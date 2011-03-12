@@ -31,6 +31,11 @@ public interface ServerControl {
   public void start() throws Exception;
 
   /**
+   * Starts the server without waiting for it to start
+   */
+  public void startWithoutWait() throws Exception;
+
+  /**
    * wait for the process termination
    */
   public int waitFor() throws Exception;

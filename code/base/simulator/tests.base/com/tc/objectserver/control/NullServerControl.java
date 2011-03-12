@@ -24,6 +24,10 @@ public class NullServerControl implements ServerControl {
     this.isRunning = true;
   }
 
+  public void startWithoutWait() throws Exception {
+    this.isRunning = true;
+  }
+
   public synchronized boolean isRunning() {
     return isRunning;
   }

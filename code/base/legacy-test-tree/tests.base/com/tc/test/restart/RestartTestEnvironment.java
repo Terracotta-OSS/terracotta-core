@@ -16,9 +16,9 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.objectserver.control.ExtraProcessServerControl;
+import com.tc.objectserver.control.ExtraProcessServerControl.DebugParams;
 import com.tc.objectserver.control.NullServerControl;
 import com.tc.objectserver.control.ServerControl;
-import com.tc.objectserver.control.ExtraProcessServerControl.DebugParams;
 import com.tc.test.TestConfigObject;
 import com.tc.util.PortChooser;
 import com.tctest.restart.TestThreadGroup;
@@ -33,29 +33,29 @@ import java.util.List;
 
 public class RestartTestEnvironment {
 
-  public static final OperatingMode                     DEV_MODE          = new OperatingMode();
-  public static final OperatingMode                     PROD_MODE         = new OperatingMode();
+  public static final OperatingMode                  DEV_MODE          = new OperatingMode();
+  public static final OperatingMode                  PROD_MODE         = new OperatingMode();
 
-  private static TCLogger                               logger            = TCLogging
-                                                                              .getTestingLogger(RestartTestEnvironment.class);
-  private final PortChooser                             portChooser;
+  private static TCLogger                            logger            = TCLogging
+                                                                           .getTestingLogger(RestartTestEnvironment.class);
+  private final PortChooser                          portChooser;
   private StandardConfigurationSetupManagerFactory   config;
-  private File                                          configFile;
+  private final File                                 configFile;
 
-  private File                                          dbhome;
-  private ServerControl                                 server;
-  private final ServerControl                           serverWrapper     = new ServerWrapper();
-  private TestThreadGroup                               threadGroup;
+  private File                                       dbhome;
+  private ServerControl                              server;
+  private final ServerControl                        serverWrapper     = new ServerWrapper();
+  private TestThreadGroup                            threadGroup;
 
-  private boolean                                       isPersistent      = true;
-  private boolean                                       isParanoid        = true;
-  private final File                                    tempDirectory;
-  private boolean                                       setUp;
-  private boolean                                       mergeServerOutput = true;
-  private int                                           serverPort;
-  private int                                           adminPort;
-  private int                                           groupPort;
-  private final OperatingMode                           operatingMode;
+  private boolean                                    isPersistent      = true;
+  private boolean                                    isParanoid        = true;
+  private final File                                 tempDirectory;
+  private boolean                                    setUp;
+  private final boolean                              mergeServerOutput = true;
+  private int                                        serverPort;
+  private int                                        adminPort;
+  private int                                        groupPort;
+  private final OperatingMode                        operatingMode;
   private final TestConfigurationSetupManagerFactory configFactory;
 
   public RestartTestEnvironment(File tempDirectory, PortChooser portChooser, OperatingMode operatingMode) {
@@ -115,8 +115,8 @@ public class RestartTestEnvironment {
 
     config = new StandardConfigurationSetupManagerFactory(new String[] {
         StandardConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFile.getAbsolutePath() },
-                                                             StandardConfigurationSetupManagerFactory.ConfigMode.L2,
-                                                             new MockIllegalConfigurationChangeHandler());
+                                                          StandardConfigurationSetupManagerFactory.ConfigMode.L2,
+                                                          new MockIllegalConfigurationChangeHandler());
   }
 
   private void writeL2Config() throws Exception {
@@ -354,6 +354,12 @@ public class RestartTestEnvironment {
       assertSetUp();
       assertServerNotNull();
       server.start();
+    }
+
+    public void startWithoutWait() throws Exception {
+      assertSetUp();
+      assertServerNotNull();
+      server.startWithoutWait();
     }
 
     public boolean isRunning() {
