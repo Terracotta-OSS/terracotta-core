@@ -162,8 +162,9 @@ public class TCObjectPhysical extends TCObjectImpl {
 
   @Override
   public void literalValueChanged(Object newValue, Object oldValue) {
+    Assert.eval(newValue != null);
     getObjectManager().getTransactionManager().literalValueChanged(this, newValue, oldValue);
-    setPeerObject(newValue == null ? null : getObjectManager().newWeakObjectReference(getObjectID(), newValue));
+    setPeerObject(getObjectManager().newWeakObjectReference(getObjectID(), newValue));
   }
 
   /**
@@ -172,7 +173,8 @@ public class TCObjectPhysical extends TCObjectImpl {
    */
   @Override
   public void setLiteralValue(Object newValue) {
-    setPeerObject(newValue == null ? null : getObjectManager().newWeakObjectReference(getObjectID(), newValue));
+    Assert.eval(newValue != null);
+    setPeerObject(getObjectManager().newWeakObjectReference(getObjectID(), newValue));
   }
 
   @Override
@@ -213,7 +215,7 @@ public class TCObjectPhysical extends TCObjectImpl {
     }
     return cleared;
   }
-  
+
   private int clearObjectReferences(TransparentAccess ta) {
 
     Map fieldValues = null;
@@ -247,12 +249,11 @@ public class TCObjectPhysical extends TCObjectImpl {
           cleared++;
         }
       }
-      
+
       aClazz = aClazz.getSuperclass();
     }
     return cleared;
   }
-
 
   public void unresolveReference(String fieldName) {
     TCField field = tcClazz.getField(fieldName);

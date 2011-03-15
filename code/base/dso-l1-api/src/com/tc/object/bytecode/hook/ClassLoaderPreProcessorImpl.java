@@ -21,11 +21,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Instruments the java.lang.ClassLoader to plug in the Class PreProcessor mechanism. <p/>
- *
+ * Instruments the java.lang.ClassLoader to plug in the Class PreProcessor mechanism.
+ * <p/>
  * We are using a lazy initialization of the class preprocessor to allow all class pre processor logic to be in system
- * classpath and not in bootclasspath. <p/>
- *
+ * classpath and not in bootclasspath.
+ * <p/>
  * This implementation should support IBM custom JRE
  */
 public class ClassLoaderPreProcessorImpl {
@@ -52,12 +52,12 @@ public class ClassLoaderPreProcessorImpl {
 
   /**
    * Patch caller side of defineClass0
-   *
+   * 
    * <pre>
    * byte[] weaved = ..hook.impl.ClassPreProcessorHelper.defineClass0Pre(this, args..);
    * klass = defineClass0(name, weaved, 0, weaved.length, protectionDomain);
    * </pre>
-   *
+   * 
    * @param classLoaderBytecode
    * @return
    */
@@ -83,11 +83,13 @@ public class ClassLoaderPreProcessorImpl {
       super(cv);
     }
 
+    @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
       super.visit(version, access, name, signature, superName, interfaces);
       this.className = name;
     }
 
+    @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
       if (CLASSLOADER_CLASS_NAME.equals(className) && "loadClass".equals(name)
@@ -98,6 +100,7 @@ public class ClassLoaderPreProcessorImpl {
                  && "(Ljava/lang/String;)Ljava/net/URL;".equals(desc)) { return new GetResourceVisitor(mv); }
 
       return new MethodAdapter(mv) {
+        @Override
         public void visitMethodInsn(int opcode, String owner, String mname, String mdesc) {
           if (CLASSLOADER_CLASS_NAME.equals(owner) && "defineClassImpl".equals(mname)) {
             mname = "__tc_defineClassImpl";
@@ -107,6 +110,7 @@ public class ClassLoaderPreProcessorImpl {
       };
     }
 
+    @Override
     public void visitEnd() {
       Label postDefine = new Label();
 
@@ -152,7 +156,8 @@ public class ClassLoaderPreProcessorImpl {
       mv.visitVarInsn(ASTORE, 7);
       mv.visitVarInsn(ALOAD, 7);
       mv.visitVarInsn(ALOAD, 0);
-      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper", "defineClass0Post", "(Ljava/lang/Class;Ljava/lang/ClassLoader;)V");
+      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper", "defineClass0Post",
+                         "(Ljava/lang/Class;Ljava/lang/ClassLoader;)V");
       mv.visitVarInsn(ALOAD, 7);
       mv.visitInsn(ARETURN);
       mv.visitMaxs(0, 0);
@@ -163,26 +168,28 @@ public class ClassLoaderPreProcessorImpl {
   }
 
   private static class ClassLoaderVisitor extends ClassAdapter {
-    private String className;
+    private String  className;
 
     private boolean getClassLoadingLockExists = false;
-    
+
     public ClassLoaderVisitor(ClassVisitor cv) {
       super(cv);
     }
 
+    @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
       super.visit(version, access, name, signature, superName, interfaces);
       this.className = name;
     }
 
+    @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
       if (CLASSLOADER_CLASS_NAME.equals(className) && "(Ljava/lang/String;)Ljava/lang/Object;".equals(desc)
           && "getClassLoadingLock".equals(name)) {
         getClassLoadingLockExists = true;
       }
-      
+
       if (CLASSLOADER_CLASS_NAME.equals(className) && "(Ljava/lang/String;)Ljava/lang/Class;".equals(desc)
           && "loadClass".equals(name)) {
         return new LoadClassAdapter(mv, access, name, desc);
@@ -195,16 +202,18 @@ public class ClassLoaderPreProcessorImpl {
         return new ProcessingVisitor(mv, access, desc);
       }
     }
-    
+
+    @Override
     public void visitEnd() {
       /*
-       * __tc_getClassLoadingLock(String className) is the method used to determine what to lock
-       * on when finding and loading TC exported classes.  If the new parallel class load
-       * enabling method getClassLoadingLock(String name) exists then we simply delegate to it.
-       * Otherwise we return 'this' and get the old behavior of locking on the classloader.
+       * __tc_getClassLoadingLock(String className) is the method used to determine what to lock on when finding and
+       * loading TC exported classes. If the new parallel class load enabling method getClassLoadingLock(String name)
+       * exists then we simply delegate to it. Otherwise we return 'this' and get the old behavior of locking on the
+       * classloader.
        */
       MethodVisitor mv = super.visitMethod(Opcodes.ACC_PROTECTED | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC,
-                                           "__tc_getClassLoadingLock", "(Ljava/lang/String;)Ljava/lang/Object;", null, null);      
+                                           "__tc_getClassLoadingLock", "(Ljava/lang/String;)Ljava/lang/Object;", null,
+                                           null);
       mv.visitCode();
       if (getClassLoadingLockExists) {
         mv.visitVarInsn(Opcodes.ALOAD, 0);
@@ -227,6 +236,7 @@ public class ClassLoaderPreProcessorImpl {
       super(mv);
     }
 
+    @Override
     public void visitFieldInsn(int opcode, String owner, String name, String desc) {
       super.visitFieldInsn(opcode, owner, name, desc);
 
@@ -251,22 +261,22 @@ public class ClassLoaderPreProcessorImpl {
         // overview:
         //
         // ClassLoader.getSystemClassLoader (1st time, scl is null)
-        //  -> ClassLoader.initSystemClassLoader
-        //  -> sclSet is false, thus continues
-        //  -> Launcher class init
-        //  -> Launcher instance init
-        //  -> Launcher.getLauncher
-        //  -> Launcher.ExtClassLoader.getExtURLs
-        //  -> URL.getURLStreamHandler
-        //      -> ClassLoader.getSystemClassLoader (2nd time, scl is null)
-        //      -> ClassLoader.initSystemClassLoader (sclSet is false)
-        //      -> launcher.getClassLoader() returns null
-        //      -> scl is set to null
-        //      -> sclSet is set to true <=== this is where the extra check is needed
-        //  -> Launcher continues its initialization
-        //  -> launcher.getClassLoader() returns classloader
-        //  -> scl is set to the classloader instance
-        //  -> sclSet is set to true <=== this is where we want to init our stuff
+        // -> ClassLoader.initSystemClassLoader
+        // -> sclSet is false, thus continues
+        // -> Launcher class init
+        // -> Launcher instance init
+        // -> Launcher.getLauncher
+        // -> Launcher.ExtClassLoader.getExtURLs
+        // -> URL.getURLStreamHandler
+        // -> ClassLoader.getSystemClassLoader (2nd time, scl is null)
+        // -> ClassLoader.initSystemClassLoader (sclSet is false)
+        // -> launcher.getClassLoader() returns null
+        // -> scl is set to null
+        // -> sclSet is set to true <=== this is where the extra check is needed
+        // -> Launcher continues its initialization
+        // -> launcher.getClassLoader() returns classloader
+        // -> scl is set to the classloader instance
+        // -> sclSet is set to true <=== this is where we want to init our stuff
         Label l = new Label();
         super.visitFieldInsn(GETSTATIC, owner, "scl", "Ljava/lang/ClassLoader;");
         super.visitJumpInsn(IFNULL, l);
@@ -281,7 +291,6 @@ public class ClassLoaderPreProcessorImpl {
     ClassProcessorHelper.defineClass0Post(c, cl);
   }
 
-
   /**
    * Adding hook for loading tc classes. Uses a primitive state machine to insert new code after first line attribute
    * (if exists) in order to help with debugging and line-based breakpoints.
@@ -293,11 +302,13 @@ public class ClassLoaderPreProcessorImpl {
       super(mv);
     }
 
+    @Override
     public void visitLineNumber(int line, Label start) {
       super.visitLineNumber(line, start);
       if (!isInstrumented) instrument();
     }
 
+    @Override
     public void visitVarInsn(int opcode, int var) {
       if (!isInstrumented) instrument();
       super.visitVarInsn(opcode, var);
@@ -326,14 +337,12 @@ public class ClassLoaderPreProcessorImpl {
   }
 
   /**
-   * Adding hook into ClassLoader.loadClass[Internal]() method to load tc classes.
-   * 
-   * This instrumentation code is mirrored by the export code in IsolationClassLoader.
-   * If you change this in any functionally significant way please update the IsolationClassLoader
-   * too otherwise we may see strange test failures.
+   * Adding hook into ClassLoader.loadClass[Internal]() method to load tc classes. This instrumentation code is mirrored
+   * by the export code in IsolationClassLoader. If you change this in any functionally significant way please update
+   * the IsolationClassLoader too otherwise we may see strange test failures.
    */
   public static class LoadClassAdapter extends AdviceAdapter {
-    
+
     public LoadClassAdapter(MethodVisitor mv, int access, String name, String desc) {
       super(mv, access, name, desc);
     }
@@ -342,24 +351,24 @@ public class ClassLoaderPreProcessorImpl {
     protected void onMethodEnter() {
       Label foundClass = new Label();
       Label noExport = new Label();
-      
+
       Label lockStart = new Label();
       Label lockEnd = new Label();
       Label lockEndEx = new Label();
       Label lockEndExEnd = new Label();
       mv.visitTryCatchBlock(lockStart, lockEnd, lockEndEx, null);
       mv.visitTryCatchBlock(lockEndEx, lockEndExEnd, lockEndEx, null);
-      
+
       final int thisSlot = 0;
       final int classnameSlot = 1;
       final int classbytesSlot = 2;
       final int loadedclassSlot = 3;
       final int lockSlot = 4;
-      
+
       mv.visitVarInsn(ALOAD, classnameSlot);
       mv.visitVarInsn(ALOAD, thisSlot);
-      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper", "loadClassInternalHook",
-                         "(Ljava/lang/String;Ljava/lang/ClassLoader;)[B");
+      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper",
+                         "loadClassInternalHook", "(Ljava/lang/String;Ljava/lang/ClassLoader;)[B");
       mv.visitVarInsn(ASTORE, classbytesSlot);
 
       mv.visitVarInsn(ALOAD, classbytesSlot);
@@ -367,34 +376,37 @@ public class ClassLoaderPreProcessorImpl {
 
       mv.visitVarInsn(ALOAD, thisSlot);
       mv.visitVarInsn(ALOAD, classnameSlot);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/ClassLoader", "__tc_getClassLoadingLock", "(Ljava/lang/String;)Ljava/lang/Object;");
+      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/ClassLoader", "__tc_getClassLoadingLock",
+                         "(Ljava/lang/String;)Ljava/lang/Object;");
       mv.visitVarInsn(ASTORE, lockSlot);
-      
-      //synchronized start
+
+      // synchronized start
       mv.visitVarInsn(ALOAD, lockSlot);
       mv.visitInsn(MONITORENTER);
       mv.visitLabel(lockStart);
-      
+
       mv.visitVarInsn(ALOAD, thisSlot);
       mv.visitVarInsn(ALOAD, classnameSlot);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/ClassLoader", "findLoadedClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/ClassLoader", "findLoadedClass",
+                         "(Ljava/lang/String;)Ljava/lang/Class;");
       mv.visitVarInsn(ASTORE, loadedclassSlot);
 
       mv.visitVarInsn(ALOAD, loadedclassSlot);
       mv.visitJumpInsn(IFNONNULL, foundClass);
-      
+
       mv.visitVarInsn(ALOAD, thisSlot);
       mv.visitVarInsn(ALOAD, classnameSlot);
       mv.visitVarInsn(ALOAD, classbytesSlot);
       mv.visitInsn(ICONST_0);
       mv.visitVarInsn(ALOAD, classbytesSlot);
       mv.visitInsn(ARRAYLENGTH);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/ClassLoader", "defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;");
+      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/ClassLoader", "defineClass",
+                         "(Ljava/lang/String;[BII)Ljava/lang/Class;");
       mv.visitVarInsn(ASTORE, loadedclassSlot);
-      
+
       mv.visitLabel(foundClass);
 
-      //synchronized end
+      // synchronized end
       mv.visitVarInsn(ALOAD, lockSlot);
       mv.visitInsn(MONITOREXIT);
       mv.visitLabel(lockEnd);
@@ -413,7 +425,7 @@ public class ClassLoaderPreProcessorImpl {
 
   /**
    * Wraps calls to defineClass0, defineClass1 and <code>defineClass2</code> methods:
-   *
+   * 
    * <pre>
    * byte[] newbytes = ClassProcessorHelper.defineClass0Pre(loader, name, b, off, len, pd);
    * if (b == newbytes) {
@@ -428,6 +440,7 @@ public class ClassLoaderPreProcessorImpl {
       super(cv, access, desc);
     }
 
+    @Override
     public void visitMethodInsn(int opcode, String owner, String name, String desc) {
       boolean insertPostCall = false;
 
@@ -531,8 +544,8 @@ public class ClassLoaderPreProcessorImpl {
 
   // TODO replace this with LocalVariableSorterAdapter
   private static class RemappingMethodVisitor extends MethodAdapter {
-    private State  state;
-    private IntRef check = new IntRef();
+    private final State  state;
+    private final IntRef check = new IntRef();
 
     public RemappingMethodVisitor(MethodVisitor v, int access, String desc) {
       super(v);
@@ -562,14 +575,17 @@ public class ClassLoaderPreProcessorImpl {
       return value.intValue();
     }
 
+    @Override
     public void visitIincInsn(int var, int increment) {
       mv.visitIincInsn(remap(var, 1), increment);
     }
 
+    @Override
     public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
       mv.visitLocalVariable(name, desc, signature, start, end, remap(index, 0));
     }
 
+    @Override
     public void visitVarInsn(int opcode, int var) {
       int size;
       switch (opcode) {
@@ -585,6 +601,7 @@ public class ClassLoaderPreProcessorImpl {
       mv.visitVarInsn(opcode, remap(var, size));
     }
 
+    @Override
     public void visitMaxs(int maxStack, int maxLocals) {
       mv.visitMaxs(0, 0);
     }
@@ -597,8 +614,8 @@ public class ClassLoaderPreProcessorImpl {
 
     State(int access, Type[] args) {
       nextLocal = ((Opcodes.ACC_STATIC & access) != 0) ? 0 : 1;
-      for (int i = 0; i < args.length; i++) {
-        nextLocal += args[i].getSize();
+      for (Type arg : args) {
+        nextLocal += arg.getSize();
       }
       firstLocal = nextLocal;
     }
@@ -607,10 +624,18 @@ public class ClassLoaderPreProcessorImpl {
   private static class IntRef {
     int key;
 
+    @Override
     public boolean equals(Object o) {
-      return key == ((IntRef) o).key;
+      if (o == null) {
+        return false;
+      } else if (!(o instanceof IntRef)) {
+        return false;
+      } else {
+        return key == ((IntRef) o).key;
+      }
     }
 
+    @Override
     public int hashCode() {
       return key;
     }

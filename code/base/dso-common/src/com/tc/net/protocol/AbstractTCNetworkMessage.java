@@ -117,6 +117,7 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
     return entireMessageData;
   }
 
+  @Override
   public final String toString() {
     try {
       return toString0();
@@ -205,8 +206,8 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
         toRet.append('[').append(i).append(']').append('=').append(entireMessageData[i].toString());
         toRet.append(" =  { ");
         byte ba[] = entireMessageData[i].array();
-        for (int j = 0; j < ba.length; j++) {
-          toRet.append(Byte.toString(ba[j])).append(' ');
+        for (byte element : ba) {
+          toRet.append(Byte.toString(element)).append(' ');
         }
         toRet.append(" }  \n\n");
       }
@@ -220,7 +221,7 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
 
   public final void seal() {
     if (sealed.attemptSet()) {
-      final int size = 1 + ((payloadData == null) ? 0 : payloadData.length);
+      final int size = 1 + payloadData.length;
       entireMessageData = new TCByteBuffer[size];
       entireMessageData[0] = header.getDataBuffer();
       System.arraycopy(payloadData, 0, entireMessageData, 1, payloadData.length);
