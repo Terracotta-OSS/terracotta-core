@@ -8,6 +8,7 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
+import com.tc.l2.msg.IndexSyncAckMessage;
 import com.tc.l2.msg.IndexSyncCompleteAckMessage;
 import com.tc.l2.msg.IndexSyncCompleteMessage;
 import com.tc.l2.msg.IndexSyncMessage;
@@ -53,17 +54,14 @@ public class L2IndexSyncHandler extends AbstractEventHandler {
     stateSyncManager.indexSyncComplete();
     IndexSyncCompleteAckMessage ackMessage = IndexSyncMessageFactory.createIndexSyncCompleteAckMessage(msg
         .messageFrom());
-    sendIndexSyncCompleteAckMessage(ackMessage);
-  }
 
-  private void sendIndexSyncCompleteAckMessage(IndexSyncCompleteAckMessage message) {
     try {
-      this.groupManager.sendTo(message.getDestinatioinNodeID(), message);
+      this.groupManager.sendTo(ackMessage.getDestinatioinNodeID(), ackMessage);
     } catch (final GroupException e) {
-      final String error = "Error sending IndexSyncCompleteAckMessage to " + message.getDestinatioinNodeID()
+      final String error = "Error sending IndexSyncCompleteAckMessage to " + ackMessage.getDestinatioinNodeID()
                            + ": Caught exception while sending message to ACTIVE";
       logger.error(error, e);
-      this.groupManager.zapNode(message.getDestinatioinNodeID(), L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
+      this.groupManager.zapNode(ackMessage.getDestinatioinNodeID(), L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
                                 "Error sending objects." + L2HAZapNodeRequestProcessor.getErrorString(e));
     }
   }
@@ -73,7 +71,17 @@ public class L2IndexSyncHandler extends AbstractEventHandler {
   }
 
   private void doSyncIndex(final IndexSyncMessage syncMsg) {
-    this.indexHACoordinator.applyIndexSync(syncMsg.getCacheName(), syncMsg.getFileName(), syncMsg.getData());
+    byte[] data = syncMsg.getData();
+    this.indexHACoordinator.applyIndexSync(syncMsg.getCacheName(), syncMsg.getFileName(), data);
+
+    IndexSyncAckMessage ack = IndexSyncMessageFactory.createIndexSyncAckMessage(syncMsg.getMessageID(), data.length);
+    try {
+      this.groupManager.sendTo(syncMsg.messageFrom(), ack);
+    } catch (GroupException e) {
+      logger.error(e);
+      this.groupManager.zapNode(syncMsg.messageFrom(), L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
+                                "Error sending index ack." + L2HAZapNodeRequestProcessor.getErrorString(e));
+    }
   }
 
   @Override
@@ -83,5 +91,4 @@ public class L2IndexSyncHandler extends AbstractEventHandler {
     this.stateSyncManager = oscc.getL2Coordinator().getStateSyncManager();
     this.groupManager = oscc.getL2Coordinator().getGroupManager();
   }
-
 }

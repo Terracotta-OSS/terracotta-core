@@ -317,6 +317,7 @@ import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.DGCSequenceProvider;
 import com.tc.util.sequence.MutableSequence;
 import com.tc.util.sequence.Sequence;
+import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.startuplock.FileNotCreatedException;
 import com.tc.util.startuplock.LocationNotCreatedException;
 import com.terracottatech.config.Offheap;
@@ -1138,8 +1139,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       logger.info("L2 Networked HA Enabled ");
       this.indexHACoordinator = this.serverBuilder.createIndexHACoordinator(this.configSetupManager, searchEventSink);
 
+      SequenceGenerator indexSequenceGenerator = new SequenceGenerator();
+
       L2IndexStateManager l2IndexStateManager = this.serverBuilder.createL2IndexStateManager(this.indexHACoordinator,
-                                                                                             this.transactionManager);
+                                                                                             this.transactionManager,
+                                                                                             indexSequenceGenerator,
+                                                                                             groupCommManager);
 
       L2ObjectStateManager l2ObjectStateManager = this.serverBuilder.createL2ObjectStateManager(objectManager,
                                                                                                 transactionManager);
@@ -1157,7 +1162,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                     gtxm, weightGeneratorFactory,
                                                                     this.configSetupManager, recycler,
                                                                     this.stripeIDStateManager,
-                                                                    serverTransactionFactory, dgcSequenceProvider);
+                                                                    serverTransactionFactory, dgcSequenceProvider,
+                                                                    indexSequenceGenerator);
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.indexHACoordinator);
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2Coordinator);

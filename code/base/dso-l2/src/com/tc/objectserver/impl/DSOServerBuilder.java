@@ -66,6 +66,7 @@ import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.sequence.DGCSequenceProvider;
+import com.tc.util.sequence.SequenceGenerator;
 
 import java.io.File;
 import java.io.IOException;
@@ -84,7 +85,8 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
       throws IOException;
 
   L2IndexStateManager createL2IndexStateManager(IndexHACoordinator indexHACoordinator,
-                                                ServerTransactionManager transactionManager);
+                                                ServerTransactionManager transactionManager,
+                                                SequenceGenerator indexSequenceGenerator, GroupManager groupManager);
 
   L2ObjectStateManager createL2ObjectStateManager(ObjectManager objectManager,
                                                   ServerTransactionManager transactionManager);
@@ -158,7 +160,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                       L2ConfigurationSetupManager configurationSetupManager, MessageRecycler recycler,
                                       StripeIDStateManager stripeStateManager,
                                       ServerTransactionFactory serverTransactionFactory,
-                                      DGCSequenceProvider dgcSequenceProvider);
+                                      DGCSequenceProvider dgcSequenceProvider, SequenceGenerator indexSequenceGenerator);
 
   L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean, LockStatisticsMonitor lockStatisticsMBean,
                                   StatisticsAgentSubSystemImpl statisticsAgentSubSystem,

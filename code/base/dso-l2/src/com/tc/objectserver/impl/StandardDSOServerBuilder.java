@@ -83,6 +83,7 @@ import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.runtime.ThreadDumpUtil;
 import com.tc.util.sequence.DGCSequenceProvider;
+import com.tc.util.sequence.SequenceGenerator;
 
 import java.io.File;
 import java.io.IOException;
@@ -145,7 +146,9 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   }
 
   public L2IndexStateManager createL2IndexStateManager(IndexHACoordinator indexHACoordinator,
-                                                       ServerTransactionManager transactionManager) {
+                                                       ServerTransactionManager transactionManager,
+                                                       SequenceGenerator indexSequenceGenerator,
+                                                       GroupManager groupManager) {
     return new NullL2IndexStateManager();
   }
 
@@ -259,12 +262,13 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                              final MessageRecycler recycler,
                                              final StripeIDStateManager stripeStateManager,
                                              final ServerTransactionFactory serverTransactionFactory,
-                                             final DGCSequenceProvider dgcSequenceProvider) {
+                                             final DGCSequenceProvider dgcSequenceProvider,
+                                             final SequenceGenerator indexSequenceGenerator) {
     return new L2HACoordinator(consoleLogger, server, stageManager, groupCommsManager, persistentMapStore,
                                objectManager, indexHACoordinator, l2PassiveSyncStateManager, l2ObjectStateManager,
                                l2IndexStateManager, transactionManager, gtxm, weightGeneratorFactory,
                                configurationSetupManager, recycler, this.thisGroupID, stripeStateManager,
-                               serverTransactionFactory, dgcSequenceProvider);
+                               serverTransactionFactory, dgcSequenceProvider, indexSequenceGenerator);
   }
 
   public L2Management createL2Management(final TCServerInfoMBean tcServerInfoMBean,

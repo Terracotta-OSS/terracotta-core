@@ -870,6 +870,8 @@ public interface TCPropertiesConsts {
 
   public static final String   SEARCH_QUERY_WAIT_FOR_TXNS                                      = "search.query.wait.for.txns";
   public static final String   SEARCH_USE_COMMIT_THREAD                                        = "search.use.commit.thread";
+  public static final String   SEARCH_PASSIVE_MAX_CHUNK                                        = "search.passive.max.chunk";
+  public static final String   SEARCH_PASSIVE_MAX_PENDING                                      = "search.passive.max.pending";
 
   public static final String   SIGAR_ENABLED                                                   = "sigar.enabled";
 }

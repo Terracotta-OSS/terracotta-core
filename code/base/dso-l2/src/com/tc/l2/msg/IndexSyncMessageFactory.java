@@ -4,6 +4,7 @@
 package com.tc.l2.msg;
 
 import com.tc.net.NodeID;
+import com.tc.net.groups.MessageID;
 
 public class IndexSyncMessageFactory {
 
@@ -13,10 +14,10 @@ public class IndexSyncMessageFactory {
     return msg;
   }
 
-  public static IndexSyncMessage createIndexSyncMessage(String cacheName, String fileName, int length, byte[] fileData,
+  public static IndexSyncMessage createIndexSyncMessage(String cacheName, String fileName, byte[] fileData,
                                                         long sequenceID) {
     IndexSyncMessage msg = new IndexSyncMessage(IndexSyncMessage.INDEX_SYNC_TYPE);
-    msg.initialize(cacheName, fileName, length, fileData, sequenceID);
+    msg.initialize(cacheName, fileName, fileData, sequenceID);
     return msg;
   }
 
@@ -26,9 +27,14 @@ public class IndexSyncMessageFactory {
     return msg;
   }
 
+  public static IndexSyncAckMessage createIndexSyncAckMessage(MessageID requestID, int amount) {
+    IndexSyncAckMessage msg = new IndexSyncAckMessage(IndexSyncAckMessage.INDEX_SYNC_ACK_TYPE, requestID);
+    msg.initialize(amount);
+    return msg;
+  }
+
   public static IndexSyncCompleteAckMessage createIndexSyncCompleteAckMessage(NodeID nodeID) {
-    return new IndexSyncCompleteAckMessage(IndexSyncCompleteAckMessage.INDEX_SYNC_COMPLETE_ACK_TYPE,
-                                                 nodeID);
+    return new IndexSyncCompleteAckMessage(IndexSyncCompleteAckMessage.INDEX_SYNC_COMPLETE_ACK_TYPE, nodeID);
   }
 
 }

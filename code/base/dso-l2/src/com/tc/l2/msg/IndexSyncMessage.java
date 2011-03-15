@@ -30,10 +30,10 @@ public class IndexSyncMessage extends AbstractGroupMessage implements OrderedEve
     super(type);
   }
 
-  public void initialize(final String cName, final String fName, final int length, final byte[] fileData, long sID) {
+  public void initialize(final String cName, final String fName, final byte[] fileData, long sID) {
     this.cacheName = cName;
     this.fileName = fName;
-    this.fileLength = length;
+    this.fileLength = fileData.length;
     this.data = fileData;
     this.sequenceID = sID;
   }
@@ -57,7 +57,6 @@ public class IndexSyncMessage extends AbstractGroupMessage implements OrderedEve
     out.writeString(this.fileName);
     out.writeLong(this.sequenceID);
     out.write(this.data);
-
   }
 
   public String getCacheName() {
@@ -66,10 +65,6 @@ public class IndexSyncMessage extends AbstractGroupMessage implements OrderedEve
 
   public String getFileName() {
     return this.fileName;
-  }
-
-  public int getFileLength() {
-    return this.fileLength;
   }
 
   public byte[] getData() {

@@ -18,7 +18,6 @@ import com.tc.l2.handler.GroupEventsDispatchHandler;
 import com.tc.l2.handler.GroupEventsDispatchHandler.GroupEventsDispatcher;
 import com.tc.l2.handler.L2IndexSyncHandler;
 import com.tc.l2.handler.L2IndexSyncRequestHandler;
-import com.tc.l2.handler.L2IndexSyncSendHandler;
 import com.tc.l2.handler.L2ObjectSyncHandler;
 import com.tc.l2.handler.L2ObjectSyncRequestHandler;
 import com.tc.l2.handler.L2ObjectSyncSendHandler;
@@ -27,6 +26,7 @@ import com.tc.l2.handler.L2StateMessageHandler;
 import com.tc.l2.handler.ServerTransactionAckHandler;
 import com.tc.l2.handler.TransactionRelayHandler;
 import com.tc.l2.msg.GCResultMessage;
+import com.tc.l2.msg.IndexSyncAckMessage;
 import com.tc.l2.msg.IndexSyncCompleteMessage;
 import com.tc.l2.msg.IndexSyncMessage;
 import com.tc.l2.msg.IndexSyncStartMessage;
@@ -92,10 +92,9 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
   private ReplicatedObjectManagerImpl                     rObjectManager;
   private ReplicatedTransactionManager                    rTxnManager;
   private ReplicatedClusterStateManager                   rClusterStateMgr;
-
   private SequenceGenerator                               sequenceGenerator;
-  private SequenceGenerator                               indexSequenceGenerator;
 
+  private final SequenceGenerator                         indexSequenceGenerator;
   private final L2ConfigurationSetupManager               configSetupManager;
   private final CopyOnWriteArrayList<StateChangeListener> listeners = new CopyOnWriteArrayList<StateChangeListener>();
   private final L2PassiveSyncStateManager                 l2PassiveSyncStateManager;
@@ -112,13 +111,14 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                          final L2ConfigurationSetupManager configurationSetupManager, final MessageRecycler recycler,
                          final GroupID thisGroupID, final StripeIDStateManager stripeIDStateManager,
                          final ServerTransactionFactory serverTransactionFactory,
-                         DGCSequenceProvider dgcSequenceProvider) {
+                         DGCSequenceProvider dgcSequenceProvider, SequenceGenerator indexSequenceGenerator) {
     this.consoleLogger = consoleLogger;
     this.server = server;
     this.groupManager = groupCommsManager;
     this.thisGroupID = thisGroupID;
     this.configSetupManager = configurationSetupManager;
     this.l2PassiveSyncStateManager = l2PassiveSyncStateManager;
+    this.indexSequenceGenerator = indexSequenceGenerator;
 
     init(stageManager, persistentStateStore, l2ObjectStateManager, l2IndexStateManager, objectManager,
          indexHACoordinator, transactionManager, gtxm, weightGeneratorFactory, recycler, stripeIDStateManager,
@@ -148,7 +148,6 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                                              new StateManagerConfigImpl(this.configSetupManager.haConfig()),
                                              createWeightGeneratorFactoryForStateManager(gtxm));
     this.sequenceGenerator = new SequenceGenerator(this);
-    this.indexSequenceGenerator = new SequenceGenerator();
 
     final L2HAZapNodeRequestProcessor zapProcessor = new L2HAZapNodeRequestProcessor(this.consoleLogger,
                                                                                      this.stateManager,
@@ -180,16 +179,12 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
     // Right now, Index Sync stages should be single threaded.
     final short INDEX_SYNC_STAGE_THREADS = 1;
-    final Sink indexSyncRequestSink = stageManager
-        .createStage(ServerConfigurationContext.INDEXES_SYNC_REQUEST_STAGE,
-                     new L2IndexSyncRequestHandler(l2IndexStateManager, this.indexSequenceGenerator),
-                     INDEX_SYNC_STAGE_THREADS, Integer.MAX_VALUE).getSink();
+    final Sink indexSyncRequestSink = stageManager.createStage(ServerConfigurationContext.INDEXES_SYNC_REQUEST_STAGE,
+                                                               new L2IndexSyncRequestHandler(l2IndexStateManager),
+                                                               INDEX_SYNC_STAGE_THREADS, Integer.MAX_VALUE).getSink();
     final Sink indexSyncSink = stageManager.createStage(ServerConfigurationContext.INDEXES_SYNC_STAGE,
                                                         new L2IndexSyncHandler(indexHACoordinator),
                                                         INDEX_SYNC_STAGE_THREADS, Integer.MAX_VALUE).getSink();
-    stageManager.createStage(ServerConfigurationContext.INDEXES_SYNC_SEND_STAGE,
-                             new L2IndexSyncSendHandler(l2IndexStateManager), INDEX_SYNC_STAGE_THREADS,
-                             Integer.MAX_VALUE);
 
     this.rClusterStateMgr = new ReplicatedClusterStateManagerImpl(
                                                                   this.groupManager,
@@ -220,6 +215,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
     this.groupManager.routeMessages(IndexSyncStartMessage.class, orderedIndexSyncSink);
     this.groupManager.routeMessages(IndexSyncMessage.class, orderedIndexSyncSink);
+    this.groupManager.routeMessages(IndexSyncAckMessage.class, indexSyncRequestSink);
     this.groupManager.routeMessages(IndexSyncCompleteMessage.class, orderedIndexSyncSink);
 
     this.groupManager.routeMessages(RelayedCommitTransactionMessage.class, orderedObjectsSyncSink);
