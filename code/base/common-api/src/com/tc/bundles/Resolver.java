@@ -108,10 +108,13 @@ public class Resolver {
       URL toolkitURL = null;
 
       for (int i = 0; i < TOOLKIT_SEARCH_RANGE; i++) {
-        String resolvedVersion = findNewestVersion(toolkitModule.getGroupId(), toolkitModule.getName());
+        String resolvedVersion = findNewestVersion(toolkitModule.getGroupId(), toolkitModule.getName(), true);
         if (resolvedVersion != null) {
           toolkitModule.setVersion(resolvedVersion);
           toolkitURL = resolve(toolkitModule);
+          if (toolkitURL == null) {
+            logger.info("Toolkit version " + resolvedVersion + " isn't a match. Skipping");
+          }
           break;
         } else {
           toolkitVer = toolkitVer.nextMinorVersion();
@@ -225,7 +228,7 @@ public class Resolver {
 
     // Resolve null versions by finding newest candidate in available repositories
     if (version == null) {
-      version = findNewestVersion(groupId, name);
+      version = findNewestVersion(groupId, name, false);
 
       if (version == null) {
         String msg = "No version was specified for "
@@ -267,13 +270,13 @@ public class Resolver {
     return location;
   }
 
-  private String findNewestVersion(String groupId, String name) {
-    // logger.info("findNewestVersion(" + groupId + ", " + name + ")");
-
+  private String findNewestVersion(String groupId, String name, boolean verbose) {
     final String symName = MavenToOSGi.artifactIdToSymbolicName(groupId, name);
     String newestVersion = null;
 
-    // logger.info("  looking for symName = " + symName);
+    if (verbose) {
+      logger.info("Looking for latest version of " + symName);
+    }
 
     for (Repository repo : repositories) {
       Collection<URL> possibles = repo.search(groupId, name);
@@ -290,6 +293,8 @@ public class Resolver {
 
           String timApiVersion = manifest.getMainAttributes().getValue("Terracotta-TIM-API");
 
+          String bundleVersion = manifest.getMainAttributes().getValue(BUNDLE_VERSION);
+
           if (timApiVersion == null) {
             if (moduleTcVersion != null) {
               timApiVersion = VersionMatcher.ANY_VERSION;
@@ -305,11 +310,14 @@ public class Resolver {
 
           if (versionMatcher.matches(moduleTcVersion, timApiVersion)) {
             // logger.info("found matching bundle, version = " + manifest.getMainAttributes().getValue(BUNDLE_VERSION));
-            newestVersion = newerVersion(newestVersion, manifest.getMainAttributes().getValue(BUNDLE_VERSION));
+            newestVersion = newerVersion(newestVersion, bundleVersion);
             logger.info("new version = " + newestVersion);
-            // } else {
-            // logger.info("skipping module with " + moduleTcVersion + " / " + moduleApiVersion
-            // + " - not appropriate for current tc version");
+          } else {
+            if (verbose) {
+              logger.info("Skipping module " + symName + " version " + bundleVersion
+                          + " because its Terracotta-RequireVersion [" + moduleTcVersion + "] or Terracotta-TIM-API ["
+                          + timApiVersion + "] doesn't match current Terracotta version");
+            }
           }
         }
       }
