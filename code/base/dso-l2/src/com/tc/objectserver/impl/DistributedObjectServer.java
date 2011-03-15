@@ -575,9 +575,14 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     logger.debug("persistent: " + persistent);
     if (!persistent) {
       if (dbhome.exists()) {
-        logger.debug("deleting persistence database...");
+        logger.info("deleting persistence database: " + dbhome.getAbsolutePath());
         FileUtils.cleanDirectory(dbhome);
-        logger.debug("persistence database deleted.");
+      }
+
+      File indexRoot = configSetupManager.commonl2Config().indexPath();
+      if (indexRoot.exists()) {
+        logger.info("deleting index directory: " + indexRoot.getAbsolutePath());
+        FileUtils.cleanDirectory(indexRoot);
       }
     }
     logger.debug("persistence database home: " + dbhome);
