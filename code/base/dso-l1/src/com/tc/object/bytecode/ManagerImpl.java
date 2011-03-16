@@ -69,6 +69,7 @@ import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.text.ConsoleParagraphFormatter;
 import com.tc.text.StringFormatter;
+import com.tc.util.Assert;
 import com.tc.util.Util;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.runtime.Vm;
@@ -88,6 +89,7 @@ import javax.management.MBeanServer;
 public class ManagerImpl implements ManagerInternal {
   private static final TCLogger                    logger              = TCLogging.getLogger(Manager.class);
   private final SetOnceFlag                        clientStarted       = new SetOnceFlag();
+  private final SetOnceFlag                        clientStopped       = new SetOnceFlag();
   private final DSOClientConfigHelper              config;
   private final ClassProvider                      classProvider;
   private final boolean                            startClient;
@@ -289,6 +291,15 @@ public class ManagerImpl implements ManagerInternal {
   }
 
   private void shutdown(final boolean fromShutdownHook) {
+    if (clientStopped.attemptSet()) {
+      shutdownClient(fromShutdownHook);
+    } else {
+      logger.info("Client already shutdown.");
+    }
+  }
+
+  private void shutdownClient(final boolean fromShutdownHook) {
+    Assert.eval(clientStopped.isSet());
     this.runtimeLogger.shutdown();
     if (this.shutdownManager != null) {
       try {
@@ -925,10 +936,21 @@ public class ManagerImpl implements ManagerInternal {
       logger.fatal(wrapper.wrap(formatter.format(UNLOCK_SHARE_LOCK_ERROR)), e);
       System.exit(-1);
     } catch (final Throwable t) {
-      final ConsoleParagraphFormatter formatter = new ConsoleParagraphFormatter(60, new StringFormatter());
-      final ExceptionWrapper wrapper = new ExceptionWrapperImpl();
-      logger.fatal(wrapper.wrap(formatter.format(IMMINENT_INFINITE_LOOP_ERROR)), t);
-      System.exit(-1);
+      if (isExpressMode) {
+        logger
+            .info("Ignoring " + t.getClass().getName() + " in unlock(lockID=" + lock + ", level=" + level + "). " + t);
+        logger.info("Shutting down this Express Client");
+        try {
+          stop();
+        } catch (final Throwable e) {
+          logger.info("Ignoring " + e);
+        }
+      } else {
+        final ConsoleParagraphFormatter formatter = new ConsoleParagraphFormatter(60, new StringFormatter());
+        final ExceptionWrapper wrapper = new ExceptionWrapperImpl();
+        logger.fatal(wrapper.wrap(formatter.format(IMMINENT_INFINITE_LOOP_ERROR)), t);
+        System.exit(-1);
+      }
     }
   }
 
