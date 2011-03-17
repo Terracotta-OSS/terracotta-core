@@ -125,7 +125,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
       sources = getConfigurationSources(this.configurationSpec.getServerTopologyOverrideConfigSpec());
       ConfigDataSourceStream serverOverrideConfigDataSourceStream = loadServerConfigDataFromSources(sources,
                                                                                                     l2sBeanRepository,
-                                                                                                    true);
+                                                                                                    true, false);
       serverOverrideConfigLoadedFromTrustedSource = serverOverrideConfigDataSourceStream.isTrustedSource();
       serverOverrideConfigDescription = serverOverrideConfigDataSourceStream.getDescription();
     }
@@ -138,11 +138,12 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
       sources = getConfigurationSources(this.configurationSpec.getServerTopologyOverrideConfigSpec());
       ConfigDataSourceStream serverOverrideConfigDataSourceStream = loadServerConfigDataFromSources(sources,
                                                                                                     l2sBeanRepository,
-                                                                                                    reportToConsole);
+                                                                                                    reportToConsole,
+                                                                                                    shouldLogTcConfig);
       serverOverrideConfigLoadedFromTrustedSource = serverOverrideConfigDataSourceStream.isTrustedSource();
       serverOverrideConfigDescription = serverOverrideConfigDataSourceStream.getDescription();
     } else {
-      loadServerConfigDataFromSources(sources, l2sBeanRepository, reportToConsole);
+      loadServerConfigDataFromSources(sources, l2sBeanRepository, reportToConsole, shouldLogTcConfig);
     }
 
     if (shouldLogTcConfig) {
@@ -224,14 +225,14 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
 
   private ConfigDataSourceStream loadServerConfigDataFromSources(ConfigurationSource[] sources,
                                                                  MutableBeanRepository l2sBeanRepository,
-                                                                 boolean reportToConsole)
+                                                                 boolean reportToConsole, boolean updateTcConfig)
       throws ConfigurationSetupException {
     long startTime = System.currentTimeMillis();
     ConfigDataSourceStream configDataSourceStream = getConfigDataSourceStrean(sources, startTime, "server topology");
     if (configDataSourceStream.getSourceInputStream() == null) configurationFetchFailed(sources, startTime);
     loadServerConfigurationData(configDataSourceStream.getSourceInputStream(),
                                 configDataSourceStream.isTrustedSource(), configDataSourceStream.getDescription(),
-                                l2sBeanRepository);
+                                l2sBeanRepository, updateTcConfig);
     if (reportToConsole) {
       consoleLogger.info("Successfully overridden " + configDataSourceStream.getDescription() + ".");
     }
@@ -417,12 +418,15 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   }
 
   private void loadServerConfigurationData(InputStream in, boolean trustedSource, String descrip,
-                                           MutableBeanRepository serversBeanRepository)
+                                           MutableBeanRepository serversBeanRepository, boolean updateTcConfig)
       throws ConfigurationSetupException {
     try {
       TcConfigDocument configDocument = getConfigFromSourceStream(in, trustedSource, descrip, false);
       Assert.assertNotNull(configDocument);
       setServerBean(serversBeanRepository, configDocument.getTcConfig(), descrip);
+      if (updateTcConfig) {
+        updateTcConfigFull(configDocument, descrip);
+      }
     } catch (XmlException xmle) {
       throw new ConfigurationSetupException("The configuration data in the " + descrip + " does not obey the "
                                             + "Terracotta schema: " + xmle.getLocalizedMessage(), xmle);
