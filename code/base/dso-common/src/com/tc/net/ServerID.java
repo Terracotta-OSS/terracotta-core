@@ -14,9 +14,9 @@ import java.util.Arrays;
 
 public class ServerID implements NodeID, Serializable {
 
-  public static final ServerID NULL_ID       = new ServerID("NULL-ID", new byte[0]);
-
-  private static final String  UNINITIALIZED = "Uninitialized";
+  private static final long    serialVersionUID = 1L;
+  public static final ServerID NULL_ID          = new ServerID("NULL-ID", new byte[0]);
+  private static final String  UNINITIALIZED    = "Uninitialized";
 
   private String               name;
   private byte[]               uid;
@@ -30,7 +30,7 @@ public class ServerID implements NodeID, Serializable {
 
   public ServerID(String name, byte[] uid) {
     this.name = name;
-    this.uid = uid;
+    this.uid = uid.clone();
   }
 
   @Override

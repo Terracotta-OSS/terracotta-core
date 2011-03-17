@@ -58,6 +58,7 @@ public class EphemeralPorts {
       return lower;
     }
 
+    @Override
     public String toString() {
       return lower + " " + upper;
     }
@@ -163,6 +164,7 @@ public class EphemeralPorts {
       try {
         reader = new BufferedReader(new InputStreamReader(new FileInputStream(src)));
         String data = reader.readLine();
+        if (data == null) { throw new RuntimeException("Unexpected EOF at " + source); }
         String[] parts = data.split("[ \\t]");
         if (parts.length != 2) { throw new RuntimeException("Wrong number of tokens (" + parts.length + ") in " + data); }
 

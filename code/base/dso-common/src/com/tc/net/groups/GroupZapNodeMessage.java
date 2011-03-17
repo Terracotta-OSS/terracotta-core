@@ -12,11 +12,11 @@ import java.io.IOException;
 
 public class GroupZapNodeMessage extends AbstractGroupMessage {
 
-  public static final int       ZAP_NODE_REQUEST = 0;
+  public static final int ZAP_NODE_REQUEST = 0;
 
-  private int                   zapNodeType;
-  private String                reason;
-  private long[]                weights;
+  private int             zapNodeType;
+  private String          reason;
+  private long[]          weights;
 
   // To make serialization happy
   public GroupZapNodeMessage() {
@@ -27,9 +27,10 @@ public class GroupZapNodeMessage extends AbstractGroupMessage {
     super(type);
     this.reason = reason;
     this.zapNodeType = zapNodeType;
-    this.weights = weights;
+    this.weights = weights.clone();
   }
-  
+
+  @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     Assert.assertEquals(ZAP_NODE_REQUEST, getType());
     zapNodeType = in.readInt();
@@ -40,16 +41,18 @@ public class GroupZapNodeMessage extends AbstractGroupMessage {
     }
   }
 
+  @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
     Assert.assertEquals(ZAP_NODE_REQUEST, getType());
     out.writeInt(zapNodeType);
     out.writeString(reason);
     out.writeInt(weights.length);
-    for (int i = 0; i < weights.length; i++) {
-      out.writeLong(weights[i]);
+    for (long weight : weights) {
+      out.writeLong(weight);
     }
   }
 
+  @Override
   public String toString() {
     return "GroupZapNodeMessage [ " + zapNodeType + " , " + reason + " , weights = " + toString(weights) + " ]";
   }
@@ -58,8 +61,8 @@ public class GroupZapNodeMessage extends AbstractGroupMessage {
     if (l == null) return "null";
     if (l.length == 0) return "empty";
     StringBuffer sb = new StringBuffer();
-    for (int i = 0; i < l.length; i++) {
-      sb.append(String.valueOf(l[i])).append(",");
+    for (long element : l) {
+      sb.append(String.valueOf(element)).append(",");
     }
     sb.setLength(sb.length() - 1);
     return sb.toString();
@@ -74,6 +77,6 @@ public class GroupZapNodeMessage extends AbstractGroupMessage {
   }
 
   public long[] getWeights() {
-    return weights;
+    return weights.clone();
   }
 }

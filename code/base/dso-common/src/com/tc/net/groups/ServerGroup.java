@@ -23,10 +23,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerGroup {
 
-  private final GroupID     groupId;
-  private String[]          members;
+  private final GroupID        groupId;
+  private String[]             members;
   private final HaConfigSchema haMode;
-  private final Map         nodes;
+  private final Map            nodes;
 
   public ServerGroup(final ActiveServerGroupConfig group) {
     this.groupId = group.getGroupId();
@@ -35,8 +35,8 @@ public class ServerGroup {
     this.nodes = new ConcurrentHashMap();
   }
 
-  public ReloadConfigChangeContext reloadGroup(L2ConfigurationSetupManager manager,
-                                               final ActiveServerGroupConfig group) throws ConfigurationSetupException {
+  public ReloadConfigChangeContext reloadGroup(L2ConfigurationSetupManager manager, final ActiveServerGroupConfig group)
+      throws ConfigurationSetupException {
     String[] membersBefore = this.members;
     String[] membersNow = group.getMembers().getMemberArray();
     this.members = group.getMembers().getMemberArray();
@@ -97,20 +97,20 @@ public class ServerGroup {
   }
 
   private String getCollectionsToString(Collection c) {
-    String out = "";
+    StringBuilder sb = new StringBuilder();
     for (Iterator iter = c.iterator(); iter.hasNext();) {
       Node node = (Node) iter.next();
-      out += node.toString() + " ";
+      sb.append(node.toString() + " ");
     }
-    return out;
+    return sb.toString();
   }
 
   private String getMembersToString() {
-    String out = "";
+    StringBuilder sb = new StringBuilder();
     for (String member : this.members) {
-      out += member + " ";
+      sb.append(member + " ");
     }
-    return out;
+    return sb.toString();
   }
 
   public void addNode(Node node, String serverName) {

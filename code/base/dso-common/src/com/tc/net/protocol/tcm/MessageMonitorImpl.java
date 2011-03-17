@@ -11,6 +11,7 @@ import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.text.StringFormatter;
 
+import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
@@ -44,6 +45,7 @@ public class MessageMonitorImpl implements MessageMonitor {
   public void startLogging(final TCLogger logger, int intervalSeconds) {
     if (intervalSeconds < 1) { throw new IllegalArgumentException("invalid interval: " + intervalSeconds); }
     TimerTask task = new TimerTask() {
+      @Override
       public void run() {
         logger.info(MessageMonitorImpl.this.toString());
       }
@@ -76,6 +78,7 @@ public class MessageMonitorImpl implements MessageMonitor {
     return counters;
   }
 
+  @Override
   public String toString() {
     String nl = System.getProperty("line.separator");
     StringBuffer rv = new StringBuffer(nl);
@@ -142,7 +145,7 @@ public class MessageMonitorImpl implements MessageMonitor {
     }
   }
 
-  private static class TCMessageTypeComparator implements Comparator {
+  private static class TCMessageTypeComparator implements Comparator, Serializable {
 
     public int compare(Object o1, Object o2) {
       TCMessageType t1 = (TCMessageType) o1;

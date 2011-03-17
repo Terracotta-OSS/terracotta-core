@@ -245,7 +245,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   public synchronized void pauseDiscovery() {
     while (joinedNodes == (nodeStateMap.size() - 1) && !stopAttempt.get()) {
       try {
-        wait();
+        this.wait();
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }

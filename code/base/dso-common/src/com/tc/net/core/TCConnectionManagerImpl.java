@@ -237,7 +237,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     if (shutdown.isSet()) { throw new IllegalStateException("connection manager shutdown"); }
   }
 
-  class ConnectionEvents implements TCConnectionEventListener {
+  static class ConnectionEvents implements TCConnectionEventListener {
     public final void connectEvent(TCConnectionEvent event) {
       if (logger.isDebugEnabled()) {
         logger.debug("connect event: " + event.toString());

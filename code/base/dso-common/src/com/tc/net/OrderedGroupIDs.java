@@ -22,7 +22,7 @@ public class OrderedGroupIDs {
   }
 
   public GroupID[] getGroupIDs() {
-    return this.groupIDs;
+    return this.groupIDs.clone();
   }
 
   public int length() {
