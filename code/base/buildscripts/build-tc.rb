@@ -171,7 +171,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     raise("FINDBUGS_HOME is not defined or doesn't exist") unless File.exists?(findbugs_home)
 
     @ant.findbugs( :home => findbugs_home, :output => "xml:withMessages", :outputFile => "build/findbugs.xml",
-                   :jvmargs => "-Xmx512m") do
+                   :jvmargs => "-Xmx512m", :excludeFilter => "findbugs/excludeFilter.xml") do
       @module_set.each do |build_module|
         src_subtree = build_module.subtree("src")
         src_path = src_subtree.source_root.to_s
