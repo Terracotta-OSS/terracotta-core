@@ -8,9 +8,9 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.LossyTCLogger;
-import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.ReconnectionRejectedException;
@@ -341,7 +341,7 @@ public class ClientConnectionEstablisher {
           if (cmt != null) cmt.logger.warn("Reconnection rejected. No more trying to reconnect.");
           return;
         } catch (Throwable t) {
-          cmt.logger.warn("Reconnect failed !", t);
+          if (cmt != null) cmt.logger.warn("Reconnect failed !", t);
         }
       }
     }

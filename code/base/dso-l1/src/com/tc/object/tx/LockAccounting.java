@@ -29,6 +29,7 @@ public class LockAccounting {
     return toString();
   }
 
+  @Override
   public synchronized String toString() {
     StringBuilder builder = new StringBuilder();
     builder.append("Lock Accounting:\n");
@@ -208,7 +209,7 @@ public class LockAccounting {
 
     @Override
     public boolean equals(Object obj) {
-      if (getClass() != obj.getClass()) return false;
+      if (obj == null || getClass() != obj.getClass()) return false;
       TransactionIDWrapper other = (TransactionIDWrapper) obj;
       if (txID == null) {
         if (other.txID != null) return false;

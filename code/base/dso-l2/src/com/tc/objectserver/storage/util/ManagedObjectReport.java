@@ -65,23 +65,24 @@ public class ManagedObjectReport extends BaseUtility {
         }
       }
 
-      for (final Iterator r = managedObject.getObjectReferences().iterator(); r.hasNext();) {
-        final ObjectID mid = (ObjectID) r.next();
-        if (mid == null) {
-          log("reference objectID is null and parent: ");
-          log(managedObject.toString());
-          this.nullObjectIDSet.add(new NullObjectData(managedObject, null));
-        } else {
-          if (mid.isNull()) {
-            this.objectIDIsNullCounter.increment();
+      if (managedObject != null) {
+        for (final Iterator r = managedObject.getObjectReferences().iterator(); r.hasNext();) {
+          final ObjectID mid = (ObjectID) r.next();
+          if (mid == null) {
+            log("reference objectID is null and parent: ");
+            log(managedObject.toString());
+            this.nullObjectIDSet.add(new NullObjectData(managedObject, null));
           } else {
-            final boolean exitInSet = objectIDSet.contains(mid);
-            if (!exitInSet) {
-              this.doesNotExistInSet.add(mid);
+            if (mid.isNull()) {
+              this.objectIDIsNullCounter.increment();
+            } else {
+              final boolean exitInSet = objectIDSet.contains(mid);
+              if (!exitInSet) {
+                this.doesNotExistInSet.add(mid);
+              }
             }
           }
         }
-
       }
     }
   }

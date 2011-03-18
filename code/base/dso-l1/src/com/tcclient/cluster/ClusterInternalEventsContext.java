@@ -7,6 +7,8 @@ import com.tc.async.api.EventContext;
 import com.tc.net.NodeID;
 import com.tcclient.cluster.DsoClusterInternal.EVENTS;
 
+import java.util.Arrays;
+
 /**
  * DsoCluster Events Contexts to be put in ClusterInternalEventsHandler.
  */
@@ -45,6 +47,6 @@ public class ClusterInternalEventsContext implements EventContext {
   @Override
   public String toString() {
     return "ClusterInternalEventsMessage [EventType: " + this.eventType + "; EventNodeID: " + this.eventNodeID
-           + "; OtherNodeIDs: " + this.otherNodeIDs + "]";
+           + "; OtherNodeIDs: " + Arrays.toString(this.otherNodeIDs) + "]";
   }
 }
