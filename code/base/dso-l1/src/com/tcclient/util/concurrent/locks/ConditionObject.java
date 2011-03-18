@@ -21,6 +21,8 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 
 public class ConditionObject implements Condition, java.io.Serializable {
+
+  private static final long   serialVersionUID = 1L;
   private transient List      waitingThreads;
   private transient int       numOfWaitingThreads;
   private transient Map       waitOnUnshared;
@@ -74,7 +76,8 @@ public class ConditionObject implements Condition, java.io.Serializable {
   }
 
   private boolean isLockRealConditionInUnshared() {
-    if (!ManagerUtil.isManaged(realCondition) || !ManagerUtil.isHeldByCurrentThread(realCondition, Manager.LOCK_TYPE_WRITE)) { return true; }
+    if (!ManagerUtil.isManaged(realCondition)
+        || !ManagerUtil.isHeldByCurrentThread(realCondition, Manager.LOCK_TYPE_WRITE)) { return true; }
     return false;
   }
 

@@ -118,7 +118,7 @@ public class SegmentedLRU<K, V> {
 
     @Override
     protected boolean removeEldestEntry(java.util.Map.Entry<K, V> eldest) {
-      return size() > segmentCapacity;
+      return super.size() > segmentCapacity;
     }
 
   }
