@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.persistence.db;
 
-import com.sleepycat.je.JEVersion;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.object.persistence.api.PersistentMapStore;
@@ -15,7 +14,7 @@ public class DBVersionChecker {
 
   private static enum DbVersions {
     /**
-     * TC r2.6 : dbVersion 1.0; TC r2.7 : dbVersion 2.0; 
+     * TC r2.6 : dbVersion 1.0; TC r2.7 : dbVersion 2.0;
      */
     DB_VERSION_1("1.0"), DB_VERSION_2("2.0"), DB_VERSION_2_1("2.1"), DB_VERSION_2_2("2.2");
 
@@ -37,10 +36,10 @@ public class DBVersionChecker {
     // TODO: db upgrade/revert routines
   }
 
-  private static final DbVersions DB_VERSION_CURRENT = DbVersions.DB_VERSION_2_2;
+  private static final DbVersions  DB_VERSION_CURRENT = DbVersions.DB_VERSION_2_2;
 
-  private PersistentMapStore      clusterStore;
-  private static final TCLogger   logger             = CustomerLogging.getDSOGenericLogger();
+  private final PersistentMapStore clusterStore;
+  private static final TCLogger    logger             = CustomerLogging.getDSOGenericLogger();
 
   public DBVersionChecker(PersistentMapStore clusterStore) {
     this.clusterStore = clusterStore;
@@ -52,9 +51,9 @@ public class DBVersionChecker {
       dbVersion = clusterStore.get(DBKEY_VERSION);
       if (dbVersion == null) {
         clusterStore.put(DBKEY_VERSION, DB_VERSION_CURRENT.getVersion());
-        logger.info("Terracotta persistence version is " +  DB_VERSION_CURRENT.getVersion() + ", underlying persistence store: ( Sleepycat " +  JEVersion.CURRENT_VERSION.getVersionString() + " )");
+        logger.info("Terracotta persistence version is " + DB_VERSION_CURRENT.getVersion());
       } else {
-        logger.info("Terracotta persistence version is " + dbVersion + ", underlying persistence store: ( Sleepycat " +  JEVersion.CURRENT_VERSION.getVersionString() + " )");
+        logger.info("Terracotta persistence version is " + dbVersion);
         if (!dbVersion.equals(DB_VERSION_CURRENT.getVersion())) { throw new DBVersionMismatchException(
                                                                                                        "There is a mismatch in Terracotta and DB data format. "
                                                                                                            + "Please ensure that both Terracotta Server instance and "
