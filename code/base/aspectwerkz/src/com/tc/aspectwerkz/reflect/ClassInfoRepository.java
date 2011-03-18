@@ -45,7 +45,7 @@ public class ClassInfoRepository {
    * @return
    */
   public static synchronized ClassInfoRepository getRepository(final ClassLoader loader) {
-    Integer hash = new Integer(loader == null ? 0 : loader.hashCode());  // boot cl
+    Integer hash = Integer.valueOf(loader == null ? 0 : loader.hashCode());  // boot cl
     WeakReference repositoryRef = (WeakReference) s_repositories.get(hash);
     ClassInfoRepository repository = repositoryRef == null ? null : (ClassInfoRepository) repositoryRef.get();
     if (repository != null) {

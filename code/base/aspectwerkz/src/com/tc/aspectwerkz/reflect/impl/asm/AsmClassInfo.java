@@ -421,7 +421,7 @@ public class AsmClassInfo implements ClassInfo {
    * @return
    */
   public ConstructorInfo getConstructor(final int hash) {
-    ConstructorInfo constructor = (ConstructorInfo) m_constructors.get(new Integer(hash));
+    ConstructorInfo constructor = (ConstructorInfo) m_constructors.get(Integer.valueOf(hash));
     if (constructor == null && getSuperclass() != null) {
       constructor = getSuperclass().getConstructor(hash);
     }
@@ -451,7 +451,7 @@ public class AsmClassInfo implements ClassInfo {
    * @return
    */
   public MethodInfo getMethod(final int hash) {
-    MethodInfo method = (MethodInfo) m_methods.get(new Integer(hash));
+    MethodInfo method = (MethodInfo) m_methods.get(Integer.valueOf(hash));
     if (method == null) {
       for (int i = 0; i < getInterfaces().length; i++) {
         method = getInterfaces()[i].getMethod(hash);
@@ -489,7 +489,7 @@ public class AsmClassInfo implements ClassInfo {
    * @return
    */
   public FieldInfo getField(final int hash) {
-    FieldInfo field = (FieldInfo) m_fields.get(new Integer(hash));
+    FieldInfo field = (FieldInfo) m_fields.get(Integer.valueOf(hash));
     if (field == null && getSuperclass() != null) {
       field = getSuperclass().getField(hash);
     }
@@ -771,7 +771,7 @@ public class AsmClassInfo implements ClassInfo {
       struct.signature = signature;
       struct.value = value;
       AsmFieldInfo fieldInfo = new AsmFieldInfo(struct, m_name, (ClassLoader) m_loaderRef.get());
-      Integer hash = new Integer(AsmHelper.calculateFieldHash(name, desc));
+      Integer hash = Integer.valueOf(AsmHelper.calculateFieldHash(name, desc));
       m_fields.put(hash, fieldInfo);
       m_sortedFieldHashes.add(hash);
       return null;
@@ -785,7 +785,7 @@ public class AsmClassInfo implements ClassInfo {
       struct.desc = desc;
       struct.signature = signature;
       struct.exceptions = exceptions;
-      Integer hash = new Integer(AsmHelper.calculateMethodHash(name, desc));
+      Integer hash = Integer.valueOf(AsmHelper.calculateMethodHash(name, desc));
       // the methodInfo that should be updated when we will visit the method parameter names info if needed.
       AsmMethodInfo methodInfo = null;
       if (name.equals(TransformationConstants.CLINIT_METHOD_NAME)) {

@@ -338,7 +338,7 @@ public class Automaton_Pattern extends com.tc.jrexx.set.AutomatonSet_String {
 
     private static final Integer[] INTEGERS = new Integer[ACTIONTABLE.length];
     static {
-      for (int i=0; i<INTEGERS.length; i++) INTEGERS[i] = new Integer(i);
+      for (int i=0; i<INTEGERS.length; i++) INTEGERS[i] = Integer.valueOf(i);
     }
 
   protected SState parseRegEx(String regEx) throws InvalidExpression {

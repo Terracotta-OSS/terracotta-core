@@ -151,7 +151,7 @@ public class DNAWriterImpl implements DNAWriterInternal {
     actionCount++;
     if (canBeReferenced) {
       // An Object reference can be set to a literal instance, like
-      // Object o = new Integer(10);
+      // Object o = Integer.valueOf(10);
       // NOTE::Earlier we used to also check LiteralValues.isLiteralInstance(value) before entering this block, but I
       // think that is unnecessary and wrong when we optimize later to store ObjectIDs as longs in most cases in the L2
       output.writeByte(BaseDNAEncodingImpl.PHYSICAL_ACTION_TYPE_REF_OBJECT);

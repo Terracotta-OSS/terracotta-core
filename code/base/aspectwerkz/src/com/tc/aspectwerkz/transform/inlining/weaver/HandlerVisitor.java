@@ -145,7 +145,7 @@ public class HandlerVisitor extends ClassAdapter implements TransformationConsta
     }
 
     public void visitLabel(Label label) {
-      classAdapter.m_labelIndexes.put(label, new Integer(++classAdapter.m_labelIndex));
+      classAdapter.m_labelIndexes.put(label, Integer.valueOf(++classAdapter.m_labelIndex));
       super.visitLabel(label);
     }
 

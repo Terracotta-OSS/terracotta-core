@@ -535,7 +535,7 @@ public class Deployer {
 //        );
 //        method.setAccessible(true);
 //        Object[] args = new Object[]{
-//                clazz.getName(), bytes, new Integer(0), new Integer(bytes.length)
+//                clazz.getName(), bytes, Integer.valueOf(0), Integer.valueOf(bytes.length)
 //        };
 //        method.invoke(toLoader, args);
 //        method.setAccessible(false);

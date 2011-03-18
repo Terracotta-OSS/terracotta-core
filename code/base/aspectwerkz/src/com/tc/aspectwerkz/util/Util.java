@@ -11,13 +11,13 @@ import com.tc.aspectwerkz.reflect.ReflectionInfo;
  * @author <a href="mailto:jboner@codehaus.org">Jonas Bonér </a>
  */
 public final class Util {
-  public static final Integer INTEGER_DEFAULT_VALUE = new Integer(0);
+  public static final Integer INTEGER_DEFAULT_VALUE = Integer.valueOf(0);
 
   public static final Float FLOAT_DEFAULT_VALUE = new Float(0.0f);
 
   public static final Double DOUBLE_DEFAULT_VALUE = new Double(0.0d);
 
-  public static final Long LONG_DEFAULT_VALUE = new Long(0L);
+  public static final Long LONG_DEFAULT_VALUE = Long.valueOf(0L);
 
   public static final Boolean BOOLEAN_DEFAULT_VALUE = new Boolean(false);
 
@@ -51,7 +51,7 @@ public final class Util {
     int hash = 17;
     hash = (37 * hash) + className.hashCode();
     hash = (37 * hash) + info.hashCode();
-    Integer hashKey = new Integer(hash);
+    Integer hashKey = Integer.valueOf(hash);
     return hashKey;
   }
 

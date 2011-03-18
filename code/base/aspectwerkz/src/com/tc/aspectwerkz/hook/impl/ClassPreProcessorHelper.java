@@ -159,7 +159,7 @@ public class ClassPreProcessorHelper {
     try {
       Class cByteBuffer = Class.forName("java.nio.ByteBuffer");
       Method mGet = cByteBuffer.getDeclaredMethod("getDefault", new Class[]{BYTE_ARRAY_CLASS, int.class, int.class});
-      mGet.invoke(byteBuffer, new Object[]{dest, new Integer(offset), new Integer(length)});
+      mGet.invoke(byteBuffer, new Object[]{dest, Integer.valueOf(offset), Integer.valueOf(length)});
     } catch (Throwable t) {
       System.err.println("AW : java.nio not supported");
       throw new RuntimeException(t.toString());

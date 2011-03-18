@@ -285,7 +285,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
       String addr = getRemoteAddress();
       if (addr != null && addr.indexOf(":") != -1) {
         try {
-          port = new Integer(addr.substring(addr.lastIndexOf(':') + 1));
+          port = Integer.valueOf(addr.substring(addr.lastIndexOf(':') + 1));
         } catch (Exception e) {/**/
         }
       }

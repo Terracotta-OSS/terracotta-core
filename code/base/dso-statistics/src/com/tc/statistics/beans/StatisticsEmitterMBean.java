@@ -7,6 +7,6 @@ package com.tc.statistics.beans;
 import com.tc.management.TerracottaMBean;
 
 public interface StatisticsEmitterMBean extends TerracottaMBean {
-  public final static Long DEFAULT_FREQUENCY = new Long(3000L);
-  public final static Long DEFAULT_BATCH_SIZE = new Long(500L);
+  public final static Long DEFAULT_FREQUENCY = Long.valueOf(3000L);
+  public final static Long DEFAULT_BATCH_SIZE = Long.valueOf(500L);
 }

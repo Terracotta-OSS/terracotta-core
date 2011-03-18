@@ -69,7 +69,7 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
       }
 
       final Map environment = new HashMap();
-      environment.put("jmx.remote.x.server.connection.timeout", new Long(Long.MAX_VALUE));
+      environment.put("jmx.remote.x.server.connection.timeout", Long.valueOf(Long.MAX_VALUE));
       String[] creds = { username, password };
       environment.put("jmx.remote.credentials", creds);
       proxy = new JMXConnectorProxy(managerHostName, managerPort, environment);

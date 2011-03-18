@@ -113,7 +113,7 @@ public class DFASet {
           "startState "+automaton.startStateNumber+" does not exist"
         );
       }
-      this.startState = new Integer(startStateNr);
+      this.startState = Integer.valueOf(startStateNr);
     }
   }
 

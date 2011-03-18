@@ -454,7 +454,7 @@ public class StatisticsGathererServlet extends RestfulServlet implements Statist
     Long interval = null;
     String interval_string = request.getParameter("interval");
     if (interval_string != null) {
-      interval = new Long(interval_string);
+      interval = Long.valueOf(interval_string);
     }
 
     Writer writer = response.getWriter();

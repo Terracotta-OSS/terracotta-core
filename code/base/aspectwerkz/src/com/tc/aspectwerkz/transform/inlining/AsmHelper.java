@@ -193,7 +193,7 @@ public class AsmHelper implements TransformationConstants {
       }
 
       Object[] args = new Object[]{
-              className, bytes, new Integer(0), new Integer(bytes.length), PROTECTION_DOMAIN
+              className, bytes, Integer.valueOf(0), Integer.valueOf(bytes.length), PROTECTION_DOMAIN
       };
       Class klass = (Class) CLASS_LOADER_DEFINE.invoke(loader, args);
       return klass;

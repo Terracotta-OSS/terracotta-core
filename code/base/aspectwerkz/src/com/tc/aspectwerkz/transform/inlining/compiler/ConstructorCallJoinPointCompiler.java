@@ -61,7 +61,7 @@ public class ConstructorCallJoinPointCompiler extends AbstractJoinPointCompiler 
    */
   protected void createSignature(final MethodVisitor cv) {
     cv.visitFieldInsn(GETSTATIC, m_joinPointClassName, TARGET_CLASS_FIELD_NAME_IN_JP, CLASS_CLASS_SIGNATURE);
-    cv.visitLdcInsn(new Integer(m_joinPointHash));
+    cv.visitLdcInsn(Integer.valueOf(m_joinPointHash));
 
     cv.visitMethodInsn(
             INVOKESTATIC,

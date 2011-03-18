@@ -295,7 +295,7 @@ public class L1Management extends TerracottaManagement {
     }
     try {
       final Map environment = new HashMap();
-      environment.put("jmx.remote.x.server.connection.timeout", new Long(Long.MAX_VALUE));
+      environment.put("jmx.remote.x.server.connection.timeout", Long.valueOf(Long.MAX_VALUE));
       ProtocolProvider.addTerracottaJmxProvider(environment);
       environment.put(TunnelingMessageConnectionServer.TUNNELING_HANDLER, tunnelingHandler);
       environment.put(EnvHelp.SERVER_CONNECTION_TIMEOUT, String.valueOf(Long.MAX_VALUE));

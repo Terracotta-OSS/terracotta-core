@@ -111,7 +111,7 @@ public class FieldUtils {
     Class<?> fieldType = field.getType();
 
     if (Integer.TYPE.equals(fieldType)) {
-      return set(obj, new Integer(value), field);
+      return set(obj, Integer.valueOf(value), field);
     } else {
       return setLong(obj, value, field);
     }    
@@ -121,7 +121,7 @@ public class FieldUtils {
     Class<?> fieldType = field.getType();
 
     if (Long.TYPE.equals(fieldType)) {
-      return set(obj, new Long(value), field);
+      return set(obj, Long.valueOf(value), field);
     } else {
       return setFloat(obj, value, field);
     }    

@@ -305,7 +305,7 @@ public class InstrumentationContext {
   }
 
   public void addLineNumberInfo(Label label, int lineNumber) {
-    m_labelTolineNumbers.put(label, new Integer(lineNumber));
+    m_labelTolineNumbers.put(label, Integer.valueOf(lineNumber));
   }
 
   /**

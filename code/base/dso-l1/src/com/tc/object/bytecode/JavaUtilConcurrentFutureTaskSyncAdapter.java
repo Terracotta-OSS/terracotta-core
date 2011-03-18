@@ -213,7 +213,7 @@ public class JavaUtilConcurrentFutureTaskSyncAdapter implements Opcodes {
 
       Label l21 = new Label();
       mv.visitLabel(l21);
-      mv.visitLdcInsn(new Long(10L));
+      mv.visitLdcInsn(Long.valueOf(10L));
       mv.visitMethodInsn(INVOKESTATIC, "java/lang/Thread", "sleep", "(J)V");
       Label l22 = new Label();
       mv.visitLabel(l22);

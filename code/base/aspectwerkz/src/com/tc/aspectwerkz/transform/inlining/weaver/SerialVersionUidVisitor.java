@@ -441,7 +441,7 @@ public class SerialVersionUidVisitor extends ClassAdapter implements Opcodes {
         SerialVersionUidVisitor sv = new SerialVersionUidVisitor(cw);
         cr.accept(sv, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
         if (sv.m_computeSVUID && !sv.m_hadSVUID) {
-          cv.visitField(ACC_FINAL + ACC_STATIC, SVUID_NAME, "J", null, new Long(sv.m_SVUID));
+          cv.visitField(ACC_FINAL + ACC_STATIC, SVUID_NAME, "J", null, Long.valueOf(sv.m_SVUID));
         }
       }
       super.visitEnd();

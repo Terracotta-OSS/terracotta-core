@@ -232,7 +232,7 @@ public class ConstructorCallVisitor extends ClassAdapter implements Transformati
       if (opcode == NEW) {
         m_newInvocationIndex++;
         // build the callee ConstructorInfo and check for a match
-        NewInvocationStruct newInvocationStruct = (NewInvocationStruct) m_newInvocations.get(new Integer(m_newInvocationIndex));
+        NewInvocationStruct newInvocationStruct = (NewInvocationStruct) m_newInvocations.get(Integer.valueOf(m_newInvocationIndex));
         if (newInvocationStruct == null) {
           super.visitTypeInsn(opcode, desc);//we failed
           return;
@@ -407,7 +407,7 @@ public class ConstructorCallVisitor extends ClassAdapter implements Transformati
     int hash = 29;
     hash = (29 * hash) + name.hashCode();
     hash = (29 * hash) + desc.hashCode();
-    return new Integer(hash);
+    return Integer.valueOf(hash);
   }
 
   /**
@@ -478,7 +478,7 @@ public class ConstructorCallVisitor extends ClassAdapter implements Transformati
       super.visitTypeInsn(opcode, desc);
       if (opcode == NEW) {
         m_newIndex++;
-        m_newIndexStack.push(new Integer(m_newIndex));
+        m_newIndexStack.push(Integer.valueOf(m_newIndex));
       }
     }
 

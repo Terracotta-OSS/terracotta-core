@@ -125,12 +125,12 @@ public class JavaClassInfo implements ClassInfo {
       final Method[] methods = this.m_class.getDeclaredMethods();
       for (int i = 0; i < methods.length; i++) {
         final Method method = methods[i];
-        this.m_methods.put(new Integer(ReflectHelper.calculateHash(method)), new JavaMethodInfo(method, this));
+        this.m_methods.put(Integer.valueOf(ReflectHelper.calculateHash(method)), new JavaMethodInfo(method, this));
       }
       final Constructor[] constructors = this.m_class.getDeclaredConstructors();
       for (int i = 0; i < constructors.length; i++) {
         final Constructor constructor = constructors[i];
-        this.m_constructors.put(new Integer(ReflectHelper.calculateHash(constructor)), //
+        this.m_constructors.put(Integer.valueOf(ReflectHelper.calculateHash(constructor)), //
                                 new JavaConstructorInfo(constructor, this));
       }
       final Field[] fields = this.m_class.getDeclaredFields();
@@ -139,7 +139,7 @@ public class JavaClassInfo implements ClassInfo {
           continue;
         }
         final Field field = fields[i];
-        this.m_fields.put(new Integer(ReflectHelper.calculateHash(field)), new JavaFieldInfo(field, this));
+        this.m_fields.put(Integer.valueOf(ReflectHelper.calculateHash(field)), new JavaFieldInfo(field, this));
       }
     }
     this.m_classInfoRepository.addClassInfo(this);
@@ -238,7 +238,7 @@ public class JavaClassInfo implements ClassInfo {
    * @return
    */
   public ConstructorInfo getConstructor(final int hash) {
-    ConstructorInfo constructor = (ConstructorInfo) this.m_constructors.get(new Integer(hash));
+    ConstructorInfo constructor = (ConstructorInfo) this.m_constructors.get(Integer.valueOf(hash));
     if (constructor == null && getSuperclass() != null) {
       constructor = getSuperclass().getConstructor(hash);
     }
@@ -269,7 +269,7 @@ public class JavaClassInfo implements ClassInfo {
    * @return
    */
   public MethodInfo getMethod(final int hash) {
-    MethodInfo method = (MethodInfo) this.m_methods.get(new Integer(hash));
+    MethodInfo method = (MethodInfo) this.m_methods.get(Integer.valueOf(hash));
     if (method == null) {
       for (int i = 0; i < getInterfaces().length; i++) {
         method = getInterfaces()[i].getMethod(hash);
@@ -308,7 +308,7 @@ public class JavaClassInfo implements ClassInfo {
    * @return
    */
   public FieldInfo getField(final int hash) {
-    FieldInfo field = (FieldInfo) this.m_fields.get(new Integer(hash));
+    FieldInfo field = (FieldInfo) this.m_fields.get(Integer.valueOf(hash));
     if (field == null && getSuperclass() != null) {
       field = getSuperclass().getField(hash);
     }

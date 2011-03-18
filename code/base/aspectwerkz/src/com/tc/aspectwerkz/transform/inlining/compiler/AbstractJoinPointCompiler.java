@@ -2194,7 +2194,7 @@ public abstract class AbstractJoinPointCompiler implements JoinPointCompiler, Tr
     cv.visitVarInsn(ALOAD, joinPointInstanceIndex);
     cv.visitVarInsn(ALOAD, advisableIndex);
     cv.visitTypeInsn(CHECKCAST, ADVISABLE_CLASS_NAME);
-    cv.visitLdcInsn(new Integer(m_joinPointClassName.hashCode()));
+    cv.visitLdcInsn(Integer.valueOf(m_joinPointClassName.hashCode()));
     cv.visitMethodInsn(
             INVOKEINTERFACE,
             ADVISABLE_CLASS_NAME,
@@ -2233,7 +2233,7 @@ public abstract class AbstractJoinPointCompiler implements JoinPointCompiler, Tr
     cv.visitVarInsn(ALOAD, joinPointInstanceIndex);
     cv.visitVarInsn(ALOAD, advisableIndex);
     cv.visitTypeInsn(CHECKCAST, ADVISABLE_CLASS_NAME);
-    cv.visitLdcInsn(new Integer(m_joinPointClassName.hashCode()));
+    cv.visitLdcInsn(Integer.valueOf(m_joinPointClassName.hashCode()));
     cv.visitMethodInsn(
             INVOKEINTERFACE,
             ADVISABLE_CLASS_NAME,
@@ -2272,7 +2272,7 @@ public abstract class AbstractJoinPointCompiler implements JoinPointCompiler, Tr
     cv.visitVarInsn(ALOAD, joinPointInstanceIndex);
     cv.visitVarInsn(ALOAD, advisableIndex);
     cv.visitTypeInsn(CHECKCAST, ADVISABLE_CLASS_NAME);
-    cv.visitLdcInsn(new Integer(m_joinPointClassName.hashCode()));
+    cv.visitLdcInsn(Integer.valueOf(m_joinPointClassName.hashCode()));
     cv.visitMethodInsn(
             INVOKEINTERFACE,
             ADVISABLE_CLASS_NAME,
@@ -2311,7 +2311,7 @@ public abstract class AbstractJoinPointCompiler implements JoinPointCompiler, Tr
     cv.visitVarInsn(ALOAD, joinPointInstanceIndex);
     cv.visitVarInsn(ALOAD, advisableIndex);
     cv.visitTypeInsn(CHECKCAST, ADVISABLE_CLASS_NAME);
-    cv.visitLdcInsn(new Integer(m_joinPointClassName.hashCode()));
+    cv.visitLdcInsn(Integer.valueOf(m_joinPointClassName.hashCode()));
     cv.visitMethodInsn(
             INVOKEINTERFACE,
             ADVISABLE_CLASS_NAME,
@@ -2350,7 +2350,7 @@ public abstract class AbstractJoinPointCompiler implements JoinPointCompiler, Tr
     cv.visitVarInsn(ALOAD, joinPointInstanceIndex);
     cv.visitVarInsn(ALOAD, advisableIndex);
     cv.visitTypeInsn(CHECKCAST, ADVISABLE_CLASS_NAME);
-    cv.visitLdcInsn(new Integer(m_joinPointClassName.hashCode()));
+    cv.visitLdcInsn(Integer.valueOf(m_joinPointClassName.hashCode()));
     cv.visitMethodInsn(
             INVOKEINTERFACE,
             ADVISABLE_CLASS_NAME,

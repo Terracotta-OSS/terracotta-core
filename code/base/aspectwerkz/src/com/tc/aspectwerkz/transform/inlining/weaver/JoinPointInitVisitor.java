@@ -214,16 +214,16 @@ public class JoinPointInitVisitor extends ClassAdapter implements Transformation
         // do not add the call to loadJoinPoint if we are doing proxy weaving
         // (since eagerly loaded already)
         if (!m_ctx.isProxy()) {
-          mv.visitLdcInsn(new Integer(jp.getJoinPointType()));
+          mv.visitLdcInsn(Integer.valueOf(jp.getJoinPointType()));
           mv.visitFieldInsn(GETSTATIC, m_ctx.getClassName(), TARGET_CLASS_FIELD_NAME, CLASS_CLASS_SIGNATURE);
           mv.visitLdcInsn(jp.getCallerMethodName());
           mv.visitLdcInsn(jp.getCallerMethodDesc());
-          mv.visitLdcInsn(new Integer(jp.getCallerMethodModifiers()));
+          mv.visitLdcInsn(Integer.valueOf(jp.getCallerMethodModifiers()));
           mv.visitLdcInsn(jp.getCalleeClassName());
           mv.visitLdcInsn(jp.getCalleeMemberName());
           mv.visitLdcInsn(jp.getCalleeMemberDesc());
-          mv.visitLdcInsn(new Integer(jp.getCalleeMemberModifiers()));
-          mv.visitLdcInsn(new Integer(jp.getJoinPointHash()));
+          mv.visitLdcInsn(Integer.valueOf(jp.getCalleeMemberModifiers()));
+          mv.visitLdcInsn(Integer.valueOf(jp.getJoinPointHash()));
           mv.visitLdcInsn(jp.getJoinPointClassName());
           mv.visitMethodInsn(
                   INVOKESTATIC,
@@ -240,25 +240,25 @@ public class JoinPointInitVisitor extends ClassAdapter implements Transformation
           // "boxed" map key
           mv.visitTypeInsn(NEW, "java/lang/Integer");
           mv.visitInsn(DUP);
-          mv.visitLdcInsn(new Integer(jp.getJoinPointClassName().hashCode()));
+          mv.visitLdcInsn(Integer.valueOf(jp.getJoinPointClassName().hashCode()));
           mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Integer", "<init>", "(I)V");
 
           mv.visitTypeInsn(NEW, "com/tc/aspectwerkz/transform/inlining/EmittedJoinPoint");
           mv.visitInsn(DUP);
 
-          mv.visitLdcInsn(new Integer(jp.getJoinPointType()));
+          mv.visitLdcInsn(Integer.valueOf(jp.getJoinPointType()));
 
           mv.visitLdcInsn(m_ctx.getClassName());
           mv.visitLdcInsn(jp.getCallerMethodName());
           mv.visitLdcInsn(jp.getCallerMethodDesc());
-          mv.visitLdcInsn(new Integer(jp.getCallerMethodModifiers()));
+          mv.visitLdcInsn(Integer.valueOf(jp.getCallerMethodModifiers()));
 
           mv.visitLdcInsn(jp.getCalleeClassName());
           mv.visitLdcInsn(jp.getCalleeMemberName());
           mv.visitLdcInsn(jp.getCalleeMemberDesc());
-          mv.visitLdcInsn(new Integer(jp.getCalleeMemberModifiers()));
+          mv.visitLdcInsn(Integer.valueOf(jp.getCalleeMemberModifiers()));
 
-          mv.visitLdcInsn(new Integer(jp.getJoinPointHash()));
+          mv.visitLdcInsn(Integer.valueOf(jp.getJoinPointHash()));
           mv.visitLdcInsn(jp.getJoinPointClassName());
 
           mv.visitMethodInsn(INVOKESPECIAL, "com/tc/aspectwerkz/transform/inlining/EmittedJoinPoint", "<init>",

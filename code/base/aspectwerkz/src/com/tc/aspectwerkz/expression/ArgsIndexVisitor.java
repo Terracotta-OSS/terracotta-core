@@ -244,7 +244,7 @@ public class ArgsIndexVisitor extends ExpressionVisitor {
       ExpressionContext ctx = (ExpressionContext) data;
       ctx.m_exprIndexToTargetIndex.put(
               m_expressionInfo.getArgumentNameAtIndex(pointcutArgIndex),
-              new Integer(ctx.getCurrentTargetArgsIndex()));
+              Integer.valueOf(ctx.getCurrentTargetArgsIndex()));
     }
     return match;
   }

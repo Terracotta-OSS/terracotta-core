@@ -7,7 +7,7 @@ import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.config.DSOStatisticsConfig;
 
 public interface StatisticsRetriever {
-  public final static Long DEFAULT_GLOBAL_FREQUENCY = new Long(1000L);
+  public final static Long DEFAULT_GLOBAL_FREQUENCY = Long.valueOf(1000L);
 
   public void startup();
 

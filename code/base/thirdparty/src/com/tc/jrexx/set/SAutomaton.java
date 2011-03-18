@@ -800,7 +800,7 @@ if (state==null) throw new Error("state==null");
 
 //    int startStateNr = 0; while (states[startStateNr]!=startState) ++startStateNr;
 
-    FSAData result = new FSAData(data_states,new Integer(startState.stateNr),this.automaton.isDeterministic());
+    FSAData result = new FSAData(data_states,Integer.valueOf(startState.stateNr),this.automaton.isDeterministic());
 
     return result;
   }
@@ -815,7 +815,7 @@ if (state==null) throw new Error("state==null");
 
     if (a.states!=null) {
       for (int i=0; i<a.states.length; ++i) {
-        Integer stateNr = new Integer(a.states[i].number);
+        Integer stateNr = Integer.valueOf(a.states[i].number);
         if (map.containsKey(stateNr))
           throw new IllegalArgumentException("bad automatonData: state with number "+stateNr+" does already exists");
 
@@ -829,7 +829,7 @@ if (state==null) throw new Error("state==null");
         FSAData.State stateData = a.states[i];
 
         AutomatonSet_String.SState state =
-          (AutomatonSet_String.SState)map.get(new Integer(stateData.number));
+          (AutomatonSet_String.SState)map.get(Integer.valueOf(stateData.number));
 
         if (stateData.transitions!=null) {
           for (int t=0; t<stateData.transitions.length; ++t) {
@@ -838,7 +838,7 @@ if (state==null) throw new Error("state==null");
             CharSet charSet = (transData.charSet==null) ? null : new CharSet(transData.charSet);
 
             AutomatonSet_String.SState toState =
-              (AutomatonSet_String.SState)map.get(new Integer(transData.toStateNumber));
+              (AutomatonSet_String.SState)map.get(Integer.valueOf(transData.toStateNumber));
 
             state.addTransition(transData.properties,charSet,toState);
           }

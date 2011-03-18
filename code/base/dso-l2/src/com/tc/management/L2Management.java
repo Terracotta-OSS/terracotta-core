@@ -122,7 +122,7 @@ public class L2Management extends TerracottaManagement {
   public synchronized void start() throws Exception {
     JMXServiceURL url;
     Map env = new HashMap();
-    env.put("jmx.remote.x.server.connection.timeout", new Long(Long.MAX_VALUE));
+    env.put("jmx.remote.x.server.connection.timeout", Long.valueOf(Long.MAX_VALUE));
     env.put("jmx.remote.server.address.wildcard", "false");
 
     validateAuthenticationElement();

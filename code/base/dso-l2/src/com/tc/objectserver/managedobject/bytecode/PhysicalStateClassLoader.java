@@ -247,7 +247,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
   // long x;
   // Object o;
   // public Map addValues(Map map) {
-  // map.put("x", new Long(x));
+  // map.put("x", Long.valueOf(x));
   // map.put("o", o);
   // return map;
   // }
@@ -286,7 +286,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
   // long x;
   // Object o;
   // protected void basicDehydrate(DNAWriter writer) {
-  // writer.addPhysicalAction("x", new Long(x), false);
+  // writer.addPhysicalAction("x", Long.valueOf(x), false);
   // writer.addPhysicalAction("o", o, true);
   // }
   // *************************************************************************************
@@ -328,7 +328,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
   // Object o;
   // protected Object basicSet(String f, Object value) {
   // if ("x".equals(f)) {
-  // Object old = new Long(x);
+  // Object old = Long.valueOf(x);
   // x = ((Long) value).longValue();
   // return old;
   // }
