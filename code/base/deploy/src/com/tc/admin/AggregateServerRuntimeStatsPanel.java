@@ -52,6 +52,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.BorderFactory;
 import javax.swing.SwingUtilities;
@@ -616,8 +617,16 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
     }
   }
 
+  private final AtomicBoolean tornDown = new AtomicBoolean(false);
+
   @Override
   public synchronized void tearDown() {
+    if (!tornDown.compareAndSet(false, true)) { return; }
+
+    IServer activeCoord = clusterModel.getActiveCoordinator();
+    if (activeCoord != null) {
+      activeCoord.removeDGCListener(this);
+    }
     clusterModel.removePropertyChangeListener(clusterListener);
     clusterListener.tearDown();
 

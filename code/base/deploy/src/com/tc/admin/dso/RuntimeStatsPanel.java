@@ -161,9 +161,17 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     ElementChooser chsr = (ElementChooser) e.getSource();
     XTreeNode node = (XTreeNode) chsr.getSelectedObject();
     String name = node.getName();
-    if (pagedView.hasPage(name)) {
-      pagedView.setPage(name);
+    if (!pagedView.hasPage(name)) {
+      if (node instanceof ServerNode) {
+        IServer server = ((ServerNode) node).getServer();
+        pagedView.addPage(createServerViewPanel(server));
+
+      } else if (node instanceof ClientNode) {
+        IClient client = ((ClientNode) node).getClient();
+        pagedView.addPage(createClientViewPanel(client));
+      }
     }
+    pagedView.setPage(name);
     TreePath path = elementChooser.getSelectedPath();
     Object type = path.getPathComponent(1);
     currentViewLabel.setText(type.toString());
@@ -218,13 +226,7 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
   }
 
   public void clientConnected(final IClient client) {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (!tornDown.get()) {
-          pagedView.addPage(createClientViewPanel(client));
-        }
-      }
-    });
+    /**/
   }
 
   public void clientDisconnected(final IClient client) {
@@ -265,12 +267,7 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     pagedView.addPage(createAggregateServerStatsPanel());
     for (IServerGroup group : clusterModel.getServerGroups()) {
       for (IServer server : group.getMembers()) {
-        pagedView.addPage(createServerViewPanel(server));
-
         if (server.isActiveCoordinator()) {
-          for (IClient client : server.getClients()) {
-            pagedView.addPage(createClientViewPanel(client));
-          }
           server.addClientConnectionListener(this);
         }
       }

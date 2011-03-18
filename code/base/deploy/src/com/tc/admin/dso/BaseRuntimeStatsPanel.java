@@ -14,12 +14,14 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.Range;
 import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeries;
+import org.jfree.data.xy.XYDataset;
 import org.jfree.ui.RectangleInsets;
 
 import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.BasicChartPanel;
 import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.DemoChartFactory;
+import com.tc.admin.common.FixedTimeSeriesCollection;
 import com.tc.admin.common.LinkButton;
 import com.tc.admin.common.StatusView;
 import com.tc.admin.common.SyncHTMLEditorKit;
@@ -264,6 +266,11 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     return result;
   }
 
+  protected FixedTimeSeriesCollection createCpuDataset(IClusterNode clusterNode) {
+    String[] cpus = clusterNode.getCpuStatNames();
+    return new FixedTimeSeriesCollection(cpus, getMaxSampleCount());
+  }
+
   protected TimeSeries createTimeSeries(String name) {
     TimeSeries ts = new TimeSeries(name, Second.class);
     ts.setMaximumItemCount(50);
@@ -281,6 +288,23 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
 
   protected JFreeChart createChart(TimeSeries[] seriesArray) {
     return createChart(seriesArray, true);
+  }
+
+  protected int getMaxSampleCount() {
+    return (getSampleHistoryMinutes() * 60) / getPollPeriodSeconds();
+  }
+
+  protected JFreeChart createChart(XYDataset xyDataset, boolean createLegend) {
+    JFreeChart chart = DemoChartFactory.createXYLineChart("", "", "", xyDataset, createLegend);
+    int sampleHistoryMinutes = getSampleHistoryMinutes();
+    int sampleHistoryMillis = sampleHistoryMinutes * 60 * 1000;
+
+    XYPlot plot = (XYPlot) chart.getPlot();
+    plot.getDomainAxis().setFixedAutoRange(sampleHistoryMillis);
+    ((NumberAxis) plot.getRangeAxis()).setAutoRangeIncludesZero(true);
+
+    allCharts.add(chart);
+    return chart;
   }
 
   protected JFreeChart createChart(TimeSeries[] seriesArray, boolean createLegend) {
@@ -486,16 +510,20 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     }
   }
 
-  private void setRuntimeStatsPollPeriodSeconds(int seconds) {
+  protected void setMaximumItemCount(int maxItemCount) {
+    Iterator<TimeSeries> seriesIter = allSeries.iterator();
+    while (seriesIter.hasNext()) {
+      seriesIter.next().setMaximumItemCount(maxItemCount);
+    }
+  }
+
+  protected void setRuntimeStatsPollPeriodSeconds(int seconds) {
     Iterator<JFreeChart> chartIter = allCharts.iterator();
     int sampleHistoryMinutes = getSampleHistoryMinutes();
     int sampleHistoryMillis = sampleHistoryMinutes * 60 * 1000;
     int maxSampleCount = (sampleHistoryMinutes * 60) / seconds;
 
-    Iterator<TimeSeries> seriesIter = allSeries.iterator();
-    while (seriesIter.hasNext()) {
-      seriesIter.next().setMaximumItemCount(maxSampleCount);
-    }
+    setMaximumItemCount(maxSampleCount);
 
     while (chartIter.hasNext()) {
       Plot plot = chartIter.next().getPlot();
@@ -505,14 +533,11 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     }
   }
 
-  private void setRuntimeStatsSampleHistoryMinutes(int sampleHistoryMinutes) {
+  protected void setRuntimeStatsSampleHistoryMinutes(int sampleHistoryMinutes) {
     int sampleHistoryMillis = sampleHistoryMinutes * 60 * 1000;
     int maxSampleCount = (sampleHistoryMinutes * 60) / getPollPeriodSeconds();
 
-    Iterator<TimeSeries> seriesIter = allSeries.iterator();
-    while (seriesIter.hasNext()) {
-      seriesIter.next().setMaximumItemCount(maxSampleCount);
-    }
+    setMaximumItemCount(maxSampleCount);
 
     Iterator<JFreeChart> chartIter = allCharts.iterator();
     while (chartIter.hasNext()) {
@@ -526,7 +551,9 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
   protected Date tmpDate = new Date();
 
   protected void updateSeries(TimeSeries series, Number value) {
-    series.addOrUpdate(new Second(tmpDate), getValueOrMissing(series, value));
+    if (series != null) {
+      series.addOrUpdate(new Second(tmpDate), getValueOrMissing(series, value));
+    }
   }
 
   public static String convert(long value) {
@@ -587,6 +614,17 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
         series[i].addOrUpdate(now, getValueOrMissing(series[i], data, i));
       }
     }
+  }
+
+  protected static void handleCpuUsage(FixedTimeSeriesCollection dataset, StatisticData[] data) {
+    float[] fa = null;
+    if (data != null) {
+      fa = new float[data.length];
+      for (int i = 0; i < data.length; i++) {
+        fa[i] = data[i] != null ? ((Number) data[i].getData()).floatValue() : 0.0f;
+      }
+    }
+    dataset.appendData(new Second(), fa);
   }
 
   protected static void handleMemoryUsage(TimeSeries[] series, Long max, Long used) {

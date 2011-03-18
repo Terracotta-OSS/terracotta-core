@@ -21,6 +21,7 @@ import org.jfree.data.time.TimeSeries;
 
 import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.BasicWorker;
+import com.tc.admin.common.FixedTimeSeriesCollection;
 import com.tc.admin.common.StatusView;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XLabel;
@@ -51,38 +52,38 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 
 public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
-  private IClient                  client;
-  private TimeSeries               memoryMaxSeries;
-  private StatusView               memoryMaxLabel;
-  private TimeSeries               memoryUsedSeries;
-  private StatusView               memoryUsedLabel;
-  private ChartPanel               cpuPanel;
-  private TimeSeries[]             cpuTimeSeries;
-  private TimeSeries               flushRateSeries;
-  private XLabel                   flushRateLabel;
-  private TimeSeries               faultRateSeries;
-  private XLabel                   faultRateLabel;
-  private TimeSeries               txnRateSeries;
-  private XLabel                   txnRateLabel;
-  private TimeSeries               pendingTxnsSeries;
-  private XLabel                   pendingTxnsLabel;
+  private IClient                   client;
+  private TimeSeries                memoryMaxSeries;
+  private StatusView                memoryMaxLabel;
+  private TimeSeries                memoryUsedSeries;
+  private StatusView                memoryUsedLabel;
+  private ChartPanel                cpuPanel;
+  private FixedTimeSeriesCollection cpuDataset;
+  private TimeSeries                flushRateSeries;
+  private XLabel                    flushRateLabel;
+  private TimeSeries                faultRateSeries;
+  private XLabel                    faultRateLabel;
+  private TimeSeries                txnRateSeries;
+  private XLabel                    txnRateLabel;
+  private TimeSeries                pendingTxnsSeries;
+  private XLabel                    pendingTxnsLabel;
 
-  protected final String           flushRateLabelFormat   = "{0} Flushes/sec.";
-  protected final String           faultRateLabelFormat   = "{0} Faults/sec.";
-  protected final String           txnRateLabelFormat     = "{0} Txns/sec.";
-  protected final String           pendingTxnsLabelFormat = "{0} Pending Txns/sec.";
-  protected final String           memoryUsedLabelFormat  = "{0} Used";
-  protected final String           memoryMaxLabelFormat   = "{0} Max";
+  protected final String            flushRateLabelFormat   = "{0} Flushes/sec.";
+  protected final String            faultRateLabelFormat   = "{0} Faults/sec.";
+  protected final String            txnRateLabelFormat     = "{0} Txns/sec.";
+  protected final String            pendingTxnsLabelFormat = "{0} Pending Txns/sec.";
+  protected final String            memoryUsedLabelFormat  = "{0} Used";
+  protected final String            memoryMaxLabelFormat   = "{0} Max";
 
-  private static final Set<String> POLLED_ATTRIBUTE_SET   = new HashSet(
-                                                                        Arrays
-                                                                            .asList(POLLED_ATTR_CPU_USAGE,
-                                                                                    POLLED_ATTR_USED_MEMORY,
-                                                                                    POLLED_ATTR_MAX_MEMORY,
-                                                                                    POLLED_ATTR_OBJECT_FLUSH_RATE,
-                                                                                    POLLED_ATTR_OBJECT_FAULT_RATE,
-                                                                                    POLLED_ATTR_TRANSACTION_RATE,
-                                                                                    POLLED_ATTR_PENDING_TRANSACTIONS_COUNT));
+  private static final Set<String>  POLLED_ATTRIBUTE_SET   = new HashSet(
+                                                                         Arrays
+                                                                             .asList(POLLED_ATTR_CPU_USAGE,
+                                                                                     POLLED_ATTR_USED_MEMORY,
+                                                                                     POLLED_ATTR_MAX_MEMORY,
+                                                                                     POLLED_ATTR_OBJECT_FLUSH_RATE,
+                                                                                     POLLED_ATTR_OBJECT_FAULT_RATE,
+                                                                                     POLLED_ATTR_TRANSACTION_RATE,
+                                                                                     POLLED_ATTR_PENDING_TRANSACTIONS_COUNT));
 
   public ClientRuntimeStatsPanel(ApplicationContext appContext, IClient client) {
     super(appContext);
@@ -125,6 +126,12 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   }
 
   @Override
+  protected void setMaximumItemCount(int maxItemCount) {
+    super.setMaximumItemCount(maxItemCount);
+    cpuDataset.setMaximumItemCount(maxItemCount);
+  }
+
+  @Override
   public void attributesPolled(PolledAttributesResult result) {
     if (tornDown.get()) { return; }
     IClient theClient = getClient();
@@ -134,7 +141,7 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     }
   }
 
-  private synchronized void handleDSOStats(PolledAttributesResult result) {
+  private void handleDSOStats(PolledAttributesResult result) {
     IClient theClient = getClient();
     if (theClient != null) {
       IClusterModel theClusterModel = client.getClusterModel();
@@ -210,37 +217,34 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     }
   }
 
-  private synchronized void handleSysStats(final PolledAttributesResult result) {
+  private void handleSysStats(final PolledAttributesResult result) {
+    IClient theClient = getClient();
+    if (theClient == null) { return; }
+
+    final Number memoryMax = (Number) result.getPolledAttribute(theClient, POLLED_ATTR_MAX_MEMORY);
+    final Number memoryUsed = (Number) result.getPolledAttribute(theClient, POLLED_ATTR_USED_MEMORY);
+    final StatisticData[] cpuUsageData = (StatisticData[]) result.getPolledAttribute(theClient, POLLED_ATTR_CPU_USAGE);
+
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        IClient theClient = getClient();
-        if (theClient != null) {
-          Number n;
+        if (memoryMax != null) {
+          memoryMaxLabel.setText(MessageFormat.format(memoryMaxLabelFormat, convert(memoryMax.longValue())));
+        }
+        if (memoryUsed != null) {
+          memoryUsedLabel.setText(MessageFormat.format(memoryUsedLabelFormat, convert(memoryUsed.longValue())));
+        }
+        updateSeries(memoryMaxSeries, memoryMax);
+        updateSeries(memoryUsedSeries, memoryUsed);
 
-          n = (Number) result.getPolledAttribute(theClient, POLLED_ATTR_MAX_MEMORY);
-          updateSeries(memoryMaxSeries, n);
-          if (n != null) {
-            memoryMaxLabel.setText(MessageFormat.format(memoryMaxLabelFormat, convert(n.longValue())));
-          }
-
-          n = (Number) result.getPolledAttribute(theClient, POLLED_ATTR_USED_MEMORY);
-          updateSeries(memoryUsedSeries, n);
-          if (n != null) {
-            memoryUsedLabel.setText(MessageFormat.format(memoryUsedLabelFormat, convert(n.longValue())));
-          }
-
-          if (cpuTimeSeries != null) {
-            StatisticData[] cpuUsageData = (StatisticData[]) result
-                .getPolledAttribute(theClient, POLLED_ATTR_CPU_USAGE);
-            handleCpuUsage(cpuTimeSeries, cpuUsageData);
-          }
+        if (cpuDataset != null) {
+          handleCpuUsage(cpuDataset, cpuUsageData);
         }
       }
     });
   }
 
   @Override
-  protected synchronized void setup(XContainer chartsPanel) {
+  protected void setup(XContainer chartsPanel) {
     chartsPanel.setLayout(new GridLayout(0, 2));
     setupMemoryPanel(chartsPanel);
     setupCpuPanel(chartsPanel);
@@ -297,11 +301,14 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   private void setupMemoryPanel(XContainer parent) {
     memoryMaxSeries = createTimeSeries(appContext.getString("heap.usage.max"));
     memoryUsedSeries = createTimeSeries(appContext.getString("heap.usage.used"));
-    JFreeChart memoryChart = createChart(new TimeSeries[] { memoryMaxSeries, memoryUsedSeries }, false);
-    XYPlot plot = (XYPlot) memoryChart.getPlot();
+    JFreeChart chart = createChart(new TimeSeries[] { memoryMaxSeries, memoryUsedSeries }, false);
+    XYPlot plot = (XYPlot) chart.getPlot();
+    XYItemRenderer renderer = plot.getRenderer();
+    renderer.setSeriesPaint(0, Color.red);
+    renderer.setSeriesPaint(1, Color.blue);
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setAutoRangeIncludesZero(true);
-    ChartPanel memoryPanel = createChartPanel(memoryChart);
+    ChartPanel memoryPanel = createChartPanel(chart);
     parent.add(memoryPanel);
     memoryPanel.setPreferredSize(fDefaultGraphSize);
     memoryPanel.setBorder(new TitledBorder(appContext.getString("client.stats.heap.usage")));
@@ -313,15 +320,11 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     labelHolder.add(memoryUsedLabel = createStatusLabel(Color.blue));
     labelHolder.setOpaque(false);
     memoryPanel.add(labelHolder, gbc);
-
-    XYItemRenderer renderer = plot.getRenderer();
-    renderer.setSeriesPaint(0, Color.red);
-    renderer.setSeriesPaint(1, Color.blue);
   }
 
-  private synchronized void setupCpuSeries(TimeSeries[] cpuTimeSeries) {
-    this.cpuTimeSeries = cpuTimeSeries;
-    JFreeChart cpuChart = createChart(cpuTimeSeries);
+  private void setupCpuSeries(FixedTimeSeriesCollection cpuDataset) {
+    this.cpuDataset = cpuDataset;
+    JFreeChart cpuChart = createChart(cpuDataset, false);
     XYPlot plot = (XYPlot) cpuChart.getPlot();
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setRange(0.0, 1.0);
@@ -329,7 +332,7 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     cpuPanel.setDomainZoomable(false);
     cpuPanel.setRangeZoomable(false);
 
-    if (cpuTimeSeries.length == 0) {
+    if (cpuDataset.getSeriesCount() == 0) {
       cpuPanel.setLayout(new BorderLayout());
       XLabel label = createOverlayLabel();
       label.setText("Sigar is disabled or missing");
@@ -337,12 +340,12 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     }
   }
 
-  private class CpuPanelWorker extends BasicWorker<TimeSeries[]> {
+  private class CpuPanelWorker extends BasicWorker<FixedTimeSeriesCollection> {
     private CpuPanelWorker() {
-      super(new Callable<TimeSeries[]>() {
-        public TimeSeries[] call() throws Exception {
+      super(new Callable<FixedTimeSeriesCollection>() {
+        public FixedTimeSeriesCollection call() throws Exception {
           final IClient theClient = getClient();
-          if (theClient != null) { return createCpusSeries(theClient); }
+          if (theClient != null) { return createCpuDataset(theClient); }
           return null;
         }
       });
@@ -376,10 +379,6 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   private void clearAllTimeSeries() {
     ArrayList<TimeSeries> list = new ArrayList<TimeSeries>();
 
-    if (cpuTimeSeries != null) {
-      list.addAll(Arrays.asList(cpuTimeSeries));
-      cpuTimeSeries = null;
-    }
     if (memoryMaxSeries != null) {
       list.add(memoryMaxSeries);
       memoryMaxSeries = null;
@@ -408,6 +407,10 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     Iterator<TimeSeries> iter = list.iterator();
     while (iter.hasNext()) {
       iter.next().clear();
+    }
+
+    if (cpuDataset != null) {
+      cpuDataset.clear();
     }
   }
 

@@ -469,7 +469,7 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
         try {
           final Map<IClusterNode, Map<ObjectName, Map<String, Object>>> resultObj = new HashMap<IClusterNode, Map<ObjectName, Map<String, Object>>>();
           Set<PolledAttributeListener> listenerSet = getAllScopedPollListeners();
-          List<Future<Collection<NodePollResult>>> results = executor.invokeAll(tasks, 5, TimeUnit.SECONDS);
+          List<Future<Collection<NodePollResult>>> results = executor.invokeAll(tasks, 30, TimeUnit.SECONDS);
           Iterator<Future<Collection<NodePollResult>>> resultIter = results.iterator();
           while (resultIter.hasNext()) {
             Future<Collection<NodePollResult>> future = resultIter.next();

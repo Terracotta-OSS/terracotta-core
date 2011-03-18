@@ -7,6 +7,7 @@ package com.tc.admin.dso;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
+import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.event.AxisChangeEvent;
 import org.jfree.chart.event.AxisChangeListener;
@@ -144,6 +145,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     chartPanel.setDomainZoomable(true);
     chartPanel.setRangeZoomable(false);
     chart.getXYPlot().getDomainAxis().addChangeListener(getDomainZoomListener());
+    ((NumberAxis) chart.getXYPlot().getRangeAxis()).setAutoRangeIncludesZero(true);
     chartPanel.setPopupMenu(getChartPopupMenu());
     chartPanel.setToolTipText(appContext.getString("dgc.tip"));
     chartPanel.setBorder(BorderFactory.createTitledBorder(appContext.getString("end.object.count")));
@@ -330,6 +332,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     if (lower < upper) {
       dateAxis.setRange(lower, upper);
     }
+    chartPanel.restoreAutoRangeBounds();
   }
 
   private void updateCurrentDGCMarker(GCStats gcStats) {
@@ -563,7 +566,6 @@ public class GCStatsPanel extends XContainer implements DGCListener {
       dateAxis.removeChangeListener(getDomainZoomListener());
       setRange();
       dateAxis.addChangeListener(getDomainZoomListener());
-      chartPanel.restoreAutoRangeBounds();
       setZoomed(false);
     }
   }

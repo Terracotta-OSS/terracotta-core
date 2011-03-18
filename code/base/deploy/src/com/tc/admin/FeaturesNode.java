@@ -123,7 +123,8 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
 
     Set<ObjectName> s;
     try {
-      s = clusterModel.getActiveCoordinator().queryNames(null, null);
+      ObjectName on = new ObjectName("org.terracotta:type=Loader,*");
+      s = clusterModel.getActiveCoordinator().queryNames(on, null);
     } catch (Exception e) {
       s = Collections.emptySet();
     }
