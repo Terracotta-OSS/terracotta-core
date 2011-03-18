@@ -30,7 +30,7 @@ public class ServerID implements NodeID, Serializable {
 
   public ServerID(String name, byte[] uid) {
     this.name = name;
-    this.uid = uid.clone();
+    this.uid = uid;
   }
 
   @Override

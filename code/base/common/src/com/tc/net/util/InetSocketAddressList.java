@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.util;
 
@@ -15,23 +16,23 @@ import java.util.regex.Pattern;
 
 public final class InetSocketAddressList {
 
-  private static final Pattern      ADDRESS_PATTERN = Pattern.compile("^([^:]+):(\\p{Digit}+)$");
-
-  private final InetSocketAddress[] addressList;
+  private static final Pattern               ADDRESS_PATTERN = Pattern.compile("^([^:]+):(\\p{Digit}+)$");
+  private final ArrayList<InetSocketAddress> addressList     = new ArrayList<InetSocketAddress>();
 
   public InetSocketAddressList(InetSocketAddress[] addressList) {
     Assert.assertNoNullElements(addressList);
-    this.addressList = addressList;
+    for (InetSocketAddress address : addressList) {
+      this.addressList.add(address);
+    }
   }
 
-  public InetSocketAddress[] addresses() {
-    return addressList;
-  }
-
+  @Override
   public String toString() {
-    String[] addresses = new String[addressList.length];
-    for (int pos = 0; pos < addressList.length; pos++) {
-      addresses[pos] = addressList[pos].getHostName() + ":" + addressList[pos].getPort();
+    String[] addresses = new String[addressList.size()];
+    int pos = 0;
+    for (InetSocketAddress address : addressList) {
+      addresses[pos] = address.getHostName() + ":" + address.getPort();
+      pos++;
     }
     return StringUtil.toString(addresses, ",", null, null);
   }

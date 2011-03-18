@@ -117,7 +117,8 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   private CommunicationsManager                             communicationsManager;
   private NetworkListener                                   groupListener;
   private TCGroupMemberDiscovery                            discover;
-  private ZapNodeRequestProcessor                           zapNodeRequestProcessor     = new DefaultZapNodeRequestProcessor();
+  private ZapNodeRequestProcessor                           zapNodeRequestProcessor     = new DefaultZapNodeRequestProcessor(
+                                                                                                                             logger);
   private Stage                                             hydrateStage;
   private Stage                                             receiveGroupMessageStage;
   private Stage                                             handshakeMessageStage;

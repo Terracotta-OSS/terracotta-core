@@ -1,8 +1,8 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode;
-
 
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.Label;
@@ -23,6 +23,7 @@ public class DateMethodAdapter extends LogicalMethodAdapter {
     super(methodName, instrumentationType);
   }
 
+  @Override
   public MethodVisitor adapt(ClassVisitor classVisitor) {
     MethodVisitor mv = super.adapt(classVisitor);
 
@@ -30,6 +31,7 @@ public class DateMethodAdapter extends LogicalMethodAdapter {
     return mv;
   }
 
+  @Override
   protected void createWrapperMethod(ClassVisitor classVisitor) {
     switch (getInstrumentationType()) {
       case MethodSpec.DATE_ADD_SET_TIME_WRAPPER_LOG:
@@ -43,11 +45,12 @@ public class DateMethodAdapter extends LogicalMethodAdapter {
     }
   }
 
-  private class TimestampMethodAdapter extends MethodAdapter implements Opcodes {
+  private static class TimestampMethodAdapter extends MethodAdapter implements Opcodes {
     public TimestampMethodAdapter(MethodVisitor mv) {
       super(mv);
     }
 
+    @Override
     public void visitMethodInsn(int opcode, String owner, String name, String desc) {
       if ((opcode == INVOKESPECIAL) && ("setTime".equals(name))) {
         super.visitMethodInsn(opcode, owner, ByteCodeUtil.TC_METHOD_PREFIX + name, desc);
@@ -58,7 +61,8 @@ public class DateMethodAdapter extends LogicalMethodAdapter {
   }
 
   private void addTimestampSetTimeMethodWrapper(ClassVisitor classVisitor) {
-    MethodVisitor mv = classVisitor.visitMethod(getWrapperAccess(), getMethodName(), getDescription(), getSignature(), getExceptions());
+    MethodVisitor mv = classVisitor.visitMethod(getWrapperAccess(), getMethodName(), getDescription(), getSignature(),
+                                                getExceptions());
     addCheckWriteAccessInstrumentedCode(mv, true);
     Label l0 = new Label();
     mv.visitLabel(l0);
@@ -77,7 +81,8 @@ public class DateMethodAdapter extends LogicalMethodAdapter {
     mv.visitLdcInsn(getMethodName() + getDescription());
 
     ByteCodeUtil.createParametersToArrayByteCode(mv, params);
-    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "logicalInvoke", "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "logicalInvoke",
+                       "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
 
     ByteCodeUtil.pushThis(mv);
     mv.visitLdcInsn("setNanos(I)V");
@@ -91,7 +96,8 @@ public class DateMethodAdapter extends LogicalMethodAdapter {
     mv.visitMethodInsn(INVOKESPECIAL, getOwnerSlashes(), "getNanos", "()I");
     mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Integer", "<init>", "(I)V");
     mv.visitInsn(AASTORE);
-    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "logicalInvoke", "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "logicalInvoke",
+                       "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
 
     if (!returnType.equals(Type.VOID_TYPE)) {
       mv.visitVarInsn(returnType.getOpcode(ILOAD), params.length + 1);
@@ -139,7 +145,8 @@ public class DateMethodAdapter extends LogicalMethodAdapter {
 
     ByteCodeUtil.createParametersToArrayByteCode(mv, setTimeParams, variableOffset);
 
-    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "logicalInvoke", "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "logicalInvoke",
+                       "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
   }
 
 }

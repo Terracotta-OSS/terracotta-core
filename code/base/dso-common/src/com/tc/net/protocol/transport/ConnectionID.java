@@ -17,7 +17,7 @@ public class ConnectionID {
   private static final char        SEP            = '.';
 
   public static ConnectionID parse(String compositeID) throws InvalidConnectionIDException {
-    if (compositeID == null) { throw new InvalidConnectionIDException(compositeID, "null connectionID"); }
+    if (compositeID == null) { throw new InvalidConnectionIDException("NULL ConnectionID"); }
 
     int idx = compositeID.indexOf(SEP);
     if (idx <= 0 || idx >= compositeID.length() - 1) {

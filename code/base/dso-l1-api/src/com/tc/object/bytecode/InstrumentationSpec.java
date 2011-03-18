@@ -92,8 +92,7 @@ class InstrumentationSpec {
     Map rv = new HashMap();
 
     FieldInfo[] fields = this.getClassInfo().getFields();
-    for (int i = 0; i < fields.length; i++) {
-      FieldInfo fieldInfo = fields[i];
+    for (FieldInfo fieldInfo : fields) {
       Object prev = rv.put(fieldInfo.getName(), fieldInfo);
       if (prev != null) { throw new AssertionError("replaced mapping for " + fieldInfo.getName() + " in class "
                                                    + this.getClassInfo().getName()); }
@@ -189,11 +188,11 @@ class InstrumentationSpec {
   String getClassSignature() {
     return classSignature;
   }
-  
+
   public boolean hasMethod(String nameAndDesc) {
     return recordedMethods.contains(nameAndDesc);
   }
-  
+
   public boolean hasField(String nameAndDesc) {
     return recordedFields.contains(nameAndDesc);
   }
@@ -319,8 +318,7 @@ class InstrumentationSpec {
         Class superClazz = Class.forName(superNameDots, false, this.classInfo.getClassLoader());
 
         Method[] methods = superClazz.getMethods();
-        for (int i = 0; i < methods.length; i++) {
-          Method m = methods[i];
+        for (Method m : methods) {
           String methodName = m.getName();
           int modifier = m.getModifiers();
           if (!shouldVisitMethod(modifier, methodName) || Modifier.isFinal(modifier) || Modifier.isStatic(modifier)) {
@@ -332,8 +330,7 @@ class InstrumentationSpec {
         }
 
         methods = superClazz.getDeclaredMethods();
-        for (int i = 0; i < methods.length; i++) {
-          Method m = methods[i];
+        for (Method m : methods) {
           String methodName = m.getName();
           int modifier = m.getModifiers();
           if (shouldVisitMethod(modifier, methodName) && !Modifier.isFinal(modifier) && Modifier.isProtected(modifier)) {
@@ -343,8 +340,7 @@ class InstrumentationSpec {
         }
 
         Field[] fields = superClazz.getDeclaredFields();
-        for (int i = 0; i < fields.length; i++) {
-          Field f = fields[i];
+        for (Field f : fields) {
           String fName = f.getName();
           int modifier = f.getModifiers();
           if (!shouldVisitField(fName) || Modifier.isFinal(modifier) || Modifier.isPrivate(modifier)) {
@@ -488,14 +484,12 @@ class InstrumentationSpec {
   public MethodInfo getMethodInfo(int access, String name, String desc) {
     if (!"<init>".equals(name)) {
       MethodInfo[] methods = classInfo.getMethods();
-      for (int i = 0; i < methods.length; i++) {
-        MethodInfo methodInfo = methods[i];
+      for (MethodInfo methodInfo : methods) {
         if (methodInfo.getName().equals(name) && methodInfo.getSignature().equals(desc)) { return methodInfo; }
       }
     } else {
       ConstructorInfo[] constructors = classInfo.getConstructors();
-      for (int i = 0; i < constructors.length; i++) {
-        ConstructorInfo info = constructors[i];
+      for (ConstructorInfo info : constructors) {
         if (info.getName().equals(name) && info.getSignature().equals(desc)) { return new ConstructorInfoWrapper(info); }
       }
       // reflecting old DSO hack (see com.tc.object.bytecode.aspectwerkz.AsmMethodInfo)
@@ -569,7 +563,7 @@ class InstrumentationSpec {
     }
   }
 
-  public class StubConstructorInfo implements ConstructorInfo {
+  public static class StubConstructorInfo implements ConstructorInfo {
     private final String    name;
     private final String    desc;
     private final int       access;
@@ -621,7 +615,7 @@ class InstrumentationSpec {
 
   }
 
-  public class ConstructorInfoWrapper implements MethodInfo {
+  public static class ConstructorInfoWrapper implements MethodInfo {
 
     private final ConstructorInfo constructorInfo;
 

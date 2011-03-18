@@ -26,7 +26,7 @@ public class TreeMapAdapter {
       return false;
     }
 
-    private class Adapter extends MethodAdapter implements Opcodes {
+    private static class Adapter extends MethodAdapter implements Opcodes {
       public Adapter(MethodVisitor mv) {
         super(mv);
       }
@@ -61,7 +61,7 @@ public class TreeMapAdapter {
       return false;
     }
 
-    private class Adapter extends MethodAdapter implements Opcodes {
+    private static class Adapter extends MethodAdapter implements Opcodes {
       public Adapter(MethodVisitor mv) {
         super(mv);
 

@@ -24,7 +24,7 @@ public class TransportNetworkStackHarnessFactory implements NetworkStackHarnessF
     return new TransportNetworkStackHarness(transportFactory, channel);
   }
 
-  private class TransportNetworkStackHarness extends AbstractNetworkStackHarness {
+  private static class TransportNetworkStackHarness extends AbstractNetworkStackHarness {
 
     TransportNetworkStackHarness(ServerMessageChannelFactory channelFactory, MessageTransport transport) {
       super(channelFactory, transport);
@@ -34,9 +34,10 @@ public class TransportNetworkStackHarnessFactory implements NetworkStackHarnessF
       super(transportFactory, channel);
     }
 
+    @Override
     protected void connectStack() {
       transport.setReceiveLayer(null);
-      
+
       // XXX: this is super ugly, but...
       if (transport instanceof ClientMessageTransport) {
         ClientMessageTransport cmt = (ClientMessageTransport) transport;
@@ -48,6 +49,7 @@ public class TransportNetworkStackHarnessFactory implements NetworkStackHarnessF
       }
     }
 
+    @Override
     protected void createIntermediateLayers() {
       // no intermediate layers to create
     }

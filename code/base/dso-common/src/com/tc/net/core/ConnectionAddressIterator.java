@@ -10,7 +10,7 @@ public class ConnectionAddressIterator {
   private int                    current = -1;
 
   public ConnectionAddressIterator(ConnectionInfo[] cis) {
-    this.cis = cis.clone();
+    this.cis = cis;
   }
 
   public boolean hasNext() {

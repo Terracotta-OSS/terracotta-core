@@ -4,17 +4,25 @@
  */
 package com.tc.net.groups;
 
+import com.tc.logging.TCLogger;
 import com.tc.net.NodeID;
 
 public class DefaultZapNodeRequestProcessor implements ZapNodeRequestProcessor {
+
+  private final TCLogger logger;
+
+  public DefaultZapNodeRequestProcessor(final TCLogger logger) {
+    this.logger = logger;
+  }
 
   public boolean acceptOutgoingZapNodeRequest(NodeID nodeID, int type, String reason) {
     return true;
   }
 
   public void incomingZapNodeRequest(NodeID nodeID, int zapNodeType, String reason, long[] weights) {
-    throw new AssertionError("DefaultZapNodeRequestProcessor : Received Zap Node request from " + nodeID + " type = "
-                             + zapNodeType + " reason = " + reason);
+    this.logger.fatal("DefaultZapNodeRequestProcessor : Received Zap Node request from " + nodeID + " type = "
+                      + zapNodeType + " reason = " + reason);
+    System.exit(zapNodeType);
   }
 
   public long[] getCurrentNodeWeights() {

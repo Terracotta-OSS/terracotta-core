@@ -132,14 +132,12 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   }
 
   private TransportHandshakeErrorHandler createHandshakeErrorHandler() {
-    if(this.commsMgrName.equals(CommunicationsManager.COMMSMGR_GROUPS)){
-      return new TransportHandshakeErrorHandler(){
-        public void handleHandshakeError(TransportHandshakeErrorContext e) {
-          logger.info(e.getMessage());
-        }
-      };
-    }
-    
+    if (this.commsMgrName.equals(CommunicationsManager.COMMSMGR_GROUPS)) { return new TransportHandshakeErrorHandler() {
+      public void handleHandshakeError(TransportHandshakeErrorContext e) {
+        logger.info(e.getMessage());
+      }
+    }; }
+
     return new TransportHandshakeErrorHandler() {
 
       public void handleHandshakeError(TransportHandshakeErrorContext e) {
@@ -281,10 +279,9 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         this.transport = messageTransportFactory.createNewTransport(connectionId, syn.getSource(),
                                                                     createHandshakeErrorHandler(),
                                                                     handshakeMessageFactory, transportListeners);
-        sendSynAck(connectionId,
-                   new TransportHandshakeErrorContext("Invalid connection id: " + connectionId,
-                                                      TransportHandshakeError.ERROR_INVALID_CONNECTION_ID), syn
-                       .getSource(), isMaxConnectionReached);
+        sendSynAck(new TransportHandshakeErrorContext("Invalid connection id: " + connectionId,
+                                                      TransportHandshakeError.ERROR_INVALID_CONNECTION_ID),
+                   syn.getSource(), isMaxConnectionReached);
         this.isHandshakeError = true;
         return;
       }
@@ -325,8 +322,8 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         String layersPresentInServer = "Layers Present in Server side communication stack: ";
         layersPresentInServer += this.transport.getCommunicationStackNames(this.transport);
         sendSynAck(connectionId, new TransportHandshakeErrorContext(layersPresentInServer,
-                                                                    TransportHandshakeError.ERROR_STACK_MISMATCH), syn
-            .getSource(), isMaxConnectionReached);
+                                                                    TransportHandshakeError.ERROR_STACK_MISMATCH),
+                   syn.getSource(), isMaxConnectionReached);
         if ((serverStackLayerFlags & NetworkLayer.TYPE_OOO_LAYER) != 0) logger
             .error(NetworkLayer.ERROR_OOO_IN_SERVER_NOT_IN_CLIENT);
         else logger.error(NetworkLayer.ERROR_OOO_IN_CLIENT_NOT_IN_SERVER);
@@ -343,6 +340,15 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     private void sendSynAck(ConnectionID connectionId, TCConnection source, boolean isMaxConnectionReached) {
       source.addWeight(MessageTransport.CONNWEIGHT_TX_HANDSHAKED);
       sendSynAck(connectionId, null, source, isMaxConnectionReached);
+    }
+
+    /**
+     * Connection ID is null. Send a SynAck Error message.
+     */
+    private void sendSynAck(final TransportHandshakeErrorContext errorContext, final TCConnection source,
+                            final boolean isMaxConnectionsReached) {
+      Assert.eval(errorContext != null);
+      sendSynAck(null, errorContext, source, isMaxConnectionsReached);
     }
 
     private void sendSynAck(ConnectionID connectionId, TransportHandshakeErrorContext errorContext,

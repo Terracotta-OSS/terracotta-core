@@ -44,30 +44,30 @@ import com.tc.util.Conversion;
  */
 
 public class WireProtocolHeader extends AbstractTCNetworkHeader implements Cloneable {
-  public static final byte    VERSION_1                    = 1;
-  public static final byte    VERSION_2                    = 2;
-  public static final byte[]  VALID_VERSIONS               = new byte[] { VERSION_1, VERSION_2 };
+  public static final byte     VERSION_1                    = 1;
+  public static final byte     VERSION_2                    = 2;
+  private static final byte[]  VALID_VERSIONS               = new byte[] { VERSION_1, VERSION_2 };
 
-  public static final short   DEFAULT_TTL                  = 64;
-  public static final int     MAX_MESSAGE_COUNT            = 0xFFFF;
+  public static final short    DEFAULT_TTL                  = 64;
+  public static final int      MAX_MESSAGE_COUNT            = 0xFFFF;
 
-  public static final short   PROTOCOL_UNKNOWN             = 0;
-  public static final short   PROTOCOL_TCM                 = 1;
-  public static final short   PROTOCOL_TRANSPORT_HANDSHAKE = 2;
-  public static final short   PROTOCOL_OOOP                = 3;
-  public static final short   PROTOCOL_HEALTHCHECK_PROBES  = 4;
-  public static final short   PROTOCOL_MSGGROUP            = 5;
+  public static final short    PROTOCOL_UNKNOWN             = 0;
+  public static final short    PROTOCOL_TCM                 = 1;
+  public static final short    PROTOCOL_TRANSPORT_HANDSHAKE = 2;
+  public static final short    PROTOCOL_OOOP                = 3;
+  public static final short    PROTOCOL_HEALTHCHECK_PROBES  = 4;
+  public static final short    PROTOCOL_MSGGROUP            = 5;
 
-  private static final int    MAGIC_NUM                    = 0xAAAAAAAA;
+  private static final int     MAGIC_NUM                    = 0xAAAAAAAA;
 
-  public static final short[] VALID_PROTOCOLS              = new short[] { PROTOCOL_TCM, PROTOCOL_TRANSPORT_HANDSHAKE,
+  private static final short[] VALID_PROTOCOLS              = new short[] { PROTOCOL_TCM, PROTOCOL_TRANSPORT_HANDSHAKE,
       PROTOCOL_OOOP, PROTOCOL_HEALTHCHECK_PROBES, PROTOCOL_MSGGROUP };
 
   // 15 32-bit words max
-  static final short          MAX_LENGTH                   = 15 * 4;
+  static final short           MAX_LENGTH                   = 15 * 4;
 
   // 8 32-bit words min
-  static final short          MIN_LENGTH                   = 8 * 4;
+  static final short           MIN_LENGTH                   = 8 * 4;
 
   public static short getProtocolForMessageClass(TCNetworkMessage msg) {
     // TODO: is there a better way to do this (ie. not using instanceof)?
@@ -102,6 +102,7 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
     set4BitValue(0, true, version);
   }
 
+  @Override
   protected void setHeaderLength(short length) {
     if ((length < 6) || (length > 15)) { throw new IllegalArgumentException("Header length must in range 6-15"); }
 
@@ -205,6 +206,7 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
     return getChecksum() == computeAdler32Checksum(12, false);
   }
 
+  @Override
   public void validate() throws WireProtocolHeaderFormatException {
     // validate the magic num
     int magic = getMagicNum();
@@ -215,8 +217,8 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
     boolean validVersion = false;
     byte version = getVersion();
 
-    for (int i = 0; i < VALID_VERSIONS.length; i++) {
-      if (version == VALID_VERSIONS[i]) {
+    for (byte element : VALID_VERSIONS) {
+      if (version == element) {
         validVersion = true;
         break;
       }
@@ -234,8 +236,8 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
     boolean validProtocol = false;
     short protocol = getProtocol();
 
-    for (int i = 0; i < VALID_PROTOCOLS.length; i++) {
-      if (protocol == VALID_PROTOCOLS[i]) {
+    for (short element : VALID_PROTOCOLS) {
+      if (protocol == element) {
         validProtocol = true;
         break;
       }
@@ -275,6 +277,7 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader implements Clone
     // TODO: validate options (once they exist)
   }
 
+  @Override
   public String toString() {
     StringBuffer buf = new StringBuffer();
     buf.append("Version: ").append(Conversion.byte2uint(getVersion())).append(", ");

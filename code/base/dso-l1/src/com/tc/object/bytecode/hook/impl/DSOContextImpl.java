@@ -326,10 +326,8 @@ public class DSOContextImpl implements DSOContext {
     L2Data[] l2Data = config.l2Config().l2Data();
     Assert.assertNotNull(l2Data);
 
-    String serverHost = l2Data[0].host();
-
     if (false && !config.loadedFromTrustedSource()) {
-      String serverConfigMode = getServerConfigMode(serverHost, l2Data[0].dsoPort());
+      String serverConfigMode = getServerConfigMode(l2Data[0].host(), l2Data[0].dsoPort());
 
       if (serverConfigMode != null && serverConfigMode.equals(ConfigurationModel.PRODUCTION)) {
         String text = "Configuration constraint violation: "

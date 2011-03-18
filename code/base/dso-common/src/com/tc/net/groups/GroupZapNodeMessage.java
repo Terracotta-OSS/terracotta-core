@@ -27,7 +27,7 @@ public class GroupZapNodeMessage extends AbstractGroupMessage {
     super(type);
     this.reason = reason;
     this.zapNodeType = zapNodeType;
-    this.weights = weights.clone();
+    this.weights = weights;
   }
 
   @Override
@@ -77,6 +77,6 @@ public class GroupZapNodeMessage extends AbstractGroupMessage {
   }
 
   public long[] getWeights() {
-    return weights.clone();
+    return weights;
   }
 }

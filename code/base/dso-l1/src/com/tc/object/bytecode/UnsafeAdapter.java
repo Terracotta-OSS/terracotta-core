@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode;
 
@@ -8,15 +9,13 @@ import com.tc.asm.ClassVisitor;
 import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
-import com.tc.object.bytecode.ByteCodeUtil;
-import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tcclient.util.DSOUnsafe;
 
 import java.lang.reflect.Modifier;
 
 public class UnsafeAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
   private final static String UNSAFE_CLASS_SLASH   = "sun/misc/Unsafe";
-  public final static String TC_UNSAFE_FIELD_NAME = ByteCodeUtil.TC_FIELD_PREFIX + "theUnsafe";
+  public final static String  TC_UNSAFE_FIELD_NAME = ByteCodeUtil.TC_FIELD_PREFIX + "theUnsafe";
 
   public UnsafeAdapter() {
     super(null);
@@ -30,6 +29,7 @@ public class UnsafeAdapter extends ClassAdapter implements Opcodes, ClassAdapter
     return new UnsafeAdapter(visitor, loader);
   }
 
+  @Override
   public final void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
     if (UNSAFE_CLASS_SLASH.equals(name)) {
       access = ~Modifier.FINAL & access;
@@ -38,6 +38,7 @@ public class UnsafeAdapter extends ClassAdapter implements Opcodes, ClassAdapter
     super.visit(version, access, name, signature, superName, interfaces);
   }
 
+  @Override
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     access = access & ~Modifier.FINAL;
 
@@ -54,11 +55,12 @@ public class UnsafeAdapter extends ClassAdapter implements Opcodes, ClassAdapter
     }
   }
 
-  private class UnsafeMethodAdapter extends MethodAdapter implements Opcodes {
+  private static class UnsafeMethodAdapter extends MethodAdapter implements Opcodes {
     public UnsafeMethodAdapter(MethodVisitor mv) {
       super(mv);
     }
 
+    @Override
     public void visitMethodInsn(int opcode, String className, String methodName, String desc) {
       if (Opcodes.INVOKESPECIAL == opcode && UNSAFE_CLASS_SLASH.equals(className) && "<init>".equals(methodName)) {
         super.visitMethodInsn(opcode, DSOUnsafe.CLASS_SLASH, methodName, desc);
@@ -67,6 +69,7 @@ public class UnsafeAdapter extends ClassAdapter implements Opcodes, ClassAdapter
       }
     }
 
+    @Override
     public void visitTypeInsn(int opcode, String desc) {
       if (NEW == opcode && UNSAFE_CLASS_SLASH.equals(desc)) {
         super.visitTypeInsn(NEW, DSOUnsafe.CLASS_SLASH);

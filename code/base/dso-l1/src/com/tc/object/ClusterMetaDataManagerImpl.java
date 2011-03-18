@@ -261,13 +261,15 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     return getNodesWithKeys(keys, mapObjectID);
   }
 
-  private <K> Map<K, Set<NodeID>> getNodesWithKeys(final Collection<? extends K> keys, final ObjectID mapObjectID) {NodesWithKeysMessage message = nwkmFactory.newNodesWithKeysMessage(groupID);
+  private <K> Map<K, Set<NodeID>> getNodesWithKeys(final Collection<? extends K> keys, final ObjectID mapObjectID) {
+    NodesWithKeysMessage message = nwkmFactory.newNodesWithKeysMessage(groupID);
     message.setMapObjectID(mapObjectID);
-    message.setKeys((Set<Object>)keys);
+    Assert.eval(keys instanceof Set);
+    message.setKeys((Set<Object>) keys);
     Map<K, Set<NodeID>> result = sendMessageAndWait(threadIDManager.getThreadID(), message);
     for (K key : keys) {
-      if(!result.containsKey(key)) {
-        result.put(key, Collections.<NodeID>emptySet());
+      if (!result.containsKey(key)) {
+        result.put(key, Collections.<NodeID> emptySet());
       }
     }
     return result;
@@ -372,7 +374,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     if (this.state == RUNNING) { throw new AssertionError(message + ": " + this.state); }
   }
 
-  private class WaitForResponse {
+  private static class WaitForResponse {
     private boolean responseReceived = false;
 
     public boolean wasResponseReceived() {
