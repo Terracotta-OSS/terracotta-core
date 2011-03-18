@@ -56,12 +56,18 @@ public class ClientServerExchangeLockContext implements TCSerializable {
     return threadID;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o == this) return true;
     if (!(o instanceof ClientServerExchangeLockContext)) return false;
     ClientServerExchangeLockContext cmp = (ClientServerExchangeLockContext) o;
     return lockID.equals(cmp.lockID) && threadID.equals(cmp.threadID) && state.equals(cmp.state)
            && nodeID.equals(cmp.nodeID);
+  }
+
+  @Override
+  public int hashCode() {
+    return (11 * lockID.hashCode()) ^ (7 * threadID.hashCode()) ^ (3 * state.hashCode()) ^ (13 * nodeID.hashCode());
   }
 
   public void serializeTo(TCByteBufferOutput output) {
@@ -96,7 +102,7 @@ public class ClientServerExchangeLockContext implements TCSerializable {
   private int calculateHash() {
     return new HashCodeBuilder(5503, 6737).append(lockID).append(nodeID).append(threadID).toHashCode();
   }
-  
+
   public long timeout() {
     return this.timeout;
   }

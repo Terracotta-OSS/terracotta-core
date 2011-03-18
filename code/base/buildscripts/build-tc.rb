@@ -192,11 +192,11 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   def findbugs_gui
     findbugs_home = ENV['FINDBUGS_HOME'] || ''
     raise("FINDBUGS_HOME is not defined or doesn't exist") unless File.exists?(findbugs_home)
-    params = "-gui -look:native -maxHeap 512"
+    params = "-gui -look:native -maxHeap 512 build/findbugs.xml"
     if ENV['OS'] =~ /windows/i
       `#{findbugs_home.gsub('\\', '/')}/bin/findbugs.bat #{params}`
     else
-      `#{findbugs_home}/bin/findbugs #{param}`
+      `#{findbugs_home}/bin/findbugs #{params}`
     end
   end
 

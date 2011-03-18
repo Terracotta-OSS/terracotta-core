@@ -12,6 +12,7 @@ import com.tc.object.locks.LockStateNode.LockWaiter;
 import com.tc.object.locks.LockStateNode.PendingLockHold;
 import com.tc.object.locks.LockStateNode.PendingTryLockHold;
 import com.tc.object.msg.ClientHandshakeMessage;
+import com.tc.util.FindbugsSuppressWarnings;
 import com.tc.util.SynchronizedSinglyLinkedList;
 
 import java.util.ArrayList;
@@ -35,6 +36,11 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
   private final LockID                lock;
 
+  /*
+   * FindBugs believes that the access to greediness in RecallCallback is not synchronized as it doesn't notice the
+   * "synchronized (ClientLockImpl.this) {"
+   */
+  @FindbugsSuppressWarnings("IS2_INCONSISTENT_SYNC")
   private ClientGreediness            greediness    = ClientGreediness.FREE;
 
   private volatile byte               gcCycleCount  = 0;
@@ -214,8 +220,12 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       unparkFirstQueuedAcquire();
       waitOnLockWaiter(remote, thread, waiter, listener);
     } finally {
-      moveWaiterToPending(waiter);
-      acquireAll(remote, thread, waiter.getReacquires());
+      if (waiter != null) {
+        moveWaiterToPending(waiter);
+        acquireAll(remote, thread, waiter.getReacquires());
+      } else if (!isLockedBy(thread, WRITE_LEVELS)) {
+        LOGGER.fatal("Potential lock reacquire failure after wait by " + thread + " in:\n" + this);
+      }
     }
   }
 

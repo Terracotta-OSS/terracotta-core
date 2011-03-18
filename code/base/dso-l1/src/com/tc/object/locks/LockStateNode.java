@@ -6,6 +6,7 @@ package com.tc.object.locks;
 import com.tc.net.ClientID;
 import com.tc.object.locks.ClientLockImpl.LockAcquireResult;
 import com.tc.util.Assert;
+import com.tc.util.FindbugsSuppressWarnings;
 import com.tc.util.SinglyLinkedList;
 
 import java.util.Stack;
@@ -299,6 +300,10 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       responded = true;
     }
 
+    /*
+     * Return value of tryAcquire is not relevant... i just want a timed escape from the acquire.
+     */
+    @FindbugsSuppressWarnings("RV_RETURN_VALUE_IGNORED")
     @Override
     void park(long timeout) {
       Assert.assertEquals(getJavaThread(), Thread.currentThread());
@@ -329,6 +334,22 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
         }
       }
       throw new AssertionError();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == this) {
+        return true;
+      } else if (o instanceof PendingTryLockHold) {
+        return super.equals(o) && waitTime == ((PendingTryLockHold) o).waitTime;
+      } else {
+        return false;
+      }
+    }
+
+    @Override
+    public int hashCode() {
+      return (5 * super.hashCode()) ^ (7 * (int) waitTime) ^ (11 * (int) (waitTime >>> Integer.SIZE));
     }
 
     @Override
@@ -387,6 +408,23 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     boolean canDelegate() {
       return false;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == this) {
+        return true;
+      } else if (o instanceof MonitorBasedPendingLockHold) {
+        return super.equals(o);
+      } else {
+        return false;
+      }
+    }
+
+    @Override
+    public int hashCode() {
+      return super.hashCode();
+    }
+
   }
 
   static class LockWaiter extends LockStateNode {
@@ -420,6 +458,10 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       return reacquires;
     }
 
+    /*
+     * There is no loop for this wait in Terracotta code. The loop will be in the user code that calls the lock manager.
+     */
+    @FindbugsSuppressWarnings("WA_NOT_IN_LOOP")
     @Override
     void park() throws InterruptedException {
       synchronized (waitObject) {

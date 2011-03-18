@@ -14,15 +14,16 @@ import com.tc.object.session.SessionManager;
 import com.tc.operatorevent.LockEventListener;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.FindbugsSuppressWarnings;
 import com.tc.util.Util;
 import com.tc.util.runtime.ThreadIDManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -503,6 +504,10 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     }
   }
 
+  /*
+   * State change that accompanies this notify is the mutation to "inFlightLockQueries"
+   */
+  @FindbugsSuppressWarnings("NN_NAKED_NOTIFY")
   public void info(final LockID lock, final ThreadID requestor,
                    final Collection<ClientServerExchangeLockContext> contexts) {
     this.stateGuard.readLock().lock();
