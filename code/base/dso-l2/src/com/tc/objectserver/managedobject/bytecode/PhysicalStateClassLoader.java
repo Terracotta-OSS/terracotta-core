@@ -126,7 +126,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
   // *************************************************************************************
   private void createGetClassIdMethod(ClassWriter cw, String classNameSlash, ClassSpec cs) {
     MethodVisitor mv = cw.visitMethod(ACC_PROTECTED, "getClassId", "()I", null, null);
-    mv.visitLdcInsn(new Integer(cs.getClassID()));
+    mv.visitLdcInsn(Integer.valueOf(cs.getClassID()));
     mv.visitInsn(IRETURN);
     mv.visitMaxs(1, 1);
     mv.visitEnd();
@@ -161,8 +161,8 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
       mv.visitVarInsn(ALOAD, 0);
       mv.visitFieldInsn(GETFIELD, classNameSlash, f.getLocalFieldName(), f.getType().getTypeDesc());
       LiteralValues fType = f.getType();
-      mv.visitMethodInsn(INVOKEINTERFACE, "java/io/ObjectOutput", fType.getOutputMethodName(), fType
-          .getOutputMethodDescriptor());
+      mv.visitMethodInsn(INVOKEINTERFACE, "java/io/ObjectOutput", fType.getOutputMethodName(),
+                         fType.getOutputMethodDescriptor());
     }
     mv.visitInsn(RETURN);
     mv.visitMaxs(3, 2);
@@ -198,8 +198,8 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
       mv.visitVarInsn(ALOAD, 0);
       mv.visitVarInsn(ALOAD, 1);
       LiteralValues fType = f.getType();
-      mv.visitMethodInsn(INVOKEINTERFACE, "java/io/ObjectInput", fType.getInputMethodName(), fType
-          .getInputMethodDescriptor());
+      mv.visitMethodInsn(INVOKEINTERFACE, "java/io/ObjectInput", fType.getInputMethodName(),
+                         fType.getInputMethodDescriptor());
       mv.visitFieldInsn(PUTFIELD, classNameSlash, f.getLocalFieldName(), f.getType().getTypeDesc());
     }
     mv.visitInsn(RETURN);

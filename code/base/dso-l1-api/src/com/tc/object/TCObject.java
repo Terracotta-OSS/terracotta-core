@@ -15,7 +15,7 @@ import com.tc.object.util.ToggleableStrongReference;
  */
 public interface TCObject extends Cacheable, TCObjectExternal {
   /** Indicates null object identifier */
-  public static final Long NULL_OBJECT_ID = new Long(-1);
+  public static final Long NULL_OBJECT_ID = Long.valueOf(-1);
 
   /** Indicates null field index */
   public static final int  NULL_INDEX     = -1;

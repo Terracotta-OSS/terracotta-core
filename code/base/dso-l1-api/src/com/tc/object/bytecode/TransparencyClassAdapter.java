@@ -552,7 +552,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase implements Transp
         }
       } else if (!lock.isAutolock()) {
         c.visitLdcInsn(ByteCodeUtil.generateNamedLockName(lock.getLockName()));
-        c.visitLdcInsn(new Integer(lock.getLockLevelAsInt()));
+        c.visitLdcInsn(Integer.valueOf(lock.getLockLevelAsInt()));
         c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "commitLock", "(Ljava/lang/String;I)V");
       }
     }
@@ -561,20 +561,20 @@ public class TransparencyClassAdapter extends ClassAdapterBase implements Transp
 
   private void callTCCommitWithLockName(final String lockName, final int type, final MethodVisitor mv) {
     mv.visitLdcInsn(lockName);
-    mv.visitLdcInsn(new Integer(type));
+    mv.visitLdcInsn(Integer.valueOf(type));
     mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "commitLock", "(Ljava/lang/String;I)V");
   }
 
   private void callTCBeginWithLock(final LockDefinition lock, final MethodVisitor c) {
     c.visitLdcInsn(ByteCodeUtil.generateNamedLockName(lock.getLockName()));
-    c.visitLdcInsn(new Integer(lock.getLockLevelAsInt()));
+    c.visitLdcInsn(Integer.valueOf(lock.getLockLevelAsInt()));
     c.visitLdcInsn(lock.getLockContextInfo());
     c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "beginLock", "(Ljava/lang/String;ILjava/lang/String;)V");
   }
 
   private void callTCBeginWithLockName(final String lockName, final int lockLevel, final MethodVisitor mv) {
     mv.visitLdcInsn(lockName);
-    mv.visitLdcInsn(new Integer(lockLevel));
+    mv.visitLdcInsn(Integer.valueOf(lockLevel));
     mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "beginLock", "(Ljava/lang/String;I)V");
   }
 
@@ -1251,14 +1251,14 @@ public class TransparencyClassAdapter extends ClassAdapterBase implements Transp
   private void callTCMonitorExit(final int callingMethodModifier, final LockDefinition def, final MethodVisitor c) {
     Assert.eval("Can't call tc monitorenter from a static method.", !Modifier.isStatic(callingMethodModifier));
     ByteCodeUtil.pushThis(c);
-    c.visitLdcInsn(new Integer(def.getLockLevelAsInt()));
+    c.visitLdcInsn(Integer.valueOf(def.getLockLevelAsInt()));
     c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "instrumentationMonitorExit", "(Ljava/lang/Object;I)V");
   }
 
   private void callTCMonitorEnter(final int callingMethodModifier, final LockDefinition def, final MethodVisitor c) {
     Assert.eval("Can't call tc monitorexit from a static method.", !Modifier.isStatic(callingMethodModifier));
     ByteCodeUtil.pushThis(c);
-    c.visitLdcInsn(new Integer(def.getLockLevelAsInt()));
+    c.visitLdcInsn(Integer.valueOf(def.getLockLevelAsInt()));
     c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "instrumentationMonitorEnter", "(Ljava/lang/Object;I)V");
   }
 

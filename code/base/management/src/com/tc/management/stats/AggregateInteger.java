@@ -192,8 +192,8 @@ public final class AggregateInteger implements Serializable {
 
   @Override
   public String toString() {
-    return MessageFormat.format(TO_STRING_FORMAT, new Object[] { name, new Integer(n), new Integer(sum),
-        new Integer(minimum), new Integer(maximum), new Integer(sum / n) });
+    return MessageFormat.format(TO_STRING_FORMAT, new Object[] { name, Integer.valueOf(n), Integer.valueOf(sum),
+        Integer.valueOf(minimum), Integer.valueOf(maximum), Integer.valueOf(sum / n) });
   }
 
 }

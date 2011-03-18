@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.async.impl;
 
@@ -69,9 +70,9 @@ class StageMonitorImpl implements StageMonitor {
       sum += qd;
     }
 
-    return new AnalysisImpl(new Long(elapsed), new Integer(snapshots.size()),
-                            safeDiv(snapshots.size() * 1000, elapsed), new Integer(min), new Integer(max),
-                            safeDiv(sum, snapshots.size()));
+    return new AnalysisImpl(Long.valueOf(elapsed), Integer.valueOf(snapshots.size()), safeDiv(snapshots.size() * 1000,
+                                                                                              elapsed),
+                            Integer.valueOf(min), Integer.valueOf(max), safeDiv(sum, snapshots.size()));
   }
 
   public synchronized void flush() {

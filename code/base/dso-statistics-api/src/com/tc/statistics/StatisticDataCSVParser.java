@@ -73,7 +73,7 @@ public class StatisticDataCSVParser {
         data.setElement(value);
         break;
       case 6:
-        data.setData(new Long(Long.parseLong(value)));
+        data.setData(Long.valueOf(Long.parseLong(value)));
         break;
       case 7:
         data.setData(value);

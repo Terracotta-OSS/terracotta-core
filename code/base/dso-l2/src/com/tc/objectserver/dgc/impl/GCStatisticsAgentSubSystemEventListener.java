@@ -59,12 +59,12 @@ public class GCStatisticsAgentSubSystemEventListener extends GarbageCollectorEve
     datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, SRADistributedGC.START_TIME_ELEMENT, gcInfo.getStartTime()));
     datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, SRADistributedGC.ELAPSED_TIME_ELEMENT, gcInfo
         .getElapsedTime()));
-    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, SRADistributedGC.BEGIN_OBJECT_COUNT_ELEMENT, new Long(gcInfo
-        .getBeginObjectCount())));
-    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, SRADistributedGC.CANDIDATE_OBJECT_COUNT_ELEMENT,
-                                new Long(gcInfo.getCandidateGarbageCount())));
-    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, SRADistributedGC.ACTUAL_GARBAGE_COUNT_ELEMENT,
-                                new Long(gcInfo.getActualGarbageCount())));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, SRADistributedGC.BEGIN_OBJECT_COUNT_ELEMENT, Long
+        .valueOf(gcInfo.getBeginObjectCount())));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, SRADistributedGC.CANDIDATE_OBJECT_COUNT_ELEMENT, Long
+        .valueOf(gcInfo.getCandidateGarbageCount())));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, SRADistributedGC.ACTUAL_GARBAGE_COUNT_ELEMENT, Long
+        .valueOf(gcInfo.getActualGarbageCount())));
     datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, SRADistributedGC.PAUSE_TIME_ELEMENT, gcInfo
         .getPausedStageTime()));
     datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, SRADistributedGC.MARK_TIME_ELEMENT, gcInfo
@@ -78,8 +78,7 @@ public class GCStatisticsAgentSubSystemEventListener extends GarbageCollectorEve
     try {
       for (Iterator sessionsIterator = sessions.iterator(); sessionsIterator.hasNext();) {
         String session = (String) sessionsIterator.next();
-        for (int i = 0; i < datas.length; i++) {
-          StatisticData data = datas[i];
+        for (StatisticData data : datas) {
           statisticsAgentSubSystem.getStatisticsManager().injectStatisticData(session, data.moment(moment));
         }
       }

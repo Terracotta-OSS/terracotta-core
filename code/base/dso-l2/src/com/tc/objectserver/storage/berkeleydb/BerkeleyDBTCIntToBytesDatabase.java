@@ -10,8 +10,8 @@ import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.TCIntToBytesDatabase;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
+import com.tc.objectserver.storage.api.TCIntToBytesDatabase;
 import com.tc.util.Conversion;
 
 import java.util.HashMap;
@@ -34,7 +34,7 @@ public class BerkeleyDBTCIntToBytesDatabase extends BerkeleyDBTCBytesBytesDataba
     byte[] key = Conversion.int2Bytes(id);
     return put(key, b, tx);
   }
-  
+
   public Map<Integer, byte[]> getAll(PersistenceTransaction tx) {
     Map<Integer, byte[]> allClazzBytes = new HashMap<Integer, byte[]>();
     Cursor cursor = null;
@@ -43,7 +43,7 @@ public class BerkeleyDBTCIntToBytesDatabase extends BerkeleyDBTCBytesBytesDataba
       DatabaseEntry key = new DatabaseEntry();
       DatabaseEntry value = new DatabaseEntry();
       while (OperationStatus.SUCCESS.equals(cursor.getNext(key, value, LockMode.DEFAULT))) {
-        allClazzBytes.put(new Integer(Conversion.bytes2Int(key.getData())), value.getData());
+        allClazzBytes.put(Integer.valueOf(Conversion.bytes2Int(key.getData())), value.getData());
       }
       cursor.close();
       tx.commit();

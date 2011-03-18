@@ -401,7 +401,7 @@ public class TCClassImpl implements TCClass {
           try {
             if (!Modifier.isStatic(fields[i].getModifiers())) {
               fields[i].setAccessible(true);
-              rv.put(new Long(unsafe.objectFieldOffset(fields[i])), makeFieldName(fields[i]));
+              rv.put(Long.valueOf(unsafe.objectFieldOffset(fields[i])), makeFieldName(fields[i]));
               // System.err.println("Thread " + Thread.currentThread().getName() + ", class: " + getName() + ", field: "
               // + fields[i].getName() + ", offset: " + unsafe.objectFieldOffset(fields[i]));
             }
@@ -425,7 +425,7 @@ public class TCClassImpl implements TCClass {
   }
 
   public String getFieldNameByOffset(final long fieldOffset) {
-    final Long fieldOffsetObj = new Long(fieldOffset);
+    final Long fieldOffsetObj = Long.valueOf(fieldOffset);
 
     final String field = (String) this.offsetToFieldNames.get(fieldOffsetObj);
     if (field == null) {

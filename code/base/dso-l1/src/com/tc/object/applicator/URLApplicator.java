@@ -92,7 +92,7 @@ public class URLApplicator extends BaseApplicator {
   public void dehydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNAWriter writer, Object pojo) {
     URL url = (URL) pojo;
     writer.addLogicalAction(SerializationUtil.URL_SET,
-                            new Object[] { url.getProtocol(), url.getHost(), new Integer(url.getPort()),
+                            new Object[] { url.getProtocol(), url.getHost(), Integer.valueOf(url.getPort()),
                                 url.getAuthority(), url.getUserInfo(), url.getPath(), url.getQuery(), url.getRef() });
   }
 

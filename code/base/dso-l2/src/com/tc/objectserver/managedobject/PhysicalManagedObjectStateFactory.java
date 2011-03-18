@@ -28,9 +28,9 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PhysicalManagedObjectStateFactory {
@@ -67,7 +67,7 @@ public class PhysicalManagedObjectStateFactory {
 
   private void addKnownClasses(String classIdentifier, String genClassName, int cid) {
     knownClasses.put(classIdentifier, genClassName);
-    knownClasses.put(new Integer(cid), genClassName);
+    knownClasses.put(Integer.valueOf(cid), genClassName);
   }
 
   private void addKnownClasses(ClassSpec cs) {
@@ -82,8 +82,8 @@ public class PhysicalManagedObjectStateFactory {
       String classIdentifier = tci.readString();
       String genClassName = tci.readString();
 
-      loader.defineClassFromBytes(genClassName, classId, clazzBytes, clazzBytes.length - bai.available(), bai
-          .available());
+      loader.defineClassFromBytes(genClassName, classId, clazzBytes, clazzBytes.length - bai.available(),
+                                  bai.available());
       addKnownClasses(classIdentifier, genClassName, classId);
     } catch (Exception ex) {
       throw new TCRuntimeException(ex);
@@ -130,7 +130,7 @@ public class PhysicalManagedObjectStateFactory {
   }
 
   public PhysicalManagedObjectState create(ObjectID parentID, int classId) throws ClassNotFoundException {
-    Integer cid = new Integer(classId);
+    Integer cid = Integer.valueOf(classId);
     String className = knownClasses.get(cid);
     if (className == null) { throw new ClassNotFoundException("Unknown Class Id :" + classId + " Details : parent = "
                                                               + parentID); }

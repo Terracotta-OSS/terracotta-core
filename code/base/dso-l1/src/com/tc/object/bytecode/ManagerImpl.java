@@ -380,8 +380,8 @@ public class ManagerImpl implements ManagerInternal {
                                      final Collection collection, final TCObject tcobj) {
 
     for (final Iterator i = collection.iterator(); i.hasNext();) {
-      tcobj.logicalInvoke(method, this.methodDisplay.getDisplayForSignature(methodSignature), new Object[] {
-          new Integer(index++), i.next() });
+      tcobj.logicalInvoke(method, this.methodDisplay.getDisplayForSignature(methodSignature),
+                          new Object[] { Integer.valueOf(index++), i.next() });
     }
   }
 

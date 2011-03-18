@@ -43,53 +43,55 @@ public class ManagedObjectStateFactory {
   private final PersistentCollectionFactory         persistentCollectionFactory;
 
   static {
-    classNameToStateMap.put(java.util.IdentityHashMap.class.getName(), new Byte(ManagedObjectState.MAP_TYPE));
-    classNameToStateMap.put(java.util.Hashtable.class.getName(), new Byte(ManagedObjectState.PARTIAL_MAP_TYPE));
-    classNameToStateMap.put(java.util.Properties.class.getName(), new Byte(ManagedObjectState.PARTIAL_MAP_TYPE));
-    classNameToStateMap.put(gnu.trove.THashMap.class.getName(), new Byte(ManagedObjectState.MAP_TYPE));
-    classNameToStateMap.put(java.util.HashMap.class.getName(), new Byte(ManagedObjectState.PARTIAL_MAP_TYPE));
-    classNameToStateMap
-        .put(java.util.Collections.EMPTY_MAP.getClass().getName(), new Byte(ManagedObjectState.MAP_TYPE));
-    classNameToStateMap.put(java.util.LinkedHashMap.class.getName(), new Byte(ManagedObjectState.LINKED_HASHMAP_TYPE));
-    classNameToStateMap.put(java.util.TreeMap.class.getName(), new Byte(ManagedObjectState.TREE_MAP_TYPE));
-    classNameToStateMap.put(gnu.trove.THashSet.class.getName(), new Byte(ManagedObjectState.SET_TYPE));
-    classNameToStateMap.put(java.util.HashSet.class.getName(), new Byte(ManagedObjectState.SET_TYPE));
-    classNameToStateMap.put(java.util.LinkedHashSet.class.getName(), new Byte(ManagedObjectState.LINKED_HASHSET_TYPE));
-    classNameToStateMap
-        .put(java.util.Collections.EMPTY_SET.getClass().getName(), new Byte(ManagedObjectState.SET_TYPE));
-    classNameToStateMap.put(java.util.TreeSet.class.getName(), new Byte(ManagedObjectState.TREE_SET_TYPE));
-    classNameToStateMap.put(java.util.LinkedList.class.getName(), new Byte(ManagedObjectState.LINKED_LIST_TYPE));
-    classNameToStateMap.put(java.util.ArrayList.class.getName(), new Byte(ManagedObjectState.LIST_TYPE));
-    classNameToStateMap.put(java.util.Vector.class.getName(), new Byte(ManagedObjectState.LIST_TYPE));
-    classNameToStateMap.put(java.util.Stack.class.getName(), new Byte(ManagedObjectState.LIST_TYPE));
+    classNameToStateMap.put(java.util.IdentityHashMap.class.getName(), Byte.valueOf(ManagedObjectState.MAP_TYPE));
+    classNameToStateMap.put(java.util.Hashtable.class.getName(), Byte.valueOf(ManagedObjectState.PARTIAL_MAP_TYPE));
+    classNameToStateMap.put(java.util.Properties.class.getName(), Byte.valueOf(ManagedObjectState.PARTIAL_MAP_TYPE));
+    classNameToStateMap.put(gnu.trove.THashMap.class.getName(), Byte.valueOf(ManagedObjectState.MAP_TYPE));
+    classNameToStateMap.put(java.util.HashMap.class.getName(), Byte.valueOf(ManagedObjectState.PARTIAL_MAP_TYPE));
+    classNameToStateMap.put(java.util.Collections.EMPTY_MAP.getClass().getName(),
+                            Byte.valueOf(ManagedObjectState.MAP_TYPE));
+    classNameToStateMap.put(java.util.LinkedHashMap.class.getName(),
+                            Byte.valueOf(ManagedObjectState.LINKED_HASHMAP_TYPE));
+    classNameToStateMap.put(java.util.TreeMap.class.getName(), Byte.valueOf(ManagedObjectState.TREE_MAP_TYPE));
+    classNameToStateMap.put(gnu.trove.THashSet.class.getName(), Byte.valueOf(ManagedObjectState.SET_TYPE));
+    classNameToStateMap.put(java.util.HashSet.class.getName(), Byte.valueOf(ManagedObjectState.SET_TYPE));
+    classNameToStateMap.put(java.util.LinkedHashSet.class.getName(),
+                            Byte.valueOf(ManagedObjectState.LINKED_HASHSET_TYPE));
+    classNameToStateMap.put(java.util.Collections.EMPTY_SET.getClass().getName(),
+                            Byte.valueOf(ManagedObjectState.SET_TYPE));
+    classNameToStateMap.put(java.util.TreeSet.class.getName(), Byte.valueOf(ManagedObjectState.TREE_SET_TYPE));
+    classNameToStateMap.put(java.util.LinkedList.class.getName(), Byte.valueOf(ManagedObjectState.LINKED_LIST_TYPE));
+    classNameToStateMap.put(java.util.ArrayList.class.getName(), Byte.valueOf(ManagedObjectState.LIST_TYPE));
+    classNameToStateMap.put(java.util.Vector.class.getName(), Byte.valueOf(ManagedObjectState.LIST_TYPE));
+    classNameToStateMap.put(java.util.Stack.class.getName(), Byte.valueOf(ManagedObjectState.LIST_TYPE));
     classNameToStateMap.put(java.util.Collections.EMPTY_LIST.getClass().getName(),
-                            new Byte(ManagedObjectState.LIST_TYPE));
-    classNameToStateMap.put(java.util.Date.class.getName(), new Byte(ManagedObjectState.DATE_TYPE));
-    classNameToStateMap.put(java.sql.Date.class.getName(), new Byte(ManagedObjectState.DATE_TYPE));
-    classNameToStateMap.put(java.sql.Time.class.getName(), new Byte(ManagedObjectState.DATE_TYPE));
-    classNameToStateMap.put(java.sql.Timestamp.class.getName(), new Byte(ManagedObjectState.DATE_TYPE));
-    classNameToStateMap.put(java.net.URL.class.getName(), new Byte(ManagedObjectState.URL_TYPE));
+                            Byte.valueOf(ManagedObjectState.LIST_TYPE));
+    classNameToStateMap.put(java.util.Date.class.getName(), Byte.valueOf(ManagedObjectState.DATE_TYPE));
+    classNameToStateMap.put(java.sql.Date.class.getName(), Byte.valueOf(ManagedObjectState.DATE_TYPE));
+    classNameToStateMap.put(java.sql.Time.class.getName(), Byte.valueOf(ManagedObjectState.DATE_TYPE));
+    classNameToStateMap.put(java.sql.Timestamp.class.getName(), Byte.valueOf(ManagedObjectState.DATE_TYPE));
+    classNameToStateMap.put(java.net.URL.class.getName(), Byte.valueOf(ManagedObjectState.URL_TYPE));
     classNameToStateMap.put(java.util.concurrent.LinkedBlockingQueue.class.getName(),
-                            new Byte(ManagedObjectState.QUEUE_TYPE));
+                            Byte.valueOf(ManagedObjectState.QUEUE_TYPE));
     classNameToStateMap.put(java.util.concurrent.ConcurrentHashMap.class.getName(),
-                            new Byte(ManagedObjectState.CONCURRENT_HASHMAP_TYPE));
+                            Byte.valueOf(ManagedObjectState.CONCURRENT_HASHMAP_TYPE));
     // XXX: Support for CDM, CDSM in terracotta-toolkit
-    classNameToStateMap.put("com.terracotta.toolkit.collections.ConcurrentDistributedMapDso", Byte
-        .valueOf(ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE));
-    classNameToStateMap.put("com.terracotta.toolkit.collections.ConcurrentDistributedServerMapDso", Byte
-        .valueOf(ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE));
+    classNameToStateMap.put("com.terracotta.toolkit.collections.ConcurrentDistributedMapDso",
+                            Byte.valueOf(ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE));
+    classNameToStateMap.put("com.terracotta.toolkit.collections.ConcurrentDistributedServerMapDso",
+                            Byte.valueOf(ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE));
     // XXX: Support for Ehcache entry type
     classNameToStateMap.put(TDCSerializedEntryManagedObjectState.SERIALIZED_ENTRY,
-                            new Byte(ManagedObjectState.TDC_SERIALIZED_ENTRY));
+                            Byte.valueOf(ManagedObjectState.TDC_SERIALIZED_ENTRY));
     classNameToStateMap.put(TDCCustomLifespanSerializedEntryManagedObjectState.CUSTOM_SERIALIZED_ENTRY,
-                            new Byte(ManagedObjectState.TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY));
+                            Byte.valueOf(ManagedObjectState.TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY));
     classNameToStateMap.put(java.util.concurrent.CopyOnWriteArrayList.class.getName(),
-                            new Byte(ManagedObjectState.LIST_TYPE));
+                            Byte.valueOf(ManagedObjectState.LIST_TYPE));
     // XXX: Support for terracotta toolkit
-    classNameToStateMap.put("org.terracotta.async.ProcessingBucketItems", new Byte(ManagedObjectState.LIST_TYPE));
+    classNameToStateMap.put("org.terracotta.async.ProcessingBucketItems", Byte.valueOf(ManagedObjectState.LIST_TYPE));
     classNameToStateMap.put("org.terracotta.collections.ConcurrentBlockingQueue",
-                            new Byte(ManagedObjectState.QUEUE_TYPE));
-    classNameToStateMap.put("org.terracotta.collections.TerracottaList", new Byte(ManagedObjectState.LIST_TYPE));
+                            Byte.valueOf(ManagedObjectState.QUEUE_TYPE));
+    classNameToStateMap.put("org.terracotta.collections.TerracottaList", Byte.valueOf(ManagedObjectState.LIST_TYPE));
   }
 
   private ManagedObjectStateFactory(final ManagedObjectChangeListenerProvider listenerProvider,
@@ -105,8 +107,7 @@ public class ManagedObjectStateFactory {
   /*
    * @see comments above
    */
-  public static synchronized ManagedObjectStateFactory createInstance(
-                                                                      final ManagedObjectChangeListenerProvider listenerProvider,
+  public static synchronized ManagedObjectStateFactory createInstance(final ManagedObjectChangeListenerProvider listenerProvider,
                                                                       final Persistor persistor) {
     if (singleton != null && !disableAssertions) {
       // not good !!
@@ -182,16 +183,17 @@ public class ManagedObjectStateFactory {
       case ManagedObjectState.DATE_TYPE:
         return new DateManagedObjectState(classID);
       case ManagedObjectState.CONCURRENT_HASHMAP_TYPE:
-        return new ConcurrentHashMapManagedObjectState(classID, this.persistentCollectionFactory
-            .createPersistentMap(oid));
+        return new ConcurrentHashMapManagedObjectState(classID,
+                                                       this.persistentCollectionFactory.createPersistentMap(oid));
       case ManagedObjectState.URL_TYPE:
         return new URLManagedObjectState(classID);
       case ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE:
-        return new ConcurrentDistributedMapManagedObjectState(classID, this.persistentCollectionFactory
-            .createPersistentMap(oid));
+        return new ConcurrentDistributedMapManagedObjectState(classID,
+                                                              this.persistentCollectionFactory.createPersistentMap(oid));
       case ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE:
-        return new ConcurrentDistributedServerMapManagedObjectState(classID, this.persistentCollectionFactory
-            .createPersistentMap(oid));
+        return new ConcurrentDistributedServerMapManagedObjectState(classID,
+                                                                    this.persistentCollectionFactory
+                                                                        .createPersistentMap(oid));
       case ManagedObjectState.TDC_SERIALIZED_ENTRY:
         return new TDCSerializedEntryManagedObjectState(classID);
       case ManagedObjectState.TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY:

@@ -56,7 +56,7 @@ public class DateApplicator extends BaseApplicator {
 
   public void dehydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNAWriter writer, Object pojo) {
     Date date = (Date) pojo;
-    writer.addLogicalAction(SerializationUtil.SET_TIME, new Object[] { new Long(date.getTime()) });
+    writer.addLogicalAction(SerializationUtil.SET_TIME, new Object[] { Long.valueOf(date.getTime()) });
   }
 
   public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.statistics.cli.commands;
 
@@ -33,7 +34,7 @@ public class CommandRetrieveStatistics extends AbstractCliCommand {
     httpclient_logger2.setLevel(Level.WARN);
   }
 
-  public final static String[] ARGUMENT_NAMES = new String[] {"filename"};
+  public final static String[] ARGUMENT_NAMES = new String[] { "filename" };
 
   public String[] getArgumentNames() {
     return ARGUMENT_NAMES;
@@ -44,7 +45,8 @@ public class CommandRetrieveStatistics extends AbstractCliCommand {
 
     final File file = new File(arguments[0]);
     if (file.exists()) {
-      System.out.println("> Aborted statistics retrieval since the target file '"  + file.getAbsolutePath() + "' already exists.");
+      System.out.println("> Aborted statistics retrieval since the target file '" + file.getAbsolutePath()
+                         + "' already exists.");
       return;
     }
 
@@ -60,7 +62,8 @@ public class CommandRetrieveStatistics extends AbstractCliCommand {
       get.setFollowRedirects(true);
       int status = httpClient.executeMethod(get);
       if (status != HttpStatus.SC_OK) {
-        System.out.println("> The http client has encountered a status code other than ok for the url: " + url + " status: " + HttpStatus.getStatusText(status));
+        System.out.println("> The http client has encountered a status code other than ok for the url: " + url
+                           + " status: " + HttpStatus.getStatusText(status));
         return;
       }
 
@@ -72,7 +75,7 @@ public class CommandRetrieveStatistics extends AbstractCliCommand {
         t.start();
 
         // wait for the download thread to finish
-        while(t.isAlive()) {
+        while (t.isAlive()) {
           System.out.print(".");
           runnable.wait(500);
         }
@@ -85,18 +88,18 @@ public class CommandRetrieveStatistics extends AbstractCliCommand {
       if (get != null) {
         get.releaseConnection();
       }
-    }      
+    }
   }
 
   private String getStatsExportServletURI(final GathererConnection connection) throws Exception {
-    Integer dsoPort = new Integer(connection.getDSOListenPort());
+    Integer dsoPort = Integer.valueOf(connection.getDSOListenPort());
     Object[] args = new Object[] { connection.getHost(), dsoPort.toString() };
     return MessageFormat.format("http://{0}:{1}/statistics-gatherer/retrieveStatistics", args);
   }
 
   private class StreamCopierRunnable implements Runnable {
     final private GetMethod getMethod;
-    final private File outFile;
+    final private File      outFile;
 
     StreamCopierRunnable(final GetMethod getMethod, final File outFile) {
       this.getMethod = getMethod;
@@ -125,7 +128,7 @@ public class CommandRetrieveStatistics extends AbstractCliCommand {
       } finally {
         IOUtils.closeQuietly(out);
         getMethod.releaseConnection();
-        
+
         synchronized (this) {
           this.notifyAll();
         }

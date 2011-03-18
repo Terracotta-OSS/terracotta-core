@@ -21,15 +21,15 @@ import java.lang.reflect.Modifier;
  * Used to create wrappers for logical methods
  */
 public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
-  private String        ownerSlashes;
-  private String        methodName;
-  private String        originalMethodName;
-  private String        description;
-  private int           access;
-  private String[]      exceptions;
-  private String        signature;
-  private int           instrumentationType;
-  private int           wrapperAccess;
+  private String   ownerSlashes;
+  private String   methodName;
+  private String   originalMethodName;
+  private String   description;
+  private int      access;
+  private String[] exceptions;
+  private String   signature;
+  private int      instrumentationType;
+  private int      wrapperAccess;
 
   public LogicalMethodAdapter() {
     // When using this as a Method creator it doesn't need any of that stuff. yuck :-)
@@ -40,9 +40,9 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
     this.instrumentationType = instrumentationType;
   }
 
-  public void initialize(int anAccess, String aClassName, String aMethodName,
-                         String aOriginalMethodName, String aDescription, String sig, String[] anExceptions,
-                         InstrumentationLogger logger, MemberInfo info) {
+  public void initialize(int anAccess, String aClassName, String aMethodName, String aOriginalMethodName,
+                         String aDescription, String sig, String[] anExceptions, InstrumentationLogger logger,
+                         MemberInfo info) {
     this.ownerSlashes = aClassName.replace('.', '/');
     this.methodName = aMethodName;
     this.originalMethodName = aOriginalMethodName;
@@ -136,10 +136,10 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
     ByteCodeUtil.pushThis(mv);
 
     mv.visitLdcInsn(methodName + description);
-    mv.visitLdcInsn(new Integer(1));
+    mv.visitLdcInsn(Integer.valueOf(1));
     mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
     mv.visitInsn(DUP);
-    mv.visitLdcInsn(new Integer(0));
+    mv.visitLdcInsn(Integer.valueOf(0));
     mv.visitVarInsn(ALOAD, 2);
     mv.visitInsn(AASTORE);
     mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "logicalInvoke",
@@ -281,21 +281,21 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
 
     ByteCodeUtil.pushThis(mv);
     mv.visitLdcInsn(methodName + description);
-    mv.visitLdcInsn(new Integer(3));
+    mv.visitLdcInsn(Integer.valueOf(3));
     mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
     mv.visitInsn(DUP);
     int count = 0;
-    mv.visitLdcInsn(new Integer(count++));
+    mv.visitLdcInsn(Integer.valueOf(count++));
     mv.visitVarInsn(ALOAD, 3);
     mv.visitInsn(AASTORE);
 
     mv.visitInsn(DUP);
-    mv.visitLdcInsn(new Integer(count++));
+    mv.visitLdcInsn(Integer.valueOf(count++));
     mv.visitVarInsn(ALOAD, 1);
     mv.visitInsn(AASTORE);
 
     mv.visitInsn(DUP);
-    mv.visitLdcInsn(new Integer(count++));
+    mv.visitLdcInsn(Integer.valueOf(count++));
     mv.visitVarInsn(ALOAD, 2);
     mv.visitInsn(AASTORE);
 

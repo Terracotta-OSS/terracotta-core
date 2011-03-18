@@ -1265,9 +1265,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   public synchronized PrettyPrinter prettyPrint(final PrettyPrinter out) {
     out.print(this.getClass().getName()).flush();
-    out.indent().print("roots Map: ").print(new Integer(this.roots.size())).flush();
-    out.indent().print("idToManaged size: ").print(new Integer(this.objectStore.size())).flush();
-    out.indent().print("pojoToManaged size: ").print(new Integer(this.pojoToManaged.size())).flush();
+    out.indent().print("roots Map: ").print(Integer.valueOf(this.roots.size())).flush();
+    out.indent().print("idToManaged size: ").print(Integer.valueOf(this.objectStore.size())).flush();
+    out.indent().print("pojoToManaged size: ").print(Integer.valueOf(this.pojoToManaged.size())).flush();
     return out;
   }
 

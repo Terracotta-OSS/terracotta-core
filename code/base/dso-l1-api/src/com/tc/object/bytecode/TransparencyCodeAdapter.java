@@ -99,8 +99,8 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
 
       String delegateFieldName = ClassAdapterBase.getDelegateFieldName(superClassNameSlashes);
       super.visitMethodInsn(INVOKESPECIAL, superClassNameSlashes, "<init>", desc);
-      super.visitMethodInsn(INVOKESPECIAL, spec.getClassNameSlashes(), ByteCodeUtil
-          .fieldSetterMethod(delegateFieldName), "(L" + superClassNameSlashes + ";)V");
+      super.visitMethodInsn(INVOKESPECIAL, spec.getClassNameSlashes(),
+                            ByteCodeUtil.fieldSetterMethod(delegateFieldName), "(L" + superClassNameSlashes + ";)V");
 
     } else {
       basicVisitMethodInsn(opcode, owner, name, desc);
@@ -164,7 +164,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
    * they were with 1.4. This adaption is needed for both PORTABLE and ADAPTABLE classes as we can have instance where
    * Logical subclass of ADAPTABLE class calls clone() to make a copy of itself. The resolveLock needs to be held for
    * the duration of the clone() call if the reference is to a shared object
-   *
+   * 
    * <pre>
    * Object refToBeCloned;
    * Object rv;
@@ -178,7 +178,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
    *   rv = refToBeCloned.clone();
    * }
    * </pre>
-   *
+   * 
    * @return
    * @see AbstractMap and HashMap
    */
@@ -301,7 +301,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
 
   private void callTCBeginWithLock(LockDefinition lock, MethodVisitor c) {
     c.visitLdcInsn(ByteCodeUtil.generateNamedLockName(lock.getLockName()));
-    c.visitLdcInsn(new Integer(lock.getLockLevelAsInt()));
+    c.visitLdcInsn(Integer.valueOf(lock.getLockLevelAsInt()));
     c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "beginLock", "(Ljava/lang/String;I)V");
   }
 
@@ -310,20 +310,20 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     for (int i = 0; i < locks.length; i++) {
       if (!locks[i].isAutolock()) {
         c.visitLdcInsn(ByteCodeUtil.generateNamedLockName(locks[i].getLockName()));
-        c.visitLdcInsn(new Integer(locks[i].getLockLevelAsInt()));
+        c.visitLdcInsn(Integer.valueOf(locks[i].getLockLevelAsInt()));
         c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "commitLock", "(Ljava/lang/String;I)V");
       }
     }
   }
 
   private void callMonitorEnterWithContextInfo() {
-    super.visitLdcInsn(new Integer(autoLockType));
+    super.visitLdcInsn(Integer.valueOf(autoLockType));
     // super.visitLdcInsn(autoLockContextInfo);
     visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "instrumentationMonitorEnter", "(Ljava/lang/Object;I)V");
   }
 
   private void callMonitorExit() {
-    super.visitLdcInsn(new Integer(autoLockType));
+    super.visitLdcInsn(Integer.valueOf(autoLockType));
     visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "instrumentationMonitorExit", "(Ljava/lang/Object;I)V");
   }
 
@@ -403,12 +403,14 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
           // ..., array, index
           super.visitInsn(DUP2); // ..., array, index, array, index
           super.visitInsn(POP); // ..., array, index, array
-          callArrayManagerMethod("getObject", "(Ljava/lang/Object;)Lcom/tc/object/TCObjectExternal;"); // ..., array, index,
+          callArrayManagerMethod("getObject", "(Ljava/lang/Object;)Lcom/tc/object/TCObjectExternal;"); // ..., array,
+                                                                                                       // index,
           // tcobj
           super.visitInsn(DUP); // ..., array, index, tcobj, tcobj
           super.visitJumpInsn(IFNULL, notManaged); // ..., array, index, tcobj
           super.visitInsn(DUP); // ..., array, index, tcobj, tcobj
-          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObjectExternal", "getResolveLock", "()Ljava/lang/Object;"); // ...,
+          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObjectExternal", "getResolveLock",
+                                "()Ljava/lang/Object;"); // ...,
           // array,
           // index,
           // tcobj,

@@ -66,7 +66,7 @@ public class QueueFactory {
       argsClass[0] = int.class;
       Constructor constructor = clazz.getConstructor(argsClass);
       Object[] args = new Object[1];
-      args[0] = new Integer(capacity);
+      args[0] = Integer.valueOf(capacity);
       return (TCQueue) constructor.newInstance(args);
     } catch (Exception e) {
       throw new AssertionError(e);

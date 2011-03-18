@@ -76,10 +76,10 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
 
     for (int i = 0; i < asgArray.length; i++) {
       String[] members = asgArray[i].getMembers().getMemberArray();
-      List groupList = (List) this.l2DataByGroupId.get(new Integer(i));
+      List groupList = (List) this.l2DataByGroupId.get(Integer.valueOf(i));
       if (groupList == null) {
         groupList = new ArrayList();
-        this.l2DataByGroupId.put(new Integer(i), groupList);
+        this.l2DataByGroupId.put(Integer.valueOf(i), groupList);
       }
       for (String member : members) {
         L2Data data = (L2Data) this.l2DataByName.get(member);

@@ -69,10 +69,10 @@ public class SRADiskActivity implements StatisticRetrievalAction {
         }
       }
       List data = new ArrayList();
-      data.add(new StatisticData(ACTION_NAME, ELEMENT_BYTES_READ, new Long(bytesRead)));
-      data.add(new StatisticData(ACTION_NAME, ELEMENT_BYTES_WRITTEN, new Long(bytesWrite)));
-      data.add(new StatisticData(ACTION_NAME, ELEMENT_READS, new Long(reads)));
-      data.add(new StatisticData(ACTION_NAME, ELEMENT_WRITES, new Long(writes)));
+      data.add(new StatisticData(ACTION_NAME, ELEMENT_BYTES_READ, Long.valueOf(bytesRead)));
+      data.add(new StatisticData(ACTION_NAME, ELEMENT_BYTES_WRITTEN, Long.valueOf(bytesWrite)));
+      data.add(new StatisticData(ACTION_NAME, ELEMENT_READS, Long.valueOf(reads)));
+      data.add(new StatisticData(ACTION_NAME, ELEMENT_WRITES, Long.valueOf(writes)));
 
       return (StatisticData[]) data.toArray(new StatisticData[data.size()]);
 

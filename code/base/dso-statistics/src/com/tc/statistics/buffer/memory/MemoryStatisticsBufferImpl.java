@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.statistics.buffer.memory;
 
@@ -27,30 +28,32 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class MemoryStatisticsBufferImpl extends AbstractStatisticsBuffer {
-  public final static Long                                 DEFAULT_MAX_SIZE         = new Long(20000L);
-  public final static Long                                 DEFAULT_PURGE_PERCENTAGE = new Long(10);
+  public final static Long                                 DEFAULT_MAX_SIZE         = Long.valueOf(20000L);
+  public final static Long                                 DEFAULT_PURGE_PERCENTAGE = Long.valueOf(10);
 
   private final StatisticsSystemType                       type;
-  private final DSOStatisticsConfig                           config;
+  private final DSOStatisticsConfig                        config;
 
   private final ConcurrentMap<String, List<StatisticData>> buffer                   = new ConcurrentHashMap<String, List<StatisticData>>();
   private final ConcurrentMap<String, Date>                sessions                 = new ConcurrentHashMap<String, Date>();
 
   public MemoryStatisticsBufferImpl(final StatisticsSystemType type, final DSOStatisticsConfig config) {
     super();
-    
+
     Assert.assertNotNull("type", type);
     Assert.assertNotNull("config", config);
-    
+
     this.type = type;
     this.config = config;
   }
 
   public void open() throws StatisticsBufferException {
-    if (StatisticsSystemType.CLIENT == type &&
-      TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.CVT_CLIENT_FAIL_BUFFER_OPEN, false)) {
-      throw new StatisticsBufferException("Forcibly failing opening the statistics buffer through the " + TCPropertiesConsts.CVT_CLIENT_FAIL_BUFFER_OPEN + " property", null);
-    }
+    if (StatisticsSystemType.CLIENT == type
+        && TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.CVT_CLIENT_FAIL_BUFFER_OPEN, false)) { throw new StatisticsBufferException(
+                                                                                                                                                     "Forcibly failing opening the statistics buffer through the "
+                                                                                                                                                         + TCPropertiesConsts.CVT_CLIENT_FAIL_BUFFER_OPEN
+                                                                                                                                                         + " property",
+                                                                                                                                                     null); }
 
     fireOpened();
   }
@@ -77,20 +80,16 @@ public class MemoryStatisticsBufferImpl extends AbstractStatisticsBuffer {
   }
 
   public void startCapturing(final String sessionId) throws StatisticsBufferException {
-    if (!buffer.containsKey(sessionId)) {
-      throw new StatisticsBufferStartCapturingSessionNotFoundException(sessionId);
-    }
-    
+    if (!buffer.containsKey(sessionId)) { throw new StatisticsBufferStartCapturingSessionNotFoundException(sessionId); }
+
     sessions.putIfAbsent(sessionId, new Date());
 
     fireCapturingStarted(sessionId);
   }
 
   public void stopCapturing(final String sessionId) throws StatisticsBufferException {
-    if (!buffer.containsKey(sessionId)) {
-      throw new StatisticsBufferStopCapturingSessionNotFoundException(sessionId);
-    }
-    
+    if (!buffer.containsKey(sessionId)) { throw new StatisticsBufferStopCapturingSessionNotFoundException(sessionId); }
+
     if (sessions.remove(sessionId) != null) {
       fireCapturingStopped(sessionId);
     }
@@ -103,51 +102,47 @@ public class MemoryStatisticsBufferImpl extends AbstractStatisticsBuffer {
     Assert.assertNotNull("name property of data", data.getName());
 
     fillInDefaultValues(data);
-    
+
     Assert.assertNotNull("agentIp property of data", data.getAgentIp());
     Assert.assertNotNull("agentDifferentiator property of data", data.getAgentDifferentiator());
 
     final List<StatisticData> sessionDataList = buffer.get(data.getSessionId());
-    if (null == sessionDataList) {
-      throw new StatisticsBufferUnknownCaptureSessionException(data.getSessionId(), null);      
-    }
-    
+    if (null == sessionDataList) { throw new StatisticsBufferUnknownCaptureSessionException(data.getSessionId(), null); }
+
     synchronized (sessionDataList) {
-      // using >= instead of == explicitly for defensive coding, you never know if a bug makes the size grow larger that the max allowed value
+      // using >= instead of == explicitly for defensive coding, you never know if a bug makes the size grow larger that
+      // the max allowed value
       if (sessionDataList.size() >= config.getParamLong(DSOStatisticsConfig.KEY_MAX_MEMORY_BUFFER_SIZE)) {
-        final int amountToRemove = (int) ((sessionDataList.size() / 100) * config.getParamLong(DSOStatisticsConfig.KEY_MEMORY_BUFFER_PURGE_PERCENTAGE));
+        final int amountToRemove = (int) ((sessionDataList.size() / 100) * config
+            .getParamLong(DSOStatisticsConfig.KEY_MEMORY_BUFFER_PURGE_PERCENTAGE));
         final ListIterator<StatisticData> it = sessionDataList.listIterator(0);
         for (int i = 0; i < amountToRemove; i++) {
           it.next();
           it.remove();
         }
       }
-      
+
       sessionDataList.add(data);
     }
   }
 
-  public void consumeStatistics(final String sessionId, final StatisticsConsumer consumer) throws StatisticsBufferException {
+  public void consumeStatistics(final String sessionId, final StatisticsConsumer consumer)
+      throws StatisticsBufferException {
     Assert.assertNotNull("sessionId", sessionId);
     Assert.assertNotNull("consumer", consumer);
 
     final List<StatisticData> newSessionDataList = new ArrayList<StatisticData>();
     final List<StatisticData> oldSessionDataList = buffer.replace(sessionId, newSessionDataList);
-    if (null == oldSessionDataList) {
-      throw new StatisticsBufferUnknownCaptureSessionException(sessionId, null);      
-    }
-    
+    if (null == oldSessionDataList) { throw new StatisticsBufferUnknownCaptureSessionException(sessionId, null); }
+
     final boolean limit_consumption = consumer.getMaximumConsumedDataCount() > 0;
 
     try {
       synchronized (oldSessionDataList) {
         long consumedCount = 0;
         final Iterator<StatisticData> it = oldSessionDataList.iterator();
-        while (it.hasNext() &&
-            (!limit_consumption || consumedCount < consumer.getMaximumConsumedDataCount())) {
-          if (!consumer.consumeStatisticData(it.next())) {
-            return;
-          }
+        while (it.hasNext() && (!limit_consumption || consumedCount < consumer.getMaximumConsumedDataCount())) {
+          if (!consumer.consumeStatisticData(it.next())) { return; }
           it.remove();
           consumedCount++;
         }

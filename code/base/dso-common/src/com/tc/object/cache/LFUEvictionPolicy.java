@@ -19,8 +19,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 /**
  * This Cache policy tries to evict objects from cache using the access count. The Least Frequenctly used objects are
@@ -180,7 +180,7 @@ public class LFUEvictionPolicy implements EvictionPolicy {
           }
         } else {
           // incrementAccessCountFor(accessCountSummary, accessed);
-          accessCounts.add(new Integer(accessed));
+          accessCounts.add(Integer.valueOf(accessed));
 
         }
         c = next;
@@ -269,9 +269,9 @@ public class LFUEvictionPolicy implements EvictionPolicy {
   private void incrementAccessCountFor(final Map accessCountSummary, final Integer key) {
     final Integer count = (Integer) accessCountSummary.get(key);
     if (count == null) {
-      accessCountSummary.put(key, new Integer(1));
+      accessCountSummary.put(key, Integer.valueOf(1));
     } else {
-      accessCountSummary.put(key, new Integer(count.intValue() + 1));
+      accessCountSummary.put(key, Integer.valueOf(count.intValue() + 1));
     }
   }
 

@@ -225,7 +225,7 @@ public class FixedTimeSeriesCollection extends AbstractIntervalXYDataset impleme
    * @return The value.
    */
   public synchronized Number getEndX(int series, int item) {
-    return new Long(getTimePeriod(item).getLastMillisecond(this.workingCalendar));
+    return Long.valueOf(getTimePeriod(item).getLastMillisecond(this.workingCalendar));
   }
 
   /**
@@ -247,7 +247,7 @@ public class FixedTimeSeriesCollection extends AbstractIntervalXYDataset impleme
    * @return The value.
    */
   public synchronized Number getStartX(int series, int item) {
-    return new Long(getTimePeriod(item).getFirstMillisecond(this.workingCalendar));
+    return Long.valueOf(getTimePeriod(item).getFirstMillisecond(this.workingCalendar));
   }
 
   /**
@@ -289,7 +289,7 @@ public class FixedTimeSeriesCollection extends AbstractIntervalXYDataset impleme
    * @return The value.
    */
   public Number getX(int series, int item) {
-    return new Long(getX(getTimePeriod(item)));
+    return Long.valueOf(getX(getTimePeriod(item)));
   }
 
   /**

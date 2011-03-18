@@ -87,8 +87,10 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
             bag.setTunneledDomains(msg.getTunneledDomains());
             bag.updateRegisteredBeans();
           } catch (IOException e) {
-            LOGGER.error("Unable to create tunneled JMX connection to all the tunneled domains on the DSO client on host["
-                         + msg.getChannel().getRemoteAddress() + "], not all the JMX beans on the client will show up in monitoring tools!!", e);
+            LOGGER
+                .error("Unable to create tunneled JMX connection to all the tunneled domains on the DSO client on host["
+                           + msg.getChannel().getRemoteAddress()
+                           + "], not all the JMX beans on the client will show up in monitoring tools!!", e);
           }
         }
       }
@@ -111,11 +113,11 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
       if (!channelIdToJmxConnector.containsKey(channel.getChannelID())) {
         JMXServiceURL serviceURL;
         try {
-          serviceURL = new JMXServiceURL("terracotta", remoteAddress.getAddress().getHostAddress(), remoteAddress
-              .getPort());
+          serviceURL = new JMXServiceURL("terracotta", remoteAddress.getAddress().getHostAddress(),
+                                         remoteAddress.getPort());
         } catch (MalformedURLException murle) {
           LOGGER.error("Unable to construct a JMX service URL using DSO client channel from host["
-                       + channel.getRemoteAddress() + "]; tunneled JMX connection will not be established", murle);
+                           + channel.getRemoteAddress() + "]; tunneled JMX connection will not be established", murle);
           return;
         }
         Map environment = new HashMap();
@@ -123,8 +125,8 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
         environment.put(ClientProvider.JMX_MESSAGE_CHANNEL, channel);
         environment.put(ClientProvider.CONNECTION_LIST, channelIdToMsgConnector);
         environment.put("jmx.remote.x.request.timeout", new Long(Long.MAX_VALUE));
-        environment.put("jmx.remote.x.client.connection.check.period", new Long(0));
-        environment.put("jmx.remote.x.server.connection.timeout", new Long(Long.MAX_VALUE));
+        environment.put("jmx.remote.x.client.connection.check.period", Long.valueOf(0));
+        environment.put("jmx.remote.x.server.connection.timeout", Long.valueOf(Long.MAX_VALUE));
 
         final JMXConnector jmxConnector;
         try {
@@ -144,14 +146,16 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
                                                              new ConnectorClosedFilter(), null);
             } catch (Exception e) {
               LOGGER.error("Unable to register a JMX connection listener for the DSO client["
-                           + channel.getRemoteAddress()
-                           + "], if the DSO client disconnects the then its (dead) beans will not be unregistered", e);
+                               + channel.getRemoteAddress()
+                               + "], if the DSO client disconnects the then its (dead) beans will not be unregistered",
+                           e);
             }
           }
 
         } catch (IOException ioe) {
           LOGGER.error("Unable to create tunneled JMX connection to the DSO client on host["
-                       + channel.getRemoteAddress() + "], this DSO client will not show up in monitoring tools!!", ioe);
+                           + channel.getRemoteAddress() + "], this DSO client will not show up in monitoring tools!!",
+                       ioe);
           return;
         }
         channelIdToJmxConnector.put(channel.getChannelID(), jmxConnector);

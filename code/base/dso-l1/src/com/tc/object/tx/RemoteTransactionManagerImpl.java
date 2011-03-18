@@ -575,7 +575,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
 
   public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     synchronized (this.lock) {
-      out.indent().print("incompleteBatches count: ").print(new Integer(this.incompleteBatches.size())).flush();
+      out.indent().print("incompleteBatches count: ").print(Integer.valueOf(this.incompleteBatches.size())).flush();
       out.indent().print("batchAccounting: ").print(this.batchAccounting).flush();
       out.indent().print("lockAccounting: ").print(this.lockAccounting).flush();
     }

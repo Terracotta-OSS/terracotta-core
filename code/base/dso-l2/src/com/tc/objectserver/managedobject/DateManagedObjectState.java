@@ -1,15 +1,16 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
-import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
 import com.tc.util.Assert;
@@ -58,11 +59,12 @@ public class DateManagedObjectState extends LogicalManagedObjectState {
       }
     }
   }
-  
+
   /**
    * This method returns whether this ManagedObjectState can have references or not.
-   * @ return true : The Managed object represented by this state object will never have any reference to other objects.
-   *         false : The Managed object represented by this state object can have references to other objects. 
+   * 
+   * @return true : The Managed object represented by this state object will never have any reference to other objects.
+   *         false : The Managed object represented by this state object can have references to other objects.
    */
   @Override
   public boolean hasNoReferences() {
@@ -70,10 +72,11 @@ public class DateManagedObjectState extends LogicalManagedObjectState {
   }
 
   public void dehydrate(ObjectID objectID, DNAWriter writer, DNAType type) {
-    writer.addLogicalAction(SerializationUtil.SET_TIME, new Object[] { new Long(referenceTime) });
-    writer.addLogicalAction(SerializationUtil.SET_NANOS, new Object[] { new Integer(referenceNanoTime) });
+    writer.addLogicalAction(SerializationUtil.SET_TIME, new Object[] { Long.valueOf(referenceTime) });
+    writer.addLogicalAction(SerializationUtil.SET_NANOS, new Object[] { Integer.valueOf(referenceNanoTime) });
   }
 
+  @Override
   protected void addAllObjectReferencesTo(Set refs) {
     return;
   }
@@ -86,6 +89,7 @@ public class DateManagedObjectState extends LogicalManagedObjectState {
                                            false);
   }
 
+  @Override
   protected void basicWriteTo(ObjectOutput o) throws IOException {
     o.writeLong(referenceTime);
     o.writeInt(referenceNanoTime);
@@ -98,6 +102,7 @@ public class DateManagedObjectState extends LogicalManagedObjectState {
     return state;
   }
 
+  @Override
   protected boolean basicEquals(LogicalManagedObjectState o) {
     DateManagedObjectState dms = (DateManagedObjectState) o;
     return dms.referenceTime == referenceTime && dms.referenceNanoTime == referenceNanoTime;

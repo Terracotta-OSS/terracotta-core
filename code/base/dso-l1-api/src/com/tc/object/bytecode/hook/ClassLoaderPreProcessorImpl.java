@@ -570,7 +570,7 @@ public class ClassLoaderPreProcessorImpl {
       if (value == null) {
         IntRef ref = new IntRef();
         ref.key = check.key;
-        state.locals.put(ref, value = new Integer(nextLocal(size)));
+        state.locals.put(ref, value = Integer.valueOf(nextLocal(size)));
       }
       return value.intValue();
     }

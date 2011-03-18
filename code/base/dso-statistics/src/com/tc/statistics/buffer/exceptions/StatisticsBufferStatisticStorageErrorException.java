@@ -1,17 +1,18 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.statistics.buffer.exceptions;
 
 import com.tc.statistics.StatisticData;
 
 public class StatisticsBufferStatisticStorageErrorException extends StatisticsBufferException {
-  private final Long sessionId;
+  private final Long          sessionId;
   private final StatisticData data;
 
   public StatisticsBufferStatisticStorageErrorException(final long sessionId, final StatisticData data) {
     super("Unexpected error while storing the statistic with id '" + sessionId + "' and data " + data + ".", null);
-    this.sessionId = new Long(sessionId);
+    this.sessionId = Long.valueOf(sessionId);
     this.data = data;
   }
 

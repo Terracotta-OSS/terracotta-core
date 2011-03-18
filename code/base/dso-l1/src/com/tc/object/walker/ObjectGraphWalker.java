@@ -110,7 +110,7 @@ public class ObjectGraphWalker {
 
       Integer id = (Integer) visited.get(o);
       if (id == null) {
-        id = new Integer(visited.size());
+        id = Integer.valueOf(visited.size());
         visited.put(o, id);
       } else {
         value.setRepeated(true);

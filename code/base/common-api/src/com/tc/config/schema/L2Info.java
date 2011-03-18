@@ -96,7 +96,7 @@ public class L2Info implements java.io.Serializable {
       }
       builder.append(jmxPort);
       builder.append(host);
-      hashCode = new Integer(builder.toHashCode());
+      hashCode = Integer.valueOf(builder.toHashCode());
     }
     return hashCode.intValue();
   }

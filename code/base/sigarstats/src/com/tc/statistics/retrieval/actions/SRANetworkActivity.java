@@ -56,8 +56,8 @@ public class SRANetworkActivity implements StatisticRetrievalAction {
         out += stat.getTxBytes();
       }
       List data = new ArrayList();
-      data.add(new StatisticData(ACTION_NAME, ELEMENT_BYTES_READ, new Long(in)));
-      data.add(new StatisticData(ACTION_NAME, ELEMENT_BYTES_WRITTEN, new Long(out)));
+      data.add(new StatisticData(ACTION_NAME, ELEMENT_BYTES_READ, Long.valueOf(in)));
+      data.add(new StatisticData(ACTION_NAME, ELEMENT_BYTES_WRITTEN, Long.valueOf(out)));
 
       return (StatisticData[]) data.toArray(new StatisticData[data.size()]);
 

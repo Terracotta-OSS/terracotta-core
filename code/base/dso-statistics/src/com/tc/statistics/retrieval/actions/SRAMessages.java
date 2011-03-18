@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.statistics.retrieval.actions;
 
@@ -28,8 +29,8 @@ import java.util.List;
  * </ul>
  * Each element is a combination of the message type and the above names separated by a colon (:)
  * <p/>
- * The {@link com.tc.statistics.retrieval.StatisticsRetriever} samples this data at the global frequency.
- * The property {@code tcm.monitor.enabled} needs to be {@code true} to collect this statistic.
+ * The {@link com.tc.statistics.retrieval.StatisticsRetriever} samples this data at the global frequency. The property
+ * {@code tcm.monitor.enabled} needs to be {@code true} to collect this statistic.
  */
 public class SRAMessages implements StatisticRetrievalAction {
 
@@ -79,18 +80,18 @@ public class SRAMessages implements StatisticRetrievalAction {
     List data = new ArrayList();
     synchronized (monitor) {
       for (Iterator it = monitor.getCounters().values().iterator(); it.hasNext();) {
-        MessageMonitorImpl.MessageCounter counter = (MessageMonitorImpl.MessageCounter)it.next();
-        data.add(new StatisticData(ACTION_NAME, counter.getName() + ELEMENT_NAME_DELIMITER + ELEMENT_INCOMING_COUNT, new Long(counter
-          .getIncomingCount().get())));
-        data.add(new StatisticData(ACTION_NAME, counter.getName() + ELEMENT_NAME_DELIMITER + ELEMENT_INCOMING_DATA, new Long(counter
-          .getIncomingData().get())));
-        data.add(new StatisticData(ACTION_NAME, counter.getName() + ELEMENT_NAME_DELIMITER + ELEMENT_OUTGOING_COUNT, new Long(counter
-          .getOutgoingCount().get())));
-        data.add(new StatisticData(ACTION_NAME, counter.getName() + ELEMENT_NAME_DELIMITER + ELEMENT_OUTGOING_DATA, new Long(counter
-          .getOutgoingData().get())));
+        MessageMonitorImpl.MessageCounter counter = (MessageMonitorImpl.MessageCounter) it.next();
+        data.add(new StatisticData(ACTION_NAME, counter.getName() + ELEMENT_NAME_DELIMITER + ELEMENT_INCOMING_COUNT,
+                                   Long.valueOf(counter.getIncomingCount().get())));
+        data.add(new StatisticData(ACTION_NAME, counter.getName() + ELEMENT_NAME_DELIMITER + ELEMENT_INCOMING_DATA,
+                                   Long.valueOf(counter.getIncomingData().get())));
+        data.add(new StatisticData(ACTION_NAME, counter.getName() + ELEMENT_NAME_DELIMITER + ELEMENT_OUTGOING_COUNT,
+                                   Long.valueOf(counter.getOutgoingCount().get())));
+        data.add(new StatisticData(ACTION_NAME, counter.getName() + ELEMENT_NAME_DELIMITER + ELEMENT_OUTGOING_DATA,
+                                   Long.valueOf(counter.getOutgoingData().get())));
       }
     }
-    return (StatisticData[])data.toArray(new StatisticData[data.size()]);
+    return (StatisticData[]) data.toArray(new StatisticData[data.size()]);
   }
 
   public String getName() {

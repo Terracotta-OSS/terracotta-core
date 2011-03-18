@@ -1,15 +1,16 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
-import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
 import com.tc.util.Assert;
@@ -28,14 +29,14 @@ import java.util.Set;
  */
 public class URLManagedObjectState extends LogicalManagedObjectState {
 
-  private String protocol = null;
-  private String host = null;
-  private int port = -1;
+  private String protocol  = null;
+  private String host      = null;
+  private int    port      = -1;
   private String authority = null;
-  private String userInfo = null;
-  private String path = null;
-  private String query = null;
-  private String ref = null;
+  private String userInfo  = null;
+  private String path      = null;
+  private String query     = null;
+  private String ref       = null;
 
   public URLManagedObjectState(long classID) {
     super(classID);
@@ -68,7 +69,7 @@ public class URLManagedObjectState extends LogicalManagedObjectState {
             host = params[1].toString();
           }
           if (!ObjectID.NULL_ID.equals(params[2])) {
-            port = ((Integer)params[2]).intValue();
+            port = ((Integer) params[2]).intValue();
           }
           if (!ObjectID.NULL_ID.equals(params[3])) {
             authority = params[3].toString();
@@ -85,7 +86,7 @@ public class URLManagedObjectState extends LogicalManagedObjectState {
           if (!ObjectID.NULL_ID.equals(params[7])) {
             ref = params[7].toString();
           }
-         break;
+          break;
         default:
           throw new AssertionError("Invalid action:" + method);
       }
@@ -93,45 +94,49 @@ public class URLManagedObjectState extends LogicalManagedObjectState {
   }
 
   public void dehydrate(ObjectID objectID, DNAWriter writer, DNAType type) {
-    writer.addLogicalAction(SerializationUtil.URL_SET, new Object[] { protocol, host, new Integer(port), authority, userInfo, path, query, ref });
+    writer.addLogicalAction(SerializationUtil.URL_SET, new Object[] { protocol, host, Integer.valueOf(port), authority,
+        userInfo, path, query, ref });
   }
 
   /**
-   * This method returns whether this ManagedObjectState can have references or not.
-   * @ return true : The Managed object represented by this state object will never have any reference to other objects.
-   *         false : The Managed object represented by this state object can have references to other objects. 
+   * This method returns whether this ManagedObjectState can have references or not. @ return true : The Managed object
+   * represented by this state object will never have any reference to other objects. false : The Managed object
+   * represented by this state object can have references to other objects.
    */
   @Override
   public boolean hasNoReferences() {
     return true;
   }
 
+  @Override
   protected void addAllObjectReferencesTo(Set refs) {
     return;
   }
-  
+
   private URL createURLFromState() {
     String file = path;
     if (query != null && query.length() > 0) {
-      file = file+"?"+query;
+      file = file + "?" + query;
     }
     if (ref != null && ref.length() > 0) {
-      file = file+"#"+ref;
+      file = file + "#" + ref;
     }
-    
+
     try {
       return new URL(protocol, host, port, file);
     } catch (MalformedURLException e) {
       throw new RuntimeException(e);
-    }    
+    }
   }
 
   public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit) {
     Map dataCopy = new HashMap();
     dataCopy.put("url", createURLFromState());
-    return new PhysicalManagedObjectFacade(objectID, ObjectID.NULL_ID, className, dataCopy, false, DNA.NULL_ARRAY_SIZE, false);
+    return new PhysicalManagedObjectFacade(objectID, ObjectID.NULL_ID, className, dataCopy, false, DNA.NULL_ARRAY_SIZE,
+                                           false);
   }
 
+  @Override
   protected void basicWriteTo(ObjectOutput o) throws IOException {
     o.writeUTF(protocol);
     o.writeUTF(host);
@@ -156,16 +161,12 @@ public class URLManagedObjectState extends LogicalManagedObjectState {
     return state;
   }
 
+  @Override
   protected boolean basicEquals(LogicalManagedObjectState o) {
     URLManagedObjectState dms = (URLManagedObjectState) o;
-    return dms.protocol.equals(protocol)
-      && dms.host.equals(host)
-      && dms.port == port
-      && dms.authority.equals(authority)
-      && dms.userInfo.equals(userInfo)
-      && dms.path.equals(path)
-      && dms.query.equals(query)
-      && dms.ref.equals(ref);
+    return dms.protocol.equals(protocol) && dms.host.equals(host) && dms.port == port
+           && dms.authority.equals(authority) && dms.userInfo.equals(userInfo) && dms.path.equals(path)
+           && dms.query.equals(query) && dms.ref.equals(ref);
   }
 
   public byte getType() {

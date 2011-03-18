@@ -92,8 +92,7 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
 
     long checksum = csc.checksum();
     Assert
-        .assertTrue(
-                    "The checksum of the SQL that creates the database structure doesn't correspond to the checksum that corresponds to the version number of the database structure. Any significant change to the database structure should increase the version number and adapt the SQL checksum. The current checksum is "
+        .assertTrue("The checksum of the SQL that creates the database structure doesn't correspond to the checksum that corresponds to the version number of the database structure. Any significant change to the database structure should increase the version number and adapt the SQL checksum. The current checksum is "
                         + checksum + "L.", currentChecksum == checksum);
 
     final Integer[] version = new Integer[1];
@@ -107,7 +106,7 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
                                   new ResultSetHandler() {
                                     public void useResultSet(ResultSet resultSet) throws SQLException {
                                       if (resultSet.next()) {
-                                        version[0] = new Integer(resultSet.getInt("version"));
+                                        version[0] = Integer.valueOf(resultSet.getInt("version"));
                                         created[0] = resultSet.getTimestamp("created");
                                       }
                                     }
@@ -161,7 +160,7 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
 
     long datanumber = resultSet.getLong("dataNumber");
     if (!resultSet.wasNull()) {
-      data.data(new Long(datanumber));
+      data.data(Long.valueOf(datanumber));
     } else {
       String datatext = resultSet.getString("dataText");
       if (!resultSet.wasNull()) {

@@ -25,7 +25,7 @@ public final class PortChooser {
   public int chooseRandomPort() {
     synchronized (VM_WIDE_LOCK) {
       int portNum = choose();
-      Assert.assertTrue(chosen.add(new Integer(portNum)));
+      Assert.assertTrue(chosen.add(Integer.valueOf(portNum)));
       return portNum;
     }
   }
@@ -37,8 +37,8 @@ public final class PortChooser {
         port = choose();
         if (port + 1 >= MAX) continue;
         if (!isPortUsed(port + 1)) {
-          Assert.assertTrue(chosen.add(new Integer(port)));
-          Assert.assertTrue(chosen.add(new Integer(port + 1)));
+          Assert.assertTrue(chosen.add(Integer.valueOf(port)));
+          Assert.assertTrue(chosen.add(Integer.valueOf(port + 1)));
           break;
         }
       } while (true);
@@ -66,14 +66,14 @@ public final class PortChooser {
       } while (true);
 
       for (int i = 0; i < numOfPorts; i++) {
-        Assert.assertTrue(chosen.add(new Integer(port + i)));
+        Assert.assertTrue(chosen.add(Integer.valueOf(port + i)));
       }
     }
     return port;
   }
 
   public boolean isPortUsed(int portNum) {
-    final Integer port = new Integer(portNum);
+    final Integer port = Integer.valueOf(portNum);
     if (chosen.contains(port)) return true;
     return !canBind(portNum);
   }
@@ -105,7 +105,7 @@ public final class PortChooser {
   private synchronized int choose() {
     while (true) {
       final int attempt = getNonEphemeralPort();
-      if (chosen.contains(new Integer(attempt))) {
+      if (chosen.contains(Integer.valueOf(attempt))) {
         continue; // already picked at some point, try again
       }
       if (canBind(attempt)) return attempt;

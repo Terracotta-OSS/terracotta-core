@@ -30,7 +30,7 @@ public class OidBitsArrayMapImpl implements OidBitsArrayMap {
       // take left-most bit as base
       idx -= bitsLength;
     }
-    return new Long(idx);
+    return Long.valueOf(idx);
   }
 
   public OidLongArray getBitsArray(long oid) {

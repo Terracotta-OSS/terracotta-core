@@ -57,7 +57,7 @@ public class L2Dumper extends AbstractTerracottaMBean implements L2DumperMBean {
     debugPrintln("ThreadDumping:  count=[" + threadDumpCount + "] interval=[" + threadDumpInterval + "]");
     Class threadDumpClass = getClass().getClassLoader().loadClass("com.tc.util.runtime.ThreadDump");
     Method method = threadDumpClass.getMethod(THREAD_DUMP_METHOD_NAME, THREAD_DUMP_METHOD_PARAMETERS);
-    Object[] args = { new Integer(threadDumpCount), new Long(threadDumpInterval) };
+    Object[] args = { Integer.valueOf(threadDumpCount), Long.valueOf(threadDumpInterval) };
     int pid = ((Integer) method.invoke(null, args)).intValue();
     return pid;
   }

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.impl;
 
@@ -43,7 +44,7 @@ public class ObjectInstanceMonitorImpl implements ObjectInstanceMonitor, ObjectI
 
     instanceCounts.forEachEntry(new TObjectIntProcedure() {
       public boolean execute(Object key, int value) {
-        rv.put(key, new Integer(value));
+        rv.put(key, Integer.valueOf(value));
         return true;
       }
     });

@@ -20,18 +20,18 @@ import java.util.regex.Pattern;
 public final class ReplaceLine {
 
   private ReplaceLine() {
-  // cannot instantiate
+    // cannot instantiate
   }
 
   /**
    * Replaces lines matching a token regular expression group.
-   *
+   * 
    * @return true if all tokens found matches
    */
   public static void parseFile(ReplaceLine.Token[] tokens, File file) throws FileNotFoundException, IOException {
     Arrays.sort(tokens, new Comparator() {
       public int compare(Object o1, Object o2) {
-        return new Integer(((Token) o1).lineNumber).compareTo(new Integer(((Token) o2).lineNumber));
+        return Integer.valueOf(((Token) o1).lineNumber).compareTo(Integer.valueOf(((Token) o2).lineNumber));
       }
     });
 

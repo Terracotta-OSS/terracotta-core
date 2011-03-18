@@ -124,7 +124,7 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
       // we could just send the data for the entire array (like we do when a managed array is brand new)
 
       // could use a better collection that maintain put order for repeated additions
-      Integer key = new Integer(index);
+      Integer key = Integer.valueOf(index);
       arrayEvents.remove(key);
       arrayEvents.put(key, new ArrayElementChangeEvent(index, newValue));
     } else {
@@ -150,7 +150,7 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
 
   public void arrayChanged(int startPos, Object array, int newLength) {
     // could use a better collection that maintain put order for repeated additions
-    Integer key = new Integer(-startPos); // negative int is used for sub-arrays
+    Integer key = Integer.valueOf(-startPos); // negative int is used for sub-arrays
     ArrayElementChangeEvent oldEvent = (ArrayElementChangeEvent) arrayEvents.remove(key);
     if (oldEvent != null) {
       Object oldArray = oldEvent.getValue();

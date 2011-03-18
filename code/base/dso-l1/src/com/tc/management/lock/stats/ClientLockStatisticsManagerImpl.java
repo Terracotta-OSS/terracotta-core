@@ -33,7 +33,7 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
   private final static Set                 IGNORE_STACK_TRACES_PACKAGE = new HashSet();
 
   private final LockDistributionStrategy   lockDistributionStrategy;
-  
+
   private Sink                             sink;
   private DSOClientMessageChannel          channel;
 
@@ -42,7 +42,7 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
   public ClientLockStatisticsManagerImpl(LockDistributionStrategy lockDistributionStrategy) {
     this.lockDistributionStrategy = lockDistributionStrategy;
   }
-  
+
   static {
     IGNORE_STACK_TRACES_PACKAGE.add("com.tc.");
     IGNORE_STACK_TRACES_PACKAGE.add("com.tcclient.");
@@ -100,16 +100,19 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
     super.recordLockRejected(lockID, NULL_NODE_ID, threadID);
   }
 
+  @Override
   public synchronized void setLockStatisticsConfig(int traceDepth, int gatherInterval) {
     disableLockStatistics();
     super.setLockStatisticsEnabled(true);
     super.setLockStatisticsConfig(traceDepth, gatherInterval);
   }
 
+  @Override
   protected LockStatisticsInfo newLockStatisticsContext(LockID lockID) {
     return new ClientLockStatisticsInfoImpl(lockID, lockStatConfig.getGatherInterval());
   }
 
+  @Override
   protected void disableLockStatistics() {
     super.clear();
   }
@@ -141,11 +144,11 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
 
     List list = new ArrayList();
     int numOfStackTraceCollected = 0;
-    for (int i = 0; i < stackTraces.length; i++) {
-      if (shouldIgnoreClass(stackTraces[i].getClassName())) {
+    for (StackTraceElement stackTrace : stackTraces) {
+      if (shouldIgnoreClass(stackTrace.getClassName())) {
         continue;
       }
-      list.add(stackTraces[i]);
+      list.add(stackTrace);
       numOfStackTraceCollected++;
       if (numOfStackTraceCollected >= stackTraceDepth) {
         break;
@@ -183,7 +186,7 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
     try {
       Field f = StackTraceElement.class.getDeclaredField("lineNumber");
       f.setAccessible(true);
-      f.set(se, new Integer(newLineNumber));
+      f.set(se, Integer.valueOf(newLineNumber));
     } catch (SecurityException e) {
       throw new TCRuntimeException(e);
     } catch (NoSuchFieldException e) {
@@ -210,7 +213,8 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
       Set allLockIDs = lockStats.keySet();
       for (Iterator i = allLockIDs.iterator(); i.hasNext();) {
         LockID lockID = (LockID) i.next();
-        if ((lockDistributionStrategy == null) || lockDistributionStrategy.getGroupIDFor(lockID).equals(nodeID) || GroupID.ALL_GROUPS.equals(nodeID)) {
+        if ((lockDistributionStrategy == null) || lockDistributionStrategy.getGroupIDFor(lockID).equals(nodeID)
+            || GroupID.ALL_GROUPS.equals(nodeID)) {
           LockStatElement lockStatElement = getLockStatElement(lockID);
           allTCLockStatElements.add(new TCStackTraceElement(lockID, lockStatElement));
         }

@@ -61,8 +61,8 @@ public class CacheManager implements CacheMemoryEventsListener {
   }
 
   public void start() {
-    new CacheMemoryManagerEventGenerator(config.getUsedThreshold(), config.getUsedCriticalThreshold(), config
-        .getLeastCount(), memoryManager, this);
+    new CacheMemoryManagerEventGenerator(config.getUsedThreshold(), config.getUsedCriticalThreshold(),
+                                         config.getLeastCount(), memoryManager, this);
   }
 
   public void memoryUsed(CacheMemoryEventType type, MemoryUsage usage) {
@@ -84,7 +84,7 @@ public class CacheManager implements CacheMemoryEventsListener {
     private int                        countBefore;
     private int                        countAfter;
     private int                        evicted;
-    private boolean                    objectsGCed = false;
+    private final boolean              objectsGCed = false;
     private int                        toEvict;
     private long                       startTime;
     private State                      state       = INIT;
@@ -143,19 +143,20 @@ public class CacheManager implements CacheMemoryEventsListener {
                                                                          long collectionCount) {
       List datas = new ArrayList();
       StatisticData statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "asking to evict count",
-                                                      new Long(toEvictArg));
+                                                      Long.valueOf(toEvictArg));
       datas.add(statisticData);
 
-      statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "current size", new Long(currentCount));
+      statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "current size", Long.valueOf(currentCount));
       datas.add(statisticData);
 
-      statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "calculated cache size", new Long(cacheSize));
+      statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "calculated cache size", Long.valueOf(cacheSize));
       datas.add(statisticData);
 
-      statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "percentage heap used", new Long(usedPercentage));
+      statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "percentage heap used",
+                                        Long.valueOf(usedPercentage));
       datas.add(statisticData);
 
-      statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "gc count", new Long(collectionCount));
+      statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "gc count", Long.valueOf(collectionCount));
       datas.add(statisticData);
 
       return (StatisticData[]) datas.toArray(new StatisticData[0]);
@@ -220,8 +221,7 @@ public class CacheManager implements CacheMemoryEventsListener {
       try {
         for (Iterator sessionsIterator = sessions.iterator(); sessionsIterator.hasNext();) {
           String session = (String) sessionsIterator.next();
-          for (int i = 0; i < datas.length; i++) {
-            StatisticData data = datas[i];
+          for (StatisticData data : datas) {
             statisticsAgentSubSystem.getStatisticsManager().injectStatisticData(session, data.moment(moment));
           }
         }
@@ -233,16 +233,17 @@ public class CacheManager implements CacheMemoryEventsListener {
     private synchronized StatisticData[] getCacheObjectsEvictedData(int evictedCount, int currentCount,
                                                                     int newObjectsCount, long timeTaken) {
       List datas = new ArrayList();
-      StatisticData statisticData = new StatisticData(CACHE_OBJECTS_EVICTED, "evicted count", new Long(evictedCount));
+      StatisticData statisticData = new StatisticData(CACHE_OBJECTS_EVICTED, "evicted count",
+                                                      Long.valueOf(evictedCount));
       datas.add(statisticData);
 
-      statisticData = new StatisticData(CACHE_OBJECTS_EVICTED, "current count", new Long(currentCount));
+      statisticData = new StatisticData(CACHE_OBJECTS_EVICTED, "current count", Long.valueOf(currentCount));
       datas.add(statisticData);
 
-      statisticData = new StatisticData(CACHE_OBJECTS_EVICTED, "new objects count", new Long(newObjectsCount));
+      statisticData = new StatisticData(CACHE_OBJECTS_EVICTED, "new objects count", Long.valueOf(newObjectsCount));
       datas.add(statisticData);
 
-      statisticData = new StatisticData(CACHE_OBJECTS_EVICTED, "time taken", new Long(timeTaken));
+      statisticData = new StatisticData(CACHE_OBJECTS_EVICTED, "time taken", Long.valueOf(timeTaken));
       datas.add(statisticData);
 
       return (StatisticData[]) datas.toArray(new StatisticData[0]);
@@ -261,6 +262,7 @@ public class CacheManager implements CacheMemoryEventsListener {
       return (objects2Evict > currentCount ? currentCount : objects2Evict);
     }
 
+    @Override
     public String toString() {
       return "CacheStats[ type = " + type + ",\n\t usage = " + usage + ",\n\t countBefore = " + countBefore
              + ", toEvict = " + toEvict + ", evicted = " + evicted + ", countAfter = " + countAfter

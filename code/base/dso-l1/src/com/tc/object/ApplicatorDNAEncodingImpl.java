@@ -100,7 +100,7 @@ public class ApplicatorDNAEncodingImpl extends BaseDNAEncodingImpl {
 
     try {
       return (String) COMPRESSED_STRING_CONSTRUCTOR.newInstance(new Object[] { Boolean.TRUE, compressedChars,
-          new Integer(stringLength), new Integer(stringHash) });
+          Integer.valueOf(stringLength), Integer.valueOf(stringHash) });
     } catch (final Exception e) {
       throw Assert.failure(e.getMessage(), e);
     }

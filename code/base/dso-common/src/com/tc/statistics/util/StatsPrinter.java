@@ -38,7 +38,7 @@ public class StatsPrinter implements StatsRecorder, Runnable {
   public StatsPrinter(String name, long timeInterval, MessageFormat header, MessageFormat formatLine, boolean printTotal) {
     this.printTotal = printTotal;
     this.timeInterval = timeInterval;
-    this.header = header.format(new Long[] { new Long(timeInterval) });
+    this.header = header.format(new Long[] { Long.valueOf(timeInterval) });
     this.formatLine = formatLine;
 
     Thread t = new Thread(this, name);
@@ -49,7 +49,7 @@ public class StatsPrinter implements StatsRecorder, Runnable {
   public StatsPrinter(MessageFormat header, MessageFormat formatLine, boolean printTotal) {
     this.printTotal = printTotal;
     this.timeInterval = -1;
-    this.header = header.format(new Long[] { new Long(Aggregator.timeInterval) });
+    this.header = header.format(new Long[] { Long.valueOf(Aggregator.timeInterval) });
     this.formatLine = formatLine;
 
     getAggregator().addStatsPrinter(this);

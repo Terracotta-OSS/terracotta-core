@@ -242,8 +242,8 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
   public Map getStatistics() {
     HashMap map = new HashMap();
 
-    map.put(MEMORY_USED, new Long(getUsedMemory()));
-    map.put(MEMORY_MAX, new Long(getMaxMemory()));
+    map.put(MEMORY_USED, Long.valueOf(getUsedMemory()));
+    map.put(MEMORY_MAX, Long.valueOf(getMaxMemory()));
 
     if (cpuSRA != null) {
       StatisticData[] statsData = getCpuUsage();

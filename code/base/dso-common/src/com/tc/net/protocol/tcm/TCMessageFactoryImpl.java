@@ -93,8 +93,9 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
           byte[].class, Integer.TYPE, Integer.TYPE });
       defineClass.setAccessible(true);
 
-      final Class c = (Class) defineClass.invoke(loader, new Object[] { className, clazz, Integer.valueOf(0),
-          new Integer(clazz.length) });
+      final Class c = (Class) defineClass.invoke(loader,
+                                                 new Object[] { className, clazz, Integer.valueOf(0),
+                                                     Integer.valueOf(clazz.length) });
       return c;
     } catch (final Exception e) {
       throw new RuntimeException(e);
