@@ -4,6 +4,7 @@
 package com.tc.object.locks;
 
 import com.tc.exception.TCLockUpgradeNotSupportedError;
+import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
@@ -781,6 +782,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         node.park();
         if (Thread.interrupted()) {
           interrupted = true;
+          if (remote.isShutdown()) { throw new TCNotRunningException(); }
         }
       }
     } catch (final RuntimeException ex) {

@@ -1021,5 +1021,9 @@ public class ClientLockTest extends TestCase {
     public void shutdown() {
       //
     }
+
+    public boolean isShutdown() {
+      return false;
+    }
   }
 }

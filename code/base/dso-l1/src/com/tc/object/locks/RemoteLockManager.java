@@ -31,4 +31,6 @@ public interface RemoteLockManager {
   public void waitForServerToReceiveTxnsForThisLock(LockID lock);
 
   public void shutdown();
+
+  public boolean isShutdown();
 }

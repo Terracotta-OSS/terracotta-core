@@ -218,4 +218,9 @@ public class TestRemoteLockManager implements RemoteLockManager {
   public void shutdown() {
     //
   }
+
+  public boolean isShutdown() {
+    return false;
+  }
+
 }

@@ -176,4 +176,9 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
   public void shutdown() {
     // no op
   }
+
+  public boolean isShutdown() {
+    return false;
+  }
+
 }

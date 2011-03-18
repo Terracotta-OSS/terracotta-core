@@ -12,6 +12,7 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
 import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.Stage;
+import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggerProvider;
@@ -89,6 +90,7 @@ public class StageImpl implements Stage {
   private void stopThreads() {
     for (WorkerThread thread : threads) {
       thread.shutdown();
+      thread.interrupt();
     }
   }
 
@@ -132,6 +134,9 @@ public class StageImpl implements Stage {
           }
         } catch (InterruptedException ie) {
           if (shutdownRequested()) { return; }
+          throw new TCRuntimeException(ie);
+        } catch (TCNotRunningException ie) {
+          if (shutdownRequested()) return;
           throw new TCRuntimeException(ie);
         } catch (EventHandlerException ie) {
           if (shutdownRequested()) return;

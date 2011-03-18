@@ -160,6 +160,12 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     }
   }
 
+  public boolean isShutdown() {
+    synchronized (queue) {
+      return this.shutdown;
+    }
+  }
+
   private void cancelTimerTask() {
     if (batchRecallCommitsTimerTask != null) {
       batchRecallCommitsTimerTask.cancel();
