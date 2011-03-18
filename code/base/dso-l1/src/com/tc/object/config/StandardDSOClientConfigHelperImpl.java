@@ -7,8 +7,8 @@ package com.tc.object.config;
 import org.knopflerfish.framework.BundleClassLoader;
 import org.osgi.framework.Bundle;
 import org.terracotta.groupConfigForL1.ServerGroup;
-import org.terracotta.groupConfigForL1.ServerInfo;
 import org.terracotta.groupConfigForL1.ServerGroupsDocument.ServerGroups;
+import org.terracotta.groupConfigForL1.ServerInfo;
 import org.terracotta.license.LicenseException;
 
 import com.tc.asm.ClassAdapter;
@@ -69,9 +69,9 @@ import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
+import com.tc.util.ClassUtils.ClassSpec;
 import com.tc.util.ProductInfo;
 import com.tc.util.UUID;
-import com.tc.util.ClassUtils.ClassSpec;
 import com.tc.util.runtime.Vm;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.L1ReconnectPropertiesDocument;
@@ -94,8 +94,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -659,8 +659,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       type = fi.getType().getName();
     }
     InjectionInstrumentation instrumentation = injectionRegistry.lookupInstrumentation(type);
-    if (null == instrumentation) { throw new UnsupportedInjectedDsoInstanceTypeException(classInfo.getName(), fi
-        .getName(), fi.getType().getName()); }
+    if (null == instrumentation) { throw new UnsupportedInjectedDsoInstanceTypeException(classInfo.getName(),
+                                                                                         fi.getName(), fi.getType()
+                                                                                             .getName()); }
 
     TransparencyClassSpec spec = getOrCreateSpec(classInfo.getName());
     spec.setHasOnLoadInjection(true);
@@ -797,11 +798,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   private void addLogicalAdaptedLinkedBlockingQueueSpec() {
-    TransparencyClassSpec spec = getOrCreateSpec("java.util.AbstractQueue");
-    spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
-
-    spec = getOrCreateSpec("java.util.concurrent.LinkedBlockingQueue",
-                           "com.tc.object.applicator.LinkedBlockingQueueApplicator");
+    getOrCreateSpec("java.util.AbstractQueue").setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
+    getOrCreateSpec("java.util.concurrent.LinkedBlockingQueue",
+                    "com.tc.object.applicator.LinkedBlockingQueueApplicator");
   }
 
   public void addCustomAdapter(final String name, final ClassAdapterFactory factory) {
@@ -1862,8 +1861,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       ConnectionInfo[] connectionInfo = connectionInfoItems[i].getConnectionInfos();
       for (int j = 0; j < connectionInfo.length; j++) {
         ConnectionInfo connectionIn = new ConnectionInfo(getIpAddressOfServer(connectionInfo[j].getHostname()),
-                                                         connectionInfo[j].getPort(), i * j + j, connectionInfo[j]
-                                                             .getGroupName());
+                                                         connectionInfo[j].getPort(), i * j + j,
+                                                         connectionInfo[j].getGroupName());
         connInfoFromL1.add(connectionIn);
       }
     }

@@ -64,9 +64,9 @@ import javax.swing.text.html.HTMLEditorKit;
 
 public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener, PropertyChangeListener {
   private static ResourceBundleHelper bundleHelper = new ResourceBundleHelper(DSOSamplesFrame.class);
-  private XTextPane                   textPane;
-  private XTextPane                   outputPane;
-  private ArrayList                   processList;
+  private final XTextPane             textPane;
+  private final XTextPane             outputPane;
+  private final ArrayList             processList;
 
   static {
     if (Os.isMac()) {
@@ -107,6 +107,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
     }
   }
 
+  @Override
   protected void initFileMenu(JMenu fileMenu) {
     fileMenu.add(new ServersAction());
     super.initFileMenu(fileMenu);
@@ -176,6 +177,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
     }
   }
 
+  @Override
   protected void quit() {
     stopProcesses();
   }
@@ -210,6 +212,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
     }
 
     new Thread() {
+      @Override
       public void run() {
         TCStop tester = new TCStop("localhost", 9520);
 
@@ -251,6 +254,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
     outDrainer.start();
 
     new Thread() {
+      @Override
       public void run() {
         while (true) {
           try {
@@ -265,10 +269,9 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
   }
 
   private void internalRunServer() {
-    String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Xms256m", "-Xmx256m",
-        "-Dcom.sun.management.jmxremote", "-Dtc.config=tc-config.xml",
-        "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(), "-cp", getTCLib().getAbsolutePath(),
-        ServerConstants.SERVER_MAIN_CLASS_NAME };
+    String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Xms256m", "-Xmx256m", "-Dcom.sun.management.jmxremote",
+        "-Dtc.config=tc-config.xml", "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(), "-cp",
+        getTCLib().getAbsolutePath(), ServerConstants.SERVER_MAIN_CLASS_NAME };
 
     Process p = exec(cmdarray, null, getSamplesDir());
     StreamReader errDrainer = createStreamReader(p.getErrorStream());
@@ -329,6 +332,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
       frame.setSize(new Dimension(500, 300));
       frame.setVisible(true);
       frame.addWindowListener(new WindowAdapter() {
+        @Override
         public void windowClosing(WindowEvent we) {
           try {
             p.destroy();
@@ -347,18 +351,18 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
     final String fileSep = System.getProperty("file.separator");
     final String LIB_DIR = "lib";
     final File libdir = new File(dir, LIB_DIR);
-    String classpath = defaultPath;
+    StringBuilder classpath = new StringBuilder(defaultPath);
     if (libdir.exists()) {
       final String[] jars = libdir.list(new FilenameFilter() {
         public boolean accept(File directory, String name) {
           return name.endsWith(".jar");
         }
       });
-      for (int i = 0; i < jars.length; i++) {
-        classpath += (pathSep + LIB_DIR + fileSep + jars[i]);
+      for (String jar : jars) {
+        classpath.append(pathSep).append(LIB_DIR).append(fileSep).append(jar);
       }
     }
-    return classpath;
+    return classpath.toString();
   }
 
   private void runSharedQueueSample() {
@@ -388,6 +392,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
       frame.setSize(new Dimension(500, 300));
       frame.setVisible(true);
       frame.addWindowListener(new WindowAdapter() {
+        @Override
         public void windowClosing(WindowEvent we) {
           try {
             p.destroy();

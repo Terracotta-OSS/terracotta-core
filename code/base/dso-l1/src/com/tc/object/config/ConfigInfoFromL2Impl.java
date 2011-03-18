@@ -37,12 +37,10 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
   private static final TCLogger  consoleLogger                                = CustomerLogging.getConsoleLogger();
   private static final int       MAX_CONNECT_TRIES                            = TCPropertiesImpl
                                                                                   .getProperties()
-                                                                                  .getInt(
-                                                                                          TCPropertiesConsts.L1_MAX_CONNECT_RETRIES);
+                                                                                  .getInt(TCPropertiesConsts.L1_MAX_CONNECT_RETRIES);
   private static final long      RECONNECT_WAIT_INTERVAL                      = TCPropertiesImpl
                                                                                   .getProperties()
-                                                                                  .getLong(
-                                                                                           TCPropertiesConsts.L1_SOCKET_RECONNECT_WAIT_INTERVAL);
+                                                                                  .getLong(TCPropertiesConsts.L1_SOCKET_RECONNECT_WAIT_INTERVAL);
   private static final long      MIN_RETRY_INTERVAL_MILLS                     = 1000;
 
   public static final String     GROUP_INFO_SERVLET_PATH                      = "/groupinfo";
@@ -228,22 +226,21 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
    */
   private InputStream getPropertiesFromServerViaHttp(final String message, final String httpPathExtension)
       throws ConfigurationSetupException {
-    InputStream in = null;
-    String serverList = "";
-    boolean loggedInConsole = false;
+    StringBuilder text = new StringBuilder("Can't connect to ");
+    if (connections.length > 1) text.append("any of the servers [");
+    else text.append("server [");
 
-    for (ConnectionInfo connection : connections) {
-      if (serverList.length() > 0) serverList += ", ";
-      serverList += connection;
+    for (int i = 0; i < connections.length; i++) {
+      if (i > 0) text.append(", ");
+      text.append(connections[i]);
     }
+    text.append("].");
 
-    String text = "Can't connect to " + (connections.length > 1 ? "any of the servers" : "server") + "[" + serverList
-                  + "].";
-
+    boolean loggedInConsole = false;
     int count = 0;
     while (true) {
       count++;
-      in = getPropertiesFromL2Stream(message, httpPathExtension);
+      InputStream in = getPropertiesFromL2Stream(message, httpPathExtension);
       if (in != null) { return in; }
 
       if (loggedInConsole == false) {
@@ -254,7 +251,7 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
         logger.warn(text + "Retrying... \n");
       }
 
-      if (MAX_CONNECT_TRIES > 0 && count >= MAX_CONNECT_TRIES) { throw new ConfigurationSetupException(text); }
+      if (MAX_CONNECT_TRIES > 0 && count >= MAX_CONNECT_TRIES) { throw new ConfigurationSetupException(text.toString()); }
       ThreadUtil.reallySleep(connectRetryInterval);
     }
   }

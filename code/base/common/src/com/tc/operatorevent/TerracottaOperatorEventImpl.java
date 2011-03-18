@@ -56,16 +56,16 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
   }
 
   public synchronized String getNodeName() {
-    String val = "";
+    StringBuilder val = new StringBuilder();
     for (Entry<String, Integer> node : this.nodes.entrySet()) {
       Assert.assertTrue(node.getValue().intValue() >= 1);
-      val += node.getKey();
+      val.append(node.getKey());
       if (node.getValue().intValue() > 1) {
-        val += "(" + node.getValue().intValue() + ")";
+        val.append("(").append(node.getValue().intValue()).append(")");
       }
-      val += " ";
+      val.append(" ");
     }
-    return val;
+    return val.toString();
   }
 
   public synchronized void addNodeName(String nodeId) {

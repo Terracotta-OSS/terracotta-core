@@ -13,7 +13,7 @@ import java.lang.reflect.Field;
  */
 public class PrintVisitor implements Visitor {
   private static final String  INDENT = "  ";
-  private final OutputSink       out;
+  private final OutputSink     out;
   private final WalkTest       walkTest;
   private final ValueFormatter formatter;
 
@@ -91,11 +91,11 @@ public class PrintVisitor implements Visitor {
   private static final int    JAVA_UTIL_LEN = JAVA_UTIL.length();
 
   private static String typeDisplay(Class c) {
-    String type = c.getName();
-    int dim = 0;
+    String type;
     if (c.isArray()) {
-      dim = ClassUtils.arrayDimensions(c);
       type = ClassUtils.baseComponentType(c).getName();
+    } else {
+      type = c.getName();
     }
 
     if (type.startsWith(JAVA_LANG) && type.lastIndexOf('.') + 1 == JAVA_LANG_LEN) {
@@ -104,11 +104,16 @@ public class PrintVisitor implements Visitor {
       type = type.substring(JAVA_UTIL_LEN);
     }
 
-    for (int i = 0; i < dim; i++) {
-      type = type + "[]";
+    if (c.isArray()) {
+      StringBuilder arrayType = new StringBuilder(type);
+      int dim = ClassUtils.arrayDimensions(c);
+      for (int i = 0; i < dim; i++) {
+        arrayType.append("[]");
+      }
+      return arrayType.toString();
+    } else {
+      return type;
     }
-
-    return type;
   }
 
   public void visitMapEntry(int index, int depth) {

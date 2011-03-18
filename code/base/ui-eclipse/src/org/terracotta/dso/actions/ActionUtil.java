@@ -320,21 +320,22 @@ public class ActionUtil {
       throwable = ((InvocationTargetException) throwable).getCause();
     }
 
-    String msg = throwable.getMessage();
-
     if (throwable instanceof CoreException) {
       CoreException ce = (CoreException) throwable;
       IStatus status = ce.getStatus();
       IStatus[] children = status.getChildren();
 
       if (children.length > 0) {
-        msg += "\n";
-        for (int i = 0; i < children.length; i++) {
-          msg += "\n" + children[i].getMessage();
+        StringBuilder message = new StringBuilder(throwable.getMessage()).append("\n");
+        for (IStatus child : children) {
+          message.append("\n").append(child.getMessage());
         }
+        return message.toString();
+      } else {
+        return throwable.getMessage();
       }
+    } else {
+      return throwable.getMessage();
     }
-
-    return msg;
   }
 }

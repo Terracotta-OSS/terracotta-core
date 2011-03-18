@@ -128,8 +128,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
                                                                            }
                                                                          });
     this.activeServerGroupsConfig = new ActiveServerGroupsConfigObject(
-                                                                       createContext(
-                                                                                     mirrorGroupsRepository,
+                                                                       createContext(mirrorGroupsRepository,
                                                                                      configurationCreator()
                                                                                          .directoryConfigurationLoadedFrom()),
                                                                        this);
@@ -177,8 +176,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
                                                                          });
 
     this.activeServerGroupsConfig = new ActiveServerGroupsConfigObject(
-                                                                       createContext(
-                                                                                     mirrorGroupsRepository,
+                                                                       createContext(mirrorGroupsRepository,
                                                                                      configurationCreator()
                                                                                          .directoryConfigurationLoadedFrom()),
                                                                        this);
@@ -462,24 +460,26 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     if (out == null) {
       out = new L2ConfigData(name);
 
-      Servers servers = (Servers) this.serversBeanRepository().bean();
-      String list = "[data unavailable]";
-
-      if (servers != null) {
-        Server[] serverList = servers.getServerArray();
-
-        if (serverList != null) {
-          list = "";
-
-          for (int i = 0; i < serverList.length; ++i) {
-            if (i > 0) list += ", ";
-            if (i == serverList.length - 1) list += "and ";
-            list += "'" + serverList[i].getName() + "'";
+      if ((!out.explicitlySpecifiedInConfigFile()) && name != null) {
+        Servers servers = (Servers) this.serversBeanRepository().bean();
+        String list;
+        if (servers == null) {
+          list = "[data unavailable]";
+        } else {
+          Server[] serverList = servers.getServerArray();
+          if (serverList == null) {
+            list = "[data unavailable]";
+          } else {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < serverList.length; ++i) {
+              if (i > 0) sb.append(", ");
+              if (i == serverList.length - 1) sb.append("and ");
+              sb.append("'").append(serverList[i].getName()).append("'");
+            }
+            list = sb.toString();
           }
         }
-      }
 
-      if ((!out.explicitlySpecifiedInConfigFile()) && name != null) {
         // formatting
         throw new ConfigurationSetupException(
                                               "Multiple <server> elements are defined in the configuration file. "
@@ -576,8 +576,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
             for (String member : members) {
               msg.append(member).append(" ");
             }
-            msg
-                .append("} are not equal. To maintain consitency all the servers in a group need to have same persistence mode");
+            msg.append("} are not equal. To maintain consitency all the servers in a group need to have same persistence mode");
             throw new ConfigurationSetupException(msg.toString());
           }
         }

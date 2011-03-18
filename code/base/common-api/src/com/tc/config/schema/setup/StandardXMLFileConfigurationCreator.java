@@ -39,6 +39,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -60,8 +61,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   private static final Pattern       URL_PATTERN                          = Pattern.compile("[A-Za-z][A-Za-z]+://.*");
   private static final long          GET_CONFIGURATION_ONE_SOURCE_TIMEOUT = TCPropertiesImpl
                                                                               .getProperties()
-                                                                              .getLong(
-                                                                                       TCPropertiesConsts.TC_CONFIG_SOURCEGET_TIMEOUT,
+                                                                              .getLong(TCPropertiesConsts.TC_CONFIG_SOURCEGET_TIMEOUT,
                                                                                        30000);
 
   private final ConfigurationSpec    configurationSpec;
@@ -306,30 +306,28 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
 
   private void configurationFetchFailed(ConfigurationSource[] sources, long startTime)
       throws ConfigurationSetupException {
-    String text = "Could not fetch configuration data from ";
-    if (sources.length > 1) text += "" + sources.length + " different configuration sources";
-    else text += "the " + sources[0];
-    text += ". ";
-
+    StringBuilder text = new StringBuilder("Could not fetch configuration data from ");
     if (sources.length > 1) {
-      text += " The sources we tried are: ";
+      text.append(sources.length).append(" different configuration sources.  The sources we tried were: ");
       for (int i = 0; i < sources.length; ++i) {
-        if (i > 0) text += ", ";
-        if (i == sources.length - 1) text += "and ";
-        text += "the " + sources[i].toString();
+        if (i > 0) text.append(", ");
+        if (i == sources.length - 1) text.append("and ");
+        text.append("the ").append(sources[i]);
       }
-      text += ". ";
+      text.append(". ");
+    } else {
+      text.append("the ").append(sources[0]).append(". ");
     }
 
     if (System.currentTimeMillis() - startTime >= GET_CONFIGURATION_TOTAL_TIMEOUT) {
-      text += " Fetch attempt duration: " + ((System.currentTimeMillis() - startTime) / 1000) + " seconds.";
+      text.append(" Fetch attempt duration: ");
+      text.append(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime)).append(" seconds.");
     }
 
-    text += "\n\nTo correct this problem specify a valid configuration location using the ";
-    text += "-f/--config command-line options.";
+    text.append("\n\nTo correct this problem specify a valid configuration location using the -f/--config command-line options.");
 
     consoleLogger.error(text);
-    throw new ConfigurationSetupException(text);
+    throw new ConfigurationSetupException(text.toString());
   }
 
   private InputStream trySource(ConfigurationSource[] remainingSources, int i) {
@@ -481,9 +479,8 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
           buf.append("  [" + i + "]: Line " + error.getLine() + ", column " + error.getColumn() + ": "
                      + error.getMessage() + "\n");
           if (error.getMessage().indexOf("spring") > -1) {
-            buf
-                .append("  The Spring configuration in your Terracotta configuration file is not valid. "
-                        + "Clustering Spring no longer requires special configuration. For more information, see http://www.terracotta.org/spring.\n");
+            buf.append("  The Spring configuration in your Terracotta configuration file is not valid. "
+                       + "Clustering Spring no longer requires special configuration. For more information, see http://www.terracotta.org/spring.\n");
           }
         }
 

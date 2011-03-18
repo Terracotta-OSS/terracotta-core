@@ -9,10 +9,10 @@ import com.tc.logging.TCLogger;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.walker.MemberValue;
 import com.tc.object.walker.PrintVisitor;
-import com.tc.object.walker.Visitor;
-import com.tc.object.walker.WalkTest;
 import com.tc.object.walker.PrintVisitor.OutputSink;
 import com.tc.object.walker.PrintVisitor.ValueFormatter;
+import com.tc.object.walker.Visitor;
+import com.tc.object.walker.WalkTest;
 
 import java.lang.reflect.Field;
 
@@ -44,11 +44,11 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
   }
 
   private static String spaces(int n) {
-    String s = "";
+    StringBuilder sb = new StringBuilder(n);
     for (int i = 0; i < n; i++) {
-      s += " ";
+      sb.append(" ");
     }
-    return s;
+    return sb.toString();
   }
 
   public void visitMapEntry(int index, int depth) {
@@ -93,7 +93,7 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
     if (o != null && config.isNeverAdaptable(JavaClassInfo.getClassInfo(o.getClass()))) { return " (never portable)"; }
     return null;
   }
-  
+
   private boolean isNeverAdaptable(Class type) {
     while (!type.equals(Object.class)) {
       if (config.isNeverAdaptable(JavaClassInfo.getClassInfo(type))) return true;
@@ -113,7 +113,7 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
     if (valueObject != null) return objMgr.isPortableInstance(valueObject);
     return true;
   }
-  
+
   private boolean isSystemType(MemberValue value) {
     Object o = value.getValueObject();
     if (o != null) {
@@ -124,10 +124,10 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
     }
     return false;
   }
-  
+
   public boolean shouldTraverse(MemberValue value) {
-    if(value.isRepeated()) { return true; }
-    
+    if (value.isRepeated()) { return true; }
+
     if (skipVisit(value) || isNeverAdaptable(value) || isTransient(value)) { return false; }
 
     if (!isPortable(value) && isSystemType(value)) return false;
@@ -139,12 +139,12 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
     }
 
     return !isLiteralInstance(value.getValueObject());
-   }
+  }
 
   private boolean isLiteralInstance(Object obj) {
     return LiteralValues.isLiteralInstance(obj);
   }
-  
+
   private boolean isTransient(MemberValue val) {
     Field f = val.getSourceField();
     if (f == null) { return false; }
@@ -155,12 +155,10 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
   public boolean includeFieldsForType(Class type) {
     return !config.isLogical(type.getName());
   }
-  
+
   private boolean skipVisit(MemberValue value) {
     Field field = value.getSourceField();
-    if (field != null) {
-      return (field.getType().getName().startsWith("com.tc."));
-    }
+    if (field != null) { return (field.getType().getName().startsWith("com.tc.")); }
     return false;
   }
 

@@ -129,12 +129,12 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
   }
 
   public String getCommunicationStackNames(NetworkLayer parentLayer) {
-    String currentLayer = "";
+    StringBuilder currentLayer = new StringBuilder();
     while (parentLayer != null) {
-      currentLayer += "\n" + parentLayer.getStackLayerName();
+      currentLayer.append("\n").append(parentLayer.getStackLayerName());
       parentLayer = parentLayer.getReceiveLayer();
     }
-    return currentLayer;
+    return currentLayer.toString();
   }
 
   public void initConnectionID(ConnectionID cid) {
