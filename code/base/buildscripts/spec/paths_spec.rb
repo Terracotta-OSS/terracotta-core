@@ -3,7 +3,7 @@ require 'paths'
 
 describe FilePath do
   describe "#initialize" do
-    HOME_PATH = ENV['HOME']
+    HOME_PATH = ENV['HOME'].sub(/^([A-Z])/) { $1.downcase }
     NETWORK_PATH = "//pebble/monkeyshare/setup/jdk/windows/hotspot1.6.0_24"
 
     it "creates a FilePath object" do
