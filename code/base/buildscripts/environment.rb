@@ -153,8 +153,8 @@ class Environment
       sun_os_patch_level = JavaSystem.getProperty('sun.os.patch.level');
       if @windows_version.nil?
         @windows_version = case os_name 
-        when /Windows 2003/i: "win2k3"
-        when /Windows XP/i:   "winxp"
+        when /Windows 2003/i then "win2k3"
+        when /Windows XP/i then   "winxp"
         else                  os_name.gsub(/ /, '_')
         end
         unless sun_os_patch_level == "unknown"

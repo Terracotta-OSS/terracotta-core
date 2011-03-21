@@ -190,10 +190,10 @@ module DistributionUtils
   def interpolated_value(variable)
     mapping = VARIABLE_MAP[variable]
     result = case mapping
-    when NilClass: nil
-    when String: @config_source[mapping]
-    when Symbol: @build_environment.send(mapping)
-    when Proc: instance_eval(&mapping)
+    when NilClass then nil
+    when String then @config_source[mapping]
+    when Symbol then @build_environment.send(mapping)
+    when Proc then instance_eval(&mapping)
     end
     result = result.to_s
     result.empty? ? nil : result

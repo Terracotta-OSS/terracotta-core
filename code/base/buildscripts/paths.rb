@@ -294,8 +294,8 @@ class FilePath
   # components removed.
   def strip_trailing_components(count)
     new_parts = case
-    when @parts.length > 1: @parts[0..(@parts.length - (count + 1))]
-    when @parts.length == 1: [ "" ]
+    when @parts.length > 1 then @parts[0..(@parts.length - (count + 1))]
+    when @parts.length == 1 then [ "" ]
     end
 
     new_parts[0] = absolute_prefix + new_parts[0]

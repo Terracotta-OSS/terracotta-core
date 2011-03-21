@@ -15,8 +15,8 @@ class MavenDeploy
     end
 
     packaging ||= case file
-    when /pom.*\.xml$/: 'pom'
-    when /\.jar/: 'jar'
+    when /pom.*\.xml$/ then 'pom'
+    when /\.jar/ then 'jar'
     else
       File.extname(file)[1..-1]
     end

@@ -117,9 +117,9 @@ class Hash
       value = self[key]
       if value.is_a?(String)
         case value.downcase.strip
-        when /^true$/: true
-        when /^false$/: false
-        when "": default
+        when /^true$/ then true
+        when /^false$/ then false
+        when "" then default
         else
           raise("Cannot convert value for key '#{key}' to boolean: #{value}")
         end
