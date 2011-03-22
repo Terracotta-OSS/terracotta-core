@@ -33,6 +33,9 @@ class FieldData implements Comparable {
   }
 
   public int compareTo(Object o) {
+    if (o == null) { throw new NullPointerException(); }
+    if (!(o instanceof FieldData)) { throw new ClassCastException(o.getClass().getName()); }
+
     FieldData other = (FieldData) o;
 
     String thisFieldName = field.getName();
@@ -43,17 +46,6 @@ class FieldData implements Comparable {
       return field.getDeclaringClass().getName().compareTo(other.field.getDeclaringClass().getName());
     } else {
       return i;
-    }
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o instanceof FieldData) {
-      FieldData other = (FieldData) o;
-      return getField().getName().equals(other.getField().getName())
-             && getField().getDeclaringClass().getName().equals(other.getField().getDeclaringClass().getName());
-    } else {
-      return false;
     }
   }
 

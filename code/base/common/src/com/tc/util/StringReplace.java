@@ -1,37 +1,36 @@
 /**
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
 package com.tc.util;
 
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
+import com.tc.util.StringUtil;
 
 /**
- * A small app that does a simple substring search and replace. It takes its input from the stdin and sends the result
- * to stdout. The strings to search and replaced for is passed as a parameter. Sets the exit code to 1 if any error
- * occurs, otherwise the exit code is set to 0.
+ * A small app that does a simple substring search and replace. It takes its input from the stdin and sends the result to stdout.
+ * The strings to search and replaced for is passed as a parameter.
+ *
+ * Sets the exit code to 1 if any error occurs, otherwise the exit code is set to 0.
  */
-public final class StringReplace extends Thread {
+public final class StringReplace 
+  extends Thread {
 
-  private final PrintStream     ps;
-  private final DataInputStream dis;
-  private final String          search;
-  private final String          replace;
+  private PrintStream ps      = null;
+  private DataInputStream dis = null;
+  private String search       = null;
+  private String replace      = null;
 
   /**
    */
   private StringReplace(PrintStream ps, DataInputStream dis, String search, String replace) {
-    this.ps = ps;
-    this.dis = dis;
-    this.search = search;
+    this.ps      = ps;
+    this.dis     = dis;
+    this.search  = search;
     this.replace = replace;
   }
-
+ 
   /**
    */
-  @Override
   public void run() {
     if (ps != null && dis != null) {
       try {
@@ -43,7 +42,7 @@ public final class StringReplace extends Thread {
         ps.close();
       } catch (IOException e) {
         System.err.println(e.getMessage());
-        e.printStackTrace();
+        System.err.println(e.getStackTrace());
         System.exit(1);
       }
     }
@@ -51,33 +50,34 @@ public final class StringReplace extends Thread {
 
   /**
    */
-  @Override
   protected void finalize() {
     try {
       if (ps != null) {
         ps.close();
+        ps = null;
       }
       if (dis != null) {
         dis.close();
+        dis = null;
       }
     } catch (IOException e) {
       System.err.println(e.getMessage());
-      e.printStackTrace();
+      System.err.println(e.getStackTrace());
       System.exit(1);
     }
   }
-
+   
   /**
    */
   public static void main(String[] args) {
-    String search = args.length >= 1 ? args[0] : "";
+    String search  = args.length >= 1 ? args[0] : "";
     String replace = args.length >= 2 ? args[1] : "";
 
     try {
       (new StringReplace(System.out, new DataInputStream(System.in), search, replace)).start();
     } catch (Exception e) {
       System.err.println(e.getMessage());
-      e.printStackTrace();
+      System.err.println(e.getStackTrace());
       System.exit(1);
     }
   }

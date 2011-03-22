@@ -5,7 +5,6 @@
 package com.tc.net;
 
 import com.tc.process.StreamCollector;
-import com.tc.util.FindbugsSuppressWarnings;
 import com.tc.util.runtime.Os;
 
 import java.io.BufferedReader;
@@ -157,10 +156,6 @@ public class EphemeralPorts {
   private static class Linux implements RangeGetter {
     private static final String source = "/proc/sys/net/ipv4/ip_local_port_range";
 
-    /*
-     * File creation with a proc filesystem path - this is okay as this is linux specific code.
-     */
-    @FindbugsSuppressWarnings("DMI_HARDCODED_ABSOLUTE_FILENAME")
     public Range getRange() {
       File src = new File(source);
       if (!src.exists() || !src.canRead()) { throw new RuntimeException("Cannot access " + source); }

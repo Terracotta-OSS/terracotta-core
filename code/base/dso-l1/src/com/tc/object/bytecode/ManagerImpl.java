@@ -70,7 +70,6 @@ import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.text.ConsoleParagraphFormatter;
 import com.tc.text.StringFormatter;
 import com.tc.util.Assert;
-import com.tc.util.FindbugsSuppressWarnings;
 import com.tc.util.Util;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.runtime.Vm;
@@ -926,11 +925,6 @@ public class ManagerImpl implements ManagerInternal {
     lock(lock, level);
   }
 
-  /*
-   * We catch IMSE exception here as it can be thrown when an unlock is clustered but the acquiring lock wasn't. This
-   * can happen when a user follows the unsupported lock-share-unlock pattern.
-   */
-  @FindbugsSuppressWarnings("IMSE_DONT_CATCH_IMSE")
   public void monitorExit(final LockID lock, final LockLevel level) {
     try {
       unlock(lock, level);

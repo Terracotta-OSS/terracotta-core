@@ -125,16 +125,10 @@ public class TIMGetTool {
     if (in == null) {
       System.err.println("Can't locate tim-get.properties file. Did you have a complete kit?");
       System.exit(1);
-      return null;
-    } else {
-      try {
-        Properties props = new Properties();
-        props.load(in);
-        return new Config(props);
-      } finally {
-        in.close();
-      }
     }
+    Properties props = new Properties();
+    props.load(in);
+    return new Config(props);
   }
 
   private void configure(Config config) throws Exception {

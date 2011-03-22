@@ -81,30 +81,30 @@ public class FieldUtils {
     Class<?> fieldType = field.getType();
 
     if (Character.TYPE.equals(fieldType)) {
-      return set(obj, Character.valueOf(value), field);
+      return set(obj, new Character(value), field);
     } else {
       return setInt(obj, value, field);
-    }
+    }    
   }
 
   public static boolean setByte(Object obj, byte value, Field field) throws IllegalAccessException {
     Class<?> fieldType = field.getType();
 
     if (Byte.TYPE.equals(fieldType)) {
-      return set(obj, Byte.valueOf(value), field);
+      return set(obj, new Byte(value), field);
     } else {
       return setShort(obj, value, field);
-    }
+    }    
   }
 
   public static boolean setShort(Object obj, short value, Field field) throws IllegalAccessException {
     Class<?> fieldType = field.getType();
 
     if (Short.TYPE.equals(fieldType)) {
-      return set(obj, Short.valueOf(value), field);
+      return set(obj, new Short(value), field);
     } else {
       return setInt(obj, value, field);
-    }
+    }    
   }
 
   public static boolean setInt(Object obj, int value, Field field) throws IllegalAccessException {
@@ -114,7 +114,7 @@ public class FieldUtils {
       return set(obj, Integer.valueOf(value), field);
     } else {
       return setLong(obj, value, field);
-    }
+    }    
   }
 
   public static boolean setLong(Object obj, long value, Field field) throws IllegalAccessException {
@@ -124,7 +124,7 @@ public class FieldUtils {
       return set(obj, Long.valueOf(value), field);
     } else {
       return setFloat(obj, value, field);
-    }
+    }    
   }
 
   /*

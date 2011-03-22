@@ -77,7 +77,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
           return super.containsValue(new ValueWrapper(value));
         } else {
           // It is a little weird to do this like this, o well...
-          return super.containsValue(null) || super.containsValue(ObjectID.NULL_ID);
+          return super.containsValue(value) || super.containsValue(ObjectID.NULL_ID);
         }
       }
     } else {
@@ -754,7 +754,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
           if (o != null) {
             return _values.contains(new ValueWrapper(o));
           } else {
-            return _values.contains(null);
+            return _values.contains(o);
           }
         }
       } else {

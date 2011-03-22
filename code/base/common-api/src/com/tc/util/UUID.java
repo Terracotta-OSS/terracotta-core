@@ -37,23 +37,15 @@ public class UUID implements java.io.Serializable {
     this.uuid = uuid;
   }
 
-  @Override
   public String toString() {
     return uuid;
   }
 
   @Override
   public boolean equals(Object obj) {
-    if (obj instanceof UUID) {
-      return toString().equals(obj.toString());
-    } else {
-      return false;
-    }
-  }
-
-  @Override
-  public int hashCode() {
-    return uuid.hashCode();
+    if (!(obj instanceof UUID)) { return false; }
+    UUID peerObj = (UUID) obj;
+    return (this.toString().equals(peerObj.toString()));
   }
 
   public static void main(String args[]) {

@@ -69,7 +69,7 @@ public class L1Management extends TerracottaManagement {
   private JMXConnectorServer             connServer;
 
   private volatile boolean               stopped;
-
+  
   public L1Management(final TunnelingEventHandler tunnelingHandler,
                       final StatisticsAgentSubSystem statisticsAgentSubSystem, final RuntimeLogger runtimeLogger,
                       final InstrumentationLogger instrumentationLogger, final String rawConfigText,
@@ -98,7 +98,7 @@ public class L1Management extends TerracottaManagement {
 
   public synchronized void stop() throws IOException {
     stopped = true;
-
+    
     if (connServer != null) {
       try {
         connServer.stop();
@@ -137,7 +137,7 @@ public class L1Management extends TerracottaManagement {
 
     Thread registrationThread = new Thread(new Runnable() {
 
-      private static final int MAX_ATTEMPTS = 60 * 5;
+      private final int MAX_ATTEMPTS = 60 * 5;
 
       public void run() {
         try {
@@ -155,8 +155,8 @@ public class L1Management extends TerracottaManagement {
                              + " attempts");
               }
             } catch (InstanceAlreadyExistsException e) {
-              logger.error("Exception while registering the L1 MBeans, they already seem to exist in the MBeanServer.",
-                           e);
+              logger
+                  .error("Exception while registering the L1 MBeans, they already seem to exist in the MBeanServer.", e);
               return;
             } catch (Exception e) {
               // Ignore and try again after 1 second, give the VM a chance to get started

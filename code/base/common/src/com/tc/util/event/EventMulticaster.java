@@ -56,7 +56,6 @@ public final class EventMulticaster implements Serializable {
     this.eventListener = null;
     this.queue = new EventQueue();
     this.dispatchThread = new Thread() {
-      @Override
       public void run() {
         QueueEvent event = null;
         try {
@@ -120,7 +119,7 @@ public final class EventMulticaster implements Serializable {
 
   private class BroadcastListener implements UpdateEventListener, Serializable {
 
-    private final List listeners = Collections.synchronizedList(new ArrayList());
+    private List listeners = Collections.synchronizedList(new ArrayList());
 
     public void handleUpdate(UpdateEvent data) {
       for (Iterator iter = listeners.iterator(); iter.hasNext();) {
@@ -155,14 +154,14 @@ public final class EventMulticaster implements Serializable {
 
   // --------------------------------------------------------------------------------
 
-  private static class QueueEvent implements Serializable {
+  private class QueueEvent implements Serializable {
     private UpdateEventListener listener;
     private UpdateEvent         data;
   }
 
   // --------------------------------------------------------------------------------
 
-  private static class EventQueue implements Serializable {
+  private class EventQueue implements Serializable {
 
     private final List list = new LinkedList();
 

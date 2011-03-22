@@ -185,7 +185,7 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
    * Parse InputStream into an XmlObject document.
    * @param <T> an XmlObject document to be parsed out.
    */
-  private static class ParseXmlObjectStream<T extends XmlObject> {
+  private class ParseXmlObjectStream<T extends XmlObject> {
 
     /*
      * Parse InputStream by parser according to the specified XmlObject type.

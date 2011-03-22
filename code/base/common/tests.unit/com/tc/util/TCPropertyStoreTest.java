@@ -35,6 +35,7 @@ public class TCPropertyStoreTest extends TestCase {
   public void testLoad() {
     TCPropertyStore propertyStore = new TCPropertyStore();
     loadDefaults(DEFAULT_TC_PROPERTIES_FILE, propertyStore);
+    Assert.assertEquals(propertyStore.size(), propertyStore.keySize());
     Assert.assertTrue(propertyStore.containsKey(TCPropertiesConsts.L2_CACHEMANAGER_ENABLED));
     Assert.assertTrue(propertyStore.containsKey(TCPropertiesConsts.L2_CACHEMANAGER_ENABLED.toUpperCase()));
     Assert.assertTrue(propertyStore.containsKey(TCPropertiesConsts.L2_CACHEMANAGER_ENABLED.replace("e", "E")));
