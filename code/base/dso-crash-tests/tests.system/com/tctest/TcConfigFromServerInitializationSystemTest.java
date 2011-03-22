@@ -52,7 +52,7 @@ public class TcConfigFromServerInitializationSystemTest extends BaseDSOTestCase 
     System.out.println("server1 became active");
   }
 
-  public void testFailover() throws Exception {
+  public void testTimeBasedLogFilesForClient() throws Exception {
     ExtraL1ProcessControl client1 = createClient(0, 2);
     client1.start();
     ThreadUtil.reallySleep(30000);
@@ -67,6 +67,7 @@ public class TcConfigFromServerInitializationSystemTest extends BaseDSOTestCase 
     Assert.assertTrue(workingDirectory.isDirectory());
     String[] extensions = { "log" };
     Collection logFiles = FileUtils.listFiles(workingDirectory, extensions, true);
+
     Assert.assertEquals(2, logFiles.size());
   }
 
