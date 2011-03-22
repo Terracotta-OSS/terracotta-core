@@ -25,6 +25,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class RuntimeLoggerImpl implements RuntimeLogger {
+  private static final String        FLUSH_DEBUG_STATS    = "flushStats";
+  private static final String        FAULT_DEBUG_STATS    = "faultStats";
+
   private final TCLogger             logger;
   private final StatsRecorderManager statsRecorderManager = new StatsRecorderManager();
 
@@ -38,9 +41,6 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
 
   private boolean                    fullStack;
   private boolean                    autoLockDetails;
-
-  private final String               flushDebugStats      = "flushStats";
-  private final String               faultDebugStats      = "faultStats";
 
   private boolean                    namedLoaderDebug;
 
@@ -150,28 +150,28 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
   }
 
   public void setFlushDebug(boolean flushDebug) {
-    this.statsRecorderManager.getAndSetStatsRecorder(this.flushDebugStats, flushDebug,
+    this.statsRecorderManager.getAndSetStatsRecorder(FLUSH_DEBUG_STATS, flushDebug,
                                                      new MessageFormat("ManagedObjects flushed in the Last {0} ms"),
                                                      new MessageFormat(" {0} instances"), true);
   }
 
   public boolean getFlushDebug() {
-    return this.statsRecorderManager.isDebugEnabled(this.flushDebugStats);
+    return this.statsRecorderManager.isDebugEnabled(FLUSH_DEBUG_STATS);
   }
 
   public void updateFlushStats(String type) {
-    StatsRecorder flushStatsRecorder = this.statsRecorderManager.get(this.flushDebugStats);
+    StatsRecorder flushStatsRecorder = this.statsRecorderManager.get(FLUSH_DEBUG_STATS);
     flushStatsRecorder.updateStats(type, StatsRecorder.SINGLE_INCR);
   }
 
   public void setFaultDebug(boolean faultDebug) {
-    this.statsRecorderManager.getAndSetStatsRecorder(this.flushDebugStats, faultDebug,
+    this.statsRecorderManager.getAndSetStatsRecorder(FLUSH_DEBUG_STATS, faultDebug,
                                                      new MessageFormat("ManagedObjects faulted in the Last {0} ms"),
                                                      new MessageFormat(" {0} instances"), true);
   }
 
   public boolean getFaultDebug() {
-    return this.statsRecorderManager.isDebugEnabled(this.faultDebugStats);
+    return this.statsRecorderManager.isDebugEnabled(FAULT_DEBUG_STATS);
   }
 
   public void setNamedLoaderDebug(boolean value) {
@@ -183,7 +183,7 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
   }
 
   public void updateFaultStats(String type) {
-    StatsRecorder faultStatsRecorder = this.statsRecorderManager.get(this.faultDebugStats);
+    StatsRecorder faultStatsRecorder = this.statsRecorderManager.get(FAULT_DEBUG_STATS);
     faultStatsRecorder.updateStats(type, StatsRecorder.SINGLE_INCR);
   }
 
@@ -262,9 +262,8 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
 
   public void objectNotify(boolean all, Object obj, TCObject tcObject) {
     StringBuffer message = new StringBuffer("notify").append(all ? "All()" : "()");
-    message.append(" called on ").append(baseToString(obj)).append(", ObjectID: ").append(
-                                                                                          tcObject.getObjectID()
-                                                                                              .toLong());
+    message.append(" called on ").append(baseToString(obj)).append(", ObjectID: ")
+        .append(tcObject.getObjectID().toLong());
     logger.info(message.toString());
   }
 

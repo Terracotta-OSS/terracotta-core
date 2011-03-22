@@ -4,10 +4,10 @@
  */
 package com.tc.util.concurrent;
 
-import com.tc.util.Util;
-
 import EDU.oswego.cs.dl.util.concurrent.Channel;
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
+
+import com.tc.util.Util;
 
 public class NoExceptionLinkedQueue implements Channel {
   public final LinkedQueue queue = new LinkedQueue();
@@ -64,14 +64,21 @@ public class NoExceptionLinkedQueue implements Channel {
     }
   }
 
+  @Override
   public boolean equals(Object obj) {
-    return queue.equals(obj);
+    if (obj instanceof NoExceptionLinkedQueue) {
+      return queue.equals(((NoExceptionLinkedQueue) obj).queue);
+    } else {
+      return false;
+    }
   }
 
+  @Override
   public int hashCode() {
     return queue.hashCode();
   }
 
+  @Override
   public String toString() {
     return queue.toString();
   }

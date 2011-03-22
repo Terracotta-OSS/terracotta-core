@@ -23,6 +23,7 @@ import com.tc.util.ProductInfo;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.io.StringWriter;
@@ -35,8 +36,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Properties;
 import java.util.Map.Entry;
+import java.util.Properties;
 
 /**
  * Factory class for obtaining TCLogger instances.
@@ -186,7 +187,12 @@ public class TCLogging {
         File propFile = devLoggingLocations[pos];
         if (propFile.isFile() && propFile.canRead()) {
           devLog4JPropsFilePresent = true;
-          devLoggingProperties.load(new FileInputStream(propFile));
+          InputStream in = new FileInputStream(propFile);
+          try {
+            devLoggingProperties.load(in);
+          } finally {
+            in.close();
+          }
         }
       }
       if (devLog4JPropsFilePresent) {

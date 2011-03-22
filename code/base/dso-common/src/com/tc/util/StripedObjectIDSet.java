@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.SortedSet;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable {
@@ -66,11 +67,12 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
 
   public void clear() {
     for (int index = 0; index < concurrency; index++) {
-      locks[index].writeLock().lock();
+      Lock l = locks[index].writeLock();
+      l.lock();
       try {
         objectIdSets[index].clear();
       } finally {
-        locks[index].writeLock().unlock();
+        l.unlock();
       }
     }
   }
