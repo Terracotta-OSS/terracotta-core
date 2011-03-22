@@ -3,105 +3,99 @@
  */
 package com.tc.util.properties;
 
-import com.tc.util.Assert;
-
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.Collection;
+import java.util.InvalidPropertiesFormatException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeMap;
 
-public class TCPropertyStore extends Properties {
-  private final Map<String, String> propertyNameMap = new HashMap<String, String>();
+public class TCPropertyStore implements Map<String, String> {
 
-  @Override
-  public synchronized Object setProperty(String key, String value) {
-    propertyNameMap.put(key.toLowerCase(), key);
-    return super.setProperty(key, value);
+  private final Map<String, String> properties = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+
+  public synchronized int size() {
+    return properties.size();
   }
 
-  @Override
-  public synchronized Object put(Object key, Object value) {
-    if (!(key instanceof String)) { throw new AssertionError("Only String keys allowed : " + key); }
-    propertyNameMap.put(((String) key).toLowerCase(), (String) key);
-    return super.put(key, value);
+  public synchronized boolean isEmpty() {
+    return properties.isEmpty();
   }
 
-  @Override
-  public synchronized void load(InputStream inStream) throws IOException {
-    super.load(inStream);
-    Enumeration<?> keys = propertyNames();
-    while (keys.hasMoreElements()) {
-      String propertyName = (String) keys.nextElement();
-      propertyNameMap.put(propertyName.toLowerCase(), propertyName);
-    }
-  }
-
-  @Override
-  public synchronized Object get(Object key) {
-    if (!(key instanceof String)) { throw new AssertionError("Only String keys allowed : " + key); }
-    String propertyName = propertyNameMap.get(((String) key).toLowerCase());
-    return propertyName != null ? super.get(propertyName) : null;
-  }
-
-  @Override
-  public String getProperty(String key) {
-    String propertyName = propertyNameMap.get(key.toLowerCase());
-    return propertyName != null ? super.getProperty(propertyName) : null;
-  }
-
-  @Override
-  public String getProperty(String key, String defaultValue) {
-    String propertyName = propertyNameMap.get(key.toLowerCase());
-    return propertyName != null ? super.getProperty(propertyName, defaultValue) : defaultValue;
-  }
-
-  @Override
   public synchronized boolean containsKey(Object key) {
-    if (!(key instanceof String)) { throw new AssertionError("Only String keys allowed : " + key); }
-    String propertyName = propertyNameMap.get(((String) key).toLowerCase());
-    return propertyName != null ? super.containsKey(propertyName) : false;
+    return properties.containsKey(key);
   }
 
-  @Override
-  public synchronized Object remove(Object key) {
-    if (!(key instanceof String)) { throw new AssertionError("Only String keys allowed : " + key); }
-    String propertyName = propertyNameMap.get(((String) key).toLowerCase());
-    return propertyName != null ? super.remove(propertyName) : super.remove(key);
+  public synchronized boolean containsValue(Object value) {
+    return properties.containsValue(value);
   }
 
-  @Override
-  public synchronized void clear() {
-    super.clear();
-    propertyNameMap.clear();
+  public String get(Object key) {
+    return properties.get(key);
   }
 
-  @Override
-  public synchronized Object clone() {
-    throw new UnsupportedOperationException();
+  public String put(String key, String value) {
+    return properties.put(key, value);
   }
 
-  public synchronized void putAll(TCPropertyStore propStore) {
-    Set<Object> keySet = propStore.keySet();
-    for (Iterator iter = keySet.iterator(); iter.hasNext();) {
-      String propertyName = (String) iter.next();
-      propertyNameMap.put(propertyName.toLowerCase(), propertyName);
+  public String remove(Object key) {
+    return properties.remove(key);
+  }
+
+  public void putAll(Map<? extends String, ? extends String> t) {
+    properties.putAll(t);
+  }
+
+  public void clear() {
+    properties.clear();
+  }
+
+  public Set<String> keySet() {
+    return properties.keySet();
+  }
+
+  public Collection<String> values() {
+    return properties.values();
+  }
+
+  public Set<java.util.Map.Entry<String, String>> entrySet() {
+    return properties.entrySet();
+  }
+
+  public String getProperty(String key) {
+    return properties.get(key);
+  }
+
+  public String getProperty(String key, String defaultValue) {
+    String val = getProperty(key);
+    return (val == null) ? defaultValue : val;
+  }
+
+  public Object setProperty(String key, String value) {
+    return properties.put(key, value);
+  }
+
+  private void putAllLooselyTyped(Map<?, ?> t) {
+    for (Entry<?, ?> entry : t.entrySet()) {
+      try {
+        put((String) entry.getKey(), (String) entry.getValue());
+      } catch (ClassCastException e) {
+        throw (AssertionError) new AssertionError("Invalid type").initCause(e);
+      }
     }
-    super.putAll(propStore);
   }
 
-  @Override
-  public synchronized void putAll(Map<? extends Object, ? extends Object> t) {
-    Assert.assertTrue(t instanceof TCPropertyStore);
-    putAll(t);
+  public void load(InputStream inStream) throws IOException {
+    Properties incoming = new Properties();
+    incoming.load(inStream);
+    putAllLooselyTyped(incoming);
   }
 
-  // used in test
-  public int keySize() {
-    return propertyNameMap.size();
+  public void loadFromXML(InputStream in) throws IOException, InvalidPropertiesFormatException {
+    Properties incoming = new Properties();
+    incoming.loadFromXML(in);
+    putAllLooselyTyped(incoming);
   }
-
 }

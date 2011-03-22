@@ -10,8 +10,8 @@ import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * This class provides a thread safe map interface (by extending Hashtable) and adds a way to easily and synchronously
@@ -78,6 +78,7 @@ public class CopyOnWriteArrayMap extends Hashtable {
     _values = _factory.createTypedArray(0);
   }
 
+  @Override
   public synchronized void clear() {
     super.clear();
     _values = _factory.createTypedArray(0);
@@ -86,6 +87,7 @@ public class CopyOnWriteArrayMap extends Hashtable {
   /**
    * This returns a Read only set since remove is not implemented on the set due to lack to time.
    */
+  @Override
   public Set entrySet() {
     return new ReadOnlyEntrySet(super.entrySet());
   }
@@ -93,10 +95,12 @@ public class CopyOnWriteArrayMap extends Hashtable {
   /**
    * This returns a Read only set since remove is not implemented on the set due to lack to time.
    */
+  @Override
   public Set keySet() {
     return new ReadOnlySet(super.keySet());
   }
 
+  @Override
   public synchronized Object put(Object key, Object value) {
     Object old = super.put(key, value);
     if (old == null) {
@@ -116,11 +120,13 @@ public class CopyOnWriteArrayMap extends Hashtable {
     return old;
   }
 
+  @Override
   public synchronized void putAll(Map t) {
     // calls into put anyways
     super.putAll(t);
   }
 
+  @Override
   public synchronized Object remove(Object key) {
     Object old = super.remove(key);
     if (old != null) {
@@ -140,6 +146,7 @@ public class CopyOnWriteArrayMap extends Hashtable {
     return old;
   }
 
+  @Override
   public synchronized Collection values() {
     return Arrays.asList(_values);
   }
@@ -148,12 +155,23 @@ public class CopyOnWriteArrayMap extends Hashtable {
     return _values;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    return super.equals(o);
+  }
+
+  @Override
+  public int hashCode() {
+    return super.hashCode();
+  }
+
   public static class ReadOnlyEntrySet extends ReadOnlySet {
 
     public ReadOnlyEntrySet(Set set) {
       super(set);
     }
 
+    @Override
     public Iterator iterator() {
       return new ReadOnlyEntrySetIterator(set.iterator());
     }
@@ -167,46 +185,57 @@ public class CopyOnWriteArrayMap extends Hashtable {
       this.set = set;
     }
 
+    @Override
     public boolean add(Object o) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean addAll(Collection c) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void clear() {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean contains(Object o) {
       return set.contains(o);
     }
 
+    @Override
     public boolean containsAll(Collection c) {
       return set.containsAll(c);
     }
 
+    @Override
     public boolean isEmpty() {
       return set.isEmpty();
     }
 
+    @Override
     public Iterator iterator() {
       return new ReadOnlyIterator(set.iterator());
     }
 
+    @Override
     public boolean remove(Object o) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean removeAll(Collection c) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean retainAll(Collection c) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public int size() {
       return set.size();
     }
@@ -219,6 +248,7 @@ public class CopyOnWriteArrayMap extends Hashtable {
       super(iterator);
     }
 
+    @Override
     public Object next() {
       return new ReadOnlyEntry((Map.Entry) iterator.next());
     }

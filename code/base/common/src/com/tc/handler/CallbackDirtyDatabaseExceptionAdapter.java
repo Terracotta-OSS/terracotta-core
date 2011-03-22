@@ -10,9 +10,10 @@ import com.tc.object.persistence.api.PersistentMapStore;
 
 public class CallbackDirtyDatabaseExceptionAdapter extends CallbackDirtyDatabaseCleanUpAdapter {
 
-  private final TCLogger consoleLogger;
-  private String         consoleMessage = "This standby Terracotta server instance had to restart to "
-                                          + "automatically wipe its database and rejoin the cluster.";
+  private static final String CONSOLE_MESSAGE = "This standby Terracotta server instance had to restart to "
+                                                + "automatically wipe its database and rejoin the cluster.\n";
+
+  private final TCLogger      consoleLogger;
 
   public CallbackDirtyDatabaseExceptionAdapter(TCLogger logger, TCLogger consoleLogger,
                                                PersistentMapStore clusterStateStore) {
@@ -23,7 +24,7 @@ public class CallbackDirtyDatabaseExceptionAdapter extends CallbackDirtyDatabase
   @Override
   public void callbackOnExit(CallbackOnExitState state) {
     super.callbackOnExit(state);
-    consoleLogger.error(consoleMessage + "\n");
+    consoleLogger.error(CONSOLE_MESSAGE);
   }
 
 }

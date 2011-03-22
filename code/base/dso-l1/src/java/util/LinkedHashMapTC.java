@@ -21,8 +21,8 @@ public abstract class LinkedHashMapTC extends LinkedHashMap implements Manageabl
 
   private boolean accessOrder;
 
-
   // This is pretty much a C&P of the one in HashMapTC
+  @Override
   public boolean containsValue(Object value) {
     if (__tc_isManaged()) {
       synchronized (__tc_managed().getResolveLock()) {
@@ -31,7 +31,7 @@ public abstract class LinkedHashMapTC extends LinkedHashMap implements Manageabl
           // other way around
           return super.containsValue(new ValueWrapper(value));
         } else {
-          return super.containsValue(value);
+          return super.containsValue(null);
         }
       }
     } else {
@@ -39,6 +39,7 @@ public abstract class LinkedHashMapTC extends LinkedHashMap implements Manageabl
     }
   }
 
+  @Override
   public Object get(Object key) {
     if (__tc_isManaged()) {
       Entry entry = null;

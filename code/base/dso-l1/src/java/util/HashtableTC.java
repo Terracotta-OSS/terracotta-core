@@ -789,8 +789,8 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
 
             if (entrySet.contains(entryToRemove)) {
               Entry entry = __tc_removeEntryForKey(entryToRemove.getKey());
-              ManagerUtil.logicalInvoke(HashtableTC.this, SerializationUtil.REMOVE_KEY_SIGNATURE, new Object[] { entry
-                  .getKey() });
+              ManagerUtil.logicalInvoke(HashtableTC.this, SerializationUtil.REMOVE_KEY_SIGNATURE,
+                                        new Object[] { entry.getKey() });
               return true;
             } else {
               return false;
@@ -1007,7 +1007,7 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     }
   }
 
-  private class ValueUnwrappingEnumeration implements Enumeration {
+  private static class ValueUnwrappingEnumeration implements Enumeration {
 
     private final Enumeration e;
 
