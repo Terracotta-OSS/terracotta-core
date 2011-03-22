@@ -308,7 +308,7 @@ findbugs
     Runs FindBugs analysis. The result find is saved to build/findbugs.xml.
     If you run 'tcbuild findbugs gui' it will run findbugs analysis first then start the GUI
 
-fingbugs_gui
+findbugs_gui
     Starts FindBugs GUI. You can use this GUI to read the build/findbugs.xml
     
     
