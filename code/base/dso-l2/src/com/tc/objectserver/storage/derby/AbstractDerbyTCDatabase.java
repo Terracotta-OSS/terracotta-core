@@ -65,8 +65,13 @@ abstract class AbstractDerbyTCDatabase {
 
   protected void executeQuery(Connection connection, String query) throws SQLException {
     Statement statement = connection.createStatement();
-    statement.execute(query);
-    statement.close();
+    try {
+      statement.execute(query);
+    } finally {
+      if (statement != null) {
+        statement.close();
+      }
+    }
     connection.commit();
   }
 

@@ -73,8 +73,12 @@ public class DerbyDBEnvironment implements DBEnvironment {
     File derbyPropsFile = new File(this.envHome.getAbsoluteFile() + File.separator + "derby.properties");
     if (!derbyProps.isEmpty() && !derbyPropsFile.exists()) {
       FileOutputStream fos = new FileOutputStream(derbyPropsFile);
-      derbyProps.store(fos, "Derby Properties File");
-      logger.info("Derby Properties file created with: " + derbyProps);
+      try {
+        derbyProps.store(fos, "Derby Properties File");
+        logger.info("Derby Properties file created with: " + derbyProps);
+      } finally {
+        fos.close();
+      }
     }
   }
 
@@ -264,8 +268,10 @@ public class DerbyDBEnvironment implements DBEnvironment {
 
   private void forceClose() {
     try {
-      DriverManager.getConnection(PROTOCOL + envHome.getAbsolutePath() + File.separator + DB_NAME + ";logDevice="
-                                  + envHome.getAbsolutePath() + ";shutdown=true");
+      Connection connection = DriverManager.getConnection(PROTOCOL + envHome.getAbsolutePath() + File.separator
+                                                          + DB_NAME + ";logDevice=" + envHome.getAbsolutePath()
+                                                          + ";shutdown=true");
+      connection.close();
     } catch (Exception e) {
       logger.info("Shutdown" + e.getMessage());
     }

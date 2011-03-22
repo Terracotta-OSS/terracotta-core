@@ -85,6 +85,7 @@ class DerbyTCLongDatabase extends AbstractDerbyTCDatabase implements TCLongDatab
     } catch (SQLException e) {
       throw new DBException(e);
     } finally {
+      closeResultSet(rs);
       tx.commit();
     }
   }

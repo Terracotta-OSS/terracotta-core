@@ -23,18 +23,18 @@ class DerbyDBSequence implements MutableSequence {
   private final String                              uid;
   private final DerbyPersistenceTransactionProvider ptxp;
 
-  private final String                              setUidQuery    = "SELECT " + SEQUENCE_UID + " FROM "
+  private static final String                       SET_UID_QUERY  = "SELECT " + SEQUENCE_UID + " FROM "
                                                                      + SEQUENCE_TABLE + " WHERE " + SEUQENCE_NAME
                                                                      + " = ?";
-  private final String                              setNextQuery   = "UPDATE " + SEQUENCE_TABLE + " SET "
+  private static final String                       SET_NEXT_QUERY = "UPDATE " + SEQUENCE_TABLE + " SET "
                                                                      + SEQUENCE_VALUE + " = ? " + " WHERE "
                                                                      + SEUQENCE_NAME + " = ?";
-  private final String                              currentQuery   = "SELECT " + SEQUENCE_VALUE + " FROM "
+  private static final String                       CURRENT_QUERY  = "SELECT " + SEQUENCE_VALUE + " FROM "
                                                                      + SEQUENCE_TABLE + " WHERE " + SEUQENCE_NAME
                                                                      + " = ?";
-  private final String                              insertQuery    = "INSERT INTO " + SEQUENCE_TABLE
+  private static final String                       INSERT_QUERY   = "INSERT INTO " + SEQUENCE_TABLE
                                                                      + " VALUES (?, ?, ?)";
-  private final String                              existsQuery    = "SELECT " + SEQUENCE_VALUE + " FROM "
+  private static final String                       EXISTS_QUERY   = "SELECT " + SEQUENCE_VALUE + " FROM "
                                                                      + SEQUENCE_TABLE + " WHERE " + SEUQENCE_NAME
                                                                      + " = ?";
 
@@ -54,18 +54,23 @@ class DerbyDBSequence implements MutableSequence {
   private String setUID() throws SQLException {
     ResultSet rs = null;
     PersistenceTransaction txn = ptxp.newTransaction();
-    PreparedStatement psSelect = AbstractDerbyTCDatabase.getOrCreatePreparedStatement(txn, setUidQuery);
-    psSelect.setString(1, entryName);
-    rs = psSelect.executeQuery();
+    String seqID = null;
 
-    if (rs.next()) {
-      String seqID = rs.getString(SEQUENCE_UID);
-      rs.close();
-      txn.commit();
-      return seqID;
+    try {
+      PreparedStatement psSelect = AbstractDerbyTCDatabase.getOrCreatePreparedStatement(txn, SET_UID_QUERY);
+      psSelect.setString(1, entryName);
+      rs = psSelect.executeQuery();
+
+      if (rs.next()) {
+        seqID = rs.getString(SEQUENCE_UID);
+      }
+    } finally {
+      closeResultSet(rs);
     }
+    txn.commit();
 
-    throw new IllegalStateException("Invalid state for sequence");
+    if (seqID == null) { throw new IllegalStateException("Invalid state for sequence"); }
+    return seqID;
   }
 
   public String getUID() {
@@ -85,7 +90,7 @@ class DerbyDBSequence implements MutableSequence {
 
     try {
       PersistenceTransaction txn = ptxp.newTransaction();
-      PreparedStatement psUpdate = AbstractDerbyTCDatabase.getOrCreatePreparedStatement(txn, setNextQuery);
+      PreparedStatement psUpdate = AbstractDerbyTCDatabase.getOrCreatePreparedStatement(txn, SET_NEXT_QUERY);
       psUpdate.setLong(1, next);
       psUpdate.setString(2, entryName);
       psUpdate.executeUpdate();
@@ -101,7 +106,7 @@ class DerbyDBSequence implements MutableSequence {
     PreparedStatement psSelect;
     try {
       PersistenceTransaction txn = ptxp.newTransaction();
-      psSelect = AbstractDerbyTCDatabase.getOrCreatePreparedStatement(txn, currentQuery);
+      psSelect = AbstractDerbyTCDatabase.getOrCreatePreparedStatement(txn, CURRENT_QUERY);
       psSelect.setString(1, entryName);
       rs = psSelect.executeQuery();
 
@@ -124,30 +129,31 @@ class DerbyDBSequence implements MutableSequence {
     if (exists()) { return; }
 
     PersistenceTransaction txn = ptxp.newTransaction();
-    PreparedStatement psPut = AbstractDerbyTCDatabase.getOrCreatePreparedStatement(txn, insertQuery);
+    PreparedStatement psPut = AbstractDerbyTCDatabase.getOrCreatePreparedStatement(txn, INSERT_QUERY);
     psPut.setString(1, entryName);
     psPut.setLong(2, startVal);
     psPut.setString(3, UUID.getUUID().toString());
 
     psPut.executeUpdate();
-    psPut.close();
     txn.commit();
   }
 
   private boolean exists() throws SQLException {
     ResultSet rs = null;
     PersistenceTransaction txn = ptxp.newTransaction();
-    PreparedStatement psSelect = AbstractDerbyTCDatabase.getOrCreatePreparedStatement(txn, existsQuery);
-    psSelect.setString(1, entryName);
-    rs = psSelect.executeQuery();
 
-    if (!rs.next()) {
-      rs.close();
-      txn.commit();
-      return false;
+    boolean exists = false;
+    try {
+      PreparedStatement psSelect = AbstractDerbyTCDatabase.getOrCreatePreparedStatement(txn, EXISTS_QUERY);
+      psSelect.setString(1, entryName);
+      rs = psSelect.executeQuery();
+
+      exists = rs.next() ? true : false;
+    } finally {
+      closeResultSet(rs);
     }
     txn.commit();
-    return true;
+    return exists;
   }
 
   /**
@@ -156,11 +162,27 @@ class DerbyDBSequence implements MutableSequence {
   public static void createSequenceTable(Connection connection) throws SQLException {
     if (DerbyDBEnvironment.tableExists(connection, SEQUENCE_TABLE)) { return; }
 
-    Statement statement = connection.createStatement();
-    String query = "CREATE TABLE " + SEQUENCE_TABLE + "(" + SEUQENCE_NAME + " VARCHAR (50), " + SEQUENCE_VALUE
-                   + " BIGINT, " + SEQUENCE_UID + " VARCHAR (50), PRIMARY KEY(" + SEUQENCE_NAME + ") )";
-    statement.execute(query);
-    statement.close();
+    Statement statement = null;
+    try {
+      statement = connection.createStatement();
+      String query = "CREATE TABLE " + SEQUENCE_TABLE + "(" + SEUQENCE_NAME + " VARCHAR (50), " + SEQUENCE_VALUE
+                     + " BIGINT, " + SEQUENCE_UID + " VARCHAR (50), PRIMARY KEY(" + SEUQENCE_NAME + ") )";
+      statement.execute(query);
+    } finally {
+      if (statement != null) {
+        statement.close();
+      }
+    }
     connection.commit();
+  }
+
+  private void closeResultSet(ResultSet rs) {
+    if (rs != null) {
+      try {
+        rs.close();
+      } catch (SQLException e) {
+        //
+      }
+    }
   }
 }
