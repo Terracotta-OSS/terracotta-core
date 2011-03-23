@@ -34,7 +34,7 @@ public class CommandRetrieveStatistics extends AbstractCliCommand {
     httpclient_logger2.setLevel(Level.WARN);
   }
 
-  public final static String[] ARGUMENT_NAMES = new String[] { "filename" };
+  private final static String[] ARGUMENT_NAMES = new String[] { "filename" };
 
   public String[] getArgumentNames() {
     return ARGUMENT_NAMES;
