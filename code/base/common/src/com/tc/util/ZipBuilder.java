@@ -50,13 +50,13 @@ public class ZipBuilder implements ArchiveBuilder {
     if (!dir.isDirectory()) throw new IOException("Unexpected Exception: " + dir + "\nis not a directory");
     putDirEntry(dirName);
     String[] files = dir.list();
-    for (int i = 0; i < files.length; i++) {
-      File file = new File(dir + File.separator + files[i]);
+    for (String file2 : files) {
+      File file = new File(dir + File.separator + file2);
       if (file.isDirectory()) {
         putTraverseDirectory(file, dirName + File.separator + file.getName());
         continue;
       }
-      putEntry(dirName + File.separator + files[i], readFile(file));
+      putEntry(dirName + File.separator + file2, readFile(file));
     }
   }
 
@@ -124,7 +124,7 @@ public class ZipBuilder implements ArchiveBuilder {
       while ((entry = zis.getNextEntry()) != null) {
         File file = new File(destDir, entry.getName());
         if (entry.isDirectory()) {
-          file.mkdirs();
+          if (!file.mkdirs()) { throw new IOException("failed to create directory " + file.getAbsolutePath()); }
         } else {
           IOUtils.copy(zis, new FileOutputStream(file));
         }

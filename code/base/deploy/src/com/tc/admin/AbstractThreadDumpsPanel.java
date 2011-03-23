@@ -231,12 +231,15 @@ public abstract class AbstractThreadDumpsPanel extends BasicThreadDumpsPanel {
     chooser.setSelectedFile(new File(chooser.getCurrentDirectory(), nodeName + "-thread-dump.txt"));
     if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
     File file = chooser.getSelectedFile();
-    FileOutputStream fos = new FileOutputStream(file);
     lastExportDir = file.getParentFile();
     int row = entryList.getSelectedIndex();
     ThreadDumpEntry tde = (ThreadDumpEntry) entryList.getModel().getElementAt(row);
-    fos.write(tde.getContent().getBytes("UTF-8"));
-    fos.close();
+    FileOutputStream fos = new FileOutputStream(file);
+    try {
+      fos.write(tde.getContent().getBytes("UTF-8"));
+    } finally {
+      fos.close();
+    }
   }
 
   @Override

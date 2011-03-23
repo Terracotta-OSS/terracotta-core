@@ -870,9 +870,8 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       textArea.setLineWrap(true);
       textArea.setWrapStyleWord(true);
       XScrollPane scrollPane = new XScrollPane(textArea);
-      JOptionPane.showMessageDialog(AdminClientPanel.this, scrollPane,
-                                    adminClientContext.getMessage("update-checker.action.title"),
-                                    JOptionPane.INFORMATION_MESSAGE);
+      JOptionPane.showMessageDialog(AdminClientPanel.this, scrollPane, adminClientContext
+          .getMessage("update-checker.action.title"), JOptionPane.INFORMATION_MESSAGE);
     }
 
     public Properties getResponseBody(URL url, HttpClient client) throws ConnectException, IOException {
@@ -982,9 +981,8 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       if (msg != null) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            JOptionPane.showMessageDialog(AdminClientPanel.this, msg,
-                                          adminClientContext.getMessage("update-checker.action.title"),
-                                          JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(AdminClientPanel.this, msg, adminClientContext
+                .getMessage("update-checker.action.title"), JOptionPane.INFORMATION_MESSAGE);
           }
         });
       }
@@ -1194,7 +1192,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     return adminClientContext.format("get.svt.url", getKitID());
   }
 
-  private class VersionMap implements Comparable {
+  private static class VersionMap implements Comparable {
     final File    versionDir;
     final Version version;
     final String  qualifier;
@@ -1303,7 +1301,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
         } catch (Exception e) {
           log(e);
         }
-      } catch (Exception e) {
+      } catch (ClassNotFoundException e) {
         BrowserLauncher.openURL(getSvtUrl());
       }
     }

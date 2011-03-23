@@ -38,7 +38,7 @@ public class NoReferencesIDStoreImpl implements NoReferencesIDStore {
     return this.delegate.hasNoReferences(id);
   }
 
-  public class OidSetStore implements NoReferencesIDStore {
+  private static class OidSetStore implements NoReferencesIDStore {
     private final StripedObjectIDSet store = new StripedObjectIDSet();
 
     public void addToNoReferences(final ManagedObject mo) {

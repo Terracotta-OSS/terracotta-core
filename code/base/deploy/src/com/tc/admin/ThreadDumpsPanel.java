@@ -135,7 +135,7 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
 
     @Override
     protected void handleReady() {
-      IClusterModel theClusterModel = getClusterModel();
+      IClusterModel theClusterModel = super.getClusterModel();
       if (theClusterModel == null) { return; }
 
       if (!inited && clusterModel.isConnected()) {

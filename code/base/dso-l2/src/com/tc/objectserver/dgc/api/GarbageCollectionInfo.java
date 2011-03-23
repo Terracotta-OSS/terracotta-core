@@ -11,7 +11,7 @@ import com.tc.objectserver.core.impl.GarbageCollectionID;
 
 import java.io.IOException;
 
-public class GarbageCollectionInfo implements Cloneable, TCSerializable {
+public class GarbageCollectionInfo implements TCSerializable {
 
   protected static final long               NOT_INITIALIZED       = -1L;
   protected static final long               NULL_INITIALIZED      = -2;
@@ -226,22 +226,6 @@ public class GarbageCollectionInfo implements Cloneable, TCSerializable {
       gcInfo.append(" rescue2Time = " + this.rescue2Time);
     }
     return gcInfo.toString();
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (obj instanceof GarbageCollectionInfo) {
-      GarbageCollectionInfo other = (GarbageCollectionInfo) obj;
-      return (this.gcID.equals(other.gcID) && this.fullGC == other.fullGC && this.startTime == other.startTime
-              && this.beginObjectCount == other.beginObjectCount && this.endObjectCount == other.endObjectCount
-              && this.markStageTime == other.markStageTime && this.pauseStageTime == other.pauseStageTime
-              && this.deleteStageTime == other.deleteStageTime && this.elapsedTime == other.elapsedTime
-              && this.totalMarkCycleTime == other.totalMarkCycleTime
-              && this.candidateGarbageCount == other.candidateGarbageCount
-              && this.preRescueCount == other.preRescueCount && this.rescue1Count == other.rescue1Count
-              && this.rescue1Time == other.rescue1Time && this.rescue2Time == other.rescue2Time);
-    }
-    return false;
   }
 
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {

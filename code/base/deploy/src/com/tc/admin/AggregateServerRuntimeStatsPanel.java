@@ -98,20 +98,19 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   protected final String           lockRecallRateLabelFormat   = "{0} Recalls/sec.";
   protected final String           broadcastRateLabelFormat    = "{0} Broadcasts/sec.";
 
-  private static final Set<String> POLLED_ATTRIBUTE_SET        = new HashSet(
-                                                                             Arrays
-                                                                                 .asList(POLLED_ATTR_OBJECT_FLUSH_RATE,
-                                                                                         POLLED_ATTR_OBJECT_FAULT_RATE,
-                                                                                         POLLED_ATTR_TRANSACTION_RATE,
-                                                                                         POLLED_ATTR_ONHEAP_FAULT_RATE,
-                                                                                         POLLED_ATTR_ONHEAP_FLUSH_RATE,
-                                                                                         POLLED_ATTR_OFFHEAP_FAULT_RATE,
-                                                                                         POLLED_ATTR_OFFHEAP_FLUSH_RATE,
-                                                                                         POLLED_ATTR_LIVE_OBJECT_COUNT,
-                                                                                         POLLED_ATTR_LOCK_RECALL_RATE,
-                                                                                         POLLED_ATTR_BROADCAST_RATE,
-                                                                                         POLLED_ATTR_CACHED_OBJECT_COUNT,
-                                                                                         POLLED_ATTR_OFFHEAP_OBJECT_CACHED_COUNT));
+  private static final Set<String> POLLED_ATTRIBUTE_SET        = new HashSet(Arrays
+                                                                   .asList(POLLED_ATTR_OBJECT_FLUSH_RATE,
+                                                                           POLLED_ATTR_OBJECT_FAULT_RATE,
+                                                                           POLLED_ATTR_TRANSACTION_RATE,
+                                                                           POLLED_ATTR_ONHEAP_FAULT_RATE,
+                                                                           POLLED_ATTR_ONHEAP_FLUSH_RATE,
+                                                                           POLLED_ATTR_OFFHEAP_FAULT_RATE,
+                                                                           POLLED_ATTR_OFFHEAP_FLUSH_RATE,
+                                                                           POLLED_ATTR_LIVE_OBJECT_COUNT,
+                                                                           POLLED_ATTR_LOCK_RECALL_RATE,
+                                                                           POLLED_ATTR_BROADCAST_RATE,
+                                                                           POLLED_ATTR_CACHED_OBJECT_COUNT,
+                                                                           POLLED_ATTR_OFFHEAP_OBJECT_CACHED_COUNT));
 
   public AggregateServerRuntimeStatsPanel(ApplicationContext appContext, IClusterModel clusterModel) {
     super(appContext);
@@ -145,7 +144,7 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
 
     @Override
     public void handleReady() {
-      IClusterModel theClusterModel = getClusterModel();
+      IClusterModel theClusterModel = super.getClusterModel();
       if (theClusterModel == null) { return; }
 
       if (clusterModel.isReady()) {
@@ -395,8 +394,8 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
     chartPanel.setBorder(objectManagerTitle);
     chartPanel.setToolTipText("Cached/OffHeap/Total instance counts");
     liveObjectCountPlot = (XYPlot) chart.getPlot();
-    XYAreaRenderer areaRenderer2 = new XYAreaRenderer(XYAreaRenderer.AREA,
-                                                      StandardXYToolTipGenerator.getTimeSeriesInstance(), null);
+    XYAreaRenderer areaRenderer2 = new XYAreaRenderer(XYAreaRenderer.AREA, StandardXYToolTipGenerator
+        .getTimeSeriesInstance(), null);
     liveObjectCountPlot.setRenderer(areaRenderer2);
     areaRenderer2.setSeriesPaint(0, (Color) appContext.getObject("chart.color.2"));
     areaRenderer2.setSeriesPaint(1, (Color) appContext.getObject("chart.color.3"));
