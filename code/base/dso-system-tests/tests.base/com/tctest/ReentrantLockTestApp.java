@@ -537,7 +537,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
 
     if (index == 0) {
       int signalCount = 0;
-      while (lock.hasWaiters(condition)) {
+      while (lock.hasWaiters(condition) || signalCount == 0) {
         lock.lock();
         try {
           System.out.println("Signalling...");
@@ -551,7 +551,8 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
 
       int threadCount = getParticipantCount() * threads.length;
       int expected = threadCount / 2;
-      Assert.assertTrue(signalCount + " signal calls needed to wake " + threadCount + " threads, expected at least " + expected, signalCount > expected);
+      Assert.assertTrue(signalCount + " signal calls needed to wake " + threadCount + " threads, expected at least "
+                        + expected, signalCount > expected);
     }
 
     barrier.await();
@@ -853,7 +854,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     } finally {
       lock.unlock();
     }
-    
+
     barrier.await();
   }
 
