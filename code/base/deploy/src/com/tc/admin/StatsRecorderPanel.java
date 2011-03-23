@@ -1108,10 +1108,9 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
   }
 
   class ViewStatsSessionsHandler implements ActionListener, PropertyChangeListener {
-    private JFrame        svtFrame;
-    private Method        retrieveMethod;
-    private Method        setSessionMethod;
-    private final boolean shouldLogErrors = true;
+    private JFrame svtFrame;
+    private Method retrieveMethod;
+    private Method setSessionMethod;
 
     public void actionPerformed(ActionEvent ae) {
       if (svtFrame == null) {
@@ -1173,9 +1172,7 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
     }
 
     private void log(Throwable t) {
-      if (shouldLogErrors) {
-        appContext.log(t);
-      }
+      appContext.log(t);
     }
   }
 

@@ -32,8 +32,8 @@ public class ServerGroupsPanel extends XContainer {
     serverGroupTableModel = new ServerGroupTableModel();
     serverGroupTable.setModel(serverGroupTableModel);
 
-    for (int i = 0; i < serverGroups.length; i++) {
-      serverGroupTableModel.addGroup(serverGroups[i]);
+    for (IServerGroup serverGroup : serverGroups) {
+      serverGroupTableModel.addGroup(serverGroup);
     }
 
     add(new XScrollPane(serverGroupTable), BorderLayout.CENTER);
@@ -42,7 +42,7 @@ public class ServerGroupsPanel extends XContainer {
   private static final String[] FIELDS  = { "Name", "Id" };
   private static final String[] HEADERS = { "Group Name", "Group Id" };
 
-  private class ServerGroupTableModel extends XObjectTableModel {
+  private static class ServerGroupTableModel extends XObjectTableModel {
     ServerGroupTableModel() {
       super(IServerGroup.class, FIELDS, HEADERS);
     }
@@ -52,6 +52,7 @@ public class ServerGroupsPanel extends XContainer {
     }
   }
 
+  @Override
   public void tearDown() {
     serverGroupTableModel.clear();
 
