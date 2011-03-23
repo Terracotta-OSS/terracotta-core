@@ -20,6 +20,7 @@ import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 import com.tc.util.Conversion;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -82,7 +83,7 @@ public class BerkeleyDBTCMapsDatabase extends BerkeleyDBTCBytesBytesDatabase imp
     Status delStatus = super.delete(k, tx);
     final boolean status = (delStatus == Status.SUCCESS || delStatus == Status.NOT_FOUND);
     if (!status) { throw new TCDatabaseException("Unable to remove Map Entry for object id: " + id + ", status: "
-                                                 + status + ", key: " + k); }
+                                                 + status + ", key: " + Arrays.toString(k)); }
     return written;
   }
 
