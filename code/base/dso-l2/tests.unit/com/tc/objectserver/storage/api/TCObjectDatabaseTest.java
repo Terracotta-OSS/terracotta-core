@@ -53,7 +53,6 @@ public class TCObjectDatabaseTest extends TCTestCase {
     tx.commit();
     Assert.assertTrue(Arrays.equals(value1, valueFetched));
 
-    value1 = getRandomlyFilledByteArray();
     tx = ptp.newTransaction();
     status = database.update(objectId1, value2, tx);
     tx.commit();

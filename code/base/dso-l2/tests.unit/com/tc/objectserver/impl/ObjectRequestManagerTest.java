@@ -445,10 +445,6 @@ public class ObjectRequestManagerTest extends TestCase {
     final ObjectRequestID requestID = new ObjectRequestID(1);
 
     final int objectsToBeRequested = 100;
-    int numberOfRequestsMade = objectsToBeRequested / ObjectRequestManagerImpl.SPLIT_SIZE;
-    if (objectsToBeRequested % ObjectRequestManagerImpl.SPLIT_SIZE > 0) {
-      numberOfRequestsMade++;
-    }
     final ObjectIDSet ids = createObjectIDSet(objectsToBeRequested);
 
     objectRequestManager.requestObjects(new ObjectRequestServerContextImpl(clientID, requestID, ids, Thread

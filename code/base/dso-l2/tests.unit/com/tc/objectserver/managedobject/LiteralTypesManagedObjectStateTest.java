@@ -26,7 +26,7 @@ public class LiteralTypesManagedObjectStateTest extends AbstractTestManagedObjec
     // API verification
     Assert.assertTrue(state.getObjectReferences().size() == 0);
     Assert.assertTrue(state.getType() == ManagedObjectState.LITERAL_TYPE);
-    Assert.assertTrue(state.getClassName() == className);
+    Assert.assertEquals(state.getClassName(), className);
 
     // dehydrate
     cursor.reset();

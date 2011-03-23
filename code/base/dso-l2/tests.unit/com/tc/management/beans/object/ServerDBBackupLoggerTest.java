@@ -4,8 +4,6 @@
  */
 package com.tc.management.beans.object;
 
-import com.tc.management.beans.object.ServerDBBackup;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -18,7 +16,7 @@ import junit.framework.TestCase;
 
 public class ServerDBBackupLoggerTest extends TestCase {
 
-  private String[]            logMessages   = { "hi", "these", "are", "log", "messages" };
+  private final String[]      logMessages   = { "hi", "these", "are", "log", "messages" };
   private static final String EXCEPTION_MSG = "Exception in test";
 
   public void testLoggerFileExists() {
@@ -32,7 +30,7 @@ public class ServerDBBackupLoggerTest extends TestCase {
 
     String errorDir = "serverdbBackup" + File.separator + "tempFile";
     createNewFile(errorDir);
-    logger = createLogger(errorDir);
+    createLogger(errorDir);
 
     file = new File(errorDir + File.separator + "backup.log");
     assertFalse(file.exists());
@@ -60,8 +58,8 @@ public class ServerDBBackupLoggerTest extends TestCase {
     BufferedReader reader = new BufferedReader(new FileReader(filePath));
 
     String line = null;
-    for (int i = 0; i < logMessages.length; i++)
-      assertEquals(logMessages[i], reader.readLine());
+    for (String logMessage : logMessages)
+      assertEquals(logMessage, reader.readLine());
 
     line = reader.readLine();
     assertTrue(line.startsWith(ServerDBBackup.FileLoggerForBackup.BACKUP_STARTED_MSG));
@@ -76,8 +74,8 @@ public class ServerDBBackupLoggerTest extends TestCase {
   }
 
   private void logMessages(ServerDBBackup.FileLoggerForBackup logger) {
-    for (int i = 0; i < logMessages.length; i++)
-      logger.logMessage(logMessages[i]);
+    for (String logMessage : logMessages)
+      logger.logMessage(logMessage);
 
     logger.logStartMessage();
     logger.logExceptions(new RuntimeException(EXCEPTION_MSG));

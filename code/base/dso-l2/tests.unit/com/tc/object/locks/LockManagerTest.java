@@ -156,7 +156,7 @@ public class LockManagerTest extends TestCase {
       assertTrue(ctxt.isLockWaitTimeout());
       ThreadUtil.reallySleep(waitTime * 3);
       assertEquals(3, sink.size()); // 2 wait timeouts and 1 award
-      ctxt = (LockResponseContext) sink.take();
+      sink.take();
       LockResponseContext ctxt1 = (LockResponseContext) sink.take();
       LockResponseContext ctxt2 = (LockResponseContext) sink.take();
       assertTrue((ctxt1.isLockAward() && ctxt2.isLockWaitTimeout())
