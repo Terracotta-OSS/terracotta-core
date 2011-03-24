@@ -48,7 +48,7 @@ public class LiteralTypesManagedObjectStateTest extends AbstractTestManagedObjec
   }
 
   public void testLiteralInteger() throws Exception {
-    basicLiteral("java.lang.Integer", new Integer(34));
+    basicLiteral("java.lang.Integer", Integer.valueOf(34));
   }
 
   public void testLiteralString() throws Exception {
@@ -56,7 +56,7 @@ public class LiteralTypesManagedObjectStateTest extends AbstractTestManagedObjec
   }
 
   public void testLiteralByte() throws Exception {
-    final Byte data = new Byte((byte) 0xf0);
+    final Byte data = Byte.valueOf((byte) 0xf0);
     basicLiteral(data.getClass().getName(), data);
   }
 

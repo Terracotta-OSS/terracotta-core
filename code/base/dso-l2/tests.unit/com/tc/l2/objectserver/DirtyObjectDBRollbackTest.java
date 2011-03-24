@@ -32,7 +32,7 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
   private File                     dataPath;
   private BerkeleyDBEnvironment    dbenv;
   private TCFile                   dirtyDbBackupPath = null;
-  private TCLogger                 logger            = TCLogging.getLogger(DirtyObjectDBRollbackTest.class);
+  private final TCLogger           logger            = TCLogging.getLogger(DirtyObjectDBRollbackTest.class);
   private TestDirtyObjectDBCleaner dbCleaner;
 
   @Override
@@ -50,8 +50,8 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
     dbenv.open();
 
     PersistenceTransactionProvider persistentTxProvider = new NullPersistenceTransactionProvider();
-    PersistentMapStore persistentMapStore = new TCMapStore(persistentTxProvider, logger, dbenv
-        .getClusterStateStoreDatabase());
+    PersistentMapStore persistentMapStore = new TCMapStore(persistentTxProvider, logger,
+                                                           dbenv.getClusterStateStoreDatabase());
 
     // create db backup dir
     dirtyDbBackupPath = new TCFileImpl(new File(dataPath.getAbsolutePath() + File.separator
@@ -133,7 +133,7 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
     cleanBackupDirs(dirtyDbBackupPath.getFile(), L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX);
   }
 
-  class TestDirtyObjectDBCleaner extends DirtyObjectDbCleaner {
+  static class TestDirtyObjectDBCleaner extends DirtyObjectDbCleaner {
 
     public TestDirtyObjectDBCleaner(PersistentMapStore clusterStateStore, File dataPath, TCLogger logger) {
       super(clusterStateStore, dataPath, logger);

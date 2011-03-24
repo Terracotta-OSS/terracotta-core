@@ -135,7 +135,7 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
         return null;
       } else if (method.getName().equals("getStringValue")) {
         return this.stringValues.get(proxy);
-      } else if (method.getName().equals("hashCode")) { return new Integer(System.identityHashCode(proxy)); }
+      } else if (method.getName().equals("hashCode")) { return Integer.valueOf(System.identityHashCode(proxy)); }
       return null;
     }
   }

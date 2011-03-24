@@ -113,13 +113,13 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     final String className = TDCCustomLifespanSerializedEntryManagedObjectState.CUSTOM_SERIALIZED_ENTRY;
     final TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addPhysicalAction(TDCSerializedEntryManagedObjectState.CREATE_TIME_FIELD, new Integer(1), false);
-    cursor.addPhysicalAction(TDCSerializedEntryManagedObjectState.LAST_ACCESS_TIME_FIELD, new Integer(2), false);
+    cursor.addPhysicalAction(TDCSerializedEntryManagedObjectState.CREATE_TIME_FIELD, Integer.valueOf(1), false);
+    cursor.addPhysicalAction(TDCSerializedEntryManagedObjectState.LAST_ACCESS_TIME_FIELD, Integer.valueOf(2), false);
     cursor.addEntireArray(new byte[] { 1, 2, 3, 4 });
-    cursor
-        .addPhysicalAction(TDCCustomLifespanSerializedEntryManagedObjectState.CUSTOM_TTI_FIELD, new Integer(3), false);
-    cursor
-        .addPhysicalAction(TDCCustomLifespanSerializedEntryManagedObjectState.CUSTOM_TTL_FIELD, new Integer(4), false);
+    cursor.addPhysicalAction(TDCCustomLifespanSerializedEntryManagedObjectState.CUSTOM_TTI_FIELD, Integer.valueOf(3),
+                             false);
+    cursor.addPhysicalAction(TDCCustomLifespanSerializedEntryManagedObjectState.CUSTOM_TTL_FIELD, Integer.valueOf(4),
+                             false);
 
     final ManagedObjectState state = applyValidation(className, cursor);
 
@@ -154,7 +154,7 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
 
     cursor.addPhysicalAction("field1", new ObjectID(2002), true);
     cursor.addPhysicalAction("field2", new ObjectID(2003), true);
-    cursor.addPhysicalAction("field3", new Integer(33), false);
+    cursor.addPhysicalAction("field3", Integer.valueOf(33), false);
 
     final ManagedObjectState state = applyValidation(className, cursor);
 
@@ -166,8 +166,8 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
 
     final TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addLogicalAction(SerializationUtil.SET_TIME, new Long[] { new Long(System.currentTimeMillis()) });
-    cursor.addLogicalAction(SerializationUtil.SET_NANOS, new Integer[] { new Integer(0) });
+    cursor.addLogicalAction(SerializationUtil.SET_TIME, new Long[] { Long.valueOf(System.currentTimeMillis()) });
+    cursor.addLogicalAction(SerializationUtil.SET_NANOS, new Integer[] { Integer.valueOf(0) });
 
     final ManagedObjectState state = applyValidation(className, cursor);
 
@@ -194,7 +194,7 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     final String className = "[java.lang.Integer";
     final TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addArrayAction(new Integer[] { new Integer(27) });
+    cursor.addArrayAction(new Integer[] { Integer.valueOf(27) });
 
     final ManagedObjectState state = applyValidation(className, cursor);
 
@@ -205,7 +205,7 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     final String className = "java.lang.Integer";
     final TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addLiteralAction(new Integer(27));
+    cursor.addLiteralAction(Integer.valueOf(27));
 
     final ManagedObjectState state = applyValidation(className, cursor);
 
@@ -302,7 +302,7 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
 
     cursor.addPhysicalAction(TAKE_LOCK_FIELD_NAME, new ObjectID(2001), true);
     cursor.addPhysicalAction(PUT_LOCK_FIELD_NAME, new ObjectID(2002), true);
-    cursor.addPhysicalAction(CAPACITY_FIELD_NAME, new Integer(100), false);
+    cursor.addPhysicalAction(CAPACITY_FIELD_NAME, Integer.valueOf(100), false);
 
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2003) });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2004) });
@@ -316,8 +316,8 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     final String className = ConcurrentHashMap.class.getName();
     final TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addPhysicalAction(ConcurrentHashMapManagedObjectState.SEGMENT_MASK_FIELD_NAME, new Integer(10), false);
-    cursor.addPhysicalAction(ConcurrentHashMapManagedObjectState.SEGMENT_SHIFT_FIELD_NAME, new Integer(20), false);
+    cursor.addPhysicalAction(ConcurrentHashMapManagedObjectState.SEGMENT_MASK_FIELD_NAME, Integer.valueOf(10), false);
+    cursor.addPhysicalAction(ConcurrentHashMapManagedObjectState.SEGMENT_SHIFT_FIELD_NAME, Integer.valueOf(20), false);
     final ObjectID[] segments = new ObjectID[] { new ObjectID(2001), new ObjectID(2002) };
     cursor.addArrayAction(segments);
 
@@ -347,8 +347,8 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     final String className = "com.terracotta.toolkit.collections.ConcurrentDistributedMapDso";
     final TestDNACursor cursor = new TestDNACursor();
 
-    cursor
-        .addPhysicalAction(ConcurrentDistributedMapManagedObjectState.DSO_LOCK_TYPE_FIELDNAME, new Integer(42), false);
+    cursor.addPhysicalAction(ConcurrentDistributedMapManagedObjectState.DSO_LOCK_TYPE_FIELDNAME, Integer.valueOf(42),
+                             false);
     cursor.addPhysicalAction(ConcurrentDistributedMapManagedObjectState.LOCK_STRATEGY_FIELDNAME, new ObjectID(1, 12),
                              true);
 
@@ -369,13 +369,13 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     cursor.addPhysicalAction(ConcurrentDistributedMapManagedObjectState.LOCK_STRATEGY_FIELDNAME, new ObjectID(1, 12),
                              true);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.MAX_TTI_SECONDS_FIELDNAME,
-                             new Integer(0), false);
+                             Integer.valueOf(0), false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.MAX_TTL_SECONDS_FIELDNAME,
-                             new Integer(0), false);
+                             Integer.valueOf(0), false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.TARGET_MAX_IN_MEMORY_COUNT_FIELDNAME,
-                             new Integer(0), false);
+                             Integer.valueOf(0), false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.TARGET_MAX_TOTAL_COUNT_FIELDNAME,
-                             new Integer(0), false);
+                             Integer.valueOf(0), false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.INVALIDATE_ON_CHANGE, new Boolean(false),
                              false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.CACHE_NAME_FIELDNAME, "cash name", false);
@@ -415,7 +415,7 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
         return null;
       } else if (method.getName().equals("getStringValue")) {
         return this.stringValues.get(proxy);
-      } else if (method.getName().equals("hashCode")) { return new Integer(System.identityHashCode(proxy)); }
+      } else if (method.getName().equals("hashCode")) { return Integer.valueOf(System.identityHashCode(proxy)); }
       return null;
     }
   }

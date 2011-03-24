@@ -1,15 +1,16 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.util.Assert;
 
@@ -97,7 +98,7 @@ public class LinkedHashMapManagedObjectState extends PartialMapManagedObjectStat
     return LINKED_HASHMAP_TYPE;
   }
 
-  //TODO:: Until partial collections support is enabled for this class
+  // TODO:: Until partial collections support is enabled for this class
   @Override
   protected void basicWriteTo(ObjectOutput out) throws IOException {
     out.writeBoolean(accessOrder);
@@ -124,4 +125,11 @@ public class LinkedHashMapManagedObjectState extends PartialMapManagedObjectStat
     return linkedsmo;
   }
 
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + (accessOrder ? 1231 : 1237);
+    return result;
+  }
 }

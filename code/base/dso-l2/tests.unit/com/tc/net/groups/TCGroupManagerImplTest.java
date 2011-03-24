@@ -588,7 +588,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
                                      final TCGroupManagerImpl mgr2, final TestGroupMessageListener l2)
       throws GroupException {
 
-    final Integer upbound = new Integer(50);
+    final Integer upbound = Integer.valueOf(50);
 
     // setup throwable ThreadGroup to catch AssertError from threads.
     TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandler(null), "TCGroupManagerImplTestGroup");
@@ -620,7 +620,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
   private static final class SenderThread extends Thread {
     private final TCGroupManagerImpl mgr;
     private final Integer            upbound;
-    private Integer                  index = new Integer(0);
+    private Integer                  index = Integer.valueOf(0);
     private final NodeID             toNode;
 
     public SenderThread(ThreadGroup group, String name, TCGroupManagerImpl mgr, Integer upbound) {
@@ -658,7 +658,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
   private static final class ReceiverThread extends Thread {
     private final TestGroupMessageListener l;
     private final Integer                  upbound;
-    private Integer                        index = new Integer(0);
+    private Integer                        index = Integer.valueOf(0);
     private final NodeID                   fromNode;
 
     public ReceiverThread(ThreadGroup group, String name, TestGroupMessageListener l, Integer upbound, NodeID fromNode) {
@@ -716,7 +716,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     tearGroups();
   }
 
-  private class MessagePackage {
+  private static class MessagePackage {
     private final GroupMessage message;
     private final NodeID       nodeID;
 
@@ -806,7 +806,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     public NoExceptionLinkedQueue outgoing = new NoExceptionLinkedQueue();
     public NoExceptionLinkedQueue incoming = new NoExceptionLinkedQueue();
-    private final int             weight   = 0;
+    private static final int      weight   = 0;
 
     public boolean acceptOutgoingZapNodeRequest(NodeID nodeID, int type, String reason) {
       outgoing.put(reason);

@@ -17,13 +17,13 @@ public final class TestMutableSequence implements MutableSequence {
   public long next() {
     return ++sequence;
   }
-  
+
   public long current() {
     return sequence;
   }
 
   public long nextBatch(long batchSize) {
-    nextBatchQueue.put(new Object[] { new Integer((int)batchSize) });
+    nextBatchQueue.put(new Object[] { Integer.valueOf((int) batchSize) });
     long ls = sequence;
     sequence += batchSize;
     return ls;

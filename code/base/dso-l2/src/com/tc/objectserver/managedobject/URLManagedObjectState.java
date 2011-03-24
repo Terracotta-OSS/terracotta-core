@@ -172,4 +172,19 @@ public class URLManagedObjectState extends LogicalManagedObjectState {
   public byte getType() {
     return URL_TYPE;
   }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((authority == null) ? 0 : authority.hashCode());
+    result = prime * result + ((host == null) ? 0 : host.hashCode());
+    result = prime * result + ((path == null) ? 0 : path.hashCode());
+    result = prime * result + port;
+    result = prime * result + ((protocol == null) ? 0 : protocol.hashCode());
+    result = prime * result + ((query == null) ? 0 : query.hashCode());
+    result = prime * result + ((ref == null) ? 0 : ref.hashCode());
+    result = prime * result + ((userInfo == null) ? 0 : userInfo.hashCode());
+    return result;
+  }
 }

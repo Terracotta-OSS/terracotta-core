@@ -197,4 +197,15 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
       this.value = data;
     }
   }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + (int) (classID ^ (classID >>> 32));
+    result = prime * result + createTime;
+    result = prime * result + lastAccessedTime;
+    result = prime * result + Arrays.hashCode(value);
+    return result;
+  }
 }

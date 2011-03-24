@@ -317,4 +317,19 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   public String getCacheName() {
     return cacheName;
   }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = super.hashCode();
+    result = prime * result + ((cacheName == null) ? 0 : cacheName.hashCode());
+    result = prime * result + ((evictionStatus == null) ? 0 : evictionStatus.hashCode());
+    result = prime * result + (invalidateOnChange ? 1231 : 1237);
+    result = prime * result + maxTTISeconds;
+    result = prime * result + maxTTLSeconds;
+    result = prime * result + targetMaxInMemoryCount;
+    result = prime * result + targetMaxTotalCount;
+    return result;
+  }
+
 }

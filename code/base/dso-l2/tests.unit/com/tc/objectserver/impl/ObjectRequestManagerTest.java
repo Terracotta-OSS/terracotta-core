@@ -1126,9 +1126,30 @@ public class ObjectRequestManagerTest extends TestCase {
     }
 
     public int compareTo(final Object o) {
+      if (this.equals(o)) { return 0; }
       final Long value1 = getChannelID().toLong();
       final Long value2 = ((TestRequestManagedObjectResponseMessage) o).getChannelID().toLong();
       return value1.compareTo(value2);
+    }
+
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((channelID == null) ? 0 : channelID.hashCode());
+      return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) return true;
+      if (obj == null) return false;
+      if (getClass() != obj.getClass()) return false;
+      TestRequestManagedObjectResponseMessage other = (TestRequestManagedObjectResponseMessage) obj;
+      if (channelID == null) {
+        if (other.channelID != null) return false;
+      } else if (channelID.toLong() != other.channelID.toLong()) return false;
+      return true;
     }
 
     public void doRecycleOnRead() {
@@ -1203,6 +1224,26 @@ public class ObjectRequestManagerTest extends TestCase {
       final Long value1 = getChannelID().toLong();
       final Long value2 = ((TestObjectsNotFoundMessage) o).getChannelID().toLong();
       return value1.compareTo(value2);
+    }
+
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((channelID == null) ? 0 : channelID.hashCode());
+      return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) return true;
+      if (obj == null) return false;
+      if (getClass() != obj.getClass()) return false;
+      TestObjectsNotFoundMessage other = (TestObjectsNotFoundMessage) obj;
+      if (channelID == null) {
+        if (other.channelID != null) return false;
+      } else if (!channelID.equals(other.channelID)) return false;
+      return true;
     }
 
     public NodeID getDestinationNodeID() {

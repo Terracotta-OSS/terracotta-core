@@ -35,8 +35,8 @@ public class OidBitsArrayMapTest extends TCTestCase {
   private BerkeleyDBEnvironment  env;
   private Database               oidDB;
   private TCBytesToBytesDatabase oidTcBytesBytesDB;
-  private final int              LongPerDiskUnit = 8;
-  private final int              TestSize        = 500;
+  private static final int       LongPerDiskUnit = 8;
+  private static final int       TestSize        = 500;
 
   public OidBitsArrayMapTest() {
     //
@@ -115,7 +115,7 @@ public class OidBitsArrayMapTest extends TCTestCase {
         if (index == (oids.oidIndex(index) + oids.getAuxKey())) {
           index -= oids.getAuxKey();
           OidLongArray bitsArray = new OidLongArray(index, value.getData());
-          oids.getMap().put(new Long(index), bitsArray);
+          oids.getMap().put(Long.valueOf(index), bitsArray);
         }
       }
       cursor.close();

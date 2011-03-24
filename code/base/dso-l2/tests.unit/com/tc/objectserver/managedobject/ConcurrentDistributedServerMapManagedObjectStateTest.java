@@ -50,15 +50,15 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
     cursor.addPhysicalAction(ConcurrentDistributedMapManagedObjectState.LOCK_STRATEGY_FIELDNAME, new ObjectID(20),
                              false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.MAX_TTI_SECONDS_FIELDNAME,
-                             new Integer(0), false);
+                             Integer.valueOf(0), false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.MAX_TTL_SECONDS_FIELDNAME,
-                             new Integer(0), false);
+                             Integer.valueOf(0), false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.TARGET_MAX_IN_MEMORY_COUNT_FIELDNAME,
-                             new Integer(0), false);
+                             Integer.valueOf(0), false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.TARGET_MAX_TOTAL_COUNT_FIELDNAME,
-                             new Integer(0), false);
-    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.INVALIDATE_ON_CHANGE, new Boolean(false),
-                             false);
+                             Integer.valueOf(0), false);
+    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.INVALIDATE_ON_CHANGE,
+                             Boolean.valueOf(false), false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.CACHE_NAME_FIELDNAME, "bob", false);
 
     for (int i = 0; i < 500; i++) {

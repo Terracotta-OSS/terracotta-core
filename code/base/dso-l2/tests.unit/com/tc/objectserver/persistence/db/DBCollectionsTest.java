@@ -216,7 +216,7 @@ public class DBCollectionsTest extends TCTestCase {
         map1.remove(tmp);
         map2.remove(tmp);
       } else {
-        tmp = new Integer(r.nextInt(1000));
+        tmp = Integer.valueOf(r.nextInt(1000));
         map1.put(tmp, "Katrina-" + r.nextInt(555));
         map2.put(tmp, "Simran-" + r.nextInt(555));
       }
@@ -269,9 +269,9 @@ public class DBCollectionsTest extends TCTestCase {
     int j = 0;
     for (int i = 0; i < 50; i++, j += increCount) {
       map.put(new ObjectID(j), new ObjectID(100 + j));
-      map.put(new Integer(j), new Long(j));
-      map.put(new String("" + j), new String("" + j));
-      map.put(new Double(j + 0.005), new Float(j - 0.004));
+      map.put(Integer.valueOf(j), Long.valueOf(j));
+      map.put(String.valueOf("" + j), String.valueOf("" + j));
+      map.put(Double.valueOf(j + 0.005), new Float(j - 0.004));
     }
   }
 
@@ -279,13 +279,13 @@ public class DBCollectionsTest extends TCTestCase {
     int j = 50;
     for (int i = 0; i < 50; i++, j++) {
       map.put(new ObjectID(j), new ObjectID(100 + j));
-      map.put(new Integer(j), new Long(j));
-      map.put(new String("" + j), new String("" + j));
-      map.put(new Double(j + 0.005), new Float(j - 0.004));
+      map.put(Integer.valueOf(j), Long.valueOf(j));
+      map.put(String.valueOf("" + j), String.valueOf("" + j));
+      map.put(Double.valueOf(j + 0.005), new Float(j - 0.004));
       map.remove(new ObjectID(j - 25));
-      map.remove(new Integer(j - 25));
-      map.remove(new String("" + (j - 25)));
-      map.remove(new Double((j - 25) + 0.005));
+      map.remove(Integer.valueOf(j - 25));
+      map.remove(String.valueOf("" + (j - 25)));
+      map.remove(Double.valueOf((j - 25) + 0.005));
     }
   }
 
@@ -293,13 +293,13 @@ public class DBCollectionsTest extends TCTestCase {
     int j = 100;
     for (int i = 0; i < 50; i++, j++) {
       map.put(new ObjectID(j), new ObjectID(100 + j));
-      map.put(new Integer(j), new Long(j));
-      map.put(new String("" + j), new String("" + j));
-      map.put(new Double(j + 0.005), new Float(j - 0.004));
+      map.put(Integer.valueOf(j), Long.valueOf(j));
+      map.put(String.valueOf("" + j), String.valueOf("" + j));
+      map.put(Double.valueOf(j + 0.005), new Float(j - 0.004));
       map.remove(new ObjectID(j - 25));
-      map.remove(new Integer(j - 25));
-      map.remove(new String("" + (j - 25)));
-      map.remove(new Double((j - 25) + 0.005));
+      map.remove(Integer.valueOf(j - 25));
+      map.remove(String.valueOf("" + (j - 25)));
+      map.remove(Double.valueOf((j - 25) + 0.005));
       if (i % 20 == 19) {
         map.clear();
       }

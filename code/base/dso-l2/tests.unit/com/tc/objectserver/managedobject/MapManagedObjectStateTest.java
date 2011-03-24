@@ -18,8 +18,8 @@ public class MapManagedObjectStateTest extends AbstractTestManagedObjectState {
 
     final TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addPhysicalAction(ConcurrentHashMapManagedObjectState.SEGMENT_MASK_FIELD_NAME, new Integer(10), false);
-    cursor.addPhysicalAction(ConcurrentHashMapManagedObjectState.SEGMENT_SHIFT_FIELD_NAME, new Integer(20), false);
+    cursor.addPhysicalAction(ConcurrentHashMapManagedObjectState.SEGMENT_MASK_FIELD_NAME, Integer.valueOf(10), false);
+    cursor.addPhysicalAction(ConcurrentHashMapManagedObjectState.SEGMENT_SHIFT_FIELD_NAME, Integer.valueOf(20), false);
     final ObjectID[] segments = new ObjectID[] { new ObjectID(2001), new ObjectID(2002) };
     cursor.addArrayAction(segments);
 

@@ -8,10 +8,10 @@ import com.tc.exception.ImplementMe;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
@@ -256,7 +256,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
   }
 
   private class NullManagedObjectState extends AbstractManagedObjectState {
-    private final byte type = 0;
+    private static final byte type = 0;
 
     @Override
     protected boolean basicEquals(final AbstractManagedObjectState o) {
@@ -292,12 +292,26 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     }
 
     public byte getType() {
-      return this.type;
+      return type;
     }
 
     public void writeTo(final ObjectOutput o) {
       throw new UnsupportedOperationException();
     }
+
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + getOuterType().hashCode();
+      result = prime * result + type;
+      return result;
+    }
+
+    private TestManagedObject getOuterType() {
+      return TestManagedObject.this;
+    }
+
   }
 
 }

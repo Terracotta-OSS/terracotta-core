@@ -216,4 +216,12 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
   public void setPersistentCollection(final PersistableCollection collection) {
     setMap((Map) collection);
   }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((references == null) ? 0 : references.hashCode());
+    return result;
+  }
 }

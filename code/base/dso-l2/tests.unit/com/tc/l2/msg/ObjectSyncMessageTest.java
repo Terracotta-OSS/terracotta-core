@@ -28,9 +28,9 @@ import junit.framework.TestCase;
 
 public class ObjectSyncMessageTest extends TestCase {
   private ManagedObjectSyncContext managedObjectSyncContext;
-  private TCByteBuffer[]           tcByteBufferArray;
+  private TCByteBuffer[]           tcByteBufferArray = null;
   private ObjectStringSerializer   objectStringSerializer;
-  private final int                dnaCount = 56;
+  private static final int         dnaCount          = 56;
 
   @Override
   public void setUp() {
@@ -44,9 +44,9 @@ public class ObjectSyncMessageTest extends TestCase {
     this.tcByteBufferArray = new TCByteBuffer[] { tcbb };
     ObjectIDSet oids = new ObjectIDSet(rootsMap.values());
     this.managedObjectSyncContext = new ManagedObjectSyncContext(nodeID, rootsMap, oids, true, 100, 10);
-    this.managedObjectSyncContext.setDehydratedBytes(oids, TCCollections.EMPTY_OBJECT_ID_SET,
-                                                     new TCByteBuffer[] { tcbb }, this.dnaCount,
-                                                     this.objectStringSerializer);
+    this.managedObjectSyncContext
+        .setDehydratedBytes(oids, TCCollections.EMPTY_OBJECT_ID_SET, new TCByteBuffer[] { tcbb }, dnaCount,
+                            this.objectStringSerializer);
     this.managedObjectSyncContext.setSequenceID(11);
   }
 

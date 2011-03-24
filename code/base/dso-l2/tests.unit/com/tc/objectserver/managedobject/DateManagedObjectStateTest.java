@@ -14,8 +14,8 @@ public class DateManagedObjectStateTest extends AbstractTestManagedObjectState {
     final String className = "java.util.Date";
     final TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addLogicalAction(SerializationUtil.SET_TIME, new Long[] { new Long(System.currentTimeMillis()) });
-    cursor.addLogicalAction(SerializationUtil.SET_NANOS, new Integer[] { new Integer(0) });
+    cursor.addLogicalAction(SerializationUtil.SET_TIME, new Long[] { Long.valueOf(System.currentTimeMillis()) });
+    cursor.addLogicalAction(SerializationUtil.SET_NANOS, new Integer[] { Integer.valueOf(0) });
 
     basicTestUnit(className, ManagedObjectState.DATE_TYPE, cursor, 0);
   }

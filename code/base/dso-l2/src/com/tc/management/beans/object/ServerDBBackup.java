@@ -203,12 +203,12 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
     String tempStr = null;
     long tempLong = -1;
     long result = -1;
-    for (int i = 0; i < list.length; i++) {
-      tempStr = list[i].substring(0, list[i].length() - 4);
+    for (String element : list) {
+      tempStr = element.substring(0, element.length() - 4);
       try {
         tempLong = Long.parseLong(tempStr, 16);
       } catch (NumberFormatException e) {
-        logger.warn("Ignoring the file name while scanning for the *.jdb files:" + list[i]);
+        logger.warn("Ignoring the file name while scanning for the *.jdb files:" + element);
       }
       if (result < tempLong) result = tempLong;
     }

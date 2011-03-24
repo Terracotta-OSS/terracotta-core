@@ -7,8 +7,6 @@ package com.tc.object.locks;
 import com.tc.management.L2LockStatsManager;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
-import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.locks.ServerLockContext.State;
 import com.tc.objectserver.api.ObjectStatsManager;
 import com.tc.objectserver.api.TestSink;
@@ -33,8 +31,8 @@ public class GreedyLockManagerTest extends TestCase {
   private TestSink        sink;
   private LockManagerImpl lockManager;
 
-  final int               numLocks   = 100;
-  final int               numThreads = 30;
+  static final int        numLocks   = 100;
+  static final int        numThreads = 30;
 
   // private final ServerThreadID[] txns = makeUniqueTxns(numThreads);
 
@@ -71,28 +69,6 @@ public class GreedyLockManagerTest extends TestCase {
   protected void tearDown() throws Exception {
     assertEquals(0, lockManager.getLockCount());
     super.tearDown();
-  }
-
-  static class MyChannelManager extends NullChannelManager {
-
-    private final ClientID       cid;
-    private final MessageChannel channel;
-
-    MyChannelManager(ClientID cid, MessageChannel channel) {
-      this.cid = cid;
-      this.channel = channel;
-    }
-
-    public MessageChannel getChannel(ChannelID id) {
-      if (cid.equals(id)) { return channel; }
-      return null;
-    }
-
-    @Override
-    public String getChannelAddress(NodeID nid) {
-      if (cid.equals(nid)) { return "127.0.0.1:6969"; }
-      return "no longer connected";
-    }
   }
 
   public void testLockMBean() {

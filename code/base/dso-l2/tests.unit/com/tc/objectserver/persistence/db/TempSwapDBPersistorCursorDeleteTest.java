@@ -57,7 +57,7 @@ public class TempSwapDBPersistorCursorDeleteTest extends TCTestCase {
 
   private void addToMap(final Map map, final int numOfEntries) {
     for (int i = 50; i < numOfEntries + 50; i++) {
-      map.put(new ObjectID(i), new Integer(i));
+      map.put(new ObjectID(i), Integer.valueOf(i));
     }
   }
 
@@ -74,7 +74,7 @@ public class TempSwapDBPersistorCursorDeleteTest extends TCTestCase {
     return new BerkeleyDBEnvironment(paranoid, dbHome);
   }
 
-  private class TestPersistentStateManagedObject extends TestManagedObject {
+  private static class TestPersistentStateManagedObject extends TestManagedObject {
 
     private final ManagedObjectState state;
 

@@ -16,7 +16,7 @@ public class PhysicalManagedObjectStateTest extends AbstractTestManagedObjectSta
 
     cursor.addPhysicalAction("field1", new ObjectID(2002), true);
     cursor.addPhysicalAction("field2", new ObjectID(2003), true);
-    cursor.addPhysicalAction("field3", new Integer(33), false);
+    cursor.addPhysicalAction("field3", Integer.valueOf(33), false);
 
     basicTestUnit(className, ManagedObjectState.PHYSICAL_TYPE, cursor, 2);
   }
@@ -27,7 +27,7 @@ public class PhysicalManagedObjectStateTest extends AbstractTestManagedObjectSta
 
     cursor.addPhysicalAction("field1", new ObjectID(2002), true);
     cursor.addPhysicalAction("field2", new ObjectID(2003), true);
-    cursor.addPhysicalAction("field3", new Integer(33), false);
+    cursor.addPhysicalAction("field3", Integer.valueOf(33), false);
 
     final ManagedObjectState state = createManagedObjectState(className, cursor);
     System.out.println("state: " + state);
@@ -38,9 +38,9 @@ public class PhysicalManagedObjectStateTest extends AbstractTestManagedObjectSta
     final String className = "com.tc.objectserver.managedobject.PhysicalManagedObjectStateTest";
     final TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addPhysicalAction("field1", new Integer(2002), false);
-    cursor.addPhysicalAction("field2", new Integer(2003), false);
-    cursor.addPhysicalAction("field3", new Integer(33), false);
+    cursor.addPhysicalAction("field1", Integer.valueOf(2002), false);
+    cursor.addPhysicalAction("field2", Integer.valueOf(2003), false);
+    cursor.addPhysicalAction("field3", Integer.valueOf(33), false);
 
     final ManagedObjectState state = createManagedObjectState(className, cursor);
     System.out.println("state: " + state);
@@ -51,9 +51,9 @@ public class PhysicalManagedObjectStateTest extends AbstractTestManagedObjectSta
     final String className = "com.tc.objectserver.managedobject.PhysicalManagedObjectStateTest";
     final TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addPhysicalAction("field1", new Integer(2002), false);
-    cursor.addPhysicalAction("field2", new Integer(2003), false);
-    cursor.addPhysicalAction("field3", new Integer(33), false);
+    cursor.addPhysicalAction("field1", Integer.valueOf(2002), false);
+    cursor.addPhysicalAction("field2", Integer.valueOf(2003), false);
+    cursor.addPhysicalAction("field3", Integer.valueOf(33), false);
 
     final ManagedObjectState state = createManagedObjectState(className, cursor, new ObjectID(2));
     System.out.println("state: " + state);
@@ -64,9 +64,9 @@ public class PhysicalManagedObjectStateTest extends AbstractTestManagedObjectSta
     final String className = "com.tc.objectserver.managedobject.PhysicalManagedObjectStateTest";
     final TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addPhysicalAction("field1", new Integer(2002), false);
-    cursor.addPhysicalAction("field2", new Integer(2003), false);
-    cursor.addPhysicalAction("field3", new Integer(33), false);
+    cursor.addPhysicalAction("field1", Integer.valueOf(2002), false);
+    cursor.addPhysicalAction("field2", Integer.valueOf(2003), false);
+    cursor.addPhysicalAction("field3", Integer.valueOf(33), false);
 
     final ManagedObjectState state = createManagedObjectState(className, cursor, ObjectID.NULL_ID);
     System.out.println("state: " + state);

@@ -13,24 +13,24 @@ import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.util.Assert;
 
 public class QueueManagedObjectStateTest extends AbstractTestManagedObjectState {
-  String     className            = "java.util.concurrent.LinkedBlockingQueue";
-  String     TAKE_LOCK_FIELD_NAME = "takeLock";
-  String     PUT_LOCK_FIELD_NAME  = "putLock";
-  String     CAPACITY_FIELD_NAME  = "capacity";
-  final byte type                 = ManagedObjectState.QUEUE_TYPE;
+  String            className            = "java.util.concurrent.LinkedBlockingQueue";
+  String            TAKE_LOCK_FIELD_NAME = "takeLock";
+  String            PUT_LOCK_FIELD_NAME  = "putLock";
+  String            CAPACITY_FIELD_NAME  = "capacity";
+  static final byte type                 = ManagedObjectState.QUEUE_TYPE;
 
   public void basicTestQueue(final TestDNACursor cursor, final int objCount, final int actionCount) throws Exception {
     final ManagedObjectState state = createManagedObjectState(this.className, cursor);
     state.apply(this.objectID, cursor, new ApplyTransactionInfo());
 
     // API verification
-    basicAPI(this.className, this.type, cursor, objCount, state);
+    basicAPI(this.className, type, cursor, objCount, state);
 
     // dehydrate
     basicDehydrate(cursor, actionCount, state);
 
     // writeTo, readFrom and equal
-    basicReadWriteEqual(this.type, state);
+    basicReadWriteEqual(type, state);
   }
 
   // override due to difference on dehydrate
@@ -46,7 +46,7 @@ public class QueueManagedObjectStateTest extends AbstractTestManagedObjectState 
 
     cursor.addPhysicalAction(this.TAKE_LOCK_FIELD_NAME, new ObjectID(2001), true);
     cursor.addPhysicalAction(this.PUT_LOCK_FIELD_NAME, new ObjectID(2002), true);
-    cursor.addPhysicalAction(this.CAPACITY_FIELD_NAME, new Integer(100), false);
+    cursor.addPhysicalAction(this.CAPACITY_FIELD_NAME, Integer.valueOf(100), false);
 
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2003) });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2004) });
@@ -64,7 +64,7 @@ public class QueueManagedObjectStateTest extends AbstractTestManagedObjectState 
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2007) });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2008) });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2009) });
-    cursor.addLogicalAction(SerializationUtil.REMOVE_AT, new Object[] { new Integer(0) });
+    cursor.addLogicalAction(SerializationUtil.REMOVE_AT, new Object[] { Integer.valueOf(0) });
 
     basicTestQueue(cursor, 6, 9);
   }

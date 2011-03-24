@@ -9,10 +9,10 @@ import org.apache.commons.lang.ArrayUtils;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
 import com.tc.text.PrettyPrintable;
@@ -73,10 +73,11 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
       }
     }
   }
+
   /**
-   * This method returns whether this ManagedObjectState can have references or not.
-   * @ return true : The Managed object represented by this state object will never have any reference to other objects.
-   *         false : The Managed object represented by this state object can have references to other objects. 
+   * This method returns whether this ManagedObjectState can have references or not. @ return true : The Managed object
+   * represented by this state object will never have any reference to other objects. false : The Managed object
+   * represented by this state object can have references to other objects.
    */
   @Override
   public boolean hasNoReferences() {
@@ -154,6 +155,7 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
     }
   }
 
+  @Override
   protected void addAllObjectReferencesTo(Set refs) {
     if (!isPrimitive) {
       addAllObjectReferencesFromIteratorTo(Arrays.asList((Object[]) arrayData).iterator(), refs);
@@ -163,6 +165,7 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
   /*
    * This method is overridden to give Arrays ability to be partial in L1
    */
+  @Override
   public void addObjectReferencesTo(ManagedObjectTraverser traverser) {
     if (!isPrimitive) {
       traverser.addReachableObjectIDs(getObjectReferences());
@@ -192,7 +195,7 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
     ObjectID parent = ObjectID.NULL_ID;
     boolean isInner = false;
 
-    return new PhysicalManagedObjectFacade(objectID, parent, className, dataCopy, isInner, size /*limit*/, isArray);
+    return new PhysicalManagedObjectFacade(objectID, parent, className, dataCopy, isInner, size /* limit */, isArray);
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
@@ -207,6 +210,7 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
     return ARRAY_TYPE;
   }
 
+  @Override
   protected void basicWriteTo(ObjectOutput out) throws IOException {
     out.writeObject(arrayData);
   }
@@ -217,6 +221,7 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
     return amos;
   }
 
+  @Override
   protected boolean basicEquals(LogicalManagedObjectState other) {
     ArrayManagedObjectState amo = (ArrayManagedObjectState) other;
     if (!(size == amo.size && isPrimitive == amo.isPrimitive)) return false;
@@ -225,7 +230,7 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
     } else {
       // DNAEncordingImpl decodes all non primitive array into Object[]
       return (literalType == LiteralValues.OBJECT || amo.literalType == LiteralValues.OBJECT)
-        && equals(arrayData, amo.arrayData, LiteralValues.OBJECT);
+             && equals(arrayData, amo.arrayData, LiteralValues.OBJECT);
     }
   }
 
@@ -250,6 +255,17 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
       default:
         return Arrays.equals((Object[]) a1, (Object[]) a2);
     }
+  }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((arrayData == null) ? 0 : arrayData.hashCode());
+    result = prime * result + (isPrimitive ? 1231 : 1237);
+    result = prime * result + ((literalType == null) ? 0 : literalType.hashCode());
+    result = prime * result + size;
+    return result;
   }
 
 }

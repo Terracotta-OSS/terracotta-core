@@ -25,13 +25,13 @@ public class DSOSerializerPolicyTest extends TestCase {
     ObjectID oid = new ObjectID(1);
     assertEquals(oid, serialize(oid));
 
-    Boolean bool = new Boolean(true);
+    Boolean bool = Boolean.valueOf(true);
     assertEquals(bool, serialize(bool));
 
-    Byte b = new Byte((byte) 1);
+    Byte b = Byte.valueOf((byte) 1);
     assertEquals(b, serialize(b));
 
-    Character c = new Character('c');
+    Character c = Character.valueOf('c');
     assertEquals(c, serialize(c));
 
     Double d = new Double(1);
@@ -40,13 +40,13 @@ public class DSOSerializerPolicyTest extends TestCase {
     Float f = new Float(1);
     assertEquals(f, serialize(f));
 
-    Integer i = new Integer(1);
+    Integer i = Integer.valueOf(1);
     assertEquals(i, serialize(i));
 
-    Long l = new Long(1);
+    Long l = Long.valueOf(1);
     assertEquals(l, serialize(l));
 
-    Short s = new Short((short) 1);
+    Short s = Short.valueOf((short) 1);
     assertEquals(s, serialize(s));
 
     String string = "orion";

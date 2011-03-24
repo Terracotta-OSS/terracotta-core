@@ -658,7 +658,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     }
   }
 
-  public class TestTransactionAcknowledgeAction implements TransactionAcknowledgeAction {
+  public static class TestTransactionAcknowledgeAction implements TransactionAcknowledgeAction {
     public NodeID        clientID;
     public TransactionID txID;
 

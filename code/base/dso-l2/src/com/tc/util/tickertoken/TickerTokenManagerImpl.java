@@ -4,6 +4,7 @@
  */
 package com.tc.util.tickertoken;
 
+import com.tc.util.Assert;
 import com.tc.util.Counter;
 import com.tc.util.tickertoken.msg.TickerTokenMessage;
 
@@ -73,8 +74,8 @@ public abstract class TickerTokenManagerImpl implements TickerTokenManager {
     TickerTokenHandleImpl handle = createHandle(identifier, tickerTokenType, triggerToken);
     TickerTokenKey key = handle.getKey();
     if ((this.tokenHandleMap.putIfAbsent(key, handle)) == null) {
-      TickerTask task = new TickerTask(key.getStartTick(), this.totalTickers, this, getTickerTokenFactory(key
-          .getClassType()), this.timerTaskMap, triggerToken);
+      TickerTask task = new TickerTask(key.getStartTick(), this.totalTickers, this,
+                                       getTickerTokenFactory(key.getClassType()), this.timerTaskMap, triggerToken);
 
       this.timer.schedule(task, this.timerPeriod, this.timerPeriod);
     } else {
@@ -170,6 +171,7 @@ public abstract class TickerTokenManagerImpl implements TickerTokenManager {
   private TickerTokenHandle removeCompleteHandler(TickerToken token) {
     TickerTokenHandle handle = this.tokenHandleMap.remove(new TickerTokenKey(token.getClass(), token.getPrimaryID(),
                                                                              token.getStartTick()));
+    Assert.assertNotNull(handle);
     this.lookupMap.remove(handle.getIdentifier());
     this.processCompleteMap.remove(handle.getKey().getClassType());
     return handle;
@@ -178,6 +180,7 @@ public abstract class TickerTokenManagerImpl implements TickerTokenManager {
   private void enableTriggerToken(TickerToken token) {
     TickerTokenHandle handle = this.tokenHandleMap.get(new TickerTokenKey(token.getClass(), token.getPrimaryID(), token
         .getStartTick()));
+    Assert.assertNotNull(handle);
     handle.enableTriggerToken();
   }
 

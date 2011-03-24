@@ -5,11 +5,11 @@
 package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.util.Assert;
 
 import java.io.IOException;
@@ -38,6 +38,7 @@ public class ConcurrentHashMapManagedObjectState extends PartialMapManagedObject
     super(classID, map);
   }
 
+  @Override
   public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo includeIDs) throws IOException {
     while (cursor.next()) {
       Object action = cursor.getAction();
@@ -72,15 +73,17 @@ public class ConcurrentHashMapManagedObjectState extends PartialMapManagedObject
     }
   }
 
+  @Override
   protected void addAllObjectReferencesTo(Set refs) {
     super.addAllObjectReferencesTo(refs);
     if (segments != null) {
-      for (int i = 0; i < segments.length; i++) {
-        refs.add(segments[i]);
+      for (ObjectID segment : segments) {
+        refs.add(segment);
       }
     }
   }
 
+  @Override
   public void dehydrate(ObjectID objectID, DNAWriter writer, DNAType type) {
     dehydrateFields(objectID, writer);
     super.dehydrate(objectID, writer, type);
@@ -92,12 +95,13 @@ public class ConcurrentHashMapManagedObjectState extends PartialMapManagedObject
     writer.addEntireArray(segments);
   }
 
+  @Override
   protected void basicWriteTo(ObjectOutput out) throws IOException {
     out.writeObject(segmentMask);
     out.writeObject(segmentShift);
     out.writeInt(segments.length);
-    for (int i = 0; i < segments.length; i++) {
-      out.writeLong(segments[i].toLong());
+    for (ObjectID segment : segments) {
+      out.writeLong(segment.toLong());
     }
   }
 
@@ -114,10 +118,12 @@ public class ConcurrentHashMapManagedObjectState extends PartialMapManagedObject
     return mo;
   }
 
+  @Override
   public byte getType() {
     return CONCURRENT_HASHMAP_TYPE;
   }
 
+  @Override
   protected boolean basicEquals(LogicalManagedObjectState o) {
     ConcurrentHashMapManagedObjectState mo = (ConcurrentHashMapManagedObjectState) o;
 
@@ -125,5 +131,15 @@ public class ConcurrentHashMapManagedObjectState extends PartialMapManagedObject
            && ((segmentShift == mo.segmentShift) || (segmentShift != null && segmentShift.equals(mo.segmentShift)))
            && ((segments == mo.segments) || (segments != null && Arrays.equals(segments, mo.segments)))
            && super.basicEquals(o);
+  }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((segmentMask == null) ? 0 : segmentMask.hashCode());
+    result = prime * result + ((segmentShift == null) ? 0 : segmentShift.hashCode());
+    result = prime * result + Arrays.hashCode(segments);
+    return result;
   }
 }

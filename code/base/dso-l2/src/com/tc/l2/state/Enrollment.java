@@ -39,8 +39,8 @@ public class Enrollment implements TCSerializable {
     nodeIDSerializer.serializeTo(out);
     out.writeBoolean(this.isNew);
     out.writeInt(weights.length);
-    for (int i = 0; i < weights.length; i++) {
-      out.writeLong(weights[i]);
+    for (long weight : weights) {
+      out.writeLong(weight);
     }
   }
 
@@ -94,6 +94,17 @@ public class Enrollment implements TCSerializable {
     }
   }
 
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + (isNew ? 1231 : 1237);
+    result = prime * result + ((nodeID == null) ? 0 : nodeID.hashCode());
+    result = prime * result + Arrays.hashCode(weights);
+    return result;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (o instanceof Enrollment) {
       Enrollment oe = (Enrollment) o;
@@ -102,6 +113,7 @@ public class Enrollment implements TCSerializable {
     return false;
   }
 
+  @Override
   public String toString() {
     StringBuffer sb = new StringBuffer("Enrollment [ ");
     sb.append(nodeID).append(", isNew = ").append(isNew);

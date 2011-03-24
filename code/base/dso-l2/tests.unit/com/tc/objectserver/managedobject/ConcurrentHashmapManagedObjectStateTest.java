@@ -23,8 +23,8 @@ public class ConcurrentHashmapManagedObjectStateTest extends AbstractTestManaged
 
     final TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addPhysicalAction(ConcurrentHashMapManagedObjectState.SEGMENT_MASK_FIELD_NAME, new Integer(10), false);
-    cursor.addPhysicalAction(ConcurrentHashMapManagedObjectState.SEGMENT_SHIFT_FIELD_NAME, new Integer(20), false);
+    cursor.addPhysicalAction(ConcurrentHashMapManagedObjectState.SEGMENT_MASK_FIELD_NAME, Integer.valueOf(10), false);
+    cursor.addPhysicalAction(ConcurrentHashMapManagedObjectState.SEGMENT_SHIFT_FIELD_NAME, Integer.valueOf(20), false);
     final int segment_size = 512;
     final Object[] segments = new Object[segment_size];
     for (int i = 0; i < segment_size; i++) {

@@ -15,17 +15,15 @@ import java.util.Set;
 
 public class TestRequestManagedObjectMessage implements RequestManagedObjectMessage, EventContext {
 
-  private ObjectRequestID requestID;
-  private ObjectIDSet     removed;
-  private MessageChannel  channel;
-  private ObjectIDSet     objectIDs;
+  private ObjectIDSet removed;
+  private ObjectIDSet objectIDs;
 
   public TestRequestManagedObjectMessage() {
     super();
   }
 
   public ObjectRequestID getRequestID() {
-    return this.requestID;
+    return null;
   }
 
   public ObjectIDSet getRequestedObjectIDs() {
@@ -50,11 +48,11 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
   }
 
   public void send() {
-    //      
+    //
   }
 
   public MessageChannel getChannel() {
-    return this.channel;
+    return null;
   }
 
   public NodeID getSourceNodeID() {
@@ -82,7 +80,7 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
   }
 
   public Object getKey() {
-    return this.channel.getRemoteNodeID();
+    return null;
   }
 
 }

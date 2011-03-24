@@ -1,11 +1,11 @@
 package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.dna.api.DNA.DNAType;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -17,8 +17,8 @@ public class ConcurrentDistributedMapManagedObjectState extends PartialMapManage
   public static final String DSO_LOCK_TYPE_FIELDNAME = "dsoLockType";
   public static final String LOCK_STRATEGY_FIELDNAME = "lockStrategy";
 
-  protected int                dsoLockType;
-  protected ObjectID           lockStrategy;
+  protected int              dsoLockType;
+  protected ObjectID         lockStrategy;
 
   protected ConcurrentDistributedMapManagedObjectState(final ObjectInput in) throws IOException {
     super(in);
@@ -97,4 +97,14 @@ public class ConcurrentDistributedMapManagedObjectState extends PartialMapManage
     final ConcurrentDistributedMapManagedObjectState mmo = (ConcurrentDistributedMapManagedObjectState) o;
     return this.dsoLockType == mmo.dsoLockType && this.lockStrategy.equals(mmo.lockStrategy) && super.basicEquals(mmo);
   }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + dsoLockType;
+    result = prime * result + ((lockStrategy == null) ? 0 : lockStrategy.hashCode());
+    return result;
+  }
+
 }

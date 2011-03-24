@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.impl;
 
@@ -40,7 +41,7 @@ public class ObjectInstanceMonitorTest extends TestCase {
     monitor.instanceDestroyed("timmy");
     counts = monitor.getInstanceCounts();
     assertEquals(1, counts.size());
-    assertEquals(new Integer(2), counts.get("timmy"));
+    assertEquals(Integer.valueOf(2), counts.get("timmy"));
 
     try {
       monitor.instanceDestroyed("timmy2");

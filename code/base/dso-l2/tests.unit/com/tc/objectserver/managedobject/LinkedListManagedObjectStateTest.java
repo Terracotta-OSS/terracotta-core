@@ -50,7 +50,7 @@ public class LinkedListManagedObjectStateTest extends AbstractTestManagedObjectS
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2002) });
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2003) });
     cursor.addLogicalAction(SerializationUtil.ADD_FIRST, new Object[] { new ObjectID(2004) });
-    cursor.addLogicalAction(SerializationUtil.ADD_AT, new Object[] { new Integer(1), new ObjectID(1000) });
+    cursor.addLogicalAction(SerializationUtil.ADD_AT, new Object[] { Integer.valueOf(1), new ObjectID(1000) });
 
     basicTestUnit(className, ManagedObjectState.LINKED_LIST_TYPE, cursor, 4);
   }

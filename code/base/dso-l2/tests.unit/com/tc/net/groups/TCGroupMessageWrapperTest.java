@@ -76,7 +76,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
   private CommunicationsManager                   serverComms;
   private ChannelManager                          channelManager;
   private final LinkedBlockingQueue<GroupMessage> queue          = new LinkedBlockingQueue(10);
-  private final long                              timeout        = 1000;
+  private static final long                       timeout        = 1000;
   private final TimeUnit                          unit           = TimeUnit.MILLISECONDS;
 
   @Override

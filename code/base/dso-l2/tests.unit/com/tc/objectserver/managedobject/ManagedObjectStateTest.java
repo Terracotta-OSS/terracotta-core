@@ -37,14 +37,14 @@ public class ManagedObjectStateTest extends TestCase {
 
     final HashMap types = new HashMap();
     types.put("field1", new ObjectID(1));
-    types.put("field2", new Boolean(true));
-    types.put("field3", new Character('c'));
-    types.put("field4", new Long(5));
-    types.put("field5", new Integer(15));
-    types.put("field6", new String("neoistheone"));
-    types.put("field7", new Short((short) 606));
-    types.put("field8", new Double(98.76d));
-    types.put("field9", new Float(8.8f));
+    types.put("field2", Boolean.valueOf(true));
+    types.put("field3", Character.valueOf('c'));
+    types.put("field4", Long.valueOf(5));
+    types.put("field5", Integer.valueOf(15));
+    types.put("field6", String.valueOf("neoistheone"));
+    types.put("field7", Short.valueOf((short) 606));
+    types.put("field8", Double.valueOf(98.76d));
+    types.put("field9", Float.valueOf(8.8f));
     types.put("field10", new StackTraceElement("classname", "methodname", "filename", 123));
 
     final TestDNACursor cursor = new TestDNACursor();
@@ -84,7 +84,7 @@ public class ManagedObjectStateTest extends TestCase {
       final Integer storedClassId = (Integer) classNameToClassId.get(className);
       assertEquals(classId, storedClassId.intValue());
 
-      final String storedClassName = (String) classIdToClassName.get(new Integer(classId));
+      final String storedClassName = (String) classIdToClassName.get(Integer.valueOf(classId));
       assertEquals(className, storedClassName);
 
     }
@@ -98,14 +98,14 @@ public class ManagedObjectStateTest extends TestCase {
 
     final HashMap types = new HashMap();
     types.put("field1", new ObjectID(1));
-    types.put("field2", new Boolean(true));
-    types.put("field3", new Character('c'));
-    types.put("field4", new Long(5));
-    types.put("field5", new Integer(15));
-    types.put("field6", new String("neoistheone"));
-    types.put("field7", new Short((short) 606));
-    types.put("field8", new Double(98.76d));
-    types.put("field9", new Float(8.8f));
+    types.put("field2", Boolean.valueOf(true));
+    types.put("field3", Character.valueOf('c'));
+    types.put("field4", Long.valueOf(5));
+    types.put("field5", Integer.valueOf(15));
+    types.put("field6", String.valueOf("neoistheone"));
+    types.put("field7", Short.valueOf((short) 606));
+    types.put("field8", Double.valueOf(98.76d));
+    types.put("field9", Float.valueOf(8.8f));
     types.put("field10", new StackTraceElement("classname", "methodname", "filename", 123));
 
     TestDNACursor cursor = new TestDNACursor();
@@ -140,8 +140,8 @@ public class ManagedObjectStateTest extends TestCase {
 
     cursor = new TestDNACursor();
     cursor.addPhysicalAction("field1", new ObjectID(2), true);
-    cursor.addPhysicalAction("field2", new Boolean(false), true);
-    cursor.addPhysicalAction("field3", new Character('d'), true);
+    cursor.addPhysicalAction("field2", Boolean.valueOf(false), true);
+    cursor.addPhysicalAction("field3", Character.valueOf('d'), true);
 
     state.apply(this.objectID, cursor, new ApplyTransactionInfo());
 
@@ -234,7 +234,7 @@ public class ManagedObjectStateTest extends TestCase {
 
     // Now try applying yet another new field on the old object
     TestDNACursor cursor2 = new TestDNACursor();
-    cursor2.addPhysicalAction("field6", new Integer(2), false);
+    cursor2.addPhysicalAction("field6", Integer.valueOf(2), false);
 
     try {
       state.apply(this.objectID, cursor2, new ApplyTransactionInfo());
@@ -286,8 +286,8 @@ public class ManagedObjectStateTest extends TestCase {
     // Try to create a new State Object
     cursor = new TestDNACursor();
     cursor.addPhysicalAction("field1", new ObjectID(1), true);
-    cursor.addPhysicalAction("field2", new Long(11), true);
-    cursor.addPhysicalAction("field3", new String("neoistheone"), true);
+    cursor.addPhysicalAction("field2", Long.valueOf(11), true);
+    cursor.addPhysicalAction("field3", String.valueOf("neoistheone"), true);
 
     PhysicalManagedObjectState state3 = (PhysicalManagedObjectState) ManagedObjectStateFactory.getInstance()
         .createState(this.objectID, ObjectID.NULL_ID, "com.xxx.SomeClassName", loaderDesc, cursor);

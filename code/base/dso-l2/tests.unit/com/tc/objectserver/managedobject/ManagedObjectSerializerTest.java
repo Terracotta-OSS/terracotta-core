@@ -57,15 +57,15 @@ public class ManagedObjectSerializerTest extends TestCase {
     final TestDNACursor cursor = new TestDNACursor();
     for (int i = 0; i < fieldSetCount; i++) {
       cursor.addPhysicalAction("refField" + i, new ObjectID(1), true);
-      cursor.addPhysicalAction("booleanField" + i, new Boolean(true), true);
-      cursor.addPhysicalAction("byteField" + i, new Byte((byte) 1), true);
-      cursor.addPhysicalAction("characterField" + i, new Character('c'), true);
-      cursor.addPhysicalAction("doubleField" + i, new Double(100.001d), true);
-      cursor.addPhysicalAction("floatField" + i, new Float(100.001f), true);
-      cursor.addPhysicalAction("integerField" + i, new Integer(100), true);
-      cursor.addPhysicalAction("longField" + i, new Long(100), true);
+      cursor.addPhysicalAction("booleanField" + i, Boolean.valueOf(true), true);
+      cursor.addPhysicalAction("byteField" + i, Byte.valueOf((byte) 1), true);
+      cursor.addPhysicalAction("characterField" + i, Character.valueOf('c'), true);
+      cursor.addPhysicalAction("doubleField" + i, Double.valueOf(100.001d), true);
+      cursor.addPhysicalAction("floatField" + i, Float.valueOf(100.001f), true);
+      cursor.addPhysicalAction("integerField" + i, Integer.valueOf(100), true);
+      cursor.addPhysicalAction("longField" + i, Long.valueOf(100), true);
       cursor.addPhysicalAction("stringField" + i, "Some nice string field" + i, true);
-      cursor.addPhysicalAction("shortField" + i, new Short((short) 1), true);
+      cursor.addPhysicalAction("shortField" + i, Short.valueOf((short) 1), true);
     }
     final TestDNA dna = new TestDNA(cursor);
     return dna;

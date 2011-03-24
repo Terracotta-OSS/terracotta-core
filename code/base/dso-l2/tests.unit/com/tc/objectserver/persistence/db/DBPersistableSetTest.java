@@ -159,7 +159,7 @@ public class DBPersistableSetTest extends TCTestCase {
     s.addAll(list);
   }
 
-  private class Node {
+  private static class Node {
     private final int i;
 
     public Node(final int i) {

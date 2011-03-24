@@ -6,11 +6,11 @@ package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.util.Assert;
@@ -110,10 +110,12 @@ public class QueueManagedObjectState extends LogicalManagedObjectState {
     }
   }
 
+  @Override
   public void addObjectReferencesTo(ManagedObjectTraverser traverser) {
     traverser.addReachableObjectIDs(getObjectReferences());
   }
 
+  @Override
   protected void addAllObjectReferencesTo(Set refs) {
     addAllObjectReferencesFromIteratorTo(references.iterator(), refs);
     if (takeLockField != null) {
@@ -142,6 +144,7 @@ public class QueueManagedObjectState extends LogicalManagedObjectState {
     }
   }
 
+  @Override
   public String toString() {
     return "QueueManagedStateObject(" + references + ")";
   }
@@ -183,6 +186,7 @@ public class QueueManagedObjectState extends LogicalManagedObjectState {
     }
   }
 
+  @Override
   protected void basicWriteTo(ObjectOutput out) throws IOException {
     writeField(out, TAKE_LOCK_FIELD_NAME, takeLockField);
     writeField(out, PUT_LOCK_FIELD_NAME, putLockField);
@@ -194,6 +198,7 @@ public class QueueManagedObjectState extends LogicalManagedObjectState {
     }
   }
 
+  @Override
   protected boolean basicEquals(LogicalManagedObjectState o) {
     QueueManagedObjectState mo = (QueueManagedObjectState) o;
     return ((takeLockField == mo.takeLockField) || (takeLockField != null && takeLockField.equals(mo.takeLockField)))
@@ -230,5 +235,16 @@ public class QueueManagedObjectState extends LogicalManagedObjectState {
     }
     mo.references = list;
     return mo;
+  }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((capacityField == null) ? 0 : capacityField.hashCode());
+    result = prime * result + ((putLockField == null) ? 0 : putLockField.hashCode());
+    result = prime * result + ((references == null) ? 0 : references.hashCode());
+    result = prime * result + ((takeLockField == null) ? 0 : takeLockField.hashCode());
+    return result;
   }
 }

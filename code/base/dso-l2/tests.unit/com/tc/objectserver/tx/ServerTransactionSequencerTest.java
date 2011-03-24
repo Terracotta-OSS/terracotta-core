@@ -323,7 +323,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
       if (!dnas.containsKey(new Integer(i))) {
         TestDNA dna = new TestDNA(new ObjectID(i));
         dna.version = ++versions[i];
-        dnas.put(new Integer(i), dna);
+        dnas.put(Integer.valueOf(i), dna);
         numObjects--;
       }
     }

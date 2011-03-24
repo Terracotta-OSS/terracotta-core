@@ -44,9 +44,9 @@ import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.api.ObjectManager;
+import com.tc.objectserver.api.ObjectManagerTest.TestDateDNA;
 import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.api.ServerMapRequestManager;
-import com.tc.objectserver.api.ObjectManagerTest.TestDateDNA;
 import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManager;
 import com.tc.objectserver.context.BroadcastChangeContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -103,8 +103,8 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     super.setUp();
     final SampledCounterImpl sci = new SampledCounterImpl(new SampledCounterConfig(5, 10, true, 0));
     final SampledRateCounterImpl srci = new SampledRateCounterImpl(new SampledRateCounterConfig(5, 10, true));
-    this.handler = new BroadcastChangeHandler(sci, new ObjectStatsRecorder(), srci, Mockito
-        .mock(InvalidateObjectManager.class));
+    this.handler = new BroadcastChangeHandler(sci, new ObjectStatsRecorder(), srci,
+                                              Mockito.mock(InvalidateObjectManager.class));
     this.serverCfgCxt = new TestServerConfigurationContext(NO_OF_CLIENTS, DISCONNECTED_CLIENT);
     this.handler.initialize(this.serverCfgCxt);
   }
@@ -124,7 +124,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     Assert.assertEquals(NO_OF_CLIENTS - 1, clients.size());
   }
 
-  private class TestServerTransaction implements ServerTransaction {
+  private static class TestServerTransaction implements ServerTransaction {
     private final int srcID;
 
     public TestServerTransaction(final int srcID) {
@@ -213,7 +213,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
   }
 
-  private class TestServerConfigurationContext implements ServerConfigurationContext {
+  private static class TestServerConfigurationContext implements ServerConfigurationContext {
     private final int                          noOfClients;
     private final int                          clientDisconnectNo;
     private final TestServerTransactionManager testServerTxManager;
@@ -310,7 +310,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
   }
 
-  private class TestStage implements Stage {
+  private static class TestStage implements Stage {
     private final Sink sink = new TestSink();
 
     public void destroy() {
@@ -331,7 +331,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
   }
 
-  private class TestSink implements Sink {
+  private static class TestSink implements Sink {
 
     public void add(final EventContext context) {
       //
@@ -383,7 +383,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
   }
 
-  private class TestDSOChannelManager implements DSOChannelManager {
+  private static class TestDSOChannelManager implements DSOChannelManager {
     private final int noOfChannels;
     private final int deadChannelID;
 
@@ -452,7 +452,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
   }
 
-  private class TestMessageChannel implements MessageChannel {
+  private static class TestMessageChannel implements MessageChannel {
     private final long    id;
     private final boolean isClosed;
 
@@ -530,7 +530,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
   }
 
-  private class TestBroadcastMessage implements TCMessage, BroadcastTransactionMessage {
+  private static class TestBroadcastMessage implements TCMessage, BroadcastTransactionMessage {
 
     public void dehydrate() {
       throw new ImplementMe();
@@ -622,7 +622,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
   }
 
-  private class TestClientStateManagerImpl implements ClientStateManager {
+  private static class TestClientStateManagerImpl implements ClientStateManager {
 
     public Set<ObjectID> addAllReferencedIdsTo(final Set<ObjectID> rescueIds) {
       throw new ImplementMe();
@@ -675,7 +675,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
   }
 
-  private class TestServerTransactionManager implements ServerTransactionManager {
+  private static class TestServerTransactionManager implements ServerTransactionManager {
 
     private final NodeID       deadNodeID;
     private final List<NodeID> acknowledgedBack = new ArrayList<NodeID>();

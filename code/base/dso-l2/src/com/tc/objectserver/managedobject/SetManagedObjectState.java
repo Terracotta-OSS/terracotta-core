@@ -6,10 +6,10 @@ package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
-import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.persistence.db.PersistableCollection;
@@ -141,5 +141,13 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
       throw new ClassNotFoundException();
     }
     return new SetManagedObjectState(in);
+  }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((references == null) ? 0 : references.hashCode());
+    return result;
   }
 }

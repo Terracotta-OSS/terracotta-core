@@ -6,10 +6,10 @@ package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
-import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 
@@ -146,6 +146,7 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
     }
   }
 
+  @Override
   protected void addAllObjectReferencesTo(Set refs) {
     addAllObjectReferencesFromIteratorTo(references.iterator(), refs);
   }
@@ -157,6 +158,7 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
     }
   }
 
+  @Override
   public String toString() {
     return "ListManagedStateObject(" + references + ")";
   }
@@ -184,6 +186,7 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
     return LIST_TYPE;
   }
 
+  @Override
   protected void basicWriteTo(ObjectOutput out) throws IOException {
     out.writeInt(references.size());
     for (Iterator i = references.iterator(); i.hasNext();) {
@@ -191,6 +194,7 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
     }
   }
 
+  @Override
   protected boolean basicEquals(LogicalManagedObjectState o) {
     ListManagedObjectState mo = (ListManagedObjectState) o;
     return references.equals(mo.references);
@@ -205,6 +209,14 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
     }
     listmo.references = list;
     return listmo;
+  }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((references == null) ? 0 : references.hashCode());
+    return result;
   }
 
 }

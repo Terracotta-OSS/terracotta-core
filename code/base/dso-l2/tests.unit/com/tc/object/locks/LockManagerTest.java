@@ -35,8 +35,8 @@ public class LockManagerTest extends TestCase {
   private TestSink        sink;
   private LockManagerImpl lockManager;
 
-  final int               numLocks   = 30;
-  final int               numThreads = 15;
+  static final int        numLocks   = 30;
+  static final int        numThreads = 15;
 
   // private final ServerThreadID[] txns = makeUniqueTxns(numThreads);
 

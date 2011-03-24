@@ -34,7 +34,7 @@ import junit.framework.TestCase;
 public class ServerTxnAckMessageTest extends TestCase {
   private AbstractGroupMessage relayedCommitTransactionMessage;
   private Set                  serverTransactionIDs;
-  private final int            channelId = 2;
+  private static final int     channelId = 2;
   private final NodeID         nodeID    = new ServerID("foo", "foobar".getBytes());
 
   @Override
@@ -43,10 +43,10 @@ public class ServerTxnAckMessageTest extends TestCase {
         .newCommitTransactionMessage(GroupID.NULL_ID);
     testCommitTransactionMessage.setBatch(new TestTransactionBatch(new TCByteBuffer[] { TCByteBufferFactory
                                               .getInstance(false, 3452) }), new ObjectStringSerializerImpl());
-    testCommitTransactionMessage.setChannelID(new ClientID(this.channelId));
+    testCommitTransactionMessage.setChannelID(new ClientID(channelId));
 
     this.serverTransactionIDs = new HashSet();
-    ClientID cid = new ClientID(this.channelId);
+    ClientID cid = new ClientID(channelId);
     ServerTransactionID stid1 = new ServerTransactionID(cid, new TransactionID(4234));
     ServerTransactionID stid2 = new ServerTransactionID(cid, new TransactionID(6543));
     ServerTransactionID stid3 = new ServerTransactionID(cid, new TransactionID(1654));

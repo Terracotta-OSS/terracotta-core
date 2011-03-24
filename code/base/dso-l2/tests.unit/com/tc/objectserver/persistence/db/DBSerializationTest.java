@@ -21,10 +21,6 @@ import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
-import com.tc.objectserver.persistence.db.CustomSerializationAdapterFactory;
-import com.tc.objectserver.persistence.db.SerializationAdapterFactory;
-import com.tc.objectserver.persistence.db.DBPersistorImpl;
-import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
@@ -47,7 +43,7 @@ import java.util.TreeSet;
  * XXX: This test needs to test more of the persistor interface.
  */
 public class DBSerializationTest extends TCTestCase {
-  private DBPersistorImpl             persistor;
+  private DBPersistorImpl                persistor;
   private PersistenceTransactionProvider ptp;
   private BerkeleyDBEnvironment          env;
   private ManagedObjectPersistor         mop;
@@ -226,9 +222,9 @@ public class DBSerializationTest extends TCTestCase {
 
   private TestDNA newLogicalTreeMapDNA(final boolean delta) {
     final TestDNACursor cursor = new TestDNACursor();
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new Short((short) 10), "good bad and ugly" });
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new Boolean(true), "mapped" });
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new Boolean(true), "Remapped" });
+    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Short.valueOf((short) 10), "good bad and ugly" });
+    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Boolean.valueOf(true), "mapped" });
+    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Boolean.valueOf(true), "Remapped" });
     final TestDNA dna = new TestDNA(cursor, TreeMap.class.getName());
     dna.version = this.version++;
     dna.isDelta = delta;
@@ -290,10 +286,10 @@ public class DBSerializationTest extends TCTestCase {
   private TestDNA newLogicalLinkedHashMapDNA(final boolean delta) {
     final TestDNACursor cursor = new TestDNACursor();
     cursor.addPhysicalAction("java.util.LinkedHashMap.accessOrder", Boolean.TRUE, true);
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new Integer(10), "King Kong" });
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new Integer(20), "Mad Max" });
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new Integer(25), "Mummy Returns" });
-    cursor.addLogicalAction(SerializationUtil.GET, new Object[] { new Integer(20) });
+    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(10), "King Kong" });
+    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(20), "Mad Max" });
+    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(25), "Mummy Returns" });
+    cursor.addLogicalAction(SerializationUtil.GET, new Object[] { Integer.valueOf(20) });
     final TestDNA dna = new TestDNA(cursor, LinkedHashMap.class.getName());
     dna.version = this.version++;
     dna.isDelta = delta;
@@ -306,7 +302,7 @@ public class DBSerializationTest extends TCTestCase {
 
   private TestDNA newLiteralDNA(final boolean delta) {
     final TestDNACursor cursor = new TestDNACursor();
-    final Short s = new Short((short) 0x0045);
+    final Short s = Short.valueOf((short) 0x0045);
     cursor.addLiteralAction("literal", s);
     final TestDNA dna = new TestDNA(cursor, Short.class.getName());
     dna.version = this.version++;
@@ -331,7 +327,7 @@ public class DBSerializationTest extends TCTestCase {
   Random r = new Random();
 
   private Long newLong() {
-    return new Long(this.r.nextLong());
+    return Long.valueOf(this.r.nextLong());
   }
 
   private ManagedObject newLogicalDateObject(final ObjectID objectID) {
@@ -379,9 +375,9 @@ public class DBSerializationTest extends TCTestCase {
 
   private TestDNA newLogicalMapDNA(final boolean delta) {
     final TestDNACursor cursor = new TestDNACursor();
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new Integer(10), "King Kong" });
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new Integer(20), "Mad Max" });
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new Integer(25), "Mummy Returns" });
+    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(10), "King Kong" });
+    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(20), "Mad Max" });
+    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(25), "Mummy Returns" });
     final TestDNA dna = new TestDNA(cursor, HashMap.class.getName());
     dna.version = this.version++;
     dna.isDelta = delta;

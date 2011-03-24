@@ -8,9 +8,9 @@ import com.tc.async.impl.MockSink;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.core.impl.TestManagedObject;
@@ -63,17 +63,19 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     this.env = newDBEnvironment(paranoid);
     this.env.open();
     this.persistenceTransactionProvider = new BerkeleyDBPersistenceTransactionProvider(this.env.getEnvironment());
-    final PersistableCollectionFactory sleepycatCollectionFactory = new PersistableCollectionFactory(new HashMapBackingMapFactory(),
-                                                                                                     this.env.isParanoidMode());
+    final PersistableCollectionFactory sleepycatCollectionFactory = new PersistableCollectionFactory(
+                                                                                                     new HashMapBackingMapFactory(),
+                                                                                                     this.env
+                                                                                                         .isParanoidMode());
     this.testSleepycatCollectionsPersistor = new TestSleepycatCollectionsPersistor(logger, this.env.getMapsDatabase(),
                                                                                    sleepycatCollectionFactory,
                                                                                    new TCCollectionsSerializerImpl());
     this.managedObjectPersistor = new ManagedObjectPersistorImpl(logger, new CustomSerializationAdapterFactory(),
-                                                                 this.env, new TestMutableSequence(), this.env
-                                                                 .getRootDatabase(),
+                                                                 this.env, new TestMutableSequence(),
+                                                                 this.env.getRootDatabase(),
                                                                  this.persistenceTransactionProvider,
-                                                                 this.testSleepycatCollectionsPersistor, this.env
-                                                                 .isParanoidMode(), new ObjectStatsRecorder());
+                                                                 this.testSleepycatCollectionsPersistor,
+                                                                 this.env.isParanoidMode(), new ObjectStatsRecorder());
     this.objectStore = new PersistentManagedObjectStore(this.managedObjectPersistor, new MockSink());
     this.oidManager = (FastObjectIDManagerImpl) this.managedObjectPersistor.getOibjectIDManager();
   }
@@ -109,7 +111,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     final HashSet ids = new HashSet(num);
     for (int i = 0; i < num; i++) {
       final long id = (long) r.nextInt(num * 10) + 1;
-      if (ids.add(new Long(id))) {
+      if (ids.add(Long.valueOf(id))) {
         final ManagedObject mo = new TestPersistentStateManagedObject(new ObjectID(id), new ArrayList<ObjectID>(),
                                                                       withPersistentCollectionState);
         objects.add(mo);
@@ -418,7 +420,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     this.oidManager.flushToCompressedStorage(new StoppedFlag(), Integer.MAX_VALUE);
   }
 
-  private class TestSleepycatCollectionsPersistor extends TCCollectionsPersistor {
+  private static class TestSleepycatCollectionsPersistor extends TCCollectionsPersistor {
     private int counter;
 
     public TestSleepycatCollectionsPersistor(final TCLogger logger, final TCMapsDatabase mapsDatabase,
@@ -511,6 +513,19 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
 
     public void writeTo(final ObjectOutput o) {
       return;
+    }
+
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + getOuterType().hashCode();
+      result = prime * result + type;
+      return result;
+    }
+
+    private ManagedObjectPersistorImplTest getOuterType() {
+      return ManagedObjectPersistorImplTest.this;
     }
 
   }

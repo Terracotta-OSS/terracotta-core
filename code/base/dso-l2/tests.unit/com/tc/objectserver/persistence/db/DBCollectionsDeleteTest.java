@@ -104,7 +104,7 @@ public class DBCollectionsDeleteTest extends TCTestCase {
 
   private void addToMap(final Map map, final int numOfEntries) {
     for (int i = 50; i < numOfEntries + 50; i++) {
-      map.put(new ObjectID(i), new Integer(i));
+      map.put(new ObjectID(i), Integer.valueOf(i));
     }
   }
 

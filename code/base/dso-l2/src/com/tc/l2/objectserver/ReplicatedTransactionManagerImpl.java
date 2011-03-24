@@ -115,9 +115,8 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
       String error = "Recd wrong response from : " + nodeID + " : msg = " + msg
                      + " while requesting reset: Killing the node";
       logger.error(error);
-      groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.PROGRAM_ERROR, error
-                                                                              + L2HAZapNodeRequestProcessor
-                                                                                  .getErrorString(new Throwable()));
+      groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.PROGRAM_ERROR,
+                           error + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
     }
   }
 
@@ -149,7 +148,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     transactionManager.incomingTransactions(nodeID, txnIDs, txns, false);
   }
 
-  private final class NullPassiveTransactionManager implements PassiveTransactionManager {
+  private static final class NullPassiveTransactionManager implements PassiveTransactionManager {
 
     public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns, Recyclable message) {
       // There could still be some messages in the queue that arrives after the node becomes ACTIVE

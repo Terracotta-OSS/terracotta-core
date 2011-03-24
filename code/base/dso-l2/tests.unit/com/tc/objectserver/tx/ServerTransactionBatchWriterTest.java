@@ -256,7 +256,7 @@ public class ServerTransactionBatchWriterTest extends TestCase {
     final DNAWriter dnaWriter = new DNAWriterImpl(out, objectID, this.getClass().getName(), objectStringSerializer,
                                                   new SerializerDNAEncodingImpl(), "Robo Rajini Class Loader", isDelta);
 
-    final PhysicalAction action1 = new PhysicalAction("manoj.field1", new Integer(1), false);
+    final PhysicalAction action1 = new PhysicalAction("manoj.field1", Integer.valueOf(1), false);
     final LogicalAction action2 = new LogicalAction(12, new Object[] { "K1", "V1" });
     final PhysicalAction action3 = new PhysicalAction("manoj.field2", new ObjectID(99), true);
 

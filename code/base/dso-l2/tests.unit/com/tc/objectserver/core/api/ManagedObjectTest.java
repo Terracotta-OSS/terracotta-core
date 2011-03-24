@@ -33,8 +33,8 @@ public class ManagedObjectTest extends TCTestCase {
 
     final TestDNACursor cursor = new TestDNACursor();
     cursor.addPhysicalAction("field1", new ObjectID(1), true);
-    cursor.addPhysicalAction("field2", new Boolean(true), true);
-    cursor.addPhysicalAction("field3", new Character('c'), true);
+    cursor.addPhysicalAction("field2", Boolean.valueOf(true), true);
+    cursor.addPhysicalAction("field3", Character.valueOf('c'), true);
     final TestDNA dna = new TestDNA(cursor);
 
     Map instances = instanceMonitor.getInstanceCounts();
@@ -43,7 +43,7 @@ public class ManagedObjectTest extends TCTestCase {
 
     instances = instanceMonitor.getInstanceCounts();
     assertEquals(1, instances.size());
-    assertEquals(new Integer(1), instances.get(dna.getTypeName()));
+    assertEquals(Integer.valueOf(1), instances.get(dna.getTypeName()));
 
     assertEquals(1, mo.getObjectReferences().size());
     assertEquals(dna.typeName, mo.getClassname());

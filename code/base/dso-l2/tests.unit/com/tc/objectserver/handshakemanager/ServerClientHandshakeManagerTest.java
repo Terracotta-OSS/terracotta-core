@@ -238,7 +238,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     // make sure the timer task was scheduled properly
     assertEquals(1, this.timer.scheduleCalls.size());
     final TestTimer.ScheduleCallContext scc = (ScheduleCallContext) this.timer.scheduleCalls.get(0);
-    assertEquals(new Long(DEFAULT_RECONNECT_TIMEOUT), scc.delay);
+    assertEquals(Long.valueOf(DEFAULT_RECONNECT_TIMEOUT), scc.delay);
     assertTrue(scc.period == null);
     assertTrue(scc.time == null);
 
@@ -403,10 +403,10 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
 
   private static final class TestChannelManager implements DSOChannelManager {
 
-    public final List    closeAllChannelIDs = new ArrayList();
-    public final Map     handshakeMessages  = new HashMap();
-    public final Set     clientIDs          = new HashSet();
-    private final String serverVersion      = "N/A";
+    public final List           closeAllChannelIDs = new ArrayList();
+    public final Map            handshakeMessages  = new HashMap();
+    public final Set            clientIDs          = new HashSet();
+    private static final String serverVersion      = "N/A";
 
     public void closeAll(final Collection theChannelIDs) {
       this.closeAllChannelIDs.addAll(theChannelIDs);
@@ -461,7 +461,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
 
     public void makeChannelActive(final ClientID clientID, final boolean persistent) {
       final ClientHandshakeAckMessage ackMsg = newClientHandshakeAckMessage(clientID);
-      ackMsg.initialize(persistent, getAllClientIDsString(), clientID, this.serverVersion, null, null, null);
+      ackMsg.initialize(persistent, getAllClientIDsString(), clientID, serverVersion, null, null, null);
       ackMsg.send();
     }
 
