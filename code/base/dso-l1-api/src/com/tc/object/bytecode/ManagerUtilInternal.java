@@ -10,7 +10,6 @@ import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.metadata.NVPair;
 import com.tc.search.SearchQueryResults;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -32,7 +31,7 @@ public class ManagerUtilInternal {
     return getInternalManager().createMetaDataDescriptor(category);
   }
 
-  public static SearchQueryResults executeQuery(String cachename, LinkedList queryStack, boolean includeKeys,
+  public static SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys,
                                                 boolean includeValues, Set<String> attributeSet,
                                                 List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults,
                                                 int batchSize) {

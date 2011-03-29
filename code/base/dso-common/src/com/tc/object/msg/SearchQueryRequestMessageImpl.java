@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Set;
 
 /**
@@ -51,7 +50,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   private SearchRequestID                     requestID;
   private GroupID                             groupIDFrom;
   private String                              cacheName;
-  private LinkedList                          queryStack;
+  private List                                queryStack;
   private boolean                             includeKeys;
   private boolean                             includeValues;
   private Set<String>                         attributes;
@@ -72,7 +71,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   }
 
   public void initializeSearchRequestMessage(SearchRequestID searchRequestID, GroupID groupID, String cache,
-                                             LinkedList stack, boolean keys, boolean values, Set<String> attributeSet,
+                                             List stack, boolean keys, boolean values, Set<String> attributeSet,
                                              List<NVPair> sortAttributesMap, List<NVPair> attributeAggregators,
                                              int max, int batch, boolean prefetchFirst) {
     this.requestID = searchRequestID;
@@ -118,8 +117,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
     }
 
     if (!queryStack.isEmpty()) {
-      for (ListIterator iter = queryStack.listIterator(queryStack.size()); iter.hasPrevious();) {
-        Object obj = iter.previous();
+      for (Object obj : queryStack) {
         if (obj instanceof StackOperations) {
           StackOperations operation = (StackOperations) obj;
           putNVPair(STACK_OPERATION_MARKER, operation.name());
@@ -204,12 +202,12 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
 
       case STACK_OPERATION_MARKER:
         StackOperations operation = StackOperations.valueOf(getStringValue());
-        queryStack.addFirst(operation);
+        queryStack.add(operation);
         return true;
 
       case STACK_NVPAIR_MARKER:
         NVPair pair = AbstractNVPair.deserializeInstance(inputStream, NULL_SERIALIZER);
-        queryStack.addFirst(pair);
+        queryStack.add(pair);
         return true;
 
       default:
@@ -227,7 +225,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   /**
    * {@inheritDoc}
    */
-  public LinkedList getQueryStack() {
+  public List getQueryStack() {
     return this.queryStack;
   }
 

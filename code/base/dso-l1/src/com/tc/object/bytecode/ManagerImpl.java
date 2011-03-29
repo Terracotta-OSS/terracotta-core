@@ -80,7 +80,6 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -977,8 +976,8 @@ public class ManagerImpl implements ManagerInternal {
     return new MetaDataDescriptorImpl(category);
   }
 
-  public SearchQueryResults executeQuery(String cachename, LinkedList queryStack, boolean includeKeys,
-                                         boolean includeValues, Set<String> attributeSet, List<NVPair> sortAttributes,
+  public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
+                                         Set<String> attributeSet, List<NVPair> sortAttributes,
                                          List<NVPair> aggregators, int maxResults, int batchSize) {
     if (QUERY_WAIT_FOR_TXNS) {
       waitForAllCurrentTransactionsToComplete();

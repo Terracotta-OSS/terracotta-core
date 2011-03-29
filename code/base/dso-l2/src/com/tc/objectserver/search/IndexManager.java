@@ -7,7 +7,6 @@ import com.tc.object.ObjectID;
 import com.tc.object.metadata.NVPair;
 import com.tc.objectserver.metadata.MetaDataProcessingContext;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,7 +27,7 @@ public interface IndexManager {
   void replace(String indexName, Object key, Object value, Object previousValue, List<NVPair> attributes,
                ObjectID segmentOid, MetaDataProcessingContext metaDataContext) throws IndexException;
 
-  public SearchResult searchIndex(String indexName, LinkedList queryStack, boolean includeKeys, boolean includeValues,
+  public SearchResult searchIndex(String indexName, List queryStack, boolean includeKeys, boolean includeValues,
                                   Set<String> attributeSet, List<NVPair> sortAttributes, List<NVPair> aggregators,
                                   int maxResults) throws IndexException;
 

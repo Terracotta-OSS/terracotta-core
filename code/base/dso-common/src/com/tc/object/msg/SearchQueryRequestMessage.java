@@ -10,7 +10,6 @@ import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.SearchRequestID;
 import com.tc.object.metadata.NVPair;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -51,7 +50,7 @@ public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEvent
    * @param maxResults
    */
   public void initializeSearchRequestMessage(final SearchRequestID searchRequestID, final GroupID groupFrom,
-                                             final String cacheName, final LinkedList queryStack, final boolean keys,
+                                             final String cacheName, final List queryStack, final boolean keys,
                                              final boolean values, final Set<String> attributeSet,
                                              final List<NVPair> sortAttributesMap, final List<NVPair> aggregators,
                                              int maxResults, int batchSize, boolean prefetchFirstBatch);
@@ -66,9 +65,9 @@ public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEvent
   /**
    * Query stack to search
    * 
-   * @return LinkedList linkedlist
+   * @return List linkedlist
    */
-  public LinkedList getQueryStack();
+  public List getQueryStack();
 
   /**
    * Return set of attributes ask for.

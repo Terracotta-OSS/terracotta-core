@@ -8,14 +8,13 @@ import com.tc.object.metadata.NVPair;
 import com.tc.objectserver.metadata.MetaDataProcessingContext;
 
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class NullIndexManager implements IndexManager {
 
-  public SearchResult searchIndex(String name, LinkedList queryStack, boolean includeKeys, boolean includeValues,
+  public SearchResult searchIndex(String name, List queryStack, boolean includeKeys, boolean includeValues,
                                   Set<String> attributeSet, List<NVPair> sortAttributes, List<NVPair> aggregators,
                                   int maxResults) {
     return null;

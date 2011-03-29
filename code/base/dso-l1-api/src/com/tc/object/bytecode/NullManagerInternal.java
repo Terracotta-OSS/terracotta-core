@@ -21,7 +21,6 @@ import com.tc.search.SearchQueryResults;
 import com.tc.statistics.StatisticRetrievalAction;
 
 import java.lang.reflect.Field;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -306,8 +305,8 @@ public class NullManagerInternal implements ManagerInternal {
     throw new UnsupportedOperationException();
   }
 
-  public SearchQueryResults executeQuery(String cachename, LinkedList queryStack, boolean includeKeys,
-                                         boolean includeValues, Set<String> attributeSet, List<NVPair> sortAttributes,
+  public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
+                                         Set<String> attributeSet, List<NVPair> sortAttributes,
                                          List<NVPair> aggregators, int maxResults, int batchSize) {
     throw new UnsupportedOperationException();
   }
