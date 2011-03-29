@@ -21,7 +21,6 @@ import com.tc.util.concurrent.CopyOnWriteArrayMap;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -133,7 +132,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
 
     private ObjectIDSet              missingOids;
     private Map                      missingRoots;
-    private Set                      existingOids;
+    private Set<ObjectID>            existingOids;
 
     private volatile State           state          = START;
 
@@ -142,7 +141,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     private int                      totalObjectsToSync;
     private int                      totalObjectsSynced;
 
-    public L2ObjectStateImpl(final NodeID nodeID, final Set oids) {
+    public L2ObjectStateImpl(final NodeID nodeID, final Set<ObjectID> oids) {
       this.nodeID = nodeID;
       this.existingOids = oids;
     }
@@ -210,9 +209,8 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       this.missingOids = L2ObjectStateManagerImpl.this.objectManager.getAllObjectIDs();
       this.missingRoots = L2ObjectStateManagerImpl.this.objectManager.getRootNamesToIDsMap();
       final int objectCount = this.missingOids.size();
-      final Set missingHere = new HashSet();
-      for (final Iterator i = this.existingOids.iterator(); i.hasNext();) {
-        final Object o = i.next();
+      final ObjectIDSet missingHere = new ObjectIDSet();
+      for (ObjectID o : this.existingOids) {
         if (!this.missingOids.remove(o)) {
           missingHere.add(o);
         }
