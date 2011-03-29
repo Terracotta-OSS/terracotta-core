@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.setup.sources;
 
@@ -18,9 +19,11 @@ public class URLConfigurationSourceTest extends TestCase {
   private URLConfigurationSource configSrc;
   private ServerSocket           server;
 
+  @Override
   public void setUp() throws Exception {
     this.server = new ServerSocket(0);
     Thread t = new Thread() {
+      @Override
       public void run() {
         try {
           Socket socket = server.accept();
@@ -31,7 +34,7 @@ public class URLConfigurationSourceTest extends TestCase {
           response.flush();
           socket.close();
         } catch (Exception e) {
-          // not implemented
+          e.printStackTrace();
         }
       }
     };
@@ -49,6 +52,7 @@ public class URLConfigurationSourceTest extends TestCase {
     }
   }
 
+  @Override
   public void tearDown() throws Exception {
     server.close();
   }

@@ -197,7 +197,7 @@ public class ManagedObjectStateTest extends TestCase {
     cursor = new TestDNACursor();
     cursor.addPhysicalAction("field1", new ObjectID(2), true);
     // Newly added fields
-    cursor.addPhysicalAction("field4", new Boolean(false), true);
+    cursor.addPhysicalAction("field4", Boolean.valueOf(false), true);
     cursor.addPhysicalAction("field5", new ObjectID(22), true);
 
     try {
@@ -229,7 +229,7 @@ public class ManagedObjectStateTest extends TestCase {
     f3 = (String) values.get("field3");
     assertEquals(f3, "neoistheone");
     Boolean f4 = (Boolean) values.get("field4");
-    assertEquals(f4, new Boolean(false));
+    assertEquals(f4, Boolean.valueOf(false));
     assertEquals(new ObjectID(22), values.get("field5"));
 
     // Now try applying yet another new field on the old object
@@ -261,7 +261,7 @@ public class ManagedObjectStateTest extends TestCase {
     f3 = (String) values.get("field3");
     assertEquals(f3, "neoistheone");
     f4 = (Boolean) values.get("field4");
-    assertEquals(f4, new Boolean(false));
+    assertEquals(f4, Boolean.valueOf(false));
     assertEquals(new ObjectID(22), values.get("field5"));
     Integer i6 = (Integer) values.get("field6");
     assertEquals(2, i6.intValue());

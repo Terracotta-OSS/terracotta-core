@@ -15,12 +15,12 @@ public class MergableLinkedListTest extends TestCase {
   public void testAddAll() {
 
     // initial list, assert correctness
-    MergableLinkedList masterList = createMergableLinkedList(1,2);
+    MergableLinkedList masterList = createMergableLinkedList(1, 2);
     assertEquals(2, masterList.size());
     assertFalse(masterList.isEmpty());
 
     // collection to test add all, assert correctness
-    Collection coll = createCollection(3,2);
+    Collection coll = createCollection(3, 2);
     assertEquals(2, coll.size());
     assertFalse(coll.isEmpty());
 
@@ -67,12 +67,12 @@ public class MergableLinkedListTest extends TestCase {
   public void testMergeToFront() {
 
     // initial list, assert correctness
-    MergableLinkedList masterList = createMergableLinkedList(1,2);
+    MergableLinkedList masterList = createMergableLinkedList(1, 2);
     assertEquals(2, masterList.size());
     assertFalse(masterList.isEmpty());
 
     // initial list, assert correctness
-    MergableLinkedList secondList = createMergableLinkedList(3,2);
+    MergableLinkedList secondList = createMergableLinkedList(3, 2);
     assertEquals(2, secondList.size());
     assertFalse(secondList.isEmpty());
 
@@ -113,7 +113,7 @@ public class MergableLinkedListTest extends TestCase {
   }
 
   public void testRemoveFirst() {
-    MergableLinkedList masterList = createMergableLinkedList(1,2);
+    MergableLinkedList masterList = createMergableLinkedList(1, 2);
     assertEquals(2, masterList.size());
     assertFalse(masterList.isEmpty());
 
@@ -138,7 +138,7 @@ public class MergableLinkedListTest extends TestCase {
     MergableLinkedList emptyList = new MergableLinkedList();
     assertTrue(emptyList.isEmpty());
 
-    MergableLinkedList populatedList = createMergableLinkedList(1,2);
+    MergableLinkedList populatedList = createMergableLinkedList(1, 2);
     assertFalse(populatedList.isEmpty());
   }
 
@@ -169,7 +169,7 @@ public class MergableLinkedListTest extends TestCase {
   }
 
   public void testClear() {
-    MergableLinkedList masterList = createMergableLinkedList(1,2);
+    MergableLinkedList masterList = createMergableLinkedList(1, 2);
     assertEquals(2, masterList.size());
     assertFalse(masterList.isEmpty());
 
@@ -189,13 +189,13 @@ public class MergableLinkedListTest extends TestCase {
 
   private Collection createCollection(int startValue, int size) {
     Collection coll = new ArrayList();
-    for(int i = startValue; i < startValue + size; i++) {
-    coll.add(new TestData("testData" + i));
+    for (int i = startValue; i < startValue + size; i++) {
+      coll.add(new TestData("testData" + i));
     }
     return coll;
   }
 
-  private class TestData {
+  private static class TestData {
     private final String data;
 
     public TestData(String data) {

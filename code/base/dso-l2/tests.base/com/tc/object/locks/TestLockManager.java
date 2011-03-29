@@ -118,7 +118,7 @@ public class TestLockManager implements LockManager {
     if (action == NotifyAction.ALL) {
       isAll = true;
     }
-    this.notifyCalls.add(new Object[] { lid, cid, tid, new Boolean(isAll), addNotifiedWaitersTo });
+    this.notifyCalls.add(new Object[] { lid, cid, tid, Boolean.valueOf(isAll), addNotifiedWaitersTo });
     return addNotifiedWaitersTo;
   }
 

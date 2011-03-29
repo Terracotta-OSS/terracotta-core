@@ -12,13 +12,13 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Comparable<TerracottaOperatorEventImpl> {
-  private final long                 time;
-  private final String               eventMessage;
-  private final EventType            eventType;
-  private final EventSubsystem       subSystem;
-  private final Map<String, Integer> nodes;
-  private boolean                    isRead = false;
-  private final String               collapseString;
+  private final long                    time;
+  private final String                  eventMessage;
+  private final EventType               eventType;
+  private final EventSubsystem          subSystem;
+  private volatile Map<String, Integer> nodes;
+  private boolean                       isRead = false;
+  private final String                  collapseString;
 
   public TerracottaOperatorEventImpl(EventType eventType, EventSubsystem subSystem, String message,
                                      String collapseString) {
@@ -137,13 +137,14 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
   }
 
   @Override
-  public TerracottaOperatorEvent clone() {
+  public TerracottaOperatorEvent clone() throws CloneNotSupportedException {
+    TerracottaOperatorEventImpl clone = (TerracottaOperatorEventImpl) super.clone();
     Map<String, Integer> nodesCopy;
     synchronized (this) {
       nodesCopy = new HashMap<String, Integer>(this.nodes);
     }
-    return new TerracottaOperatorEventImpl(this.eventType, this.subSystem, this.time, this.eventMessage,
-                                           this.collapseString, nodesCopy);
+    clone.nodes = nodesCopy;
+    return clone;
   }
 
   // STRICTLY FOR TESTS

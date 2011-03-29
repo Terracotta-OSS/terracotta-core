@@ -79,14 +79,14 @@ public class ConfigAutoChooseServerTest extends TCTestCase {
                       + "\n</tc:tc-config>";
       writeConfigFile(config);
       TestConfigurationSetupManagerFactory factory = new TestConfigurationSetupManagerFactory(
-                                                                                                    new FatalIllegalConfigurationChangeHandler());
+                                                                                              new FatalIllegalConfigurationChangeHandler());
 
       L2ConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, null);
       Assert.assertEquals(9510, configSetupMgr.dsoL2Config().dsoPort().getIntValue());
       Assert.assertEquals(9520, configSetupMgr.commonl2Config().jmxPort().getIntValue());
       Assert.assertEquals(9530, configSetupMgr.dsoL2Config().l2GroupPort().getIntValue());
 
-    } catch (Exception e) {
+    } catch (Throwable e) {
       throw new AssertionError(e);
     }
   }

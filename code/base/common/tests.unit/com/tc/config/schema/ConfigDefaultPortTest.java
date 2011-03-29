@@ -94,7 +94,7 @@ public class ConfigDefaultPortTest extends TCTestCase {
                       + "\n</server>" + "\n</servers>" + "\n</tc:tc-config>";
       writeConfigFile(config);
       TestConfigurationSetupManagerFactory factory = new TestConfigurationSetupManagerFactory(
-                                                                                                    new FatalIllegalConfigurationChangeHandler());
+                                                                                              new FatalIllegalConfigurationChangeHandler());
 
       L2ConfigurationSetupManager configSetupMgr = null;
 
@@ -128,15 +128,12 @@ public class ConfigDefaultPortTest extends TCTestCase {
       configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server5");
       Assert.assertEquals(65534, configSetupMgr.dsoL2Config().dsoPort().getIntValue());
       Assert
-          .assertEquals(
-                        ((65534 + CommonL2Config.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT) % CommonL2Config.MAX_PORTNUMBER)
-                            + CommonL2Config.MIN_PORTNUMBER, configSetupMgr.commonl2Config().jmxPort().getIntValue());
-      Assert
-          .assertEquals(
-                        ((65534 + L2DSOConfig.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT) % CommonL2Config.MAX_PORTNUMBER)
-                            + CommonL2Config.MIN_PORTNUMBER, configSetupMgr.dsoL2Config().l2GroupPort().getIntValue());
+          .assertEquals(((65534 + CommonL2Config.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT) % CommonL2Config.MAX_PORTNUMBER)
+                        + CommonL2Config.MIN_PORTNUMBER, configSetupMgr.commonl2Config().jmxPort().getIntValue());
+      Assert.assertEquals(((65534 + L2DSOConfig.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT) % CommonL2Config.MAX_PORTNUMBER)
+                          + CommonL2Config.MIN_PORTNUMBER, configSetupMgr.dsoL2Config().l2GroupPort().getIntValue());
 
-    } catch (Exception e) {
+    } catch (Throwable e) {
       throw new AssertionError(e);
     }
   }

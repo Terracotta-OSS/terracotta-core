@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -11,21 +12,24 @@ import java.util.TimerTask;
 
 public class TestTimer extends Timer {
 
-  public List scheduleCalls       = new ArrayList();
-  public List cancelCalls = new ArrayList();
+  public List scheduleCalls = new ArrayList();
+  public List cancelCalls   = new ArrayList();
 
+  @Override
   public void cancel() {
     cancelCalls.add(new Object());
     super.cancel();
   }
 
+  @Override
   public void schedule(TimerTask task, long delay) {
-    scheduleCalls.add(new ScheduleCallContext(task, new Long(delay), null, null));
+    scheduleCalls.add(new ScheduleCallContext(task, Long.valueOf(delay), null, null));
     super.schedule(task, delay);
   }
 
+  @Override
   public void schedule(TimerTask task, long delay, long period) {
-    scheduleCalls.add(new ScheduleCallContext(task, new Long(delay), null, new Long(period)));
+    scheduleCalls.add(new ScheduleCallContext(task, Long.valueOf(delay), null, Long.valueOf(period)));
     super.schedule(task, delay, period);
   }
 

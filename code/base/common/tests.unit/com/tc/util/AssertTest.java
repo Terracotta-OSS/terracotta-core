@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -11,7 +12,7 @@ import java.util.ArrayList;
  * Unit test for {@link Assert}.
  */
 public class AssertTest extends TCTestCase {
-  
+
   public void testAssertNoBlankElements() {
     try {
       Assert.assertNoBlankElements(null);
@@ -216,9 +217,9 @@ public class AssertTest extends TCTestCase {
       // Expected
     }
     String foo = "foo";
-    Object[] objectArray = new Object[] { new Object(), foo, null, new Integer(1), new ArrayList() };
-    for (int pos = 0; pos < objectArray.length; pos++) {
-      Assert.assertContainsElement(objectArray, objectArray[pos]);
+    Object[] objectArray = new Object[] { new Object(), foo, null, Integer.valueOf(1), new ArrayList() };
+    for (Object element : objectArray) {
+      Assert.assertContainsElement(objectArray, element);
     }
     try {
       Assert.assertContainsElement(objectArray, new String(foo));

@@ -16,7 +16,6 @@ import java.util.Random;
 import junit.framework.TestCase;
 
 public class SampledRateCounterTest extends TestCase {
-  CounterManager counterManager = new CounterManagerImpl();
 
   public void testInitialValue() {
 
@@ -111,6 +110,7 @@ public class SampledRateCounterTest extends TestCase {
     Thread[] threads = new Thread[10];
     for (int i = 0; i < threads.length; i++) {
       threads[i] = new Thread() {
+        @Override
         public void run() {
           try {
             Random random = new Random(hashCode());
@@ -157,8 +157,8 @@ public class SampledRateCounterTest extends TestCase {
       threads[i].start();
     }
 
-    for (int i = 0; i < threads.length; i++) {
-      threads[i].join();
+    for (Thread thread : threads) {
+      thread.join();
     }
 
     if (error.get() != null) {

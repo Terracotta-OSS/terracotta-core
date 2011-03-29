@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.stats;
 
@@ -37,35 +38,35 @@ public class LossyStackTest extends TestCase {
       // expected
     }
 
-    stack.push(new Integer(1));
+    stack.push(Integer.valueOf(1));
     assertFalse(stack.isEmtpy());
     assertEquals(1, stack.depth());
-    stack.push(new Integer(2));
+    stack.push(Integer.valueOf(2));
     assertFalse(stack.isEmtpy());
     assertEquals(2, stack.depth());
 
-    assertEquals(new Integer(2), stack.pop());
+    assertEquals(Integer.valueOf(2), stack.pop());
     assertFalse(stack.isEmtpy());
-    assertEquals(new Integer(1), stack.pop());
+    assertEquals(Integer.valueOf(1), stack.pop());
     assertEquals(0, stack.depth());
     assertTrue(stack.isEmtpy());
     assertNull(stack.peek());
 
-    stack.push(new Integer(1));
-    stack.push(new Integer(2));
-    stack.push(new Integer(3));
-    stack.push(new Integer(4));
-    stack.push(new Integer(5));
+    stack.push(Integer.valueOf(1));
+    stack.push(Integer.valueOf(2));
+    stack.push(Integer.valueOf(3));
+    stack.push(Integer.valueOf(4));
+    stack.push(Integer.valueOf(5));
     assertEquals(5, stack.depth());
-    stack.push(new Integer(6));
+    stack.push(Integer.valueOf(6));
     assertEquals(5, stack.depth());
-    stack.push(new Integer(7));
+    stack.push(Integer.valueOf(7));
     assertEquals(5, stack.depth());
 
     Integer[] data = (Integer[]) stack.toArray(new Integer[stack.depth()]);
     assertEquals(5, data.length);
     for (int i = 0; i < data.length; i++) {
-      assertEquals(new Integer(7 - i), data[i]);
+      assertEquals(Integer.valueOf(7 - i), data[i]);
     }
 
   }

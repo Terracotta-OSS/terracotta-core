@@ -1,11 +1,13 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util.concurrent;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.TestCase;
 
@@ -23,13 +25,14 @@ public class SetOnceFlagTest extends TestCase {
       final SetOnceFlag flag = new SetOnceFlag();
       final SynchronizedBoolean thread1 = new SynchronizedBoolean(false);
       final SynchronizedBoolean thread2 = new SynchronizedBoolean(false);
+      final AtomicReference<Exception> exception = new AtomicReference<Exception>();
 
       Runnable r1 = new Runnable() {
         public void run() {
           try {
             Thread.sleep(random.nextInt(50));
           } catch (InterruptedException e) {
-            fail();
+            exception.set(e);
           }
 
           try {
@@ -47,7 +50,7 @@ public class SetOnceFlagTest extends TestCase {
             try {
               Thread.sleep(random.nextInt(50));
             } catch (InterruptedException e) {
-              fail();
+              exception.set(e);
             }
 
             flag.set();
@@ -57,6 +60,10 @@ public class SetOnceFlagTest extends TestCase {
           }
         }
       };
+
+      if (exception.get() != null) {
+        fail("One of threads caught interrupted exception");
+      }
 
       Thread t1 = new Thread(r1);
       Thread t2 = new Thread(r2);

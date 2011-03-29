@@ -48,23 +48,23 @@ public class AATreeSetTest extends TestCase {
 
   public void testBasic() {
     Set<Long> t = new AATreeSet<Long>();
-    t.add(new Long(25));
-    t.add(new Long(10));
-    t.add(new Long(1));
-    t.add(new Long(4));
-    t.add(new Long(15));
-    t.add(new Long(8));
-    t.add(new Long(11));
-    t.add(new Long(10));
-    t.add(new Long(9));
-    t.add(new Long(13));
-    t.add(new Long(2));
-    t.add(new Long(23));
-    t.add(new Long(35));
-    t.add(new Long(33));
-    t.add(new Long(17));
-    t.add(new Long(29));
-    t.add(new Long(19));
+    t.add(Long.valueOf(25));
+    t.add(Long.valueOf(10));
+    t.add(Long.valueOf(1));
+    t.add(Long.valueOf(4));
+    t.add(Long.valueOf(15));
+    t.add(Long.valueOf(8));
+    t.add(Long.valueOf(11));
+    t.add(Long.valueOf(10));
+    t.add(Long.valueOf(9));
+    t.add(Long.valueOf(13));
+    t.add(Long.valueOf(2));
+    t.add(Long.valueOf(23));
+    t.add(Long.valueOf(35));
+    t.add(Long.valueOf(33));
+    t.add(Long.valueOf(17));
+    t.add(Long.valueOf(29));
+    t.add(Long.valueOf(19));
 
     checkAATreeIteratorElements(t.iterator());
   }
@@ -85,27 +85,27 @@ public class AATreeSetTest extends TestCase {
 
   public void testVeryBasic() {
     AATreeSet<Integer> aaTree = new AATreeSet<Integer>();
-    boolean inserted = aaTree.add(new Integer(10));
+    boolean inserted = aaTree.add(Integer.valueOf(10));
     assertTrue(inserted);
     assertEquals(1, aaTree.size());
 
-    inserted = aaTree.add(new Integer(10));
+    inserted = aaTree.add(Integer.valueOf(10));
     assertFalse(inserted);
     assertEquals(1, aaTree.size());
 
-    assertFalse(aaTree.remove(new Integer(100)));
+    assertFalse(aaTree.remove(Integer.valueOf(100)));
     assertEquals(1, aaTree.size());
 
-    Integer deleted = aaTree.removeAndReturn(new Integer(10));
+    Integer deleted = aaTree.removeAndReturn(Integer.valueOf(10));
     assertNotNull(deleted);
     assertEquals(10, deleted.intValue());
     assertEquals(0, aaTree.size());
 
-    deleted = aaTree.removeAndReturn(new Integer(10));
+    deleted = aaTree.removeAndReturn(Integer.valueOf(10));
     assertNull(deleted);
     assertEquals(0, aaTree.size());
 
-    inserted = aaTree.add(new Integer(10));
+    inserted = aaTree.add(Integer.valueOf(10));
     assertTrue(inserted);
     assertEquals(1, aaTree.size());
 
@@ -120,18 +120,18 @@ public class AATreeSetTest extends TestCase {
     final int NUMS = 400000;
     final int GAP = 1;
 
-    t.add(new Integer(NUMS * 2));
-    t.add(new Integer(NUMS * 3));
+    t.add(Integer.valueOf(NUMS * 2));
+    t.add(Integer.valueOf(NUMS * 3));
     int size = 2;
     for (int i = GAP; i != 0; i = (i + GAP) % NUMS) {
-      t.add(new Integer(i));
+      t.add(Integer.valueOf(i));
       size++;
     }
     assertEquals(size, t.size());
 
     assertTrue(t.remove(t.last()));
     for (int i = 1; i < NUMS; i += 2) {
-      assertTrue("remove(" + i + ")", t.remove(new Integer(i)));
+      assertTrue("remove(" + i + ")", t.remove(Integer.valueOf(i)));
     }
     assertTrue(t.remove(t.last()));
 
@@ -165,7 +165,7 @@ public class AATreeSetTest extends TestCase {
       SecureRandom sr = new SecureRandom();
       long seed = sr.nextLong();
       Random r = new Random(seed);
-      Long tailSetKey = new Long(r.nextLong());
+      Long tailSetKey = Long.valueOf(r.nextLong());
       System.err.println("Seed for random : " + seed + ". tailSetKey = " + tailSetKey);
       Iterator<Long> tsIterator = treeSet.tailSet(tailSetKey).iterator();
       Iterator<Long> aaIterator = aatree.tailSet(tailSetKey).iterator();
@@ -177,26 +177,26 @@ public class AATreeSetTest extends TestCase {
 
     // 1 2 4 8 9 10 11 13 15 17 19 23 25 27 29 33 35 47 56
     List longList = new ArrayList();
-    longList.add(new Long(25));
-    longList.add(new Long(27));
-    longList.add(new Long(9));
-    longList.add(new Long(13));
-    longList.add(new Long(2));
-    longList.add(new Long(23));
-    longList.add(new Long(47));
-    longList.add(new Long(35));
-    longList.add(new Long(10));
-    longList.add(new Long(1));
-    longList.add(new Long(4));
-    longList.add(new Long(15));
-    longList.add(new Long(8));
-    longList.add(new Long(56));
-    longList.add(new Long(11));
-    longList.add(new Long(10));
-    longList.add(new Long(33));
-    longList.add(new Long(17));
-    longList.add(new Long(29));
-    longList.add(new Long(19));
+    longList.add(Long.valueOf(25));
+    longList.add(Long.valueOf(27));
+    longList.add(Long.valueOf(9));
+    longList.add(Long.valueOf(13));
+    longList.add(Long.valueOf(2));
+    longList.add(Long.valueOf(23));
+    longList.add(Long.valueOf(47));
+    longList.add(Long.valueOf(35));
+    longList.add(Long.valueOf(10));
+    longList.add(Long.valueOf(1));
+    longList.add(Long.valueOf(4));
+    longList.add(Long.valueOf(15));
+    longList.add(Long.valueOf(8));
+    longList.add(Long.valueOf(56));
+    longList.add(Long.valueOf(11));
+    longList.add(Long.valueOf(10));
+    longList.add(Long.valueOf(33));
+    longList.add(Long.valueOf(17));
+    longList.add(Long.valueOf(29));
+    longList.add(Long.valueOf(19));
 
     AATreeSet<Long> aaTreeSet = new AATreeSet<Long>();
     TreeSet<Long> treeSet = new TreeSet<Long>();
@@ -207,37 +207,37 @@ public class AATreeSetTest extends TestCase {
     }
 
     // Exact match
-    checkTailSets(treeSet, aaTreeSet, new Long(15));
+    checkTailSets(treeSet, aaTreeSet, Long.valueOf(15));
 
     // non-existing member with-in the range
-    checkTailSets(treeSet, aaTreeSet, new Long(16));
+    checkTailSets(treeSet, aaTreeSet, Long.valueOf(16));
 
     // non-existing member below the range
-    checkTailSets(treeSet, aaTreeSet, new Long(-10101));
+    checkTailSets(treeSet, aaTreeSet, Long.valueOf(-10101));
 
     // non-existing member above the range
-    checkTailSets(treeSet, aaTreeSet, new Long(50505));
+    checkTailSets(treeSet, aaTreeSet, Long.valueOf(50505));
 
     // the least member
-    checkTailSets(treeSet, aaTreeSet, new Long(1));
+    checkTailSets(treeSet, aaTreeSet, Long.valueOf(1));
 
     // the max member
-    checkTailSets(treeSet, aaTreeSet, new Long(56));
+    checkTailSets(treeSet, aaTreeSet, Long.valueOf(56));
 
     // these members are important to test. For more info, draw the aaTree for above
     // data, and you will know the reason
-    checkTailSets(treeSet, aaTreeSet, new Long(4));
-    checkTailSets(treeSet, aaTreeSet, new Long(10));
-    checkTailSets(treeSet, aaTreeSet, new Long(13));
-    checkTailSets(treeSet, aaTreeSet, new Long(17));
-    checkTailSets(treeSet, aaTreeSet, new Long(33));
-    checkTailSets(treeSet, aaTreeSet, new Long(25));
-    checkTailSets(treeSet, aaTreeSet, new Long(47));
+    checkTailSets(treeSet, aaTreeSet, Long.valueOf(4));
+    checkTailSets(treeSet, aaTreeSet, Long.valueOf(10));
+    checkTailSets(treeSet, aaTreeSet, Long.valueOf(13));
+    checkTailSets(treeSet, aaTreeSet, Long.valueOf(17));
+    checkTailSets(treeSet, aaTreeSet, Long.valueOf(33));
+    checkTailSets(treeSet, aaTreeSet, Long.valueOf(25));
+    checkTailSets(treeSet, aaTreeSet, Long.valueOf(47));
 
     // node with no left child
-    checkTailSets(treeSet, aaTreeSet, new Long(27));
+    checkTailSets(treeSet, aaTreeSet, Long.valueOf(27));
     // node with no right child
-    checkTailSets(treeSet, aaTreeSet, new Long(11));
+    checkTailSets(treeSet, aaTreeSet, Long.valueOf(11));
   }
 
   private void checkTailSets(TreeSet<Long> treeSet, AATreeSet<Long> aaTreeSet, Long tailKey) {
@@ -260,7 +260,7 @@ public class AATreeSetTest extends TestCase {
     System.err.println("Seed for random : " + seed);
     Random r = new Random(seed);
     for (int i = 0; i < count; i++) {
-      list.add(new Long(r.nextLong()));
+      list.add(Long.valueOf(r.nextLong()));
     }
     return list;
   }

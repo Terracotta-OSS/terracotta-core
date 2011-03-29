@@ -1,45 +1,45 @@
 /**
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test;
 
-import org.w3c.dom.Text;
-import org.w3c.dom.Element;
-import org.w3c.dom.Document;
-
-import org.apache.tools.ant.util.DOMElementWriter;
-import org.apache.tools.ant.taskdefs.optional.junit.XMLConstants;
-import org.apache.tools.ant.taskdefs.optional.junit.JUnitTestRunner;
-import org.apache.tools.ant.taskdefs.optional.junit.JUnitTest;
-import org.apache.tools.ant.taskdefs.optional.junit.JUnitResultFormatter;
 import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.taskdefs.optional.junit.JUnitResultFormatter;
+import org.apache.tools.ant.taskdefs.optional.junit.JUnitTest;
+import org.apache.tools.ant.taskdefs.optional.junit.JUnitTestRunner;
+import org.apache.tools.ant.taskdefs.optional.junit.XMLConstants;
+import org.apache.tools.ant.util.DOMElementWriter;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Text;
 
-import junit.framework.TestCase;
-import junit.framework.Test;
-import junit.framework.AssertionFailedError;
-
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.DocumentBuilder;
-import java.util.Properties;
-import java.util.Enumeration;
-import java.io.Writer;
-import java.io.OutputStreamWriter;
-import java.io.OutputStream;
-import java.io.IOException;
-import java.io.FileOutputStream;
-import java.io.FileNotFoundException;
-import java.io.File;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.Enumeration;
+import java.util.Properties;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import junit.framework.AssertionFailedError;
+import junit.framework.Test;
+import junit.framework.TestCase;
 
 /**
  * This formatter is used to generate a 'pre-condition' log --- if the TestCase shuts the VM down (eg: deliberately
  * calling System.exit()) then we'll at least have a log file that indicate that the TestSuite did not complete
  * gracefully, with a record of which TestCase was last run...
- *
+ * 
  * @author Juris Galang
  */
-public class TCXMLJUnitFormatter
-   implements JUnitResultFormatter, XMLConstants {
+public class TCXMLJUnitFormatter implements JUnitResultFormatter, XMLConstants {
 
   /**
    */
@@ -65,7 +65,7 @@ public class TCXMLJUnitFormatter
   /**
    */
   public void startTest(Test test) {
-    //logfile = new File("TEST-" + this.suite.getName() + "-" + ((TestCase) test).getName() + ".xml");
+    // logfile = new File("TEST-" + this.suite.getName() + "-" + ((TestCase) test).getName() + ".xml");
     logfile = new File("TEST-" + this.suite.getName() + ".xml");
 
     loadDocument();
@@ -177,11 +177,12 @@ public class TCXMLJUnitFormatter
     }
   }
 
-  private class TestSuiteAbortedException extends Throwable {
+  private static class TestSuiteAbortedException extends Throwable {
     public TestSuiteAbortedException(String message) {
       super(message);
     }
 
+    @Override
     public String getMessage() {
       return super.getMessage();
     }

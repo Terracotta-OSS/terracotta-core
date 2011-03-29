@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -50,7 +51,7 @@ public class StackTest extends TCTestCase {
   }
 
   private void callSearch(Stack tcStack, java.util.Stack javaStack, Random r) {
-    Integer subject = new Integer(r.nextInt(10000));
+    Integer subject = Integer.valueOf(r.nextInt(10000));
     assertEquals(javaStack.search(subject), tcStack.search(subject));
   }
 
@@ -63,7 +64,7 @@ public class StackTest extends TCTestCase {
   }
 
   private void callPush(Stack tcStack, java.util.Stack javaStack, Random r) {
-    Integer subject = new Integer(r.nextInt(10000));
+    Integer subject = Integer.valueOf(r.nextInt(10000));
     assertEquals(javaStack.push(subject), tcStack.push(subject));
     assertEquals(javaStack.size(), tcStack.size());
   }

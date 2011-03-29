@@ -20,7 +20,7 @@ public class BoundedConcurrentHashMapTest extends TCTestCase {
 
     for (int i = 0; i < 100; i++) {
       Assert.assertNotNull(boundedConcurrentHashMap.get("key" + i));
-      Assert.assertTrue(boundedConcurrentHashMap.get("key" + i).equals(new Integer(i)));
+      Assert.assertTrue(boundedConcurrentHashMap.get("key" + i).equals(Integer.valueOf(i)));
     }
   }
 

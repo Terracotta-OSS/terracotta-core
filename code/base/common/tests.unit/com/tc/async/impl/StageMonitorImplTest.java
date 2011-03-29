@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.async.impl;
 
@@ -39,25 +40,25 @@ public class StageMonitorImplTest extends TestCase {
     StageMonitorImpl sm = new StageMonitorImpl("name", new StringFormatter());
 
     Analysis an = sm.analyze();
-    assertEquals(new Integer(0), an.getEventCount());
-    //assertEquals(new Double(0), an.getEventsPerSecond());
-    assertEquals(new Integer(-1), an.getMinQueueDepth());
-    assertEquals(new Integer(0), an.getMaxQueueDepth());
-    assertEquals(new Double(-1), an.getAvgQueueDepth());
+    assertEquals(Integer.valueOf(0), an.getEventCount());
+    // assertEquals(new Double(0), an.getEventsPerSecond());
+    assertEquals(Integer.valueOf(-1), an.getMinQueueDepth());
+    assertEquals(Integer.valueOf(0), an.getMaxQueueDepth());
+    assertEquals(Double.valueOf(-1), an.getAvgQueueDepth());
 
     sm.eventBegin(10);
     ThreadUtil.reallySleep(100);
     sm.eventBegin(20);
     an = sm.analyze();
 
-    assertEquals(new Integer(2), an.getEventCount());
+    assertEquals(Integer.valueOf(2), an.getEventCount());
     String elapsed = String.valueOf(an.getElapsedTime().longValue());
     assertTrue(elapsed, an.getElapsedTime().longValue() >= 100);
     assertTrue(elapsed, an.getElapsedTime().longValue() < 2500);
-    assertEquals(new Double(1000 * an.getEventCount().doubleValue() / an.getElapsedTime().doubleValue()), an
-        .getEventsPerSecond());
-    assertEquals(new Integer(10), an.getMinQueueDepth());
-    assertEquals(new Integer(20), an.getMaxQueueDepth());
+    assertEquals(Double.valueOf(1000 * an.getEventCount().doubleValue() / an.getElapsedTime().doubleValue()),
+                 an.getEventsPerSecond());
+    assertEquals(Integer.valueOf(10), an.getMinQueueDepth());
+    assertEquals(Integer.valueOf(20), an.getMaxQueueDepth());
 
   }
 

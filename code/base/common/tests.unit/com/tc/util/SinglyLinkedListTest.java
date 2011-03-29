@@ -71,7 +71,7 @@ public class SinglyLinkedListTest extends TestCase {
     assertTrue(list.isEmpty());
   }
 
-  protected class Node implements LinkedNode<Node> {
+  protected static class Node implements LinkedNode<Node> {
 
     private Node      next;
     private final int id;

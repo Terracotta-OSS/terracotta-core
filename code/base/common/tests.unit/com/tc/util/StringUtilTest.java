@@ -10,44 +10,43 @@ public final class StringUtilTest extends TestCase {
 
   public void testSafeToString() {
     assertEquals(StringUtil.NULL_STRING, StringUtil.safeToString(null));
-    assertEquals("10", StringUtil.safeToString(new Integer(10)));
+    assertEquals("10", StringUtil.safeToString(Integer.valueOf(10)));
   }
-  
+
   public void testIndentLinesNegativeIndent() {
-    try { 
+    try {
       StringUtil.indentLines(new StringBuffer(), -10, ' ');
       Assert.fail("Expected IllegalArgumentException");
-    } catch(IllegalArgumentException e) {
+    } catch (IllegalArgumentException e) {
       // expected
     }
   }
-  
+
   public void testIndentLines() {
     // null StringBuffer -> null result
     assertEquals(null, StringUtil.indentLines(null, 2, ' '));
-    
+
     // 0 indent -> unchanged
     String start = "abc\ndef\nghi";
     StringBuffer sb = new StringBuffer(start);
     assertEquals(start, StringUtil.indentLines(sb, 0, ' ').toString());
     assertEquals(start, sb.toString());
-    
+
     // check indent after line breaks
     String after = "\t\tabc\n\t\tdef\n\t\tghi";
     assertEquals(after, StringUtil.indentLines(sb, 2, '\t').toString());
     assertEquals(after, sb.toString());
   }
-  
+
   public void testIndentLinesStringNull() {
     try {
-      StringUtil.indentLines((String)null, 5);
+      StringUtil.indentLines((String) null, 5);
       fail("Expected NPE");
-    } catch(NullPointerException e) {
+    } catch (NullPointerException e) {
       // expected exception
     }
   }
 
-  
   public void testToStringObjectArrayStringStringString() {
     // Test 1, all nulls
     String expected = StringUtil.NULL_STRING;
@@ -83,20 +82,20 @@ public final class StringUtilTest extends TestCase {
   }
 
   public void testToString() {
-    Long[] vals = new Long[] { new Long(1), new Long(2), new Long(3) };
+    Long[] vals = new Long[] { Long.valueOf(1), Long.valueOf(2), Long.valueOf(3) };
     final String actual = StringUtil.toString(vals);
     assertEquals("1, 2, 3", actual);
   }
-  
+
   public void testToPaddedString() {
     // Too big for padding
     assertEquals("123", StringUtil.toPaddedString(123, 10, 1));
-    
+
     // Pad out with 0's
     assertEquals("0000000123", StringUtil.toPaddedString(123, 10, 10));
-    
+
     // Base 16
     assertEquals("00cd", StringUtil.toPaddedString(205, 16, 4));
   }
-  
+
 }

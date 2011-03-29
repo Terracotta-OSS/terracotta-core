@@ -20,8 +20,8 @@ import junit.framework.TestCase;
 
 public class StartupLockTest extends TestCase {
 
-  private final int lockedAlreadyOnThisVM = 0;
-  private final int lockCanBeAquired      = 1;
+  private static final int lockedAlreadyOnThisVM = 0;
+  private static final int lockCanBeAquired      = 1;
 
   public void testBasics() throws Throwable {
     TestTCRandomFileAccessImpl randomFileAccess = new TestTCRandomFileAccessImpl();
@@ -76,7 +76,7 @@ public class StartupLockTest extends TestCase {
     Assert.assertTrue(result);
   }
 
-  private class TestTCRandomFileAccessImpl implements TCRandomFileAccess {
+  private static class TestTCRandomFileAccessImpl implements TCRandomFileAccess {
     private int lockAvailability;
 
     public void setLockAvailability(int lockAvailability) {
@@ -88,9 +88,9 @@ public class StartupLockTest extends TestCase {
     }
   }
 
-  private class TestTCFileChannelImpl implements TCFileChannel {
+  private static class TestTCFileChannelImpl implements TCFileChannel {
 
-    private int lockAvailability;
+    private final int lockAvailability;
 
     public TestTCFileChannelImpl(TCFile file, String mode, int lockAvailability) {
       this.lockAvailability = lockAvailability;
@@ -111,7 +111,7 @@ public class StartupLockTest extends TestCase {
 
   }
 
-  private class TestTCFileLockImpl implements TCFileLock {
+  private static class TestTCFileLockImpl implements TCFileLock {
 
     public void release() {
       // method not used in test
@@ -121,9 +121,9 @@ public class StartupLockTest extends TestCase {
 
   private class TestTCFileImpl implements TCFile {
 
-    private boolean fileIsMakable;
-    private boolean fileExists;
-    private boolean newFileIsMakable;
+    private final boolean fileIsMakable;
+    private boolean       fileExists;
+    private boolean       newFileIsMakable;
 
     public TestTCFileImpl(boolean isMakable) {
       fileIsMakable = isMakable;
@@ -159,6 +159,7 @@ public class StartupLockTest extends TestCase {
       newFileIsMakable = val;
     }
 
+    @Override
     public String toString() {
       String s = "TestTCFileImpl:  ";
       if (fileIsMakable) {

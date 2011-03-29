@@ -57,6 +57,12 @@ public class TCPropertiesConstsTest extends TCTestCase {
       props.load(in);
     } catch (IOException e) {
       throw new AssertionError(e);
+    } finally {
+      try {
+        in.close();
+      } catch (IOException e) {
+        // ignore
+      }
     }
   }
 

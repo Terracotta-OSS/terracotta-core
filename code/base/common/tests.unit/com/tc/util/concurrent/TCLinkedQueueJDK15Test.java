@@ -44,7 +44,7 @@ public class TCLinkedQueueJDK15Test extends TestCase {
 
     for (int i = 0; i < capacity; i++) {
       try {
-        linkedBlockingQueue.put(new Integer(i));
+        linkedBlockingQueue.put(Integer.valueOf(i));
       } catch (InterruptedException e) {
         throw new AssertionError(e);
       }
@@ -52,7 +52,7 @@ public class TCLinkedQueueJDK15Test extends TestCase {
 
     // Now try to offer, and it should fail
     try {
-      boolean offered = linkedBlockingQueue.offer(new Integer(1000), 0);
+      boolean offered = linkedBlockingQueue.offer(Integer.valueOf(1000), 0);
       assertFalse(offered);
     } catch (InterruptedException e) {
       throw new AssertionError(e);
@@ -61,7 +61,7 @@ public class TCLinkedQueueJDK15Test extends TestCase {
     // try creating with negative capacity.
     boolean failed = true;
     try {
-      linkedBlockingQueue = (new QueueFactory()).createInstance(-1);
+      (new QueueFactory()).createInstance(-1);
       failed = false;
     } catch (AssertionError iae) {
       // expected

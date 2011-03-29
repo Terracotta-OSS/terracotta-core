@@ -22,7 +22,7 @@ public class BatchSequenceTest extends TestCase {
       public void run() {
         barrier.set(new Object());
         try {
-          longs.put(new Long(sequence.next()));
+          longs.put(Long.valueOf(sequence.next()));
         } catch (InterruptedException e) {
           e.printStackTrace();
           throw new AssertionError(e);
