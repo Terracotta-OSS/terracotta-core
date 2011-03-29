@@ -73,6 +73,11 @@ class BuildEnvironment < Environment
   def build_hostname
     hostname
   end
+  
+  # Are we running as a Jenkins/Hudson job?
+  def jenkins?
+    (ENV['HUDSON_HOME'] || ENV['JENKINS_HOME']) && ENV['JOB_NAME']
+  end
 
   # What's the name of the user we're building as?
   def username
