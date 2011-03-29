@@ -163,6 +163,13 @@ public class Vm {
   }
 
   /**
+   * @return true if OpenJDK BM
+   */
+  public static boolean isOpenJdk() {
+    return VERSION.isOpenJdk();
+  }
+
+  /**
    * @return 32 for a 32 bits JVM, 64 for a 64 bits JVM, 0 if unknown.
    */
   public static int dataModel() {
@@ -191,7 +198,7 @@ public class Vm {
     if (isJRockit()) {
       return extractMaxDirectMemoryJrockit();
     } 
-    if (isHotSpot() || isIBM()) {
+    if (isHotSpot() || isOpenJdk() || isIBM()) {
       return sun.misc.VM.maxDirectMemory(); 
     }
     throw new RuntimeException("Don't know how to find maxDirectMemory for this VM");
@@ -205,7 +212,7 @@ public class Vm {
     if (isJRockit()) {
       return reservedDirectMemoryJrockit();
     } 
-    if (isHotSpot() || isIBM()) {
+    if (isHotSpot() || isOpenJdk() || isIBM()) {
       return reservedDirectMemorySun();
     } 
     throw new RuntimeException("Don't know how to find reservedDirectMemory for this VM");

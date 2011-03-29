@@ -30,6 +30,7 @@ public final class VmVersion {
   private final boolean        isJRockit;
   private final boolean        isAzul;
   private final boolean        isHotSpot;
+  private final boolean        isOpenJdk;
 
   /**
    * Construct with system properties, which will be parsed to determine version. Looks at properties like java.version,
@@ -40,7 +41,8 @@ public final class VmVersion {
    * @throws UnknownRuntimeVersionException If Java runtime version is unknown
    */
   public VmVersion(final Properties props) {
-    this(javaVersion(props), runtimeVersion(props), isHotspot(props), isJRockit(props), isIBM(props), isAzul(props));
+    this(javaVersion(props), runtimeVersion(props), isHotspot(props), isOpenJdk(props), isJRockit(props), isIBM(props),
+         isAzul(props));
   }
 
   /**
@@ -54,8 +56,9 @@ public final class VmVersion {
    * @throws UnknownRuntimeVersionException If Java runtime version is unknown
    */
   private VmVersion(final String vendorVersion, final String runtimeVersion, final boolean isSun,
-                    final boolean isJRockit, final boolean isIBM, final boolean isAzul) {
+                    final boolean isOpenJdk, final boolean isJRockit, final boolean isIBM, final boolean isAzul) {
     this.isHotSpot = isSun;
+    this.isOpenJdk = isOpenJdk;
     this.isIBM = isIBM;
     this.isJRockit = isJRockit;
     this.isAzul = isAzul;
@@ -166,6 +169,13 @@ public final class VmVersion {
   }
 
   /**
+   * @return true if OpenJDK JVM
+   */
+  public boolean isOpenJdk() {
+    return isOpenJdk;
+  }
+
+  /**
    * @return True if IBM JVM
    */
   public boolean isIBM() {
@@ -267,5 +277,9 @@ public final class VmVersion {
 
   private static boolean isHotspot(Properties props) {
     return props.getProperty("java.vm.name", "").toLowerCase().contains("hotspot");
+  }
+
+  private static boolean isOpenJdk(Properties props) {
+    return props.getProperty("java.vm.name", "").toLowerCase().contains("openjdk");
   }
 }
