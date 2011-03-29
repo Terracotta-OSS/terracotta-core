@@ -136,15 +136,14 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
     return toString();
   }
 
-  @Override
-  public TerracottaOperatorEvent clone() throws CloneNotSupportedException {
-    TerracottaOperatorEventImpl clone = (TerracottaOperatorEventImpl) super.clone();
+  public TerracottaOperatorEvent cloneEvent() {
     Map<String, Integer> nodesCopy;
     synchronized (this) {
       nodesCopy = new HashMap<String, Integer>(this.nodes);
     }
-    clone.nodes = nodesCopy;
-    return clone;
+    return new TerracottaOperatorEventImpl(this.eventType, this.subSystem, this.time, this.eventMessage,
+                                           this.collapseString, nodesCopy);
+
   }
 
   // STRICTLY FOR TESTS

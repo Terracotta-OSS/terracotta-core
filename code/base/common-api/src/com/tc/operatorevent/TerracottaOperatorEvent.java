@@ -54,4 +54,6 @@ public interface TerracottaOperatorEvent extends Serializable, Cloneable {
    * This method is used to get the event in String format.
    */
   String extractAsText();
+
+  TerracottaOperatorEvent cloneEvent();
 }
