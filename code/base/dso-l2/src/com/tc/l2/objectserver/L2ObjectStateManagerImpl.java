@@ -227,7 +227,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       if (!missingHere.isEmpty()) {
         // XXX:: This is possible because some message (Transaction message with new object creation or object delete
         // message from DGC) from previous active reached the other node and not this node and the active crashed
-        logger.warn("Object IDs MISSING HERE : " + missingHere.size() + " : " + missingHere);
+        logger.warn("Object IDs MISSING HERE : " + missingHere.size() + " : " + missingHere.toShortString());
       }
       final int missingCount = this.missingOids.size();
       if (missingCount == 0) {
