@@ -14,6 +14,7 @@ import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -21,15 +22,17 @@ public class DistributedMethodCallGCTest extends GCTestBase {
 
   public DistributedMethodCallGCTest() {
     // MNK-714
-    //disableAllUntil("2010-3-19"); //extended timebomb
+    // disableAllUntil("2010-3-19"); //extended timebomb
   }
-  
+
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     super.doSetUp(t);
     t.getTransparentAppConfig().setAttribute("gc-interval-ms",
                                              new Long(gcConfigHelper.getGarbageCollectionInterval() * 1000));
   }
 
+  @Override
   protected Class getApplicationClass() {
     return App.class;
   }
@@ -48,7 +51,16 @@ public class DistributedMethodCallGCTest extends GCTestBase {
       if (getParticipantCount() < 2) { throw new AssertionError(); }
     }
 
+    private static void debug(String msg) {
+      Date date = new Date();
+      System.out.println(":::::::: XXX " + date + " [" + date.getTime() + "] " + Thread.currentThread().getName()
+                         + ": " + msg);
+    }
+
+    @Override
     protected void runTest() throws Throwable {
+
+      debug("In runTest()");
 
       DMITarget.setAppThread(Thread.currentThread());
 
@@ -76,6 +88,7 @@ public class DistributedMethodCallGCTest extends GCTestBase {
     }
 
     public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
+      debug("visitL1DSOConfig ENTER");
       String testClassName = App.class.getName();
       TransparencyClassSpec spec = config.getOrCreateSpec(testClassName);
       spec.addRoot("root", "root");
@@ -85,6 +98,10 @@ public class DistributedMethodCallGCTest extends GCTestBase {
       spec = config.getOrCreateSpec(DMITarget.class.getName());
       spec.addDistributedMethodCall("foo", "()V", true);
       spec.addDistributedMethodCall("foo", "(Ljava/lang/String;I)V", true);
+      // debugging for MNK-1810
+      TransparencyClassSpec requiredSpec = config.getSpec(DMITarget.class.getName());
+      debug("Got required spec: " + requiredSpec);
+      debug("visitL1DSOConfig EXIT");
     }
 
     private static class DMITarget {
