@@ -20,7 +20,7 @@ class TCPersistableMap implements Map, PersistableCollection {
 
   // This is a carefully selected ObjectID that will never be assigned to any object.
   // TODO:: Move this Object ID to ObjectID class
-  private static final ObjectID REMOVED     = new ObjectID(-2);
+  private static final ObjectID REMOVED = new ObjectID(-2);
 
   /*
    * This map contains the mappings already in the database
@@ -34,8 +34,8 @@ class TCPersistableMap implements Map, PersistableCollection {
 
   private final long            id;
 
-  private int                   removeCount = 0;
-  private boolean               clear       = false;
+  private int                   size    = 0;
+  private boolean               clear   = false;
 
   /**
    * This constructor is used when in permanent store mode
@@ -52,13 +52,12 @@ class TCPersistableMap implements Map, PersistableCollection {
     this.map = backingMap;
     this.delta = deltaMap;
     this.id = id.toLong();
+    this.size = backingMap.size();
+    if (deltaMap.size() != 0) { throw new AssertionError("Delta Map is not empty ! : size " + deltaMap.size()); }
   }
 
   public int size() {
-    int rv = (this.map.size() + this.delta.size() - this.removeCount);
-    if (rv < 0) { throw new AssertionError("TCPersistableMap Size error -  map:" + this.map.size() + "; delta:"
-                                           + this.delta.size() + "; removed: " + this.removeCount); }
-    return rv;
+    return size;
   }
 
   public boolean isEmpty() {
@@ -93,27 +92,47 @@ class TCPersistableMap implements Map, PersistableCollection {
   }
 
   public Object put(final Object key, final Object value) {
-    final Object old = this.delta.put(key, value);
+    Object old = this.delta.put(key, value);
     if (REMOVED.equals(old)) {
-      this.removeCount--;
+      this.size++;
       return null;
     } else if (old != null) {
       return old;
     } else {
-      return this.map.remove(key);
+      old = this.map.get(key);
+      if (old == null) {
+        size++;
+      }
+      return old;
     }
   }
 
   public Object remove(final Object key) {
-    final Object old = this.delta.put(key, REMOVED);
-    if (REMOVED.equals(old)) {
-      return null;
-    } else if (old != null) {
-      this.removeCount++;
-      return old;
+    final Object oldInMap = map.get(key);
+    if (oldInMap != null) {
+      // Entry in map
+      final Object old = this.delta.put(key, REMOVED);
+      if (REMOVED.equals(old)) {
+        // Already removed
+        return null;
+      } else if (old != null) {
+        this.size--;
+        return old;
+      } else {
+        this.size--;
+        return oldInMap;
+      }
     } else {
-      this.removeCount++;
-      return this.map.remove(key);
+      // Entry not in map
+      final Object old = this.delta.remove(key);
+      if (REMOVED.equals(old)) {
+        throw new AssertionError("Map doesn't contain : " + key + " but delta has REMOVED ");
+      } else if (old != null) {
+        this.size--;
+        return old;
+      } else {
+        return null;
+      }
     }
   }
 
@@ -126,11 +145,9 @@ class TCPersistableMap implements Map, PersistableCollection {
 
   public void clear() {
     this.clear = true;
-    // XXX:: May be saving the keys to remove will be faster as sleepycat has to read/fault all records on clear. But
-    // then it is memory to performance trade off.
     this.delta.clear();
     this.map.clear();
-    this.removeCount = 0;
+    this.size = 0;
   }
 
   public Set keySet() {
@@ -171,7 +188,8 @@ class TCPersistableMap implements Map, PersistableCollection {
         }
       }
       this.delta.clear();
-      this.removeCount = 0;
+      if (this.size != map.size()) { throw new AssertionError("Size ( " + size + " ) is not equal to map.size ( "
+                                                              + map.size() + " )"); }
     }
     return written;
   }
@@ -196,13 +214,14 @@ class TCPersistableMap implements Map, PersistableCollection {
   @Override
   public String toString() {
     return "TCPersistableMap(" + this.id + ")={ Map.size() = " + this.map.size() + ", delta.size() = "
-           + this.delta.size() + ", removeCount = " + this.removeCount + " }";
+           + this.delta.size() + ", size = " + this.size + " }";
   }
 
   public void load(final TCCollectionsSerializer serializer, final PersistenceTransaction tx, final TCMapsDatabase db)
       throws TCDatabaseException {
     Assert.assertTrue(this.map.isEmpty());
     db.loadMap(tx, this.id, this.map, serializer);
+    this.size = map.size();
   }
 
   private abstract class BaseView implements Set {
@@ -225,7 +244,6 @@ class TCPersistableMap implements Map, PersistableCollection {
     }
 
     public Object[] toArray(Object[] a) {
-      final int size = size();
       if (a.length < size) {
         a = (Object[]) java.lang.reflect.Array.newInstance(a.getClass().getComponentType(), size);
       }
@@ -323,7 +341,8 @@ class TCPersistableMap implements Map, PersistableCollection {
     private void moveToNext() {
       while (this.current.hasNext()) {
         this.next = (Entry) this.current.next();
-        if (!this.isDelta || !REMOVED.equals(this.next.getValue())) { return; }
+        if ((!this.isDelta && !delta.containsKey(this.next.getKey()))
+            || (this.isDelta && !REMOVED.equals(this.next.getValue()))) { return; }
       }
       if (this.isDelta) {
         this.next = null;
