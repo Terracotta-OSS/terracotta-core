@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -30,7 +31,7 @@ public class TransparentLinkedListTestApp extends AbstractTransparentApp {
   private static final int REMOVE_COMPLETE_STAGE       = 3;
   private static final int ASSERT_REMOVE_SIZE_STAGE    = 4;
 
-  private LinkedList       list                        = new LinkedList();
+  private final LinkedList list                        = new LinkedList();
 
   public TransparentLinkedListTestApp(String applicationId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(applicationId, cfg, listenerProvider);
@@ -93,10 +94,10 @@ public class TransparentLinkedListTestApp extends AbstractTransparentApp {
           TestObject to = (TestObject) i.next();
           String key = to.getId();
           if (!res.containsKey(key)) {
-            res.put(key, new Long(0));
+            res.put(key, Long.valueOf(0));
           } else {
             long v = ((Long) res.get(key)).longValue();
-            res.put(key, new Long(++v));
+            res.put(key, Long.valueOf(++v));
           }
         }
         throw new AssertionError("" + res);
@@ -123,8 +124,8 @@ public class TransparentLinkedListTestApp extends AbstractTransparentApp {
   }
 
   static class TestObject {
-    private String id;
-    private int    count;
+    private final String id;
+    private final int    count;
 
     TestObject(String i, int count) {
       this.id = i;
@@ -135,6 +136,7 @@ public class TransparentLinkedListTestApp extends AbstractTransparentApp {
       return id;
     }
 
+    @Override
     public String toString() {
       return "TestObject(" + id + "," + count + ")";
     }

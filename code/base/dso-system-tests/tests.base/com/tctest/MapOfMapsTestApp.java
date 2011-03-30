@@ -31,8 +31,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
 
@@ -141,10 +141,10 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
       while (b-- > 0) {
         childs.add(addToMap(String.valueOf(b), myRoot));
       }
-      myRoot.put(new Integer(10), "Testing");
+      myRoot.put(Integer.valueOf(10), "Testing");
     }
     synchronized (myRoot) {
-      myRoot.remove(new Integer(10));
+      myRoot.remove(Integer.valueOf(10));
     }
     if (depth-- > 0) {
       for (final Iterator i = childs.iterator(); i.hasNext();) {
@@ -201,8 +201,8 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
 
   private Map getPopulatedMap(final Map m) {
     for (int i = 0; i < 10; i++) {
-      m.put(StringUtil.reduce("Hello - " + i), StringUtil
-          .reduce("Hehehehehehehehehehehehehehehehehheheheheheheheheheheheheheheheheh-" + i));
+      m.put(StringUtil.reduce("Hello - " + i),
+            StringUtil.reduce("Hehehehehehehehehehehehehehehehehheheheheheheheheheheheheheheheheh-" + i));
     }
     return m;
   }

@@ -18,12 +18,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CyclicBarrier;
 
 /**
- * (see CDV-1160) -- This test reproduces a deadlock associated with using certain key types, such as
- * Class, in a ConcurrentHashMap.  The problem happens when the key type has a hashCode() that is not
- * stable across nodes. 
+ * (see CDV-1160) -- This test reproduces a deadlock associated with using certain key types, such as Class, in a
+ * ConcurrentHashMap. The problem happens when the key type has a hashCode() that is not stable across nodes.
  */
 public class ConcurrentHashMapBadKeyDeadlockTest extends TransparentTestBase {
-  
+
   private static final int NODE_COUNT = 2;
 
   @Override
@@ -36,20 +35,20 @@ public class ConcurrentHashMapBadKeyDeadlockTest extends TransparentTestBase {
   protected Class getApplicationClass() {
     return App.class;
   }
-  
+
   public ConcurrentHashMapBadKeyDeadlockTest() {
-    //this.disableAllUntil("2010-03-01");
+    // this.disableAllUntil("2010-03-01");
   }
 
   public static class App extends AbstractErrorCatchingTransparentApp {
 
-    private static final long DURATION = 30L * 1000L; // test duration (30 seconds)
-    private static final long LOG_INTERVAL = 5L * 1000L; // write output every 5 seconds
-    private static final int  INNER_CLASSES = 20;
+    private static final long                    DURATION      = 30L * 1000L; // test duration (30 seconds)
+    private static final long                    LOG_INTERVAL  = 5L * 1000L; // write output every 5 seconds
+    private static final int                     INNER_CLASSES = 20;
 
     /** map of Class to hashcode */
     private ConcurrentHashMap<Class<?>, Integer> mapRoot;
-    private final CyclicBarrier barrier;
+    private final CyclicBarrier                  barrier;
 
     public App(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
       super(appId, cfg, listenerProvider);
@@ -72,7 +71,7 @@ public class ConcurrentHashMapBadKeyDeadlockTest extends TransparentTestBase {
 
     @Override
     protected void runTest() throws Throwable {
-      
+
       // Fill the shared map with keys
       int index = barrier.await();
       if (index == 0) {
@@ -80,10 +79,10 @@ public class ConcurrentHashMapBadKeyDeadlockTest extends TransparentTestBase {
         for (int i = 0; i < INNER_CLASSES; i++) {
           Class<?> clazz = getClassInstance(i);
           int hash = clazz.hashCode();
-          //System.out.println("adding class " + clazz.getSimpleName() + " with hash " + hash);
-          mapRoot.put(clazz, new Integer(hash));
+          // System.out.println("adding class " + clazz.getSimpleName() + " with hash " + hash);
+          mapRoot.put(clazz, Integer.valueOf(hash));
         }
-        
+
         // Validate the map
         Class<?>[] classes = new Class<?>[mapRoot.size()];
         for (Class clazz : mapRoot.keySet()) {
@@ -126,22 +125,23 @@ public class ConcurrentHashMapBadKeyDeadlockTest extends TransparentTestBase {
           ++mismatches;
         }
         if (time > nextLogTime) {
-          System.out.println("Iteration " + count + " on node " + index + ": found " + mismatches + " mismatched hash codes (expect > 0)");
+          System.out.println("Iteration " + count + " on node " + index + ": found " + mismatches
+                             + " mismatched hash codes (expect > 0)");
           nextLogTime += LOG_INTERVAL;
         }
-        mapRoot.put(clazz, new Integer(clazz.hashCode()));
+        mapRoot.put(clazz, Integer.valueOf(clazz.hashCode()));
       }
-      
-      //System.out.println("on node " + index + " found " + mismatches + " mismatches");
+
+      // System.out.println("on node " + index + " found " + mismatches + " mismatches");
       assertTrue(index == 0 || mismatches > 0);
     }
-    
+
     /**
      * @param i a number corresponding to the class, e.g., 1 -> Inner01.
      */
     Class<?> getClassInstance(int i) {
       String name = String.format("%s$Inner%02d", ConcurrentHashMapBadKeyDeadlockTest.class.getName(), i);
-      
+
       try {
         return Class.forName(name);
       } catch (ClassNotFoundException e) {
@@ -149,7 +149,7 @@ public class ConcurrentHashMapBadKeyDeadlockTest extends TransparentTestBase {
         throw new IllegalStateException("not reachable");
       }
     }
-    
+
     /**
      * Given a class with a simple name like "Inner02", return 2.
      */
@@ -157,66 +157,85 @@ public class ConcurrentHashMapBadKeyDeadlockTest extends TransparentTestBase {
       String name = clazz.getSimpleName();
       return Integer.parseInt(name.substring(5)); // E.g., "Inner02"
     }
-    
+
   }
-  
-  public static class Inner00 { 
+
+  public static class Inner00 {
     //
   }
-  public static class Inner01 { 
+
+  public static class Inner01 {
     //
   }
-  public static class Inner02 { 
+
+  public static class Inner02 {
     //
   }
+
   public static class Inner03 {
     //
   }
-  public static class Inner04 { 
+
+  public static class Inner04 {
     //
   }
-  public static class Inner05 { 
+
+  public static class Inner05 {
     //
   }
+
   public static class Inner06 {
     //
   }
-  public static class Inner07 { 
+
+  public static class Inner07 {
     //
   }
-  public static class Inner08 { 
+
+  public static class Inner08 {
     //
   }
+
   public static class Inner09 {
     //
   }
-  public static class Inner10 { 
+
+  public static class Inner10 {
     //
   }
-  public static class Inner11 { 
+
+  public static class Inner11 {
     //
   }
+
   public static class Inner12 {
     //
   }
+
   public static class Inner13 {
     //
   }
-  public static class Inner14 { 
+
+  public static class Inner14 {
     //
   }
-  public static class Inner15 { 
+
+  public static class Inner15 {
     //
   }
+
   public static class Inner16 {
     //
   }
-  public static class Inner17 { 
+
+  public static class Inner17 {
     //
   }
-  public static class Inner18 { 
+
+  public static class Inner18 {
     //
   }
+
   public static class Inner19 {
     //
   }

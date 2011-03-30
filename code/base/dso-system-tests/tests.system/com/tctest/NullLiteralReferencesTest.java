@@ -137,14 +137,14 @@ public class NullLiteralReferencesTest extends TransparentTestBase {
     short             s = 3;
 
     synchronized void setNonNull() {
-      byteRef = new Byte((byte) 1);
-      booleanRef = new Boolean(true);
-      characterRef = new Character('q');
-      doubleRef = new Double(3.14);
-      floatRef = new Float(2.78);
-      integerRef = new Integer(42);
-      longRef = new Long(666);
-      shortRef = new Short((short) "steve".length());
+      byteRef = Byte.valueOf((byte) 1);
+      booleanRef = Boolean.valueOf(true);
+      characterRef = Character.valueOf('q');
+      doubleRef = Double.valueOf(3.14);
+      floatRef = Float.valueOf(2.78f);
+      integerRef = Integer.valueOf(42);
+      longRef = Long.valueOf(666);
+      shortRef = Short.valueOf((short) "steve".length());
 
       clazz = getClass();
       stack = new Throwable().getStackTrace()[0];

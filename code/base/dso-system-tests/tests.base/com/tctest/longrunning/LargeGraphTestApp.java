@@ -259,7 +259,7 @@ public class LargeGraphTestApp implements Application, ApplicationConfigBuilder 
   private void incrementObjectCount() {
     synchronized (objectCount) {
       try {
-        Integer newValue = new Integer(getObjectCount() + 1);
+        Integer newValue = Integer.valueOf(getObjectCount() + 1);
         if (objectCount.size() == 0) {
           objectCount.add(newValue);
         } else {
@@ -349,6 +349,7 @@ public class LargeGraphTestApp implements Application, ApplicationConfigBuilder 
       this.id = id;
     }
 
+    @Override
     public String toString() {
       return "GraphNode[id=" + id + ", children=" + enumerateChildren(new StringBuffer());
     }

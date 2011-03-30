@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -13,11 +14,11 @@ import java.util.Random;
  * writer for the FastReadSlowWriteTest
  */
 public class TestWriter {
-  public final static int         WRITE_COUNT  = 100;
-  public final static int         WRITE_DELAY  = 10;
+  public final static int WRITE_COUNT = 100;
+  public final static int WRITE_DELAY = 10;
 
-  private Map    stuff = new HashMap();
-  private Random r     = new Random();
+  private final Map       stuff       = new HashMap();
+  private final Random    r           = new Random();
 
   public void write() {
     int count = 0;
@@ -29,7 +30,7 @@ public class TestWriter {
 
   public void doAWrite() {
     synchronized (stuff) {
-      stuff.put(new Integer(stuff.size() + 1), "" + r.nextLong());
+      stuff.put(Integer.valueOf(stuff.size() + 1), "" + r.nextLong());
     }
   }
 

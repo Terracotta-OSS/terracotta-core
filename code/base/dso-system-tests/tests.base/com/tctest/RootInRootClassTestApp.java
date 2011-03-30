@@ -17,12 +17,12 @@ import java.util.Map;
 
 public class RootInRootClassTestApp extends AbstractTransparentApp {
 
-  private Map myInnerInMap;
+  private final Map myInnerInMap;
 
   public RootInRootClassTestApp() {
     super("", new TransparentAppConfig(null, null, 0, 0, null), null);
     Map m = new HashMap();
-    m.put(new Long(System.currentTimeMillis()), new TestObject());
+    m.put(Long.valueOf(System.currentTimeMillis()), new TestObject());
     myInnerInMap = m;
 
     System.out.println("CALLED NO ARG CONST:");
@@ -32,7 +32,7 @@ public class RootInRootClassTestApp extends AbstractTransparentApp {
   public RootInRootClassTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     Map m = new HashMap();
-    m.put(new Long(System.currentTimeMillis()), new TestObject());
+    m.put(Long.valueOf(System.currentTimeMillis()), new TestObject());
     myInnerInMap = m;
   }
 

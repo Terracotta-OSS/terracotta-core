@@ -16,13 +16,13 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class LinkedBlockingQueueMultiThreadTestApp extends AbstractTransparentApp {
-  private static final int    NUM_OF_PUTS    = 1000;
-  private static final int    NUM_OF_THREADS = 5;
+  private static final int          NUM_OF_PUTS    = 1000;
+  private static final int          NUM_OF_THREADS = 5;
 
-  private LinkedBlockingQueue queue          = new LinkedBlockingQueue(2);
-  private final CyclicBarrier barrier;
-  private int[]               putCount;
-  private int[]               getCount;
+  private final LinkedBlockingQueue queue          = new LinkedBlockingQueue(2);
+  private final CyclicBarrier       barrier;
+  private int[]                     putCount;
+  private int[]                     getCount;
 
   public LinkedBlockingQueueMultiThreadTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -47,7 +47,7 @@ public class LinkedBlockingQueueMultiThreadTestApp extends AbstractTransparentAp
                 for (int j = 0; j < NUM_OF_PUTS; j++) {
                   int seed = (this.hashCode() ^ (int) System.nanoTime());
                   localPutCount[k] += seed;
-                  queue.put(new Integer(seed));
+                  queue.put(Integer.valueOf(seed));
                 }
                 localBarrier.await();
               } catch (Throwable t) {

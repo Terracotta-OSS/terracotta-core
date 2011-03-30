@@ -18,8 +18,8 @@ import com.tctest.runner.AbstractTransparentApp;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 public class TreeMapTestApp extends AbstractTransparentApp {
 
@@ -170,14 +170,14 @@ public class TreeMapTestApp extends AbstractTransparentApp {
     synchronized (map) {
       if (map.size() == getParticipantCount()) {
         if (map.size() > 2) {
-          Object fromKey = new Integer(0);
-          Object toKey = new Integer(10);
+          Object fromKey = Integer.valueOf(0);
+          Object toKey = Integer.valueOf(10);
           Map subMap = map.subMap(fromKey, toKey);
-          subMap.put(new Integer(1), "subMap-value");
+          subMap.put(Integer.valueOf(1), "subMap-value");
         }
       } else {
         Assert.assertEquals(getParticipantCount() + 1, map.size());
-        Assert.assertTrue(map.get(new Integer(1)).equals("subMap-value"));
+        Assert.assertTrue(map.get(Integer.valueOf(1)).equals("subMap-value"));
       }
     }
 
@@ -204,13 +204,13 @@ public class TreeMapTestApp extends AbstractTransparentApp {
     synchronized (map) {
       if (map.size() == getParticipantCount()) {
         if (map.size() > 2) {
-          Object toKey = new Integer(2);
+          Object toKey = Integer.valueOf(2);
           Map headMap = map.headMap(toKey);
-          headMap.put(new Integer(1), "subMap-value");
+          headMap.put(Integer.valueOf(1), "subMap-value");
         }
       } else {
         Assert.assertEquals(getParticipantCount() + 1, map.size());
-        Assert.assertTrue(map.get(new Integer(1)).equals("subMap-value"));
+        Assert.assertTrue(map.get(Integer.valueOf(1)).equals("subMap-value"));
       }
     }
 
@@ -236,13 +236,13 @@ public class TreeMapTestApp extends AbstractTransparentApp {
     synchronized (map) {
       if (map.size() == getParticipantCount()) {
         if (map.size() > 2) {
-          Object fromKey = new Integer(0);
+          Object fromKey = Integer.valueOf(0);
           Map tailMap = map.tailMap(fromKey);
-          tailMap.put(new Integer(1), "subMap-value");
+          tailMap.put(Integer.valueOf(1), "subMap-value");
         }
       } else {
         Assert.assertEquals(getParticipantCount() + 1, map.size());
-        Assert.assertTrue(map.get(new Integer(1)).equals("subMap-value"));
+        Assert.assertTrue(map.get(Integer.valueOf(1)).equals("subMap-value"));
       }
     }
 
@@ -267,7 +267,7 @@ public class TreeMapTestApp extends AbstractTransparentApp {
     // tailMap() clear testing.
     synchronized (map) {
       if (map.size() == getParticipantCount()) {
-        Object fromKey = new Integer(0);
+        Object fromKey = Integer.valueOf(0);
         Map tailMap = map.tailMap(fromKey);
         tailMap.clear();
       } else {
@@ -317,7 +317,7 @@ public class TreeMapTestApp extends AbstractTransparentApp {
 
     synchronized (map) {
       int key = subMapKeyRoot.getKey();
-      map.put(new Integer(key), me + "-value");
+      map.put(Integer.valueOf(key), me + "-value");
       subMapKeyRoot.setKey(key + 2);
     }
     barrier.barrier();

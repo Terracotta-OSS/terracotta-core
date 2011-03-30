@@ -103,7 +103,7 @@ public class TransparencyTestApp extends AbstractTransparentApp {
     TestObj ref = to.getObj();
     Assert.assertNotNull(ref);
     Map values = new HashMap();
-    ((TransparentAccess)to).__tc_getallfields(values);
+    ((TransparentAccess) to).__tc_getallfields(values);
     Assert.assertTrue(values.containsKey(fieldName));
     Assert.assertEquals(ref, values.get(fieldName));
 
@@ -112,8 +112,6 @@ public class TransparencyTestApp extends AbstractTransparentApp {
     Assert.assertTrue(values.containsKey(fieldName));
     Assert.assertEquals(null, values.get(fieldName));
   }
-
-
 
   private void testStaticNonRoot() {
     try {
@@ -264,7 +262,7 @@ public class TransparencyTestApp extends AbstractTransparentApp {
     obj.setTransientPrimitive(101L);
     obj.setObjectArray(new Object[5]);
     obj.setObjectArray(1, new File("hello"));
-    obj.setObjectArray(2, new Character('b'));
+    obj.setObjectArray(2, Character.valueOf('b'));
 
     Date[] dates = new Date[2];
     obj.setFile(new File("yellow"));
@@ -272,26 +270,26 @@ public class TransparencyTestApp extends AbstractTransparentApp {
     obj.setDate(0, new Date());
 
     obj.setCharacters(new Character[2]);
-    obj.setCharacter(0, new Character('c'));
+    obj.setCharacter(0, Character.valueOf('c'));
 
     obj.setDate(new Date());
-    obj.setLiteralObject(new Long(0));
-    obj.setBooleanObject(new Boolean(true));
+    obj.setLiteralObject(Long.valueOf(0));
+    obj.setBooleanObject(Boolean.valueOf(true));
     obj.setBooleanValue(true);
-    obj.setByteObject(new Byte((byte) 1));
+    obj.setByteObject(Byte.valueOf((byte) 1));
     obj.setByteValue((byte) 2);
     obj.setCharValue('a');
-    obj.setCharObject(new Character('b'));
-    obj.setDoubleObject(new Double(1.1));
+    obj.setCharObject(Character.valueOf('b'));
+    obj.setDoubleObject(Double.valueOf(1.1));
     obj.setDoubleValue(1.2);
     obj.floatObject = new Float(2.1);
     obj.setFloatValue((float) 2.2);
-    // obj.setIntegerObject(new Integer(3));
-    obj.integerObject = new Integer(3);
+    // obj.setIntegerObject(Integer.valueOf(3));
+    obj.integerObject = Integer.valueOf(3);
     obj.setIntegerValue(4);
-    obj.longObject = new Long(5);
+    obj.longObject = Long.valueOf(5);
     obj.setLongValue(6);
-    obj.setShortObject(new Short((short) 7));
+    obj.setShortObject(Short.valueOf((short) 7));
     obj.setShortValue((short) 8);
     obj.setStringValue("Steve");
     obj.setObjects(new TestObj[1]);
@@ -339,29 +337,29 @@ public class TransparencyTestApp extends AbstractTransparentApp {
     obj.setTransientPrimitive(1011L);
 
     obj.setObjectArray(2, new File("hello"));
-    obj.setObjectArray(1, new Character('b'));
+    obj.setObjectArray(1, Character.valueOf('b'));
 
     obj.setFile(new File("yellow"));
     obj.setDate(1, new Date());
-    obj.setCharacter(1, new Character('d'));
+    obj.setCharacter(1, Character.valueOf('d'));
     obj.setDate(new Date());
     obj.setLiteralObject("Steve");
-    obj.setBooleanObject(new Boolean(false));
+    obj.setBooleanObject(Boolean.valueOf(false));
     obj.setBooleanValue(false);
-    obj.setByteObject(new Byte((byte) 2));
+    obj.setByteObject(Byte.valueOf((byte) 2));
     obj.setByteValue((byte) 3);
     obj.setCharValue('e');
-    obj.setCharObject(new Character('f'));
-    // obj.setDoubleObject(new Double((double) 5.1));
-    obj.doubleObject = new Double(5.1);
+    obj.setCharObject(Character.valueOf('f'));
+    // obj.setDoubleObject(Double.valueOf((double) 5.1));
+    obj.doubleObject = Double.valueOf(5.1);
     obj.setDoubleValue(6.2);
     obj.setFloatObject(new Float(7.1));
     obj.setFloatValue((float) 8.2);
-    obj.setIntegerObject(new Integer(9));
+    obj.setIntegerObject(Integer.valueOf(9));
     obj.setIntegerValue(10);
-    obj.setLongObject(new Long(11));
+    obj.setLongObject(Long.valueOf(11));
     obj.setLongValue(6);
-    obj.setShortObject(new Short((short) 12));
+    obj.setShortObject(Short.valueOf((short) 12));
     obj.setShortValue((short) 13);
     obj.setStringValue("Steve2");
     TestObj to = obj.getObject(0);
@@ -405,32 +403,32 @@ public class TransparencyTestApp extends AbstractTransparentApp {
     Assert.eval(obj.getTransientObject() == null);
     Assert.eval(obj.getTransientPrimitive() == 0);
     Assert.eval(obj.getObjectArray(2).equals(new File("hello")));
-    Assert.eval(obj.getObjectArray(1).equals(new Character('b')));
+    Assert.eval(obj.getObjectArray(1).equals(Character.valueOf('b')));
 
     Assert.eval(obj.getFile().equals(new File("yellow")));
     Assert.eval(System.getProperty("steve").equals("prop2"));
-    Assert.eval(obj.getCharacter(0).equals(new Character('c')));
-    Assert.eval(obj.getCharacter(1).equals(new Character('d')));
+    Assert.eval(obj.getCharacter(0).equals(Character.valueOf('c')));
+    Assert.eval(obj.getCharacter(1).equals(Character.valueOf('d')));
 
     Assert.eval(obj.getDate() != null);
     Assert.eval(obj.getDate(0) != null);
     Assert.eval(obj.getDate(1) != null);
     Assert.eval(obj.getLiteralObject().equals("Steve"));
-    Assert.eval(obj.getBooleanObject().equals(new Boolean(false)));
+    Assert.eval(obj.getBooleanObject().equals(Boolean.valueOf(false)));
     Assert.eval(obj.getBooleanValue() == false);
-    Assert.eval(obj.getByteObject().equals(new Byte((byte) 2)));
+    Assert.eval(obj.getByteObject().equals(Byte.valueOf((byte) 2)));
     Assert.eval(obj.getByteValue() == (byte) 3);
     Assert.eval(obj.getCharValue() == 'e');
-    Assert.eval(obj.getCharObject().equals(new Character('f')));
-    Assert.eval(obj.getDoubleObject().equals(new Double(5.1)));
+    Assert.eval(obj.getCharObject().equals(Character.valueOf('f')));
+    Assert.eval(obj.getDoubleObject().equals(Double.valueOf(5.1)));
     Assert.eval(obj.getDoubleValue() == 6.2);
     Assert.eval(obj.getFloatObject().equals(new Float(7.1)));
     Assert.eval(obj.getFloatValue() == (float) 8.2);
-    Assert.eval(obj.getIntegerObject().equals(new Integer(9)));
+    Assert.eval(obj.getIntegerObject().equals(Integer.valueOf(9)));
     Assert.eval(obj.getIntegerValue() == 10);
-    Assert.eval(obj.getLongObject().equals(new Long(11)));
+    Assert.eval(obj.getLongObject().equals(Long.valueOf(11)));
     Assert.eval(obj.getLongValue() == 6);
-    Assert.eval(obj.getShortObject().equals(new Short((short) 12)));
+    Assert.eval(obj.getShortObject().equals(Short.valueOf((short) 12)));
     Assert.eval(obj.getShortValue() == (short) 13);
     Assert.eval(obj.getStringValue().equals("Steve2"));
     Assert.eval(obj.getObjects().length == 1);
@@ -477,30 +475,30 @@ public class TransparencyTestApp extends AbstractTransparentApp {
     System.out.println("Got:" + obj.getTransientPrimitive());
     Assert.eval(obj.getTransientPrimitive() == 0);
     Assert.eval(obj.getObjectArray(1).equals(new File("hello")));
-    Assert.eval(obj.getObjectArray(2).equals(new Character('b')));
+    Assert.eval(obj.getObjectArray(2).equals(Character.valueOf('b')));
     Assert.eval(obj.getFile().equals(new File("yellow")));
     Assert.eval(System.getProperty("steve").equals("prop1"));
-    Assert.eval(obj.getCharacter(0).equals(new Character('c')));
+    Assert.eval(obj.getCharacter(0).equals(Character.valueOf('c')));
     Assert.eval(obj.getCharacter(1) == null);
     Assert.eval(obj.getDate() != null);
     Assert.eval(obj.getDate(0) != null);
     Assert.eval(obj.getDate(1) == null);
-    Assert.eval(obj.getLiteralObject().equals(new Long(0)));
-    Assert.eval(obj.getBooleanObject().equals(new Boolean(true)));
+    Assert.eval(obj.getLiteralObject().equals(Long.valueOf(0)));
+    Assert.eval(obj.getBooleanObject().equals(Boolean.valueOf(true)));
     Assert.eval(obj.getBooleanValue() == true);
-    Assert.eval(obj.getByteObject().equals(new Byte((byte) 1)));
+    Assert.eval(obj.getByteObject().equals(Byte.valueOf((byte) 1)));
     Assert.eval(obj.getByteValue() == (byte) 2);
     Assert.eval(obj.getCharValue() == 'a');
-    Assert.eval(obj.getCharObject().equals(new Character('b')));
-    Assert.eval(obj.getDoubleObject().equals(new Double(1.1)));
+    Assert.eval(obj.getCharObject().equals(Character.valueOf('b')));
+    Assert.eval(obj.getDoubleObject().equals(Double.valueOf(1.1)));
     Assert.eval(obj.getDoubleValue() == 1.2);
     Assert.eval(obj.floatObject.equals(new Float(2.1)));
     Assert.eval(obj.getFloatValue() == (float) 2.2);
-    Assert.eval(obj.getIntegerObject().equals(new Integer(3)));
+    Assert.eval(obj.getIntegerObject().equals(Integer.valueOf(3)));
     Assert.eval(obj.integerValue == 4);
-    Assert.eval(obj.getLongObject().equals(new Long(5)));
+    Assert.eval(obj.getLongObject().equals(Long.valueOf(5)));
     Assert.eval(obj.getLongValue() == 6);
-    Assert.eval(obj.getShortObject().equals(new Short((short) 7)));
+    Assert.eval(obj.getShortObject().equals(Short.valueOf((short) 7)));
     Assert.eval(obj.getShortValue() == (short) 8);
     Assert.eval(obj.getStringValue().equals("Steve"));
     Assert.eval(obj.getObjects().length == 1);
@@ -557,16 +555,16 @@ public class TransparencyTestApp extends AbstractTransparentApp {
 
     public static final Object staticFinalNonRoot = new Object();
 
-    private final Runnable anonymousSubclass = new Runnable() {
-                                         private Object o;
+    private final Runnable     anonymousSubclass  = new Runnable() {
+                                                    private Object o;
 
-                                         public void run() {
-                                           System.out.println("syncMap" + syncMap);
-                                           System.out.println("o: " + o);
-                                         }
-                                       };
+                                                    public void run() {
+                                                      System.out.println("syncMap" + syncMap);
+                                                      System.out.println("o: " + o);
+                                                    }
+                                                  };
 
-    public Object    namedSubclass;
+    public Object              namedSubclass;
 
     public Runnable getAnonymousSubclass() {
       // This method here to silence warnings
@@ -626,9 +624,8 @@ public class TransparencyTestApp extends AbstractTransparentApp {
     private BigInteger    bigIntegerObject;
     private BigDecimal    bigDecimalObject;
 
-    private final Boolean booleanTRUE = Boolean.TRUE;
+    private final Boolean booleanTRUE  = Boolean.TRUE;
     private final Boolean booleanFALSE = Boolean.FALSE;
-
 
     public TestObj(TestObj obj) {
       this.obj = obj;

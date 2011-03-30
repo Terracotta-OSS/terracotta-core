@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -72,7 +73,7 @@ public class ConcurrentLockSystemTestApp extends AbstractTransparentApp {
 
     List collapsedCounts;
     List expectedCounts = new LinkedList();
-    expectedCounts.add(new Integer(iterations));
+    expectedCounts.add(Integer.valueOf(iterations));
     while (true) {
       collapsedCounts = new LinkedList(new HashSet(testObject.getAllCounts()));
       if (expectedCounts.equals(collapsedCounts)) {
@@ -93,6 +94,7 @@ public class ConcurrentLockSystemTestApp extends AbstractTransparentApp {
     private int        size;
     private int        count;
 
+    @Override
     public synchronized String toString() {
       return "TestObject[child=" + (child == null ? "null" : "TestObject") + ", size=" + size + ", count=" + count
              + "]";
@@ -119,7 +121,7 @@ public class ConcurrentLockSystemTestApp extends AbstractTransparentApp {
       TestObject to = this;
       List rv = new LinkedList();
       while (to != null) {
-        rv.add(new Integer(count));
+        rv.add(Integer.valueOf(count));
         to = to.child;
       }
       return rv;

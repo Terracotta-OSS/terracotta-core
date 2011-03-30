@@ -23,14 +23,14 @@ import java.util.Map;
  * @author steve
  */
 public class TransparencySpeedTestApp extends AbstractTransparentApp {
-  public final static int MUTATOR_COUNT  = 3;
-  public final static int ADD_COUNT      = 10;                    // must be divisible by 2
-  public final static int VERIFIER_COUNT = 3;
+  public final static int       MUTATOR_COUNT  = 3;
+  public final static int       ADD_COUNT      = 10;                    // must be divisible by 2
+  public final static int       VERIFIER_COUNT = 3;
 
-  private static Map      myRoot         = new HashMap();
-  private long            count;
-  private int             commits        = 0;
-  private SynchronizedInt gcount         = new SynchronizedInt(0);
+  private static Map            myRoot         = new HashMap();
+  private long                  count;
+  private int                   commits        = 0;
+  private final SynchronizedInt gcount         = new SynchronizedInt(0);
 
   public TransparencySpeedTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -111,10 +111,10 @@ public class TransparencySpeedTestApp extends AbstractTransparentApp {
       commits++;
       int s = myRoot.size();
       long c = count++;
-      if (myRoot.containsKey(new Long(c))) {
+      if (myRoot.containsKey(Long.valueOf(c))) {
         Assert.eval(false);
       }
-      myRoot.put(new Long(c), new TestObj(new TestObj(null)));
+      myRoot.put(Long.valueOf(c), new TestObj(new TestObj(null)));
       if (myRoot.size() != s + 1) System.out.println("Wrong size!:" + s + " new size:" + myRoot.size());
       Assert.eval(myRoot.size() == s + 1);
       // System.out.println("^^^TOTAL SIZE ADD:" + myRoot.size() + "^^^:" + this);
@@ -127,7 +127,7 @@ public class TransparencySpeedTestApp extends AbstractTransparentApp {
       long start = System.currentTimeMillis();
       commits++;
       int s = myRoot.size();
-      myRoot.remove(new Long(count - 1));
+      myRoot.remove(Long.valueOf(count - 1));
       if (myRoot.size() != s - 1) System.out.println("Wrong size!:" + s + " new size:" + myRoot.size());
       Assert.eval(myRoot.size() == s - 1);
       // System.out.println("^^^TOTAL SIZE REMOVE:" + myRoot.size() + "^^^:" + this);
@@ -136,11 +136,11 @@ public class TransparencySpeedTestApp extends AbstractTransparentApp {
   }
 
   public static class TestObj {
-    private TestObj obj;
-    private String  string  = "Steve";
-    private int     integer = 22;
-    private boolean bool    = false;
-    private Map     map     = new HashMap();
+    private TestObj       obj;
+    private final String  string  = "Steve";
+    private final int     integer = 22;
+    private final boolean bool    = false;
+    private final Map     map     = new HashMap();
 
     private TestObj() {
       //
@@ -149,7 +149,7 @@ public class TransparencySpeedTestApp extends AbstractTransparentApp {
     public TestObj(TestObj obj) {
       this.obj = obj;
       for (int i = 0; i < 30; i++) {
-        map.put(new Long(i), new TestObj());
+        map.put(Long.valueOf(i), new TestObj());
       }
     }
 

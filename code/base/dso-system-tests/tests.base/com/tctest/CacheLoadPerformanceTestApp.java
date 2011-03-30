@@ -29,7 +29,7 @@ public class CacheLoadPerformanceTestApp extends AbstractTransparentApp {
     Random r = new Random();
     synchronized (cache) {
       for (int i = 0; i < CACHE_COUNT; i++) {
-        cache.put(new Integer(i), new HashMap());
+        cache.put(Integer.valueOf(i), new HashMap());
       }
     }
     long start = System.currentTimeMillis();
@@ -37,7 +37,7 @@ public class CacheLoadPerformanceTestApp extends AbstractTransparentApp {
     while (added < ENTRIES) {
       synchronized (cache) {
         for (int i = 0; i < BATCH_SIZE; i++) {
-          Integer cid = new Integer(r.nextInt(CACHE_COUNT));
+          Integer cid = Integer.valueOf(r.nextInt(CACHE_COUNT));
           Map m = (Map) cache.get(cid);
           m.put(new TestKey(), new TestValue());
           added++;

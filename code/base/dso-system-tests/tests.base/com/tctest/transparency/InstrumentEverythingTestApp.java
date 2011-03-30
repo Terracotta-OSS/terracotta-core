@@ -54,6 +54,7 @@ public class InstrumentEverythingTestApp extends AbstractErrorCatchingTransparen
     config.addIncludePattern("*..*", false);
   }
 
+  @Override
   public void runTest() throws BrokenBarrierException, InterruptedException {
     int n = barrier.barrier();
     moveToStage(INITIAL);
@@ -81,7 +82,7 @@ public class InstrumentEverythingTestApp extends AbstractErrorCatchingTransparen
   private void addALotOfObjects(List l) {
     HashMap map = new HashMap();
     map.put("hello", "saro");
-    map.put(new Integer(10), new Vector());
+    map.put(Integer.valueOf(10), new Vector());
     l.add(map);
     l.add(new ArrayList());
     l.add(new SubClassA());

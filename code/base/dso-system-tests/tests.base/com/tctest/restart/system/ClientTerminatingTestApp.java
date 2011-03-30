@@ -33,7 +33,7 @@ public class ClientTerminatingTestApp extends ServerCrashingAppBase {
   private long                  count      = 0;
   private ExtraL1ProcessControl client;
   private final boolean         forceKill;
-  private String                appId;
+  private final String          appId;
 
   public ClientTerminatingTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -54,6 +54,7 @@ public class ClientTerminatingTestApp extends ServerCrashingAppBase {
     }
   }
 
+  @Override
   public void runTest() throws Throwable {
     final List myList = new ArrayList();
     synchronized (queue) {
@@ -114,15 +115,16 @@ public class ClientTerminatingTestApp extends ServerCrashingAppBase {
     }
   }
 
+  @Override
   public String toString() {
     return "Controller(" + id + ") :";
   }
 
   public static class Client {
-    private int     id;
-    private long    addCount;
-    private boolean shouldForceKill;
-    private List    clientQueue = new ArrayList();
+    private final int     id;
+    private long          addCount;
+    private final boolean shouldForceKill;
+    private final List    clientQueue = new ArrayList();
 
     public Client(int i, long addCount, boolean shouldForceKill) {
       this.id = i;
@@ -164,7 +166,7 @@ public class ClientTerminatingTestApp extends ServerCrashingAppBase {
       }
       while (addCount-- > 0) {
         synchronized (myList) {
-          myList.add(new Long(++count));
+          myList.add(Long.valueOf(++count));
         }
       }
 
@@ -177,6 +179,7 @@ public class ClientTerminatingTestApp extends ServerCrashingAppBase {
       }
     }
 
+    @Override
     public String toString() {
       return "Client(" + id + ") :";
     }

@@ -125,7 +125,8 @@ public class GenericListTestApp extends GenericTransparentApp {
     CopyOnWriteArrayList cowList = (CopyOnWriteArrayList) list;
     if (validate) {
       assertListsEqual(Arrays
-          .asList(new Object[] { E("one", v), E("two", v), E("three", v), E("four", v), E("five", v) }), cowList);
+                           .asList(new Object[] { E("one", v), E("two", v), E("three", v), E("four", v), E("five", v) }),
+                       cowList);
     } else {
       List extra = new ArrayList();
       extra.add(E("two", v));
@@ -289,7 +290,7 @@ public class GenericListTestApp extends GenericTransparentApp {
 
     if (validate) {
       assertListsEqual(Arrays.asList(new Object[] { E("first element", v), E("second element", v),
-          E("third element", v) }), vector);
+                           E("third element", v) }), vector);
     } else {
       synchronized (vector) {
         vector.addElement(E("first element", v));
@@ -308,7 +309,7 @@ public class GenericListTestApp extends GenericTransparentApp {
 
     if (validate) {
       assertListsEqual(Arrays.asList(new Object[] { E("first element", v), E("second element", v),
-          E("third element", v) }), vector);
+                           E("third element", v) }), vector);
     } else {
       synchronized (vector) {
         vector.addElement(E("first element", v));
@@ -576,7 +577,7 @@ public class GenericListTestApp extends GenericTransparentApp {
 
     if (validate) {
       assertListsEqual(Arrays.asList(new Object[] { E("first element", v), E("second element", v),
-          E("third element", v), E("fourth element", v) }), list);
+                           E("third element", v), E("fourth element", v) }), list);
     } else {
       synchronized (list) {
         list.add(E("first element", v));
@@ -637,7 +638,7 @@ public class GenericListTestApp extends GenericTransparentApp {
         Method m = listClass.getDeclaredMethod("removeRange", parameterType);
         m.setAccessible(true); // suppressing java access checking since removeRange is
         // a protected method.
-        m.invoke(list, new Object[] { new Integer(1), new Integer(3) });
+        m.invoke(list, new Object[] { Integer.valueOf(1), Integer.valueOf(3) });
       }
     }
   }
@@ -713,7 +714,7 @@ public class GenericListTestApp extends GenericTransparentApp {
 
     if (validate) {
       assertListsEqual(Arrays.asList(new Object[] { E("modified first element", v), E("second element", v),
-          E("third element", v) }), list);
+                           E("third element", v) }), list);
     } else {
       synchronized (list) {
         list.add(E("first element", v));
@@ -733,7 +734,7 @@ public class GenericListTestApp extends GenericTransparentApp {
 
     if (validate) {
       assertListsEqual(Arrays.asList(new Object[] { E("first element", v), E("modified second element", v),
-          E("third element", v) }), list);
+                           E("third element", v) }), list);
     } else {
       synchronized (list) {
         list.add(E("first element", v));
@@ -819,7 +820,7 @@ public class GenericListTestApp extends GenericTransparentApp {
 
     if (validate) {
       assertListsEqual(Arrays.asList(new Object[] { E("first element", v), E("second element", v),
-          E("third element", v) }), list);
+                           E("third element", v) }), list);
       // assertListsEqual(Arrays.asList(new Object[] { E("second element", v), E("third element", v) }), list);
     } else {
       synchronized (list) {
@@ -838,7 +839,7 @@ public class GenericListTestApp extends GenericTransparentApp {
 
     if (validate) {
       assertListsEqual(Arrays.asList(new Object[] { E("first element", v), E("second element", v),
-          E("third element", v) }), list);
+                           E("third element", v) }), list);
     } else {
       synchronized (list) {
         list.add(E("first element", v));
@@ -857,7 +858,7 @@ public class GenericListTestApp extends GenericTransparentApp {
 
     if (validate) {
       assertListsEqual(Arrays.asList(new Object[] { E("modified first element", v), E("second element", v),
-          E("third element", v) }), list);
+                           E("third element", v) }), list);
     } else {
       synchronized (list) {
         list.add(E("second element", v));
@@ -877,7 +878,7 @@ public class GenericListTestApp extends GenericTransparentApp {
 
     if (validate) {
       assertListsEqual(Arrays.asList(new Object[] { E("first element", v), E("second element", v),
-          E("modified third element", v) }), list);
+                           E("modified third element", v) }), list);
     } else {
       synchronized (list) {
         list.add(E("first element", v));
@@ -898,7 +899,7 @@ public class GenericListTestApp extends GenericTransparentApp {
 
     if (validate) {
       assertListsEqual(Arrays.asList(new Object[] { E("first element", v), E("second element", v),
-          E("modified third element", v), E("fourth element", v) }), list);
+                           E("modified third element", v), E("fourth element", v) }), list);
     } else {
       synchronized (list) {
         list.add(E("first element", v));
@@ -1197,7 +1198,7 @@ public class GenericListTestApp extends GenericTransparentApp {
 
     if (validate) {
       assertListsEqual(Arrays.asList(new Object[] { E("first element", v), E("second element", v),
-          E("third element", v) }), list);
+                           E("third element", v) }), list);
     } else {
       synchronized (list) {
         list.addAll(Arrays
@@ -1352,8 +1353,8 @@ public class GenericListTestApp extends GenericTransparentApp {
   }
 
   private static void assertEmptyObjectArray(Object[] array) {
-    for (int i = 0; i < array.length; i++) {
-      Assert.assertNull(array[i]);
+    for (Object element : array) {
+      Assert.assertNull(element);
     }
   }
 

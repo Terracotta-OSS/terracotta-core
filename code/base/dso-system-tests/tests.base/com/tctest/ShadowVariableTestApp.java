@@ -27,16 +27,16 @@ public class ShadowVariableTestApp extends AbstractTransparentApp {
     root = new ShadowSub();
     synchronized (root) {
       if (root.getBaseMyNumber() == null) {
-        root.setBaseMyNumber(new Integer(1));
-        root.setSubMyNumber(new Integer(2));
+        root.setBaseMyNumber(Integer.valueOf(1));
+        root.setSubMyNumber(Integer.valueOf(2));
       }
     }
 
     Assert.assertNotNull(root.getBaseMyNumber());
     Assert.assertNotNull(root.getSubMyNumber());
 
-    Assert.eval(root.getBaseMyNumber().equals(new Integer(1)));
-    Assert.eval(root.getSubMyNumber().equals(new Integer(2)));
+    Assert.eval(root.getBaseMyNumber().equals(Integer.valueOf(1)));
+    Assert.eval(root.getSubMyNumber().equals(Integer.valueOf(2)));
 
     Assert.assertEquals(0, root.getPublicInt());
   }

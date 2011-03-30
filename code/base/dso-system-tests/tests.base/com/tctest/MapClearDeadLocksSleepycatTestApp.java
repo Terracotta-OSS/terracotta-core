@@ -64,7 +64,7 @@ public class MapClearDeadLocksSleepycatTestApp extends AbstractTransparentApp {
   }
 
   private void iterateBackwards(int idx, int i) {
-    synchronized (new Integer(idx)) {
+    synchronized (Integer.valueOf(idx)) {
       for (int j = MAP_SIZE - 1; j >= 0; j--) {
         if (j % getParticipantCount() == idx) {
           Map m = getMapReadOnly(j);
@@ -75,7 +75,7 @@ public class MapClearDeadLocksSleepycatTestApp extends AbstractTransparentApp {
   }
 
   private void iterateForwards(int idx, int i) {
-    synchronized (new Integer(idx)) {
+    synchronized (Integer.valueOf(idx)) {
       for (int j = 0; j < MAP_SIZE; j++) {
         if (j % getParticipantCount() == idx) {
           Map m = getMapReadOnly(j);
@@ -89,17 +89,17 @@ public class MapClearDeadLocksSleepycatTestApp extends AbstractTransparentApp {
     if (i % 5 == 0) {
       m.clear();
     } else {
-      m.put(new Long(i), "String : " + i);
-      m.put(new Long(i++), "String : " + i);
-      m.put(new Long(i++), "String : " + i);
-      m.put(new Long(i++), "String : " + i);
-      m.put(new Long(i++), "String : " + i);
+      m.put(Long.valueOf(i), "String : " + i);
+      m.put(Long.valueOf(i++), "String : " + i);
+      m.put(Long.valueOf(i++), "String : " + i);
+      m.put(Long.valueOf(i++), "String : " + i);
+      m.put(Long.valueOf(i++), "String : " + i);
     }
   }
 
   private Map getMapReadOnly(int idx) {
     synchronized (root) {
-      Integer index = new Integer(idx);
+      Integer index = Integer.valueOf(idx);
       return (Map) root.get(index);
     }
   }
@@ -107,7 +107,7 @@ public class MapClearDeadLocksSleepycatTestApp extends AbstractTransparentApp {
   private void initialize() {
     synchronized (root) {
       for (int i = 0; i < MAP_SIZE; i++) {
-        root.put(new Integer(i), new HashMap());
+        root.put(Integer.valueOf(i), new HashMap());
       }
     }
   }

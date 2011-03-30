@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -15,17 +16,18 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-
 public class NestedConcurrentLockTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 3;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     getTransparentAppConfig().setClientCount(NODE_COUNT).setIntensity(1);
     initializeTestRunner();
   }
 
+  @Override
   protected Class getApplicationClass() {
     return NestedConcurrentLockTestApp.class;
   }
@@ -39,6 +41,7 @@ public class NestedConcurrentLockTest extends TransparentTestBase {
       super(appId, cfg, listenerProvider);
     }
 
+    @Override
     protected void runTest() throws Throwable {
       for (int i = 1; i <= NUM; i++) {
         concurrent();
@@ -57,7 +60,7 @@ public class NestedConcurrentLockTest extends TransparentTestBase {
     private void write() {
       synchronized (list) {
         int add = validate();
-        list.add(new Integer(add));
+        list.add(Integer.valueOf(add));
       }
     }
 

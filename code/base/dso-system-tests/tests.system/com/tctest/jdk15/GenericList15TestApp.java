@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.jdk15;
 
@@ -31,11 +32,13 @@ public class GenericList15TestApp extends GenericTransparentApp {
     super(appId, cfg, listenerProvider, List.class);
   }
 
+  @Override
   protected Object getTestObject(String testName) {
     List lists = (List) sharedMap.get("lists");
     return lists.iterator();
   }
 
+  @Override
   protected void setupTestObject(String testName) {
     List lists = new ArrayList();
     lists.add(new LinkedList());
@@ -496,7 +499,7 @@ public class GenericList15TestApp extends GenericTransparentApp {
   void testSubList(List list, boolean validate) {
     if (validate) {
       assertListsEqual(Arrays.asList(new Object[] { "first element", "second element", "third element",
-          "fourth element" }), list);
+                           "fourth element" }), list);
     } else {
       synchronized (list) {
         list.add("first element");
@@ -548,7 +551,7 @@ public class GenericList15TestApp extends GenericTransparentApp {
           Method m = listClass.getDeclaredMethod("removeRange", parameterType);
           m.setAccessible(true); // suppressing java access checking since removeRange is
           // a protected method.
-          m.invoke(list, new Object[] { new Integer(1), new Integer(3) });
+          m.invoke(list, new Object[] { Integer.valueOf(1), Integer.valueOf(3) });
         }
       } catch (Exception e) {
         // ignore Exception in test.
@@ -742,7 +745,7 @@ public class GenericList15TestApp extends GenericTransparentApp {
   void testListIteratorAddSet3(List list, boolean validate) {
     if (validate) {
       assertListsEqual(Arrays.asList(new Object[] { "first element", "second element", "modified third element",
-          "fourth element" }), list);
+                           "fourth element" }), list);
     } else {
       synchronized (list) {
         list.add("first element");
@@ -1143,8 +1146,8 @@ public class GenericList15TestApp extends GenericTransparentApp {
   }
 
   private static void assertEmptyObjectArray(Object[] array) {
-    for (int i = 0; i < array.length; i++) {
-      Assert.assertNull(array[i]);
+    for (Object element : array) {
+      Assert.assertNull(element);
     }
   }
 

@@ -96,7 +96,8 @@ public class CopyOnWriteArrayTestApp extends GenericTransparentApp {
     CopyOnWriteArrayList cowList = (CopyOnWriteArrayList) list;
     if (validate) {
       assertListsEqual(Arrays
-          .asList(new Object[] { E("one", v), E("two", v), E("three", v), E("four", v), E("five", v) }), cowList);
+                           .asList(new Object[] { E("one", v), E("two", v), E("three", v), E("four", v), E("five", v) }),
+                       cowList);
     } else {
       List extra = new ArrayList();
       extra.add(E("two", v));
@@ -313,7 +314,7 @@ public class CopyOnWriteArrayTestApp extends GenericTransparentApp {
       Method m = listClass.getDeclaredMethod("removeRange", parameterType);
       m.setAccessible(true); // suppressing java access checking since removeRange is
       // a protected method.
-      m.invoke(list, new Object[] { new Integer(1), new Integer(3) });
+      m.invoke(list, new Object[] { Integer.valueOf(1), Integer.valueOf(3) });
     }
   }
 

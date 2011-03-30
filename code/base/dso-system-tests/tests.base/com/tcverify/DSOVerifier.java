@@ -31,8 +31,8 @@ public class DSOVerifier {
     Assert.eval(myID != otherID);
     this.myID = myID;
     this.otherID = otherID;
-    this.myIDInteger = new Integer(this.myID);
-    this.otherIDInteger = new Integer(this.otherID);
+    this.myIDInteger = Integer.valueOf(this.myID);
+    this.otherIDInteger = Integer.valueOf(this.otherID);
   }
 
   private static void debug(String message) {

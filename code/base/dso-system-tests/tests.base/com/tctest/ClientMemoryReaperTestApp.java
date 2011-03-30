@@ -95,7 +95,7 @@ public class ClientMemoryReaperTestApp extends AbstractErrorCatchingTransparentA
 
     int topLevelObjectCount = (int) (OBJECT_COUNT / 50);
     while (objectCount++ <= OBJECT_COUNT) {
-      Object myKey = new Integer(r.nextInt(topLevelObjectCount));
+      Object myKey = Integer.valueOf(r.nextInt(topLevelObjectCount));
       Node n = getNode(myKey);
       if (n == null) {
         putNode(myKey, new Node(objectCount));
@@ -122,7 +122,7 @@ public class ClientMemoryReaperTestApp extends AbstractErrorCatchingTransparentA
                                + "Currently Max Memory is " + max_memory);
     }
     log("Max memory is " + max_memory);
-    if(Os.isSolaris() || Os.isWindows()) {
+    if (Os.isSolaris() || Os.isWindows()) {
       transient_mem_blocks_size = (int) ((max_memory * 25) / (512 * 1024)); // 25KB for 512MB, so for max_memory ?
     } else {
       transient_mem_blocks_size = (int) ((max_memory * 50) / (512 * 1024)); // 50KB for 512MB, so for max_memory ?

@@ -60,7 +60,7 @@ public class BigIntegerTestApp extends AbstractTransparentApp {
     if ("add".equals(methodName) || "and".equals(methodName) || "andNot".equals(methodName)) {
       arguments[0] = new BigInteger("200");
     } else if ("clearBit".equals(methodName)) {
-      arguments[0] = new Integer(1);
+      arguments[0] = Integer.valueOf(1);
     } else if ("compareTo".equals(methodName) || "divide".equals(methodName) || "divideAndRemainder".equals(methodName)
                || "equals".equals(methodName) || "gcd".equals(methodName) || "max".equals(methodName)
                || "min".equals(methodName) || "mod".equals(methodName) || "modInverse".equals(methodName)
@@ -71,36 +71,36 @@ public class BigIntegerTestApp extends AbstractTransparentApp {
                || "setBit".equals(methodName) || "shiftLeft".equals(methodName) || "shiftRight".equals(methodName)
                || "testBit".equals(methodName) || "trailingZeroCnt".equals(methodName) || "bitLen".equals(methodName)
                || "primeToCertainty".equals(methodName) || "bitCnt".equals(methodName)) {
-      arguments[0] = new Integer(1);
+      arguments[0] = Integer.valueOf(1);
     } else if ("modPow".equals(methodName)) {
       arguments[0] = refInt;
       arguments[1] = refInt;
     } else if ("probablePrime".equals(methodName)) {
-      arguments[0] = new Integer(5);
+      arguments[0] = Integer.valueOf(5);
       arguments[1] = new Random();
     } else if ("toString".equals(methodName) && arguments.length == 1) {
-      arguments[0] = new Integer(1);
+      arguments[0] = Integer.valueOf(1);
     } else if ("valueOf".equals(methodName)) {
-      arguments[0] = new Long(1);
+      arguments[0] = Long.valueOf(1);
     } else if ("mulAdd".equals(methodName)) {
       arguments[0] = new int[] { 1 };
       arguments[1] = new int[] { 1 };
-      arguments[2] = new Integer(0);
-      arguments[3] = new Integer(1);
-      arguments[4] = new Integer(1);
+      arguments[2] = Integer.valueOf(0);
+      arguments[3] = Integer.valueOf(1);
+      arguments[4] = Integer.valueOf(1);
     } else if ("addOne".equals(methodName)) {
       arguments[0] = new int[] { 1 };
-      arguments[1] = new Integer(0);
-      arguments[2] = new Integer(0);
-      arguments[3] = new Integer(1);
+      arguments[1] = Integer.valueOf(0);
+      arguments[2] = Integer.valueOf(0);
+      arguments[3] = Integer.valueOf(1);
     } else if ("primitiveLeftShift".equals(methodName) || "primitiveRightShift".equals(methodName)) {
       arguments[0] = new int[] { 1 };
-      arguments[1] = new Integer(1);
-      arguments[2] = new Integer(1);
+      arguments[1] = Integer.valueOf(1);
+      arguments[2] = Integer.valueOf(1);
     } else if ("javaIncrement".equals(methodName)) {
       arguments[0] = new int[] { 1 };
     } else if ("jacobiSymbol".equals(methodName)) {
-      arguments[0] = new Integer(1);
+      arguments[0] = Integer.valueOf(1);
       arguments[1] = refInt;
     }
 
@@ -110,9 +110,9 @@ public class BigIntegerTestApp extends AbstractTransparentApp {
   private void invokeAllBigIntegerConstructors() {
     Class bClazz = BigInteger.class;
     Constructor[] constructors = bClazz.getConstructors();
-    for (int i = 0; i < constructors.length; i++) {
+    for (Constructor constructor : constructors) {
       try {
-        invokeConstructor(constructors[i]);
+        invokeConstructor(constructor);
       } catch (IllegalArgumentException e) {
         throw new TCRuntimeException(e);
       } catch (InstantiationException e) {
@@ -146,18 +146,18 @@ public class BigIntegerTestApp extends AbstractTransparentApp {
       case 2:
         if (parameterTypes[0] == String.class) {
           arguments[0] = "100";
-          arguments[1] = new Integer(10);
+          arguments[1] = Integer.valueOf(10);
         } else if (parameterTypes[1] == Random.class) {
-          arguments[0] = new Integer(10);
+          arguments[0] = Integer.valueOf(10);
           arguments[1] = new Random();
         } else {
-          arguments[0] = new Integer(refInt.signum());
+          arguments[0] = Integer.valueOf(refInt.signum());
           arguments[1] = new byte[] { (byte) 100 };
         }
         break;
       case 3:
-        arguments[0] = new Integer(refInt.bitLength());
-        arguments[1] = new Integer(5);
+        arguments[0] = Integer.valueOf(refInt.bitLength());
+        arguments[1] = Integer.valueOf(5);
         arguments[2] = new Random();
         break;
     }

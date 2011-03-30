@@ -30,19 +30,19 @@ import java.util.List;
 import java.util.Map;
 
 public class ObjectDataTestApp extends AbstractTransparentApp {
-  public static final String SYNCHRONOUS_WRITE = "synch-write";
+  public static final String    SYNCHRONOUS_WRITE = "synch-write";
 
-  private final int                threadCount       = 10;
-  private final int                workSize          = 1 * 50;
-  private final int                testObjectDepth   = 1 * 25;
+  private final int             threadCount       = 10;
+  private final int             workSize          = 1 * 50;
+  private final int             testObjectDepth   = 1 * 25;
   // Beware when tuning down the iteration count, it might not run long enough to actually do a useful crash test
   // But, high iteration counts can cause test timeouts in slow boxes : MNK-941
-  private final int                iterationCount    = 5;
-  private final List               workQueue         = new ArrayList();
-  private final Collection         resultSet         = new HashSet();
-  private final SynchronizedInt    complete          = new SynchronizedInt(0);
-  private final OutputListener     out;
-  private final SynchronizedInt    nodes             = new SynchronizedInt(0);
+  private final int             iterationCount    = 5;
+  private final List            workQueue         = new ArrayList();
+  private final Collection      resultSet         = new HashSet();
+  private final SynchronizedInt complete          = new SynchronizedInt(0);
+  private final OutputListener  out;
+  private final SynchronizedInt nodes             = new SynchronizedInt(0);
 
   public ObjectDataTestApp(final String appId, final ApplicationConfig cfg, final ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -125,7 +125,8 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
     visitL1DSOConfig(visitor, config, new HashMap());
   }
 
-  public static void visitL1DSOConfig(final ConfigVisitor visitor, final DSOClientConfigHelper config, final Map optionalAttributes) {
+  public static void visitL1DSOConfig(final ConfigVisitor visitor, final DSOClientConfigHelper config,
+                                      final Map optionalAttributes) {
     boolean isSynchronousWrite = false;
     if (optionalAttributes.size() > 0) {
       isSynchronousWrite = Boolean.valueOf((String) optionalAttributes.get(ObjectDataTestApp.SYNCHRONOUS_WRITE))
@@ -210,7 +211,8 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
     addWriteAutolock(config, isSynchronousWrite, nextIDExpression);
   }
 
-  private static void addWriteAutolock(final DSOClientConfigHelper config, final boolean isSynchronousWrite, final String methodPattern) {
+  private static void addWriteAutolock(final DSOClientConfigHelper config, final boolean isSynchronousWrite,
+                                       final String methodPattern) {
     if (isSynchronousWrite) {
       config.addSynchronousWriteAutolock(methodPattern);
     } else {
@@ -227,7 +229,8 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
     private final SynchronizedInt complete;
     private final String          appId;
 
-    public WorkerFactory(final String appId, final List workQueue, final Collection results, final SynchronizedInt complete) {
+    public WorkerFactory(final String appId, final List workQueue, final Collection results,
+                         final SynchronizedInt complete) {
       this.appId = appId;
       this.workQueue = workQueue;
       this.results = results;
@@ -333,7 +336,7 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
 
     private CyclicBarrier getOrCreateBarrier(final int barrierID) {
       synchronized (barriers) {
-        Integer key = new Integer(barrierID);
+        Integer key = Integer.valueOf(barrierID);
         CyclicBarrier rv = (CyclicBarrier) barriers.get(key);
         if (rv == null) {
           rv = new CyclicBarrier(this.nodeCount);
@@ -346,10 +349,10 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
   }
 
   protected static final class TestObject {
-    private TestObject child;
-    private int        counter;
-    private final List       activity = new ArrayList();
-    private final String     id;
+    private TestObject   child;
+    private int          counter;
+    private final List   activity = new ArrayList();
+    private final String id;
 
     public TestObject(final String id) {
       this.id = id;
@@ -426,11 +429,11 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
     public synchronized Integer nextID() {
       int rv = current++;
       // System.err.println("Issuing new id: " + rv);
-      return new Integer(rv);
+      return Integer.valueOf(rv);
     }
 
     public synchronized Integer getCurrentID() {
-      return new Integer(current);
+      return Integer.valueOf(current);
     }
   }
 

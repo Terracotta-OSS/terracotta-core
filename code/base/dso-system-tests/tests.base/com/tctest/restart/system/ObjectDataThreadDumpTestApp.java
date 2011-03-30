@@ -168,8 +168,9 @@ public class ObjectDataThreadDumpTestApp extends AbstractTransparentApp {
     for (int i = 0; i < clients.length; i++) {
       clients[i] = (DSOClientMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, clientObjectNames[i],
                                                                                   DSOClientMBean.class, false);
-      l1InfoMbeans[i] = (L1InfoMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, clients[i]
-          .getL1InfoBeanName(), L1InfoMBean.class, false);
+      l1InfoMbeans[i] = (L1InfoMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc,
+                                                                                    clients[i].getL1InfoBeanName(),
+                                                                                    L1InfoMBean.class, false);
     }
     return l1InfoMbeans;
   }
@@ -211,8 +212,8 @@ public class ObjectDataThreadDumpTestApp extends AbstractTransparentApp {
                                       final Map optionalAttributes) {
     boolean isSynchronousWrite = false;
     if (optionalAttributes.size() > 0) {
-      isSynchronousWrite = Boolean.valueOf((String) optionalAttributes.get(ObjectDataThreadDumpTestApp.SYNCHRONOUS_WRITE))
-          .booleanValue();
+      isSynchronousWrite = Boolean.valueOf((String) optionalAttributes
+                                               .get(ObjectDataThreadDumpTestApp.SYNCHRONOUS_WRITE)).booleanValue();
     }
 
     String testClassName = ObjectDataThreadDumpTestApp.class.getName();
@@ -464,11 +465,11 @@ public class ObjectDataThreadDumpTestApp extends AbstractTransparentApp {
     public synchronized Integer nextID() {
       int rv = current++;
       // System.err.println("Issuing new id: " + rv);
-      return new Integer(rv);
+      return Integer.valueOf(rv);
     }
 
     public synchronized Integer getCurrentID() {
-      return new Integer(current);
+      return Integer.valueOf(current);
     }
   }
 

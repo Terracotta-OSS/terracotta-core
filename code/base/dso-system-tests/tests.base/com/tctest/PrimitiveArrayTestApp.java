@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -99,6 +100,7 @@ public class PrimitiveArrayTestApp extends AbstractErrorCatchingTransparentApp {
     new CyclicBarrierSpec().visit(visitor, config);
   }
 
+  @Override
   protected void runTest() throws Throwable {
     Object array = root.getArray();
     Class type = array.getClass().getComponentType();
@@ -171,7 +173,7 @@ public class PrimitiveArrayTestApp extends AbstractErrorCatchingTransparentApp {
         if (withMods) {
           modifyData(expect, intClassType(type));
         }
-  
+
         if (!compareData(actual, expect)) {
           differentDataError(actual, expect, type);
         }
@@ -252,19 +254,19 @@ public class PrimitiveArrayTestApp extends AbstractErrorCatchingTransparentApp {
 
   private static void modifyShortWrapper(Short[] s) {
     for (int i = 0; i < s.length; i++) {
-      s[i] = new Short((short) (s[i].shortValue() + 1));
+      s[i] = Short.valueOf((short) (s[i].shortValue() + 1));
     }
   }
 
   private static void modifyLongWrapper(Long[] l) {
     for (int i = 0; i < l.length; i++) {
-      l[i] = new Long(l[i].longValue() + 1);
+      l[i] = Long.valueOf(l[i].longValue() + 1);
     }
   }
 
   private static void modifyIntegerWrapper(Integer[] i) {
     for (int x = 0; x < i.length; x++) {
-      i[x] = new Integer(i[x].intValue() + 1);
+      i[x] = Integer.valueOf(i[x].intValue() + 1);
     }
   }
 
@@ -282,19 +284,19 @@ public class PrimitiveArrayTestApp extends AbstractErrorCatchingTransparentApp {
 
   private static void modifyCharWrapper(Character[] c) {
     for (int i = 0; i < c.length; i++) {
-      c[i] = new Character((char) (c[i].charValue() + 1));
+      c[i] = Character.valueOf((char) (c[i].charValue() + 1));
     }
   }
 
   private static void modifyByteWrapper(Byte[] b) {
     for (int i = 0; i < b.length; i++) {
-      b[i] = new Byte((byte) (b[i].byteValue() + 1));
+      b[i] = Byte.valueOf((byte) (b[i].byteValue() + 1));
     }
   }
 
   private static void modifyBooleanWrapper(Boolean[] b) {
     for (int i = 0; i < b.length; i++) {
-      b[i] = new Boolean(!b[i].booleanValue());
+      b[i] = Boolean.valueOf(!b[i].booleanValue());
     }
   }
 
@@ -435,7 +437,7 @@ public class PrimitiveArrayTestApp extends AbstractErrorCatchingTransparentApp {
   private static Character[] makeCharacterArray(char[] c) {
     Character rv[] = new Character[c.length];
     for (int i = 0; i < rv.length; i++) {
-      rv[i] = new Character(c[i]);
+      rv[i] = Character.valueOf(c[i]);
     }
     return rv;
   }
@@ -520,7 +522,7 @@ public class PrimitiveArrayTestApp extends AbstractErrorCatchingTransparentApp {
 
     private Object makeArray(long seed, Class type) {
       System.err.println("Seed for type " + type + "=" + seed);
-      seeds.put(type.getName(), new Long(seed));
+      seeds.put(type.getName(), Long.valueOf(seed));
       return createRandomArray(new Random(seed), type);
     }
   }

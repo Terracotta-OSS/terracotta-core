@@ -15,11 +15,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TransparentTransientTestApp extends AbstractTransparentApp {
-  private TestClass1 one         = new TestClass1();
-  private TestClass2 two         = new TestClass2(new Object());
-  private TestClass3 three       = new TestClass3();
-  private TestClass4 four        = new TestClass4();
-  private Map        sharedState = new HashMap();
+  private final TestClass1 one         = new TestClass1();
+  private final TestClass2 two         = new TestClass2(new Object());
+  private final TestClass3 three       = new TestClass3();
+  private final TestClass4 four        = new TestClass4();
+  private final Map        sharedState = new HashMap();
 
   public TransparentTransientTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -31,13 +31,13 @@ public class TransparentTransientTestApp extends AbstractTransparentApp {
     }
     synchronized (sharedState) {
       if (!sharedState.containsKey("two")) {
-        sharedState.put("two", new Integer(0));
+        sharedState.put("two", Integer.valueOf(0));
       }
       if (two.getMap() != null) {
         int i = ((Integer) sharedState.get("two")).intValue();
         ++i;
         System.out.println("PUTTING:" + i);
-        sharedState.put("two", new Integer(i));
+        sharedState.put("two", Integer.valueOf(i));
       }
       int i = ((Integer) sharedState.get("two")).intValue();
       System.out.println("GOT:" + i);
@@ -52,13 +52,13 @@ public class TransparentTransientTestApp extends AbstractTransparentApp {
 
     synchronized (sharedState) {
       if (!sharedState.containsKey("three")) {
-        sharedState.put("three", new Integer(0));
+        sharedState.put("three", Integer.valueOf(0));
       }
       if (three.getMap() != null) {
         int i = ((Integer) sharedState.get("three")).intValue();
         ++i;
         System.out.println("PUTTING:" + i);
-        sharedState.put("three", new Integer(i));
+        sharedState.put("three", Integer.valueOf(i));
       }
       int i = ((Integer) sharedState.get("three")).intValue();
       System.out.println("GOT:" + i);
@@ -94,7 +94,7 @@ public class TransparentTransientTestApp extends AbstractTransparentApp {
   }
 
   public static class TestClass3 {
-    private Map m = new HashMap();
+    private final Map m = new HashMap();
 
     public synchronized Map getMap() {
       return m;

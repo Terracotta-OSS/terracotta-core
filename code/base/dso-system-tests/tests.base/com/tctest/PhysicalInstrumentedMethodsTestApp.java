@@ -25,8 +25,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
 
@@ -154,32 +154,30 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
         // __tc_setfield will not notify the other clients.
         Method m = subRootClass.getDeclaredMethod("__tc_setfield", new Class[] { String.class, Object.class });
         m.invoke(subRoot, new Object[] {
-            "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildIntField", new Integer(2) });
+            "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildIntField", Integer.valueOf(2) });
         m.invoke(subRoot, new Object[] {
-            "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildObjectField", new Integer(7) });
+            "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildObjectField", Integer.valueOf(7) });
         m.invoke(subRoot, new Object[] { "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childIntField",
-            new Integer(4) });
+            Integer.valueOf(4) });
         m.invoke(subRoot, new Object[] { "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childSetField",
             referenceSet });
         m.invoke(subRoot, new Object[] { "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childStringField",
             "testString" });
         m.invoke(subRoot, new Object[] {
-            "com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentIntField", new Integer(5) });
+            "com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentIntField", Integer.valueOf(5) });
         m.invoke(subRoot, new Object[] {
             "com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentMapField", referenceMap });
         m.invoke(subRoot, new Object[] {
             "com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentArrayField", referenceArray });
 
         // This setting should do nothing.
-        m
-            .invoke(subRoot, new Object[] { "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.this$0",
-                null });
+        m.invoke(subRoot, new Object[] { "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.this$0", null });
         TransparentAccess ta = (TransparentAccess) subRoot;
         Assert.assertNotNull(ta
             .__tc_getmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.this$0"));
 
         Assert.assertEquals(2, subRoot.getGrandChildIntField());
-        Assert.assertEquals(new Integer(7), subRoot.getGrandChildObjectField());
+        Assert.assertEquals(Integer.valueOf(7), subRoot.getGrandChildObjectField());
         Assert.assertEquals(4, subRoot.getChildIntField());
         assertSetsEqual(referenceSet, subRoot.getChildSetField());
         Assert.assertEquals("testString", subRoot.getChildStringField());
@@ -212,15 +210,14 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
 
         // __tc_setfield will not notify the other clients.
         ta.__tc_setfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildIntField",
-                         new Integer(2));
+                         Integer.valueOf(2));
         ta.__tc_setfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildObjectField",
-                         new Integer(7));
-        ta.__tc_setfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childIntField", new Integer(4));
+                         Integer.valueOf(7));
+        ta.__tc_setfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childIntField", Integer.valueOf(4));
         ta.__tc_setfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childSetField", referenceSet);
         ta.__tc_setfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childStringField", "testString");
-        ta
-            .__tc_setfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentIntField",
-                           new Integer(5));
+        ta.__tc_setfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentIntField",
+                         Integer.valueOf(5));
         ta.__tc_setfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentMapField", referenceMap);
         ta.__tc_setfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentArrayField",
                          referenceArray);
@@ -232,7 +229,7 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
             .__tc_getmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.this$0"));
 
         Assert.assertEquals(2, subRoot.getGrandChildIntField());
-        Assert.assertEquals(new Integer(7), subRoot.getGrandChildObjectField());
+        Assert.assertEquals(Integer.valueOf(7), subRoot.getGrandChildObjectField());
         Assert.assertEquals(4, subRoot.getChildIntField());
         assertSetsEqual(referenceSet, subRoot.getChildSetField());
         Assert.assertEquals("testString", subRoot.getChildStringField());
@@ -264,26 +261,24 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
 
         Method m = subRootClass.getDeclaredMethod("__tc_setmanagedfield", new Class[] { String.class, Object.class });
         m.invoke(subRoot, new Object[] {
-            "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildIntField", new Integer(2) });
+            "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildIntField", Integer.valueOf(2) });
         m.invoke(subRoot, new Object[] {
-            "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildObjectField", new Integer(7) });
+            "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildObjectField", Integer.valueOf(7) });
         m.invoke(subRoot, new Object[] { "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childIntField",
-            new Integer(4) });
+            Integer.valueOf(4) });
         m.invoke(subRoot, new Object[] { "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childSetField",
             referenceSet });
         m.invoke(subRoot, new Object[] { "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childStringField",
             "testString" });
         m.invoke(subRoot, new Object[] {
-            "com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentIntField", new Integer(5) });
+            "com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentIntField", Integer.valueOf(5) });
         m.invoke(subRoot, new Object[] {
             "com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentMapField", referenceMap });
         m.invoke(subRoot, new Object[] {
             "com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentArrayField", referenceArray });
 
         // This setting should do nothing.
-        m
-            .invoke(subRoot, new Object[] { "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.this$0",
-                null });
+        m.invoke(subRoot, new Object[] { "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.this$0", null });
       }
     }
 
@@ -294,7 +289,7 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
         .__tc_getmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.this$0"));
 
     Assert.assertEquals(2, subRoot.getGrandChildIntField());
-    Assert.assertEquals(new Integer(7), subRoot.getGrandChildObjectField());
+    Assert.assertEquals(Integer.valueOf(7), subRoot.getGrandChildObjectField());
     Assert.assertEquals(4, subRoot.getChildIntField());
     assertSetsEqual(referenceSet, subRoot.getChildSetField());
     Assert.assertEquals("testString", subRoot.getChildStringField());
@@ -323,17 +318,17 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
     synchronized (subRoot) {
       if (index == 0) {
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildIntField",
-                                new Integer(2));
+                                Integer.valueOf(2));
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildObjectField",
-                                new Integer(7));
+                                Integer.valueOf(7));
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childIntField",
-                                new Integer(4));
+                                Integer.valueOf(4));
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childSetField",
                                 referenceSet);
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childStringField",
                                 "testString");
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentIntField",
-                                new Integer(5));
+                                Integer.valueOf(5));
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentMapField",
                                 referenceMap);
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentArrayField",
@@ -350,7 +345,7 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
         .__tc_getmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.this$0"));
 
     Assert.assertEquals(2, subRoot.getGrandChildIntField());
-    Assert.assertEquals(new Integer(7), subRoot.getGrandChildObjectField());
+    Assert.assertEquals(Integer.valueOf(7), subRoot.getGrandChildObjectField());
     Assert.assertEquals(4, subRoot.getChildIntField());
     assertSetsEqual(referenceSet, subRoot.getChildSetField());
     Assert.assertEquals("testString", subRoot.getChildStringField());
@@ -379,17 +374,17 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
       TransparentAccess ta = (TransparentAccess) subRoot;
       if (index == 0) {
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildIntField",
-                                new Integer(2));
+                                Integer.valueOf(2));
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildObjectField",
-                                new Integer(7));
+                                Integer.valueOf(7));
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childIntField",
-                                new Integer(4));
+                                Integer.valueOf(4));
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childSetField",
                                 referenceSet);
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childStringField",
                                 "testString");
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentIntField",
-                                new Integer(5));
+                                Integer.valueOf(5));
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentMapField",
                                 referenceMap);
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentArrayField",
@@ -402,24 +397,26 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
         Method m = subRootClass.getDeclaredMethod("__tc_getallfields", new Class[] { Map.class });
         m.invoke(subRoot, new Object[] { map });
 
-        Assert.assertEquals(new Integer(2), map
-            .get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildIntField"));
-        Assert.assertEquals(new Integer(7), map
+        Assert
+            .assertEquals(Integer.valueOf(2),
+                          map.get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildIntField"));
+        Assert.assertEquals(Integer.valueOf(7), map
             .get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildObjectField"));
         Assert.assertTrue(this == map.get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.this$0"));
         Assert.assertEquals(4, ((Integer) map
             .get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childIntField")).intValue());
-        assertSetsEqual(referenceSet, (Set) map
-            .get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childSetField"));
-        Assert.assertEquals("testString", map
-            .get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childStringField"));
+        assertSetsEqual(referenceSet,
+                        (Set) map.get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childSetField"));
+        Assert.assertEquals("testString",
+                            map.get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childStringField"));
 
         Assert.assertEquals(5, ((Integer) map
             .get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentIntField")).intValue());
-        assertMappings(referenceMap, (Map) map
-            .get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentMapField"));
-        assertIntegerArray(referenceArray, (int[]) map
-            .get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentArrayField"));
+        assertMappings(referenceMap,
+                       (Map) map.get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentMapField"));
+        assertIntegerArray(referenceArray,
+                           (int[]) map
+                               .get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentArrayField"));
 
       }
     }
@@ -443,17 +440,17 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
       TransparentAccess ta = (TransparentAccess) subRoot;
       if (index == 0) {
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildIntField",
-                                new Integer(2));
+                                Integer.valueOf(2));
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildObjectField",
-                                new Integer(7));
+                                Integer.valueOf(7));
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childIntField",
-                                new Integer(4));
+                                Integer.valueOf(4));
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childSetField",
                                 referenceSet);
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childStringField",
                                 "testString");
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentIntField",
-                                new Integer(5));
+                                Integer.valueOf(5));
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentMapField",
                                 referenceMap);
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentArrayField",
@@ -462,24 +459,26 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
         Map map = new HashMap();
         // __tc_getallfields() will not resolve reference.
         ta.__tc_getallfields(map);
-        Assert.assertEquals(new Integer(2), map
-            .get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildIntField"));
-        Assert.assertEquals(new Integer(7), map
+        Assert
+            .assertEquals(Integer.valueOf(2),
+                          map.get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildIntField"));
+        Assert.assertEquals(Integer.valueOf(7), map
             .get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildObjectField"));
         Assert.assertTrue(this == map.get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.this$0"));
         Assert.assertEquals(4, ((Integer) map
             .get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childIntField")).intValue());
-        assertSetsEqual(referenceSet, (Set) map
-            .get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childSetField"));
-        Assert.assertEquals("testString", map
-            .get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childStringField"));
+        assertSetsEqual(referenceSet,
+                        (Set) map.get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childSetField"));
+        Assert.assertEquals("testString",
+                            map.get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childStringField"));
 
         Assert.assertEquals(5, ((Integer) map
             .get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentIntField")).intValue());
-        assertMappings(referenceMap, (Map) map
-            .get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentMapField"));
-        assertIntegerArray(referenceArray, (int[]) map
-            .get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentArrayField"));
+        assertMappings(referenceMap,
+                       (Map) map.get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentMapField"));
+        assertIntegerArray(referenceArray,
+                           (int[]) map
+                               .get("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentArrayField"));
 
       }
     }
@@ -503,17 +502,17 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
       TransparentAccess ta = (TransparentAccess) subRoot;
       if (index == 0) {
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildIntField",
-                                new Integer(2));
+                                Integer.valueOf(2));
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildObjectField",
-                                new Integer(7));
+                                Integer.valueOf(7));
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childIntField",
-                                new Integer(4));
+                                Integer.valueOf(4));
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childSetField",
                                 referenceSet);
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childStringField",
                                 "testString");
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentIntField",
-                                new Integer(5));
+                                Integer.valueOf(5));
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentMapField",
                                 referenceMap);
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentArrayField",
@@ -531,11 +530,9 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
                 new Object[] { "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildIntField" }))
         .intValue());
     Assert
-        .assertEquals(
-                      7,
+        .assertEquals(7,
                       ((Integer) m
-                          .invoke(
-                                  subRoot,
+                          .invoke(subRoot,
                                   new Object[] { "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildObjectField" }))
                           .intValue());
     Assert.assertNotNull(m
@@ -547,8 +544,10 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
     Assert.assertEquals(4, ((Integer) m
         .invoke(subRoot, new Object[] { "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childIntField" }))
         .intValue());
-    assertSetsEqual(referenceSet, (Set) m
-        .invoke(subRoot, new Object[] { "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childSetField" }));
+    assertSetsEqual(referenceSet,
+                    (Set) m
+                        .invoke(subRoot,
+                                new Object[] { "com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childSetField" }));
     Assert
         .assertEquals("testString", m
             .invoke(subRoot,
@@ -557,12 +556,14 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
         .invoke(subRoot,
                 new Object[] { "com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentIntField" }))
         .intValue());
-    assertMappings(referenceMap, (Map) m
-        .invoke(subRoot,
-                new Object[] { "com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentMapField" }));
-    assertIntegerArray(referenceArray, (int[]) m
-        .invoke(subRoot,
-                new Object[] { "com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentArrayField" }));
+    assertMappings(referenceMap,
+                   (Map) m
+                       .invoke(subRoot,
+                               new Object[] { "com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentMapField" }));
+    assertIntegerArray(referenceArray,
+                       (int[]) m
+                           .invoke(subRoot,
+                                   new Object[] { "com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentArrayField" }));
 
     barrier.barrier();
   }
@@ -584,17 +585,17 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
     synchronized (subRoot) {
       if (index == 0) {
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildIntField",
-                                new Integer(2));
+                                Integer.valueOf(2));
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildObjectField",
-                                new Integer(7));
+                                Integer.valueOf(7));
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childIntField",
-                                new Integer(4));
+                                Integer.valueOf(4));
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childSetField",
                                 referenceSet);
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childStringField",
                                 "testString");
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentIntField",
-                                new Integer(5));
+                                Integer.valueOf(5));
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentMapField",
                                 referenceMap);
         ta.__tc_setmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentArrayField",
@@ -607,7 +608,7 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
     Assert.assertEquals(2, ((Integer) ta
         .__tc_getmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildIntField"))
         .intValue());
-    Assert.assertEquals(new Integer(7), ta
+    Assert.assertEquals(Integer.valueOf(7), ta
         .__tc_getmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.grandChildObjectField"));
     Assert.assertNotNull(ta
         .__tc_getmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubSubClass.this$0"));
@@ -617,18 +618,21 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
     }
     Assert.assertEquals(4, ((Integer) ta
         .__tc_getmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childIntField")).intValue());
-    assertSetsEqual(referenceSet, (Set) ta
-        .__tc_getmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childSetField"));
+    assertSetsEqual(referenceSet,
+                    (Set) ta
+                        .__tc_getmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childSetField"));
     Assert.assertEquals("testString", ta
         .__tc_getmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestSubClass.childStringField"));
 
     Assert.assertEquals(5, ((Integer) ta
         .__tc_getmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentIntField"))
         .intValue());
-    assertMappings(referenceMap, (Map) ta
-        .__tc_getmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentMapField"));
-    assertIntegerArray(referenceArray, (int[]) ta
-        .__tc_getmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentArrayField"));
+    assertMappings(referenceMap,
+                   (Map) ta
+                       .__tc_getmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentMapField"));
+    assertIntegerArray(referenceArray,
+                       (int[]) ta
+                           .__tc_getmanagedfield("com.tctest.PhysicalInstrumentedMethodsTestApp$TestParentClass.parentArrayField"));
 
     barrier.barrier();
   }

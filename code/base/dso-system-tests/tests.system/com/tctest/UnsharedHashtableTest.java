@@ -11,13 +11,13 @@ import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 import java.util.Hashtable;
 
 /*
- * Assert some things about Hashtable instances that are not shared
- *
- * This test was first written in response to DEV-958 -- it should evolve
+ * Assert some things about Hashtable instances that are not shared This test was first written in response to DEV-958
+ * -- it should evolve
  */
 public class UnsharedHashtableTest extends TransparentTestBase {
   private final static int NODE_COUNT = 1;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
 
@@ -25,6 +25,7 @@ public class UnsharedHashtableTest extends TransparentTestBase {
     initializeTestRunner();
   }
 
+  @Override
   protected Class getApplicationClass() {
     return App.class;
   }
@@ -35,20 +36,22 @@ public class UnsharedHashtableTest extends TransparentTestBase {
       super(appId, cfg, listenerProvider);
     }
 
+    @Override
     protected void runTest() throws Throwable {
       final Hashtable ht = new Hashtable();
       final int size = 500;
 
       for (int i = 0; i < size; i++) {
-        Integer I = new Integer(i);
+        Integer I = Integer.valueOf(i);
         ht.put(I, I);
       }
 
       final Stop stop = new Stop();
 
       Thread mutator = new Thread() {
+        @Override
         public void run() {
-          Integer I = new Integer(ht.size());
+          Integer I = Integer.valueOf(ht.size());
           while (!stop.stop) {
             ht.remove(I);
             ht.put(I, I);

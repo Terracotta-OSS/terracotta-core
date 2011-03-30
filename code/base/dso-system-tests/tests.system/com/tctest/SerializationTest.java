@@ -128,7 +128,8 @@ public class SerializationTest extends BaseDSOTestCase {
       MockClientLockManager testClientLockManager = new MockClientLockManager();
       MockRemoteSearchRequestManager testSearchRequestManager = new MockRemoteSearchRequestManager();
       IsolationClassLoader classLoader = new IsolationClassLoader(config, testClientObjectManager,
-                                                                  testTransactionManager, testClientLockManager, testSearchRequestManager);
+                                                                  testTransactionManager, testClientLockManager,
+                                                                  testSearchRequestManager);
       classLoader.init();
       Thread.currentThread().setContextClassLoader(classLoader);
 
@@ -176,8 +177,8 @@ public class SerializationTest extends BaseDSOTestCase {
   private static boolean isHashMapDSOInstrumented() {
     Class c = HashMap.class;
     Class[] interfaces = c.getInterfaces();
-    for (int i = 0; i < interfaces.length; i++) {
-      if (interfaces[i].getName().equals(Manageable.class.getName())) { return true; }
+    for (Class interface1 : interfaces) {
+      if (interface1.getName().equals(Manageable.class.getName())) { return true; }
     }
 
     return false;
@@ -481,24 +482,24 @@ public class SerializationTest extends BaseDSOTestCase {
 
   private void populateMap(Map m) {
     m.put("Hello", "Saro");
-    m.put(new Integer(99), new Long(88));
-    m.put(new Date(), new Double(454.4545));
+    m.put(Integer.valueOf(99), Long.valueOf(88));
+    m.put(new Date(), Double.valueOf(454.4545));
   }
 
   private void populateSet(Set set) {
     set.add("Hello Saro");
-    set.add(new Integer(343));
-    set.add(new Long(33434343));
+    set.add(Integer.valueOf(343));
+    set.add(Long.valueOf(33434343));
     set.add(new Date());
-    set.add(new Double(34343.23));
+    set.add(Double.valueOf(34343.23));
   }
 
   private void populateList(List list) {
     list.add("Hey you ");
-    list.add(new Integer(34343));
-    list.add(new Long(33434343));
+    list.add(Integer.valueOf(34343));
+    list.add(Long.valueOf(33434343));
     list.add(new Date());
-    list.add(new Double(34343.23));
+    list.add(Double.valueOf(34343.23));
   }
 
   public static class ExternalSerializer {

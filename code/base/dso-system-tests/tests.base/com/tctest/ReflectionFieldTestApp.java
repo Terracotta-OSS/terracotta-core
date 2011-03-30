@@ -406,21 +406,21 @@ public class ReflectionFieldTestApp extends GenericTransparentApp {
     if (validate) {
       Integer localLiteralRoot = (Integer) literalRootField.get(this);
       Assert.assertNotNull(localLiteralRoot);
-      Assert.assertEquals(new Integer(100), localLiteralRoot);
+      Assert.assertEquals(Integer.valueOf(100), localLiteralRoot);
 
       Integer localPrimitiveRoot = (Integer) primitiveRootField.get(this);
       Assert.assertNotNull(localPrimitiveRoot);
-      Assert.assertEquals(new Integer(200), localPrimitiveRoot);
+      Assert.assertEquals(Integer.valueOf(200), localPrimitiveRoot);
     } else {
       Object value = literalRootField.get(this);
       Assert.assertNull(value);
 
       // don't need DSO lock to set roots
-      literalRootField.set(this, new Integer(100));
+      literalRootField.set(this, Integer.valueOf(100));
 
       value = primitiveRootField.get(this);
-      Assert.assertEquals(new Integer(0), value);
-      primitiveRootField.set(this, new Integer(200));
+      Assert.assertEquals(Integer.valueOf(0), value);
+      primitiveRootField.set(this, Integer.valueOf(200));
     }
   }
 
@@ -547,17 +547,17 @@ public class ReflectionFieldTestApp extends GenericTransparentApp {
     Field staticLongField = root.getClass().getDeclaredField("staticLong");
     staticLongField.setAccessible(true);
     if (!validate) {
-      staticLongField.set(null, new Long(33L));
-      Assert.assertEquals(new Long(33L), DataRoot.getStaticLong());
+      staticLongField.set(null, Long.valueOf(33L));
+      Assert.assertEquals(Long.valueOf(33L), DataRoot.getStaticLong());
 
       Object staticLongFieldValue = staticLongField.get(null);
-      Assert.assertEquals(new Long(33L), staticLongFieldValue);
+      Assert.assertEquals(Long.valueOf(33L), staticLongFieldValue);
 
-      staticLongField.set(null, new Long(50L));
-      Assert.assertEquals(new Long(50L), DataRoot.getStaticLong());
+      staticLongField.set(null, Long.valueOf(50L));
+      Assert.assertEquals(Long.valueOf(50L), DataRoot.getStaticLong());
 
       staticLongFieldValue = staticLongField.get(null);
-      Assert.assertEquals(new Long(50L), staticLongFieldValue);
+      Assert.assertEquals(Long.valueOf(50L), staticLongFieldValue);
     }
   }
 

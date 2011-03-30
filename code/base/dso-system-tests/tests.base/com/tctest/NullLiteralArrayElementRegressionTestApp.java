@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -96,7 +97,7 @@ public class NullLiteralArrayElementRegressionTestApp extends AbstractTransparen
 
     // This method takes a long b/c that is a "literal" type, but stored in an Object array
     void setElement(int index, long value) {
-      array[index] = new Long(value);
+      array[index] = Long.valueOf(value);
     }
 
   }

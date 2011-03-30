@@ -72,9 +72,9 @@ public class ProxyTestApp extends AbstractTransparentApp {
 
     Class[] interfaces = dataRoot.getMyProxy().getClass().getInterfaces();
     Assert.assertEquals(2, interfaces.length);
-    for (int i = 0; i < interfaces.length; i++) {
-      Assert.assertFalse(interfaces[i].equals(Manageable.class.getName()));
-      Assert.assertFalse(interfaces[i].equals(TransparentAccess.class.getName()));
+    for (Class interface1 : interfaces) {
+      Assert.assertFalse(interface1.equals(Manageable.class.getName()));
+      Assert.assertFalse(interface1.equals(TransparentAccess.class.getName()));
     }
 
     barrier.barrier();
@@ -332,7 +332,7 @@ public class ProxyTestApp extends AbstractTransparentApp {
         return null;
       } else if (method.getName().equals("getStringValue")) {
         return stringValues.get(proxy);
-      } else if (method.getName().equals("hashCode")) { return new Integer(System.identityHashCode(proxy)); }
+      } else if (method.getName().equals("hashCode")) { return Integer.valueOf(System.identityHashCode(proxy)); }
       return null;
     }
   }
@@ -347,8 +347,8 @@ public class ProxyTestApp extends AbstractTransparentApp {
         values.put(args[0], args[1]);
         return null;
       } else if (method.getName().equals("size")) {
-        return new Integer(values.size());
-      } else if (method.getName().equals("hashCode")) { return new Integer(System.identityHashCode(proxy)); }
+        return Integer.valueOf(values.size());
+      } else if (method.getName().equals("hashCode")) { return Integer.valueOf(System.identityHashCode(proxy)); }
       return null;
     }
   }
@@ -380,6 +380,7 @@ public class ProxyTestApp extends AbstractTransparentApp {
       return ((URLClassLoader) SYSTEM_LOADER).getURLs();
     }
 
+    @Override
     public Class loadClass(String name) throws ClassNotFoundException {
       return super.loadClass(name);
     }

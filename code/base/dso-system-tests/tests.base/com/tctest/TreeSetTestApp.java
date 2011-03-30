@@ -77,16 +77,16 @@ public class TreeSetTestApp extends AbstractTransparentApp {
 
     if (key == 0) {
       synchronized (set) {
-        Object fromKey = new Integer(0);
-        Object toKey = new Integer(10);
+        Object fromKey = Integer.valueOf(0);
+        Object toKey = Integer.valueOf(10);
         Set subSet = set.subSet(fromKey, toKey);
-        subSet.add(new Integer(1));
+        subSet.add(Integer.valueOf(1));
       }
     }
     barrier.barrier();
 
     Assert.assertEquals(getParticipantCount() + 1, set.size());
-    Assert.assertTrue(set.contains(new Integer(1)));
+    Assert.assertTrue(set.contains(Integer.valueOf(1)));
 
     barrier.barrier();
     key = getKey();
@@ -117,15 +117,15 @@ public class TreeSetTestApp extends AbstractTransparentApp {
     // headSet() testing.
     if (key == 0) {
       synchronized (set) {
-        Object toKey = new Integer(2);
+        Object toKey = Integer.valueOf(2);
         Set headSet = set.headSet(toKey);
-        headSet.add(new Integer(1));
+        headSet.add(Integer.valueOf(1));
       }
     }
     barrier.barrier();
 
     Assert.assertEquals(getParticipantCount() + 1, set.size());
-    Assert.assertTrue(set.contains(new Integer(1)));
+    Assert.assertTrue(set.contains(Integer.valueOf(1)));
 
     barrier.barrier();
 
@@ -158,16 +158,16 @@ public class TreeSetTestApp extends AbstractTransparentApp {
 
     if (key == 0) {
       synchronized (set) {
-        Object fromKey = new Integer(0);
+        Object fromKey = Integer.valueOf(0);
         Set tailSet = set.tailSet(fromKey);
-        tailSet.add(new Integer(1));
+        tailSet.add(Integer.valueOf(1));
       }
     }
 
     barrier.barrier();
 
     Assert.assertEquals(getParticipantCount() + 1, set.size());
-    Assert.assertTrue(set.contains(new Integer(1)));
+    Assert.assertTrue(set.contains(Integer.valueOf(1)));
 
     barrier.barrier();
 
@@ -197,7 +197,7 @@ public class TreeSetTestApp extends AbstractTransparentApp {
     // tailSet() clear testing.
     if (key == 0) {
       synchronized (set) {
-        Object fromKey = new Integer(0);
+        Object fromKey = Integer.valueOf(0);
         Set tailSet = set.tailSet(fromKey);
         tailSet.clear();
       }
@@ -233,21 +233,21 @@ public class TreeSetTestApp extends AbstractTransparentApp {
 
     // subSet() share testing.
     if (key == 0) {
-      Object fromKey = new Integer(0);
-      Object toKey = new Integer(10);
+      Object fromKey = Integer.valueOf(0);
+      Object toKey = Integer.valueOf(10);
       Set subSet = set.subSet(fromKey, toKey);
       synchronized (subSetSharedRoot) {
         subSetSharedRoot.setSet(subSet);
       }
       synchronized (subSetSharedRoot.getSet()) {
-        subSetSharedRoot.getSet().add(new Integer(1));
+        subSetSharedRoot.getSet().add(Integer.valueOf(1));
       }
     }
 
     barrier.barrier();
 
     Assert.assertEquals(getParticipantCount() + 1, set.size());
-    Assert.assertTrue(set.contains(new Integer(1)));
+    Assert.assertTrue(set.contains(Integer.valueOf(1)));
 
     barrier.barrier();
 
@@ -281,20 +281,20 @@ public class TreeSetTestApp extends AbstractTransparentApp {
 
     // headSet() share testing.
     if (key == 0) {
-      Object toKey = new Integer(10);
+      Object toKey = Integer.valueOf(10);
       Set headSet = set.headSet(toKey);
       synchronized (subSetSharedRoot) {
         subSetSharedRoot.setSet(headSet);
       }
       synchronized (subSetSharedRoot.getSet()) {
-        subSetSharedRoot.getSet().add(new Integer(1));
+        subSetSharedRoot.getSet().add(Integer.valueOf(1));
       }
     }
 
     barrier.barrier();
 
     Assert.assertEquals(getParticipantCount() + 1, set.size());
-    Assert.assertTrue(set.contains(new Integer(1)));
+    Assert.assertTrue(set.contains(Integer.valueOf(1)));
 
     barrier.barrier();
 
@@ -327,21 +327,21 @@ public class TreeSetTestApp extends AbstractTransparentApp {
 
     // tailSet() share testing.
     if (key == 0) {
-      Object fromKey = new Integer(0);
+      Object fromKey = Integer.valueOf(0);
       Set tailSet = set.tailSet(fromKey);
       synchronized (subSetSharedRoot) {
         subSetSharedRoot.setSet(tailSet);
       }
 
       synchronized (subSetSharedRoot.getSet()) {
-        subSetSharedRoot.getSet().add(new Integer(1));
+        subSetSharedRoot.getSet().add(Integer.valueOf(1));
       }
     }
 
     barrier.barrier();
 
     Assert.assertEquals(getParticipantCount() + 1, set.size());
-    Assert.assertTrue(set.contains(new Integer(1)));
+    Assert.assertTrue(set.contains(Integer.valueOf(1)));
 
     barrier.barrier();
 
@@ -374,23 +374,23 @@ public class TreeSetTestApp extends AbstractTransparentApp {
 
     // subSet().subSet() share testing.
     if (key == 0) {
-      Object fromKey = new Integer(0);
-      Object toKey = new Integer(10);
-      Object toKey2 = new Integer(5);
+      Object fromKey = Integer.valueOf(0);
+      Object toKey = Integer.valueOf(10);
+      Object toKey2 = Integer.valueOf(5);
       SortedSet subSet = set.subSet(fromKey, toKey);
       Set subSet2 = subSet.subSet(fromKey, toKey2);
       synchronized (subSetSharedRoot) {
         subSetSharedRoot.setSet(subSet2);
       }
       synchronized (subSetSharedRoot.getSet()) {
-        subSetSharedRoot.getSet().add(new Integer(1));
+        subSetSharedRoot.getSet().add(Integer.valueOf(1));
       }
     }
 
     barrier.barrier();
 
     Assert.assertEquals(getParticipantCount() + 1, set.size());
-    Assert.assertTrue(set.contains(new Integer(1)));
+    Assert.assertTrue(set.contains(Integer.valueOf(1)));
 
     barrier.barrier();
 
@@ -442,7 +442,7 @@ public class TreeSetTestApp extends AbstractTransparentApp {
 
     synchronized (set) {
       int key = subSetSharedRoot.getKey();
-      set.add(new Integer(key));
+      set.add(Integer.valueOf(key));
       subSetSharedRoot.setKey(key + 2);
     }
     barrier.barrier();

@@ -43,7 +43,7 @@ public class LinkedHashMapMutateValidateTestApp extends AbstractMutateValidateTr
           synchronized (eventIndex) {
             event = eventIndex.produce();
           }
-          map1.getMap().put(new Integer(event.getId()), event);
+          map1.getMap().put(Integer.valueOf(event.getId()), event);
           System.out.println("*** Add item " + event.getId());
         }
       }
@@ -56,7 +56,7 @@ public class LinkedHashMapMutateValidateTestApp extends AbstractMutateValidateTr
           if (it.hasNext()) {
             Integer key = (Integer) it.next();
             event = (EventNode) map1.getMap().remove(key);
-            map2.getMap().put(new Integer(event.getId()), event);
+            map2.getMap().put(Integer.valueOf(event.getId()), event);
             System.out.println("*** Move item " + event.getId());
 
             if (event.getId() >= upbound) break;
@@ -87,7 +87,7 @@ public class LinkedHashMapMutateValidateTestApp extends AbstractMutateValidateTr
 
     while (id < eventIndex.getId()) {
       synchronized (map1) {
-        Integer key = new Integer(id);
+        Integer key = Integer.valueOf(id);
         boolean inMap1 = map1.getMap().containsKey(key);
         boolean inMap2 = map2.getMap().containsKey(key);
         if ((inMap1 && inMap2) || (!inMap1 && !inMap2)) {

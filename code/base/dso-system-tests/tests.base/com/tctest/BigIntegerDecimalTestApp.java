@@ -142,14 +142,14 @@ public class BigIntegerDecimalTestApp extends AbstractTransparentApp {
         } else if (parameterTypes[1].equals(roundingModeClazz)) {
           arguments[1] = upRoundingMode;
         } else {
-          arguments[1] = new Integer(BigDecimal.ROUND_UP);
+          arguments[1] = Integer.valueOf(BigDecimal.ROUND_UP);
         }
       } else if (arguments.length == 3) {
-        arguments[1] = new Integer(1);
+        arguments[1] = Integer.valueOf(1);
         if (parameterTypes[2].equals(roundingModeClazz)) {
           arguments[2] = upRoundingMode;
         } else {
-          arguments[2] = new Integer(BigDecimal.ROUND_UP);
+          arguments[2] = Integer.valueOf(BigDecimal.ROUND_UP);
         }
       }
     } else if ("divideAndRemainder".equals(methodName) || "divideToIntegralValue".equals(methodName)
@@ -160,30 +160,30 @@ public class BigIntegerDecimalTestApp extends AbstractTransparentApp {
       }
     } else if ("movePointLeft".equals(methodName) || "movePointRight".equals(methodName)
                || "scaleByPowerOfTen".equals(methodName)) {
-      arguments[0] = new Integer(1);
+      arguments[0] = Integer.valueOf(1);
     } else if ("pow".equals(methodName)) {
-      arguments[0] = new Integer(1);
+      arguments[0] = Integer.valueOf(1);
       if (arguments.length == 2 && parameterTypes[1].equals(mathContextClazz)) {
         arguments[1] = decimal32MathContext;
       }
     } else if ("round".equals(methodName)) {
       arguments[0] = decimal32MathContext;
     } else if ("setScale".equals(methodName)) {
-      arguments[0] = new Integer(1);
+      arguments[0] = Integer.valueOf(1);
       if (arguments.length == 2) {
         if (parameterTypes[1].equals(roundingModeClazz)) {
           arguments[1] = upRoundingMode;
         } else {
-          arguments[1] = new Integer(BigDecimal.ROUND_UP);
+          arguments[1] = Integer.valueOf(BigDecimal.ROUND_UP);
         }
       }
     } else if ("valueOf".equals(methodName)) {
       if (parameterTypes[0].equals(Double.TYPE)) {
         arguments[0] = new Double(100.0);
       } else if (parameterTypes[0].equals(Long.TYPE)) {
-        arguments[0] = new Long(100);
+        arguments[0] = Long.valueOf(100);
         if (arguments.length == 2) {
-          arguments[1] = new Integer(1);
+          arguments[1] = Integer.valueOf(1);
         }
       }
     }
@@ -198,7 +198,7 @@ public class BigIntegerDecimalTestApp extends AbstractTransparentApp {
     if ("add".equals(methodName) || "and".equals(methodName) || "andNot".equals(methodName)) {
       arguments[0] = new BigInteger("200");
     } else if ("clearBit".equals(methodName)) {
-      arguments[0] = new Integer(1);
+      arguments[0] = Integer.valueOf(1);
     } else if ("compareTo".equals(methodName) || "divide".equals(methodName) || "divideAndRemainder".equals(methodName)
                || "equals".equals(methodName) || "gcd".equals(methodName) || "max".equals(methodName)
                || "min".equals(methodName) || "mod".equals(methodName) || "modInverse".equals(methodName)
@@ -209,36 +209,36 @@ public class BigIntegerDecimalTestApp extends AbstractTransparentApp {
                || "setBit".equals(methodName) || "shiftLeft".equals(methodName) || "shiftRight".equals(methodName)
                || "testBit".equals(methodName) || "trailingZeroCnt".equals(methodName) || "bitLen".equals(methodName)
                || "primeToCertainty".equals(methodName) || "bitCnt".equals(methodName)) {
-      arguments[0] = new Integer(1);
+      arguments[0] = Integer.valueOf(1);
     } else if ("modPow".equals(methodName)) {
       arguments[0] = refInt;
       arguments[1] = refInt;
     } else if ("probablePrime".equals(methodName)) {
-      arguments[0] = new Integer(5);
+      arguments[0] = Integer.valueOf(5);
       arguments[1] = new Random();
     } else if ("toString".equals(methodName) && arguments.length == 1) {
-      arguments[0] = new Integer(1);
+      arguments[0] = Integer.valueOf(1);
     } else if ("valueOf".equals(methodName)) {
-      arguments[0] = new Long(1);
+      arguments[0] = Long.valueOf(1);
     } else if ("mulAdd".equals(methodName)) {
       arguments[0] = new int[] { 1 };
       arguments[1] = new int[] { 1 };
-      arguments[2] = new Integer(0);
-      arguments[3] = new Integer(1);
-      arguments[4] = new Integer(1);
+      arguments[2] = Integer.valueOf(0);
+      arguments[3] = Integer.valueOf(1);
+      arguments[4] = Integer.valueOf(1);
     } else if ("addOne".equals(methodName)) {
       arguments[0] = new int[] { 1 };
-      arguments[1] = new Integer(0);
-      arguments[2] = new Integer(0);
-      arguments[3] = new Integer(1);
+      arguments[1] = Integer.valueOf(0);
+      arguments[2] = Integer.valueOf(0);
+      arguments[3] = Integer.valueOf(1);
     } else if ("primitiveLeftShift".equals(methodName) || "primitiveRightShift".equals(methodName)) {
       arguments[0] = new int[] { 1 };
-      arguments[1] = new Integer(1);
-      arguments[2] = new Integer(1);
+      arguments[1] = Integer.valueOf(1);
+      arguments[2] = Integer.valueOf(1);
     } else if ("javaIncrement".equals(methodName)) {
       arguments[0] = new int[] { 1 };
     } else if ("jacobiSymbol".equals(methodName)) {
-      arguments[0] = new Integer(1);
+      arguments[0] = Integer.valueOf(1);
       arguments[1] = refInt;
     }
 
@@ -260,11 +260,11 @@ public class BigIntegerDecimalTestApp extends AbstractTransparentApp {
     }
     Object[] arguments = null;
     Constructor[] constructors = bClazz.getConstructors();
-    for (int i = 0; i < constructors.length; i++) {
+    for (Constructor constructor : constructors) {
       try {
-        arguments = (bigIntegerClass) ? getBigIntegerConstructorArguments(constructors[i].getParameterTypes())
-            : getBigDecimalConstructorArguments(constructors[i].getParameterTypes());
-        invokeConstructor(constructors[i], arguments);
+        arguments = (bigIntegerClass) ? getBigIntegerConstructorArguments(constructor.getParameterTypes())
+            : getBigDecimalConstructorArguments(constructor.getParameterTypes());
+        invokeConstructor(constructor, arguments);
       } catch (IllegalArgumentException e) {
         throw new TCRuntimeException(e);
       } catch (InstantiationException e) {
@@ -296,10 +296,10 @@ public class BigIntegerDecimalTestApp extends AbstractTransparentApp {
         if (parameterTypes[1].equals(mathContextClazz)) {
           arguments[1] = decimal32MathContext;
         } else {
-          arguments[1] = new Integer(1);
+          arguments[1] = Integer.valueOf(1);
         }
       } else if (parameterTypes.length == 3) {
-        arguments[1] = new Integer(1);
+        arguments[1] = Integer.valueOf(1);
         arguments[2] = decimal32MathContext;
       }
     } else if (parameterTypes[0].equals(char[].class)) {
@@ -307,11 +307,11 @@ public class BigIntegerDecimalTestApp extends AbstractTransparentApp {
       if (parameterTypes.length == 2) {
         arguments[1] = decimal32MathContext;
       } else if (parameterTypes.length == 3) {
-        arguments[1] = new Integer(0);
-        arguments[2] = new Integer(1);
+        arguments[1] = Integer.valueOf(0);
+        arguments[2] = Integer.valueOf(1);
       } else if (parameterTypes.length == 4) {
-        arguments[1] = new Integer(0);
-        arguments[2] = new Integer(1);
+        arguments[1] = Integer.valueOf(0);
+        arguments[2] = Integer.valueOf(1);
         arguments[3] = decimal32MathContext;
       }
     } else if (parameterTypes[0].equals(Double.TYPE)) {
@@ -320,12 +320,12 @@ public class BigIntegerDecimalTestApp extends AbstractTransparentApp {
         arguments[1] = decimal32MathContext;
       }
     } else if (parameterTypes[0].equals(Integer.TYPE)) {
-      arguments[0] = new Integer(100);
+      arguments[0] = Integer.valueOf(100);
       if (parameterTypes.length == 2) {
         arguments[1] = decimal32MathContext;
       }
     } else if (parameterTypes[0].equals(Long.TYPE)) {
-      arguments[0] = new Long(100);
+      arguments[0] = Long.valueOf(100);
       if (parameterTypes.length == 2) {
         arguments[1] = decimal32MathContext;
       }
@@ -352,18 +352,18 @@ public class BigIntegerDecimalTestApp extends AbstractTransparentApp {
       case 2:
         if (parameterTypes[0] == String.class) {
           arguments[0] = "100";
-          arguments[1] = new Integer(10);
+          arguments[1] = Integer.valueOf(10);
         } else if (parameterTypes[1] == Random.class) {
-          arguments[0] = new Integer(10);
+          arguments[0] = Integer.valueOf(10);
           arguments[1] = new Random();
         } else {
-          arguments[0] = new Integer(refInt.signum());
+          arguments[0] = Integer.valueOf(refInt.signum());
           arguments[1] = new byte[] { (byte) 100 };
         }
         break;
       case 3:
-        arguments[0] = new Integer(refInt.bitLength());
-        arguments[1] = new Integer(5);
+        arguments[0] = Integer.valueOf(refInt.bitLength());
+        arguments[1] = Integer.valueOf(5);
         arguments[2] = new Random();
         break;
     }

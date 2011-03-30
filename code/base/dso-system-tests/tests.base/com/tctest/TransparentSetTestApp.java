@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -31,7 +32,7 @@ public class TransparentSetTestApp extends AbstractTransparentApp implements App
   private static final int REMOVE_COMPLETE_STAGE       = 3;
   private static final int ASSERT_REMOVE_SIZE_STAGE    = 4;
 
-  private Set              set                         = new HashSet();
+  private final Set        set                         = new HashSet();
 
   public TransparentSetTestApp(String globalId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(globalId, cfg, listenerProvider);
@@ -48,9 +49,9 @@ public class TransparentSetTestApp extends AbstractTransparentApp implements App
         int size = set.size();
         set.add(to);
         Assert.eval(set.size() == size + 1);
-	if((size+1) % 50 == 0) System.out.println("XXX added " + (size+1));
+        if ((size + 1) % 50 == 0) System.out.println("XXX added " + (size + 1));
       }
-       ThreadUtil.reallySleep(20);
+      ThreadUtil.reallySleep(20);
     }
     moveToStageAndWait(ADD_COMPLETE_STAGE);
 
@@ -65,9 +66,9 @@ public class TransparentSetTestApp extends AbstractTransparentApp implements App
         boolean wasRemoved = set.remove(testObjects.get(i));
         Assert.eval("Test object should have been removed  but wasn't: " + testObjects.get(i), wasRemoved);
         Assert.eval(set.size() == size - 1);
-	if((size-1) % 50 == 0) System.out.println("XXX remain " + (size-1));
+        if ((size - 1) % 50 == 0) System.out.println("XXX remain " + (size - 1));
       }
-       ThreadUtil.reallySleep(20);
+      ThreadUtil.reallySleep(20);
     }
 
     moveToStageAndWait(REMOVE_COMPLETE_STAGE);
@@ -94,10 +95,10 @@ public class TransparentSetTestApp extends AbstractTransparentApp implements App
         TestObject to = (TestObject) i.next();
         String key = to.getId();
         if (!res.containsKey(key)) {
-          res.put(key, new Long(0));
+          res.put(key, Long.valueOf(0));
         } else {
           long v = ((Long) res.get(key)).longValue();
-          res.put(key, new Long(++v));
+          res.put(key, Long.valueOf(++v));
         }
       }
       if (set.size() != s) {
@@ -119,8 +120,8 @@ public class TransparentSetTestApp extends AbstractTransparentApp implements App
 
   static class TestObject {
 
-    private String id;
-    private int    count;
+    private final String id;
+    private final int    count;
 
     TestObject(String id, int count) {
       this.id = id;
@@ -131,6 +132,7 @@ public class TransparentSetTestApp extends AbstractTransparentApp implements App
       return id;
     }
 
+    @Override
     public String toString() {
       return "TestObject(" + id + "," + count + ")";
     }

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -41,10 +42,12 @@ public class TransparentVectorTestApp extends AbstractErrorCatchingTransparentAp
 
   private final CyclicBarrier barrier;
 
+  @Override
   public void moveToStageAndWait(int stage) {
     super.moveToStageAndWait(stage);
   }
 
+  @Override
   protected void runTest() throws Throwable {
     int maxCount = getParticipantCount() * getIntensity();
     List testObjects = new Vector();
@@ -128,10 +131,10 @@ public class TransparentVectorTestApp extends AbstractErrorCatchingTransparentAp
           TestObject to = (TestObject) i.next();
           String key = to.getId();
           if (!res.containsKey(key)) {
-            res.put(key, new Long(0));
+            res.put(key, Long.valueOf(0));
           } else {
             long v = ((Long) res.get(key)).longValue();
-            res.put(key, new Long(++v));
+            res.put(key, Long.valueOf(++v));
           }
         }
         throw new AssertionError("" + res);
@@ -152,8 +155,8 @@ public class TransparentVectorTestApp extends AbstractErrorCatchingTransparentAp
   }
 
   static class TestObject {
-    private String id;
-    private int    count;
+    private final String id;
+    private final int    count;
 
     TestObject(String id, int count) {
       this.id = id;
@@ -164,6 +167,7 @@ public class TransparentVectorTestApp extends AbstractErrorCatchingTransparentAp
       return id;
     }
 
+    @Override
     public String toString() {
       return "TestObject(" + id + "," + count + ")";
     }

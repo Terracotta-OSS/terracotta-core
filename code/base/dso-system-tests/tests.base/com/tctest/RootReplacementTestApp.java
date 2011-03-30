@@ -30,14 +30,14 @@ public class RootReplacementTestApp extends AbstractTransparentApp {
   private Integer             integerRoot;
   private int                 primitiveIntRoot;
 
-  private Integer             nonReplaceableIntegerRoot = new Integer(15);
+  private Integer             nonReplaceableIntegerRoot = Integer.valueOf(15);
   private int                 nonReplaceableIntRoot     = 15;
 
   private final int           nonSharedPrimitiveInt     = 45;
   private final int           sharedPrimitiveInt        = 50;
 
-  private final Integer       nonSharedIntegerObject    = new Integer(45);
-  private final Integer       sharedIntegerObject       = new Integer(50);
+  private final Integer       nonSharedIntegerObject    = Integer.valueOf(45);
+  private final Integer       sharedIntegerObject       = Integer.valueOf(50);
 
   private SyncRoot            replaceableSyncRoot       = new SyncRoot(5);
   private SyncRoot            nonReplaceableSyncRoot    = new SyncRoot(15);
@@ -229,22 +229,22 @@ public class RootReplacementTestApp extends AbstractTransparentApp {
     barrier.barrier();
 
     if (index == 0) {
-      staticIntegerRoot = new Integer(10);
+      staticIntegerRoot = Integer.valueOf(10);
     }
 
     barrier.barrier();
 
-    Assert.assertEquals(new Integer(10), staticIntegerRoot);
+    Assert.assertEquals(Integer.valueOf(10), staticIntegerRoot);
 
     barrier.barrier();
 
     if (index == 1) {
-      staticIntegerRoot = new Integer(20);
+      staticIntegerRoot = Integer.valueOf(20);
     }
 
     barrier.barrier();
 
-    Assert.assertEquals(new Integer(20), staticIntegerRoot);
+    Assert.assertEquals(Integer.valueOf(20), staticIntegerRoot);
 
     barrier.barrier();
 
@@ -309,22 +309,22 @@ public class RootReplacementTestApp extends AbstractTransparentApp {
     barrier.barrier();
 
     if (index == 0) {
-      integerField.set(this, new Integer(11));
+      integerField.set(this, Integer.valueOf(11));
     }
 
     barrier.barrier();
 
-    Assert.assertEquals(new Integer(11), integerRoot);
+    Assert.assertEquals(Integer.valueOf(11), integerRoot);
 
     barrier.barrier();
 
     if (index == 1) {
-      integerField.set(this, new Integer(13));
+      integerField.set(this, Integer.valueOf(13));
     }
 
     barrier.barrier();
 
-    Assert.assertEquals(new Integer(13), integerRoot);
+    Assert.assertEquals(Integer.valueOf(13), integerRoot);
 
     barrier.barrier();
 
@@ -386,12 +386,12 @@ public class RootReplacementTestApp extends AbstractTransparentApp {
     barrier.barrier();
 
     if (index == 0) {
-      nonReplaceableIntegerRoot = new Integer(20);
+      nonReplaceableIntegerRoot = Integer.valueOf(20);
     }
 
     barrier.barrier();
 
-    Assert.assertEquals(new Integer(15), nonReplaceableIntegerRoot);
+    Assert.assertEquals(Integer.valueOf(15), nonReplaceableIntegerRoot);
 
     barrier.barrier();
 
@@ -493,12 +493,12 @@ public class RootReplacementTestApp extends AbstractTransparentApp {
     barrier.barrier();
 
     if (index == 0) {
-      integerRoot = new Integer(10);
+      integerRoot = Integer.valueOf(10);
     }
 
     barrier.barrier();
 
-    Assert.assertEquals(new Integer(10), integerRoot);
+    Assert.assertEquals(Integer.valueOf(10), integerRoot);
 
     barrier.barrier();
 
@@ -508,7 +508,7 @@ public class RootReplacementTestApp extends AbstractTransparentApp {
 
     barrier.barrier();
 
-    Assert.assertEquals(new Integer(50), integerRoot);
+    Assert.assertEquals(Integer.valueOf(50), integerRoot);
 
     barrier.barrier();
 
@@ -518,7 +518,7 @@ public class RootReplacementTestApp extends AbstractTransparentApp {
 
     barrier.barrier();
 
-    Assert.assertEquals(new Integer(45), integerRoot);
+    Assert.assertEquals(Integer.valueOf(45), integerRoot);
 
     barrier.barrier();
   }

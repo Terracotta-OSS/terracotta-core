@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -16,21 +17,21 @@ import java.util.Map;
 /**
  * An app that throws an exception in a lock method and makes sure things still work ok
  */
-public class TransparencyExceptionTestApp  extends AbstractTransparentApp {
-  private Map myRoot = new HashMap();
-  private boolean fail = true;
+public class TransparencyExceptionTestApp extends AbstractTransparentApp {
+  private final Map myRoot = new HashMap();
+  private boolean   fail   = true;
 
-  public TransparencyExceptionTestApp (String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
+  public TransparencyExceptionTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
   }
-  
+
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     TransparencyClassSpec spec = config.getOrCreateSpec("com.tctest.TransparencyExceptionTestApp");
     spec.addRoot("myRoot", "rootBabyRoot");
     String methodExpression = "void com.tctest.TransparencyExceptionTestApp.test1()";
     config.addWriteAutolock(methodExpression);
   }
-  
+
   public void run() {
     test();
     fail = false;
@@ -41,24 +42,24 @@ public class TransparencyExceptionTestApp  extends AbstractTransparentApp {
     try {
       test1();
     } catch (AssertionError e) {
-      if(fail)  {
+      if (fail) {
         System.out.println("SUCCESS");
       } else {
         throw new AssertionError("Failed !!");
       }
       return;
     }
-    if(fail) {
+    if (fail) {
       throw new AssertionError("Failed !!");
     } else {
-        System.out.println("SUCCESS");
+      System.out.println("SUCCESS");
     }
   }
 
   public void test1() {
     synchronized (myRoot) {
-      myRoot.put(new Long(1), new Long(1));
-      if(fail) throw new AssertionError("Testing one two three");
+      myRoot.put(Long.valueOf(1), Long.valueOf(1));
+      if (fail) throw new AssertionError("Testing one two three");
     }
   }
 

@@ -457,7 +457,7 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
     private Integer value;
 
     public MyCallable(int i) {
-      this.value = new Integer(i);
+      this.value = Integer.valueOf(i);
     }
 
     public MyCallable() {
@@ -518,21 +518,24 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
       super(runnable, result);
     }
 
+    @Override
     public synchronized void set(Object v) {
       super.set(v);
     }
 
+    @Override
     public synchronized void setException(Throwable t) {
       super.setException(t);
     }
 
+    @Override
     public boolean runAndReset() {
       return super.runAndReset();
     }
   }
 
   private class GetUnSharedRunnable implements Runnable {
-    private FutureTask task;
+    private final FutureTask task;
 
     public GetUnSharedRunnable(FutureTask task) {
       this.task = task;

@@ -109,7 +109,7 @@ public class PartialCollectionsCloneTest extends TransparentTestBase {
     private void populateMap(Map m) {
       synchronized (m) {
         for (int i = 0; i < MAP_SIZE; i++) {
-          m.put(new Integer(i), new NonLiteralObject());
+          m.put(Integer.valueOf(i), new NonLiteralObject());
         }
       }
     }

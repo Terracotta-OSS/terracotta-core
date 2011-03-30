@@ -226,7 +226,7 @@ public class NonFaultingMapTestApp extends AbstractErrorCatchingTransparentApp {
     // record object id in clustered collection (as long to prevent munging)
     Set objectIds = (Set) sharedMap.get("objectIds");
     synchronized (objectIds) {
-      objectIds.add(new Long(tco.getObjectID().toLong()));
+      objectIds.add(Long.valueOf(tco.getObjectID().toLong()));
     }
   }
 

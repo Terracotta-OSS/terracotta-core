@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -19,13 +20,13 @@ import java.util.Random;
 
 public class LinkedQueueTestApp extends AbstractTransparentApp {
 
-  public static int       COUNT       = 500;
-  public static int       DEBUG_COUNT = 100;
+  public static int             COUNT       = 500;
+  public static int             DEBUG_COUNT = 100;
 
-  private LinkedQueue     queue   = new LinkedQueue();
-  //private List queue = new ArrayList();
-  private SynchronizedInt in          = new SynchronizedInt(0);
-  private SynchronizedInt out         = new SynchronizedInt(0);
+  private final LinkedQueue     queue       = new LinkedQueue();
+  // private List queue = new ArrayList();
+  private final SynchronizedInt in          = new SynchronizedInt(0);
+  private final SynchronizedInt out         = new SynchronizedInt(0);
 
   public LinkedQueueTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -35,9 +36,9 @@ public class LinkedQueueTestApp extends AbstractTransparentApp {
     Random random = new Random();
     while (out.get() < COUNT) {
       if ((random.nextInt(2) == 0) || (in.get() >= COUNT)) {
-          get();
+        get();
       } else {
-          put();
+        put();
       }
     }
   }
@@ -45,18 +46,17 @@ public class LinkedQueueTestApp extends AbstractTransparentApp {
   private void get() {
     synchronized (out) {
       try {
-      if (!queue.isEmpty()) {
-        Integer i = (Integer) queue.take();
-        //Integer i = (Integer) take(queue);
-        if (i.intValue() != out.increment()) {
-          throw new AssertionError(" Got = " + i.intValue() + " and Expected = " + out.get());
+        if (!queue.isEmpty()) {
+          Integer i = (Integer) queue.take();
+          // Integer i = (Integer) take(queue);
+          if (i.intValue() != out.increment()) { throw new AssertionError(" Got = " + i.intValue() + " and Expected = "
+                                                                          + out.get()); }
+          // if ((i.intValue() % DEBUG_COUNT) == 0) {
+          println("                 Got : " + i);
+          // }
         }
-        //if ((i.intValue() % DEBUG_COUNT) == 0) {
-        println("                 Got : " + i);
-        //}
-      }
       } catch (InterruptedException e) {
-      throw new AssertionError(e);
+        throw new AssertionError(e);
       }
     }
 
@@ -65,12 +65,12 @@ public class LinkedQueueTestApp extends AbstractTransparentApp {
   private void put() {
     synchronized (in) {
       try {
-      Integer i = new Integer(in.increment());
-      queue.put(i);
-      //put(queue, i);
-      println("Put : " + i);
+        Integer i = Integer.valueOf(in.increment());
+        queue.put(i);
+        // put(queue, i);
+        println("Put : " + i);
       } catch (InterruptedException e) {
-      throw new AssertionError(e);
+        throw new AssertionError(e);
       }
     }
   }
@@ -95,25 +95,25 @@ public class LinkedQueueTestApp extends AbstractTransparentApp {
     new LinkedQueueSpec().visit(visitor, config);
   }
 
-//  private static Object take(List workQueue2) {
-//    synchronized (workQueue2) {
-//      while (workQueue2.size() == 0) {
-//        try {
-//          workQueue2.wait();
-//        } catch (InterruptedException e) {
-//          throw new RuntimeException(e);
-//        }
-//      }
-//      return workQueue2.remove(0);
-//    }
-//  }
-//
-//  private static void put(List workQueue2, Object o) {
-//    synchronized (workQueue2) {
-//      workQueue2.add(o);
-//      workQueue2.notify();
-//    }
-//  }
+  // private static Object take(List workQueue2) {
+  // synchronized (workQueue2) {
+  // while (workQueue2.size() == 0) {
+  // try {
+  // workQueue2.wait();
+  // } catch (InterruptedException e) {
+  // throw new RuntimeException(e);
+  // }
+  // }
+  // return workQueue2.remove(0);
+  // }
+  // }
+  //
+  // private static void put(List workQueue2, Object o) {
+  // synchronized (workQueue2) {
+  // workQueue2.add(o);
+  // workQueue2.notify();
+  // }
+  // }
 
   private static void println(Object o) {
     System.err.println(Thread.currentThread().getName() + " : " + String.valueOf(o));

@@ -176,7 +176,7 @@ public class ClassNotPortableTestApp extends AbstractTransparentApp {
       }
 
       Map m = new HashMap();
-      m.put(new Integer(10), new SuperClassWithFields());
+      m.put(Integer.valueOf(10), new SuperClassWithFields());
 
       try {
         // Adding non-portable Map to a shared object.
@@ -190,14 +190,14 @@ public class ClassNotPortableTestApp extends AbstractTransparentApp {
       root6.add(tm);
 
       try {
-        tm.put(new Integer(10), new SuperClassWithFields());
+        tm.put(Integer.valueOf(10), new SuperClassWithFields());
         // Adding non-portable Map to a shared object.
         throw new AssertionError("Should have failed");
       } catch (TCNonPortableObjectError tcp) {
         // Expected
       }
 
-      ReferenceHolder ref = new ReferenceHolder(new Integer(120));
+      ReferenceHolder ref = new ReferenceHolder(Integer.valueOf(120));
       root6.add(ref);
       try {
         ref.setReference(new SuperClassWithNoFields());
@@ -343,6 +343,7 @@ public class ClassNotPortableTestApp extends AbstractTransparentApp {
       this.localint = i;
     }
 
+    @Override
     public String toString() {
       return "SubClassOfArrayList(" + localint + "):" + super.toString();
     }
@@ -363,16 +364,17 @@ public class ClassNotPortableTestApp extends AbstractTransparentApp {
       this.localint = i;
     }
 
+    @Override
     public String toString() {
       return "SubClassOfHashMap(" + localint + "):" + super.toString();
     }
   }
 
   static class Worker extends Thread {
-    private List    works = new ArrayList();
-    private boolean stop  = false;
+    private final List works = new ArrayList();
+    private boolean    stop  = false;
 
-    private int     k;
+    private int        k;
 
     public synchronized void addWork(Runnable r) {
       works.add(r);
@@ -400,6 +402,7 @@ public class ClassNotPortableTestApp extends AbstractTransparentApp {
       notifyAll();
     }
 
+    @Override
     public void run() {
       while (true) {
         while (works.isEmpty() && !stop) {

@@ -38,10 +38,10 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class GenericMapTestApp extends GenericTransparentApp {
@@ -1750,12 +1750,12 @@ public class GenericMapTestApp extends GenericTransparentApp {
     THashMap tMap = (THashMap) map;
     if (validate) {
       for (int i = 0; i < 10; i++) {
-        Assert.assertEquals(new Integer(i + 1), tMap.get(String.valueOf(i)));
+        Assert.assertEquals(Integer.valueOf(i + 1), tMap.get(String.valueOf(i)));
       }
     } else {
       synchronized (tMap) {
         for (int i = 0; i < 10; i++) {
-          tMap.put(String.valueOf(i), new Integer(i));
+          tMap.put(String.valueOf(i), Integer.valueOf(i));
         }
       }
       synchronized (tMap) {
@@ -1944,7 +1944,7 @@ public class GenericMapTestApp extends GenericTransparentApp {
 
     Clearable clearableMap = (Clearable) map;
     TCMap tcMap = (TCMap) map;
-    
+
     if (validate) {
       // turn off clearing temporarily to make sure we can observe the value being locally present
       clearableMap.setEvictionEnabled(false);
@@ -1969,7 +1969,7 @@ public class GenericMapTestApp extends GenericTransparentApp {
       }
     }
   }
-  
+
   void testValuesIteratorFaults(Map map, boolean validate, int v) {
     boolean clearable = false;
     for (Class iface : map.getClass().getInterfaces()) {
@@ -1991,7 +1991,7 @@ public class GenericMapTestApp extends GenericTransparentApp {
 
     Clearable clearableMap = (Clearable) map;
     TCMap tcMap = (TCMap) map;
-    
+
     if (validate) {
       // turn off clearing temporarily to make sure we can observe the value being locally present
       clearableMap.setEvictionEnabled(false);
@@ -2016,7 +2016,7 @@ public class GenericMapTestApp extends GenericTransparentApp {
       }
     }
   }
-  
+
   private boolean canTestSharedArray(Map map) {
     return !(map instanceof HashMap) && !(map instanceof LinkedHashMap) && !(map instanceof Hashtable);
   }
@@ -2531,7 +2531,7 @@ public class GenericMapTestApp extends GenericTransparentApp {
   private static class MyObjectFunction implements TObjectFunction {
 
     public Object execute(Object value) {
-      return new Integer(((Integer) value).intValue() + 1);
+      return Integer.valueOf(((Integer) value).intValue() + 1);
     }
 
   }

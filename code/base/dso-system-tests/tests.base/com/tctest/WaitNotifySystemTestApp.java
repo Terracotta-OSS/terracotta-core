@@ -75,7 +75,7 @@ public class WaitNotifySystemTestApp extends AbstractTransparentApp {
   }
 
   public void run0() throws Throwable {
-    final long id = new Long(getApplicationId()).longValue();
+    final long id = Long.valueOf(getApplicationId()).longValue();
 
     if (first.attemptSet()) {
       // I am the master, bow before me
@@ -92,7 +92,7 @@ public class WaitNotifySystemTestApp extends AbstractTransparentApp {
   private void runTaker(long id) throws InterruptedException {
     Thread.currentThread().setName("TAKER-" + id);
 
-    Long myID = new Long(id);
+    Long myID = Long.valueOf(id);
     synchronized (takers) {
       takers.add(myID);
     }
@@ -138,7 +138,7 @@ public class WaitNotifySystemTestApp extends AbstractTransparentApp {
     } finally {
       log("adding to takeCount");
       synchronized (takeCounts) {
-        takeCounts.add(new Long(count));
+        takeCounts.add(Long.valueOf(count));
       }
 
       log("removing self from takers set");
@@ -154,7 +154,7 @@ public class WaitNotifySystemTestApp extends AbstractTransparentApp {
   private void runPutter(long id) {
     Thread.currentThread().setName("PUTTER-" + id);
 
-    Long myID = new Long(id);
+    Long myID = Long.valueOf(id);
     synchronized (putters) {
       putters.add(myID);
     }
@@ -209,7 +209,7 @@ public class WaitNotifySystemTestApp extends AbstractTransparentApp {
 
     final long extraTakerID = getUniqueId(workerIDs);
     final List next = new ArrayList(workers);
-    next.add(new Long(extraTakerID));
+    next.add(Long.valueOf(extraTakerID));
     final long extraPutterID = getUniqueId((Long[]) next.toArray(new Long[] {}));
 
     // start up another taker and putter locally. Do this for two reasons:
@@ -320,8 +320,8 @@ public class WaitNotifySystemTestApp extends AbstractTransparentApp {
     while (true) {
       final long candidate = random.nextInt(Integer.MAX_VALUE);
       boolean okay = true;
-      for (int i = 0; i < workerIDs.length; i++) {
-        if (workerIDs[i].longValue() == candidate) {
+      for (Long workerID : workerIDs) {
+        if (workerID.longValue() == candidate) {
           okay = false;
           break;
         }
@@ -360,6 +360,7 @@ public class WaitNotifySystemTestApp extends AbstractTransparentApp {
       return STOP.name.equals(name);
     }
 
+    @Override
     public String toString() {
       return this.name;
     }

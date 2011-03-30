@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -171,12 +172,12 @@ public class JavaUtilArraysTestApp extends AbstractTransparentApp {
       }
 
       Object[] objectFillCompare = new Object[10];
-      Arrays.fill(objectFillCompare, new Integer(1));
+      Arrays.fill(objectFillCompare, Integer.valueOf(1));
       if (!Arrays.equals(objectFillCompare, d.filledObject)) {
         // formatting
         throw new RuntimeException("filled objects: " + expected(objectFillCompare, d.filledObject));
       }
-      Object[] sortedObject = new Object[] { new Integer(-4), new Integer(3) };
+      Object[] sortedObject = new Object[] { Integer.valueOf(-4), Integer.valueOf(3) };
       if (!Arrays.equals(sortedObject, d.sortedObject)) {
         // formatting
         throw new RuntimeException("sorted objects: " + expected(sortedObject, d.sortedObject));
@@ -191,8 +192,8 @@ public class JavaUtilArraysTestApp extends AbstractTransparentApp {
 
       List list = d.asList;
       if (list.size() != 2) { throw new RuntimeException("list wrong size: " + list.size()); }
-      if (!list.get(0).equals(new Integer(-4))) { throw new RuntimeException("wrong data"); }
-      if (!list.get(1).equals(new Integer(3))) { throw new RuntimeException("wrong data"); }
+      if (!list.get(0).equals(Integer.valueOf(-4))) { throw new RuntimeException("wrong data"); }
+      if (!list.get(1).equals(Integer.valueOf(3))) { throw new RuntimeException("wrong data"); }
 
       Object[] array = d.dataBehindAsList2;
       if (array.length != 4) { throw new RuntimeException("array size wrong: " + array.length); }
@@ -227,41 +228,41 @@ public class JavaUtilArraysTestApp extends AbstractTransparentApp {
   private static final int[]    unsortedInt    = new int[] { 2, Integer.MAX_VALUE, 7, Integer.MIN_VALUE, 8, 1 };
   private static final long[]   unsortedLong   = new long[] { 1000L, 5L, 1L, Long.MIN_VALUE, Long.MAX_VALUE };
   private static final short[]  unsortedShort  = new short[] { Short.MAX_VALUE, 2, Short.MIN_VALUE, 0 };
-  private static final Object[] unsortedObject = new Object[] { new Integer(3), new Integer(-4) };
+  private static final Object[] unsortedObject = new Object[] { Integer.valueOf(3), Integer.valueOf(-4) };
 
   private static class Data {
 
-    private boolean[]      filledBoolean;
+    private final boolean[] filledBoolean;
     // NOTE: There is no such thing as sorted booleans
 
-    private final byte[]   filledByte;
-    private final byte[]   sortedByte;
+    private final byte[]    filledByte;
+    private final byte[]    sortedByte;
 
-    private final char[]   filledChar;
-    private final char[]   sortedChar;
+    private final char[]    filledChar;
+    private final char[]    sortedChar;
 
-    private final double[] filledDouble;
-    private final double[] sortedDouble;
+    private final double[]  filledDouble;
+    private final double[]  sortedDouble;
 
-    private final float[]  filledFloat;
-    private final float[]  sortedFloat;
+    private final float[]   filledFloat;
+    private final float[]   sortedFloat;
 
-    private final int[]    filledInt;
-    private final int[]    sortedInt;
+    private final int[]     filledInt;
+    private final int[]     sortedInt;
 
-    private final long[]   filledLong;
-    private final long[]   sortedLong;
+    private final long[]    filledLong;
+    private final long[]    sortedLong;
 
-    private final short[]  filledShort;
-    private final short[]  sortedShort;
+    private final short[]   filledShort;
+    private final short[]   sortedShort;
 
-    private final Object[] filledObject;
-    private final Object[] sortedObject;
+    private final Object[]  filledObject;
+    private final Object[]  sortedObject;
 
-    private final List     asList;
-    private final List     asList2;
+    private final List      asList;
+    private final List      asList2;
 
-    private final Object[] dataBehindAsList2;
+    private final Object[]  dataBehindAsList2;
 
     Data() {
       this.filledBoolean = new boolean[10];
@@ -312,7 +313,7 @@ public class JavaUtilArraysTestApp extends AbstractTransparentApp {
       Arrays.fill(this.filledInt, 1);
       Arrays.fill(this.filledLong, 42L);
       Arrays.fill(this.filledShort, (short) 69);
-      Arrays.fill(this.filledObject, new Integer(1));
+      Arrays.fill(this.filledObject, Integer.valueOf(1));
     }
 
     synchronized void sort() {

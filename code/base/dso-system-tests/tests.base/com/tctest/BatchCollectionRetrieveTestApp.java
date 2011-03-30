@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -16,8 +17,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class BatchCollectionRetrieveTestApp extends AbstractTransparentApp {
-  private TestRoot root;
-  private Set      nodes = new HashSet();
+  private TestRoot  root;
+  private final Set nodes = new HashSet();
 
   public BatchCollectionRetrieveTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -42,7 +43,7 @@ public class BatchCollectionRetrieveTestApp extends AbstractTransparentApp {
   private Map createBigHashMap() {
     Map m = new HashMap();
     for (int i = 0; i < 1000; i++) {
-      m.put(new Integer(i), new HashMap());
+      m.put(Integer.valueOf(i), new HashMap());
     }
     return m;
   }

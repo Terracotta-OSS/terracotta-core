@@ -165,8 +165,8 @@ public class AccessibleObjectTestApp extends AbstractTransparentApp {
 
     if (index == 1) {
       Constructor c = root.getC1();
-      Superclass o = (Superclass) c
-          .newInstance(new Object[] { new Integer(1), new Long(10), "Basic Constructor Test" });
+      Superclass o = (Superclass) c.newInstance(new Object[] { Integer.valueOf(1), Long.valueOf(10),
+          "Basic Constructor Test" });
       Assert.assertEquals(1, o.getI());
       Assert.assertEquals(10, o.getL());
       Assert.assertEquals("Basic Constructor Test", o.getSuperString());
@@ -274,7 +274,7 @@ public class AccessibleObjectTestApp extends AbstractTransparentApp {
 
       Subclass sub = new Subclass();
       m1.invoke(sub, new Object[] { "sample super string" });
-      m2.invoke(sub, new Object[] { new Long(773648L) });
+      m2.invoke(sub, new Object[] { Long.valueOf(773648L) });
       Assert.assertEquals("sample super string", sub.getSuperString());
       Assert.assertEquals(773648L, sub.getL());
     }
@@ -374,7 +374,7 @@ public class AccessibleObjectTestApp extends AbstractTransparentApp {
     if (index == 1) {
       Method m = root.getM1();
       Subclass sub = new Subclass();
-      m.invoke(sub, new Object[] { new Integer(10) });
+      m.invoke(sub, new Object[] { Integer.valueOf(10) });
       Assert.assertEquals(10, sub.getI());
     }
 
@@ -392,7 +392,7 @@ public class AccessibleObjectTestApp extends AbstractTransparentApp {
     if (index == 1) {
       Method m = root.getM1();
       Subclass sub = new Subclass();
-      m.invoke(sub, new Object[] { new Integer(10) });
+      m.invoke(sub, new Object[] { Integer.valueOf(10) });
       Assert.assertEquals(10, sub.getI());
     }
 
@@ -508,7 +508,7 @@ public class AccessibleObjectTestApp extends AbstractTransparentApp {
     if (index == 1) {
       Method m = root.getM1();
       Superclass sc = new Superclass();
-      m.invoke(sc, new Object[] { new Integer(10) });
+      m.invoke(sc, new Object[] { Integer.valueOf(10) });
       Assert.assertEquals(10, sc.getI());
     }
 
