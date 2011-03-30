@@ -14,6 +14,8 @@ import com.tc.objectserver.storage.api.DBEnvironment;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 
@@ -81,7 +83,14 @@ public class DBCollectionsDeleteTest extends TCTestCase {
       final MapManagedObjectState state = (MapManagedObjectState) ManagedObjectStateFactory.getInstance()
           .createState(id, ObjectID.NULL_ID, "java.util.HashMap", "System.loader", new TestDNACursor());
       final TCPersistableMap sMap = (TCPersistableMap) state.getPersistentCollection();
-      int entries = rand.nextInt(200000);
+      int entries = 0;
+      if (i == 0) {
+        entries = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_OBJECTMANAGER_DELETEBATCHSIZE) - 1;
+      } else if (i == 1) {
+        entries = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_OBJECTMANAGER_DELETEBATCHSIZE) + 100;
+      } else {
+        entries = rand.nextInt(200000);
+      }
       System.out.println("XXX added entries:" + entries);
       addToMap(sMap, entries);
       Assert.assertEquals(totalEntries, this.env.getMapsDatabase().count(null));
