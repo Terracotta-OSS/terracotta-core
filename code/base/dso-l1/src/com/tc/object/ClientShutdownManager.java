@@ -62,7 +62,7 @@ public class ClientShutdownManager {
 
     closeStatisticsAgent();
 
-    closeLocalWork();
+    closeLocalWork(fromShutdownHook);
 
     if (!fromShutdownHook) {
       shutdown();
@@ -90,7 +90,7 @@ public class ClientShutdownManager {
     }
   }
 
-  private void closeLocalWork() {
+  private void closeLocalWork(final boolean fromShutdownHook) {
 
     // stop handshaking while shutting down
     handshakeManager.shutdown();
@@ -99,7 +99,7 @@ public class ClientShutdownManager {
     if (!immediate) {
       if (rtxManager != null) {
         try {
-          rtxManager.stop();
+          rtxManager.stop(fromShutdownHook);
         } catch (Throwable t) {
           logger.error("Error shutting down remote transaction manager", t);
         }

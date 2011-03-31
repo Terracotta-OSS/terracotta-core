@@ -120,7 +120,7 @@ public class RemoteTransactionManagerTest extends TestCase {
     final NoExceptionLinkedQueue flushCalls = new NoExceptionLinkedQueue();
     Runnable stoper = new Runnable() {
       public void run() {
-        RemoteTransactionManagerTest.this.manager.stop();
+        RemoteTransactionManagerTest.this.manager.stop(true);
         flushCalls.put(lockID1);
         System.err.println("Manager stopped");
       }
@@ -155,7 +155,7 @@ public class RemoteTransactionManagerTest extends TestCase {
     final NoExceptionLinkedQueue flushCalls = new NoExceptionLinkedQueue();
     Runnable stoper = new Runnable() {
       public void run() {
-        RemoteTransactionManagerTest.this.manager.stop();
+        RemoteTransactionManagerTest.this.manager.stop(true);
         flushCalls.put(lockID1);
         System.err.println("Manager stopped");
       }
