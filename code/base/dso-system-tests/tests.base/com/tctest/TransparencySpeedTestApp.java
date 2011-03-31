@@ -138,7 +138,9 @@ public class TransparencySpeedTestApp extends AbstractTransparentApp {
   public static class TestObj {
     private TestObj       obj;
     private final String  string  = "Steve";
+    @SuppressWarnings("unused")
     private final int     integer = 22;
+    @SuppressWarnings("unused")
     private final boolean bool    = false;
     private final Map     map     = new HashMap();
 
@@ -158,7 +160,7 @@ public class TransparencySpeedTestApp extends AbstractTransparentApp {
     }
 
     public boolean check() {
-      return string.equals("Steve") && integer == 22 && bool == false;
+      return string.equals("Steve");
     }
   }
 }
