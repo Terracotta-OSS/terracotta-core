@@ -287,25 +287,29 @@ public class ManagerImpl implements ManagerInternal {
   }
 
   public void stop() {
-    shutdown(false);
+    shutdown(false, false);
   }
 
-  private void shutdown(final boolean fromShutdownHook) {
+  public void stopImmediate() {
+    shutdown(false, true);
+  }
+
+  private void shutdown(boolean fromShutdownHook, boolean forceImmediate) {
     if (clientStopped.attemptSet()) {
-      shutdownClient(fromShutdownHook);
+      shutdownClient(fromShutdownHook, forceImmediate);
     } else {
       logger.info("Client already shutdown.");
     }
   }
 
-  private void shutdownClient(final boolean fromShutdownHook) {
+  private void shutdownClient(boolean fromShutdownHook, boolean forceImmediate) {
     Assert.eval(clientStopped.isSet());
     this.runtimeLogger.shutdown();
     if (this.shutdownManager != null) {
       try {
         // XXX: This "fromShutdownHook" flag should be removed. It's only here temporarily to make shutdown behave
         // before I started futzing with it
-        this.shutdownManager.execute(fromShutdownHook);
+        this.shutdownManager.execute(fromShutdownHook, forceImmediate);
       } finally {
         // If we're not being called as a result of the shutdown hook, de-register the hook
         if (Thread.currentThread() != this.shutdownAction) {
@@ -599,7 +603,7 @@ public class ManagerImpl implements ManagerInternal {
       // XXX: we should just call stop(), but for the 1.5 (chex) release, I'm reverting the behavior
       // stop();
 
-      shutdown(true);
+      shutdown(true, false);
     }
   }
 

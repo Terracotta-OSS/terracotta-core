@@ -322,4 +322,9 @@ public class NullManagerInternal implements ManagerInternal {
   public void fireOperatorEvent(EventType eventLevel, EventSubsystem eventSubsystem, String eventMessage) {
     //
   }
+
+  public void stopImmediate() {
+    //
+  }
+
 }

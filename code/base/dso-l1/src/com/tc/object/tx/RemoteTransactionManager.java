@@ -18,7 +18,7 @@ import java.util.Set;
  */
 public interface RemoteTransactionManager extends ClientHandshakeCallback, PrettyPrintable {
 
-  public void stop(final boolean fromShutdownHook);
+  public void stop();
 
   /**
    * Blocks until all of the transactions within the given lock has been fully ACKed.

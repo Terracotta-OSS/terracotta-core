@@ -56,13 +56,13 @@ public class ClientShutdownManager {
     }
   }
 
-  public void execute(boolean fromShutdownHook) {
+  public void execute(boolean fromShutdownHook, boolean forceImmediate) {
 
     executeBeforeShutdownHooks();
 
     closeStatisticsAgent();
 
-    closeLocalWork(fromShutdownHook);
+    closeLocalWork(forceImmediate);
 
     if (!fromShutdownHook) {
       shutdown();
@@ -90,16 +90,16 @@ public class ClientShutdownManager {
     }
   }
 
-  private void closeLocalWork(final boolean fromShutdownHook) {
+  private void closeLocalWork(boolean forceImmediate) {
 
     // stop handshaking while shutting down
     handshakeManager.shutdown();
 
-    boolean immediate = isImmediate();
+    boolean immediate = forceImmediate || isImmediate();
     if (!immediate) {
       if (rtxManager != null) {
         try {
-          rtxManager.stop(fromShutdownHook);
+          rtxManager.stop();
         } catch (Throwable t) {
           logger.error("Error shutting down remote transaction manager", t);
         }

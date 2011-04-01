@@ -50,7 +50,7 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
     throw new ImplementMe();
   }
 
-  public void stop(final boolean fromShutdownHook) {
+  public void stop() {
     throw new ImplementMe();
 
   }

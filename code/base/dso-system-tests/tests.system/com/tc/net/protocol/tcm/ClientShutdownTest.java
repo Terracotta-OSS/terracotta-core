@@ -135,7 +135,7 @@ public class ClientShutdownTest extends BaseDSOTestCase {
     ThreadUtil.reallySleep(5000);
 
     new ClientShutdownManager(client.getObjectManager(), client, preparedComponentsFromL2Connection)
-        .execute(shutDownHook);
+        .execute(shutDownHook, false);
 
     System.out.println("XXX waiting for client close event");
     chLsnr.waitForComplete();
