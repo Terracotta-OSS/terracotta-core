@@ -10,10 +10,8 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 
 import gnu.trove.TLinkedList;
-import gnu.trove.TObjectLongHashMap;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -28,31 +26,24 @@ import java.util.TreeMap;
  */
 public class LFUEvictionPolicy implements EvictionPolicy {
 
-  private static final TCLogger    logger         = TCLogging.getLogger(LFUEvictionPolicy.class);
+  private static final TCLogger  logger         = TCLogging.getLogger(LFUEvictionPolicy.class);
 
-  private static final LFUConfig   DEFAULT_CONFIG = new LFUConfig() {
+  private static final LFUConfig DEFAULT_CONFIG = new LFUConfig() {
 
-                                                    public float getAgingFactor() {
-                                                      // DISABLED
-                                                      return 1;
-                                                    }
+                                                  public float getAgingFactor() {
+                                                    // DISABLED
+                                                    return 1;
+                                                  }
 
-                                                    public int getRecentlyAccessedIgnorePercentage() {
-                                                      return 20;
-                                                    }
+                                                  public int getRecentlyAccessedIgnorePercentage() {
+                                                    return 20;
+                                                  }
+                                                };
 
-                                                    public boolean isDebugEnabled() {
-                                                      return false;
-                                                    }
-
-                                                  };
-
-  private final int                capacity;
-  private final int                evictionSize;
-  private final TLinkedList        cache          = new TLinkedList();
-  private final LFUConfig          config;
-
-  private final TObjectLongHashMap smap           = new TObjectLongHashMap();
+  private final int              capacity;
+  private final int              evictionSize;
+  private final TLinkedList      cache          = new TLinkedList();
+  private final LFUConfig        config;
 
   public LFUEvictionPolicy(final int capacity) {
     this(capacity, capacity / 10, DEFAULT_CONFIG);
@@ -78,9 +69,6 @@ public class LFUEvictionPolicy implements EvictionPolicy {
   public synchronized boolean add(final Cacheable obj) {
     Assert.assertTrue(obj.getNext() == null && obj.getPrevious() == null);
     this.cache.addLast(obj);
-    if (this.config.isDebugEnabled()) {
-      this.smap.put(obj.getObjectID(), System.currentTimeMillis());
-    }
     return isCacheFull();
   }
 
@@ -104,45 +92,7 @@ public class LFUEvictionPolicy implements EvictionPolicy {
     }
   }
 
-  public Collection getRemovalCandidates(final int maxCount) {
-    final Collection candidates = getRemovalCandidatesInternal(maxCount);
-    if (this.config.isDebugEnabled()) {
-      reportTime("Cache", this.cache.subList(0, this.cache.size()));
-      reportTime("Eviction candidates", candidates);
-    }
-    return candidates;
-  }
-
-  private void reportTime(final String name, final Collection cacheables) {
-    final long now = System.currentTimeMillis();
-    final long times[] = new long[cacheables.size()];
-    int j = 0;
-    long avg = 0;
-    synchronized (this) {
-      for (final Iterator i = cacheables.iterator(); i.hasNext();) {
-        final Cacheable c = (Cacheable) i.next();
-        final long diff = now - this.smap.get(c.getObjectID());
-        times[j++] = diff;
-        avg += diff;
-      }
-    }
-    avg = avg / times.length;
-    // Stupid but whatever
-    Arrays.sort(times);
-    final StringBuffer sb = new StringBuffer(name);
-    sb.append(" : size = ").append(cacheables.size()).append(" Avg = ").append(avg);
-    sb.append(" Min = ").append(times[0]);
-    sb.append(" Max = ").append(times[times.length - 1]);
-    sb.append("\n\n");
-    final int n10 = times.length / 10;
-    for (int i = 1; i < 10; i++) {
-      sb.append("\t").append(i * 10).append(" % = ").append(times[n10 * i]).append("\n");
-    }
-    sb.append("\n\n");
-    logger.info(sb.toString());
-  }
-
-  private Collection getRemovalCandidatesInternal(int maxCount) {
+  public Collection getRemovalCandidates(int maxCount) {
 
     final long start = System.currentTimeMillis();
     final Collection rv = new HashSet();
@@ -156,7 +106,7 @@ public class LFUEvictionPolicy implements EvictionPolicy {
           maxCount = this.evictionSize;
         }
       } else if (maxCount <= 0) {
-        // disallow negetative maxCount when capacity is negative
+        // disallow negative maxCount when capacity is negative
         throw new AssertionError("Please specify maxcount > 0 as capacity is set to : " + this.capacity
                                  + " Max Count = " + maxCount);
       }
@@ -283,9 +233,6 @@ public class LFUEvictionPolicy implements EvictionPolicy {
   public synchronized void remove(final Cacheable obj) {
     if (contains(obj)) {
       this.cache.remove(obj);
-      if (this.config.isDebugEnabled()) {
-        this.smap.remove(obj.getObjectID());
-      }
     }
   }
 

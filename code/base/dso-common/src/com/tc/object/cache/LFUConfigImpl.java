@@ -9,9 +9,8 @@ import com.tc.util.Assert;
 
 public class LFUConfigImpl implements LFUConfig {
 
-  private final float   agingFactor;
-  private final int     ignorePercentage;
-  private final boolean debug;
+  private final float agingFactor;
+  private final int   ignorePercentage;
 
   public LFUConfigImpl(TCProperties lfuProperties) {
     agingFactor = lfuProperties.getFloat("agingFactor");
@@ -19,7 +18,6 @@ public class LFUConfigImpl implements LFUConfig {
     ignorePercentage = lfuProperties.getInt("recentlyAccessedIgnorePercentage");
     Assert.assertTrue("Invalid recentlyAccessedIgnorePercentage in properties file", ignorePercentage >= 0
                                                                                      && ignorePercentage <= 100);
-    debug = lfuProperties.getBoolean("debug.enabled");
   }
 
   public float getAgingFactor() {
@@ -28,10 +26,6 @@ public class LFUConfigImpl implements LFUConfig {
 
   public int getRecentlyAccessedIgnorePercentage() {
     return ignorePercentage;
-  }
-
-  public boolean isDebugEnabled() {
-    return debug;
   }
 
 }
