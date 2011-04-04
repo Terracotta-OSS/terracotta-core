@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema;
 
@@ -9,18 +10,14 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 public class L2InfoTest extends TCTestCase {
-  private String  canonicalHostName;
-  private String  hostAddress;
-  private boolean haveFQHostName;
+  private final String  canonicalHostName;
+  private final String  hostAddress;
+  private final boolean haveFQHostName;
 
-  public L2InfoTest() {
-    try {
-      canonicalHostName = InetAddress.getLocalHost().getCanonicalHostName();
-      hostAddress = InetAddress.getLocalHost().getHostAddress();
-      haveFQHostName = !canonicalHostName.equals(hostAddress);
-    } catch (UnknownHostException uhe) {
-      disableAllUntil("2010-01-01");
-    }
+  public L2InfoTest() throws UnknownHostException {
+    canonicalHostName = InetAddress.getLocalHost().getCanonicalHostName();
+    hostAddress = InetAddress.getLocalHost().getHostAddress();
+    haveFQHostName = !canonicalHostName.equals(hostAddress);
   }
 
   public void testEquals() {
