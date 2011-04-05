@@ -6,8 +6,10 @@ package com.tc.objectserver.dgc.api;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.impl.GCTestObjectManager;
+import com.tc.objectserver.core.impl.GarbageCollectionID;
 import com.tc.objectserver.core.impl.TestManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
+import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
 import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
 import com.tc.objectserver.dgc.impl.MarkAndSweepGarbageCollector;
 import com.tc.objectserver.impl.ObjectManagerConfig;
@@ -15,6 +17,7 @@ import com.tc.objectserver.l1.api.TestClientStateManager;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
 import com.tc.objectserver.persistence.inmemory.NullPersistenceTransactionProvider;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
+import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.sequence.DGCSequenceProvider;
 
@@ -120,6 +123,18 @@ public class GCStatsEventPublisherTest extends TestCase {
     assertEquals(1, listener.completedList.size());
     assertEquals(1, listener.cycleCompletedList.size());
 
+  }
+
+  public void testLastGarbageCollectorStats() {
+    GCStatsEventPublisher gcEventPublisher = new GCStatsEventPublisher();
+    GarbageCollectionInfo gcInfo1 = new GarbageCollectionInfo(new GarbageCollectionID(0, "xyz0"), true);
+    gcEventPublisher.garbageCollectorStart(gcInfo1);
+    GarbageCollectionInfo gcInfo2 = new GarbageCollectionInfo(new GarbageCollectionID(1, "xyz1"), true);
+    gcEventPublisher.garbageCollectorStart(gcInfo2);
+    GarbageCollectionInfo gcInfo3 = new GarbageCollectionInfo(new GarbageCollectionID(2, "xyz2"), true);
+    gcEventPublisher.garbageCollectorStart(gcInfo3);
+
+    Assert.assertEquals(gcInfo3.getIteration(), gcEventPublisher.getLastGarbageCollectorStats().getIteration());
   }
 
   private static class TestGarbageCollectionInfoCallsListener extends TestGarbageCollectorEventListener {

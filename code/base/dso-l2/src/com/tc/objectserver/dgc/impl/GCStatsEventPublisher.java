@@ -21,6 +21,7 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
   private final List               gcStatsEventListeners = new CopyOnWriteArrayList();
 
   private final LossyLinkedHashMap gcHistory             = new LossyLinkedHashMap(1500);
+  private GCStats                  lastGCStat            = null;
 
   public void addListener(GCStatsEventListener listener) {
     gcStatsEventListeners.add(listener);
@@ -31,9 +32,7 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
   }
 
   public GCStats getLastGarbageCollectorStats() {
-    Iterator iter = gcHistory.values().iterator();
-    if (iter.hasNext()) { return (GCStats) iter.next(); }
-    return null;
+    return this.lastGCStat;
   }
 
   @Override
@@ -106,6 +105,7 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
   }
 
   private void push(GarbageCollectionID id, GCStatsImpl stats) {
+    this.lastGCStat = stats;
     gcHistory.put(id, stats);
   }
 
