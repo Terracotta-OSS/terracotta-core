@@ -647,6 +647,11 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       try {
         final ServerSocketChannel ssc = (ServerSocketChannel) key.channel();
         sc = ssc.accept();
+        if (sc == null) {
+          // non blocking channel accept can return null
+          logger.warn("New connection accept didn't go through for " + ssc.socket());
+          return;
+        }
         sc.configureBlocking(false);
         final TCConnectionImpl conn = lsnr.createConnection(sc, CoreNIOServices.this, socketParams);
         requestReadInterest(conn, sc);
