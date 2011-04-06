@@ -163,7 +163,11 @@ public class TCBytesToBytesDatabaseTest extends TCTestCase {
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
-    dbenv.close();
-    FileUtils.cleanDirectory(dbHome);
+    try {
+      dbenv.close();
+      FileUtils.cleanDirectory(dbHome);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 }
