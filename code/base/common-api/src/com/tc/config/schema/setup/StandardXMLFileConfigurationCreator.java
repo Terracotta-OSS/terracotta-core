@@ -74,7 +74,6 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   private File                       directoryLoadedFrom;
   private String                     baseConfigDescription                = "";
   private TcConfigDocument           tcConfigDocument;
-  private TcConfig                   providedTcConfig;
   private final DefaultValueProvider defaultValueProvider                 = new SchemaDefaultValueProvider();
 
   public StandardXMLFileConfigurationCreator(final ConfigurationSpec configurationSpec,
@@ -493,7 +492,6 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
 
       tcConfigDoc = ((TcConfigDocument) beanWithErrors.bean());
       TcConfig config = tcConfigDoc.getTcConfig();
-      this.providedTcConfig = (TcConfig) config.copy();
       SystemConfigObject.initializeSystem(config, this.defaultValueProvider);
       L2DSOConfigObject.initializeServers(config, this.defaultValueProvider, this.directoryLoadedFrom);
       // initialize client only while parsing for client
@@ -526,7 +524,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   }
 
   public String rawConfigText() {
-    return this.providedTcConfig.toString();
+    return this.tcConfigDocument.toString();
   }
 
   public String describeSources() {
