@@ -26,6 +26,7 @@ import com.tc.logging.TCLogging;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerImpl;
+import com.tc.object.bytecode.ManagerInternal;
 import com.tc.object.bytecode.hook.ClassLoaderPreProcessorImpl;
 import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -87,6 +88,7 @@ public class DSOContextImpl implements DSOContext {
                                                                              + "Enter the make-boot-jar command with the -h switch for help.\n"
                                                                              + "********************************************************************************\n";
   private final EmbeddedOSGiRuntime                 osgiRuntime;
+  private final boolean                             immediateStop;
 
   /**
    * Creates a "global" DSO Context. This context is appropriate only when there is only one DSO Context that applies to
@@ -95,7 +97,7 @@ public class DSOContextImpl implements DSOContext {
   public static DSOContext createGlobalContext() throws ConfigurationSetupException {
     DSOClientConfigHelper configHelper = getGlobalConfigHelper();
     Manager manager = new ManagerImpl(configHelper, preparedComponentsFromL2Connection);
-    return new DSOContextImpl(configHelper, manager.getClassProvider(), manager, Collections.EMPTY_LIST);
+    return new DSOContextImpl(configHelper, manager.getClassProvider(), manager, Collections.EMPTY_LIST, false);
   }
 
   public static DSOContext createContext(String configSpec) throws ConfigurationSetupException {
@@ -123,7 +125,8 @@ public class DSOContextImpl implements DSOContext {
 
   public static DSOContext createStandaloneContext(String configSpec, ClassLoader loader,
                                                    Map<String, URL> virtualTimJars, Collection<URL> additionalModules,
-                                                   URL bootJarURL) throws ConfigurationSetupException {
+                                                   URL bootJarURL, boolean immediateStop)
+      throws ConfigurationSetupException {
     // XXX: refactor this method to not duplicate createContext() so much
 
     // load license via normal methods before attempt to load it from application resource
@@ -165,7 +168,7 @@ public class DSOContextImpl implements DSOContext {
 
     Collection<Repository> repos = new ArrayList<Repository>();
     repos.add(new VirtualTimRepository(virtualTimJars));
-    DSOContext context = createContext(configHelper, manager, repos);
+    DSOContext context = createContext(configHelper, manager, repos, immediateStop);
     if (additionalModules != null && !additionalModules.isEmpty()) {
       try {
         context.addModules(additionalModules.toArray(new URL[0]));
@@ -183,20 +186,21 @@ public class DSOContextImpl implements DSOContext {
    */
 
   public static DSOContext createContext(DSOClientConfigHelper configHelper, Manager manager) {
-    return createContext(configHelper, manager, Collections.EMPTY_LIST);
+    return createContext(configHelper, manager, Collections.EMPTY_LIST, false);
   }
 
   public static DSOContext createContext(DSOClientConfigHelper configHelper, Manager manager,
-                                         Collection<Repository> repos) {
-    return new DSOContextImpl(configHelper, manager.getClassProvider(), manager, repos);
+                                         Collection<Repository> repos, boolean immediateStop) {
+    return new DSOContextImpl(configHelper, manager.getClassProvider(), manager, repos, immediateStop);
   }
 
   private DSOContextImpl(DSOClientConfigHelper configHelper, ClassProvider classProvider, Manager manager,
-                         Collection<Repository> repos) {
+                         Collection<Repository> repos, boolean immediateStop) {
     Assert.assertNotNull(configHelper);
 
     resolveClasses();
 
+    this.immediateStop = immediateStop;
     this.configHelper = configHelper;
     this.manager = manager;
     this.instrumentationLogger = manager.getInstrumentationLogger();
@@ -397,12 +401,16 @@ public class DSOContextImpl implements DSOContext {
   }
 
   public void addModules(URL[] modules) throws Exception {
-    ModulesLoader.installAndStartBundles(osgiRuntime, configHelper, manager.getClassProvider(),
-                                         manager.getTunneledDomainUpdater(), false, modules);
+    ModulesLoader.installAndStartBundles(osgiRuntime, configHelper, manager.getClassProvider(), manager
+        .getTunneledDomainUpdater(), false, modules);
   }
 
   public void shutdown() {
     osgiRuntime.shutdown();
-    manager.stop();
+    if (immediateStop) {
+      ((ManagerInternal) manager).stopImmediate();
+    } else {
+      manager.stop();
+    }
   }
 }
