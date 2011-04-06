@@ -8,6 +8,8 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.osgi.framework.Version;
 
 import com.tc.admin.common.AboutDialog;
@@ -88,13 +90,13 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
+import javax.swing.JPopupMenu.Separator;
 import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
-import javax.swing.JPopupMenu.Separator;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -870,8 +872,9 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       textArea.setLineWrap(true);
       textArea.setWrapStyleWord(true);
       XScrollPane scrollPane = new XScrollPane(textArea);
-      JOptionPane.showMessageDialog(AdminClientPanel.this, scrollPane, adminClientContext
-          .getMessage("update-checker.action.title"), JOptionPane.INFORMATION_MESSAGE);
+      JOptionPane.showMessageDialog(AdminClientPanel.this, scrollPane,
+                                    adminClientContext.getMessage("update-checker.action.title"),
+                                    JOptionPane.INFORMATION_MESSAGE);
     }
 
     public Properties getResponseBody(URL url, HttpClient client) throws ConnectException, IOException {
@@ -981,8 +984,9 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       if (msg != null) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            JOptionPane.showMessageDialog(AdminClientPanel.this, msg, adminClientContext
-                .getMessage("update-checker.action.title"), JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(AdminClientPanel.this, msg,
+                                          adminClientContext.getMessage("update-checker.action.title"),
+                                          JOptionPane.INFORMATION_MESSAGE);
           }
         });
       }
@@ -1087,6 +1091,8 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       textPane.setEditorKit(new SyncHTMLEditorKit());
       msg.add(new XScrollPane(textPane));
       textPane.setPreferredSize(new Dimension(550, 280));
+      textPane.setEditable(false);
+      textPane.addHyperlinkListener(this);
       textPane.addPropertyChangeListener("page", new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent pce) {
           Frame frame = getFrame();
@@ -1098,8 +1104,6 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
-      textPane.setEditable(false);
-      textPane.addHyperlinkListener(this);
     }
 
     public void hyperlinkUpdate(HyperlinkEvent e) {
@@ -1220,6 +1224,27 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
         }
       }
       return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == null) { return false; }
+      if (obj == this) { return true; }
+      if (obj.getClass() != getClass()) { return false; }
+      VersionMap rhs = (VersionMap) obj;
+      return new EqualsBuilder().appendSuper(super.equals(obj)).append(versionDir, rhs.versionDir)
+          .append(version, rhs.version).append(qualifier, rhs.qualifier).isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+      builder.append(versionDir);
+      builder.append(version);
+      if (qualifier != null) {
+        builder.append(qualifier);
+      }
+      return builder.toHashCode();
     }
 
     @Override
