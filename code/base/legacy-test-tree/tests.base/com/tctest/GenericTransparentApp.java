@@ -68,6 +68,7 @@ public abstract class GenericTransparentApp extends AbstractErrorCatchingTranspa
     }
   }
 
+  @Override
   public void runTest() throws Throwable {
     int num = barrier.await();
     mutator = (num == 0);
@@ -96,6 +97,8 @@ public abstract class GenericTransparentApp extends AbstractErrorCatchingTranspa
         try {
           runOp(name, true, variant);
         } catch (Throwable t) {
+          t.printStackTrace();
+
           exit.toggle();
           throw t;
         } finally {
@@ -120,6 +123,8 @@ public abstract class GenericTransparentApp extends AbstractErrorCatchingTranspa
           runOp(name, false, variant);
           runOp(name, true, variant);
         } catch (Throwable t) {
+          t.printStackTrace();
+
           exit.toggle();
           throw t;
         } finally {
@@ -188,8 +193,7 @@ public abstract class GenericTransparentApp extends AbstractErrorCatchingTranspa
     List rv = new ArrayList();
     Class klass = getClass();
     Method[] methods = klass.getDeclaredMethods();
-    for (int i = 0; i < methods.length; i++) {
-      Method m = methods[i];
+    for (Method m : methods) {
       if (m.getName().matches(METHOD_PATTERN)) {
         Class[] args = m.getParameterTypes();
 
