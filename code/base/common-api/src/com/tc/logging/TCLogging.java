@@ -36,8 +36,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Map.Entry;
 
 /**
  * Factory class for obtaining TCLogger instances.
@@ -292,7 +292,11 @@ public class TCLogging {
       File lockFile = new File(theDirectory, LOCK_FILE_NAME);
 
       try {
-        if (!lockFile.exists()) lockFile.createNewFile();
+        if (!lockFile.exists()) {
+          if (!lockFile.createNewFile()) {
+            Assert.fail("Failed to create lock file");
+          }
+        }
         Assert.eval(lockFile.exists());
         FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
         thisDirectoryLock = channel.tryLock();
