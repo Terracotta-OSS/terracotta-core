@@ -21,37 +21,52 @@
 <body>
 
 <h1><img src="/com/tc/welcome/tc-logo.png"><br>Terracotta Developer Console: My Application</h1>
-<h2><a name="HibViewsDevConsoleGuideaddition-TerracottaSecondLevelCacheforHibernateViews"></a>Terracotta Second-Level Cache for Hibernate Views</h2>
-<p>If you are using the Terracotta Second-Level Cache for Hibernate with your Hibernate-based application, the <b>Hibernate</b> and <b>Second-Level Cache</b> views offers you the following:</p>
+<p>Provides visibility and control of clustered applications. A product-specific node appears if any clustered applications use Terracotta Distributed Ehcache,
+Distributed Ehcache for Hibernate, Distributed Quartz Scheduler, or Web Sessions.</p>
+
+<h2>Ehcache</h2>
+<p>Contains panels with the following features:</p>
+<ul>
+	<li>Deep visibility into cached data</li>
+	<li>Controls for enabling, disabling, and clearing all CacheManager caches</li>
+	<li>Per-cache controls for enabling, disabling, clearing, and setting data visibility consistency</li>
+	<li>Live statistics for the entire cluster or per client</li>
+	<li>Graphs with performance metrics for cache activity</li>
+	<li>Historical data for trend analysis</li>
+	<li>Parameters for control over the size and efficiency of cache regions</li>
+	<li>A configuration generator</li>
+</ul>
+
+<h2>Hibernate</h2>
+<p>Contains panels with the following features:</p>
 <ul>
 	<li>Deep visibility into Hibernate and cached data</li>
 	<li>Live statistics</li>
 	<li>Graphs, including puts and misses</li>
 	<li>Historical data for trend analysis</li>
 	<li>Parameters for control over the size and efficiency of cache regions</li>
+	<li>Historical data for trend analysis</li>
+	<li>Parameters for control over the size and efficiency of cache regions</li>
 	<li>A configuration generator</li>
 </ul>
-<p>Note that the settings you change in the Second-Level Cache view are not saved to the cache configuration file and are not persisted beyond the lifetime of the cache.</p>
-<p>For more information on testing and tuning the Terracotta Second-Level Cache for Hibernate, go <a href="http://www.terracotta.org/kit/reflector?kitID=default&pageID=H2LCtune" rel="nofollow">here</a>.</p>
-<h3><a name="HibViewsDevConsoleGuideaddition-HibernateView"></a>Hibernate View</h3>
-<p>The Hibernate view displays Hibernate statistics. Some of the main tasks you can perform in this view are: </p>
+
+<h2>Quartz</h2>
+<p>Contains panels with the following features:</p>
 <ul>
-	<li>View statistics for the entire cluster on Hibernate entities, collections, and queries.</li>
-	<li>View statistics for each Terracotta client (application server) on Hibernate entities, collections, and queries.</li>
+	<li>Activity meters</li>
+	<li>Start/stop and pause controls for schedulers, job groups, and jobs</li>
+	<li>Job execution history</li>
+	<li>Ability to delete individual job details</li>
 </ul>
 
-<h3><a name="HibViewsDevConsoleGuideaddition-SecondLevelCacheView"></a>Second-Level Cache View</h3>
-<p>The Second-Level Cache view provides performance statistics and includes per-region cache configuration. Some of the main tasks you can perform in this view are:</p>
+<h2>Sessions</h2>
+<p>Contains panels with the following features:</p>
 <ul>
-	<li>View both live and historical performance metrics in graphs.</li>
-	<li>Enable and disable cache regions.</li>
-	<li>Flush cache regions.</li>
-	<li>Set eviction parameters per region.</li>
-	<li>Generate a configuration file based on settings in the Second-Level Cache view.</li>
+	<li>Live statistics</li>
+	<li>Graphs, including session creation, hop, and destruction rates</li>
+	<li>Historical data for trend analysis</li>
+	<li>Ability to expire any individual session or all sessions</li>
 </ul>
-
-<h3><a name="HibViewsDevConsoleGuideaddition-ViewingMultipleCaches"></a>Viewing Multiple Caches</h3>
-<p>If your cluster has more than one second-level cache, use the <b>Persistence Unit</b> drop-down menu to choose the cache you want to view.</p>
 
 </body>
 </html>
