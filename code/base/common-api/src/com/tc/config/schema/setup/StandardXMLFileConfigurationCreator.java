@@ -74,6 +74,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   private File                       directoryLoadedFrom;
   private String                     baseConfigDescription                = "";
   private TcConfigDocument           tcConfigDocument;
+  private TcConfigDocument           providedTcConfigDocument;
   private final DefaultValueProvider defaultValueProvider                 = new SchemaDefaultValueProvider();
 
   public StandardXMLFileConfigurationCreator(final ConfigurationSpec configurationSpec,
@@ -389,7 +390,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   }
 
   private void logCopyOfConfig() {
-    logger.info(describeSources() + ":\n\n" + this.tcConfigDocument.toString());
+    logger.info(describeSources() + ":\n\n" + this.providedTcConfigDocument.toString());
   }
 
   private void loadConfigurationData(InputStream in, boolean trustedSource, String descrip,
@@ -491,6 +492,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
       }
 
       tcConfigDoc = ((TcConfigDocument) beanWithErrors.bean());
+      this.providedTcConfigDocument = (TcConfigDocument) beanWithErrors.bean().copy();
       TcConfig config = tcConfigDoc.getTcConfig();
       SystemConfigObject.initializeSystem(config, this.defaultValueProvider);
       L2DSOConfigObject.initializeServers(config, this.defaultValueProvider, this.directoryLoadedFrom);
@@ -524,7 +526,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   }
 
   public String rawConfigText() {
-    return this.tcConfigDocument.toString();
+    return this.providedTcConfigDocument.toString();
   }
 
   public String describeSources() {
