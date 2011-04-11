@@ -26,4 +26,5 @@ public interface TCObjectDatabase {
    */
   public Status delete(long id, PersistenceTransaction tx);
 
+  public Status upsert(long long1, byte[] value, PersistenceTransaction tx);
 }

@@ -134,4 +134,9 @@ class DerbyTCObjectDatabase extends AbstractDerbyTCDatabase implements TCObjectD
     }
     return Status.SUCCESS;
   }
+
+  public Status upsert(long id, byte[] b, PersistenceTransaction tx) {
+    if (get(id, tx) == null) { return insert(id, b, tx); }
+    return update(id, b, tx);
+  }
 }

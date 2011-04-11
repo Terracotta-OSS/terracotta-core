@@ -114,5 +114,9 @@ public class SRAL2FaultsFromDiskTest extends TCTestCase {
     public Status update(long id, byte[] b, PersistenceTransaction tx) {
       throw new ImplementMe();
     }
+
+    public Status upsert(long id, byte[] b, PersistenceTransaction tx) {
+      throw new ImplementMe();
+    }
   }
 }

@@ -64,7 +64,8 @@ public final class ManagedObjectPersistorImpl extends DBPersistorBase implements
 
   private static final int                        DELETE_BATCH_SIZE      = TCPropertiesImpl
                                                                              .getProperties()
-                                                                             .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_DELETEBATCHSIZE,
+                                                                             .getInt(
+                                                                                     TCPropertiesConsts.L2_OBJECTMANAGER_DELETEBATCHSIZE,
                                                                                      5000);
 
   private static final long                       REMOVE_THRESHOLD       = 300;
@@ -340,11 +341,7 @@ public final class ManagedObjectPersistorImpl extends DBPersistorBase implements
     length += 8;
 
     try {
-      if (managedObject.isNew()) {
-        status = this.objectDB.insert(managedObject.getID().toLong(), value, tx);
-      } else {
-        status = this.objectDB.update(managedObject.getID().toLong(), value, tx);
-      }
+      status = this.objectDB.upsert(managedObject.getID().toLong(), value, tx);
       if (status == Status.SUCCESS) {
         length += basicSaveCollection(tx, managedObject);
         managedObject.setIsDirty(false);

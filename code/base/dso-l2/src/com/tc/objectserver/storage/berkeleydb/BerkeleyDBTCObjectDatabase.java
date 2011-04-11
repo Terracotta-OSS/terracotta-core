@@ -78,6 +78,10 @@ public class BerkeleyDBTCObjectDatabase extends BerkeleyDBTCBytesBytesDatabase i
     return put(id, b, tx);
   }
 
+  public Status upsert(long id, byte[] b, PersistenceTransaction tx) {
+    return put(id, b, tx);
+  }
+
   @Override
   public String toString() {
     return "BerkeleyDB-TCObjectDatabase";
