@@ -992,8 +992,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
   def mark_this_revision_as_good
     STDERR.puts("Revision #{@build_environment.combo_revision} is good to go.")
-    # Uncomment below line when all monkeys have been ported to Jenkins.
-    #return if @build_environment.jenkins?
+    return if @build_environment.jenkins? && !@build_environment.monkey_police?
     root = File.join(build_archive_dir.to_s, "monkey-police", @build_environment.current_branch)
     FileUtils.mkdir_p(root) unless File.exist?(root)
     good_rev_file = File.join(root, "good_rev.yml")

@@ -79,6 +79,11 @@ class BuildEnvironment < Environment
     (ENV['HUDSON_HOME'] || ENV['JENKINS_HOME']) && ENV['JOB_NAME']
   end
 
+  # Are we running the original monkey police job?
+  def monkey_police?
+    ENV['JOB_NAME'] =~ /^TC_(OS|EE)_publisher_/
+  end
+
   # What's the name of the user we're building as?
   def username
     if @user.nil?
