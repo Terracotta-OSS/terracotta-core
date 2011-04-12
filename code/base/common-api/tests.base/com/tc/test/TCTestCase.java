@@ -22,6 +22,7 @@ import com.tc.util.diff.Difference;
 import com.tc.util.diff.DifferenceBuilder;
 import com.tc.util.diff.Differenceable;
 import com.tc.util.runtime.ThreadDump;
+import com.tc.util.runtime.Vm;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.lang.management.ManagementFactory;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -42,6 +44,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
@@ -244,6 +249,30 @@ public class TCTestCase extends TestCase {
         timeoutCallback(delay);
       }
     }, delay);
+  }
+
+  public synchronized void dumpHeap() {
+    if (Vm.isJDK16Compliant()) {
+      try {
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        String hotSpotDiagName = "com.sun.management:type=HotSpotDiagnostic";
+        ObjectName name = new ObjectName(hotSpotDiagName);
+        String operationName = "dumpHeap";
+
+        File tempFile = new File(getTempDirectory(), "heapDump_" + (System.currentTimeMillis()) + ".hprof");
+        String dumpFilename = tempFile.getAbsolutePath();
+
+        Object[] params = new Object[] { dumpFilename, Boolean.TRUE };
+        String[] signature = new String[] { String.class.getName(), boolean.class.getName() };
+        mbs.invoke(name, operationName, params, signature);
+
+        System.out.println("dumped heap in file " + dumpFilename);
+      } catch (Exception e) {
+        System.err.println("Could not dump heap: " + e.getMessage());
+      }
+    } else {
+      System.err.println("Heap dump only available on jdk1.6+");
+    }
   }
 
   private long millisToMinutes(final long timeInMilliseconds) {
