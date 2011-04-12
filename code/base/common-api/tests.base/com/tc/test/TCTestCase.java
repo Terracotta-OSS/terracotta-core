@@ -251,7 +251,7 @@ public class TCTestCase extends TestCase {
     }, delay);
   }
 
-  public synchronized void dumpHeap() {
+  public static void dumpHeap(File destDir) {
     if (Vm.isJDK16Compliant()) {
       try {
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
@@ -259,7 +259,7 @@ public class TCTestCase extends TestCase {
         ObjectName name = new ObjectName(hotSpotDiagName);
         String operationName = "dumpHeap";
 
-        File tempFile = new File(getTempDirectory(), "heapDump_" + (System.currentTimeMillis()) + ".hprof");
+        File tempFile = new File(destDir, "heapDump_" + (System.currentTimeMillis()) + ".hprof");
         String dumpFilename = tempFile.getAbsolutePath();
 
         Object[] params = new Object[] { dumpFilename, Boolean.TRUE };

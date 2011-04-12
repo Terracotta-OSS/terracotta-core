@@ -14,11 +14,11 @@ public class TCTestCaseTest extends TCTestCase {
   public void testHeapDump() throws IOException {
     if (Vm.isJDK16Compliant()) {
       assertEquals(0, getHprofs().length);
-      dumpHeap();
+      dumpHeap(getTempDirectory());
       assertEquals(1, getHprofs().length);
-      dumpHeap();
+      dumpHeap(getTempDirectory());
       assertEquals(2, getHprofs().length);
-      dumpHeap();
+      dumpHeap(getTempDirectory());
     }
   }
 
