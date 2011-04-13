@@ -35,6 +35,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   public static final String TARGET_MAX_TOTAL_COUNT_FIELDNAME     = "targetMaxTotalCount";
   public static final String INVALIDATE_ON_CHANGE                 = "invalidateOnChange";
   public static final String CACHE_NAME_FIELDNAME                 = "cacheName";
+  public static final String LOCAL_CACHE_ENABLED_FIELDNAME        = "localCacheEnabled";
 
   enum EvictionStatus {
     NOT_INITIATED, INITIATED, SAMPLED
@@ -49,6 +50,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   private int            targetMaxInMemoryCount;
   private int            targetMaxTotalCount;
   private String         cacheName;
+  private boolean        localCacheEnabled;
 
   protected ConcurrentDistributedServerMapManagedObjectState(final ObjectInput in) throws IOException {
     super(in);
@@ -58,6 +60,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     this.targetMaxTotalCount = in.readInt();
     this.invalidateOnChange = in.readBoolean();
     this.cacheName = in.readUTF();
+    this.localCacheEnabled = in.readBoolean();
   }
 
   protected ConcurrentDistributedServerMapManagedObjectState(final long classId, final Map map) {
@@ -94,6 +97,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     writer.addPhysicalAction(TARGET_MAX_TOTAL_COUNT_FIELDNAME, Integer.valueOf(this.targetMaxTotalCount));
     writer.addPhysicalAction(INVALIDATE_ON_CHANGE, Boolean.valueOf(this.invalidateOnChange));
     writer.addPhysicalAction(CACHE_NAME_FIELDNAME, cacheName);
+    writer.addPhysicalAction(LOCAL_CACHE_ENABLED_FIELDNAME, localCacheEnabled);
   }
 
   @Override
@@ -130,8 +134,9 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
           } else {
             name = (String) value;
           }
-
           this.cacheName = name;
+        } else if (fieldName.equals(LOCAL_CACHE_ENABLED_FIELDNAME)) {
+          this.localCacheEnabled = (Boolean) physicalAction.getObject();
         } else {
           throw new AssertionError("unexpected field name: " + fieldName);
         }
@@ -230,6 +235,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     out.writeInt(this.targetMaxTotalCount);
     out.writeBoolean(this.invalidateOnChange);
     out.writeUTF(this.cacheName);
+    out.writeBoolean(localCacheEnabled);
   }
 
   public Object getValueForKey(final Object portableKey) {
@@ -242,7 +248,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     final ConcurrentDistributedServerMapManagedObjectState mmo = (ConcurrentDistributedServerMapManagedObjectState) o;
     return super.basicEquals(o) && this.maxTTISeconds == mmo.maxTTISeconds && this.maxTTLSeconds == mmo.maxTTLSeconds
            && this.targetMaxInMemoryCount == mmo.targetMaxInMemoryCount
-           && this.invalidateOnChange == mmo.invalidateOnChange && this.targetMaxTotalCount == mmo.targetMaxTotalCount;
+           && this.invalidateOnChange == mmo.invalidateOnChange && this.targetMaxTotalCount == mmo.targetMaxTotalCount
+           && localCacheEnabled == mmo.localCacheEnabled;
   }
 
   static MapManagedObjectState readFrom(final ObjectInput in) throws IOException {
@@ -325,6 +332,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     result = prime * result + ((cacheName == null) ? 0 : cacheName.hashCode());
     result = prime * result + ((evictionStatus == null) ? 0 : evictionStatus.hashCode());
     result = prime * result + (invalidateOnChange ? 1231 : 1237);
+    result = prime * result + (localCacheEnabled ? 1231 : 1237);
     result = prime * result + maxTTISeconds;
     result = prime * result + maxTTLSeconds;
     result = prime * result + targetMaxInMemoryCount;

@@ -20,7 +20,7 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param invalidateOnChange invalidateOnChange
    */
   public void initialize(int maxTTISeconds, int maxTTLSeconds, int targetMaxInMemoryCount, int targetMaxTotalCount,
-                         boolean invalidateOnChange);
+                         boolean invalidateOnChange, boolean localCacheEnabled);
 
   /**
    * Does a logic remove and removes from the local cache if present
