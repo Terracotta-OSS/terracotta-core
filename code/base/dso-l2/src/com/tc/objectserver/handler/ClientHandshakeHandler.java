@@ -30,7 +30,7 @@ public class ClientHandshakeHandler extends AbstractEventHandler {
   private static final int             SYSTEM_TIME_DIFF_THRESHOLD = TCPropertiesImpl
                                                                       .getProperties()
                                                                       .getInt(
-                                                                              TCPropertiesConsts.L2_L1_TIME_SYNC_THRESHOLD,
+                                                                              TCPropertiesConsts.TC_TIME_SYNC_THRESHOLD,
                                                                               30) * 1000;
   private static final TCLogger        LOGGER                     = TCLogging.getLogger(ClientHandshakeHandler.class);
 
