@@ -1041,8 +1041,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage transactionAck = stageManager.createStage(ServerConfigurationContext.TRANSACTION_ACKNOWLEDGEMENT_STAGE,
                                                           new TransactionAcknowledgementHandler(), 1, maxStageSize);
     final Stage clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE,
-                                                           new ClientHandshakeHandler(this.tcServerInfoMBean
-                                                               .isEnterprise()), 1, maxStageSize);
+                                                           createHandShakeHandler(), 1, maxStageSize);
     this.hydrateStage = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK, new HydrateHandler(),
                                                  stageWorkerThreadCount, 1, maxStageSize);
     final Stage txnLwmStage = stageManager.createStage(ServerConfigurationContext.TRANSACTION_LOWWATERMARK_STAGE,
@@ -1720,6 +1719,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   public boolean isAlive(final String name) {
     throw new UnsupportedOperationException();
+  }
+
+  protected ClientHandshakeHandler createHandShakeHandler() {
+    return new ClientHandshakeHandler(this.configSetupManager.dsoL2Config().serverName());
   }
 
   // for tests only

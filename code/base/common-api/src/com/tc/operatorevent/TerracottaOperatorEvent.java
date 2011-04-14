@@ -13,7 +13,7 @@ public interface TerracottaOperatorEvent extends Serializable, Cloneable {
   }
 
   public static enum EventSubsystem {
-    MEMORY_MANAGER, DGC, CLUSTER_TOPOLOGY, LOCK_MANAGER, DCV2, TOOLKIT
+    MEMORY_MANAGER, DGC, CLUSTER_TOPOLOGY, LOCK_MANAGER, DCV2, TOOLKIT, SYSTEM_SETUP
   }
 
   void addNodeName(String nodeId);

@@ -3,6 +3,7 @@
  */
 package com.tc.operatorevent;
 
+import com.tc.net.NodeID;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.properties.TCPropertiesConsts;
@@ -89,10 +90,11 @@ public class TerracottaOperatorEventFactory {
         .format(TerracottaOperatorEventResources.getClusterNodeStateChangedMessage(), arguments), "");
   }
 
-  public static TerracottaOperatorEvent createHandShakeRejectedEvent(String clientVersion, String serverVersion) {
+  public static TerracottaOperatorEvent createHandShakeRejectedEvent(String clientVersion, NodeID remoteNodeID,
+                                                                     String serverVersion) {
     return new TerracottaOperatorEventImpl(EventType.ERROR, EventSubsystem.CLUSTER_TOPOLOGY, MessageFormat
         .format(TerracottaOperatorEventResources.getHandshakeRejectedMessage(), new Object[] { clientVersion,
-            serverVersion }), "handshake rejected");
+            remoteNodeID.toString(), serverVersion }), "handshake rejected");
   }
 
   /**
@@ -122,6 +124,13 @@ public class TerracottaOperatorEventFactory {
   public static TerracottaOperatorEvent createServerMapEvictionOperatorEvent(Object[] arguments) {
     return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.DCV2, MessageFormat
         .format(TerracottaOperatorEventResources.getServerMapEvictionMessage(), arguments), "");
+  }
+
+  public static TerracottaOperatorEvent createSystemTimeDifferentEvent(NodeID remoteNodeID, String desp,
+                                                                       String serverName, long timeDiff) {
+    return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.SYSTEM_SETUP, MessageFormat
+        .format(TerracottaOperatorEventResources.getTimeDifferentMessage(), new Object[] { remoteNodeID, desp,
+            serverName, timeDiff }), "time difference");
   }
 
 }

@@ -45,4 +45,6 @@ public interface ClientHandshakeMessage extends TCMessage {
 
   public boolean enterpriseClient();
 
+  public long getLocalTimeMills();
+
 }

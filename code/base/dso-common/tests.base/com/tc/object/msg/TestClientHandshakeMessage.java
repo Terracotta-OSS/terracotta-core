@@ -146,4 +146,8 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   public Set getObjectIDsToValidate() {
     return validateObjectIds;
   }
+
+  public long getLocalTimeMills() {
+    return System.currentTimeMillis();
+  }
 }

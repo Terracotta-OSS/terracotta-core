@@ -99,4 +99,11 @@ class TerracottaOperatorEventResources {
   static String getServerMapEvictionMessage() {
     return instance.resources.getString("servermap.eviction");
   }
+
+  /**
+   * Cluster configuration events
+   */
+  public static String getTimeDifferentMessage() {
+    return instance.resources.getString("time.different");
+  }
 }

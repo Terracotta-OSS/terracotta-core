@@ -36,12 +36,14 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   private static final byte SERVER_HIGH_WATER_MARK   = 7;
   private static final byte ENTERPRISE_CLIENT        = 8;
   private static final byte OBJECTS_TO_VALIDATE      = 9;
+  private static final byte LOCAL_TIME_MILLS         = 10;
 
   private final ObjectIDSet objectIDs                = new ObjectIDSet();
   private final ObjectIDSet objectsToValidate        = new ObjectIDSet();
   private final Set         lockContexts             = new HashSet();
   private final List        sequenceIDs              = new ArrayList();
   private final List        txnIDs                   = new ArrayList();
+  private long              currentLocalTimeMills    = System.currentTimeMillis();
   private boolean           requestObjectIDs;
   private boolean           enterpriseClient         = false;
   private long              serverHighWaterMark      = 0;
@@ -121,6 +123,10 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
     this.enterpriseClient = isEnterpriseClient;
   }
 
+  public long getLocalTimeMills() {
+    return this.currentLocalTimeMills;
+  }
+
   @Override
   protected void dehydrateValues() {
     putNVPair(MANAGED_OBJECT_IDS, objectIDs);
@@ -138,6 +144,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
     putNVPair(ENTERPRISE_CLIENT, this.enterpriseClient);
     putNVPair(CLIENT_VERSION, this.clientVersion);
     putNVPair(SERVER_HIGH_WATER_MARK, this.serverHighWaterMark);
+    putNVPair(LOCAL_TIME_MILLS, this.currentLocalTimeMills);
   }
 
   @Override
@@ -170,8 +177,12 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
       case SERVER_HIGH_WATER_MARK:
         this.serverHighWaterMark = getLongValue();
         return true;
+      case LOCAL_TIME_MILLS:
+        this.currentLocalTimeMills = getLongValue();
+        return true;
       default:
         return false;
     }
   }
+
 }
