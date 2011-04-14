@@ -553,7 +553,8 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
       } else {
         currentDGCMarker.setGCStats(gcStats);
       }
-      if (gcStats.getElapsedTime() != -1) {
+      if (gcStats.getStatus().equals(GCStats.GC_COMPLETE.getName())
+          || gcStats.getStatus().equals(GCStats.GC_CANCELED.getName())) {
         currentDGCMarker = null;
       }
     }
