@@ -34,6 +34,7 @@ import com.tc.statistics.config.DSOStatisticsConfig;
 import com.tc.stats.DSOClassInfo;
 import com.tc.stats.DSOMBean;
 import com.tc.stats.DSORootMBean;
+import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 
 import java.beans.PropertyChangeEvent;
@@ -1827,6 +1828,13 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
    */
   public void startupClusterStats() {
     StatisticsLocalGathererMBean theClusterStatsBean = getClusterStatsBean();
+    ServerConnectionManager scm = getConnectionManager();
+    String[] credentials = scm.getCredentials();
+    if (credentials != null) {
+      Assert.assertEquals(2, credentials.length);
+      theClusterStatsBean.setUsername(credentials[0]);
+      theClusterStatsBean.setPassword(credentials[1]);
+    }
     if (theClusterStatsBean != null) {
       theClusterStatsBean.startup();
     } else {
