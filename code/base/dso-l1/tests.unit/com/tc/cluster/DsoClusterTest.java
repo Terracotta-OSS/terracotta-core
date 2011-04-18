@@ -4,6 +4,8 @@
  */
 package com.tc.cluster;
 
+import EDU.oswego.cs.dl.util.concurrent.Latch;
+
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ClusterMetaDataManager;
@@ -268,8 +270,16 @@ public class DsoClusterTest extends TCTestCase {
   public void testWaitUntilNodeJoinsCluster() {
     final ClientID thisNodeId = new ClientID(1);
 
-    TimingRunnable targetRunnable = new TimingRunnable(cluster, thisNodeId);
+    Latch startLatch = new Latch();
+    TimingRunnable targetRunnable = new TimingRunnable(cluster, thisNodeId, startLatch);
     new Thread(targetRunnable).start();
+    while (true)
+      try {
+        startLatch.acquire();
+        break;
+      } catch (InterruptedException e) {
+        System.err.println("XXX startLatch acquire exception : " + e);
+      }
     ThreadUtil.reallySleep(2000);
     cluster.fireThisNodeJoined(thisNodeId, new ClientID[] { new ClientID(2) });
     assertNotNull(cluster.getCurrentNode());
@@ -279,8 +289,8 @@ public class DsoClusterTest extends TCTestCase {
     assertTrue("waitUntilNodeJoinsCluster must return after node joins", targetRunnable.isFinished());
     assertTrue("Waiting thread should return after approx. 2 secs (actual:" + targetRunnable.getElapsedTimeMillis()
                + ")", targetRunnable.getElapsedTimeMillis() + 100 >= 2000);
-    assertEquals("DsoNode returned from waitUntilNodeJoinsCluster should be same as cluster.getCurrentNode", cluster
-        .getCurrentNode(), targetRunnable.getNode());
+    assertEquals("DsoNode returned from waitUntilNodeJoinsCluster should be same as cluster.getCurrentNode",
+                 cluster.getCurrentNode(), targetRunnable.getNode());
   }
 
   private static class TestEventListener implements DsoClusterListener {
@@ -337,11 +347,13 @@ public class DsoClusterTest extends TCTestCase {
     private final DsoClusterImpl cluster;
     private final ClientID       expectedNode;
     private DsoNode              node;
+    private final Latch          startLatch;
 
-    public TimingRunnable(DsoClusterImpl cluster, ClientID expectedNode) {
+    public TimingRunnable(DsoClusterImpl cluster, ClientID expectedNode, Latch startLatch) {
       super();
       this.cluster = cluster;
       this.expectedNode = expectedNode;
+      this.startLatch = startLatch;
     }
 
     public void waitUntilFinished() {
@@ -356,6 +368,7 @@ public class DsoClusterTest extends TCTestCase {
 
     public void run() {
       long start = System.currentTimeMillis();
+      this.startLatch.release();
       node = cluster.waitUntilNodeJoinsCluster();
       assertEquals(expectedNode.toString(), node.getId());
       elapsedTimeMillis = System.currentTimeMillis() - start;
