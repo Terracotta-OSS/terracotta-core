@@ -19,7 +19,7 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/derby-10.7.1.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/google-collections-tc-1.0.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/hsqldb-1.7.2.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/je-4.1.7.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/je-4.1.10.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jmxremote-1.0.1_04.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/junit-3.8.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/junit-addons-1.4.jar"/>
