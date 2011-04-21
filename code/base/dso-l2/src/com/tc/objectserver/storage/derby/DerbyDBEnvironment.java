@@ -43,6 +43,7 @@ public class DerbyDBEnvironment implements DBEnvironment {
   public static final String    DRIVER        = "org.apache.derby.jdbc.EmbeddedDriver";
   public static final String    PROTOCOL      = "jdbc:derby:";
   public static final String    DB_NAME       = "objectDB";
+  private static final String   DURABILITY    = "derby.system.durability";
   private static final Object   CONTROL_LOCK  = new Object();
 
   private final Map             tables        = new HashMap();
@@ -70,6 +71,11 @@ public class DerbyDBEnvironment implements DBEnvironment {
     logger.info("Using DERBY DBEnvironment ...");
     Properties p = System.getProperties();
     p.setProperty("derby.system.home", this.envHome.getAbsolutePath());
+    if (!isParanoid) {
+      derbyProps.setProperty(DURABILITY, "test");
+    } else {
+      derbyProps.remove(DURABILITY);
+    }
     File derbyPropsFile = new File(this.envHome.getAbsoluteFile() + File.separator + "derby.properties");
     if (!derbyProps.isEmpty() && !derbyPropsFile.exists()) {
       FileOutputStream fos = new FileOutputStream(derbyPropsFile);
