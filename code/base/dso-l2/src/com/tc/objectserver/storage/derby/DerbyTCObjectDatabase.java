@@ -20,7 +20,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 class DerbyTCObjectDatabase extends AbstractDerbyTCDatabase implements TCObjectDatabase {
-  private static final String   INDEX_NAME = "objectDBIndex";
   private static final TCLogger logger     = TCLogging.getLogger(DerbyTCObjectDatabase.class);
   private final SampledCounter  l2FaultFromDisk;
 
@@ -46,9 +45,6 @@ class DerbyTCObjectDatabase extends AbstractDerbyTCDatabase implements TCObjectD
     if (DerbyDBEnvironment.tableExists(connection, tableName)) { return; }
 
     String query = queryProvider.createObjectDBTable(tableName, KEY, VALUE);
-    executeQuery(connection, query);
-
-    query = queryProvider.createObjectDBIndex(INDEX_NAME, tableName, KEY);
     executeQuery(connection, query);
   }
 

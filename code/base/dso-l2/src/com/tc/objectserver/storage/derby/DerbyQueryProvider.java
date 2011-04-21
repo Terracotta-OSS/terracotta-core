@@ -35,18 +35,6 @@ class DerbyQueryProvider implements QueryProvider {
            + ", PRIMARY KEY(" + key + "," + id + ") )";
   }
 
-  public String createMapsDBIndexObjectID(String indexName, String tableName, String id, String key, String value) {
-    return "CREATE INDEX " + indexName + " ON " + tableName + "(" + id + ")";
-  }
-
-  public String createMapsDBIndexObjectdIDKey(String indexName, String tableName, String id, String key, String value) {
-    return "CREATE INDEX " + indexName + " ON " + tableName + "(" + id + "," + key + ")";
-  }
-
-  public String createObjectDBIndex(String indexName, String tableName, String key) {
-    return "CREATE INDEX " + indexName + " ON " + tableName + "(" + key + ")";
-  }
-
   public String createObjectDBTable(String tableName, String key, String value) {
     return "CREATE TABLE " + tableName + "(" + key + " " + DerbyDataTypes.TC_LONG + ", " + value + " "
            + DerbyDataTypes.TC_BYTE_ARRAY_VALUE + ", PRIMARY KEY(" + key + ") )";

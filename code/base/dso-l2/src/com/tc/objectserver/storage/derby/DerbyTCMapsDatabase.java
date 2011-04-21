@@ -25,8 +25,6 @@ import java.util.Map;
 
 class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatabase {
   private static final String     OBJECT_ID          = "objectid";
-  private static final String     INDEX_OBJECTID     = "indexMapObjectId";
-  private static final String     INDEX_OBJECTID_KEY = "indexMapObjectIdKey";
 
   private final String            deleteQuery;
   private final String            deleteCollectionBatchedQuery;
@@ -63,12 +61,6 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
     if (DerbyDBEnvironment.tableExists(connection, tableName)) { return; }
 
     String query = queryProvider.createMapsDBTable(tableName, OBJECT_ID, KEY, VALUE);
-    executeQuery(connection, query);
-
-    query = queryProvider.createMapsDBIndexObjectID(INDEX_OBJECTID, tableName, OBJECT_ID, KEY, VALUE);
-    executeQuery(connection, query);
-
-    query = queryProvider.createMapsDBIndexObjectdIDKey(INDEX_OBJECTID_KEY, tableName, OBJECT_ID, KEY, VALUE);
     executeQuery(connection, query);
   }
 
