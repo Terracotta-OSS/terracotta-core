@@ -213,6 +213,27 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
+   * Section : L2 Derby DB Persistence Layer Properties
+   * Description : Section for properties related to tuning Derby. See description of tunable properties in
+   * the Derby documentation.
+   * pageCache.heapUsage (float) - Controls percentage of the heap to be given to Derby's page cache.
+   * </code>
+   ********************************************************************************************************************/
+  public static final String DERBY_STORAGE_PAGESIZE                                          = "derby.storage.pageSize";
+  public static final String DERBY_STORAGE_PAGECACHESIZE                                     = "derby.storage.pageCacheSize";
+  public static final String DERBY_SYSTEM_DURABILITY                                         = "derby.system.durability";
+  public static final String DERBY_PAGECACHE_HEAPUSAGE                                       = "pageCache.heapUsage";
+  public static final String L2_DERBYDB_DERBY_STORAGE_PAGESIZE                               = "l2.derbydb."
+                                                                                               + DERBY_STORAGE_PAGESIZE;
+  public static final String L2_DERBYDB_DERBY_STORAGE_PAGECACHESIZE                          = "l2.derbydb."
+                                                                                               + DERBY_STORAGE_PAGECACHESIZE;
+  public static final String L2_DERBYDB_DERBY_SYSTEM_DURABILITY                              = "l2.derbydb."
+                                                                                               + DERBY_SYSTEM_DURABILITY;
+  public static final String L2_DERBYDB_PAGECACHE_HEAPUSAGE                                  = "l2.derbydb."
+                                                                                               + DERBY_PAGECACHE_HEAPUSAGE;
+
+  /*********************************************************************************************************************
+   * <code>
    * Section : L2 LFU cachepolicy defaults
    * Description : If cachePolicy is set to lfu, then these values take effect
    * agingFactor (float)                    - valid values 0 to 1

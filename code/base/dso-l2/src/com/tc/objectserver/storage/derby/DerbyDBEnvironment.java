@@ -23,6 +23,7 @@ import com.tc.objectserver.storage.api.TCMapsDatabase;
 import com.tc.objectserver.storage.api.TCObjectDatabase;
 import com.tc.objectserver.storage.api.TCRootDatabase;
 import com.tc.objectserver.storage.api.TCStringToStringDatabase;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.sequence.MutableSequence;
@@ -40,22 +41,31 @@ import java.util.Map;
 import java.util.Properties;
 
 public class DerbyDBEnvironment implements DBEnvironment {
-  public static final String    DRIVER        = "org.apache.derby.jdbc.EmbeddedDriver";
-  public static final String    PROTOCOL      = "jdbc:derby:";
-  public static final String    DB_NAME       = "objectDB";
-  private static final String   DURABILITY    = "derby.system.durability";
-  private static final Object   CONTROL_LOCK  = new Object();
+  public static final String               DRIVER                         = "org.apache.derby.jdbc.EmbeddedDriver";
+  public static final String               PROTOCOL                       = "jdbc:derby:";
+  public static final String               DB_NAME                        = "objectDB";
+  private static final int                 DEFAULT_PAGE_SIZE              = 16384;
+  private static final Object              CONTROL_LOCK                   = new Object();
+  private static final Map<Integer, Float> PAGE_CACHE_OVERHEAD_FACTOR_MAP = new HashMap<Integer, Float>() {
+                                                                            {
+                                                                              put(4096, 0.67F);
+                                                                              put(8192, 0.753F);
+                                                                              put(16384, 0.80F);
+                                                                              put(32768, 0.826F);
+                                                                            }
+                                                                          };
 
-  private final Map             tables        = new HashMap();
-  private final Properties      derbyProps;
-  private final QueryProvider   queryProvider = new DerbyQueryProvider();
-  private final boolean         isParanoid;
-  private final File            envHome;
-  private DBEnvironmentStatus   status;
-  private DerbyControlDB        controlDB;
-  private final SampledCounter  l2FaultFromDisk;
+  private final Map                        tables                         = new HashMap();
+  private final Properties                 derbyProps;
+  private final QueryProvider              queryProvider                  = new DerbyQueryProvider();
+  private final boolean                    isParanoid;
+  private final File                       envHome;
+  private DBEnvironmentStatus              status;
+  private DerbyControlDB                   controlDB;
+  private final SampledCounter             l2FaultFromDisk;
 
-  private static final TCLogger logger        = TCLogging.getLogger(DerbyDBEnvironment.class);
+  private static final TCLogger            logger                         = TCLogging
+                                                                              .getLogger(DerbyDBEnvironment.class);
 
   public DerbyDBEnvironment(boolean paranoid, File home, SampledCounter l2FaultFromDisk) throws IOException {
     this(paranoid, home, new Properties(), l2FaultFromDisk);
@@ -69,13 +79,40 @@ public class DerbyDBEnvironment implements DBEnvironment {
     this.l2FaultFromDisk = l2FaultFromDisk;
     FileUtils.forceMkdir(this.envHome);
     logger.info("Using DERBY DBEnvironment ...");
+
+    if (!derbyProps.containsKey(TCPropertiesConsts.DERBY_STORAGE_PAGESIZE)
+        || !PAGE_CACHE_OVERHEAD_FACTOR_MAP.containsKey(Integer.parseInt(derbyProps
+            .getProperty(TCPropertiesConsts.DERBY_STORAGE_PAGESIZE)))) {
+      logger.info(TCPropertiesConsts.DERBY_STORAGE_PAGESIZE + " unset. Setting to a default of " + DEFAULT_PAGE_SIZE
+                  + ".");
+      derbyProps.setProperty(TCPropertiesConsts.DERBY_STORAGE_PAGESIZE, "" + DEFAULT_PAGE_SIZE);
+    }
+
+    // Perform heap size calculation to determine how many cache pages to give derby
+    if (derbyProps.containsKey(TCPropertiesConsts.DERBY_PAGECACHE_HEAPUSAGE)) {
+      int pageSize = Integer.parseInt(derbyProps.getProperty(TCPropertiesConsts.DERBY_STORAGE_PAGESIZE));
+      float heapPercentage = Float.parseFloat(derbyProps.getProperty(TCPropertiesConsts.DERBY_PAGECACHE_HEAPUSAGE));
+      float cacheOverheadFactor = PAGE_CACHE_OVERHEAD_FACTOR_MAP.get(pageSize);
+      // Total number of pages is reduced by a factor (depending on the page size) to account for derby's cache
+      // overhead.
+      int pageCacheSize = (int) ((Runtime.getRuntime().maxMemory() * (heapPercentage / 100.0F) * cacheOverheadFactor) / pageSize);
+      if (derbyProps.containsKey(TCPropertiesConsts.DERBY_STORAGE_PAGECACHESIZE)) {
+        logger.warn(TCPropertiesConsts.L2_DERBYDB_DERBY_STORAGE_PAGECACHESIZE + " overridden by setting "
+                    + TCPropertiesConsts.L2_DERBYDB_PAGECACHE_HEAPUSAGE + ".");
+      }
+      logger.info("Setting derby page cache heap usage to " + heapPercentage + "% (" + pageCacheSize + " pages).");
+      derbyProps.setProperty(TCPropertiesConsts.DERBY_STORAGE_PAGECACHESIZE, "" + pageCacheSize);
+    }
+
     Properties p = System.getProperties();
     p.setProperty("derby.system.home", this.envHome.getAbsolutePath());
+
     if (!isParanoid) {
-      derbyProps.setProperty(DURABILITY, "test");
+      derbyProps.setProperty(TCPropertiesConsts.DERBY_SYSTEM_DURABILITY, "test");
     } else {
-      derbyProps.remove(DURABILITY);
+      derbyProps.remove(TCPropertiesConsts.DERBY_SYSTEM_DURABILITY);
     }
+
     File derbyPropsFile = new File(this.envHome.getAbsoluteFile() + File.separator + "derby.properties");
     if (!derbyProps.isEmpty() && !derbyPropsFile.exists()) {
       FileOutputStream fos = new FileOutputStream(derbyPropsFile);
