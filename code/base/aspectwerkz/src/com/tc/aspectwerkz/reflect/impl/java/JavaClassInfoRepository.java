@@ -9,13 +9,12 @@ import com.tc.aspectwerkz.reflect.ClassInfo;
 
 import java.lang.ref.WeakReference;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A repository for the class info hierarchy. Is class loader aware.
  * <p/>
  * TODO refactor some with ASMClassInfoRepository but keep em separate for system runtime sake in AOPC (WLS)
- * 
+ *
  * @author <a href="mailto:jboner@codehaus.org">Jonas Bonér </a>
  */
 public class JavaClassInfoRepository {
@@ -30,7 +29,7 @@ public class JavaClassInfoRepository {
   /**
    * Map with all the class info mapped to their class names.
    */
-  private final Map<String, ClassInfo>                           m_repository           = new ConcurrentHashMap<String, ClassInfo>();
+  private final Map<String, ClassInfo>                           m_repository           = new MapMaker().softValues().makeMap();
 
   /**
    * Class loader for the class repository.
@@ -39,7 +38,7 @@ public class JavaClassInfoRepository {
 
   /**
    * Creates a new repository.
-   * 
+   *
    * @param loader
    */
   private JavaClassInfoRepository(final ClassLoader loader) {
@@ -48,7 +47,7 @@ public class JavaClassInfoRepository {
 
   /**
    * Returns the class info repository for the specific class loader
-   * 
+   *
    * @param loader
    * @return
    */
@@ -61,22 +60,22 @@ public class JavaClassInfoRepository {
     synchronized (JavaClassInfoRepository.class) {
       // check again now that we're locked
       repository = s_repositories.get(loader);
-      if (repository != null) { return repository; }      
-      
+      if (repository != null) { return repository; }
+
       JavaClassInfoRepository repo = new JavaClassInfoRepository(loader);
       s_repositories.put(loader, repo);
       return repo;
     }
   }
-  
-  
+
+
   static int repositoriesSize() {
     return s_repositories.size();
   }
 
   /**
    * Remove a class from the repository.
-   * 
+   *
    * @param className the name of the class
    */
   public static void removeClassInfoFromAllClassLoaders(final String className) {
@@ -86,7 +85,7 @@ public class JavaClassInfoRepository {
 
   /**
    * Returns the class info.
-   * 
+   *
    * @param className
    * @return
    */
@@ -98,7 +97,7 @@ public class JavaClassInfoRepository {
 
   /**
    * Adds a new class info.
-   * 
+   *
    * @param classInfo
    */
   public void addClassInfo(final ClassInfo classInfo) {
@@ -112,17 +111,17 @@ public class JavaClassInfoRepository {
 
   /**
    * Checks if the class info for a specific class exists.
-   * 
+   *
    * @param name
    * @return
    */
   public boolean hasClassInfo(final String name) {
-    return m_repository.containsKey(name);
+    return m_repository.get(name) != null;
   }
 
   /**
    * Searches for a class info up in the class loader hierarchy.
-   * 
+   *
    * @param className
    * @param loader
    * @return the class info

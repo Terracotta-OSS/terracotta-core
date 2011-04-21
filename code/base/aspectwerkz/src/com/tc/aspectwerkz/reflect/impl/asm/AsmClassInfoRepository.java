@@ -16,11 +16,10 @@ import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A repository for the class info hierarchy. Is class loader aware.
- * 
+ *
  * @author <a href="mailto:jboner@codehaus.org">Jonas Bonér </a>
  */
 public class AsmClassInfoRepository {
@@ -37,7 +36,9 @@ public class AsmClassInfoRepository {
   /**
    * Map with all the class info mapped to their class names.
    */
-  private final Map<String, Reference<ClassInfo>>                          m_repository            = new ConcurrentHashMap();
+  private final Map<String, ClassInfo>                                     m_repository            = new MapMaker()
+                                                                                                       .softValues()
+                                                                                                       .makeMap();
 
   /**
    * Class loader for the class repository.
@@ -51,7 +52,7 @@ public class AsmClassInfoRepository {
 
   /**
    * Creates a new repository.
-   * 
+   *
    * @param loader
    */
   private AsmClassInfoRepository(final ClassLoader loader) {
@@ -79,7 +80,7 @@ public class AsmClassInfoRepository {
 
   /**
    * Returns the class info repository for the specific class loader
-   * 
+   *
    * @param loader
    * @return
    */
@@ -115,7 +116,7 @@ public class AsmClassInfoRepository {
 
   /**
    * Remove a class from the repository.
-   * 
+   *
    * @param className the name of the class
    */
   public static void removeClassInfoFromAllClassLoaders(final String className) {
@@ -125,26 +126,25 @@ public class AsmClassInfoRepository {
 
   /**
    * Returns the class info.
-   * 
+   *
    * @param className
    * @return
    */
   public ClassInfo getClassInfo(final String className) {
-    Reference classInfoRef = m_repository.get(className);
-    ClassInfo info = classInfoRef == null ? null : (ClassInfo) classInfoRef.get();
+    ClassInfo info = m_repository.get(className);
     if (info == null) { return checkParentClassRepository(className, (ClassLoader) m_loaderRef.get()); }
     return info;
   }
 
   /**
    * Adds a new class info.
-   * 
+   *
    * @param classInfo
    */
   public void addClassInfo(final ClassInfo classInfo) {
     // is the class loaded by a class loader higher up in the hierarchy?
     if (checkParentClassRepository(classInfo.getName(), (ClassLoader) m_loaderRef.get()) == null) {
-      m_repository.put(classInfo.getName(), new SoftReference(classInfo));
+      m_repository.put(classInfo.getName(), classInfo);
     } else {
       // TODO: remove class in child class repository and add it for the
       // current (parent) CL
@@ -153,18 +153,18 @@ public class AsmClassInfoRepository {
 
   /**
    * Checks if the class info for a specific class exists.
-   * 
+   *
    * @param name
    * @return
    */
   public boolean hasClassInfo(final String name) {
-    Reference classInfoRef = m_repository.get(name);
-    return (classInfoRef == null) ? false : (classInfoRef.get() != null);
+    ClassInfo info = m_repository.get(name);
+    return info != null;
   }
 
   /**
    * Removes the class from the repository (since it has been modified and needs to be rebuild).
-   * 
+   *
    * @param className
    */
   public void removeClassInfo(final String className) {
@@ -173,7 +173,7 @@ public class AsmClassInfoRepository {
 
   /**
    * Returns the annotation properties for the specific class loader.
-   * 
+   *
    * @return the annotation properties
    */
   public Properties getAnnotationProperties() {
@@ -182,7 +182,7 @@ public class AsmClassInfoRepository {
 
   /**
    * Searches for a class info up in the class loader hierarchy.
-   * 
+   *
    * @param className
    * @param loader
    * @return the class info
@@ -197,8 +197,7 @@ public class AsmClassInfoRepository {
     } else {
       AsmClassInfoRepository parentRep = AsmClassInfoRepository.getRepository(parent);
 
-      Reference classInfoRef = parentRep.m_repository.get(className);
-      ClassInfo info = classInfoRef == null ? null : (ClassInfo) classInfoRef.get();
+      ClassInfo info = parentRep.m_repository.get(className);
       if (info != null) {
         return info;
       } else {
