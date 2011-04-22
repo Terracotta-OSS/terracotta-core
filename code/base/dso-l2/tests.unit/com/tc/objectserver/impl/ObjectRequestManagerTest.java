@@ -810,7 +810,7 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestClientStateManager.class);
     }
 
-    public void removeReferences(final NodeID nodeID, final Set<ObjectID> removed) {
+    public void removeReferences(NodeID nodeID, Set<ObjectID> removed, Set<ObjectID> requested) {
       throw new NotImplementedException(TestClientStateManager.class);
     }
 

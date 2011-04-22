@@ -129,7 +129,6 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
         }
       }
     } finally {
-      // TODO::FIXME::Release as soon as possible
       this.objectManager.releaseReadOnly(managedObject);
     }
     if (!prefetches.isEmpty()) {

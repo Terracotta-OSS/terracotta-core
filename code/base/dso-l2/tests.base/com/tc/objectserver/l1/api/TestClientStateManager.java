@@ -39,7 +39,7 @@ public class TestClientStateManager implements ClientStateManager {
     }
   }
 
-  public void removeReferences(final NodeID nodeID, final Set<ObjectID> removed) {
+  public void removeReferences(NodeID nodeID, Set<ObjectID> removed, Set<ObjectID> requested) {
     //
   }
 

@@ -102,12 +102,22 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     }
   }
 
-  public void removeReferences(final NodeID id, final Set<ObjectID> removed) {
+  /**
+   * From the local state of the l1 named nodeID remove all the objectIDs that are references and also remove from the
+   * requested list any refrence already present
+   * 
+   * @param nodeID nodeID of the client requesting the objects
+   * @param removed set of objects removed from the client
+   * @param requested set of Objects requested, this set is mutated to remove any object that is already present in the
+   *        client.
+   */
+  public void removeReferences(final NodeID id, final Set<ObjectID> removed, final Set<ObjectID> requested) {
     final ClientStateImpl c = getClientState(id);
     if (c != null) {
       c.lock();
       try {
         c.removeReferences(removed);
+        c.removeReferencedObjectIDsFrom(requested);
       } finally {
         c.unlock();
       }

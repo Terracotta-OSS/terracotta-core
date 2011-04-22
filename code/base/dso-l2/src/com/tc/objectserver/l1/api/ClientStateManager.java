@@ -34,9 +34,15 @@ public interface ClientStateManager {
   public void addReference(NodeID nodeID, ObjectID objectID);
 
   /**
-   * For the local state of the l1 named clientID remove all the objectIDs that are references
+   * From the local state of the l1 named nodeID remove all the objectIDs that are references and also remove from the
+   * requested list any refrence already present
+   * 
+   * @param nodeID nodeID of the client requesting the objects
+   * @param removed set of objects removed from the client
+   * @param requested set of Objects requested, this set is mutated to remove any object that is already present in the
+   *        client.
    */
-  public void removeReferences(NodeID nodeID, Set<ObjectID> removed);
+  public void removeReferences(NodeID nodeID, Set<ObjectID> removed, Set<ObjectID> requested);
 
   public boolean hasReference(NodeID nodeID, ObjectID objectID);
 

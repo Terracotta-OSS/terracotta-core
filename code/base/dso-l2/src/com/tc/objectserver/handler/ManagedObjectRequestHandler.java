@@ -81,16 +81,18 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
     if (numObjectsRemoved != 0) {
       this.globalObjectFlushCounter.increment(numObjectsRemoved);
       this.channelStats.notifyObjectRemove(channel, numObjectsRemoved);
+    }
 
+    if (numObjectsRequested > 0 || numObjectsRemoved > 0) {
       long t = System.currentTimeMillis();
-      this.stateManager.removeReferences(clientID, removedIDs);
+      this.stateManager.removeReferences(clientID, removedIDs, requestedIDs);
       t = System.currentTimeMillis() - t;
       if (t > 1000 || numObjectsRemoved > 100000) {
         logger.warn("Time to Remove " + numObjectsRemoved + " is " + t + " ms");
       }
     }
 
-    if (numObjectsRequested > 0) {
+    if (requestedIDs.size() > 0) {
       this.objectRequestManager.requestObjects(rmom);
     }
   }

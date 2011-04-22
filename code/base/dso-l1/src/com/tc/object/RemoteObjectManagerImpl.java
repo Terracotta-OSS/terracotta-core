@@ -444,7 +444,13 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
       final ObjectID oid = (ObjectID) i.next();
       final ObjectLookupState ols = this.objectLookupStates.get(oid);
       this.logger.warn("Received Missing Object ID from server : " + oid + " ObjectLookup State : " + ols);
-      if (ols.isPrefetch()) {
+      if (ols == null) {
+        /**
+         * DEV-5697 : This is possible if prefetch from the server and the look from the client are racing and the
+         * object gets removed, DGCed before the lookup from the client is actually processed.
+         */
+        continue;
+      } else if (ols.isPrefetch()) {
         // Ignoring prefetch requests, as it could made under incorrect locking, reset the data structures
         this.objectLookupStates.remove(oid);
       } else {

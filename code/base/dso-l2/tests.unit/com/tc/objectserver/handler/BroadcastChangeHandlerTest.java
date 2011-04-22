@@ -661,7 +661,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void removeReferences(final NodeID nodeID, final Set<ObjectID> removed) {
+    public void removeReferences(NodeID nodeID, Set<ObjectID> removed, Set<ObjectID> requested) {
       throw new ImplementMe();
     }
 
