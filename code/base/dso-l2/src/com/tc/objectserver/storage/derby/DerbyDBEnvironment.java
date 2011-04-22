@@ -222,10 +222,8 @@ public class DerbyDBEnvironment implements DBEnvironment {
 
   protected Connection createConnection() throws TCDatabaseException {
     try {
-      Properties attributesProps = new Properties();
-      attributesProps.setProperty("logDevice", logDevice);
       Connection connection = DriverManager.getConnection(PROTOCOL + envHome.getAbsolutePath() + File.separator
-                                                          + DB_NAME + ";", attributesProps);
+                                                          + DB_NAME + ";");
       connection.setAutoCommit(false);
       return connection;
     } catch (SQLException e) {
