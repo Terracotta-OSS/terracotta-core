@@ -52,8 +52,10 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.DERBY_STORAGE_PAGECACHESIZE);
     exemptedProperties.add(TCPropertiesConsts.DERBY_PAGECACHE_HEAPUSAGE);
     exemptedProperties.add(TCPropertiesConsts.DERBY_SYSTEM_DURABILITY);
+    exemptedProperties.add(TCPropertiesConsts.DERBY_LOG_DEVICE);
     exemptedProperties.add(TCPropertiesConsts.L2_DERBYDB_DERBY_STORAGE_PAGECACHESIZE);
     exemptedProperties.add(TCPropertiesConsts.L2_DERBYDB_DERBY_SYSTEM_DURABILITY);
+    exemptedProperties.add(TCPropertiesConsts.L2_DERBYDB_LOG_DEVICE);
   }
 
   private void loadDefaults(String propFile) {

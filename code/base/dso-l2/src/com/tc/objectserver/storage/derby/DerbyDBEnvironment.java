@@ -59,6 +59,7 @@ public class DerbyDBEnvironment implements DBEnvironment {
   private final Properties                 derbyProps;
   private final QueryProvider              queryProvider                  = new DerbyQueryProvider();
   private final boolean                    isParanoid;
+  private final String                     logDevice;
   private final File                       envHome;
   private DBEnvironmentStatus              status;
   private DerbyControlDB                   controlDB;
@@ -79,6 +80,9 @@ public class DerbyDBEnvironment implements DBEnvironment {
     this.l2FaultFromDisk = l2FaultFromDisk;
     FileUtils.forceMkdir(this.envHome);
     logger.info("Using DERBY DBEnvironment ...");
+
+    logDevice = derbyProps.getProperty(TCPropertiesConsts.DERBY_LOG_DEVICE, envHome.getAbsolutePath());
+    logger.info("Writing derby transaction logs to " + logDevice);
 
     if (!derbyProps.containsKey(TCPropertiesConsts.DERBY_STORAGE_PAGESIZE)
         || !PAGE_CACHE_OVERHEAD_FACTOR_MAP.containsKey(Integer.parseInt(derbyProps
@@ -200,10 +204,11 @@ public class DerbyDBEnvironment implements DBEnvironment {
 
     Properties attributesProps = new Properties();
     attributesProps.put("create", "true");
+    attributesProps.setProperty("logDevice", logDevice);
     Connection conn;
     try {
-      conn = DriverManager.getConnection(PROTOCOL + envHome.getAbsolutePath() + File.separator + DB_NAME
-                                         + ";logDevice=" + envHome.getAbsolutePath(), attributesProps);
+      conn = DriverManager.getConnection(PROTOCOL + envHome.getAbsolutePath() + File.separator + DB_NAME + ";",
+                                         attributesProps);
       conn.setAutoCommit(false);
       conn.close();
     } catch (SQLException e) {
