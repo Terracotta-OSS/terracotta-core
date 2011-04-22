@@ -232,7 +232,7 @@ import com.tc.objectserver.persistence.db.DatabaseDirtyException;
 import com.tc.objectserver.persistence.db.SerializationAdapterFactory;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.persistence.db.TempSwapDBPersistorImpl;
-import com.tc.objectserver.persistence.inmemory.TransactionStoreImpl;
+import com.tc.objectserver.persistence.db.TransactionStoreImpl;
 import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.SearchEventHandler;
 import com.tc.objectserver.search.SearchQueryRequestMessageHandler;
