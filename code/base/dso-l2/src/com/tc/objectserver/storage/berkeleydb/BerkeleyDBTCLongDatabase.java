@@ -11,8 +11,8 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.tc.objectserver.persistence.db.DBException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.TCLongDatabase;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
+import com.tc.objectserver.storage.api.TCLongDatabase;
 import com.tc.util.Conversion;
 
 import java.util.HashSet;
@@ -34,7 +34,7 @@ public class BerkeleyDBTCLongDatabase extends BerkeleyDBTCBytesBytesDatabase imp
     return false;
   }
 
-  public Status put(long key, PersistenceTransaction tx) {
+  public Status insert(long key, PersistenceTransaction tx) {
     byte[] keyInBytes = Conversion.long2Bytes(key);
     return put(keyInBytes, VALUE, tx);
   }

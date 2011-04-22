@@ -14,6 +14,16 @@ public interface TCIntToBytesDatabase {
   public Status put(int id, byte[] b, PersistenceTransaction tx);
 
   /**
+   * Inserts a <int, byte[]> key-value pair into the db.
+   */
+  public Status insert(int id, byte[] value, PersistenceTransaction tx);
+
+  /**
+   * Updates a <int, byte[]> key-value pair in the db.
+   */
+  public Status update(int id, byte[] value, PersistenceTransaction tx);
+
+  /**
    * Gets a byte[] from the key id
    */
   public byte[] get(int id, PersistenceTransaction tx);

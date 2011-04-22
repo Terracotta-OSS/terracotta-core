@@ -6,8 +6,8 @@ package com.tc.objectserver.storage.derby;
 import com.tc.objectserver.persistence.db.DBException;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.TCIntToBytesDatabase;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
+import com.tc.objectserver.storage.api.TCIntToBytesDatabase;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -85,7 +85,7 @@ class DerbyTCIntToBytesDatabase extends AbstractDerbyTCDatabase implements TCInt
     }
   }
 
-  private Status update(int id, byte[] b, PersistenceTransaction tx) {
+  public Status update(int id, byte[] b, PersistenceTransaction tx) {
     try {
       // "UPDATE " + tableName + " SET " + VALUE + " = ? "
       // + " WHERE " + KEY + " = ?"
@@ -99,7 +99,7 @@ class DerbyTCIntToBytesDatabase extends AbstractDerbyTCDatabase implements TCInt
     }
   }
 
-  private Status insert(int id, byte[] b, PersistenceTransaction tx) {
+  public Status insert(int id, byte[] b, PersistenceTransaction tx) {
     PreparedStatement psPut;
     try {
       // "INSERT INTO " + tableName + " VALUES (?, ?)"

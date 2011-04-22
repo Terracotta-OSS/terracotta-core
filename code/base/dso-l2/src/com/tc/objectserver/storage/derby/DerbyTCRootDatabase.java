@@ -7,8 +7,8 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.persistence.db.DBException;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.TCRootDatabase;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
+import com.tc.objectserver.storage.api.TCRootDatabase;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -27,7 +27,6 @@ class DerbyTCRootDatabase extends AbstractDerbyTCDatabase implements TCRootDatab
   private final String rootNamesToIDQuery;
   private final String insertQuery;
   private final String rootIDsQuery;
-  private final String updateQuery;
   private final String idFromNameQuery;
 
   public DerbyTCRootDatabase(String tableName, Connection connection, QueryProvider queryProvider)
@@ -38,7 +37,6 @@ class DerbyTCRootDatabase extends AbstractDerbyTCDatabase implements TCRootDatab
     rootNamesQuery = "SELECT " + KEY + " FROM " + tableName;
     rootNamesToIDQuery = "SELECT " + KEY + ", " + VALUE + " FROM " + tableName;
     insertQuery = "INSERT INTO " + tableName + " VALUES (?, ?)";
-    updateQuery = "UPDATE " + tableName + " SET " + VALUE + " = ? " + " WHERE " + KEY + " = ?";
     idFromNameQuery = "SELECT " + VALUE + " FROM " + tableName + " WHERE " + KEY + " = ?";
   }
 
@@ -130,15 +128,7 @@ class DerbyTCRootDatabase extends AbstractDerbyTCDatabase implements TCRootDatab
     }
   }
 
-  public Status put(byte[] rootName, long id, PersistenceTransaction tx) {
-    if (get(rootName, tx) == ObjectID.NULL_ID.toLong()) {
-      return insert(rootName, id, tx);
-    } else {
-      return update(rootName, id, tx);
-    }
-  }
-
-  private Status insert(byte[] rootName, long id, PersistenceTransaction tx) {
+  public Status insert(byte[] rootName, long id, PersistenceTransaction tx) {
     try {
       // "INSERT INTO " + tableName + " VALUES (?, ?)"
       PreparedStatement psPut = getOrCreatePreparedStatement(tx, insertQuery);
@@ -150,20 +140,6 @@ class DerbyTCRootDatabase extends AbstractDerbyTCDatabase implements TCRootDatab
     }
     return Status.SUCCESS;
 
-  }
-
-  private Status update(byte[] rootName, long id, PersistenceTransaction tx) {
-    try {
-      // "UPDATE " + tableName + " SET " + VALUE + " = ? "
-      // + " WHERE " + KEY + " = ?"
-      PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, updateQuery);
-      psUpdate.setLong(1, id);
-      psUpdate.setBytes(2, rootName);
-      psUpdate.executeUpdate();
-      return Status.SUCCESS;
-    } catch (SQLException e) {
-      throw new DBException(e);
-    }
   }
 
   public long getIdFromName(byte[] rootName, PersistenceTransaction tx) {

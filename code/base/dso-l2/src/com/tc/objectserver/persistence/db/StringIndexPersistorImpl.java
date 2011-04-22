@@ -35,7 +35,7 @@ public final class StringIndexPersistorImpl extends DBPersistorBase implements S
     PersistenceTransaction tx = null;
     try {
       tx = ptp.newTransaction();
-      stringIndexDatabase.put(index, string, tx);
+      stringIndexDatabase.insert(index, string, tx);
       tx.commit();
     } catch (Throwable t) {
       abortOnError(tx);

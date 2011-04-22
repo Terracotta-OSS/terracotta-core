@@ -7,8 +7,8 @@ import com.tc.objectserver.persistence.db.DBException;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.TCDatabaseEntry;
-import com.tc.objectserver.storage.api.TCStringToStringDatabase;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
+import com.tc.objectserver.storage.api.TCStringToStringDatabase;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -87,7 +87,7 @@ class DerbyTCStringToStringDatabase extends AbstractDerbyTCDatabase implements T
 
   }
 
-  private Status update(String key, String value, PersistenceTransaction tx) {
+  public Status update(String key, String value, PersistenceTransaction tx) {
     try {
       // "UPDATE " + tableName + " SET " + VALUE + " = ? "
       // + " WHERE " + KEY + " = ?"
@@ -104,7 +104,7 @@ class DerbyTCStringToStringDatabase extends AbstractDerbyTCDatabase implements T
     }
   }
 
-  private Status insert(String key, String value, PersistenceTransaction tx) {
+  public Status insert(String key, String value, PersistenceTransaction tx) {
     PreparedStatement psPut;
     try {
       // "INSERT INTO " + tableName + " VALUES (?, ?)"

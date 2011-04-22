@@ -12,8 +12,8 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.objectserver.persistence.db.DBException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.TCObjectDatabase;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
+import com.tc.objectserver.storage.api.TCObjectDatabase;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.Conversion;
 
@@ -32,7 +32,7 @@ public class BerkeleyDBTCObjectDatabase extends BerkeleyDBTCBytesBytesDatabase i
     return delete(key, tx);
   }
 
-  private Status put(long id, byte[] val, PersistenceTransaction tx) {
+  public Status put(long id, byte[] val, PersistenceTransaction tx) {
     byte[] key = Conversion.long2Bytes(id);
     return put(key, val, tx);
   }
@@ -75,10 +75,6 @@ public class BerkeleyDBTCObjectDatabase extends BerkeleyDBTCBytesBytesDatabase i
   }
 
   public Status update(long id, byte[] b, PersistenceTransaction tx) {
-    return put(id, b, tx);
-  }
-
-  public Status upsert(long id, byte[] b, PersistenceTransaction tx) {
     return put(id, b, tx);
   }
 

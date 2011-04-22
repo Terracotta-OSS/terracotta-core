@@ -49,7 +49,7 @@ public class BerkeleyDBTCLongToStringDatabase extends AbstractBerkeleyDatabase i
     return target;
   }
 
-  public Status put(long index, String string, PersistenceTransaction tx) {
+  public Status insert(long index, String string, PersistenceTransaction tx) {
     DatabaseEntry entryKey = new DatabaseEntry();
     DatabaseEntry entryValue = new DatabaseEntry();
     entryKey.setData(Conversion.long2Bytes(index));

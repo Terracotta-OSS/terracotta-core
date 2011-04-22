@@ -11,8 +11,8 @@ import com.tc.objectserver.persistence.db.DBPersistorImpl.DBPersistorBase;
 import com.tc.objectserver.persistence.inmemory.ClientNotFoundException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
-import com.tc.objectserver.storage.api.TCLongDatabase;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
+import com.tc.objectserver.storage.api.TCLongDatabase;
 import com.tc.util.sequence.MutableSequence;
 
 import java.util.HashSet;
@@ -74,7 +74,7 @@ class ClientStatePersistorImpl extends DBPersistorBase implements ClientStatePer
   private void basicSave(long clientID) {
     try {
       PersistenceTransaction tx = ptp.newTransaction();
-      Status status = db.put(clientID, tx);
+      Status status = db.insert(clientID, tx);
       if (status != Status.SUCCESS) {
         tx.abort();
         throw new DBException("Unable to save client state: ChannelID " + clientID + "; status: " + status);

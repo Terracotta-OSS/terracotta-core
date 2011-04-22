@@ -12,8 +12,8 @@ import com.tc.objectserver.core.impl.TestServerConfigurationContext;
 import com.tc.objectserver.impl.TestManagedObjectStore;
 import com.tc.objectserver.impl.TestObjectManager;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.TCObjectDatabase;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
+import com.tc.objectserver.storage.api.TCObjectDatabase;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -115,7 +115,7 @@ public class SRAL2FaultsFromDiskTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public Status upsert(long id, byte[] b, PersistenceTransaction tx) {
+    public Status put(long id, byte[] b, PersistenceTransaction tx) {
       throw new ImplementMe();
     }
   }

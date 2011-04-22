@@ -45,7 +45,7 @@ public class TCLongDatabaseTest extends TCTestCase {
 
     for (long key : keys) {
       PersistenceTransaction tx = ptp.newTransaction();
-      Status status = database.put(key, tx);
+      Status status = database.insert(key, tx);
       tx.commit();
 
       Assert.assertEquals(Status.SUCCESS, status);
@@ -73,7 +73,7 @@ public class TCLongDatabaseTest extends TCTestCase {
 
     for (long key : keys) {
       PersistenceTransaction tx = ptp.newTransaction();
-      Status status = database.put(key, tx);
+      Status status = database.insert(key, tx);
       tx.commit();
 
       Assert.assertEquals(Status.SUCCESS, status);
@@ -94,7 +94,7 @@ public class TCLongDatabaseTest extends TCTestCase {
 
     for (long key : keys) {
       PersistenceTransaction tx = ptp.newTransaction();
-      Status status = database.put(key, tx);
+      Status status = database.insert(key, tx);
       tx.commit();
 
       Assert.assertEquals(Status.SUCCESS, status);

@@ -16,5 +16,5 @@ public interface TCLongToStringDatabase {
   /**
    * puts a <long, String> key value pair to the db.
    */
-  public Status put(long val, String string, PersistenceTransaction tx);
+  public Status insert(long val, String string, PersistenceTransaction tx);
 }

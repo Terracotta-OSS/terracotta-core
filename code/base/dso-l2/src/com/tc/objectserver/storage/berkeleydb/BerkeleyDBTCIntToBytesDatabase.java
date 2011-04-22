@@ -56,4 +56,11 @@ public class BerkeleyDBTCIntToBytesDatabase extends BerkeleyDBTCBytesBytesDataba
     return allClazzBytes;
   }
 
+  public Status insert(int id, byte[] value, PersistenceTransaction tx) {
+    return put(id, value, tx);
+  }
+
+  public Status update(int id, byte[] value, PersistenceTransaction tx) {
+    return put(id, value, tx);
+  }
 }

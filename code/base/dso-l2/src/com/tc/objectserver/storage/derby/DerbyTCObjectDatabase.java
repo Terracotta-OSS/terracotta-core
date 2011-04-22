@@ -9,8 +9,8 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.persistence.db.DBException;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.TCObjectDatabase;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
+import com.tc.objectserver.storage.api.TCObjectDatabase;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.ObjectIDSet;
 
@@ -20,7 +20,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 class DerbyTCObjectDatabase extends AbstractDerbyTCDatabase implements TCObjectDatabase {
-  private static final TCLogger logger     = TCLogging.getLogger(DerbyTCObjectDatabase.class);
+  private static final TCLogger logger = TCLogging.getLogger(DerbyTCObjectDatabase.class);
   private final SampledCounter  l2FaultFromDisk;
 
   private final String          deleteQuery;
@@ -110,8 +110,11 @@ class DerbyTCObjectDatabase extends AbstractDerbyTCDatabase implements TCObjectD
       PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, updateQuery);
       psUpdate.setBytes(1, b);
       psUpdate.setLong(2, id);
-      psUpdate.executeUpdate();
-      return Status.SUCCESS;
+      if (psUpdate.executeUpdate() > 0) {
+        return Status.SUCCESS;
+      } else {
+        return Status.NOT_FOUND;
+      }
     } catch (SQLException e) {
       throw new DBException(e);
     }
@@ -131,8 +134,8 @@ class DerbyTCObjectDatabase extends AbstractDerbyTCDatabase implements TCObjectD
     return Status.SUCCESS;
   }
 
-  public Status upsert(long id, byte[] b, PersistenceTransaction tx) {
-    if (get(id, tx) == null) { return insert(id, b, tx); }
-    return update(id, b, tx);
+  public Status put(long id, byte[] b, PersistenceTransaction tx) {
+    if (update(id, b, tx) == Status.SUCCESS) { return Status.SUCCESS; }
+    return insert(id, b, tx);
   }
 }

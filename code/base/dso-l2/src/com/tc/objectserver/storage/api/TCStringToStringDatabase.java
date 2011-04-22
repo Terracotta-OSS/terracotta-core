@@ -20,4 +20,14 @@ public interface TCStringToStringDatabase {
    * Stored the <String, String> key value pair to the db
    */
   public Status put(String key, String value, PersistenceTransaction tx);
+
+  /**
+   * Insert a <String, String> key-value pair into the db.
+   */
+  public Status insert(String key, String value, PersistenceTransaction tx);
+
+  /**
+   * Update a <String, String> key-value pair in the db.
+   */
+  public Status update(String key, String value, PersistenceTransaction tx);
 }

@@ -68,4 +68,12 @@ public class BerkeleyDBTCBytesBytesDatabase extends AbstractBerkeleyDatabase imp
   public TCDatabaseCursor<byte[], byte[]> openCursorUpdatable(final PersistenceTransaction tx) {
     return openCursor(tx);
   }
+
+  public Status insert(byte[] key, byte[] value, PersistenceTransaction tx) {
+    return put(key, value, tx);
+  }
+
+  public Status update(byte[] key, byte[] value, PersistenceTransaction tx) {
+    return put(key, value, tx);
+  }
 }

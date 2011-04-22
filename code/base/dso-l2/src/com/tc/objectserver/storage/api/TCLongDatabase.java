@@ -9,13 +9,12 @@ import java.util.Set;
 
 public interface TCLongDatabase {
   /**
-   * Puts a long to the database
+   * Inserts a long to the database
    */
-  public Status put(long key, PersistenceTransaction tx);
+  public Status insert(long key, PersistenceTransaction tx);
 
   /**
-   * Gets all the long keys persisted to the database.
-   * The transaction is already committed in this method.
+   * Gets all the long keys persisted to the database. The transaction is already committed in this method.
    */
   public Set<Long> getAllKeys(PersistenceTransaction tx);
 

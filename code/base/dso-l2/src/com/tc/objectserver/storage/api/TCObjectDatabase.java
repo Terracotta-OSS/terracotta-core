@@ -7,6 +7,11 @@ import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 
 public interface TCObjectDatabase {
   /**
+   * Puts a <long, byte[]> key-value pair into the db.
+   */
+  public Status put(long id, byte[] value, PersistenceTransaction tx);
+
+  /**
    * Inserts a <long, byte[]> key-value pair to the db.
    */
   public Status insert(long id, byte[] b, PersistenceTransaction tx);
@@ -26,5 +31,4 @@ public interface TCObjectDatabase {
    */
   public Status delete(long id, PersistenceTransaction tx);
 
-  public Status upsert(long long1, byte[] value, PersistenceTransaction tx);
 }

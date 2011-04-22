@@ -101,7 +101,7 @@ class DerbyTCBytesToBlobDB extends AbstractDerbyTCDatabase implements TCBytesToB
     }
   }
 
-  private Status update(byte[] key, byte[] val, PersistenceTransaction tx) {
+  public Status update(byte[] key, byte[] val, PersistenceTransaction tx) {
     try {
       // "UPDATE " + tableName + " SET " + VALUE + " = ? " + " WHERE " + KEY + " = ?"
       PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, updateQuery);
@@ -114,7 +114,7 @@ class DerbyTCBytesToBlobDB extends AbstractDerbyTCDatabase implements TCBytesToB
     }
   }
 
-  private Status insert(byte[] key, byte[] val, PersistenceTransaction tx) {
+  public Status insert(byte[] key, byte[] val, PersistenceTransaction tx) {
     PreparedStatement psPut;
     try {
       // "INSERT INTO " + tableName + " VALUES (?, ?)"
