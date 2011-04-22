@@ -806,6 +806,33 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     public int size() {
       return HashtableTC.this.size();
     }
+
+    @Override
+    public int hashCode() {
+      int h = 0;
+      Iterator i = iterator();
+      while (i.hasNext()) {
+        Object obj = i.next();
+        if (obj != null) h += obj.hashCode();
+      }
+      return h;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == this) return true;
+
+      if (!(o instanceof Set)) return false;
+      Collection c = (Collection) o;
+      if (c.size() != size()) return false;
+      try {
+        return containsAll(c);
+      } catch (ClassCastException unused) {
+        return false;
+      } catch (NullPointerException unused) {
+        return false;
+      }
+    }
   }
 
   private class KeySetWrapper extends CollectionWrapper implements Set {
@@ -886,6 +913,32 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
       return HashtableTC.this.size();
     }
 
+    @Override
+    public int hashCode() {
+      int h = 0;
+      Iterator i = iterator();
+      while (i.hasNext()) {
+        Object obj = i.next();
+        if (obj != null) h += obj.hashCode();
+      }
+      return h;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == this) return true;
+
+      if (!(o instanceof Set)) return false;
+      Collection c = (Collection) o;
+      if (c.size() != size()) return false;
+      try {
+        return containsAll(c);
+      } catch (ClassCastException unused) {
+        return false;
+      } catch (NullPointerException unused) {
+        return false;
+      }
+    }
   }
 
   private class ValuesCollectionWrapper extends CollectionWrapper {

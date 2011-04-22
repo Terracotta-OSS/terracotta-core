@@ -6,13 +6,14 @@ package com.tcclient.util;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TCMap;
 
+import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
 @SuppressWarnings("unchecked")
-public class ConcurrentHashMapKeySetWrapper implements Set {
+public class ConcurrentHashMapKeySetWrapper extends AbstractSet {
 
   protected final Set realKeySet;
   protected final Map map;

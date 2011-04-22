@@ -2017,6 +2017,88 @@ public class GenericMapTestApp extends GenericTransparentApp {
     }
   }
 
+  void testKeySetEquals(Map map, boolean validate, int v) {
+    if (validate) {
+      Set matching = new HashSet();
+      matching.add(E("timmy", v));
+      matching.add(E("chris", v));
+      matching.add(E("steve", v));
+
+      Assert.assertTrue(matching.equals(map.keySet()));
+      Assert.assertTrue(map.keySet().equals(matching));
+
+      Set nonMatching = new HashSet(matching);
+      nonMatching.add(E("brian", v));
+
+      Assert.assertFalse(nonMatching.equals(map.keySet()));
+      Assert.assertFalse(map.keySet().equals(nonMatching));
+    } else {
+      synchronized (map) {
+        Assert.assertNull(map.put(E("timmy", v), "teck"));
+        Assert.assertNull(map.put(E("chris", v), "cdennis"));
+        Assert.assertNull(map.put(E("steve", v), "sharris"));
+      }
+    }
+  }
+
+  void testEntrySetEquals(Map map, boolean validate, int v) {
+    if (validate) {
+      Set matching = new HashSet();
+      matching.add(new SimpleEntry(E("timmy", v), "teck"));
+      matching.add(new SimpleEntry(E("chris", v), "cdennis"));
+      matching.add(new SimpleEntry(E("steve", v), "sharris"));
+
+      Assert.assertTrue(matching.equals(map.entrySet()));
+      Assert.assertTrue(map.entrySet().equals(matching));
+
+      Set nonMatching = new HashSet(matching);
+      nonMatching.add(new SimpleEntry(E("brian", v), "bgriffin"));
+
+      Assert.assertFalse(nonMatching.equals(map.entrySet()));
+      Assert.assertFalse(map.entrySet().equals(nonMatching));
+    } else {
+      synchronized (map) {
+        Assert.assertNull(map.put(E("timmy", v), "teck"));
+        Assert.assertNull(map.put(E("chris", v), "cdennis"));
+        Assert.assertNull(map.put(E("steve", v), "sharris"));
+      }
+    }
+  }
+
+  void testKeySetHashCode(Map map, boolean validate, int v) {
+    if (validate) {
+      Set matching = new HashSet();
+      matching.add(E("timmy", v));
+      matching.add(E("chris", v));
+      matching.add(E("steve", v));
+
+      Assert.assertTrue(matching.hashCode() == map.keySet().hashCode());
+    } else {
+      synchronized (map) {
+        Assert.assertNull(map.put(E("timmy", v), "teck"));
+        Assert.assertNull(map.put(E("chris", v), "cdennis"));
+        Assert.assertNull(map.put(E("steve", v), "sharris"));
+      }
+    }
+  }
+
+  void testEntrySetHashCode(Map map, boolean validate, int v) {
+    if (validate) {
+      Set matching = new HashSet();
+      matching.add(new SimpleEntry(E("timmy", v), "teck"));
+      matching.add(new SimpleEntry(E("chris", v), "cdennis"));
+      matching.add(new SimpleEntry(E("steve", v), "sharris"));
+
+      Assert.assertTrue(matching.hashCode() == map.entrySet().hashCode());
+    } else {
+      synchronized (map) {
+        Assert.assertNull(map.put(E("timmy", v), "teck"));
+        Assert.assertNull(map.put(E("chris", v), "cdennis"));
+        Assert.assertNull(map.put(E("steve", v), "sharris"));
+      }
+    }
+  }
+
   private boolean canTestSharedArray(Map map) {
     return !(map instanceof HashMap) && !(map instanceof LinkedHashMap) && !(map instanceof Hashtable);
   }
