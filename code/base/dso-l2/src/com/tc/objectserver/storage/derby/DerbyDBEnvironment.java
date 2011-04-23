@@ -44,7 +44,7 @@ public class DerbyDBEnvironment implements DBEnvironment {
   public static final String               DRIVER                         = "org.apache.derby.jdbc.EmbeddedDriver";
   public static final String               PROTOCOL                       = "jdbc:derby:";
   public static final String               DB_NAME                        = "objectDB";
-  private static final int                 DEFAULT_PAGE_SIZE              = 16384;
+  private static final int                 DEFAULT_PAGE_SIZE              = 32768;
   private static final Object              CONTROL_LOCK                   = new Object();
   private static final Map<Integer, Float> PAGE_CACHE_OVERHEAD_FACTOR_MAP = new HashMap<Integer, Float>() {
                                                                             {
