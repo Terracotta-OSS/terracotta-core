@@ -136,10 +136,10 @@ class DerbyTCRootDatabase extends AbstractDerbyTCDatabase implements TCRootDatab
       psPut.setLong(2, id);
       psPut.executeUpdate();
     } catch (SQLException e) {
-      throw new DBException("Could not put root", e);
+      // Catch and ignore duplicate inserts
+      if (!e.getSQLState().equals("23505")) { throw new DBException("Could not put root", e); }
     }
     return Status.SUCCESS;
-
   }
 
   public long getIdFromName(byte[] rootName, PersistenceTransaction tx) {
