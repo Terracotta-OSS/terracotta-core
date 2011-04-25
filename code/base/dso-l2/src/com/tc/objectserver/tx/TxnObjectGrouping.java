@@ -5,8 +5,8 @@
 package com.tc.objectserver.tx;
 
 import com.tc.object.tx.ServerTransactionID;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
@@ -18,13 +18,15 @@ import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 
 public final class TxnObjectGrouping implements PrettyPrintable {
-  private static final int          MAX_OBJECTS    = TCPropertiesImpl.getProperties()
+  private static final int          MAX_OBJECTS    = TCPropertiesImpl
+                                                       .getProperties()
                                                        .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_MAXOBJECTS_INTXNOBJ_GROUPING);
-  private static final int          MAX_TXNS       = TCPropertiesImpl.getProperties()
+  private static final int          MAX_TXNS       = TCPropertiesImpl
+                                                       .getProperties()
                                                        .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_MAXTXNS_INTXNOBJECT_GROUPING);
 
   private static final State        APPLY_PENDING  = new State("APPLY_PENDING");
@@ -33,13 +35,17 @@ public final class TxnObjectGrouping implements PrettyPrintable {
   private final ServerTransactionID txID;
   private Map                       txns;
   private Map                       objects;
-  private final Map                 newRootsMap;
+  private Map                       newRootsMap;
   private int                       pendingApplys;
   private boolean                   isActive       = true;
 
   public TxnObjectGrouping(ServerTransactionID sTxID, Map newRootsMap) {
     this.txID = sTxID;
-    this.newRootsMap = newRootsMap;
+    if (newRootsMap.isEmpty()) {
+      this.newRootsMap = Collections.EMPTY_MAP;
+    } else {
+      this.newRootsMap = new HashMap(newRootsMap);
+    }
     this.txns = new HashMap();
     this.txns.put(sTxID, APPLY_PENDING);
     this.pendingApplys = 1;
@@ -93,12 +99,19 @@ public final class TxnObjectGrouping implements PrettyPrintable {
       objects = oldGrouping.objects;
       objects.putAll(temp);
     }
-    newRootsMap.putAll(oldGrouping.newRootsMap);
+    if (!oldGrouping.newRootsMap.isEmpty()) {
+      if (newRootsMap == Collections.EMPTY_MAP) {
+        newRootsMap = oldGrouping.newRootsMap;
+      } else {
+        newRootsMap.putAll(oldGrouping.newRootsMap);
+      }
+    }
     pendingApplys += oldGrouping.pendingApplys;
 
     // Setting these references to null so that we disable any futher access to these through old grouping
     oldGrouping.txns = null;
     oldGrouping.objects = null;
+    oldGrouping.newRootsMap = null;
     oldGrouping.isActive = false;
   }
 
@@ -110,10 +123,12 @@ public final class TxnObjectGrouping implements PrettyPrintable {
     return txns.size() > MAX_TXNS || (txns.size() > 1 && objects.size() > MAX_OBJECTS);
   }
 
+  @Override
   public int hashCode() {
     return txID.hashCode();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o instanceof TxnObjectGrouping) {
       TxnObjectGrouping other = (TxnObjectGrouping) o;
@@ -140,6 +155,7 @@ public final class TxnObjectGrouping implements PrettyPrintable {
     return out;
   }
 
+  @Override
   public String toString() {
     StringBuffer out = new StringBuffer();
     out.append("TransactionGrouping@" + System.identityHashCode(this)).append("\n");
