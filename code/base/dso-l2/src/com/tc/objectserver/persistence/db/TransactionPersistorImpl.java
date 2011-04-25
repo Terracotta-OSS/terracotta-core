@@ -78,8 +78,7 @@ class TransactionPersistorImpl extends DBPersistorBase implements TransactionPer
 
   public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx,
                                                     SortedSet<ServerTransactionID> serverTxnIDs) {
-    for (Object element : serverTxnIDs) {
-      ServerTransactionID stxID = (ServerTransactionID) element;
+    for (ServerTransactionID stxID : serverTxnIDs) {
       try {
         db.delete(serverTxnID2Bytes(stxID), tx);
       } catch (Exception e) {
