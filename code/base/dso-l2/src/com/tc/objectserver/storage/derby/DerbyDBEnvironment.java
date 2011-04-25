@@ -78,6 +78,9 @@ public class DerbyDBEnvironment implements DBEnvironment {
     this.envHome = home;
     this.derbyProps = props;
     this.l2FaultFromDisk = l2FaultFromDisk;
+
+    cleanLogDeviceIfRequired(paranoid);
+
     FileUtils.forceMkdir(this.envHome);
     logger.info("Using DERBY DBEnvironment ...");
 
@@ -125,6 +128,21 @@ public class DerbyDBEnvironment implements DBEnvironment {
         logger.info("Derby Properties file created with: " + derbyProps);
       } finally {
         fos.close();
+      }
+    }
+  }
+
+  private void cleanLogDeviceIfRequired(boolean paranoid) {
+    if (derbyProps.containsKey(TCPropertiesConsts.DERBY_LOG_DEVICE) && !paranoid) {
+      // clean logDevice if not already empty
+      String logDeviceDir = derbyProps.getProperty(TCPropertiesConsts.DERBY_LOG_DEVICE);
+      try {
+        File f = new File(logDeviceDir);
+        if (f.isDirectory() && f.list().length > 0) {
+          FileUtils.cleanDirectory(f);
+        }
+      } catch (Throwable t) {
+        logger.warn("Error while deleting logDevice directory " + logDeviceDir);
       }
     }
   }
