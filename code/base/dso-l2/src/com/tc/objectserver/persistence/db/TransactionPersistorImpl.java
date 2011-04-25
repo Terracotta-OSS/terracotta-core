@@ -18,7 +18,6 @@ import com.tc.util.Conversion;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.SortedSet;
 
 class TransactionPersistorImpl extends DBPersistorBase implements TransactionPersistor {
@@ -55,7 +54,7 @@ class TransactionPersistorImpl extends DBPersistorBase implements TransactionPer
     byte[] key = serverTxnID2Bytes(gtx.getServerTransactionID());
     byte[] value = globalTxnID2Bytes(gtx.getGlobalTransactionID());
     try {
-      this.db.put(key, value, tx);
+      this.db.insert(key, value, tx);
     } catch (Exception e) {
       throw new DBException(e);
     }
@@ -79,8 +78,8 @@ class TransactionPersistorImpl extends DBPersistorBase implements TransactionPer
 
   public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx,
                                                     SortedSet<ServerTransactionID> serverTxnIDs) {
-    for (Iterator i = serverTxnIDs.iterator(); i.hasNext();) {
-      ServerTransactionID stxID = (ServerTransactionID) i.next();
+    for (Object element : serverTxnIDs) {
+      ServerTransactionID stxID = (ServerTransactionID) element;
       try {
         db.delete(serverTxnID2Bytes(stxID), tx);
       } catch (Exception e) {
