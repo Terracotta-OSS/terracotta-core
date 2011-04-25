@@ -14,9 +14,9 @@ import com.tc.objectserver.persistence.db.TCCollectionsSerializer;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.TCDatabaseEntry;
+import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 import com.tc.objectserver.storage.api.TCMapsDatabase;
 import com.tc.objectserver.storage.api.TCMapsDatabaseCursor;
-import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 import com.tc.util.Conversion;
 
 import java.io.IOException;
@@ -206,6 +206,16 @@ public class BerkeleyDBTCMapsDatabase extends BerkeleyDBTCBytesBytesDatabase imp
   @Override
   public String toString() {
     return "BerkeleyDB-TCMapsDatabase";
+  }
+
+  public int update(PersistenceTransaction tx, long id, Object key, Object value, TCCollectionsSerializer serializer)
+      throws IOException, TCDatabaseException {
+    return put(tx, id, key, value, serializer);
+  }
+
+  public int insert(PersistenceTransaction tx, long id, Object key, Object value, TCCollectionsSerializer serializer)
+      throws IOException, TCDatabaseException {
+    return put(tx, id, key, value, serializer);
   }
 
 }

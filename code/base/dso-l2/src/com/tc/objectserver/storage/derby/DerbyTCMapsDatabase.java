@@ -11,7 +11,6 @@ import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.TCDatabaseCursor;
 import com.tc.objectserver.storage.api.TCDatabaseEntry;
 import com.tc.objectserver.storage.api.TCMapsDatabase;
-import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 import com.tc.objectserver.storage.derby.DerbyTCBytesToBlobDB.DerbyTCBytesBytesCursor;
 import com.tc.util.Conversion;
 
@@ -24,22 +23,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatabase {
-  private static final String     OBJECT_ID          = "objectid";
+  private static final String     OBJECT_ID = "objectid";
 
   private final String            deleteQuery;
   private final String            deleteCollectionBatchedQuery;
   private final String            deleteCollectionQuery;
-  private final String            containsQuery;
   private final String            updateQuery;
   private final String            insertQuery;
   private final String            countQuery;
   private final String            openCursorQuery;
 
-  private final BackingMapFactory factory            = new BackingMapFactory() {
-                                                       public Map createBackingMapFor(final ObjectID mapID) {
-                                                         return new HashMap(0);
-                                                       }
-                                                     };
+  private final BackingMapFactory factory   = new BackingMapFactory() {
+                                              public Map createBackingMapFor(final ObjectID mapID) {
+                                                return new HashMap(0);
+                                              }
+                                            };
 
   public DerbyTCMapsDatabase(String tableName, Connection connection, QueryProvider queryProvider)
       throws TCDatabaseException {
@@ -48,7 +46,6 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
     deleteCollectionBatchedQuery = "SELECT " + KEY + "," + VALUE + " FROM " + tableName + " WHERE " + OBJECT_ID
                                    + " = ?";
     deleteCollectionQuery = "DELETE FROM " + tableName + " WHERE " + OBJECT_ID + " = ?";
-    containsQuery = "SELECT " + VALUE + " FROM " + tableName + " WHERE " + KEY + " = ? AND " + OBJECT_ID + " = ? ";
     updateQuery = "UPDATE " + tableName + " SET " + VALUE + " = ? " + " WHERE " + KEY + " = ? AND " + OBJECT_ID
                   + " = ? ";
     insertQuery = "INSERT INTO " + tableName + " VALUES (?, ?, ?)";
@@ -124,34 +121,14 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
     final byte[] v = serializer.serialize(value);
     final int written = v.length + k.length;
 
-    if (!contains(id, k, tx)) {
-      insert(id, k, v, tx);
+    if (update(id, k, v, tx) == written) {
+      return written;
     } else {
-      update(id, k, v, tx);
-    }
-    return written;
-  }
-
-  private boolean contains(long id, byte[] k, PersistenceTransaction tx) {
-    ResultSet rs = null;
-    try {
-      // "SELECT " + VALUE + " FROM " + tableName + " WHERE "
-      // + KEY + " = ? AND " + OBJECT_ID + " = ? "
-      PreparedStatement psSelect = getOrCreatePreparedStatement(tx, containsQuery);
-      psSelect.setBytes(1, k);
-      psSelect.setLong(2, id);
-      rs = psSelect.executeQuery();
-
-      if (!rs.next()) { return false; }
-      return true;
-    } catch (SQLException e) {
-      throw new DBException("Error retrieving object id: " + id + "; error: " + e.getMessage());
-    } finally {
-      closeResultSet(rs);
+      return insert(id, k, v, tx);
     }
   }
 
-  private Status update(long id, byte[] k, byte[] v, PersistenceTransaction tx) {
+  private int update(long id, byte[] k, byte[] v, PersistenceTransaction tx) {
     try {
       // "UPDATE " + tableName + " SET " + VALUE + " = ? "
       // + " WHERE " + KEY + " = ? AND " + OBJECT_ID + " = ? "
@@ -159,25 +136,45 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
       psUpdate.setBytes(1, v);
       psUpdate.setBytes(2, k);
       psUpdate.setLong(3, id);
-      psUpdate.executeUpdate();
-      return Status.SUCCESS;
+      if (psUpdate.executeUpdate() > 0) {
+        return k.length + v.length;
+      } else {
+        return 0;
+      }
     } catch (SQLException e) {
       throw new DBException(e);
     }
   }
 
-  private Status insert(long id, byte[] k, byte[] v, PersistenceTransaction tx) {
+  public int update(PersistenceTransaction tx, long id, Object k, Object v, TCCollectionsSerializer serializer)
+      throws IOException {
+    final byte[] keyBytes = serializer.serialize(k);
+    final byte[] valueBytes = serializer.serialize(v);
+    return update(id, keyBytes, valueBytes, tx);
+  }
+
+  private int insert(long id, byte[] k, byte[] v, PersistenceTransaction tx) {
     try {
       // "INSERT INTO " + tableName + " VALUES (?, ?, ?)"
       PreparedStatement psPut = getOrCreatePreparedStatement(tx, insertQuery);
       psPut.setLong(1, id);
       psPut.setBytes(2, k);
       psPut.setBytes(3, v);
-      psPut.executeUpdate();
+      if (psPut.executeUpdate() > 0) {
+        return k.length + v.length;
+      } else {
+        return 0;
+      }
     } catch (SQLException e) {
       throw new DBException(e);
     }
-    return Status.SUCCESS;
+  }
+
+  public int insert(PersistenceTransaction tx, long id, Object k, Object v, TCCollectionsSerializer serializer)
+      throws IOException {
+    final byte[] keyBytes = serializer.serialize(k);
+    final byte[] valueBytes = serializer.serialize(v);
+    return insert(id, keyBytes, valueBytes, tx);
   }
 
   public long count(PersistenceTransaction tx) {
