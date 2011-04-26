@@ -23,6 +23,7 @@ import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Converts the request into a call to the objectManager with the proper next steps initialized I'm not convinced that
@@ -37,9 +38,10 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
 
   private final Counter         globalObjectRequestCounter;
   private final Counter         globalObjectFlushCounter;
+  private final AtomicLong      repeatLookups = new AtomicLong();
   private ObjectRequestManager  objectRequestManager;
 
-  private static final TCLogger logger = TCLogging.getLogger(ManagedObjectRequestHandler.class);
+  private static final TCLogger logger        = TCLogging.getLogger(ManagedObjectRequestHandler.class);
 
   public ManagedObjectRequestHandler(Counter globalObjectRequestCounter, Counter globalObjectFlushCounter) {
     this.globalObjectRequestCounter = globalObjectRequestCounter;
@@ -90,6 +92,10 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
       if (t > 1000 || numObjectsRemoved > 100000) {
         logger.warn("Time to Remove " + numObjectsRemoved + " is " + t + " ms");
       }
+    }
+    long diff = repeatLookups.addAndGet(numObjectsRequested - requestedIDs.size());
+    if (diff > 0 && diff % 10000 == 0) {
+      logger.warn(" Number of repeated/wasted lookups : " + diff);
     }
 
     if (requestedIDs.size() > 0) {
