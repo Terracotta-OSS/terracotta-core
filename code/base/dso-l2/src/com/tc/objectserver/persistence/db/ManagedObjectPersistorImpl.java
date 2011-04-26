@@ -340,7 +340,11 @@ public final class ManagedObjectPersistorImpl extends DBPersistorBase implements
     length += 8;
 
     try {
-      status = this.objectDB.put(managedObject.getID().toLong(), value, tx);
+      if (managedObject.isNewInDB()) {
+        status = this.objectDB.insert(managedObject.getID().toLong(), value, tx);
+      } else {
+        status = this.objectDB.update(managedObject.getID().toLong(), value, tx);
+      }
       if (status == Status.SUCCESS) {
         length += basicSaveCollection(tx, managedObject);
         managedObject.setIsDirty(false);

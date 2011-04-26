@@ -183,8 +183,12 @@ class TCPersistableMap implements Map, PersistableCollection {
           written += db.delete(tx, this.id, key, serializer);
           this.map.remove(key);
         } else {
-          written += db.put(tx, this.id, key, value, serializer);
-          this.map.put(key, value);
+          Object old = this.map.put(key, value);
+          if (old == null) {
+            written += db.insert(tx, this.id, key, value, serializer);
+          } else {
+            written += db.update(tx, this.id, key, value, serializer);
+          }
         }
       }
       this.delta.clear();

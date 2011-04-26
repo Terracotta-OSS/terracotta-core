@@ -52,8 +52,10 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   private final static byte                REFERENCED_OFFSET        = 4;
   private final static byte                REMOVE_ON_RELEASE_OFFSET = 8;
   private final static byte                PINNED_OFFSET            = 16;
+  private final static byte                IS_DB_NEW_OFFSET         = 32;
 
-  private final static byte                INITIAL_FLAG_VALUE       = IS_DIRTY_OFFSET | IS_NEW_OFFSET;
+  private final static byte                INITIAL_FLAG_VALUE       = IS_DIRTY_OFFSET | IS_NEW_OFFSET
+                                                                      | IS_DB_NEW_OFFSET;
 
   private static final long                UNINITIALIZED_VERSION    = -1;
 
@@ -96,8 +98,12 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     setFlag(IS_NEW_OFFSET, b);
   }
 
-  private void setBasicIsDirty(final boolean b) {
-    setFlag(IS_DIRTY_OFFSET, b);
+  private void setBasicIsDirty(final boolean isDirty) {
+    if (isDirty) {
+      setFlag(IS_DIRTY_OFFSET, isDirty);
+    } else {
+      setFlag(IS_DIRTY_OFFSET | IS_DB_NEW_OFFSET, isDirty);
+    }
   }
 
   private synchronized boolean compareAndSetFlag(final int offset, final boolean expected, final boolean value) {
@@ -116,16 +122,12 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     return (this.flags & offset) == offset;
   }
 
-  private boolean basicIsNew() {
+  public boolean isNew() {
     return getFlag(IS_NEW_OFFSET);
   }
 
-  private boolean basicIsDirty() {
-    return getFlag(IS_DIRTY_OFFSET);
-  }
-
-  public boolean isNew() {
-    return basicIsNew();
+  public boolean isNewInDB() {
+    return getFlag(IS_DB_NEW_OFFSET);
   }
 
   public void setIsNew(final boolean isNew) {
@@ -133,7 +135,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   }
 
   public boolean isDirty() {
-    return basicIsDirty();
+    return getFlag(IS_DIRTY_OFFSET);
   }
 
   public void setIsDirty(final boolean isDirty) {
@@ -256,8 +258,8 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     out.indent().print("className: " + getClassname()).println();
     out.indent().print("version:" + this.version).println();
     out.indent().print("state: ").visit(this.state).println();
-    out.indent().print("isDirty:" + basicIsDirty());
-    out.indent().print("isNew:" + basicIsNew());
+    out.indent().print("isDirty:" + isDirty());
+    out.indent().print("isNew:" + isNew());
     out.indent().print("isReferenced:" + isReferenced()).println();
     out.indent().print("next: " + (getNext() != null) + " prev: " + (getPrevious() != null));
     return rv;

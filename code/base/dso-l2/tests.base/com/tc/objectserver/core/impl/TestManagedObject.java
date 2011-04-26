@@ -133,6 +133,10 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return this.isNew;
   }
 
+  public boolean isNewInDB() {
+    return false;
+  }
+
   public void setTransientState(final ManagedObjectStateFactory stateFactory) {
     this.setTransientStateCalls.put(stateFactory);
   }

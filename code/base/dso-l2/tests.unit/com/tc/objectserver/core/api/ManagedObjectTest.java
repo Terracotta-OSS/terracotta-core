@@ -50,6 +50,33 @@ public class ManagedObjectTest extends TCTestCase {
     assertEquals(dna.loaderDesc, mo.getLoaderDescription());
   }
 
+  public void testIsNewToDB() throws Exception {
+    final ObjectID objectID = new ObjectID(1);
+
+    final ManagedObjectImpl mo = new ManagedObjectImpl(objectID);
+
+    assertTrue(mo.isDirty());
+    assertTrue(mo.isNew());
+    assertTrue(mo.isNewInDB());
+
+    mo.setIsDirty(true);
+    assertTrue(mo.isDirty());
+    assertTrue(mo.isNewInDB());
+
+    mo.setIsDirty(false);
+    assertFalse(mo.isDirty());
+    assertFalse(mo.isNewInDB());
+
+    mo.setIsDirty(true);
+    assertTrue(mo.isDirty());
+    assertFalse(mo.isNewInDB());
+
+    mo.setIsDirty(false);
+    assertFalse(mo.isDirty());
+    assertFalse(mo.isNewInDB());
+
+  }
+
   public void testApplyDNASameOrLowerVersion() throws Exception {
     final ObjectInstanceMonitor instanceMonitor = new ObjectInstanceMonitorImpl();
     final ObjectID objectID = new ObjectID(1);

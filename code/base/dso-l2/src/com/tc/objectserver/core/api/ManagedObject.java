@@ -7,8 +7,8 @@ package com.tc.objectserver.core.api;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
-import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.DNA.DNAType;
+import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
@@ -43,6 +43,8 @@ public interface ManagedObject {
   public ManagedObjectFacade createFacade(int limit);
 
   public boolean isNew();
+
+  public boolean isNewInDB();
 
   public void setIsNew(boolean isNew);
 
