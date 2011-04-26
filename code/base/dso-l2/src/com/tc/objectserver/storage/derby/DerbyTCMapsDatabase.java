@@ -146,11 +146,14 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
     }
   }
 
-  public int update(PersistenceTransaction tx, long id, Object k, Object v, TCCollectionsSerializer serializer)
+  public int update(PersistenceTransaction tx, long id, Object key, Object value, TCCollectionsSerializer serializer)
       throws IOException {
-    final byte[] keyBytes = serializer.serialize(k);
-    final byte[] valueBytes = serializer.serialize(v);
-    return update(id, keyBytes, valueBytes, tx);
+    final byte[] k = serializer.serialize(id, key);
+    final byte[] v = serializer.serialize(value);
+    final int written = v.length + k.length;
+
+    update(id, k, v, tx);
+    return written;
   }
 
   private int insert(long id, byte[] k, byte[] v, PersistenceTransaction tx) {
@@ -170,11 +173,14 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
     }
   }
 
-  public int insert(PersistenceTransaction tx, long id, Object k, Object v, TCCollectionsSerializer serializer)
+  public int insert(PersistenceTransaction tx, long id, Object key, Object value, TCCollectionsSerializer serializer)
       throws IOException {
-    final byte[] keyBytes = serializer.serialize(k);
-    final byte[] valueBytes = serializer.serialize(v);
-    return insert(id, keyBytes, valueBytes, tx);
+    final byte[] k = serializer.serialize(id, key);
+    final byte[] v = serializer.serialize(value);
+    final int written = v.length + k.length;
+
+    insert(id, k, v, tx);
+    return written;
   }
 
   public long count(PersistenceTransaction tx) {
