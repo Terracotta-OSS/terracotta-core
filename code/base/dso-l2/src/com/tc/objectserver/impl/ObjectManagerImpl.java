@@ -791,11 +791,14 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private void removeReferenceIfNecessary(final ManagedObjectReference mor) {
     if (mor.isRemoveOnRelease()) {
       if (mor.getObject().isDirty()) {
-        logger.error(mor + " is DIRTY");
-        throw new AssertionError(mor + " is DIRTY");
+        // This could happen if the faulting is initiated by someone with removeOnRelease=true but someone else sneaks
+        // in before that guy and gets the object. So adjust the state and proceed.
+        logger.info(mor + " is DIRTY but isRemoveOnRelease is true, resetting it");
+        mor.setRemoveOnRelease(false);
+      } else {
+        final Object removed = this.references.remove(mor.getObjectID());
+        if (removed == null) { throw new AssertionError("Removed is null : " + mor); }
       }
-      final Object removed = this.references.remove(mor.getObjectID());
-      if (removed == null) { throw new AssertionError("Removed is null : " + mor); }
     }
   }
 
