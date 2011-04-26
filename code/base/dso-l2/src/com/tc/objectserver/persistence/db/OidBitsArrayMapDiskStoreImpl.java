@@ -7,6 +7,7 @@ package com.tc.objectserver.persistence.db;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.object.ObjectID;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.storage.api.TCBytesToBytesDatabase;
@@ -22,10 +23,11 @@ import java.util.TreeMap;
 
 public class OidBitsArrayMapDiskStoreImpl extends OidBitsArrayMapImpl implements OidBitsArrayMap {
 
-  private static final TCLogger        logger = TCLogging.getTestingLogger(FastObjectIDManagerImpl.class);
+  private static final TCLogger        logger        = TCLogging.getTestingLogger(FastObjectIDManagerImpl.class);
 
   private final TCBytesToBytesDatabase oidDB;
   private final int                    auxKey;
+  private final OidBitsArrayMap        onDiskEntries = new OidBitsArrayMapImpl(8);
 
   /*
    * Compressed bits array for ObjectIDs, backed up by a database. If null database, then only in-memory representation.
@@ -64,7 +66,10 @@ public class OidBitsArrayMapDiskStoreImpl extends OidBitsArrayMapImpl implements
     try {
       long aryIndex = oidIndex(oid);
       byte[] val = oidDB.get(Conversion.long2Bytes(aryIndex + auxKey), txn);
-      if (val != null) { return new OidLongArray(aryIndex, val); }
+      if (val != null) {
+        onDiskEntries.getAndSet(new ObjectID(aryIndex), null);
+        return new OidLongArray(aryIndex, val);
+      }
       return null;
     } catch (Exception e) {
       throw new TCDatabaseException(e.getMessage());
@@ -74,12 +79,21 @@ public class OidBitsArrayMapDiskStoreImpl extends OidBitsArrayMapImpl implements
   void writeDiskEntry(PersistenceTransaction txn, OidLongArray bits) throws TCDatabaseException {
     byte[] key = bits.keyToBytes(auxKey);
 
+    long aryIndex = oidIndex(bits.getKey());
     try {
       if (!bits.isZero()) {
-        if (this.oidDB.put(key, bits.arrayToBytes(), txn) != Status.SUCCESS) {
-          //
-          throw new TCDatabaseException("Failed to update oidDB at " + bits.getKey());
+        if (onDiskEntries.contains(new ObjectID(aryIndex))) {
+          if (this.oidDB.update(key, bits.arrayToBytes(), txn) != Status.SUCCESS) {
+            // for text format
+            throw new TCDatabaseException("Failed to update oidDB at " + bits.getKey());
+          }
+        } else {
+          if (this.oidDB.insert(key, bits.arrayToBytes(), txn) != Status.SUCCESS) {
+            // for text format
+            throw new TCDatabaseException("Failed to insert oidDB at " + bits.getKey());
+          }
         }
+        onDiskEntries.getAndSet(new ObjectID(aryIndex), null);
       } else {
         // OperationStatus.NOTFOUND happened if added and then deleted in the same batch
         Status status = this.oidDB.delete(key, txn);
@@ -87,6 +101,7 @@ public class OidBitsArrayMapDiskStoreImpl extends OidBitsArrayMapImpl implements
           //
           throw new TCDatabaseException("Failed to delete oidDB at " + bits.getKey());
         }
+        onDiskEntries.getAndClr(new ObjectID(aryIndex), null);
       }
     } catch (Exception e) {
       throw new TCDatabaseException(e.getMessage());
