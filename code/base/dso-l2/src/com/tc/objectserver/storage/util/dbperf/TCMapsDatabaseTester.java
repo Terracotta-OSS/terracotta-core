@@ -8,7 +8,6 @@ import com.tc.objectserver.persistence.db.TCCollectionsSerializerImpl;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.TCMapsDatabase;
-import com.tc.util.Conversion;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -28,14 +27,14 @@ public class TCMapsDatabaseTester extends AbstractTCDatabaseTester {
   protected void insertInternal(PersistenceTransaction tx) throws TCDatabaseException, IOException {
     long objectId = nextNewObjectId();
     long mapId = objectId % MAP_SIZE;
-    mapsDB.insert(tx, mapId, Conversion.long2Bytes(objectId), newValue(), serializer);
+    mapsDB.insert(tx, mapId, keyWithLong(objectId), newValue(), serializer);
   }
 
   @Override
   protected void updateInternal(PersistenceTransaction tx) throws TCDatabaseException, IOException {
     long objectId = nextExistentObjectId();
     long mapId = objectId % MAP_SIZE;
-    mapsDB.update(tx, mapId, Conversion.long2Bytes(objectId), newValue(), serializer);
+    mapsDB.update(tx, mapId, keyWithLong(objectId), newValue(), serializer);
   }
 
   @Override
@@ -47,14 +46,14 @@ public class TCMapsDatabaseTester extends AbstractTCDatabaseTester {
       objectId = nextNewObjectId();
     }
     long mapId = objectId % MAP_SIZE;
-    mapsDB.put(tx, mapId, Conversion.long2Bytes(objectId), newValue(), serializer);
+    mapsDB.put(tx, mapId, keyWithLong(objectId), newValue(), serializer);
   }
 
   @Override
   protected void deleteInternal(PersistenceTransaction tx) throws TCDatabaseException, IOException {
     long objectId = nextOldObjectId();
     long mapId = objectId % MAP_SIZE;
-    mapsDB.delete(tx, mapId, Conversion.long2Bytes(objectId), serializer);
+    mapsDB.delete(tx, mapId, keyWithLong(objectId), serializer);
   }
 
   @Override
@@ -62,5 +61,10 @@ public class TCMapsDatabaseTester extends AbstractTCDatabaseTester {
     long objectId = nextExistentObjectId();
     long mapId = objectId % MAP_SIZE;
     mapsDB.loadMap(tx, mapId, new HashMap(), serializer);
+  }
+
+  @Override
+  protected byte[] keyWithLong(long l) {
+    return (byte[]) super.keyWithLong(l);
   }
 }

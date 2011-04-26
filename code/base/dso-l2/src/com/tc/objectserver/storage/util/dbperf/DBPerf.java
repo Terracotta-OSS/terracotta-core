@@ -19,7 +19,6 @@ import com.tc.logging.TCLogging;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.DBEnvironment;
 import com.tc.objectserver.storage.api.DBFactory;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
@@ -41,7 +40,8 @@ public class DBPerf {
   private final AbstractTCDatabaseTester objectDBTester;
   private final AbstractTCDatabaseTester mapsDBTester;
   private final AbstractTCDatabaseTester clientStateDBTester;
-  private String                         workload  = "for (int i = 0; i < 100; i++) { objectDB.insert(tx); mapsDB.insert(tx); }";
+  private final AbstractTCDatabaseTester transactionDBTester;
+  private String                         workload  = "tx = ptp.newTransaction(); for (int i = 0; i < 20; i++) { objectDB.insert(tx); mapsDB.insert(tx); }; tx.commit();";
   private int                            runtime   = 60;
   private int                            noWorkers = 4;
 
@@ -51,6 +51,7 @@ public class DBPerf {
     objectDBTester = new TCObjectDatabaseTester(dbEnvironment.getObjectDatabase());
     mapsDBTester = new TCMapsDatabaseTester(dbEnvironment.getMapsDatabase());
     clientStateDBTester = new TCLongDatabaseTester(dbEnvironment.getClientStateDatabase());
+    transactionDBTester = new TCBytesToBytesDatabaseTester(dbEnvironment.getTransactionDatabase(), 64, 8);
   }
 
   public void setWorkload(String workload) {
@@ -177,6 +178,8 @@ public class DBPerf {
         mapsDBTester.printCycleReport("m->", POLL_TIME);
         System.out.println("clientStateDB");
         clientStateDBTester.printCycleReport("c->", POLL_TIME);
+        System.out.println("transactionDB");
+        transactionDBTester.printCycleReport("t->", POLL_TIME);
       }
       int totalTransactions = 0;
       for (Worker worker : workers) {
@@ -190,6 +193,8 @@ public class DBPerf {
       mapsDBTester.printTotalReport("m=>", runtimeSeconds);
       System.out.println("clientStateDB");
       clientStateDBTester.printTotalReport("c=>", runtimeSeconds);
+      System.out.println("transactionDB");
+      transactionDBTester.printTotalReport("t=>", runtimeSeconds);
     }
   }
 
@@ -204,23 +209,28 @@ public class DBPerf {
       interpreter.set("objectDB", objectDBTester);
       interpreter.set("mapsDB", mapsDBTester);
       interpreter.set("clientStateDB", clientStateDBTester);
+      interpreter.set("transactionDB", transactionDBTester);
       interpreter.set("id", id);
+      interpreter.eval("work() { " + workload + ";}");
       setName("Worker " + id);
     }
 
     @Override
     public void run() {
       PersistenceTransactionProvider ptp = dbEnvironment.getPersistenceTransactionProvider();
+      try {
+        interpreter.set("ptp", ptp);
+      } catch (EvalError e) {
+        logger.error("Failed to setup PersistenceTransactionProvider.");
+        stopWorker();
+      }
       while (running) {
-        PersistenceTransaction tx = ptp.newTransaction();
         try {
-          interpreter.set("tx", tx);
-          interpreter.eval(workload);
+          interpreter.eval("work()");
         } catch (EvalError e) {
           logger.error("Failed to evaluate workload!", e);
           stopWorker();
         }
-        tx.commit();
         transactionsThisCycle.incrementAndGet();
         totalTransactions.incrementAndGet();
       }

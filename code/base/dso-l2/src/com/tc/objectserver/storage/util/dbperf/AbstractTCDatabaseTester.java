@@ -5,6 +5,7 @@ package com.tc.objectserver.storage.util.dbperf;
 
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
+import com.tc.util.Conversion;
 
 import java.io.IOException;
 import java.util.Random;
@@ -101,6 +102,10 @@ public abstract class AbstractTCDatabaseTester {
 
   protected byte[] newValue() {
     return new byte[VALUE_SIZE];
+  }
+
+  protected Object keyWithLong(long l) {
+    return Conversion.long2Bytes(l);
   }
 
   public void printCycleReport(String prefix, int timePeriod) {
