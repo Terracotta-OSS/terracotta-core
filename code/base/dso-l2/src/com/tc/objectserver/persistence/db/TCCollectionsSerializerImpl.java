@@ -54,8 +54,9 @@ public class TCCollectionsSerializerImpl implements TCCollectionsSerializer {
   }
 
   public byte[] serialize(final Object o) throws IOException {
-    TCObjectOutputStream oo = this.td.get().getTCObjectOutputStream();
-    ByteArrayOutputStream bao = this.td.get().getByteArrayOutputStream();
+    OutputStreamWrappers outputStreamWrappers = this.td.get();
+    TCObjectOutputStream oo = outputStreamWrappers.getTCObjectOutputStream();
+    ByteArrayOutputStream bao = outputStreamWrappers.getByteArrayOutputStream();
 
     this.serializer.serializeTo(o, oo);
     oo.flush();

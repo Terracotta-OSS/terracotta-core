@@ -12,7 +12,6 @@ import com.tc.objectserver.storage.api.TCDatabaseCursor;
 import com.tc.objectserver.storage.api.TCDatabaseEntry;
 import com.tc.objectserver.storage.api.TCMapsDatabase;
 import com.tc.objectserver.storage.derby.DerbyTCBytesToBlobDB.DerbyTCBytesBytesCursor;
-import com.tc.util.Conversion;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -42,7 +41,7 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
   public DerbyTCMapsDatabase(String tableName, Connection connection, QueryProvider queryProvider)
       throws TCDatabaseException {
     super(tableName, connection, queryProvider);
-    deleteQuery = "DELETE FROM " + tableName + " WHERE " + KEY + " = ?";
+    deleteQuery = "DELETE FROM " + tableName + " WHERE " + KEY + " = ? AND " + OBJECT_ID + " = ? ";
     deleteCollectionBatchedQuery = "SELECT " + KEY + "," + VALUE + " FROM " + tableName + " WHERE " + OBJECT_ID
                                    + " = ?";
     deleteCollectionQuery = "DELETE FROM " + tableName + " WHERE " + OBJECT_ID + " = ?";
@@ -63,12 +62,13 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
 
   public int delete(PersistenceTransaction tx, long id, Object key, TCCollectionsSerializer serializer)
       throws IOException {
-    final byte[] k = serializer.serialize(id, key);
+    final byte[] k = serializer.serialize(key);
     int written = k.length;
     try {
       // "DELETE FROM " + tableName + " WHERE " + KEY + " = ?"
       PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, deleteQuery);
       psUpdate.setBytes(1, k);
+      psUpdate.setLong(2, id);
       psUpdate.executeUpdate();
       return written;
     } catch (SQLException e) {
@@ -117,7 +117,7 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
 
   public int put(PersistenceTransaction tx, long id, Object key, Object value, TCCollectionsSerializer serializer)
       throws IOException {
-    final byte[] k = serializer.serialize(id, key);
+    final byte[] k = serializer.serialize(key);
     final byte[] v = serializer.serialize(value);
     final int written = v.length + k.length;
 
@@ -148,7 +148,7 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
 
   public int update(PersistenceTransaction tx, long id, Object key, Object value, TCCollectionsSerializer serializer)
       throws IOException {
-    final byte[] k = serializer.serialize(id, key);
+    final byte[] k = serializer.serialize(key);
     final byte[] v = serializer.serialize(value);
     final int written = v.length + k.length;
 
@@ -175,7 +175,7 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
 
   public int insert(PersistenceTransaction tx, long id, Object key, Object value, TCCollectionsSerializer serializer)
       throws IOException {
-    final byte[] k = serializer.serialize(id, key);
+    final byte[] k = serializer.serialize(key);
     final byte[] v = serializer.serialize(value);
     final int written = v.length + k.length;
 
@@ -210,13 +210,12 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
 
   public void loadMap(PersistenceTransaction tx, long id, Map map, TCCollectionsSerializer serializer)
       throws TCDatabaseException {
-    final byte idb[] = Conversion.long2Bytes(id);
     TCDatabaseCursor c = null;
     try {
       c = openCursor(tx, id);
       while (c.hasNext()) {
         final TCDatabaseEntry<byte[], byte[]> entry = c.next();
-        final Object mkey = serializer.deserialize(idb.length, entry.getKey());
+        final Object mkey = serializer.deserialize(entry.getKey());
         final Object mvalue = serializer.deserialize(entry.getValue());
         map.put(mkey, mvalue);
       }

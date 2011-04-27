@@ -126,6 +126,26 @@ public class TCMapsDatabaseTest extends TCTestCase {
     return array;
   }
 
+  public void testDelete() throws Exception {
+    long objectId1 = 1;
+    long objectId2 = 2;
+    TCCollectionsSerializer serializer = new TCCollectionsSerializerImpl();
+
+    String key = "key";
+    String value = "value";
+
+    PersistenceTransaction tx = ptp.newTransaction();
+    database.insert(tx, objectId1, key, value, serializer);
+    database.insert(tx, objectId2, key, value, serializer);
+    tx.commit();
+
+    tx = ptp.newTransaction();
+    database.delete(tx, objectId1, key, serializer);
+    tx.commit();
+
+    Assert.assertEquals(1, database.count(ptp.newTransaction()));
+  }
+
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
