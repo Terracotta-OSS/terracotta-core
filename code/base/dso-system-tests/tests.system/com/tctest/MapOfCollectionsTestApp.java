@@ -12,6 +12,7 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.runtime.Os;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.HashMap;
@@ -22,11 +23,19 @@ import java.util.concurrent.CyclicBarrier;
 
 public class MapOfCollectionsTestApp extends AbstractTransparentApp {
 
-  private final ConcurrentHashMap<Key, Map<Key, Value>> chm        = new ConcurrentHashMap<Key, Map<Key, Value>>();
+  private final ConcurrentHashMap<Key, Map<Key, Value>> chm   = new ConcurrentHashMap<Key, Map<Key, Value>>();
   private final CyclicBarrier                           barrier;
-  private final static int                              RANGE      = 10000;
-  private final static int                              SIZE       = 50;
-  private final static int                              LOOP_COUNT = 4000;
+  private final static int                              RANGE = 10000;
+  private final static int                              SIZE  = 50;
+  private final static int                              LOOP_COUNT;
+
+  static {
+    if (Os.isWindows() || Os.isSolaris()) {
+      LOOP_COUNT = 2000;
+    } else {
+      LOOP_COUNT = 4000;
+    }
+  }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = MapOfCollectionsTestApp.class.getName();
