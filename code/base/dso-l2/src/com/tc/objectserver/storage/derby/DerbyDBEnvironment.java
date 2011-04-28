@@ -43,7 +43,7 @@ import java.util.Properties;
 public class DerbyDBEnvironment implements DBEnvironment {
   public static final String               DRIVER                         = "org.apache.derby.jdbc.EmbeddedDriver";
   public static final String               PROTOCOL                       = "jdbc:derby:";
-  public static final String               DB_NAME                        = "objectDB";
+  public static final String               DB_NAME                        = "datadb";
   private static final int                 DEFAULT_PAGE_SIZE              = 32768;
   private static final Object              CONTROL_LOCK                   = new Object();
   private static final Map<Integer, Float> PAGE_CACHE_OVERHEAD_FACTOR_MAP = new HashMap<Integer, Float>() {
@@ -230,7 +230,9 @@ public class DerbyDBEnvironment implements DBEnvironment {
       conn.setAutoCommit(false);
       conn.close();
     } catch (SQLException e) {
-      throw new TCDatabaseException(e);
+      String message = "Could not open database. Try cleaning data directory for Terracotta and the logDevice Directory.";
+      logger.fatal(message, e);
+      throw new TCDatabaseException(message);
     }
   }
 
