@@ -62,12 +62,16 @@ public class OidBitsArrayMapDiskStoreImpl extends OidBitsArrayMapImpl implements
     return longAry;
   }
 
+  private ObjectID entryIndex(long keyToOnDiskEntry) {
+    return new ObjectID(keyToOnDiskEntry / this.bitsLength);
+  }
+
   OidLongArray readDiskEntry(PersistenceTransaction txn, long oid) throws TCDatabaseException {
     try {
       long aryIndex = oidIndex(oid);
       byte[] val = oidDB.get(Conversion.long2Bytes(aryIndex + auxKey), txn);
       if (val != null) {
-        onDiskEntries.getAndSet(new ObjectID(aryIndex), null);
+        onDiskEntries.getAndSet(entryIndex(aryIndex), null);
         return new OidLongArray(aryIndex, val);
       }
       return null;
@@ -82,7 +86,7 @@ public class OidBitsArrayMapDiskStoreImpl extends OidBitsArrayMapImpl implements
     long aryIndex = oidIndex(bits.getKey());
     try {
       if (!bits.isZero()) {
-        if (onDiskEntries.contains(new ObjectID(aryIndex))) {
+        if (onDiskEntries.contains(entryIndex(aryIndex))) {
           if (this.oidDB.update(key, bits.arrayToBytes(), txn) != Status.SUCCESS) {
             // for text format
             throw new TCDatabaseException("Failed to update oidDB at " + bits.getKey());
@@ -93,7 +97,7 @@ public class OidBitsArrayMapDiskStoreImpl extends OidBitsArrayMapImpl implements
             throw new TCDatabaseException("Failed to insert oidDB at " + bits.getKey());
           }
         }
-        onDiskEntries.getAndSet(new ObjectID(aryIndex), null);
+        onDiskEntries.getAndSet(entryIndex(aryIndex), null);
       } else {
         // OperationStatus.NOTFOUND happened if added and then deleted in the same batch
         Status status = this.oidDB.delete(key, txn);
