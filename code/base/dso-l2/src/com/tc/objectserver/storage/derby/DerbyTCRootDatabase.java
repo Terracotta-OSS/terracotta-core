@@ -26,6 +26,7 @@ class DerbyTCRootDatabase extends AbstractDerbyTCDatabase implements TCRootDatab
   private final String getQuery;
   private final String rootNamesToIDQuery;
   private final String insertQuery;
+  private final String updateQuery;
   private final String rootIDsQuery;
   private final String idFromNameQuery;
 
@@ -37,6 +38,7 @@ class DerbyTCRootDatabase extends AbstractDerbyTCDatabase implements TCRootDatab
     rootNamesQuery = "SELECT " + KEY + " FROM " + tableName;
     rootNamesToIDQuery = "SELECT " + KEY + ", " + VALUE + " FROM " + tableName;
     insertQuery = "INSERT INTO " + tableName + " VALUES (?, ?)";
+    updateQuery = "UPDATE " + tableName + " SET " + VALUE + " = ? " + " WHERE " + KEY + " = ?";
     idFromNameQuery = "SELECT " + VALUE + " FROM " + tableName + " WHERE " + KEY + " = ?";
   }
 
@@ -128,17 +130,45 @@ class DerbyTCRootDatabase extends AbstractDerbyTCDatabase implements TCRootDatab
     }
   }
 
-  public Status insert(byte[] rootName, long id, PersistenceTransaction tx) {
+  public Status put(byte[] rootName, long id, PersistenceTransaction tx) {
+    if (get(rootName, tx) == ObjectID.NULL_ID.toLong()) {
+      return insert(rootName, id, tx);
+    } else {
+      return update(rootName, id, tx);
+    }
+  }
+
+  private Status insert(byte[] rootName, long id, PersistenceTransaction tx) {
     try {
       // "INSERT INTO " + tableName + " VALUES (?, ?)"
       PreparedStatement psPut = getOrCreatePreparedStatement(tx, insertQuery);
       psPut.setBytes(1, rootName);
       psPut.setLong(2, id);
-      psPut.executeUpdate();
+      if (psPut.executeUpdate() > 0) {
+        return Status.SUCCESS;
+      } else {
+        return Status.NOT_FOUND;
+      }
     } catch (SQLException e) {
       throw new DBException("Could not put root", e);
     }
-    return Status.SUCCESS;
+  }
+
+  private Status update(byte[] rootName, long id, PersistenceTransaction tx) {
+    try {
+      // "UPDATE " + tableName + " SET " + VALUE + " = ? "
+      // + " WHERE " + KEY + " = ?"
+      PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, updateQuery);
+      psUpdate.setLong(1, id);
+      psUpdate.setBytes(2, rootName);
+      if (psUpdate.executeUpdate() > 0) {
+        return Status.SUCCESS;
+      } else {
+        return Status.NOT_FOUND;
+      }
+    } catch (SQLException e) {
+      throw new DBException(e);
+    }
   }
 
   public long getIdFromName(byte[] rootName, PersistenceTransaction tx) {

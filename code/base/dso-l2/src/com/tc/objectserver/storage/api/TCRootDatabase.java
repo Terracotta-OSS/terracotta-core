@@ -14,7 +14,7 @@ public interface TCRootDatabase {
   /**
    * Puts the root name with the id to the db
    */
-  public Status insert(byte[] rootName, long id, PersistenceTransaction tx);
+  public Status put(byte[] rootName, long id, PersistenceTransaction tx);
 
   /**
    * gets the id from the root name

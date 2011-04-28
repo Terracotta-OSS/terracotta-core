@@ -30,8 +30,8 @@ public class BerkeleyDBTCRootDatabase extends BerkeleyDBTCBytesBytesDatabase imp
     super(db);
     this.rootDBCursorConfig.setReadCommitted(true);
   }
-  
-  public Status insert(byte[] rootName, long id, PersistenceTransaction tx) {
+
+  public Status put(byte[] rootName, long id, PersistenceTransaction tx) {
     byte[] value = Conversion.long2Bytes(id);
     return put(rootName, value, tx);
   }

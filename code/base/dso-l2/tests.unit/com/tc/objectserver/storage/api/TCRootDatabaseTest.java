@@ -48,7 +48,7 @@ public class TCRootDatabaseTest extends TCTestCase {
     byte[] key = getRandomlyFilledByteArray();
 
     PersistenceTransaction tx = ptp.newTransaction();
-    Status status = database.insert(key, objectId, tx);
+    Status status = database.put(key, objectId, tx);
     tx.commit();
     Assert.assertEquals(Status.SUCCESS, status);
 
@@ -67,7 +67,7 @@ public class TCRootDatabaseTest extends TCTestCase {
 
     for (int i = 0; i < keys.length; i++) {
       PersistenceTransaction tx = ptp.newTransaction();
-      Status status = database.insert(keys[i], i, tx);
+      Status status = database.put(keys[i], i, tx);
       tx.commit();
       Assert.assertEquals(Status.SUCCESS, status);
     }
