@@ -138,11 +138,11 @@ public class TransactionStoreImpl implements TransactionStore {
    * Global Transaction descriptors should have been deleted from sids data structure, before this call.
    */
   private void removeGlobalTransactionDescs(Collection gidDescs, PersistenceTransaction tx) {
-    SortedSet<ServerTransactionID> toRemove = new TreeSet<ServerTransactionID>();
+    SortedSet<GlobalTransactionID> toRemove = new TreeSet<GlobalTransactionID>();
     for (Iterator i = gidDescs.iterator(); i.hasNext();) {
       GlobalTransactionDescriptor gd = (GlobalTransactionDescriptor) i.next();
       this.ids.remove(gd.getGlobalTransactionID());
-      toRemove.add(gd.getServerTransactionID());
+      toRemove.add(gd.getGlobalTransactionID());
     }
     if (!gidDescs.isEmpty()) {
       this.persistor.deleteAllGlobalTransactionDescriptors(tx, toRemove);
@@ -163,7 +163,7 @@ public class TransactionStoreImpl implements TransactionStore {
 
   // Used in Passive server
   public void clearCommitedTransactionsBelowLowWaterMark(PersistenceTransaction tx, GlobalTransactionID lowWaterMark) {
-    SortedSet<ServerTransactionID> toRemove = new TreeSet<ServerTransactionID>();
+    SortedSet<GlobalTransactionID> toRemove = new TreeSet<GlobalTransactionID>();
     synchronized (this.ids) {
       Map lowerThanLWM = this.ids.headMap(lowWaterMark);
       for (Iterator i = lowerThanLWM.values().iterator(); i.hasNext();) {
@@ -172,7 +172,7 @@ public class TransactionStoreImpl implements TransactionStore {
           i.remove();
           ServerTransactionID sid = gd.getServerTransactionID();
           this.sids.remove(sid);
-          toRemove.add(sid);
+          toRemove.add(gd.getGlobalTransactionID());
         }
       }
     }

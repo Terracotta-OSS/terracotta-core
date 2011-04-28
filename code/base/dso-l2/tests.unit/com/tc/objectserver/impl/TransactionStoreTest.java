@@ -402,7 +402,7 @@ public class TransactionStoreTest extends TCTestCase {
 
     public void saveGlobalTransactionDescriptor(PersistenceTransaction tx, GlobalTransactionDescriptor gtx) {
       storeQueue.put(new Object[] { tx, gtx });
-      persisted.put(gtx.getServerTransactionID(), gtx);
+      persisted.put(gtx.getGlobalTransactionID(), gtx);
     }
 
     public long next() {
@@ -413,10 +413,9 @@ public class TransactionStoreTest extends TCTestCase {
       return sequence;
     }
 
-    public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx, SortedSet<ServerTransactionID> toDelete) {
+    public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx, SortedSet<GlobalTransactionID> toDelete) {
       deleteQueue.put(toDelete);
-      for (Iterator<ServerTransactionID> i = toDelete.iterator(); i.hasNext();) {
-        ServerTransactionID sid = i.next();
+      for (GlobalTransactionID sid : toDelete) {
         persisted.remove(sid);
       }
     }

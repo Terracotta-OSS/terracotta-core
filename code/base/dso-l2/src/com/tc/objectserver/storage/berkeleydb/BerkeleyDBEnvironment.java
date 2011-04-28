@@ -43,6 +43,7 @@ import com.tc.objectserver.storage.api.TCMapsDatabase;
 import com.tc.objectserver.storage.api.TCObjectDatabase;
 import com.tc.objectserver.storage.api.TCRootDatabase;
 import com.tc.objectserver.storage.api.TCStringToStringDatabase;
+import com.tc.objectserver.storage.api.TCTransactionStoreDatabase;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.retrieval.actions.SRAForBerkeleyDB;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -190,7 +191,7 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
       newRootDB(env, ROOT_DB_NAME);
 
       newLongDB(env, CLIENT_STATE_DB_NAME);
-      newBytesBytesDB(env, TRANSACTION_DB_NAME);
+      newTransactionStoreDB(env, TRANSACTION_DB_NAME);
       newLongToStringDatabase(env, STRING_INDEX_DB_NAME);
       newIntToBytesDatabase(env, CLASS_DB_NAME);
       newMapsDatabase(env, MAP_DB_NAME);
@@ -356,9 +357,9 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
     return (BerkeleyDBTCLongDatabase) databasesByName.get(CLIENT_STATE_DB_NAME);
   }
 
-  public synchronized TCBytesToBytesDatabase getTransactionDatabase() throws TCDatabaseException {
+  public synchronized TCTransactionStoreDatabase getTransactionDatabase() throws TCDatabaseException {
     assertOpen();
-    return (BerkeleyDBTCBytesBytesDatabase) databasesByName.get(TRANSACTION_DB_NAME);
+    return (TCTransactionStoreDatabase) databasesByName.get(TRANSACTION_DB_NAME);
   }
 
   public synchronized TCIntToBytesDatabase getClassDatabase() throws TCDatabaseException {
@@ -498,6 +499,17 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
     try {
       Database db = e.openDatabase(null, name, dbcfg);
       BerkeleyDBTCBytesBytesDatabase bdb = new BerkeleyDBTCBytesBytesDatabase(db);
+      createdDatabases.add(bdb);
+      databasesByName.put(name, bdb);
+    } catch (Exception de) {
+      throw new TCDatabaseException(de.getMessage());
+    }
+  }
+
+  private void newTransactionStoreDB(Environment e, String name) throws TCDatabaseException {
+    try {
+      Database db = e.openDatabase(null, name, dbcfg);
+      TCTransactionStoreDatabase bdb = new BerkeleyDBTCTransactionStoreDatabase(db);
       createdDatabases.add(bdb);
       databasesByName.put(name, bdb);
     } catch (Exception de) {

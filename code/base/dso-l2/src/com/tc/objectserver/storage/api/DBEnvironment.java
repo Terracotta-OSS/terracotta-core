@@ -103,7 +103,7 @@ public interface DBEnvironment {
   /**
    * Returns the transaction database.
    */
-  public abstract TCBytesToBytesDatabase getTransactionDatabase() throws TCDatabaseException;
+  public abstract TCTransactionStoreDatabase getTransactionDatabase() throws TCDatabaseException;
 
   /**
    * Returns the class database.

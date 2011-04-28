@@ -23,6 +23,7 @@ import com.tc.objectserver.storage.api.TCMapsDatabase;
 import com.tc.objectserver.storage.api.TCObjectDatabase;
 import com.tc.objectserver.storage.api.TCRootDatabase;
 import com.tc.objectserver.storage.api.TCStringToStringDatabase;
+import com.tc.objectserver.storage.api.TCTransactionStoreDatabase;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -261,7 +262,7 @@ public class DerbyDBEnvironment implements DBEnvironment {
     newBytesToBlobDB(OID_STORE_LOG_DB_NAME, connection);
     newBytesToBlobDB(EVICTABLE_OID_STORE_DB_NAME, connection);
     newLongDB(CLIENT_STATE_DB_NAME, connection);
-    newBytesToBlobDB(TRANSACTION_DB_NAME, connection);
+    newTransactionStoreDatabase(connection);
     newIntToBytesDB(CLASS_DB_NAME, connection);
     newLongToStringDB(STRING_INDEX_DB_NAME, connection);
     newStringToStringDB(CLUSTER_STATE_STORE, connection);
@@ -299,6 +300,11 @@ public class DerbyDBEnvironment implements DBEnvironment {
   private void newBytesToBlobDB(String tableName, Connection connection) throws TCDatabaseException {
     TCBytesToBytesDatabase db = new DerbyTCBytesToBlobDB(tableName, connection, queryProvider);
     tables.put(tableName, db);
+  }
+
+  private void newTransactionStoreDatabase(Connection connection) throws TCDatabaseException {
+    TCTransactionStoreDatabase db = new DerbyTCTransactionStoreDatabase(TRANSACTION_DB_NAME, connection, queryProvider);
+    tables.put(TRANSACTION_DB_NAME, db);
   }
 
   private void newLongDB(String tableName, Connection connection) throws TCDatabaseException {
@@ -392,9 +398,9 @@ public class DerbyDBEnvironment implements DBEnvironment {
     return (DerbyTCLongDatabase) tables.get(CLIENT_STATE_DB_NAME);
   }
 
-  public synchronized TCBytesToBytesDatabase getTransactionDatabase() throws TCDatabaseException {
+  public synchronized TCTransactionStoreDatabase getTransactionDatabase() throws TCDatabaseException {
     assertOpen();
-    return (DerbyTCBytesToBlobDB) tables.get(TRANSACTION_DB_NAME);
+    return (TCTransactionStoreDatabase) tables.get(TRANSACTION_DB_NAME);
   }
 
   public synchronized TCIntToBytesDatabase getClassDatabase() throws TCDatabaseException {

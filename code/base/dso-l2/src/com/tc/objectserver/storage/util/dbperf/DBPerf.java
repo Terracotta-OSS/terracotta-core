@@ -51,7 +51,7 @@ public class DBPerf {
     objectDBTester = new TCObjectDatabaseTester(dbEnvironment.getObjectDatabase());
     mapsDBTester = new TCMapsDatabaseTester(dbEnvironment.getMapsDatabase());
     clientStateDBTester = new TCLongDatabaseTester(dbEnvironment.getClientStateDatabase());
-    transactionDBTester = new TCBytesToBytesDatabaseTester(dbEnvironment.getTransactionDatabase(), 64, 8);
+    transactionDBTester = new TCBytesToBytesDatabaseTester(dbEnvironment.getEvictableOidStoreDatabase(), 64, 8);
   }
 
   public void setWorkload(String workload) {
