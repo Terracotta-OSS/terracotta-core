@@ -235,6 +235,7 @@ public interface TCPropertiesConsts {
   public static final String L2_DERBYDB_LOG_DEVICE                                           = "l2.derbydb."
                                                                                                + DERBY_LOG_DEVICE;
   public static final String L2_DERBYDB_DERBY_STORAGE_CHECKPOINTINTERVAL                     = "l2.derbydb.derby.storage.checkpointInterval";
+  public static final String L2_DERBYDB_DERBY_LOCK_ESCALATION_THRESHOLD                      = "l2.derbydb.derby.locks.escalationThreshold";
 
   /*********************************************************************************************************************
    * <code>
