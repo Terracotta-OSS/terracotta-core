@@ -62,7 +62,8 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   private long                                 nextSequenceNumber;
 
   private final JVMMemoryManager               manager;
-  private StatisticRetrievalAction             cpuSRA;
+  private StatisticRetrievalAction             cpuUsageSRA;
+  private StatisticRetrievalAction             cpuLoadSRA;
   private String[]                             cpuNames;
 
   private static final String[]                EMPTY_CPU_NAMES = {};
@@ -82,9 +83,13 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     manager = TCRuntime.getJVMMemoryManager();
 
     try {
-      Class sraCpuType = Class.forName("com.tc.statistics.retrieval.actions.SRACpuCombined");
-      if (sraCpuType != null) {
-        cpuSRA = (StatisticRetrievalAction) sraCpuType.newInstance();
+      Class sraCpuLoadType = Class.forName("com.tc.statistics.retrieval.actions.SRACpuLoad");
+      if (sraCpuLoadType != null) {
+        cpuLoadSRA = (StatisticRetrievalAction) sraCpuLoadType.newInstance();
+      }
+      Class sraCpuUsageType = Class.forName("com.tc.statistics.retrieval.actions.SRACpuCombined");
+      if (sraCpuUsageType != null) {
+        cpuUsageSRA = (StatisticRetrievalAction) sraCpuUsageType.newInstance();
       }
     } catch (LinkageError e) {
       /**
@@ -258,10 +263,10 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
 
   public String[] getCpuStatNames() {
     if (cpuNames != null) return Arrays.asList(cpuNames).toArray(EMPTY_CPU_NAMES);
-    if (cpuSRA == null) return cpuNames = EMPTY_CPU_NAMES;
+    if (cpuUsageSRA == null) return cpuNames = EMPTY_CPU_NAMES;
 
     List list = new ArrayList();
-    StatisticData[] statsData = cpuSRA.retrieveStatisticData();
+    StatisticData[] statsData = cpuUsageSRA.retrieveStatisticData();
     if (statsData != null) {
       for (StatisticData element : statsData) {
         list.add(element.getElement());
@@ -284,25 +289,43 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     map.put(MEMORY_USED, Long.valueOf(getUsedMemory()));
     map.put(MEMORY_MAX, Long.valueOf(getMaxMemory()));
 
-    if (cpuSRA != null) {
+    if (cpuUsageSRA != null) {
       StatisticData[] statsData = getCpuUsage();
       if (statsData != null) {
         map.put(CPU_USAGE, statsData);
       }
     }
 
+    if (cpuLoadSRA != null) {
+      StatisticData statsData = getCpuLoad();
+      if (statsData != null) {
+        map.put(CPU_LOAD, statsData);
+      }
+    }
+
     return map;
   }
 
-  private long             lastCpuUpdateTime        = System.currentTimeMillis();
-  private StatisticData[]  lastCpuUpdate;
+  private long             lastCpuUsageUpdateTime   = System.currentTimeMillis();
+  private StatisticData[]  lastCpuUsageUpdate;
+  private long             lastCpuLoadUpdateTime    = System.currentTimeMillis();
+  private StatisticData    lastCpuLoadUpdate;
   private static final int CPU_UPDATE_WINDOW_MILLIS = 1000;
 
   public StatisticData[] getCpuUsage() {
-    if (cpuSRA == null) return null;
-    if (System.currentTimeMillis() - lastCpuUpdateTime < CPU_UPDATE_WINDOW_MILLIS) { return lastCpuUpdate; }
-    lastCpuUpdateTime = System.currentTimeMillis();
-    return lastCpuUpdate = cpuSRA.retrieveStatisticData();
+    if (cpuUsageSRA == null) { return null; }
+    if (System.currentTimeMillis() - lastCpuUsageUpdateTime < CPU_UPDATE_WINDOW_MILLIS) { return lastCpuUsageUpdate; }
+    lastCpuUsageUpdateTime = System.currentTimeMillis();
+    return lastCpuUsageUpdate = cpuUsageSRA.retrieveStatisticData();
+  }
+
+  public StatisticData getCpuLoad() {
+    if (cpuLoadSRA == null) { return null; }
+    if (System.currentTimeMillis() - lastCpuLoadUpdateTime < CPU_UPDATE_WINDOW_MILLIS) { return lastCpuLoadUpdate; }
+    lastCpuLoadUpdateTime = System.currentTimeMillis();
+    StatisticData[] sd = cpuLoadSRA.retrieveStatisticData();
+    if (sd.length == 1) { return lastCpuLoadUpdate = sd[0]; }
+    return null;
   }
 
   public byte[] takeCompressedThreadDump(long requestMillis) {

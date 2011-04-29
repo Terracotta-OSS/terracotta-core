@@ -4,7 +4,7 @@
  */
 package com.tctest;
 
-import com.tc.stats.DSOMBean;
+import com.tc.stats.api.DSOMBean;
 import com.tc.test.MultipleServersCrashMode;
 import com.tc.test.MultipleServersPersistenceMode;
 import com.tc.test.MultipleServersSharedDataMode;

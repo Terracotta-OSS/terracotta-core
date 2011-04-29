@@ -107,8 +107,12 @@ public class XFrame extends JFrame {
     if (getExtendedState() != NORMAL) { return; }
     Preferences prefs = getPreferences();
     if (prefs != null) {
-      prefs.put("Bounds", getBoundsString());
-      storePreferences();
+      String bounds = getBoundsString();
+      String existing = prefs.get("Bounds", "");
+      if (!bounds.equals(existing)) {
+        prefs.put("Bounds", bounds);
+        storePreferences();
+      }
     }
   }
 

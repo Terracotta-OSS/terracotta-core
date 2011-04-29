@@ -14,7 +14,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
-import com.tc.stats.DSOMBean;
+import com.tc.stats.api.DSOMBean;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
@@ -32,7 +32,8 @@ import javax.management.ObjectName;
  * Exercise ManagerUtil.waitForAllCurrentTransactionsToComplete() to see if screw up anything
  */
 public class WaitForAllCurrentTransactionsToCompleteTestApp extends AbstractTransparentApp {
-  private static final TCLogger     logger              = TCLogging.getLogger("com.tc.WaitForAllCurrentTransactionsToComplete");
+  private static final TCLogger     logger              = TCLogging
+                                                            .getLogger("com.tc.WaitForAllCurrentTransactionsToComplete");
   private static final int          DEFAULT_NUM_OF_PUT  = 1234;
   private static final int          DEFAULT_NUM_OF_LOOP = 5;
   public static final String        JMX_PORT            = "jmx-port";

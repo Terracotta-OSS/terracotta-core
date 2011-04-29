@@ -120,15 +120,15 @@ public class ClusterDumper {
   }
 
   private void doServerDumps(ServerGroupInfo[] serverGrpInfos) {
-    for (int i = 0; i < serverGrpInfos.length; i++) {
-      L2Info[] members = serverGrpInfos[i].members();
-      for (int j = 0; j < members.length; j++) {
+    for (ServerGroupInfo serverGrpInfo : serverGrpInfos) {
+      L2Info[] members = serverGrpInfo.members();
+      for (L2Info member : members) {
         L2DumperMBean mbean = null;
         JMXConnector jmxConnector = null;
 
         try {
-          String hostName = members[j].host();
-          int jmxPort = members[j].jmxPort();
+          String hostName = member.host();
+          int jmxPort = member.jmxPort();
           System.out.println("trying to take server dump for " + hostName + ":" + jmxPort);
           jmxConnector = CommandLineBuilder.getJMXConnector(username, password, hostName, jmxPort);
           final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
@@ -152,9 +152,9 @@ public class ClusterDumper {
 
   private void findActiveAndDumpClients(ServerGroupInfo[] serverGrpInfos) {
     L2Info[] l2Infos = null;
-    for (int i = 0; i < serverGrpInfos.length; i++) {
-      if (serverGrpInfos[i].isCoordinator()) {
-        l2Infos = serverGrpInfos[i].members();
+    for (ServerGroupInfo serverGrpInfo : serverGrpInfos) {
+      if (serverGrpInfo.isCoordinator()) {
+        l2Infos = serverGrpInfo.members();
         break;
       }
     }
@@ -164,9 +164,9 @@ public class ClusterDumper {
       return;
     }
 
-    for (int i = 0; i < l2Infos.length; i++) {
-      String hostName = l2Infos[i].host();
-      int jmxPort = l2Infos[i].jmxPort();
+    for (L2Info l2Info : l2Infos) {
+      String hostName = l2Info.host();
+      int jmxPort = l2Info.jmxPort();
       if (isActive(hostName, jmxPort)) {
         doClientsDump(hostName, jmxPort);
       }

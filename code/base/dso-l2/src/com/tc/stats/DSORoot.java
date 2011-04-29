@@ -4,17 +4,23 @@
  */
 package com.tc.stats;
 
+import com.tc.management.AbstractTerracottaMBean;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.api.ObjectManagerMBean;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
+import com.tc.stats.api.DSORootMBean;
 
-public class DSORoot implements DSORootMBean {
+import javax.management.NotCompliantMBeanException;
+
+public class DSORoot extends AbstractTerracottaMBean implements DSORootMBean {
   private final ObjectID           objectID;
   private final String             rootName;
   private final ObjectManagerMBean objMgr;
 
-  public DSORoot(ObjectID rootID, ObjectManagerMBean objMgr, String name) {
+  public DSORoot(ObjectID rootID, ObjectManagerMBean objMgr, String name) throws NotCompliantMBeanException {
+    super(DSORootMBean.class, false);
+
     this.objectID = rootID;
     this.objMgr = objMgr;
     this.rootName = name;
@@ -36,4 +42,7 @@ public class DSORoot implements DSORootMBean {
     return objectID;
   }
 
+  public void reset() {
+    /**/
+  }
 }

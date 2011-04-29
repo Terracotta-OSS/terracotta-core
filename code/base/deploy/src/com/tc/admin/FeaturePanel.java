@@ -27,12 +27,13 @@ import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 
 public class FeaturePanel extends XContainer implements PropertyChangeListener {
-  protected Feature             feature;
-  protected FeatureNode         featureNode;
-  protected IAdminClientContext adminClientContext;
-  protected IClusterModel       clusterModel;
-  protected Presentation        presentation;
-  protected boolean             presentationReady;
+  protected final Feature             feature;
+  protected final FeatureNode         featureNode;
+  protected final IAdminClientContext adminClientContext;
+  protected final IClusterModel       clusterModel;
+
+  protected Presentation              presentation;
+  protected boolean                   presentationReady;
 
   public FeaturePanel(final Feature feature, final FeatureNode featureNode, IAdminClientContext adminClientContext,
                       IClusterModel clusterModel) {
@@ -162,14 +163,6 @@ public class FeaturePanel extends XContainer implements PropertyChangeListener {
     if (presentation != null) {
       presentation.tearDown();
     }
-
-    synchronized (this) {
-      feature = null;
-      adminClientContext = null;
-      clusterModel = null;
-      presentation = null;
-    }
-
     super.tearDown();
   }
 }

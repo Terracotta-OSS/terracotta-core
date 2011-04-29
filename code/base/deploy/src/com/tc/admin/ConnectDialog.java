@@ -39,29 +39,30 @@ import javax.swing.Timer;
 import javax.swing.WindowConstants;
 
 public final class ConnectDialog extends JDialog implements HierarchyListener {
-  private ApplicationContext         appContext;
+  private final ApplicationContext         appContext;
+  private final IClusterModel              clusterModel;
+  private final ConnectionListener         listener;
 
-  private static final long          DEFAULT_CONNECT_TIMEOUT_MILLIS = 20000;
-  public static final long           CONNECT_TIMEOUT_MILLIS         = Long.getLong("com.tc.admin.connect-timeout",
-                                                                                   DEFAULT_CONNECT_TIMEOUT_MILLIS)
-                                                                        .longValue();
-  private static final int           HIDE_TIMER_DELAY_MILLIS        = 650;
+  private static final long                DEFAULT_CONNECT_TIMEOUT_MILLIS = 20000;
+  public static final long                 CONNECT_TIMEOUT_MILLIS         = Long
+                                                                              .getLong("com.tc.admin.connect-timeout",
+                                                                                       DEFAULT_CONNECT_TIMEOUT_MILLIS)
+                                                                              .longValue();
+  private static final int                 HIDE_TIMER_DELAY_MILLIS        = 650;
 
-  private IClusterModel              clusterModel;
-  private long                       timeout;
-  private ConnectionListener         listener;
-  private AuthenticatingJMXConnector jmxc;
-  private Future                     connectInitiator;
-  private Timer                      hideTimer;
-  private boolean                    isAuthenticating;
-  private Exception                  error;
-  private XLabel                     label;
-  private XButton                    cancelButton;
-  private XTextField                 usernameField;
-  private JPasswordField             passwordField;
-  private XButton                    okButton;
-  private XButton                    authCancelButton;
-  private XContainer                 authPanel;
+  private long                             timeout;
+  private final AuthenticatingJMXConnector jmxc;
+  private Future                           connectInitiator;
+  private final Timer                      hideTimer;
+  private boolean                          isAuthenticating;
+  private Exception                        error;
+  private final XLabel                     label;
+  private final XButton                    cancelButton;
+  private XTextField                       usernameField;
+  private JPasswordField                   passwordField;
+  private XButton                          okButton;
+  private XButton                          authCancelButton;
+  private XContainer                       authPanel;
 
   public ConnectDialog(ApplicationContext appContext, Frame parent, IClusterModel clusterModel,
                        ConnectionListener listener) {
@@ -234,13 +235,6 @@ public final class ConnectDialog extends JDialog implements HierarchyListener {
     usernameField.grabFocus();
   }
 
-  public void setClusterModel(IClusterModel clusterModel) {
-    this.clusterModel = clusterModel;
-    jmxc = new AuthenticatingJMXConnector(clusterModel);
-    label.setText(appContext.format("connect-dialog.connecting.format", clusterModel));
-    pack();
-  }
-
   public IClusterModel getClusterModel() {
     return clusterModel;
   }
@@ -251,10 +245,6 @@ public final class ConnectDialog extends JDialog implements HierarchyListener {
 
   public long getTimeout() {
     return timeout;
-  }
-
-  public void setConnectionListener(ConnectionListener listener) {
-    this.listener = listener;
   }
 
   public ConnectionListener getConnectionListener() {
@@ -285,16 +275,14 @@ public final class ConnectDialog extends JDialog implements HierarchyListener {
   }
 
   protected void fireHandleConnect() {
-    if (listener != null) {
-      try {
-        if (error == null) {
-          listener.handleConnection();
-        } else {
-          listener.handleException();
-        }
-      } catch (RuntimeException rte) {
-        appContext.log(rte);
+    try {
+      if (error == null) {
+        listener.handleConnection();
+      } else {
+        listener.handleException();
       }
+    } catch (RuntimeException rte) {
+      appContext.log(rte);
     }
     isAuthenticating = false;
   }
@@ -338,22 +326,10 @@ public final class ConnectDialog extends JDialog implements HierarchyListener {
     }
   }
 
-  void tearDown() {
+  public void tearDown() {
     Map env = clusterModel.getConnectionEnvironment();
     if (env != null) {
       env.clear();
-    }
-
-    synchronized (this) {
-      appContext = null;
-      clusterModel = null;
-      listener = null;
-      jmxc = null;
-      connectInitiator = null;
-      cancelButton = null;
-      hideTimer = null;
-      error = null;
-      label = null;
     }
   }
 }

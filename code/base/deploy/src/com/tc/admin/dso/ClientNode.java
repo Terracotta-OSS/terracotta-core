@@ -11,9 +11,10 @@ import com.tc.admin.model.IClient;
 import java.awt.Component;
 
 public class ClientNode extends ClusterElementNode {
-  protected ApplicationContext appContext;
-  protected IClient            client;
-  protected ClientPanel        clientPanel;
+  protected final ApplicationContext appContext;
+  protected final IClient            client;
+
+  protected ClientPanel              clientPanel;
 
   public ClientNode(ApplicationContext appContext, IClient client) {
     super(client);
@@ -42,13 +43,8 @@ public class ClientNode extends ClusterElementNode {
 
   @Override
   public void tearDown() {
-    synchronized (this) {
-      appContext = null;
-      client = null;
-      if (clientPanel != null) {
-        clientPanel.tearDown();
-        clientPanel = null;
-      }
+    if (clientPanel != null) {
+      clientPanel.tearDown();
     }
     super.tearDown();
   }

@@ -1,7 +1,7 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-package com.tc.stats;
+package com.tc.stats.api;
 
 import com.tc.objectserver.api.GCStats;
 

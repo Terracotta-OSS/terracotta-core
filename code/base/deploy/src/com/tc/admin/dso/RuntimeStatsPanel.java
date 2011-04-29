@@ -31,28 +31,37 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Properties;
 
 import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
 public class RuntimeStatsPanel extends XContainer implements ActionListener, ClientConnectionListener,
     PropertyChangeListener {
-  private IAdminClientContext adminClientContext;
-  private IClusterModel       clusterModel;
-  private ClusterListener     clusterListener;
-  private XLabel              currentViewLabel;
-  private ElementChooser      elementChooser;
-  private PagedView           pagedView;
-  private XContainer          mainPanel;
-  private XContainer          messagePanel;
-  private XLabel              messageLabel;
+  private final IAdminClientContext adminClientContext;
+  private final IClusterModel       clusterModel;
+  private final ClusterListener     clusterListener;
 
-  private static final String AGGREGATE_SERVER_STATS_NODE_NAME = "AggregateServerStatsNode";
+  private XLabel                    currentViewLabel;
+  private ElementChooser            elementChooser;
+  private PagedView                 pagedView;
+  private final XContainer          mainPanel;
+  private final XContainer          messagePanel;
+  private XLabel                    messageLabel;
+
+  private static final String       AGGREGATE_SERVER_STATS_NODE_NAME = "AggregateServerStatsNode";
+
+  public final static Icon          WAIT_ICON                        = new ImageIcon(
+                                                                                     RuntimeStatsPanel.class
+                                                                                         .getResource("/com/tc/admin/icons/wait.gif"));
 
   public RuntimeStatsPanel(IAdminClientContext adminClientContext, IClusterModel clusterModel) {
     super(new BorderLayout());
@@ -118,6 +127,18 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     messageLabel.setText(adminClientContext.getString("cluster.not.ready.msg"));
     messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
     messageLabel.setFont((Font) adminClientContext.getObject("message.label.font"));
+    messageLabel.setIcon(WAIT_ICON);
+    messageLabel.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (true) {
+          Properties props = System.getProperties();
+          if (props != null) {
+            /**/
+          }
+        }
+      }
+    });
     return panel;
   }
 
@@ -184,7 +205,6 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
 
     @Override
     protected void handleReady() {
-      if (tornDown.get()) { return; }
       if (clusterModel.isReady()) {
         init();
       } else {
@@ -194,7 +214,6 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
 
     @Override
     protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
-      if (tornDown.get()) { return; }
       if (oldActive != null) {
         oldActive.removeClientConnectionListener(RuntimeStatsPanel.this);
       }
@@ -232,24 +251,20 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
   public void clientDisconnected(final IClient client) {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        if (!tornDown.get()) {
-          ClientRuntimeStatsPanel panel = (ClientRuntimeStatsPanel) pagedView.getPage(client.toString());
-          if (panel != null) {
-            pagedView.remove(panel);
-            panel.tearDown();
-          }
+        ClientRuntimeStatsPanel panel = (ClientRuntimeStatsPanel) pagedView.getPage(client.toString());
+        if (panel != null) {
+          pagedView.remove(panel);
+          panel.tearDown();
         }
       }
     });
   }
 
   public void propertyChange(PropertyChangeEvent evt) {
-    if (!tornDown.get()) {
-      String prop = evt.getPropertyName();
-      if (PagedView.PROP_CURRENT_PAGE.equals(prop)) {
-        String newPage = (String) evt.getNewValue();
-        elementChooser.setSelectedPath(newPage);
-      }
+    String prop = evt.getPropertyName();
+    if (PagedView.PROP_CURRENT_PAGE.equals(prop)) {
+      String newPage = (String) evt.getNewValue();
+      elementChooser.setSelectedPath(newPage);
     }
   }
 
@@ -301,12 +316,8 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     return clusterModel;
   }
 
-  private final AtomicBoolean tornDown = new AtomicBoolean(false);
-
   @Override
   public void tearDown() {
-    if (!tornDown.compareAndSet(false, true)) { return; }
-
     clusterModel.removePropertyChangeListener(clusterListener);
     clusterListener.tearDown();
 
@@ -314,18 +325,6 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     elementChooser.removeActionListener(this);
 
     clearPagedView();
-
-    synchronized (this) {
-      adminClientContext = null;
-      clusterModel = null;
-      clusterListener = null;
-      elementChooser = null;
-      pagedView = null;
-      currentViewLabel = null;
-      mainPanel = null;
-      messagePanel = null;
-      messageLabel = null;
-    }
 
     super.tearDown();
   }

@@ -15,11 +15,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DashboardViewer extends XContainer {
-  private ApplicationContext                 appContext;
-  private Map<IClusterModel, DashboardPanel> panelMap;
-  private PagedView                          pagedView;
+  private final ApplicationContext                 appContext;
+  private final Map<IClusterModel, DashboardPanel> panelMap;
+  private final PagedView                          pagedView;
 
-  private static final String                EMPTY_PAGE = "EmptyPage";
+  private static final String                      EMPTY_PAGE = "EmptyPage";
 
   public DashboardViewer(ApplicationContext appContext) {
     super(new BorderLayout());
@@ -57,13 +57,7 @@ public class DashboardViewer extends XContainer {
 
   @Override
   public void tearDown() {
+    panelMap.clear();
     super.tearDown();
-
-    synchronized (this) {
-      appContext = null;
-      panelMap.clear();
-      panelMap = null;
-      pagedView = null;
-    }
   }
 }

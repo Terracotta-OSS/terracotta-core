@@ -10,9 +10,9 @@ import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.model.IClient;
 import com.tc.admin.model.IClusterModel;
+import com.tc.admin.model.IClusterModel.PollScope;
 import com.tc.admin.model.PolledAttributeListener;
 import com.tc.admin.model.PolledAttributesResult;
-import com.tc.admin.model.IClusterModel.PollScope;
 
 import java.awt.BorderLayout;
 import java.awt.event.HierarchyEvent;
@@ -24,8 +24,9 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
 public class ClientsPanel extends XContainer implements PolledAttributeListener, HierarchyListener {
-  protected IClusterModel clusterModel;
-  protected ClientsTable  table;
+  protected final IClusterModel clusterModel;
+
+  protected ClientsTable        table;
 
   public ClientsPanel(ApplicationContext appContext, IClusterModel clusterModel, IClient[] clients) {
     super(new BorderLayout());
@@ -54,8 +55,6 @@ public class ClientsPanel extends XContainer implements PolledAttributeListener,
   }
 
   public void attributesPolled(PolledAttributesResult result) {
-    IClusterModel theClusterModel = getClusterModel();
-    if (theClusterModel == null) return;
     final Map<IClient, Integer> locMap = new HashMap<IClient, Integer>();
     for (IClient client : clusterModel.getClients()) {
       Number value = (Number) result.getPolledAttribute(client, POLLED_ATTR_LIVE_OBJECT_COUNT);
@@ -71,32 +70,11 @@ public class ClientsPanel extends XContainer implements PolledAttributeListener,
   }
 
   private void addPolledAttributeListeners() {
-    IClusterModel theClusterModel = getClusterModel();
-    if (theClusterModel != null) {
-      theClusterModel.addPolledAttributeListener(PollScope.CLIENTS, POLLED_ATTR_LIVE_OBJECT_COUNT, this);
-    }
+    clusterModel.addPolledAttributeListener(PollScope.CLIENTS, POLLED_ATTR_LIVE_OBJECT_COUNT, this);
   }
 
   private void removePolledAttributeListeners() {
-    IClusterModel theClusterModel = getClusterModel();
-    if (theClusterModel != null) {
-      theClusterModel.removePolledAttributeListener(PollScope.CLIENTS, POLLED_ATTR_LIVE_OBJECT_COUNT, this);
-    }
-  }
-
-  private synchronized IClusterModel getClusterModel() {
-    return clusterModel;
-  }
-
-  public void tearDown() {
-    removePolledAttributeListeners();
-
-    super.tearDown();
-
-    synchronized (this) {
-      clusterModel = null;
-      table = null;
-    }
+    clusterModel.removePolledAttributeListener(PollScope.CLIENTS, POLLED_ATTR_LIVE_OBJECT_COUNT, this);
   }
 
   public void hierarchyChanged(HierarchyEvent e) {
@@ -107,5 +85,11 @@ public class ClientsPanel extends XContainer implements PolledAttributeListener,
         removePolledAttributeListeners();
       }
     }
+  }
+
+  @Override
+  public void tearDown() {
+    removePolledAttributeListeners();
+    super.tearDown();
   }
 }

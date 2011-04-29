@@ -24,6 +24,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.net.ChannelStats;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.statistics.StatisticData;
+import com.tc.stats.api.DSOClientMBean;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCumulativeCounter;
@@ -67,13 +68,13 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   private final SampledCounter                 faultRate;
   private final Counter                        pendingTransactions;
   private final SynchronizedLong               sequenceNumber          = new SynchronizedLong(0L);
-  private final SampledCumulativeCounter serverMapGetSizeRequestsCounter;
-  private final SampledCumulativeCounter serverMapGetValueRequestsCounter;
+  private final SampledCumulativeCounter       serverMapGetSizeRequestsCounter;
+  private final SampledCumulativeCounter       serverMapGetValueRequestsCounter;
   private final ClientID                       clientID;
   private final ClientStateManager             stateManager;
 
   private ObjectName                           enterpriseMBeanName;
-  private boolean                              isEnterpriseBeanNameSet     = false;
+  private boolean                              isEnterpriseBeanNameSet = false;
 
   private static final MBeanNotificationInfo[] NOTIFICATION_INFO;
 
@@ -96,8 +97,10 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     this.flushRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.OBJECT_FLUSH_RATE);
     this.faultRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.OBJECT_REQUEST_RATE);
     this.pendingTransactions = channelStats.getCounter(channel, ChannelStats.PENDING_TRANSACTIONS);
-    this.serverMapGetSizeRequestsCounter = (SampledCumulativeCounter) channelStats.getCounter(channel, ChannelStats.SERVER_MAP_GET_SIZE_REQUESTS);
-    this.serverMapGetValueRequestsCounter = (SampledCumulativeCounter) channelStats.getCounter(channel, ChannelStats.SERVER_MAP_GET_VALUE_REQUESTS);
+    this.serverMapGetSizeRequestsCounter = (SampledCumulativeCounter) channelStats
+        .getCounter(channel, ChannelStats.SERVER_MAP_GET_SIZE_REQUESTS);
+    this.serverMapGetValueRequestsCounter = (SampledCumulativeCounter) channelStats
+        .getCounter(channel, ChannelStats.SERVER_MAP_GET_VALUE_REQUESTS);
 
     this.l1InfoBeanName = getTunneledBeanName(L1MBeanNames.L1INFO_PUBLIC);
     this.instrumentationLoggingBeanName = getTunneledBeanName(L1MBeanNames.INSTRUMENTATION_LOGGING_PUBLIC);
@@ -150,7 +153,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
       runtimeOutputOptionsBeanName = beanName;
       setupRuntimeOutputOptionsBean();
     }
-    
+
     if ((beanName = queryClientBean(this.l1OperatorEventsBeanName)) != null) {
       this.l1OperatorEventsBeanName = beanName;
       setupL1OperatorEventsBean();
@@ -323,7 +326,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     l1InfoBean = (L1InfoMBean) MBeanServerInvocationHandler.newProxyInstance(mbeanServer, l1InfoBeanName,
                                                                              L1InfoMBean.class, false);
   }
-  
+
   private void setupL1OperatorEventsBean() {
     this.l1OperatorEventsBean = (TerracottaOperatorEventsMBean) MBeanServerInvocationHandler
         .newProxyInstance(mbeanServer, l1OperatorEventsBeanName, TerracottaOperatorEventsMBean.class, false);

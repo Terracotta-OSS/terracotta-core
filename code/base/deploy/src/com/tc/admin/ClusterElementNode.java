@@ -8,7 +8,7 @@ import com.tc.admin.common.ComponentNode;
 import com.tc.admin.model.IClusterModelElement;
 
 public class ClusterElementNode extends ComponentNode {
-  private IClusterModelElement clusterElement;
+  private final IClusterModelElement clusterElement;
 
   protected ClusterElementNode(IClusterModelElement clusterElement) {
     super();

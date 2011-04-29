@@ -24,7 +24,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.management.MBeanServerNotification;
 import javax.management.Notification;
@@ -38,10 +37,11 @@ import javax.swing.text.Element;
 import javax.swing.text.html.HTML;
 
 public class FeaturesNode extends ComponentNode implements NotificationListener, HyperlinkListener {
-  protected IAdminClientContext               adminClientContext;
-  protected IClusterModel                     clusterModel;
-  protected ClusterNode                       clusterNode;
-  protected ClusterListener                   clusterListener;
+  protected final IAdminClientContext         adminClientContext;
+  protected final IClusterModel               clusterModel;
+  protected final ClusterNode                 clusterNode;
+  protected final ClusterListener             clusterListener;
+
   protected XScrollPane                       myApplicationPanel;
   protected ClientsNode                       clientsNode;
   protected Map<String, Feature>              activeFeatureMap;
@@ -67,10 +67,6 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
     setIcon(DSOHelper.getHelper().getFeaturesIcon());
   }
 
-  protected synchronized IClusterModel getClusterModel() {
-    return clusterModel;
-  }
-
   private class ClusterListener extends AbstractClusterListener {
     private ClusterListener(IClusterModel clusterModel) {
       super(clusterModel);
@@ -78,9 +74,6 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
 
     @Override
     protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
-      IClusterModel theClusterModel = getClusterModel();
-      if (theClusterModel == null) { return; }
-
       if (newActive != null) {
         init();
       }
@@ -88,11 +81,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
 
     @Override
     protected void handleUncaughtError(Exception e) {
-      if (adminClientContext != null) {
-        adminClientContext.log(e);
-      } else {
-        super.handleUncaughtError(e);
-      }
+      adminClientContext.log(e);
     }
   }
 
@@ -180,9 +169,6 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
   }
 
   private void handlePresentationReady(FeatureNode featureNode) {
-    AdminClientPanel acp = (AdminClientPanel) SwingUtilities.getAncestorOfClass(AdminClientPanel.class,
-                                                                                clusterNode.getComponent());
-
     if (featureNode.isPresentationReady()) {
       testAddToParent();
       int i = 0;
@@ -194,14 +180,10 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
       }
       insertChild(featureNode, i);
       adminClientContext.getAdminClientController().expand(this);
-      if (acp != null) {
-        acp.activeFeatureAdded(featureNode.getName());
-      }
+      adminClientContext.getAdminClientController().activeFeatureAdded(featureNode.getName());
     } else if (isNodeChild(featureNode)) {
       removeFeatureNode(featureNode);
-      if (acp != null) {
-        acp.activeFeatureRemoved(featureNode.getName());
-      }
+      adminClientContext.getAdminClientController().activeFeatureRemoved(featureNode.getName());
       testRemoveFromParent();
     }
   }
@@ -240,8 +222,6 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
   }
 
   protected boolean testUnregisterFeature(ObjectName on) {
-    if (tornDown.get()) { return false; }
-
     if (StringUtils.equals("org.terracotta", on.getDomain()) && StringUtils.equals("Loader", on.getKeyProperty("type"))) {
       String symbolicName = on.getKeyProperty("feature");
       Feature feature = activeFeatureMap.get(symbolicName);
@@ -258,17 +238,12 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
   }
 
   private void tearDownFeature(Feature feature) {
-    AdminClientPanel acp = (AdminClientPanel) SwingUtilities.getAncestorOfClass(AdminClientPanel.class,
-                                                                                clusterNode.getComponent());
-
     FeatureNode featureNode = nodeMap.remove(feature);
     if (featureNode != null) {
       if (isNodeChild(featureNode)) {
         removeChild(featureNode);
       }
-      if (acp != null) {
-        acp.activeFeatureRemoved(featureNode.getName());
-      }
+      adminClientContext.getAdminClientController().activeFeatureRemoved(featureNode.getName());
       featureNode.tearDown();
     }
     if (getParent() != null && getChildCount() == 0) {
@@ -283,16 +258,12 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
   }
 
   public void handleNotification(Notification notification, Object handback) {
-    IClusterModel theClusterModel = getClusterModel();
-    if (theClusterModel == null) { return; }
-
     String type = notification.getType();
     if (notification instanceof MBeanServerNotification) {
       final MBeanServerNotification mbsn = (MBeanServerNotification) notification;
       if (type.equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            if (tornDown.get()) { return; }
             if (testRegisterFeature(mbsn.getMBeanName())) {
               ensureFeatureNodes();
             }
@@ -301,7 +272,6 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
       } else if (type.equals(MBeanServerNotification.UNREGISTRATION_NOTIFICATION)) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            if (tornDown.get()) { return; }
             testUnregisterFeature(mbsn.getMBeanName());
           }
         });
@@ -346,13 +316,9 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
     this.tearDown = tearDown;
   }
 
-  private final AtomicBoolean tornDown = new AtomicBoolean(false);
-
   @Override
   public void tearDown() {
     if (!tearDown) { return; }
-
-    if (!tornDown.compareAndSet(false, true)) { return; }
 
     removeMBeanServerDelegateListener();
 
@@ -364,17 +330,6 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
         tearDownFeature(feature);
       }
       activeFeatureMap.clear();
-    }
-
-    synchronized (this) {
-      adminClientContext = null;
-      clusterModel = null;
-      clusterListener = null;
-      clusterNode = null;
-      activeFeatureMap = null;
-      nodeMap.clear();
-      nodeMap = null;
-      myApplicationPanel = null;
     }
 
     super.tearDown();

@@ -19,13 +19,14 @@ import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 
 public class ClassesNode extends ComponentNode {
-  private ApplicationContext  appContext;
-  protected IClusterModel     clusterModel;
-  protected ClassesPanel      classesPanel;
-  protected JPopupMenu        popupMenu;
-  protected RefreshAction     refreshAction;
+  protected final ApplicationContext appContext;
+  protected final IClusterModel      clusterModel;
 
-  private static final String REFRESH_ACTION = "RefreshAction";
+  protected ClassesPanel             classesPanel;
+  protected JPopupMenu               popupMenu;
+  protected RefreshAction            refreshAction;
+
+  private static final String        REFRESH_ACTION = "RefreshAction";
 
   public ClassesNode(ApplicationContext appContext, IClusterModel clusterModel) {
     super();
@@ -49,10 +50,6 @@ public class ClassesNode extends ComponentNode {
     return classesPanel;
   }
 
-  IClusterModel getClusterModel() {
-    return clusterModel;
-  }
-
   private void initMenu() {
     refreshAction = new RefreshAction();
     popupMenu = new JPopupMenu("Classes Actions");
@@ -71,8 +68,7 @@ public class ClassesNode extends ComponentNode {
   }
 
   public void refresh() {
-    IClusterModel theClusterModel = getClusterModel();
-    if (theClusterModel != null && theClusterModel.isReady() && classesPanel != null) {
+    if (clusterModel.isReady() && classesPanel != null) {
       classesPanel.refresh();
     }
   }
@@ -100,13 +96,6 @@ public class ClassesNode extends ComponentNode {
     if (classesPanel != null) {
       classesPanel.tearDown();
     }
-
     super.tearDown();
-
-    appContext = null;
-    clusterModel = null;
-    classesPanel = null;
-    popupMenu = null;
-    refreshAction = null;
   }
 }

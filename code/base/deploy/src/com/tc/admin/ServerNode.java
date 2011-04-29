@@ -19,12 +19,13 @@ import javax.swing.JPopupMenu;
 import javax.swing.JTree;
 
 public class ServerNode extends ClusterElementNode {
-  protected ApplicationContext appContext;
-  protected IClusterModel      clusterModel;
-  protected IServer            server;
-  protected ServerListener     serverListener;
-  protected ServerPanel        serverPanel;
-  protected JPopupMenu         popupMenu;
+  protected final ApplicationContext appContext;
+  protected final IClusterModel      clusterModel;
+  protected final IServer            server;
+  protected final ServerListener     serverListener;
+
+  protected ServerPanel              serverPanel;
+  protected JPopupMenu               popupMenu;
 
   ServerNode(ApplicationContext appContext, IClusterModel clusterModel, IServer server) {
     super(server);
@@ -50,7 +51,7 @@ public class ServerNode extends ClusterElementNode {
     return serverPanel;
   }
 
-  public synchronized IServer getServer() {
+  public IServer getServer() {
     return server;
   }
 
@@ -65,16 +66,12 @@ public class ServerNode extends ClusterElementNode {
 
     @Override
     protected void handleConnectError() {
-      if (appContext != null) {
-        nodeChanged();
-      }
+      nodeChanged();
     }
 
     @Override
     protected void handleConnected() {
-      if (appContext != null) {
-        nodeChanged();
-      }
+      nodeChanged();
     }
   }
 
@@ -140,17 +137,9 @@ public class ServerNode extends ClusterElementNode {
 
   @Override
   public void tearDown() {
-    super.tearDown();
-
-    synchronized (this) {
-      appContext = null;
-      clusterModel = null;
-      server = null;
-      if (serverPanel != null) {
-        serverPanel.tearDown();
-        serverPanel = null;
-      }
-      popupMenu = null;
+    if (serverPanel != null) {
+      serverPanel.tearDown();
     }
+    super.tearDown();
   }
 }

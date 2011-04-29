@@ -275,22 +275,22 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
   }
 
   private ScheduledThreadPoolExecutor scheduledExecutor;
-  private long                        pollPeriodSeconds  = 1;
-  private long                        pollTimeoutSeconds = 1;
+  private int                         pollPeriodSeconds  = 1;
+  private int                         pollTimeoutSeconds = 1;
 
-  public synchronized void setPollPeriod(long seconds) {
+  public synchronized void setPollPeriod(int seconds) {
     pollPeriodSeconds = seconds;
   }
 
-  public synchronized long getPollPeriod() {
+  public synchronized int getPollPeriod() {
     return pollPeriodSeconds;
   }
 
-  public synchronized void setPollTimeout(long seconds) {
+  public synchronized void setPollTimeout(int seconds) {
     pollTimeoutSeconds = seconds;
   }
 
-  public synchronized long getPollTimeoutSeconds() {
+  public synchronized int getPollTimeoutSeconds() {
     return pollTimeoutSeconds;
   }
 
@@ -306,7 +306,7 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
     if (enabled) {
       ScheduledThreadPoolExecutor se = new ScheduledThreadPoolExecutor(1);
       setScheduledExecutor(se);
-      se.schedule(new PollTask(), getPollPeriod(), TimeUnit.SECONDS);
+      se.schedule(new PollTask(), 0, TimeUnit.SECONDS);
     } else {
       ScheduledThreadPoolExecutor se = getScheduledExecutor();
       if (se != null) {
@@ -365,7 +365,7 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
         }
         if (attrMap.isEmpty()) { return Collections.singleton(new NodePollResult(server)); }
         Map<ObjectName, Map<String, Object>> combinedResultMap = null;
-        combinedResultMap = server.getAttributeMap(attrMap, pollTimeoutSeconds, TimeUnit.SECONDS);
+        combinedResultMap = server.getAttributeMap(attrMap, getPollTimeoutSeconds(), TimeUnit.SECONDS);
         if (combinedResultMap == null) {
           combinedResultMap = new HashMap<ObjectName, Map<String, Object>>();
         }
@@ -394,7 +394,7 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
         if (attrMap.isEmpty()) {
           resultMap = Collections.emptyMap();
         } else {
-          resultMap = server.getAttributeMap(attrMap, pollTimeoutSeconds, TimeUnit.SECONDS);
+          resultMap = server.getAttributeMap(attrMap, getPollTimeoutSeconds(), TimeUnit.SECONDS);
         }
         return Collections.singleton(new NodePollResult(server, resultMap));
       }
@@ -942,7 +942,7 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
 
   private Set<PolledAttributeListener> getAllScopedPollListeners() {
     synchronized (this) {
-      if (allScopedPollListeners != null) { return allScopedPollListeners; }
+      if (allScopedPollListeners != null) { return new HashSet<PolledAttributeListener>(allScopedPollListeners); }
     }
 
     Set<PolledAttributeListener> result = new HashSet<PolledAttributeListener>();
@@ -962,6 +962,6 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
       allScopedPollListeners = result;
     }
 
-    return result;
+    return new HashSet<PolledAttributeListener>(result);
   }
 }

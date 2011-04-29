@@ -99,8 +99,8 @@ public class XObjectTableModel extends AbstractTableModel {
     Class returnType;
     Class[] paramTypes;
 
-    for (int i = 0; i < methods.length; i++) {
-      method = methods[i];
+    for (Method method2 : methods) {
+      method = method2;
       returnType = method.getReturnType();
       paramTypes = method.getParameterTypes();
       methodName = method.getName();
@@ -114,8 +114,8 @@ public class XObjectTableModel extends AbstractTableModel {
       }
     }
 
-    for (int i = 0; i < methods.length; i++) {
-      method = methods[i];
+    for (Method method2 : methods) {
+      method = method2;
       returnType = method.getReturnType();
       paramTypes = method.getParameterTypes();
       methodName = method.getName();
@@ -128,8 +128,8 @@ public class XObjectTableModel extends AbstractTableModel {
       }
     }
 
-    for (int i = 0; i < methods.length; i++) {
-      method = methods[i];
+    for (Method method2 : methods) {
+      method = method2;
       methodName = method.getName();
 
       if (name.equals(methodName)) {
@@ -447,7 +447,10 @@ public class XObjectTableModel extends AbstractTableModel {
         } else if (next == null && prev != null) {
           return 1;
         } else {
-          int diff = prev.compareTo(next);
+          int diff = 0;
+          if (prev != null) { // FindBugs: prev can't really be null here
+            diff = prev.compareTo(next);
+          }
           return (direction == SwingConstants.SOUTH) ? diff : -diff;
         }
       }
@@ -483,8 +486,8 @@ public class XObjectTableModel extends AbstractTableModel {
   public void showColumnsExclusive(String[] theFieldNames) {
     FieldDescription fieldDesc;
     showingFields = new ArrayList();
-    for (int i = 0; i < theFieldNames.length; i++) {
-      if ((fieldDesc = findDescription(theFieldNames[i])) != null) {
+    for (String theFieldName : theFieldNames) {
+      if ((fieldDesc = findDescription(theFieldName)) != null) {
         showingFields.add(fieldDesc);
       }
     }

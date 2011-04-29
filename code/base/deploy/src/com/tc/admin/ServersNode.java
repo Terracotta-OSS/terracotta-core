@@ -14,19 +14,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ServersNode extends ComponentNode {
-  protected IAdminClientContext adminClientContext;
-  protected IClusterModel       clusterModel;
-  protected IServer[]           servers;
-  protected ServersPanel        serversPanel;
+  protected final IAdminClientContext adminClientContext;
+  protected final IClusterModel       clusterModel;
+  protected final IServer[]           servers;
+
+  protected ServersPanel              serversPanel;
 
   public ServersNode(IAdminClientContext adminClientContext, IClusterModel clusterModel) {
     super();
+
     this.adminClientContext = adminClientContext;
     this.clusterModel = clusterModel;
-    IServerGroup[] serverGroups = clusterModel.getServerGroups();
+
     List<IServer> serverList = new ArrayList<IServer>();
-    for (IServerGroup group : serverGroups) {
-      IServer[] members = group.getMembers();
+    for (IServerGroup serverGroup : clusterModel.getServerGroups()) {
+      IServer[] members = serverGroup.getMembers();
       for (IServer server : members) {
         ServerNode serverNode = new ServerNode(adminClientContext, clusterModel, server);
         add(serverNode);
@@ -41,6 +43,7 @@ public class ServersNode extends ComponentNode {
     return new ServersPanel(adminClientContext, clusterModel, servers);
   }
 
+  @Override
   public Component getComponent() {
     if (serversPanel == null) {
       serversPanel = createServersPanel();
@@ -50,12 +53,5 @@ public class ServersNode extends ComponentNode {
 
   void selectClientNode(String remoteAddr) {
     // clusterNode.selectClientNode(remoteAddr);
-  }
-
-  public void tearDown() {
-    super.tearDown();
-    adminClientContext = null;
-    clusterModel = null;
-    servers = null;
   }
 }

@@ -11,6 +11,7 @@ import com.tc.admin.model.ServerLogListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import javax.swing.SwingUtilities;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
@@ -18,9 +19,9 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
 public class ServerLog extends LogPane {
-  private IServer                         server;
-  private ServerListener                  serverListener;
-  private LogListener                     logListener;
+  private final IServer                   server;
+  private final ServerListener            serverListener;
+  private final LogListener               logListener;
 
   private static final SimpleAttributeSet errorIconAttrSet      = new SimpleAttributeSet();
   private static final SimpleAttributeSet warnIconAttrSet       = new SimpleAttributeSet();
@@ -49,8 +50,9 @@ public class ServerLog extends LogPane {
     warn = appContext.getString("log.warn");
     info = appContext.getString("log.info");
     this.server = server;
+    this.logListener = new LogListener();
     if (server.isReady()) {
-      server.addServerLogListener(logListener = new LogListener());
+      server.addServerLogListener(logListener);
     }
     server.addPropertyChangeListener(serverListener = new ServerListener(server));
     setEditable(false);
@@ -65,9 +67,6 @@ public class ServerLog extends LogPane {
     @Override
     protected void handleReady() {
       if (server.isReady()) {
-        if (logListener == null) {
-          logListener = new LogListener();
-        }
         server.addServerLogListener(logListener);
       } else {
         // server.removeServerLogListener(logListener);
@@ -75,13 +74,13 @@ public class ServerLog extends LogPane {
     }
   }
 
-  public IServer getServer() {
-    return server;
-  }
-
   class LogListener implements ServerLogListener {
-    public void messageLogged(String logMsg) {
-      log(logMsg);
+    public void messageLogged(final String logMsg) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          log(logMsg);
+        }
+      });
     }
   }
 
@@ -158,11 +157,5 @@ public class ServerLog extends LogPane {
   public void tearDown() {
     server.removePropertyChangeListener(serverListener);
     server.removeServerLogListener(logListener);
-
-    synchronized (this) {
-      serverListener = null;
-      logListener = null;
-      server = null;
-    }
   }
 }

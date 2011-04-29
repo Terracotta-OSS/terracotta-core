@@ -6,7 +6,7 @@ package com.tctest.offheap;
 
 import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.control.ServerControl;
-import com.tc.stats.DGCMBean;
+import com.tc.stats.api.DGCMBean;
 import com.tc.test.GroupData;
 import com.tc.test.MultipleServersCrashMode;
 import com.tc.test.TestConfigObject;

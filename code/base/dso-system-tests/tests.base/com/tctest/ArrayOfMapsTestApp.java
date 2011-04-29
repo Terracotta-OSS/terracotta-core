@@ -22,7 +22,7 @@ import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
-import com.tc.stats.DSOMBean;
+import com.tc.stats.api.DSOMBean;
 import com.tc.test.GroupData;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
@@ -184,9 +184,9 @@ public class ArrayOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
 
   private static final class ObjectBrowser {
 
-    private ConnectionContext context;
-    private JMXConnector      jmxc;
-    private DSOMBean          dsoBean;
+    private final ConnectionContext context;
+    private final JMXConnector      jmxc;
+    private final DSOMBean          dsoBean;
 
     public ObjectBrowser(int jmxPort) throws IOException {
       context = new ConnectionContext("localhost", jmxPort);
@@ -201,8 +201,8 @@ public class ArrayOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
 
       String[] fieldNames = facade.getFields();
       String s = null;
-      for (int j = 0; j < fieldNames.length; j++) {
-        s = fieldNames[j] + facade.getFieldValue(fieldNames[j]) + "; ";
+      for (String fieldName : fieldNames) {
+        s = fieldName + facade.getFieldValue(fieldName) + "; ";
       }
       System.out.println("XXX Lookup ObjID " + oID + " : " + facade + "; Fileds: " + s);
     }

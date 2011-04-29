@@ -16,11 +16,12 @@ import java.util.Map;
 import javax.swing.SwingUtilities;
 
 public class StatsRecorderNode extends ComponentNode implements IClusterStatsListener {
-  protected ApplicationContext appContext;
-  private IClusterModel        clusterModel;
-  private StatsRecorderPanel   statsRecorderPanel;
-  private String               baseLabel;
-  private final String         recordingSuffix;
+  protected final ApplicationContext appContext;
+  private final IClusterModel        clusterModel;
+
+  private StatsRecorderPanel         statsRecorderPanel;
+  private String                     baseLabel;
+  private final String               recordingSuffix;
 
   public StatsRecorderNode(ApplicationContext appContext, IClusterModel clusterModel) {
     super();
@@ -34,7 +35,7 @@ public class StatsRecorderNode extends ComponentNode implements IClusterStatsLis
 
     clusterModel.addPropertyChangeListener(new ClusterListener(clusterModel));
     if (clusterModel.isReady()) {
-      IServer activeCoord = getActiveCoordinator();
+      IServer activeCoord = clusterModel.getActiveCoordinator();
       if (activeCoord != null && activeCoord.isClusterStatsSupported()) {
         activeCoord.addClusterStatsListener(this);
       }
@@ -54,15 +55,6 @@ public class StatsRecorderNode extends ComponentNode implements IClusterStatsLis
     return new StatsRecorderPanel(theAppContext, theClusterModel);
   }
 
-  synchronized IClusterModel getClusterModel() {
-    return clusterModel;
-  }
-
-  synchronized IServer getActiveCoordinator() {
-    IClusterModel theClusterModel = getClusterModel();
-    return theClusterModel != null ? theClusterModel.getActiveCoordinator() : null;
-  }
-
   private class ClusterListener extends AbstractClusterListener {
     private ClusterListener(IClusterModel clusterModel) {
       super(clusterModel);
@@ -70,11 +62,8 @@ public class StatsRecorderNode extends ComponentNode implements IClusterStatsLis
 
     @Override
     protected void handleReady() {
-      IClusterModel theClusterModel = getClusterModel();
-      if (theClusterModel == null) { return; }
-
-      if (theClusterModel.isReady()) {
-        IServer activeCoord = theClusterModel.getActiveCoordinator();
+      if (clusterModel.isReady()) {
+        IServer activeCoord = clusterModel.getActiveCoordinator();
         if (activeCoord != null && activeCoord.isClusterStatsSupported()) {
           activeCoord.addClusterStatsListener(StatsRecorderNode.this);
         }
@@ -93,11 +82,7 @@ public class StatsRecorderNode extends ComponentNode implements IClusterStatsLis
 
     @Override
     protected void handleUncaughtError(Exception e) {
-      if (appContext != null) {
-        appContext.log(e);
-      } else {
-        super.handleUncaughtError(e);
-      }
+      appContext.log(e);
     }
   }
 
@@ -112,20 +97,6 @@ public class StatsRecorderNode extends ComponentNode implements IClusterStatsLis
   void showRecording(boolean recording) {
     setLabel(baseLabel + (recording ? recordingSuffix : ""));
     nodeChanged();
-  }
-
-  @Override
-  public void tearDown() {
-    super.tearDown();
-
-    synchronized (this) {
-      appContext = null;
-      clusterModel = null;
-      if (statsRecorderPanel != null) {
-        statsRecorderPanel.tearDown();
-        statsRecorderPanel = null;
-      }
-    }
   }
 
   /*
@@ -170,5 +141,13 @@ public class StatsRecorderNode extends ComponentNode implements IClusterStatsLis
         showRecording(false);
       }
     });
+  }
+
+  @Override
+  public void tearDown() {
+    if (statsRecorderPanel != null) {
+      statsRecorderPanel.tearDown();
+    }
+    super.tearDown();
   }
 }

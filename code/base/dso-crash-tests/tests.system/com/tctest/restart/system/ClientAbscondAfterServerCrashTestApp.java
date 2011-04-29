@@ -16,7 +16,7 @@ import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
-import com.tc.stats.DSOMBean;
+import com.tc.stats.api.DSOMBean;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
@@ -56,13 +56,19 @@ public class ClientAbscondAfterServerCrashTestApp extends AbstractTransparentApp
     // Extra L1s
     List jvmArgs = new ArrayList();
     client1 = new ExtraL1ProcessControl(appConfig.getAttribute(HOST_NAME), Integer.parseInt(appConfig
-        .getAttribute(DSO_PORT)), AbscondingClient.class, new File(appConfig.getAttribute(CONFIG_FILE))
-        .getAbsolutePath(), Arrays.asList("AbscondingClient"), new File(appConfig.getAttribute(CLIENT1_SPACE)),
+        .getAttribute(DSO_PORT)), AbscondingClient.class,
+                                        new File(appConfig.getAttribute(CONFIG_FILE)).getAbsolutePath(),
+                                        Arrays.asList("AbscondingClient"), new File(
+                                                                                    appConfig
+                                                                                        .getAttribute(CLIENT1_SPACE)),
                                         jvmArgs);
 
     client2 = new ExtraL1ProcessControl(appConfig.getAttribute(HOST_NAME), Integer.parseInt(appConfig
-        .getAttribute(DSO_PORT)), AbscondingClient.class, new File(appConfig.getAttribute(CONFIG_FILE))
-        .getAbsolutePath(), Arrays.asList("Resident Client"), new File(appConfig.getAttribute(CLIENT2_SPACE)),
+        .getAttribute(DSO_PORT)), AbscondingClient.class,
+                                        new File(appConfig.getAttribute(CONFIG_FILE)).getAbsolutePath(),
+                                        Arrays.asList("Resident Client"), new File(
+                                                                                   appConfig
+                                                                                       .getAttribute(CLIENT2_SPACE)),
                                         jvmArgs);
 
     try {
@@ -80,7 +86,7 @@ public class ClientAbscondAfterServerCrashTestApp extends AbstractTransparentApp
 
     // Wait till all clients join the game
     try {
-      //checkServerHasClients waits till the clients join
+      // checkServerHasClients waits till the clients join
       checkServerHasClients(3, Integer.parseInt(appConfig.getAttribute(ADMIN_PORT)));
     } catch (Exception e) {
       throw new AssertionError(e);

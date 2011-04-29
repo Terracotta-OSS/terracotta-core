@@ -11,7 +11,7 @@ import com.tc.admin.common.XTreeNode;
 import java.awt.BorderLayout;
 
 public class AdminClientApplet extends XApplet implements AdminClientController {
-  private AdminClientPanel mainPanel;
+  private final AdminClientPanel mainPanel;
 
   public AdminClientApplet(IAdminClientContext adminClientContext) {
     super();
@@ -40,7 +40,7 @@ public class AdminClientApplet extends XApplet implements AdminClientController 
   public void expandAll(XTreeNode node) {
     mainPanel.expandAll(node);
   }
-  
+
   public boolean isSelected(XTreeNode node) {
     return mainPanel.isSelected(node);
   }
@@ -57,6 +57,7 @@ public class AdminClientApplet extends XApplet implements AdminClientController 
     mainPanel.updateServerPrefs();
   }
 
+  @Override
   public void stop() {
     mainPanel.disconnectAll();
   }
@@ -89,5 +90,13 @@ public class AdminClientApplet extends XApplet implements AdminClientController 
 
   public void showOptions() {
     mainPanel.showOptions();
+  }
+
+  public void activeFeatureAdded(String name) {
+    mainPanel.activeFeatureAdded(name);
+  }
+
+  public void activeFeatureRemoved(String name) {
+    mainPanel.activeFeatureRemoved(name);
   }
 }

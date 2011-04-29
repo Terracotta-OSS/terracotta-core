@@ -15,11 +15,12 @@ import com.tc.admin.model.IServerGroup;
 import java.awt.BorderLayout;
 
 public class ServerGroupsPanel extends XContainer {
-  protected ApplicationContext    appContext;
-  protected IClusterModel         clusterModel;
-  protected IServerGroup[]        serverGroups;
-  protected XObjectTable          serverGroupTable;
-  protected ServerGroupTableModel serverGroupTableModel;
+  protected final ApplicationContext appContext;
+  protected final IClusterModel      clusterModel;
+  protected final IServerGroup[]     serverGroups;
+
+  protected XObjectTable             serverGroupTable;
+  protected ServerGroupTableModel    serverGroupTableModel;
 
   public ServerGroupsPanel(ApplicationContext appContext, IClusterModel clusterModel, IServerGroup[] serverGroups) {
     super(new BorderLayout());
@@ -55,15 +56,6 @@ public class ServerGroupsPanel extends XContainer {
   @Override
   public void tearDown() {
     serverGroupTableModel.clear();
-
     super.tearDown();
-
-    synchronized (this) {
-      appContext = null;
-      clusterModel = null;
-      serverGroups = null;
-      serverGroupTable = null;
-      serverGroupTableModel = null;
-    }
   }
 }

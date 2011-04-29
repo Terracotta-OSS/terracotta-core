@@ -49,7 +49,6 @@ import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -58,8 +57,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
 class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeListener {
-  private IClusterModel            clusterModel;
-  private ClusterListener          clusterListener;
+  private final IClusterModel      clusterModel;
+  private final ClusterListener    clusterListener;
 
   private int                      dialRangeScaleFactor;
 
@@ -151,9 +150,6 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
 
     @Override
     public void handleConnected() {
-      IClusterModel theClusterModel = getClusterModel();
-      if (theClusterModel == null) { return; }
-
       if (clusterModel.isConnected()) {
         setup();
       } else {
@@ -168,9 +164,6 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
 
     @Override
     public void handleReady() {
-      IClusterModel theClusterModel = getClusterModel();
-      if (theClusterModel == null) { return; }
-
       removeAll();
       if (clusterModel.isReady()) {
         add(chartsPanel);
@@ -188,11 +181,7 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
 
     @Override
     protected void handleUncaughtError(Exception e) {
-      if (appContext != null) {
-        appContext.log(e);
-      } else {
-        super.handleUncaughtError(e);
-      }
+      appContext.log(e);
     }
   }
 
@@ -201,11 +190,6 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
    */
   @Override
   public void attributesPolled(final PolledAttributesResult result) {
-    if (tornDown.get()) { return; }
-
-    IClusterModel theClusterModel = getClusterModel();
-    if (theClusterModel == null) { return; }
-
     int liveObjectCount = 0;
     int txnRate = 0;
     int lockRecallRate = 0;
@@ -295,7 +279,7 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
     if (txnSizeRate != -1) {
       IServerGroup[] groups = clusterModel.getServerGroups();
       if (groups != null && groups.length > 0) {
-        tmpTxnRateSize = (txnSizeRate / groups.length) / 1000d;
+        tmpTxnRateSize = (txnSizeRate / (double) groups.length) / 1000d;
       }
     }
     final double theTxnSizeRate = tmpTxnRateSize;
@@ -331,17 +315,11 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
   }
 
   private void addPolledAttributeListener() {
-    IClusterModel theClusterModel = getClusterModel();
-    if (theClusterModel != null) {
-      theClusterModel.addPolledAttributeListener(ACTIVE_SERVERS, POLLED_ATTRIBUTE_SET, this);
-    }
+    clusterModel.addPolledAttributeListener(ACTIVE_SERVERS, POLLED_ATTRIBUTE_SET, this);
   }
 
   private void removePolledAttributeListener() {
-    IClusterModel theClusterModel = getClusterModel();
-    if (theClusterModel != null) {
-      theClusterModel.removePolledAttributeListener(ACTIVE_SERVERS, POLLED_ATTRIBUTE_SET, this);
-    }
+    clusterModel.removePolledAttributeListener(ACTIVE_SERVERS, POLLED_ATTRIBUTE_SET, this);
   }
 
   @Override
@@ -574,10 +552,6 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
     runtimeStatsPanel.add(label, gbc);
   }
 
-  private synchronized IClusterModel getClusterModel() {
-    return clusterModel;
-  }
-
   private static class DialInfo {
     String              name;
     Number              maxValue;
@@ -632,32 +606,12 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
     }
   }
 
-  private final AtomicBoolean tornDown = new AtomicBoolean(false);
-
   @Override
   public void tearDown() {
-    if (!tornDown.compareAndSet(false, true)) { return; }
-
     clusterModel.removePropertyChangeListener(clusterListener);
     clusterListener.tearDown();
-
     clusterModel.removePolledAttributeListener(ACTIVE_SERVERS, POLLED_ATTRIBUTE_SET, this);
 
     super.tearDown();
-
-    synchronized (this) {
-      appContext = null;
-      clusterModel = null;
-      clusterListener = null;
-
-      txnRateDialInfo = null;
-      creationRateDialInfo = null;
-      broadcastRateDialInfo = null;
-      lockRecallRateDialInfo = null;
-      flushRateDialInfo = null;
-      faultRateDialInfo = null;
-      txnSizeRateDialInfo = null;
-      pendingTxnsDialInfo = null;
-    }
   }
 }

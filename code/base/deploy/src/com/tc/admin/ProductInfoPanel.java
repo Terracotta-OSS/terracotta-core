@@ -31,10 +31,12 @@ public class ProductInfoPanel extends XContainer {
     add(copyright = new JLabel(), gbc);
   }
 
+  @Override
   public boolean isVisible() {
     return visible;
   }
 
+  @Override
   public void setVisible(boolean visible) {
     this.visible = visible;
     if (visible) {
@@ -55,11 +57,5 @@ public class ProductInfoPanel extends XContainer {
     }
     version.setText(versionText);
     copyright.setText(copyrightText);
-  }
-
-  public void tearDown() {
-    super.tearDown();
-    version = null;
-    copyright = null;
   }
 }

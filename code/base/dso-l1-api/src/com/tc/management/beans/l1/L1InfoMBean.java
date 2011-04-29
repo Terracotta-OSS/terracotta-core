@@ -49,6 +49,8 @@ public interface L1InfoMBean extends TerracottaMBean, NotificationEmitter, Runti
 
   long getMaxMemory();
 
+  StatisticData getCpuLoad();
+
   StatisticData[] getCpuUsage();
 
   boolean isVerboseGC();

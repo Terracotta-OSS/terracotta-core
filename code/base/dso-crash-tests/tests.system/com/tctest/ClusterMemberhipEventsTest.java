@@ -11,7 +11,7 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
-import com.tc.stats.DSOMBean;
+import com.tc.stats.api.DSOMBean;
 import com.tc.util.TcConfigBuilder;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.process.ExternalDsoServer;
@@ -110,8 +110,8 @@ public class ClusterMemberhipEventsTest extends BaseDSOTestCase {
   }
 
   private void waitForClientsToFinish(ExtraL1ProcessControl[] clients) throws Exception {
-    for (int i = 0; i < clients.length; i++) {
-      clients[i].waitUntilShutdown();
+    for (ExtraL1ProcessControl client : clients) {
+      client.waitUntilShutdown();
     }
   }
 

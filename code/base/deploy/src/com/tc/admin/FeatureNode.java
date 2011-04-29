@@ -11,18 +11,17 @@ import com.tc.admin.model.IClusterModel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.event.EventListenerList;
 
 public class FeatureNode extends ComponentNode implements PropertyChangeListener {
-  protected Feature               feature;
-  protected IAdminClientContext   adminClientContext;
-  protected IClusterModel         clusterModel;
-  protected FeaturePanel          featurePanel;
-  protected ClientsNode           clientsNode;
+  protected final Feature             feature;
+  protected final IAdminClientContext adminClientContext;
+  protected final IClusterModel       clusterModel;
+  protected final EventListenerList   listenerList;
 
-  private final EventListenerList listenerList;
+  protected FeaturePanel              featurePanel;
+  protected ClientsNode               clientsNode;
 
   public FeatureNode(Feature feature, IAdminClientContext adminClientContext, IClusterModel clusterModel) {
     super(feature.getDisplayName());
@@ -52,39 +51,23 @@ public class FeatureNode extends ComponentNode implements PropertyChangeListener
   }
 
   public void addPresentationListener(PresentationListener listener) {
-    if (listenerList != null) {
-      listenerList.add(PresentationListener.class, listener);
-    }
+    listenerList.add(PresentationListener.class, listener);
   }
 
   public void removePresentationListener(PresentationListener listener) {
-    if (listenerList != null) {
-      listenerList.remove(PresentationListener.class, listener);
-    }
+    listenerList.remove(PresentationListener.class, listener);
   }
 
   private void firePresentationReady(boolean ready) {
-    if (listenerList != null) {
-      Object[] listeners = listenerList.getListenerList();
-      for (int i = listeners.length - 2; i >= 0; i -= 2) {
-        if (listeners[i] == PresentationListener.class) {
-          ((PresentationListener) listeners[i + 1]).presentationReady(ready);
-        }
+    Object[] listeners = listenerList.getListenerList();
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (listeners[i] == PresentationListener.class) {
+        ((PresentationListener) listeners[i + 1]).presentationReady(ready);
       }
     }
   }
 
-  public Feature getFeature() {
-    return feature;
-  }
-
-  public Presentation getPresentation() {
-    return featurePanel.getPresentation();
-  }
-
-  private final AtomicBoolean tornDown = new AtomicBoolean(false);
-
-  private volatile boolean    tearDown = true;
+  private volatile boolean tearDown = true;
 
   public void setTearDown(boolean tearDown) {
     this.tearDown = tearDown;
@@ -94,19 +77,8 @@ public class FeatureNode extends ComponentNode implements PropertyChangeListener
   public void tearDown() {
     if (!tearDown) { return; }
 
-    if (!tornDown.compareAndSet(false, true)) { return; }
-
-    if (featurePanel != null) {
-      featurePanel.tearDown();
-    }
-
-    synchronized (this) {
-      feature = null;
-      adminClientContext = null;
-      clusterModel = null;
-      featurePanel = null;
-      clientsNode = null;
-    }
+    featurePanel.removePropertyChangeListener(this);
+    featurePanel.tearDown();
 
     super.tearDown();
   }

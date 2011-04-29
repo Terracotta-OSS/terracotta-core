@@ -28,16 +28,17 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
 public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
-  protected IAdminClientContext adminClientContext;
-  protected IBasicObject        object;
-  private boolean               resident;
-  private MoreAction            moreAction;
-  private LessAction            lessAction;
-  private JPopupMenu            popupMenu;
-  private int                   batchSize;
-  private RefreshAction         refreshAction;
+  protected final IAdminClientContext adminClientContext;
+  protected final IBasicObject        object;
 
-  private static final String   REFRESH_ACTION = "RefreshAction";
+  private boolean                     resident;
+  private MoreAction                  moreAction;
+  private LessAction                  lessAction;
+  private JPopupMenu                  popupMenu;
+  private int                         batchSize;
+  private RefreshAction               refreshAction;
+
+  private static final String         REFRESH_ACTION = "RefreshAction";
 
   public BasicObjectNode(IAdminClientContext adminClientContext, IBasicObject object) {
     super(object);
@@ -67,7 +68,7 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
   }
 
   public boolean isObjectValid() {
-    return object != null && object.isValid();
+    return object.isValid();
   }
 
   protected void init() {
@@ -162,7 +163,7 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
 
   @Override
   public int getChildCount() {
-    return object != null ? object.getFieldCount() : 0;
+    return object.getFieldCount();
   }
 
   @Override
@@ -200,11 +201,9 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
   public void refreshChildren() {
     tearDownChildren();
 
-    if (object != null) {
-      object.initFields();
-      children.setSize(getChildCount());
-      fillInChildren();
-    }
+    object.initFields();
+    children.setSize(getChildCount());
+    fillInChildren();
 
     getModel().nodeStructureChanged(this);
   }
@@ -338,16 +337,5 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
 
   public int resetDSOBatchSize() {
     return batchSize = ConnectionContext.DSO_SMALL_BATCH_SIZE;
-  }
-
-  @Override
-  public void tearDown() {
-    super.tearDown();
-
-    object = null;
-    moreAction = null;
-    lessAction = null;
-    refreshAction = null;
-    popupMenu = null;
   }
 }

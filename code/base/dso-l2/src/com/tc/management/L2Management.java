@@ -20,19 +20,24 @@ import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2Dumper;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.LockStatisticsMonitorMBean;
-import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ObjectManagementMonitor;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.DBEnvironment;
 import com.tc.statistics.StatisticsAgentSubSystem;
+import com.tc.statistics.StatisticsGathererSubSystem;
 import com.tc.statistics.beans.StatisticsMBeanNames;
 import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
+import com.tc.statistics.beans.impl.StatisticsLocalGathererMBeanImpl;
+import com.tc.stats.DSO;
+import com.tc.stats.api.DSOMBean;
 import com.tc.util.concurrent.TCExceptionResultException;
 import com.tc.util.concurrent.TCFuture;
 
 import java.io.IOException;
+import java.io.StreamCorruptedException;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.List;
@@ -58,28 +63,32 @@ public class L2Management extends TerracottaManagement {
 
   protected MBeanServer                          mBeanServer;
   protected JMXConnectorServer                   jmxConnectorServer;
-  protected final L2ConfigurationSetupManager configurationSetupManager;
+  protected final L2ConfigurationSetupManager    configurationSetupManager;
+  private DSOMBean                               dsoBean;
   private final TCServerInfoMBean                tcServerInfo;
-  private final TCDumper                         tcDumper;
+  protected final DistributedObjectServer        dsoServer;
   private final ObjectManagementMonitor          objectManagementBean;
   private final LockStatisticsMonitorMBean       lockStatistics;
   private final StatisticsAgentSubSystem         statisticsAgentSubSystem;
+  private final StatisticsGathererSubSystem      statisticsGathererSubSystem;
   private final StatisticsGatewayMBeanImpl       statisticsGateway;
+  private final StatisticsLocalGathererMBeanImpl statisticsLocalGatherer;
   protected final int                            jmxPort;
   protected final InetAddress                    bindAddress;
   private final Sink                             remoteEventsSink;
 
   public L2Management(TCServerInfoMBean tcServerInfo, LockStatisticsMonitorMBean lockStatistics,
                       StatisticsAgentSubSystem statisticsAgentSubSystem, StatisticsGatewayMBeanImpl statisticsGateway,
-                      L2ConfigurationSetupManager configurationSetupManager, TCDumper tcDumper,
-                      InetAddress bindAddr, int port, Sink remoteEventsSink) throws MBeanRegistrationException,
-      NotCompliantMBeanException, InstanceAlreadyExistsException {
+                      StatisticsGathererSubSystem statisticsGathererSubSystem,
+                      L2ConfigurationSetupManager configurationSetupManager, DistributedObjectServer dsoServer,
+                      InetAddress bindAddr, int port, Sink remoteEventsSink) throws NotCompliantMBeanException {
     this.tcServerInfo = tcServerInfo;
     this.lockStatistics = lockStatistics;
     this.configurationSetupManager = configurationSetupManager;
     this.statisticsAgentSubSystem = statisticsAgentSubSystem;
     this.statisticsGateway = statisticsGateway;
-    this.tcDumper = tcDumper;
+    this.statisticsGathererSubSystem = statisticsGathererSubSystem;
+    this.dsoServer = dsoServer;
     this.bindAddress = bindAddr;
     this.jmxPort = port;
     this.remoteEventsSink = remoteEventsSink;
@@ -91,6 +100,9 @@ public class L2Management extends TerracottaManagement {
                                    "Unable to construct one of the L2 MBeans: this is a programming error in one of those beans",
                                    ncmbe);
     }
+    statisticsLocalGatherer = new StatisticsLocalGathererMBeanImpl(this.statisticsGathererSubSystem,
+                                                                   this.configurationSetupManager.commonl2Config(),
+                                                                   this.configurationSetupManager.dsoL2Config());
     // LKC-2990 and LKC-3171: Remove the JMX generic optional logging
     java.util.logging.Logger jmxLogger = java.util.logging.Logger.getLogger("javax.management.remote.generic");
     jmxLogger.setLevel(java.util.logging.Level.OFF);
@@ -105,8 +117,6 @@ public class L2Management extends TerracottaManagement {
     } else {
       mBeanServer = MBeanServerFactory.createMBeanServer();
     }
-    registerMBeans();
-    statisticsGateway.addStatisticsAgent(ChannelID.NULL_ID, mBeanServer);
   }
 
   /**
@@ -120,6 +130,9 @@ public class L2Management extends TerracottaManagement {
   }
 
   public synchronized void start() throws Exception {
+    registerMBeans();
+    statisticsGateway.addStatisticsAgent(ChannelID.NULL_ID, mBeanServer);
+
     JMXServiceURL url;
     Map env = new HashMap();
     env.put("jmx.remote.x.server.connection.timeout", Long.valueOf(Long.MAX_VALUE));
@@ -174,6 +187,11 @@ public class L2Management extends TerracottaManagement {
 
   protected void registerMBeans() throws MBeanRegistrationException, NotCompliantMBeanException,
       InstanceAlreadyExistsException {
+    dsoBean = new DSO(this.dsoServer.getManagementContext(), this.dsoServer.getContext(), mBeanServer,
+                      this.dsoServer.getGcStatsEventPublisher(), this.dsoServer.getOperatorEventsHistoryProvider(),
+                      this.dsoServer.getOffheapStats());
+
+    mBeanServer.registerMBean(dsoBean, L2MBeanNames.DSO);
     mBeanServer.registerMBean(tcServerInfo, L2MBeanNames.TC_SERVER_INFO);
     mBeanServer.registerMBean(JMXLogging.getJMXAppender().getMBean(), L2MBeanNames.LOGGER);
     mBeanServer.registerMBean(objectManagementBean, L2MBeanNames.OBJECT_MANAGEMENT);
@@ -182,10 +200,13 @@ public class L2Management extends TerracottaManagement {
       statisticsAgentSubSystem.registerMBeans(mBeanServer);
     }
     mBeanServer.registerMBean(statisticsGateway, StatisticsMBeanNames.STATISTICS_GATEWAY);
-    mBeanServer.registerMBean(new L2Dumper(tcDumper, mBeanServer), L2MBeanNames.DUMPER);
+    mBeanServer.registerMBean(statisticsLocalGatherer, StatisticsMBeanNames.STATISTICS_GATHERER);
+    mBeanServer.registerMBean(new L2Dumper(dsoServer, mBeanServer), L2MBeanNames.DUMPER);
+    mBeanServer.registerMBean(dsoServer.getManagementContext().getDSOAppEventsMBean(), L2MBeanNames.DSO_APP_EVENTS);
   }
 
   protected void unregisterMBeans() throws InstanceNotFoundException, MBeanRegistrationException {
+    mBeanServer.unregisterMBean(L2MBeanNames.DSO);
     mBeanServer.unregisterMBean(L2MBeanNames.TC_SERVER_INFO);
     mBeanServer.unregisterMBean(L2MBeanNames.LOGGER);
     mBeanServer.unregisterMBean(L2MBeanNames.OBJECT_MANAGEMENT);
@@ -194,7 +215,9 @@ public class L2Management extends TerracottaManagement {
       statisticsAgentSubSystem.unregisterMBeans(mBeanServer);
     }
     mBeanServer.unregisterMBean(StatisticsMBeanNames.STATISTICS_GATEWAY);
+    mBeanServer.unregisterMBean(StatisticsMBeanNames.STATISTICS_GATHERER);
     mBeanServer.unregisterMBean(L2MBeanNames.DUMPER);
+    mBeanServer.unregisterMBean(L2MBeanNames.DSO_APP_EVENTS);
   }
 
   public static class TCSynchroMessageConnectionServer extends SynchroMessageConnectionServerImpl {
@@ -227,7 +250,15 @@ public class L2Management extends TerracottaManagement {
     }
 
     public void connect(Map env) throws IOException {
-      conn.connect(env);
+      try {
+        conn.connect(env);
+      } catch (StreamCorruptedException sce) {
+        /*
+         * Happens when DevConsole tries connecting to a JMXMP connector using a service:jmx:rmi URL. The string below
+         * is the Hex form of "JRMI"
+         */
+        if (!sce.getMessage().contains("4A524D49")) { throw sce; }
+      }
     }
 
     public String getConnectionId() {

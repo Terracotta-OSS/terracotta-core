@@ -38,17 +38,17 @@ import javax.management.ObjectName;
 import javax.swing.table.DefaultTableCellRenderer;
 
 public class ClientPanel extends XContainer implements PropertyChangeListener {
-  protected ApplicationContext appContext;
-  protected IClient            client;
+  protected final ApplicationContext appContext;
+  protected final IClient            client;
 
-  protected XTabbedPane        tabbedPane;
-  protected XContainer         controlArea;
-  protected PropertyTable      propertyTable;
-  protected XTextArea          environmentTextArea;
-  protected XTextArea          tcPropertiesTextArea;
-  protected XTextArea          processArgumentsTextArea;
-  protected XTextArea          configTextArea;
-  protected ClientLoggingPanel loggingPanel;
+  protected XTabbedPane              tabbedPane;
+  protected XContainer               controlArea;
+  protected PropertyTable            propertyTable;
+  protected XTextArea                environmentTextArea;
+  protected XTextArea                tcPropertiesTextArea;
+  protected XTextArea                processArgumentsTextArea;
+  protected XTextArea                configTextArea;
+  protected ClientLoggingPanel       loggingPanel;
 
   public ClientPanel(ApplicationContext appContext, IClient client) {
     super(new BorderLayout());
@@ -112,14 +112,7 @@ public class ClientPanel extends XContainer implements PropertyChangeListener {
     add(tabbedPane, BorderLayout.CENTER);
 
     setTabbedPaneEnabled(false);
-    setClient(client);
-  }
 
-  protected ClientLoggingPanel createLoggingPanel(ApplicationContext theAppContext, IClient theClient) {
-    return new ClientLoggingPanel(theAppContext, theClient);
-  }
-
-  public void setClient(IClient client) {
     this.client = client;
 
     String patchLevel = client.getProductPatchLevel();
@@ -142,8 +135,8 @@ public class ClientPanel extends XContainer implements PropertyChangeListener {
     }
   }
 
-  public IClient getClient() {
-    return client;
+  protected ClientLoggingPanel createLoggingPanel(ApplicationContext theAppContext, IClient theClient) {
+    return new ClientLoggingPanel(theAppContext, theClient);
   }
 
   private static class ClientState {
@@ -197,11 +190,10 @@ public class ClientPanel extends XContainer implements PropertyChangeListener {
     private ClientStateWorker() {
       super(new Callable<ClientState>() {
         public ClientState call() throws Exception {
-          IClient theClient = getClient();
-          IServer theServer = theClient.getClusterModel().getActiveCoordinator();
+          IServer theServer = client.getClusterModel().getActiveCoordinator();
           if (theServer == null) throw new IllegalStateException("not connected");
           Map<ObjectName, Set<String>> request = new HashMap<ObjectName, Set<String>>();
-          ObjectName l1InfoBeanName = theClient.getL1InfoBeanName();
+          ObjectName l1InfoBeanName = client.getL1InfoBeanName();
           request.put(l1InfoBeanName,
                       new HashSet(Arrays.asList(new String[] { "Environment", "TCProperties", "ProcessArguments",
                           "Config" })));
@@ -226,9 +218,7 @@ public class ClientPanel extends XContainer implements PropertyChangeListener {
       if (e != null) {
         Throwable rootCause = ExceptionHelper.getRootCause(e);
         if (!(rootCause instanceof IOException)) {
-          if (appContext != null) {
-            appContext.log(e);
-          }
+          appContext.log(e);
         }
       } else {
         if (!tabbedPane.isEnabled()) {
@@ -250,6 +240,7 @@ public class ClientPanel extends XContainer implements PropertyChangeListener {
   public void propertyChange(PropertyChangeEvent evt) {
     String prop = evt.getPropertyName();
     if (IClusterModelElement.PROP_READY.equals(prop)) {
+      client.removePropertyChangeListener(this);
       initClientState();
     }
   }
@@ -265,15 +256,7 @@ public class ClientPanel extends XContainer implements PropertyChangeListener {
 
   @Override
   public void tearDown() {
+    client.removePropertyChangeListener(this);
     super.tearDown();
-
-    appContext = null;
-    client = null;
-    propertyTable = null;
-    environmentTextArea = null;
-    tcPropertiesTextArea = null;
-    processArgumentsTextArea = null;
-    configTextArea = null;
-    controlArea = null;
   }
 }

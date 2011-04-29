@@ -48,19 +48,21 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 public class RootsPanel extends XContainer implements PropertyChangeListener {
-  protected IAdminClientContext         adminClientContext;
-  protected ManagedObjectFacadeProvider facadeProvider;
-  protected ILiveObjectCountProvider    liveObjectCountProvider;
-  protected IClient                     client;
-  protected XLabel                      liveObjectCountValueLabel;
-  protected XLabel                      explainationLabel;
-  protected BasicObjectSetPanel         objectSetPanel;
-  protected MouseListener               objectSetMouseListener;
-  protected XTextField                  inspectObjectField;
-  protected XButton                     inspectObjectButton;
+  protected final IAdminClientContext         adminClientContext;
+  protected final ManagedObjectFacadeProvider facadeProvider;
+  protected final ILiveObjectCountProvider    liveObjectCountProvider;
+  protected final IClient                     client;
 
-  private static final ImageIcon        helpIcon = new ImageIcon(RootsPanel.class
-                                                     .getResource("/com/tc/admin/icons/help.gif"));
+  protected XLabel                            liveObjectCountValueLabel;
+  protected XLabel                            explainationLabel;
+  protected BasicObjectSetPanel               objectSetPanel;
+  protected MouseListener                     objectSetMouseListener;
+  protected XTextField                        inspectObjectField;
+  protected XButton                           inspectObjectButton;
+
+  private static final ImageIcon              helpIcon = new ImageIcon(
+                                                                       RootsPanel.class
+                                                                           .getResource("/com/tc/admin/icons/help.gif"));
 
   public RootsPanel(IAdminClientContext adminClientContext, ManagedObjectFacadeProvider facadeProvider,
                     ILiveObjectCountProvider liveObjectCountProvider, IBasicObject[] roots) {
@@ -179,8 +181,7 @@ public class RootsPanel extends XContainer implements PropertyChangeListener {
         JDialog dialog = new JDialog(frame, Long.toString(fObjectID), false);
         BasicTcObject dsoObject = new BasicTcObject(facadeProvider, "", mof, mof.getClassName(), null);
         dialog.getContentPane().setLayout(new BorderLayout());
-        dialog.getContentPane().add(
-                                    new BasicObjectSetPanel(adminClientContext, client,
+        dialog.getContentPane().add(new BasicObjectSetPanel(adminClientContext, client,
                                                             new IBasicObject[] { dsoObject }));
         dialog.pack();
         WindowHelper.center(dialog, frame);
@@ -274,25 +275,6 @@ public class RootsPanel extends XContainer implements PropertyChangeListener {
     }
   }
 
-  @Override
-  public void tearDown() {
-    objectSetPanel.getTree().removeMouseListener(objectSetMouseListener);
-    if (client != null) {
-      client.removePropertyChangeListener(this);
-    }
-
-    super.tearDown();
-
-    adminClientContext = null;
-    facadeProvider = null;
-    client = null;
-    liveObjectCountValueLabel = null;
-    objectSetPanel = null;
-    objectSetMouseListener = null;
-    inspectObjectField = null;
-    inspectObjectButton = null;
-  }
-
   public void propertyChange(PropertyChangeEvent evt) {
     if (client == null) return;
     String prop = evt.getPropertyName();
@@ -306,5 +288,14 @@ public class RootsPanel extends XContainer implements PropertyChangeListener {
         }
       });
     }
+  }
+
+  @Override
+  public void tearDown() {
+    objectSetPanel.getTree().removeMouseListener(objectSetMouseListener);
+    if (client != null) {
+      client.removePropertyChangeListener(this);
+    }
+    super.tearDown();
   }
 }

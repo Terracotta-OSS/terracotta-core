@@ -39,17 +39,19 @@ import javax.servlet.http.HttpServletResponse;
  * Servlet that provides a RESTful interface towards an embedded statistics gatherer
  */
 public class StatisticsGathererServlet extends RestfulServlet implements StatisticsGathererListener {
-  public static final String             GATHERER_ATTRIBUTE = StatisticsGathererServlet.class.getName() + ".gatherer";
+  private static final long                     serialVersionUID   = -8552317343856988647L;
 
-  private L2ConfigurationSetupManager configSetupManager;
-  private StatisticsGathererSubSystem    system;
+  public static final String                    GATHERER_ATTRIBUTE = StatisticsGathererServlet.class.getName()
+                                                                     + ".gatherer";
 
-  private boolean                        connected          = false;
+  private transient L2ConfigurationSetupManager configSetupManager;
+  private transient StatisticsGathererSubSystem system;
+
+  private boolean                               connected          = false;
 
   @Override
   public void init() {
-    configSetupManager = (L2ConfigurationSetupManager) getServletContext()
-        .getAttribute(ConfigServlet.CONFIG_ATTRIBUTE);
+    configSetupManager = (L2ConfigurationSetupManager) getServletContext().getAttribute(ConfigServlet.CONFIG_ATTRIBUTE);
     system = (StatisticsGathererSubSystem) getServletContext().getAttribute(GATHERER_ATTRIBUTE);
     system.getStatisticsGatherer().addListener(this);
   }

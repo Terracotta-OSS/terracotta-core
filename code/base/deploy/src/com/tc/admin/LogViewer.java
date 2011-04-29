@@ -16,6 +16,7 @@ import java.util.Map;
 public class LogViewer extends XContainer {
   private final IAdminClientContext            adminClientContext;
   private final Map<IClusterModel, ClusterLog> logMap;
+
   private PagedView                            pagedView;
 
   private static final String                  EMPTY_PAGE = "EmptyPage";
@@ -34,7 +35,6 @@ public class LogViewer extends XContainer {
   public void add(IClusterModel clusterModel) {
     ClusterLog clusterLog = new ClusterLog(adminClientContext, clusterModel);
     logMap.put(clusterModel, clusterLog);
-    // clusterLog.setName(clusterModel.toString());
     pagedView.addPage(clusterLog);
     select(clusterModel);
   }

@@ -13,8 +13,8 @@ import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
-import com.tc.stats.DSOClientMBean;
-import com.tc.stats.DSOMBean;
+import com.tc.stats.api.DSOClientMBean;
+import com.tc.stats.api.DSOMBean;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
@@ -102,8 +102,8 @@ public class LockInfoThreadDumpTestApp extends AbstractTransparentApp {
 
     Assert.eval("The text \"LOCKED : [\" should be present in the thread dump", threadDump.indexOf("LOCKED : [") >= 0);
 
-    Assert.eval("The text \"WAITING TO LOCK: [\" should be present in the thread dump", threadDump
-        .indexOf("WAITING TO LOCK: [") >= 0);
+    Assert.eval("The text \"WAITING TO LOCK: [\" should be present in the thread dump",
+                threadDump.indexOf("WAITING TO LOCK: [") >= 0);
 
     System.out.println("XXX DONE");
   }

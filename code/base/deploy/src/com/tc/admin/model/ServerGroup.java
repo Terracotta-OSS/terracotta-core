@@ -174,7 +174,6 @@ public class ServerGroup implements IServerGroup {
       } else if (IClusterModelElement.PROP_READY.equals(prop)) {
         if (server.isConnected() && server.isActive()) {
           setActiveServer(server);
-        } else {
           setReady(determineReady());
         }
       }
@@ -279,13 +278,15 @@ public class ServerGroup implements IServerGroup {
     // IServer theActiveServer = getActiveServer();
     // return theActiveServer != null && theActiveServer.isReady();
 
+    boolean isActiveReady = false;
     int activeCount = 0;
     for (IServer server : getMembers()) {
       if (server.isActive()) {
         activeCount++;
+        isActiveReady = server.isReady();
       }
     }
-    return activeCount == 1;
+    return activeCount == 1 && isActiveReady;
   }
 
   private boolean determineConnected() {

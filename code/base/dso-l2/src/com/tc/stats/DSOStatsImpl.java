@@ -7,6 +7,7 @@ package com.tc.stats;
 import com.tc.objectserver.api.ObjectManagerStats;
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.objectserver.core.impl.ServerManagementContext;
+import com.tc.stats.api.DSOStats;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 
@@ -19,7 +20,7 @@ import java.lang.reflect.Method;
  * @see DSOStats
  */
 
-public class DSOStatsImpl extends StatsSupport implements DSOStats {
+public class DSOStatsImpl implements DSOStats {
 
   private final DSOGlobalServerStats serverStats;
   private final SampledCounter       faultRate;

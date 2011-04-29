@@ -85,13 +85,6 @@ public class StatusView extends XContainer {
     paintImmediately(0, 0, getWidth(), getHeight());
   }
 
-  @Override
-  public void tearDown() {
-    super.tearDown();
-    label = null;
-    indicator = null;
-  }
-
   public static void main(String[] args) {
     JFrame frame = new JFrame("Server Status Indicators");
     Container cp = frame.getContentPane();

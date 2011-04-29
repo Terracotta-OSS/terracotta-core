@@ -10,10 +10,13 @@ import org.jfree.chart.axis.AxisSpace;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.NumberTickUnit;
 import org.jfree.chart.plot.Plot;
+import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.Range;
 import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeries;
+import org.jfree.data.time.TimeTableXYDataset;
+import org.jfree.data.xy.TableXYDataset;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.ui.RectangleInsets;
 
@@ -22,6 +25,7 @@ import com.tc.admin.common.BasicChartPanel;
 import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.DemoChartFactory;
 import com.tc.admin.common.FixedTimeSeriesCollection;
+import com.tc.admin.common.FixedTimeTableXYDataset;
 import com.tc.admin.common.LinkButton;
 import com.tc.admin.common.StatusView;
 import com.tc.admin.common.SyncHTMLEditorKit;
@@ -77,15 +81,18 @@ import javax.swing.text.html.HTML;
 
 public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisticConstants, PolledAttributeListener,
     PreferenceChangeListener, HierarchyListener {
-  protected ApplicationContext          appContext;
+  protected final ApplicationContext    appContext;
+  protected final ArrayList<TimeSeries> allSeries;
+  protected final ArrayList<JFreeChart> allCharts;
+
   protected XContainer                  chartsPanel;
   private XButton                       manageMonitoringButton;
   private XButton                       clearSamplesButton;
   private JButton                       configureOptionsButton;
   protected AxisSpace                   rangeAxisSpace;
-  private boolean                       autoStart;
-  private boolean                       hasAutoStarted;
-  private boolean                       isMonitoring;
+  private volatile boolean              autoStart;
+  private volatile boolean              hasAutoStarted;
+  private volatile boolean              isMonitoring;
 
   protected static final Dimension      fDefaultGraphSize                       = new Dimension(0, 65);
 
@@ -110,9 +117,6 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
 
   private static final String[]         MEMORY_USAGE_SERIES_NAMES               = { SRAMemoryUsage.DATA_NAME_MAX,
       SRAMemoryUsage.DATA_NAME_USED                                            };
-
-  protected final ArrayList<TimeSeries> allSeries;
-  protected final ArrayList<JFreeChart> allCharts;
 
   private final boolean                 showControls                            = false;
 
@@ -224,11 +228,17 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     return getIntPref(DEFAULT_SAMPLE_HISTORY_MINUTES_PREF_KEY, DEFAULT_SAMPLE_HISTORY_MINUTES);
   }
 
+  private int getSampleHistorySeconds() {
+    return getSampleHistoryMinutes() * 60;
+  }
+
+  private int getSampleHistoryMillis() {
+    return getSampleHistorySeconds() * 1000;
+  }
+
   private class ConfigureOptionsAction implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
-      if (appContext != null) {
-        appContext.getApplicationController().showOption(RuntimeStatsOption.NAME);
-      }
+      appContext.getApplicationController().showOption(RuntimeStatsOption.NAME);
     }
   }
 
@@ -266,14 +276,19 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     return result;
   }
 
-  protected FixedTimeSeriesCollection createCpuDataset(IClusterNode clusterNode) {
+  protected FixedTimeSeriesCollection createCpuUsageDataset(IClusterNode clusterNode) {
     String[] cpus = clusterNode.getCpuStatNames();
-    return new FixedTimeSeriesCollection(cpus, getMaxSampleCount());
+    return new FixedTimeSeriesCollection(cpus, getSampleHistoryMillis());
+  }
+
+  protected TimeSeries createCpuLoadSeries(IClusterNode clusterNode) {
+    String[] cpus = clusterNode.getCpuStatNames();
+    return cpus.length > 0 ? createTimeSeries("cpu load") : null;
   }
 
   protected TimeSeries createTimeSeries(String name) {
     TimeSeries ts = new TimeSeries(name, Second.class);
-    ts.setMaximumItemCount(50);
+    ts.setMaximumItemAge(getSampleHistorySeconds());
     allSeries.add(ts);
     return ts;
   }
@@ -296,8 +311,7 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
 
   protected JFreeChart createChart(XYDataset xyDataset, boolean createLegend) {
     JFreeChart chart = DemoChartFactory.createXYLineChart("", "", "", xyDataset, createLegend);
-    int sampleHistoryMinutes = getSampleHistoryMinutes();
-    int sampleHistoryMillis = sampleHistoryMinutes * 60 * 1000;
+    int sampleHistoryMillis = getSampleHistoryMillis();
 
     XYPlot plot = (XYPlot) chart.getPlot();
     plot.getDomainAxis().setFixedAutoRange(sampleHistoryMillis);
@@ -309,6 +323,23 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
 
   protected JFreeChart createChart(TimeSeries[] seriesArray, boolean createLegend) {
     JFreeChart chart = DemoChartFactory.getXYLineChart("", "", "", seriesArray, createLegend);
+
+    XYPlot plot = (XYPlot) chart.getPlot();
+    plot.getDomainAxis().setFixedAutoRange(getSampleHistoryMillis());
+    ((NumberAxis) plot.getRangeAxis()).setAutoRangeIncludesZero(true);
+
+    int sampleHistorySeconds = getSampleHistorySeconds();
+    for (TimeSeries series : seriesArray) {
+      series.setMaximumItemAge(sampleHistorySeconds);
+    }
+
+    allCharts.add(chart);
+    return chart;
+  }
+
+  protected JFreeChart createStackedXYAreaChart(FixedTimeTableXYDataset dataset, boolean createLegend) {
+    JFreeChart chart = DemoChartFactory.createStackedXYAreaChart("", "", "", dataset, PlotOrientation.VERTICAL,
+                                                                 createLegend);
     int sampleHistoryMinutes = getSampleHistoryMinutes();
     int sampleHistoryMillis = sampleHistoryMinutes * 60 * 1000;
 
@@ -316,10 +347,7 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     plot.getDomainAxis().setFixedAutoRange(sampleHistoryMillis);
     ((NumberAxis) plot.getRangeAxis()).setAutoRangeIncludesZero(true);
 
-    int maxSampleCount = (sampleHistoryMinutes * 60) / getPollPeriodSeconds();
-    for (TimeSeries series : seriesArray) {
-      series.setMaximumItemCount(maxSampleCount);
-    }
+    dataset.setMaximumItemAge(sampleHistoryMillis);
 
     allCharts.add(chart);
     return chart;
@@ -331,16 +359,14 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
 
   protected JFreeChart createXYBarChart(TimeSeries[] seriesArray, boolean createLegend) {
     JFreeChart chart = DemoChartFactory.getXYBarChart("", "", "", seriesArray, createLegend);
-    int sampleHistoryMinutes = getSampleHistoryMinutes();
-    int sampleHistoryMillis = sampleHistoryMinutes * 60 * 1000;
 
     XYPlot plot = (XYPlot) chart.getPlot();
-    plot.getDomainAxis().setFixedAutoRange(sampleHistoryMillis);
+    plot.getDomainAxis().setFixedAutoRange(getSampleHistoryMillis());
     ((NumberAxis) plot.getRangeAxis()).setAutoRangeIncludesZero(true);
 
-    int maxSampleCount = (sampleHistoryMinutes * 60) / getPollPeriodSeconds();
+    int sampleHistorySeconds = getSampleHistorySeconds();
     for (TimeSeries series : seriesArray) {
-      series.setMaximumItemCount(maxSampleCount);
+      series.setMaximumItemAge(sampleHistorySeconds);
     }
 
     allCharts.add(chart);
@@ -357,16 +383,14 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
 
   protected JFreeChart createXYStepChart(TimeSeries[] seriesArray, boolean createLegend) {
     JFreeChart chart = DemoChartFactory.getXYStepChart("", "", "", seriesArray, createLegend);
-    int sampleHistoryMinutes = getSampleHistoryMinutes();
-    int sampleHistoryMillis = sampleHistoryMinutes * 60 * 1000;
 
     XYPlot plot = (XYPlot) chart.getPlot();
-    plot.getDomainAxis().setFixedAutoRange(sampleHistoryMillis);
+    plot.getDomainAxis().setFixedAutoRange(getSampleHistoryMillis());
     ((NumberAxis) plot.getRangeAxis()).setAutoRangeIncludesZero(true);
 
-    int maxSampleCount = (sampleHistoryMinutes * 60) / getPollPeriodSeconds();
+    int sampleHistorySeconds = getSampleHistorySeconds();
     for (TimeSeries series : seriesArray) {
-      series.setMaximumItemCount(maxSampleCount);
+      series.setMaximumItemAge(sampleHistorySeconds);
     }
 
     allCharts.add(chart);
@@ -394,7 +418,7 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
   public void hierarchyChanged(HierarchyEvent e) {
     long flags = e.getChangeFlags();
     if ((flags & HierarchyEvent.SHOWING_CHANGED) != 0) {
-      if (isShowing() && getAutoStart() && !hasAutoStarted) {
+      if (isShowing() && !isMonitoringRuntimeStats() && getAutoStart() && !hasAutoStarted) {
         hasAutoStarted = true;
         startMonitoringRuntimeStats();
       }
@@ -503,41 +527,25 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
   }
 
   private int getIntPref(String key, int defaultValue) {
-    if (appContext != null) {
-      return appContext.getPrefs().node(RuntimeStatsOption.NAME).getInt(key, defaultValue);
-    } else {
-      return defaultValue;
-    }
+    return appContext.getPrefs().node(RuntimeStatsOption.NAME).getInt(key, defaultValue);
   }
 
-  protected void setMaximumItemCount(int maxItemCount) {
+  protected void setMaximumItemAge(int maxItemAgeSeconds) {
     Iterator<TimeSeries> seriesIter = allSeries.iterator();
     while (seriesIter.hasNext()) {
-      seriesIter.next().setMaximumItemCount(maxItemCount);
+      seriesIter.next().setMaximumItemAge(maxItemAgeSeconds);
     }
   }
 
   protected void setRuntimeStatsPollPeriodSeconds(int seconds) {
-    Iterator<JFreeChart> chartIter = allCharts.iterator();
-    int sampleHistoryMinutes = getSampleHistoryMinutes();
-    int sampleHistoryMillis = sampleHistoryMinutes * 60 * 1000;
-    int maxSampleCount = (sampleHistoryMinutes * 60) / seconds;
-
-    setMaximumItemCount(maxSampleCount);
-
-    while (chartIter.hasNext()) {
-      Plot plot = chartIter.next().getPlot();
-      if (plot instanceof XYPlot) {
-        ((XYPlot) plot).getDomainAxis().setFixedAutoRange(sampleHistoryMillis);
-      }
-    }
+    /* ClusterNode handles messaging the clusterModel */
   }
 
   protected void setRuntimeStatsSampleHistoryMinutes(int sampleHistoryMinutes) {
-    int sampleHistoryMillis = sampleHistoryMinutes * 60 * 1000;
-    int maxSampleCount = (sampleHistoryMinutes * 60) / getPollPeriodSeconds();
+    int sampleHistorySeconds = sampleHistoryMinutes * 60;
+    int sampleHistoryMillis = sampleHistorySeconds * 1000;
 
-    setMaximumItemCount(maxSampleCount);
+    setMaximumItemAge(sampleHistorySeconds);
 
     Iterator<JFreeChart> chartIter = allCharts.iterator();
     while (chartIter.hasNext()) {
@@ -556,6 +564,12 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     }
   }
 
+  protected void updateSeries(TimeTableXYDataset dataset, Number value, String seriesName) {
+    if (dataset != null && value != null) {
+      dataset.add(new Second(tmpDate), value.doubleValue(), seriesName);
+    }
+  }
+
   public static String convert(long value) {
     try {
       if (value < MemorySizeUnits.KILO.getInBytes()) {
@@ -569,6 +583,15 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
   }
 
   private static final boolean SHOW_LAST_ON_MISSING = true;
+
+  protected static Number getValueOrMissing(TableXYDataset dataset, Number value, int series) {
+    if (value != null) { return value; }
+    if (SHOW_LAST_ON_MISSING) {
+      int itemCount = dataset.getItemCount();
+      if (itemCount > 0) { return dataset.getY(series, itemCount - 1); }
+    }
+    return Double.valueOf(0);
+  }
 
   protected static Number getValueOrMissing(TimeSeries timeSeries, Number value) {
     if (value != null) { return value; }
@@ -601,22 +624,28 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     return result;
   }
 
-  protected static void handleTransactionRate(TimeSeries series, Long value) {
+  protected void handleTransactionRate(TimeSeries series, Long value) {
     if (series != null) {
-      series.addOrUpdate(new Second(), getValueOrMissing(series, value));
+      series.addOrUpdate(new Second(tmpDate), getValueOrMissing(series, value));
     }
   }
 
-  protected static void handleCpuUsage(TimeSeries[] series, StatisticData[] data) {
+  protected void handleCpuUsage(TimeSeries series, StatisticData data) {
+    if (series != null) {
+      series.addOrUpdate(new Second(tmpDate), getValueOrMissing(series, (Number) data.getData()));
+    }
+  }
+
+  protected void handleCpuUsage(TimeSeries[] series, StatisticData[] data) {
     if (series != null && series.length > 0) {
-      Second now = new Second();
+      Second now = new Second(tmpDate);
       for (int i = 0; i < series.length; i++) {
         series[i].addOrUpdate(now, getValueOrMissing(series[i], data, i));
       }
     }
   }
 
-  protected static void handleCpuUsage(FixedTimeSeriesCollection dataset, StatisticData[] data) {
+  protected void handleCpuUsage(FixedTimeSeriesCollection dataset, StatisticData[] data) {
     float[] fa = null;
     if (data != null) {
       fa = new float[data.length];
@@ -624,12 +653,12 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
         fa[i] = data[i] != null ? ((Number) data[i].getData()).floatValue() : 0.0f;
       }
     }
-    dataset.appendData(new Second(), fa);
+    dataset.appendData(new Second(tmpDate), fa);
   }
 
-  protected static void handleMemoryUsage(TimeSeries[] series, Long max, Long used) {
+  protected void handleMemoryUsage(TimeSeries[] series, Long max, Long used) {
     if (series != null) {
-      Second now = new Second();
+      Second now = new Second(tmpDate);
       series[0].addOrUpdate(now, getValueOrMissing(series[0], max));
       series[1].addOrUpdate(now, getValueOrMissing(series[1], used));
     }
@@ -683,18 +712,15 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
   }
 
   @Override
-  public synchronized void tearDown() {
+  public void tearDown() {
     Preferences runtimeStatsPrefs = appContext.getPrefs().node(RuntimeStatsOption.NAME);
     runtimeStatsPrefs.removePreferenceChangeListener(this);
     removeHierarchyListener(this);
     stopMonitoringRuntimeStats();
 
-    super.tearDown();
+    allSeries.clear();
+    allCharts.clear();
 
-    appContext = null;
-    chartsPanel = null;
-    manageMonitoringButton = null;
-    configureOptionsButton = null;
-    clearSamplesButton = null;
+    super.tearDown();
   }
 }

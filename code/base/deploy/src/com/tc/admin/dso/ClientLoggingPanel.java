@@ -24,6 +24,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
@@ -35,8 +36,8 @@ import javax.swing.BorderFactory;
 import javax.swing.SwingUtilities;
 
 public class ClientLoggingPanel extends XContainer implements NotificationListener, PropertyChangeListener {
-  protected ApplicationContext         appContext;
-  protected IClient                    client;
+  protected final ApplicationContext   appContext;
+  protected final IClient              client;
 
   protected XCheckBox                  classCheckBox;
   protected XCheckBox                  locksCheckBox;
@@ -98,7 +99,15 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
     loggingControlMap = new HashMap<String, XCheckBox>();
     loggingChangeHandler = new LoggingChangeHandler();
 
-    setClient(client);
+    this.client = client;
+    if (client.isReady()) {
+      try {
+        setupTunneledBeans();
+      } catch (Exception e) {
+        appContext.log(e);
+      }
+    }
+    client.addPropertyChangeListener(this);
   }
 
   private XContainer createInstrumentationLoggingPanel() {
@@ -243,19 +252,6 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
     return panel;
   }
 
-  public void setClient(IClient client) {
-    this.client = client;
-
-    if (client.isReady()) {
-      try {
-        setupTunneledBeans();
-      } catch (Exception e) {
-        appContext.log(e);
-      }
-    }
-    client.addPropertyChangeListener(this);
-  }
-
   public IClient getClient() {
     return client;
   }
@@ -342,7 +338,7 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
     }
   }
 
-  class LoggingChangeHandler implements ActionListener {
+  class LoggingChangeHandler implements ActionListener, Serializable {
     public void actionPerformed(ActionEvent ae) {
       XCheckBox checkBox = (XCheckBox) ae.getSource();
       Object loggingBean = checkBox.getClientProperty(checkBox.getName());
@@ -363,8 +359,10 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
         checkBox.setSelected(Boolean.valueOf(notification.getMessage()));
       }
     } else if (type.equals(L1InfoMBean.VERBOSE_GC)) {
-      Boolean value = (Boolean) ((AttributeChangeNotification) notification).getNewValue();
-      verboseGCCheckBox.setSelected(value.booleanValue());
+      if (notification instanceof AttributeChangeNotification) {
+        Boolean value = (Boolean) ((AttributeChangeNotification) notification).getNewValue();
+        verboseGCCheckBox.setSelected(value.booleanValue());
+      }
     }
   }
 
@@ -395,33 +393,7 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
   @Override
   public void tearDown() {
     client.removePropertyChangeListener(this);
-
-    synchronized (this) {
-      appContext = null;
-      client = null;
-      classCheckBox = null;
-      locksCheckBox = null;
-      transientRootCheckBox = null;
-      rootsCheckBox = null;
-      distributedMethodsCheckBox = null;
-      nonPortableDumpCheckBox = null;
-      lockDebugCheckBox = null;
-      fieldChangeDebugCheckBox = null;
-      waitNotifyDebugCheckBox = null;
-      distributedMethodDebugCheckBox = null;
-      newObjectDebugCheckBox = null;
-      namedLoaderDebugCheckBox = null;
-      flushDebugCheckBox = null;
-      faultDebugCheckBox = null;
-      autoLockDetailsCheckBox = null;
-      callerCheckBox = null;
-      fullStackCheckBox = null;
-      verboseGCCheckBox = null;
-      loggingChangeHandler = null;
-      loggingControlMap.clear();
-      loggingControlMap = null;
-    }
-
+    loggingControlMap.clear();
     super.tearDown();
   }
 }

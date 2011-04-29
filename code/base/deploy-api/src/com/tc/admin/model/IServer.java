@@ -10,7 +10,7 @@ import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.operatorevent.TerracottaOperatorEvent;
-import com.tc.stats.DSOClassInfo;
+import com.tc.stats.api.DSOClassInfo;
 
 import java.io.IOException;
 import java.util.Collection;

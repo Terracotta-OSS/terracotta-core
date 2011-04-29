@@ -8,7 +8,9 @@ import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
 import com.tc.util.ObjectIDSet;
 
-public abstract class GarbageCollectorEventListenerAdapter implements GarbageCollectorEventListener {
+import java.io.Serializable;
+
+public abstract class GarbageCollectorEventListenerAdapter implements GarbageCollectorEventListener, Serializable {
 
   public void garbageCollectorCompleted(GarbageCollectionInfo info) {
     // do nothing

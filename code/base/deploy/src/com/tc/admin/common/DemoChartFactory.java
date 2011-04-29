@@ -13,6 +13,8 @@ import org.jfree.chart.axis.NumberTickUnit;
 import org.jfree.chart.axis.TickUnitSource;
 import org.jfree.chart.axis.TickUnits;
 import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.labels.StandardXYToolTipGenerator;
+import org.jfree.chart.labels.XYToolTipGenerator;
 import org.jfree.chart.plot.DefaultDrawingSupplier;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
@@ -25,13 +27,17 @@ import org.jfree.chart.plot.dial.DialValueIndicator;
 import org.jfree.chart.plot.dial.StandardDialFrame;
 import org.jfree.chart.plot.dial.StandardDialRange;
 import org.jfree.chart.plot.dial.StandardDialScale;
+import org.jfree.chart.renderer.xy.StackedXYAreaRenderer2;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
+import org.jfree.chart.urls.StandardXYURLGenerator;
+import org.jfree.chart.urls.XYURLGenerator;
 import org.jfree.data.RangeType;
 import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.general.ValueDataset;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.IntervalXYDataset;
+import org.jfree.data.xy.TableXYDataset;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.ui.RectangleInsets;
 
@@ -163,6 +169,62 @@ public class DemoChartFactory {
     numberAxis.setLabelFont(regularFont);
 
     return chart;
+  }
+
+  public static JFreeChart createStackedXYAreaChart(String header, String xLabel, String yLabel,
+                                                    TableXYDataset dataset, PlotOrientation orientation,
+                                                    boolean createLegend) {
+    JFreeChart chart = createStackedXYAreaChart(header, xLabel, yLabel, dataset, orientation, createLegend, true, false);
+
+    XYPlot plot = (XYPlot) chart.getPlot();
+
+    ValueAxis axis = plot.getDomainAxis();
+    axis.setFixedAutoRange(30000.0);
+    axis.setTickLabelFont(regularFont);
+    axis.setLabelFont(regularFont);
+    if (axis instanceof DateAxis) {
+      ((DateAxis) axis).setDateFormatOverride(new SimpleDateFormat("h:mm:ss"));
+    }
+
+    NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
+    numberAxis.setRangeType(RangeType.POSITIVE);
+    numberAxis.setStandardTickUnits(DEFAULT_TICKS);
+    numberAxis.setAutoRangeMinimumSize(10.0);
+    numberAxis.setTickLabelFont(regularFont);
+    numberAxis.setLabelFont(regularFont);
+
+    return chart;
+  }
+
+  public static JFreeChart createStackedXYAreaChart(String title, String xAxisLabel, String yAxisLabel,
+                                                    TableXYDataset dataset, PlotOrientation orientation,
+                                                    boolean legend, boolean tooltips, boolean urls) {
+
+    if (orientation == null) { throw new IllegalArgumentException("Null 'orientation' argument."); }
+    DateAxis xAxis = new DateAxis(xAxisLabel);
+    xAxis.setLowerMargin(0.02);
+    xAxis.setUpperMargin(0.02);
+    NumberAxis yAxis = new NumberAxis(yAxisLabel);
+    XYToolTipGenerator toolTipGenerator = null;
+    if (tooltips) {
+      toolTipGenerator = new StandardXYToolTipGenerator();
+    }
+
+    XYURLGenerator urlGenerator = null;
+    if (urls) {
+      urlGenerator = new StandardXYURLGenerator();
+    }
+    StackedXYAreaRenderer2 renderer = new StackedXYAreaRenderer2(toolTipGenerator, urlGenerator);
+    renderer.setOutline(true);
+    XYPlot plot = new XYPlot(dataset, xAxis, yAxis, renderer);
+    plot.setOrientation(orientation);
+
+    plot.setRangeAxis(yAxis); // forces recalculation of the axis range
+
+    JFreeChart chart = new JFreeChart(title, JFreeChart.DEFAULT_TITLE_FONT, plot, legend);
+    ChartFactory.getChartTheme().apply(chart);
+    return chart;
+
   }
 
   public static JFreeChart getXYStepChart(String header, String xLabel, String yLabel, TimeSeries ts, boolean legend) {

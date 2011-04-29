@@ -13,33 +13,37 @@ import com.tc.admin.model.IServer;
 import javax.swing.Icon;
 
 public class LocksNode extends ComponentNode {
-  private ClusterNode clusterNode;
-  private LocksPanel  locksPanel;
-  private String      baseLabel;
-  private String      profilingSuffix;
+  private final ClusterNode   clusterNode;
+  private final IClusterModel clusterModel;
+
+  private LocksPanel          locksPanel;
+  private String              baseLabel;
+  private final String        profilingSuffix;
 
   public LocksNode(IAdminClientContext adminClientContext, ClusterNode clusterNode) {
     super();
 
     this.clusterNode = clusterNode;
+    this.clusterModel = clusterNode.getClusterModel();
+
     setLabel(baseLabel = adminClientContext.getString("dso.locks"));
     profilingSuffix = adminClientContext.getString("dso.locks.profiling.suffix");
     setComponent(locksPanel = new LocksPanel(adminClientContext, this));
   }
 
   IClusterModel getClusterModel() {
-    return clusterNode != null ? clusterNode.getClusterModel() : null;
+    return clusterModel;
   }
 
   IServer getActiveCoordinator() {
-    IClusterModel clusterModel = getClusterModel();
-    return clusterModel != null ? clusterModel.getActiveCoordinator() : null;
+    return clusterModel.getActiveCoordinator();
   }
-  
+
   public boolean isProfiling() {
     return locksPanel != null ? locksPanel.isProfiling() : false;
   }
 
+  @Override
   public Icon getIcon() {
     return LocksHelper.getHelper().getLocksIcon();
   }
@@ -56,13 +60,5 @@ public class LocksNode extends ComponentNode {
 
   void notifyChanged() {
     nodeChanged();
-  }
-
-  public void tearDown() {
-    super.tearDown();
-
-    clusterNode = null;
-    baseLabel = null;
-    locksPanel = null;
   }
 }

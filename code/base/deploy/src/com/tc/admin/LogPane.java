@@ -10,16 +10,14 @@ import com.tc.admin.common.XTextPane;
 import java.awt.Font;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
+import javax.swing.text.BadLocationException;
 
 public class LogPane extends XTextPane implements HierarchyListener {
-  private boolean            autoScroll = true;
-  private final List<String> buffer     = new ArrayList<String>();
+  private boolean             autoScroll = true;
+  private final StringBuilder buffer     = new StringBuilder();
 
   public LogPane() {
     super();
@@ -60,7 +58,7 @@ public class LogPane extends XTextPane implements HierarchyListener {
               getDocument().insertString(end, " ", null);
               getDocument().remove(end, 1);
               setCaretPosition(end - 1);
-            } catch (Exception e) {/**/
+            } catch (BadLocationException e) {/**/
             }
           }
         });
@@ -74,13 +72,10 @@ public class LogPane extends XTextPane implements HierarchyListener {
 
   private void testDrainBuffer() {
     synchronized (buffer) {
-      if (!buffer.isEmpty()) {
-        Iterator<String> iter = buffer.iterator();
-        while (iter.hasNext()) {
-          append(iter.next());
-        }
+      if (buffer.length() > 0) {
+        append(buffer.toString());
+        buffer.setLength(0);
       }
-      buffer.clear();
     }
   }
 
@@ -94,7 +89,7 @@ public class LogPane extends XTextPane implements HierarchyListener {
       }
     } else {
       synchronized (buffer) {
-        buffer.add(s);
+        buffer.append(s);
       }
     }
   }

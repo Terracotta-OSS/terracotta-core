@@ -28,13 +28,10 @@ import java.util.TimeZone;
 
 public class FixedTimeSeriesCollection extends AbstractIntervalXYDataset implements XYDataset, IntervalXYDataset,
     DomainInfo, Serializable {
-
-  private int                      maximumItemCount;
-
+  private int                      maximumItemCount = Integer.MAX_VALUE;
+  private long                     maximumItemAge   = Long.MAX_VALUE;
   private final Comparable[]       seriesKeys;
-
   private final List<MomentSample> data;
-
   private final Calendar           workingCalendar;
 
   /**
@@ -66,10 +63,14 @@ public class FixedTimeSeriesCollection extends AbstractIntervalXYDataset impleme
   }
 
   public FixedTimeSeriesCollection(Comparable[] seriesKeys, int maximumItemCount) {
-    this(seriesKeys, maximumItemCount, TimeZone.getDefault());
+    this(seriesKeys, maximumItemCount, Long.MAX_VALUE, TimeZone.getDefault());
   }
 
-  public FixedTimeSeriesCollection(Comparable[] seriesKeys, int maximumItemCount, TimeZone timeZone) {
+  public FixedTimeSeriesCollection(Comparable[] seriesKeys, long maximumItemAge) {
+    this(seriesKeys, Integer.MAX_VALUE, maximumItemAge, TimeZone.getDefault());
+  }
+
+  public FixedTimeSeriesCollection(Comparable[] seriesKeys, int maximumItemCount, long maximumItemAge, TimeZone timeZone) {
     this.seriesKeys = seriesKeys;
     this.maximumItemCount = maximumItemCount;
     this.workingCalendar = Calendar.getInstance(timeZone);
@@ -106,6 +107,54 @@ public class FixedTimeSeriesCollection extends AbstractIntervalXYDataset impleme
   }
 
   /**
+   * Returns the maximum item age (in time periods) for the series.
+   * 
+   * @return The maximum item age.
+   * @see #setMaximumItemAge(long)
+   */
+  public long getMaximumItemAge() {
+    return this.maximumItemAge;
+  }
+
+  /**
+   * Sets the number of time units in the 'history' for the series. This provides one mechanism for automatically
+   * dropping old data from the time series. For example, if a series contains daily data, you might set the history
+   * count to 30. Then, when you add a new data item, all data items more than 30 days older than the latest value are
+   * automatically dropped from the series.
+   * 
+   * @param periods the number of time periods.
+   * @see #getMaximumItemAge()
+   */
+  public void setMaximumItemAge(long periods) {
+    if (periods < 0) { throw new IllegalArgumentException("Negative 'periods' argument."); }
+    this.maximumItemAge = periods;
+    removeAgedItems(true); // remove old items and notify if necessary
+  }
+
+  /**
+   * Age items in the series. Ensure that the timespan from the youngest to the oldest record in the series does not
+   * exceed maximumItemAge time periods. Oldest items will be removed if required.
+   * 
+   * @param notify controls whether or not a {@link SeriesChangeEvent} is sent to registered listeners IF any items are
+   *        removed.
+   */
+  public void removeAgedItems(boolean notify) {
+    // check if there are any values earlier than specified by the history
+    // count...
+    if (getItemCount() > 1) {
+      long latest = getTimePeriod(getItemCount() - 1).getSerialIndex();
+      boolean removed = false;
+      while ((latest - getTimePeriod(0).getSerialIndex()) > this.maximumItemAge) {
+        this.data.remove(0);
+        removed = true;
+      }
+      if (removed && notify) {
+        fireDatasetChanged();
+      }
+    }
+  }
+
+  /**
    * Deletes data from start until end index (end inclusive).
    * 
    * @param start the index of the first period to delete.
@@ -125,7 +174,7 @@ public class FixedTimeSeriesCollection extends AbstractIntervalXYDataset impleme
    * 
    * @return The anchor position (never <code>null</code>).
    */
-  public TimePeriodAnchor getXPosition() {
+  public synchronized TimePeriodAnchor getXPosition() {
     return this.xPosition;
   }
 
@@ -137,7 +186,9 @@ public class FixedTimeSeriesCollection extends AbstractIntervalXYDataset impleme
    */
   public void setXPosition(TimePeriodAnchor anchor) {
     if (anchor == null) { throw new IllegalArgumentException("Null 'anchor' argument."); }
-    this.xPosition = anchor;
+    synchronized (this) {
+      this.xPosition = anchor;
+    }
     notifyListeners(new DatasetChangeEvent(this, this));
   }
 
@@ -175,13 +226,14 @@ public class FixedTimeSeriesCollection extends AbstractIntervalXYDataset impleme
    * @param period the time period (<code>null</code> not permitted).
    * @return The x-value.
    */
-  protected synchronized long getX(RegularTimePeriod period) {
+  protected long getX(RegularTimePeriod period) {
     long result = 0L;
-    if (this.xPosition == TimePeriodAnchor.START) {
+    TimePeriodAnchor xPos = getXPosition();
+    if (xPos == TimePeriodAnchor.START) {
       result = period.getFirstMillisecond(this.workingCalendar);
-    } else if (this.xPosition == TimePeriodAnchor.MIDDLE) {
+    } else if (xPos == TimePeriodAnchor.MIDDLE) {
       result = period.getMiddleMillisecond(this.workingCalendar);
-    } else if (this.xPosition == TimePeriodAnchor.END) {
+    } else if (xPos == TimePeriodAnchor.END) {
       result = period.getLastMillisecond(this.workingCalendar);
     }
     return result;
@@ -342,6 +394,8 @@ public class FixedTimeSeriesCollection extends AbstractIntervalXYDataset impleme
     if (getItemCount() > this.maximumItemCount) {
       this.data.remove(0);
     }
+
+    removeAgedItems(false);
 
     fireDatasetChanged();
   }

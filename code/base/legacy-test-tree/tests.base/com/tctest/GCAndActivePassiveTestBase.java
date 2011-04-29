@@ -6,7 +6,7 @@ package com.tctest;
 
 import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.objectserver.api.GCStats;
-import com.tc.stats.DSOMBean;
+import com.tc.stats.api.DSOMBean;
 import com.tc.util.Assert;
 import com.tctest.runner.PostAction;
 

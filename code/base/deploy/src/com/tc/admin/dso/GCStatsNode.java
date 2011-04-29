@@ -11,26 +11,26 @@ import com.tc.admin.model.IClusterModel;
 import java.awt.Component;
 
 public class GCStatsNode extends ComponentNode {
-  private ApplicationContext appContext;
-  protected IClusterModel    clusterModel;
-  protected GCStatsPanel     gcStatsPanel;
+  protected final ApplicationContext appContext;
+  protected final IClusterModel      clusterModel;
+
+  protected GCStatsPanel             gcStatsPanel;
 
   public GCStatsNode(ApplicationContext appContext, IClusterModel clusterModel) {
     super();
+
     this.appContext = appContext;
     this.clusterModel = clusterModel;
+
     setLabel(appContext.getMessage("dso.gcstats"));
     setIcon(DSOHelper.getHelper().getGCIcon());
-  }
-
-  IClusterModel getClusterModel() {
-    return clusterModel;
   }
 
   protected GCStatsPanel createGCStatsPanel() {
     return new GCStatsPanel(appContext, clusterModel);
   }
 
+  @Override
   public Component getComponent() {
     if (gcStatsPanel == null) {
       gcStatsPanel = createGCStatsPanel();
@@ -38,10 +38,10 @@ public class GCStatsNode extends ComponentNode {
     return gcStatsPanel;
   }
 
+  @Override
   public void tearDown() {
     if (gcStatsPanel != null) {
       gcStatsPanel.tearDown();
-      gcStatsPanel = null;
     }
     super.tearDown();
   }

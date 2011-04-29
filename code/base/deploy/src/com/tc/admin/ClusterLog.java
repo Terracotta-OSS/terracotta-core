@@ -37,14 +37,15 @@ import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
 public class ClusterLog extends XContainer implements ActionListener {
-  private ApplicationContext  appContext;
-  private IClusterModel       clusterModel;
-  private ClusterListener     clusterListener;
-  private ElementChooser      elementChooser;
-  private PagedView           pagedView;
-  private boolean             inited;
+  private final ApplicationContext appContext;
+  private final IClusterModel      clusterModel;
+  private final ClusterListener    clusterListener;
 
-  private static final String EMPTY_PAGE = "EmptyPage";
+  private ElementChooser           elementChooser;
+  private PagedView                pagedView;
+  private volatile boolean         inited;
+
+  private static final String      EMPTY_PAGE = "EmptyPage";
 
   public ClusterLog(ApplicationContext appContext, IClusterModel clusterModel) {
     super(new BorderLayout());
@@ -80,7 +81,7 @@ public class ClusterLog extends XContainer implements ActionListener {
     setName(clusterModel.toString());
 
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
-    if (clusterModel.isReady()) {
+    if (!inited && clusterModel.isReady()) {
       elementChooser.setupTreeModel();
     }
   }
@@ -132,40 +133,26 @@ public class ClusterLog extends XContainer implements ActionListener {
 
     @Override
     protected void handleReady() {
-      IClusterModel theClusterModel = getClusterModel();
-      if (theClusterModel == null) { return; }
-
-      if (!inited && theClusterModel.isReady()) {
+      if (!inited && clusterModel.isReady()) {
         elementChooser.setupTreeModel();
-        addNodePanels();
-      } else if (inited && !theClusterModel.isReady()) {
+      } else if (inited && !clusterModel.isReady()) {
         reset();
       }
     }
 
     @Override
     protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
-      IClusterModel theClusterModel = getClusterModel();
-      if (theClusterModel == null) { return; }
-
       if (newActive != null) {
         if (!inited) {
           elementChooser.setupTreeModel();
-          addNodePanels();
         }
-        if (elementChooser != null) {
-          elementChooser.setSelectedPath(newActive.toString());
-        }
+        elementChooser.setSelectedPath(newActive.toString());
       }
     }
 
     @Override
     protected void handleUncaughtError(Exception e) {
-      if (appContext != null) {
-        appContext.log(e);
-      } else {
-        super.handleUncaughtError(e);
-      }
+      appContext.log(e);
     }
   }
 
@@ -180,16 +167,14 @@ public class ClusterLog extends XContainer implements ActionListener {
     emptyPage.setName(EMPTY_PAGE);
     pagedView.addPage(emptyPage);
 
-    for (IServerGroup group : clusterModel.getServerGroups()) {
-      for (IServer server : group.getMembers()) {
+    for (IServerGroup serverGroup : clusterModel.getServerGroups()) {
+      for (IServer server : serverGroup.getMembers()) {
         pagedView.addPage(createServerLog(server));
       }
     }
-    if (elementChooser != null) {
-      IServer activeCoord = clusterModel.getActiveCoordinator();
-      if (activeCoord != null) {
-        elementChooser.setSelectedPath(activeCoord.toString());
-      }
+    IServer activeCoord = clusterModel.getActiveCoordinator();
+    if (activeCoord != null) {
+      elementChooser.setSelectedPath(activeCoord.toString());
     }
     inited = true;
   }
@@ -261,14 +246,6 @@ public class ClusterLog extends XContainer implements ActionListener {
     clusterListener.tearDown();
 
     elementChooser.removeActionListener(this);
-
-    synchronized (this) {
-      appContext = null;
-      clusterModel = null;
-      clusterListener = null;
-      elementChooser = null;
-      pagedView = null;
-    }
 
     super.tearDown();
   }

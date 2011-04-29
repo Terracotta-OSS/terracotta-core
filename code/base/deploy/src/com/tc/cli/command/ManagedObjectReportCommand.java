@@ -11,11 +11,11 @@ import java.io.File;
 import java.io.Writer;
 
 public class ManagedObjectReportCommand extends BaseCommand {
-  private final String LIST_ALL        = "list-all-objects";
-  private final String SHOW_OBJECT     = "show-object";
-  private final int    UNKNOWN_CMD     = 0;
-  private final int    LIST_ALL_CMD    = 1;
-  private final int    SHOW_OBJECT_CMD = 2;
+  private static final String LIST_ALL        = "list-all-objects";
+  private static final String SHOW_OBJECT     = "show-object";
+  private static final int    UNKNOWN_CMD     = 0;
+  private static final int    LIST_ALL_CMD    = 1;
+  private static final int    SHOW_OBJECT_CMD = 2;
 
   public ManagedObjectReportCommand(Writer writer) {
     super(writer);

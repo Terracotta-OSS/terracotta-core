@@ -13,6 +13,7 @@ import javax.management.ObjectName;
 
 public interface IClusterNode extends IClusterModelElement, ILiveObjectCountProvider {
   static final String POLLED_ATTR_CPU_USAGE             = "CpuUsage";
+  static final String POLLED_ATTR_CPU_LOAD              = "CpuLoad";
   static final String POLLED_ATTR_USED_MEMORY           = "UsedMemory";
   static final String POLLED_ATTR_MAX_MEMORY            = "MaxMemory";
   static final String POLLED_ATTR_OBJECT_FLUSH_RATE     = "ObjectFlushRate";
@@ -55,6 +56,8 @@ public interface IClusterNode extends IClusterModelElement, ILiveObjectCountProv
   long getTransactionRate();
 
   StatisticData[] getCpuUsage();
+
+  StatisticData getCpuLoad();
 
   String[] getCpuStatNames();
 

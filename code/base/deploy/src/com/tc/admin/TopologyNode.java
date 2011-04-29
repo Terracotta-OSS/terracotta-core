@@ -23,10 +23,10 @@ import javax.swing.text.Element;
 import javax.swing.text.html.HTML;
 
 public class TopologyNode extends ComponentNode implements HyperlinkListener {
-  protected IAdminClientContext adminClientContext;
-  protected IClusterModel       clusterModel;
-  protected XScrollPane         topologyPanel;
-  protected ClientsNode         clientsNode;
+  protected final IAdminClientContext adminClientContext;
+  protected final IClusterModel       clusterModel;
+  protected XScrollPane               topologyPanel;
+  protected ClientsNode               clientsNode;
 
   public TopologyNode(IAdminClientContext adminClientContext, IClusterModel clusterModel) {
     super(adminClientContext.getString("cluster.topology"));
@@ -34,20 +34,8 @@ public class TopologyNode extends ComponentNode implements HyperlinkListener {
     this.adminClientContext = adminClientContext;
     this.clusterModel = clusterModel;
 
-    add(clientsNode = createClientsNode());
-    add(createServerGroupsNode());
-  }
-
-  protected ServerGroupsNode createServerGroupsNode() {
-    return new ServerGroupsNode(adminClientContext, getClusterModel());
-  }
-
-  protected ClientsNode createClientsNode() {
-    return new ClientsNode(adminClientContext, getClusterModel());
-  }
-
-  synchronized IClusterModel getClusterModel() {
-    return clusterModel;
+    add(clientsNode = new ClientsNode(adminClientContext, clusterModel));
+    add(new ServerGroupsNode(adminClientContext, clusterModel));
   }
 
   @Override
@@ -88,13 +76,10 @@ public class TopologyNode extends ComponentNode implements HyperlinkListener {
 
   @Override
   public void tearDown() {
-    super.tearDown();
-
-    synchronized (this) {
-      adminClientContext = null;
-      clusterModel = null;
-      topologyPanel = null;
-      clientsNode = null;
+    if (topologyPanel != null) {
+      XTextPane textPane = (XTextPane) topologyPanel.getViewport().getView();
+      textPane.removeHyperlinkListener(this);
     }
+    super.tearDown();
   }
 }

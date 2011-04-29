@@ -70,25 +70,26 @@ import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 
 public class GCStatsPanel extends XContainer implements DGCListener {
-  private ApplicationContext appContext;
-  private IClusterModel      clusterModel;
-  private ClusterListener    clusterListener;
-  private XObjectTable       table;
-  private XLabel             overviewLabel;
-  private JPopupMenu         popupMenu;
-  private RunGCAction        gcAction;
-  private boolean            inited;
-  private final ChartPanel   chartPanel;
-  private JPopupMenu         fChartPopupMenu;
-  private TimeSeries         endObjectCountSeries;
-  private XYPlot             endObjectCountPlot;
-  private DGCIntervalMarker  currentDGCMarker;
-  private DomainZoomListener fDomainZoomListener;
-  private boolean            fHandlingAxisChange;
-  private boolean            fZoomed;
-  private AbstractAction     fRestoreDefaultRangeAction;
-  private ExportAction       exportAction;
-  private File               lastExportDir;
+  private final ApplicationContext appContext;
+  private final IClusterModel      clusterModel;
+  private final ClusterListener    clusterListener;
+
+  private final XObjectTable       table;
+  private XLabel                   overviewLabel;
+  private final JPopupMenu         popupMenu;
+  private RunGCAction              gcAction;
+  private boolean                  inited;
+  private final ChartPanel         chartPanel;
+  private JPopupMenu               fChartPopupMenu;
+  private final TimeSeries         endObjectCountSeries;
+  private final XYPlot             endObjectCountPlot;
+  private DGCIntervalMarker        currentDGCMarker;
+  private DomainZoomListener       fDomainZoomListener;
+  private boolean                  fHandlingAxisChange;
+  private boolean                  fZoomed;
+  private AbstractAction           fRestoreDefaultRangeAction;
+  private ExportAction             exportAction;
+  private File                     lastExportDir;
 
   public GCStatsPanel(ApplicationContext appContext, IClusterModel clusterModel) {
     super(new BorderLayout());
@@ -171,20 +172,11 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     }
   }
 
-  private synchronized IClusterModel getClusterModel() {
-    return clusterModel;
-  }
-
-  private synchronized IServer getActiveCoordinator() {
-    IClusterModel theClusterModel = getClusterModel();
-    return theClusterModel != null ? theClusterModel.getActiveCoordinator() : null;
-  }
-
   private class InitOverviewTextWorker extends BasicWorker<String> {
     private InitOverviewTextWorker() {
       super(new Callable<String>() {
         public String call() {
-          IServer activeCoord = getActiveCoordinator();
+          IServer activeCoord = clusterModel.getActiveCoordinator();
           if (activeCoord != null) {
             if (activeCoord.isGarbageCollectionEnabled()) {
               int seconds = activeCoord.getGarbageCollectionInterval();
@@ -240,7 +232,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
 
     @Override
     public void handleActiveCoordinator(IServer oldActive, IServer newActive) {
-      IClusterModel theClusterModel = getClusterModel();
+      IClusterModel theClusterModel = super.getClusterModel();
       if (theClusterModel == null) { return; }
 
       if (oldActive != null) {
@@ -253,10 +245,10 @@ public class GCStatsPanel extends XContainer implements DGCListener {
 
     @Override
     public void handleReady() {
-      IClusterModel theClusterModel = getClusterModel();
+      IClusterModel theClusterModel = super.getClusterModel();
       if (theClusterModel == null) { return; }
 
-      if (clusterModel.isReady()) {
+      if (theClusterModel.isReady()) {
         if (!inited) {
           init();
         } else {
@@ -265,8 +257,8 @@ public class GCStatsPanel extends XContainer implements DGCListener {
       } else {
         overviewLabel.setText(appContext.getString("dso.gcstats.overview.not-ready"));
       }
-      gcAction.setEnabled(clusterModel != null && clusterModel.isReady());
-      exportAction.setEnabled(clusterModel != null && clusterModel.isReady());
+      gcAction.setEnabled(theClusterModel.isReady());
+      exportAction.setEnabled(theClusterModel.isReady());
     }
 
     @Override
@@ -296,7 +288,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     private InitWorker() {
       super(new Callable<GCStats[]>() {
         public GCStats[] call() throws Exception {
-          IServer activeCoord = getActiveCoordinator();
+          IServer activeCoord = clusterModel.getActiveCoordinator();
           return activeCoord != null ? activeCoord.getGCStats() : new GCStats[0];
         }
       });
@@ -304,9 +296,6 @@ public class GCStatsPanel extends XContainer implements DGCListener {
 
     @Override
     protected void finished() {
-      IClusterModel theClusterModel = getClusterModel();
-      if (theClusterModel == null) { return; }
-
       Exception e = getException();
       if (e == null) {
         GCStatsTableModel model = (GCStatsTableModel) table.getModel();
@@ -408,9 +397,6 @@ public class GCStatsPanel extends XContainer implements DGCListener {
   }
 
   public void statusUpdate(GCStats gcStats) {
-    IClusterModel theClusterModel = getClusterModel();
-    if (theClusterModel == null) { return; }
-
     SwingUtilities.invokeLater(new ModelUpdater(gcStats));
   }
 
@@ -422,9 +408,6 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     }
 
     public void run() {
-      IClusterModel theClusterModel = getClusterModel();
-      if (theClusterModel == null) { return; }
-
       gcAction.setEnabled(gcStats.getElapsedTime() != -1);
       exportAction.setEnabled(true);
       GCStatsTableModel model = (GCStatsTableModel) table.getModel();
@@ -446,7 +429,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     private RunGCWorker() {
       super(new Callable<Void>() {
         public Void call() {
-          IServer activeCoord = getActiveCoordinator();
+          IServer activeCoord = clusterModel.getActiveCoordinator();
           if (activeCoord != null) {
             activeCoord.runGC();
           }
@@ -457,9 +440,6 @@ public class GCStatsPanel extends XContainer implements DGCListener {
 
     @Override
     protected void finished() {
-      IClusterModel theClusterModel = getClusterModel();
-      if (theClusterModel == null) { return; }
-
       Exception e = getException();
       if (e != null) {
         Frame frame = (Frame) SwingUtilities.getAncestorOfClass(Frame.class, GCStatsPanel.this);
@@ -611,26 +591,13 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     clusterModel.removePropertyChangeListener(clusterListener);
     clusterListener.tearDown();
 
-    IServer activeCoord = getActiveCoordinator();
+    IServer activeCoord = clusterModel.getActiveCoordinator();
     if (activeCoord != null) {
       activeCoord.removeDGCListener(this);
     }
 
-    super.tearDown();
-
     endObjectCountSeries.clear();
 
-    synchronized (this) {
-      appContext = null;
-      clusterModel = null;
-      clusterListener = null;
-      table = null;
-      popupMenu = null;
-      gcAction = null;
-      endObjectCountSeries = null;
-      endObjectCountPlot = null;
-      currentDGCMarker = null;
-      exportAction = null;
-    }
+    super.tearDown();
   }
 }

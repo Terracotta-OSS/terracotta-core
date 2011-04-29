@@ -15,6 +15,8 @@ import javax.management.AttributeChangeNotification;
 import javax.management.MBeanNotificationInfo;
 import javax.management.NotificationBroadcasterSupport;
 
+// TODO: remove me
+
 public class StatsSupport extends NotificationBroadcasterSupport implements Serializable {
   private final Map        statMap        = new HashMap();
   private final AtomicLong sequenceNumber = new AtomicLong();
@@ -35,6 +37,7 @@ public class StatsSupport extends NotificationBroadcasterSupport implements Seri
     return (Statistic[]) statMap.values().toArray(new Statistic[statMap.size()]);
   }
 
+  @Override
   public MBeanNotificationInfo[] getNotificationInfo() {
     String[] types = new String[] { AttributeChangeNotification.ATTRIBUTE_CHANGE };
     String name = AttributeChangeNotification.class.getName();

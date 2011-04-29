@@ -34,12 +34,16 @@ import com.tc.objectserver.tx.ServerTransactionManagerMBean;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.statistics.StatisticData;
+import com.tc.stats.api.DSOClassInfo;
+import com.tc.stats.api.DSOMBean;
+import com.tc.stats.api.DSOStats;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
@@ -268,8 +272,8 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
         return;
       }
 
-      DSORoot dsoRoot = new DSORoot(rootID, objMgr, name);
       try {
+        DSORoot dsoRoot = new DSORoot(rootID, objMgr, name);
         mbeanServer.registerMBean(dsoRoot, rootName);
         rootObjectNames.add(rootName);
         sendNotification(ROOT_ADDED, rootName);
@@ -430,7 +434,9 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
             if (statsMap != null) {
               result.put((ObjectName) statsMap.remove("clientBeanName"), statsMap);
             }
-          } catch (Exception e) {
+          } catch (InterruptedException e) {
+            /**/
+          } catch (ExecutionException e) {
             /**/
           }
         }
@@ -623,12 +629,12 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
   public Map<ObjectName, Exception> setAttribute(String attrName, Map<ObjectName, Object> attrMap) {
     Map<ObjectName, Exception> result = new HashMap<ObjectName, Exception>();
-    Iterator<ObjectName> onIter = attrMap.keySet().iterator();
-    ObjectName on;
-    while (onIter.hasNext()) {
-      on = onIter.next();
+    Iterator<Entry<ObjectName, Object>> entryIter = attrMap.entrySet().iterator();
+    while (entryIter.hasNext()) {
+      Entry<ObjectName, Object> entry = entryIter.next();
+      ObjectName on = entry.getKey();
       try {
-        Attribute attribute = new Attribute(attrName, attrMap.get(on));
+        Attribute attribute = new Attribute(attrName, entry.getValue());
         mbeanServer.setAttribute(on, attribute);
       } catch (Exception e) {
         result.put(on, newPlainException(e));
@@ -641,11 +647,10 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
                                                               TimeUnit unit) {
     Map<ObjectName, Map<String, Object>> result = new HashMap<ObjectName, Map<String, Object>>();
     List<Callable<SourcedAttributeList>> tasks = new ArrayList<Callable<SourcedAttributeList>>();
-    Iterator<ObjectName> onIter = attributeMap.keySet().iterator();
-    while (onIter.hasNext()) {
-      ObjectName on = onIter.next();
-      Set<String> attributeSet = attributeMap.get(on);
-      tasks.add(new AttributeListTask(on, attributeSet));
+    Iterator<Entry<ObjectName, Set<String>>> entryIter = attributeMap.entrySet().iterator();
+    while (entryIter.hasNext()) {
+      Entry<ObjectName, Set<String>> entry = entryIter.next();
+      tasks.add(new AttributeListTask(entry.getKey(), entry.getValue()));
     }
     try {
       List<Future<SourcedAttributeList>> results = pool.invokeAll(tasks, timeout, unit);

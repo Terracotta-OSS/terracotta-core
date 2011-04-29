@@ -42,18 +42,19 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableCellRenderer;
 
 public class ServerPanel extends XContainer {
-  private ApplicationContext appContext;
-  private IServer            server;
-  private ServerListener     serverListener;
-  private XTabbedPane        tabbedPane;
-  private StatusView         statusView;
-  private XContainer         restartInfoItem;
-  private PropertyTable      propertyTable;
-  private XTextArea          environmentTextArea;
-  private XTextArea          tcPropertiesTextArea;
-  private XTextArea          processArgumentsTextArea;
-  private XTextArea          configTextArea;
-  private ServerLoggingPanel loggingPanel;
+  private final ApplicationContext appContext;
+  private final IServer            server;
+  private final ServerListener     serverListener;
+
+  private final XTabbedPane        tabbedPane;
+  private StatusView               statusView;
+  private XContainer               restartInfoItem;
+  private final PropertyTable      propertyTable;
+  private final XTextArea          environmentTextArea;
+  private final XTextArea          tcPropertiesTextArea;
+  private final XTextArea          processArgumentsTextArea;
+  private final XTextArea          configTextArea;
+  private final ServerLoggingPanel loggingPanel;
 
   public ServerPanel(ApplicationContext appContext, IServer server) {
     super(new BorderLayout());
@@ -151,14 +152,6 @@ public class ServerPanel extends XContainer {
     serverListener.startListening();
   }
 
-  synchronized IServer getServer() {
-    return server;
-  }
-
-  synchronized ApplicationContext getApplicationContext() {
-    return appContext;
-  }
-
   protected ServerLoggingPanel createLoggingPanel(ApplicationContext theAppContext, IServer theServer) {
     return new ServerLoggingPanel(theAppContext, theServer);
   }
@@ -170,13 +163,10 @@ public class ServerPanel extends XContainer {
 
     @Override
     protected void handleConnectError() {
-      IServer theServer = getServer();
-      if (theServer != null) {
-        Exception e = theServer.getConnectError();
-        String msg = e != null ? theServer.getConnectErrorMessage(e) : "unknown error";
-        if (msg != null) {
-          setConnectExceptionMessage(msg);
-        }
+      Exception e = server.getConnectError();
+      String msg = e != null ? server.getConnectErrorMessage(e) : "unknown error";
+      if (msg != null) {
+        setConnectExceptionMessage(msg);
       }
     }
 
@@ -187,48 +177,32 @@ public class ServerPanel extends XContainer {
 
     @Override
     protected void handleStarting() {
-      ApplicationContext theAppContext = getApplicationContext();
-      if (theAppContext != null) {
-        theAppContext.execute(new StartedWorker());
-      }
+      appContext.execute(new StartedWorker());
     }
 
     @Override
     protected void handleActivation() {
-      ApplicationContext theAppContext = getApplicationContext();
-      if (theAppContext != null) {
-        theAppContext.execute(new ActivatedWorker());
-      }
+      appContext.execute(new ActivatedWorker());
     }
 
     @Override
     protected void handlePassiveStandby() {
-      ApplicationContext theAppContext = getApplicationContext();
-      if (theAppContext != null) {
-        theAppContext.execute(new PassiveStandbyWorker());
-      }
+      appContext.execute(new PassiveStandbyWorker());
     }
 
     @Override
     protected void handlePassiveUninitialized() {
-      ApplicationContext theAppContext = getApplicationContext();
-      if (theAppContext != null) {
-        theAppContext.execute(new PassiveUninitializedWorker());
-      }
+      appContext.execute(new PassiveUninitializedWorker());
     }
 
     @Override
     protected void handleDisconnected() {
       disconnected();
     }
-
   }
 
   protected void storePreferences() {
-    ApplicationContext theAppContext = getApplicationContext();
-    if (theAppContext != null) {
-      theAppContext.storePrefs();
-    }
+    appContext.storePrefs();
   }
 
   private static class ServerState {
@@ -304,13 +278,11 @@ public class ServerPanel extends XContainer {
     private ServerStateWorker() {
       super(new Callable<ServerState>() {
         public ServerState call() throws Exception {
-          IServer theServer = getServer();
-          if (theServer == null) throw new IllegalStateException("not connected");
           Map<ObjectName, Set<String>> request = new HashMap<ObjectName, Set<String>>();
           request.put(L2MBeanNames.TC_SERVER_INFO,
                       new HashSet(Arrays.asList(new String[] { "StartTime", "ActivateTime", "Environment",
                           "TCProperties", "ProcessArguments", "Config" })));
-          Map<ObjectName, Map<String, Object>> result = theServer.getAttributeMap(request);
+          Map<ObjectName, Map<String, Object>> result = server.getAttributeMap(request);
           Map<String, Object> values = result.get(L2MBeanNames.TC_SERVER_INFO);
           if (values != null) {
             Date startDate = new Date(ServerState.safeGetLong(values, "StartTime"));
@@ -333,10 +305,7 @@ public class ServerPanel extends XContainer {
       if (e != null) {
         Throwable rootCause = ExceptionHelper.getRootCause(e);
         if (!(rootCause instanceof IOException)) {
-          ApplicationContext theAppContext = getApplicationContext();
-          if (theAppContext != null) {
-            theAppContext.log(e);
-          }
+          appContext.log(e);
         }
       } else {
         if (!tabbedPane.isEnabled()) { // showInfoContent enables tabbedPane
@@ -357,14 +326,12 @@ public class ServerPanel extends XContainer {
   private class StartedWorker extends ServerStateWorker {
     @Override
     protected void finished() {
-      IServer theServer = getServer();
-      if (theServer == null) return;
       super.finished();
       if (getException() == null) {
         ServerState serverState = getResult();
         String startTime = serverState.getStartDate().toString();
         setStatusLabel(appContext.format("server.started.label", startTime));
-        appContext.setStatus(appContext.format("server.started.status", theServer, startTime));
+        appContext.setStatus(appContext.format("server.started.status", server, startTime));
       } else {
         appContext.log(getException());
       }
@@ -374,14 +341,12 @@ public class ServerPanel extends XContainer {
   private class ActivatedWorker extends ServerStateWorker {
     @Override
     protected void finished() {
-      IServer theServer = getServer();
-      if (theServer == null) return;
       super.finished();
       if (getException() == null) {
         ServerState serverState = getResult();
         String activateTime = serverState.getActivateDate().toString();
         setStatusLabel(appContext.format("server.activated.label", activateTime));
-        appContext.setStatus(appContext.format("server.activated.status", theServer, activateTime));
+        appContext.setStatus(appContext.format("server.activated.status", server, activateTime));
       } else {
         appContext.log(getException());
       }
@@ -391,13 +356,11 @@ public class ServerPanel extends XContainer {
   private class PassiveUninitializedWorker extends ServerStateWorker {
     @Override
     protected void finished() {
-      IServer theServer = getServer();
-      if (theServer == null) return;
       super.finished();
       if (getException() == null) {
         String startTime = new Date().toString();
         setStatusLabel(appContext.format("server.initializing.label", startTime));
-        appContext.setStatus(appContext.format("server.initializing.status", theServer, startTime));
+        appContext.setStatus(appContext.format("server.initializing.status", server, startTime));
       }
     }
   }
@@ -405,13 +368,11 @@ public class ServerPanel extends XContainer {
   private class PassiveStandbyWorker extends ServerStateWorker {
     @Override
     protected void finished() {
-      IServer theServer = getServer();
-      if (theServer == null) return;
       super.finished();
       if (getException() == null) {
         String startTime = new Date().toString();
         setStatusLabel(appContext.format("server.standingby.label", startTime));
-        appContext.setStatus(appContext.format("server.standingby.status", theServer, startTime));
+        appContext.setStatus(appContext.format("server.standingby.status", server, startTime));
       }
     }
   }
@@ -421,33 +382,23 @@ public class ServerPanel extends XContainer {
    * activated() under the presumption that a non-active server won't be saying anything.
    */
   void started() {
-    if (appContext != null) {
-      appContext.execute(new StartedWorker());
-    }
+    appContext.execute(new StartedWorker());
   }
 
   void activated() {
-    if (appContext != null) {
-      appContext.execute(new ActivatedWorker());
-    }
+    appContext.execute(new ActivatedWorker());
   }
 
   void passiveUninitialized() {
-    if (appContext != null) {
-      appContext.execute(new PassiveUninitializedWorker());
-    }
+    appContext.execute(new PassiveUninitializedWorker());
   }
 
   void passiveStandby() {
-    if (appContext != null) {
-      appContext.execute(new PassiveStandbyWorker());
-    }
+    appContext.execute(new PassiveStandbyWorker());
   }
 
   private void testShowRestartInfoItem() {
-    IServer theServer = getServer();
-    if (theServer == null) return;
-    if (!theServer.getPersistenceMode().equals("permanent-store")) {
+    if (!server.getPersistenceMode().equals("permanent-store")) {
       String warning = appContext.getString("server.non-restartable.warning");
       restartInfoItem.add(new PersistenceModeWarningPanel(appContext, warning));
     } else {
@@ -472,11 +423,9 @@ public class ServerPanel extends XContainer {
   }
 
   void disconnected() {
-    IServer theServer = getServer();
-    if (theServer == null) return;
     String startTime = new Date().toString();
     setStatusLabel(appContext.format("server.disconnected.label", startTime));
-    appContext.setStatus(appContext.format("server.disconnected.status", theServer, startTime));
+    appContext.setStatus(appContext.format("server.disconnected.status", server, startTime));
     hideInfoContent();
   }
 
@@ -490,18 +439,13 @@ public class ServerPanel extends XContainer {
   }
 
   void setConnectExceptionMessage(String msg) {
-    IServer theServer = getServer();
-    if (theServer != null) {
-      setStatusLabel(msg);
-      setTabbedPaneEnabled(false);
-    }
+    setStatusLabel(msg);
+    setTabbedPaneEnabled(false);
   }
 
   void setStatusLabel(String text) {
-    IServer theServer = getServer();
-    if (theServer == null) return;
     statusView.setText(text);
-    ServerHelper.getHelper().setStatusView(theServer, statusView);
+    ServerHelper.getHelper().setStatusView(server, statusView);
     statusView.revalidate();
     statusView.repaint();
   }
@@ -550,23 +494,11 @@ public class ServerPanel extends XContainer {
   }
 
   @Override
-  public synchronized void tearDown() {
+  public void tearDown() {
     server.removePropertyChangeListener(serverListener);
     serverListener.tearDown();
     statusView.tearDown();
 
     super.tearDown();
-
-    appContext = null;
-    server = null;
-    serverListener = null;
-    propertyTable = null;
-    statusView = null;
-    tabbedPane = null;
-    environmentTextArea = null;
-    tcPropertiesTextArea = null;
-    processArgumentsTextArea = null;
-    configTextArea = null;
-    loggingPanel = null;
   }
 }

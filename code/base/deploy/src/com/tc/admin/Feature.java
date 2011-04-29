@@ -21,7 +21,11 @@ public class Feature {
   public Feature(String symbolicName, String displayName) {
     this.symbolicName = symbolicName;
     this.displayName = displayName;
-    this.loader = new FeatureClassLoader(this);
+    this.loader = java.security.AccessController.doPrivileged(new java.security.PrivilegedAction<FeatureClassLoader>() {
+      public FeatureClassLoader run() {
+        return new FeatureClassLoader(Feature.this);
+      }
+    });
   }
 
   public String getSymbolicName() {

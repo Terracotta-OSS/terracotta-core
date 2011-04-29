@@ -19,11 +19,12 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.TableColumnModel;
 
 public class ServersPanel extends XContainer implements PropertyChangeListener {
-  protected ApplicationContext      appContext;
-  protected IClusterModel           clusterModel;
-  protected IServer[]               servers;
-  protected XObjectTable            serverTable;
-  protected ClusterMemberTableModel serverTableModel;
+  protected final ApplicationContext appContext;
+  protected final IClusterModel      clusterModel;
+  protected final IServer[]          servers;
+
+  protected XObjectTable             serverTable;
+  protected ClusterMemberTableModel  serverTableModel;
 
   public ServersPanel(ApplicationContext appContext, IClusterModel clusterModel, IServer[] servers) {
     super(new BorderLayout());
@@ -38,24 +39,24 @@ public class ServersPanel extends XContainer implements PropertyChangeListener {
     colModel.getColumn(0).setCellRenderer(new ClusterMemberStatusRenderer(appContext));
     colModel.getColumn(2).setCellRenderer(new XObjectTable.PortNumberRenderer());
 
-    for (int i = 0; i < servers.length; i++) {
-      serverTableModel.addClusterMember(servers[i]);
+    for (IServer server : servers) {
+      serverTableModel.addClusterMember(server);
     }
 
     add(new XScrollPane(serverTable), BorderLayout.CENTER);
 
-    for(IServer server : servers) {
+    for (IServer server : servers) {
       server.addPropertyChangeListener(this);
     }
   }
 
   public void propertyChange(PropertyChangeEvent evt) {
-    final IServer server = (IServer)evt.getSource();
+    final IServer server = (IServer) evt.getSource();
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         if (serverTableModel == null) return;
         int row = serverTableModel.getObjectIndex(server);
-        if(row != -1) {
+        if (row != -1) {
           serverTableModel.fireTableCellUpdated(row, 0);
         } else {
           serverTableModel.fireTableDataChanged();
@@ -64,20 +65,12 @@ public class ServersPanel extends XContainer implements PropertyChangeListener {
     });
   }
 
+  @Override
   public void tearDown() {
-    for(IServer server : servers) {
+    for (IServer server : servers) {
       server.removePropertyChangeListener(this);
     }
     serverTableModel.clear();
-
     super.tearDown();
-
-    synchronized (this) {
-      appContext = null;
-      clusterModel = null;
-      servers = null;
-      serverTable = null;
-      serverTableModel = null;
-    }
   }
 }

@@ -6,6 +6,7 @@ package com.tc.stats;
 import com.tc.management.TerracottaMBean;
 import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
+import com.tc.stats.api.DGCMBean;
 
 import javax.management.NotCompliantMBeanException;
 

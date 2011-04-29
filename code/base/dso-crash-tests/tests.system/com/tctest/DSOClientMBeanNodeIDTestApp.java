@@ -13,8 +13,8 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.spec.SynchronizedIntSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
-import com.tc.stats.DSOClientMBean;
-import com.tc.stats.DSOMBean;
+import com.tc.stats.api.DSOClientMBean;
+import com.tc.stats.api.DSOMBean;
 import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 

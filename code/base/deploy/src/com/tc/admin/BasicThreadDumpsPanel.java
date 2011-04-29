@@ -28,17 +28,18 @@ import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
 
 public abstract class BasicThreadDumpsPanel extends XContainer {
-  protected ApplicationContext appContext;
-  protected XButton            threadDumpButton;
-  protected XButton            clusterDumpButton;
-  protected XButton            exportButton;
-  protected XScrollPane        itemScroller;
-  protected XTextArea          textArea;
-  protected XScrollPane        textScroller;
-  protected DeleteAction       deleteAction;
-  protected DeleteAllAction    deleteAllAction;
-  protected ExportAsTextAction exportAsTextAction;
-  protected File               lastExportDir;
+  protected final ApplicationContext appContext;
+
+  protected XButton                  threadDumpButton;
+  protected XButton                  clusterDumpButton;
+  protected XButton                  exportButton;
+  protected XScrollPane              itemScroller;
+  protected XTextArea                textArea;
+  protected XScrollPane              textScroller;
+  protected DeleteAction             deleteAction;
+  protected DeleteAllAction          deleteAllAction;
+  protected ExportAsTextAction       exportAsTextAction;
+  protected File                     lastExportDir;
 
   public BasicThreadDumpsPanel(ApplicationContext appContext) {
     super(new BorderLayout());
@@ -184,21 +185,4 @@ public abstract class BasicThreadDumpsPanel extends XContainer {
       }
     }
   }
-
-  @Override
-  public void tearDown() {
-    super.tearDown();
-
-    appContext = null;
-    threadDumpButton = null;
-    clusterDumpButton = null;
-    exportButton = null;
-    itemScroller = null;
-    textArea = null;
-    textScroller = null;
-    deleteAction = null;
-    deleteAllAction = null;
-    exportAsTextAction = null;
-  }
-
 }

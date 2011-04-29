@@ -16,7 +16,6 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -31,13 +30,14 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 public class ClusterThreadDumpsPanel extends BasicThreadDumpsPanel implements TreeModelListener {
-  private ClusterThreadDumpProvider clusterThreadDumpProvider;
-  private XTree                     threadDumpTree;
-  private XTreeModel                threadDumpTreeModel;
-  private ThreadDumpTreeNode        lastSelectedThreadDumpTreeNode;
+  private final ClusterThreadDumpProvider clusterThreadDumpProvider;
 
-  private static final String       DELETE_ITEM_CMD                 = "DeleteItemCmd";
-  private static final String       DEFAULT_EXPORT_ARCHIVE_FILENAME = "tc-cluster-thread-dumps.zip";
+  private XTree                           threadDumpTree;
+  private XTreeModel                      threadDumpTreeModel;
+  private ThreadDumpTreeNode              lastSelectedThreadDumpTreeNode;
+
+  private static final String             DELETE_ITEM_CMD                 = "DeleteItemCmd";
+  private static final String             DEFAULT_EXPORT_ARCHIVE_FILENAME = "tc-cluster-thread-dumps.zip";
 
   public ClusterThreadDumpsPanel(ApplicationContext appContext, ClusterThreadDumpProvider clusterThreadDumpProvider) {
     super(appContext);
@@ -130,7 +130,6 @@ public class ClusterThreadDumpsPanel extends BasicThreadDumpsPanel implements Tr
 
   private class ThreadDumpTreeSelectionListener implements TreeSelectionListener {
     public void valueChanged(TreeSelectionEvent e) {
-      if (tornDown.get()) { return; }
       ThreadDumpTreeNode tdtn = updateSelectedContent();
       lastSelectedThreadDumpTreeNode = tdtn;
       setControlsEnabled(tdtn != null);
@@ -175,7 +174,9 @@ public class ClusterThreadDumpsPanel extends BasicThreadDumpsPanel implements Tr
 
   private void exportAsArchive() throws Exception {
     FastFileChooser chooser = new FastFileChooser();
-    if (lastExportDir != null) chooser.setCurrentDirectory(lastExportDir);
+    if (lastExportDir != null) {
+      chooser.setCurrentDirectory(lastExportDir);
+    }
     chooser.setDialogTitle("Export thread dumps");
     chooser.setMultiSelectionEnabled(false);
     chooser.setSelectedFile(new File(chooser.getCurrentDirectory(), DEFAULT_EXPORT_ARCHIVE_FILENAME));
@@ -211,7 +212,9 @@ public class ClusterThreadDumpsPanel extends BasicThreadDumpsPanel implements Tr
   @Override
   protected void exportAsText() throws Exception {
     FastFileChooser chooser = new FastFileChooser();
-    if (lastExportDir != null) chooser.setCurrentDirectory(lastExportDir);
+    if (lastExportDir != null) {
+      chooser.setCurrentDirectory(lastExportDir);
+    }
     chooser.setDialogTitle("Export thread dump as text");
     chooser.setMultiSelectionEnabled(false);
     chooser.setSelectedFile(new File(chooser.getCurrentDirectory(), "thread-dump.txt"));
@@ -224,7 +227,6 @@ public class ClusterThreadDumpsPanel extends BasicThreadDumpsPanel implements Tr
   }
 
   public void treeNodesChanged(TreeModelEvent e) {
-    if (tornDown.get()) { return; }
     ClusterThreadDumpEntry tde = (ClusterThreadDumpEntry) e.getTreePath().getPathComponent(1);
     boolean isDone = tde.isDone();
     exportButton.setEnabled(isDone);
@@ -247,22 +249,9 @@ public class ClusterThreadDumpsPanel extends BasicThreadDumpsPanel implements Tr
     /**/
   }
 
-  private final AtomicBoolean tornDown = new AtomicBoolean(false);
-
   @Override
   public void tearDown() {
-    if (!tornDown.compareAndSet(false, true)) { return; }
-
     threadDumpTreeModel.removeTreeModelListener(this);
-
     super.tearDown();
-
-    synchronized (this) {
-      clusterThreadDumpProvider = null;
-      threadDumpTree = null;
-      threadDumpTreeModel.tearDown();
-      threadDumpTreeModel = null;
-      lastSelectedThreadDumpTreeNode = null;
-    }
   }
 }

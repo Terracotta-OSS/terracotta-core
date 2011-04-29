@@ -11,8 +11,9 @@ import com.tc.admin.model.IClient;
 import java.awt.Component;
 
 public class ClientRuntimeStatsNode extends ComponentNode {
-  private ApplicationContext        appContext;
-  private IClient                   client;
+  private final ApplicationContext  appContext;
+  private final IClient             client;
+
   protected ClientRuntimeStatsPanel runtimeStatsPanel;
 
   public ClientRuntimeStatsNode(ApplicationContext appContext, IClient client) {
@@ -26,6 +27,7 @@ public class ClientRuntimeStatsNode extends ComponentNode {
     return new ClientRuntimeStatsPanel(appContext, client);
   }
 
+  @Override
   public Component getComponent() {
     if (runtimeStatsPanel == null) {
       runtimeStatsPanel = createRuntimeStatsPanel();
@@ -33,13 +35,11 @@ public class ClientRuntimeStatsNode extends ComponentNode {
     return runtimeStatsPanel;
   }
 
-  public synchronized void tearDown() {
-    super.tearDown();
+  @Override
+  public void tearDown() {
     if (runtimeStatsPanel != null) {
       runtimeStatsPanel.tearDown();
-      runtimeStatsPanel = null;
     }
-    appContext = null;
-    client = null;
+    super.tearDown();
   }
 }

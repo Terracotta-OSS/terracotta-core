@@ -12,9 +12,9 @@ public interface AdminClientController extends ApplicationController {
   boolean isExpanded(XTreeNode node);
 
   void expandAll(XTreeNode node);
-  
+
   boolean selectNode(XTreeNode startNode, String name);
-  
+
   void select(XTreeNode node);
 
   boolean isSelected(XTreeNode node);
@@ -22,4 +22,8 @@ public interface AdminClientController extends ApplicationController {
   boolean testServerMatch(ClusterNode node);
 
   void updateServerPrefs();
+
+  void activeFeatureAdded(String name);
+
+  void activeFeatureRemoved(String name);
 }

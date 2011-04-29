@@ -6,7 +6,7 @@ package com.tc.admin.dso;
 
 import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.XObjectTableModel;
-import com.tc.stats.DSOClassInfo;
+import com.tc.stats.api.DSOClassInfo;
 
 public class ClassTableModel extends XObjectTableModel {
   private static final String[] FIELDS  = { "ClassName", "InstanceCount" };

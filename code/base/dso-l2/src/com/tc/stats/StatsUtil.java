@@ -10,6 +10,8 @@ import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 import com.tc.stats.statistics.CountStatistic;
 import com.tc.stats.statistics.CountStatisticImpl;
 
+// TODO: remove me
+
 public class StatsUtil {
 
   public static CountStatistic makeCountStat(SampledCounter counter) {

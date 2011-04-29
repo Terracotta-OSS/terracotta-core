@@ -6,7 +6,7 @@ package com.tc.admin.dso;
 
 import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.XTreeModel;
-import com.tc.stats.DSOClassInfo;
+import com.tc.stats.api.DSOClassInfo;
 
 public class ClassTreeModel extends XTreeModel {
   public ClassTreeModel(ApplicationContext appContext, DSOClassInfo[] classInfo) {

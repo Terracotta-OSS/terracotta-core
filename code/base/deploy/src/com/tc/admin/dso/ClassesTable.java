@@ -5,7 +5,7 @@
 package com.tc.admin.dso;
 
 import com.tc.admin.common.XObjectTable;
-import com.tc.stats.DSOClassInfo;
+import com.tc.stats.api.DSOClassInfo;
 
 public class ClassesTable extends XObjectTable {
   public ClassesTable(ClassTableModel model) {

@@ -31,15 +31,16 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
 
 public class ThreadDumpsPanel extends XContainer implements ActionListener, PropertyChangeListener {
-  private IAdminClientContext       adminClientContext;
-  private IClusterModel             clusterModel;
-  private ClusterThreadDumpProvider threadDumpProvider;
-  private ClusterListener           clusterListener;
-  private ElementChooser            elementChooser;
-  private PagedView                 pagedView;
-  private boolean                   inited;
+  private final IAdminClientContext       adminClientContext;
+  private final IClusterModel             clusterModel;
+  private final ClusterThreadDumpProvider threadDumpProvider;
+  private final ClusterListener           clusterListener;
 
-  private static final String       ALL_NODES_NODE_NAME = "AllNodesNode";
+  private ElementChooser                  elementChooser;
+  private PagedView                       pagedView;
+  private boolean                         inited;
+
+  private static final String             ALL_NODES_NODE_NAME = "AllNodesNode";
 
   public ThreadDumpsPanel(IAdminClientContext adminClientContext, IClusterModel clusterModel,
                           ClusterThreadDumpProvider threadDumpProvider) {
@@ -135,9 +136,6 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
 
     @Override
     protected void handleReady() {
-      IClusterModel theClusterModel = super.getClusterModel();
-      if (theClusterModel == null) { return; }
-
       if (!inited && clusterModel.isConnected()) {
         elementChooser.setupTreeModel();
         addNodePanels();
@@ -146,11 +144,7 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
 
     @Override
     protected void handleUncaughtError(Exception e) {
-      if (adminClientContext != null) {
-        adminClientContext.log(e);
-      } else {
-        super.handleUncaughtError(e);
-      }
+      adminClientContext.log(e);
     }
   }
 
@@ -192,10 +186,6 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
     return panel;
   }
 
-  public IClusterModel getClusterModel() {
-    return clusterModel;
-  }
-
   @Override
   public void tearDown() {
     clusterModel.removePropertyChangeListener(clusterListener);
@@ -203,15 +193,6 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
 
     pagedView.removePropertyChangeListener(this);
     elementChooser.removeActionListener(this);
-
-    synchronized (this) {
-      adminClientContext = null;
-      clusterModel = null;
-      threadDumpProvider = null;
-      clusterListener = null;
-      elementChooser = null;
-      pagedView = null;
-    }
 
     super.tearDown();
   }

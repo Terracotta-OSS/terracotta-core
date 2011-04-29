@@ -102,10 +102,11 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 
 public class StatsRecorderPanel extends XContainer implements ClientConnectionListener, IClusterStatsListener {
-  private ApplicationContext         appContext;
-  private IClusterModel              clusterModel;
-  private ClusterListener            clusterListener;
-  private ServerListener             serverListener;
+  private final ApplicationContext   appContext;
+  private final IClusterModel        clusterModel;
+  private final ClusterListener      clusterListener;
+  private final ServerListener       serverListener;
+
   private JToggleButton              startGatheringStatsButton;
   private JToggleButton              stopGatheringStatsButton;
   private XList                      statsSessionsList;
@@ -148,28 +149,17 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
 
     add(messagePanel);
 
-    if (clusterModel != null) {
-      clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
-      clusterModel.addServerStateListener(serverListener = new ServerListener());
-      if (clusterModel.isReady()) {
-        IServer activeCoord = clusterModel.getActiveCoordinator();
-        if (activeCoord != null && activeCoord.isClusterStatsSupported()) {
-          activeCoord.addClusterStatsListener(this);
-          initiateStatsGathererConnectWorker();
-        }
-      } else {
-        messageLabel.setText(appContext.getString("cluster.not.ready.msg"));
+    clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
+    clusterModel.addServerStateListener(serverListener = new ServerListener());
+    if (clusterModel.isReady()) {
+      IServer activeCoord = clusterModel.getActiveCoordinator();
+      if (activeCoord != null && activeCoord.isClusterStatsSupported()) {
+        activeCoord.addClusterStatsListener(this);
+        initiateStatsGathererConnectWorker();
       }
+    } else {
+      messageLabel.setText(appContext.getString("cluster.not.ready.msg"));
     }
-  }
-
-  private synchronized IClusterModel getClusterModel() {
-    return clusterModel;
-  }
-
-  private synchronized IServer getActiveCoordinator() {
-    IClusterModel theClusterModel = getClusterModel();
-    return theClusterModel != null ? theClusterModel.getActiveCoordinator() : null;
   }
 
   private XContainer createMessagePanel() {
@@ -292,11 +282,8 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
 
     @Override
     protected void handleReady() {
-      IClusterModel theClusterModel = getClusterModel();
-      if (theClusterModel == null) { return; }
-
-      if (theClusterModel.isReady()) {
-        IServer activeCoord = theClusterModel.getActiveCoordinator();
+      if (clusterModel.isReady()) {
+        IServer activeCoord = clusterModel.getActiveCoordinator();
         if (activeCoord != null) {
           messageLabel.setText(appContext.getString("initializing"));
           if (activeCoord.isClusterStatsSupported()) {
@@ -316,9 +303,6 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
 
     @Override
     protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
-      IClusterModel theClusterModel = getClusterModel();
-      if (theClusterModel == null) { return; }
-
       if (oldActive != null) {
         oldActive.removeClientConnectionListener(StatsRecorderPanel.this);
         oldActive.removeClusterStatsListener(StatsRecorderPanel.this);
@@ -335,19 +319,12 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
 
     @Override
     protected void handleUncaughtError(Exception e) {
-      if (appContext != null) {
-        appContext.log(e);
-      } else {
-        super.handleUncaughtError(e);
-      }
+      appContext.log(e);
     }
   }
 
   private class ServerListener implements ServerStateListener {
     public void serverStateChanged(IServer server, PropertyChangeEvent pce) {
-      IClusterModel theClusterModel = getClusterModel();
-      if (theClusterModel == null) { return; }
-
       if (isRecording) {
         String prop = pce.getPropertyName();
         if (prop.equals(IClusterModelElement.PROP_READY)) {
@@ -391,8 +368,8 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
     StatsGathererConnectWorker() {
       super(new Callable() {
         public Void call() throws Exception {
-          for (IServerGroup group : clusterModel.getServerGroups()) {
-            for (IServer server : group.getMembers()) {
+          for (IServerGroup serverGroup : clusterModel.getServerGroups()) {
+            for (IServer server : serverGroup.getMembers()) {
               if (server.isReady() && server.isClusterStatsSupported()) {
                 server.startupClusterStats();
               }
@@ -435,10 +412,8 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
   }
 
   private void gathererConnected() {
-    if (appContext != null) {
-      statsSessionsListModel.clear();
-      appContext.execute(new GathererConnectedWorker());
-    }
+    statsSessionsListModel.clear();
+    appContext.execute(new GathererConnectedWorker());
   }
 
   private void gathererDisconnected() {
@@ -483,7 +458,7 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
     GathererConnectedWorker() {
       super(new Callable<GathererConnectedState>() {
         public GathererConnectedState call() {
-          IServer activeCoord = getActiveCoordinator();
+          IServer activeCoord = clusterModel.getActiveCoordinator();
           if (activeCoord != null) {
             boolean isCapturing = activeCoord.isActiveClusterStatsSession();
             String[] allSessions = activeCoord.getAllClusterStatsSessions();
@@ -687,8 +662,8 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
     StopGatheringStatsWorker() {
       super(new Callable<Void>() {
         public Void call() {
-          for (IServerGroup group : clusterModel.getServerGroups()) {
-            for (IServer server : group.getMembers()) {
+          for (IServerGroup serverGroup : clusterModel.getServerGroups()) {
+            for (IServer server : serverGroup.getMembers()) {
               server.endCurrentClusterStatsSession();
             }
           }
@@ -752,7 +727,9 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
   private class ImportStatsConfigHandler implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
       FastFileChooser chooser = new FastFileChooser();
-      if (lastExportDir != null) chooser.setCurrentDirectory(lastExportDir);
+      if (lastExportDir != null) {
+        chooser.setCurrentDirectory(lastExportDir);
+      }
       chooser.setDialogTitle("Import statistics configuration");
       chooser.setMultiSelectionEnabled(false);
       chooser.setSelectedFile(new File(chooser.getCurrentDirectory(), DEFAULT_STATS_CONFIG_FILENAME));
@@ -788,7 +765,9 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
   private class ExportStatsConfigHandler implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
       FastFileChooser chooser = new FastFileChooser();
-      if (lastExportDir != null) chooser.setCurrentDirectory(lastExportDir);
+      if (lastExportDir != null) {
+        chooser.setCurrentDirectory(lastExportDir);
+      }
       chooser.setDialogTitle("Export statistics configuration");
       chooser.setMultiSelectionEnabled(false);
       chooser.setSelectedFile(new File(chooser.getCurrentDirectory(), DEFAULT_STATS_CONFIG_FILENAME));
@@ -822,7 +801,7 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
 
   private synchronized AuthScope getAuthScope() {
     if (authScope == null) {
-      IServer activeCoord = getActiveCoordinator();
+      IServer activeCoord = clusterModel.getActiveCoordinator();
       String host = activeCoord.getHost();
       int dsoPort = activeCoord.getDSOListenPort();
       authScope = new AuthScope(host, dsoPort);
@@ -842,24 +821,14 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
     }
   }
 
-  // private static class CsvFileFilter extends FileFilter {
-  // @Override
-  // public boolean accept(File file) {
-  // return file.isDirectory() || file.getName().endsWith(".csv");
-  // }
-  //
-  // @Override
-  // public String getDescription() {
-  // return "CSV files";
-  // }
-  // }
-
   class ExportStatsHandler implements ActionListener {
     private UsernamePasswordCredentials credentials;
 
     private JFileChooser createFileChooser() {
       FastFileChooser chooser = new FastFileChooser();
-      if (lastExportDir != null) chooser.setCurrentDirectory(lastExportDir);
+      if (lastExportDir != null) {
+        chooser.setCurrentDirectory(lastExportDir);
+      }
       chooser.setDialogTitle("Export statistics");
       chooser.setMultiSelectionEnabled(false);
       chooser.setFileFilter(new ZipFileFilter());
@@ -926,7 +895,7 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
     }
 
     private UsernamePasswordCredentials getCredentials() {
-      if (credentials != null) return credentials;
+      if (credentials != null) { return credentials; }
       Frame frame = (Frame) SwingUtilities.getAncestorOfClass(Frame.class, StatsRecorderPanel.this);
       LoginPanel loginPanel = new LoginPanel();
       int answer = JOptionPane.showConfirmDialog(frame, loginPanel, frame.getTitle(), JOptionPane.OK_CANCEL_OPTION);
@@ -1001,7 +970,7 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
         IOUtils.copy(fin, zout);
         fin.close();
         zout.close();
-      } catch (Exception e) {
+      } catch (IOException e) {
         appContext.log(e);
       } finally {
         SwingUtilities.invokeLater(new Runnable() {
@@ -1028,8 +997,8 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
           SwingWorker worker = new SwingWorker() {
             @Override
             public Object construct() throws Exception {
-              for (IServerGroup group : clusterModel.getServerGroups()) {
-                for (IServer server : group.getMembers()) {
+              for (IServerGroup serverGroup : clusterModel.getServerGroups()) {
+                for (IServer server : serverGroup.getMembers()) {
                   if (server.isReady() && server.isClusterStatsSupported()) {
                     server.clearClusterStatsSession(item.getSessionId());
                   }
@@ -1067,8 +1036,8 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
         SwingWorker worker = new SwingWorker() {
           @Override
           public Object construct() throws Exception {
-            for (IServerGroup group : clusterModel.getServerGroups()) {
-              for (IServer server : group.getMembers()) {
+            for (IServerGroup serverGroup : clusterModel.getServerGroups()) {
+              for (IServer server : serverGroup.getMembers()) {
                 if (server.isReady() && server.isClusterStatsSupported()) {
                   server.clearAllClusterStats();
                 }
@@ -1145,7 +1114,7 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
     }
 
     private String getActiveCoordinatorAddress() {
-      IServer activeCoord = getActiveCoordinator();
+      IServer activeCoord = clusterModel.getActiveCoordinator();
       if (activeCoord != null) { return activeCoord.getHost() + ":" + activeCoord.getPort(); }
       return null;
     }
@@ -1178,44 +1147,18 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
 
   @Override
   public void tearDown() {
-    IClusterModel theClusterModel = getClusterModel();
-    if (theClusterModel != null) {
-      theClusterModel.removePropertyChangeListener(clusterListener);
-      clusterListener.tearDown();
-      theClusterModel.removeServerStateListener(serverListener);
+    clusterModel.removePropertyChangeListener(clusterListener);
+    clusterListener.tearDown();
+    clusterModel.removeServerStateListener(serverListener);
 
-      IServer activeCoord = theClusterModel.getActiveCoordinator();
-      if (activeCoord != null) {
-        activeCoord.removeClusterStatsListener(this);
-      }
+    IServer activeCoord = clusterModel.getActiveCoordinator();
+    if (activeCoord != null) {
+      activeCoord.removeClusterStatsListener(this);
     }
-
-    super.tearDown();
 
     availableStatsArea.tearDown();
 
-    synchronized (this) {
-      appContext = null;
-      clusterModel = null;
-      clusterListener = null;
-      serverListener = null;
-      startGatheringStatsButton = null;
-      stopGatheringStatsButton = null;
-      statsSessionsList = null;
-      statsSessionsListModel = null;
-      availableStatsArea = null;
-      statsControls = null;
-      samplePeriodSpinner = null;
-      importStatsConfigButton = null;
-      exportStatsConfigButton = null;
-      currentStatsSessionId = null;
-      exportStatsButton = null;
-      viewStatsButton = null;
-      lastExportDir = null;
-      clearStatsSessionButton = null;
-      clearAllStatsSessionsButton = null;
-      authScope = null;
-    }
+    super.tearDown();
   }
 
   private static class LoginPanel extends JPanel {
@@ -1256,7 +1199,7 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
     UpdateSupportedStatsWorker() {
       super(new Callable<String[]>() {
         public String[] call() {
-          IServer activeCoord = getActiveCoordinator();
+          IServer activeCoord = clusterModel.getActiveCoordinator();
           return activeCoord != null ? activeCoord.getSupportedClusterStats() : new String[0];
         }
       });
@@ -1285,13 +1228,10 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
   }
 
   public void clientDisconnected(IClient client) {
-    IClusterModel theClusterModel = getClusterModel();
-    if (theClusterModel != null) {
-      IClient[] clients = theClusterModel.getClients();
-      haveClientStats = clients.length > 0;
-      if (!haveClientStats) {
-        appContext.execute(new UpdateSupportedStatsWorker());
-      }
+    IClient[] clients = clusterModel.getClients();
+    haveClientStats = clients.length > 0;
+    if (!haveClientStats) {
+      appContext.execute(new UpdateSupportedStatsWorker());
     }
   }
 

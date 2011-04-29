@@ -22,9 +22,9 @@ import javax.swing.text.Element;
 import javax.swing.text.html.HTML;
 
 public class MonitoringNode extends ComponentNode implements HyperlinkListener {
-  protected IAdminClientContext adminClientContext;
-  protected IClusterModel       clusterModel;
-  protected XScrollPane         monitoringPanel;
+  protected final IAdminClientContext adminClientContext;
+  protected final IClusterModel       clusterModel;
+  protected XScrollPane               monitoringPanel;
 
   public MonitoringNode(ClusterNode clusterNode, IAdminClientContext adminClientContext, IClusterModel clusterModel) {
     super(adminClientContext.getString("dso.monitoring"));
@@ -44,7 +44,7 @@ public class MonitoringNode extends ComponentNode implements HyperlinkListener {
     return new RuntimeStatsNode(adminClientContext, clusterModel);
   }
 
-  protected synchronized IClusterModel getClusterModel() {
+  protected IClusterModel getClusterModel() {
     return clusterModel;
   }
 
@@ -85,12 +85,10 @@ public class MonitoringNode extends ComponentNode implements HyperlinkListener {
 
   @Override
   public void tearDown() {
-    super.tearDown();
-
-    synchronized (this) {
-      adminClientContext = null;
-      clusterModel = null;
-      monitoringPanel = null;
+    if (monitoringPanel != null) {
+      XTextPane textPane = (XTextPane) monitoringPanel.getViewport().getView();
+      textPane.removeHyperlinkListener(this);
     }
+    super.tearDown();
   }
 }

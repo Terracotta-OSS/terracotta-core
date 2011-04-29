@@ -37,6 +37,7 @@ public class MapEntryNode extends XTreeNode implements DSOObjectTreeNode {
     children.setSize(2);
   }
 
+  @Override
   public TreeNode getChildAt(int index) {
     if (children != null && children.elementAt(index) == null) {
       fillInChildren();
@@ -89,15 +90,8 @@ public class MapEntryNode extends XTreeNode implements DSOObjectTreeNode {
     }
   }
 
+  @Override
   public Icon getIcon() {
     return RootsHelper.getHelper().getFieldIcon();
-  }
-
-  public void tearDown() {
-    super.tearDown();
-
-    mapEntry = null;
-    keyNode = null;
-    valueNode = null;
   }
 }

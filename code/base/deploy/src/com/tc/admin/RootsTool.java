@@ -10,8 +10,8 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.MapEntryFacade;
-import com.tc.stats.DSOMBean;
-import com.tc.stats.DSORootMBean;
+import com.tc.stats.api.DSOMBean;
+import com.tc.stats.api.DSORootMBean;
 
 import java.io.IOException;
 import java.io.PrintWriter;

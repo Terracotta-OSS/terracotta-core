@@ -31,7 +31,6 @@ import javax.swing.AbstractButton;
 import javax.swing.CellRendererPane;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
@@ -52,7 +51,7 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
-public class TreeComboBox extends JPanel implements TreeWillExpandListener, TreeModelListener {
+public class TreeComboBox extends XContainer implements TreeWillExpandListener, TreeModelListener {
   private AbstractButton          triggerButton;
   private TriggerHandler          triggerHandler;
   protected JTree                 tree;
@@ -486,6 +485,7 @@ public class TreeComboBox extends JPanel implements TreeWillExpandListener, Tree
     treeModelChanged();
   }
 
+  @Override
   public void tearDown() {
     treeModel.removeTreeModelListener(this);
     tree.removeMouseListener(treeMouseHandler);

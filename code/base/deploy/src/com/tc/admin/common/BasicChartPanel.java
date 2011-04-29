@@ -6,7 +6,6 @@ package com.tc.admin.common;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.IntervalMarker;
-import org.jfree.chart.plot.Plot;
 import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.ui.Layer;
@@ -53,29 +52,26 @@ public class BasicChartPanel extends TooltipChartPanel {
     String toolTip = null;
     JFreeChart chart = getChart();
     if (chart != null) {
-      Plot plot = chart.getXYPlot();
-      if (plot instanceof XYPlot) {
-        XYPlot xyPlot = (XYPlot) plot;
-        Collection<?> domainMarkers = new HashSet();
-        Collection<?> fgDomainMarkers = xyPlot.getDomainMarkers(Layer.FOREGROUND);
-        if (fgDomainMarkers != null) {
-          domainMarkers.addAll(new HashSet(fgDomainMarkers));
-        }
-        Collection<?> bgDomainMarkers = xyPlot.getDomainMarkers(Layer.BACKGROUND);
-        if (bgDomainMarkers != null) {
-          domainMarkers.addAll(new HashSet(bgDomainMarkers));
-        }
-        PlotRenderingInfo info = getChartRenderingInfo().getPlotInfo();
-        Insets insets = getInsets();
-        double x = (me.getX() - insets.left) / getScaleX();
-        double xx = xyPlot.getDomainAxis().java2DToValue(x, info.getDataArea(), xyPlot.getDomainAxisEdge());
-        Iterator<?> domainMarkerIter = domainMarkers.iterator();
-        while (domainMarkerIter.hasNext()) {
-          IntervalMarker marker = (IntervalMarker) domainMarkerIter.next();
-          if (marker instanceof ToolTipProvider) {
-            if (xx >= marker.getStartValue() && xx <= marker.getEndValue()) {
-              toolTip = ((ToolTipProvider) marker).getToolTipText(me);
-            }
+      XYPlot xyPlot = chart.getXYPlot();
+      Collection<?> domainMarkers = new HashSet();
+      Collection<?> fgDomainMarkers = xyPlot.getDomainMarkers(Layer.FOREGROUND);
+      if (fgDomainMarkers != null) {
+        domainMarkers.addAll(new HashSet(fgDomainMarkers));
+      }
+      Collection<?> bgDomainMarkers = xyPlot.getDomainMarkers(Layer.BACKGROUND);
+      if (bgDomainMarkers != null) {
+        domainMarkers.addAll(new HashSet(bgDomainMarkers));
+      }
+      PlotRenderingInfo info = getChartRenderingInfo().getPlotInfo();
+      Insets insets = getInsets();
+      double x = (me.getX() - insets.left) / getScaleX();
+      double xx = xyPlot.getDomainAxis().java2DToValue(x, info.getDataArea(), xyPlot.getDomainAxisEdge());
+      Iterator<?> domainMarkerIter = domainMarkers.iterator();
+      while (domainMarkerIter.hasNext()) {
+        IntervalMarker marker = (IntervalMarker) domainMarkerIter.next();
+        if (marker instanceof ToolTipProvider) {
+          if (xx >= marker.getStartValue() && xx <= marker.getEndValue()) {
+            toolTip = ((ToolTipProvider) marker).getToolTipText(me);
           }
         }
       }

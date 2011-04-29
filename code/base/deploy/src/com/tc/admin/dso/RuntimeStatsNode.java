@@ -12,9 +12,10 @@ import com.tc.admin.model.IClusterModel;
 import java.awt.Component;
 
 public class RuntimeStatsNode extends ComponentNode {
-  protected IAdminClientContext adminClientContext;
-  protected IClusterModel       clusterModel;
-  protected RuntimeStatsPanel   runtimeStatsPanel;
+  protected final IAdminClientContext adminClientContext;
+  protected final IClusterModel       clusterModel;
+
+  protected RuntimeStatsPanel         runtimeStatsPanel;
 
   public RuntimeStatsNode(IAdminClientContext adminClientContext, IClusterModel clusterModel) {
     super(adminClientContext.getString("dso.runtime.stats"));
@@ -39,15 +40,9 @@ public class RuntimeStatsNode extends ComponentNode {
 
   @Override
   public void tearDown() {
-    super.tearDown();
-
-    synchronized (this) {
-      adminClientContext = null;
-      clusterModel = null;
-      if (runtimeStatsPanel != null) {
-        runtimeStatsPanel.tearDown();
-        runtimeStatsPanel = null;
-      }
+    if (runtimeStatsPanel != null) {
+      runtimeStatsPanel.tearDown();
     }
+    super.tearDown();
   }
 }

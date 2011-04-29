@@ -16,7 +16,7 @@ import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
 import com.tc.statistics.StatisticData;
-import com.tc.stats.DSOClientMBean;
+import com.tc.stats.api.DSOClientMBean;
 import com.tc.util.ProductInfo;
 
 import java.beans.PropertyChangeEvent;
@@ -194,10 +194,12 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
       PropertyChangeEvent pce = new PropertyChangeEvent(this, type, oldValue, newValue);
       propertyChangeSupport.firePropertyChange(pce);
     } else if ("jmx.attribute.change".equals(type)) {
-      AttributeChangeNotification acn = (AttributeChangeNotification) notification;
-      PropertyChangeEvent pce = new PropertyChangeEvent(this, acn.getAttributeName(), acn.getOldValue(),
-                                                        acn.getNewValue());
-      propertyChangeSupport.firePropertyChange(pce);
+      if (notification instanceof AttributeChangeNotification) {
+        AttributeChangeNotification acn = (AttributeChangeNotification) notification;
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, acn.getAttributeName(), acn.getOldValue(),
+                                                          acn.getNewValue());
+        propertyChangeSupport.firePropertyChange(pce);
+      }
     }
   }
 
@@ -209,6 +211,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
 
   private void initPolledAttributes() {
     registerPolledAttribute(new PolledAttribute(getL1InfoBeanName(), POLLED_ATTR_CPU_USAGE));
+    registerPolledAttribute(new PolledAttribute(getL1InfoBeanName(), POLLED_ATTR_CPU_LOAD));
     registerPolledAttribute(new PolledAttribute(getL1InfoBeanName(), POLLED_ATTR_USED_MEMORY));
     registerPolledAttribute(new PolledAttribute(getL1InfoBeanName(), POLLED_ATTR_MAX_MEMORY));
     registerPolledAttribute(new PolledAttribute(getBeanName(), POLLED_ATTR_OBJECT_FLUSH_RATE));
@@ -219,7 +222,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
   }
 
   @Override
-  public synchronized void addPolledAttributeListener(String name, PolledAttributeListener listener) {
+  public void addPolledAttributeListener(String name, PolledAttributeListener listener) {
     super.addPolledAttributeListener(name, listener);
     clusterModel.addPolledAttributeListener(PollScope.CLIENTS, name, listener);
   }
@@ -308,7 +311,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
   }
 
   public void addNotificationListener(ObjectName on, NotificationListener listener) throws Exception {
-    safeRemoveNotificationListener(on, listener);
+    // safeRemoveNotificationListener(on, listener);
     cc.addNotificationListener(on, listener);
   }
 
@@ -326,6 +329,10 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
 
   public StatisticData[] getCpuUsage() {
     return getL1InfoBean().getCpuUsage();
+  }
+
+  public StatisticData getCpuLoad() {
+    return getL1InfoBean().getCpuLoad();
   }
 
   public long getTransactionRate() {

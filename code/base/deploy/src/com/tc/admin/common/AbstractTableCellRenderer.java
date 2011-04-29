@@ -5,6 +5,7 @@
 package com.tc.admin.common;
 
 import java.awt.Color;
+import java.lang.reflect.Method;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -66,6 +67,14 @@ public abstract class AbstractTableCellRenderer implements TableCellRenderer {
   public abstract JComponent getComponent();
 
   public void setValue(JTable table, int row, int col) {
+    try {
+      Method m = table.getClass().getMethod("convertRowIndexToModel", new Class[] { Integer.TYPE });
+      if (m != null) {
+        row = ((Integer) m.invoke(table, Integer.valueOf(row))).intValue();
+      }
+    } catch (Exception e) {/**/
+    }
+
     setValue(table.getModel().getValueAt(row, col));
   }
 

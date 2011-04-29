@@ -31,8 +31,9 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 public class RootsNode extends ComponentNode implements RootCreationListener, PropertyChangeListener {
-  protected IAdminClientContext       adminClientContext;
-  protected IClusterModel             clusterModel;
+  protected final IAdminClientContext adminClientContext;
+  protected final IClusterModel       clusterModel;
+
   protected IBasicObject[]            roots;
   protected ObjectBrowser             objectBrowserPanel;
   protected JPopupMenu                popupMenu;
@@ -68,15 +69,10 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
     nodeChanged();
   }
 
-  synchronized IClusterModel getClusterModel() {
-    return clusterModel;
-  }
-
   public void propertyChange(PropertyChangeEvent evt) {
     String prop = evt.getPropertyName();
     if (IClusterModelElement.PROP_READY.equals(prop)) {
-      IClusterModel theClusterModel = getClusterModel();
-      if (theClusterModel != null && theClusterModel.isReady()) {
+      if (clusterModel.isReady()) {
         SwingUtilities.invokeLater(new InitRunnable());
       }
     }
@@ -84,17 +80,11 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
 
   private class InitRunnable implements Runnable {
     public void run() {
-      IClusterModel theClusterModel = getClusterModel();
-      if (theClusterModel == null) { return; }
-
       init();
     }
   }
 
   private void init() {
-    IClusterModel theClusterModel = getClusterModel();
-    if (theClusterModel == null) { return; }
-
     roots = EMPTY_ROOTS;
     if (objectBrowserPanel != null) {
       objectBrowserPanel.clearModel();
@@ -106,17 +96,13 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
     private InitWorker() {
       super(new Callable<IBasicObject[]>() {
         public IBasicObject[] call() throws Exception {
-          IClusterModel theClusterModel = getClusterModel();
-          return theClusterModel != null ? theClusterModel.getRoots() : EMPTY_ROOTS;
+          return clusterModel.getRoots();
         }
       });
     }
 
     @Override
     protected void finished() {
-      IClusterModel theClusterModel = getClusterModel();
-      if (theClusterModel == null) { return; }
-
       Exception e = getException();
       if (e != null) {
         Throwable rootCause = ExceptionHelper.getRootCause(e);
@@ -135,7 +121,7 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
   }
 
   protected ObjectBrowser createObjectBrowserPanel() {
-    return new ObjectBrowser(adminClientContext, getClusterModel(), roots);
+    return new ObjectBrowser(adminClientContext, clusterModel, roots);
   }
 
   @Override
@@ -193,9 +179,6 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
 
     @Override
     protected void finished() {
-      IClusterModel theClusterModel = getClusterModel();
-      if (theClusterModel == null) { return; }
-
       Exception e = getException();
       if (e != null) {
         Throwable rootCause = ExceptionHelper.getRootCause(e);
@@ -239,27 +222,6 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
     }
   }
 
-  @Override
-  public void tearDown() {
-    clusterModel.removePropertyChangeListener(this);
-    clusterModel.removeRootCreationListener(this);
-
-    if (objectBrowserPanel != null) {
-      objectBrowserPanel.tearDown();
-      objectBrowserPanel = null;
-    }
-
-    synchronized (this) {
-      adminClientContext = null;
-      clusterModel = null;
-      roots = null;
-      popupMenu = null;
-      refreshAction = null;
-    }
-
-    super.tearDown();
-  }
-
   public void rootCreated(IBasicObject root) {
     SwingUtilities.invokeLater(new RootCreatedRunnable(root));
   }
@@ -282,5 +244,17 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
       adminClientContext.setStatus(adminClientContext.getMessage("dso.root.new") + root);
       updateLabel();
     }
+  }
+
+  @Override
+  public void tearDown() {
+    clusterModel.removePropertyChangeListener(this);
+    clusterModel.removeRootCreationListener(this);
+
+    if (objectBrowserPanel != null) {
+      objectBrowserPanel.tearDown();
+    }
+
+    super.tearDown();
   }
 }

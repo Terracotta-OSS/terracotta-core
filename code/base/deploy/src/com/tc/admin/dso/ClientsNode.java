@@ -5,7 +5,6 @@
 package com.tc.admin.dso;
 
 import com.tc.admin.AbstractClusterListener;
-import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.ComponentNode;
@@ -22,19 +21,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.SwingUtilities;
 
 public class ClientsNode extends ComponentNode implements ClientConnectionListener {
-  protected ApplicationContext   appContext;
-  protected IClusterModel        clusterModel;
-  protected ClusterListener      clusterListener;
-  protected ConnectionContext    cc;
-  protected IClient[]            clients;
-  protected ClientsPanel         clientsPanel;
+  protected final ApplicationContext appContext;
+  protected final IClusterModel      clusterModel;
+  protected final ClusterListener    clusterListener;
 
-  private static final IClient[] NULL_CLIENTS = {};
+  protected IClient[]                clients;
+  protected ClientsPanel             clientsPanel;
+
+  private static final IClient[]     NULL_CLIENTS = {};
 
   public ClientsNode(ApplicationContext appContext, IClusterModel clusterModel) {
     super();
@@ -48,11 +46,11 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
     }
   }
 
-  private synchronized IClusterModel getClusterModel() {
+  private IClusterModel getClusterModel() {
     return clusterModel;
   }
 
-  private synchronized IServer getActiveCoordinator() {
+  private IServer getActiveCoordinator() {
     IClusterModel theClusterModel = getClusterModel();
     return theClusterModel != null ? theClusterModel.getActiveCoordinator() : null;
   }
@@ -64,7 +62,6 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
 
     @Override
     protected void handleReady() {
-      if (tornDown.get()) { return; }
       if (clusterModel.isReady()) {
         init();
       } else {
@@ -74,7 +71,6 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
 
     @Override
     protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
-      if (tornDown.get()) { return; }
       if (oldActive != null) {
         oldActive.removeClientConnectionListener(ClientsNode.this);
       }
@@ -132,7 +128,6 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
 
     @Override
     protected void finished() {
-      if (tornDown.get()) { return; }
       Exception e = getException();
       if (e != null) {
         Throwable rootCause = ExceptionHelper.getRootCause(e);
@@ -180,9 +175,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
   }
 
   public void clientConnected(IClient client) {
-    if (!tornDown.get()) {
-      SwingUtilities.invokeLater(new ClientConnectedRunnable(client));
-    }
+    SwingUtilities.invokeLater(new ClientConnectedRunnable(client));
   }
 
   private class ClientConnectedRunnable implements Runnable {
@@ -200,7 +193,6 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
     }
 
     public void run() {
-      if (tornDown.get()) { return; }
       if (!haveClient(client)) {
         appContext.setStatus(appContext.getMessage("dso.client.retrieving"));
         List<IClient> list = new ArrayList(Arrays.asList(clients));
@@ -214,9 +206,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
   }
 
   public void clientDisconnected(IClient client) {
-    if (!tornDown.get()) {
-      SwingUtilities.invokeLater(new ClientDisconnectedRunnable(client));
-    }
+    SwingUtilities.invokeLater(new ClientDisconnectedRunnable(client));
   }
 
   private class ClientDisconnectedRunnable implements Runnable {
@@ -227,7 +217,6 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
     }
 
     public void run() {
-      if (tornDown.get()) { return; }
       appContext.setStatus(appContext.getMessage("dso.client.detaching"));
       ArrayList<IClient> list = new ArrayList<IClient>(Arrays.asList(clients));
       int nodeIndex = list.indexOf(client);
@@ -244,11 +233,9 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
     }
   }
 
-  private final AtomicBoolean tornDown = new AtomicBoolean(false);
-
   @Override
   public void tearDown() {
-    if (!tornDown.compareAndSet(false, true)) { return; }
+    clients = NULL_CLIENTS;
 
     IServer activeCoord = getActiveCoordinator();
     if (activeCoord != null) {
@@ -261,16 +248,6 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
       clientsPanel.tearDown();
     }
 
-    synchronized (this) {
-      appContext = null;
-      clusterModel = null;
-      clusterListener = null;
-      cc = null;
-      clients = null;
-      clientsPanel = null;
-    }
-
     super.tearDown();
   }
-
 }

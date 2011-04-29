@@ -20,7 +20,7 @@ import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IServer;
 import com.tc.admin.model.IServerGroup;
 import com.tc.object.LiteralValues;
-import com.tc.stats.DSOClassInfo;
+import com.tc.stats.api.DSOClassInfo;
 import com.terracottatech.config.InstrumentedClasses;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
@@ -39,9 +39,10 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 
 public class ClassesPanel extends XContainer {
-  private ApplicationContext          appContext;
-  private IClusterModel               clusterModel;
-  private ClusterListener             clusterListener;
+  private final ApplicationContext    appContext;
+  private final IClusterModel         clusterModel;
+  private final ClusterListener       clusterListener;
+
   private ClassesTable                table;
   private XTree                       tree;
   private ClassesTreeMap              treeMap;
@@ -137,20 +138,14 @@ public class ClassesPanel extends XContainer {
 
     @Override
     protected void handleUncaughtError(Exception e) {
-      if (appContext != null) {
-        appContext.log(e);
-      } else {
-        super.handleUncaughtError(e);
-      }
+      appContext.log(e);
     }
   }
 
   private void init() {
-    if (appContext != null) {
-      removeAll();
-      add(mainPanel);
-      appContext.execute(new InitWorker());
-    }
+    removeAll();
+    add(mainPanel);
+    appContext.execute(new InitWorker());
   }
 
   private class InitWorker extends BasicWorker<DSOClassInfo[]> {
@@ -175,65 +170,58 @@ public class ClassesPanel extends XContainer {
     }
   }
 
-  private synchronized IClusterModel getClusterModel() {
-    return clusterModel;
-  }
-
   private DSOClassInfo[] getClassInfos() {
     Map<String, Integer> map = new HashMap<String, Integer>();
-    IClusterModel theClusterModel = getClusterModel();
 
-    if (theClusterModel != null) {
-      for (IServerGroup group : theClusterModel.getServerGroups()) {
-        IServer server = group.getActiveServer();
+    for (IServerGroup group : clusterModel.getServerGroups()) {
+      IServer server = group.getActiveServer();
 
-        if (server != null) {
-          DSOClassInfo[] classInfo = server.getClassInfo();
-          if (classInfo != null) {
-            for (DSOClassInfo info : classInfo) {
-              String className = info.getClassName();
-              if (className.startsWith("com.tcclient")) {
-                continue;
-              }
-              if (className.startsWith("[")) {
-                int i = 0;
-                while (className.charAt(i) == '[') {
-                  i++;
-                }
-                if (className.charAt(i) == 'L') {
-                  className = className.substring(i + 1, className.length() - 1);
-                } else {
-                  switch (className.charAt(i)) {
-                    case 'Z':
-                      className = "boolean";
-                      break;
-                    case 'I':
-                      className = "int";
-                      break;
-                    case 'F':
-                      className = "float";
-                      break;
-                    case 'C':
-                      className = "char";
-                      break;
-                    case 'D':
-                      className = "double";
-                      break;
-                    case 'B':
-                      className = "byte";
-                      break;
-                  }
-                }
-                StringBuffer sb = new StringBuffer(className);
-                for (int j = 0; j < i; j++) {
-                  sb.append("[]");
-                }
-                className = sb.toString();
-              }
-              Integer instanceCount = map.get(className);
-              int currentCount = instanceCount != null ? instanceCount.intValue() : 0;
-              map.put(className, Integer.valueOf(info.getInstanceCount() + currentCount));
+      if (server != null) {
+        DSOClassInfo[] classInfo = server.getClassInfo();
+        if (classInfo != null) {
+          for (DSOClassInfo info : classInfo) {
+            String className = info.getClassName();
+            if (className.startsWith("com.tcclient")) {
+              continue;
             }
+            if (className.startsWith("[")) {
+              int i = 0;
+              while (className.charAt(i) == '[') {
+                i++;
+              }
+              if (className.charAt(i) == 'L') {
+                className = className.substring(i + 1, className.length() - 1);
+              } else {
+                switch (className.charAt(i)) {
+                  case 'Z':
+                    className = "boolean";
+                    break;
+                  case 'I':
+                    className = "int";
+                    break;
+                  case 'F':
+                    className = "float";
+                    break;
+                  case 'C':
+                    className = "char";
+                    break;
+                  case 'D':
+                    className = "double";
+                    break;
+                  case 'B':
+                    className = "byte";
+                    break;
+                }
+              }
+              StringBuffer sb = new StringBuffer(className);
+              for (int j = 0; j < i; j++) {
+                sb.append("[]");
+              }
+              className = sb.toString();
+            }
+            Integer instanceCount = map.get(className);
+            int currentCount = instanceCount != null ? instanceCount.intValue() : 0;
+            map.put(className, Integer.valueOf(info.getInstanceCount() + currentCount));
           }
         }
       }
@@ -296,17 +284,6 @@ public class ClassesPanel extends XContainer {
   @Override
   public void tearDown() {
     clusterModel.removePropertyChangeListener(clusterListener);
-
     super.tearDown();
-
-    synchronized (this) {
-      appContext = null;
-      clusterModel = null;
-      clusterListener = null;
-      table = null;
-      tree = null;
-      treeMap = null;
-      configText = null;
-    }
   }
 }

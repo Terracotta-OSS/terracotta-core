@@ -97,4 +97,24 @@ public class XSplitPane extends JSplitPane implements PropertyChangeListener {
     }
     super.doLayout();
   }
+
+  private void tearDown(Component c) {
+    if (c instanceof XContainer) {
+      ((XContainer) c).tearDown();
+    } else if (c instanceof XSplitPane) {
+      ((XSplitPane) c).tearDown();
+    }
+  }
+
+  public void tearDown() {
+    Component left = getLeftComponent();
+    if (left != null) {
+      tearDown(left);
+    }
+    Component right = getRightComponent();
+    if (right != null) {
+      tearDown(right);
+    }
+    removeAll();
+  }
 }

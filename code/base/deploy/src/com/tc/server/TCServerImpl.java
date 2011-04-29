@@ -34,14 +34,13 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.state.StateManager;
 import com.tc.lang.StartupHelper;
+import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
-import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.license.LicenseManager;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.L2State;
 import com.tc.management.beans.TCServerInfo;
 import com.tc.net.GroupID;
@@ -49,21 +48,12 @@ import com.tc.net.OrderedGroupIDs;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
-import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.core.impl.ServerManagementContext;
-import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
-import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.servlets.L1ReconnectPropertiesServlet;
-import com.tc.statistics.StatisticsGathererSubSystem;
-import com.tc.statistics.beans.StatisticsMBeanNames;
-import com.tc.statistics.beans.impl.StatisticsLocalGathererMBeanImpl;
-import com.tc.stats.DSO;
-import com.tc.stats.DSOMBean;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 import com.terracottatech.config.Offheap;
@@ -76,11 +66,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.NotCompliantMBeanException;
 
 public class TCServerImpl extends SEDA implements TCServer {
 
@@ -106,7 +91,6 @@ public class TCServerImpl extends SEDA implements TCServer {
   protected DistributedObjectServer         dsoServer;
   private Server                            httpServer;
   private TerracottaConnector               terracottaConnector;
-  private StatisticsGathererSubSystem       statisticsGathererSubSystem;
 
   private final Object                      stateLock                                    = new Object();
   private final L2State                     state                                        = new L2State();
@@ -134,13 +118,6 @@ public class TCServerImpl extends SEDA implements TCServer {
     Assert.assertNotNull(manager);
     validateEnterpriseFeatures(manager);
     this.configurationSetupManager = manager;
-
-    this.statisticsGathererSubSystem = new StatisticsGathererSubSystem();
-    if (!this.statisticsGathererSubSystem.setup(manager.commonl2Config())) {
-      notifyShutdown();
-      System.exit(1);
-    }
-
   }
 
   private void validateEnterpriseFeatures(final L2ConfigurationSetupManager manager) {
@@ -358,16 +335,6 @@ public class TCServerImpl extends SEDA implements TCServer {
       consoleLogger.debug("Stopping TC server...");
     }
 
-    if (this.statisticsGathererSubSystem != null) {
-      try {
-        this.statisticsGathererSubSystem.cleanup();
-      } catch (Exception e) {
-        logger.error("Error shutting down statistics gatherer", e);
-      } finally {
-        this.statisticsGathererSubSystem = null;
-      }
-    }
-
     if (this.terracottaConnector != null) {
       try {
         this.terracottaConnector.shutdown();
@@ -426,15 +393,16 @@ public class TCServerImpl extends SEDA implements TCServer {
       }
 
       TCServerImpl.this.terracottaConnector = new TerracottaConnector();
-      startHTTPServer(commonL2Config, TCServerImpl.this.terracottaConnector);
-
       Stage stage = getStageManager().createStage("dso-http-bridge",
                                                   new HttpConnectionHandler(TCServerImpl.this.terracottaConnector), 1,
                                                   100);
-      stage.start(new NullContext(getStageManager()));
 
       // the following code starts the jmx server as well
       startDSOServer(stage.getSink());
+
+      startHTTPServer(commonL2Config, TCServerImpl.this.terracottaConnector);
+
+      stage.start(new NullContext(getStageManager()));
 
       if (isActive()) {
         updateActivateTime();
@@ -471,18 +439,22 @@ public class TCServerImpl extends SEDA implements TCServer {
   private void startDSOServer(final Sink httpSink) throws Exception {
     Assert.assertTrue(this.state.isStartState());
     TCProperties tcProps = TCPropertiesImpl.getProperties();
-    ObjectStatsRecorder objectStatsRecorder = new ObjectStatsRecorder(tcProps
-        .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED), tcProps
-        .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_REQUEST_LOGGING_ENABLED), tcProps
-        .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_FLUSH_LOGGING_ENABLED), tcProps
-        .getBoolean(TCPropertiesConsts.L2_TRANSACTIONMANAGER_LOGGING_PRINT_BROADCAST_STATS), tcProps
-        .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED));
+    ObjectStatsRecorder objectStatsRecorder = new ObjectStatsRecorder(
+                                                                      tcProps
+                                                                          .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED),
+                                                                      tcProps
+                                                                          .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_REQUEST_LOGGING_ENABLED),
+                                                                      tcProps
+                                                                          .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_FLUSH_LOGGING_ENABLED),
+                                                                      tcProps
+                                                                          .getBoolean(TCPropertiesConsts.L2_TRANSACTIONMANAGER_LOGGING_PRINT_BROADCAST_STATS),
+                                                                      tcProps
+                                                                          .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED));
 
     this.dsoServer = createDistributedObjectServer(this.configurationSetupManager, this.connectionPolicy, httpSink,
                                                    new TCServerInfo(this, this.state, objectStatsRecorder),
                                                    objectStatsRecorder, this.state, this);
     this.dsoServer.start();
-    registerDSOServer();
   }
 
   protected DistributedObjectServer createDistributedObjectServer(L2ConfigurationSetupManager configSetupManager,
@@ -528,7 +500,8 @@ public class TCServerImpl extends SEDA implements TCServer {
     final boolean cvtRestEnabled = TCPropertiesImpl.getProperties()
         .getBoolean(TCPropertiesConsts.CVT_REST_INTERFACE_ENABLED, true);
     if (cvtRestEnabled) {
-      context.setAttribute(StatisticsGathererServlet.GATHERER_ATTRIBUTE, this.statisticsGathererSubSystem);
+      context.setAttribute(StatisticsGathererServlet.GATHERER_ATTRIBUTE,
+                           this.dsoServer.getStatisticsGathererSubsystem());
     }
 
     ServletHandler servletHandler = new ServletHandler();
@@ -607,34 +580,6 @@ public class TCServerImpl extends SEDA implements TCServer {
     if (this.dsoServer != null) {
       this.dsoServer.dump();
     }
-  }
-
-  private void registerDSOServer() throws InstanceAlreadyExistsException, MBeanRegistrationException,
-      NotCompliantMBeanException, NullPointerException {
-
-    ServerManagementContext mgmtContext = this.dsoServer.getManagementContext();
-    ServerConfigurationContext configContext = this.dsoServer.getContext();
-    MBeanServer mBeanServer = this.dsoServer.getMBeanServer();
-    registerDSOMBeans(mgmtContext, configContext, mBeanServer);
-    mBeanServer.registerMBean(mgmtContext.getDSOAppEventsMBean(), L2MBeanNames.DSO_APP_EVENTS);
-    StatisticsLocalGathererMBeanImpl local_gatherer = new StatisticsLocalGathererMBeanImpl(
-                                                                                           this.statisticsGathererSubSystem,
-                                                                                           this.configurationSetupManager
-                                                                                               .commonl2Config(),
-                                                                                           this.configurationSetupManager
-                                                                                               .dsoL2Config());
-    mBeanServer.registerMBean(local_gatherer, StatisticsMBeanNames.STATISTICS_GATHERER);
-  }
-
-  protected void registerDSOMBeans(ServerManagementContext mgmtContext, ServerConfigurationContext configContext,
-                                   MBeanServer mBeanServer) throws NotCompliantMBeanException,
-      InstanceAlreadyExistsException, MBeanRegistrationException {
-    GCStatsEventPublisher gcStatsPublisher = this.dsoServer.getGcStatsEventPublisher();
-    TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider = this.dsoServer
-        .getOperatorEventsHistoryProvider();
-    DSOMBean dso = new DSO(mgmtContext, configContext, mBeanServer, gcStatsPublisher, operatorEventHistoryProvider,
-                           this.dsoServer.getOffheapStats());
-    mBeanServer.registerMBean(dso, L2MBeanNames.DSO);
   }
 
   // TODO: check that this is not needed then remove

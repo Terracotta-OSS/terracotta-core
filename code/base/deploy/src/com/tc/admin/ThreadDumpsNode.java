@@ -10,10 +10,11 @@ import com.tc.admin.model.IClusterModel;
 import java.awt.Component;
 
 public class ThreadDumpsNode extends ComponentNode {
-  protected IAdminClientContext       adminClientContext;
-  protected IClusterModel             clusterModel;
-  protected ClusterThreadDumpProvider threadDumpProvider;
-  protected ThreadDumpsPanel          threadDumpsPanel;
+  protected final IAdminClientContext       adminClientContext;
+  protected final IClusterModel             clusterModel;
+  protected final ClusterThreadDumpProvider threadDumpProvider;
+
+  protected ThreadDumpsPanel                threadDumpsPanel;
 
   public ThreadDumpsNode(IAdminClientContext adminClientContext, IClusterModel clusterModel,
                          ClusterThreadDumpProvider threadDumpProvider) {
@@ -40,16 +41,9 @@ public class ThreadDumpsNode extends ComponentNode {
 
   @Override
   public void tearDown() {
-    super.tearDown();
-
-    synchronized (this) {
-      adminClientContext = null;
-      clusterModel = null;
-      threadDumpProvider = null;
-      if (threadDumpsPanel != null) {
-        threadDumpsPanel.tearDown();
-        threadDumpsPanel = null;
-      }
+    if (threadDumpsPanel != null) {
+      threadDumpsPanel.tearDown();
     }
+    super.tearDown();
   }
 }

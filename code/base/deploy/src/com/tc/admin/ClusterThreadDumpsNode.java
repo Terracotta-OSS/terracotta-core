@@ -10,14 +10,17 @@ import com.tc.admin.common.ComponentNode;
 import java.awt.Component;
 
 public class ClusterThreadDumpsNode extends ComponentNode {
-  private ApplicationContext          appContext;
-  protected ClusterThreadDumpProvider threadDumpProvider;
-  protected ClusterThreadDumpsPanel   clusterThreadDumpsPanel;
+  protected final ApplicationContext        appContext;
+  protected final ClusterThreadDumpProvider threadDumpProvider;
+
+  protected ClusterThreadDumpsPanel         clusterThreadDumpsPanel;
 
   public ClusterThreadDumpsNode(ApplicationContext appContext, ClusterThreadDumpProvider threadDumpProvider) {
     super();
+
     this.appContext = appContext;
     this.threadDumpProvider = threadDumpProvider;
+
     setLabel(appContext.getString("cluster.thread.dumps"));
     setIcon(ServerHelper.getHelper().getThreadDumpsIcon());
   }
@@ -26,6 +29,7 @@ public class ClusterThreadDumpsNode extends ComponentNode {
     return new ClusterThreadDumpsPanel(appContext, threadDumpProvider);
   }
 
+  @Override
   public Component getComponent() {
     if (clusterThreadDumpsPanel == null) {
       clusterThreadDumpsPanel = createClusterThreadDumpsPanel();
@@ -37,10 +41,10 @@ public class ClusterThreadDumpsNode extends ComponentNode {
     return threadDumpProvider.takeThreadDump();
   }
 
+  @Override
   public void tearDown() {
     if (clusterThreadDumpsPanel != null) {
       clusterThreadDumpsPanel.tearDown();
-      clusterThreadDumpsPanel = null;
     }
     super.tearDown();
   }

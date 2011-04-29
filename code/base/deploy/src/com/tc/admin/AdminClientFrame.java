@@ -111,4 +111,12 @@ public class AdminClientFrame extends XFrame implements AdminClientController {
   public void showOptions() {
     mainPanel.showOptions();
   }
+
+  public void activeFeatureAdded(String name) {
+    mainPanel.activeFeatureAdded(name);
+  }
+
+  public void activeFeatureRemoved(String name) {
+    mainPanel.activeFeatureRemoved(name);
+  }
 }

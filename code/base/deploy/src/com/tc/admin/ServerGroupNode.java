@@ -12,10 +12,11 @@ import com.tc.admin.model.IServerGroup;
 import java.awt.Component;
 
 public class ServerGroupNode extends ClusterElementNode {
-  protected ApplicationContext appContext;
-  protected IClusterModel      clusterModel;
-  protected IServerGroup       serverGroup;
-  protected ServersPanel       serverGroupPanel;
+  protected final ApplicationContext appContext;
+  protected final IClusterModel      clusterModel;
+  protected final IServerGroup       serverGroup;
+
+  protected ServersPanel             serverGroupPanel;
 
   public ServerGroupNode(ApplicationContext appContext, IClusterModel clusterModel, IServerGroup serverGroup) {
     super(serverGroup);
@@ -41,13 +42,5 @@ public class ServerGroupNode extends ClusterElementNode {
       serverGroupPanel = createServerGroupPanel();
     }
     return serverGroupPanel;
-  }
-
-  @Override
-  public void tearDown() {
-    super.tearDown();
-    appContext = null;
-    serverGroup = null;
-    serverGroupPanel = null;
   }
 }

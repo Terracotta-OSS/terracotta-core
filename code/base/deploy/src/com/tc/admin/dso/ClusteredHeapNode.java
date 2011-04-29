@@ -21,9 +21,10 @@ import javax.swing.text.Element;
 import javax.swing.text.html.HTML;
 
 public class ClusteredHeapNode extends ComponentNode implements HyperlinkListener {
-  protected IAdminClientContext adminClientContext;
-  protected IClusterModel       clusterModel;
-  protected XScrollPane         clusteredHeapPanel;
+  protected final IAdminClientContext adminClientContext;
+  protected final IClusterModel       clusterModel;
+
+  protected XScrollPane               clusteredHeapPanel;
 
   public ClusteredHeapNode(IAdminClientContext adminClientContext, IClusterModel clusterModel) {
     super(adminClientContext.getString("dso.heap"));
@@ -36,15 +37,11 @@ public class ClusteredHeapNode extends ComponentNode implements HyperlinkListene
   }
 
   protected RootsNode createRootsNode() {
-    return new RootsNode(adminClientContext, getClusterModel());
+    return new RootsNode(adminClientContext, clusterModel);
   }
 
   protected ClassesNode createClassesNode() {
-    return new ClassesNode(adminClientContext, getClusterModel());
-  }
-
-  synchronized IClusterModel getClusterModel() {
-    return clusterModel;
+    return new ClassesNode(adminClientContext, clusterModel);
   }
 
   @Override
@@ -84,12 +81,10 @@ public class ClusteredHeapNode extends ComponentNode implements HyperlinkListene
 
   @Override
   public void tearDown() {
-    super.tearDown();
-
-    synchronized (this) {
-      adminClientContext = null;
-      clusterModel = null;
-      clusteredHeapPanel = null;
+    if (clusteredHeapPanel != null) {
+      XTextPane textPane = (XTextPane) clusteredHeapPanel.getViewport().getView();
+      textPane.removeHyperlinkListener(this);
     }
+    super.tearDown();
   }
 }

@@ -47,19 +47,16 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.BorderFactory;
 import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 
 public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel implements DGCListener {
-  private IClusterModel            clusterModel;
+  private final IClusterModel      clusterModel;
   private ClusterListener          clusterListener;
 
   private TimeSeries               clientFlushRateSeries;
@@ -98,19 +95,20 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   protected final String           lockRecallRateLabelFormat   = "{0} Recalls/sec.";
   protected final String           broadcastRateLabelFormat    = "{0} Broadcasts/sec.";
 
-  private static final Set<String> POLLED_ATTRIBUTE_SET        = new HashSet(Arrays
-                                                                   .asList(POLLED_ATTR_OBJECT_FLUSH_RATE,
-                                                                           POLLED_ATTR_OBJECT_FAULT_RATE,
-                                                                           POLLED_ATTR_TRANSACTION_RATE,
-                                                                           POLLED_ATTR_ONHEAP_FAULT_RATE,
-                                                                           POLLED_ATTR_ONHEAP_FLUSH_RATE,
-                                                                           POLLED_ATTR_OFFHEAP_FAULT_RATE,
-                                                                           POLLED_ATTR_OFFHEAP_FLUSH_RATE,
-                                                                           POLLED_ATTR_LIVE_OBJECT_COUNT,
-                                                                           POLLED_ATTR_LOCK_RECALL_RATE,
-                                                                           POLLED_ATTR_BROADCAST_RATE,
-                                                                           POLLED_ATTR_CACHED_OBJECT_COUNT,
-                                                                           POLLED_ATTR_OFFHEAP_OBJECT_CACHED_COUNT));
+  private static final Set<String> POLLED_ATTRIBUTE_SET        = new HashSet(
+                                                                             Arrays
+                                                                                 .asList(POLLED_ATTR_OBJECT_FLUSH_RATE,
+                                                                                         POLLED_ATTR_OBJECT_FAULT_RATE,
+                                                                                         POLLED_ATTR_TRANSACTION_RATE,
+                                                                                         POLLED_ATTR_ONHEAP_FAULT_RATE,
+                                                                                         POLLED_ATTR_ONHEAP_FLUSH_RATE,
+                                                                                         POLLED_ATTR_OFFHEAP_FAULT_RATE,
+                                                                                         POLLED_ATTR_OFFHEAP_FLUSH_RATE,
+                                                                                         POLLED_ATTR_LIVE_OBJECT_COUNT,
+                                                                                         POLLED_ATTR_LOCK_RECALL_RATE,
+                                                                                         POLLED_ATTR_BROADCAST_RATE,
+                                                                                         POLLED_ATTR_CACHED_OBJECT_COUNT,
+                                                                                         POLLED_ATTR_OFFHEAP_OBJECT_CACHED_COUNT));
 
   public AggregateServerRuntimeStatsPanel(ApplicationContext appContext, IClusterModel clusterModel) {
     super(appContext);
@@ -144,9 +142,6 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
 
     @Override
     public void handleReady() {
-      IClusterModel theClusterModel = super.getClusterModel();
-      if (theClusterModel == null) { return; }
-
       if (clusterModel.isReady()) {
         startMonitoringRuntimeStats();
       } else {
@@ -164,22 +159,12 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
     }
   }
 
-  synchronized IClusterModel getClusterModel() {
-    return clusterModel;
-  }
-
   private void addPolledAttributeListener() {
-    IClusterModel theClusterModel = getClusterModel();
-    if (theClusterModel != null) {
-      theClusterModel.addPolledAttributeListener(ACTIVE_SERVERS, POLLED_ATTRIBUTE_SET, this);
-    }
+    clusterModel.addPolledAttributeListener(ACTIVE_SERVERS, POLLED_ATTRIBUTE_SET, this);
   }
 
   private void removePolledAttributeListener() {
-    IClusterModel theClusterModel = getClusterModel();
-    if (theClusterModel != null) {
-      theClusterModel.removePolledAttributeListener(ACTIVE_SERVERS, POLLED_ATTRIBUTE_SET, this);
-    }
+    clusterModel.removePolledAttributeListener(ACTIVE_SERVERS, POLLED_ATTRIBUTE_SET, this);
   }
 
   @Override
@@ -198,163 +183,154 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
 
   @Override
   public void attributesPolled(final PolledAttributesResult result) {
-    IClusterModel theClusterModel = getClusterModel();
-    if (theClusterModel != null) {
-      handleDSOStats(result);
-    }
+    handleDSOStats(result);
   }
 
   private Object getPolledAttribute(PolledAttributesResult par, IServer server, String attr) {
     return par.getPolledAttribute(server, attr);
   }
 
-  private synchronized void handleDSOStats(PolledAttributesResult result) {
-    IClusterModel theClusterModel = getClusterModel();
-    if (theClusterModel != null) {
-      tmpDate.setTime(System.currentTimeMillis());
+  private void handleDSOStats(PolledAttributesResult result) {
+    tmpDate.setTime(System.currentTimeMillis());
 
-      long flush = 0;
-      long fault = 0;
-      long txn = 0;
-      long onHeapFaultRate = 0;
-      long onHeapFlushRate = 0;
-      long offHeapFaultRate = 0;
-      long offHeapFlushRate = 0;
-      long liveObjectCount = 0;
-      long cachedObjectCount = 0;
-      long offHeapObjectCount = 0;
-      long lockRecallRate = 0;
-      long broadcastRate = 0;
-      Number n;
+    long flush = 0;
+    long fault = 0;
+    long txn = 0;
+    long onHeapFaultRate = 0;
+    long onHeapFlushRate = 0;
+    long offHeapFaultRate = 0;
+    long offHeapFlushRate = 0;
+    long liveObjectCount = 0;
+    long cachedObjectCount = 0;
+    long offHeapObjectCount = 0;
+    long lockRecallRate = 0;
+    long broadcastRate = 0;
+    Number n;
 
-      for (IServerGroup group : theClusterModel.getServerGroups()) {
-        IServer theServer = group.getActiveServer();
-        if (theServer != null && theServer.isReady()) {
-          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OBJECT_FLUSH_RATE);
-          if (n != null && flush >= 0) {
-            flush += n.longValue();
-          }
-          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OBJECT_FAULT_RATE);
-          if (n != null && fault >= 0) {
-            fault += n.longValue();
-          }
-          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_TRANSACTION_RATE);
-          if (n != null && txn >= 0) {
-            txn += n.longValue();
-          }
-          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_ONHEAP_FAULT_RATE);
-          if (n != null && onHeapFaultRate >= 0) {
-            onHeapFaultRate += n.longValue();
-          }
-          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_ONHEAP_FLUSH_RATE);
-          if (n != null && onHeapFlushRate >= 0) {
-            onHeapFlushRate += n.longValue();
-          }
-          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OFFHEAP_FAULT_RATE);
-          if (n != null && offHeapFaultRate >= 0) {
-            offHeapFaultRate += n.longValue();
-          }
-          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OFFHEAP_FLUSH_RATE);
-          if (n != null && offHeapFlushRate >= 0) {
-            offHeapFlushRate += n.longValue();
-          }
-          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_LIVE_OBJECT_COUNT);
-          if (n != null && liveObjectCount >= 0) {
-            liveObjectCount += n.longValue();
-          }
-          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_CACHED_OBJECT_COUNT);
-          if (n != null && cachedObjectCount >= 0) {
-            cachedObjectCount += n.longValue();
-          }
-          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OFFHEAP_OBJECT_CACHED_COUNT);
-          if (n != null && offHeapObjectCount >= 0) {
-            offHeapObjectCount += n.longValue();
-          }
-          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_LOCK_RECALL_RATE);
-          if (n != null && lockRecallRate >= 0) {
-            lockRecallRate += n.longValue();
-          }
-          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_BROADCAST_RATE);
-          if (n != null && broadcastRate >= 0) {
-            broadcastRate += n.longValue();
-          }
+    for (IServerGroup group : clusterModel.getServerGroups()) {
+      IServer theServer = group.getActiveServer();
+      if (theServer != null && theServer.isReady()) {
+        n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OBJECT_FLUSH_RATE);
+        if (n != null) {
+          flush += n.longValue();
+        }
+        n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OBJECT_FAULT_RATE);
+        if (n != null) {
+          fault += n.longValue();
+        }
+        n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_TRANSACTION_RATE);
+        if (n != null) {
+          txn += n.longValue();
+        }
+        n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_ONHEAP_FAULT_RATE);
+        if (n != null) {
+          onHeapFaultRate += n.longValue();
+        }
+        n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_ONHEAP_FLUSH_RATE);
+        if (n != null) {
+          onHeapFlushRate += n.longValue();
+        }
+        n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OFFHEAP_FAULT_RATE);
+        if (n != null) {
+          offHeapFaultRate += n.longValue();
+        }
+        n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OFFHEAP_FLUSH_RATE);
+        if (n != null) {
+          offHeapFlushRate += n.longValue();
+        }
+        n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_LIVE_OBJECT_COUNT);
+        if (n != null) {
+          liveObjectCount += n.longValue();
+        }
+        n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_CACHED_OBJECT_COUNT);
+        if (n != null) {
+          cachedObjectCount += n.longValue();
+        }
+        n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OFFHEAP_OBJECT_CACHED_COUNT);
+        if (n != null) {
+          offHeapObjectCount += n.longValue();
+        }
+        n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_LOCK_RECALL_RATE);
+        if (n != null) {
+          lockRecallRate += n.longValue();
+        }
+        n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_BROADCAST_RATE);
+        if (n != null) {
+          broadcastRate += n.longValue();
         }
       }
-
-      final long theFlush = flush;
-      final long theFault = fault;
-      final long theTxn = txn;
-      final long theOnHeapFaultRate = onHeapFaultRate;
-      final long theOnHeapFlushRate = onHeapFlushRate;
-      final long theOffHeapFaultRate = offHeapFaultRate;
-      final long theOffHeapFlushRate = offHeapFlushRate;
-      final long theLiveObjectCount = liveObjectCount;
-      final long theCachedObjectCount = cachedObjectCount;
-      final long theOffHeapObjectCount = offHeapObjectCount;
-      final long theLockRecallRate = lockRecallRate;
-      final long theBroadcastRate = broadcastRate;
-
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          {
-            updateSeries(clientFlushRateSeries, Long.valueOf(theFlush));
-            clientFlushRateLabel.setText(MessageFormat.format(clientFlushRateLabelFormat, convert(theFlush)));
-          }
-          {
-            updateSeries(clientFaultRateSeries, Long.valueOf(theFault));
-            clientFaultRateLabel.setText(MessageFormat.format(clientFaultRateLabelFormat, convert(theFault)));
-          }
-          {
-            updateSeries(txnRateSeries, Long.valueOf(theTxn));
-            txnRateLabel.setText(MessageFormat.format(txnRateLabelFormat, convert(theTxn)));
-          }
-          {
-            updateSeries(onHeapFaultRateSeries, Long.valueOf(theOnHeapFaultRate));
-            onHeapFaultRateLabel.setText(MessageFormat.format(onHeapFaultRateLabelFormat, convert(theOnHeapFaultRate)));
-          }
-          {
-            updateSeries(onHeapFlushRateSeries, Long.valueOf(theOnHeapFlushRate));
-            onHeapFlushRateLabel.setText(MessageFormat.format(onHeapFlushRateLabelFormat, convert(theOnHeapFlushRate)));
-          }
-          {
-            updateSeries(offHeapFaultRateSeries, Long.valueOf(theOffHeapFaultRate));
-            offHeapFaultRateLabel.setText(MessageFormat.format(offHeapFaultRateLabelFormat,
-                                                               convert(theOffHeapFaultRate)));
-          }
-          {
-            updateSeries(offHeapFlushRateSeries, Long.valueOf(theOffHeapFlushRate));
-            offHeapFlushRateLabel.setText(MessageFormat.format(offHeapFlushRateLabelFormat,
-                                                               convert(theOffHeapFlushRate)));
-          }
-          {
-            updateSeries(liveObjectCountSeries, Long.valueOf(theLiveObjectCount));
-            String cached = convert(theCachedObjectCount);
-            String offHeap = theOffHeapObjectCount != -1 ? convert(theOffHeapObjectCount) : "n/a";
-            String live = convert(theLiveObjectCount);
-            objectManagerTitle.setTitle(MessageFormat.format(objectManagerTitlePattern, cached, offHeap, live));
-          }
-          {
-            updateSeries(cachedObjectCountSeries, Long.valueOf(theCachedObjectCount));
-          }
-          {
-            updateSeries(offHeapObjectCountSeries, Long.valueOf(theOffHeapObjectCount));
-          }
-          {
-            updateSeries(lockRecallRateSeries, Long.valueOf(theLockRecallRate));
-            lockRecallRateLabel.setText(MessageFormat.format(lockRecallRateLabelFormat, convert(theLockRecallRate)));
-          }
-          {
-            updateSeries(broadcastRateSeries, Long.valueOf(theBroadcastRate));
-            broadcastRateLabel.setText(MessageFormat.format(broadcastRateLabelFormat, convert(theBroadcastRate)));
-          }
-        }
-      });
     }
+
+    final long theFlush = flush;
+    final long theFault = fault;
+    final long theTxn = txn;
+    final long theOnHeapFaultRate = onHeapFaultRate;
+    final long theOnHeapFlushRate = onHeapFlushRate;
+    final long theOffHeapFaultRate = offHeapFaultRate;
+    final long theOffHeapFlushRate = offHeapFlushRate;
+    final long theLiveObjectCount = liveObjectCount;
+    final long theCachedObjectCount = cachedObjectCount;
+    final long theOffHeapObjectCount = offHeapObjectCount;
+    final long theLockRecallRate = lockRecallRate;
+    final long theBroadcastRate = broadcastRate;
+
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        {
+          updateSeries(clientFlushRateSeries, Long.valueOf(theFlush));
+          clientFlushRateLabel.setText(MessageFormat.format(clientFlushRateLabelFormat, convert(theFlush)));
+        }
+        {
+          updateSeries(clientFaultRateSeries, Long.valueOf(theFault));
+          clientFaultRateLabel.setText(MessageFormat.format(clientFaultRateLabelFormat, convert(theFault)));
+        }
+        {
+          updateSeries(txnRateSeries, Long.valueOf(theTxn));
+          txnRateLabel.setText(MessageFormat.format(txnRateLabelFormat, convert(theTxn)));
+        }
+        {
+          updateSeries(onHeapFaultRateSeries, Long.valueOf(theOnHeapFaultRate));
+          onHeapFaultRateLabel.setText(MessageFormat.format(onHeapFaultRateLabelFormat, convert(theOnHeapFaultRate)));
+        }
+        {
+          updateSeries(onHeapFlushRateSeries, Long.valueOf(theOnHeapFlushRate));
+          onHeapFlushRateLabel.setText(MessageFormat.format(onHeapFlushRateLabelFormat, convert(theOnHeapFlushRate)));
+        }
+        {
+          updateSeries(offHeapFaultRateSeries, Long.valueOf(theOffHeapFaultRate));
+          offHeapFaultRateLabel.setText(MessageFormat.format(offHeapFaultRateLabelFormat, convert(theOffHeapFaultRate)));
+        }
+        {
+          updateSeries(offHeapFlushRateSeries, Long.valueOf(theOffHeapFlushRate));
+          offHeapFlushRateLabel.setText(MessageFormat.format(offHeapFlushRateLabelFormat, convert(theOffHeapFlushRate)));
+        }
+        {
+          updateSeries(liveObjectCountSeries, Long.valueOf(theLiveObjectCount));
+          String cached = convert(theCachedObjectCount);
+          String offHeap = theOffHeapObjectCount != -1 ? convert(theOffHeapObjectCount) : "n/a";
+          String live = convert(theLiveObjectCount);
+          objectManagerTitle.setTitle(MessageFormat.format(objectManagerTitlePattern, cached, offHeap, live));
+        }
+        {
+          updateSeries(cachedObjectCountSeries, Long.valueOf(theCachedObjectCount));
+        }
+        {
+          updateSeries(offHeapObjectCountSeries, Long.valueOf(theOffHeapObjectCount));
+        }
+        {
+          updateSeries(lockRecallRateSeries, Long.valueOf(theLockRecallRate));
+          lockRecallRateLabel.setText(MessageFormat.format(lockRecallRateLabelFormat, convert(theLockRecallRate)));
+        }
+        {
+          updateSeries(broadcastRateSeries, Long.valueOf(theBroadcastRate));
+          broadcastRateLabel.setText(MessageFormat.format(broadcastRateLabelFormat, convert(theBroadcastRate)));
+        }
+      }
+    });
   }
 
   @Override
-  protected synchronized void setup(XContainer chartsPanel) {
-
+  protected void setup(XContainer chartsPanel) {
     chartsPanel.setLayout(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.gridx = gbc.gridy = 0;
@@ -394,8 +370,8 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
     chartPanel.setBorder(objectManagerTitle);
     chartPanel.setToolTipText("Cached/OffHeap/Total instance counts");
     liveObjectCountPlot = (XYPlot) chart.getPlot();
-    XYAreaRenderer areaRenderer2 = new XYAreaRenderer(XYAreaRenderer.AREA, StandardXYToolTipGenerator
-        .getTimeSeriesInstance(), null);
+    XYAreaRenderer areaRenderer2 = new XYAreaRenderer(XYAreaRenderer.AREA,
+                                                      StandardXYToolTipGenerator.getTimeSeriesInstance(), null);
     liveObjectCountPlot.setRenderer(areaRenderer2);
     areaRenderer2.setSeriesPaint(0, (Color) appContext.getObject("chart.color.2"));
     areaRenderer2.setSeriesPaint(1, (Color) appContext.getObject("chart.color.3"));
@@ -561,68 +537,46 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   }
 
   private void clearAllTimeSeries() {
-    ArrayList<TimeSeries> list = new ArrayList<TimeSeries>();
     if (clientFlushRateSeries != null) {
-      list.add(clientFlushRateSeries);
-      clientFlushRateSeries = null;
+      clientFlushRateSeries.clear();
     }
     if (clientFaultRateSeries != null) {
-      list.add(clientFaultRateSeries);
-      clientFaultRateSeries = null;
+      clientFaultRateSeries.clear();
     }
     if (txnRateSeries != null) {
-      list.add(txnRateSeries);
-      txnRateSeries = null;
+      txnRateSeries.clear();
     }
     if (onHeapFaultRateSeries != null) {
-      list.add(onHeapFaultRateSeries);
-      onHeapFaultRateSeries = null;
+      onHeapFaultRateSeries.clear();
     }
     if (onHeapFlushRateSeries != null) {
-      list.add(onHeapFlushRateSeries);
-      onHeapFlushRateSeries = null;
+      onHeapFlushRateSeries.clear();
     }
     if (offHeapFaultRateSeries != null) {
-      list.add(offHeapFaultRateSeries);
-      offHeapFaultRateSeries = null;
+      offHeapFaultRateSeries.clear();
     }
     if (offHeapFlushRateSeries != null) {
-      list.add(offHeapFlushRateSeries);
-      offHeapFlushRateSeries = null;
+      offHeapFlushRateSeries.clear();
     }
     if (liveObjectCountSeries != null) {
-      list.add(liveObjectCountSeries);
-      liveObjectCountSeries = null;
+      liveObjectCountSeries.clear();
     }
     if (offHeapObjectCountSeries != null) {
-      list.add(offHeapObjectCountSeries);
-      offHeapObjectCountSeries = null;
+      offHeapObjectCountSeries.clear();
     }
     if (cachedObjectCountSeries != null) {
-      list.add(cachedObjectCountSeries);
-      cachedObjectCountSeries = null;
+      cachedObjectCountSeries.clear();
     }
     if (lockRecallRateSeries != null) {
-      list.add(lockRecallRateSeries);
-      lockRecallRateSeries = null;
+      lockRecallRateSeries.clear();
     }
     if (broadcastRateSeries != null) {
-      list.add(broadcastRateSeries);
-      broadcastRateSeries = null;
-    }
-
-    Iterator<TimeSeries> iter = list.iterator();
-    while (iter.hasNext()) {
-      iter.next().clear();
+      broadcastRateSeries.clear();
     }
   }
 
-  private final AtomicBoolean tornDown = new AtomicBoolean(false);
-
   @Override
-  public synchronized void tearDown() {
-    if (!tornDown.compareAndSet(false, true)) { return; }
-
+  public void tearDown() {
     IServer activeCoord = clusterModel.getActiveCoordinator();
     if (activeCoord != null) {
       activeCoord.removeDGCListener(this);
@@ -631,10 +585,8 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
     clusterListener.tearDown();
 
     stopMonitoringRuntimeStats();
-    clusterModel = null;
-    clusterListener = null;
-    liveObjectCountPlot = null;
-    super.tearDown();
     clearAllTimeSeries();
+
+    super.tearDown();
   }
 }

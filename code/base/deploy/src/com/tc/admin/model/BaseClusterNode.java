@@ -44,9 +44,6 @@ public abstract class BaseClusterNode implements IClusterNode {
     PolledAttribute polledAttribute = getPolledAttribute(name);
     if (polledAttribute != null) {
       addPolledAttributeListener(polledAttribute, listener);
-    } else {
-      System.err.println("PolledAttribute named '" + name + "' not found in node '" + this + "'");
-      Thread.dumpStack();
     }
   }
 
@@ -88,9 +85,6 @@ public abstract class BaseClusterNode implements IClusterNode {
     PolledAttribute polledAttribute = getPolledAttribute(name);
     if (polledAttribute != null) {
       removePolledAttributeListener(polledAttribute, listener);
-    } else {
-      System.err.println("PolledAttribute named '" + name + "' not found in node '" + this + "'");
-      Thread.dumpStack();
     }
   }
 

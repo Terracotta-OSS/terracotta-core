@@ -126,7 +126,8 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
     return true;
   }
 
-  private StatisticsBuffer createClientStatisticsBuffer(final StatisticsSystemType type, final DSOStatisticsConfig config) {
+  private StatisticsBuffer createClientStatisticsBuffer(final StatisticsSystemType type,
+                                                        final DSOStatisticsConfig config) {
     final StatisticsBuffer buffer = new MemoryStatisticsBufferImpl(type, config);
     try {
       buffer.open();
@@ -145,8 +146,8 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
     return buffer;
   }
 
-  private StatisticsBuffer createServerStatisticsBuffer(final StatisticsSystemType type, final DSOStatisticsConfig config,
-                                                        final File statPath) {
+  private StatisticsBuffer createServerStatisticsBuffer(final StatisticsSystemType type,
+                                                        final DSOStatisticsConfig config, final File statPath) {
     if (!TCFileUtils.ensureWritableDir(statPath, new TCFileUtils.EnsureWritableDirReporter() {
 
       public void reportFailedCreate(final File dir, final Exception e) {
@@ -191,17 +192,7 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
       // TODO: needs to be properly written and put in a properties file
       String msg = "\n**************************************************************************************\n"
                    + "The statistics buffer couldn't be opened at \n" + "'" + statPath.getAbsolutePath() + "'.\n"
-                   + "The CVT system will not be active for this node.\n" + "\n"
-                   + "A common reason for this is that you're launching several Terracotta L1\n"
-                   + "clients on the same machine. The default directory for the statistics buffer\n"
-                   + "uses the IP address of the machine that it runs on as the identifier.\n"
-                   + "When several clients are being executed on the same machine, a typical solution\n"
-                   + "to properly separate these directories is by using a JVM property at startup\n"
-                   + "that is unique for each client.\n" + "\n" + "For example:\n"
-                   + "  dso-java.sh -Dtc.node-name=node1 your.main.Class\n" + "\n"
-                   + "You can then adapt the tc-config.xml file so that this JVM property is picked\n"
-                   + "up when the statistics directory is configured by using %(tc.node-name) in the\n"
-                   + "statistics path.\n"
+                   + "Do you have another Terracotta Server instance running?" + "\n"
                    + "**************************************************************************************\n";
       CONSOLE_LOGGER.warn(msg);
       DSO_LOGGER.warn(msg, e);
@@ -214,10 +205,10 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
 
   public void registerMBeans(final MBeanServer server, final UUID uuid) throws MBeanRegistrationException,
       NotCompliantMBeanException, InstanceAlreadyExistsException, MalformedObjectNameException {
-    server.registerMBean(statisticsEmitterMBean, TerracottaManagement
-        .addNodeInfo(StatisticsMBeanNames.STATISTICS_EMITTER, uuid));
-    server.registerMBean(statisticsManagerMBean, TerracottaManagement
-        .addNodeInfo(StatisticsMBeanNames.STATISTICS_MANAGER, uuid));
+    server.registerMBean(statisticsEmitterMBean,
+                         TerracottaManagement.addNodeInfo(StatisticsMBeanNames.STATISTICS_EMITTER, uuid));
+    server.registerMBean(statisticsManagerMBean,
+                         TerracottaManagement.addNodeInfo(StatisticsMBeanNames.STATISTICS_MANAGER, uuid));
   }
 
   public void registerMBeans(final MBeanServer server) throws MBeanRegistrationException, NotCompliantMBeanException,

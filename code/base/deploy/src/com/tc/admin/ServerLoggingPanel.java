@@ -20,6 +20,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
@@ -31,8 +32,8 @@ import javax.swing.BorderFactory;
 import javax.swing.SwingUtilities;
 
 public class ServerLoggingPanel extends XContainer implements NotificationListener, PropertyChangeListener {
-  protected ApplicationContext         appContext;
-  protected IServer                    server;
+  protected final ApplicationContext   appContext;
+  protected final IServer              server;
 
   protected XCheckBox                  faultDebugCheckBox;
   protected XCheckBox                  requestDebugCheckBox;
@@ -141,22 +142,13 @@ public class ServerLoggingPanel extends XContainer implements NotificationListen
     return panel;
   }
 
-  synchronized IServer getServer() {
-    return server;
-  }
-
-  synchronized ApplicationContext getApplicationContext() {
-    return appContext;
-  }
-
   public void setupLoggingControls() {
-    IServer theServer = getServer();
-    if (theServer != null && theServer.isReady()) {
-      setupLoggingControl(faultDebugCheckBox, theServer);
-      setupLoggingControl(requestDebugCheckBox, theServer);
-      setupLoggingControl(flushDebugCheckBox, theServer);
-      setupLoggingControl(broadcastDebugCheckBox, theServer);
-      setupLoggingControl(commitDebugCheckBox, theServer);
+    if (server.isReady()) {
+      setupLoggingControl(faultDebugCheckBox, server);
+      setupLoggingControl(requestDebugCheckBox, server);
+      setupLoggingControl(flushDebugCheckBox, server);
+      setupLoggingControl(broadcastDebugCheckBox, server);
+      setupLoggingControl(commitDebugCheckBox, server);
 
       verboseGCCheckBox.setSelected(server.isVerboseGC());
     }
@@ -170,15 +162,13 @@ public class ServerLoggingPanel extends XContainer implements NotificationListen
   }
 
   private void setLoggingControl(XCheckBox checkBox, Object bean) {
-    ApplicationContext theAppContext = getApplicationContext();
-    if (theAppContext == null) return;
     try {
       Class beanClass = bean.getClass();
       Method setter = beanClass.getMethod("get" + checkBox.getName(), new Class[0]);
       Boolean value = (Boolean) setter.invoke(bean, new Object[0]);
       checkBox.setSelected(value.booleanValue());
     } catch (Exception e) {
-      theAppContext.log(e);
+      appContext.log(e);
     }
   }
 
@@ -186,8 +176,6 @@ public class ServerLoggingPanel extends XContainer implements NotificationListen
     private LoggingChangeWorker(final Object loggingBean, final String attrName, final boolean enabled) {
       super(new Callable<Void>() {
         public Void call() throws Exception {
-          ApplicationContext theAppContext = getApplicationContext();
-          if (theAppContext == null) return null;
           Class beanClass = loggingBean.getClass();
           Method setter = beanClass.getMethod("set" + attrName, new Class[] { Boolean.TYPE });
           setter.invoke(loggingBean, new Object[] { Boolean.valueOf(enabled) });
@@ -198,16 +186,14 @@ public class ServerLoggingPanel extends XContainer implements NotificationListen
 
     @Override
     protected void finished() {
-      ApplicationContext theAppContext = getApplicationContext();
-      if (theAppContext == null) return;
       Exception e = getException();
       if (e != null) {
-        theAppContext.log(e);
+        appContext.log(e);
       }
     }
   }
 
-  class LoggingChangeHandler implements ActionListener {
+  class LoggingChangeHandler implements ActionListener, Serializable {
     public void actionPerformed(ActionEvent ae) {
       XCheckBox checkBox = (XCheckBox) ae.getSource();
       Object loggingBean = checkBox.getClientProperty(checkBox.getName());
@@ -228,8 +214,10 @@ public class ServerLoggingPanel extends XContainer implements NotificationListen
         checkBox.setSelected(Boolean.valueOf(notification.getMessage()));
       }
     } else if (type.equals(TCServerInfoMBean.VERBOSE_GC)) {
-      Boolean value = (Boolean) ((AttributeChangeNotification) notification).getNewValue();
-      verboseGCCheckBox.setSelected(value.booleanValue());
+      if (notification instanceof AttributeChangeNotification) {
+        Boolean value = (Boolean) ((AttributeChangeNotification) notification).getNewValue();
+        verboseGCCheckBox.setSelected(value.booleanValue());
+      }
     }
   }
 
@@ -254,23 +242,6 @@ public class ServerLoggingPanel extends XContainer implements NotificationListen
   @Override
   public void tearDown() {
     server.removePropertyChangeListener(this);
-
-    synchronized (this) {
-      appContext = null;
-      server = null;
-
-      faultDebugCheckBox = null;
-      requestDebugCheckBox = null;
-      flushDebugCheckBox = null;
-      broadcastDebugCheckBox = null;
-      commitDebugCheckBox = null;
-      verboseGCCheckBox = null;
-
-      loggingChangeHandler = null;
-      loggingControlMap.clear();
-      loggingControlMap = null;
-    }
-
     super.tearDown();
   }
 }

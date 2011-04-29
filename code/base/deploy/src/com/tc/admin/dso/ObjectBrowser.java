@@ -39,19 +39,20 @@ import javax.swing.tree.TreePath;
 
 public class ObjectBrowser extends XContainer implements ActionListener, ClientConnectionListener,
     PropertyChangeListener {
-  private IAdminClientContext adminClientContext;
-  private IClusterModel       clusterModel;
-  private ClusterListener     clusterListener;
-  private IBasicObject[]      roots;
-  private XLabel              currentViewLabel;
-  private ElementChooser      elementChooser;
-  private PagedView           pagedView;
-  private final XContainer    mainPanel;
-  private final XContainer    messagePanel;
-  private XLabel              messageLabel;
-  private boolean             inited;
+  private final IAdminClientContext adminClientContext;
+  private final IClusterModel       clusterModel;
+  private final ClusterListener     clusterListener;
 
-  private static final String CLUSTER_HEAP_NODE_NAME = "ClusterHeapNode";
+  private IBasicObject[]            roots;
+  private XLabel                    currentViewLabel;
+  private ElementChooser            elementChooser;
+  private PagedView                 pagedView;
+  private final XContainer          mainPanel;
+  private final XContainer          messagePanel;
+  private XLabel                    messageLabel;
+  private boolean                   inited;
+
+  private static final String       CLUSTER_HEAP_NODE_NAME = "ClusterHeapNode";
 
   public ObjectBrowser(IAdminClientContext adminClientContext, IClusterModel clusterModel, IBasicObject[] roots) {
     super(new BorderLayout());
@@ -206,11 +207,11 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
 
     @Override
     protected void handleReady() {
-      IClusterModel theClusterModel = getClusterModel();
+      IClusterModel theClusterModel = super.getClusterModel();
       if (theClusterModel == null) { return; }
 
       removeAll();
-      if (clusterModel.isReady()) {
+      if (theClusterModel.isReady()) {
         if (!inited) {
           elementChooser.setupTreeModel();
           addNodePanels();
@@ -236,11 +237,7 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
 
     @Override
     protected void handleUncaughtError(Exception e) {
-      if (adminClientContext != null) {
-        adminClientContext.log(e);
-      } else {
-        super.handleUncaughtError(e);
-      }
+      adminClientContext.log(e);
     }
   }
 
@@ -299,10 +296,6 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
     return panel;
   }
 
-  public IClusterModel getClusterModel() {
-    return clusterModel;
-  }
-
   @Override
   public void tearDown() {
     clusterModel.removePropertyChangeListener(clusterListener);
@@ -311,16 +304,6 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
     pagedView.removePropertyChangeListener(this);
     elementChooser.removeActionListener(this);
 
-    synchronized (this) {
-      adminClientContext = null;
-      clusterModel = null;
-      clusterListener = null;
-      roots = null;
-      elementChooser = null;
-      pagedView = null;
-    }
-
     super.tearDown();
   }
-
 }

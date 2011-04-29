@@ -46,26 +46,27 @@ import javax.swing.text.Element;
 import javax.swing.text.html.HTML;
 
 public class ClusterPanel extends XContainer implements HyperlinkListener {
-  private IAdminClientContext adminClientContext;
-  private ClusterNode         clusterNode;
-  private final XContainer    connectedPanel;
-  private final XContainer    disconnectedPanel;
-  private final XButton       disconnectButton;
-  private XLabel              connectSummaryLabel;
-  private PagedView           pagedView;
-  private final XTextPane     introPane;
-  private JTextField          hostField;
-  private JTextField          portField;
-  private final JCheckBox     autoConnectToggle;
-  private JButton             connectButton;
-  static private ImageIcon    connectIcon;
-  static private ImageIcon    disconnectIcon;
-  private ConnectPanel        connectPanel;
-  private StatusView          statusView;
-  private ProductInfoPanel    productInfoPanel;
+  private final IAdminClientContext adminClientContext;
+  private final ClusterNode         clusterNode;
 
-  private static final String DISCONNECTED_PAGE = "disconnected";
-  private static final String CONNECTED_PAGE    = "connected";
+  private final XContainer          connectedPanel;
+  private final XContainer          disconnectedPanel;
+  private final XButton             disconnectButton;
+  private XLabel                    connectSummaryLabel;
+  private PagedView                 pagedView;
+  private final XTextPane           introPane;
+  private final JTextField          hostField;
+  private final JTextField          portField;
+  private final JCheckBox           autoConnectToggle;
+  private final JButton             connectButton;
+  static private ImageIcon          connectIcon;
+  static private ImageIcon          disconnectIcon;
+  private ConnectPanel              connectPanel;
+  private StatusView                statusView;
+  private final ProductInfoPanel    productInfoPanel;
+
+  private static final String       DISCONNECTED_PAGE = "disconnected";
+  private static final String       CONNECTED_PAGE    = "connected";
 
   static {
     connectIcon = new ImageIcon(ClusterPanel.class.getResource("/com/tc/admin/icons/disconnect_co.gif"));
@@ -479,19 +480,9 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
 
   @Override
   public void tearDown() {
-    super.tearDown();
-
     statusView.tearDown();
     productInfoPanel.tearDown();
 
-    synchronized (this) {
-      adminClientContext = null;
-      clusterNode = null;
-      hostField = null;
-      portField = null;
-      connectButton = null;
-      statusView = null;
-      productInfoPanel = null;
-    }
+    super.tearDown();
   }
 }

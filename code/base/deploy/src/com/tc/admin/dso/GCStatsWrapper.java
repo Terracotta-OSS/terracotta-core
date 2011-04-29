@@ -4,6 +4,8 @@
  */
 package com.tc.admin.dso;
 
+import org.apache.commons.lang.builder.EqualsBuilder;
+
 import com.tc.objectserver.api.GCStats;
 
 import java.util.Date;
@@ -79,5 +81,18 @@ public class GCStatsWrapper implements GCStats, Comparable {
     Integer iter = Integer.valueOf(getIteration());
     Integer otherIter = Integer.valueOf(((GCStatsWrapper) o).getIteration());
     return otherIter.compareTo(iter);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null) { return false; }
+    if (obj == this) { return true; }
+    if (obj.getClass() != getClass()) { return false; }
+    return new EqualsBuilder().appendSuper(super.equals(obj)).isEquals();
+  }
+
+  @Override
+  public int hashCode() {
+    return gcStats.hashCode();
   }
 }

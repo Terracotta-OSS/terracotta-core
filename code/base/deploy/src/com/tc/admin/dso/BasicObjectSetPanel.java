@@ -26,7 +26,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
 public class BasicObjectSetPanel extends XContainer implements PropertyChangeListener {
-  private XTree tree;
+  private final XTree tree;
 
   public BasicObjectSetPanel() {
     super(new BorderLayout());
@@ -99,7 +99,6 @@ public class BasicObjectSetPanel extends XContainer implements PropertyChangeLis
   public void tearDown() {
     BasicObjectTreeModel treeModel = getObjectTreeModel();
     treeModel.tearDown();
-    tree = null;
 
     super.tearDown();
   }

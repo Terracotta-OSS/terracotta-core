@@ -8,8 +8,8 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
-import com.tc.stats.DSOClientMBean;
-import com.tc.stats.DSOMBean;
+import com.tc.stats.api.DSOClientMBean;
+import com.tc.stats.api.DSOMBean;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.IOException;
@@ -44,7 +44,7 @@ public class JmxMaxThreadsTestApp extends AbstractTransparentApp {
     for (int i = 0; i < noOfThreads; i++) {
       threads[i].start();
     }
-    
+
     for (int i = 0; i < noOfThreads; i++) {
       try {
         threads[i].join();
