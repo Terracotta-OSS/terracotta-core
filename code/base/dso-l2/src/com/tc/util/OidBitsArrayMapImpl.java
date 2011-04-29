@@ -60,9 +60,7 @@ public class OidBitsArrayMapImpl implements OidBitsArrayMap {
     if (doSet) {
       longAry.setBit(oidInArray);
     } else {
-      if (longAry.clrBit(oidInArray) == 0 && longAry.isZero()) {
-        map.remove(oidIndex(oid));
-      }
+      longAry.clrBit(oidInArray);
     }
     return (longAry);
   }
