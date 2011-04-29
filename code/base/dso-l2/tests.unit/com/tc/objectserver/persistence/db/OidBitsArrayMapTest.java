@@ -338,4 +338,54 @@ public class OidBitsArrayMapTest extends TCTestCase {
     baseTestReadDiskEntry(1);
   }
 
+  private void loadFromDiskStore(List<ObjectID> idList, OidBitsArrayMapDiskStoreImpl oids) {
+    for (int i = 0; i < idList.size(); ++i) {
+      try {
+        if (null != oids.readDiskEntry(null, idList.get(i).toLong())) {
+          oids.getAndSet(idList.get(i), null);
+        }
+      } catch (TCDatabaseException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
+  private void verifyOnDiskEntry(List<ObjectID> idList, OidBitsArrayMapDiskStoreImpl oids) {
+    int totalBits = oids.getBitsArray(idList.get(0).toLong()).totalBits();
+    for (int i = 0; i < idList.size(); ++i) {
+      long aryIndex = oids.oidIndex(idList.get(i));
+      ObjectID oid = new ObjectID(aryIndex / totalBits);
+      Assert.assertTrue("Not found index " + aryIndex, oids.getOnDiskEntries().contains(oid));
+    }
+  }
+
+  public void testOnDiskEntries() throws Exception {
+    List<ObjectID> idList = populateObjectIDList();
+
+    OidBitsArrayMapDiskStoreImpl oids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidTcBytesBytesDB,
+                                                                         new NullPersistenceTransactionProvider());
+
+    for (ObjectID id : idList) {
+      oids.getAndSet(id, null);
+    }
+
+    // write and read back
+    saveAllToDisk(oids);
+    oids.getOnDiskEntries().clear();
+    loadFromDiskStore(idList, oids);
+    verifyOnDiskEntry(idList, oids);
+
+    // load to a new OidBitsArrayMap
+    OidBitsArrayMapDiskStoreImpl secOids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidTcBytesBytesDB,
+                                                                            new NullPersistenceTransactionProvider());
+    loadFromDiskStore(idList, secOids);
+    verifyOnDiskEntry(idList, secOids);
+
+    secOids.flushToDisk(null);
+
+    // verify in memory onDiskEntries shall drop all mappings
+    Assert.assertEquals(0, secOids.getOnDiskEntries().size());
+
+  }
+
 }

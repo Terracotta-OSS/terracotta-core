@@ -83,6 +83,14 @@ public class OidBitsArrayMapImpl implements OidBitsArrayMap {
     return (false);
   }
 
+  public void clear() {
+    this.map.clear();
+  }
+
+  public int size() {
+    return this.map.size();
+  }
+
   // for testing
   @Override
   public String toString() {

@@ -123,7 +123,13 @@ public class OidBitsArrayMapDiskStoreImpl extends OidBitsArrayMapImpl implements
       writeDiskEntry(tx, ary);
       if (ary.isZero()) i.remove();
     }
+    clear();
+  }
+
+  @Override
+  public void clear() {
     map.clear();
+    onDiskEntries.clear();
   }
 
   // for testing
@@ -134,6 +140,11 @@ public class OidBitsArrayMapDiskStoreImpl extends OidBitsArrayMapImpl implements
   // for testing
   int getAuxKey() {
     return auxKey;
+  }
+
+  // for testing
+  OidBitsArrayMap getOnDiskEntries() {
+    return onDiskEntries;
   }
 
 }

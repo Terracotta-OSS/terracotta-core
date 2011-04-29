@@ -15,4 +15,8 @@ public interface OidBitsArrayMap {
 
   public OidLongArray getAndClr(ObjectID id, PersistenceTransaction tx);
 
+  public void clear();
+
+  public int size();
+
 }
