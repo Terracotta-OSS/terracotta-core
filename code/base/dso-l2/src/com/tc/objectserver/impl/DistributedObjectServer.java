@@ -592,6 +592,17 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     sraForDbEnv = this.dbenv.getSRAs();
 
+    // init the JMX server
+    try {
+      setupL2Management(jmxBind, this.configSetupManager.commonl2Config().jmxPort().getIntValue(),
+                        new RemoteJMXProcessor(), dbFactory.getServerDBBackupMBean(this.configSetupManager));
+    } catch (final Exception e) {
+      final String msg = "Unable to setup JMX server. Do you have another Terracotta Server instance running?";
+      consoleLogger.error(msg);
+      logger.error(msg, e);
+      System.exit(-1);
+    }
+
     // Setting the DB environment for the bean which takes backup of the active server
     if (persistent) {
       this.persistor = new DBPersistorImpl(TCLogging.getLogger(DBPersistorImpl.class), this.dbenv,
@@ -602,17 +613,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       this.persistor = new TempSwapDBPersistorImpl(TCLogging.getLogger(DBPersistorImpl.class), this.dbenv,
                                                    serializationAdapterFactory, this.configSetupManager
                                                        .commonl2Config().dataPath(), this.objectStatsRecorder);
-    }
-
-    // init the JMX server
-    try {
-      setupL2Management(jmxBind, this.configSetupManager.commonl2Config().jmxPort().getIntValue(),
-                        new RemoteJMXProcessor(), dbFactory.getServerDBBackupMBean(this.configSetupManager));
-    } catch (final Exception e) {
-      final String msg = "Unable to setup JMX server. Do you have another Terracotta Server instance running?";
-      consoleLogger.error(msg);
-      logger.error(msg, e);
-      System.exit(-1);
     }
 
     // register the terracotta operator event logger
