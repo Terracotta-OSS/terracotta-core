@@ -232,9 +232,6 @@ public class GCStatsPanel extends XContainer implements DGCListener {
 
     @Override
     public void handleActiveCoordinator(IServer oldActive, IServer newActive) {
-      IClusterModel theClusterModel = super.getClusterModel();
-      if (theClusterModel == null) { return; }
-
       if (oldActive != null) {
         oldActive.removeDGCListener(GCStatsPanel.this);
       }
@@ -245,10 +242,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
 
     @Override
     public void handleReady() {
-      IClusterModel theClusterModel = super.getClusterModel();
-      if (theClusterModel == null) { return; }
-
-      if (theClusterModel.isReady()) {
+      if (clusterModel.isReady()) {
         if (!inited) {
           init();
         } else {
@@ -257,17 +251,13 @@ public class GCStatsPanel extends XContainer implements DGCListener {
       } else {
         overviewLabel.setText(appContext.getString("dso.gcstats.overview.not-ready"));
       }
-      gcAction.setEnabled(theClusterModel.isReady());
-      exportAction.setEnabled(theClusterModel.isReady());
+      gcAction.setEnabled(clusterModel.isReady());
+      exportAction.setEnabled(clusterModel.isReady());
     }
 
     @Override
     protected void handleUncaughtError(Exception e) {
-      if (appContext != null) {
-        appContext.log(e);
-      } else {
-        super.handleUncaughtError(e);
-      }
+      appContext.log(e);
     }
   }
 
