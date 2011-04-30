@@ -198,7 +198,7 @@ public class ClientBeanBag {
     }
   }
 
-  private final class MBeanRegistrationListener implements NotificationListener {
+  private static final class MBeanRegistrationListener implements NotificationListener {
     private final ClientBeanBag bag;
 
     public MBeanRegistrationListener(ClientBeanBag bag) {

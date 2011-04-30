@@ -125,7 +125,9 @@ public class DBPerf {
     File envHome = new File(commandLine.getOptionValue("tempDirectory"), "DBPerf_temp");
     if (!envHome.exists()) {
       System.out.println("Temp directory not found, making it.");
-      envHome.mkdirs();
+      if (!envHome.mkdirs()) {
+        System.out.println("Not able to create the temp directory : " + envHome.getAbsolutePath());
+      }
     } else {
       System.out.println("Temp directory already exists, cleaning it.");
       FileUtils.cleanDirectory(envHome);

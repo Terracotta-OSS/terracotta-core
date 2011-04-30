@@ -25,7 +25,7 @@ public class ThreadDumpUtil {
   private static final short            ZIP_BUFFER_INITIAL_SIZE = 10 * 1024;
 
   protected static final TCLogger       logger                  = TCLogging.getLogger(ThreadDumpUtil.class);
-  protected static ThreadMXBean         threadMXBean            = ManagementFactory.getThreadMXBean();
+  protected static final ThreadMXBean   threadMXBean            = ManagementFactory.getThreadMXBean();
   protected static volatile ThreadGroup rootThreadGroup;
 
   private static Class                  threadDumpUtilJdk15Type;

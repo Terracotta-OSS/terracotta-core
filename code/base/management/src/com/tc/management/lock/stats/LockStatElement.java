@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class LockStatElement implements TCSerializable, Serializable, LockTraceElement {
+  private static final long              serialVersionUID  = 1L;
   private LockID                         lockID;
   private LockStats                      lockStat;
   private int                            hashCode;
@@ -248,6 +249,7 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
     nextStat.clear();
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof LockStatElement)) { return false; }
     if (this == obj) { return true; }
@@ -260,6 +262,7 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
     return lockID.equals(ls.lockID) && stackTraceElement.equals(ls.stackTraceElement);
   }
 
+  @Override
   public int hashCode() {
     return hashCode;
   }
@@ -318,6 +321,7 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
     }
   }
 
+  @Override
   public String toString() {
     StringBuffer sb = new StringBuffer();
     if (stackTraceElement == null) {
@@ -594,6 +598,7 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
       }
     }
 
+    @Override
     public String toString() {
       return pendingData.toString();
     }

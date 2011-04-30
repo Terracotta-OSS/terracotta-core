@@ -97,7 +97,7 @@ public class CommandRetrieveStatistics extends AbstractCliCommand {
     return MessageFormat.format("http://{0}:{1}/statistics-gatherer/retrieveStatistics", args);
   }
 
-  private class StreamCopierRunnable implements Runnable {
+  private static class StreamCopierRunnable implements Runnable {
     final private GetMethod getMethod;
     final private File      outFile;
 

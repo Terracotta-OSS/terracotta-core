@@ -4,13 +4,13 @@
  */
 package com.tc.management.beans.object;
 
+import com.tc.management.beans.object.ServerDBBackup.FileLoggerForBackup;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-
-import javax.management.NotCompliantMBeanException;
 
 import junit.framework.TestCase;
 
@@ -91,15 +91,9 @@ public class ServerDBBackupLoggerTest extends TestCase {
   }
 
   public ServerDBBackup.FileLoggerForBackup createLogger(String tempDir) {
-    ServerDBBackup serverDBBackup;
-    try {
-      serverDBBackup = new ServerDBBackup(tempDir);
-    } catch (NotCompliantMBeanException e) {
-      throw new RuntimeException(e);
-    }
     ServerDBBackup.FileLoggerForBackup logger = null;
     try {
-      logger = serverDBBackup.new FileLoggerForBackup(tempDir);
+      logger = new FileLoggerForBackup(tempDir);
     } catch (Exception e) {
       fail("Should never throw an exception");
     }

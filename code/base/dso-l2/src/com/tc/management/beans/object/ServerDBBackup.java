@@ -261,7 +261,7 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
     sendNotification(BACKUP_FAILED, this, e.getMessage());
   }
 
-  class FileLoggerForBackup {
+  static class FileLoggerForBackup {
     private final String       logFilePath;
     public final static String BACKUP_STARTED_MSG   = "Backup Started at ";
     public final static String BACKUP_STOPPED_MSG   = "Backup Stopped at ";
@@ -272,7 +272,9 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
       try {
         File dir = new File(backupPath);
         if (!dir.exists()) {
-          dir.mkdirs();
+          if (!dir.mkdirs()) {
+            logger.warn("Could not create dir " + dir.getAbsolutePath() + " for log file.");
+          }
         }
         File logFile = new File(logFilePath);
         if (!logFile.exists()) {

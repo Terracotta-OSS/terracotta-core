@@ -33,7 +33,7 @@ public class ReviveClassFiles extends BaseUtility {
   }
 
   public ReviveClassFiles(File sourceDir, File destDir, Writer writer) throws Exception {
-    super(writer, new File[]{sourceDir});
+    super(writer, new File[] { sourceDir });
     this.destDir = destDir;
     persistor = getPersistor(1).getClassPersistor();
     loader = new PhysicalStateClassLoader();
@@ -61,9 +61,11 @@ public class ReviveClassFiles extends BaseUtility {
       String genClassName = tci.readString();
 
       File file = new File(destDir.getPath() + File.separator + genClassName + ".class");
-      file.createNewFile();
-      ByteArrayInputStream bais = new ByteArrayInputStream(clazzBytes, clazzBytes.length - bai.available(), bai
-          .available());
+      if (!file.createNewFile()) {
+        log("Unable to create " + file.getAbsolutePath());
+      }
+      ByteArrayInputStream bais = new ByteArrayInputStream(clazzBytes, clazzBytes.length - bai.available(),
+                                                           bai.available());
       FileOutputStream fos = new FileOutputStream(file);
       IOUtils.copy(bais, fos);
       IOUtils.closeQuietly(fos);

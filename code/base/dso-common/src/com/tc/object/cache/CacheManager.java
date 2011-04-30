@@ -84,10 +84,9 @@ public class CacheManager implements CacheMemoryEventsListener {
     private int                        countBefore;
     private int                        countAfter;
     private int                        evicted;
-    private final boolean              objectsGCed = false;
     private int                        toEvict;
     private long                       startTime;
-    private State                      state       = INIT;
+    private State                      state = INIT;
 
     public CacheStatistics(CacheMemoryEventType type, MemoryUsage usage) {
       this.type = type;
@@ -265,8 +264,8 @@ public class CacheManager implements CacheMemoryEventsListener {
     @Override
     public String toString() {
       return "CacheStats[ type = " + type + ",\n\t usage = " + usage + ",\n\t countBefore = " + countBefore
-             + ", toEvict = " + toEvict + ", evicted = " + evicted + ", countAfter = " + countAfter
-             + ", objectsGCed = " + objectsGCed + ",\n\t state = " + state + "]";
+             + ", toEvict = " + toEvict + ", evicted = " + evicted + ", countAfter = " + countAfter + ", \n\t state = "
+             + state + "]";
     }
   }
 
