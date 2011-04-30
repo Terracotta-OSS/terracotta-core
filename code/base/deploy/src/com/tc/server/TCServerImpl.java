@@ -4,6 +4,12 @@
  */
 package com.tc.server;
 
+import static com.tc.properties.TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED;
+import static com.tc.properties.TCPropertiesConsts.L2_OBJECTMANAGER_FLUSH_LOGGING_ENABLED;
+import static com.tc.properties.TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED;
+import static com.tc.properties.TCPropertiesConsts.L2_OBJECTMANAGER_REQUEST_LOGGING_ENABLED;
+import static com.tc.properties.TCPropertiesConsts.L2_TRANSACTIONMANAGER_LOGGING_PRINT_BROADCAST_STATS;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.mortbay.jetty.Server;
@@ -54,6 +60,7 @@ import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.servlets.L1ReconnectPropertiesServlet;
+import com.tc.statistics.StatisticsGathererSubSystem;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 import com.terracottatech.config.Offheap;
@@ -91,6 +98,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   protected DistributedObjectServer         dsoServer;
   private Server                            httpServer;
   private TerracottaConnector               terracottaConnector;
+  protected StatisticsGathererSubSystem     statisticsGathererSubSystem;
 
   private final Object                      stateLock                                    = new Object();
   private final L2State                     state                                        = new L2State();
@@ -118,6 +126,12 @@ public class TCServerImpl extends SEDA implements TCServer {
     Assert.assertNotNull(manager);
     validateEnterpriseFeatures(manager);
     this.configurationSetupManager = manager;
+
+    this.statisticsGathererSubSystem = new StatisticsGathererSubSystem();
+    if (!this.statisticsGathererSubSystem.setup(manager.commonl2Config())) {
+      notifyShutdown();
+      System.exit(1);
+    }
   }
 
   private void validateEnterpriseFeatures(final L2ConfigurationSetupManager manager) {
@@ -335,6 +349,16 @@ public class TCServerImpl extends SEDA implements TCServer {
       consoleLogger.debug("Stopping TC server...");
     }
 
+    if (this.statisticsGathererSubSystem != null) {
+      try {
+        this.statisticsGathererSubSystem.cleanup();
+      } catch (Exception e) {
+        logger.error("Error shutting down statistics gatherer", e);
+      } finally {
+        this.statisticsGathererSubSystem = null;
+      }
+    }
+
     if (this.terracottaConnector != null) {
       try {
         this.terracottaConnector.shutdown();
@@ -393,16 +417,15 @@ public class TCServerImpl extends SEDA implements TCServer {
       }
 
       TCServerImpl.this.terracottaConnector = new TerracottaConnector();
+      startHTTPServer(commonL2Config, TCServerImpl.this.terracottaConnector);
+
       Stage stage = getStageManager().createStage("dso-http-bridge",
                                                   new HttpConnectionHandler(TCServerImpl.this.terracottaConnector), 1,
                                                   100);
+      stage.start(new NullContext(getStageManager()));
 
       // the following code starts the jmx server as well
       startDSOServer(stage.getSink());
-
-      startHTTPServer(commonL2Config, TCServerImpl.this.terracottaConnector);
-
-      stage.start(new NullContext(getStageManager()));
 
       if (isActive()) {
         updateActivateTime();
@@ -438,19 +461,14 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   private void startDSOServer(final Sink httpSink) throws Exception {
     Assert.assertTrue(this.state.isStartState());
-    TCProperties tcProps = TCPropertiesImpl.getProperties();
-    ObjectStatsRecorder objectStatsRecorder = new ObjectStatsRecorder(
-                                                                      tcProps
-                                                                          .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED),
-                                                                      tcProps
-                                                                          .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_REQUEST_LOGGING_ENABLED),
-                                                                      tcProps
-                                                                          .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_FLUSH_LOGGING_ENABLED),
-                                                                      tcProps
-                                                                          .getBoolean(TCPropertiesConsts.L2_TRANSACTIONMANAGER_LOGGING_PRINT_BROADCAST_STATS),
-                                                                      tcProps
-                                                                          .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED));
-
+    TCProperties props = TCPropertiesImpl.getProperties();
+    ObjectStatsRecorder objectStatsRecorder;
+    objectStatsRecorder = new ObjectStatsRecorder(
+                                                  props.getBoolean(L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED),
+                                                  props.getBoolean(L2_OBJECTMANAGER_REQUEST_LOGGING_ENABLED),
+                                                  props.getBoolean(L2_OBJECTMANAGER_FLUSH_LOGGING_ENABLED),
+                                                  props.getBoolean(L2_TRANSACTIONMANAGER_LOGGING_PRINT_BROADCAST_STATS),
+                                                  props.getBoolean(L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED));
     this.dsoServer = createDistributedObjectServer(this.configurationSetupManager, this.connectionPolicy, httpSink,
                                                    new TCServerInfo(this, this.state, objectStatsRecorder),
                                                    objectStatsRecorder, this.state, this);
@@ -463,7 +481,7 @@ public class TCServerImpl extends SEDA implements TCServer {
                                                                   ObjectStatsRecorder objectStatsRecorder,
                                                                   L2State l2State, TCServerImpl serverImpl) {
     return new DistributedObjectServer(configSetupManager, getThreadGroup(), policy, httpSink, serverInfo,
-                                       objectStatsRecorder, l2State, this, this);
+                                       objectStatsRecorder, statisticsGathererSubSystem, l2State, this, this);
   }
 
   private void startHTTPServer(final CommonL2Config commonL2Config, final TerracottaConnector tcConnector)
@@ -500,8 +518,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     final boolean cvtRestEnabled = TCPropertiesImpl.getProperties()
         .getBoolean(TCPropertiesConsts.CVT_REST_INTERFACE_ENABLED, true);
     if (cvtRestEnabled) {
-      context.setAttribute(StatisticsGathererServlet.GATHERER_ATTRIBUTE,
-                           this.dsoServer.getStatisticsGathererSubsystem());
+      context.setAttribute(StatisticsGathererServlet.GATHERER_ATTRIBUTE, this.statisticsGathererSubSystem);
     }
 
     ServletHandler servletHandler = new ServletHandler();

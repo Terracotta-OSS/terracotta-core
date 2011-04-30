@@ -390,7 +390,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   private StatisticsAgentSubSystemImpl           statisticsAgentSubSystem;
   private StatisticsGatewayMBeanImpl             statisticsGateway;
-  private StatisticsGathererSubSystem            statisticsGathererSubSystem;
+  private final StatisticsGathererSubSystem      statisticsGathererSubSystem;
 
   private final TCThreadGroup                    threadGroup;
   private final SEDA                             seda;
@@ -410,17 +410,18 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   // used by a test
   public DistributedObjectServer(final L2ConfigurationSetupManager configSetupManager, final TCThreadGroup threadGroup,
                                  final ConnectionPolicy connectionPolicy, final TCServerInfoMBean tcServerInfoMBean,
-                                 final ObjectStatsRecorder objectStatsRecorder) {
+                                 final ObjectStatsRecorder objectStatsRecorder,
+                                 final StatisticsGathererSubSystem statisticsGathererSubSystem) {
     this(configSetupManager, threadGroup, connectionPolicy, new NullSink(), tcServerInfoMBean, objectStatsRecorder,
-         new L2State(), new SEDA(threadGroup), null);
-
+         statisticsGathererSubSystem, new L2State(), new SEDA(threadGroup), null);
   }
 
   public DistributedObjectServer(final L2ConfigurationSetupManager configSetupManager, final TCThreadGroup threadGroup,
                                  final ConnectionPolicy connectionPolicy, final Sink httpSink,
                                  final TCServerInfoMBean tcServerInfoMBean,
-                                 final ObjectStatsRecorder objectStatsRecorder, final L2State l2State, final SEDA seda,
-                                 final TCServer server) {
+                                 final ObjectStatsRecorder objectStatsRecorder,
+                                 final StatisticsGathererSubSystem statisticsGathererSubSystem, final L2State l2State,
+                                 final SEDA seda, final TCServer server) {
     // This assertion is here because we want to assume that all threads spawned by the server (including any created in
     // 3rd party libs) inherit their thread group from the current thread . Consider this before removing the assertion.
     // Even in tests, we probably don't want different thread group configurations
@@ -432,6 +433,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.httpSink = httpSink;
     this.tcServerInfoMBean = tcServerInfoMBean;
     this.objectStatsRecorder = objectStatsRecorder;
+    this.statisticsGathererSubSystem = statisticsGathererSubSystem;
     this.l2State = l2State;
     this.threadGroup = threadGroup;
     this.seda = seda;
@@ -514,10 +516,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     } catch (final NotCompliantMBeanException e) {
       throw new TCRuntimeException("Unable to construct the " + StatisticsGatewayMBeanImpl.class.getName()
                                    + " MBean; this is a programming error. Please go fix that class.", e);
-    }
-    this.statisticsGathererSubSystem = new StatisticsGathererSubSystem();
-    if (!this.statisticsGathererSubSystem.setup(this.configSetupManager.commonl2Config())) {
-      System.exit(1);
     }
 
     NIOWorkarounds.solaris10Workaround();
@@ -1564,12 +1562,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       logger.warn(e);
     }
 
-    try {
-      this.statisticsGathererSubSystem.cleanup();
-    } catch (Exception e) {
-      logger.error("Error shutting down statistics gatherer", e);
-    }
-
     this.seda.getStageManager().stopAll();
 
     if (this.l1Listener != null) {
@@ -1679,10 +1671,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   public StatisticsGatewayMBeanImpl getStatisticsGateway() {
     return this.statisticsGateway;
-  }
-
-  public StatisticsGathererSubSystem getStatisticsGathererSubsystem() {
-    return this.statisticsGathererSubSystem;
   }
 
   public GCStatsEventPublisher getGcStatsEventPublisher() {
