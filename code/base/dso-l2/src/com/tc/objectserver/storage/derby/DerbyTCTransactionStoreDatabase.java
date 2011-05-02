@@ -8,8 +8,8 @@ import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.TCDatabaseCursor;
 import com.tc.objectserver.storage.api.TCDatabaseEntry;
-import com.tc.objectserver.storage.api.TCTransactionStoreDatabase;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
+import com.tc.objectserver.storage.api.TCTransactionStoreDatabase;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -25,7 +25,7 @@ class DerbyTCTransactionStoreDatabase extends AbstractDerbyTCDatabase implements
       throws TCDatabaseException {
     super(tableName, connection, queryProvider);
     deleteQuery = "DELETE FROM " + tableName + " WHERE " + KEY + " = ?";
-    openCursorQuery = "SELECT " + KEY + " FROM " + tableName;
+    openCursorQuery = "SELECT " + KEY + ", " + VALUE + " FROM " + tableName;
     insertQuery = "INSERT INTO " + tableName + " VALUES (?, ?)";
   }
 
