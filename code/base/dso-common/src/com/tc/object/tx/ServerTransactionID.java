@@ -74,14 +74,21 @@ public class ServerTransactionID implements Comparable {
    * Utility method for serialization.
    */
   public byte[] getBytes() {
-    TCByteBufferOutputStream out = new TCByteBufferOutputStream(64, false);
+    TCByteBufferOutputStream out = new TCByteBufferOutputStream(64, 256, false);
     NodeIDSerializer nodeIDSerializer = new NodeIDSerializer(sourceID);
     nodeIDSerializer.serializeTo(out);
     out.writeLong(txnID.toLong());
     out.close();
     TCByteBuffer[] bufs = out.toArray();
-    Assert.assertEquals(1, bufs.length);
-    return bufs[0].array();
+    byte[] toRet = new byte[out.getBytesWritten()];
+    int idx = 0;
+    for (TCByteBuffer buf : bufs) {
+      int length = buf.limit();
+      buf.get(toRet, idx, buf.limit());
+      idx += length;
+    }
+    Assert.assertEquals(idx, out.getBytesWritten());
+    return toRet;
   }
 
   /**
