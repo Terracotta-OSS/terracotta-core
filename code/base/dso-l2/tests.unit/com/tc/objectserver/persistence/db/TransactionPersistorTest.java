@@ -13,7 +13,6 @@ import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
-import com.tc.objectserver.persistence.db.TransactionPersistorImpl;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
 import com.tc.objectserver.storage.berkeleydb.BerkeleyDBPersistenceTransactionProvider;
@@ -107,7 +106,7 @@ public class TransactionPersistorTest extends TCTestCase {
         try {
           PersistenceTransaction pt = persistenceTransactionProvider.newTransaction();
           SortedSet ss = new TreeSet();
-          ss.add(gtd.getServerTransactionID());
+          ss.add(gtd.getGlobalTransactionID());
           cb.barrier();
           tpl.deleteAllGlobalTransactionDescriptors(pt, ss);
           System.err.println("T2 : Delete done");
