@@ -265,7 +265,6 @@ import com.tc.server.TCServer;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
-import com.tc.statistics.StatisticsGathererSubSystem;
 import com.tc.statistics.StatisticsSystemType;
 import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
@@ -390,7 +389,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   private StatisticsAgentSubSystemImpl           statisticsAgentSubSystem;
   private StatisticsGatewayMBeanImpl             statisticsGateway;
-  private final StatisticsGathererSubSystem      statisticsGathererSubSystem;
 
   private final TCThreadGroup                    threadGroup;
   private final SEDA                             seda;
@@ -410,18 +408,17 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   // used by a test
   public DistributedObjectServer(final L2ConfigurationSetupManager configSetupManager, final TCThreadGroup threadGroup,
                                  final ConnectionPolicy connectionPolicy, final TCServerInfoMBean tcServerInfoMBean,
-                                 final ObjectStatsRecorder objectStatsRecorder,
-                                 final StatisticsGathererSubSystem statisticsGathererSubSystem) {
+                                 final ObjectStatsRecorder objectStatsRecorder) {
     this(configSetupManager, threadGroup, connectionPolicy, new NullSink(), tcServerInfoMBean, objectStatsRecorder,
-         statisticsGathererSubSystem, new L2State(), new SEDA(threadGroup), null);
+         new L2State(), new SEDA(threadGroup), null);
+
   }
 
   public DistributedObjectServer(final L2ConfigurationSetupManager configSetupManager, final TCThreadGroup threadGroup,
                                  final ConnectionPolicy connectionPolicy, final Sink httpSink,
                                  final TCServerInfoMBean tcServerInfoMBean,
-                                 final ObjectStatsRecorder objectStatsRecorder,
-                                 final StatisticsGathererSubSystem statisticsGathererSubSystem, final L2State l2State,
-                                 final SEDA seda, final TCServer server) {
+                                 final ObjectStatsRecorder objectStatsRecorder, final L2State l2State, final SEDA seda,
+                                 final TCServer server) {
     // This assertion is here because we want to assume that all threads spawned by the server (including any created in
     // 3rd party libs) inherit their thread group from the current thread . Consider this before removing the assertion.
     // Even in tests, we probably don't want different thread group configurations
@@ -433,7 +430,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.httpSink = httpSink;
     this.tcServerInfoMBean = tcServerInfoMBean;
     this.objectStatsRecorder = objectStatsRecorder;
-    this.statisticsGathererSubSystem = statisticsGathererSubSystem;
     this.l2State = l2State;
     this.threadGroup = threadGroup;
     this.seda = seda;
@@ -529,6 +525,17 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     final DBFactory dbFactory = getDBFactory();
 
+    // start the JMX server
+    try {
+      startJMXServer(jmxBind, this.configSetupManager.commonl2Config().jmxPort().getIntValue(),
+                     new RemoteJMXProcessor(), dbFactory.getServerDBBackupMBean(this.configSetupManager));
+    } catch (final Exception e) {
+      final String msg = "Unable to start the JMX server. Do you have another Terracotta Server instance running?";
+      consoleLogger.error(msg);
+      logger.error(msg, e);
+      System.exit(-1);
+    }
+
     final TCFile location = new TCFileImpl(this.configSetupManager.commonl2Config().dataPath());
     this.startupLock = new StartupLock(location, this.l2Properties.getBoolean("startuplock.retries.enabled"));
 
@@ -589,17 +596,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
 
     sraForDbEnv = this.dbenv.getSRAs();
-
-    // init the JMX server
-    try {
-      setupL2Management(jmxBind, this.configSetupManager.commonl2Config().jmxPort().getIntValue(),
-                        new RemoteJMXProcessor(), dbFactory.getServerDBBackupMBean(this.configSetupManager));
-    } catch (final Exception e) {
-      final String msg = "Unable to setup JMX server. Do you have another Terracotta Server instance running?";
-      consoleLogger.error(msg);
-      logger.error(msg, e);
-      System.exit(-1);
-    }
 
     // Setting the DB environment for the bean which takes backup of the active server
     if (persistent) {
@@ -1210,16 +1206,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                          (LockManagerMBean) this.lockManager,
                                                          (DSOChannelManagerMBean) channelManager, serverStats,
                                                          channelStats, instanceMonitor, appEvents, indexHACoordinator);
-
-    try {
-      this.l2Management.start();
-    } catch (final Exception e) {
-      final String msg = "Unable to start JMX server. Do you have another Terracotta Server instance running?";
-      consoleLogger.error(msg);
-      logger.error(msg, e);
-      System.exit(-1);
-    }
-
     if (this.l2Properties.getBoolean("beanshell.enabled")) {
       startBeanShell(this.l2Properties.getInt("beanshell.port"));
     }
@@ -1681,17 +1667,18 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return this.operatorEventHistoryProvider;
   }
 
-  private void setupL2Management(final InetAddress bind, int jmxPort, final Sink remoteEventsSink,
-                                 final ServerDBBackupMBean serverDBBackupMBean) throws Exception {
+  private void startJMXServer(final InetAddress bind, int jmxPort, final Sink remoteEventsSink,
+                              final ServerDBBackupMBean serverDBBackupMBean) throws Exception {
     if (jmxPort == 0) {
       jmxPort = new PortChooser().chooseRandomPort();
     }
 
     this.l2Management = this.serverBuilder.createL2Management(this.tcServerInfoMBean, this.lockStatisticsMBean,
                                                               this.statisticsAgentSubSystem, this.statisticsGateway,
-                                                              this.statisticsGathererSubSystem,
                                                               this.configSetupManager, this, bind, jmxPort,
                                                               remoteEventsSink, this, serverDBBackupMBean);
+
+    this.l2Management.start();
   }
 
   private void stopJMXServer() throws Exception {

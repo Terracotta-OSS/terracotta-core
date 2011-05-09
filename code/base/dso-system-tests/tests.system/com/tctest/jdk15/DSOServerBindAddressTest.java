@@ -19,7 +19,6 @@ import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.server.NullTCServerInfo;
-import com.tc.statistics.StatisticsGathererSubSystem;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.terracottatech.config.HaMode;
@@ -65,7 +64,7 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
     public void execute() throws Throwable {
       server = new DistributedObjectServer(createL2Manager(bindAddr, dsoPort, jmxPort), group,
                                            new NullConnectionPolicy(), new NullTCServerInfo(),
-                                           new ObjectStatsRecorder(), new StatisticsGathererSubSystem());
+                                           new ObjectStatsRecorder());
       server.start();
     }
 

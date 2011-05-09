@@ -62,7 +62,6 @@ import com.tc.runtime.logging.LongGCLogger;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
-import com.tc.statistics.StatisticsGathererSubSystem;
 import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -166,7 +165,6 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
   L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean, LockStatisticsMonitor lockStatisticsMBean,
                                   StatisticsAgentSubSystemImpl statisticsAgentSubSystem,
                                   StatisticsGatewayMBeanImpl statisticsGateway,
-                                  StatisticsGathererSubSystem statisticsGathererSubSystem,
                                   L2ConfigurationSetupManager configSetupManager,
                                   DistributedObjectServer distributedObjectServer, InetAddress bind, int jmxPort,
                                   Sink remoteEventsSink, ServerConnectionValidator serverConnectionValidator,

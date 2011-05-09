@@ -78,7 +78,6 @@ import com.tc.runtime.logging.LongGCLogger;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
-import com.tc.statistics.StatisticsGathererSubSystem;
 import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -276,15 +275,13 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                          final LockStatisticsMonitor lockStatisticsMBean,
                                          final StatisticsAgentSubSystemImpl statisticsAgentSubSystem,
                                          final StatisticsGatewayMBeanImpl statisticsGateway,
-                                         final StatisticsGathererSubSystem statisticsGathererSubSystem,
                                          final L2ConfigurationSetupManager configSetupManager,
                                          final DistributedObjectServer distributedObjectServer, final InetAddress bind,
                                          final int jmxPort, final Sink remoteEventsSink,
                                          final ServerConnectionValidator serverConnectionValidator,
                                          final ServerDBBackupMBean serverDBBackupMBean) throws Exception {
     return new L2Management(tcServerInfoMBean, lockStatisticsMBean, statisticsAgentSubSystem, statisticsGateway,
-                            statisticsGathererSubSystem, configSetupManager, distributedObjectServer, bind, jmxPort,
-                            remoteEventsSink);
+                            configSetupManager, distributedObjectServer, bind, jmxPort, remoteEventsSink);
   }
 
   public void registerForOperatorEvents(final L2Management l2Management,
