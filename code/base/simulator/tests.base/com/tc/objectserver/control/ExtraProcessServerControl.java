@@ -23,6 +23,8 @@ import com.tc.util.runtime.Vm;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.OutputStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -143,6 +145,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
                 + "=true");
     addLibPath(jvmArgs);
     addEnvVarsForWindows(jvmArgs);
+    addTCPropsJvmArgsFromCurrentJvm(jvmArgs);
 
     if (!Vm.isIBM() && !(Os.isMac() && Vm.isJDK14())) {
       jvmArgs.add("-XX:+HeapDumpOnOutOfMemoryError");
@@ -180,6 +183,19 @@ public class ExtraProcessServerControl extends ServerControlBase {
     String val = System.getProperty("tc.tests.info.property-files");
     if (val != null && !val.trim().equals("")) {
       args.add("-Dtc.tests.info.property-files=" + val);
+    }
+  }
+
+  private void addTCPropsJvmArgsFromCurrentJvm(List args) {
+    RuntimeMXBean mxbean = ManagementFactory.getRuntimeMXBean();
+    try {
+      for (String parentJvmArg : mxbean.getInputArguments()) {
+        if (parentJvmArg.startsWith("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX)) {
+          args.add(parentJvmArg);
+        }
+      }
+    } catch (SecurityException e) {
+      System.out.println("Unable to add TCProperties defines from parent JVM. Error: " + e.getMessage());
     }
   }
 
