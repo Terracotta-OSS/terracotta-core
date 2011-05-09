@@ -80,16 +80,19 @@ public class DirtyObjectDbCleaner {
     Date d = new Date();
     String timeStamp = dateFormat.format(d);
     File dirtyDbSourcedir = new File(dataPath + File.separator + L2DSOConfig.OBJECTDB_DIRNAME + File.separator);
-    File dirtyDbBackupDestDir = new File(dirtyDbBackupPath + File.separator
-                                         + L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX + timeStamp);
+    File dirtyDbBackupDestDir = new File(dirtyDbBackupPath + File.separator + L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX
+                                         + timeStamp);
 
     try {
       boolean success = dirtyDbSourcedir.renameTo(dirtyDbBackupDestDir);
-      if (!success) { throw new TCDatabaseException("Not able to move dirty objectdbs to "
-                                                    + dirtyDbBackupDestDir.getAbsolutePath()); }
+      if (!success) {
+        logger.warn("Unable to move the dirty objectdb, performing a copy and delete.");
+        FileUtils.copyDirectory(dirtyDbSourcedir, dirtyDbBackupDestDir);
+        FileUtils.deleteDirectory(dirtyDbSourcedir);
+      }
     } catch (Exception e) {
       throw new TCDatabaseException("Not able to move dirty objectdbs to " + dirtyDbBackupDestDir.getAbsolutePath()
-                                    + ". Reason: " + e.getClass().getName());
+                                    + ". Reason: " + e.getMessage());
     }
 
     Assert.eval(!dirtyDbSourcedir.exists());
@@ -100,8 +103,8 @@ public class DirtyObjectDbCleaner {
                                     + e.getClass().getName());
     }
     logger.info("Successfully moved dirty objectdb to " + dirtyDbBackupDestDir.getAbsolutePath() + ".");
-    rollDirtyObjectDbBackups(dirtyDbBackupPath.getFile(), TCPropertiesImpl.getProperties()
-        .getInt(TCPropertiesConsts.L2_NHA_DIRTYDB_ROLLING, 0));
+    rollDirtyObjectDbBackups(dirtyDbBackupPath.getFile(),
+                             TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_NHA_DIRTYDB_ROLLING, 0));
   }
 
   protected void rollDirtyObjectDbBackups(File dirtyDbBackupPath, int nofBackups) {
@@ -111,8 +114,7 @@ public class DirtyObjectDbCleaner {
     File[] contents = dirtyDbBackupPath.listFiles();
     if (null == contents) return;
 
-    String pathPrefix = dirtyDbBackupPath.getAbsolutePath() + File.separator
-                        + L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX;
+    String pathPrefix = dirtyDbBackupPath.getAbsolutePath() + File.separator + L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX;
 
     Arrays.sort(contents, new Comparator<File>() {
       public int compare(File o1, File o2) {
