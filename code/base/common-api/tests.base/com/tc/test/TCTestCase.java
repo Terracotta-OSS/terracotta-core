@@ -37,6 +37,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Hashtable;
@@ -157,6 +158,15 @@ public class TCTestCase extends TestCase {
                            + this.allDisabledUntil);
         return;
       } else {
+        // don't let timebomb go off on weekend
+        // see INT-1173
+        Calendar rightNow = Calendar.getInstance();
+        int dayOfWeek = rightNow.get(Calendar.DAY_OF_WEEK);
+        if (dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY) {
+          Banner.warnBanner("Timebomb is scheduled to expire on weekend (" + allDisabledUntil
+                            + ". Preventing it from going off. Tests are NOT running.");
+          return;
+        }
         throw new Exception("Timebomb has expired on " + allDisabledUntil);
       }
     }
