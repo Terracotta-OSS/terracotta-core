@@ -38,6 +38,8 @@ public class MapClearDeadLocksSleepycatTest extends TransparentTestBase {
   protected void setExtraJvmArgs(ArrayList jvmArgs) {
     super.setExtraJvmArgs(jvmArgs);
     jvmArgs.add("-Dcom.tc.l2.derbydb.derby.locks.deadlockTrace=true");
+    jvmArgs.add("-Dcom.tc.l2.derbydb.derby.language.logStatementText=true");
+    jvmArgs.add("-Dcom.tc.l2.derbydb.derby.locks.monitor=true");
   }
 
   @Override
