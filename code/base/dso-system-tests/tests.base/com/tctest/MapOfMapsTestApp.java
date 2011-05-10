@@ -67,6 +67,8 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
     spec.addRoot("barrier", "barrier");
     String methodExpression = "* " + testClass + ".read(..)";
     config.addReadAutolock(methodExpression);
+    methodExpression = "* " + testClass + ".countMaps(..)";
+    config.addReadAutolock(methodExpression);
     methodExpression = "* " + testClass + ".add2Root(..)";
     config.addWriteAutolock(methodExpression);
     methodExpression = "* " + testClass + ".populateMyRoot(..)";
@@ -112,14 +114,8 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
   }
 
   private int countMaps(final Map m) {
-
     int count = 0;
-    Iterator entrySetIterator = null;
-    synchronized (m) {
-      entrySetIterator = m.entrySet().iterator();
-    }
-
-    for (final Iterator i = entrySetIterator; i.hasNext();) {
+    for (final Iterator i = m.entrySet().iterator(); i.hasNext();) {
       final Map.Entry e = (Entry) i.next();
       if (e.getValue() instanceof Map) {
         count = count + 1 + countMaps((Map) e.getValue());
