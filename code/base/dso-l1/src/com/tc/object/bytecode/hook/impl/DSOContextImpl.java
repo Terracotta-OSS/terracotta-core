@@ -131,8 +131,8 @@ public class DSOContextImpl implements DSOContext {
 
     // load license via normal methods before attempt to load it from application resource
     if (LicenseManager.getLicense() == null) {
-      String licenseLocation = "/" + LICENSE_KEY_FILENAME;
-      LicenseManager.loadLicenseFromStream(loader.getResourceAsStream(licenseLocation), licenseLocation);
+      String licenseLocation = LICENSE_KEY_FILENAME;
+      LicenseManager.loadLicenseFromStream(loader.getResourceAsStream(licenseLocation), "resource " + licenseLocation);
     }
 
     try {
@@ -401,8 +401,8 @@ public class DSOContextImpl implements DSOContext {
   }
 
   public void addModules(URL[] modules) throws Exception {
-    ModulesLoader.installAndStartBundles(osgiRuntime, configHelper, manager.getClassProvider(), manager
-        .getTunneledDomainUpdater(), false, modules);
+    ModulesLoader.installAndStartBundles(osgiRuntime, configHelper, manager.getClassProvider(),
+                                         manager.getTunneledDomainUpdater(), false, modules);
   }
 
   public void shutdown() {
