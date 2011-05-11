@@ -12,13 +12,12 @@ import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.cache.CachedItem;
+import com.tc.object.cache.CachedItem.CachedItemInitialization;
 import com.tc.object.cache.IncoherentCachedItem;
 import com.tc.object.locks.LockID;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.object.tx.ClientTransaction;
-import com.tc.object.tx.TransactionCompleteListener;
-import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -517,27 +516,23 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
 
     private void addCoherentValueToCacheInternal(Object id, Object key, Object value, boolean isMutate) {
-      final CachedItem item = new CachedItem(id, this, key, value, isMutate);
+      final CachedItem item;
+      if (!localCacheEnabled) {
+        item = new CachedItem(id, this, key, value, CachedItemInitialization.REMOVE_ON_TXN_COMPLETE);
+      } else {
+        item = new CachedItem(id, this, key, value, isMutate ? CachedItemInitialization.WAIT_FOR_ACK
+            : CachedItemInitialization.NO_WAIT_FOR_ACK);
+      }
       addToCache(key, item, isMutate);
     }
 
-    private void registerForCallbackOnComplete(final CachedItem item, boolean removeOnTxnComplete) {
+    private void registerForCallbackOnComplete(final CachedItem item) {
       ClientTransaction txn = TCObjectServerMapImpl.this.objectManager.getTransactionManager().getCurrentTransaction();
       if (txn == null) { throw new UnlockedSharedObjectException(
                                                                  "Attempt to access a shared object outside the scope of a shared lock.",
                                                                  Thread.currentThread().getName(), manager
                                                                      .getClientID()); }
-      if (removeOnTxnComplete) {
-        // remove from cache once txn is complete
-        txn.addTransactionCompleteListener(new TransactionCompleteListener() {
-
-          public void transactionComplete(TransactionID txnID) {
-            LocalCache.this.removeFromLocalCache(item.getKey());
-          }
-        });
-      } else {
-        txn.addTransactionCompleteListener(item);
-      }
+      txn.addTransactionCompleteListener(item);
     }
 
     /**
@@ -552,23 +547,23 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
 
     public void addIncoherentValueToCache(final Object key, final Object value, boolean isMutate) {
-      final IncoherentCachedItem item = new IncoherentCachedItem(this, key, value, isMutate);
+      final IncoherentCachedItem item;
+      if (!localCacheEnabled) {
+        item = new IncoherentCachedItem(this, key, value, CachedItemInitialization.REMOVE_ON_TXN_COMPLETE);
+      } else {
+        item = new IncoherentCachedItem(this, key, value, isMutate ? CachedItemInitialization.WAIT_FOR_ACK
+            : CachedItemInitialization.NO_WAIT_FOR_ACK);
+      }
       addToCache(key, item, isMutate);
     }
 
     // TODO::FIXME:: There is a race for puts for same key from same vm - it races between the map.put() and
     // serverMapManager.put()
     private void addToCache(final Object key, final CachedItem item, boolean isMutate) {
-      final boolean removeOnTxnCompleteForMutates;
-      if (localCacheEnabled) {
-        removeOnTxnCompleteForMutates = false;
-      } else {
-        if (!isMutate) {
-          // not a mutate operation, do not cache anything locally
-          // otherwise keep in local cache till txn is complete
-          return;
-        }
-        removeOnTxnCompleteForMutates = true;
+      if (!localCacheEnabled && !isMutate) {
+        // local cache NOT enabled AND NOT a mutate operation, do not cache anything locally
+        // for mutate ops keep in local cache till txn is complete
+        return;
       }
       final CachedItem old = this.map.put(key, item);
       int currentSize;
@@ -587,7 +582,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       }
       initiateEvictionIfNecessary(currentSize);
       if (isMutate) {
-        registerForCallbackOnComplete(item, removeOnTxnCompleteForMutates);
+        registerForCallbackOnComplete(item);
       }
     }
 
@@ -752,12 +747,26 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       }
     }
 
+    public void evictFromLocalCache(final CachedItem ci) {
+      if (removeFromMap(ci.getKey(), ci)) {
+        TCObjectServerMapImpl.this.serverMapManager.removeCachedItem(ci.getID(), ci);
+      }
+    }
+
     private CachedItem removeFromMap(final Object key) {
       final CachedItem removed = this.map.remove(key);
       if (removed != null) {
         this.size.decrementAndGet();
       }
       return removed;
+    }
+
+    private boolean removeFromMap(final Object key, final CachedItem item) {
+      if (this.map.remove(key, item)) {
+        this.size.decrementAndGet();
+        return true;
+      }
+      return false;
     }
 
     /**

@@ -13,7 +13,17 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 public class CachedItem implements TransactionCompleteListener {
 
   public interface DisposeListener {
+    /**
+     * This method is called when the CachedItem is disposed. Dispose is called when the item is being flushed/removed
+     * from the RemoteServerMapManager
+     */
     public void disposed(CachedItem ci);
+
+    /**
+     * This method is called to remove from the LocalCache if the same mapping exists from the key to the cachedItem.
+     * This will also remove from the RemoteServerMapManager
+     */
+    public void evictFromLocalCache(CachedItem ci);
   }
 
   private final DisposeListener                                                 listener;
@@ -35,12 +45,24 @@ public class CachedItem implements TransactionCompleteListener {
   private CachedItem                                                            next;
 
   public CachedItem(final Object id, final DisposeListener listener, final Object key, final Object value,
-                    boolean waitForAck) {
+                    CachedItemInitialization initializeState) {
     this.listener = listener;
     this.id = id;
     this.key = key;
     this.value = value;
-    this.state = (waitForAck ? CachedItemState.UNACKED_ACCESSED : CachedItemState.ACKED_ACCESSED);
+    switch (initializeState) {
+      case WAIT_FOR_ACK:
+        this.state = CachedItemState.UNACKED_ACCESSED;
+        break;
+      case NO_WAIT_FOR_ACK:
+        this.state = CachedItemState.ACKED_ACCESSED;
+        break;
+      case REMOVE_ON_TXN_COMPLETE:
+        this.state = CachedItemState.REMOVE_ON_TXN_COMPLETE;
+        break;
+      default:
+        throw new AssertionError("Unknow state - " + initializeState);
+    }
   }
 
   public Object getID() {
@@ -108,19 +130,31 @@ public class CachedItem implements TransactionCompleteListener {
   }
 
   public void transactionComplete(TransactionID txnID) {
-    boolean success = false;
-    do {
-      final CachedItemState lstate = state;
-      success = update(lstate, lstate.acknowledged());
-    } while (!success);
-    if (id == ObjectID.NULL_ID && value == null) {
-      // This is an unlocked remove item, remove from local cache so reads go to the server
-      dispose();
+    switch (state) {
+      case REMOVE_ON_TXN_COMPLETE:
+        listener.evictFromLocalCache(this);
+        break;
+      default: {
+        boolean success = false;
+        do {
+          final CachedItemState lstate = state;
+          success = update(lstate, lstate.acknowledged());
+        } while (!success);
+        if (id == ObjectID.NULL_ID && value == null) {
+          // This is an unlocked remove item, remove from local cache so reads go to the server
+          dispose();
+        }
+        break;
+      }
     }
   }
 
   private boolean update(CachedItemState previous, CachedItemState newState) {
     return refUpdater.compareAndSet(this, previous, newState);
+  }
+
+  public static enum CachedItemInitialization {
+    WAIT_FOR_ACK, NO_WAIT_FOR_ACK, REMOVE_ON_TXN_COMPLETE;
   }
 
 }

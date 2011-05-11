@@ -79,6 +79,22 @@ enum CachedItemState {
     public CachedItemState clearAccessed() {
       return ACKED_NOT_ACCESSED;
     }
+  },
+  REMOVE_ON_TXN_COMPLETE {
+    @Override
+    public CachedItemState accessed() {
+      return this;
+    }
+
+    @Override
+    public boolean isAccessed() {
+      return true;
+    }
+
+    @Override
+    public CachedItemState clearAccessed() {
+      return this;
+    }
   };
 
   public CachedItemState accessed() {

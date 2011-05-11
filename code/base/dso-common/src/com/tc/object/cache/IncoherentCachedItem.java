@@ -16,8 +16,9 @@ public class IncoherentCachedItem extends CachedItem {
 
   private final long        lastCoherentTime;
 
-  public IncoherentCachedItem(final DisposeListener listener, final Object key, final Object value, boolean waitForAck) {
-    super(null, listener, key, value, waitForAck);
+  public IncoherentCachedItem(final DisposeListener listener, final Object key, final Object value,
+                              CachedItemInitialization cachedItemInitialization) {
+    super(null, listener, key, value, cachedItemInitialization);
     this.lastCoherentTime = System.nanoTime();
   }
 
