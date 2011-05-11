@@ -4,16 +4,15 @@
  */
 package com.tc.objectserver.persistence.db;
 
-import com.sleepycat.je.DatabaseException;
 import com.tc.exception.TCException;
 
 import java.sql.SQLException;
 
 public class TCDatabaseException extends TCException {
-  public TCDatabaseException(DatabaseException cause) {
+  public TCDatabaseException(Exception cause) {
     super(cause);
   }
-  
+
   public TCDatabaseException(SQLException cause) {
     super(cause);
   }
