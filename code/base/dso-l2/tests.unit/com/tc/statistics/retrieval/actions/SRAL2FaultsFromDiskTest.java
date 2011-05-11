@@ -13,7 +13,7 @@ import com.tc.objectserver.impl.TestManagedObjectStore;
 import com.tc.objectserver.impl.TestObjectManager;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
-import com.tc.objectserver.storage.api.TCObjectDatabase;
+import com.tc.objectserver.storage.api.TCLongToBytesDatabase;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -35,7 +35,7 @@ public class SRAL2FaultsFromDiskTest extends TCTestCase {
     System.out.println("set to true");
   }
 
-  private TCObjectDatabase         objectDatabase;
+  private TCLongToBytesDatabase         objectDatabase;
   private DSOGlobalServerStatsImpl dsoGlobalServerStats;
 
   @Override
@@ -91,7 +91,7 @@ public class SRAL2FaultsFromDiskTest extends TCTestCase {
     System.out.println("Asserted statistic data.");
   }
 
-  private static class MyTCObjectDatabase implements TCObjectDatabase {
+  private static class MyTCObjectDatabase implements TCLongToBytesDatabase {
     private final SampledCounter faultCounter;
 
     public MyTCObjectDatabase(SampledCounter faultCounter) {

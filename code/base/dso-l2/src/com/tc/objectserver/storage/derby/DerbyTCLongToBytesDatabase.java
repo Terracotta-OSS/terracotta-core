@@ -9,8 +9,11 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.persistence.db.DBException;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
+import com.tc.objectserver.storage.api.TCDatabaseCursor;
+import com.tc.objectserver.storage.api.TCDatabaseEntry;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
-import com.tc.objectserver.storage.api.TCObjectDatabase;
+import com.tc.objectserver.storage.api.TCLongToBytesDatabase;
+import com.tc.objectserver.storage.api.TCTransactionStoreDatabase;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.ObjectIDSet;
 
@@ -19,18 +22,25 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-class DerbyTCObjectDatabase extends AbstractDerbyTCDatabase implements TCObjectDatabase {
-  private static final TCLogger logger = TCLogging.getLogger(DerbyTCObjectDatabase.class);
+class DerbyTCLongToBytesDatabase extends AbstractDerbyTCDatabase implements TCLongToBytesDatabase,
+    TCTransactionStoreDatabase {
+  private static final TCLogger logger = TCLogging.getLogger(DerbyTCLongToBytesDatabase.class);
   private final SampledCounter  l2FaultFromDisk;
 
   private final String          deleteQuery;
   private final String          getQuery;
   private final String          updateQuery;
   private final String          insertQuery;
+  private final String          openCursorQuery;
   private final String          getAllObjectIDsQuery;
 
-  public DerbyTCObjectDatabase(String tableName, Connection connection, QueryProvider queryProvider,
-                               SampledCounter l2FaultFromDisk) throws TCDatabaseException {
+  public DerbyTCLongToBytesDatabase(String tableName, Connection connection, QueryProvider queryProvider)
+      throws TCDatabaseException {
+    this(tableName, connection, queryProvider, SampledCounter.NULL_SAMPLED_COUNTER);
+  }
+
+  public DerbyTCLongToBytesDatabase(String tableName, Connection connection, QueryProvider queryProvider,
+                                    SampledCounter l2FaultFromDisk) throws TCDatabaseException {
     super(tableName, connection, queryProvider);
     this.l2FaultFromDisk = l2FaultFromDisk;
     deleteQuery = "DELETE FROM " + tableName + " WHERE " + KEY + " = ?";
@@ -38,6 +48,7 @@ class DerbyTCObjectDatabase extends AbstractDerbyTCDatabase implements TCObjectD
     getAllObjectIDsQuery = "SELECT " + KEY + " FROM " + tableName;
     updateQuery = "UPDATE " + tableName + " SET " + VALUE + " = ? " + " WHERE " + KEY + " = ?";
     insertQuery = "INSERT INTO " + tableName + " VALUES (?, ?)";
+    openCursorQuery = "SELECT " + KEY + ", " + VALUE + " FROM " + tableName;
   }
 
   @Override
@@ -137,5 +148,70 @@ class DerbyTCObjectDatabase extends AbstractDerbyTCDatabase implements TCObjectD
   public Status put(long id, byte[] b, PersistenceTransaction tx) {
     if (update(id, b, tx) == Status.SUCCESS) { return Status.SUCCESS; }
     return insert(id, b, tx);
+  }
+
+  public TCDatabaseCursor<Long, byte[]> openCursor(PersistenceTransaction tx) {
+    try {
+      // "SELECT " + KEY + "," + VALUE + " FROM " + tableName
+      PreparedStatement psSelect = getOrCreatePreparedStatement(tx, openCursorQuery);
+      return new DerbyTCLongToBytesCursor(psSelect.executeQuery());
+    } catch (SQLException e) {
+      throw new DBException(e);
+    }
+  }
+
+  static class DerbyTCLongToBytesCursor implements TCDatabaseCursor<Long, byte[]> {
+    private final ResultSet rs;
+
+    public DerbyTCLongToBytesCursor(ResultSet rs) {
+      this.rs = rs;
+    }
+
+    private TCDatabaseEntry<Long, byte[]> entry    = null;
+    private boolean                       finished = false;
+
+    public boolean hasNext() {
+      if (entry != null) { return true; }
+      if (finished) { return false; }
+
+      boolean hasNext = false;
+      try {
+        hasNext = rs.next();
+        if (hasNext) {
+          entry = new TCDatabaseEntry<Long, byte[]>();
+          entry.setKey(rs.getLong(1)).setValue(rs.getBytes(2));
+        }
+      } catch (SQLException e) {
+        throw new DBException(e);
+      }
+
+      if (!hasNext) {
+        finished = true;
+      }
+      return hasNext;
+    }
+
+    public TCDatabaseEntry<Long, byte[]> next() {
+      if (entry == null) { throw new DBException("next call should be called only after checking hasNext."); }
+      TCDatabaseEntry<Long, byte[]> temp = entry;
+      entry = null;
+      return temp;
+    }
+
+    public void close() {
+      try {
+        rs.close();
+      } catch (SQLException e) {
+        throw new DBException(e);
+      }
+    }
+
+    public void delete() {
+      try {
+        rs.deleteRow();
+      } catch (SQLException e) {
+        throw new DBException(e);
+      }
+    }
   }
 }

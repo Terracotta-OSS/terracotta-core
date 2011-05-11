@@ -12,17 +12,25 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.objectserver.persistence.db.DBException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
+import com.tc.objectserver.storage.api.TCDatabaseCursor;
+import com.tc.objectserver.storage.api.TCDatabaseEntry;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
-import com.tc.objectserver.storage.api.TCObjectDatabase;
+import com.tc.objectserver.storage.api.TCLongToBytesDatabase;
+import com.tc.objectserver.storage.api.TCTransactionStoreDatabase;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.Conversion;
 
-public class BerkeleyDBTCObjectDatabase extends BerkeleyDBTCBytesBytesDatabase implements TCObjectDatabase {
-  private static final TCLogger logger = TCLogging.getLogger(BerkeleyDBTCObjectDatabase.class);
+public class BerkeleyDBTCLongToBytesDatabase extends BerkeleyDBTCBytesBytesDatabase implements TCLongToBytesDatabase,
+    TCTransactionStoreDatabase {
+  private static final TCLogger logger = TCLogging.getLogger(BerkeleyDBTCLongToBytesDatabase.class);
 
   private final SampledCounter  l2FaultFromDisk;
 
-  public BerkeleyDBTCObjectDatabase(Database db, SampledCounter l2FaultFromDisk) {
+  public BerkeleyDBTCLongToBytesDatabase(Database db) {
+    this(db, SampledCounter.NULL_SAMPLED_COUNTER);
+  }
+
+  public BerkeleyDBTCLongToBytesDatabase(Database db, SampledCounter l2FaultFromDisk) {
     super(db);
     this.l2FaultFromDisk = l2FaultFromDisk;
   }
@@ -80,7 +88,37 @@ public class BerkeleyDBTCObjectDatabase extends BerkeleyDBTCBytesBytesDatabase i
 
   @Override
   public String toString() {
-    return "BerkeleyDB-TCObjectDatabase";
+    return "BerkeleyDB-TCLongToBytesDatabase";
   }
 
+  @Override
+  public TCDatabaseCursor openCursor(PersistenceTransaction tx) {
+    TCDatabaseCursor byteByteCursor = super.openCursor(tx);
+    return new BerkeleyDBLongBytesTCDatabaseCursor(byteByteCursor);
+  }
+
+  static class BerkeleyDBLongBytesTCDatabaseCursor implements TCDatabaseCursor<Long, byte[]> {
+    private final TCDatabaseCursor<byte[], byte[]> byteByteCursor;
+
+    public BerkeleyDBLongBytesTCDatabaseCursor(TCDatabaseCursor byteByteCursor) {
+      this.byteByteCursor = byteByteCursor;
+    }
+
+    public void close() {
+      this.byteByteCursor.close();
+    }
+
+    public void delete() {
+      this.byteByteCursor.delete();
+    }
+
+    public boolean hasNext() {
+      return this.byteByteCursor.hasNext();
+    }
+
+    public TCDatabaseEntry<Long, byte[]> next() {
+      TCDatabaseEntry<byte[], byte[]> entry = this.byteByteCursor.next();
+      return new TCDatabaseEntry<Long, byte[]>(Conversion.bytes2Long(entry.getKey()), entry.getValue());
+    }
+  }
 }

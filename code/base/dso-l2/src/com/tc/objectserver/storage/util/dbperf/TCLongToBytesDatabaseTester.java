@@ -4,12 +4,12 @@
 package com.tc.objectserver.storage.util.dbperf;
 
 import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.TCObjectDatabase;
+import com.tc.objectserver.storage.api.TCLongToBytesDatabase;
 
-public class TCObjectDatabaseTester extends AbstractTCDatabaseTester {
-  private final TCObjectDatabase objectDB;
+public class TCLongToBytesDatabaseTester extends AbstractTCDatabaseTester {
+  private final TCLongToBytesDatabase objectDB;
 
-  public TCObjectDatabaseTester(TCObjectDatabase objectDB) {
+  public TCLongToBytesDatabaseTester(TCLongToBytesDatabase objectDB) {
     this.objectDB = objectDB;
   }
 

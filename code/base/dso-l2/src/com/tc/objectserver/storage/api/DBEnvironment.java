@@ -77,7 +77,7 @@ public interface DBEnvironment {
   /**
    * Returns the Object Database to be used by Persistor classes.
    */
-  public abstract TCObjectDatabase getObjectDatabase() throws TCDatabaseException;
+  public abstract TCLongToBytesDatabase getObjectDatabase() throws TCDatabaseException;
 
   /**
    * Oid Stores which are used by FastObjectOidManagerImpl

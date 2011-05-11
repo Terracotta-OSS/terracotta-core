@@ -16,9 +16,9 @@ import com.tc.objectserver.persistence.db.DBPersistorImpl.DBPersistorBase;
 import com.tc.objectserver.storage.api.DBEnvironment;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
-import com.tc.objectserver.storage.api.TCObjectDatabase;
-import com.tc.objectserver.storage.api.TCRootDatabase;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
+import com.tc.objectserver.storage.api.TCLongToBytesDatabase;
+import com.tc.objectserver.storage.api.TCRootDatabase;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
@@ -37,10 +37,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.Map.Entry;
 
 public final class ManagedObjectPersistorImpl extends DBPersistorBase implements ManagedObjectPersistor,
     PrettyPrintable {
@@ -64,15 +64,14 @@ public final class ManagedObjectPersistorImpl extends DBPersistorBase implements
 
   private static final int                        DELETE_BATCH_SIZE      = TCPropertiesImpl
                                                                              .getProperties()
-                                                                             .getInt(
-                                                                                     TCPropertiesConsts.L2_OBJECTMANAGER_DELETEBATCHSIZE,
+                                                                             .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_DELETEBATCHSIZE,
                                                                                      5000);
 
   private static final long                       REMOVE_THRESHOLD       = 300;
 
   private static final int                        INTEGER_MAX_80_PERCENT = (int) (Integer.MAX_VALUE * 0.8);
 
-  private final TCObjectDatabase                  objectDB;
+  private final TCLongToBytesDatabase             objectDB;
   private final SerializationAdapterFactory       saf;
   private final MutableSequence                   objectIDSequence;
   private final TCRootDatabase                    rootDB;

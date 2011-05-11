@@ -5,7 +5,7 @@ package com.tc.objectserver.storage.api;
 
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 
-public interface TCObjectDatabase {
+public interface TCLongToBytesDatabase {
   /**
    * Puts a <long, byte[]> key-value pair into the db.
    */

@@ -48,7 +48,7 @@ public class DBPerf {
   public DBPerf(File envHome, boolean paranoid) throws IOException, TCDatabaseException {
     dbEnvironment = getDBFactory().createEnvironment(paranoid, envHome, SampledCounter.NULL_SAMPLED_COUNTER, false);
     dbEnvironment.open();
-    objectDBTester = new TCObjectDatabaseTester(dbEnvironment.getObjectDatabase());
+    objectDBTester = new TCLongToBytesDatabaseTester(dbEnvironment.getObjectDatabase());
     mapsDBTester = new TCMapsDatabaseTester(dbEnvironment.getMapsDatabase());
     clientStateDBTester = new TCLongDatabaseTester(dbEnvironment.getClientStateDatabase());
     transactionDBTester = new TCBytesToBytesDatabaseTester(dbEnvironment.getEvictableOidStoreDatabase(), 64, 8);

@@ -38,9 +38,9 @@ import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.storage.api.TCBytesToBytesDatabase;
 import com.tc.objectserver.storage.api.TCIntToBytesDatabase;
 import com.tc.objectserver.storage.api.TCLongDatabase;
+import com.tc.objectserver.storage.api.TCLongToBytesDatabase;
 import com.tc.objectserver.storage.api.TCLongToStringDatabase;
 import com.tc.objectserver.storage.api.TCMapsDatabase;
-import com.tc.objectserver.storage.api.TCObjectDatabase;
 import com.tc.objectserver.storage.api.TCRootDatabase;
 import com.tc.objectserver.storage.api.TCStringToStringDatabase;
 import com.tc.objectserver.storage.api.TCTransactionStoreDatabase;
@@ -317,9 +317,9 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
     return new StatisticRetrievalAction[] { sraBerkeleyDB };
   }
 
-  public synchronized TCObjectDatabase getObjectDatabase() throws TCDatabaseException {
+  public synchronized TCLongToBytesDatabase getObjectDatabase() throws TCDatabaseException {
     assertOpen();
-    return (TCObjectDatabase) databasesByName.get(OBJECT_DB_NAME);
+    return (TCLongToBytesDatabase) databasesByName.get(OBJECT_DB_NAME);
   }
 
   public synchronized TCBytesToBytesDatabase getObjectOidStoreDatabase() throws TCDatabaseException {
@@ -475,7 +475,7 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
   private void newObjectDB(Environment e, String name) throws TCDatabaseException {
     try {
       Database db = e.openDatabase(null, name, dbcfg);
-      BerkeleyDBTCObjectDatabase objectDatabse = new BerkeleyDBTCObjectDatabase(db, this.l2FaultFromDisk);
+      BerkeleyDBTCLongToBytesDatabase objectDatabse = new BerkeleyDBTCLongToBytesDatabase(db, this.l2FaultFromDisk);
 
       createdDatabases.add(objectDatabse);
       databasesByName.put(name, objectDatabse);
@@ -509,7 +509,7 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
   private void newTransactionStoreDB(Environment e, String name) throws TCDatabaseException {
     try {
       Database db = e.openDatabase(null, name, dbcfg);
-      TCTransactionStoreDatabase bdb = new BerkeleyDBTCTransactionStoreDatabase(db);
+      TCTransactionStoreDatabase bdb = new BerkeleyDBTCLongToBytesDatabase(db);
       createdDatabases.add(bdb);
       databasesByName.put(name, bdb);
     } catch (Exception de) {
@@ -625,8 +625,8 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
 
   public MutableSequence getSequence(PersistenceTransactionProvider ptxp, TCLogger log, String sequenceID,
                                      int startValue) {
-    return new BerkeleyDBSequence(ptxp, log, sequenceID, startValue, (Database) databasesByName
-        .get(GLOBAL_SEQUENCE_DATABASE));
+    return new BerkeleyDBSequence(ptxp, log, sequenceID, startValue,
+                                  (Database) databasesByName.get(GLOBAL_SEQUENCE_DATABASE));
   }
 
   public PersistenceTransactionProvider getPersistenceTransactionProvider() {
