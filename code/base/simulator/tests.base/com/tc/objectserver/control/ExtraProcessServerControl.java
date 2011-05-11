@@ -190,7 +190,11 @@ public class ExtraProcessServerControl extends ServerControlBase {
     RuntimeMXBean mxbean = ManagementFactory.getRuntimeMXBean();
     try {
       for (String parentJvmArg : mxbean.getInputArguments()) {
-        if (parentJvmArg.startsWith("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX)) {
+        // DEV-5808: Replace the explicit check for tc properties define with something
+        // that can properly account for all properties that should not be passed
+        // through.
+        if (parentJvmArg.startsWith("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX)
+            && !parentJvmArg.startsWith("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX + "properties")) {
           args.add(parentJvmArg);
         }
       }
