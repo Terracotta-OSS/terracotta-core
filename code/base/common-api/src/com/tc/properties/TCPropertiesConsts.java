@@ -223,6 +223,7 @@ public interface TCPropertiesConsts {
   public static final String DERBY_STORAGE_PAGESIZE                                          = "derby.storage.pageSize";
   public static final String DERBY_STORAGE_PAGECACHESIZE                                     = "derby.storage.pageCacheSize";
   public static final String DERBY_SYSTEM_DURABILITY                                         = "derby.system.durability";
+  public static final String DERBY_STREAM_ERROR_METHOD                                       = "derby.stream.error.method";
   public static final String DERBY_PAGECACHE_HEAPUSAGE                                       = "pageCache.heapUsage";
   public static final String DERBY_LOG_DEVICE                                                = "logDevice";
   public static final String L2_DERBYDB_DERBY_STORAGE_PAGESIZE                               = "l2.derbydb."

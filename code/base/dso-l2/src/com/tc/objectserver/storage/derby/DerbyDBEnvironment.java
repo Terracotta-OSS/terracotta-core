@@ -32,6 +32,7 @@ import com.tc.util.sequence.MutableSequence;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.Writer;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -121,6 +122,8 @@ public class DerbyDBEnvironment implements DBEnvironment {
       derbyProps.remove(TCPropertiesConsts.DERBY_SYSTEM_DURABILITY);
     }
 
+    derbyProps.setProperty(TCPropertiesConsts.DERBY_STREAM_ERROR_METHOD,
+                           "com.tc.objectserver.storage.derby.DerbyDBEnvironment.getWriter");
     File derbyPropsFile = new File(this.envHome.getAbsoluteFile() + File.separator + "derby.properties");
     if (!derbyProps.isEmpty() && !derbyPropsFile.exists()) {
       FileOutputStream fos = new FileOutputStream(derbyPropsFile);
@@ -461,4 +464,26 @@ public class DerbyDBEnvironment implements DBEnvironment {
   public void initObjectStoreStats(ManagedObjectStoreStats objectStoreStats) {
     //
   }
+
+  public static Writer getWriter() {
+    return WRITER;
+  }
+
+  private static final Writer WRITER = new Writer() {
+
+                                      @Override
+                                      public void close() {
+                                        // do nothing
+                                      }
+
+                                      @Override
+                                      public void flush() {
+                                        // do nothing
+                                      }
+
+                                      @Override
+                                      public void write(char[] cbuf, int off, int len) {
+                                        logger.info(new String(cbuf, off, len));
+                                      }
+                                    };
 }
