@@ -113,12 +113,14 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
     return count;
   }
 
-  private synchronized int countMaps(final Map m) {
+  private int countMaps(final Map m) {
     int count = 0;
-    for (final Iterator i = m.entrySet().iterator(); i.hasNext();) {
-      final Map.Entry e = (Entry) i.next();
-      if (e.getValue() instanceof Map) {
-        count = count + 1 + countMaps((Map) e.getValue());
+    synchronized (m) {
+      for (final Iterator i = m.entrySet().iterator(); i.hasNext();) {
+        final Map.Entry e = (Entry) i.next();
+        if (e.getValue() instanceof Map) {
+          count = count + 1 + countMaps((Map) e.getValue());
+        }
       }
     }
     return count;
