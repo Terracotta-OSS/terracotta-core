@@ -76,7 +76,7 @@ public class ServerTxnAckMessageTest extends TestCase {
     this.serverTransactionIDs = null;
   }
 
-  private void validate(ServerTxnAckMessage stam, ServerTxnAckMessage stam1) {
+  private void validate(ServerRelayedTxnAckMessage stam, ServerRelayedTxnAckMessage stam1) {
     assertEquals(stam.getType(), stam1.getType());
     assertEquals(stam.getMessageID(), stam1.getMessageID());
     assertEquals(stam.inResponseTo(), stam1.inResponseTo());
@@ -95,21 +95,21 @@ public class ServerTxnAckMessageTest extends TestCase {
     assertEquals(stam.getDestinationID(), this.nodeID);
   }
 
-  private ServerTxnAckMessage writeAndRead(ServerTxnAckMessage stam) throws Exception {
+  private ServerRelayedTxnAckMessage writeAndRead(ServerRelayedTxnAckMessage stam) throws Exception {
     TCByteBufferOutputStream bo = new TCByteBufferOutputStream();
     stam.serializeTo(bo);
     System.err.println("Written : " + stam);
     TCByteBufferInputStream bi = new TCByteBufferInputStream(bo.toArray());
-    ServerTxnAckMessage stam1 = new ServerTxnAckMessage();
+    ServerRelayedTxnAckMessage stam1 = new ServerRelayedTxnAckMessage();
     stam1.deserializeFrom(bi);
     System.err.println("Read : " + stam1);
     return stam1;
   }
 
   public void testBasicSerialization() throws Exception {
-    ServerTxnAckMessage stam = ServerTxnAckMessageFactory
-        .createServerTxnAckMessage(this.relayedCommitTransactionMessage, this.serverTransactionIDs);
-    ServerTxnAckMessage stam1 = writeAndRead(stam);
+    ServerRelayedTxnAckMessage stam = ServerTxnAckMessageFactory
+        .createServerRelayedTxnAckMessage(this.relayedCommitTransactionMessage, this.serverTransactionIDs);
+    ServerRelayedTxnAckMessage stam1 = writeAndRead(stam);
     validate(stam, stam1);
   }
 }

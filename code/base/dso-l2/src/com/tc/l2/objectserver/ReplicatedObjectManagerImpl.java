@@ -68,9 +68,11 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   private final GCMonitor                    gcMonitor;
   private final boolean                      isCleanDB;
   private final L2PassiveSyncStateManager    passiveSyncStateManager;
+  private final L2ObjectStateManager         l2ObjectStateManager;
 
   public ReplicatedObjectManagerImpl(final GroupManager groupManager, final StateManager stateManager,
                                      final L2PassiveSyncStateManager l2PassiveSyncStateManager,
+                                     L2ObjectStateManager l2ObjectStateManager,
                                      final ReplicatedTransactionManager txnManager, final ObjectManager objectManager,
                                      final ServerTransactionManager transactionManager,
                                      final Sink objectsSyncRequestSink, final Sink indexSyncRequestSink,
@@ -92,6 +94,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     this.groupManager.registerForMessages(IndexSyncCompleteAckMessage.class, this);
     this.isCleanDB = isCleanDB;
     this.passiveSyncStateManager = l2PassiveSyncStateManager;
+    this.l2ObjectStateManager = l2ObjectStateManager;
   }
 
   /**
@@ -248,7 +251,12 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       this.passiveSyncStateManager.objectSyncComplete(nodeID);
       moveNodeToPassiveStandByIfPossible(nodeID);
     } else {
-      this.objectsSyncRequestSink.add(new SyncObjectsRequest(nodeID));
+      final Runnable syncRunnable = new Runnable() {
+        public void run() {
+          objectsSyncRequestSink.add(new SyncObjectsRequest(nodeID));
+        }
+      };
+      this.l2ObjectStateManager.initiateSync(nodeID, syncRunnable);
     }
   }
 

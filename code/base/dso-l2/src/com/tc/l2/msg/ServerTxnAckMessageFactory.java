@@ -10,8 +10,16 @@ import java.util.Set;
 
 public class ServerTxnAckMessageFactory {
 
-  public static ServerTxnAckMessage createServerTxnAckMessage(AbstractGroupMessage request, Set serverTxnIDs) {
-    ServerTxnAckMessage msg = new ServerTxnAckMessage(request.messageFrom(), request.getMessageID(), serverTxnIDs);
+  public static ServerRelayedTxnAckMessage createServerRelayedTxnAckMessage(AbstractGroupMessage request,
+                                                                            Set serverTxnIDs) {
+    ServerRelayedTxnAckMessage msg = new ServerRelayedTxnAckMessage(request.messageFrom(), request.getMessageID(),
+                                                                    serverTxnIDs);
+    return msg;
+  }
+
+  public static ServerSyncTxnAckMessage createServerSyncTxnAckMessage(AbstractGroupMessage request, Set serverTxnIDs) {
+    ServerSyncTxnAckMessage msg = new ServerSyncTxnAckMessage(request.messageFrom(), request.getMessageID(),
+                                                              serverTxnIDs);
     return msg;
   }
 

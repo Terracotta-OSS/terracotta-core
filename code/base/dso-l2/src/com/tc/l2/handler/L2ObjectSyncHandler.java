@@ -14,7 +14,8 @@ import com.tc.l2.msg.ObjectSyncCompleteMessage;
 import com.tc.l2.msg.ObjectSyncCompleteMessageFactory;
 import com.tc.l2.msg.ObjectSyncMessage;
 import com.tc.l2.msg.RelayedCommitTransactionMessage;
-import com.tc.l2.msg.ServerTxnAckMessage;
+import com.tc.l2.msg.ServerRelayedTxnAckMessage;
+import com.tc.l2.msg.ServerSyncTxnAckMessage;
 import com.tc.l2.msg.ServerTxnAckMessageFactory;
 import com.tc.l2.objectserver.ReplicatedTransactionManager;
 import com.tc.l2.objectserver.ServerTransactionFactory;
@@ -60,7 +61,7 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
       final RelayedCommitTransactionMessage commitMessage = (RelayedCommitTransactionMessage) context;
       final Set serverTxnIDs = processCommitTransactionMessage(commitMessage);
       processTransactionLowWaterMark(commitMessage.getLowGlobalTransactionIDWatermark());
-      ackTransactions(commitMessage, serverTxnIDs);
+      ackRelayedTransactions(commitMessage, serverTxnIDs);
     } else if (context instanceof ObjectSyncCompleteMessage) {
       handleObjectSyncCompleteMessage((ObjectSyncCompleteMessage) context);
     } else {
@@ -96,8 +97,15 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     this.rTxnManager.clearTransactionsBelowLowWaterMark(lowGlobalTransactionIDWatermark);
   }
 
-  private void ackTransactions(final AbstractGroupMessage messageFrom, final Set serverTxnIDs) {
-    final ServerTxnAckMessage msg = ServerTxnAckMessageFactory.createServerTxnAckMessage(messageFrom, serverTxnIDs);
+  private void ackRelayedTransactions(final AbstractGroupMessage messageFrom, final Set serverTxnIDs) {
+    final ServerRelayedTxnAckMessage msg = ServerTxnAckMessageFactory.createServerRelayedTxnAckMessage(messageFrom,
+                                                                                                       serverTxnIDs);
+    this.sendSink.add(msg);
+  }
+
+  private void ackSyncTransactions(final AbstractGroupMessage messageFrom, final Set serverTxnIDs) {
+    final ServerSyncTxnAckMessage msg = ServerTxnAckMessageFactory.createServerSyncTxnAckMessage(messageFrom,
+                                                                                                 serverTxnIDs);
     this.sendSink.add(msg);
   }
 
@@ -123,7 +131,7 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     this.rTxnManager.addObjectSyncTransaction(txn);
     final HashSet serverTxnIDs = new HashSet(2);
     serverTxnIDs.add(txn.getServerTransactionID());
-    ackTransactions(syncMsg, serverTxnIDs);
+    ackSyncTransactions(syncMsg, serverTxnIDs);
   }
 
   @Override

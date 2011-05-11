@@ -14,10 +14,13 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TxnsInSystemCompletionListener;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.State;
 import com.tc.util.concurrent.CopyOnWriteArrayMap;
+import com.tc.util.concurrent.ThrottledTaskExecutor;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -27,16 +30,26 @@ import java.util.Set;
 
 public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
 
-  private static final TCLogger          logger    = TCLogging.getLogger(L2ObjectStateManagerImpl.class);
+  private static final TCLogger          logger                 = TCLogging.getLogger(L2ObjectStateManagerImpl.class);
 
   private final ObjectManager            objectManager;
-  private final CopyOnWriteArrayMap      nodes     = new CopyOnWriteArrayMap();
-  private final CopyOnWriteArrayList     listeners = new CopyOnWriteArrayList();
+  private final CopyOnWriteArrayMap      nodes                  = new CopyOnWriteArrayMap();
+  private final CopyOnWriteArrayList     listeners              = new CopyOnWriteArrayList();
   private final ServerTransactionManager transactionManager;
+  private final CopyOnWriteArrayMap      syncExecutorContextMap = new CopyOnWriteArrayMap();
+  private final int                      syncMaxPendingMsgs;
 
   public L2ObjectStateManagerImpl(final ObjectManager objectManager, final ServerTransactionManager transactionManager) {
     this.objectManager = objectManager;
     this.transactionManager = transactionManager;
+    int maxSyncPendingMsgs = TCPropertiesImpl.getProperties()
+        .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_PASSIVE_SYNC_THROTTLE_PENDING_MSGS);
+    if (maxSyncPendingMsgs <= 0) {
+      logger.warn("Passive Object Sync throttle disabled. ("
+                  + TCPropertiesConsts.L2_OBJECTMANAGER_PASSIVE_SYNC_THROTTLE_PENDING_MSGS + " = " + maxSyncPendingMsgs
+                  + ")");
+    }
+    this.syncMaxPendingMsgs = (maxSyncPendingMsgs <= 0) ? Integer.MAX_VALUE : maxSyncPendingMsgs;
   }
 
   public void registerForL2ObjectStateChangeEvents(final L2ObjectStateListener listener) {
@@ -66,6 +79,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     if (l2State == null) {
       logger.warn("L2State Not found for " + nodeID);
     }
+    this.syncExecutorContextMap.remove(nodeID);
   }
 
   public boolean addL2(final NodeID nodeID, final Set oids) {
@@ -112,12 +126,63 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     return this.nodes.values();
   }
 
+  public void initiateSync(NodeID nodeID, Runnable syncRunnable) {
+    ThrottledTaskExecutor throttledTaskExecutor = new ThrottledTaskExecutor(syncMaxPendingMsgs);
+    SyncExecutorContext passiveSyncContext = new SyncExecutorContext(throttledTaskExecutor, syncRunnable);
+    Object o = this.syncExecutorContextMap.put(nodeID, passiveSyncContext);
+    if (o != null) {
+      logger.warn("initiateSync: Passive Sync Context already available for " + nodeID);
+    }
+    syncPassive(throttledTaskExecutor, syncRunnable);
+  }
+
+  public void syncMore(NodeID nodeID) {
+    SyncExecutorContext passiveSync = (SyncExecutorContext) this.syncExecutorContextMap.get(nodeID);
+    if (passiveSync != null) {
+      syncPassive(passiveSync.getExecutor(), passiveSync.getRunnable());
+    } else {
+      logger.warn("syncMore: Passive Sync Context missing for " + nodeID);
+    }
+  }
+
+  private void syncPassive(ThrottledTaskExecutor executor, Runnable syncRunnable) {
+    executor.offer(syncRunnable);
+  }
+
+  public void ackSync(NodeID nodeID) {
+    SyncExecutorContext passiveSync = (SyncExecutorContext) this.syncExecutorContextMap.get(nodeID);
+    if (passiveSync != null) {
+      passiveSync.getExecutor().receiveFeedback();
+    } else {
+      logger.warn("ackSync: Passive Sync Context missing for " + nodeID);
+    }
+  }
+
   @Override
   public String toString() {
     StringBuilder strBuilder = new StringBuilder();
     strBuilder.append(L2ObjectStateManagerImpl.class.getSimpleName()).append(": [ ").append(this.nodes.values())
         .append("]");
     return strBuilder.toString();
+  }
+
+  private static class SyncExecutorContext {
+    private final ThrottledTaskExecutor executor;
+    private final Runnable              runnable;
+
+    public SyncExecutorContext(ThrottledTaskExecutor executor, Runnable runnable) {
+      this.executor = executor;
+      this.runnable = runnable;
+    }
+
+    public ThrottledTaskExecutor getExecutor() {
+      return executor;
+    }
+
+    public Runnable getRunnable() {
+      return runnable;
+    }
+
   }
 
   private static final State START                  = new State("START");

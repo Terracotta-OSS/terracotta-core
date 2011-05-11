@@ -4,6 +4,7 @@
  */
 package com.tc.l2.api;
 
+import com.tc.l2.objectserver.L2ObjectStateManager;
 import com.tc.l2.objectserver.ReplicatedObjectManager;
 import com.tc.l2.objectserver.ReplicatedTransactionManager;
 import com.tc.l2.state.StateChangeListener;
@@ -27,5 +28,7 @@ public interface L2Coordinator extends StateChangeListener, PrettyPrintable {
   public GroupManager getGroupManager();
 
   public StateSyncManager getStateSyncManager();
+
+  public L2ObjectStateManager getL2ObjectStateManager();
 
 }

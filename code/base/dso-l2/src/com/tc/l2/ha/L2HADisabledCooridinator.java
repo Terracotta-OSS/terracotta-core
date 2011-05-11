@@ -7,8 +7,10 @@ package com.tc.l2.ha;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.context.StateChangedEvent;
+import com.tc.l2.objectserver.L2ObjectStateManager;
 import com.tc.l2.objectserver.NonReplicatedObjectManager;
 import com.tc.l2.objectserver.NonReplicatedTransactionManager;
+import com.tc.l2.objectserver.NullL2ObjectStateManager;
 import com.tc.l2.objectserver.ReplicatedObjectManager;
 import com.tc.l2.objectserver.ReplicatedTransactionManager;
 import com.tc.l2.state.DummyStateManager;
@@ -24,10 +26,11 @@ public class L2HADisabledCooridinator implements L2Coordinator, PrettyPrintable 
 
   private final GroupManager                  groupManager;
   private final StateManager                  stateMgr;
-  private final ReplicatedClusterStateManager clusterStateMgr  = new NonReplicatedClusterStateManager();
-  private final ReplicatedObjectManager       replicatedObjMgr = new NonReplicatedObjectManager();
-  private final ReplicatedTransactionManager  replicatedTxnMgr = new NonReplicatedTransactionManager();
-  private final StateSyncManager              stateSyncManager = new NullStateSyncManager();
+  private final ReplicatedClusterStateManager clusterStateMgr    = new NonReplicatedClusterStateManager();
+  private final ReplicatedObjectManager       replicatedObjMgr   = new NonReplicatedObjectManager();
+  private final ReplicatedTransactionManager  replicatedTxnMgr   = new NonReplicatedTransactionManager();
+  private final StateSyncManager              stateSyncManager   = new NullStateSyncManager();
+  private final L2ObjectStateManager          objectStateManager = new NullL2ObjectStateManager();
 
   public L2HADisabledCooridinator(GroupManager groupCommManager) {
     this.groupManager = groupCommManager;
@@ -79,6 +82,10 @@ public class L2HADisabledCooridinator implements L2Coordinator, PrettyPrintable 
 
   public void l2StateChanged(StateChangedEvent sce) {
     //
+  }
+
+  public L2ObjectStateManager getL2ObjectStateManager() {
+    return objectStateManager;
   }
 
 }
