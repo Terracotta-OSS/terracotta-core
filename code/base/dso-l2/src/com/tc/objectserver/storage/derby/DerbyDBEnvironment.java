@@ -56,6 +56,9 @@ public class DerbyDBEnvironment implements DBEnvironment {
                                                                               put(32768, 0.826F);
                                                                             }
                                                                           };
+  private static final float               LOG_BUFFER_HEAP_PERCENTAGE     = 0.1f;
+  private static final int                 NUMBER_OF_LOG_BUFFERS          = 3;
+  private static final int                 MAX_LOG_BUFFER_SIZE            = 50 * 1024 * 1024;
 
   private final Map                        tables                         = new HashMap();
   private final Properties                 derbyProps;
@@ -99,17 +102,28 @@ public class DerbyDBEnvironment implements DBEnvironment {
 
     // Perform heap size calculation to determine how many cache pages to give derby
     if (derbyProps.containsKey(TCPropertiesConsts.DERBY_PAGECACHE_HEAPUSAGE)) {
+      // Heap memory to give to Derby
+      float heapUsage = Runtime.getRuntime().maxMemory()
+                        * (Float.parseFloat(derbyProps.getProperty(TCPropertiesConsts.DERBY_PAGECACHE_HEAPUSAGE)) / 100.0f);
+
+      // Calculate log buffer size
+      int logBufferMemory = Math.min((int) (heapUsage * LOG_BUFFER_HEAP_PERCENTAGE), MAX_LOG_BUFFER_SIZE);
+      logger.info("Setting derby transaction log buffer size to " + logBufferMemory / (1024 * 1024) + "M.");
+      derbyProps.setProperty(TCPropertiesConsts.DERBY_LOG_BUFFER_SIZE, "" + (logBufferMemory / NUMBER_OF_LOG_BUFFERS));
+
+      // Calculate page cache size
       int pageSize = Integer.parseInt(derbyProps.getProperty(TCPropertiesConsts.DERBY_STORAGE_PAGESIZE));
-      float heapPercentage = Float.parseFloat(derbyProps.getProperty(TCPropertiesConsts.DERBY_PAGECACHE_HEAPUSAGE));
+      float pageMemory = heapUsage - logBufferMemory;
       float cacheOverheadFactor = PAGE_CACHE_OVERHEAD_FACTOR_MAP.get(pageSize);
       // Total number of pages is reduced by a factor (depending on the page size) to account for derby's cache
       // overhead.
-      int pageCacheSize = (int) ((Runtime.getRuntime().maxMemory() * (heapPercentage / 100.0F) * cacheOverheadFactor) / pageSize);
+      int pageCacheSize = (int) ((pageMemory * cacheOverheadFactor) / pageSize);
       if (derbyProps.containsKey(TCPropertiesConsts.DERBY_STORAGE_PAGECACHESIZE)) {
         logger.warn(TCPropertiesConsts.L2_DERBYDB_DERBY_STORAGE_PAGECACHESIZE + " overridden by setting "
                     + TCPropertiesConsts.L2_DERBYDB_PAGECACHE_HEAPUSAGE + ".");
       }
-      logger.info("Setting derby page cache heap usage to " + heapPercentage + "% (" + pageCacheSize + " pages).");
+      logger.info("Setting derby page cache heap usage to " + pageMemory / (1024 * 1024) + "M (" + pageCacheSize
+                  + " pages).");
       derbyProps.setProperty(TCPropertiesConsts.DERBY_STORAGE_PAGECACHESIZE, "" + pageCacheSize);
     }
 
@@ -472,19 +486,19 @@ public class DerbyDBEnvironment implements DBEnvironment {
 
   private static final Writer WRITER = new Writer() {
 
-                                      @Override
-                                      public void close() {
-                                        // do nothing
-                                      }
+                                       @Override
+                                       public void close() {
+                                         // do nothing
+                                       }
 
-                                      @Override
-                                      public void flush() {
-                                        // do nothing
-                                      }
+                                       @Override
+                                       public void flush() {
+                                         // do nothing
+                                       }
 
-                                      @Override
-                                      public void write(char[] cbuf, int off, int len) {
-                                        logger.info(new String(cbuf, off, len));
-                                      }
-                                    };
+                                       @Override
+                                       public void write(char[] cbuf, int off, int len) {
+                                         logger.info(new String(cbuf, off, len));
+                                       }
+                                     };
 }

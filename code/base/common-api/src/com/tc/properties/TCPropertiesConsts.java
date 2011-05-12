@@ -225,6 +225,7 @@ public interface TCPropertiesConsts {
   public static final String DERBY_SYSTEM_DURABILITY                                         = "derby.system.durability";
   public static final String DERBY_STREAM_ERROR_METHOD                                       = "derby.stream.error.method";
   public static final String DERBY_PAGECACHE_HEAPUSAGE                                       = "pageCache.heapUsage";
+  public static final String DERBY_LOG_BUFFER_SIZE                                           = "derby.storage.logBufferSize";
   public static final String DERBY_LOG_DEVICE                                                = "logDevice";
   public static final String L2_DERBYDB_DERBY_STORAGE_PAGESIZE                               = "l2.derbydb."
                                                                                                + DERBY_STORAGE_PAGESIZE;
@@ -238,7 +239,8 @@ public interface TCPropertiesConsts {
                                                                                                + DERBY_LOG_DEVICE;
   public static final String L2_DERBYDB_DERBY_STORAGE_CHECKPOINTINTERVAL                     = "l2.derbydb.derby.storage.checkpointInterval";
   public static final String L2_DERBYDB_DERBY_STORAGE_LOG_SWITCH_INTERVAL                    = "l2.derbydb.derby.storage.logSwitchInterval";
-  public static final String L2_DERBYDB_DERBY_STORAGE_LOG_BUFFER_SIZE                        = "l2.derbydb.derby.storage.logBufferSize";
+  public static final String L2_DERBYDB_DERBY_STORAGE_LOG_BUFFER_SIZE                        = "l2.derbydb."
+                                                                                               + DERBY_LOG_BUFFER_SIZE;
   public static final String L2_DERBYDB_DERBY_LOCK_ESCALATION_THRESHOLD                      = "l2.derbydb.derby.locks.escalationThreshold";
   public static final String L2_DERBYDB_DERBY_LOCKS_DEADLOCK_TIMEOUT                         = "l2.derbydb.derby.locks.deadlockTimeout";
   public static final String L2_DERBYDB_DERBY_LOCKS_WAIT_TIMEOUT                             = "l2.derbydb.derby.locks.waitTimeout";
