@@ -28,17 +28,12 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
-/**
- * @author steve
- */
 public class LockManagerTest extends TestCase {
   private TestSink        sink;
   private LockManagerImpl lockManager;
 
   static final int        numLocks   = 30;
   static final int        numThreads = 15;
-
-  // private final ServerThreadID[] txns = makeUniqueTxns(numThreads);
 
   @Override
   protected void setUp() throws Exception {

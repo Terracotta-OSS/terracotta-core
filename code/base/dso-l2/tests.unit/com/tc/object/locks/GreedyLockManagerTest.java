@@ -24,17 +24,12 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
-/**
- * @author steve
- */
 public class GreedyLockManagerTest extends TestCase {
   private TestSink        sink;
   private LockManagerImpl lockManager;
 
   static final int        numLocks   = 100;
   static final int        numThreads = 30;
-
-  // private final ServerThreadID[] txns = makeUniqueTxns(numThreads);
 
   @Override
   protected void setUp() throws Exception {
