@@ -22,6 +22,7 @@ public class CallbackDumpAdapter implements CallbackOnExitHandler {
 
   public void callbackOnExit(CallbackOnExitState state) {
     DumpLoggerWriter writer = new DumpLoggerWriter();
+    writer.write("\n***********************************************************************************\n");
     PrintWriter pw = new PrintWriter(writer);
     PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
     prettyPrinter.autoflush(false);
