@@ -3,14 +3,14 @@
  */
 package com.tc.objectserver.handler;
 
-import com.tc.logging.TerracottaOperatorEventLogger;
-import com.tc.logging.TerracottaOperatorEventLogging;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.operatorevent.TerracottaOperatorEventFactory;
+import com.tc.operatorevent.TerracottaOperatorEventLogger;
+import com.tc.operatorevent.TerracottaOperatorEventLogging;
 
 public class ClientChannelOperatorEventlistener implements DSOChannelManagerEventListener {
-  
+
   private final TerracottaOperatorEventLogger operatorEventLogger = TerracottaOperatorEventLogging.getEventLogger();
 
   public void channelCreated(MessageChannel channel) {

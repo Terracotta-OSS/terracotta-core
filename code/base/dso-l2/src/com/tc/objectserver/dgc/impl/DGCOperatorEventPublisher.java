@@ -3,10 +3,10 @@
  */
 package com.tc.objectserver.dgc.impl;
 
-import com.tc.logging.TerracottaOperatorEventLogger;
-import com.tc.logging.TerracottaOperatorEventLogging;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.operatorevent.TerracottaOperatorEventFactory;
+import com.tc.operatorevent.TerracottaOperatorEventLogger;
+import com.tc.operatorevent.TerracottaOperatorEventLogging;
 
 public class DGCOperatorEventPublisher extends GarbageCollectorEventListenerAdapter {
   private final TerracottaOperatorEventLogger operatorEventLogger = TerracottaOperatorEventLogging.getEventLogger();

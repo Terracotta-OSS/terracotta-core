@@ -5,11 +5,11 @@ package com.tc.objectserver.impl;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.logging.TerracottaOperatorEventLogging;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEventFactory;
+import com.tc.operatorevent.TerracottaOperatorEventLogging;
 
 import java.util.concurrent.atomic.AtomicLong;
 

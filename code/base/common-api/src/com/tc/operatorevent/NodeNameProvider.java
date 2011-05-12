@@ -1,7 +1,7 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-package com.tc.net;
+package com.tc.operatorevent;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;

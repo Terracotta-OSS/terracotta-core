@@ -133,4 +133,10 @@ public class TerracottaOperatorEventFactory {
             serverName, timeDiff }), "time difference");
   }
 
+  public static TerracottaOperatorEvent createConfigReloadedEvent(String description) {
+    return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.CLUSTER_TOPOLOGY, MessageFormat
+        .format(TerracottaOperatorEventResources.getConfigReloadedMessage(), new Object[] { description }),
+                                           "config reload");
+  }
+
 }

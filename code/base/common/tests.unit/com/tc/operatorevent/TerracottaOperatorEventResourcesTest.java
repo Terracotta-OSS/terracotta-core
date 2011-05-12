@@ -29,11 +29,14 @@ public class TerracottaOperatorEventResourcesTest extends TCTestCase {
     /**
      * DGC messages
      */
-    Assert.assertTrue(TerracottaOperatorEventResources.getDGCStartedMessage().equals(this.resources
+    Assert.assertTrue(TerracottaOperatorEventResources.getDGCStartedMessage().equals(
+                                                                                     this.resources
                                                                                          .getObject("dgc.started")));
-    Assert.assertTrue(TerracottaOperatorEventResources.getDGCFinishedMessage().equals(this.resources
+    Assert.assertTrue(TerracottaOperatorEventResources.getDGCFinishedMessage().equals(
+                                                                                      this.resources
                                                                                           .getObject("dgc.finished")));
-    Assert.assertTrue(TerracottaOperatorEventResources.getDGCCanceledMessage().equals(this.resources
+    Assert.assertTrue(TerracottaOperatorEventResources.getDGCCanceledMessage().equals(
+                                                                                      this.resources
                                                                                           .getObject("dgc.canceled")));
 
     /**
@@ -43,7 +46,8 @@ public class TerracottaOperatorEventResourcesTest extends TCTestCase {
         .equals(this.resources.getObject("node.availability")));
     Assert.assertTrue(TerracottaOperatorEventResources.getOOODisconnectMessage()
         .equals(this.resources.getObject("ooo.disconnect")));
-    Assert.assertTrue(TerracottaOperatorEventResources.getOOOConnectMessage().equals(this.resources
+    Assert.assertTrue(TerracottaOperatorEventResources.getOOOConnectMessage().equals(
+                                                                                     this.resources
                                                                                          .getObject("ooo.connect")));
     Assert.assertTrue(TerracottaOperatorEventResources.getClusterNodeStateChangedMessage()
         .equals(this.resources.getObject("node.state")));
@@ -70,6 +74,12 @@ public class TerracottaOperatorEventResourcesTest extends TCTestCase {
         .equals(this.resources.getObject("offheap.memory.eviction")));
     Assert.assertTrue(TerracottaOperatorEventResources.getOffHeapObjectCachedMessage()
         .equals(this.resources.getObject("offheap.memory.objectCached")));
+
+    /**
+     * config related message
+     */
+    Assert.assertTrue(TerracottaOperatorEventResources.getConfigReloadedMessage()
+        .equals(this.resources.getObject("config.reloaded")));
 
   }
 }

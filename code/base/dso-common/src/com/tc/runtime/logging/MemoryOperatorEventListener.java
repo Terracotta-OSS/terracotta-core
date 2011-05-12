@@ -3,9 +3,9 @@
  */
 package com.tc.runtime.logging;
 
-import com.tc.logging.TerracottaOperatorEventLogger;
-import com.tc.logging.TerracottaOperatorEventLogging;
 import com.tc.operatorevent.TerracottaOperatorEventFactory;
+import com.tc.operatorevent.TerracottaOperatorEventLogger;
+import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.runtime.MemoryEventsListener;
 import com.tc.runtime.MemoryUsage;
 

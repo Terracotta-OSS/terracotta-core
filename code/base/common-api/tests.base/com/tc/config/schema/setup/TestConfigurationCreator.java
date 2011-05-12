@@ -52,7 +52,7 @@ public class TestConfigurationCreator extends StandardXMLFileConfigurationCreato
   }
 
   @Override
-  public void reloadServersConfiguration(MutableBeanRepository l2sBeanRepository, boolean b, boolean reportToConsole) {
+  public String reloadServersConfiguration(MutableBeanRepository l2sBeanRepository, boolean b, boolean reportToConsole) {
     throw new UnsupportedOperationException();
   }
 

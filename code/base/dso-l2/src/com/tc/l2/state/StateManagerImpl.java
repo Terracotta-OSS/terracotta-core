@@ -14,14 +14,14 @@ import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.L2StateMessageFactory;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.logging.TerracottaOperatorEventLogger;
-import com.tc.logging.TerracottaOperatorEventLogging;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessage;
 import com.tc.operatorevent.TerracottaOperatorEventFactory;
+import com.tc.operatorevent.TerracottaOperatorEventLogger;
+import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.util.Assert;
 import com.tc.util.State;
 

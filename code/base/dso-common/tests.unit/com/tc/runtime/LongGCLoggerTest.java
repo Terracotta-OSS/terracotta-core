@@ -8,10 +8,10 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.logging.TerracottaOperatorEventLogging;
 import com.tc.operatorevent.TerracottaOperatorEvent;
-import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.operatorevent.TerracottaOperatorEventCallback;
+import com.tc.operatorevent.TerracottaOperatorEventLogging;
+import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.test.TCTestCase;
 

@@ -3,7 +3,7 @@
  */
 package com.tc.objectserver.impl;
 
-import com.tc.net.NodeNameProvider;
+import com.tc.operatorevent.NodeNameProvider;
 
 public class ServerNameProvider implements NodeNameProvider {
   private final String nodeName;

@@ -4,12 +4,12 @@
 package com.tc.l2.operatorevent;
 
 import com.tc.config.NodesStore;
-import com.tc.logging.TerracottaOperatorEventLogger;
-import com.tc.logging.TerracottaOperatorEventLogging;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupEventsListener;
 import com.tc.operatorevent.TerracottaOperatorEventFactory;
+import com.tc.operatorevent.TerracottaOperatorEventLogger;
+import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.util.Assert;
 
 public class OperatorEventsNodeConnectionListener implements GroupEventsListener {

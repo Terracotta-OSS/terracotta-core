@@ -106,4 +106,8 @@ class TerracottaOperatorEventResources {
   public static String getTimeDifferentMessage() {
     return instance.resources.getString("time.different");
   }
+
+  public static String getConfigReloadedMessage() {
+    return instance.resources.getString("config.reloaded");
+  }
 }

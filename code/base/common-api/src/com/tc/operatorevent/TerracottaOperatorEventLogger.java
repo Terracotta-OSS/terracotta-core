@@ -1,12 +1,7 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-package com.tc.logging;
-
-import com.tc.net.NodeNameProvider;
-import com.tc.operatorevent.TerracottaOperatorEvent;
-import com.tc.operatorevent.TerracottaOperatorEventCallback;
-import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
+package com.tc.operatorevent;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 

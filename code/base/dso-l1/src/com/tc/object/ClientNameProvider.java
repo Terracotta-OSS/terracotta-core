@@ -4,7 +4,7 @@
 package com.tc.object;
 
 import com.tc.cluster.DsoCluster;
-import com.tc.net.NodeNameProvider;
+import com.tc.operatorevent.NodeNameProvider;
 
 public class ClientNameProvider implements NodeNameProvider {
 

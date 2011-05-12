@@ -61,7 +61,8 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   private static final Pattern       URL_PATTERN                          = Pattern.compile("[A-Za-z][A-Za-z]+://.*");
   private static final long          GET_CONFIGURATION_ONE_SOURCE_TIMEOUT = TCPropertiesImpl
                                                                               .getProperties()
-                                                                              .getLong(TCPropertiesConsts.TC_CONFIG_SOURCEGET_TIMEOUT,
+                                                                              .getLong(
+                                                                                       TCPropertiesConsts.TC_CONFIG_SOURCEGET_TIMEOUT,
                                                                                        30000);
 
   private final ConfigurationSpec    configurationSpec;
@@ -132,24 +133,25 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     }
   }
 
-  public void reloadServersConfiguration(MutableBeanRepository l2sBeanRepository, boolean shouldLogTcConfig,
-                                         boolean reportToConsole) throws ConfigurationSetupException {
+  public String reloadServersConfiguration(MutableBeanRepository l2sBeanRepository, boolean shouldLogTcConfig,
+                                           boolean reportToConsole) throws ConfigurationSetupException {
     ConfigurationSource[] sources = getConfigurationSources(this.configurationSpec.getBaseConfigSpec());
+    ConfigDataSourceStream serverOverrideConfigDataSourceStream;
     if (this.configurationSpec.shouldOverrideServerTopology()) {
       sources = getConfigurationSources(this.configurationSpec.getServerTopologyOverrideConfigSpec());
-      ConfigDataSourceStream serverOverrideConfigDataSourceStream = loadServerConfigDataFromSources(sources,
-                                                                                                    l2sBeanRepository,
-                                                                                                    reportToConsole,
-                                                                                                    shouldLogTcConfig);
+      serverOverrideConfigDataSourceStream = loadServerConfigDataFromSources(sources, l2sBeanRepository,
+                                                                             reportToConsole, shouldLogTcConfig);
       serverOverrideConfigLoadedFromTrustedSource = serverOverrideConfigDataSourceStream.isTrustedSource();
       serverOverrideConfigDescription = serverOverrideConfigDataSourceStream.getDescription();
     } else {
-      loadServerConfigDataFromSources(sources, l2sBeanRepository, reportToConsole, shouldLogTcConfig);
+      serverOverrideConfigDataSourceStream = loadServerConfigDataFromSources(sources, l2sBeanRepository,
+                                                                             reportToConsole, shouldLogTcConfig);
     }
 
     if (shouldLogTcConfig) {
       logCopyOfConfig();
     }
+    return serverOverrideConfigDataSourceStream.getDescription();
   }
 
   protected ConfigurationSource[] getConfigurationSources(String configrationSpec) throws ConfigurationSetupException {
