@@ -65,7 +65,7 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
     final byte[] k = serializer.serialize(key);
     int written = k.length;
     try {
-      // "DELETE FROM " + tableName + " WHERE " + KEY + " = ?"
+      // "DELETE FROM " + tableName + " WHERE " + KEY + " = ? AND " + OBJECT_ID + " = ? "
       PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, deleteQuery);
       psUpdate.setBytes(1, k);
       psUpdate.setLong(2, id);
@@ -220,7 +220,7 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
         map.put(mkey, mvalue);
       }
     } catch (final Exception t) {
-      throw new TCDatabaseException(t.getMessage());
+      throw new TCDatabaseException(t);
     } finally {
       if (c != null) {
         c.close();
