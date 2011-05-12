@@ -11,6 +11,14 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * LockStore is used for storing all the locks present in the system. Access to any lock can be obtained by checking out
+ * a lock and then by checking it in. Locks will be distributed into segments and the location of the lock will be
+ * decided on the basis of the a hash function
+ * <p>
+ * Apart from this getNextLock (for scanning all the locks) has been provided which takes care of the checking out/in of
+ * lock.
+ */
 public class LockStore {
   private static final int                  DEFAULT_SEGMENTS = 32;
   private final HashMap<LockID, ServerLock> segments[];

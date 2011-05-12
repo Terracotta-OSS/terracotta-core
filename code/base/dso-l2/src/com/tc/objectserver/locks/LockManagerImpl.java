@@ -16,8 +16,8 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.locks.LockStore.LockIterator;
 import com.tc.objectserver.locks.ServerLock.NotifyAction;
 import com.tc.objectserver.locks.factory.ServerLockFactoryImpl;
-import com.tc.objectserver.locks.timer.TimerCallback;
 import com.tc.objectserver.locks.timer.LockTimer.LockTimerContext;
+import com.tc.objectserver.locks.timer.TimerCallback;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
@@ -28,6 +28,10 @@ import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+/**
+ * LockManager is responsible for holding locks (in a LockStore) and delegating requests from the handler to the
+ * concerned lock. Each lock is checked out, worked upon and then finally checked in.
+ */
 public class LockManagerImpl implements LockManager, PrettyPrintable, LockManagerMBean, L2LockStatisticsChangeListener,
     TimerCallback {
   private enum RequestType {
@@ -179,8 +183,8 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
           lock(lid, (ClientID) cselc.getNodeID(), cselc.getThreadID(), cselc.getState().getLockLevel());
           break;
         case TRY_PENDING:
-          tryLock(lid, (ClientID) cselc.getNodeID(), cselc.getThreadID(), cselc.getState().getLockLevel(), cselc
-              .timeout());
+          tryLock(lid, (ClientID) cselc.getNodeID(), cselc.getThreadID(), cselc.getState().getLockLevel(),
+                  cselc.timeout());
           break;
       }
     }
@@ -238,8 +242,8 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
           lock(ctxt.getLockID(), ctxt.getClientID(), ctxt.getThreadID(), ctxt.getRequestedLockLevel());
           break;
         case TRY_LOCK:
-          tryLock(ctxt.getLockID(), ctxt.getClientID(), ctxt.getThreadID(), ctxt.getRequestedLockLevel(), ctxt
-              .getTimeout());
+          tryLock(ctxt.getLockID(), ctxt.getClientID(), ctxt.getThreadID(), ctxt.getRequestedLockLevel(),
+                  ctxt.getTimeout());
       }
     }
   }

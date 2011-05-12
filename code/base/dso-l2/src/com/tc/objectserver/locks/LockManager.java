@@ -12,6 +12,9 @@ import com.tc.objectserver.locks.ServerLock.NotifyAction;
 
 import java.util.Collection;
 
+/**
+ * The main server side LockManager interface
+ */
 public interface LockManager {
 
   /**
