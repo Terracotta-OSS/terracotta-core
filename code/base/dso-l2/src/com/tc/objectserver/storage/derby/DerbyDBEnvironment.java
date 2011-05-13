@@ -47,7 +47,6 @@ public class DerbyDBEnvironment implements DBEnvironment {
   public static final String               PROTOCOL                       = "jdbc:derby:";
   public static final String               DB_NAME                        = "datadb";
   private static final int                 DEFAULT_PAGE_SIZE              = 32768;
-  private static final Object              CONTROL_LOCK                   = new Object();
   private static final Map<Integer, Float> PAGE_CACHE_OVERHEAD_FACTOR_MAP = new HashMap<Integer, Float>() {
                                                                             {
                                                                               put(4096, 0.67F);
@@ -197,14 +196,12 @@ public class DerbyDBEnvironment implements DBEnvironment {
       status = DBEnvironmentStatus.STATUS_OPENING;
 
       // now open control db
-      synchronized (CONTROL_LOCK) {
-        controlDB = new DerbyControlDB(CONTROL_DB, createConnection(), queryProvider);
-        openResult = controlDB.isClean();
-        if (!openResult) {
-          this.status = DBEnvironmentStatus.STATUS_INIT;
-          forceClose();
-          return openResult;
-        }
+      controlDB = new DerbyControlDB(CONTROL_DB, createConnection(), queryProvider);
+      openResult = controlDB.isClean();
+      if (!openResult) {
+        this.status = DBEnvironmentStatus.STATUS_INIT;
+        forceClose();
+        return openResult;
       }
 
       if (!this.isParanoid) {
@@ -231,7 +228,7 @@ public class DerbyDBEnvironment implements DBEnvironment {
     return openResult;
   }
 
-  public void createDatabase() throws TCDatabaseException {
+  public void openDatabase() throws TCDatabaseException {
     // loading the Driver
     try {
       Class.forName(DRIVER).newInstance();
@@ -260,10 +257,6 @@ public class DerbyDBEnvironment implements DBEnvironment {
       logger.fatal(message, e);
       throw new TCDatabaseException(message);
     }
-  }
-
-  public void openDatabase() throws TCDatabaseException {
-    createDatabase();
   }
 
   protected Connection createConnection() throws TCDatabaseException {
