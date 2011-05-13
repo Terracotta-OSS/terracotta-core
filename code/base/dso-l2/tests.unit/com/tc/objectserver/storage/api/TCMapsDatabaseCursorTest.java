@@ -52,8 +52,8 @@ public class TCMapsDatabaseCursorTest extends TCTestCase {
     byte[] value2 = getRandomlyFilledByteArray(objectId2);
 
     PersistenceTransaction tx = ptp.newTransaction();
-    database.put(tx, objectId1, key1, value1, serializer);
-    database.put(tx, objectId2, key2, value2, serializer);
+    database.insert(tx, objectId1, key1, value1, serializer);
+    database.insert(tx, objectId2, key2, value2, serializer);
     tx.commit();
 
     Assert.assertEquals(2, database.count(ptp.newTransaction()));
@@ -84,8 +84,8 @@ public class TCMapsDatabaseCursorTest extends TCTestCase {
     byte[] value2 = getRandomlyFilledByteArray(objectId2);
 
     PersistenceTransaction tx = ptp.newTransaction();
-    database.put(tx, objectId1, key1, value1, serializer);
-    database.put(tx, objectId2, key2, value2, serializer);
+    database.insert(tx, objectId1, key1, value1, serializer);
+    database.insert(tx, objectId2, key2, value2, serializer);
     tx.commit();
 
     Assert.assertEquals(2, database.count(ptp.newTransaction()));

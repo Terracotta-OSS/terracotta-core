@@ -3,6 +3,7 @@
  */
 package com.tc.objectserver.storage.util.dbperf;
 
+import com.tc.exception.ImplementMe;
 import com.tc.objectserver.persistence.db.TCCollectionsSerializer;
 import com.tc.objectserver.persistence.db.TCCollectionsSerializerImpl;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
@@ -38,15 +39,8 @@ public class TCMapsDatabaseTester extends AbstractTCDatabaseTester {
   }
 
   @Override
-  protected void putInternal(PersistenceTransaction tx) throws TCDatabaseException, IOException {
-    long objectId = 0;
-    if (random.nextBoolean() && getNumberOfObjects() > 100) {
-      objectId = nextExistentObjectId();
-    } else {
-      objectId = nextNewObjectId();
-    }
-    long mapId = objectId % MAP_SIZE;
-    mapsDB.put(tx, mapId, keyWithLong(objectId), newValue(), serializer);
+  protected void putInternal(PersistenceTransaction tx) {
+    throw new ImplementMe();
   }
 
   @Override
@@ -67,4 +61,5 @@ public class TCMapsDatabaseTester extends AbstractTCDatabaseTester {
   protected byte[] keyWithLong(long l) {
     return (byte[]) super.keyWithLong(l);
   }
+
 }

@@ -50,7 +50,7 @@ public class TCMapsDatabaseTest extends TCTestCase {
     byte[] value = getRandomlyFilledByteArray(objectId);
 
     PersistenceTransaction tx = ptp.newTransaction();
-    int written = database.put(tx, objectId, key, value, serializer);
+    int written = database.insert(tx, objectId, key, value, serializer);
     tx.commit();
 
     Assert.assertTrue(written > 0);
@@ -89,8 +89,8 @@ public class TCMapsDatabaseTest extends TCTestCase {
     byte[] value2 = getRandomlyFilledByteArray(objectId2);
 
     PersistenceTransaction tx = ptp.newTransaction();
-    database.put(tx, objectId1, key1, value1, serializer);
-    database.put(tx, objectId2, key2, value2, serializer);
+    database.insert(tx, objectId1, key1, value1, serializer);
+    database.insert(tx, objectId2, key2, value2, serializer);
     tx.commit();
 
     Assert.assertEquals(2, database.count(ptp.newTransaction()));

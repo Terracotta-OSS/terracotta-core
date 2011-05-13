@@ -37,11 +37,6 @@ public abstract class AbstractTCDatabaseTester {
     updateInternal(tx);
   }
 
-  public void put(PersistenceTransaction tx) throws TCDatabaseException, IOException {
-    putsThisCycle.incrementAndGet();
-    putInternal(tx);
-  }
-
   public void delete(PersistenceTransaction tx) throws TCDatabaseException, IOException {
     deletesThisCycle.incrementAndGet();
     deleteInternal(tx);

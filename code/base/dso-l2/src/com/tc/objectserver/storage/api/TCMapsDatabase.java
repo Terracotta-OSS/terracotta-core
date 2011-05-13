@@ -12,14 +12,6 @@ import java.util.Map;
 
 public interface TCMapsDatabase {
   /**
-   * Puts an entry<K,Y> for a particular map identified by id into the DB. The id here is the object id of the map.
-   * 
-   * @throws IOException
-   */
-  public int put(PersistenceTransaction tx, long id, Object key, Object value, TCCollectionsSerializer serializer)
-      throws TCDatabaseException, IOException;
-
-  /**
    * Updates an entry<K, V> for a particular map identified by id in the DB.
    * 
    * @throws IOException

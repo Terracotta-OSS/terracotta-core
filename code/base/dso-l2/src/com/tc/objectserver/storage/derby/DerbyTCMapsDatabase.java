@@ -115,19 +115,6 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
     }
   }
 
-  public int put(PersistenceTransaction tx, long id, Object key, Object value, TCCollectionsSerializer serializer)
-      throws IOException {
-    final byte[] k = serializer.serialize(key);
-    final byte[] v = serializer.serialize(value);
-    final int written = v.length + k.length;
-
-    if (update(id, k, v, tx) == written) {
-      return written;
-    } else {
-      return insert(id, k, v, tx);
-    }
-  }
-
   private int update(long id, byte[] k, byte[] v, PersistenceTransaction tx) {
     try {
       // "UPDATE " + tableName + " SET " + VALUE + " = ? "
