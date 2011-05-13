@@ -29,8 +29,13 @@ public class BerkeleyDBFactory implements DBFactory {
     return new BerkeleyDBEnvironment(paranoid, envHome, properties, l2FaultFromDisk, offheapEnabled);
   }
 
+  public DBEnvironment createEnvironment(boolean paranoid, File envHome) throws IOException {
+    return new BerkeleyDBEnvironment(paranoid, envHome);
+  }
+
   public ServerDBBackupMBean getServerDBBackupMBean(final L2ConfigurationSetupManager configurationSetupManager)
       throws NotCompliantMBeanException {
     return new ServerDBBackup(configurationSetupManager);
   }
+
 }

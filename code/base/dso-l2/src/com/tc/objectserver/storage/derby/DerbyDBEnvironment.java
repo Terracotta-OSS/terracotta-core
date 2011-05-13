@@ -73,8 +73,8 @@ public class DerbyDBEnvironment implements DBEnvironment {
   private static final TCLogger            logger                         = TCLogging
                                                                               .getLogger(DerbyDBEnvironment.class);
 
-  public DerbyDBEnvironment(boolean paranoid, File home, SampledCounter l2FaultFromDisk) throws IOException {
-    this(paranoid, home, new Properties(), l2FaultFromDisk, false);
+  public DerbyDBEnvironment(boolean paranoid, File home) throws IOException {
+    this(paranoid, home, new Properties(), SampledCounter.NULL_SAMPLED_COUNTER, false);
   }
 
   public DerbyDBEnvironment(boolean paranoid, File home, Properties props, SampledCounter l2FaultFromDisk,

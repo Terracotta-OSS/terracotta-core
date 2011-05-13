@@ -37,4 +37,8 @@ public class DBFactoryForDBUnitTests implements DBFactory {
   public ServerDBBackupMBean getServerDBBackupMBean(L2ConfigurationSetupManager configurationSetupManager) {
     return null;
   }
+
+  public DBEnvironment createEnvironment(boolean paranoid, File envHome) {
+    throw new UnsupportedOperationException();
+  }
 }

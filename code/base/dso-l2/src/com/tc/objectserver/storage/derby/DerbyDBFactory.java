@@ -33,4 +33,8 @@ public class DerbyDBFactory implements DBFactory {
       throws NotCompliantMBeanException {
     return new DerbyServerDBBackup(configurationSetupManager);
   }
+
+  public DBEnvironment createEnvironment(boolean paranoid, File envHome) throws IOException {
+    return new DerbyDBEnvironment(paranoid, envHome);
+  }
 }

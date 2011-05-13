@@ -16,9 +16,10 @@ import javax.management.NotCompliantMBeanException;
  * This class is responsible for creating db and other classes specific to a particular db.
  */
 public interface DBFactory {
-
   DBEnvironment createEnvironment(boolean paranoid, File envHome, SampledCounter l2FaultFromDisk, boolean offheapEnabled)
       throws IOException;
+
+  DBEnvironment createEnvironment(boolean paranoid, File envHome) throws IOException;
 
   ServerDBBackupMBean getServerDBBackupMBean(final L2ConfigurationSetupManager configurationSetupManager)
       throws NotCompliantMBeanException;
