@@ -11,7 +11,8 @@ import org.apache.log4j.spi.LoggingEvent;
 import java.io.IOException;
 
 public class TCRollingFileAppender extends RollingFileAppender {
-  private static final PatternLayout DUMP_PATTERN_LAYOUT = new PatternLayout(TCLogging.DUMP_PATTERN);
+  private static final PatternLayout DUMP_PATTERN_LAYOUT  = new PatternLayout(TCLogging.DUMP_PATTERN);
+  private static final PatternLayout DERBY_PATTERN_LAYOUT = new PatternLayout(TCLogging.DERBY_PATTERN);
 
   public TCRollingFileAppender(Layout layout, String logPath, boolean append) throws IOException {
     super(layout, logPath, append);
@@ -23,6 +24,8 @@ public class TCRollingFileAppender extends RollingFileAppender {
     try {
       if (event.getLoggerName().equals(TCLogging.DUMP_LOGGER_NAME)) {
         this.setLayout(DUMP_PATTERN_LAYOUT);
+      } else if (event.getLoggerName().equals(TCLogging.DERBY_LOGGER_NAME)) {
+        this.setLayout(DERBY_PATTERN_LAYOUT);
       }
       super.subAppend(event);
     } finally {

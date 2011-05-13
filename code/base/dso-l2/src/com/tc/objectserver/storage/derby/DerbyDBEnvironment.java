@@ -493,6 +493,7 @@ public class DerbyDBEnvironment implements DBEnvironment {
   }
 
   private static final Writer WRITER = new Writer() {
+                                       private final TCLogger derbyLogger = TCLogging.getDerbyLogger();
 
                                        @Override
                                        public void close() {
@@ -506,7 +507,7 @@ public class DerbyDBEnvironment implements DBEnvironment {
 
                                        @Override
                                        public void write(char[] cbuf, int off, int len) {
-                                         logger.info(new String(cbuf, off, len));
+                                         derbyLogger.info(new String(cbuf, off, len));
                                        }
                                      };
 }

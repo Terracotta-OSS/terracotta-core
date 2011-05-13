@@ -62,6 +62,7 @@ public class TCLogging {
 
   private static final String       CONSOLE_LOGGER_NAME                = CUSTOMER_LOGGER_NAMESPACE + ".console";
   public static final String        DUMP_LOGGER_NAME                   = "com.tc.dumper.dump";
+  public static final String        DERBY_LOGGER_NAME                  = "com.tc.derby.log";
   private static final String       OPERATOR_EVENT_LOGGER_NAME         = "tc.operator.event";
 
   private static final String       LOGGING_PROPERTIES_SECTION         = "logging";
@@ -73,6 +74,7 @@ public class TCLogging {
 
   private static final String       CONSOLE_PATTERN                    = "%d %p - %m%n";
   public static final String        DUMP_PATTERN                       = "[dump] %m%n";
+  public static final String        DERBY_PATTERN                      = "[derby.log] %m%n";
   private static final String       CONSOLE_PATTERN_DEVELOPMENT        = "%d [%t] %p %c - %m%n";
   // This next pattern is used when we're *only* logging to the console.
   private static final String       CONSOLE_LOGGING_ONLY_PATTERN       = "[TC] %d %p - %m%n";
@@ -384,6 +386,10 @@ public class TCLogging {
 
   public static TCLogger getDumpLogger() {
     return new TCLoggerImpl(DUMP_LOGGER_NAME);
+  }
+
+  public static TCLogger getDerbyLogger() {
+    return new TCLoggerImpl(DERBY_LOGGER_NAME);
   }
 
   static {
