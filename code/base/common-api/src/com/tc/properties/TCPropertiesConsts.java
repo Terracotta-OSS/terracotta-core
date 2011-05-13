@@ -224,7 +224,7 @@ public interface TCPropertiesConsts {
   public static final String DERBY_STORAGE_PAGECACHESIZE                                     = "derby.storage.pageCacheSize";
   public static final String DERBY_SYSTEM_DURABILITY                                         = "derby.system.durability";
   public static final String DERBY_STREAM_ERROR_METHOD                                       = "derby.stream.error.method";
-  public static final String DERBY_PAGECACHE_HEAPUSAGE                                       = "pageCache.heapUsage";
+  public static final String DERBY_MAXMEMORYPERCENT                                          = "pageCache.maxMemoryPercent";
   public static final String DERBY_LOG_BUFFER_SIZE                                           = "derby.storage.logBufferSize";
   public static final String DERBY_LOG_DEVICE                                                = "logDevice";
   public static final String L2_DERBYDB_DERBY_STORAGE_PAGESIZE                               = "l2.derbydb."
@@ -233,8 +233,8 @@ public interface TCPropertiesConsts {
                                                                                                + DERBY_STORAGE_PAGECACHESIZE;
   public static final String L2_DERBYDB_DERBY_SYSTEM_DURABILITY                              = "l2.derbydb."
                                                                                                + DERBY_SYSTEM_DURABILITY;
-  public static final String L2_DERBYDB_PAGECACHE_HEAPUSAGE                                  = "l2.derbydb."
-                                                                                               + DERBY_PAGECACHE_HEAPUSAGE;
+  public static final String L2_DERBYDB_MAXMEMORYPERCENT                                     = "l2.derbydb."
+                                                                                               + DERBY_MAXMEMORYPERCENT;
   public static final String L2_DERBYDB_LOG_DEVICE                                           = "l2.derbydb."
                                                                                                + DERBY_LOG_DEVICE;
   public static final String L2_DERBYDB_DERBY_STORAGE_CHECKPOINTINTERVAL                     = "l2.derbydb.derby.storage.checkpointInterval";

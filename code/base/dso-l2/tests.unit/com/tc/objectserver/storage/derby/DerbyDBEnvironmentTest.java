@@ -17,8 +17,9 @@ public class DerbyDBEnvironmentTest extends TCTestCase {
     File dataDir = new File(getTempDirectory(), "testHeapUsage");
     dataDir.mkdirs();
     Properties props = new Properties();
-    props.setProperty(TCPropertiesConsts.DERBY_PAGECACHE_HEAPUSAGE, "25");
-    DerbyDBEnvironment derbyEnv = new DerbyDBEnvironment(false, dataDir, props, SampledCounter.NULL_SAMPLED_COUNTER);
+    props.setProperty(TCPropertiesConsts.DERBY_MAXMEMORYPERCENT, "25");
+    DerbyDBEnvironment derbyEnv = new DerbyDBEnvironment(false, dataDir, props, SampledCounter.NULL_SAMPLED_COUNTER,
+                                                         false);
     derbyEnv.open();
 
     Properties derbyProps = new Properties();
@@ -37,7 +38,8 @@ public class DerbyDBEnvironmentTest extends TCTestCase {
     logDir.mkdir();
     Properties props = new Properties();
     props.setProperty(TCPropertiesConsts.DERBY_LOG_DEVICE, logDir.getAbsolutePath());
-    DerbyDBEnvironment derbyEnv = new DerbyDBEnvironment(false, dataDir, props, SampledCounter.NULL_SAMPLED_COUNTER);
+    DerbyDBEnvironment derbyEnv = new DerbyDBEnvironment(false, dataDir, props, SampledCounter.NULL_SAMPLED_COUNTER,
+                                                         false);
     derbyEnv.open();
     assertTrue(new File(logDir, "log").exists());
     derbyEnv.close();

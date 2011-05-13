@@ -74,15 +74,23 @@ public class DerbyDBEnvironment implements DBEnvironment {
                                                                               .getLogger(DerbyDBEnvironment.class);
 
   public DerbyDBEnvironment(boolean paranoid, File home, SampledCounter l2FaultFromDisk) throws IOException {
-    this(paranoid, home, new Properties(), l2FaultFromDisk);
+    this(paranoid, home, new Properties(), l2FaultFromDisk, false);
   }
 
-  public DerbyDBEnvironment(boolean paranoid, File home, Properties props, SampledCounter l2FaultFromDisk)
-      throws IOException {
+  public DerbyDBEnvironment(boolean paranoid, File home, Properties props, SampledCounter l2FaultFromDisk,
+                            boolean offheapEnabled) throws IOException {
     this.isParanoid = paranoid;
     this.envHome = home;
     this.derbyProps = props;
     this.l2FaultFromDisk = l2FaultFromDisk;
+
+    if (!isParanoidMode() && offheapEnabled) {
+      final Integer newDerbyMemPercentage = Integer.parseInt(derbyProps
+          .getProperty(TCPropertiesConsts.DERBY_MAXMEMORYPERCENT)) / 3;
+      derbyProps.setProperty(TCPropertiesConsts.DERBY_MAXMEMORYPERCENT, newDerbyMemPercentage.toString());
+      logger.info("Since running OffHeap in temp-swap mode, setting " + TCPropertiesConsts.DERBY_MAXMEMORYPERCENT
+                  + " to " + newDerbyMemPercentage.toString());
+    }
 
     cleanLogDeviceIfRequired(paranoid);
 
@@ -101,10 +109,10 @@ public class DerbyDBEnvironment implements DBEnvironment {
     }
 
     // Perform heap size calculation to determine how many cache pages to give derby
-    if (derbyProps.containsKey(TCPropertiesConsts.DERBY_PAGECACHE_HEAPUSAGE)) {
+    if (derbyProps.containsKey(TCPropertiesConsts.DERBY_MAXMEMORYPERCENT)) {
       // Heap memory to give to Derby
       float heapUsage = Runtime.getRuntime().maxMemory()
-                        * (Float.parseFloat(derbyProps.getProperty(TCPropertiesConsts.DERBY_PAGECACHE_HEAPUSAGE)) / 100.0f);
+                        * (Float.parseFloat(derbyProps.getProperty(TCPropertiesConsts.DERBY_MAXMEMORYPERCENT)) / 100.0f);
 
       // Calculate log buffer size
       int logBufferMemory = Math.min((int) (heapUsage * LOG_BUFFER_HEAP_PERCENTAGE), MAX_LOG_BUFFER_SIZE);
@@ -120,7 +128,7 @@ public class DerbyDBEnvironment implements DBEnvironment {
       int pageCacheSize = (int) ((pageMemory * cacheOverheadFactor) / pageSize);
       if (derbyProps.containsKey(TCPropertiesConsts.DERBY_STORAGE_PAGECACHESIZE)) {
         logger.warn(TCPropertiesConsts.L2_DERBYDB_DERBY_STORAGE_PAGECACHESIZE + " overridden by setting "
-                    + TCPropertiesConsts.L2_DERBYDB_PAGECACHE_HEAPUSAGE + ".");
+                    + TCPropertiesConsts.L2_DERBYDB_MAXMEMORYPERCENT + ".");
       }
       logger.info("Setting derby page cache heap usage to " + pageMemory / (1024 * 1024) + "M (" + pageCacheSize
                   + " pages).");
