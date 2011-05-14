@@ -4,6 +4,7 @@
  */
 package com.tc.test;
 
+import java.util.Calendar;
 
 public class ExpiredTimeBombTest extends TCTestCase {
 
@@ -11,10 +12,23 @@ public class ExpiredTimeBombTest extends TCTestCase {
     disableAllUntil("2007-01-01");
   }
 
-  public void testShouldFail() {
-    fail("this test should not run");
+  /*
+   * Timebombs don't fire on weekends since INT-1173 was fixed.
+   */
+  private boolean isWeekend() {
+    Calendar rightNow = Calendar.getInstance();
+    int dayOfWeek = rightNow.get(Calendar.DAY_OF_WEEK);
+    if (dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY) { return true; }
+    return false;
   }
-  
+
+  public void testShouldFail() {
+    if (!isWeekend()) {
+      fail("this test should not run");
+    }
+  }
+
+  @Override
   public void runBare() throws Throwable {
     try {
       super.runBare();
@@ -22,6 +36,8 @@ public class ExpiredTimeBombTest extends TCTestCase {
       // expected
       return;
     }
-    fail("should have thrown exception when timebomb expired");
+    if (!isWeekend()) {
+      fail("should have thrown exception when timebomb expired");
+    }
   }
 }
