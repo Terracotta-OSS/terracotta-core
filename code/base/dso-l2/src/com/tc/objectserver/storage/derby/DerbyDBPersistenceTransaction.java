@@ -14,8 +14,7 @@ import java.util.Map;
 
 class DerbyDBPersistenceTransaction implements PersistenceTransaction {
   private final Connection                                     connection;
-  private final Map<String, PreparedStatement>                 cachedPreparedStatements          = new HashMap<String, PreparedStatement>();
-  private final Map<PreparedStatementQuery, PreparedStatement> cachedPreparedStatementsForCursor = new HashMap<PreparedStatementQuery, PreparedStatement>();
+  private final Map<PreparedStatementQuery, PreparedStatement> cachedPreparedStatements = new HashMap<PreparedStatementQuery, PreparedStatement>();
 
   public DerbyDBPersistenceTransaction(Connection connection) {
     this.connection = connection;
@@ -42,35 +41,62 @@ class DerbyDBPersistenceTransaction implements PersistenceTransaction {
   }
 
   public PreparedStatement getOrCreatePrepartedStatement(String query) throws SQLException {
-    PreparedStatement preparedStatement = cachedPreparedStatements.get(query);
+    PreparedStatementQuery queryKey = new PreparedStatementQuery(query);
+    PreparedStatement preparedStatement = cachedPreparedStatements.get(queryKey);
     if (preparedStatement == null) {
       preparedStatement = connection.prepareStatement(query);
-      cachedPreparedStatements.put(query, preparedStatement);
+      cachedPreparedStatements.put(queryKey, preparedStatement);
     }
     return preparedStatement;
   }
 
   public PreparedStatement getOrCreatePrepartedStatement(String query, int resultSetType, int resultSetConcurrency)
       throws SQLException {
-    PreparedStatementQuery preparedStatementQuery = new PreparedStatementQuery(query, resultSetType,
-                                                                               resultSetConcurrency);
-    PreparedStatement preparedStatement = cachedPreparedStatementsForCursor.get(preparedStatementQuery);
+    PreparedStatementCursorQuery queryKey = new PreparedStatementCursorQuery(query, resultSetType, resultSetConcurrency);
+    PreparedStatement preparedStatement = cachedPreparedStatements.get(queryKey);
     if (preparedStatement == null) {
       preparedStatement = connection.prepareStatement(query, resultSetType, resultSetConcurrency);
-      cachedPreparedStatementsForCursor.put(preparedStatementQuery, preparedStatement);
+      cachedPreparedStatements.put(queryKey, preparedStatement);
     }
     return preparedStatement;
   }
 
   private static class PreparedStatementQuery {
-    private final int    resultSetType;
-    private final int    resultSetConcurrency;
-    private final String query;
+    protected final String query;
 
-    public PreparedStatementQuery(String query, int resultSetType, int resultSetConcurrency) {
+    public PreparedStatementQuery(String query) {
+      this.query = query;
+    }
+
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((query == null) ? 0 : query.hashCode());
+      return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) return true;
+      if (obj == null) return false;
+      if (getClass() != obj.getClass()) return false;
+      PreparedStatementQuery other = (PreparedStatementQuery) obj;
+      if (query == null) {
+        if (other.query != null) return false;
+      } else if (!query.equals(other.query)) return false;
+      return true;
+    }
+  }
+
+  private static class PreparedStatementCursorQuery extends PreparedStatementQuery {
+    private final int resultSetType;
+    private final int resultSetConcurrency;
+
+    public PreparedStatementCursorQuery(String query, int resultSetType, int resultSetConcurrency) {
+      super(query);
       this.resultSetType = resultSetType;
       this.resultSetConcurrency = resultSetConcurrency;
-      this.query = query;
     }
 
     @Override
@@ -88,7 +114,7 @@ class DerbyDBPersistenceTransaction implements PersistenceTransaction {
       if (this == obj) return true;
       if (obj == null) return false;
       if (getClass() != obj.getClass()) return false;
-      PreparedStatementQuery other = (PreparedStatementQuery) obj;
+      PreparedStatementCursorQuery other = (PreparedStatementCursorQuery) obj;
       if (query == null) {
         if (other.query != null) return false;
       } else if (!query.equals(other.query)) return false;
