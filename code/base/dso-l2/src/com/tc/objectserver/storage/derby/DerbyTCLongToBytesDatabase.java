@@ -40,7 +40,7 @@ class DerbyTCLongToBytesDatabase extends AbstractDerbyTCDatabase implements TCLo
     deleteQuery = "DELETE FROM " + tableName + " WHERE " + KEY + " = ?";
     getQuery = "SELECT " + VALUE + " FROM " + tableName + " WHERE " + KEY + " = ?";
     updateQuery = "UPDATE " + tableName + " SET " + VALUE + " = ? " + " WHERE " + KEY + " = ?";
-    insertQuery = "INSERT INTO " + tableName + " VALUES (?, ?)";
+    insertQuery = "INSERT INTO " + tableName + " (" + KEY + ", " + VALUE + ") VALUES (?, ?)";
     openCursorQuery = "SELECT " + KEY + ", " + VALUE + " FROM " + tableName;
   }
 

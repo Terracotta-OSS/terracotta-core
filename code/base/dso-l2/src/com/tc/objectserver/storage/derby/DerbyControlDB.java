@@ -27,7 +27,7 @@ class DerbyControlDB extends AbstractDerbyTCDatabase {
       throws TCDatabaseException {
     super(tableName, connection, queryProvider);
     this.txn = new DerbyDBPersistenceTransaction(connection);
-    this.insertQuery = "INSERT INTO " + tableName + " VALUES (?, ?)";
+    this.insertQuery = "INSERT INTO " + tableName + " (" + KEY + ", " + VALUE + ") VALUES (?, ?)";
     this.updateQuery = "UPDATE " + tableName + " SET " + VALUE + " = ? " + " WHERE " + KEY + " = ?";
     this.selectQuery = "SELECT " + VALUE + " FROM " + tableName + " WHERE " + KEY + " = ?";
   }

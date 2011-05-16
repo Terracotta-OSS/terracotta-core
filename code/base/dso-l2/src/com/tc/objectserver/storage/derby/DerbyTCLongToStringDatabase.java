@@ -24,7 +24,7 @@ class DerbyTCLongToStringDatabase extends AbstractDerbyTCDatabase implements TCL
       throws TCDatabaseException {
     super(tableName, connection, queryProvider);
     loadMappingsIntoQuery = "SELECT " + KEY + "," + VALUE + " FROM " + tableName;
-    insertQuery = "INSERT INTO " + tableName + " VALUES (?, ?)";
+    insertQuery = "INSERT INTO " + tableName + " (" + KEY + ", " + VALUE + ") VALUES (?, ?)";
   }
 
   @Override

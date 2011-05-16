@@ -28,7 +28,7 @@ class DerbyTCIntToBytesDatabase extends AbstractDerbyTCDatabase implements TCInt
     getQuery = "SELECT " + VALUE + " FROM " + tableName + " WHERE " + KEY + " = ?";
     getAllQuery = "SELECT " + KEY + "," + VALUE + " FROM " + tableName;
     updateQuery = "UPDATE " + tableName + " SET " + VALUE + " = ? " + " WHERE " + KEY + " = ?";
-    insertQuery = "INSERT INTO " + tableName + " VALUES (?, ?)";
+    insertQuery = "INSERT INTO " + tableName + " (" + KEY + ", " + VALUE + ") VALUES (?, ?)";
   }
 
   @Override

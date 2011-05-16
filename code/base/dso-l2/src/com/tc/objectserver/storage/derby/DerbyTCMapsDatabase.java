@@ -46,7 +46,7 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
     deleteCollectionQuery = "DELETE FROM " + tableName + " WHERE " + OBJECT_ID + " = ?";
     updateQuery = "UPDATE " + tableName + " SET " + VALUE + " = ? " + " WHERE " + KEY + " = ? AND " + OBJECT_ID
                   + " = ? ";
-    insertQuery = "INSERT INTO " + tableName + " VALUES (?, ?, ?)";
+    insertQuery = "INSERT INTO " + tableName + " (" + OBJECT_ID + ", " + KEY + ", " + VALUE + ") VALUES (?, ?, ?)";
     countQuery = "SELECT COUNT(*) FROM " + tableName;
     openCursorQuery = "SELECT " + KEY + "," + VALUE + " FROM " + tableName + " WHERE " + OBJECT_ID + " = ?";
   }

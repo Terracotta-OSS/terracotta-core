@@ -28,7 +28,7 @@ class DerbyTCLongDatabase extends AbstractDerbyTCDatabase implements TCLongDatab
     containsQuery = "SELECT " + KEY + " FROM " + tableName + " WHERE " + KEY + " = ?";
     deleteQuery = "DELETE FROM " + tableName + " WHERE " + KEY + " = ?";
     getAllQuery = "SELECT " + KEY + " FROM " + tableName;
-    insertQuery = "INSERT INTO " + tableName + " VALUES (?)";
+    insertQuery = "INSERT INTO " + tableName + " (" + KEY + ") VALUES (?)";
   }
 
   @Override

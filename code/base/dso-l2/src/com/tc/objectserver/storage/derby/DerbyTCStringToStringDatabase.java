@@ -27,7 +27,7 @@ class DerbyTCStringToStringDatabase extends AbstractDerbyTCDatabase implements T
     deleteQuery = "DELETE FROM " + tableName + " WHERE " + KEY + " = ?";
     getQuery = "SELECT " + VALUE + " FROM " + tableName + " WHERE " + KEY + " = ?";
     updateQuery = "UPDATE " + tableName + " SET " + VALUE + " = ? " + " WHERE " + KEY + " = ?";
-    insertQuery = "INSERT INTO " + tableName + " VALUES (?, ?)";
+    insertQuery = "INSERT INTO " + tableName + " (" + KEY + ", " + VALUE + ") VALUES (?, ?)";
   }
 
   @Override

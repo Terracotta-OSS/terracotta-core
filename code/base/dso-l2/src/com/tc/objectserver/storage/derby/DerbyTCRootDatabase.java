@@ -37,7 +37,7 @@ class DerbyTCRootDatabase extends AbstractDerbyTCDatabase implements TCRootDatab
     rootIDsQuery = "SELECT " + VALUE + " FROM " + tableName;
     rootNamesQuery = "SELECT " + KEY + " FROM " + tableName;
     rootNamesToIDQuery = "SELECT " + KEY + ", " + VALUE + " FROM " + tableName;
-    insertQuery = "INSERT INTO " + tableName + " VALUES (?, ?)";
+    insertQuery = "INSERT INTO " + tableName + " (" + KEY + ", " + VALUE + ") VALUES (?, ?)";
     updateQuery = "UPDATE " + tableName + " SET " + VALUE + " = ? " + " WHERE " + KEY + " = ?";
     idFromNameQuery = "SELECT " + VALUE + " FROM " + tableName + " WHERE " + KEY + " = ?";
   }
