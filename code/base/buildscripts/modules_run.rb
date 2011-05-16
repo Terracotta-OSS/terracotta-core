@@ -17,10 +17,10 @@ class BuildSubtree
   # <modulename>/<subtree>.jvmargs.
   def run_java(ant, classname, directory, jvm, jvm_args, args, system_properties, build_results, build_environment)
     real_jvmargs = effective_jvmargs(jvm_args, build_environment)
-        
+
     the_native_library_path = native_library_path(build_results, build_environment, :full)
     the_classpath = classpath(build_results, :full, :runtime)
-        
+
     ant.java(
       :classname => classname,
       :fork => true,
@@ -31,19 +31,19 @@ class BuildSubtree
     ) {
       ant.sysproperty(:key => 'java.library.path', :value => the_native_library_path.to_s) unless the_native_library_path.to_s.blank?
       ant.sysproperty(:key => 'java.awt.headless', :value => true)
-            
+
       unless system_properties.nil?
         system_properties.each do |key, value|
           ant.sysproperty(:key => key, :value => value)
         end
       end
-            
+
       unless real_jvmargs.nil?
         real_jvmargs.each do |jvm_arg|
           ant.jvmarg(:value => jvm_arg)
         end
       end
-            
+
       unless args.nil?
         args.each do |arg|
           ant.arg(:value => arg)
@@ -51,7 +51,7 @@ class BuildSubtree
       end
     }
   end
-    
+
   private
   # Figures out which JVM arguments we should use. specified_jvmargs is the set of
   # JVM argument specified directly (which will be used, if non-nil); otherwise,
@@ -70,10 +70,10 @@ class BuildSubtree
     else
       out = build_environment.default_jvmargs
     end
-        
+
     out
   end
-    
+
   def jvmargs_file
     FilePath.new(build_module.root, name + ".jvmargs")
   end
