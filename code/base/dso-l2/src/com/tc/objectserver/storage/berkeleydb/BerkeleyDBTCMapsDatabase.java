@@ -41,7 +41,7 @@ public class BerkeleyDBTCMapsDatabase extends BerkeleyDBTCBytesBytesDatabase imp
     final byte idb[] = Conversion.long2Bytes(id);
     TCMapsDatabaseCursor c = null;
     try {
-      c = openCursor(tx, id);
+      c = openCursor(tx, id, true);
       while (c.hasNext()) {
         final TCDatabaseEntry<byte[], byte[]> entry = c.next();
         final Object mkey = serializer.deserialize(idb.length, entry.getKey());
@@ -69,11 +69,11 @@ public class BerkeleyDBTCMapsDatabase extends BerkeleyDBTCBytesBytesDatabase imp
    * over READ_COMMITTED. Since we never read the map which has been marked for deletion by the DGC the deadlocks are
    * avoided
    */
-  private TCMapsDatabaseCursor openCursor(final PersistenceTransaction tx, final long objectID) {
+  private TCMapsDatabaseCursor openCursor(final PersistenceTransaction tx, final long objectID, boolean fetchValue) {
     // XXX:: Since we read in one direction and since we have to read the first record of the next map to break out, we
     // need READ_COMMITTED to avoid deadlocks between commit thread and DGC thread.
     final Cursor cursor = this.db.openCursor(pt2nt(tx), CursorConfig.READ_UNCOMMITTED);
-    return new BerkeleyMapsTCDatabaseCursor(cursor, objectID);
+    return new BerkeleyMapsTCDatabaseCursor(cursor, objectID, fetchValue);
   }
 
   public int delete(final PersistenceTransaction tx, final long id, final Object key,
@@ -115,7 +115,7 @@ public class BerkeleyDBTCMapsDatabase extends BerkeleyDBTCBytesBytesDatabase imp
    */
   public int deleteCollectionBatched(final long id, final PersistenceTransaction tx, final int maxDeleteBatchSize) {
     int mapEntriesDeleted = 0;
-    final TCMapsDatabaseCursor cursor = openCursor(tx, id);
+    final TCMapsDatabaseCursor cursor = openCursor(tx, id, false);
     try {
       while (mapEntriesDeleted <= maxDeleteBatchSize && cursor.hasNextKey()) {
         cursor.nextKey();
@@ -150,18 +150,13 @@ public class BerkeleyDBTCMapsDatabase extends BerkeleyDBTCBytesBytesDatabase imp
     private boolean    noMoreMatches = false;
     private final long objectID;
 
-    public BerkeleyMapsTCDatabaseCursor(final Cursor cursor, final long objectID) {
-      super(cursor);
+    public BerkeleyMapsTCDatabaseCursor(final Cursor cursor, final long objectID, boolean fetchValue) {
+      super(cursor, fetchValue);
       this.objectID = objectID;
     }
 
-    @Override
-    public boolean hasNext() {
-      return hasNext(true);
-    }
-
     public boolean hasNextKey() {
-      return hasNext(false);
+      return hasNext();
     }
 
     public TCDatabaseEntry<byte[], byte[]> nextKey() {
@@ -169,14 +164,14 @@ public class BerkeleyDBTCMapsDatabase extends BerkeleyDBTCBytesBytesDatabase imp
     }
 
     @Override
-    protected boolean hasNext(final boolean fetchValue) {
+    public boolean hasNext() {
       if (this.noMoreMatches) { return false; }
       if (this.entry != null) { return true; }
 
       if (!this.isInit) {
         this.isInit = true;
-        if (!getSearchKeyRange(fetchValue)) { return false; }
-      } else if (!super.hasNext(fetchValue)) { return false; }
+        if (!getSearchKeyRange()) { return false; }
+      } else if (!super.hasNext()) { return false; }
 
       final byte idb[] = Conversion.long2Bytes(this.objectID);
       if (partialMatch(idb, this.entry.getKey())) {
@@ -187,7 +182,7 @@ public class BerkeleyDBTCMapsDatabase extends BerkeleyDBTCBytesBytesDatabase imp
       }
     }
 
-    private boolean getSearchKeyRange(final boolean fetchValue) {
+    private boolean getSearchKeyRange() {
       final DatabaseEntry entryKey = new DatabaseEntry();
       final DatabaseEntry entryValue = new DatabaseEntry();
       entryKey.setData(Conversion.long2Bytes(this.objectID));

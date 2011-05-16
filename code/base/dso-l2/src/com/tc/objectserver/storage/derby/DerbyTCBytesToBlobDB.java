@@ -16,6 +16,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.NoSuchElementException;
 
 class DerbyTCBytesToBlobDB extends AbstractDerbyTCDatabase implements TCBytesToBytesDatabase {
   private final String deleteQuery;
@@ -166,7 +167,10 @@ class DerbyTCBytesToBlobDB extends AbstractDerbyTCDatabase implements TCBytesToB
     }
 
     public TCDatabaseEntry<byte[], byte[]> next() {
-      if (entry == null) { throw new DBException("next call should be called only after checking hasNext."); }
+      if (entry == null) {
+        if (!hasNext()) { throw new NoSuchElementException("No Element left. Please do hasNext before calling next"); }
+      }
+
       TCDatabaseEntry<byte[], byte[]> temp = entry;
       entry = null;
       return temp;

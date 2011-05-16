@@ -17,6 +17,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.NoSuchElementException;
 
 class DerbyTCLongToBytesDatabase extends AbstractDerbyTCDatabase implements TCLongToBytesDatabase,
     TCTransactionStoreDatabase {
@@ -164,7 +165,10 @@ class DerbyTCLongToBytesDatabase extends AbstractDerbyTCDatabase implements TCLo
     }
 
     public TCDatabaseEntry<Long, byte[]> next() {
-      if (entry == null) { throw new DBException("next call should be called only after checking hasNext."); }
+      if (entry == null) {
+        if (!hasNext()) { throw new NoSuchElementException("No Element left. Please do hasNext before calling next"); }
+      }
+
       TCDatabaseEntry<Long, byte[]> temp = entry;
       entry = null;
       return temp;
