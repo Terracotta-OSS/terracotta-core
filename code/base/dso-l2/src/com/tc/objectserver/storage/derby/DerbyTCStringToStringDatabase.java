@@ -7,8 +7,8 @@ import com.tc.objectserver.persistence.db.DBException;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.TCDatabaseEntry;
-import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 import com.tc.objectserver.storage.api.TCStringToStringDatabase;
+import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -87,37 +87,31 @@ class DerbyTCStringToStringDatabase extends AbstractDerbyTCDatabase implements T
 
   }
 
-  public Status update(String key, String value, PersistenceTransaction tx) {
+  private Status update(String key, String value, PersistenceTransaction tx) {
     try {
       // "UPDATE " + tableName + " SET " + VALUE + " = ? "
       // + " WHERE " + KEY + " = ?"
       PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, updateQuery);
       psUpdate.setString(1, value);
       psUpdate.setString(2, key);
-      if (psUpdate.executeUpdate() > 0) {
-        return Status.SUCCESS;
-      } else {
-        return Status.NOT_SUCCESS;
-      }
+      if (psUpdate.executeUpdate() > 0) { return Status.SUCCESS; }
     } catch (SQLException e) {
       throw new DBException(e);
     }
+    throw new DBException("Could not update with String key: " + key);
   }
 
-  public Status insert(String key, String value, PersistenceTransaction tx) {
+  private Status insert(String key, String value, PersistenceTransaction tx) {
     PreparedStatement psPut;
     try {
       // "INSERT INTO " + tableName + " VALUES (?, ?)"
       psPut = getOrCreatePreparedStatement(tx, insertQuery);
       psPut.setString(1, key);
       psPut.setString(2, value);
-      if (psPut.executeUpdate() > 0) {
-        return Status.SUCCESS;
-      } else {
-        return Status.NOT_SUCCESS;
-      }
+      if (psPut.executeUpdate() > 0) { return Status.SUCCESS; }
     } catch (SQLException e) {
       throw new DBException(e);
     }
+    throw new DBException("Could not insert with String key: " + key);
   }
 }

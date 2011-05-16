@@ -144,14 +144,11 @@ class DerbyTCRootDatabase extends AbstractDerbyTCDatabase implements TCRootDatab
       PreparedStatement psPut = getOrCreatePreparedStatement(tx, insertQuery);
       psPut.setBytes(1, rootName);
       psPut.setLong(2, id);
-      if (psPut.executeUpdate() > 0) {
-        return Status.SUCCESS;
-      } else {
-        return Status.NOT_FOUND;
-      }
+      if (psPut.executeUpdate() > 0) { return Status.SUCCESS; }
     } catch (SQLException e) {
       throw new DBException("Could not put root", e);
     }
+    throw new DBException("Could not insert with root id: " + id);
   }
 
   private Status update(byte[] rootName, long id, PersistenceTransaction tx) {
@@ -161,14 +158,11 @@ class DerbyTCRootDatabase extends AbstractDerbyTCDatabase implements TCRootDatab
       PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, updateQuery);
       psUpdate.setLong(1, id);
       psUpdate.setBytes(2, rootName);
-      if (psUpdate.executeUpdate() > 0) {
-        return Status.SUCCESS;
-      } else {
-        return Status.NOT_FOUND;
-      }
+      if (psUpdate.executeUpdate() > 0) { return Status.SUCCESS; }
     } catch (SQLException e) {
       throw new DBException(e);
     }
+    throw new DBException("Could not update with root id: " + id);
   }
 
   public long getIdFromName(byte[] rootName, PersistenceTransaction tx) {

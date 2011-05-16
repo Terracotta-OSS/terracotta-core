@@ -6,8 +6,8 @@ package com.tc.objectserver.storage.derby;
 import com.tc.objectserver.persistence.db.DBException;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 import com.tc.objectserver.storage.api.TCIntToBytesDatabase;
+import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -92,11 +92,11 @@ class DerbyTCIntToBytesDatabase extends AbstractDerbyTCDatabase implements TCInt
       PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, updateQuery);
       psUpdate.setBytes(1, b);
       psUpdate.setInt(2, id);
-      psUpdate.executeUpdate();
-      return Status.SUCCESS;
+      if (psUpdate.executeUpdate() > 0) { return Status.SUCCESS; }
     } catch (SQLException e) {
       throw new DBException(e);
     }
+    throw new DBException("Could not update with id: " + id);
   }
 
   public Status insert(int id, byte[] b, PersistenceTransaction tx) {
@@ -106,11 +106,11 @@ class DerbyTCIntToBytesDatabase extends AbstractDerbyTCDatabase implements TCInt
       psPut = getOrCreatePreparedStatement(tx, insertQuery);
       psPut.setInt(1, id);
       psPut.setBytes(2, b);
-      psPut.executeUpdate();
+      if (psPut.executeUpdate() > 0) { return Status.SUCCESS; }
     } catch (SQLException e) {
       throw new DBException(e);
     }
-    return Status.SUCCESS;
+    throw new DBException("Could not insert with id: " + id);
   }
 
 }

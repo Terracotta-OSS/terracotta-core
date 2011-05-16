@@ -6,8 +6,8 @@ package com.tc.objectserver.storage.derby;
 import com.tc.objectserver.persistence.db.DBException;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 import com.tc.objectserver.storage.api.TCLongDatabase;
+import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -96,11 +96,11 @@ class DerbyTCLongDatabase extends AbstractDerbyTCDatabase implements TCLongDatab
       // "INSERT INTO " + tableName + " VALUES (?)"
       psPut = getOrCreatePreparedStatement(tx, insertQuery);
       psPut.setLong(1, key);
-      psPut.executeUpdate();
+      if (psPut.executeUpdate() > 0) { return Status.SUCCESS; }
     } catch (SQLException e) {
       throw new DBException(e);
     }
-    return Status.SUCCESS;
+    throw new DBException("Could not insert with key: " + key);
   }
 
 }

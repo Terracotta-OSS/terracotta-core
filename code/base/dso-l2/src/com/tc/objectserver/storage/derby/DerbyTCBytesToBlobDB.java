@@ -15,6 +15,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 
 class DerbyTCBytesToBlobDB extends AbstractDerbyTCDatabase implements TCBytesToBytesDatabase {
   private final String deleteQuery;
@@ -107,11 +108,11 @@ class DerbyTCBytesToBlobDB extends AbstractDerbyTCDatabase implements TCBytesToB
       PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, updateQuery);
       psUpdate.setBytes(1, val);
       psUpdate.setBytes(2, key);
-      psUpdate.executeUpdate();
-      return Status.SUCCESS;
+      if (psUpdate.executeUpdate() > 0) { return Status.SUCCESS; }
     } catch (SQLException e) {
       throw new DBException(e);
     }
+    throw new DBException("Could not update with key: " + Arrays.toString(key));
   }
 
   public Status insert(byte[] key, byte[] val, PersistenceTransaction tx) {
@@ -121,11 +122,11 @@ class DerbyTCBytesToBlobDB extends AbstractDerbyTCDatabase implements TCBytesToB
       psPut = getOrCreatePreparedStatement(tx, insertQuery);
       psPut.setBytes(1, key);
       psPut.setBytes(2, val);
-      psPut.executeUpdate();
-      return Status.SUCCESS;
+      if (psPut.executeUpdate() > 0) { return Status.SUCCESS; }
     } catch (SQLException e) {
       throw new DBException(e);
     }
+    throw new DBException("Could not insert with key: " + Arrays.toString(key));
   }
 
   public Status putNoOverwrite(PersistenceTransaction tx, byte[] key, byte[] value) {

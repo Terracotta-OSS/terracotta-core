@@ -93,14 +93,11 @@ class DerbyTCLongToBytesDatabase extends AbstractDerbyTCDatabase implements TCLo
       PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, updateQuery);
       psUpdate.setBytes(1, b);
       psUpdate.setLong(2, id);
-      if (psUpdate.executeUpdate() > 0) {
-        return Status.SUCCESS;
-      } else {
-        return Status.NOT_FOUND;
-      }
+      if (psUpdate.executeUpdate() > 0) { return Status.SUCCESS; }
     } catch (SQLException e) {
       throw new DBException(e);
     }
+    throw new DBException("Could not update with key: " + id);
   }
 
   public Status insert(long id, byte[] b, PersistenceTransaction tx) {
@@ -110,16 +107,19 @@ class DerbyTCLongToBytesDatabase extends AbstractDerbyTCDatabase implements TCLo
       psPut = getOrCreatePreparedStatement(tx, insertQuery);
       psPut.setLong(1, id);
       psPut.setBytes(2, b);
-      psPut.executeUpdate();
+      if (psPut.executeUpdate() > 0) { return Status.SUCCESS; }
     } catch (SQLException e) {
       throw new DBException(e);
     }
-    return Status.SUCCESS;
+    throw new DBException("Could not insert with key: " + id);
   }
 
   public Status put(long id, byte[] b, PersistenceTransaction tx) {
-    if (update(id, b, tx) == Status.SUCCESS) { return Status.SUCCESS; }
-    return insert(id, b, tx);
+    if (get(id, tx) == null) {
+      return insert(id, b, tx);
+    } else {
+      return update(id, b, tx);
+    }
   }
 
   public TCDatabaseCursor<Long, byte[]> openCursor(PersistenceTransaction tx) {

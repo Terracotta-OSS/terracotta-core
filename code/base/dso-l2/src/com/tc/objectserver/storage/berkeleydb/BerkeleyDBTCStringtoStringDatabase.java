@@ -9,8 +9,8 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.TCDatabaseEntry;
-import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 import com.tc.objectserver.storage.api.TCStringToStringDatabase;
+import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 import com.tc.util.Conversion;
 
 public class BerkeleyDBTCStringtoStringDatabase extends BerkeleyDBTCBytesBytesDatabase implements
@@ -42,13 +42,4 @@ public class BerkeleyDBTCStringtoStringDatabase extends BerkeleyDBTCBytesBytesDa
     byte[] keyInBytes = Conversion.string2Bytes(key);
     return delete(keyInBytes, tx);
   }
-
-  public Status insert(String key, String value, PersistenceTransaction tx) {
-    return put(key, value, tx);
-  }
-
-  public Status update(String key, String value, PersistenceTransaction tx) {
-    return put(key, value, tx);
-  }
-
 }

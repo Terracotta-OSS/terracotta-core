@@ -122,24 +122,19 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
       psUpdate.setBytes(1, v);
       psUpdate.setBytes(2, k);
       psUpdate.setLong(3, id);
-      if (psUpdate.executeUpdate() > 0) {
-        return k.length + v.length;
-      } else {
-        return 0;
-      }
+      if (psUpdate.executeUpdate() > 0) { return k.length + v.length; }
     } catch (SQLException e) {
       throw new DBException(e);
     }
+    throw new DBException("Could not update with key: " + id);
   }
 
   public int update(PersistenceTransaction tx, long id, Object key, Object value, TCCollectionsSerializer serializer)
       throws IOException {
     final byte[] k = serializer.serialize(key);
     final byte[] v = serializer.serialize(value);
-    final int written = v.length + k.length;
 
-    update(id, k, v, tx);
-    return written;
+    return update(id, k, v, tx);
   }
 
   private int insert(long id, byte[] k, byte[] v, PersistenceTransaction tx) {
@@ -149,24 +144,19 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
       psPut.setLong(1, id);
       psPut.setBytes(2, k);
       psPut.setBytes(3, v);
-      if (psPut.executeUpdate() > 0) {
-        return k.length + v.length;
-      } else {
-        return 0;
-      }
+      if (psPut.executeUpdate() > 0) { return k.length + v.length; }
     } catch (SQLException e) {
       throw new DBException(e);
     }
+    throw new DBException("Could not insert with key: " + id);
   }
 
   public int insert(PersistenceTransaction tx, long id, Object key, Object value, TCCollectionsSerializer serializer)
       throws IOException {
     final byte[] k = serializer.serialize(key);
     final byte[] v = serializer.serialize(value);
-    final int written = v.length + k.length;
 
-    insert(id, k, v, tx);
-    return written;
+    return insert(id, k, v, tx);
   }
 
   public long count(PersistenceTransaction tx) {
