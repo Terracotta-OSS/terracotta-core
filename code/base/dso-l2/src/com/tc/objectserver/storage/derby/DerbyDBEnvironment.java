@@ -175,8 +175,7 @@ public class DerbyDBEnvironment implements DBEnvironment {
   public static boolean tableExists(Connection connection, String table) throws SQLException {
     DatabaseMetaData dbmd = connection.getMetaData();
 
-    String[] types = { "TABLE" };
-    ResultSet resultSet = dbmd.getTables(null, null, "%", types);
+    ResultSet resultSet = dbmd.getTables(null, null, table.toUpperCase(), null);
     while (resultSet.next()) {
       String tableName = resultSet.getString(3);
       if (tableName.equalsIgnoreCase(table)) {
