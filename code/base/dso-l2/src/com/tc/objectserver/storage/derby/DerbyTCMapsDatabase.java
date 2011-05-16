@@ -22,21 +22,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatabase {
-  private static final String     OBJECT_ID = "objectid";
+  private static final String            OBJECT_ID = "objectid";
+  private static final BackingMapFactory factory   = new BackingMapFactory() {
+                                                     public Map createBackingMapFor(final ObjectID mapID) {
+                                                       return new HashMap(0);
+                                                     }
+                                                   };
 
-  private final String            deleteQuery;
-  private final String            deleteCollectionBatchedQuery;
-  private final String            deleteCollectionQuery;
-  private final String            updateQuery;
-  private final String            insertQuery;
-  private final String            countQuery;
-  private final String            openCursorQuery;
-
-  private final BackingMapFactory factory   = new BackingMapFactory() {
-                                              public Map createBackingMapFor(final ObjectID mapID) {
-                                                return new HashMap(0);
-                                              }
-                                            };
+  private final String                   deleteQuery;
+  private final String                   deleteCollectionBatchedQuery;
+  private final String                   deleteCollectionQuery;
+  private final String                   updateQuery;
+  private final String                   insertQuery;
+  private final String                   countQuery;
+  private final String                   openCursorQuery;
 
   public DerbyTCMapsDatabase(String tableName, Connection connection, QueryProvider queryProvider)
       throws TCDatabaseException {
@@ -48,7 +47,7 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
     updateQuery = "UPDATE " + tableName + " SET " + VALUE + " = ? " + " WHERE " + KEY + " = ? AND " + OBJECT_ID
                   + " = ? ";
     insertQuery = "INSERT INTO " + tableName + " VALUES (?, ?, ?)";
-    countQuery = "SELECT " + OBJECT_ID + ", " + KEY + " FROM " + tableName;
+    countQuery = "SELECT COUNT(*) FROM " + tableName;
     openCursorQuery = "SELECT " + KEY + "," + VALUE + " FROM " + tableName + " WHERE " + OBJECT_ID + " = ?";
   }
 
@@ -174,20 +173,19 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
     ResultSet rs = null;
     int count = 0;
     try {
-      // "SELECT " + OBJECT_ID + ", " + KEY + " FROM "
-      // + tableName
+      // SELECT COUNT(*) FROM tableName;
       PreparedStatement psSelect = getOrCreatePreparedStatement(tx, countQuery);
       rs = psSelect.executeQuery();
 
-      while (rs.next()) {
-        count++;
+      if (rs.next()) {
+        count = rs.getInt(1);
       }
-      tx.commit();
       return count;
     } catch (SQLException e) {
       throw new DBException(e);
     } finally {
       closeResultSet(rs);
+      tx.commit();
     }
   }
 
