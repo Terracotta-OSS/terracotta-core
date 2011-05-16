@@ -133,15 +133,13 @@ class DerbyTCLongToBytesDatabase extends AbstractDerbyTCDatabase implements TCLo
     }
   }
 
-  static class DerbyTCLongToBytesCursor implements TCDatabaseCursor<Long, byte[]> {
-    private final ResultSet rs;
-
-    public DerbyTCLongToBytesCursor(ResultSet rs) {
-      this.rs = rs;
-    }
-
+  static class DerbyTCLongToBytesCursor extends AbstractDerbyTCDatabaseCursor<Long, byte[]> {
     private TCDatabaseEntry<Long, byte[]> entry    = null;
     private boolean                       finished = false;
+
+    public DerbyTCLongToBytesCursor(ResultSet rs) {
+      super(rs);
+    }
 
     public boolean hasNext() {
       if (entry != null) { return true; }
@@ -172,22 +170,6 @@ class DerbyTCLongToBytesDatabase extends AbstractDerbyTCDatabase implements TCLo
       TCDatabaseEntry<Long, byte[]> temp = entry;
       entry = null;
       return temp;
-    }
-
-    public void close() {
-      try {
-        rs.close();
-      } catch (SQLException e) {
-        throw new DBException(e);
-      }
-    }
-
-    public void delete() {
-      try {
-        rs.deleteRow();
-      } catch (SQLException e) {
-        throw new DBException(e);
-      }
     }
   }
 }

@@ -14,9 +14,9 @@ import com.tc.objectserver.persistence.db.DBException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.TCDatabaseCursor;
 import com.tc.objectserver.storage.api.TCDatabaseEntry;
-import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 import com.tc.objectserver.storage.api.TCLongToBytesDatabase;
 import com.tc.objectserver.storage.api.TCTransactionStoreDatabase;
+import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.Conversion;
 
@@ -99,6 +99,7 @@ public class BerkeleyDBTCLongToBytesDatabase extends BerkeleyDBTCBytesBytesDatab
 
   static class BerkeleyDBLongBytesTCDatabaseCursor implements TCDatabaseCursor<Long, byte[]> {
     private final TCDatabaseCursor<byte[], byte[]> byteByteCursor;
+    private volatile boolean                       isClosed = false;
 
     public BerkeleyDBLongBytesTCDatabaseCursor(TCDatabaseCursor byteByteCursor) {
       this.byteByteCursor = byteByteCursor;
@@ -106,6 +107,16 @@ public class BerkeleyDBTCLongToBytesDatabase extends BerkeleyDBTCBytesBytesDatab
 
     public void close() {
       this.byteByteCursor.close();
+      isClosed = true;
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+      if (!isClosed) {
+        logger.info("Since the closed for the cursor was not called. So calling it explicity in finalize.");
+        close();
+      }
+      super.finalize();
     }
 
     public void delete() {

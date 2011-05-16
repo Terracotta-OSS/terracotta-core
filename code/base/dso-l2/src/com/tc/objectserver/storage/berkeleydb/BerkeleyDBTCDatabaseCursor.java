@@ -7,15 +7,19 @@ import com.sleepycat.je.Cursor;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.objectserver.storage.api.TCDatabaseCursor;
 import com.tc.objectserver.storage.api.TCDatabaseEntry;
 
 import java.util.NoSuchElementException;
 
 public class BerkeleyDBTCDatabaseCursor implements TCDatabaseCursor<byte[], byte[]> {
+  private static final TCLogger             logger   = TCLogging.getLogger(BerkeleyDBTCDatabaseCursor.class);
   private final Cursor                      cursor;
   protected final boolean                   fetchValue;
-  protected TCDatabaseEntry<byte[], byte[]> entry = null;
+  protected TCDatabaseEntry<byte[], byte[]> entry    = null;
+  private volatile boolean                  isClosed = false;
 
   public BerkeleyDBTCDatabaseCursor(Cursor cursor) {
     this(cursor, true);
@@ -28,6 +32,16 @@ public class BerkeleyDBTCDatabaseCursor implements TCDatabaseCursor<byte[], byte
 
   public void close() {
     cursor.close();
+    isClosed = true;
+  }
+
+  @Override
+  protected void finalize() throws Throwable {
+    if (!isClosed) {
+      logger.info("Since the closed for the cursor was not called. So calling it explicity in finalize.");
+      close();
+    }
+    super.finalize();
   }
 
   public void delete() {

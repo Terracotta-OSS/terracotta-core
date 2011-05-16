@@ -135,15 +135,13 @@ class DerbyTCBytesToBlobDB extends AbstractDerbyTCDatabase implements TCBytesToB
     return Status.NOT_SUCCESS;
   }
 
-  static class DerbyTCBytesBytesCursor implements TCDatabaseCursor<byte[], byte[]> {
-    private final ResultSet rs;
-
-    public DerbyTCBytesBytesCursor(ResultSet rs) {
-      this.rs = rs;
-    }
-
+  static class DerbyTCBytesBytesCursor extends AbstractDerbyTCDatabaseCursor<byte[], byte[]> {
     private TCDatabaseEntry<byte[], byte[]> entry    = null;
     private boolean                         finished = false;
+
+    public DerbyTCBytesBytesCursor(ResultSet rs) {
+      super(rs);
+    }
 
     public boolean hasNext() {
       if (entry != null) { return true; }
@@ -174,22 +172,6 @@ class DerbyTCBytesToBlobDB extends AbstractDerbyTCDatabase implements TCBytesToB
       TCDatabaseEntry<byte[], byte[]> temp = entry;
       entry = null;
       return temp;
-    }
-
-    public void close() {
-      try {
-        rs.close();
-      } catch (SQLException e) {
-        throw new DBException(e);
-      }
-    }
-
-    public void delete() {
-      try {
-        rs.deleteRow();
-      } catch (SQLException e) {
-        throw new DBException(e);
-      }
     }
   }
 }
