@@ -202,7 +202,7 @@
       <dependency>
         <groupId>com.terracottatech</groupId>
         <artifactId>offheap-store</artifactId>
-        <version>1.0.3</version>
+        <version>1.0.4-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta.license</groupId>
