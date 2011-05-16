@@ -41,7 +41,7 @@ public abstract class AbstractDerbyTCDatabaseCursor<K, V> implements TCDatabaseC
   @Override
   protected void finalize() throws Throwable {
     if (!isClosed) {
-      logger.info("Since the closed for the cursor was not called. So calling it explicity in finalize.");
+      logger.warn("Since the closed for the cursor was not called. So calling it explicity in finalize.");
       close();
     }
     super.finalize();
