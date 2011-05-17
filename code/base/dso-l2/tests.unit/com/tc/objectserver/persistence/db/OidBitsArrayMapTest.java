@@ -13,9 +13,11 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.persistence.inmemory.NullPersistenceTransactionProvider;
+import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.storage.api.TCBytesToBytesDatabase;
 import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
 import com.tc.objectserver.storage.berkeleydb.BerkeleyDBTCBytesBytesDatabase;
+import com.tc.objectserver.storage.derby.DerbyDBEnvironment;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
@@ -69,6 +71,19 @@ public class OidBitsArrayMapTest extends TCTestCase {
     assertTrue(dbHome.isDirectory());
     System.out.println("DB Home: " + dbHome);
     return new BerkeleyDBEnvironment(paranoid, dbHome);
+  }
+
+  private DerbyDBEnvironment newDerbyDBEnvironment(boolean paranoid) throws Exception {
+    File dbHome;
+    int count = 0;
+    do {
+      dbHome = new File(this.getTempDirectory(), getClass().getName() + "db" + (++count));
+    } while (dbHome.exists());
+    dbHome.mkdir();
+    assertTrue(dbHome.exists());
+    assertTrue(dbHome.isDirectory());
+    System.out.println("DB Home: " + dbHome);
+    return new DerbyDBEnvironment(paranoid, dbHome);
   }
 
   private List<ObjectID> populateObjectIDList() {
@@ -388,4 +403,40 @@ public class OidBitsArrayMapTest extends TCTestCase {
 
   }
 
+  public void testOnDiskEntriesBug() throws Exception {
+    DerbyDBEnvironment dbEnvironment = newDerbyDBEnvironment(true);
+    dbEnvironment.open();
+    PersistenceTransactionProvider ptp = dbEnvironment.getPersistenceTransactionProvider();
+    TCBytesToBytesDatabase tcBytesToBytesDatabase = dbEnvironment.getObjectOidStoreDatabase();
+
+    List<ObjectID> idList = new ArrayList<ObjectID>();
+    final ObjectID oid512 = new ObjectID(512);
+    final ObjectID oid512_512 = new ObjectID(512 * 512);
+    final ObjectID oid512_512_1 = new ObjectID(512 * 512 + 1);
+
+    idList.add(oid512);
+    idList.add(oid512_512);
+
+    OidBitsArrayMapDiskStoreImpl oids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, tcBytesToBytesDatabase, ptp);
+
+    for (ObjectID id : idList) {
+      oids.getAndSet(id, ptp.newTransaction());
+    }
+
+    // write and read back
+    oids.flushToDisk(ptp.newTransaction());
+
+    oids.readDiskEntry(ptp.newTransaction(), oid512.toLong());
+    oids.readDiskEntry(ptp.newTransaction(), oid512_512.toLong());
+
+    oids.getAndSet(oid512_512_1, ptp.newTransaction());
+    idList.add(oid512_512_1);
+
+    oids.getAndClr(oid512, ptp.newTransaction());
+    idList.remove(oid512);
+
+    oids.flushToDisk(ptp.newTransaction());
+
+    dbEnvironment.close();
+  }
 }

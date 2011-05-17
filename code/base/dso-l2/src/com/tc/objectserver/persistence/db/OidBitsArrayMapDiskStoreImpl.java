@@ -105,7 +105,7 @@ public class OidBitsArrayMapDiskStoreImpl extends OidBitsArrayMapImpl implements
           //
           throw new TCDatabaseException("Failed to delete oidDB at " + bits.getKey());
         }
-        onDiskEntries.getAndClr(new ObjectID(aryIndex), null);
+        onDiskEntries.getAndClr(entryIndex(aryIndex), null);
       }
     } catch (Exception e) {
       throw new TCDatabaseException(e.getMessage());
