@@ -3,15 +3,32 @@
  */
 package com.tc.objectserver.storage.derby;
 
+import com.tc.objectserver.storage.api.DBEnvironment;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.test.TCTestCase;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.sql.Connection;
 import java.util.Properties;
 
 public class DerbyDBEnvironmentTest extends TCTestCase {
+
+  public void testTableExists() throws Exception {
+    File dataDir = new File(getTempDirectory(), "testReopen");
+    dataDir.mkdirs();
+    DerbyDBEnvironment derbyEnv = new DerbyDBEnvironment(true, dataDir);
+    assertTrue(derbyEnv.open());
+
+    Connection connection = derbyEnv.createConnection();
+    assertTrue(DerbyDBEnvironment.tableExists(connection, DBEnvironment.OBJECT_DB_NAME));
+    assertFalse(DerbyDBEnvironment.tableExists(connection, DBEnvironment.OBJECT_DB_NAME + "nope"));
+    assertFalse(DerbyDBEnvironment.tableExists(connection, "nope" + DBEnvironment.OBJECT_DB_NAME));
+
+    connection.close();
+    derbyEnv.close();
+  }
 
   public void testHeapUsage() throws Exception {
     File dataDir = new File(getTempDirectory(), "testHeapUsage");

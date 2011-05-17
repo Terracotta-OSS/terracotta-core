@@ -174,17 +174,11 @@ public class DerbyDBEnvironment implements DBEnvironment {
 
   public static boolean tableExists(Connection connection, String table) throws SQLException {
     DatabaseMetaData dbmd = connection.getMetaData();
-
     ResultSet resultSet = dbmd.getTables(null, null, table.toUpperCase(), null);
-    while (resultSet.next()) {
-      String tableName = resultSet.getString(3);
-      if (tableName.equalsIgnoreCase(table)) {
-        resultSet.close();
-        connection.commit();
-        return true;
-      }
-    }
-    return false;
+    boolean tableExists = resultSet.next();
+    resultSet.close();
+    connection.commit();
+    return tableExists;
   }
 
   public synchronized boolean open() throws TCDatabaseException {
