@@ -6,8 +6,8 @@ package com.tc.objectserver.storage.derby;
 class DerbyQueryProvider implements QueryProvider {
 
   public String createBytesToBlobDBTable(String tableName, String key, String value) {
-    return "CREATE TABLE " + tableName + "(" + key + " " + DerbyDataTypes.TC_BYTE_ARRAY_KEY + ", " + value + " "
-           + DerbyDataTypes.TC_BYTE_ARRAY_VALUE + ", PRIMARY KEY(" + key + ") )";
+    return "CREATE TABLE " + tableName + "(" + key + " " + DerbyDataTypes.VARCHAR_32K + ", " + value + " "
+           + DerbyDataTypes.BLOB_1G + ", PRIMARY KEY(" + key + ") )";
   }
 
   public String createControlDBTable(String tableName, String key, String value) {
@@ -16,38 +16,38 @@ class DerbyQueryProvider implements QueryProvider {
   }
 
   public String createIntToBytesDBTable(String tableName, String key, String value) {
-    return "CREATE TABLE " + tableName + "(" + key + " " + DerbyDataTypes.TC_INT + ", " + value + " "
-           + DerbyDataTypes.TC_BYTE_ARRAY_VALUE + ", PRIMARY KEY(" + key + ") )";
+    return "CREATE TABLE " + tableName + "(" + key + " " + DerbyDataTypes.INT + ", " + value + " "
+           + DerbyDataTypes.BLOB_1G + ", PRIMARY KEY(" + key + ") )";
   }
 
   public String createLongDBTable(String tableName, String key) {
-    return "CREATE TABLE " + tableName + "(" + key + " " + DerbyDataTypes.TC_LONG + ", PRIMARY KEY(" + key + ") )";
+    return "CREATE TABLE " + tableName + "(" + key + " " + DerbyDataTypes.LONG + ", PRIMARY KEY(" + key + ") )";
   }
 
   public String createLongToStringDBTable(String tableName, String key, String value) {
-    return "CREATE TABLE " + tableName + "(" + key + " " + DerbyDataTypes.TC_LONG + ", " + value + " "
-           + DerbyDataTypes.TC_STRING + ", PRIMARY KEY(" + key + ") )";
+    return "CREATE TABLE " + tableName + "(" + key + " " + DerbyDataTypes.LONG + ", " + value + " "
+           + DerbyDataTypes.STRING + ", PRIMARY KEY(" + key + ") )";
   }
 
-  public String createMapsDBTable(String tableName, String id, String key, String value) {
-    return "CREATE TABLE " + tableName + "(" + id + " " + DerbyDataTypes.TC_LONG + ", " + key + " "
-           + DerbyDataTypes.TC_BYTE_ARRAY_KEY + ", " + value + " " + DerbyDataTypes.TC_BYTE_ARRAY_VALUE
-           + ", PRIMARY KEY(" + id + "," + key + ") )";
+  public String createMapsDBTable(String tableName, String mapId, String key, String bigKey, String value) {
+    return "CREATE TABLE " + tableName + "(" + mapId + " " + DerbyDataTypes.LONG + ", " + key + " "
+           + DerbyDataTypes.VARCHAR_32K + ", " + bigKey + " " + DerbyDataTypes.BLOB_1G + ", " + value
+           + " " + DerbyDataTypes.BLOB_1G + ", PRIMARY KEY(" + key + ", " + mapId + ") )";
   }
 
   public String createObjectDBTable(String tableName, String key, String value) {
-    return "CREATE TABLE " + tableName + "(" + key + " " + DerbyDataTypes.TC_LONG + ", " + value + " "
-           + DerbyDataTypes.TC_BYTE_ARRAY_VALUE + ", PRIMARY KEY(" + key + ") )";
+    return "CREATE TABLE " + tableName + "(" + key + " " + DerbyDataTypes.LONG + ", " + value + " "
+           + DerbyDataTypes.BLOB_1G + ", PRIMARY KEY(" + key + ") )";
   }
 
   public String createRootDBTable(String tableName, String key, String value) {
-    return "CREATE TABLE " + tableName + "(" + key + " " + DerbyDataTypes.TC_BYTE_ARRAY_KEY + ", " + value + " "
-           + DerbyDataTypes.TC_LONG + ", PRIMARY KEY(" + key + ") )";
+    return "CREATE TABLE " + tableName + "(" + key + " " + DerbyDataTypes.VARCHAR_32K + ", " + value + " "
+           + DerbyDataTypes.LONG + ", PRIMARY KEY(" + key + ") )";
   }
 
   public String createStringToStringDBTable(String tableName, String key, String value) {
-    return "CREATE TABLE " + tableName + "(" + key + " " + DerbyDataTypes.TC_STRING + ", " + value + " "
-           + DerbyDataTypes.TC_STRING + ", PRIMARY KEY(" + key + ") )";
+    return "CREATE TABLE " + tableName + "(" + key + " " + DerbyDataTypes.STRING + ", " + value + " "
+           + DerbyDataTypes.STRING + ", PRIMARY KEY(" + key + ") )";
   }
 
 }

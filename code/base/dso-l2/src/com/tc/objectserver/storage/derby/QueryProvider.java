@@ -14,7 +14,7 @@ public interface QueryProvider {
 
   String createLongToStringDBTable(String tableName, String key, String value);
 
-  String createMapsDBTable(String tableName, String id, String key, String value);
+  String createMapsDBTable(String tableName, String id, String key, String bigKey, String value);
 
   String createObjectDBTable(String tableName, String key, String value);
 
