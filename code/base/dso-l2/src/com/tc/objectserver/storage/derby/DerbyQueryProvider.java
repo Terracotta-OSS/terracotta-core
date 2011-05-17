@@ -31,8 +31,8 @@ class DerbyQueryProvider implements QueryProvider {
 
   public String createMapsDBTable(String tableName, String mapId, String key, String bigKey, String value) {
     return "CREATE TABLE " + tableName + "(" + mapId + " " + DerbyDataTypes.LONG + ", " + key + " "
-           + DerbyDataTypes.VARCHAR_32K + ", " + bigKey + " " + DerbyDataTypes.BLOB_1G + ", " + value
-           + " " + DerbyDataTypes.BLOB_1G + ", PRIMARY KEY(" + key + ", " + mapId + ") )";
+           + DerbyDataTypes.VARCHAR_32K + ", " + bigKey + " " + DerbyDataTypes.BLOB_1G + ", " + value + " "
+           + DerbyDataTypes.BLOB_1G + ", PRIMARY KEY(" + mapId + ", " + key + ") )";
   }
 
   public String createObjectDBTable(String tableName, String key, String value) {
