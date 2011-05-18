@@ -35,7 +35,7 @@ class DerbyQueryProvider implements QueryProvider {
            + DerbyDataTypes.BLOB_1G + ", PRIMARY KEY(" + mapId + ", " + key + ") )";
   }
 
-  public String createObjectDBTable(String tableName, String key, String value) {
+  public String createLongToBytesTable(String tableName, String key, String value) {
     return "CREATE TABLE " + tableName + "(" + key + " " + DerbyDataTypes.LONG + ", " + value + " "
            + DerbyDataTypes.BLOB_1G + ", PRIMARY KEY(" + key + ") )";
   }
@@ -48,6 +48,16 @@ class DerbyQueryProvider implements QueryProvider {
   public String createStringToStringDBTable(String tableName, String key, String value) {
     return "CREATE TABLE " + tableName + "(" + key + " " + DerbyDataTypes.STRING + ", " + value + " "
            + DerbyDataTypes.STRING + ", PRIMARY KEY(" + key + ") )";
+  }
+
+  public String createTransactionStoreTable(String tableName, String key, String value) {
+    return "CREATE TABLE " + tableName + "(" + key + " " + DerbyDataTypes.LONG + ", " + value + " "
+           + DerbyDataTypes.VARCHAR_32K + ", PRIMARY KEY(" + key + ") )";
+  }
+
+  public String createBytesToBytesDBTable(String tableName, String key, String value) {
+    return "CREATE TABLE " + tableName + "(" + key + " " + DerbyDataTypes.VARCHAR_32K + ", " + value + " "
+           + DerbyDataTypes.VARCHAR_32K + ", PRIMARY KEY(" + key + ") )";
   }
 
 }

@@ -18,14 +18,14 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
-class DerbyTCBytesToBlobDB extends AbstractDerbyTCDatabase implements TCBytesToBytesDatabase {
+class DerbyTCBytesToBlobDatabase extends AbstractDerbyTCDatabase implements TCBytesToBytesDatabase {
   private final String deleteQuery;
   private final String getQuery;
   private final String openCursorQuery;
   private final String updateQuery;
   private final String insertQuery;
 
-  public DerbyTCBytesToBlobDB(String tableName, Connection connection, QueryProvider queryProvider)
+  public DerbyTCBytesToBlobDatabase(String tableName, Connection connection, QueryProvider queryProvider)
       throws TCDatabaseException {
     super(tableName, connection, queryProvider);
     deleteQuery = "DELETE FROM " + tableName + " WHERE " + KEY + " = ?";
@@ -36,7 +36,7 @@ class DerbyTCBytesToBlobDB extends AbstractDerbyTCDatabase implements TCBytesToB
   }
 
   @Override
-  protected final void createTableIfNotExists(Connection connection, QueryProvider queryProvider) throws SQLException {
+  protected void createTableIfNotExists(Connection connection, QueryProvider queryProvider) throws SQLException {
     if (DerbyDBEnvironment.tableExists(connection, tableName)) { return; }
 
     String query = queryProvider.createBytesToBlobDBTable(tableName, KEY, VALUE);

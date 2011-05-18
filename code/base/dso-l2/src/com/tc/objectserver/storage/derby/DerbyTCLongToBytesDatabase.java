@@ -46,10 +46,10 @@ class DerbyTCLongToBytesDatabase extends AbstractDerbyTCDatabase implements TCLo
   }
 
   @Override
-  protected final void createTableIfNotExists(Connection connection, QueryProvider queryProvider) throws SQLException {
+  protected void createTableIfNotExists(Connection connection, QueryProvider queryProvider) throws SQLException {
     if (DerbyDBEnvironment.tableExists(connection, tableName)) { return; }
 
-    String query = queryProvider.createObjectDBTable(tableName, KEY, VALUE);
+    String query = queryProvider.createLongToBytesTable(tableName, KEY, VALUE);
     executeQuery(connection, query);
   }
 

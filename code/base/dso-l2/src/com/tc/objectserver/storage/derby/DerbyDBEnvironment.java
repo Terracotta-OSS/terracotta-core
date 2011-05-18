@@ -268,10 +268,10 @@ public class DerbyDBEnvironment implements DBEnvironment {
 
     newObjectDB(connection);
     newRootDB(connection);
-    newBytesToBlobDB(OBJECT_OID_STORE_DB_NAME, connection);
-    newBytesToBlobDB(MAPS_OID_STORE_DB_NAME, connection);
+    newBytesToBytesDB(OBJECT_OID_STORE_DB_NAME, connection);
+    newBytesToBytesDB(MAPS_OID_STORE_DB_NAME, connection);
     newBytesToBlobDB(OID_STORE_LOG_DB_NAME, connection);
-    newBytesToBlobDB(EVICTABLE_OID_STORE_DB_NAME, connection);
+    newBytesToBytesDB(EVICTABLE_OID_STORE_DB_NAME, connection);
     newLongDB(CLIENT_STATE_DB_NAME, connection);
     newTransactionStoreDatabase(connection);
     newIntToBytesDB(CLASS_DB_NAME, connection);
@@ -310,7 +310,12 @@ public class DerbyDBEnvironment implements DBEnvironment {
   }
 
   private void newBytesToBlobDB(String tableName, Connection connection) throws TCDatabaseException {
-    TCBytesToBytesDatabase db = new DerbyTCBytesToBlobDB(tableName, connection, queryProvider);
+    TCBytesToBytesDatabase db = new DerbyTCBytesToBlobDatabase(tableName, connection, queryProvider);
+    tables.put(tableName, db);
+  }
+
+  private void newBytesToBytesDB(String tableName, Connection connection) throws TCDatabaseException {
+    TCBytesToBytesDatabase db = new DerbyTCBytesToBytesDatabase(tableName, connection, queryProvider);
     tables.put(tableName, db);
   }
 
@@ -382,22 +387,22 @@ public class DerbyDBEnvironment implements DBEnvironment {
 
   public synchronized TCBytesToBytesDatabase getObjectOidStoreDatabase() throws TCDatabaseException {
     assertOpen();
-    return (DerbyTCBytesToBlobDB) tables.get(OBJECT_OID_STORE_DB_NAME);
+    return (DerbyTCBytesToBlobDatabase) tables.get(OBJECT_OID_STORE_DB_NAME);
   }
 
   public synchronized TCBytesToBytesDatabase getMapsOidStoreDatabase() throws TCDatabaseException {
     assertOpen();
-    return (DerbyTCBytesToBlobDB) tables.get(MAPS_OID_STORE_DB_NAME);
+    return (DerbyTCBytesToBlobDatabase) tables.get(MAPS_OID_STORE_DB_NAME);
   }
 
   public synchronized TCBytesToBytesDatabase getOidStoreLogDatabase() throws TCDatabaseException {
     assertOpen();
-    return (DerbyTCBytesToBlobDB) tables.get(OID_STORE_LOG_DB_NAME);
+    return (DerbyTCBytesToBlobDatabase) tables.get(OID_STORE_LOG_DB_NAME);
   }
 
   public synchronized TCBytesToBytesDatabase getEvictableOidStoreDatabase() throws TCDatabaseException {
     assertOpen();
-    return (DerbyTCBytesToBlobDB) tables.get(EVICTABLE_OID_STORE_DB_NAME);
+    return (DerbyTCBytesToBlobDatabase) tables.get(EVICTABLE_OID_STORE_DB_NAME);
   }
 
   public synchronized TCRootDatabase getRootDatabase() throws TCDatabaseException {
