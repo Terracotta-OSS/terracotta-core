@@ -11,6 +11,7 @@ import com.tc.objectserver.persistence.db.TCCollectionsSerializer;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.TCMapsDatabase;
+import com.tc.util.Assert;
 import com.tc.util.Conversion;
 
 import java.io.ByteArrayInputStream;
@@ -338,16 +339,13 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
   }
 
   private byte[] abbreviateKey(byte[] key, int sequenceId) {
-    if (!isBigKey(key)) {
-      return key;
-    } else {
-      byte[] smallKey = new byte[DERBY_VARCHAR_LIMIT];
-      System.arraycopy(key, 0, smallKey, 0, SMALL_KEY_MAX_LEN);
-      System.arraycopy(hashKey(key), 0, smallKey, SMALL_KEY_MAX_LEN, KEY_HASH_SIZE);
-      System.arraycopy(Conversion.int2Bytes(sequenceId), 0, smallKey, SMALL_KEY_MAX_LEN + KEY_HASH_SIZE,
-                       SEQUENCE_ID_SIZE);
-      return smallKey;
-    }
+    Assert.eval(isBigKey(key));
+    byte[] smallKey = new byte[DERBY_VARCHAR_LIMIT];
+    System.arraycopy(key, 0, smallKey, 0, SMALL_KEY_MAX_LEN);
+    System.arraycopy(hashKey(key), 0, smallKey, SMALL_KEY_MAX_LEN, KEY_HASH_SIZE);
+    System
+        .arraycopy(Conversion.int2Bytes(sequenceId), 0, smallKey, SMALL_KEY_MAX_LEN + KEY_HASH_SIZE, SEQUENCE_ID_SIZE);
+    return smallKey;
   }
 
   private int getSequenceIdFromAbbreviatedKey(byte[] abbreviatedKey) {
