@@ -28,6 +28,24 @@ import com.tc.util.sequence.MutableSequence;
 
 import java.util.SortedSet;
 
+/**
+ * A good start to understand this is to go and look at the explanation in the intranet link<br>
+ * http://intranet.terracotta.lan/xwiki/bin/view/Main/DgcOptDelete<br>
+ * <br>
+ * How it works?<br>
+ * On creation of new objects or deletion of objects due to DGC, we keep writing to a oidStoreLogDB.<br>
+ * Then a check pointer thread runs periodically which iterates through this oidStoreLogDB. This checkpoint threads
+ * flushes data to objectOidStoreDB, mapsOidStoreDB and evictableOidStoreDB after compressing it properly.<br>
+ * <br>
+ * Format of data stored in oidStoreLogDB:<br>
+ * Key: First 8 bytes are sequence-id, then 1 byte whether this is ADD/DELETE op. Hence total 9 bytes.<br>
+ * Value: Set of (8 bytes ObjectID, then 1 byte for type of object). Thus 9 bytes * (no of objects).<br>
+ * <br>
+ * Format of data stored in objectOidStoreDB, mapsOidStoreDB and evictableOidStoreDB:<br>
+ * Key: Base id<br>
+ * Value: 64 length byte array.<br>
+ * e.g. if u want to store ObjectID=513, then Base id = 512 & Value will have 2nd bit set.<br>
+ */
 public final class FastObjectIDManagerImpl extends DBPersistorBase implements ObjectIDManager {
   private static final TCLogger                logger                     = TCLogging
                                                                               .getTestingLogger(FastObjectIDManagerImpl.class);
