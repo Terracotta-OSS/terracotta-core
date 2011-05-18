@@ -31,26 +31,29 @@ public abstract class BaseUtility {
   private static final TCLogger logger = TCLogging.getLogger(BaseUtility.class);
 
   protected final Writer        writer;
-  protected final Map           sleepycatPersistorMap;
+  protected final Map           dbPersistorsMap;
+  protected final Map           dbEnvironmentsMap;
   protected final File[]        databaseDirs;
 
   public BaseUtility(Writer writer, File[] databaseDirs) throws Exception {
     this.writer = writer;
     this.databaseDirs = databaseDirs;
-    sleepycatPersistorMap = new HashMap(databaseDirs.length);
+    dbPersistorsMap = new HashMap(databaseDirs.length);
+    dbEnvironmentsMap = new HashMap(databaseDirs.length);
     initPersistors(databaseDirs.length);
   }
 
   private void initPersistors(int persistorCount) throws Exception {
     ManagedObjectStateFactory.disableSingleton(true);
     for (int i = 1; i <= persistorCount; i++) {
-      sleepycatPersistorMap.put(Integer.valueOf(i), createPersistor(i));
+      dbPersistorsMap.put(Integer.valueOf(i), createPersistor(i));
     }
   }
 
   private DBPersistorImpl createPersistor(int id) throws Exception {
     DBFactory factory = getDBFactory();
     DBEnvironment env = factory.createEnvironment(true, databaseDirs[id - 1]);
+    dbEnvironmentsMap.put(id, env);
     SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
     final TestManagedObjectChangeListenerProvider managedObjectChangeListenerProvider = new TestManagedObjectChangeListenerProvider();
     DBPersistorImpl persistor = new DBPersistorImpl(logger, env, serializationAdapterFactory);
@@ -72,7 +75,7 @@ public abstract class BaseUtility {
   }
 
   protected DBPersistorImpl getPersistor(int id) {
-    return (DBPersistorImpl) sleepycatPersistorMap.get(Integer.valueOf(id));
+    return (DBPersistorImpl) dbPersistorsMap.get(Integer.valueOf(id));
   }
 
   protected File getDatabaseDir(int id) {

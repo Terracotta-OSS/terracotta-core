@@ -4,18 +4,14 @@
  */
 package com.tc.objectserver.storage.util;
 
-import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseConfig;
-import com.sleepycat.je.DatabaseEntry;
-import com.sleepycat.je.DatabaseException;
-import com.sleepycat.je.Environment;
-import com.sleepycat.je.EnvironmentConfig;
-import com.sleepycat.je.LockMode;
-import com.sleepycat.je.OperationStatus;
 import com.tc.l2.ha.ClusterState;
 import com.tc.l2.state.StateManager;
-import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
-import com.tc.util.Conversion;
+import com.tc.objectserver.storage.api.DBEnvironment;
+import com.tc.objectserver.storage.api.PersistenceTransaction;
+import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
+import com.tc.objectserver.storage.api.TCDatabaseEntry;
+import com.tc.objectserver.storage.api.TCStringToStringDatabase;
+import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 import com.tc.util.State;
 
 import java.io.File;
@@ -25,49 +21,41 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SetDbClean extends BaseUtility {
-  private final EnvironmentConfig enc;
-  private final Environment       env;
-  private final DatabaseConfig    dbc;
-  protected List                  oidlogsStatsList = new ArrayList();
+  protected List oidlogsStatsList = new ArrayList();
 
   public SetDbClean(File dir) throws Exception {
     this(dir, new OutputStreamWriter(System.out));
   }
 
   public SetDbClean(File dir, Writer writer) throws Exception {
-    super(writer, new File[] {});
-    this.enc = new EnvironmentConfig();
-    this.enc.setReadOnly(false);
-    this.env = new Environment(dir, enc);
-    this.dbc = new DatabaseConfig();
-    this.dbc.setReadOnly(false);
+    super(writer, new File[] { dir });
   }
 
-  public void setDbClean() throws DatabaseException {
-    Database db = null;
-    try {
-      db = env.openDatabase(null, BerkeleyDBEnvironment.getClusterStateStoreName(), dbc);
-    } catch (DatabaseException e) {
-      log("Probably not running in persistent mode!");
-      env.close();
-      throw e;
-    }
+  public void setDbClean() throws Exception {
+    if (dbEnvironmentsMap.size() != 1) { throw new AssertionError(
+                                                                  "DB Environments created should be 1 only. DB Env in map = "
+                                                                      + dbEnvironmentsMap.size()); }
+    DBEnvironment env = (DBEnvironment) dbEnvironmentsMap.get(1);
+    PersistenceTransactionProvider ptp = env.getPersistenceTransactionProvider();
 
-    DatabaseEntry dkey = new DatabaseEntry();
-    dkey.setData(Conversion.string2Bytes(ClusterState.getL2StateKey()));
-    DatabaseEntry dvalue = new DatabaseEntry();
-    OperationStatus status = db.get(null, dkey, dvalue, LockMode.DEFAULT);
-    if (!OperationStatus.SUCCESS.equals(status)) {
+    TCStringToStringDatabase db = env.getClusterStateStoreDatabase();
+    TCDatabaseEntry<String, String> entry = new TCDatabaseEntry<String, String>();
+    entry.setKey(ClusterState.getL2StateKey());
+
+    PersistenceTransaction tx = ptp.newTransaction();
+    Status status = db.get(entry, tx);
+
+    if (!Status.SUCCESS.equals(status)) {
       log("Failed to read state!");
-      db.close();
+      tx.commit();
       env.close();
       return;
     }
+    tx.commit();
 
-    String stateStr = Conversion.bytes2String(dvalue.getData());
+    String stateStr = entry.getValue();
     if (stateStr == null) {
       log("Failed to set DB clean for empty state");
-      db.close();
       env.close();
       return;
     }
@@ -75,20 +63,18 @@ public class SetDbClean extends BaseUtility {
     State state = new State(stateStr);
     if (!StateManager.PASSIVE_STANDBY.equals(state)) {
       log("Failed to set DB clean for " + state);
-      db.close();
       env.close();
       return;
     }
-    
-    dvalue.setData(Conversion.string2Bytes(StateManager.ACTIVE_COORDINATOR.getName()));
-    status = db.put(null, dkey, dvalue);
-    if (OperationStatus.SUCCESS.equals(status)) {
+
+    tx = ptp.newTransaction();
+    status = db.put(ClusterState.getL2StateKey(), StateManager.ACTIVE_COORDINATOR.getName(), tx);
+    if (Status.SUCCESS.equals(status)) {
       log("SetDbClean success!");
     } else {
       log("Failed to setDbClean");
     }
-    
-    db.close();
+    tx.commit();
     env.close();
   }
 
