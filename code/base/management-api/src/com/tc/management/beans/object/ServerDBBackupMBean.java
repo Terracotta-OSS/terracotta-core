@@ -16,15 +16,15 @@ public interface ServerDBBackupMBean extends TerracottaMBean {
   public static final String BACKUP_COMPLETED  = "com.tc.management.beans.object.serverdbbackup.backupcompleted";
   public static final String BACKUP_FAILED     = "com.tc.management.beans.object.serverdbbackup.backupfailed";
 
-  public boolean isBackUpRunning();
-
   public String getDefaultPathForBackup();
+
+  public boolean isBackupEnabled();
+
+  public boolean isBackUpRunning();
 
   public void runBackUp() throws IOException;
 
   public void runBackUp(String path) throws IOException;
-
-  public boolean isBackupEnabled();
 
   public String getDbHome();
 }

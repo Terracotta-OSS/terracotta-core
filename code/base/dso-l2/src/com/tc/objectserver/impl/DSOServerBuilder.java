@@ -47,7 +47,6 @@ import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
-import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.IndexManager;
 import com.tc.objectserver.search.SearchRequestManager;
@@ -178,7 +177,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                     DumpHandlerStore dumpHandlerStore, final StageManager stageManager,
                                     SampledCounter l2FaultFromDisk, SampledCounter l2FaultFromOffheap,
                                     SampledCounter l2FlushFromOffheap, DBFactory factory, boolean offheapEnabled)
-      throws IOException, TCDatabaseException;
+      throws IOException;
 
   LongGCLogger createLongGCLogger(long gcTimeOut);
 }

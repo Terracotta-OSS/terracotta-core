@@ -4,7 +4,6 @@
 package com.tc.objectserver.storage.derby;
 
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
-import com.tc.management.beans.object.DerbyServerDBBackup;
 import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.objectserver.storage.api.DBEnvironment;
 import com.tc.objectserver.storage.api.DBFactory;

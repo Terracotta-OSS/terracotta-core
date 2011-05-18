@@ -60,8 +60,8 @@ import com.tc.management.beans.L2State;
 import com.tc.management.beans.LockStatisticsMonitor;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
-import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.management.beans.object.ObjectManagementMonitor.ObjectIdsFetcher;
+import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.management.lock.stats.L2LockStatisticsManagerImpl;
 import com.tc.management.lock.stats.LockStatisticsMessage;
 import com.tc.management.lock.stats.LockStatisticsResponseMessageImpl;
@@ -450,8 +450,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.serverBuilder.dump();
   }
 
-  public synchronized void start() throws IOException, TCDatabaseException, LocationNotCreatedException,
-      FileNotCreatedException {
+  public synchronized void start() throws IOException, LocationNotCreatedException, FileNotCreatedException {
 
     this.threadGroup.addCallbackOnExitDefaultHandler(new ThreadDumpHandler(this));
     this.threadGroup.addCallbackOnExitDefaultHandler(this.dumpHandler);
@@ -598,15 +597,21 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     sraForDbEnv = this.dbenv.getSRAs();
 
     // Setting the DB environment for the bean which takes backup of the active server
-    if (persistent) {
-      this.persistor = new DBPersistorImpl(TCLogging.getLogger(DBPersistorImpl.class), this.dbenv,
-                                           serializationAdapterFactory, this.configSetupManager.commonl2Config()
-                                               .dataPath(), this.objectStatsRecorder);
-      this.l2Management.initBackupMbean(this.dbenv);
-    } else {
-      this.persistor = new TempSwapDBPersistorImpl(TCLogging.getLogger(DBPersistorImpl.class), this.dbenv,
-                                                   serializationAdapterFactory, this.configSetupManager
-                                                       .commonl2Config().dataPath(), this.objectStatsRecorder);
+    try {
+      if (persistent) {
+        this.persistor = new DBPersistorImpl(TCLogging.getLogger(DBPersistorImpl.class), this.dbenv,
+                                             serializationAdapterFactory, this.configSetupManager.commonl2Config()
+                                                 .dataPath(), this.objectStatsRecorder);
+        this.l2Management.initBackupMbean(this.dbenv);
+      } else {
+        this.persistor = new TempSwapDBPersistorImpl(TCLogging.getLogger(DBPersistorImpl.class), this.dbenv,
+                                                     serializationAdapterFactory, this.configSetupManager
+                                                         .commonl2Config().dataPath(), this.objectStatsRecorder);
+      }
+    } catch (TCDatabaseException tcde) {
+      consoleLogger.error(tcde.getMessage());
+      logger.error(tcde);
+      System.exit(-1);
     }
 
     // register the terracotta operator event logger

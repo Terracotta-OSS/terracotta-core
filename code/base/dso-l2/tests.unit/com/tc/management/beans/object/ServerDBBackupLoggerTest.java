@@ -4,7 +4,7 @@
  */
 package com.tc.management.beans.object;
 
-import com.tc.management.beans.object.ServerDBBackup.FileLoggerForBackup;
+import com.tc.management.beans.object.AbstractServerDBBackup.FileLoggerForBackup;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -22,7 +22,7 @@ public class ServerDBBackupLoggerTest extends TestCase {
   public void testLoggerFileExists() {
     String tempDir = "serverdbBackup" + File.separator + "testDirExists";
 
-    ServerDBBackup.FileLoggerForBackup logger = createLogger(tempDir);
+    FileLoggerForBackup logger = createLogger(tempDir);
     assertNotNull(logger);
 
     File file = new File(tempDir + File.separator + "backup.log");
@@ -41,7 +41,7 @@ public class ServerDBBackupLoggerTest extends TestCase {
     String filePath = tempDir + File.separator + "backup.log";
     ifFileExistsThenDelete(filePath);
 
-    ServerDBBackup.FileLoggerForBackup logger = createLogger(tempDir);
+    FileLoggerForBackup logger = createLogger(tempDir);
 
     assertTrue(new File(filePath).exists());
 
@@ -62,18 +62,18 @@ public class ServerDBBackupLoggerTest extends TestCase {
       assertEquals(logMessage, reader.readLine());
 
     line = reader.readLine();
-    assertTrue(line.startsWith(ServerDBBackup.FileLoggerForBackup.BACKUP_STARTED_MSG));
+    assertTrue(line.startsWith(FileLoggerForBackup.BACKUP_STARTED_MSG));
 
     line = reader.readLine();
     assertTrue(line.endsWith(EXCEPTION_MSG));
 
     line = reader.readLine();
-    assertTrue(line.startsWith(ServerDBBackup.FileLoggerForBackup.BACKUP_STOPPED_MSG));
+    assertTrue(line.startsWith(FileLoggerForBackup.BACKUP_STOPPED_MSG));
 
     reader.close();
   }
 
-  private void logMessages(ServerDBBackup.FileLoggerForBackup logger) {
+  private void logMessages(FileLoggerForBackup logger) {
     for (String logMessage : logMessages)
       logger.logMessage(logMessage);
 
@@ -90,8 +90,8 @@ public class ServerDBBackupLoggerTest extends TestCase {
     }
   }
 
-  public ServerDBBackup.FileLoggerForBackup createLogger(String tempDir) {
-    ServerDBBackup.FileLoggerForBackup logger = null;
+  public FileLoggerForBackup createLogger(String tempDir) {
+    FileLoggerForBackup logger = null;
     try {
       logger = new FileLoggerForBackup(tempDir);
     } catch (Exception e) {

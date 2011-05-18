@@ -241,9 +241,16 @@ public class DerbyDBEnvironment implements DBEnvironment {
       conn.setAutoCommit(false);
       conn.close();
     } catch (SQLException e) {
-      String message = "Could not open database. Try cleaning data directory for Terracotta and the logDevice Directory.";
-      logger.fatal(message, e);
-      throw new TCDatabaseException(message);
+      String errorMessage;
+      if (e.getErrorCode() == 40000 && e.getSQLState().equals("XJ040")
+          && e.getNextException().getSQLState().equals("XSLAB")) {
+        errorMessage = e.getNextException().getMessage() + "\n";
+      } else {
+        errorMessage = "Error opening derby database. Try restarting server after cleaning up derby data directory and logDevice directory . ErrorCode: "
+                       + e.getErrorCode() + "; SQLState: " + e.getSQLState() + "\n";
+      }
+      logger.fatal(errorMessage, e);
+      throw new TCDatabaseException(errorMessage);
     }
   }
 
@@ -468,7 +475,7 @@ public class DerbyDBEnvironment implements DBEnvironment {
   }
 
   public void initBackupMbean(ServerDBBackupMBean mBean) {
-    // TODO: no db backup
+    ((DerbyServerDBBackup) mBean).initDbEnvironment(this.envHome);
   }
 
   public void initObjectStoreStats(ManagedObjectStoreStats objectStoreStats) {

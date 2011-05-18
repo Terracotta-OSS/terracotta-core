@@ -24,7 +24,6 @@ import com.sleepycat.je.Transaction;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.management.beans.object.ServerDBBackup;
 import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.objectserver.persistence.api.ManagedObjectStoreStats;
 import com.tc.objectserver.persistence.db.DBException;
@@ -118,9 +117,7 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
   }
 
   public void initBackupMbean(ServerDBBackupMBean mBean) throws TCDatabaseException {
-    if (mBean != null) {
-      ((ServerDBBackup) mBean).setDbEnvironment(this.getEnvironment(), this.getEnvironmentHome());
-    }
+    ((BerkeleyServerDBBackup) mBean).initDbEnvironment(this.getEnvironment(), this.getEnvironmentHome());
   }
 
   public void initObjectStoreStats(ManagedObjectStoreStats objectStoreStats) {
