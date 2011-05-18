@@ -184,9 +184,10 @@ public class DerbyDBEnvironment implements DBEnvironment {
   public synchronized boolean open() throws TCDatabaseException {
     boolean openResult;
     try {
-      openDatabase();
+      if (status == DBEnvironmentStatus.STATUS_OPEN) return true;
 
       status = DBEnvironmentStatus.STATUS_OPENING;
+      openDatabase();
 
       // now open control db
       controlDB = new DerbyControlDB(CONTROL_DB, createConnection(), queryProvider);
@@ -203,22 +204,16 @@ public class DerbyDBEnvironment implements DBEnvironment {
 
       createTablesIfRequired();
 
-    } catch (TCDatabaseException e) {
-      this.status = DBEnvironmentStatus.STATUS_ERROR;
-      forceClose();
-      throw e;
-    } catch (Error e) {
-      this.status = DBEnvironmentStatus.STATUS_ERROR;
-      forceClose();
-      throw e;
-    } catch (RuntimeException e) {
-      this.status = DBEnvironmentStatus.STATUS_ERROR;
-      forceClose();
-      throw e;
+      status = DBEnvironmentStatus.STATUS_OPEN;
+      return openResult;
+
+    } finally {
+      if (status == DBEnvironmentStatus.STATUS_OPENING) {
+        status = DBEnvironmentStatus.STATUS_ERROR;
+        forceClose();
+      }
     }
 
-    status = DBEnvironmentStatus.STATUS_OPEN;
-    return openResult;
   }
 
   public void openDatabase() throws TCDatabaseException {
@@ -237,7 +232,7 @@ public class DerbyDBEnvironment implements DBEnvironment {
     }
 
     Properties attributesProps = new Properties();
-    attributesProps.put("create", "true");
+    attributesProps.setProperty("create", "true");
     attributesProps.setProperty("logDevice", logDevice);
     Connection conn;
     try {
@@ -349,22 +344,23 @@ public class DerbyDBEnvironment implements DBEnvironment {
     tables.put(MAP_DB_NAME, db);
   }
 
-  public synchronized void close() {
+  public synchronized void close() throws TCDatabaseException {
     status = DBEnvironmentStatus.STATUS_CLOSING;
-
     forceClose();
-
     status = DBEnvironmentStatus.STATUS_CLOSED;
   }
 
-  private void forceClose() {
+  private void forceClose() throws TCDatabaseException {
     try {
       Connection connection = DriverManager.getConnection(PROTOCOL + envHome.getAbsolutePath() + File.separator
-                                                          + DB_NAME + ";logDevice=" + envHome.getAbsolutePath()
-                                                          + ";shutdown=true");
+                                                          + DB_NAME + ";shutdown=true");
       connection.close();
-    } catch (Exception e) {
-      logger.info("Shutdown" + e.getMessage());
+    } catch (SQLException e) {
+      if ("08006".equals(e.getSQLState())) {
+        logger.info("Derby shut down normally.");
+      } else {
+        throw new TCDatabaseException(e);
+      }
     }
   }
 
