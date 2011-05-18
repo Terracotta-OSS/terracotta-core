@@ -16,18 +16,18 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.event.EventListenerList;
 
 public class ServerGroup implements IServerGroup {
-  private final IClusterModel         clusterModel;
-  protected final Server[]            members;
-  private final boolean               isCoordinator;
-  private final String                name;
-  private final int                   id;
-  private final AtomicBoolean         connected    = new AtomicBoolean();
-  private final AtomicBoolean         ready        = new AtomicBoolean();
-  private AtomicReference<IServer>    activeServer = new AtomicReference<IServer>();
-  private final PropertyChangeSupport propertyChangeSupport;
-  private ActiveServerListener        activeServerListener;
-  private PropertyChangeListener      serverPropertyChangeListener;
-  private final EventListenerList     listenerList;
+  private final IClusterModel            clusterModel;
+  protected final Server[]               members;
+  private final boolean                  isCoordinator;
+  private final String                   name;
+  private final int                      id;
+  private final AtomicBoolean            connected    = new AtomicBoolean();
+  private final AtomicBoolean            ready        = new AtomicBoolean();
+  private final AtomicReference<IServer> activeServer = new AtomicReference<IServer>();
+  private final PropertyChangeSupport    propertyChangeSupport;
+  private final ActiveServerListener     activeServerListener;
+  private final PropertyChangeListener   serverPropertyChangeListener;
+  private final EventListenerList        listenerList;
 
   public ServerGroup(IClusterModel clusterModel, ServerGroupInfo info) {
     this.clusterModel = clusterModel;
@@ -237,11 +237,6 @@ public class ServerGroup implements IServerGroup {
         server.tearDown();
       }
     }
-    synchronized (this) {
-      serverPropertyChangeListener = null;
-      activeServerListener = null;
-      activeServer = null;
-    }
   }
 
   @Override
@@ -275,9 +270,6 @@ public class ServerGroup implements IServerGroup {
   }
 
   private boolean determineReady() {
-    // IServer theActiveServer = getActiveServer();
-    // return theActiveServer != null && theActiveServer.isReady();
-
     boolean isActiveReady = false;
     int activeCount = 0;
     for (IServer server : getMembers()) {
