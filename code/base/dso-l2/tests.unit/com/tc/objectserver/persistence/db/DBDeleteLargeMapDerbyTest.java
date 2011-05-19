@@ -9,7 +9,7 @@ import com.tc.objectserver.storage.derby.DerbyDBEnvironment;
 import java.io.File;
 import java.io.IOException;
 
-public class DBDeleteLargeMapDerbyTest extends AbstractDBCollectionsDeleteTest {
+public class DBDeleteLargeMapDerbyTest extends AbstractDBCollectionsDeleteTestParent {
 
   @Override
   protected DBEnvironment getDBEnvironMent(File dbHome) throws IOException {

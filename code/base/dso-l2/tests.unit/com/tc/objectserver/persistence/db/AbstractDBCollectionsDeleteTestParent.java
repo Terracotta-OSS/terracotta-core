@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public abstract class AbstractDBCollectionsDeleteTest extends TCTestCase {
+public abstract class AbstractDBCollectionsDeleteTestParent extends TCTestCase {
 
   private DBPersistorImpl                persistor;
   private PersistenceTransactionProvider ptp;

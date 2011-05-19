@@ -9,7 +9,7 @@ import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
 import java.io.File;
 import java.io.IOException;
 
-public class DBDeleteLargeMapBDBTest extends AbstractDBCollectionsDeleteTest {
+public class DBDeleteLargeMapBDBTest extends AbstractDBCollectionsDeleteTestParent {
 
   @Override
   protected DBEnvironment getDBEnvironMent(File dbHome) throws IOException {
