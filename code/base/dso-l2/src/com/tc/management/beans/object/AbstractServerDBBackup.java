@@ -70,8 +70,11 @@ public abstract class AbstractServerDBBackup extends AbstractNotifyingMBean impl
     }
   }
 
+  /**
+   * Needed for mbean requirements. Terracotta Ops-Center doesn't expose this.
+   */
   public void reset() {
-    // XXX:
+    //
   }
 
   public boolean isBackUpRunning() {
