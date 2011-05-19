@@ -18,7 +18,7 @@ public class SetDbCleanCommand extends BaseCommand {
   public void execute(String[] args) {
 
     if (args.length < 1) {
-      println("sleepycat database source required.");
+      println("database source required.");
       printUsage();
       return;
     }
@@ -32,7 +32,7 @@ public class SetDbCleanCommand extends BaseCommand {
         e.printStackTrace();
       }
     } else {
-      println("invalid sleepycat database source.");
+      println("invalid database source.");
     }
 
   }
@@ -46,11 +46,11 @@ public class SetDbCleanCommand extends BaseCommand {
   }
 
   public String description() {
-    return "This utility clean up passive dirty DB at <sleepycat source directory>.";
+    return "This utility clean up passive dirty DB at <database source directory>.";
   }
 
   public void printUsage() {
-    println("\tUsage: " + optionName() + " <sleepycat source directory>");
-    println("\t" +description());
+    println("\tUsage: " + optionName() + " <database source directory>");
+    println("\t" + description());
   }
 }

@@ -18,7 +18,7 @@ public class ReviveClassFilesCommand extends BaseCommand {
   public void execute(String[] args) {
 
     if (args.length < 2) {
-      println("sleepycat database source required, and destination directory required.");
+      println("database source required, and destination directory required.");
       printUsage();
       return;
     }
@@ -33,7 +33,7 @@ public class ReviveClassFilesCommand extends BaseCommand {
         e.printStackTrace();
       }
     } else {
-      println("invalid sleepycat database source and/or destination directory.");
+      println("invalid database source and/or destination directory.");
     }
 
   }
@@ -47,13 +47,13 @@ public class ReviveClassFilesCommand extends BaseCommand {
   }
 
   public String description() {
-    return "This utility revives class files found a the database located <sleepycat source directory>, " +
-    		"and places those files at the <destination directory>.";
+    return "This utility revives class files found a the database located <database source directory>, "
+           + "and places those files at the <destination directory>.";
 
   }
 
   public void printUsage() {
-    println("\tUsage: " + optionName() + " <sleepycat source directory> <destination directory>");
+    println("\tUsage: " + optionName() + " <database source directory> <destination directory>");
     println("\t" + description());
   }
 

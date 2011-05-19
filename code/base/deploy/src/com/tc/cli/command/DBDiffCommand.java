@@ -18,15 +18,15 @@ public class DBDiffCommand extends BaseCommand {
   public void execute(String[] args) {
 
     if (args.length < 2) {
-      println("sleepycat database sources (2) required.");
+      println("database sources (2) required.");
       printUsage();
       return;
     }
 
     File db1 = new File(args[0]);
     File db2 = new File(args[1]);
-    
-    if(db1.equals(db2)) {
+
+    if (db1.equals(db2)) {
       println("database source 1 and 2 cannot be the same database");
     }
     if (db1.exists() && db2.exists()) {
@@ -37,13 +37,13 @@ public class DBDiffCommand extends BaseCommand {
         e.printStackTrace();
       }
     } else {
-      println("invalid sleepycat database sources.");
+      println("invalid database sources.");
     }
 
   }
 
   public String name() {
-    return "Sleepycat DB Diff Report";
+    return "DB Diff Report";
   }
 
   public String optionName() {
@@ -51,12 +51,12 @@ public class DBDiffCommand extends BaseCommand {
   }
 
   public String description() {
-    return "This utility print a diff report on the databases <sleepycat source directory 1> <sleepycat source directory 2>." +
-    		"The report consists of differences in generated classes, transactions, client states and managed objects.";
+    return "This utility print a diff report on the databases <database source directory 1> <database source directory 2>."
+           + "The report consists of differences in generated classes, transactions, client states and managed objects.";
   }
 
   public void printUsage() {
-    println("\tUsage: " + optionName() + " <sleepycat source directory 1> <sleepycat source directory 2>");
+    println("\tUsage: " + optionName() + " <database source directory 1> <database source directory 2>");
     println("\t" + description());
   }
 

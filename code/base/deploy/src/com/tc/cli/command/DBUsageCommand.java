@@ -18,7 +18,7 @@ public class DBUsageCommand extends BaseCommand {
   public void execute(String[] args) {
 
     if (args.length < 1) {
-      println("sleepycat database source required.");
+      println("database source required.");
       printUsage();
       return;
     }
@@ -33,12 +33,12 @@ public class DBUsageCommand extends BaseCommand {
       }
 
     } else {
-      println("invalid sleepycat database source.");
+      println("invalid database source.");
     }
   }
 
   public String name() {
-    return "Sleepycat DB Usage Report";
+    return "DB Usage Report";
   }
 
   public String optionName() {
@@ -46,13 +46,13 @@ public class DBUsageCommand extends BaseCommand {
   }
 
   public String description() {
-    return "This utility prints key statistics of the database located at <sleepycat source directory>.";
+    return "This utility prints key statistics of the database located at <database source directory>.";
   }
 
   public void printUsage() {
-    println("\tUsage: " + optionName() + " <sleepycat source directory>");
-    println("\t"+description());
-    		
+    println("\tUsage: " + optionName() + " <database source directory>");
+    println("\t" + description());
+
   }
 
 }

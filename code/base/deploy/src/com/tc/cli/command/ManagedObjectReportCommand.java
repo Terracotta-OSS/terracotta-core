@@ -24,7 +24,7 @@ public class ManagedObjectReportCommand extends BaseCommand {
   public void execute(String[] args) {
 
     if (args.length < 1) {
-      println("sleepycat database source required.");
+      println("database source required.");
       printUsage();
       return;
     }
@@ -57,7 +57,7 @@ public class ManagedObjectReportCommand extends BaseCommand {
         e.printStackTrace();
       }
     } else {
-      println("invalid sleepycat database source.");
+      println("invalid database source.");
     }
 
   }
@@ -69,7 +69,7 @@ public class ManagedObjectReportCommand extends BaseCommand {
   }
 
   public String name() {
-    return "Managed Object SleepycatDB Report";
+    return "Managed Object DB Report";
   }
 
   public String optionName() {
@@ -77,11 +77,11 @@ public class ManagedObjectReportCommand extends BaseCommand {
   }
 
   public String description() {
-    return "This utility prints the state of managed objects in the database located at <sleepycat source directory>.";
+    return "This utility prints the state of managed objects in the database located at <database source directory>.";
   }
 
   public void printUsage() {
-    println("\tUsage: " + optionName() + " <sleepycat source directory> [[" + LIST_ALL + "]|[" + SHOW_OBJECT
+    println("\tUsage: " + optionName() + " <database source directory> [[" + LIST_ALL + "]|[" + SHOW_OBJECT
             + " <objectID>]]");
     println("\t" + description());
   }
