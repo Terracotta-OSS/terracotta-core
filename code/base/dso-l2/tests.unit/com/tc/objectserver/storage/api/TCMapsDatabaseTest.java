@@ -18,6 +18,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -118,12 +119,7 @@ public class TCMapsDatabaseTest extends TCTestCase {
     database.loadMap(tx, mapId, actual, serializer);
     tx.commit();
 
-    assertEquals(actual.size(), reference.size());
-    for (Entry<String, String> entry : actual.entrySet()) {
-      String referenceValue = reference.get(entry.getKey());
-      assertNotNull(referenceValue);
-      assertEquals(referenceValue, entry.getValue());
-    }
+    assertEquals(reference, actual);
   }
 
   public void testInsertBigDuplicate() throws Exception {
@@ -179,12 +175,7 @@ public class TCMapsDatabaseTest extends TCTestCase {
     database.loadMap(tx, mapId, actual, serializer);
     tx.commit();
 
-    assertEquals(actual.size(), reference.size());
-    for (Entry<String, String> entry : actual.entrySet()) {
-      String referenceValue = reference.get(entry.getKey());
-      assertNotNull(referenceValue);
-      assertEquals(referenceValue, entry.getValue());
-    }
+    assertEquals(reference, actual);
   }
 
   public void testBigDeleteCollections() throws Exception {
@@ -330,6 +321,57 @@ public class TCMapsDatabaseTest extends TCTestCase {
       database.loadMap(tx, 1, emptyingMap, serializer);
       assertEquals(count, database.count(tx));
       tx.commit();
+    }
+  }
+
+  public void testSmallBigKeyTransition() throws Exception {
+    long mapId = 1;
+    Map<String, String> referenceMap = new HashMap<String, String>();
+    for (int i = 15800; i < 16200; i++) {
+      referenceMap.put(getRandomString(1, i), getRandomString(1, 100));
+    }
+    PersistenceTransaction tx = ptp.newTransaction();
+    for (Entry<String, String> entry : referenceMap.entrySet()) {
+      database.insert(tx, mapId, entry.getKey(), entry.getValue(), serializer);
+    }
+    tx.commit();
+
+    Map<String, String> actualMap = new HashMap<String, String>();
+    tx = ptp.newTransaction();
+    database.loadMap(tx, mapId, actualMap, serializer);
+    tx.commit();
+
+    assertEquals(referenceMap, actualMap);
+
+    tx = ptp.newTransaction();
+    for (String key : referenceMap.keySet()) {
+      String newValue = getRandomString(mapId, 200);
+      referenceMap.put(key, newValue);
+      database.update(tx, mapId, key, newValue, serializer);
+    }
+    tx.commit();
+
+    tx = ptp.newTransaction();
+    actualMap.clear();
+    database.loadMap(tx, mapId, actualMap, serializer);
+    tx.commit();
+
+    assertEquals(referenceMap, actualMap);
+
+    Iterator<String> refernceKeyIterator = referenceMap.keySet().iterator();
+    while (refernceKeyIterator.hasNext()) {
+      String key = refernceKeyIterator.next();
+      refernceKeyIterator.remove();
+      tx = ptp.newTransaction();
+      database.delete(tx, mapId, key, serializer);
+      tx.commit();
+
+      actualMap.clear();
+      tx = ptp.newTransaction();
+      database.loadMap(tx, mapId, actualMap, serializer);
+      tx.commit();
+
+      assertEquals(referenceMap, actualMap);
     }
   }
 
