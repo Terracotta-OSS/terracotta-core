@@ -10,13 +10,14 @@ import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.tc.object.ObjectID;
+import com.tc.objectserver.persistence.db.BatchedTransaction;
 import com.tc.objectserver.persistence.db.TCCollectionsSerializer;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.TCDatabaseEntry;
+import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 import com.tc.objectserver.storage.api.TCMapsDatabase;
 import com.tc.objectserver.storage.api.TCMapsDatabaseCursor;
-import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 import com.tc.util.Conversion;
 
 import java.io.IOException;
@@ -102,22 +103,29 @@ public class BerkeleyDBTCMapsDatabase extends BerkeleyDBTCBytesBytesDatabase imp
    * <p>
    * This method Doesn't support more than Integer.MAX_VALUE in one collection.
    */
-  public void deleteCollection(final long id, final PersistenceTransaction tx) {
-    deleteCollectionBatched(id, tx, Integer.MAX_VALUE);
+  public int deleteCollection(final long id, final PersistenceTransaction tx) {
+    return deleteBatch(id, tx, Integer.MAX_VALUE);
   }
 
   /**
-   * Deletes a collection but only up to a max delete batch size and returns the number of entries deleted.
+   * Deletes a collection by batch. The batch size is passed as param
    * 
-   * @return number of entries in Maps database deleted, if less than DELETE_BATCH_SIZE, then there could be more
-   *         entries for the same map ID.
+   * @return number of entries deleted from Maps database for the passed id
    * @throws TCDatabaseException
    */
-  public int deleteCollectionBatched(final long id, final PersistenceTransaction tx, final int maxDeleteBatchSize) {
+  public void deleteCollectionBatched(final long id, final BatchedTransaction batchedTransaction) {
+    int deletedBatchCount = 0;
+    do {
+      deletedBatchCount = deleteBatch(id, batchedTransaction.getCurrentTransaction(), batchedTransaction.getBatchSize());
+      batchedTransaction.optionalCommit(deletedBatchCount);
+    } while (deletedBatchCount >= batchedTransaction.getBatchSize());
+  }
+
+  private int deleteBatch(final long id, final PersistenceTransaction tx, final int maxDeleteBatchSize) {
     int mapEntriesDeleted = 0;
     final TCMapsDatabaseCursor cursor = openCursor(tx, id, false);
     try {
-      while (mapEntriesDeleted <= maxDeleteBatchSize && cursor.hasNextKey()) {
+      while (mapEntriesDeleted < maxDeleteBatchSize && cursor.hasNextKey()) {
         cursor.nextKey();
         cursor.delete();
         mapEntriesDeleted++;
@@ -125,7 +133,6 @@ public class BerkeleyDBTCMapsDatabase extends BerkeleyDBTCBytesBytesDatabase imp
     } finally {
       cursor.close();
     }
-
     return mapEntriesDeleted;
   }
 

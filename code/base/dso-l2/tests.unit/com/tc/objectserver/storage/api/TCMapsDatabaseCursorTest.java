@@ -6,6 +6,7 @@ package com.tc.objectserver.storage.api;
 import org.apache.commons.io.FileUtils;
 
 import com.tc.object.config.schema.L2DSOConfig;
+import com.tc.objectserver.persistence.db.BatchedTransactionImpl;
 import com.tc.objectserver.persistence.db.TCCollectionsSerializerImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
@@ -14,9 +15,9 @@ import com.tc.util.Conversion;
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Random;
-import java.util.Map.Entry;
 
 public class TCMapsDatabaseCursorTest extends TCTestCase {
   private final Random                   random = new Random();
@@ -100,8 +101,10 @@ public class TCMapsDatabaseCursorTest extends TCTestCase {
     tx.commit();
 
     tx = ptp.newTransaction();
-    int countDeleted = database.deleteCollectionBatched(objectId1, tx, 1);
-    tx.commit();
+    BatchedTransactionImpl bt = new BatchedTransactionImpl(ptp, 1);
+    bt.startBatchedTransaction();
+    database.deleteCollectionBatched(objectId1, bt);
+    long countDeleted = bt.completeBatchedTransaction();
 
     Assert.assertEquals(1, database.count(ptp.newTransaction()));
     Assert.assertEquals(1, countDeleted);

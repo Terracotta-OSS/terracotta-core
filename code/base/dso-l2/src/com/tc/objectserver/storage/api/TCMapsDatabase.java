@@ -4,6 +4,7 @@
 package com.tc.objectserver.storage.api;
 
 import com.tc.object.ObjectID;
+import com.tc.objectserver.persistence.db.BatchedTransaction;
 import com.tc.objectserver.persistence.db.TCCollectionsSerializer;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 
@@ -41,16 +42,16 @@ public interface TCMapsDatabase {
    * Deletes an entire collection
    */
 
-  public void deleteCollection(long id, PersistenceTransaction tx) throws TCDatabaseException;
+  public int deleteCollection(long id, PersistenceTransaction tx) throws TCDatabaseException;
 
   /**
-   * Deletes a collection but only up to a max delete batch size and returns the number of entries deleted.
+   * Deletes a collection using the {@link BatchedTransaction}. Methods calling this interface should call
+   * {@link BatchedTransaction#startBatchedTransaction()} before calling this and call
+   * {@link BatchedTransaction#completeBatchedTransaction()} after this method
    * 
-   * @return number of entries in Maps database deleted, if less than DELETE_BATCH_SIZE, then there could be more
-   *         entries for the same map ID.
    * @throws TCDatabaseException
    */
-  public int deleteCollectionBatched(long id, PersistenceTransaction tx, int maxDeleteBatchSize);
+  public void deleteCollectionBatched(long id, BatchedTransaction batchedTransaction) throws TCDatabaseException;
 
   public void loadMap(PersistenceTransaction tx, long id, Map map, TCCollectionsSerializer serializer)
       throws TCDatabaseException;

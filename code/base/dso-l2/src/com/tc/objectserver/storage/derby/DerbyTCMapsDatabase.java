@@ -6,6 +6,7 @@ package com.tc.objectserver.storage.derby;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
+import com.tc.objectserver.persistence.db.BatchedTransaction;
 import com.tc.objectserver.persistence.db.DBException;
 import com.tc.objectserver.persistence.db.TCCollectionsSerializer;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
@@ -42,7 +43,6 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
                                                                 };
 
   private final String                   deleteQuery;
-  private final String                   deleteCollectionBatchedQuery;
   private final String                   deleteCollectionQuery;
   private final String                   updateQuery;
   private final String                   insertBigKeyQuery;
@@ -55,7 +55,6 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
       throws TCDatabaseException {
     super(tableName, connection, queryProvider);
     deleteQuery = "DELETE FROM " + tableName + " WHERE " + MAP_ID + " = ? AND " + KEY + " = ? ";
-    deleteCollectionBatchedQuery = "SELECT " + KEY + "," + VALUE + " FROM " + tableName + " WHERE " + MAP_ID + " = ?";
     deleteCollectionQuery = "DELETE FROM " + tableName + " WHERE " + MAP_ID + " = ?";
     updateQuery = "UPDATE " + tableName + " SET " + VALUE + " = ? " + " WHERE " + MAP_ID + " = ? AND " + KEY + " = ?";
     insertBigKeyQuery = "SELECT * FROM " + tableName + " WHERE " + MAP_ID + " = ? AND " + KEY + " >= ? AND " + KEY
@@ -111,40 +110,22 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
     }
   }
 
-  public int deleteCollectionBatched(long mapId, PersistenceTransaction tx, int maxDeleteBatchSize) {
-    ResultSet rs = null;
+  public void deleteCollectionBatched(long mapId, BatchedTransaction batchedTransaction) throws TCDatabaseException {
+    PersistenceTransaction tx = batchedTransaction.getCurrentTransaction();
+    int deleteCollectionCount = 0;
     try {
-      // "SELECT " + KEY + "," + VALUE + " FROM " + tableName
-      // + " WHERE " + OBJECT_ID + " = ?"
-      PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, deleteCollectionBatchedQuery,
-                                                                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                                                                ResultSet.CONCUR_UPDATABLE);
-      psUpdate.setLong(1, mapId);
-      rs = psUpdate.executeQuery();
-      int count = 0;
-      while (rs.next() && count < maxDeleteBatchSize) {
-        rs.deleteRow();
-        count++;
-      }
-
-      return count;
-    } catch (SQLException e) {
-      throw new DBException(e);
+      deleteCollectionCount = deleteCollection(mapId, tx);
     } finally {
-      try {
-        rs.close();
-      } catch (SQLException e) {
-        throw new DBException(e);
-      }
+      batchedTransaction.optionalCommit(deleteCollectionCount);
     }
   }
 
-  public void deleteCollection(long objectID, PersistenceTransaction tx) throws TCDatabaseException {
+  public int deleteCollection(long objectID, PersistenceTransaction tx) throws TCDatabaseException {
     try {
       // "DELETE FROM " + tableName + " WHERE " + OBJECT_ID + " = ?"
       PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, deleteCollectionQuery);
       psUpdate.setLong(1, objectID);
-      psUpdate.executeUpdate();
+      return psUpdate.executeUpdate();
     } catch (SQLException e) {
       throw new TCDatabaseException(e);
     }
