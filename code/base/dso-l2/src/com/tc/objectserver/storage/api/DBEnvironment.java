@@ -11,6 +11,7 @@ import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.util.sequence.MutableSequence;
 
 import java.io.File;
+import java.io.Writer;
 
 // This should be the class which should be used by Derby Db environment and Berkeley db env
 public interface DBEnvironment {
@@ -128,4 +129,6 @@ public interface DBEnvironment {
   public StatisticRetrievalAction[] getSRAs();
 
   public abstract OffheapStats getOffheapStats();
+
+  public abstract void printDatabaseStats(Writer writer) throws Exception;
 }

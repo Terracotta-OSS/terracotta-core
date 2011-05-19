@@ -51,6 +51,7 @@ import com.tc.util.sequence.MutableSequence;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -622,8 +623,8 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
 
   public MutableSequence getSequence(PersistenceTransactionProvider ptxp, TCLogger log, String sequenceID,
                                      int startValue) {
-    return new BerkeleyDBSequence(ptxp, log, sequenceID, startValue,
-                                  (Database) databasesByName.get(GLOBAL_SEQUENCE_DATABASE));
+    return new BerkeleyDBSequence(ptxp, log, sequenceID, startValue, (Database) databasesByName
+        .get(GLOBAL_SEQUENCE_DATABASE));
   }
 
   public PersistenceTransactionProvider getPersistenceTransactionProvider() {
@@ -640,6 +641,10 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
 
   public OffheapStats getOffheapStats() {
     return OffheapStats.NULL_OFFHEAP_STATS;
+  }
+
+  public void printDatabaseStats(Writer writer) throws Exception {
+    new BerkeleyDBStatisticsHandler(this.env, writer).report();
   }
 
 }

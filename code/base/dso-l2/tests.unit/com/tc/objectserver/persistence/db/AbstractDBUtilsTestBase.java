@@ -34,15 +34,16 @@ import java.util.Set;
 
 public abstract class AbstractDBUtilsTestBase extends TCTestCase {
 
-  private static final TCLogger logger  = TCLogging.getLogger(AbstractDBUtilsTestBase.class);
-  private int                   transactionSequence;
-  private int                   objectIDSequence;
-  private Set                   rootIDs;
-  private Set                   rootNames;
-  private Set                   mos;
-  private ObjectInstanceMonitor imo;
-  private int                   version = 1;
-  private int                   dnaRequestCount;
+  private static final TCLogger   logger  = TCLogging.getLogger(AbstractDBUtilsTestBase.class);
+  private int                     transactionSequence;
+  private int                     objectIDSequence;
+  private Set                     rootIDs;
+  private Set                     rootNames;
+  private Set                     mos;
+  private ObjectInstanceMonitor   imo;
+  private int                     version = 1;
+  private int                     dnaRequestCount;
+  protected BerkeleyDBEnvironment dbenv;
 
   protected static class SampleDNA1 extends AbstractSampleDNA1 {
 
@@ -188,13 +189,12 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
   }
 
   protected DBPersistorImpl getSleepycatPersistor(final File dir) {
-    BerkeleyDBEnvironment env;
     DBPersistorImpl persistor = null;
     try {
-      env = new BerkeleyDBEnvironment(true, dir);
+      this.dbenv = new BerkeleyDBEnvironment(true, dir);
       final SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
       final TestManagedObjectChangeListenerProvider managedObjectChangeListenerProvider = new TestManagedObjectChangeListenerProvider();
-      persistor = new DBPersistorImpl(logger, env, serializationAdapterFactory);
+      persistor = new DBPersistorImpl(logger, this.dbenv, serializationAdapterFactory);
       ManagedObjectStateFactory.disableSingleton(true);
       ManagedObjectStateFactory.createInstance(managedObjectChangeListenerProvider, persistor);
     } catch (final Exception e) {

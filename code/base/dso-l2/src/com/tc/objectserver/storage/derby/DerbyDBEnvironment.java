@@ -504,4 +504,12 @@ public class DerbyDBEnvironment implements DBEnvironment {
                                          derbyLogger.info(new String(cbuf, off, len));
                                        }
                                      };
+
+  public void printDatabaseStats(Writer writer) throws Exception {
+    new DerbyStatisticsHandler(this, writer).report();
+  }
+
+  Map getTables() {
+    return this.tables;
+  }
 }

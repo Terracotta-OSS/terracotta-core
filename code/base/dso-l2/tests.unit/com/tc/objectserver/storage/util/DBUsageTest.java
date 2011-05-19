@@ -6,8 +6,10 @@ package com.tc.objectserver.storage.util;
 
 import com.tc.objectserver.persistence.db.AbstractDBUtilsTestBase;
 import com.tc.objectserver.persistence.db.DBPersistorImpl;
+import com.tc.objectserver.storage.berkeleydb.BerkeleyDBStatisticsHandler;
 
 import java.io.File;
+import java.io.OutputStreamWriter;
 
 public class DBUsageTest extends AbstractDBUtilsTestBase {
 
@@ -20,7 +22,10 @@ public class DBUsageTest extends AbstractDBUtilsTestBase {
     populateSleepycatDB(sleepycatPersistor);
     sleepycatPersistor.close();
 
-    DBUsage sleepycatDBUsage_test1 = new DBUsage(databaseDir);
+    BerkeleyDBStatisticsHandler sleepycatDBUsage_test1 = new BerkeleyDBStatisticsHandler(
+                                                                                         dbenv.getEnvironment(),
+                                                                                         new OutputStreamWriter(
+                                                                                                                System.out));
     sleepycatDBUsage_test1.report();
 
     assertTrue(sleepycatDBUsage_test1.getTotalCount() > 0);
@@ -39,7 +44,10 @@ public class DBUsageTest extends AbstractDBUtilsTestBase {
     sleepycatPersistor.close();
 
     // db is not populated
-    DBUsage sleepycatDBUsage_test2 = new DBUsage(databaseDir);
+    BerkeleyDBStatisticsHandler sleepycatDBUsage_test2 = new BerkeleyDBStatisticsHandler(
+                                                                                         dbenv.getEnvironment(),
+                                                                                         new OutputStreamWriter(
+                                                                                                                System.out));
     sleepycatDBUsage_test2.report();
 
     assertTrue(sleepycatDBUsage_test2.getTotalCount() > 0);
