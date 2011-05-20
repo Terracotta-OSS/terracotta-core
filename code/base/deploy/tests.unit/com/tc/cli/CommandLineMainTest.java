@@ -26,19 +26,19 @@ public class CommandLineMainTest extends TestCase {
   }
 
   public void testManagedObjectReportCommandNoArgs() throws Exception {
-   
+
     StringWriter sw = new StringWriter();
     CommandLineMain clm = new CommandLineMain(sw);
     ManagedObjectReportCommand command = new ManagedObjectReportCommand(sw);
     clm.executeCommand(command.optionName(), new String[0]);
-    String assertString = "sleepycat database source required.\n"
-                          + "\tUsage: managed-object-report <sleepycat source directory> [[list-all-objects]|[show-object <objectID>]]\n"
-                          + "\tThis utility prints the state of managed objects in the database located at <sleepycat source directory>.\n";
+    String assertString = "database source required.\n"
+                          + "\tUsage: managed-object-report <database source directory> [[list-all-objects]|[show-object <objectID>]]\n"
+                          + "\tThis utility prints the state of managed objects in the database located at <database source directory>.\n";
     assertEquals(assertString, sw.toString());
   }
 
   public void testFastLoadOidLogAnalysisCommandNoArgs() throws Exception {
-   
+
     StringWriter sw = new StringWriter();
     CommandLineMain clm = new CommandLineMain(sw);
     FastLoadOidLogAnalysisCommand command = new FastLoadOidLogAnalysisCommand(sw);
@@ -50,15 +50,15 @@ public class CommandLineMainTest extends TestCase {
   }
 
   public void testReviveClassFilesCommandNoArgs() throws Exception {
-   
+
     StringWriter sw = new StringWriter();
     CommandLineMain clm = new CommandLineMain(sw);
     ReviveClassFilesCommand command = new ReviveClassFilesCommand(sw);
     clm.executeCommand(command.optionName(), new String[0]);
 
-    String assertString = "sleepycat database source required, and destination directory required.\n"
-                          + "\tUsage: revive-class-files <sleepycat source directory> <destination directory>\n"
-                          + "\tThis utility revives class files found a the database located <sleepycat source directory>, and places those files at the <destination directory>.\n";
+    String assertString = "database source required, and destination directory required.\n"
+                          + "\tUsage: revive-class-files <database source directory> <destination directory>\n"
+                          + "\tThis utility revives class files found a the database located <database source directory>, and places those files at the <destination directory>.\n";
     assertEquals(assertString, sw.toString());
 
   }
@@ -71,9 +71,9 @@ public class CommandLineMainTest extends TestCase {
     DBUsageCommand command = new DBUsageCommand(sw);
     clm.executeCommand(command.optionName(), new String[0]);
 
-    String assertString = "sleepycat database source required.\n"
-                          + "\tUsage: db-usage <sleepycat source directory>\n"
-                          + "\tThis utility prints key statistics of the database located at <sleepycat source directory>.\n";
+    String assertString = "database source required.\n"
+                          + "\tUsage: db-usage <database source directory>\n"
+                          + "\tThis utility prints key statistics of the database located at <database source directory>.\n";
     assertEquals(assertString, sw.toString());
   }
 
@@ -85,26 +85,25 @@ public class CommandLineMainTest extends TestCase {
     DBDiffCommand command = new DBDiffCommand(sw);
     clm.executeCommand(command.optionName(), new String[0]);
 
-    String assertString = "sleepycat database sources (2) required.\n"
-                          + "\tUsage: db-diff <sleepycat source directory 1> <sleepycat source directory 2>\n"
-                          + "\tThis utility print a diff report on the databases <sleepycat source directory 1> <sleepycat source directory 2>.The report consists of differences in generated classes, transactions, client states and managed objects.\n";
+    String assertString = "database sources (2) required.\n"
+                          + "\tUsage: db-diff <database source directory 1> <database source directory 2>\n"
+                          + "\tThis utility print a diff report on the databases <database source directory 1> <database source directory 2>.The report consists of differences in generated classes, transactions, client states and managed objects.\n";
     assertEquals(assertString, sw.toString());
   }
-  
+
   public void testCommand() {
     TestCommand command = new TestCommand();
-    
+
     CommandLineMain commandLineMain = new CommandLineMain();
     commandLineMain.registerCommand(command);
     commandLineMain.executeCommand("test", new String[0]);
     assertTrue(command.executeCall);
   }
 
-  
   private static class TestCommand implements Command {
 
     boolean executeCall = false;
-    
+
     public String description() {
       return "test command";
     }
@@ -124,6 +123,6 @@ public class CommandLineMainTest extends TestCase {
     public void printUsage() {
       System.out.println("Usage: test command object");
     }
-    
+
   }
 }
