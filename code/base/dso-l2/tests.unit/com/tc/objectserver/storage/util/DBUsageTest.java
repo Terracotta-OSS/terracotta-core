@@ -22,6 +22,7 @@ public class DBUsageTest extends AbstractDBUtilsTestBase {
     populateSleepycatDB(sleepycatPersistor);
     sleepycatPersistor.close();
 
+    dbenv.open();
     BerkeleyDBStatisticsHandler sleepycatDBUsage_test1 = new BerkeleyDBStatisticsHandler(
                                                                                          dbenv.getEnvironment(),
                                                                                          new OutputStreamWriter(
@@ -44,6 +45,7 @@ public class DBUsageTest extends AbstractDBUtilsTestBase {
     sleepycatPersistor.close();
 
     // db is not populated
+    dbenv.open();
     BerkeleyDBStatisticsHandler sleepycatDBUsage_test2 = new BerkeleyDBStatisticsHandler(
                                                                                          dbenv.getEnvironment(),
                                                                                          new OutputStreamWriter(
