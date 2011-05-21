@@ -9,7 +9,9 @@ import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.object.session.SessionProvider;
 import com.tc.object.tx.TransactionID;
+import com.tc.util.Assert;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -203,8 +205,17 @@ public class TestRemoteLockManager implements RemoteLockManager {
     //
   }
 
-  public void tryLock(LockID lockID, ThreadID threadID, ServerLockLevel level, long timeout) {
-    //
+  public void tryLock(final LockID lockID, final ThreadID threadID, final ServerLockLevel level, final long timeout) {
+    Assert.assertEquals(0, timeout);
+    Runnable runnable = new Runnable() {
+      public void run() {
+        System.err.println("Sleeping in try lock for 30 seconds -- ");
+        ThreadUtil.reallySleep(30000);
+        lock(lockID, threadID, level);
+      }
+    };
+    Thread t = new Thread(runnable);
+    t.start();
   }
 
   public ClientID getClientID() {
