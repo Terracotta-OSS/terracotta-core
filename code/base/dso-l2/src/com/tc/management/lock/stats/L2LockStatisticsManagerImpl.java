@@ -34,14 +34,15 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 public class L2LockStatisticsManagerImpl extends LockStatisticsManager implements L2LockStatsManager, Serializable {
-  private static final TCLogger       logger                   = TCLogging.getLogger(L2LockStatisticsManagerImpl.class);
+  private static final TCLogger             logger                   = TCLogging
+                                                                         .getLogger(L2LockStatisticsManagerImpl.class);
 
-  private DSOChannelManager           channelManager;
-  private ObjectStatsManager          objectStatsHelper;
-  protected final Set<NodeID>         lockSpecRequestedNodeIDs = new HashSet<NodeID>();
-  private SampledCounter              globalLockCounter;
-  private SampledCounter              globalLockRecallCounter;
-  private WeakHashMap<LockID, String> lockIdToType             = new WeakHashMap<LockID, String>();
+  private volatile DSOChannelManager        channelManager;
+  private ObjectStatsManager                objectStatsHelper;
+  protected final Set<NodeID>               lockSpecRequestedNodeIDs = new HashSet<NodeID>();
+  private SampledCounter                    globalLockCounter;
+  private SampledCounter                    globalLockRecallCounter;
+  private final WeakHashMap<LockID, String> lockIdToType             = new WeakHashMap<LockID, String>();
 
   private final static void sendLockStatisticsEnableDisableMessage(MessageChannel channel, boolean statsEnable,
                                                                    int traceDepth, int gatherInterval) {
@@ -90,8 +91,8 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
     this.lockStatisticsEnabled = false;
 
     MessageChannel[] channels = channelManager.getActiveChannels();
-    for (int i = 0; i < channels.length; i++) {
-      sendLockStatisticsEnableDisableMessage(channels[i], false, lockStatConfig.getTraceDepth(), lockStatConfig
+    for (MessageChannel channel : channels) {
+      sendLockStatisticsEnableDisableMessage(channel, false, lockStatConfig.getTraceDepth(), lockStatConfig
           .getGatherInterval());
     }
     clear();
@@ -191,8 +192,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
 
     if (nodeWaitingForStat) {
       if (stackTraceElements.size() > 0) {
-        for (Iterator<TCStackTraceElement> i = stackTraceElements.iterator(); i.hasNext();) {
-          TCStackTraceElement tcStackTraceElement = i.next();
+        for (TCStackTraceElement tcStackTraceElement : stackTraceElements) {
           LockID lockID = tcStackTraceElement.getLockID();
           LockStatElement lockStatElement = tcStackTraceElement.getLockStatElement();
 
@@ -244,9 +244,9 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
 
     if (lockSpecRequestedNodeIDs.isEmpty()) {
       MessageChannel[] channels = channelManager.getActiveChannels();
-      for (int i = 0; i < channels.length; i++) {
-        sendLockStatisticsGatheringMessage(channels[i]);
-        lockSpecRequestedNodeIDs.add(new ClientID(channels[i].getChannelID().toLong()));
+      for (MessageChannel channel : channels) {
+        sendLockStatisticsGatheringMessage(channel);
+        lockSpecRequestedNodeIDs.add(new ClientID(channel.getChannelID().toLong()));
       }
     }
 
@@ -295,8 +295,8 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
   private void sendLockStatisticsEnableDisableMessageIfNeeded(int traceDepth, int gatherInterval) {
     if (isLockStatisticsEnabled()) {
       MessageChannel[] channels = channelManager.getActiveChannels();
-      for (int i = 0; i < channels.length; i++) {
-        sendLockStatisticsEnableDisableMessage(channels[i], true, traceDepth, gatherInterval);
+      for (MessageChannel channel : channels) {
+        sendLockStatisticsEnableDisableMessage(channel, true, traceDepth, gatherInterval);
       }
     }
   }
