@@ -40,7 +40,8 @@ public class ReceiveStateMachine extends AbstractStateMachine {
 
   @Override
   public String toString() {
-    return "CurrentState: " + getCurrentState() + "; Received: " + received + "; DelayedAcks: " + delayedAcks;
+    return "CurrentState: " + getCurrentState() + "; Received: " + received + "; DelayedAcks: " + delayedAcks + "; "
+           + super.toString();
   }
 
   private class MessageWaitState extends AbstractState {

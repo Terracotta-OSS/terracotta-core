@@ -234,10 +234,16 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
       if (debug) {
         debugLog("Got GoodBye message - shutting down");
       }
-      isClosed = true;
-      sendLayer.close();
-      receiveLayer.close();
-      delivery.pause();
+
+      if (isConnected()) {
+        isClosed = true;
+        sendLayer.close();
+        receiveLayer.close();
+        delivery.pause();
+      } else {
+        logger.warn("Channel not yet connected. Ignoring OOO Goodbye Message: ChannelConnected: "
+                    + channelConnected.get() + "; DeliveryEngine: " + delivery);
+      }
     } else {
       Assert.inv(false);
     }

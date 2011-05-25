@@ -71,7 +71,7 @@ public class SendStateMachine extends AbstractStateMachine {
   @Override
   public String toString() {
     return "CurrentState: " + getCurrentState() + "; OutStandingMsgsCount: " + outstandingCnt + "; Sent: " + sent
-           + "; Acked: " + acked;
+           + "; Acked: " + acked + "; " + super.toString();
   }
 
   @Override

@@ -10,10 +10,10 @@ import com.tc.util.Assert;
  * 
  */
 public abstract class AbstractStateMachine {
-  private State              current;
-  private boolean            started   = false;
-  private boolean            paused    = true;
-  
+  private State   current;
+  private boolean started = false;
+  private boolean paused  = true;
+
   public abstract void execute(OOOProtocolMessage msg);
 
   public final synchronized boolean isStarted() {
@@ -64,4 +64,9 @@ public abstract class AbstractStateMachine {
   protected abstract State initialState();
 
   public abstract void reset();
+
+  @Override
+  public String toString() {
+    return "Started: " + isStarted() + "; Paused: " + isPaused();
+  }
 }
