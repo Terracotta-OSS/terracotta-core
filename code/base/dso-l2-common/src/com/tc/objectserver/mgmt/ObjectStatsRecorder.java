@@ -51,7 +51,7 @@ public class ObjectStatsRecorder {
       faultStatsRecorder.finish();
     }
     if (faultDebug) {
-      faultStatsRecorder = new StatsPrinter(new MessageFormat("Faulted from disk in the Last {0} ms"),
+      faultStatsRecorder = new StatsPrinter(new MessageFormat("Faulted from disk/offheap in the Last {0} ms"),
                                             new MessageFormat(" {0} instances"), true);
     } else {
       faultStatsRecorder = NULL_RECORDER;
@@ -93,7 +93,7 @@ public class ObjectStatsRecorder {
       flushStatsRecorder.finish();
     }
     if (flushDebug) {
-      flushStatsRecorder = new StatsPrinter(new MessageFormat("Flushed to disk in the Last {0} ms"),
+      flushStatsRecorder = new StatsPrinter(new MessageFormat("Flushed to disk/offheap in the Last {0} ms"),
                                             new MessageFormat(" {0} instances"), true);
     } else {
       flushStatsRecorder = NULL_RECORDER;
