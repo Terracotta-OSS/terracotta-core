@@ -9,10 +9,10 @@ import org.apache.commons.lang.ArrayUtils;
 
 import com.tc.cli.CommandLineBuilder;
 import com.tc.config.schema.CommonL2Config;
+import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
-import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.management.TerracottaManagement;
@@ -92,9 +92,9 @@ public class TCStop {
 
       FatalIllegalConfigurationChangeHandler changeHandler = new FatalIllegalConfigurationChangeHandler();
       ConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(
-                                                                                                    args,
-                                                                                                    StandardConfigurationSetupManagerFactory.ConfigMode.L2,
-                                                                                                    changeHandler);
+                                                                                              args,
+                                                                                              StandardConfigurationSetupManagerFactory.ConfigMode.L2,
+                                                                                              changeHandler);
 
       String name = null;
       if (nameSpecified) {
@@ -190,7 +190,7 @@ public class TCStop {
       // wait a bit for server to be ready for shutdown
       int count = 10;
       while (!tcServerInfo.isShutdownable() && --count > 0) {
-        consoleLogger.warn("Waiting for server to be shutdownable...");
+        consoleLogger.warn("Server state: " + tcServerInfo.getState() + ". Waiting for server to be shutdownable... ");
         ThreadUtil.reallySleep(1000);
       }
       try {
