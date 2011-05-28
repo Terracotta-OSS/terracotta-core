@@ -88,7 +88,6 @@ bundled_modules:
   - core:
       install_directory: platform/modules
       manifest:
-        - clustered-surefire-2.3
 packaging:
   - tar
   - izpack
@@ -135,11 +134,7 @@ package_sources:
     dest: build/sources
 
 maven_deploy:
-  - artifact_count: 12
-
-  - groupId: org.terracotta.modules
-    artifact: clustered-surefire-2.3
-    file: build/modules/org/terracotta/modules/clustered-surefire-2.3/{maven.version}/clustered-surefire-2.3-{maven.version}.jar
+  - artifact_count: 11
 
   - groupId: org.terracotta
     artifact: parent

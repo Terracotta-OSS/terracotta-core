@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<ivy-module version="2.0">
-  <info organisation="org.terracotta" module="clustered-surefire-2.3"/>
-  
-  <dependencies defaultconf="default">
-    <dependency name="junit" rev="3.8.1" org="junit"/>
-  </dependencies>
-
-</ivy-module>

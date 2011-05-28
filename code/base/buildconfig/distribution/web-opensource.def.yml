@@ -50,7 +50,7 @@ bundled_modules:
   - core:
       install_directory: eclipse/org.terracotta.dso/platform/modules
       manifest:
-        - clustered-surefire-2.3
+
 packaging:
   - tar
 postscripts:

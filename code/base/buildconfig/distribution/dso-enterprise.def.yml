@@ -85,7 +85,7 @@ bundled_modules:
   - core:
       install_directory: platform/modules
       manifest:
-        - clustered-surefire-2.3
+
 packaging:
   - tar
   - izpack

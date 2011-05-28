@@ -14,7 +14,6 @@ import java.util.Properties;
  * content of integration-modules.properties
  */
 public class TIMUtil {
-  public static final String      SUREFIRE_2_3;
   public static final String      JETTY_6_1;
 
   public static final String      TOMCAT_5_0;
@@ -44,7 +43,6 @@ public class TIMUtil {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    SUREFIRE_2_3 = lookup(".*surefire-2.3");
     JETTY_6_1 = "tim-jetty-6.1";
 
     TOMCAT_5_0 = "tim-tomcat-5.0";

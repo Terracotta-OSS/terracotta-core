@@ -368,15 +368,6 @@ modules:
         - sigarstats
         - thirdparty
         - tim-api
-  - clustered-surefire-2.3:
-      options:
-        jdk: J2SE-1.5
-        module: true
-      dependencies:
-        - common
-        - common-api
-        - dso-l1-api
-        - tim-api
   - eclipsegen:
       options:
         jdk: J2SE-1.5
