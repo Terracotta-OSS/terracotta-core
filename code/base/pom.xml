@@ -335,12 +335,6 @@
         <version>${sigar.version}</version>
         <type>dylib</type>
       </dependency>      
-      <dependency>
-        <groupId>org.hyperic</groupId>
-        <artifactId>libsigar-universal64-macosx</artifactId>
-        <version>${sigar.version}</version>
-        <type>dylib</type>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 
