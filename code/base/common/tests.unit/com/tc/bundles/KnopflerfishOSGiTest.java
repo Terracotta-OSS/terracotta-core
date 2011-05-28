@@ -10,6 +10,7 @@ import org.osgi.framework.BundleException;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.test.TCTestCase;
 import com.tc.util.ProductInfo;
 import com.terracottatech.config.Module;
 
@@ -22,20 +23,18 @@ import java.util.Iterator;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
-import junit.framework.TestCase;
-
-public class KnopflerfishOSGiTest extends TestCase {
+public class KnopflerfishOSGiTest extends TCTestCase {
 
   private static final String PRODUCT_VERSION_DASH_QUALIFIER = ProductInfo.getInstance().version();
   private static final String PRODUCT_VERSION_DOT_QUALIFIER  = PRODUCT_VERSION_DASH_QUALIFIER.replace('-', '.');
   private KnopflerfishOSGi    osgiRuntime                    = null;
 
+  public KnopflerfishOSGiTest() {
+    disableAllUntil("2011-05-31");
+  }
+
   @Override
   public void setUp() throws Exception {
-    String defaultRepo = System.getProperty("com.tc.l1.modules.repositories");
-    if (defaultRepo == null) {
-      System.setProperty("com.tc.l1.modules.repositories", ".");
-    }
     osgiRuntime = new KnopflerfishOSGi(new URL[0], Collections.EMPTY_LIST);
   }
 
