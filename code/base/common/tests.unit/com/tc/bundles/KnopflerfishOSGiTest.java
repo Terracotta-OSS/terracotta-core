@@ -32,6 +32,10 @@ public class KnopflerfishOSGiTest extends TestCase {
 
   @Override
   public void setUp() throws Exception {
+    String defaultRepo = System.getProperty("com.tc.l1.modules.repositories");
+    if (defaultRepo == null) {
+      System.setProperty("com.tc.l1.modules.repositories", ".");
+    }
     osgiRuntime = new KnopflerfishOSGi(new URL[0], Collections.EMPTY_LIST);
   }
 
