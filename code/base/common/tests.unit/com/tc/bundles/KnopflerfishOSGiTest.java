@@ -28,13 +28,13 @@ public class KnopflerfishOSGiTest extends TCTestCase {
   private static final String PRODUCT_VERSION_DASH_QUALIFIER = ProductInfo.getInstance().version();
   private static final String PRODUCT_VERSION_DOT_QUALIFIER  = PRODUCT_VERSION_DASH_QUALIFIER.replace('-', '.');
   private KnopflerfishOSGi    osgiRuntime                    = null;
-
-  public KnopflerfishOSGiTest() {
-    disableAllUntil("2011-06-07");
-  }
+  private File                defaultRepo                    = null;
 
   @Override
   public void setUp() throws Exception {
+    defaultRepo = new File(getTempDirectory(), "modules");
+    if (!defaultRepo.mkdirs()) { throw new Exception("Can't create modules home '" + defaultRepo + "'"); }
+    System.setProperty("com.tc.l1.modules.repositories", defaultRepo.getAbsolutePath());
     osgiRuntime = new KnopflerfishOSGi(new URL[0], Collections.EMPTY_LIST);
   }
 
@@ -55,7 +55,7 @@ public class KnopflerfishOSGiTest extends TCTestCase {
       String version = PRODUCT_VERSION_DASH_QUALIFIER;
       String name = jar.getName().replaceAll("-" + version + ".jar", "");
 
-      String[] repos = { System.getProperty("com.tc.l1.modules.repositories") };
+      String[] repos = { defaultRepo.getAbsolutePath() };
       Resolver resolver = new Resolver(repos, ProductInfo.getInstance().version(), ProductInfo.getInstance()
           .timApiVersion());
       Module module = Module.Factory.newInstance();
@@ -112,7 +112,7 @@ public class KnopflerfishOSGiTest extends TCTestCase {
   }
 
   private Collection jarFiles() throws IOException {
-    String repo = System.getProperty("com.tc.l1.modules.repositories");
+    String repo = defaultRepo.getAbsolutePath();
     File file = null;
     if (repo.startsWith("file:")) {
       file = FileUtils.toFile(new URL(repo));
