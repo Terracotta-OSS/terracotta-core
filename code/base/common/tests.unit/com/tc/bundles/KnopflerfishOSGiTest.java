@@ -30,7 +30,7 @@ public class KnopflerfishOSGiTest extends TCTestCase {
   private KnopflerfishOSGi    osgiRuntime                    = null;
 
   public KnopflerfishOSGiTest() {
-    disableAllUntil("2011-05-31");
+    disableAllUntil("2011-06-07");
   }
 
   @Override
