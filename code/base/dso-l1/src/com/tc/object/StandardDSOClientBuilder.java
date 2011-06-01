@@ -78,6 +78,7 @@ import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.runtime.ThreadIDManager;
 import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.BatchSequenceReceiver;
+import com.tcclient.cluster.DsoClusterInternalEventsGun;
 
 import java.util.Collection;
 import java.util.Map;
@@ -248,10 +249,10 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                              final DSOClientMessageChannel channel,
                                                              final ClientHandshakeMessageFactory chmf,
                                                              final Sink pauseSink, final SessionManager sessionManager,
-                                                             final Sink clusterEventsHandlerSink,
+                                                             final DsoClusterInternalEventsGun dsoClusterEventsGun,
                                                              final String clientVersion,
                                                              final Collection<ClientHandshakeCallback> callbacks) {
-    return new ClientHandshakeManagerImpl(logger, channel, chmf, pauseSink, sessionManager, clusterEventsHandlerSink,
+    return new ClientHandshakeManagerImpl(logger, channel, chmf, pauseSink, sessionManager, dsoClusterEventsGun,
                                           clientVersion, callbacks);
   }
 

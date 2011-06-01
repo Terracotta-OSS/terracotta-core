@@ -4,8 +4,16 @@
  */
 package com.tc.cluster;
 
+import org.mockito.Matchers;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
 import EDU.oswego.cs.dl.util.concurrent.Latch;
 
+import com.tc.async.api.EventContext;
+import com.tc.async.api.Sink;
+import com.tc.async.api.Stage;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ClusterMetaDataManager;
@@ -15,8 +23,8 @@ import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.locks.ThreadID;
 import com.tc.object.msg.ClientHandshakeMessage;
-import com.tc.test.TCTestCase;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tcclient.cluster.ClusterInternalEventsContext;
 import com.tcclient.cluster.DsoNode;
 import com.tcclient.cluster.DsoNodeInternal;
 import com.tcclient.cluster.DsoNodeMetaData;
@@ -28,14 +36,29 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class DsoClusterTest extends TCTestCase {
+import junit.framework.TestCase;
+
+public class DsoClusterTest extends TestCase {
 
   private DsoClusterImpl cluster;
 
   @Override
   protected void setUp() throws Exception {
     cluster = new DsoClusterImpl();
-    cluster.init(new MockClusterMetaDataManager(), null);
+    Stage mockStage = Mockito.mock(Stage.class);
+    Sink mockSink = Mockito.mock(Sink.class);
+    Mockito.when(mockStage.getSink()).thenReturn(mockSink);
+    Mockito.doAnswer(new Answer<Void>() {
+
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        Object[] arguments = invocation.getArguments();
+        ClusterInternalEventsContext ce = (ClusterInternalEventsContext) arguments[0];
+        cluster.notifyDsoClusterListener(ce.getEventType(), ce.getEvent(), ce.getDsoClusterListener());
+        return null;
+      }
+
+    }).when(mockSink).add(Matchers.any(EventContext.class));
+    cluster.init(new MockClusterMetaDataManager(), null, mockStage);
   }
 
   private final static class MockClusterMetaDataManager implements ClusterMetaDataManager {
@@ -186,6 +209,12 @@ public class DsoClusterTest extends TCTestCase {
     listener.reset();
     cluster.fireThisNodeLeft();
     assertTrue(listener.getOccurredEvents().isEmpty());
+
+    // adding listener after node_left fires node_left
+    TestEventListener newListener = new TestEventListener();
+    cluster.addClusterListener(newListener);
+    assertEquals(1, newListener.getOccurredEvents().size());
+    assertEquals("ClientID[1] LEFT", newListener.getOccurredEvents().get(0));
   }
 
   public void testNodeConnected() {

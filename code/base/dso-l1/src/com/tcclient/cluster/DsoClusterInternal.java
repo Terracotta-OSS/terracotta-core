@@ -4,9 +4,9 @@
  */
 package com.tcclient.cluster;
 
+import com.tc.async.api.Stage;
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.exceptions.UnclusteredObjectException;
-import com.tc.net.NodeID;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ClusterMetaDataManager;
 
@@ -14,15 +14,15 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-public interface DsoClusterInternal extends DsoCluster {
+public interface DsoClusterInternal extends DsoCluster, DsoClusterInternalEventsGun, DsoClusterEventsNotifier {
 
-  public static enum EVENTS {
-    THIS_NODE_JOIN("This Node Joined"), THIS_NODE_LEFT("This Node Left"), NODE_JOIN("Node Joined"), NODE_LEFT(
-        "Node Left"), OPERATIONS_ENABLED("Operations Enabled"), OPERATIONS_DISABLED("Operations Disabled");
+  public static enum DsoClusterEventType {
+    NODE_JOIN("Node Joined"), NODE_LEFT("Node Left"), OPERATIONS_ENABLED("Operations Enabled"), OPERATIONS_DISABLED(
+        "Operations Disabled");
 
     private final String name;
 
-    private EVENTS(String name) {
+    private DsoClusterEventType(String name) {
       this.name = name;
     }
 
@@ -32,21 +32,10 @@ public interface DsoClusterInternal extends DsoCluster {
     }
   }
 
-  public void init(final ClusterMetaDataManager metaDataManager, final ClientObjectManager objectManager);
+  public void init(final ClusterMetaDataManager metaDataManager, final ClientObjectManager objectManager,
+                   Stage dsoClusterEventsStage);
 
   public DsoNodeMetaData retrieveMetaDataForDsoNode(DsoNodeInternal node);
-
-  public void fireThisNodeJoined(NodeID nodeId, NodeID[] clusterMembers);
-
-  public void fireThisNodeLeft();
-
-  public void fireNodeJoined(NodeID nodeId);
-
-  public void fireNodeLeft(NodeID nodeId);
-
-  public void fireOperationsEnabled();
-
-  public void fireOperationsDisabled();
 
   public <K> Map<K, Set<DsoNode>> getNodesWithKeys(final Map<K, ?> map, final Collection<? extends K> keys)
       throws UnclusteredObjectException;

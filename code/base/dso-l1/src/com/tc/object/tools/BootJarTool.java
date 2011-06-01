@@ -185,11 +185,14 @@ import com.tc.util.runtime.UnknownJvmVersionException;
 import com.tc.util.runtime.UnknownRuntimeVersionException;
 import com.tc.util.runtime.Vm;
 import com.tc.util.runtime.VmVersion;
+import com.tcclient.cluster.DsoClusterEventsNotifier;
 import com.tcclient.cluster.DsoClusterInternal;
+import com.tcclient.cluster.DsoClusterInternalEventsGun;
 import com.tcclient.cluster.DsoNode;
 import com.tcclient.cluster.DsoNodeImpl;
 import com.tcclient.cluster.DsoNodeInternal;
 import com.tcclient.cluster.DsoNodeMetaData;
+import com.tcclient.cluster.OutOfBandDsoClusterListener;
 import com.tcclient.util.HashtableEntrySetWrapper;
 import com.tcclient.util.MapEntrySetWrapper;
 
@@ -646,12 +649,15 @@ public class BootJarTool {
   private void addClusterEventsAndMetaDataClasses() {
     loadTerracottaClass(DsoCluster.class.getName());
     loadTerracottaClass(DsoClusterInternal.class.getName());
-    loadTerracottaClass(DsoClusterInternal.EVENTS.class.getName());
     loadTerracottaClass(DsoClusterEvent.class.getName());
     loadTerracottaClass(DsoClusterListener.class.getName());
     loadTerracottaClass(DsoClusterTopology.class.getName());
     loadTerracottaClass(DsoNode.class.getName());
     loadTerracottaClass(DsoNodeInternal.class.getName());
+    loadTerracottaClass(DsoClusterInternalEventsGun.class.getName());
+    loadTerracottaClass(DsoClusterEventsNotifier.class.getName());
+    loadTerracottaClass(DsoClusterInternal.DsoClusterEventType.class.getName());
+    loadTerracottaClass(OutOfBandDsoClusterListener.class.getName());
     {
       final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(DsoNodeImpl.class.getName());
       spec.markPreInstrumented();

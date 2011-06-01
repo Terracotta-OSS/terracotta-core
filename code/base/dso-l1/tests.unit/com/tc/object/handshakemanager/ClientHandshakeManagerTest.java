@@ -6,6 +6,7 @@ package com.tc.object.handshakemanager;
 
 import com.tc.async.api.Sink;
 import com.tc.async.impl.NullSink;
+import com.tc.cluster.DsoClusterImpl;
 import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -50,7 +51,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
                                           final SessionManager sessionManager, final Sink nullSink,
                                           final String clientVersion,
                                           final Collection<ClientHandshakeCallback> callbacks) {
-      super(logger, channel, chmf, pauseSink, sessionManager, nullSink, clientVersion, callbacks);
+      super(logger, channel, chmf, pauseSink, sessionManager, new DsoClusterImpl(), clientVersion, callbacks);
     }
 
     @Override

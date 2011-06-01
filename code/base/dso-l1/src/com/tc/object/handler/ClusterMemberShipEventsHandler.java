@@ -6,17 +6,15 @@ package com.tc.object.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.EventHandlerException;
-import com.tc.async.api.Sink;
 import com.tc.object.msg.ClusterMembershipMessage;
-import com.tcclient.cluster.ClusterInternalEventsContext;
-import com.tcclient.cluster.DsoClusterInternal.EVENTS;
+import com.tcclient.cluster.DsoClusterInternalEventsGun;
 
 public class ClusterMemberShipEventsHandler extends AbstractEventHandler {
 
-  private final Sink clusterEventsHandlerSink;
+  private final DsoClusterInternalEventsGun dsoClusterEventsGun;
 
-  public ClusterMemberShipEventsHandler(final Sink sink) {
-    this.clusterEventsHandlerSink = sink;
+  public ClusterMemberShipEventsHandler(final DsoClusterInternalEventsGun dsoClusterEventsGun) {
+    this.dsoClusterEventsGun = dsoClusterEventsGun;
   }
 
   @Override
@@ -30,9 +28,9 @@ public class ClusterMemberShipEventsHandler extends AbstractEventHandler {
 
   private void handleClusterMembershipMessage(final ClusterMembershipMessage cmm) throws EventHandlerException {
     if (cmm.isNodeConnectedEvent()) {
-      clusterEventsHandlerSink.add(new ClusterInternalEventsContext(EVENTS.NODE_JOIN, cmm.getNodeId()));
+      dsoClusterEventsGun.fireNodeJoined(cmm.getNodeId());
     } else if (cmm.isNodeDisconnectedEvent()) {
-      clusterEventsHandlerSink.add(new ClusterInternalEventsContext(EVENTS.NODE_LEFT, cmm.getNodeId()));
+      dsoClusterEventsGun.fireNodeLeft(cmm.getNodeId());
     } else {
       throw new EventHandlerException("Unknown event type: " + cmm);
     }

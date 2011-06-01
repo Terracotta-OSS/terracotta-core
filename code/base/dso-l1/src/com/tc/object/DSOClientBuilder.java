@@ -58,6 +58,7 @@ import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.runtime.ThreadIDManager;
 import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.BatchSequenceReceiver;
+import com.tcclient.cluster.DsoClusterInternalEventsGun;
 
 import java.util.Collection;
 import java.util.Map;
@@ -144,7 +145,8 @@ public interface DSOClientBuilder {
 
   ClientHandshakeManager createClientHandshakeManager(final TCLogger logger, final DSOClientMessageChannel channel,
                                                       final ClientHandshakeMessageFactory chmf, final Sink pauseSink,
-                                                      final SessionManager sessionManager, final Sink sink,
+                                                      final SessionManager sessionManager,
+                                                      final DsoClusterInternalEventsGun dsoClusterEventsGun,
                                                       final String clientVersion,
                                                       final Collection<ClientHandshakeCallback> callbacks);
 
