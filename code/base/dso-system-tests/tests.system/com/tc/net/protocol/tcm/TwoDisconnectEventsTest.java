@@ -18,7 +18,7 @@ import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerImpl;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
-import com.tc.net.protocol.transport.ClientMessageTransport;
+import com.tc.net.protocol.transport.ServerMessageTransport;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.bytecode.MockClassProvider;
@@ -92,27 +92,25 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
         Assert.assertTrue(server.getDSOServer().getServerNodeID().equals(pingReceived.getDestinationNodeID()));
 
         // two transport disconnect events to client.
-        ClientMessageChannelImpl cmci = clientChannel;
-        ClientMessageTransport cmt;
-        if (cmci.getSendLayer() instanceof ClientMessageTransport) {
-          cmt = (ClientMessageTransport) cmci.getSendLayer();
+        ServerMessageChannelImpl smci = serverChannel;
+        ServerMessageTransport smt;
+        if (smci.getSendLayer() instanceof ServerMessageTransport) {
+          smt = (ServerMessageTransport) smci.getSendLayer();
         } else {
-          cmt = (ClientMessageTransport) ((OnceAndOnlyOnceProtocolNetworkLayerImpl) cmci.getSendLayer()).getSendLayer();
+          smt = (ServerMessageTransport) ((OnceAndOnlyOnceProtocolNetworkLayerImpl) smci.getSendLayer()).getSendLayer();
         }
-        cmt.setAllowConnectionReplace(true);
+        smt.setAllowConnectionReplace(true);
 
         // send first event
         TCConnection tccomm = new MockTCConnection();
-        cmt.attachNewConnection(tccomm);
-        cmt.closeEvent(new TCConnectionEvent(tccomm));
+        smt.attachNewConnection(tccomm);
+        smt.closeEvent(new TCConnectionEvent(tccomm));
 
         // send second event
         tccomm = new MockTCConnection();
-        cmt.attachNewConnection(tccomm);
-        cmt.closeEvent(new TCConnectionEvent(tccomm));
+        smt.attachNewConnection(tccomm);
+        smt.closeEvent(new TCConnectionEvent(tccomm));
         ThreadUtil.reallySleep(2000);
-        msg = clientChannel.createMessage(TCMessageType.PING_MESSAGE);
-        Assert.assertEquals(msg.getLocalSessionID(), cmci.getSessionID());
 
       } finally {
         client.getCommunicationsManager().shutdown();
