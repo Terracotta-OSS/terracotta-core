@@ -16,6 +16,6 @@ set JAVA_HOME="%JAVA_HOME:"=%"
 set CLASSPATH=%TC_INSTALL_DIR%\lib\tc.jar
 set CLASSPATH="%CLASSPATH:"=%"
 
-set JAVA_OPTS=-Xmx128m -Dtc.install-root=%TC_INSTALL_DIR% %JAVA_OPTS%
+set JAVA_OPTS=-Xmx128m -Dsun.java2d.pmoffscreen=false -Dtc.install-root=%TC_INSTALL_DIR% %JAVA_OPTS%
 start "AdminConsole" /B %JAVA_HOME%\bin\java %JAVA_OPTS% -cp %CLASSPATH% com.tc.admin.AdminClient %*
 endlocal
