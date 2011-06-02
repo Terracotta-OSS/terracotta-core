@@ -434,7 +434,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     if (useOOBNotification(eventType, event, listener)) {
       Thread t = new Thread(new Runnable() {
         public void run() {
-          notifyDsoClusterListener(DsoClusterEventType.NODE_LEFT, event, listener);
+          notifyDsoClusterListener(eventType, event, listener);
         }
       }, "Out of band notifier");
       t.setDaemon(true);
