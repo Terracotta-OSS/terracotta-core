@@ -290,8 +290,8 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     this.rTxnManager.l2StateChanged(sce);
     if (sce.movedToActive()) {
       this.rClusterStateMgr.goActiveAndSyncState();
-      this.rObjectManager.sync();
       this.server.startActiveMode();
+      this.rObjectManager.sync();
       startL1Listener();
     }
   }
