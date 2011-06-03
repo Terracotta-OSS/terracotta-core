@@ -36,10 +36,6 @@ bundled_components:
               - tim-get.properties
         - ui-eclipse:
             exclude-runtime-libraries: true
-        - ui-eclipse-33:
-            exclude-runtime-libraries: true
-        - ui-eclipse-34:
-            exclude-runtime-libraries: true
   - eclipse-plugin: 
       install_directory: eclipse
   - eclipse-update-site: 

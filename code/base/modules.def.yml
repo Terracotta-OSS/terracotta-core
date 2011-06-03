@@ -231,16 +231,6 @@ modules:
         - management-api
         - thirdparty
         - tim-api
-  - ui-eclipse-33:
-      options:
-        jdk: J2SE-1.5
-      dependencies:
-        - ui-eclipse
-  - ui-eclipse-34:
-      options:
-        jdk: J2SE-1.5
-      dependencies:
-        - ui-eclipse
   - tim-get-tool:
       options:
         jdk: J2SE-1.5
