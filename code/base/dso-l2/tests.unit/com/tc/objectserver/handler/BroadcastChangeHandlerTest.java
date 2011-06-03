@@ -669,7 +669,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void startupNode(final NodeID nodeID) {
+    public boolean startupNode(final NodeID nodeID) {
       throw new ImplementMe();
     }
 

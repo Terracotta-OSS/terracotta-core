@@ -100,13 +100,14 @@ public class ServerClientHandshakeManager {
     this.logger.info("Client connected " + clientID);
     synchronized (this) {
       this.logger.debug("Handling client handshake...");
-      this.clientStateManager.startupNode(clientID);
+
+      boolean nodeStarted = this.clientStateManager.startupNode(clientID);
+      if (!nodeStarted) { throw new ClientHandshakeException("Previous instance of client " + clientID
+                                                             + " still not cleaned up."); }
+
       if (this.state == STARTED) {
-        if (handshake.getObjectIDs().size() > 0 || handshake.getObjectIDsToValidate().size() > 0) {
-          //
-          throw new ClientHandshakeException(
-                                             "Clients connected after startup should have no existing object references.");
-        }
+        if (handshake.getObjectIDs().size() > 0 || handshake.getObjectIDsToValidate().size() > 0) { throw new ClientHandshakeException(
+                                                                                                                                       "Clients connected after startup should have no existing object references."); }
 
         for (final ClientServerExchangeLockContext context : handshake.getLockContexts()) {
           if (context.getState() == com.tc.object.locks.ServerLockContext.State.WAITER) { throw new ClientHandshakeException(

@@ -20,8 +20,10 @@ public interface ClientStateManager {
 
   /**
    * Initializes the internal data structures for newly connected client
+   * 
+   * @return boolean true if this newly connecting client can be accepted, else false
    */
-  public void startupNode(NodeID nodeID);
+  public boolean startupNode(NodeID nodeID);
 
   /**
    * Clears internal data structures for disconnected clients

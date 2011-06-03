@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
@@ -30,8 +29,8 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintable {
 
-  private final Map<NodeID, ClientStateImpl> clientStates;
-  private final TCLogger                     logger;
+  private final ConcurrentHashMap<NodeID, ClientStateImpl> clientStates;
+  private final TCLogger                                   logger;
 
   public ClientStateManagerImpl(final TCLogger logger) {
     this.logger = logger;
@@ -201,9 +200,8 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     this.clientStates.remove(waitee);
   }
 
-  public void startupNode(final NodeID nodeID) {
-    final Object old = this.clientStates.put(nodeID, new ClientStateImpl(nodeID));
-    if (old != null) { throw new AssertionError("Client connected before disconnecting : old Client state = " + old); }
+  public boolean startupNode(final NodeID nodeID) {
+    return (this.clientStates.putIfAbsent(nodeID, new ClientStateImpl(nodeID)) == null);
   }
 
   private ClientStateImpl getClientState(final NodeID id) {

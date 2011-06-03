@@ -761,7 +761,7 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestClientStateManager.class);
     }
 
-    public void startupNode(final NodeID nodeID) {
+    public boolean startupNode(final NodeID nodeID) {
       throw new NotImplementedException(TestClientStateManager.class);
     }
 
