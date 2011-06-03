@@ -2,6 +2,10 @@
 <ivy-module version="2.0">
   <info organisation="org.terracotta" module="ui-eclipse"/>
   <dependencies>
+     <!-- ported from ui-eclipse-34 -->
+  	<dependency name="org.eclipse.debug.ui" rev="3.4.0.v20080529-1300" org="tc-eclipse"/>
+  	<dependency name="org.eclipse.jdt.debug.ui" rev="3.3.0.v20080603" org="tc-eclipse"/>
+    
   	<dependency name="org.eclipse.core.commands" rev="3.3.0.I20070605-0010" org="tc-eclipse"/>
   	<dependency name="org.eclipse.core.contenttype" rev="3.2.100.v20070319" org="tc-eclipse"/>
   	<dependency name="org.eclipse.core.filebuffers" rev="3.3.0.v20070606-0010" org="tc-eclipse"/>
@@ -10,7 +14,6 @@
   	<dependency name="org.eclipse.core.runtime" rev="3.3.100.v20070530" org="tc-eclipse"/>
   	<dependency name="org.eclipse.core.variables" rev="3.2.0.v20070426" org="tc-eclipse"/>
   	<dependency name="org.eclipse.debug.core" rev="3.3.0.v20070607-1800" org="tc-eclipse"/>	
-  	<dependency name="org.eclipse.debug.ui" rev="3.3.0.v20070607-1800" org="tc-eclipse"/>
   	<dependency name="org.eclipse.equinox.app" rev="1.0.0.v20070606" org="tc-eclipse"/>
   	<dependency name="org.eclipse.equinox.common" rev="3.3.0.v20070426" org="tc-eclipse"/>
   	<dependency name="org.eclipse.equinox.preferences" rev="3.2.100.v20070522" org="tc-eclipse"/>
@@ -18,7 +21,6 @@
   	<dependency name="org.eclipse.jdt.compiler.apt" rev="1.0.0.v20070510-2000" org="tc-eclipse"/>
   	<dependency name="org.eclipse.jdt.compiler.tool" rev="1.0.0.v_771" org="tc-eclipse"/>
   	<dependency name="org.eclipse.jdt.core" rev="3.3.0.v_771" org="tc-eclipse"/>
-  	<dependency name="org.eclipse.jdt.debug.ui" rev="3.2.100.v20070531-1800" org="tc-eclipse"/>
   	<dependency name="org.eclipse.jdt.junit" rev="3.3.0.v20070606-0010" org="tc-eclipse"/>
   	<dependency name="org.eclipse.jdt.launching" rev="3.3.0.v20070510" org="tc-eclipse"/>
   	<dependency name="org.eclipse.jdt.ui" rev="3.3.0.v20070607-0010" org="tc-eclipse"/>
@@ -42,8 +44,5 @@
   	<dependency name="org.eclipse.ui.workbench.texteditor" rev="3.3.0.v20070606-0010" org="tc-eclipse"/>
   	<dependency name="runtime_registry_compatibility" rev="x" org="tc-eclipse"/>
     
-    <!-- ported from ui-eclipse-34 -->
-  	<dependency name="org.eclipse.debug.ui" rev="3.4.0.v20080529-1300" org="tc-eclipse"/>
-  	<dependency name="org.eclipse.jdt.debug.ui" rev="3.3.0.v20080603" org="tc-eclipse"/> 
   </dependencies>
 </ivy-module>
