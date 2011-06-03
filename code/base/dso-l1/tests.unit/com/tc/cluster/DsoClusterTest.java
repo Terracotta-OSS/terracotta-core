@@ -23,11 +23,14 @@ import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.locks.ThreadID;
 import com.tc.object.msg.ClientHandshakeMessage;
+import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tcclient.cluster.ClusterInternalEventsContext;
+import com.tcclient.cluster.DsoClusterInternal.DsoClusterEventType;
 import com.tcclient.cluster.DsoNode;
 import com.tcclient.cluster.DsoNodeInternal;
 import com.tcclient.cluster.DsoNodeMetaData;
+import com.tcclient.cluster.OutOfBandDsoClusterListener;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -35,6 +38,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.TestCase;
 
@@ -322,6 +326,35 @@ public class DsoClusterTest extends TestCase {
                  cluster.getCurrentNode(), targetRunnable.getNode());
   }
 
+  public void testOOBNotification() throws Exception {
+    final ClientID thisNodeId = new ClientID(1);
+    final ClientID[] nodeIds = new ClientID[] { thisNodeId };
+    cluster.fireThisNodeJoined(thisNodeId, nodeIds);
+
+    OOBTestListener listener = new OOBTestListener();
+
+    // if this node is connected, adding a listener should result in an immediate callback
+    cluster.addClusterListener(listener);
+    Thread.sleep(2000);
+    assertEquals(1, listener.getOccurredEvents().size());
+    assertEquals("ClientID[1] JOINED", listener.getOccurredEvents().get(0));
+
+    cluster.fireOperationsDisabled();
+    cluster.fireOperationsEnabled();
+    cluster.fireThisNodeLeft();
+
+    Thread.sleep(10000);
+
+    assertEquals(4, listener.getOccurredEvents().size());
+    assertEquals("ClientID[1] JOINED", listener.getOccurredEvents().get(0));
+    assertEquals("ClientID[1] ENABLED", listener.getOccurredEvents().get(1));
+    assertEquals("ClientID[1] DISABLED", listener.getOccurredEvents().get(2));
+    assertEquals("ClientID[1] LEFT", listener.getOccurredEvents().get(3));
+
+    // make sure different thread was used all the time
+    Assert.assertNull("Out of band notification didn't happen", listener.getError());
+  }
+
   private static class TestEventListener implements DsoClusterListener {
 
     public LinkedList<String> events = new LinkedList<String>();
@@ -331,19 +364,27 @@ public class DsoClusterTest extends TestCase {
     }
 
     public synchronized void nodeJoined(final DsoClusterEvent event) {
+      check();
       events.add(event.getNode().getId() + " JOINED");
     }
 
     public synchronized void nodeLeft(final DsoClusterEvent event) {
+      check();
       events.add(event.getNode().getId() + " LEFT");
     }
 
     public synchronized void operationsEnabled(final DsoClusterEvent event) {
+      check();
       events.add(event.getNode().getId() + " ENABLED");
     }
 
     public synchronized void operationsDisabled(final DsoClusterEvent event) {
+      check();
       events.add(event.getNode().getId() + " DISABLED");
+    }
+
+    public void check() {
+      // no-op
     }
 
     public synchronized void reset() {
@@ -416,5 +457,25 @@ public class DsoClusterTest extends TestCase {
       return node;
     }
 
+  }
+
+  private static class OOBTestListener extends TestEventListener implements OutOfBandDsoClusterListener {
+
+    private final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
+
+    public boolean useOutOfBandNotification(DsoClusterEventType type, DsoClusterEvent event) {
+      return true;
+    }
+
+    @Override
+    public void check() {
+      if (!Thread.currentThread().getName().equals("Out of band notifier")) {
+        error.set(new AssertionError());
+      }
+    }
+
+    public Throwable getError() {
+      return error.get();
+    }
   }
 }
