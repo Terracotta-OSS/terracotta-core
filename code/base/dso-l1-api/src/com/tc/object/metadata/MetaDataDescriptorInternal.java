@@ -7,11 +7,7 @@ import com.tc.io.TCByteBufferOutput;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 
-import java.util.Iterator;
-
 public interface MetaDataDescriptorInternal extends MetaDataDescriptor {
-
-  Iterator<NVPair> getMetaDatas();
 
   int numberOfNvPairs();
 

@@ -6,6 +6,7 @@ package com.tc.object.metadata;
 import com.tc.object.ObjectID;
 
 import java.util.Date;
+import java.util.Iterator;
 
 /**
  * This class holds a collection of metadata
@@ -49,4 +50,7 @@ public interface MetaDataDescriptor {
   void set(String name, Object newValue);
 
   String getCategory();
+
+  Iterator<NVPair> getMetaDatas();
+
 }
