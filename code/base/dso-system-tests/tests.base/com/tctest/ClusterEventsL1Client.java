@@ -8,7 +8,7 @@ import com.tc.injection.annotations.InjectedDsoInstance;
 
 public class ClusterEventsL1Client {
   @InjectedDsoInstance
-  private DsoCluster      cluster;
+  private DsoCluster                   cluster;
 
   private final ClusterEventsTestState state = new ClusterEventsTestState();
 
@@ -18,5 +18,11 @@ public class ClusterEventsL1Client {
 
   public ClusterEventsL1Client() {
     cluster.addClusterListener(state.getListenerForNode(cluster.getCurrentNode()));
+    // wait for events a little bit
+    try {
+      Thread.sleep(10000);
+    } catch (InterruptedException e) {
+      // ignored
+    }
   }
 }
