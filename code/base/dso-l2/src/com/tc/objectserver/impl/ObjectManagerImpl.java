@@ -87,6 +87,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     LOOKUP, DONT_LOOKUP
   }
 
+  private static enum AccessLevel {
+    READ, READ_WRITE
+  }
+
   private static final TCLogger                                 logger          = TCLogging
                                                                                     .getLogger(ObjectManager.class);
 
@@ -210,11 +214,14 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public boolean lookupObjectsAndSubObjectsFor(final NodeID nodeID, final ObjectManagerResultsContext responseContext,
                                                final int maxReachableObjects) {
-    return basicLookupObjectsFor(nodeID, new ObjectManagerLookupContext(responseContext, false), maxReachableObjects);
+    return basicLookupObjectsFor(nodeID,
+                                 new ObjectManagerLookupContext(responseContext, false, AccessLevel.READ_WRITE),
+                                 maxReachableObjects);
   }
 
   public boolean lookupObjectsFor(final NodeID nodeID, final ObjectManagerResultsContext responseContext) {
-    return basicLookupObjectsFor(nodeID, new ObjectManagerLookupContext(responseContext, false), -1);
+    return basicLookupObjectsFor(nodeID,
+                                 new ObjectManagerLookupContext(responseContext, false, AccessLevel.READ_WRITE), -1);
   }
 
   public Iterator getRoots() {
@@ -235,7 +242,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
     if (!containsObject(id)) { throw new NoSuchObjectException(id); }
 
-    final ManagedObject object = lookup(id, MissingObjects.OK, NewObjects.DONT_LOOKUP, UpdateStats.UPDATE);
+    final ManagedObject object = lookup(id, MissingObjects.OK, NewObjects.DONT_LOOKUP, UpdateStats.UPDATE,
+                                        AccessLevel.READ);
     if (object == null) { throw new NoSuchObjectException(id); }
 
     try {
@@ -247,11 +255,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private ManagedObject lookup(final ObjectID id, final MissingObjects missingObjects, final NewObjects newObjects,
-                               final UpdateStats updateStats) {
+                               final UpdateStats updateStats, AccessLevel accessLevel) {
     assertNotInShutdown();
 
     final WaitForLookupContext waitContext = new WaitForLookupContext(id, missingObjects, newObjects, updateStats);
-    final ObjectManagerLookupContext context = new ObjectManagerLookupContext(waitContext, true);
+    final ObjectManagerLookupContext context = new ObjectManagerLookupContext(waitContext, true, accessLevel);
     basicLookupObjectsFor(ClientID.NULL_ID, context, -1);
 
     final ManagedObject mo = waitContext.getLookedUpObject();
@@ -262,18 +270,18 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   public ManagedObject getObjectByID(final ObjectID id) {
-    return lookup(id, MissingObjects.NOT_OK, NewObjects.DONT_LOOKUP, UpdateStats.UPDATE);
+    return lookup(id, MissingObjects.NOT_OK, NewObjects.DONT_LOOKUP, UpdateStats.UPDATE, AccessLevel.READ_WRITE);
   }
 
   /**
    * This method does not update the cache hit/miss stats. You may want to use this if you have prefetched the objects.
    */
   public ManagedObject getQuietObjectByID(ObjectID id) {
-    return lookup(id, MissingObjects.NOT_OK, NewObjects.DONT_LOOKUP, UpdateStats.DONT_UPDATE);
+    return lookup(id, MissingObjects.NOT_OK, NewObjects.DONT_LOOKUP, UpdateStats.DONT_UPDATE, AccessLevel.READ_WRITE);
   }
 
   public ManagedObject getObjectByIDOrNull(final ObjectID id) {
-    return lookup(id, MissingObjects.OK, NewObjects.DONT_LOOKUP, UpdateStats.UPDATE);
+    return lookup(id, MissingObjects.OK, NewObjects.DONT_LOOKUP, UpdateStats.UPDATE, AccessLevel.READ_WRITE);
   }
 
   private boolean markReferenced(final ManagedObjectReference reference) {
@@ -486,7 +494,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
     this.lock.readLock().lock();
     try {
-      if (this.collector.isPausingOrPaused()) {
+      // DEV-5889 : Allowing READ requests like DGC and lookupFacade to go thru as blocking those might result in a
+      // deadlock.
+      if (context.getAccessLevel() == AccessLevel.READ_WRITE && this.collector.isPausingOrPaused()) {
         makePending(nodeID, context, maxReachableObjects);
         return false;
       }
@@ -739,7 +749,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       // Object either not in cache or is a new object, return emtpy set
       return TCCollections.EMPTY_OBJECT_ID_SET;
     }
-    final ManagedObject mo = lookup(id, MissingObjects.NOT_OK, NewObjects.LOOKUP, UpdateStats.UPDATE);
+    final ManagedObject mo = lookup(id, MissingObjects.NOT_OK, NewObjects.LOOKUP, UpdateStats.UPDATE, AccessLevel.READ);
     final Set references2Return = mo.getObjectReferences();
     releaseReadOnly(mo);
     return references2Return;
@@ -1034,11 +1044,14 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     private final ObjectManagerResultsContext responseContext;
     private final boolean                     removeOnRelease;
     private final ObjectIDSet                 missing        = new ObjectIDSet();
+    private final AccessLevel                 accessLevel;
     private int                               processedCount = 0;
 
-    public ObjectManagerLookupContext(final ObjectManagerResultsContext responseContext, final boolean removeOnRelease) {
+    public ObjectManagerLookupContext(final ObjectManagerResultsContext responseContext, final boolean removeOnRelease,
+                                      AccessLevel accessLevel) {
       this.responseContext = responseContext;
       this.removeOnRelease = removeOnRelease;
+      this.accessLevel = accessLevel;
     }
 
     public boolean isMissingObject(final ObjectID id) {
@@ -1079,6 +1092,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
     public ObjectIDSet getMissingObjectIDs() {
       return this.missing;
+    }
+
+    public AccessLevel getAccessLevel() {
+      return this.accessLevel;
     }
 
     @Override

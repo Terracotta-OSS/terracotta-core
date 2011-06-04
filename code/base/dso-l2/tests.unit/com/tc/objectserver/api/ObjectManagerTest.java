@@ -1662,6 +1662,10 @@ public class ObjectManagerTest extends TCTestCase {
     initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))), policy);
     this.objectManager.setStatsListener(this.stats);
 
+    final TestGarbageCollector gc = new TestGarbageCollector(this.objectManager);
+    this.objectManager.setGarbageCollector(gc);
+    this.objectManager.start();
+
     assertEquals(0, this.stats.getTotalCacheHits());
     assertEquals(0, this.stats.getTotalCacheMisses());
 
@@ -1675,8 +1679,14 @@ public class ObjectManagerTest extends TCTestCase {
     final Set<ObjectID> returnedSet = this.objectManager.getObjectReferencesFrom(new ObjectID(1), false);
     assertEquals(1000, returnedSet.size());
 
+    // ObjectManager should give out objects references counts to DGC even if its passed
+    gc.requestGCPause();
+
     final Set<ObjectID> returnedCachedNoReapSet = this.objectManager.getObjectReferencesFrom(new ObjectID(4), true);
     assertEquals(1000, returnedCachedNoReapSet.size());
+
+    gc.notifyReadyToGC();
+    gc.notifyGCComplete();
 
     policy.objects = objects;
     final CacheStatsYoungGC cacheStats = new CacheStatsYoungGC();
