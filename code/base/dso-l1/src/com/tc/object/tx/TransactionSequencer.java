@@ -4,8 +4,6 @@
  */
 package com.tc.object.tx;
 
-import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
-
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -19,14 +17,18 @@ import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
 import com.tc.util.Util;
 
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
 public class TransactionSequencer {
 
-  private static final TCLogger         logger         = TCLogging.getLogger(TransactionSequencer.class);
+  private static final TCLogger                             logger         = TCLogging
+                                                                               .getLogger(TransactionSequencer.class);
 
-  private static final boolean          LOGGING_ENABLED;
-  private static final int              MAX_BYTE_SIZE_FOR_BATCH;
-  private static final int              MAX_PENDING_BATCHES;
-  private static final long             MAX_SLEEP_TIME_BEFORE_HALT;
+  private static final boolean                              LOGGING_ENABLED;
+  private static final int                                  MAX_BYTE_SIZE_FOR_BATCH;
+  private static final int                                  MAX_PENDING_BATCHES;
+  private static final long                                 MAX_SLEEP_TIME_BEFORE_HALT;
 
   static {
     // Set the values from the properties here.
@@ -40,25 +42,24 @@ public class TransactionSequencer {
         .getLong(TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXSLEEPTIME_BEFOREHALT);
   }
 
-  private final SequenceGenerator       sequence       = new SequenceGenerator(1);
-  private final TransactionBatchFactory batchFactory;
-  private final BoundedLinkedQueue      pendingBatches = new BoundedLinkedQueue(MAX_PENDING_BATCHES);
+  private final SequenceGenerator                           sequence       = new SequenceGenerator(1);
+  private final TransactionBatchFactory                     batchFactory;
+  private final LinkedBlockingQueue<ClientTransactionBatch> pendingBatches = new LinkedBlockingQueue<ClientTransactionBatch>();
 
-  private ClientTransactionBatch        currentBatch;
-  private int                           pending_size   = 0;
+  private ClientTransactionBatch                            currentBatch;
 
-  private final int                     slowDownStartsAt;
-  private final double                  sleepTimeIncrements;
-  private int                           txnsPerBatch   = 0;
-  private boolean                       shutdown       = false;
+  private final int                                         slowDownStartsAt;
+  private final double                                      sleepTimeIncrements;
+  private int                                               txnsPerBatch   = 0;
+  private volatile boolean                                  shutdown       = false;
 
-  private final LockAccounting          lockAccounting;
-  private final Counter                 pendingBatchesSize;
-  private final SampledRateCounter      transactionSizeCounter;
-  private final SampledRateCounter      transactionsPerBatchCounter;
+  private final LockAccounting                              lockAccounting;
+  private final Counter                                     pendingBatchesSize;
+  private final SampledRateCounter                          transactionSizeCounter;
+  private final SampledRateCounter                          transactionsPerBatchCounter;
 
-  private final GroupID                 groupID;
-  private final TransactionIDGenerator  transactionIDGenerator;
+  private final GroupID                                     groupID;
+  private final TransactionIDGenerator                      transactionIDGenerator;
 
   public TransactionSequencer(GroupID groupID, TransactionIDGenerator transactionIDGenerator,
                               TransactionBatchFactory batchFactory, LockAccounting lockAccounting,
@@ -119,6 +120,8 @@ public class TransactionSequencer {
    * XXX::Note : There is automatic throttling built in by adding to a BoundedLinkedQueue from within a synch block
    */
   private void addTxnInternal(ClientTransaction txn) {
+    waitIfNecessary();
+
     this.txnsPerBatch++;
     final int numTransactionsDelta = 1;
     int numBatchesDelta = 0;
@@ -154,24 +157,24 @@ public class TransactionSequencer {
       numBatchesDelta = 1;
     }
     this.transactionsPerBatchCounter.increment(numTransactionsDelta, numBatchesDelta);
-    throttle();
   }
 
-  private void throttle() {
-    int diff = this.pending_size - this.slowDownStartsAt;
-    if (diff >= 0) {
-      long sleepTime = (long) (1 + diff * this.sleepTimeIncrements);
-      try {
-        wait(sleepTime);
-      } catch (InterruptedException e) {
-        throw new TCRuntimeException(e);
+  private void waitIfNecessary() {
+    do {
+      int diff = this.pendingBatches.size() - this.slowDownStartsAt;
+      if (diff >= 0) {
+        long sleepTime = (long) (1 + diff * this.sleepTimeIncrements);
+        try {
+          wait(sleepTime);
+        } catch (InterruptedException e) {
+          throw new TCRuntimeException(e);
+        }
       }
-    }
+    } while (this.pendingBatches.size() >= MAX_PENDING_BATCHES);
   }
 
   private void reconcilePendingSize() {
-    this.pending_size = this.pendingBatches.size();
-    this.pendingBatchesSize.setValue(this.pending_size);
+    this.pendingBatchesSize.setValue(this.pendingBatches.size());
   }
 
   private void put(ClientTransactionBatch batch) {
@@ -183,7 +186,7 @@ public class TransactionSequencer {
   }
 
   private void log_stats() {
-    int size = this.pending_size;
+    int size = this.pendingBatches.size();
     if (size == MAX_PENDING_BATCHES) {
       logger.info("Max pending size reached !!! : Pending Batches size = " + size + " TxnsInBatch = "
                   + this.txnsPerBatch);
@@ -197,7 +200,7 @@ public class TransactionSequencer {
     ClientTransactionBatch returnValue = null;
     while (true) {
       try {
-        returnValue = (ClientTransactionBatch) this.pendingBatches.poll(0);
+        returnValue = this.pendingBatches.poll(0, TimeUnit.MILLISECONDS);
         break;
       } catch (InterruptedException e) {
         isInterrupted = true;
@@ -208,7 +211,7 @@ public class TransactionSequencer {
   }
 
   private ClientTransactionBatch peek() {
-    return (ClientTransactionBatch) this.pendingBatches.peek();
+    return this.pendingBatches.peek();
   }
 
   public ClientTransactionBatch getNextBatch() {
