@@ -350,8 +350,10 @@ public class DsoClusterTest extends TestCase {
     assertEquals(4, listener.getOccurredEvents().size());
     assertEquals("ClientID[1] JOINED", listener.getOccurredEvents().get(0));
     assertEquals("ClientID[1] ENABLED", listener.getOccurredEvents().get(1));
-    assertEquals("ClientID[1] DISABLED", listener.getOccurredEvents().get(2));
-    assertEquals("ClientID[1] LEFT", listener.getOccurredEvents().get(3));
+    // left and disabled events race as they are from different threads
+    // assert contains instead of ordering
+    assertTrue(listener.getOccurredEvents().contains("ClientID[1] DISABLED"));
+    assertTrue(listener.getOccurredEvents().contains("ClientID[1] LEFT"));
 
     // make sure different thread was used all the time
     Assert.assertNull("Out of band notification didn't happen", listener.getError());
