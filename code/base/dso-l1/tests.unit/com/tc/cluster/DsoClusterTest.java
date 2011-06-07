@@ -345,6 +345,8 @@ public class DsoClusterTest extends TestCase {
 
     Thread.sleep(10000);
 
+    System.out.println("Occured events: " + listener.getOccurredEvents());
+
     assertEquals(4, listener.getOccurredEvents().size());
     assertEquals("ClientID[1] JOINED", listener.getOccurredEvents().get(0));
     assertEquals("ClientID[1] ENABLED", listener.getOccurredEvents().get(1));
