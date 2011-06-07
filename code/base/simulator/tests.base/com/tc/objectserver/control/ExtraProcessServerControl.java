@@ -17,6 +17,7 @@ import com.tc.process.StreamCopier;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TestConfigObject;
+import com.tc.util.concurrent.ConcurrentHashMap;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.Vm;
 
@@ -111,6 +112,34 @@ public class ExtraProcessServerControl extends ServerControlBase {
          false);
   }
 
+  private void pruneJVMArgsList(List vmArgs) {
+    try {
+      ConcurrentHashMap<String, String> map = new ConcurrentHashMap<String, String>();
+      String oldValue = NOT_DEF;
+      for (Iterator i = vmArgs.iterator(); i.hasNext();) {
+
+        String arg = (String) i.next();
+        if (arg.equals(NOT_DEF)) continue;
+
+        String[] kv = arg.split("=");
+        if (kv.length <= 1) {
+          continue;
+        }
+
+        /**
+         * Lets not allow vm argument getting overridden
+         */
+        if ((oldValue = map.putIfAbsent(kv[0], kv[1])) != null) {
+          System.err.println("XXX Duplicate VM argument " + arg + "; " + kv[0] + "=" + oldValue + " only applies");
+          i.remove();
+          continue;
+        }
+      }
+    } catch (Exception e) {
+      System.err.println("XXX error in pruneJVMArgs " + e);
+    }
+  }
+
   // only called by constructors in this class
   protected ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
                                       String configFileLoc, File runningDirectory, boolean mergeOutput,
@@ -150,6 +179,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     if (!Vm.isIBM() && !(Os.isMac() && Vm.isJDK14())) {
       jvmArgs.add("-XX:+HeapDumpOnOutOfMemoryError");
     }
+    pruneJVMArgsList(jvmArgs);
   }
 
   protected void addProductKeyIfExists(List args) {
