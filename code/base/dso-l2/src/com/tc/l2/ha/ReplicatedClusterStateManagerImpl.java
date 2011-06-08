@@ -55,6 +55,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
 
   public synchronized void goActiveAndSyncState() {
     state.generateStripeIDIfNeeded();
+    state.syncActiveState();
 
     // Sync state to external passive servers
     publishToAll(ClusterStateMessageFactory.createClusterStateMessage(state));
@@ -86,14 +87,11 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
       logger.error("Recd wrong response from : " + nodeID + " : msg = " + msg
                    + " while publishing Cluster State: Killing the node");
       groupManager
-          .zapNode(
-                   nodeID,
+          .zapNode(nodeID,
                    (msg != null && msg.getType() == ClusterStateMessage.OPERATION_FAILED_SPLIT_BRAIN ? L2HAZapNodeRequestProcessor.SPLIT_BRAIN
-                       : L2HAZapNodeRequestProcessor.PROGRAM_ERROR), "Recd wrong response from : "
-                                                                     + nodeID
-                                                                     + " while publishing Cluster State"
-                                                                     + L2HAZapNodeRequestProcessor
-                                                                         .getErrorString(new Throwable()));
+                       : L2HAZapNodeRequestProcessor.PROGRAM_ERROR),
+                   "Recd wrong response from : " + nodeID + " while publishing Cluster State"
+                       + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
     }
   }
 
@@ -154,16 +152,15 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
       logger.warn("Recd ClusterStateMessage from " + fromNode
                   + " while I am the cluster co-ordinator. This is bad. Sending NG response. ");
       sendNGSplitBrainResponse(fromNode, msg);
-      groupManager.zapNode(fromNode, L2HAZapNodeRequestProcessor.SPLIT_BRAIN, "Recd ClusterStateMessage from : "
-                                                                              + fromNode
-                                                                              + " while in ACTIVE-COORDINATOR state"
-                                                                              + L2HAZapNodeRequestProcessor
-                                                                                  .getErrorString(new Throwable()));
+      groupManager.zapNode(fromNode, L2HAZapNodeRequestProcessor.SPLIT_BRAIN,
+                           "Recd ClusterStateMessage from : " + fromNode + " while in ACTIVE-COORDINATOR state"
+                               + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
     } else {
       // XXX:: Is it a good idea to check if the message we are receiving is from the active server that we think is
       // active ? There is a race between publishing active and pushing cluster state and hence we don't do the check.
       // May be someday these two messages will merge into one.
       msg.initState(state);
+      state.syncSequenceState();
       sendChannelLifeCycleEventsIfNecessary(msg);
       sendOKResponse(fromNode, msg);
     }

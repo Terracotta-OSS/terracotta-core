@@ -35,7 +35,7 @@ import java.util.Set;
 
 public class ClusterState {
 
-  private static final TCLogger                     logger               = TCLogging.getLogger(ClusterState.class);
+  private static final TCLogger                     logger                 = TCLogging.getLogger(ClusterState.class);
 
   private final PersistentMapStore                  persistentStateStore;
   private final ObjectIDSequence                    oidSequence;
@@ -45,15 +45,19 @@ public class ClusterState {
   private final StripeIDStateManager                stripeIDStateManager;
   private final DGCSequenceProvider                 dgcSequenceProvider;
 
-  private final Set                                 connections          = Collections.synchronizedSet(new HashSet());
-  private long                                      nextAvailObjectID    = -1;
-  private long                                      nextAvailChannelID   = -1;
-  private long                                      nextAvailGlobalTxnID = -1;
-  private long                                      nextAvailableDGCId   = -1;
+  private final Set                                 connections            = Collections.synchronizedSet(new HashSet());
+  private long                                      nextAvailObjectID      = -1;
+  private long                                      nextAvailChannelID     = -1;
+  private long                                      nextAvailGlobalTxnID   = -1;
+  private long                                      nextAvailableDGCId     = -1;
   private State                                     currentState;
   private StripeID                                  stripeID;
-  private final TerracottaOperatorEventLogger       operatorEventLogger  = TerracottaOperatorEventLogging
-                                                                             .getEventLogger();
+  private final TerracottaOperatorEventLogger       operatorEventLogger    = TerracottaOperatorEventLogging
+                                                                               .getEventLogger();
+
+  private boolean                                   nextObjectIDChanged    = false;
+  private boolean                                   nextGlobalTxnIDChanged = false;
+  private boolean                                   nextDGCIDChanged       = false;
 
   public ClusterState(PersistentMapStore persistentStateStore, ObjectIDSequence oidSequence,
                       ConnectionIDFactory connectionIdFactory, GlobalTransactionIDSequenceProvider gidSequenceProvider,
@@ -106,6 +110,7 @@ public class ClusterState {
                    + " new value = " + nextAvailOID + " IGNORING");
       return;
     }
+    nextObjectIDChanged = true;
     this.nextAvailObjectID = nextAvailOID;
   }
 
@@ -132,6 +137,7 @@ public class ClusterState {
                    + " new value = " + nextAvailGID + " IGNORING");
       return;
     }
+    nextGlobalTxnIDChanged = true;
     this.nextAvailGlobalTxnID = nextAvailGID;
   }
 
@@ -152,14 +158,24 @@ public class ClusterState {
                    + " new value = " + nextDGCId + " IGNORING");
       return;
     }
+    nextDGCIDChanged = true;
     this.nextAvailableDGCId = nextDGCId;
   }
 
-  public void syncInternal() {
+  public void syncActiveState() {
     syncConnectionIDsToDisk();
-    syncOIDSequenceToDisk();
-    syncGIDSequenceToDisk();
-    syncDGCIDSequenceToDisk();
+  }
+
+  public void syncSequenceState() {
+    if (nextObjectIDChanged) {
+      syncOIDSequenceToDisk();
+    }
+    if (nextGlobalTxnIDChanged) {
+      syncGIDSequenceToDisk();
+    }
+    if (nextDGCIDChanged) {
+      syncDGCIDSequenceToDisk();
+    }
   }
 
   private void syncConnectionIDsToDisk() {
@@ -197,11 +213,13 @@ public class ClusterState {
       logger.info("Setting the Next Available OID to " + nextOID);
       this.oidSequence.setNextAvailableObjectID(nextOID);
     }
+    nextObjectIDChanged = false;
   }
 
   private void syncDGCIDSequenceToDisk() {
     logger.info("Setting the next Available DGC sequence to " + this.nextAvailableDGCId);
     this.dgcSequenceProvider.setNextAvailableDGCId(this.nextAvailableDGCId);
+    nextDGCIDChanged = false;
   }
 
   private void syncGIDSequenceToDisk() {
@@ -210,6 +228,7 @@ public class ClusterState {
       logger.info("Setting the Next Available Global Transaction ID to " + nextGID);
       this.gidSequenceProvider.setNextAvailableGID(nextGID);
     }
+    nextGlobalTxnIDChanged = false;
   }
 
   public void setCurrentState(State state) {
@@ -248,7 +267,6 @@ public class ClusterState {
       // This is the first time an L2 goes active in the cluster of L2s. Generate a new stripeID. this will stick.
       setStripeID(UUID.getUUID().toString());
     }
-    syncInternal();
   }
 
   public Map<GroupID, StripeID> getStripeIDMap() {

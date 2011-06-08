@@ -30,13 +30,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * DEV-2011. For the case, both active and passive go down. But active goes down for good. Passive restores data and
  * becomes active.
  */
-public class TreeMapPassiveClrDirtyDbActivePassiveTest extends ActivePassiveTransparentTestBase {
+public class PassiveClrDirtyDbActivePassiveTest extends ActivePassiveTransparentTestBase {
 
   private static final int NODE_COUNT = 1;
-
-  public TreeMapPassiveClrDirtyDbActivePassiveTest() {
-    disableAllUntil("2011-08-01");
-  }
 
   @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
