@@ -31,7 +31,7 @@ public class TimeBasedEvictionHandler extends AbstractEventHandler {
         serverMap.evictExpired(ci.getKey(), value);
         if (ci.getID() instanceof LockID) {
           // recall the locks in-line to save memory and also to keep the local cache count in check
-          this.lockManager.recall((LockID) ci.getID(), ServerLockLevel.WRITE, -1);
+          this.lockManager.recall(null, null, (LockID) ci.getID(), ServerLockLevel.WRITE, -1);
         }
       }
     }
