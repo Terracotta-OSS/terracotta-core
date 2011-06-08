@@ -184,20 +184,25 @@ public class TCStop {
     jmxc = CommandLineBuilder.getJMXConnector(username, password, host, port);
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
 
+    // To be in sync with Test framework's server shutdown grace time
+    long SHUTDOWN_WAIT_TIME = 2 * 60 * 1000;
+    long startTime = System.currentTimeMillis();
+    long maxWaitTime = (startTime + (long) (0.75 * SHUTDOWN_WAIT_TIME));
     if (mbsc != null) {
       TCServerInfoMBean tcServerInfo = (TCServerInfoMBean) TerracottaManagement
           .findMBean(L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, mbsc);
       // wait a bit for server to be ready for shutdown
-      int count = 10;
-      while (!tcServerInfo.isShutdownable() && --count > 0) {
+      while (!tcServerInfo.isShutdownable() && (System.currentTimeMillis() < maxWaitTime)) {
         consoleLogger.warn("Server state: " + tcServerInfo.getState() + ". Waiting for server to be shutdownable... ");
-        ThreadUtil.reallySleep(1000);
+        ThreadUtil.reallySleep(5000);
       }
       try {
         tcServerInfo.shutdown();
       } finally {
         jmxc.close();
       }
+    } else {
+      consoleLogger.warn("Unable to get mbean connection to Server " + host + ":" + port);
     }
   }
 }
