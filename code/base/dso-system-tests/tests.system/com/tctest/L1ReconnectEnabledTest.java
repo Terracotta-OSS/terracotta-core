@@ -48,9 +48,12 @@ public class L1ReconnectEnabledTest extends TransparentTestBase {
 
   @Override
   protected void setJvmArgsL1Reconnect(final ArrayList jvmArgs) {
-    super.setJvmArgsL1Reconnect(jvmArgs);
-
     TCProperties tcProps = TCPropertiesImpl.getProperties();
+
+    System.setProperty("com.tc." + TCPropertiesConsts.L2_L1RECONNECT_ENABLED, "true");
+    tcProps.setProperty(TCPropertiesConsts.L2_L1RECONNECT_ENABLED, "true");
+    jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_L1RECONNECT_ENABLED + "=true");
+
     tcProps.setProperty(TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS, "" + L1_RECONNECT_TIMEOUT);
     System.setProperty("com.tc." + TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS, "" + L1_RECONNECT_TIMEOUT);
     jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS + "=" + L1_RECONNECT_TIMEOUT);
@@ -67,7 +70,8 @@ public class L1ReconnectEnabledTest extends TransparentTestBase {
 
     ArrayList jvmArgs = new ArrayList();
     setJvmArgsL1Reconnect(jvmArgs);
-    setUpControlledServer(configFactory(), configHelper(), port, jmxPort, groupPort, configFile.getAbsolutePath(), jvmArgs);
+    setUpControlledServer(configFactory(), configHelper(), port, jmxPort, groupPort, configFile.getAbsolutePath(),
+                          jvmArgs);
     doSetUp(this);
   }
 
@@ -81,7 +85,7 @@ public class L1ReconnectEnabledTest extends TransparentTestBase {
       throw Assert.failure("Can't create config file", e);
     }
   }
-  
+
   public static TerracottaConfigBuilder createConfig(int port, int adminPort) {
     String testClassName = L1ReconnectEnabledTestApp.class.getName();
     String testClassSuperName = AbstractTransparentApp.class.getName();

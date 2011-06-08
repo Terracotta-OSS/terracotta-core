@@ -14,12 +14,12 @@ import com.tctest.runner.AbstractTransparentApp;
 
 public class L1ReconnectEnabledTestApp extends AbstractTransparentApp {
 
-  public static final String CONFIG_FILE = "config-file";
-  public static final String PORT_NUMBER = "port-number";
-  public static final String HOST_NAME   = "host-name";
-  public static final String JMX_PORT    = "jmx-port";
+  public static final String      CONFIG_FILE = "config-file";
+  public static final String      PORT_NUMBER = "port-number";
+  public static final String      HOST_NAME   = "host-name";
+  public static final String      JMX_PORT    = "jmx-port";
 
-  private ApplicationConfig  appCfg;
+  private final ApplicationConfig appCfg;
 
   public L1ReconnectEnabledTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -43,9 +43,9 @@ public class L1ReconnectEnabledTestApp extends AbstractTransparentApp {
 
   private void testL1ReconnectConfig() throws ConfigurationSetupException {
     TestConfigurationSetupManagerFactory factory = new TestConfigurationSetupManagerFactory(
-                                                                                                  TestConfigurationSetupManagerFactory.MODE_CENTRALIZED_CONFIG,
-                                                                                                  null,
-                                                                                                  new FatalIllegalConfigurationChangeHandler());
+                                                                                            TestConfigurationSetupManagerFactory.MODE_CENTRALIZED_CONFIG,
+                                                                                            null,
+                                                                                            new FatalIllegalConfigurationChangeHandler());
     int portNumber = Integer.parseInt(appCfg.getAttribute(PORT_NUMBER));
     int jmxPort = Integer.parseInt(appCfg.getAttribute(JMX_PORT));
     factory.addServerToL1Config(null, portNumber, jmxPort);
@@ -55,8 +55,8 @@ public class L1ReconnectEnabledTestApp extends AbstractTransparentApp {
       ReconnectConfig l1ReconnectConfig = configHelper.getL1ReconnectProperties();
 
       // verify
-      Assert.eval(l1ReconnectConfig.getReconnectEnabled() == true);
-      Assert.eval(l1ReconnectConfig.getReconnectTimeout() == L1ReconnectEnabledTest.L1_RECONNECT_TIMEOUT);
+      Assert.assertEquals(true, l1ReconnectConfig.getReconnectEnabled());
+      Assert.assertEquals(L1ReconnectEnabledTest.L1_RECONNECT_TIMEOUT, l1ReconnectConfig.getReconnectTimeout());
     } catch (Exception e) {
       throw new AssertionError(e);
     }
