@@ -14,6 +14,7 @@ public class ActivePassiveServerCrasher implements Runnable {
 
   private int                              crashCount = 0;
   private final TestState                  testState;
+  private volatile boolean                 done;
 
   public ActivePassiveServerCrasher(ActivePassiveServerManager serverManager, long serverCrashWaitTimeInSec,
                                     int maxCrashCount, TestState testState) {
@@ -24,7 +25,7 @@ public class ActivePassiveServerCrasher implements Runnable {
   }
 
   public void run() {
-    while (true) {
+    while (!done) {
       try {
         Thread.sleep(serverCrashWaitTimeInSec * 1000);
       } catch (InterruptedException e1) {
@@ -32,7 +33,7 @@ public class ActivePassiveServerCrasher implements Runnable {
       }
 
       synchronized (testState) {
-        if (testState.isRunning() && (maxCrashCount - crashCount) > 0 && serverManger.getErrors().isEmpty()) {
+        if (testState.isRunning() && (maxCrashCount - crashCount) > 0 && serverManger.getErrors().isEmpty() && !done) {
           try {
             debugPrintln("***** ActivePassiveServerCrasher:  about to crash server  threadID=["
                          + Thread.currentThread().getName() + "]");
@@ -64,5 +65,9 @@ public class ActivePassiveServerCrasher implements Runnable {
     if (DEBUG) {
       System.err.println(s);
     }
+  }
+
+  public synchronized void stop() {
+    this.done = true;
   }
 }

@@ -26,7 +26,7 @@ public abstract class MultipleServerManager {
 
   public abstract void stopAllServers() throws Exception;
 
-  public abstract void dumpAllServers(int currentPid, int dumpCount, long dumpInterval) throws Exception;
+  public abstract boolean dumpClusterState(int currentPid, int dumpCount, long dumpInterval) throws Exception;
 
   public MultipleServersTestSetupManager getMultipleServersTestSetupManager() {
     return setupManger;
@@ -37,13 +37,13 @@ public abstract class MultipleServerManager {
   public int getPid() {
     throw new ImplementMe();
   }
-  
+
   public abstract int getDsoPort();
-  
+
   public abstract int getJMXPort();
 
   public abstract int getL2GroupPort();
-  
+
   public abstract String getConfigFileLocation();
 
 }

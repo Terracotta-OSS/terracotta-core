@@ -57,5 +57,7 @@ public interface TCServer {
 
   void dump();
 
+  void dumpClusterState();
+
   void reloadConfiguration() throws ConfigurationSetupException;
 }

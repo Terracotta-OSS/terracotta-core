@@ -250,12 +250,15 @@ public class ActiveActiveServerManager extends MultipleServerManager {
   }
 
   @Override
-  public void dumpAllServers(int currentPid, int dumpCount, long dumpInterval) throws Exception {
+  public boolean dumpClusterState(int currentPid, int dumpCount, long dumpInterval) throws Exception {
     int grpCount = setupManger.getActiveServerGroupCount();
 
     for (int i = 0; i < grpCount; i++) {
-      activePassiveServerManagers[i].dumpAllServers(currentPid, dumpCount, dumpInterval);
+      if (activePassiveServerManagers[i].dumpClusterState(currentPid, dumpCount, dumpInterval)) {
+        break;
+      }
     }
+    return true;
   }
 
   public void addGroupsToL1Config(TestConfigurationSetupManagerFactory configFactory, Servers servers) {

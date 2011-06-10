@@ -51,11 +51,11 @@ public abstract class MultipleServersTransparentTestBase extends TransparentTest
 
   protected abstract void runMultipleServersTest() throws Exception;
 
-  protected void dumpServers() throws Exception {
+  protected void dumpClusterState() throws Exception {
     if (multipleServerManager != null) {
-      multipleServerManager.dumpAllServers(pid, getThreadDumpCount(), getThreadDumpInterval());
+      multipleServerManager.dumpClusterState(pid, getThreadDumpCount(), getThreadDumpInterval());
     }
-    super.dumpServers();
+    super.dumpClusterState();
   }
 
   protected void tearDown() throws Exception {

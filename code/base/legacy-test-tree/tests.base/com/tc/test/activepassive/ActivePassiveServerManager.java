@@ -589,14 +589,20 @@ public class ActivePassiveServerManager extends MultipleServerManager {
   }
 
   @Override
-  public void dumpAllServers(int currentPid, int dumpCount, long dumpInterval) throws Exception {
+  public boolean dumpClusterState(int currentPid, int dumpCount, long dumpInterval) throws Exception {
+    if (serverCrasher != null) {
+      this.serverCrasher.stop();
+    }
     pid = currentPid;
+    boolean dumpTaken = false;
+    getActiveIndex(false);
     for (int i = 0; i < serverCount; i++) {
       if (!serverNetworkShare && i != activeIndex) {
         debugPrintln("***** skipping dumping server=[" + dsoPorts[i] + "]");
         continue;
       }
-      if (servers[i].getServerControl().isRunning()) {
+
+      if (servers[i].getServerControl().isRunning() && i == activeIndex) {
         System.out.println("Dumping server=[" + dsoPorts[i] + "]");
 
         MBeanServerConnection mbs;
@@ -610,9 +616,12 @@ public class ActivePassiveServerManager extends MultipleServerManager {
           jmxConnectors[i] = getJMXConnector(jmxPorts[i]);
           mbs = jmxConnectors[i].getMBeanServerConnection();
         }
+
         L2DumperMBean mbean = (L2DumperMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DUMPER,
                                                                                             L2DumperMBean.class, true);
         mbean.dumpClusterState();
+
+        dumpTaken = true;
         if (pid != 0) {
           mbean.setThreadDumpCount(dumpCount);
           mbean.setThreadDumpInterval(dumpInterval);
@@ -622,6 +631,7 @@ public class ActivePassiveServerManager extends MultipleServerManager {
       }
     }
     closeJMXConnectors();
+    return dumpTaken;
   }
 
   private void closeJMXConnector(int i) {

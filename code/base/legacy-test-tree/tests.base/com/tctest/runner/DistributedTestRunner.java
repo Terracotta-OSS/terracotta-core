@@ -41,45 +41,45 @@ import java.util.Map;
  * Takes an application configuration and some parameters and runs a single-vm, multi-node (multi-classloader) test.
  */
 public class DistributedTestRunner implements ResultsListener {
-  private static final boolean                          DEBUG       = true;
+  private static final boolean                       DEBUG       = true;
 
-  private final boolean                                 startServer;
+  private final boolean                              startServer;
 
-  private final Class                                   applicationClass;
-  private final ApplicationConfig                       applicationConfig;
-  private final ContainerConfig                         containerConfig;
-  private final ResultsListener[]                       resultsListeners;
-  private final TestClientConfigHelperFactory           configHelperFactory;
-  private final ContainerStateFactory                   containerStateFactory;
-  private final TestGlobalIdGenerator                   globalIdGenerator;
-  private final TCServer                                server;
-  private final List                                    errors      = new ArrayList();
-  private final List                                    results     = new ArrayList();
-  private final DistributedTestRunnerConfig             config;
+  private final Class                                applicationClass;
+  private final ApplicationConfig                    applicationConfig;
+  private final ContainerConfig                      containerConfig;
+  private final ResultsListener[]                    resultsListeners;
+  private final TestClientConfigHelperFactory        configHelperFactory;
+  private final ContainerStateFactory                containerStateFactory;
+  private final TestGlobalIdGenerator                globalIdGenerator;
+  private final TCServer                             server;
+  private final List                                 errors      = new ArrayList();
+  private final List                                 results     = new ArrayList();
+  private final DistributedTestRunnerConfig          config;
   private final TestConfigurationSetupManagerFactory configFactory;
-  private Control                                       control;
-  private boolean                                       startTimedOut;
-  private boolean                                       executionTimedOut;
-  private final int                                     clientCount;
-  private final int                                     applicationInstanceCount;
-  private final LinkedQueue                             statsOutputQueue;
-  private final QueuePrinter                            statsOutputPrinter;
+  private Control                                    control;
+  private boolean                                    startTimedOut;
+  private boolean                                    executionTimedOut;
+  private final int                                  clientCount;
+  private final int                                  applicationInstanceCount;
+  private final LinkedQueue                          statsOutputQueue;
+  private final QueuePrinter                         statsOutputPrinter;
 
-  private final Map                                     optionalAttributes;
+  private final Map                                  optionalAttributes;
 
-  private final boolean                                 isMutatorValidatorTest;
-  private final int                                     validatorCount;
-  private final boolean                                 isMultipleServerTest;
-  private final MultipleServerManager                   serverManager;
+  private final boolean                              isMutatorValidatorTest;
+  private final int                                  validatorCount;
+  private final boolean                              isMultipleServerTest;
+  private final MultipleServerManager                serverManager;
 
-  private final int                                     adaptedMutatorCount;
-  private final int                                     adaptedValidatorCount;
-  private final Map                                     adapterMap;
+  private final int                                  adaptedMutatorCount;
+  private final int                                  adaptedValidatorCount;
+  private final Map                                  adapterMap;
 
-  private ApplicationBuilder[]                          applicationBuilders;
-  private Container[]                                   containers;
-  private Container[]                                   validatorContainers;
-  private final List                                    postActions = new ArrayList();
+  private ApplicationBuilder[]                       applicationBuilders;
+  private Container[]                                containers;
+  private Container[]                                validatorContainers;
+  private final List                                 postActions = new ArrayList();
 
   /**
    * @param applicationClass Class of the application to be executed. It should implement the static method required by
@@ -89,8 +89,7 @@ public class DistributedTestRunner implements ResultsListener {
    * @param applicationsPerNode Number of application instances per classloader to execute. This counts as number of
    *        threads per classloader.
    */
-  public DistributedTestRunner(DistributedTestRunnerConfig config,
-                               TestConfigurationSetupManagerFactory configFactory,
+  public DistributedTestRunner(DistributedTestRunnerConfig config, TestConfigurationSetupManagerFactory configFactory,
                                TestClientConfigHelperFactory configHelperFactory, Class applicationClass,
                                Map optionalAttributes, ApplicationConfig applicationConfig, boolean startServer,
                                boolean isMutatorValidatorTest, boolean isMultipleServerTest,
@@ -496,10 +495,10 @@ public class DistributedTestRunner implements ResultsListener {
     }
   }
 
-  public void dumpServer() {
+  public void dumpClusterState() {
     if (server != null && startServer) {
-      System.out.println("Dumping intra-process server");
-      server.dump();
+      System.out.println("Dumping cluster state");
+      server.dumpClusterState();
     }
   }
 
