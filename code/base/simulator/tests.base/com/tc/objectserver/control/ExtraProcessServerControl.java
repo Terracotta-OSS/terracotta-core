@@ -17,7 +17,6 @@ import com.tc.process.StreamCopier;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TestConfigObject;
-import com.tc.util.concurrent.ConcurrentHashMap;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.Vm;
 
@@ -28,9 +27,11 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
@@ -113,26 +114,28 @@ public class ExtraProcessServerControl extends ServerControlBase {
   }
 
   private void pruneJVMArgsList(List vmArgs) {
+    // Arguments added later in the list have precedence.
     try {
-      ConcurrentHashMap<String, String> map = new ConcurrentHashMap<String, String>();
-      String oldValue = NOT_DEF;
-      for (Iterator i = vmArgs.iterator(); i.hasNext();) {
-
-        String arg = (String) i.next();
-        if (arg.equals(NOT_DEF)) continue;
-
-        String[] kv = arg.split("=");
-        if (kv.length <= 1) {
-          continue;
+      Map<String, String> map = new HashMap<String, String>();
+      for (Object vmArgObj : vmArgs) {
+        String vmArg = (String) vmArgObj;
+        String[] kv = vmArg.split("=");
+        if (kv.length == 1) {
+          map.put(kv[0], null);
+        } else if (kv.length == 2) {
+          if (map.containsKey(kv[0]) && !map.get(kv[0]).equals(kv[1])) {
+            System.out.println("Overriding duplicate JVM arg definition " + kv[0] + "=" + map.get(kv[0]) + " with "
+                               + kv[0] + "=" + kv[1]);
+          }
+          map.put(kv[0], kv[1]);
         }
-
-        /**
-         * Lets not allow vm argument getting overridden
-         */
-        if ((oldValue = map.putIfAbsent(kv[0], kv[1])) != null) {
-          System.err.println("XXX Duplicate VM argument " + arg + "; " + kv[0] + "=" + oldValue + " only applies");
-          i.remove();
-          continue;
+      }
+      vmArgs.clear();
+      for (Entry<String, String> entry : map.entrySet()) {
+        if (entry.getValue() != null) {
+          vmArgs.add(entry.getKey() + "=" + entry.getValue());
+        } else {
+          vmArgs.add(entry.getKey());
         }
       }
     } catch (Exception e) {
@@ -150,15 +153,6 @@ public class ExtraProcessServerControl extends ServerControlBase {
     this.javaHome = javaHome;
     this.serverName = serverName;
     jvmArgs = new ArrayList();
-
-    if (additionalJvmArgs != null) {
-      for (Iterator i = additionalJvmArgs.iterator(); i.hasNext();) {
-        String next = (String) i.next();
-        if (!next.equals(undefString)) {
-          this.jvmArgs.add(next);
-        }
-      }
-    }
 
     this.configFileLoc = configFileLoc;
     this.mergeOutput = mergeOutput;
@@ -178,6 +172,16 @@ public class ExtraProcessServerControl extends ServerControlBase {
 
     if (!Vm.isIBM() && !(Os.isMac() && Vm.isJDK14())) {
       jvmArgs.add("-XX:+HeapDumpOnOutOfMemoryError");
+    }
+
+    // Add test defined parameters last so they have the final word in what gets passed to the spawned process.
+    if (additionalJvmArgs != null) {
+      for (Iterator i = additionalJvmArgs.iterator(); i.hasNext();) {
+        String next = (String) i.next();
+        if (!next.equals(undefString)) {
+          this.jvmArgs.add(next);
+        }
+      }
     }
     pruneJVMArgsList(jvmArgs);
   }
@@ -454,7 +458,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
       this.debug = debug;
     }
 
-    private void addDebugParamsTo(Collection jvmArgs) {
+    private void addDebugParamsTo(List jvmArgs) {
       if (debug) {
         jvmArgs.add("-Xdebug");
         String address = debugPort > 0 ? "address=" + debugPort + "," : "";
