@@ -11,6 +11,8 @@ import com.tc.object.config.DSOApplicationConfig;
 import com.tc.object.config.DSOApplicationConfigImpl;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.objectserver.storage.util.SetDbClean;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.test.MultipleServersCrashMode;
@@ -22,8 +24,11 @@ import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.File;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /*
@@ -120,7 +125,7 @@ public class PassiveClrDirtyDbActivePassiveTest extends ActivePassiveTransparent
     // clean up passive dirty db
     System.out.println("XXX Clean passive db dirty bit");
     LinkedJavaProcess setDbCleanProcess = new LinkedJavaProcess(SetDbClean.class.getName(), Arrays.asList(manager
-        .getConfigCreator().getDataLocation(1) + File.separator + "objectdb"), Collections.EMPTY_LIST);
+        .getConfigCreator().getDataLocation(1) + File.separator + "objectdb"), getDBFactoryJVMArgs());
     setDbCleanProcess.start();
     System.out.println("XXX SetDbCleanCommand exited with status " + setDbCleanProcess.waitFor());
 
@@ -130,5 +135,14 @@ public class PassiveClrDirtyDbActivePassiveTest extends ActivePassiveTransparent
 
     client1.start();
     Assert.assertEquals(0, client1.waitFor());
+  }
+
+  private List<String> getDBFactoryJVMArgs() {
+    RuntimeMXBean mxbean = ManagementFactory.getRuntimeMXBean();
+    for (String jvmArg : mxbean.getInputArguments()) {
+      if (jvmArg.startsWith("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX + TCPropertiesConsts.L2_DB_FACTORY_NAME)) { return Arrays
+          .asList(jvmArg); }
+    }
+    return Collections.EMPTY_LIST;
   }
 }
