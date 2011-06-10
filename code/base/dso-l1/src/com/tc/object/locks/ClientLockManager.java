@@ -19,12 +19,12 @@ public interface ClientLockManager extends TerracottaLockingInternal, ClientHand
   /**
    * Called by a Terracotta thread to request the return of a greedy lock previously awarded to the client.
    */
-  public void recall(NodeID from, SessionID session, LockID lock, ServerLockLevel level, int lease);
-
+  public void recall(LockID lock, ServerLockLevel level, int lease);
+  
   /**
    * Called by a Terracotta thread to request the return of a greedy lock previously awarded to the client.
    */
-  public void recall(NodeID from, SessionID session, LockID lock, ServerLockLevel level, int lease, boolean batch);
+  public void recall(LockID lock, ServerLockLevel level, int lease, boolean batch);
 
   /**
    * Called by a Terracotta thread to award a per-thread or greedy lock to the client.

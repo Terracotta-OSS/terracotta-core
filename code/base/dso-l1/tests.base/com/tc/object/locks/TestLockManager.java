@@ -69,14 +69,12 @@ public class TestLockManager implements ClientLockManager {
   public void notified(final LockID lockID, final ThreadID threadID) {
     return;
   }
-
-  public void recall(final NodeID node, final SessionID session, final LockID lockID, final ServerLockLevel level,
-                     final int leaseTime) {
+  
+  public void recall(final LockID lockID, final ServerLockLevel level, final int leaseTime) {
     return;
   }
 
-  public void recall(final NodeID node, final SessionID session, final LockID lockID, final ServerLockLevel level,
-                     final int leaseTime, boolean batch) {
+  public void recall(final LockID lockID, final ServerLockLevel level, final int leaseTime, boolean batch) {
     return;
   }
 
@@ -150,7 +148,7 @@ public class TestLockManager implements ClientLockManager {
   public LockID generateLockIdentifier(long l) {
     throw new ImplementMe();
   }
-
+  
   public LockID generateLockIdentifier(String str) {
     throw new ImplementMe();
   }

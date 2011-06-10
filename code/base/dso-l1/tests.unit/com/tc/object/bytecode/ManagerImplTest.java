@@ -63,15 +63,13 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
 
     }
-
-    public void recall(final NodeID node, final SessionID session, final LockID lock, final ServerLockLevel level,
-                       final int lease) {
+    
+    public void recall(final LockID lock, final ServerLockLevel level, final int lease) {
       throw new ImplementMe();
 
     }
 
-    public void recall(final NodeID node, final SessionID session, final LockID lock, final ServerLockLevel level,
-                       final int lease, boolean batch) {
+    public void recall(final LockID lock, final ServerLockLevel level, final int lease, boolean batch) {
       throw new ImplementMe();
 
     }
@@ -85,7 +83,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
     public LockID generateLockIdentifier(final String str) {
       throw new ImplementMe();
     }
-
+    
     public LockID generateLockIdentifier(final long l) {
       throw new ImplementMe();
     }
@@ -239,7 +237,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
     public TCObject lookupOrCreate(final Object obj) {
       throw new ImplementMe();
     }
-
+    
     public TCObject lookupOrCreate(final Object obj, GroupID gid) {
       throw new ImplementMe();
     }

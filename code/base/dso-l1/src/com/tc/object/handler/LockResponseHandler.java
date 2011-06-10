@@ -37,18 +37,18 @@ public class LockResponseHandler extends AbstractEventHandler {
 
     switch (msg.getResponseType()) {
       case AWARD:
-        this.lockManager.award(msg.getSourceNodeID(), msg.getLocalSessionID(), msg.getLockID(), msg.getThreadID(),
-                               msg.getLockLevel());
+        this.lockManager.award(msg.getSourceNodeID(), msg.getLocalSessionID(), msg.getLockID(), msg.getThreadID(), msg
+            .getLockLevel());
         return;
       case RECALL:
-        this.lockManager.recall(msg.getSourceNodeID(), msg.getLocalSessionID(), msg.getLockID(), msg.getLockLevel(), -1);
+        this.lockManager.recall(msg.getLockID(), msg.getLockLevel(), -1);
         return;
       case RECALL_WITH_TIMEOUT:
-        this.lockManager.recall(msg.getSourceNodeID(), msg.getLocalSessionID(), msg.getLockID(), msg.getLockLevel(), msg.getAwardLeaseTime());
+        this.lockManager.recall(msg.getLockID(), msg.getLockLevel(), msg.getAwardLeaseTime());
         return;
       case REFUSE:
-        this.lockManager.refuse(msg.getSourceNodeID(), msg.getLocalSessionID(), msg.getLockID(), msg.getThreadID(),
-                                msg.getLockLevel());
+        this.lockManager.refuse(msg.getSourceNodeID(), msg.getLocalSessionID(), msg.getLockID(), msg.getThreadID(), msg
+            .getLockLevel());
         return;
       case WAIT_TIMEOUT:
         this.lockManager.notified(msg.getLockID(), msg.getThreadID());
