@@ -348,10 +348,9 @@ public class DsoClusterTest extends TestCase {
     System.out.println("Occured events: " + listener.getOccurredEvents());
 
     assertEquals(4, listener.getOccurredEvents().size());
-    assertEquals("ClientID[1] JOINED", listener.getOccurredEvents().get(0));
-    assertEquals("ClientID[1] ENABLED", listener.getOccurredEvents().get(1));
-    // left and disabled events race as they are from different threads
-    // assert contains instead of ordering
+    // all events use oob notification, assert contains instead of ordering
+    assertTrue(listener.getOccurredEvents().contains("ClientID[1] JOINED"));
+    assertTrue(listener.getOccurredEvents().contains("ClientID[1] ENABLED"));
     assertTrue(listener.getOccurredEvents().contains("ClientID[1] DISABLED"));
     assertTrue(listener.getOccurredEvents().contains("ClientID[1] LEFT"));
 
