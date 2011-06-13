@@ -49,12 +49,12 @@ public class MockClientLockManager implements ClientLockManager {
   public void notified(LockID lock, ThreadID thread) {
     throw new ImplementMe();
   }
-  
-  public void recall(LockID lock, ServerLockLevel level, int lease) {
+
+  public void recall(NodeID node, SessionID session, LockID lock, ServerLockLevel level, int lease) {
     throw new ImplementMe();
   }
 
-  public void recall(LockID lock, ServerLockLevel level, int lease, boolean batch) {
+  public void recall(NodeID node, SessionID session, LockID lock, ServerLockLevel level, int lease, boolean batch) {
     throw new ImplementMe();
   }
 

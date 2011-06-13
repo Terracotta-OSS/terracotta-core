@@ -447,16 +447,18 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     }
   }
 
-  public void recall(final LockID lock, final ServerLockLevel level, final int lease) {
-    recall(lock, level, lease, false);
+  public void recall(final NodeID node, final SessionID session, final LockID lock, final ServerLockLevel level,
+                     final int lease) {
+    recall(node, session, lock, level, lease, false);
   }
 
-  public void recall(final LockID lock, final ServerLockLevel level, final int lease, final boolean batch) {
+  public void recall(final NodeID node, final SessionID session, final LockID lock, final ServerLockLevel level,
+                     final int lease, final boolean batch) {
     this.stateGuard.readLock().lock();
     try {
-      if (paused() || isShutdown()) {
-        this.logger.warn("Ignoring recall request from dead server : " + lock + ", interestedLevel : " + level
-                         + " state: " + state);
+      if (paused() || (node != null && !sessionManager.isCurrentSession(node, session))) {
+        this.logger.warn("Ignoring recall request from a dead server :" + session + ", " + this.sessionManager + " : "
+                         + lock + ", interestedLevel : " + level + " state: " + state);
         return;
       }
 
@@ -468,7 +470,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
             @Override
             public void run() {
               try {
-                ClientLockManagerImpl.this.recall(lock, level, -1, batch);
+                ClientLockManagerImpl.this.recall(node, session, lock, level, -1, batch);
               } catch (TCNotRunningException e) {
                 logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName()
                             + " and cancelling timer task");
