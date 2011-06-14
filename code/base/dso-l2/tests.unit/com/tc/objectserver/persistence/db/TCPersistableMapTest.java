@@ -6,6 +6,7 @@ package com.tc.objectserver.persistence.db;
 import org.mockito.Mockito;
 
 import com.tc.object.ObjectID;
+import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.TCMapsDatabase;
 import com.tc.util.Assert;
 
@@ -86,8 +87,79 @@ public class TCPersistableMapTest extends TestCase {
     }
   }
 
-  public void testRandom() {
-    //
+  public void testTempSwapRemove() {
+    for (int i = 0; i < 100; i++) {
+      pmap.put("key" + i, i);
+    }
+
+    for (int i = 0; i < 100; i++) {
+      pmap.remove("key" + i);
+    }
+
+    Assert.assertEquals(0, pmap.size());
+    Assert.assertEquals(0, delta.size());
+    Assert.assertEquals(0, backingMap.size());
+  }
+
+  public void testPutGetRemove() throws Exception {
+    for (int i = 0; i < 100; i++) {
+      pmap.put("key" + i, i);
+    }
+
+    Assert.assertEquals(100, pmap.size());
+    Assert.assertEquals(100, delta.size());
+    Assert.assertEquals(0, backingMap.size());
+
+    for (int i = 0; i < 100; i++) {
+      Assert.assertEquals(i, pmap.get("key" + i));
+    }
+
+    TCCollectionsSerializerImpl serializer = new TCCollectionsSerializerImpl();
+    PersistenceTransaction tx = Mockito.mock(PersistenceTransaction.class);
+    pmap.commit(serializer, tx, db);
+
+    Assert.assertEquals(100, pmap.size());
+    Assert.assertEquals(0, delta.size());
+    Assert.assertEquals(100, backingMap.size());
+
+    for (int i = 0; i < 100; i++) {
+      Assert.assertEquals(i, pmap.get("key" + i));
+    }
+
+    for (int i = 0; i < 100; i++) {
+      Assert.assertEquals(i, backingMap.get("key" + i));
+    }
+
+    for (int i = 50; i < 100; i++) {
+      pmap.remove("key" + i);
+    }
+
+    Assert.assertEquals(50, pmap.size());
+    Assert.assertEquals(50, delta.size());
+    Assert.assertEquals(100, backingMap.size());
+
+    for (int i = 0; i < 50; i++) {
+      Assert.assertEquals(i, pmap.get("key" + i));
+    }
+
+    for (int i = 0; i < 100; i++) {
+      Assert.assertEquals(i, backingMap.get("key" + i));
+    }
+
+    for (int i = 50; i < 100; i++) {
+      Assert.assertEquals(TCPersistableMap.REMOVED, delta.get("key" + i));
+    }
+
+    pmap.commit(serializer, tx, db);
+
+    Assert.assertEquals(50, pmap.size());
+    Assert.assertEquals(0, delta.size());
+    Assert.assertEquals(50, backingMap.size());
+
+    for (int i = 0; i < 50; i++) {
+      Assert.assertEquals(i, pmap.get("key" + i));
+      Assert.assertEquals(i, backingMap.get("key" + i));
+    }
   }
 
   public void testRemoves() {

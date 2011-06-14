@@ -20,22 +20,22 @@ class TCPersistableMap implements Map, PersistableCollection {
 
   // This is a carefully selected ObjectID that will never be assigned to any object.
   // TODO:: Move this Object ID to ObjectID class
-  private static final ObjectID REMOVED = new ObjectID(-2);
+  static final ObjectID REMOVED = new ObjectID(-2);
 
   /*
    * This map contains the mappings already in the database
    */
-  private final Map             map;
+  private final Map     map;
 
   /*
    * This map contains the newly added mappings or removed mapping that are not in the database yet
    */
-  private final Map             delta;
+  private final Map     delta;
 
-  private final long            id;
+  private final long    id;
 
-  private int                   size    = 0;
-  private boolean               clear   = false;
+  private int           size    = 0;
+  private boolean       clear   = false;
 
   /**
    * This constructor is used when in permanent store mode
