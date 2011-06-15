@@ -176,7 +176,7 @@ class Environment
   # 'athlon'.
   def processor_type
     if @processor_type.nil?
-      if os_family == 'Windows'
+      if os_family == 'Windows' && ENV['PROCESSOR_ARCHITECTURE']
         @processor_type = ENV['PROCESSOR_ARCHITECTURE']
       else
         @processor_type = @platform.exec("uname", (os_type(:nice) =~ /Windows/ ? '-m' : '-p')).strip
