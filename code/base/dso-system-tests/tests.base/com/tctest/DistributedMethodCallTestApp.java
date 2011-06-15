@@ -4,9 +4,6 @@
  */
 package com.tctest;
 
-import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
-
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -17,10 +14,12 @@ import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.Arrays;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DistributedMethodCallTestApp extends AbstractTransparentApp {
 
-  private SharedModel         model          = new SharedModel();
+  private final SharedModel   model          = new SharedModel();
   private final CyclicBarrier sharedBarrier  = new CyclicBarrier(getParticipantCount());
   private final CyclicBarrier sharedBarrier2 = new CyclicBarrier(getParticipantCount());
 
@@ -35,14 +34,14 @@ public class DistributedMethodCallTestApp extends AbstractTransparentApp {
       runTestNested();
       runTestNonVoid();
       runTestWithParamChange();
-//       runTestWithSynchAndNested();
+      // runTestWithSynchAndNested();
     } catch (Throwable e) {
       notifyError(e);
     }
   }
 
   private void runTest() throws Throwable {
-    final boolean callInitiator = sharedBarrier.barrier() == 0;
+    final boolean callInitiator = sharedBarrier.await() == 0;
 
     if (callInitiator) {
       model.callCount.set(0);
@@ -52,7 +51,7 @@ public class DistributedMethodCallTestApp extends AbstractTransparentApp {
         model.addObject(new FooObject(), 1, 2, foos, ints, true);
       }
     }
-    sharedBarrier.barrier();
+    sharedBarrier.await();
     final int actual = model.callCount.get();
     if (actual != getParticipantCount()) {
       notifyError("Unexpected call count: expected=" + getParticipantCount() + ", actual=" + actual);
@@ -60,7 +59,7 @@ public class DistributedMethodCallTestApp extends AbstractTransparentApp {
   }
 
   private void runTestWithParamChange() throws Throwable {
-    final boolean callInitiator = sharedBarrier.barrier() == 0;
+    final boolean callInitiator = sharedBarrier.await() == 0;
 
     if (callInitiator) {
       model.callCount.set(0);
@@ -70,7 +69,7 @@ public class DistributedMethodCallTestApp extends AbstractTransparentApp {
         model.addObjectWithParamChange(new FooObject(), 1, 2, foos, ints, true);
       }
     }
-    sharedBarrier.barrier();
+    sharedBarrier.await();
     final int actual = model.callCount.get();
     if (actual != getParticipantCount()) {
       notifyError("Unexpected call count: expected=" + getParticipantCount() + ", actual=" + actual);
@@ -78,7 +77,7 @@ public class DistributedMethodCallTestApp extends AbstractTransparentApp {
   }
 
   private void runTestNonVoid() throws Throwable {
-    final boolean callInitiator = sharedBarrier.barrier() == 0;
+    final boolean callInitiator = sharedBarrier.await() == 0;
 
     if (callInitiator) {
       model.callCount.set(0);
@@ -88,7 +87,7 @@ public class DistributedMethodCallTestApp extends AbstractTransparentApp {
         model.addObjectNonVoid(new FooObject(), 1, 2, foos, ints, true);
       }
     }
-    sharedBarrier.barrier();
+    sharedBarrier.await();
     final int actual = model.callCount.get();
     if (actual != getParticipantCount()) {
       notifyError("Unexpected call count: expected=" + getParticipantCount() + ", actual=" + actual);
@@ -96,7 +95,7 @@ public class DistributedMethodCallTestApp extends AbstractTransparentApp {
   }
 
   private void runTestNested() throws Throwable {
-    final boolean callInitiator = sharedBarrier.barrier() == 0;
+    final boolean callInitiator = sharedBarrier.await() == 0;
 
     if (callInitiator) {
       model.callCount.set(0);
@@ -106,7 +105,7 @@ public class DistributedMethodCallTestApp extends AbstractTransparentApp {
         model.addObjectNested(new FooObject(), 1, 2, foos, ints, true);
       }
     }
-    sharedBarrier.barrier();
+    sharedBarrier.await();
     final int actual = model.callCount.get();
     if (actual != getParticipantCount()) {
       notifyError("Unexpected call count: expected=" + getParticipantCount() + ", actual=" + actual);
@@ -114,7 +113,7 @@ public class DistributedMethodCallTestApp extends AbstractTransparentApp {
   }
 
   private void runTestWithNulls() throws Throwable {
-    final boolean callInitiator = sharedBarrier.barrier() == 0;
+    final boolean callInitiator = sharedBarrier.await() == 0;
 
     if (callInitiator) {
       model.callCount.set(0);
@@ -122,7 +121,7 @@ public class DistributedMethodCallTestApp extends AbstractTransparentApp {
         model.addObjectWithNulls(null, 1, 2, null, null, true);
       }
     }
-    sharedBarrier.barrier();
+    sharedBarrier.await();
     final int actual = model.callCount.get();
     if (actual != getParticipantCount()) {
       notifyError("Unexpected call count: expected=" + getParticipantCount() + ", actual=" + actual);
@@ -153,7 +152,7 @@ public class DistributedMethodCallTestApp extends AbstractTransparentApp {
   }
 
   public class SharedModel {
-    public final SynchronizedInt callCount = new SynchronizedInt(0);
+    public final AtomicInteger callCount = new AtomicInteger(0);
 
     public synchronized void addObjectSynched(Object obj, int i, double d, FooObject[][] foos, int[][][] ints, boolean b)
         throws Throwable {
@@ -167,7 +166,13 @@ public class DistributedMethodCallTestApp extends AbstractTransparentApp {
     }
 
     public void addObject(Object obj, int i, double d, FooObject[][] foos, int[][][] ints, boolean b) throws Throwable {
-      callCount.increment();
+      int countCall = callCount.incrementAndGet();
+
+      // The test has been failing since eterninty (MNK-18 was the first)
+      // Printing stack trace to know why the distributed method was called
+      // more than number of client times.
+      System.out.println("XXXXXXX callCount: " + countCall);
+      new Exception().printStackTrace();
       // Everything in the "foos" array should be non-null
       for (int index = 0; index < foos.length; index++) {
         FooObject[] array = foos[index];
@@ -191,12 +196,12 @@ public class DistributedMethodCallTestApp extends AbstractTransparentApp {
       }
 
       checkLiteralParams(i, d, b);
-      sharedBarrier2.barrier();
+      sharedBarrier2.await();
     }
 
     public void addObjectWithParamChange(Object obj, int i, double d, FooObject[][] foos, int[][][] ints, boolean b)
         throws Throwable {
-      callCount.increment();
+      callCount.incrementAndGet();
       // Everything in the "foos" array should be non-null
       for (int index = 0; index < foos.length; index++) {
         FooObject[] array = foos[index];
@@ -225,16 +230,16 @@ public class DistributedMethodCallTestApp extends AbstractTransparentApp {
       foos = null;
       ints = null;
       b = !b;
-      sharedBarrier2.barrier();
+      sharedBarrier2.await();
     }
 
     public void addObjectWithNulls(Object obj, int i, double d, FooObject[][] foos, int[][][] ints, boolean b)
         throws Throwable {
-      callCount.increment();
+      callCount.incrementAndGet();
       // all params should be nulls
       checkReferenceParams(obj, foos, ints, true);
       checkLiteralParams(i, d, b);
-      sharedBarrier2.barrier();
+      sharedBarrier2.await();
     }
 
     public void addObjectNested(Object obj, int i, double d, FooObject[][] foos, int[][][] ints, boolean b)
