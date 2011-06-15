@@ -25,9 +25,11 @@ public class ReconnectionRejectedListenerImpl implements ChannelEventListener {
   }
 
   public void notifyChannelEvent(ChannelEvent event) {
-    if (event.getType() == ChannelEventType.TRANSPORT_RECONNECTION_REJECTED_EVENT) {
+    if ((event.getType() == ChannelEventType.TRANSPORT_RECONNECTION_REJECTED_EVENT)
+        || (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT)) {
       ChannelID channelID = event.getChannelID();
-      String msg = "Reconnection rejected event fired, caused by " + channelID;
+      String msg = (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT) ? "Channel " + channelID + " closed."
+          : "Reconnection rejected event fired, caused by " + channelID;
       CONSOLE_LOGGER.info(msg);
       DSO_LOGGER.info(msg);
       // fire event first
