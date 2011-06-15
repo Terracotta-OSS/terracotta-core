@@ -915,8 +915,6 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
       end
 
       @build_results.archive_to(ant, full_build_archive_path)
-    else
-      STDERR.puts "build_archive_dir is nil"
     end
   end
 
