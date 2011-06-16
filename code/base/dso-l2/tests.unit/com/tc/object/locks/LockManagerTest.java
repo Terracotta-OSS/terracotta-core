@@ -21,10 +21,13 @@ import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
+import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import junit.framework.TestCase;
 
@@ -451,6 +454,58 @@ public class LockManagerTest extends TestCase {
     lockManager.unlock(l1, c3, s1);
     assertFalse(lockManager.hasPending(l1));
     lockManager.unlock(l1, c4, s1);
+  }
+
+  public void testTryLockFairness() throws InterruptedException {
+    lockManager.start();
+
+    final LockID lockid = new StringLockID("1");
+    final AtomicBoolean tryLockSucceeded = new AtomicBoolean(false);
+    final CountDownLatch latch = new CountDownLatch(1);
+
+    final ClientID c1 = new ClientID(1);
+    final ClientID c2 = new ClientID(2);
+    final ClientID c3 = new ClientID(3);
+    final ThreadID t1 = new ThreadID(1);
+
+    lockManager.lock(lockid, c1, t1, ServerLockLevel.WRITE);
+
+    Runnable tryLockRunnable = new Runnable() {
+      public void run() {
+        System.err.println("tryLock to grab lock " + c2);
+        lockManager.tryLock(lockid, c2, t1, ServerLockLevel.WRITE, 3600 * 1000);
+        tryLockSucceeded.set(true);
+        latch.countDown();
+      }
+    };
+
+    Runnable anotherPendingRequest = new Runnable() {
+      public void run() {
+        System.err.println("grab lock " + c3);
+        lockManager.lock(lockid, c3, t1, ServerLockLevel.WRITE);
+        latch.countDown();
+      }
+    };
+
+    Thread thread1 = new Thread(tryLockRunnable);
+    Thread thread2 = new Thread(anotherPendingRequest);
+
+    thread1.start();
+    ThreadUtil.reallySleep(10000);
+    thread2.start();
+
+    ThreadUtil.reallySleep(10000);
+    lockManager.unlock(lockid, c1, t1);
+
+    latch.await();
+
+    Assert.assertTrue(tryLockSucceeded.get());
+
+    lockManager.unlock(lockid, c2, t1);
+
+    ThreadUtil.reallySleep(10000);
+
+    lockManager.unlock(lockid, c3, t1);
   }
 
   public void disableTestUpgradeDeadLock() {
