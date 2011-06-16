@@ -157,8 +157,12 @@ public abstract class TCObjectImpl implements TCObject {
         final Interpreter i = new Interpreter();
         i.setClassLoader(tcc.getPeerClass().getClassLoader());
         i.set("self", pojo);
-        i.eval("setAccessibility(true)");
-        i.eval(eval);
+        try {
+          i.eval("setAccessibility(true)");
+          i.eval(eval);
+        } finally {
+          i.getNameSpace().clear();
+        }
       } catch (final ParseException e) {
         // Error Parsing script. Use e.getMessage() instead of e.getErrorText() when there is a ParseException because
         // expectedTokenSequences in ParseException could be null and thus, may throw a NullPointerException when
