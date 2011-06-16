@@ -19,10 +19,12 @@ public class ClusterEventsTestState {
     synchronized (listeners) {
       ClusterEventsTestListener listener = listeners.get(node.getId());
       if (null == listener) {
+        System.out.println("XXXXXXXX added listener for node " + node);
         listener = new ClusterEventsTestListener();
         listeners.put(node.getId(), listener);
       }
 
+      System.out.println("XXXXXXXX Listeners are: " + listeners);
       return listener;
     }
   }
