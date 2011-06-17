@@ -317,6 +317,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   }
 
   protected LinkedJavaProcess createLinkedJavaProcess(String mainClassName, List<String> args, List<String> jvmargs) {
+    VerboseGCHelper.getInstance().setupVerboseGcLogging(jvmargs, serverName, mainClassName);
     LinkedJavaProcess result = new LinkedJavaProcess(mainClassName, args, jvmargs);
     result.setMaxRuntime(TestConfigObject.getInstance().getJunitTimeoutInSeconds() + 180);
     result.setDirectory(this.runningDirectory);

@@ -19,6 +19,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.objectserver.control.ServerControl;
+import com.tc.objectserver.control.VerboseGCHelper;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -167,6 +168,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   protected void setUp() throws Exception {
     setUpTransparent(configFactory(), configHelper());
 
+    VerboseGCHelper.getInstance().setupTempDir(getTempDirectory());
+
     // config should be set up before tc-config for external L2s are written out
     setupConfig(configFactory());
 
@@ -208,8 +211,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       groupPort = helper.getGroupPort();
 
       setPortsInConfig();
-      this.transparentAppConfig.setAttribute(ApplicationConfig.JMXPORT_KEY, String.valueOf(configFactory()
-          .l2CommonConfig().jmxPort().getIntValue()));
+      this.transparentAppConfig.setAttribute(ApplicationConfig.JMXPORT_KEY,
+                                             String.valueOf(configFactory().l2CommonConfig().jmxPort().getIntValue()));
 
       if (!canRunL1ProxyConnect()) configFactory().addServerToL1Config(null, dsoPort, adminPort);
       serverControl = helper.getServerControl();
@@ -221,8 +224,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       groupPort = portChooser.chooseRandomPort();
 
       setPortsInConfig();
-      this.transparentAppConfig.setAttribute(ApplicationConfig.JMXPORT_KEY, String.valueOf(configFactory()
-          .l2CommonConfig().jmxPort().getIntValue()));
+      this.transparentAppConfig.setAttribute(ApplicationConfig.JMXPORT_KEY,
+                                             String.valueOf(configFactory().l2CommonConfig().jmxPort().getIntValue()));
 
       if (!canRunL1ProxyConnect()) configFactory().addServerToL1Config(null, dsoPort, -1);
     }
@@ -411,8 +414,12 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       al.add("-Dtc.node-name=" + serverNames[i]);
       L2DSOConfigObject.initializeServers(TcConfigDocument.Factory.parse(configFiles[i]).getTcConfig(),
                                           new SchemaDefaultValueProvider(), configFiles[i].getParentFile());
-      serverControls[i] = new ExtraProcessServerControl("localhost", dsoPorts[i], jmxPorts[i], configFiles[i]
-          .getAbsolutePath(), true, serverNames[i], null, javaHome, true);
+
+      List<String> jvmArgs = new ArrayList<String>();
+
+      serverControls[i] = new ExtraProcessServerControl("localhost", dsoPorts[i], jmxPorts[i],
+                                                        configFiles[i].getAbsolutePath(), true, serverNames[i],
+                                                        jvmArgs, javaHome, true);
     }
     setUpTransparent(factory, helper, true);
   }
@@ -665,8 +672,9 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       }
 
       if (!this.runner.success()) {
-        AssertionFailedError e = new AssertionFailedError(new ErrorContextFormatter(this.runner.getErrors())
-            .formatForExceptionMessage());
+        AssertionFailedError e = new AssertionFailedError(
+                                                          new ErrorContextFormatter(this.runner.getErrors())
+                                                              .formatForExceptionMessage());
         throw e;
       }
     } else {
