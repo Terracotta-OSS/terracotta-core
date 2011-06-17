@@ -280,9 +280,10 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
 
     synchronized boolean getAndSetIsClosed() {
       if (ChannelState.INIT.equals(state)) {
-        logger.warn("Ignoring state switch to " + ChannelState.CLOSED + "; Current State : " + state + "; "
-                    + AbstractMessageChannel.this);
-        return false;
+        // Treating an unopened channel as effectively equivalent to closed.
+        logger.warn("Switcing channel state from " + ChannelState.INIT + " to " + ChannelState.CLOSED + ".");
+        state = ChannelState.CLOSED;
+        return true;
       }
 
       if (ChannelState.CLOSED.equals(state)) {
