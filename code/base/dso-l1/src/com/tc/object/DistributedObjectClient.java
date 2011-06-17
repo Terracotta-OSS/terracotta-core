@@ -44,7 +44,6 @@ import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
-import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.GeneratedMessageFactory;
 import com.tc.net.protocol.tcm.HydrateHandler;
@@ -259,6 +258,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private final CallbackDumpHandler                  dumpHandler                         = new CallbackDumpHandler();
   private TunneledDomainManager                      tunneledDomainManager;
   private TCMemoryManagerImpl                        tcMemManager;
+  private ReconnectionRejectedListener               reconnectionRejectedListener;
 
   private Stage                                      clusterEventsStage;
 
@@ -736,7 +736,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                       dsoCluster, pInfo.version(), Collections
                                           .unmodifiableCollection(clientHandshakeCallbacks));
     this.channel.addListener(this.clientHandshakeManager);
-    ChannelEventListener reconnectionRejectedListener = new ReconnectionRejectedListenerImpl(dsoCluster,
+    reconnectionRejectedListener = new ReconnectionRejectedListenerImpl(dsoCluster,
                                                                                              clientHandshakeManager);
     this.channel.addListener(reconnectionRejectedListener);
 
@@ -1166,6 +1166,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
       }
     }
 
+    if (this.reconnectionRejectedListener != null) {
+      this.reconnectionRejectedListener.shutDown();
+    }
+    
     if (this.channel != null) {
       try {
         this.channel.close();

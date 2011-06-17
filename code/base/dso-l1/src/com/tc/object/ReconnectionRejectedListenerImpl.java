@@ -6,17 +6,17 @@ package com.tc.object;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.net.protocol.tcm.ChannelEvent;
-import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelEventType;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tcclient.cluster.DsoClusterInternalEventsGun;
 
-public class ReconnectionRejectedListenerImpl implements ChannelEventListener {
+public class ReconnectionRejectedListenerImpl implements ReconnectionRejectedListener {
   private static final TCLogger             DSO_LOGGER     = CustomerLogging.getDSOGenericLogger();
   private static final TCLogger             CONSOLE_LOGGER = CustomerLogging.getConsoleLogger();
   private final DsoClusterInternalEventsGun dsoClusterEventsGun;
   private final ClientHandshakeManager      clientHandshakeManager;
+  private volatile boolean                  shutDown       = false;
 
   public ReconnectionRejectedListenerImpl(final DsoClusterInternalEventsGun dsoClusterEventsGun,
                                           ClientHandshakeManager clientHandshakeManager) {
@@ -32,10 +32,16 @@ public class ReconnectionRejectedListenerImpl implements ChannelEventListener {
           : "Reconnection rejected event fired, caused by " + channelID;
       CONSOLE_LOGGER.info(msg);
       DSO_LOGGER.info(msg);
-      // fire event first
-      this.dsoClusterEventsGun.fireThisNodeLeft();
+      // fire event first but don't fire if already shutdown
+      if (!this.shutDown) {
+        this.dsoClusterEventsGun.fireThisNodeLeft();
+      }
       DSO_LOGGER.info("Shutting down clientHandshakeManager...");
       clientHandshakeManager.shutdown();
     }
+  }
+
+  public void shutDown() {
+    this.shutDown = true;
   }
 }
