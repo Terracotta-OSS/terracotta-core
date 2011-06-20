@@ -35,7 +35,6 @@ public class VerboseGCHelper {
       System.out
           .println("Verbose GC logging will not be setup for this run (tempDir is null). Please set up tempDir to start using verbose gc for this run - serverName="
                    + serverName + ", mainClassName=" + mainClassName);
-      new Exception().printStackTrace();
       System.out.println("++++==================================================================================++++");
       return;
     }
