@@ -243,6 +243,7 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
   private void tryLockTimeout(ServerLockContext context, LockHelper helper) {
     Assert.assertTrue(context.isTryPending());
     cannotAward(context.getClientID(), context.getThreadID(), context.getState().getLockLevel(), helper);
+    processPendingRequests(helper);
   }
 
   private void waitTimeout(ServerLockContext context, LockHelper helper) {
