@@ -35,10 +35,10 @@ public class BroadcastDisconnectingClientTest extends ServerCrashingTestBase {
 
   private static final int   INTERNAL_CLIENT_COUNT  = 3;                                    // includes one that just
   // spawns external clients
-  static final int           LONG_RUNNERS_DURATION  = 15 * 60 * 1000;
+  static final int           LONG_RUNNERS_DURATION  = 10 * 60 * 1000;
   static final int           SHORT_RUNNERS_DURATION = 30 * 1000;
   static final int           SHORT_RUNNERS_INTERVAL = 30 * 1000;
-  static final int           LIST_MAX               = 50;
+  static final int           LIST_MAX               = 25;
   static final int           INNER_LIST_SIZE        = 1;
   private static final int   TIMEOUT_SECONDS        = 25 * 60;
 
