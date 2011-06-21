@@ -44,7 +44,7 @@ public class TreeMapYoungGenGCActivePassiveTest extends YoungGCTestAndActivePass
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH);
-    setupManager.setServerCrashWaitTimeInSec(120);
+    setupManager.setServerCrashWaitTimeInSec(150);
     setupManager.setServerShareDataMode(MultipleServersSharedDataMode.NETWORK);
     setupManager.setServerPersistenceMode(MultipleServersPersistenceMode.PERMANENT_STORE);
   }
