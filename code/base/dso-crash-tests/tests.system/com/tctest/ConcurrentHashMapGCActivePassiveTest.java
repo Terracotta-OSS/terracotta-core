@@ -10,6 +10,11 @@ import com.tc.test.MultipleServersSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 
 public class ConcurrentHashMapGCActivePassiveTest extends GCAndActivePassiveTestBase implements TestConfigurator {
+
+  public ConcurrentHashMapGCActivePassiveTest() {
+    disableAllUntil("2011-07-13");
+  }
+
   @Override
   public void doSetUp(final TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setAttribute(ConcurrentHashMapSwappingTestApp.GC_TEST_KEY, "true");
