@@ -4,6 +4,7 @@
  */
 package com.tctest;
 
+import com.tc.simulator.app.ErrorContext;
 import com.tc.stats.api.DSOMBean;
 import com.tc.test.MultipleServersCrashMode;
 import com.tc.test.MultipleServersPersistenceMode;
@@ -97,7 +98,8 @@ public class TreeMapL1ReconnectCustomizedActivePassiveTest extends ActivePassive
           System.out.println("XXX Start passive server[1]");
           manager.startServer(1);
           Thread.sleep(1000);
-          manager.waitServerIsPassiveStandby(1, 20);
+          Assert.assertTrue("XXX server[1] failed to come up as passive within 5 minutes.",
+                            manager.waitServerIsPassiveStandby(1, 300));
 
           System.out.println("XXX Stop active server[0] to failover to passive");
           manager.stopServer(0);
@@ -115,7 +117,8 @@ public class TreeMapL1ReconnectCustomizedActivePassiveTest extends ActivePassive
           System.out.println("XXX Start passive server[0]");
           manager.startServer(0);
           Thread.sleep(1000);
-          manager.waitServerIsPassiveStandby(0, 20);// waitServerIsPassiveStandby(0, 20);
+          Assert.assertTrue("XXX server[0] failed to come up as passive within 5 minutes.",
+                            manager.waitServerIsPassiveStandby(0, 300));
 
           while (true) {
             Thread.sleep(20000);
@@ -128,7 +131,8 @@ public class TreeMapL1ReconnectCustomizedActivePassiveTest extends ActivePassive
             System.out.println("XXX Start passive server[" + crashedIndex + "]");
             manager.startServer(crashedIndex);
             Thread.sleep(1000);
-            manager.waitServerIsPassiveStandby(crashedIndex, 20);
+            Assert.assertTrue("XXX server[" + crashedIndex + "] failed to come up as passive within 5 minutes.",
+                              manager.waitServerIsPassiveStandby(crashedIndex, 300));
 
             activeIndex = manager.getAndUpdateActiveIndex();
             Assert.assertTrue(activeIndex != crashedIndex);
@@ -141,8 +145,8 @@ public class TreeMapL1ReconnectCustomizedActivePassiveTest extends ActivePassive
 
           }
 
-        } catch (Exception e) {
-          System.out.println("customerizeActivePassiveTest: " + e);
+        } catch (Throwable t) {
+          runner.notifyError(new ErrorContext(t));
         }
       }
     });
