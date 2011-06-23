@@ -294,9 +294,7 @@ public class TCLogging {
       File lockFile = new File(theDirectory, LOCK_FILE_NAME);
 
       try {
-        if (!lockFile.createNewFile()) {
-          reportLoggingError("Logging lock file already exists, attempting to lock it.", null);
-        }
+        lockFile.createNewFile();
         Assert.eval(lockFile.exists());
         FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
         thisDirectoryLock = channel.tryLock();

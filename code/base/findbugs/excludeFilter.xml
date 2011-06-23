@@ -268,6 +268,11 @@
 	<Bug pattern="EI_EXPOSE_REP" />
 </Match>
 <Match>
+   <Class name="com.tc.logging.TCLogging" />
+   <Method name="setLogDirectory" />
+   <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE" />
+</Match>
+<Match>
 	<Class name="com.tc.management.beans.logging.TCLoggingBroadcaster" />
 	<Method name="getNotificationInfo" />
 	<Bug pattern="EI_EXPOSE_REP" />
