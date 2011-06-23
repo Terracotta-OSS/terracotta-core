@@ -8,9 +8,9 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.LossyTCLogger;
+import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.ReconnectionRejectedException;
@@ -220,7 +220,7 @@ public class ClientConnectionEstablisher {
     }
 
     this.asyncReconnecting.set(true);
-    for (int i = 0; !connected; i++) {
+    while (!connected) {
       TCConnection connection = null;
       try {
         connection = connect(sa, cmt);

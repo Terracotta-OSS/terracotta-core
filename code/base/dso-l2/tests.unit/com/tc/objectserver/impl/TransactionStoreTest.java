@@ -253,13 +253,11 @@ public class TransactionStoreTest extends TCTestCase {
   }
 
   public void testClientShutdown() throws Exception {
-    long sequence = 0;
     int initialMin = 200;
     int initialMax = 300;
     int laterMax = 400;
     persistor = new TestTransactionPersistor();
     for (int i = initialMin; i < initialMax; i++) {
-      sequence++;
       ServerTransactionID stxid = new ServerTransactionID(new ClientID(i % 2), new TransactionID(i));
       persistor.persisted.put(stxid, new GlobalTransactionDescriptor(stxid, new GlobalTransactionID(persistor.next())));
     }

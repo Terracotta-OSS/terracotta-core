@@ -136,13 +136,12 @@ public class TCBytesToBytesDatabaseTest extends TCTestCase {
 
     tx = ptp.newTransaction();
     TCDatabaseCursor<byte[], byte[]> cursor = database.openCursorUpdatable(tx);
-    int count = 0;
+
     while (cursor.hasNext()) {
       cursor.next();
       // get
       bytesToBytesDatabase.get(key1, tx);
       cursor.delete();
-      count++;
     }
     cursor.close();
     tx.commit();
