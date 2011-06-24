@@ -27,7 +27,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CyclicBarrier;
@@ -40,7 +39,7 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
 
   private final SomePojo      pojo       = new SomePojo();
   private final Map           map        = new HashMap();
-  private final Map           treeMap    = new TreeMap();
+  private final Map           treeMap    = new ConcurrentHashMap();
 
   @InjectedDsoInstance
   private DsoCluster          cluster;
@@ -391,8 +390,8 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
 
     if (0 == nodeId) {
       checkGetNodesWithObjectsResult(cluster.getNodesWithObjects(pojo.getYourMojo(), null, pojo.getMyMojo()));
-      checkGetNodesWithObjectsResult(cluster.getNodesWithObjects(Arrays.asList(pojo.getYourMojo(), null,
-                                                                               pojo.getMyMojo())));
+      checkGetNodesWithObjectsResult(cluster.getNodesWithObjects(Arrays.asList(pojo.getYourMojo(), null, pojo
+          .getMyMojo())));
     }
 
     barrier.await();
