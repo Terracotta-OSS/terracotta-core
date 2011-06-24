@@ -1551,8 +1551,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return this.sraSpecs;
   }
 
-  public void addTunneledMBeanDomain(final String tunneledMBeanDomain) {
-    this.tunneledMBeanDomains.add(tunneledMBeanDomain);
+  public boolean addTunneledMBeanDomain(final String tunneledMBeanDomain) {
+    return this.tunneledMBeanDomains.add(tunneledMBeanDomain);
   }
 
   /*

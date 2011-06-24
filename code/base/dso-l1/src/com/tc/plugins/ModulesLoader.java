@@ -229,7 +229,10 @@ public class ModulesLoader {
 
             if (headers.get("Tunneled-MBean-Domains") != null) {
               logger.info("Installing tunneled MBean domains for bundle '" + bundle.getSymbolicName() + "'");
-              installTunneledMBeanDomains(String.valueOf(headers.get("Tunneled-MBean-Domains")), configHelper);
+              if (installTunneledMBeanDomains(String.valueOf(headers.get("Tunneled-MBean-Domains")), configHelper)
+                  && tunneledDomainUpdater != null) {
+                tunneledDomainUpdater.sendCurrentTunneledDomains();
+              }
             }
           }
           printModuleBuildInfo(bundle);
@@ -244,10 +247,6 @@ public class ModulesLoader {
       getModulesSpecs(osgiRuntime, configHelper);
       getMBeanSpecs(osgiRuntime, configHelper);
       getSRASpecs(osgiRuntime, configHelper);
-
-      if (tunneledDomainUpdater != null) {
-        tunneledDomainUpdater.sendCurrentTunneledDomains();
-      }
     }
   }
 
@@ -353,13 +352,16 @@ public class ModulesLoader {
     }
   }
 
-  private static void installTunneledMBeanDomains(final String tunneledMBeanDomains,
-                                                  final DSOClientConfigHelper configHelper) {
-    if (null == tunneledMBeanDomains) { return; }
-
-    String[] domains = tunneledMBeanDomains.split(":");
-    for (String domain : domains) {
-      configHelper.addTunneledMBeanDomain(domain);
+  private static boolean installTunneledMBeanDomains(final String tunneledMBeanDomains,
+                                                     final DSOClientConfigHelper configHelper) {
+    if (null == tunneledMBeanDomains) {
+      return false;
+    } else {
+      boolean changed = false;
+      for (String domain : tunneledMBeanDomains.split(":")) {
+        changed |= configHelper.addTunneledMBeanDomain(domain);
+      }
+      return changed;
     }
   }
 
