@@ -33,6 +33,7 @@ import com.tc.util.concurrent.TCExceptionResultException;
 import com.tc.util.concurrent.TCFuture;
 
 import java.io.IOException;
+import java.io.StreamCorruptedException;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.List;
@@ -227,7 +228,15 @@ public class L2Management extends TerracottaManagement {
     }
 
     public void connect(Map env) throws IOException {
-      conn.connect(env);
+      try {
+        conn.connect(env);
+      } catch (StreamCorruptedException sce) {
+        /*
+         * Happens when DevConsole tries connecting to a JMXMP connector using a service:jmx:rmi URL. The string below
+         * is the Hex form of "JRMI"; this exception contains this message with JDK1.6 and greater.
+         */
+        if (!sce.getMessage().contains("4A524D49")) { throw sce; }
+      }
     }
 
     public String getConnectionId() {

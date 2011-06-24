@@ -4,10 +4,10 @@
 package com.tctest;
 
 import com.tc.admin.common.MBeanServerInvocationProxy;
-import com.tc.cli.CommandLineBuilder;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.object.BaseDSOTestCase;
+import com.tc.test.JMXUtils;
 import com.tc.util.Assert;
 import com.tc.util.TcConfigBuilder;
 import com.tc.util.concurrent.ThreadUtil;
@@ -64,7 +64,7 @@ public class TCStopTest extends BaseDSOTestCase {
     JMXConnector jmxConnector = null;
 
     try {
-      jmxConnector = CommandLineBuilder.getJMXConnector(null, null, "localhost", jmxPort);
+      jmxConnector = JMXUtils.getJMXConnector("localhost", jmxPort);
       final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
       mbean = MBeanServerInvocationProxy
           .newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
@@ -90,7 +90,7 @@ public class TCStopTest extends BaseDSOTestCase {
     JMXConnector jmxConnector = null;
 
     try {
-      jmxConnector = CommandLineBuilder.getJMXConnector(null, null, "localhost", jmxPort);
+      jmxConnector = JMXUtils.getJMXConnector("localhost", jmxPort);
       final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
       mbean = MBeanServerInvocationProxy
           .newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);

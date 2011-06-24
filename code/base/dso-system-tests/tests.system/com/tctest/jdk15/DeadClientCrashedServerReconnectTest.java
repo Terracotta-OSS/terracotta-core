@@ -9,7 +9,6 @@ import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogging;
-import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.DistributedObjectClient;
@@ -26,6 +25,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.stats.api.DSOMBean;
+import com.tc.test.JMXUtils;
 import com.tc.test.proxyconnect.ProxyConnectManager;
 import com.tc.test.proxyconnect.ProxyConnectManagerImpl;
 import com.tc.test.restart.RestartTestEnvironment;
@@ -120,7 +120,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
   }
 
   private void checkServerHasClients(final int clientCount, final int jmxPort) throws Exception {
-    JMXConnector jmxConnector = new JMXConnectorProxy("localhost", jmxPort);
+    JMXConnector jmxConnector = JMXUtils.getJMXConnector("localhost", jmxPort);
     MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
     DSOMBean mbean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DSO, DSOMBean.class,
                                                                               true);

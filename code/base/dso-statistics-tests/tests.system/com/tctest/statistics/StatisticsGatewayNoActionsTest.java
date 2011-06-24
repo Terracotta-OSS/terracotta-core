@@ -1,14 +1,15 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.statistics;
 
-import com.tc.management.JMXConnectorProxy;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.beans.StatisticsGatewayMBean;
 import com.tc.statistics.beans.StatisticsMBeanNames;
 import com.tc.statistics.retrieval.actions.SRAShutdownTimestamp;
 import com.tc.statistics.retrieval.actions.SRAStartupTimestamp;
+import com.tc.test.JMXUtils;
 import com.tc.util.UUID;
 import com.tctest.TransparentTestIface;
 
@@ -17,20 +18,22 @@ import java.util.List;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
+import javax.management.remote.JMXConnector;
 
 public class StatisticsGatewayNoActionsTest extends AbstractStatisticsTransparentTestBase {
   @Override
   protected void duringRunningCluster() throws Exception {
-    JMXConnectorProxy jmxc = new JMXConnectorProxy("localhost", getAdminPort());
+    JMXConnector jmxc = JMXUtils.getJMXConnector("localhost", getAdminPort());
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
 
-    StatisticsGatewayMBean stat_gateway = (StatisticsGatewayMBean)MBeanServerInvocationHandler
+    StatisticsGatewayMBean stat_gateway = (StatisticsGatewayMBean) MBeanServerInvocationHandler
         .newProxyInstance(mbsc, StatisticsMBeanNames.STATISTICS_GATEWAY, StatisticsGatewayMBean.class, false);
 
-    waitForAllNodesToConnectToGateway(stat_gateway, StatisticsGatewayNoActionsTestApp.NODE_COUNT+1);
+    waitForAllNodesToConnectToGateway(stat_gateway, StatisticsGatewayNoActionsTestApp.NODE_COUNT + 1);
 
     List<StatisticData> data = new ArrayList<StatisticData>();
-    CollectingNotificationListener listener = new CollectingNotificationListener(StatisticsGatewayNoActionsTestApp.NODE_COUNT + 1);
+    CollectingNotificationListener listener = new CollectingNotificationListener(
+                                                                                 StatisticsGatewayNoActionsTestApp.NODE_COUNT + 1);
     mbsc.addNotificationListener(StatisticsMBeanNames.STATISTICS_GATEWAY, listener, null, data);
     stat_gateway.enable();
 

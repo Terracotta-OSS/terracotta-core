@@ -1,15 +1,16 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.statistics;
 
-import com.tc.management.JMXConnectorProxy;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.beans.StatisticsGatewayMBean;
 import com.tc.statistics.beans.StatisticsMBeanNames;
 import com.tc.statistics.retrieval.actions.SRAShutdownTimestamp;
 import com.tc.statistics.retrieval.actions.SRAStartupTimestamp;
 import com.tc.statistics.retrieval.actions.SRASystemProperties;
+import com.tc.test.JMXUtils;
 import com.tc.util.UUID;
 import com.tctest.TransparentTestIface;
 
@@ -20,16 +21,17 @@ import java.util.Map;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
+import javax.management.remote.JMXConnector;
 
 public class StatisticsGatewayCaptureStatisticTest extends AbstractStatisticsTransparentTestBase {
   @Override
   protected void duringRunningCluster() throws Exception {
     int total_node_count = StatisticsGatewayNoActionsTestApp.NODE_COUNT + 1;
 
-    JMXConnectorProxy jmxc = new JMXConnectorProxy("localhost", getAdminPort());
+    JMXConnector jmxc = JMXUtils.getJMXConnector("localhost", getAdminPort());
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
 
-    StatisticsGatewayMBean stat_gateway = (StatisticsGatewayMBean)MBeanServerInvocationHandler
+    StatisticsGatewayMBean stat_gateway = (StatisticsGatewayMBean) MBeanServerInvocationHandler
         .newProxyInstance(mbsc, StatisticsMBeanNames.STATISTICS_GATEWAY, StatisticsGatewayMBean.class, false);
 
     waitForAllNodesToConnectToGateway(stat_gateway, total_node_count);
@@ -79,8 +81,8 @@ public class StatisticsGatewayCaptureStatisticTest extends AbstractStatisticsTra
     // aggregate the data
     Map dataMap = new HashMap();
     for (Object element : data) {
-      StatisticData dataEntry = (StatisticData)element;
-      List dataNameAggregation = (List)dataMap.get(dataEntry.getName());
+      StatisticData dataEntry = (StatisticData) element;
+      List dataNameAggregation = (List) dataMap.get(dataEntry.getName());
       if (null == dataNameAggregation) {
         dataNameAggregation = new ArrayList();
         dataMap.put(dataEntry.getName(), dataNameAggregation);
@@ -92,9 +94,9 @@ public class StatisticsGatewayCaptureStatisticTest extends AbstractStatisticsTra
     assertTrue(dataMap.containsKey(SRAStartupTimestamp.ACTION_NAME));
     assertTrue(dataMap.containsKey(SRASystemProperties.ACTION_NAME));
     assertTrue(dataMap.containsKey(SRAShutdownTimestamp.ACTION_NAME));
-    assertEquals(total_node_count, ((List)dataMap.get(SRAStartupTimestamp.ACTION_NAME)).size());
-    assertEquals(total_node_count * 2, ((List)dataMap.get(SRASystemProperties.ACTION_NAME)).size());
-    assertEquals(total_node_count, ((List)dataMap.get(SRAShutdownTimestamp.ACTION_NAME)).size());
+    assertEquals(total_node_count, ((List) dataMap.get(SRAStartupTimestamp.ACTION_NAME)).size());
+    assertEquals(total_node_count * 2, ((List) dataMap.get(SRASystemProperties.ACTION_NAME)).size());
+    assertEquals(total_node_count, ((List) dataMap.get(SRAShutdownTimestamp.ACTION_NAME)).size());
   }
 
   @Override

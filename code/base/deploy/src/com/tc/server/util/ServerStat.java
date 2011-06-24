@@ -30,7 +30,7 @@ public class ServerStat {
   private final int             port;
   private final String          username;
   private final String          password;
-  private JMXConnector          jmxProxy;
+  private JMXConnector          jmxc;
   private MBeanServerConnection mbsc;
 
   private TCServerInfoMBean     infoBean;
@@ -46,16 +46,16 @@ public class ServerStat {
   }
 
   private void connect() {
-    if (jmxProxy != null) {
+    if (jmxc != null) {
       try {
-        jmxProxy.close();
+        jmxc.close();
       } catch (IOException e) {
         // ignore
       }
     }
-    jmxProxy = CommandLineBuilder.getJMXConnector(username, password, host, port);
     try {
-      mbsc = jmxProxy.getMBeanServerConnection();
+      jmxc = CommandLineBuilder.getJMXConnector(username, password, host, port);
+      mbsc = jmxc.getMBeanServerConnection();
       infoBean = (TCServerInfoMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.TC_SERVER_INFO,
                                                                                    TCServerInfoMBean.class, false);
       connected = true;
@@ -82,6 +82,7 @@ public class ServerStat {
     return infoBean.getHealthStatus();
   }
 
+  @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append(host + ".health: " + getHealth()).append(NEWLINE);
@@ -150,9 +151,9 @@ public class ServerStat {
     }
     TcConfig tcConfig = tcConfigDocument.getTcConfig();
     Server[] servers = tcConfig.getServers().getServerArray();
-    for (int i = 0; i < servers.length; i++) {
-      String host = servers[i].getHost();
-      int jmxPort = servers[i].getJmxPort().getIntValue() == 0 ? DEFAULT_JMX_PORT : servers[i].getJmxPort().getIntValue();
+    for (Server server : servers) {
+      String host = server.getHost();
+      int jmxPort = server.getJmxPort().getIntValue() == 0 ? DEFAULT_JMX_PORT : server.getJmxPort().getIntValue();
       ServerStat stat = new ServerStat(username, password, host, jmxPort);
       System.out.println(stat.toString());
     }

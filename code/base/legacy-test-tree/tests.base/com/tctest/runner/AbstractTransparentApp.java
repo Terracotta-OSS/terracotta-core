@@ -12,9 +12,12 @@ import com.tc.simulator.app.Application;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.app.ErrorContext;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.test.JMXUtils;
 
 import java.util.HashSet;
 import java.util.Set;
+
+import javax.management.remote.JMXConnector;
 
 public abstract class AbstractTransparentApp implements Application {
 
@@ -91,5 +94,13 @@ public abstract class AbstractTransparentApp implements Application {
 
   public boolean interpretResult(Object result) {
     return result instanceof Boolean && ((Boolean) result).booleanValue();
+  }
+
+  public static JMXConnector getJMXConnector(String host, int jmxPort) {
+    try {
+      return JMXUtils.getJMXConnector(host, jmxPort);
+    } catch (Exception e) {
+      throw new AssertionError(e);
+    }
   }
 }

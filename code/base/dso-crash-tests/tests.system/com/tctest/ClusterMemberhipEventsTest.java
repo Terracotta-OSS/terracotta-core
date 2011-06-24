@@ -6,12 +6,12 @@ package com.tctest;
 import org.apache.commons.io.IOUtils;
 
 import com.tc.admin.common.MBeanServerInvocationProxy;
-import com.tc.cli.CommandLineBuilder;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.stats.api.DSOMBean;
+import com.tc.test.JMXUtils;
 import com.tc.util.TcConfigBuilder;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.process.ExternalDsoServer;
@@ -88,7 +88,7 @@ public class ClusterMemberhipEventsTest extends BaseDSOTestCase {
     JMXConnector jmxConnector = null;
 
     try {
-      jmxConnector = CommandLineBuilder.getJMXConnector(null, null, "localhost", this.jmxPort_1);
+      jmxConnector = JMXUtils.getJMXConnector("localhost", this.jmxPort_1);
       final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
       mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.DSO, DSOMBean.class, false);
       while (true) {
@@ -121,7 +121,7 @@ public class ClusterMemberhipEventsTest extends BaseDSOTestCase {
     JMXConnector jmxConnector = null;
 
     try {
-      jmxConnector = CommandLineBuilder.getJMXConnector(null, null, "localhost", jmxPort);
+      jmxConnector = JMXUtils.getJMXConnector("localhost", jmxPort);
       final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
       mbean = MBeanServerInvocationProxy
           .newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
@@ -147,7 +147,7 @@ public class ClusterMemberhipEventsTest extends BaseDSOTestCase {
     JMXConnector jmxConnector = null;
 
     try {
-      jmxConnector = CommandLineBuilder.getJMXConnector(null, null, "localhost", jmxPort);
+      jmxConnector = JMXUtils.getJMXConnector("localhost", jmxPort);
       final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
       mbean = MBeanServerInvocationProxy
           .newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);

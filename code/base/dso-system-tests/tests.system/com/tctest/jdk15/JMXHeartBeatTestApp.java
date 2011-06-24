@@ -4,7 +4,6 @@
  */
 package com.tctest.jdk15;
 
-import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.object.config.ConfigVisitor;
@@ -12,6 +11,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.test.JMXUtils;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
@@ -69,7 +69,8 @@ public class JMXHeartBeatTestApp extends AbstractTransparentApp {
 
     try {
       echo("connecting to jmx server....");
-      jmxc = new JMXConnectorProxy("localhost", Integer.parseInt(config.getAttribute(JMX_PORT)));
+      int jmxPort = Integer.parseInt(config.getAttribute(JMX_PORT));
+      jmxc = JMXUtils.getJMXConnector("localhost", jmxPort);
       mbsc = jmxc.getMBeanServerConnection();
       echo("obtained mbeanserver connection");
       serverMBean = (TCServerInfoMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc,
@@ -85,7 +86,8 @@ public class JMXHeartBeatTestApp extends AbstractTransparentApp {
       if (jmxc != null) {
         try {
           jmxc.close();
-        } catch (IOException e) {/**/}
+        } catch (IOException e) {/**/
+        }
       }
     }
 

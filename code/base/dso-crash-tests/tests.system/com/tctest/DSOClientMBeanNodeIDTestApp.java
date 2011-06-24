@@ -6,7 +6,6 @@ package com.tctest;
 
 import com.tc.cluster.DsoCluster;
 import com.tc.injection.annotations.InjectedDsoInstance;
-import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -15,6 +14,7 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.stats.api.DSOClientMBean;
 import com.tc.stats.api.DSOMBean;
+import com.tc.test.JMXUtils;
 import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 
@@ -23,14 +23,10 @@ import java.io.IOException;
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
 
 public class DSOClientMBeanNodeIDTestApp extends AbstractTransparentApp {
-
-  // private static final int TOTAL_L1_PROCESS = 2;
-
   private final ApplicationConfig appConfig;
-
-  // private final CyclicBarrier barrier = new CyclicBarrier(TOTAL_L1_PROCESS);
 
   public DSOClientMBeanNodeIDTestApp(final String appId, final ApplicationConfig cfg,
                                      final ListenerProvider listenerProvider) {
@@ -52,16 +48,15 @@ public class DSOClientMBeanNodeIDTestApp extends AbstractTransparentApp {
   }
 
   private class DSOClientMBeanCoordinator {
-
     @InjectedDsoInstance
     private DsoCluster            cluster;
     private DSOMBean              dsoMBean;
     private MBeanServerConnection mbsc;
 
     public void startDSOClientMBeanCoordinator() {
-      JMXConnectorProxy jmxc = new JMXConnectorProxy("localhost", Integer.valueOf(appConfig
-          .getAttribute(ApplicationConfig.JMXPORT_KEY)));
+      int jmxPort = Integer.valueOf(appConfig.getAttribute(ApplicationConfig.JMXPORT_KEY));
       try {
+        JMXConnector jmxc = JMXUtils.getJMXConnector("localhost", jmxPort);
         mbsc = jmxc.getMBeanServerConnection();
       } catch (IOException e) {
         throw new AssertionError(e);
@@ -73,11 +68,9 @@ public class DSOClientMBeanNodeIDTestApp extends AbstractTransparentApp {
 
       Assert.eval(dsoMBean.getClients().length == 1);
       Assert.eval(clients[0].getNodeID().equals(cluster.getCurrentNode().getId()));
-
     }
 
     private DSOClientMBean[] getDSOClientMBeans() {
-
       ObjectName[] clientObjectNames = dsoMBean.getClients();
       DSOClientMBean[] clients = new DSOClientMBean[clientObjectNames.length];
       for (int i = 0; i < clients.length; i++) {
@@ -87,5 +80,4 @@ public class DSOClientMBeanNodeIDTestApp extends AbstractTransparentApp {
       return clients;
     }
   }
-
 }

@@ -6,7 +6,6 @@ package com.tc.test.activepassive;
 
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
-import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
@@ -16,6 +15,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.stats.api.DGCMBean;
 import com.tc.stats.api.DSOMBean;
 import com.tc.test.GroupData;
+import com.tc.test.JMXUtils;
 import com.tc.test.MultipleServerManager;
 import com.tc.test.MultipleServersConfigCreator;
 import com.tc.test.MultipleServersCrashMode;
@@ -515,13 +515,11 @@ public class ActivePassiveServerManager extends MultipleServerManager {
   }
 
   public static JMXConnector getJMXConnector(int jmxPort) throws IOException {
-    JMXConnector jmxConnector = new JMXConnectorProxy(HOST, jmxPort);
-    jmxConnector.connect();
-    return jmxConnector;
+    return JMXUtils.getJMXConnector("localhost", jmxPort);
   }
 
   public DSOMBean getDsoMBean(int index) throws IOException {
-    JMXConnectorProxy jmxc = new JMXConnectorProxy(HOST, jmxPorts[index]);
+    JMXConnector jmxc = getJMXConnector(jmxPorts[index]);
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
     DSOMBean dsoMBean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO,
                                                                                  DSOMBean.class, false);
@@ -529,7 +527,7 @@ public class ActivePassiveServerManager extends MultipleServerManager {
   }
 
   public DGCMBean getLocalDGCMBean(int index) throws IOException {
-    JMXConnectorProxy jmxc = new JMXConnectorProxy(HOST, jmxPorts[index]);
+    JMXConnector jmxc = getJMXConnector(jmxPorts[index]);
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
     DGCMBean dgcMBean = (DGCMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.LOCAL_DGC_STATS,
                                                                                  DSOMBean.class, false);

@@ -88,7 +88,7 @@ public class GCRunner {
       new GCRunner(host, port, username, password).runGC();
     } catch (IOException ioe) {
       consoleLogger.error("Unable to connect to host '" + host + "', port " + port
-                         + ". Are you sure there is a Terracotta server instance running there?");
+                          + ". Are you sure there is a Terracotta server instance running there?");
     } catch (SecurityException se) {
       consoleLogger.error(se.getMessage());
       commandLineBuilder.usageAndDie();
@@ -139,18 +139,18 @@ public class GCRunner {
   private boolean setActiveCoordinatorJmxPortAndHost(String host, int jmxPort) throws Exception {
     ServerGroupInfo[] serverGrpInfos = getServerGroupInfo();
     L2Info[] activeGrpServerInfos = null;
-    for (int i = 0; i < serverGrpInfos.length; i++) {
-      if (serverGrpInfos[i].isCoordinator()) {
-        activeGrpServerInfos = serverGrpInfos[i].members();
+    for (ServerGroupInfo serverGrpInfo : serverGrpInfos) {
+      if (serverGrpInfo.isCoordinator()) {
+        activeGrpServerInfos = serverGrpInfo.members();
       }
     }
 
     boolean isActiveFound = false;
-    for (int i = 0; i < activeGrpServerInfos.length; i++) {
-      if (isActive(activeGrpServerInfos[i].host(), activeGrpServerInfos[i].jmxPort())) {
+    for (L2Info activeGrpServerInfo : activeGrpServerInfos) {
+      if (isActive(activeGrpServerInfo.host(), activeGrpServerInfo.jmxPort())) {
         isActiveFound = true;
-        this.host = activeGrpServerInfos[i].host();
-        this.port = activeGrpServerInfos[i].jmxPort();
+        this.host = activeGrpServerInfo.host();
+        this.port = activeGrpServerInfo.jmxPort();
         break;
       }
     }

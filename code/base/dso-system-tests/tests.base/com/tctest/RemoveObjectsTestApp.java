@@ -5,7 +5,6 @@
 package com.tctest;
 
 import com.tc.exception.TCRuntimeException;
-import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 import com.tc.object.config.ConfigVisitor;
@@ -13,6 +12,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.test.JMXUtils;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
@@ -30,11 +30,11 @@ import junit.framework.Assert;
 
 public class RemoveObjectsTestApp extends AbstractTransparentApp {
 
-  private long                                TEST_DURATION = 5 * 60 * 1000;
+  private final long                          TEST_DURATION = 5 * 60 * 1000;
   private final CyclicBarrier                 barrier;
   private static final ReentrantReadWriteLock myLock        = new ReentrantReadWriteLock();
   private static final WriteLock              writeLock     = myLock.writeLock();
-  private ConcurrentHashMap                   sharedRoot    = new ConcurrentHashMap();
+  private final ConcurrentHashMap             sharedRoot    = new ConcurrentHashMap();
 
   private MBeanServerConnection               mbsc          = null;
   private JMXConnector                        jmxc;
@@ -59,6 +59,7 @@ public class RemoveObjectsTestApp extends AbstractTransparentApp {
       if (myID == 0) {
         ThreadUtil.reallySleep(10000);
         connect();
+        Assert.assertTrue(objectMBean != null);
         int startLiveCount = objectMBean.getAllObjectIds().size();
         long starttime = System.currentTimeMillis();
         while ((starttime + TEST_DURATION) > System.currentTimeMillis()) {
@@ -95,7 +96,8 @@ public class RemoveObjectsTestApp extends AbstractTransparentApp {
 
   private void connect() throws Exception {
     System.out.println("connecting to jmx server....");
-    jmxc = new JMXConnectorProxy("localhost", Integer.parseInt(config.getAttribute(ApplicationConfig.JMXPORT_KEY)));
+    int jmxPort = Integer.parseInt(config.getAttribute(ApplicationConfig.JMXPORT_KEY));
+    jmxc = JMXUtils.getJMXConnector("localhost", jmxPort);
     mbsc = jmxc.getMBeanServerConnection();
     System.out.println("obtained mbeanserver connection");
     objectMBean = (ObjectManagementMonitorMBean) MBeanServerInvocationHandler

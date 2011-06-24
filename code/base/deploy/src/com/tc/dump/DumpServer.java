@@ -18,8 +18,8 @@ import javax.management.remote.JMXConnector;
 public class DumpServer {
   private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
 
-  private String                host;
-  private int                   port;
+  private final String          host;
+  private final int             port;
   private final String          username;
   private final String          password;
 

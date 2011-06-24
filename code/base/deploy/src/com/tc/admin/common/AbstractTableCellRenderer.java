@@ -72,7 +72,9 @@ public abstract class AbstractTableCellRenderer implements TableCellRenderer {
       if (m != null) {
         row = ((Integer) m.invoke(table, Integer.valueOf(row))).intValue();
       }
-    } catch (Exception e) {/**/
+    } catch (RuntimeException e) {/**/
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
 
     setValue(table.getModel().getValueAt(row, col));

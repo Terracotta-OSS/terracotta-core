@@ -5,7 +5,6 @@
 package com.tctest.jdk15;
 
 import com.tc.lang.ServerExitStatus;
-import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.object.config.schema.L2DSOConfig;
@@ -22,11 +21,14 @@ import java.io.IOException;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
 
 public class PassiveSmoothStartTestApp extends AbstractTransparentApp {
   private final ServerControl[]   serverControls;
   private final ApplicationConfig appConfig;
-  private JMXConnectorProxy[]     jmxConnectors;
+  private final JMXConnector[]    jmxConnectors;
   public static String            SERVER0_DATA_PATH = "server0_data_path";
   public static String            SERVER1_DATA_PATH = "server1_data_path";
 
@@ -36,7 +38,7 @@ public class PassiveSmoothStartTestApp extends AbstractTransparentApp {
     this.serverControls = cfg.getServerControls();
     Assert.assertNotNull(this.serverControls);
     Assert.eval(this.serverControls.length == 2);
-    jmxConnectors = new JMXConnectorProxy[2];
+    jmxConnectors = new JMXConnector[2];
   }
 
   public void run() {
@@ -152,11 +154,11 @@ public class PassiveSmoothStartTestApp extends AbstractTransparentApp {
       ThreadUtil.reallySleep(5000);
     }
 
-    for (int i = 0; i < dirtyObjectDBTimeStampedDirs.length; i++) {
+    for (File dirtyObjectDBTimeStampedDir : dirtyObjectDBTimeStampedDirs) {
       Assert.eval(new String(dirtyObjectDBTimeStampedDirs[0].getName())
           .startsWith(L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX));
       System.out.println("XXX Successfully created Timestamped DirtyObjectDB Backup dir "
-                         + dirtyObjectDBTimeStampedDirs[i].getAbsolutePath());
+                         + dirtyObjectDBTimeStampedDir.getAbsolutePath());
     }
   }
 
@@ -195,6 +197,7 @@ public class PassiveSmoothStartTestApp extends AbstractTransparentApp {
   }
 
   private void ensureActiveServer(int index) throws IOException {
+    jmxConnectors[index].connect();
     MBeanServerConnection mBeanServer = jmxConnectors[index].getMBeanServerConnection();
     TCServerInfoMBean m = (TCServerInfoMBean) MBeanServerInvocationHandler
         .newProxyInstance(mBeanServer, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, true);
@@ -205,6 +208,7 @@ public class PassiveSmoothStartTestApp extends AbstractTransparentApp {
   }
 
   private TCServerInfoMBean getJmxServer(int index) throws IOException {
+    jmxConnectors[index].connect();
     MBeanServerConnection mBeanServer = jmxConnectors[index].getMBeanServerConnection();
     return (TCServerInfoMBean) MBeanServerInvocationHandler.newProxyInstance(mBeanServer, L2MBeanNames.TC_SERVER_INFO,
                                                                              TCServerInfoMBean.class, true);
@@ -212,7 +216,11 @@ public class PassiveSmoothStartTestApp extends AbstractTransparentApp {
 
   private void createJMXConnectors() {
     for (int i = 0; i < serverControls.length; i++) {
-      jmxConnectors[i] = new JMXConnectorProxy("localhost", serverControls[i].getAdminPort());
+      try {
+        jmxConnectors[i] = newJMXConnector("localhost", serverControls[i].getAdminPort());
+      } catch (Exception e) {
+        throw new AssertionError(e);
+      }
     }
   }
 
@@ -224,5 +232,14 @@ public class PassiveSmoothStartTestApp extends AbstractTransparentApp {
         // who cares
       }
     }
+  }
+
+  /*
+   * This is line AbstractTransparentApp.getJMXConnector except that it doesn't automatically connect.
+   */
+  private static JMXConnector newJMXConnector(String host, int jmxPort) throws Exception {
+    JMXServiceURL url = new JMXServiceURL("service:jmx:jmxmp://" + host + ":" + jmxPort);
+    JMXConnector jmxc = JMXConnectorFactory.newJMXConnector(url, null);
+    return jmxc;
   }
 }

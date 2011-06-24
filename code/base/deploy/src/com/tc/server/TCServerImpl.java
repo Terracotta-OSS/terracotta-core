@@ -34,9 +34,9 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.state.StateManager;
 import com.tc.lang.StartupHelper;
+import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
-import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.license.LicenseManager;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
@@ -138,7 +138,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     this.statisticsGathererSubSystem = new StatisticsGathererSubSystem();
     if (!this.statisticsGathererSubSystem.setup(manager.commonl2Config())) {
       notifyShutdown();
-      System.exit(1);
+      throw new RuntimeException("Unable to setup StatisticsGathererSubSystem");
     }
 
   }
@@ -471,12 +471,17 @@ public class TCServerImpl extends SEDA implements TCServer {
   private void startDSOServer(final Sink httpSink) throws Exception {
     Assert.assertTrue(this.state.isStartState());
     TCProperties tcProps = TCPropertiesImpl.getProperties();
-    ObjectStatsRecorder objectStatsRecorder = new ObjectStatsRecorder(tcProps
-        .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED), tcProps
-        .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_REQUEST_LOGGING_ENABLED), tcProps
-        .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_FLUSH_LOGGING_ENABLED), tcProps
-        .getBoolean(TCPropertiesConsts.L2_TRANSACTIONMANAGER_LOGGING_PRINT_BROADCAST_STATS), tcProps
-        .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED));
+    ObjectStatsRecorder objectStatsRecorder = new ObjectStatsRecorder(
+                                                                      tcProps
+                                                                          .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED),
+                                                                      tcProps
+                                                                          .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_REQUEST_LOGGING_ENABLED),
+                                                                      tcProps
+                                                                          .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_FLUSH_LOGGING_ENABLED),
+                                                                      tcProps
+                                                                          .getBoolean(TCPropertiesConsts.L2_TRANSACTIONMANAGER_LOGGING_PRINT_BROADCAST_STATS),
+                                                                      tcProps
+                                                                          .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED));
 
     this.dsoServer = createDistributedObjectServer(this.configurationSetupManager, this.connectionPolicy, httpSink,
                                                    new TCServerInfo(this, this.state, objectStatsRecorder),

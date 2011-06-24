@@ -6,7 +6,6 @@ package com.tctest.jdk15;
 
 import org.apache.commons.io.FileUtils;
 
-import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
@@ -17,6 +16,7 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.stats.api.DSOClientMBean;
 import com.tc.stats.api.DSOMBean;
+import com.tc.test.JMXUtils;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
@@ -34,6 +34,7 @@ import javax.management.MBeanServerInvocationHandler;
 import javax.management.Notification;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
 
 public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp implements NotificationListener {
   public static final String      CONFIG_FILE  = "config-file";
@@ -42,7 +43,7 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
   public static final String      JMX_PORT     = "jmx-port";
 
   private final ApplicationConfig appConfig;
-  private JMXConnectorProxy       jmxc;
+  private JMXConnector            jmxc;
   private MBeanServerConnection   mbsc;
   private DSOMBean                dsoMBean;
 
@@ -58,7 +59,8 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
 
   @Override
   protected void runTest() throws Throwable {
-    jmxc = new JMXConnectorProxy("localhost", Integer.valueOf(appConfig.getAttribute(JMX_PORT)));
+    int jmxPort = Integer.valueOf(appConfig.getAttribute(JMX_PORT));
+    jmxc = JMXUtils.getJMXConnector("localhost", jmxPort);
     mbsc = jmxc.getMBeanServerConnection();
     dsoMBean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO, DSOMBean.class, false);
     getCurrentChannelIds();

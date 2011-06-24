@@ -7,7 +7,6 @@ package com.tc.objectserver.control;
 import org.apache.commons.lang.ArrayUtils;
 
 import com.tc.admin.common.MBeanServerInvocationProxy;
-import com.tc.cli.CommandLineBuilder;
 import com.tc.config.Directories;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
 import com.tc.lcp.LinkedJavaProcess;
@@ -16,6 +15,7 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.process.StreamCopier;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.test.JMXUtils;
 import com.tc.test.TestConfigObject;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.Vm;
@@ -475,7 +475,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   public void dumpServerControl() throws Exception {
     JMXConnector jmxConnector = null;
     try {
-      jmxConnector = CommandLineBuilder.getJMXConnector("localhost", getAdminPort());
+      jmxConnector = JMXUtils.getJMXConnector("localhost", getAdminPort());
       MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
       L2DumperMBean mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.DUMPER, L2DumperMBean.class,
                                                                      false);

@@ -6,7 +6,6 @@ package com.tctest.jdk15;
 
 import org.apache.commons.lang.StringUtils;
 
-import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.appevent.NonPortableFieldSetContext;
@@ -20,6 +19,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.app.ErrorContext;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.test.JMXUtils;
 import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 
@@ -29,6 +29,7 @@ import java.util.concurrent.CyclicBarrier;
 import javax.management.MBeanServerConnection;
 import javax.management.Notification;
 import javax.management.NotificationListener;
+import javax.management.remote.JMXConnector;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 
@@ -61,9 +62,9 @@ public class ApplicationEventTestApp extends AbstractTransparentApp {
   }
 
   private void setupApplicationEventListener() {
-    JMXConnectorProxy jmx = new JMXConnectorProxy("localhost", jmxPort);
     try {
-      mbsc = jmx.getMBeanServerConnection();
+      JMXConnector jmxc = JMXUtils.getJMXConnector("localhost", jmxPort);
+      mbsc = jmxc.getMBeanServerConnection();
       mbsc.addNotificationListener(L2MBeanNames.DSO_APP_EVENTS, new AppEventListener(), null, null);
     } catch (Exception e) {
       throw new RuntimeException("Setting up AppEventListener", e);

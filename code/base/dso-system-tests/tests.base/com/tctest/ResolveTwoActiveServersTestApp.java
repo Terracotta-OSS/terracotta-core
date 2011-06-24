@@ -6,7 +6,6 @@ package com.tctest;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
-import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.proxy.TCPProxy;
@@ -16,6 +15,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.test.JMXUtils;
 import com.tc.util.Assert;
 import com.tc.util.TCAssertionError;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
@@ -90,24 +90,24 @@ public class ResolveTwoActiveServersTestApp extends AbstractErrorCatchingTranspa
   }
 
   public void cleanUp() throws IOException {
-    for (int i = 0; i < proxies.length; i++) {
-      proxies[i].stop();
+    for (TCPProxy proxie : proxies) {
+      proxie.stop();
     }
 
-    for (int i = 0; i < jmxConnectors.length; i++) {
-      jmxConnectors[i].close();
+    for (JMXConnector jmxConnector : jmxConnectors) {
+      jmxConnector.close();
     }
   }
 
   private void connectServers() throws IOException {
-    for (int i = 0; i < proxies.length; i++) {
-      proxies[i].start();
+    for (TCPProxy proxie : proxies) {
+      proxie.start();
     }
   }
 
   private void disconnectServers() throws IOException {
-    for (int i = 0; i < proxies.length; i++) {
-      proxies[i].fastStop();
+    for (TCPProxy proxie : proxies) {
+      proxie.fastStop();
     }
 
     MBeanServerConnection mBeanServer = jmxConnectors[1].getMBeanServerConnection();
@@ -151,9 +151,9 @@ public class ResolveTwoActiveServersTestApp extends AbstractErrorCatchingTranspa
                                                                              TCServerInfoMBean.class, true);
   }
 
-  private void createJMXConnectors() {
+  private void createJMXConnectors() throws Exception {
     for (int i = 0; i < serverControls.length; i++) {
-      jmxConnectors[i] = new JMXConnectorProxy("localhost", serverControls[i].getAdminPort());
+      jmxConnectors[i] = JMXUtils.getJMXConnector("localhost", serverControls[i].getAdminPort());
     }
   }
 

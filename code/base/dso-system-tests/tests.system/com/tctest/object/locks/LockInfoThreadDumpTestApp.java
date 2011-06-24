@@ -6,7 +6,6 @@ package com.tctest.object.locks;
 
 import EDU.oswego.cs.dl.util.concurrent.CountDown;
 
-import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.object.config.ConfigVisitor;
@@ -15,6 +14,7 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.stats.api.DSOClientMBean;
 import com.tc.stats.api.DSOMBean;
+import com.tc.test.JMXUtils;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
@@ -26,6 +26,7 @@ import java.util.concurrent.CyclicBarrier;
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
 
 public class LockInfoThreadDumpTestApp extends AbstractTransparentApp {
   protected static final String JMXPORT = "jmxport";
@@ -122,10 +123,9 @@ public class LockInfoThreadDumpTestApp extends AbstractTransparentApp {
   }
 
   private L1InfoMBean getL1InfoBean(int clientID) {
-
-    JMXConnectorProxy jmxc = new JMXConnectorProxy("localhost", jmxPort);
     MBeanServerConnection mbsc;
     try {
+      JMXConnector jmxc = JMXUtils.getJMXConnector("localhost", jmxPort);
       mbsc = jmxc.getMBeanServerConnection();
     } catch (IOException e) {
       throw new AssertionError(e);

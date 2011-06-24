@@ -6,12 +6,12 @@ package com.tctest;
 import org.apache.commons.io.IOUtils;
 
 import com.tc.admin.common.MBeanServerInvocationProxy;
-import com.tc.cli.CommandLineBuilder;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.TCSocketAddress;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.test.JMXUtils;
 import com.tc.util.Assert;
 import com.tc.util.TcConfigBuilder;
 import com.tc.util.concurrent.ThreadUtil;
@@ -39,33 +39,38 @@ public class BindAddressSystemTest extends BaseDSOTestCase {
 
   public void testDsoPortBinding() throws Exception {
     tcConfig = getTempFile("server-tc-config-bind-address-test.xml");
-    String config =        "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
-                    + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "\n<servers>"
-                    + "\n      <server name=\"server1\" host=\"" + TCSocketAddress.LOOPBACK_IP + "\">"
-                    + "\n      <dso-port bind=\"" +InetAddress.getLocalHost().getHostAddress() + "\">9510</dso-port>"  
-                    + "\n      <dso>" 
+    String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
+                    + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "\n<servers>"
+                    + "\n      <server name=\"server1\" host=\""
+                    + TCSocketAddress.LOOPBACK_IP
+                    + "\">"
+                    + "\n      <dso-port bind=\""
+                    + InetAddress.getLocalHost().getHostAddress()
+                    + "\">9510</dso-port>"
+                    + "\n      <dso>"
                     + "\n        <persistence>"
-                    + "\n          <mode>permanent-store</mode>" 
-                    + "\n        </persistence>" 
+                    + "\n          <mode>permanent-store</mode>"
+                    + "\n        </persistence>"
                     + "\n      </dso>"
-                    + "\n      </server>" 
-                    + "\n      <server name=\"server2\" host=\"" + TCSocketAddress.LOOPBACK_IP + "\">"
-                    + "\n      <dso-port bind=\"" +InetAddress.getLocalHost().getHostAddress() + "\">8510</dso-port>"
-                    + "\n      <dso>" 
+                    + "\n      </server>"
+                    + "\n      <server name=\"server2\" host=\""
+                    + TCSocketAddress.LOOPBACK_IP
+                    + "\">"
+                    + "\n      <dso-port bind=\""
+                    + InetAddress.getLocalHost().getHostAddress()
+                    + "\">8510</dso-port>"
+                    + "\n      <dso>"
                     + "\n        <persistence>"
-                    + "\n          <mode>permanent-store</mode>" 
-                    + "\n        </persistence>" 
+                    + "\n          <mode>permanent-store</mode>"
+                    + "\n        </persistence>"
                     + "\n      </dso>"
-                    + "\n      </server>" 
+                    + "\n      </server>"
                     + "\n      <ha>"
                     + "\n        <mode>networked-active-passive</mode>"
                     + "\n        <networked-active-passive>"
                     + "\n           <election-time>5</election-time>"
                     + "\n         </networked-active-passive>"
-                    + "\n      </ha>"
-                    + "\n</servers>" 
-                    + "\n</tc:tc-config>";
+                    + "\n      </ha>" + "\n</servers>" + "\n</tc:tc-config>";
     writeConfigFile(config);
     configBuilder = new TcConfigBuilder(tcConfig.getAbsoluteFile());
     configBuilder.randomizePorts();
@@ -84,7 +89,7 @@ public class BindAddressSystemTest extends BaseDSOTestCase {
     System.out.println("server2 started");
     waitTillBecomePassiveStandBy(jmxPort_2);
     System.out.println("server2 became passive");
-    
+
     ExternalDsoClient client = createClient("client");
     client.start();
     ThreadUtil.reallySleep(5000);
@@ -93,35 +98,39 @@ public class BindAddressSystemTest extends BaseDSOTestCase {
     }
   }
 
-  public void testGroupPortBinding() throws Exception{
+  public void testGroupPortBinding() throws Exception {
     tcConfig = getTempFile("server-tc-config-bind-address-test.xml");
-    String config =        "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
-                    + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "\n<servers>"
-                    + "\n      <server name=\"server1\" host=\"" + TCSocketAddress.LOOPBACK_IP + "\">"
-                    + "\n      <l2-group-port bind=\"" +InetAddress.getLocalHost().getHostAddress() + "\">9510</l2-group-port>"  
-                    + "\n      <dso>" 
+    String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
+                    + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "\n<servers>"
+                    + "\n      <server name=\"server1\" host=\""
+                    + TCSocketAddress.LOOPBACK_IP
+                    + "\">"
+                    + "\n      <l2-group-port bind=\""
+                    + InetAddress.getLocalHost().getHostAddress()
+                    + "\">9510</l2-group-port>"
+                    + "\n      <dso>"
                     + "\n        <persistence>"
-                    + "\n          <mode>permanent-store</mode>" 
-                    + "\n        </persistence>" 
+                    + "\n          <mode>permanent-store</mode>"
+                    + "\n        </persistence>"
                     + "\n      </dso>"
-                    + "\n      </server>" 
-                    + "\n      <server name=\"server2\" host=\"" + TCSocketAddress.LOOPBACK_IP + "\">"
-                    + "\n      <l2-group-port bind=\"" +InetAddress.getLocalHost().getHostAddress() + "\">8510</l2-group-port>"
-                    + "\n      <dso>" 
+                    + "\n      </server>"
+                    + "\n      <server name=\"server2\" host=\""
+                    + TCSocketAddress.LOOPBACK_IP
+                    + "\">"
+                    + "\n      <l2-group-port bind=\""
+                    + InetAddress.getLocalHost().getHostAddress()
+                    + "\">8510</l2-group-port>"
+                    + "\n      <dso>"
                     + "\n        <persistence>"
-                    + "\n          <mode>permanent-store</mode>" 
-                    + "\n        </persistence>" 
+                    + "\n          <mode>permanent-store</mode>"
+                    + "\n        </persistence>"
                     + "\n      </dso>"
-                    + "\n      </server>" 
+                    + "\n      </server>"
                     + "\n      <ha>"
                     + "\n        <mode>networked-active-passive</mode>"
                     + "\n        <networked-active-passive>"
                     + "\n           <election-time>5</election-time>"
-                    + "\n         </networked-active-passive>"
-                    + "\n      </ha>"
-                    + "\n</servers>" 
-                    + "\n</tc:tc-config>";
+                    + "\n         </networked-active-passive>" + "\n      </ha>" + "\n</servers>" + "\n</tc:tc-config>";
     writeConfigFile(config);
     configBuilder = new TcConfigBuilder(tcConfig.getAbsoluteFile());
     configBuilder.randomizePorts();
@@ -148,7 +157,7 @@ public class BindAddressSystemTest extends BaseDSOTestCase {
     JMXConnector jmxConnector = null;
 
     try {
-      jmxConnector = CommandLineBuilder.getJMXConnector(null, null, "localhost", jmxPort);
+      jmxConnector = JMXUtils.getJMXConnector("localhost", jmxPort);
       final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
       mbean = MBeanServerInvocationProxy
           .newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
@@ -174,7 +183,7 @@ public class BindAddressSystemTest extends BaseDSOTestCase {
     JMXConnector jmxConnector = null;
 
     try {
-      jmxConnector = CommandLineBuilder.getJMXConnector(null, null, "localhost", jmxPort);
+      jmxConnector = JMXUtils.getJMXConnector("localhost", jmxPort);
       final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
       mbean = MBeanServerInvocationProxy
           .newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);

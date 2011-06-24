@@ -3,13 +3,13 @@
  */
 package com.tctest;
 
-import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.stats.api.DSOClientMBean;
 import com.tc.stats.api.DSOMBean;
+import com.tc.test.JMXUtils;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.IOException;
@@ -55,7 +55,12 @@ public class JmxMaxThreadsTestApp extends AbstractTransparentApp {
   }
 
   private static void getConfig() {
-    JMXConnectorProxy jmxConnector = new JMXConnectorProxy("localhost", jmxPort);
+    JMXConnector jmxConnector = null;
+    try {
+      jmxConnector = JMXUtils.getJMXConnector("localhost", jmxPort);
+    } catch (Exception e) {
+      new AssertionError(e);
+    }
     MBeanServerConnection mbsc = getMBeanServerConnection(jmxConnector, "localhost", jmxPort);
     DSOMBean dsoMBean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO,
                                                                                  DSOMBean.class, false);

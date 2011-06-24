@@ -10,7 +10,6 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.exception.TCRuntimeException;
-import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.l1.L1InfoMBean;
@@ -23,6 +22,7 @@ import com.tc.simulator.listener.ListenerProvider;
 import com.tc.simulator.listener.OutputListener;
 import com.tc.stats.api.DSOClientMBean;
 import com.tc.stats.api.DSOMBean;
+import com.tc.test.JMXUtils;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
@@ -41,6 +41,7 @@ import java.util.concurrent.CyclicBarrier;
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
 
 public class ObjectDataThreadDumpTestApp extends AbstractTransparentApp {
   public static final String      SYNCHRONOUS_WRITE = "synch-write";
@@ -141,8 +142,9 @@ public class ObjectDataThreadDumpTestApp extends AbstractTransparentApp {
 
   private TCServerInfoMBean getDsoServerInfoMBean() {
     MBeanServerConnection mbsc;
-    JMXConnectorProxy jmxc = new JMXConnectorProxy("localhost", Integer.valueOf(appConfig.getAttribute(JMX_PORT)));
+    int jmxPort = Integer.valueOf(appConfig.getAttribute(JMX_PORT));
     try {
+      JMXConnector jmxc = JMXUtils.getJMXConnector("localhost", jmxPort);
       mbsc = jmxc.getMBeanServerConnection();
     } catch (IOException e) {
       throw new AssertionError(e);
@@ -154,8 +156,9 @@ public class ObjectDataThreadDumpTestApp extends AbstractTransparentApp {
 
   private L1InfoMBean[] getDSOClientInfoMBeans() {
     MBeanServerConnection mbsc;
-    JMXConnectorProxy jmxc = new JMXConnectorProxy("localhost", Integer.valueOf(appConfig.getAttribute(JMX_PORT)));
+    int jmxPort = Integer.valueOf(appConfig.getAttribute(JMX_PORT));
     try {
+      JMXConnector jmxc = JMXUtils.getJMXConnector("localhost", jmxPort);
       mbsc = jmxc.getMBeanServerConnection();
     } catch (IOException e) {
       throw new AssertionError(e);

@@ -23,15 +23,15 @@ import javax.management.remote.JMXConnector;
  */
 
 public class ServerDBBackupRunner {
-  private String             host;
-  private int                port;
+  private final String       host;
+  private final int          port;
   private final String       username;
   private final String       password;
   public static final String DEFAULT_HOST = "localhost";
   public static final int    DEFAULT_PORT = 9520;
   private JMXConnector       jmxConnector;
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Exception {
     CommandLineBuilder commandLineBuilder = new CommandLineBuilder(ServerDBBackupRunner.class.getName(), args);
 
     commandLineBuilder.addOption("n", "hostname", true, "Terracotta Server instance hostname", String.class, false,

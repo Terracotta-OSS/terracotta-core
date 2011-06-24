@@ -9,7 +9,6 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.cluster.DsoClusterEvent;
 import com.tc.cluster.DsoClusterListener;
-import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
@@ -17,6 +16,7 @@ import com.tc.objectserver.control.ServerControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.stats.api.DSOMBean;
+import com.tc.test.JMXUtils;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
@@ -139,7 +139,7 @@ public class ClientAbscondAfterServerCrashTestApp extends AbstractTransparentApp
   }
 
   private void checkServerHasClients(final int clientCount, final int jmxPort) throws Exception {
-    JMXConnector jmxConnector = new JMXConnectorProxy("localhost", jmxPort);
+    JMXConnector jmxConnector = JMXUtils.getJMXConnector("localhost", jmxPort);
     MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
     DSOMBean mbean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DSO, DSOMBean.class,
                                                                               true);

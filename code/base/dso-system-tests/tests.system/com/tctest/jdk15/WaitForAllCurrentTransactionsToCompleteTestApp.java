@@ -6,7 +6,6 @@ package com.tctest.jdk15;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
@@ -15,6 +14,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.stats.api.DSOMBean;
+import com.tc.test.JMXUtils;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
@@ -27,6 +27,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
 
 /**
  * Exercise ManagerUtil.waitForAllCurrentTransactionsToComplete() to see if screw up anything
@@ -101,8 +102,9 @@ public class WaitForAllCurrentTransactionsToCompleteTestApp extends AbstractTran
 
   private long getPendingTransactionsCount() {
     MBeanServerConnection mbsc;
-    JMXConnectorProxy jmxc = new JMXConnectorProxy("localhost", Integer.valueOf(appConfig.getAttribute(JMX_PORT)));
+    int jmxPort = Integer.valueOf(appConfig.getAttribute(JMX_PORT));
     try {
+      JMXConnector jmxc = JMXUtils.getJMXConnector("localhost", jmxPort);
       mbsc = jmxc.getMBeanServerConnection();
     } catch (IOException e) {
       throw new AssertionError(e);

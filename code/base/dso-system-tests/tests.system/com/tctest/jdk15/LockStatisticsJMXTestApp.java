@@ -4,7 +4,6 @@
  */
 package com.tctest.jdk15;
 
-import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.LockStatisticsMonitorMBean;
 import com.tc.management.lock.stats.LockSpec;
@@ -21,6 +20,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.locks.LockID;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.test.JMXUtils;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
@@ -35,7 +35,7 @@ import javax.management.MBeanServerInvocationHandler;
 import javax.management.remote.JMXConnector;
 
 public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
-  private static final String NAMED_LOCK_NAME = "nameLock";
+  private static final String        NAMED_LOCK_NAME  = "nameLock";
 
   public static final String         CONFIG_FILE      = "config-file";
   public static final String         PORT_NUMBER      = "port-number";
@@ -88,7 +88,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
       testTryAutoLock(index, 2);
       testAutoLock(index, 2);
       testNameLock(index, 2);
-      
+
       enableStackTraces(index, 0, 1);
 
       testServerLockAggregateWaitTime("lock0", index);
@@ -110,7 +110,8 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
 
   private void connect() throws Exception {
     echo("connecting to jmx server....");
-    jmxc = new JMXConnectorProxy("localhost", Integer.parseInt(config.getAttribute(JMX_PORT)));
+    int jmxPort = Integer.parseInt(config.getAttribute(JMX_PORT));
+    jmxc = JMXUtils.getJMXConnector("localhost", jmxPort);
     mbsc = jmxc.getMBeanServerConnection();
     echo("obtained mbeanserver connection");
     statMBean = (LockStatisticsMonitorMBean) MBeanServerInvocationHandler
@@ -132,20 +133,22 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
 
     barrier.await();
   }
-  
+
   private void testNameLock(int index, int traceDepth) throws Throwable {
     if (index == 0) {
       waitForAllToMoveOn();
       connect();
       Thread.sleep(2000);
-      verifyClientStat(ManagerUtil.getManager().generateLockIdentifier(ByteCodeUtil.generateNamedLockName(NAMED_LOCK_NAME)), 1, traceDepth);
+      verifyClientStat(ManagerUtil.getManager().generateLockIdentifier(ByteCodeUtil
+                                                                           .generateNamedLockName(NAMED_LOCK_NAME)), 1,
+                       traceDepth);
       disconnect();
     } else {
-      TestClass tc = (TestClass)sharedRoot;
+      TestClass tc = (TestClass) sharedRoot;
       tc.nameLockMethod(1000);
       waitForAllToMoveOn();
     }
-    
+
     waitForAllToMoveOn();
   }
 
@@ -158,30 +161,30 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
       verifyClientStat(lock, TestClass.class.getName(), 2, traceDepth);
       disconnect();
     } else {
-      TestClass tc = (TestClass)sharedRoot;
+      TestClass tc = (TestClass) sharedRoot;
       tc.syncMethod(1000);
       tc.syncBlock(2000);
       waitForAllToMoveOn();
     }
-    
+
     waitForAllToMoveOn();
   }
-  
+
   private void testTryAutoLock(int index, int traceDepth) throws Throwable {
     if (index == 0) {
       waitForAllToMoveOn();
       connect();
       Thread.sleep(2000);
-      TestClass tc = (TestClass)sharedRoot;
+      TestClass tc = (TestClass) sharedRoot;
       LockID lock = ManagerUtil.getManager().generateLockIdentifier(tc.getTryLock());
       verifyClientStat(lock, ReentrantLock.class.getName(), 1, traceDepth);
       disconnect();
     } else {
-      TestClass tc = (TestClass)sharedRoot;
+      TestClass tc = (TestClass) sharedRoot;
       tc.tryLockBlock(1000);
       waitForAllToMoveOn();
     }
-    
+
     waitForAllToMoveOn();
   }
 
@@ -205,7 +208,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     }
     waitForAllToMoveOn();
   }
-  
+
   private void assertExpectedTime(long expectedMinTime, long actualTime) {
     // Supposed to be expectedMinTime but changed to expectedMinTime-10
     // This is due to System.currentTimeMillis() which is not that accurate,
@@ -217,7 +220,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
       Assert.assertTrue(actualTime >= (expectedMinTime - 10));
     }
   }
-  
+
   private void testServerLockAggregateWaitTime(String lockName, int index) throws Throwable {
     if (index == 0) {
       connect();
@@ -368,7 +371,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     LockSpec ls = getLockSpecFor(lock);
     Assert.assertEquals(expectedValue, ls.getClientStats().getNumOfLockAwarded());
   }
-  
+
   private long getServerAggregateAverageHeldTime(LockID lock) {
     LockSpec ls = getLockSpecFor(lock);
     return ls.getServerStats().getAvgHeldTimeInMillis();
@@ -378,7 +381,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     LockSpec ls = getLockSpecFor(lock);
     return ls.getClientStats().getAvgHeldTimeInMillis();
   }
-  
+
   private long getServerAggregateAverageWaitTime(LockID lock) {
     LockSpec ls = getLockSpecFor(lock);
     return ls.getServerStats().getAvgWaitTimeToAwardInMillis();
@@ -399,10 +402,10 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     Assert.assertEquals(numOfClientsStackTraces, ls.children().size());
     assertStackTracesDepth(ls.children(), traceDepth);
   }
-  
+
   private void verifyClientStat(LockID lock, String lockType, int numOfClientsStackTraces, int traceDepth) {
     LockSpec ls = getLockSpecFor(lock);
-//    Assert.assertEquals(lockType, ls.getObjectType());
+    // Assert.assertEquals(lockType, ls.getObjectType());
     Assert.assertEquals(numOfClientsStackTraces, ls.children().size());
     assertStackTracesDepth(ls.children(), traceDepth);
   }
@@ -424,16 +427,14 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     System.err.println("Statistics For: ");
     for (LockSpec ls : c) {
       System.err.println("\t" + ls.getLockID());
-      if (ls.getLockID().equals(lock)) {
-        return ls;
-      }
+      if (ls.getLockID().equals(lock)) { return ls; }
     }
-    throw new AssertionError(lock + " cannot be found in the statistics.");    
+    throw new AssertionError(lock + " cannot be found in the statistics.");
   }
-  
+
   private static class TestClass {
-    private ReentrantLock rLock = new ReentrantLock();
-    
+    private final ReentrantLock rLock = new ReentrantLock();
+
     public synchronized void syncMethod(long time) {
       try {
         Thread.sleep(time);
@@ -451,7 +452,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
         }
       }
     }
-    
+
     public void nameLockMethod(long time) {
       try {
         Thread.sleep(time);
@@ -459,7 +460,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
         throw new AssertionError(e);
       }
     }
-    
+
     public void tryLockBlock(long time) {
       boolean isLocked = rLock.tryLock();
       if (isLocked) {
@@ -472,7 +473,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
         }
       }
     }
-    
+
     public Object getTryLock() {
       return rLock;
     }

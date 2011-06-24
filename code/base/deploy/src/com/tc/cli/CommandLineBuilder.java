@@ -21,11 +21,11 @@ import java.util.Map;
 import javax.management.remote.JMXConnector;
 
 public class CommandLineBuilder {
-  private Options     options = new Options();
-  private String      callingClassName;
-  private String[]    cmdArguments;
-  private CommandLine commandLine;
-  private String      usageMessage;
+  private Options        options = new Options();
+  private final String   callingClassName;
+  private final String[] cmdArguments;
+  private CommandLine    commandLine;
+  private String         usageMessage;
 
   static {
     System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
@@ -152,12 +152,9 @@ public class CommandLineBuilder {
   }
 
   public static JMXConnector getJMXConnector(String host, int port) {
-    return new JMXConnectorProxy(host, port, null);
+    return new JMXConnectorProxy(host, port);
   }
 
-  /**
-   * username and password must not be null. If either is null, they won't be used
-   */
   public static JMXConnector getJMXConnector(String username, String password, String host, int port) {
     Map env = new HashMap();
     if (username != null && password != null) {

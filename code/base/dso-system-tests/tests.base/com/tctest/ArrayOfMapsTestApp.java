@@ -7,9 +7,7 @@ package com.tctest;
 import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
-import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.MBeanServerInvocationProxy;
-import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.object.ObjectID;
 import com.tc.object.bytecode.Manageable;
@@ -24,6 +22,7 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.stats.api.DSOMBean;
 import com.tc.test.GroupData;
+import com.tc.test.JMXUtils;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.io.IOException;
@@ -31,6 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 
 /**
@@ -183,17 +183,12 @@ public class ArrayOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
   }
 
   private static final class ObjectBrowser {
-
-    private final ConnectionContext context;
-    private final JMXConnector      jmxc;
-    private final DSOMBean          dsoBean;
+    private final DSOMBean dsoBean;
 
     public ObjectBrowser(int jmxPort) throws IOException {
-      context = new ConnectionContext("localhost", jmxPort);
-      jmxc = new JMXConnectorProxy(context.host, context.port);
-      context.jmxc = jmxc;
-      context.mbsc = jmxc.getMBeanServerConnection();
-      dsoBean = MBeanServerInvocationProxy.newMBeanProxy(context.mbsc, L2MBeanNames.DSO, DSOMBean.class, false);
+      JMXConnector jmxc = JMXUtils.getJMXConnector("localhost", jmxPort);
+      MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
+      dsoBean = MBeanServerInvocationProxy.newMBeanProxy(mbsc, L2MBeanNames.DSO, DSOMBean.class, false);
     }
 
     public void lookup(ObjectID oID) throws NoSuchObjectException {

@@ -4,11 +4,11 @@
  */
 package com.tctest;
 
-import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.test.JMXUtils;
 import com.tctest.runner.AbstractTransparentApp;
 
 import javax.management.MBeanServerConnection;
@@ -50,7 +50,8 @@ public class RunGCJMXTestApp extends AbstractTransparentApp {
 
   private void connect() throws Exception {
     System.out.println("connecting to jmx server....");
-    jmxc = new JMXConnectorProxy("localhost", Integer.parseInt(config.getAttribute(JMX_PORT)));
+    int jmxPort = Integer.parseInt(config.getAttribute(JMX_PORT));
+    jmxc = JMXUtils.getJMXConnector("localhost", jmxPort);
     mbsc = jmxc.getMBeanServerConnection();
     System.out.println("obtained mbeanserver connection");
     objectMBean = (ObjectManagementMonitorMBean) MBeanServerInvocationHandler
@@ -65,9 +66,9 @@ public class RunGCJMXTestApp extends AbstractTransparentApp {
   }
 
   private void runGC() throws Exception {
-      connect();
-      objectMBean.runGC();
-      disconnect();   
+    connect();
+    objectMBean.runGC();
+    disconnect();
   }
 
 }

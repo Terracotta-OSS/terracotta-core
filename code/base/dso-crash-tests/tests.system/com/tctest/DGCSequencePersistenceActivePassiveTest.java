@@ -4,13 +4,13 @@
 package com.tctest;
 
 import com.tc.admin.common.MBeanServerInvocationProxy;
-import com.tc.cli.CommandLineBuilder;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.objectserver.api.GCStats;
 import com.tc.stats.api.DSOMBean;
+import com.tc.test.JMXUtils;
 import com.tc.util.Assert;
 import com.tc.util.TcConfigBuilder;
 import com.tc.util.concurrent.ThreadUtil;
@@ -114,8 +114,8 @@ public class DGCSequencePersistenceActivePassiveTest extends BaseDSOTestCase {
       Assert.assertEquals(iteration1 + iteration2 + iteration3 + i + 1, stats[i].getIteration());
   }
 
-  private GCStats[] collectGCStats(int jmxPort) {
-    JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector(HOST, jmxPort);
+  private GCStats[] collectGCStats(int jmxPort) throws Exception {
+    JMXConnector jmxConnector = JMXUtils.getJMXConnector(HOST, jmxPort);
     MBeanServerConnection mbs = getMBeanServerConnection(jmxConnector, HOST, jmxPort);
     Assert.assertNotNull(mbs);
     DSOMBean mbean = getDSOMbean(mbs);
@@ -127,11 +127,11 @@ public class DGCSequencePersistenceActivePassiveTest extends BaseDSOTestCase {
     return gcStats;
   }
 
-  private void runGC(int jmxPort) {
+  private void runGC(int jmxPort) throws Exception {
     boolean result = false;
     while (!result) {
       System.out.println("Going to run GC with jmxPort = " + jmxPort);
-      JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector(HOST, jmxPort);
+      JMXConnector jmxConnector = JMXUtils.getJMXConnector(HOST, jmxPort);
       MBeanServerConnection mbs = getMBeanServerConnection(jmxConnector, HOST, jmxPort);
       Assert.assertNotNull(mbs);
       ObjectManagementMonitorMBean objectMonitorMbean = getObjectMonitorMbean(mbs);
@@ -181,7 +181,7 @@ public class DGCSequencePersistenceActivePassiveTest extends BaseDSOTestCase {
     JMXConnector jmxConnector = null;
 
     try {
-      jmxConnector = CommandLineBuilder.getJMXConnector(null, null, "localhost", jmxPort);
+      jmxConnector = JMXUtils.getJMXConnector("localhost", jmxPort);
       final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
       mbean = MBeanServerInvocationProxy
           .newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
@@ -207,7 +207,7 @@ public class DGCSequencePersistenceActivePassiveTest extends BaseDSOTestCase {
     JMXConnector jmxConnector = null;
 
     try {
-      jmxConnector = CommandLineBuilder.getJMXConnector(null, null, "localhost", jmxPort);
+      jmxConnector = JMXUtils.getJMXConnector("localhost", jmxPort);
       final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
       mbean = MBeanServerInvocationProxy
           .newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
