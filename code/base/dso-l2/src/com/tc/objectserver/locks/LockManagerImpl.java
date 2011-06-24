@@ -16,8 +16,8 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.locks.LockStore.LockIterator;
 import com.tc.objectserver.locks.ServerLock.NotifyAction;
 import com.tc.objectserver.locks.factory.ServerLockFactoryImpl;
-import com.tc.objectserver.locks.timer.LockTimer.LockTimerContext;
 import com.tc.objectserver.locks.timer.TimerCallback;
+import com.tc.objectserver.locks.timer.LockTimer.LockTimerContext;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
@@ -35,7 +35,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class LockManagerImpl implements LockManager, PrettyPrintable, LockManagerMBean, L2LockStatisticsChangeListener,
     TimerCallback {
   private enum RequestType {
-    LOCK, TRY_LOCK
+    LOCK, TRY_LOCK, WAIT
   }
 
   private final LockStore                               lockStore;
@@ -151,7 +151,15 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
   }
 
   public void wait(LockID lid, ClientID cid, ThreadID tid, long timeout) {
-    if (!isValidStateFor(lid, cid, tid, "Wait")) { return; }
+    // Why queue wait request?
+    // consider steps:
+    // 1) ClientLock trying to do remote wait
+    // 2) Then that thread doesn't somehow doesn't get CPU cycles and before getting synchronized for wait
+    // 3) Server crashes and transport is established again
+    // 4) Client handshake gets called and it sends holder context to the server
+    // 5) Then remote wait gets called and wait request gets queued in L2 Lock Manager
+    // Hence the reason.
+    if (!queueIfNecessary(lid, cid, tid, ServerLockLevel.WRITE, RequestType.WAIT, timeout)) { return; }
 
     ServerLock lock = lockStore.checkOut(lid);
     try {
@@ -183,8 +191,8 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
           lock(lid, (ClientID) cselc.getNodeID(), cselc.getThreadID(), cselc.getState().getLockLevel());
           break;
         case TRY_PENDING:
-          tryLock(lid, (ClientID) cselc.getNodeID(), cselc.getThreadID(), cselc.getState().getLockLevel(),
-                  cselc.timeout());
+          tryLock(lid, (ClientID) cselc.getNodeID(), cselc.getThreadID(), cselc.getState().getLockLevel(), cselc
+              .timeout());
           break;
       }
     }
@@ -242,8 +250,12 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
           lock(ctxt.getLockID(), ctxt.getClientID(), ctxt.getThreadID(), ctxt.getRequestedLockLevel());
           break;
         case TRY_LOCK:
-          tryLock(ctxt.getLockID(), ctxt.getClientID(), ctxt.getThreadID(), ctxt.getRequestedLockLevel(),
-                  ctxt.getTimeout());
+          tryLock(ctxt.getLockID(), ctxt.getClientID(), ctxt.getThreadID(), ctxt.getRequestedLockLevel(), ctxt
+              .getTimeout());
+          break;
+        case WAIT:
+          wait(ctxt.getLockID(), ctxt.getClientID(), ctxt.getThreadID(), ctxt.getTimeout());
+          break;
       }
     }
   }

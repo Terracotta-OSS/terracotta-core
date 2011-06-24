@@ -539,7 +539,19 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
 
   protected void addWaiter(ServerLockContext request, LockHelper helper) {
     preStepsForAdd(helper);
-    Assert.assertFalse(checkDuplicate(request));
+    // This has been commented out because there is a possibility in restarts that this can happen.
+    // consider steps:
+    // 1) ClientLock trying to do remote wait and get inside synchronization
+    // 2) Then that thread doesn't somehow doesn't get CPU cycles
+    // 3) Server crashes and transport is established again
+    // 4) Then remote wait gets called and wait request gets queued in L2 Lock Manager
+    // 5) Client handshake also sends this to "Wait" context to the server
+    // Hence duplicate.
+    // Assert.assertFalse(checkDuplicate(request));
+    if (checkDuplicate(request)) {
+      logger.info("Ignoring adding of waiter for same context " + request);
+      return;
+    }
 
     this.addLast(request);
   }
