@@ -136,9 +136,11 @@ public class DGCSequencePersistenceActivePassiveTest extends BaseDSOTestCase {
       Assert.assertNotNull(mbs);
       ObjectManagementMonitorMBean objectMonitorMbean = getObjectMonitorMbean(mbs);
       result = objectMonitorMbean.runGC();
-      while (result && objectMonitorMbean.isGCRunning()) {
-        ThreadUtil.reallySleep(500);
-      }
+      do {
+        // Sleep before checking isGCRunning() to give GC time to get started.
+        ThreadUtil.reallySleep(1000);
+      } while (result && objectMonitorMbean.isGCRunning());
+
       closeJMXConnector(jmxConnector);
       if (!result) {
         ThreadUtil.reallySleep(1000);
