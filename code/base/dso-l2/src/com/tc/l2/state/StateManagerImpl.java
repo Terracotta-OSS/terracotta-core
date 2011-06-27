@@ -7,6 +7,8 @@ package com.tc.l2.state;
 import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 
 import com.tc.async.api.Sink;
+import com.tc.l2.L2DebugLogging;
+import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.ha.WeightGeneratorFactory;
@@ -63,6 +65,7 @@ public class StateManagerImpl implements StateManager {
    * around it. If ACTIVE in persistent mode, it can come back and recover the cluster
    */
   public void startElection() {
+    debugInfo("Starting election");
     synchronized (electionLock) {
       if (electionInProgress) return;
       electionInProgress = true;
@@ -90,8 +93,10 @@ public class StateManagerImpl implements StateManager {
       if (++count > 1) {
         logger.info("Rerunning election since node " + winner + " never declared itself as ACTIVE !");
       }
+      debugInfo("Running election - isNew: " + isNew);
       winner = electionMgr.runElection(myNodeID, isNew, weightsFactory);
       if (winner == myNodeID) {
+        debugInfo("Won Election, moving to active state. myNodeID/winner=" + myNodeID);
         moveToActiveState();
       } else {
         electionMgr.reset(null);
@@ -99,6 +104,7 @@ public class StateManagerImpl implements StateManager {
         // finite time we restart the election. This is to prevent some weird cases where two nodes might end up
         // thinking the other one is the winner.
         // @see MNK-518
+        debugInfo("Lost election, waiting for winner to declare as active, winner=" + winner);
         waitUntilActiveNodeIDNotNull(electionMgr.getElectionTime());
       }
     }
@@ -116,6 +122,8 @@ public class StateManagerImpl implements StateManager {
       }
       timeout = timeout - (System.currentTimeMillis() - start);
     }
+    debugInfo("Wait for other active to declare as active over. Declared? activeNodeId.isNull() = "
+              + activeNode.isNull() + ", activeNode=" + activeNode);
   }
 
   // should be called from synchronized code
@@ -150,6 +158,8 @@ public class StateManagerImpl implements StateManager {
       // TODO:: Support this later
       throw new AssertionError("Cant move to " + PASSIVE_UNINTIALIZED + " from " + ACTIVE_COORDINATOR
                                + " at least for now");
+    } else {
+      debugInfo("Move to passive state ignored - state=" + state + ", winningEnrollMent: " + winningEnrollment);
     }
   }
 
@@ -170,6 +180,7 @@ public class StateManagerImpl implements StateManager {
   private synchronized void moveToActiveState() {
     if (state == START_STATE || state == PASSIVE_STANDBY) {
       // TODO :: If state == START_STATE publish cluster ID
+      debugInfo("Moving to active state");
       StateChangedEvent event = new StateChangedEvent(state, ACTIVE_COORDINATOR);
       state = ACTIVE_COORDINATOR;
       setActiveNodeID(getLocalNodeID());
@@ -207,6 +218,7 @@ public class StateManagerImpl implements StateManager {
   }
 
   public void handleClusterStateMessage(L2StateMessage clusterMsg) {
+    debugInfo("Received cluster state message: " + clusterMsg);
     try {
       switch (clusterMsg.getType()) {
         case L2StateMessage.START_ELECTION:
@@ -240,6 +252,7 @@ public class StateManagerImpl implements StateManager {
   }
 
   private synchronized void handleElectionWonMessage(L2StateMessage clusterMsg) {
+    debugInfo("Received election_won or election_already_won msg: " + clusterMsg);
     Enrollment winningEnrollment = clusterMsg.getEnrollment();
     if (state == ACTIVE_COORDINATOR) {
       // Can't get Election Won from another node : Split brain
@@ -294,6 +307,7 @@ public class StateManagerImpl implements StateManager {
            + resultConflict);
       groupManager.sendTo(msg.messageFrom(), resultConflict);
     } else {
+      debugInfo("ElectionMgr handling election result msg: " + msg);
       electionMgr.handleElectionResultMessage(msg);
     }
   }
@@ -305,6 +319,7 @@ public class StateManagerImpl implements StateManager {
       logger.error(error);
       groupManager.zapNode(clusterMsg.messageFrom(), L2HAZapNodeRequestProcessor.SPLIT_BRAIN, error);
     } else {
+      debugInfo("ElectionMgr handling election abort");
       electionMgr.handleElectionAbort(clusterMsg);
     }
   }
@@ -325,6 +340,7 @@ public class StateManagerImpl implements StateManager {
 
   // notify new node
   public void publishActiveState(NodeID nodeID) throws GroupException {
+    debugInfo("Publishing active state to nodeId: " + nodeID);
     Assert.assertTrue(isActiveCoordinator());
     GroupMessage msg = L2StateMessageFactory.createElectionWonAlreadyMessage(EnrollmentFactory
         .createTrumpEnrollment(getLocalNodeID(), weightsFactory));
@@ -356,6 +372,8 @@ public class StateManagerImpl implements StateManager {
     if (elect) {
       info("Starting Election to determine cluser wide ACTIVE L2");
       startElection();
+    } else {
+      debugInfo("Not starting election even though node left: " + disconnectedNode);
     }
   }
 
@@ -373,6 +391,16 @@ public class StateManagerImpl implements StateManager {
     } catch (GroupException e) {
       logger.error("Error handling message : " + msg, e);
     }
+  }
+
+  @Override
+  public String toString() {
+    return StateManagerImpl.class.getSimpleName() + ":" + this.state.toString();
+  }
+
+  private void fireStateChangedOperatorEvent() {
+    operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory
+        .createClusterNodeStateChangedEvent(new Object[] { state.getName() }));
   }
 
   private void info(String message) {
@@ -397,14 +425,7 @@ public class StateManagerImpl implements StateManager {
     }
   }
 
-  @Override
-  public String toString() {
-    return StateManagerImpl.class.getSimpleName() + ":" + this.state.toString();
+  private static void debugInfo(String message) {
+    L2DebugLogging.log(logger, LogLevel.INFO, message, null);
   }
-
-  private void fireStateChangedOperatorEvent() {
-    operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory
-        .createClusterNodeStateChangedEvent(new Object[] { state.getName() }));
-  }
-
 }

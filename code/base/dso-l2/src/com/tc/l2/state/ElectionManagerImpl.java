@@ -4,6 +4,8 @@
  */
 package com.tc.l2.state;
 
+import com.tc.l2.L2DebugLogging;
+import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.L2StateMessageFactory;
@@ -80,6 +82,7 @@ public class ElectionManagerImpl implements ElectionManager {
 
   public synchronized void handleElectionAbort(L2StateMessage msg) {
     Assert.assertEquals(L2StateMessage.ABORT_ELECTION, msg.getType());
+    debugInfo("Handling election abort");
     if (state == ELECTION_IN_PROGRESS) {
       // An existing ACTIVE Node has forced election to quit
       Assert.assertNotNull(myVote);
@@ -91,6 +94,7 @@ public class ElectionManagerImpl implements ElectionManager {
 
   public synchronized void handleElectionResultMessage(L2StateMessage msg) {
     Assert.assertEquals(L2StateMessage.ELECTION_RESULT, msg.getType());
+    debugInfo("Handling election result");
     if (state == ELECTION_COMPLETE && !this.winner.equals(msg.getEnrollment())) {
       // conflict
       GroupMessage resultConflict = L2StateMessageFactory.createResultConflictMessage(msg, this.winner);
@@ -127,6 +131,7 @@ public class ElectionManagerImpl implements ElectionManager {
   public synchronized void declareWinner(NodeID myNodeId) {
     Assert.assertEquals(winner.getNodeID(), myNodeId);
     GroupMessage msg = createElectionWonMessage(this.winner);
+    debugInfo("Announcing as winner: " + myNodeId);
     this.groupManager.sendAll(msg);
     logger.info("Declared as Winner: Winner is : " + this.winner);
     reset(winner);
@@ -175,6 +180,7 @@ public class ElectionManagerImpl implements ElectionManager {
     electionStarted(e);
 
     GroupMessage msg = createElectionStartedMessage(e);
+    debugInfo("Sending my election vote to all members");
     groupManager.sendAll(msg);
 
     // Step 2: Wait for election completion
@@ -189,6 +195,7 @@ public class ElectionManagerImpl implements ElectionManager {
     }
     // Step 4 : local host won the election, so notify world for acceptance
     msg = createElectionResultMessage(e);
+    debugInfo("Won election, announcing to world and waiting for response...");
     GroupResponse responses = groupManager.sendAllAndWaitForResponse(msg);
     for (Iterator i = responses.getResponses().iterator(); i.hasNext();) {
       L2StateMessage response = (L2StateMessage) i.next();
@@ -234,6 +241,7 @@ public class ElectionManagerImpl implements ElectionManager {
 
   private synchronized void waitTillElectionComplete() {
     long diff = electionTime;
+    debugInfo("Waiting till election complete, electionTime=" + electionTime);
     while (state == ELECTION_IN_PROGRESS && diff > 0) {
       long start = System.currentTimeMillis();
       try {
@@ -265,6 +273,10 @@ public class ElectionManagerImpl implements ElectionManager {
 
   public long getElectionTime() {
     return electionTime;
+  }
+
+  private static void debugInfo(String message) {
+    L2DebugLogging.log(logger, LogLevel.INFO, message, null);
   }
 
 }

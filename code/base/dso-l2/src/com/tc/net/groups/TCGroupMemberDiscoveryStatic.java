@@ -5,6 +5,8 @@
 package com.tc.net.groups;
 
 import com.tc.async.api.EventContext;
+import com.tc.l2.L2DebugLogging;
+import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.CommStackMismatchException;
@@ -103,10 +105,12 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     if (!addNodeToConnectingSet(serverNodeName)) {
       logger.warn("Discovery for " + node + " is in progress. skipping it.");
       return;
+    } else {
+      debugInfo("Added node to connecting set: " + node);
     }
 
     try {
-      if (logger.isDebugEnabled()) logger.debug(getLocalNodeID().toString() + " opens channel to " + node);
+      debugInfo(getLocalNodeID().toString() + " opening channel to " + node);
       manager.openChannel(node.getHost(), node.getGroupPort(), stateMachine);
       removeNodeFromConnectingSet(serverNodeName);
       stateMachine.connected();
@@ -295,6 +299,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
 
     protected synchronized void switchToState(DiscoveryState state) {
       Assert.assertNotNull(state);
+      debugInfo("DiscoverStateMachine [" + node + "]: switching to state: " + state);
       this.current = state;
       state.enter();
     }
@@ -307,7 +312,8 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
         to.enter();
         return true;
       } else {
-        logger.warn("Ignore switching " + node + ":" + current + " from " + from + " to " + to);
+        logger.warn("DiscoverStateMachine [" + node + "]: Ignored switching state from: " + from + ", to: " + to
+                    + ", current: " + current);
         return false;
       }
     }
@@ -621,5 +627,9 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     if (dsm == null) { return false; }
 
     return dsm.isMemberInGroup();
+  }
+
+  private static void debugInfo(String message) {
+    L2DebugLogging.log(logger, LogLevel.INFO, message, null);
   }
 }

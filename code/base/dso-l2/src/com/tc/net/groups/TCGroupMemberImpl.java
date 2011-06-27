@@ -4,6 +4,8 @@
  */
 package com.tc.net.groups;
 
+import com.tc.l2.L2DebugLogging;
+import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ServerID;
@@ -50,7 +52,7 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
 
   public void sendIgnoreNotReady(GroupMessage msg) {
     if (!channel.isOpen()) {
-      logger.warn("Send to a not ready member " + this);
+      logger.warn("Attempting send to a not ready member " + this + ", msg will not be sent: " + msg);
       return;
     }
     sendMessage(msg);
@@ -62,6 +64,7 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
     wrapper.send();
   }
 
+  @Override
   public String toString() {
     return ("Group Member: " + localNodeID + " <-> " + peerNodeID + " " + channel + "; Ready:" + ready + "; Joined: "
             + joined + "; memberAdding:" + memberAdding + "; HighPri: " + isHighPriorityNode());
@@ -117,6 +120,7 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
 
   public void close() {
     ready.set(false);
+    debugInfo("Closing channel: " + channel);
     getChannel().close();
   }
 
@@ -150,4 +154,7 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
     }
   }
 
+  private static void debugInfo(String message) {
+    L2DebugLogging.log(logger, LogLevel.INFO, message, null);
+  }
 }
