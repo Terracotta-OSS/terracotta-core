@@ -12,16 +12,17 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tc.util.runtime.Os;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.Map.Entry;
 
 public class TreeMapTestApp extends AbstractTransparentApp {
+
+  private static final long   TIME_TO_RUN   = 15 * 60 * 1000;
 
   // plain old TreeMap
   private final TreeMap       map           = new TreeMap();
@@ -34,23 +35,17 @@ public class TreeMapTestApp extends AbstractTransparentApp {
 
   private final SubMapKey     subMapKeyRoot = new SubMapKey(0);
 
-  private final int           loopcount;
-
   public TreeMapTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     barrier = new CyclicBarrier(getParticipantCount());
-    // MNK-1600
-    if (Os.isSolaris()) {
-      loopcount = 100;
-    } else {
-      loopcount = 200;
-    }
   }
 
   public void run() {
+    long startTime = System.currentTimeMillis();
+    int i = 0;
     try {
-      for (int i = 0; i < loopcount; ++i) {
-        System.out.println("*** TreeMap LoopCount:" + i);
+      while (System.currentTimeMillis() - startTime < TIME_TO_RUN) {
+        System.out.println("*** TreeMap LoopCount:" + ++i);
         clear();
         run0();
         run1();
