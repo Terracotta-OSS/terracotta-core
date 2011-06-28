@@ -4,6 +4,7 @@
  */
 package com.tctest;
 
+import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.object.config.ConfigVisitor;
@@ -17,23 +18,29 @@ import com.tctest.runner.AbstractTransparentApp;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.Map.Entry;
+import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TreeMapTestApp extends AbstractTransparentApp {
 
-  private static final long   TIME_TO_RUN   = 15 * 60 * 1000;
+  private static final long   RUNTIME_SECONDS = 15 * 60;
 
   // plain old TreeMap
-  private final TreeMap       map           = new TreeMap();
+  private final TreeMap       map             = new TreeMap();
 
   // Use a comparator with a shared TreeMap too. If the comparator doesn't make it across VMs,
   // then we should get some ClassCastExceptions
-  private final TreeMap       map2          = new TreeMap(new WrappedStringComparator());
+  private final TreeMap       map2            = new TreeMap(new WrappedStringComparator());
+
+  private final AtomicBoolean running         = new AtomicBoolean(true);
 
   private final CyclicBarrier barrier;
 
-  private final SubMapKey     subMapKeyRoot = new SubMapKey(0);
+  private final SubMapKey     subMapKeyRoot   = new SubMapKey(0);
+
+  private final long          startTime       = System.nanoTime();
 
   public TreeMapTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -41,18 +48,29 @@ public class TreeMapTestApp extends AbstractTransparentApp {
   }
 
   public void run() {
-    long startTime = System.currentTimeMillis();
     int i = 0;
     try {
-      while (System.currentTimeMillis() - startTime < TIME_TO_RUN) {
+      while (running.get()) {
         System.out.println("*** TreeMap LoopCount:" + ++i);
         clear();
         run0();
         run1();
+        checkTime();
       }
     } catch (Throwable t) {
       notifyError(t);
     }
+  }
+
+  private void checkTime() throws BrokenBarrierException, InterruptedException {
+    int node = barrier.barrier();
+    if (node == 0) {
+      long currentTime = System.nanoTime();
+      if (TimeUnit.NANOSECONDS.toSeconds(currentTime - startTime) > RUNTIME_SECONDS) {
+        running.set(false);
+      }
+    }
+    barrier.barrier();
   }
 
   private void run0() throws Exception {
@@ -374,15 +392,16 @@ public class TreeMapTestApp extends AbstractTransparentApp {
 
     String methodExpression = "* " + testClass + "*.getMapSize(..)";
     config.addReadAutolock(methodExpression);
-    // methodExpression = "* " + testClass + "*.*(..)";
-    // config.addWriteAutolock(methodExpression);
     methodExpression = "* " + testClass + ".run*(..)";
     config.addWriteAutolock(methodExpression);
     methodExpression = "* " + testClass + ".clear(..)";
     config.addWriteAutolock(methodExpression);
     methodExpression = "* " + testClass + ".initializeMaps(..)";
     config.addWriteAutolock(methodExpression);
+    methodExpression = "* " + testClass + ".checkTime(..)";
+    config.addWriteAutolock(methodExpression);
 
+    spec.addRoot("running", "running");
     spec.addRoot("map", "map");
     spec.addRoot("map2", "map2");
     spec.addRoot("barrier", "barrier");
