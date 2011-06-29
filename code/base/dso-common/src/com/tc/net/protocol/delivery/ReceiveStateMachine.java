@@ -122,7 +122,7 @@ public class ReceiveStateMachine extends AbstractStateMachine {
   }
 
   // for testing purpose only
-  boolean isClean() {
+  synchronized boolean isClean() {
     return ((received == -1) && (delayedAcks == 0));
   }
 
