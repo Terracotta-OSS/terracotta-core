@@ -19,7 +19,7 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/junit-3.8.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/junit-addons-1.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/knopflerfish-tc-2.0.1-20100819.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/linked-child-process-1.0.5.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/linked-child-process-1.0.6.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/log4j-1.2.16.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/native-tool-1.0.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/terracotta-license-1.0.2.jar"/>

@@ -3,7 +3,7 @@
   <info organisation="org.terracotta" module="common-tests-base"/>
   
   <dependencies defaultconf="default">
-    <dependency name="linked-child-process" rev="1.0.5" org="org.terracotta" changing="true"/>
+    <dependency name="linked-child-process" rev="1.0.6" org="org.terracotta" changing="true"/>
     <dependency name="native-tool" rev="1.0.1" org="org.terracotta"/>
     <dependency name="ant" rev="1.7.1" org="org.apache.ant"/>
     <dependency name="ant-launcher" rev="1.7.1" org="org.apache.ant"/>
