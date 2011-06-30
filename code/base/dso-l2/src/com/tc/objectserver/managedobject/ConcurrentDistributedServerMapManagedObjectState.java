@@ -12,6 +12,8 @@ import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.objectserver.api.EvictableMap;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -29,13 +31,17 @@ import java.util.SortedSet;
 public class ConcurrentDistributedServerMapManagedObjectState extends ConcurrentDistributedMapManagedObjectState
     implements EvictableMap {
 
-  public static final String MAX_TTI_SECONDS_FIELDNAME            = "maxTTISeconds";
-  public static final String MAX_TTL_SECONDS_FIELDNAME            = "maxTTLSeconds";
-  public static final String TARGET_MAX_IN_MEMORY_COUNT_FIELDNAME = "targetMaxInMemoryCount";
-  public static final String TARGET_MAX_TOTAL_COUNT_FIELDNAME     = "targetMaxTotalCount";
-  public static final String INVALIDATE_ON_CHANGE                 = "invalidateOnChange";
-  public static final String CACHE_NAME_FIELDNAME                 = "cacheName";
+  public static final String  MAX_TTI_SECONDS_FIELDNAME            = "maxTTISeconds";
+  public static final String  MAX_TTL_SECONDS_FIELDNAME            = "maxTTLSeconds";
+  public static final String  TARGET_MAX_IN_MEMORY_COUNT_FIELDNAME = "targetMaxInMemoryCount";
+  public static final String  TARGET_MAX_TOTAL_COUNT_FIELDNAME     = "targetMaxTotalCount";
+  public static final String  INVALIDATE_ON_CHANGE                 = "invalidateOnChange";
+  public static final String  CACHE_NAME_FIELDNAME                 = "cacheName";
   public static final String LOCAL_CACHE_ENABLED_FIELDNAME        = "localCacheEnabled";
+
+  private static final double OVERSHOOT                            = 1D + (TCPropertiesImpl
+                                                                       .getProperties()
+                                                                       .getFloat(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_EVICTION_OVERSHOOT) / 100D);
 
   enum EvictionStatus {
     NOT_INITIATED, INITIATED, SAMPLED
@@ -173,7 +179,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     }
     if (applyInfo.isActiveTxn() && method == SerializationUtil.PUT && this.targetMaxTotalCount > 0
         && this.evictionStatus == EvictionStatus.NOT_INITIATED
-        && this.references.size() > this.targetMaxTotalCount * 1.15) { // 15 % overshoot
+        && this.references.size() > this.targetMaxTotalCount * OVERSHOOT) {
       this.evictionStatus = EvictionStatus.INITIATED;
       applyInfo.initiateEvictionFor(objectID);
     }
