@@ -215,6 +215,7 @@ import com.tc.objectserver.l1.impl.TransactionAcknowledgeAction;
 import com.tc.objectserver.l1.impl.TransactionAcknowledgeActionImpl;
 import com.tc.objectserver.locks.LockManagerImpl;
 import com.tc.objectserver.locks.LockManagerMBean;
+import com.tc.objectserver.managedobject.ConcurrentDistributedServerMapManagedObjectState;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListenerProviderImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.metadata.MetaDataManager;
@@ -517,6 +518,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     }
 
     NIOWorkarounds.solaris10Workaround();
+    ConcurrentDistributedServerMapManagedObjectState.init();
     this.l2Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l2");
     final PersistenceMode.Enum persistenceMode = l2DSOConfig.getPersistence().getMode();
     final TCProperties objManagerProperties = this.l2Properties.getPropertiesFor("objectmanager");

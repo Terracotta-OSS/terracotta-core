@@ -3,6 +3,8 @@
  */
 package com.tc.objectserver.managedobject;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNA.DNAType;
@@ -31,17 +33,22 @@ import java.util.SortedSet;
 public class ConcurrentDistributedServerMapManagedObjectState extends ConcurrentDistributedMapManagedObjectState
     implements EvictableMap {
 
-  public static final String  MAX_TTI_SECONDS_FIELDNAME            = "maxTTISeconds";
-  public static final String  MAX_TTL_SECONDS_FIELDNAME            = "maxTTLSeconds";
-  public static final String  TARGET_MAX_IN_MEMORY_COUNT_FIELDNAME = "targetMaxInMemoryCount";
-  public static final String  TARGET_MAX_TOTAL_COUNT_FIELDNAME     = "targetMaxTotalCount";
-  public static final String  INVALIDATE_ON_CHANGE                 = "invalidateOnChange";
-  public static final String  CACHE_NAME_FIELDNAME                 = "cacheName";
-  public static final String LOCAL_CACHE_ENABLED_FIELDNAME        = "localCacheEnabled";
+  private static final TCLogger LOGGER                               = TCLogging
+                                                                         .getLogger(ConcurrentDistributedMapManagedObjectState.class);
 
-  private static final double OVERSHOOT                            = 1D + (TCPropertiesImpl
-                                                                       .getProperties()
-                                                                       .getFloat(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_EVICTION_OVERSHOOT) / 100D);
+  public static final String    MAX_TTI_SECONDS_FIELDNAME            = "maxTTISeconds";
+  public static final String    MAX_TTL_SECONDS_FIELDNAME            = "maxTTLSeconds";
+  public static final String    TARGET_MAX_IN_MEMORY_COUNT_FIELDNAME = "targetMaxInMemoryCount";
+  public static final String    TARGET_MAX_TOTAL_COUNT_FIELDNAME     = "targetMaxTotalCount";
+  public static final String    INVALIDATE_ON_CHANGE                 = "invalidateOnChange";
+  public static final String    CACHE_NAME_FIELDNAME                 = "cacheName";
+  public static final String    LOCAL_CACHE_ENABLED_FIELDNAME        = "localCacheEnabled";
+
+  private static final double   OVERSHOOT                            = getOvershoot();
+
+  static {
+    LOGGER.info("Eviction overshoot threshold is " + OVERSHOOT);
+  }
 
   enum EvictionStatus {
     NOT_INITIATED, INITIATED, SAMPLED
@@ -179,7 +186,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     }
     if (applyInfo.isActiveTxn() && method == SerializationUtil.PUT && this.targetMaxTotalCount > 0
         && this.evictionStatus == EvictionStatus.NOT_INITIATED
-        && this.references.size() > this.targetMaxTotalCount * OVERSHOOT) {
+        && this.references.size() > this.targetMaxTotalCount * (1D + (OVERSHOOT / 100D))) {
       this.evictionStatus = EvictionStatus.INITIATED;
       applyInfo.initiateEvictionFor(objectID);
     }
@@ -346,4 +353,24 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     return result;
   }
 
+  public static void init() {
+    // no-op for eager loading done at server startup (init constants in particular)
+  }
+
+  private static double getOvershoot() {
+    final float MIN = 0;
+    final float MAX = 100;
+
+    float propVal = TCPropertiesImpl.getProperties()
+        .getFloat(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_EVICTION_OVERSHOOT);
+
+    if (propVal < MIN || propVal > MAX) {
+      //
+      throw new IllegalArgumentException("Invalid value for ["
+                                         + TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_EVICTION_OVERSHOOT + "]: "
+                                         + propVal + " (must be between " + MIN + " and " + MAX + ")");
+    }
+
+    return propVal;
+  }
 }
