@@ -27,7 +27,7 @@ public class VirtualTCGroupManagerImpl implements GroupManager, GroupEventsListe
   private final CopyOnWriteArrayList<GroupEventsListener> groupListeners   = new CopyOnWriteArrayList<GroupEventsListener>();
   private final Map<String, GroupMessageListener>         messageListeners = new ConcurrentHashMap<String, GroupMessageListener>();
   private final Set<NodeID>                               groupNodeIDs     = new CopyOnWriteArraySet<NodeID>();
-  private final ClusterInfo                    serverNamesOfThisGroup;
+  private final ClusterInfo                               serverNamesOfThisGroup;
 
   public VirtualTCGroupManagerImpl(GroupManager groupManager, ClusterInfo serverNamesOfThisGroup) {
     this.groupManager = groupManager;
@@ -165,6 +165,8 @@ public class VirtualTCGroupManagerImpl implements GroupManager, GroupEventsListe
     strBuffer.append("groupNodeIDs: {").append(this.groupNodeIDs).append("} ]");
 
     out.indent().print(strBuffer.toString()).flush();
+    out.visit(this.groupManager).flush();
+
     return out;
   }
 
