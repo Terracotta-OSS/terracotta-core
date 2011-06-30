@@ -10,36 +10,38 @@ import com.tc.util.runtime.Os;
 public class LinkedBlockingQueueL1ReconnectCrashTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 8;
-  
+
   public LinkedBlockingQueueL1ReconnectCrashTest() {
-    //disableAllUntil("2007-06-30");
+    disableAllUntil("2011-09-30");
   }
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
   }
-  
+
   @Override
   protected long getRestartInterval(RestartTestHelper helper) {
-    if(Os.isSolaris() || Memory.isMemoryLow()) {
+    if (Os.isSolaris() || Memory.isMemoryLow()) {
       return super.getRestartInterval(helper) * 3;
     } else {
       return super.getRestartInterval(helper);
     }
   }
 
+  @Override
   protected Class getApplicationClass() {
     return LinkedBlockingQueueCrashTestApp.class;
   }
 
+  @Override
   protected boolean canRunCrash() {
     return true;
   }
-  
+
   protected boolean enableL1Reconnec() {
     return true;
   }
 
- 
 }
