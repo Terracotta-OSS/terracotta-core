@@ -21,6 +21,7 @@ public abstract class ServerCrashingTestBase extends TransparentTestBase {
   private final int  nodeCount;
   private int        port;
   private int        adminPort;
+  private int        groupPort;
   private File       configFile;
   private final List jvmArgs;
 
@@ -52,13 +53,10 @@ public abstract class ServerCrashingTestBase extends TransparentTestBase {
     PortChooser pc = new PortChooser();
     port = pc.chooseRandomPort();
     adminPort = pc.chooseRandomPort();
-    int groupPort = pc.chooseRandomPort();
+    groupPort = pc.chooseRandomPort();
     configFile = getTempFile("config-file.xml");
     writeConfigFile();
 
-    configFactory().l2DSOConfig().dsoPort().setIntValue(port);
-
-    configFactory().l2CommonConfig().jmxPort().setIntValue(adminPort);
     setupConfigLogDataStatisticsPaths(configFactory());
 
     setUpControlledServer(configFactory(), configHelper(), port, adminPort, groupPort, configFile.getAbsolutePath(),
@@ -81,6 +79,7 @@ public abstract class ServerCrashingTestBase extends TransparentTestBase {
 
       cb.getServers().getL2s()[0].setDSOPort(port);
       cb.getServers().getL2s()[0].setJMXPort(adminPort);
+      cb.getServers().getL2s()[0].setL2GroupPort(groupPort);
 
       createConfig(cb);
 
