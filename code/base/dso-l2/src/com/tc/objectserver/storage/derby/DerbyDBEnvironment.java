@@ -41,6 +41,8 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class DerbyDBEnvironment implements DBEnvironment {
   public static final String               DRIVER                         = "org.apache.derby.jdbc.EmbeddedDriver";
@@ -235,11 +237,14 @@ public class DerbyDBEnvironment implements DBEnvironment {
     attributesProps.setProperty("create", "true");
     attributesProps.setProperty("logDevice", logDevice);
     Connection conn;
+    ThreadDumpOnTimeout td = new ThreadDumpOnTimeout(Thread.currentThread(), 20 * 1000);
     try {
+      td.start();
       conn = DriverManager.getConnection(PROTOCOL + envHome.getAbsolutePath() + File.separator + DB_NAME + ";",
                                          attributesProps);
       conn.setAutoCommit(false);
       conn.close();
+      td.cancel();
     } catch (SQLException e) {
       String errorMessage;
       if (e.getErrorCode() == 40000 && e.getSQLState().equals("XJ040")
@@ -484,6 +489,33 @@ public class DerbyDBEnvironment implements DBEnvironment {
 
   public static Writer getWriter() {
     return WRITER;
+  }
+
+  private static class ThreadDumpOnTimeout {
+    private final Timer  timer = new Timer("ThreadDumpOnTimeout");
+    private final Thread thread;
+    private final long   timeout;
+
+    private ThreadDumpOnTimeout(Thread thread, long timeout) {
+      this.thread = thread;
+      this.timeout = timeout;
+    }
+
+    private void start() {
+      timer.schedule(new TimerTask() {
+        @Override
+        public void run() {
+          logger.info("Exceeded timeout of " + timeout + "ms. Stack trace for thread " + thread.getName());
+          for (StackTraceElement ste : thread.getStackTrace()) {
+            logger.info(ste.toString());
+          }
+        }
+      }, timeout);
+    }
+
+    private void cancel() {
+      timer.cancel();
+    }
   }
 
   private static final Writer WRITER = new Writer() {
