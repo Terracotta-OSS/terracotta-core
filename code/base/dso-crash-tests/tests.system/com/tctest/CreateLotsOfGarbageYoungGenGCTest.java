@@ -13,7 +13,7 @@ import com.tc.util.runtime.Os;
 
 import java.util.Date;
 
-public class CreateLotsOfGarbageYoungGenGCTest extends YoungGCTestAndActivePassiveTest implements TestConfigurator {
+public class CreateLotsOfGarbageYoungGenGCTest extends YoungGCTestAndActivePassiveTestBase implements TestConfigurator {
 
   public CreateLotsOfGarbageYoungGenGCTest() {
     if (Os.isSolaris()) {

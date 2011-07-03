@@ -9,12 +9,12 @@ import com.tc.test.MultipleServersPersistenceMode;
 import com.tc.test.MultipleServersSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tc.util.runtime.Os;
-import com.tctest.YoungGCTestAndActivePassiveTest;
+import com.tctest.YoungGCTestAndActivePassiveTestBase;
 
 import java.util.ArrayList;
 import java.util.Date;
 
-public class CreateRescueCandidatesYoungGCTest extends YoungGCTestAndActivePassiveTest {
+public class CreateRescueCandidatesYoungGCTest extends YoungGCTestAndActivePassiveTestBase {
   private final long LOW_FREE_MEMORY    = 20 * 1024 * 1024;
   private final long MIDDLE_FREE_MEMORY = 40 * 1024 * 1024;
   private final int  LOW_APP_NODES      = 1;

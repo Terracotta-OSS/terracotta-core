@@ -6,13 +6,14 @@ package com.tctest;
 
 import java.util.ArrayList;
 
-public abstract class YoungGCTestAndActivePassiveTest extends GCAndActivePassiveTestBase {
+public abstract class YoungGCTestAndActivePassiveTestBase extends GCAndActivePassiveTestBase {
 
-  public YoungGCTestAndActivePassiveTest() {
+  public YoungGCTestAndActivePassiveTestBase() {
     gcConfigHelper = new YoungGCConfigurationHelper();
   }
 
   // Run Young Gen every 10 seconds
+  @Override
   protected void setExtraJvmArgs(final ArrayList jvmArgs) {
     super.setExtraJvmArgs(jvmArgs);
     ((YoungGCConfigurationHelper) gcConfigHelper).setExtraJvmArgs(jvmArgs);

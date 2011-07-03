@@ -11,7 +11,7 @@ import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tc.test.restart.RestartTestHelper;
 import com.tc.util.runtime.Os;
 
-public class TreeMapYoungGenGCActivePassiveTest extends YoungGCTestAndActivePassiveTest {
+public class TreeMapYoungGenGCActivePassiveTest extends YoungGCTestAndActivePassiveTestBase {
 
   private static final int NODE_COUNT = 3;
 
