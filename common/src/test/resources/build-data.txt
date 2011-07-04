@@ -1,0 +1,15 @@
+# This file allows tests in eclipse to work and what not.
+# It is specifically not a "real" build-data.txt, but
+# unfortunately it seems that ProductInfo class depends
+# the version string to detect that these are "development"
+# settings
+
+terracotta.build.productname=unknown
+terracotta.build.edition=unknown
+terracotta.build.version=[unknown]
+terracotta.build.maven.artifacts.version=[unknown]
+terracotta.build.host=unknown
+terracotta.build.user=unknown
+terracotta.build.timestamp=20000101-123456
+terracotta.build.revision=unknown
+terracotta.build.branch=unknown

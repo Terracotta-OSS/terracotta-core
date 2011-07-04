@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+	<!--
+
+		All content copyright (c) 2003-2008 Terracotta, Inc., except as may
+		otherwise be noted in a separate copyright notice. All rights
+		reserved.
+	-->
+
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-6.xsd">
+
+	<servers>
+		<server host="localhost" name="server-1">
+			<dso-port>4210</dso-port>
+			<jmx-port>4220</jmx-port>
+			<l2-group-port>4200</l2-group-port>
+			<data>server-1-data</data>
+			<logs>server-1-logs</logs>
+			<statistics>server-1-stats</statistics>
+			<dso>
+				<persistence>
+					<mode>permanent-store</mode>
+				</persistence>
+			</dso>
+		</server>
+	</servers>
+
+	<clients>
+		<logs>client-logs-%D</logs>
+	</clients>
+
+</tc:tc-config>

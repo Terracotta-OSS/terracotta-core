@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  
+  <parent>
+    <groupId>org.terracotta</groupId>
+    <artifactId>build-parent</artifactId>
+    <version>3.6.0-SNAPSHOT</version>
+    <relativePath>../build-parent</relativePath>    
+  </parent>
+  
+  <groupId>org.terracotta.internal</groupId>
+  <artifactId>ui-eclipse</artifactId>
+  <packaging>jar</packaging>
+
+  <properties>  
+    <skip.deploy>true</skip.deploy>
+  </properties>
+  
+  <dependencies>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>dso-l1</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.terracotta.internal</groupId>
+        <artifactId>deploy</artifactId>
+        <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.apache.xmlbeans</groupId>
+        <artifactId>xmlbeans</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.eclipse.debug</groupId>
+      <artifactId>ui</artifactId>
+      <version>3.4.0-v20080529-1300</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jdt.debug</groupId>
+      <artifactId>ui</artifactId>
+      <version>3.3.0-v20080603</version>
+      <scope>provided</scope>
+    </dependency>    
+    <dependency>
+      <groupId>org.eclipse.core</groupId>
+      <artifactId>commands</artifactId>
+      <version>3.3.0-I20070605-0010</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.core</groupId>
+      <artifactId>contenttype</artifactId>
+      <version>3.2.100-v20070319</version>
+      <scope>provided</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.eclipse.ui</groupId>
+      <artifactId>ide</artifactId>
+      <version>3.3.0-I20070620</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.eclipse.jdt</groupId>
+        <artifactId>core</artifactId>
+        <version>3.3.0-v_771</version>
+        <scope>provided</scope>
+    </dependency>
+        <dependency>
+          <groupId>org.eclipse.swt.win32.win32</groupId>
+          <artifactId>x86</artifactId>
+          <version>3.3.0-v3346</version>
+          <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.eclipse.ltk.core</groupId>
+          <artifactId>refactoring</artifactId>
+          <version>3.3.0-v20070606-0010</version>
+          <scope>provided</scope>
+        </dependency>
+    <dependency>
+        <groupId>org.eclipse.jdt</groupId>
+        <artifactId>ui</artifactId>
+        <version>3.3.0-v20070607-0010</version>
+        <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.eclipse.ui</groupId>
+      <artifactId>workbench</artifactId>
+      <version>3.3.0-I20070608-1100</version>
+      <scope>provided</scope>
+    </dependency>
+    
+    <dependency>
+        <groupId>org.eclipse.jdt</groupId>
+        <artifactId>junit</artifactId>
+        <version>3.3.0-v20070606-0010</version>
+        <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>org</groupId>
+            <artifactId>junit</artifactId>
+          </exclusion>
+        </exclusions>
+    </dependency>
+    <dependency>
+        <groupId>org.eclipse.debug</groupId>
+        <artifactId>core</artifactId>
+        <version>3.3.0-v20070607-1800</version>
+        <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.pde</groupId>
+      <artifactId>ui</artifactId>
+      <version>3.3.0-v20070608-1300</version>
+      <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org</groupId>
+          <artifactId>junit</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache</groupId>
+          <artifactId>ant</artifactId>
+        </exclusion>        
+      </exclusions>
+    </dependency>
+    <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.8.2</version>
+        <scope>test</scope>
+    </dependency>
+  </dependencies>
+  
+<!--
+[WARNING] Used undeclared dependencies found:
+[WARNING]    org.eclipse.core:variables:jar:3.2.0-v20070426:provided
+[WARNING]    org.eclipse.jdt:launching:jar:3.3.0-v20070510:provided
+[WARNING]    org.eclipse.ui:forms:jar:3.3.0-v20070511:provided
+[WARNING]    org.terracotta:aspectwerkz:jar:3.6.0-SNAPSHOT:compile
+[WARNING]    org.eclipse.ui.workbench:texteditor:jar:3.3.0-v20070606-0010:provided
+[WARNING]    org.terracotta:dso-l1-api:jar:3.6.0-SNAPSHOT:compile
+[WARNING]    org.eclipse.core:runtime:jar:3.3.100-v20070530:provided
+[WARNING]    org.eclipse:osgi:jar:3.4.3.R34x_v20081215-1030:provided
+[WARNING]    stax:stax-api:jar:1.0.1:compile
+[WARNING]    knopflerfish-tc:knopflerfish-tc:jar:2.0.1-20100819:compile
+[WARNING]    org.eclipse:text:jar:3.3.0-v20070606-0010:provided
+[WARNING]    org.eclipse:jface:jar:3.3.0-I20070606-0010:provided
+[WARNING]    org.terracotta:common:jar:3.6.0-SNAPSHOT:compile
+[WARNING]    org.eclipse.ui:editors:jar:3.3.0-v20070606-0010:provided
+[WARNING]    org.eclipse.core:resources:jar:3.3.0-v20070604:provided
+[WARNING]    org.terracotta:management-api:jar:3.6.0-SNAPSHOT:compile
+[WARNING]    org.eclipse.equinox:common:jar:3.3.0-v20070426:provided
+[WARNING]    org.eclipse.jface:text:jar:3.3.0-v20070606-0010:provided
+[WARNING]    commons-lang:commons-lang:jar:2.0:compile
+[WARNING]    org.terracotta:tcconfig-xmlbeans:jar:3.6.0-SNAPSHOT:compile
+[WARNING]    org.eclipse.ui:console:jar:3.2.0-v20070530:provided
+[WARNING]    org.terracotta:common-api:jar:3.6.0-SNAPSHOT:compile
+[WARNING]    com.h2database:h2:jar:1.0.67:compile
+[WARNING]    org.eclipse.core:jobs:jar:3.3.0-v20070423:provided
+[WARNING]    org.eclipse.pde:core:jar:3.3.0-v20070608-1300:provided
+[WARNING]    org.eclipse.core:filebuffers:jar:3.3.0-v20070606-0010:provided
+[WARNING]    org.terracotta.api:tim-api:jar:1.3.0:compile
+-->
+</project>

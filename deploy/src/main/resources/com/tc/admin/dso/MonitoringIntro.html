@@ -1,0 +1,45 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!-- - - - - - - - - - - - - -->
+<!--  Terracotta             -->
+<!--  DiagnosticsIntro.html  -->
+<!-- - - - - - - - - - - - - -->
+<html>
+<head>
+<title>Terracotta Developer Console</title>
+<style>
+   body { color:#666666; font-family: sans-serif; margin: 10px 10px }
+   h1 { text-align: right; margin: 0px 0px 20px 0px }
+   a { color:#8B4513; font-weight: bold; text-decoration: underline }
+   a:hover { color:red; text-decoration: none }
+   img.topic { margin-right: 0px}
+   div.main { margin: 10px 0px 0px 30px }
+   div.description { margin: 0px 0px 0px 20px }
+   div.footer { text-align: center; font-size: 95%; margin-top: 15px }
+   </style>
+</head>
+<body>
+
+<h1><img src="/com/tc/welcome/tc-logo.png"><br>Terracotta Developer Console: Monitoring</h1>
+
+<p>Contains real-time, graphical system performance metrics and distributed garbage collection events to diagnose problems and recognize and interpret trends.
+
+<table cellpadding=10>
+   <tr>
+      <td valign=top><a href="RuntimeStatsNode"><img border=0 src="/com/tc/admin/icons/chart_bar.png" class=topic></a></td>
+      <td><a href="RuntimeStatsNode">Runtime statistics</a>
+         <div class=description>
+         Real-time cluster statistics. Gauge the health of hosts, server instances, and clients. Monitor host resources, server-instance and client object faulting and flushing, and cache and transaction efficiency.
+         </div>
+      </td></tr>
+   <tr>
+      <td valign=top><a href="GCStatsNode"><img border=0 src="/com/tc/admin/icons/trash.gif" class=topic></a></td>
+      <td><a href="GCStatsNode">Garbage collection</a>
+         <div class=description>
+         Distributed garbage collection (DGC) removes objects that are no longer referenced on any client and have been made eligible for collection by Java GC. DGC runs on schedule, but can also be triggered manually. If the DCG's standard configuration may not be optimal for an application's characteristics, it can be tuned.
+         </div>
+      </td></tr>
+</table>
+
+<div class=footer>Copyright &copy; Terracotta, Inc.</div>
+</body>
+</html>
