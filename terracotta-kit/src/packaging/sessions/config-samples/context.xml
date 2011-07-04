@@ -1,0 +1,44 @@
+<!-- The following is an example of a Tomcat Valve declaration to add to your application to enable
+     terracotta express session clustering. 
+     
+     In the example below you will likely need to adjust the className attribute to match
+     your desired application server and the "tcConfigUrl" attribute should be changed to
+     match the location of your Terracotta server(s).
+     
+     The order of <Valve> elements is relevant. The Terracotta Valve should always be listed first.
+     
+     This file should be placed at META-INF/context.xml for WAR deployment on tomcat, or at
+     WEB-INF/context.xml for Jboss WAR deployment       
+     
+     Tomcat 5.0.x users must add a path attribute to the <Context path="/myApp"> element since it is not
+     optional in that version
+-->
+
+<Context>
+  <Valve className="org.terracotta.session.TerracottaTomcat60xSessionValve" tcConfigUrl="localhost:9510"/>
+</Context>
+
+<!-- tomcat 5.5.x -->
+<!-- <Context> -->
+<!--   <Valve className="org.terracotta.session.TerracottaTomcat55xSessionValve" tcConfigUrl="localhost:9510"/> -->
+<!-- </Context> -->
+
+<!-- tomcat 5.0.x -->
+<!-- <Context path="/myApp"> -->
+<!--   <Valve className="org.terracotta.session.TerracottaTomcat50xSessionValve" tcConfigUrl="localhost:9510"/> -->
+<!-- </Context> -->
+
+<!-- jboss 5.1.x -->
+<!-- <Context> -->
+<!--   <Valve className="org.terracotta.session.TerracottaJboss51xSessionValve" tcConfigUrl="localhost:9510"/> -->
+<!-- </Context> -->
+
+<!-- jboss 4.2.x -->
+<!-- <Context> -->
+<!--   <Valve className="org.terracotta.session.TerracottaJboss42xSessionValve" tcConfigUrl="localhost:9510"/> -->
+<!-- </Context> -->
+
+<!-- jboss 4.0.x -->
+<!-- <Context> -->
+<!--   <Valve className="org.terracotta.session.TerracottaJboss40xSessionValve" tcConfigUrl="localhost:9510"/> -->
+<!-- </Context> -->

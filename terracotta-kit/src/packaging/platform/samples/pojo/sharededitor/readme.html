@@ -1,0 +1,61 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!-- - - - - - - - - - - - -->
+<!--  Terracotta DSO       -->
+<!--  Sample Application   -->
+<!-- - - - - - - - - - - - -->
+<html>
+<head>
+<title>Terracotta DSO  &bull;  Shared Graphics Editor</title>
+<link rel="stylesheet"    type="text/css"  href="../samples.css">
+<link rel="shortcut icon" type="image/ico"
+   href="http://www.terracotta.org/favicon.ico">
+</head>
+<body>
+   <p class=logo>
+      <a href="http://www.terracotta.org/"><img src="../samples.png"></a>
+      </p>
+   <h1>Terracotta DSO</h1>
+   Shared Graphics Editor Sample Application
+
+   <h2>About</h2>
+   The Shared Graphics Editor sample application shows how to use Terracotta DSO
+   to transform a single user drawing tool into a multi-person drawing tool where
+   all users share a common drawing canvas.<br>
+
+   <h2>Build Instructions</h2>
+   This sample application ships built ready to run.&nbsp;  If you modify the
+   application code, use the provided <code>build.xml</code> file to re-build the
+   application with Apache Ant (<code>ant build</code>).
+
+   <h2>Run Instructions</h2>
+   The command-line steps below for executing scripts on Windows can be replaced
+   by double-clicking the script instead.<br>
+   <ol>
+      <li>Start a Terracotta server from the <code>samples</code> directory.<br><br>
+            Unix:    <samp>./start-demo-server.sh</samp><br>
+            Windows: <samp>start-demo-server.bat</samp><br>
+      <li>Start multiple copies of application from the <code>samples/pojo/sharededitor</code> directory.<br><br>
+            Unix:    <samp>./run.sh &<br>./run.sh &</samp><br>
+            Windows: <samp>run.bat<br>run.bat</samp><br>
+      <li>View application.<br>
+            In one of the Shared Graphics Editors, draw a square and see the
+            square replicated across all views of the data.&nbsp;  Try drawing
+            an object with an image texture and resizing the object.&nbsp;
+            DSO's fine-grain replication only sends over fields that have
+            changed instead of the entire object.<br><br>
+      <li>Try out failover.<br>
+            Close all the Graphics Editors and restart one to see that the data
+            persists across invocations of the client.
+      </ol>
+
+   <h2>Source Code</h2>
+   Browse configuration file and source code: <a href="docs/source.html" target="_blank">source.html</a>
+
+   <p class=footer>
+      <a href="../samples.html">Sample Applications</a><br>
+      <a class=footer href="http://www.terracotta.org/">
+      www.terracotta.org<br>Copyright (c) Terracotta, Inc.
+      </a>
+   </p>
+</body>
+</html>

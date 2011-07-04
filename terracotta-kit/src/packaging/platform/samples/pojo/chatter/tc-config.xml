@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+
+-->
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-6.xsd">
+  <!--Server is colocated with client and DSO is listening on
+       default port (9510).-->
+  <servers>
+    <server host="%i" name="sample"/>
+  </servers>
+  <!--Configure DSO for 'development' mode;
+       See the Terracotta Configuration Guide and Reference for additional information.-->
+  <system>
+    <configuration-model>development</configuration-model>
+  </system>
+  <!--Tell DSO where to put the generated client logs
+       See the Terracotta Configuration Guide and Reference for additional
+       information.-->
+  <clients>
+    <logs>terracotta/client-logs/pojo/chatter/%D</logs>
+  </clients>
+  <application>
+    <dso>
+      <!--The app requires these custom objects/classes to be shared - the following declarations
+           tell DSO which ones they are. When the app runs under DSO, instances of these classes
+           will broadcast changes in their state.
+
+           A best practice (and an MVC pattern) when writing an app that you intend to cluster via Terracotta is to group the 
+           classes you want to share under a single package. This makes the list of instrumented classes more concise.-->
+      <instrumented-classes>
+        <!--The following <include> instruments 'demo.chatter.ChatManager' to be shared, but
+             that fields described in the class as 'transient' should still behave as transient fields.
+
+             By setting the value of <honor-transient> to 'true', fields declared as transient *are* transient
+             and their state and value will not become available across instances of the app. Only local instances of the app
+             will be able to create, read, and write to these fields.
+
+             In 'demo.chatter.ChatManager' most members (transient and otherwise) are initialized upon creation. 
+             However, when DSO finds that an object is already available from the server, additional instances of the app 
+             will simply receive a reference to that object, and its constructor will not be called; transient fields 
+             will not be initialized at this point, so the <on-load> declaration is used to indicate actions
+             that the class needs to take when DSO loads that object from the server (actions that normally
+             happens on class instantiation).-->
+        <include>
+          <class-expression>demo.chatter.ChatManager</class-expression>
+          <honor-transient>true</honor-transient>
+          <on-load>
+            <method>init</method>
+          </on-load>
+        </include>
+        <!--The following <include> sections cause the classes 'demo.chatter.Message' and
+            'demo.chatter.User' to be treated as shareable. These objects are used to ferry around the messages
+            (and information about the message) sent from chatter clients.-->
+        <include>
+          <class-expression>demo.chatter.Message</class-expression>
+        </include>
+        <include>
+          <class-expression>demo.chatter.User</class-expression>
+          <honor-transient>true</honor-transient>
+        </include>
+        <include>
+          <class-expression>demo.chatter.Main</class-expression>
+        </include>
+      </instrumented-classes>
+      <!--This section makes it so that calls made to this method from any instance of the app
+           also happen across all instances of the app at the time of the call.-->
+      <distributed-methods>
+        <method-expression>void demo.chatter.ChatManager.sendNewMessageEvent(..)</method-expression>
+        <method-expression>void demo.chatter.ChatManager.sendNewUserEvent(..)</method-expression>
+      </distributed-methods>
+      <!--We declare the field 'demo.chatter.Main.message' a root, making it
+           available to all instances of our app that run via DSO.-->
+      <roots>
+        <root>
+          <field-name>demo.chatter.Main.chatManager</field-name>
+        </root>
+      </roots>
+      <!-- This section applies autolocking to all methods in the ChatManager class. Autolocking will
+           make any syncrhonization in these methods apply accross the cluster. -->
+      <locks>
+        <autolock>
+          <method-expression>* demo.chatter.ChatManager.*(..)</method-expression>
+        </autolock>
+      </locks>
+	  <injected-instances>      
+	      <injected-field> 
+	         <field-name>demo.chatter.Main.cluster</field-name> 
+	      </injected-field>
+	  </injected-instances> 
+    </dso>
+  </application>
+</tc:tc-config>

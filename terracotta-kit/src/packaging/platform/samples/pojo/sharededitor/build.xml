@@ -1,0 +1,30 @@
+<!--
+
+  All content copyright Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved.
+
+-->
+
+<project name="sharededitor" default="build" basedir=".">
+	<property name="src.dir" location="src" />
+	<property name="images.dir" location="${src.dir}/images" />
+	<property name="build.dir" location="classes" />
+	<property name="build.images.dir" location="${build.dir}/images" />
+
+	<target name="init">
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${build.images.dir}" />
+	</target>
+
+	<target name="build" depends="init" description="build the source ">
+		<javac target="1.4" source="1.4" srcdir="${src.dir}" destdir="${build.dir}" />
+		<copy todir="${build.images.dir}">
+			<fileset dir="${images.dir}" />
+		</copy>
+	</target>
+
+	<target name="clean" description="clean up">
+		<delete dir="${build.dir}" />
+	</target>
+</project>

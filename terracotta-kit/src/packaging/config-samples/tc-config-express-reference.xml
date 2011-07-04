@@ -1,0 +1,464 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+
+All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+
+-->
+<!--
+  tc-config-server-reference.xml
+
+  This is a sample Terracotta configuration file. In it, you will find an
+  example of every permitted element, along with a brief description of each.
+  As such, it's a good reference, but vastly more than you need to get started.
+  Very few of the elements in this configuration file are required; they are
+  marked with a (REQUIRED) notation.
+-->
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-6.xsd">
+
+  <tc-properties>
+
+        <!--    
+          The optional <tc-properties> block contains various tuning
+          properties for the Terracotta cluster. This block is inserted at the
+          beginning of the Terracotta configuration file.
+          The properties defined here override default tc.properties but they
+          are overridden by those found in a local tc.properties file and by
+          those defined using system properties. The order of precedence, 
+          beginning with the source having least precedence, is:
+
+          1. Default tc.properties file located in tc.jar
+          2. <tc-properties> block in the Terracotta configuration file
+          3. Local tc.properties file
+          4. Properties defined using Java system properties
+        -->     
+
+    <property name="l2.nha.dirtydb.autoDelete" value="true"/>
+    <property name="l1.cachemanager.enabled" value="true"/>
+    <property name="logging.maxLogFileSize" value="1024"/>
+  </tc-properties>
+  
+  <!-- The 'system' section contains configuration data that affects the
+     entire Terracotta system as a whole; things like whether to activate
+     DSO services go here. -->
+
+  <system>
+    <!-- The configuration model: 'development' or 'production'.
+
+    The configuration-model element is for informational purposes. The two
+    configuration-model options are 'development' and 'production'. These values
+    have no effect on the functioning of Terracotta servers or clients, but
+    instead allow you to designate the intended use of a configuration file
+    using one of two recommended modes.
+
+    In development, you may want each client to have its own configuration,
+    independent of the server or any other client. This approach is useful for
+    development, but should not be used in production as it can result in shared
+    data being corrupted or lost if, for instance, two different clients specify
+    roots of different types. To note that a configuration file is intended for
+    direct use by a client, set the configuration-model to 'development'.
+
+    In production, each client should obtain its configuration from a Terracotta
+    server instance. To note that a configuration file is intended be be fetched
+    from a server, set the configuration-model to 'production'.
+
+    In general, a client can specify that its configuration come from a server
+    by setting the tc.config system propery:
+
+        -Dtc.config=serverHost:dsoPort
+
+    Default: 'development'. -->
+    <configuration-model>development</configuration-model>
+  </system>
+
+  <!--
+    This section defines the servers present in your Terracotta system. You can
+    omit this section entirely, in which case it behaves as if there's a
+    single server with all values set at their default. You can include exactly
+    one server entry here (the common case), or, if you're going to run multiple
+    servers for failover, you can include multiple servers here.
+
+    If you include more than one server here, note that each server will need to know
+    which configuration it should use as it starts up. If you name your servers
+    according to the host that they run on (and no host contains more than
+    one server), then they will find the hostname themselves and work
+    automatically.
+
+    If you name your servers in any other fashion (and, again, only if there is
+    more than one 'server' element present here), then you will need to pass the
+    command-line option "-n <name>" to the start-tc-server script, passing it
+    the name of a server configuration from this file.
+  -->
+  <servers>
+
+    <!-- The host, symbolic name and bind address of the server; host defaults to "%i" (the machine's
+       IP address), name defaults to "host:dso-port" and bind address defaults to "0.0.0.0".
+       Expansion parameters may be used in all attributes. -->
+    <server host="my.host.name" name="My Server Name" bind="0.0.0.0">
+
+      <!-- Where should the server store its persistent data? (This includes
+         stored object data for DSO.) This value undergoes parameter substitution
+         before being used; this allows you to use placeholders like '%h' (for the hostname)
+         or '%(com.mycompany.propname)' (to substitute in the value of
+         Java system property 'com.mycompany.propname'). Thus, a value
+         of 'server-data-%h' would expand to 'server-data-my.host.name' if 
+         running on host 'my.host.name'.
+
+         If this is a relative path, then it is interpreted relative to
+         the current working directory of the server (that is, the directory
+         you were in when you started the server). It is thus recommended that
+         you specify an absolute path here.
+
+         Default: 'data'; this places the 'data' directory in the
+         directory you were in when you invoked 'start-tc-server'.
+      -->
+      <data>/opt/terracotta/server-data</data>
+
+      <!-- In which directory should the server store its log files? Again,
+         this value undergoes parameter substitution before being used;
+         thus, a value like 'server-logs-%h' would expand to
+         'server-logs-my.host.name' if running on host 'my.host.names'.
+
+         If this is a relative path, then it is interpreted relative to
+         the current working directory of the server (that is, the directory
+         you were in when you started server). It is thus recommended that
+         you specify an absolute path here.
+
+         Default: 'logs'; this places the 'logs' directory in the
+         directory you were in when you invoked 'start-tc-server'.
+      -->
+      <logs>/opt/terracotta/server-logs</logs>
+
+      <!-- Where should the server store its search index data? This value
+         undergoes parameter substitution like <data> and <logs>
+
+         If this is a relative path, then it is interpreted relative to
+         the current working directory of the server (that is, the directory
+         you were in when you started the server). It is thus recommended that
+         you specify an absolute path here.
+
+         Default: (none); the index will be stored in the same directory
+         as the configured <data> location
+      -->
+      <index>/opt/terracotta/server-index</index>
+
+      <!-- In which directory should the server store statistics data that is
+         being buffered? Again, this value undergoes parameter substitution
+         before being used; thus, a value like 'statistics-data-%h' would
+         expand to 'statistics-data' if running on host 'artichoke'.
+        
+         If this is a relative path, then it is interpreted relative to the
+         current working directory of the server (that is, the directory you
+         were in when you started server). It is thus recommended that you
+         specify an absolute path here.
+        
+         Default: 'statistics' This places the 'statistics' directory in the
+         directory you were in when you invoked 'start-tc-server'. -->
+      <statistics>/opt/terracotta/server-statistics</statistics>
+
+      <!-- On what port should the DSO server listen for connections from DSO
+         clients? This can be any port you like, but note that
+         ports below 1024 typically require 'root' privileges to use
+         on Un*x-style systems (Linux, Solaris). Optionally, you can bind
+         the port to a specific interface.
+
+         Default: 9510
+      -->
+      <dso-port bind="12.345.678.9">9510</dso-port>
+
+      <!-- On what port should the server listen for connections from the
+         Terracotta administration console? This can be any port you
+         like, but note that ports below 1024 typically require 'root'
+         privileges to use on Un*x-style systems (Linux, Solaris).
+         Optionally, you can bind the port to a specific interface.
+
+         Default: dso port +10
+      -->
+      <jmx-port bind="12.345.678.9">9520</jmx-port>
+
+      <!-- On what port should the server listen for communication from
+         other servers participating in an networked-active-passive setup.
+         This can be any port you like, but note that ports below 1024
+         typically require 'root' privileges to use on Un*x-style systems
+         (Linux, Solaris). Optionally, you can bind the port to a specific
+         interface.
+
+         Default: dso port + 20
+      -->
+      <l2-group-port bind="12.345.678.9">9530</l2-group-port>
+      
+      <!-- Turn on authentication for the Terracotta server. An empty tag
+         <authentication> defaults to the standard Java JMX authentication
+         mechanism referring to password and access files in:
+         $JAVA_HOME/jre/lib/management.
+         - $JAVA_HOME/jre/lib/management/jmxremote.password
+         - $JAVA_HOME/jre/lib/management/jmxremote.access
+        
+         You must modify these files as such (if none exist create them):
+        
+         - jmxremote.password: add a line to the end of the file declaring
+           your username and password followed by a caridge return:
+           secretusername secretpassword
+        
+         - jmxremote.access: add the following line (with a caridge return)
+           to the end of your file:
+           secretusername readwrite
+        
+         You must also do:
+         $ chmod 500 jmxremote.password
+         $ chown <user who will execute the tc-server> jmxremote.password
+      -->
+      <authentication/>
+      
+      <!-- Turn on authentication for the embedded Terracotta HTTP Server.
+         This requires a properties file that contains the users and passwords
+         that have access to the HTTP server.
+        
+         The format of the properties file is:
+         username: password [,rolename ...]
+        
+         The supported roles and protected sections are: 
+         - statistics: for the statistics gatherer at /statistics-gatherer
+        
+         Passwords may be clear text, obfuscated or checksummed.
+         
+         The class com.mortbay.Util.Password should be used to generate
+         obfuscated passwords or password checksums.
+      -->
+      <http-authentication>
+        <user-realm-file>/opt/terracotta/realm.properties</user-realm-file>
+      </http-authentication>
+
+      <!-- Configuration data for DSO that's specific to the DSO server. -->
+      <dso>
+
+        <!-- How much time (in seconds) should the DSO server, upon restart, allow for previously
+             connected clients to reconnect?  After this period, clients will
+             not be allowed to reconnect.
+
+             Default: 120 seconds
+        -->
+        <client-reconnect-window>120</client-reconnect-window>
+
+        <!-- Information about how DSO should persist shared data to disk. -->
+        <persistence>
+          <!-- How should DSO persist shared data to disk? This can be one
+             of two values:
+
+             'temporary-swap-only' causes the DSO server to use the
+             disk as a temporary backing store. Data is not
+             preserved across server restarts. This mode is somewhat
+             faster than 'permanent-store' mode.
+
+             'permanent-store' causes the DSO server to write data
+             immediately and permanently to disk. Upon server restart,
+             data will be restored, meaning data underneath roots
+             in your program will be restored to the exact state it
+             was in when the server shut down.
+
+             Note that if you are using clustered DSO servers
+             (you have more than one <server> element defined,
+             below), then 'permanent-store' mode is recommended.
+             This helps ensure proper operation of the DSO
+             failover mechanism.
+
+             Default: 'temporary-swap-only'
+          -->
+          <mode>temporary-swap-only</mode>
+        </persistence>
+
+        <!-- Information about how DSO should perform distributed
+           garbage collection on the data underneath your
+           application's roots. -->
+        <garbage-collection>
+
+          <!-- If 'true', distributed garbage collection is enabled.
+             You should only set this to 'false' if you are
+             absolutely certain that none of the data underneath
+             your roots will ever become garbage; certain 
+             applications, such as those that read a large amount
+             of data into a Map and never remove it (merely look up
+             values in it) can safely do this.
+
+             A setting of 'false' can also be used if distributed
+             garbage collection will be triggered externally
+             with the 'run-dgc' script
+
+             Default: true
+          -->
+          <enabled>true</enabled>
+
+          <!-- If 'true', the DSO server will emit extra information 
+             to the log file when it performs distributed garbage
+             collection; this can be useful when trying to
+             performance-tune your application.
+
+             Default: false
+          -->
+          <verbose>false</verbose>
+
+          <!-- How often should the DSO server perform distributed 
+             garbage collection, in seconds?
+
+             Default: 3600 (60 minutes)
+          -->
+          <interval>3600</interval>
+        </garbage-collection>
+
+      </dso>
+    </server>
+
+    <!-- This additional <server> element is just to illustrate 
+       that multiple server definitions can be listed
+    -->
+    <server host="broccoli">
+      <data>/usr/local/tc/data</data>
+      <logs>/usr/local/tc/logs</logs>
+
+      <dso-port>8510</dso-port>
+
+      <dso>
+        <persistence>
+          <mode>permanent-store</mode>
+        </persistence>
+
+        <garbage-collection>
+          <enabled>true</enabled>
+          <verbose>true</verbose>
+          <interval>3600</interval>
+        </garbage-collection>
+      </dso>
+    </server>
+    <!-- This section lets you divide your servers in groups. Each 
+        group can be composed of one or more servers out of which 1 server 
+        will act as an Active server i.e. each group will have 1 Active 
+        server. You can omit this section if you want to have only
+        1 Active server in the cluster. 
+    --> 
+    <mirror-groups>
+      <!-- Each group can also be assigned a group name. Each group has members 
+        which are actually the "name" of the server specified above in the server section.
+        More than one member can be present in a mirror group.
+      -->
+      <mirror-group group-name="group1">
+        <members>
+          <member>server1</member>
+        </members>
+        <!-- Each group can have its own ha, otherwise it is taken as the common
+            ha defined
+        -->
+        <ha>
+          <mode>networked-active-passive</mode>
+          <networked-active-passive>
+            <election-time>5</election-time>
+          </networked-active-passive>
+        </ha>
+       </mirror-group>
+       <mirror-group>
+         <members>
+           <member>server2</member>
+         </members>
+       </mirror-group>
+    </mirror-groups>     
+    <!-- This section allows you to indicate properties associated 
+       with running your servers in active-passive mode. The properties 
+       apply to all servers defined. You can omit this section, in which 
+       case your servers, running in persistent mode, will run in 
+       networked active-passive mode.
+
+       Note: In order to allow for at most 1 <ha> section to be defined 
+             along with multiple <server> sections, they must be defined 
+             in a given order (i.e., multiple <server> section then 
+             0 or 1 <ha> section).
+    -->
+    <ha>
+
+      <!-- This section allows you configure whether servers run in 
+         disk-based active-passive or network-based active-passive mode. 
+         There are two HA mode options: 'disk-based-active-passive' and 
+         'networked-active-passive'. 
+
+         Default: 'networked-active-passive'
+      -->
+      <mode>networked-active-passive</mode>
+      
+      <!-- This section allows you to declare the election time window, 
+         which is used when servers run in network-based active-passive mode. 
+         An active server is elected from the servers that cast a vote within 
+         this window. The value is specified in seconds. Network latency and 
+         work load of the servers should be taken into consideration when 
+         choosing an appropriate window.
+
+         Default: 5
+      -->
+      <networked-active-passive>
+        <election-time>5</election-time>
+      </networked-active-passive>
+    </ha>
+
+    <!-- This element lets you control if and how often the Terracotta server
+       will check for update versions of the Terracotta platform.
+
+    -->
+    <update-check>
+      <!-- This element determines if the server will check for updates
+         to the version of the Terracotta platform your are using. The server
+         will contact the terracotta.org website and compare the version of
+         your software with a registry of current releases. Information about
+         new versions will be logged and displayed on the server's standard
+         output.
+
+         Default: 'false'
+      -->
+      <enabled>true</enabled>
+      
+      <!-- This element controls the period, in days, between update checks
+         given that update checking is enabled. When checking is enabled, each
+         time the server starts an update check is performed as well as at
+         subsequent intervals, according to this value.
+
+         Default: 7
+      -->
+      <period-days>10</period-days>
+    </update-check>
+  </servers>
+
+  <!-- This section contains settings that affect all clients that connect to the
+     system.
+
+     Note that while these settings are applied uniformly across all clients,
+     this does not prevent you from applying different settings to various
+     clients. There are two ways of doing this:
+
+      - Certain parameters ('logs', below) undergo parameter expansion
+        before being used by the client. This allows you to use various predefined
+        substitutions (like '%h' for host), or a general one
+        (%(myprop) to use the value of Java system property 'myprop'), for
+        these values; expansions are carried out in each client's JVM
+        independently.
+  -->
+  <clients>
+
+    <!-- Where should the client write its log files?
+
+       This value undergoes parameter substitution before being used;
+       thus, a value like 'client-logs-%h' would expand to
+       'client-logs-banana' if running on host 'banana'.
+
+       If this is a relative path, then it is interpreted relative to
+       the current working directory of the client (that is, the directory
+       you were in when you started the program that uses Terracotta
+       services). It is thus recommended that you specify an absolute
+       path here.
+
+       Default: 'logs-%i'; this places the logs in a directory relative
+       to the directory you were in when you invoked the program that uses
+       Terracotta services (your client), and calls that directory, for example,
+       'logs-10.0.0.57' if the machine that the client is on has assigned IP
+       address 10.0.0.57.
+    -->
+    <logs>logs-%i</logs>
+  </clients>
+
+</tc:tc-config>

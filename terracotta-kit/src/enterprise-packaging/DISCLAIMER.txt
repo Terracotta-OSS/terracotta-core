@@ -1,0 +1,21 @@
+DISCLAIMER OF WARRANTY and LIMITATION OF LIABILITY 
+
+(a) Disclaimer of Warranty. Terracotta Software and any accompanying 
+Technical Support and/or Documentation are licensed and provided to 
+Licensee "as is", without warranty of any kind, and Terracotta disclaims 
+all warranties, whether express, implied, or statutory, including 
+without limitation the warranties of merchantability, fitness for a 
+particular purpose, title, noninfringement, accuracy, quiet enjoyment, 
+and system integration with respect to the Software and any Technical 
+Support and/or Documentation, except as may otherwise be set forth in 
+the applicable license agreement entered into by and between you and Terracotta. 
+
+(b) Limitation of Liability. In no event and under no circumstances 
+shall Terracotta be liable for any indirect, exemplary, special, 
+consequential, treble, punitive, or incidental damages of any kind 
+(including without limitation lost profits), however caused and 
+regardless of the theory of liability, even if Terracotta has been 
+advised of the possibility of such damages, and the 
+foregoing limitations will apply even if the above-stated warranty 
+fails of its essential purpose, except as may otherwise be set forth in 
+the applicable license agreement entered into by and between you and Terracotta.

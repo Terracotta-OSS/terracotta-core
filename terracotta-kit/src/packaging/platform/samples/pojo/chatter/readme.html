@@ -1,0 +1,74 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!-- - - - - - - - - - - - -->
+<!--  Terracotta DSO       -->
+<!--  Sample Application   -->
+<!-- - - - - - - - - - - - -->
+<html>
+<head>
+<title>Terracotta DSO  &bull;  Chatter</title>
+<link rel="stylesheet"    type="text/css"  href="../samples.css">
+<link rel="shortcut icon" type="image/ico"
+   href="http://www.terracotta.org/favicon.ico">
+</head>
+<body>
+   <p class=logo>
+      <a href="http://www.terracotta.org/"><img src="../samples.png"></a>
+      </p>
+   <h1>Terracotta DSO</h1>
+   Chatter Sample Application
+
+   <h2>About</h2>
+   Chatter is a simple chat application that allows multiple users connected 
+   to the same Terracotta Server to communicate via text messages. After 
+   pressing &lt;ENTER&gt;, the text displays on all client nodes.<br>
+   <br>
+   Chatter is implemented by sharing a very simple model across a cluster. 
+   In this case, the model is the <code>ChatManager</code> which keeps a record
+   of all connected chat users in a <code>Map</code>. Writing to the <code>ChatManager</code> 
+   is synchronized across the cluster to ensure data integrity.<br>
+   <br>
+   One relevant implementation detail is that the listeners to the
+   <code>ChatManager</code> are declared as transient in the source code 
+   and the tc-config.xml file declares that the <code>ChatManager</code> class 
+   honors the transient modifier. This makes that the listeners registered to the <code>ChatManager</code> are not clustered, even if the entire object itself is. <br>
+   <br>
+   The <code>ChatManager::sendNewUserEvent()</code> and <code>ChatManager::sendNewMessageEvent</code> methods are declared as distributed. This means that whenever this method is invoked 
+   from any one client, it also fires in the context of all the other clients in the cluster.<br>
+   <br>
+   The program also makes use of terracotta cluster membership events via JMX notifications. By responding to these JMX events, the program can detect the coming and going of other nodes
+   in the cluster, as well as when the terracotta server is unavailable
+   
+
+   <h2>Build Instructions</h2>
+   This sample application ships built ready to run.&nbsp;  If you modify the
+   application code, use the provided <code>build.xml</code> file to re-build the
+   application with Apache Ant (<code>ant build</code>).
+
+   <h2>Run Instructions</h2>
+   The command-line steps below for executing scripts on Windows can be replaced
+   by double-clicking the script instead.<br>
+   <br>
+   <b>This sample application requires a version 1.5+ java runtime</b>
+   <ol>
+      <li>Start a Terracotta server from the <code>samples</code> directory.<br><br>
+            Unix:    <samp>./start-demo-server.sh</samp><br>
+            Windows: <samp>start-demo-server.bat</samp><br>
+      <li>Start multiple copies of the application from the <code>samples/pojo/chatter</code> directory.<br><br>
+            Unix:    <samp>./run.sh &<br>./run.sh &</samp><br>
+            Windows: <samp>run.bat<br>run.bat</samp><br><br>
+      <li>View application.<br>
+   				 In each window type text and press &lt;ENTER&gt; to see the text
+   				 replicated across all nodes in the cluster.
+   </ol>
+
+   <h2>Source Code</h2>
+   Browse configuration file and source code: <a href="docs/source.html" target="_blank">source.html</a>
+
+   <p class=footer>
+      <a href="../samples.html">Sample Applications</a><br>
+      <a class=footer href="http://www.terracotta.org/">
+      www.terracotta.org<br>Copyright (c) Terracotta, Inc.
+      </a>
+   </p>
+</body>
+</html>

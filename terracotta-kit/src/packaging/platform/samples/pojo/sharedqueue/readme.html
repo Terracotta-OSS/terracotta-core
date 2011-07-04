@@ -1,0 +1,67 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!-- - - - - - - - - - - - -->
+<!--  Terracotta DSO       -->
+<!--  Sample Application   -->
+<!-- - - - - - - - - - - - -->
+<html>
+<head>
+<title>Terracotta DSO  &bull;  Shared Work Queue</title>
+<link rel="stylesheet"    type="text/css"  href="../samples.css">
+<link rel="shortcut icon" type="image/ico"
+   href="http://www.terracotta.org/favicon.ico">
+</head>
+<body>
+   <p class=logo>
+      <a href="http://www.terracotta.org/"><img src="../samples.png"></a>
+      </p>
+   <h1>Terracotta DSO</h1>
+   Shared Work Queue Sample Application
+
+   <h2>About</h2>
+   The Shared Work Queue sample application shows how to use Terracotta DSO in a
+   web environment to create a list of computation tasks that is worked on by all
+   the nodes in the cluster.<br>
+
+   <h2>Build Instructions</h2>
+   This sample application ships built ready to run.&nbsp;  If you modify the
+   application code, use the provided <code>build.xml</code> file to re-build the
+   application with Apache Ant (<code>ant build</code>).
+
+   <h2>Run Instructions</h2>
+   <ol>
+      <li>Start a Terracotta Server from the <code>samples</code> directory.<br><br>
+            Unix:    <samp>./start-demo-server.sh</samp><br>
+            Windows: <samp>start-demo-server.bat</samp><br>
+      <li>Start multiple copies of application from the <code>samples/pojo/sharedqueue</code> directory.<br><br>
+            Unix:    <samp>./run.sh &<br>./run.sh &</samp><br>
+            Windows: <samp>run.bat<br>run.bat</samp><br><br>
+            Optionally, a port number may be supplied to the run scripts; otherwise a default 
+            port number will be used, starting at port 1990, and incremented by 1 for each
+            successive copy of the application that you run.<br><br>
+      <li>View application.<br>
+            Fire up a web browser and point the URL to one of the web servers - if you relied
+            on the application to use it's default port number, the following will work:  
+            <code>http://localhost:&lt;1990&gt;/webapp/</code><br><br>
+            Otherwise replace the value 1990, with the port number that you supplied. You can run
+            as many copies of the application as you like, and the number of workers available
+            will be reflected on the page.
+      <li>Distribute work tasks to clustered processing.<br>
+            Enter a value for how many units of work to create.
+            Press Start. You can refresh the browser periodically or wait until
+            the page refreshes automatically, which is about every quarter of 
+            a second. At the bottom, the results demonstrate that the
+            processing of the work is automatically split across the nodes of the
+            cluster.
+      </ol>
+
+   <h2>Source Code</h2>
+   Browse configuration file and source code: <a href="docs/source.html" target="_blank">source.html</a>
+
+   <p class=footer>
+      <a href="../samples.html">Sample Applications</a><br>
+      <a class=footer href="http://www.terracotta.org/">
+      www.terracotta.org<br>Copyright (c) Terracotta, Inc.
+      </a>
+   </p>
+</body>
+</html>

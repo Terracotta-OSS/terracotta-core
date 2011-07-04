@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!--
+
+  All content copyright (c) 2003-2008 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved.
+
+-->         
+<!DOCTYPE struts-config PUBLIC
+       "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN"
+       "http://jakarta.apache.org/struts/dtds/struts-config_1_2.dtd">          
+         
+
+<struts-config>
+  <form-beans>
+    <form-bean 
+    	name="displayUserListForm"
+        type="org.apache.struts.action.DynaActionForm">
+        <form-property name="userList" type="java.util.ArrayList" />
+        <form-property name="numTasks" type="java.lang.String" />
+        <form-property name="errorMsg" type="java.lang.String" />
+    </form-bean>         
+    <form-bean name="addToListForm" type="demo.tasklist.form.AddToListForm" />
+    <form-bean name="deleteFromListForm" type="demo.tasklist.form.DeleteFromListForm" />
+  </form-beans>
+
+  <global-forwards>
+  	<forward name="welcome" path="/action/welcome" />
+  </global-forwards>
+  
+  <action-mappings>
+
+  <action
+  	path="/welcome"
+  	type="demo.tasklist.action.WelcomeAction">
+  	<forward name="Success" path="/action/displayUserList" redirect="true" />
+  </action>
+  
+  <action
+  	path="/displayUserList"
+  	type="demo.tasklist.action.DisplayUserListAction"
+  	scope="session"
+  	name="displayUserListForm"
+  	validate="true">
+  	<forward name="Success" path="/displayUserList.jsp" redirect="true"/>
+  	<forward name="Failure" path="/displayUserList.jsp" redirect="true"/>
+  </action> 
+  
+  <action
+    path="/addToList"
+    type="demo.tasklist.action.AddToListAction"
+    scope="request"
+    name="addToListForm"
+    validate="true"
+    input="/displayUserList.jsp">
+    <forward name="Success" path="/action/displayUserList" redirect="true"/>
+  </action>  
+  
+  <action
+    path="/deleteFromList"
+    type="demo.tasklist.action.DeleteFromListAction"
+    scope="request"
+    name="deleteFromListForm"
+    validate="true"
+    input="/displayUserList.jsp">
+    <forward name="Success" path="/action/displayUserList" redirect="true"/>  
+   </action>
+</action-mappings>
+          
+<controller 
+  contentType="text/html;charset=UTF-8"
+  locale="false"
+  nocache="true"/> 
+  
+<message-resources parameter="DepartmentTaskListMessageResources" null="false"/>
+ 
+</struts-config>    

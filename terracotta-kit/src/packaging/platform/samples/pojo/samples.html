@@ -1,0 +1,52 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!-- - - - - - - - - - - - -->
+<!--  Terracotta DSO       -->
+<!--  Sample Applications  -->
+<!-- - - - - - - - - - - - -->
+<html>
+<head>
+<title>Terracotta DSO  &bull;  Sample Applications</title>
+<link rel="stylesheet"    type="text/css"  href="samples.css">
+<link rel="shortcut icon" type="image/ico"
+   href="http://www.terracotta.org/favicon.ico">
+</head>
+<body>
+   <p class=logo>
+      <a href="http://www.terracotta.org/"><img src="samples.png"></a>
+      </p>
+   <h1>Terracotta DSO</h1>
+   Examples of using Terracotta to cluster the JVM
+
+   <h2>Sample Applications</h2>
+   <ul>
+      <li><a href="chatter/readme.html">Chatter</a><br>
+         Chatter is a simple chat application that allows multiple users connected 
+         to the same Terracotta Server to communicate via text messages. After 
+         pressing &lt;ENTER&gt;, the text displays on all client nodes.
+      <li><a href="coordination/readme.html">JVM Coordination</a><br>
+         The relevant implementation detail from this sample application is that it shows 
+         how to coordinate threads in a multi-VM environment using the same patterns one 
+         would use in a single-VM multi-threaded environment.
+      <li><a href="inventory/readme.html">Inventory Manager</a><br>
+         The Inventory Manager sample application shows how to use Terracotta DSO to
+         share and propagate changes to data structures.
+      <li><a href="jtable/readme.html">Shared JTable</a><br>
+         The Shared JTable sample application shows how to use Terracotta DSO to cluster
+         a Java Swing application and use Terracotta Distributed Method Invocation (DMI)
+         to propagate model data changes across the cluster.
+      <li><a href="sharededitor/readme.html">Shared Graphics Editor</a><br>
+         The Shared Graphics Editor sample application shows how to use Terracotta DSO
+         to transform a single user drawing tool into a multi-person drawing tool where
+         all users share a common drawing canvas.<br>
+      <li><a href="sharedqueue/readme.html">Shared Work Queue</a><br>
+         The Shared Work Queue sample application shows how to use Terracotta DSO in a
+         web environment to create a list of computation tasks that is worked on by all
+         the nodes in the cluster.
+   </ul>
+
+   <p class=footer><a class=footer href="http://www.terracotta.org/">
+      www.terracotta.org<br>Copyright (c) Terracotta, Inc.
+      </a>
+   </p>
+</body>
+</html>

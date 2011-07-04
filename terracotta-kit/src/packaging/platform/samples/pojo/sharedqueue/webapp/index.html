@@ -1,0 +1,87 @@
+<!--
+
+  All content copyright Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved.
+
+-->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- - - - - - - - - - - - - - - - - - - - -->
+<!--  DSO Shared QueueSample Application   -->
+<!--  Terracotta, Inc.                     -->
+<!-- - - - - - - - - - - - - - - - - - - - -->
+<html xmlns="http://www.w3.org/1999/xhtml" >
+   <head>
+      <title>Terracotta DSO &bull; Shared Queue</title>
+      <style>
+         body { width: 620px; font-size: 85%; font-family: trebuchet ms, sans-serif; margin: 20px 40px; }
+      </style>
+      <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+      <!-- link href="/webapp/ajax.css" rel="stylesheet" type="text/css" -->
+      <script type="text/javascript" src="scripts.js"></script>
+   </head>
+   <body onload="javascript:startDemo();">
+      <h1>DSO Shared Work Queue</h1>
+      
+      <div id="errmsg0" align="center" style="color:red; background-color:yellow; border:2px solid brown; font-size:12pt; padding:5px; display:;">
+         You need to have JavaScript enabled.
+      </div>
+      <p/>
+
+      This sample application demonstrates using DSO to easily create a shared work queue. Each instance of the application 
+      provides as service to add items into the queue, as well as consumers to the contents of the queue.
+      <p/>
+   
+      <div>
+         <h2>The Queue</h2>
+         When you click the <b>Start</b> button the <i>Queue</i> will be populated with however many number of jobs you've
+         indicated in the <i><b>number of jobs to create</b></i> field.
+         <p/>
+         <form action="javascript:get(document.getElementById('myform'));" name="myform" id="myform">
+            <b>Number of jobs to create:</b>
+            <input type="text" name="unitsOfWork" id="unitsOfWork" class="field" maxlength="3" value="25" style="text-align:right;width:50px"/>
+            <input type="button" name="button" onclick="javascript:populateQueue();" value="Start"/>
+         </form>
+         <p/>
+         
+         The 3 digit numbers below represents a job that may be consumed. 
+         <table id="jobs" border="0" cellpadding="1" cellspacing="0" width="100%" style="border:4px solid gray">
+            <tr>
+               <td colspan="100%" style="font-size:20pt"/>
+            </tr>
+         </table>
+         <div id="errmsg1" style="color: silver"></div>
+      </div>
+      <p/>
+   
+      <div>
+         <h2>The Workers</h2>
+         As soon as a <i>Job</i> becomes available in the <i>Queue</i>, a <i>Worker</i>, provided it's own job queue 
+         is not yet full, will grab and proceed to consume it.
+         <p/>
+         Each node spawns a worker. The more nodes you have running, the more workers you'll see listed below.
+         The 3 digit numbers in each box beside each worker represent the jobs they have grabbed from the <i>Queue</i>
+         <p/>
+         <div style="padding:10px" id="workers">
+         </div>
+         <p/>
+         <div id="errmsg2" style="color: silver"></div>
+      </div>
+      <p/>
+   
+      <div id="completed_jobs_section" style="display:none">
+         A log entry is created for each job that is consumed. The list below represent only the most recent log entries.
+         <p/>
+         <table id="completed" border="1" cellpadding="1" cellspacing="0" width="100%" style="border-collapse:collapse; color: gray">
+            <tr style="background-color: silver">
+               <td>Job</b></td>
+               <td>Producer</td>
+               <td>Consumer</td>
+               <td>Duration</td>
+            </tr>
+         </table>
+         <div id="errmsg3" style="color: silver"></div>
+      </div>
+   </body>
+</html>

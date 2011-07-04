@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+
+-->
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-6.xsd">
+  <!-- Server is colocated with client and DSO is listening on
+       default port (9510). -->
+  <servers>
+    <server host="%i" name="sample"/>
+  </servers>
+
+  <!-- Tell DSO where to put the generated client logs
+       See the Terracotta Configuration Guide and Reference for additional
+       information. -->
+  <clients>
+    <logs>terracotta/client-logs/pojo/sharedqueue/%D</logs>
+  </clients>
+
+  <application>
+    <dso>
+      <!-- Our app requires these custom objects/classes to be shared - the following declarations
+           tells DSO which ones they are. When the app runs under DSO, instances of these classes
+           will broadcast changes in their state.
+
+           A good idiom when writing an app thay you intend to cluster via TC DSO, is to group the 
+           classes you wish to share under a single package (although if you follow the MVC pattern
+           this tends to happen naturally) - this way the list of classes you wish to instrument
+           can be concise 
+
+           Here, we're basically telling DSO to instrument all of the classes for all packages found -->
+      <instrumented-classes>
+        <include>
+          <class-expression>demo.sharedqueue..*</class-expression>
+        </include>
+      </instrumented-classes>
+
+
+      <!-- These methods (originating from local objects) operates on objects declared as shared. This 
+           section tells DSO to assume a lock on those objects for the duration of the call; essentially this
+           section declares that all methods found in the 'demo.sharedqueue.Main' class should assume the 
+           behavior described -->
+      <locks>
+        <autolock>
+          <method-expression>* demo.sharedqueue.*.*(..)</method-expression>
+        </autolock>
+      </locks>
+
+      <!-- We declare the following fields from the 'demo.sharedqueue.Queue' class
+           as roots, making it available for all instances of our app that runs via DSO 
+
+           The field 'demo.sharedqueue.Main.lastPortUsed' keeps track of the last port number
+           used to launch the web server - subsequent instances of the application will use
+           the next port number in the sequence to avoid collision with previous instances -->
+      <roots>
+        <root>
+          <field-name>demo.sharedqueue.Queue.queue</field-name>
+        </root>
+        <root>
+          <field-name>demo.sharedqueue.Queue.workers</field-name>
+        </root>
+        <root>
+          <field-name>demo.sharedqueue.Queue.completedJobs</field-name>
+        </root>
+        <root>
+          <field-name>demo.sharedqueue.Queue.nextJobId</field-name>
+        </root>
+        <root>
+          <field-name>demo.sharedqueue.Main.lastPortUsed</field-name>
+        </root>
+      </roots>
+    </dso>
+  </application>
+</tc:tc-config>

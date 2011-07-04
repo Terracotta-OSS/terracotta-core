@@ -1,0 +1,153 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.terracotta.samples.sessions</groupId>
+  <artifactId>tasklist</artifactId>
+  <version>3.6.0-SNAPSHOT</version>
+  <name>DepartmentTaskList</name>
+  <packaging>war</packaging>
+
+  <dependencies>
+    <dependency>
+      <groupId>struts</groupId>
+      <artifactId>struts</artifactId>
+      <version>1.2.9</version>
+    </dependency>      
+
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+      <version>2.5</version>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.1</version>
+      <scope>compile</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>logkit</groupId>
+          <artifactId>logkit</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>avalon-framework</groupId>
+          <artifactId>avalon-framework</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>javax.servlet</groupId>
+          <artifactId>servlet-api</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.terracotta.session</groupId>
+      <artifactId>terracotta-session</artifactId>
+      <version>1.1.0-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>terracotta-toolkit-1.0-runtime</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+    </dependency>      
+  </dependencies>
+
+  <build>
+    <finalName>${name}</finalName>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <configuration>
+          <source>1.5</source>
+          <target>1.5</target>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-jetty-plugin</artifactId>
+        <version>6.1.15</version>
+        <groupId>org.mortbay.jetty</groupId>
+        <configuration>
+          <contextPath>${name}</contextPath>
+          <stopKey>STOP</stopKey>
+        </configuration>
+      </plugin>
+
+
+      <plugin>
+        <groupId>org.terracotta.maven.plugins</groupId>
+        <artifactId>tc-maven-plugin</artifactId>
+        <version>1.6.0-SNAPSHOT</version>
+      </plugin>
+    </plugins>
+  </build>
+
+  <repositories>
+    <repository>
+      <id>terracotta-repository</id>
+      <url>http://www.terracotta.org/download/reflector/maven2</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
+  <profiles>
+    <profile>
+      <id>9081</id>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-jetty-plugin</artifactId>
+            <version>6.1.15</version>
+            <groupId>org.mortbay.jetty</groupId>
+            <configuration>
+              <systemProperties>
+                <systemProperty>
+                  <name>jetty.port</name>
+                  <value>9081</value>
+                </systemProperty>
+              </systemProperties>
+              <stopPort>9981</stopPort>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>9082</id>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-jetty-plugin</artifactId>
+            <version>6.1.15</version>
+            <groupId>org.mortbay.jetty</groupId>
+            <configuration>
+              <systemProperties>
+                <systemProperty>
+                  <name>jetty.port</name>
+                  <value>9082</value>
+                </systemProperty>
+              </systemProperties>
+              <stopPort>9982</stopPort>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
+</project>
