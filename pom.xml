@@ -76,7 +76,9 @@
         <module>../ent-deploy</module>
         <module>../terracotta-ee</module>
         <module>../ent-system-tests</module>
-        <module>../ent-active-active-tests</module>   
+        <module>../ent-active-active-tests</module>
+        <module>../terracotta-ee</module>
+        <module>../terracotta-l1-ee</module>         
       </modules>        
     </profile>
     
