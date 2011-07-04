@@ -8,7 +8,7 @@ import org.apache.commons.io.FileUtils;
 import org.osgi.framework.BundleException;
 
 import com.tc.bundles.exception.MissingDefaultRepositoryException;
-import com.tc.test.TestConfigObject;
+import com.tc.test.TCTestCase;
 import com.tc.util.ProductInfo;
 import com.terracottatech.config.Module;
 
@@ -24,24 +24,30 @@ import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import junit.framework.TestCase;
-
-public class ResolverTest extends TestCase {
+public class ResolverTest extends TCTestCase {
   private static final Pattern ARTIFACT_PATTERN = Pattern.compile("(.*)-(\\d+.*)");
   private static boolean       PASS             = true;
   private static boolean       FAIL             = false;
 
   private final String         apiVersion;
   private final String         tcVersion;
+  private final String         testRepo;
 
   public ResolverTest() {
+    try {
+      testRepo = getTempDirectory().getAbsolutePath() + File.separator + "testRepo";
+      new File(testRepo).mkdir();
+      System.setProperty("com.tc.l1.modules.repositories", testRepo);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     ProductInfo info = ProductInfo.getInstance();
     apiVersion = info.timApiVersion();
     tcVersion = info.mavenArtifactsVersion();
   }
 
   public void testResolveBundle() throws IOException {
-    resolveBundles(new String[] { System.getProperty("com.tc.l1.modules.repositories") }, jarFiles(), PASS);
+    resolveBundles(new String[] { testRepo }, jarFiles(), PASS);
   }
 
   public void testResolveBundleInFlatRepo() throws IOException {
@@ -59,7 +65,7 @@ public class ResolverTest extends TestCase {
   }
 
   public void testFindJar() {
-    resolveJars(new String[] { System.getProperty("com.tc.l1.modules.repositories") }, jarFiles(), PASS);
+    resolveJars(new String[] { testRepo }, jarFiles(), PASS);
   }
 
   public void testFindJarInFlatRepo() throws IOException {
@@ -68,7 +74,7 @@ public class ResolverTest extends TestCase {
   }
 
   public void testNotFindJar() {
-    String[] repos = { System.getProperty("com.tc.l1.modules.repositories") };
+    String[] repos = { testRepo };
     resolve(repos, "foobar", "0.0.0-SNAPSHOT", FAIL);
   }
 
@@ -78,14 +84,14 @@ public class ResolverTest extends TestCase {
 
   // CDV-691
   public void testModuleWithNoVersion() throws Exception {
-    resolve(new String[] { System.getProperty("com.tc.l1.modules.repositories") }, "foo", null, false);
+    resolve(new String[] { testRepo }, "foo", null, false);
   }
 
   public void testModuleWithNoName() throws Exception {
-    resolve(new String[] { System.getProperty("com.tc.l1.modules.repositories") }, null, "1.0.0", false);
+    resolve(new String[] { testRepo }, null, "1.0.0", false);
   }
 
-  public void testAcceptGoodRepositories() {
+  public void testAcceptGoodRepositories() throws IOException {
     String[] repo = { "modules", "modules-repo", "modules-repo.1", "modules repo with space" };
     for (int i = 0; i < repo.length; i++)
       repo[i] = makeRepoDir(repo[i]);
@@ -99,7 +105,7 @@ public class ResolverTest extends TestCase {
     }
   }
 
-  public void testIgnoreBadRepositories() {
+  public void testIgnoreBadRepositories() throws IOException {
     String[] repo = { "modules-repo", "modules-repo.1", "modules repo with space" };
 
     for (int i = 0; i < repo.length; i++)
@@ -108,27 +114,27 @@ public class ResolverTest extends TestCase {
     for (String element : repo) {
       File repoDir = new File(element);
       assertFalse("repository location '" + element + "' should've been deleted.", repoDir.exists());
-      assertNull("non-existent repository location '" + element + "' was not ignored.", Resolver
-          .resolveRepositoryLocation(element));
+      assertNull("non-existent repository location '" + element + "' was not ignored.",
+                 Resolver.resolveRepositoryLocation(element));
     }
 
     for (int i = 0; i < repo.length; i++) {
       repo[i] = "file://" + repo[i];
       File repoDir = new File(repo[i]);
       assertFalse("repository URL '" + repo[i] + "' should've been deleted.", repoDir.exists());
-      assertNull("non-existent repository URL '" + repo[i] + "' was not ignored.", Resolver
-          .resolveRepositoryLocation(repo[i]));
+      assertNull("non-existent repository URL '" + repo[i] + "' was not ignored.",
+                 Resolver.resolveRepositoryLocation(repo[i]));
     }
 
     for (int i = 0; i < repo.length; i++) {
       repo[i] = "http://" + repo[i];
-      assertNull("bad protocol used to specify repository URL '" + repo[i] + "' but was not ignored.", Resolver
-          .resolveRepositoryLocation(repo[i]));
+      assertNull("bad protocol used to specify repository URL '" + repo[i] + "' but was not ignored.",
+                 Resolver.resolveRepositoryLocation(repo[i]));
     }
   }
 
   public void testAllModulesCanBeLoadedWithoutVersion() throws Exception {
-    String[] repoLocation = new String[] { System.getProperty("com.tc.l1.modules.repositories") };
+    String[] repoLocation = new String[] { testRepo };
     Collection<File> files = jarFiles();
     for (File file : files) {
       Manifest manifest = Resolver.getManifest(file.toURI().toURL());
@@ -147,23 +153,19 @@ public class ResolverTest extends TestCase {
     }
   }
 
-  private String makeRepoDir(String repoName) {
-    String repoUrl = System.getProperty(TestConfigObject.TC_BASE_DIR) + File.separator + "build" + File.separator
-                     + repoName;
+  private String makeRepoDir(String repoName) throws IOException {
+    String repoUrl = getTempDirectory().getAbsolutePath() + File.separator + repoName;
     File repoDir = new File(repoUrl);
     repoDir.mkdir();
     repoDir.deleteOnExit();
     return repoUrl;
   }
 
-  private String deleteRepoDir(String repoName) {
-    String repoUrl = System.getProperty(TestConfigObject.TC_BASE_DIR) + File.separator + "build" + File.separator
-                     + repoName;
+  private String deleteRepoDir(String repoName) throws IOException {
+    String repoUrl = getTempDirectory().getAbsolutePath() + File.separator + repoName;
     File repoDir = new File(repoUrl);
-    if (repoDir.exists()) try {
+    if (repoDir.exists()) {
       FileUtils.deleteDirectory(repoDir);
-    } catch (IOException e) {
-      //
     }
     return repoUrl;
   }
