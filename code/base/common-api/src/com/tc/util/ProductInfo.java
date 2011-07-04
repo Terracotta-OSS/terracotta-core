@@ -32,32 +32,30 @@ import java.util.regex.Pattern;
  * Utility class to retrieve the build information for the product.
  */
 public final class ProductInfo {
-  public static final String                ENTERPRISE                   = "Enterprise";
-  public static final String                OPENSOURCE                   = "Opensource";
+  public static final String                ENTERPRISE                 = "Enterprise";
+  public static final String                OPENSOURCE                 = "Opensource";
 
-  private static final ResourceBundleHelper bundleHelper                 = new ResourceBundleHelper(ProductInfo.class);
+  private static final ResourceBundleHelper bundleHelper               = new ResourceBundleHelper(ProductInfo.class);
 
-  private static final String               DATE_FORMAT                  = "yyyyMMdd-HHmmss";
-  private static final Pattern              KITIDPATTERN                 = Pattern.compile("(\\d+\\.\\d+.\\d+).*");
-  private static final String               BUILD_DATA_RESOURCE_NAME     = "/build-data.txt";
-  private static final String               PATCH_DATA_RESOURCE_NAME     = "/patch-data.txt";
+  private static final String               DATE_FORMAT                = "yyyyMMdd-HHmmss";
+  private static final Pattern              KITIDPATTERN               = Pattern.compile("(\\d+\\.\\d+.\\d+).*");
+  private static final String               BUILD_DATA_RESOURCE_NAME   = "/build-data.txt";
+  private static final String               PATCH_DATA_RESOURCE_NAME   = "/patch-data.txt";
 
-  private static final String               BUILD_DATA_ROOT_KEY          = "terracotta.build.";
-  private static final String               BUILD_DATA_VERSION_KEY       = "version";
-  private static final String               BUILD_DATA_MAVEN_VERSION_KEY = "maven.artifacts.version";
-  private static final String               BUILD_DATA_EDITION_KEY       = "edition";
-  private static final String               BUILD_DATA_TIMESTAMP_KEY     = "timestamp";
-  private static final String               BUILD_DATA_HOST_KEY          = "host";
-  private static final String               BUILD_DATA_USER_KEY          = "user";
-  private static final String               BUILD_DATA_REVISION_KEY      = "revision";
-  private static final String               BUILD_DATA_EE_REVISION_KEY   = "ee.revision";
-  private static final String               BUILD_DATA_BRANCH_KEY        = "branch";
-  private static final String               PATCH_DATA_ROOT_KEY          = "terracotta.patch.";
-  private static final String               PATCH_DATA_LEVEL_KEY         = "level";
-  public static final String                UNKNOWN_VALUE                = "[unknown]";
-  public static final String                DEFAULT_LICENSE              = "Unlimited development";
+  private static final String               BUILD_DATA_ROOT_KEY        = "terracotta.build.";
+  private static final String               BUILD_DATA_VERSION_KEY     = "version";
+  private static final String               BUILD_DATA_TIMESTAMP_KEY   = "timestamp";
+  private static final String               BUILD_DATA_HOST_KEY        = "host";
+  private static final String               BUILD_DATA_USER_KEY        = "user";
+  private static final String               BUILD_DATA_REVISION_KEY    = "revision";
+  private static final String               BUILD_DATA_EE_REVISION_KEY = "ee.revision";
+  private static final String               BUILD_DATA_BRANCH_KEY      = "branch";
+  private static final String               PATCH_DATA_ROOT_KEY        = "terracotta.patch.";
+  private static final String               PATCH_DATA_LEVEL_KEY       = "level";
+  public static final String                UNKNOWN_VALUE              = "[unknown]";
+  public static final String                DEFAULT_LICENSE            = "Unlimited development";
 
-  private static ProductInfo                INSTANCE                     = null;
+  private static ProductInfo                INSTANCE                   = null;
 
   private final String                      moniker;
   private final Date                        timestamp;
@@ -77,12 +75,11 @@ public final class ProductInfo {
   private final String                      patchEERevision;
   private final String                      patchBranch;
 
-  private final String                      mavenVersion;
   private final String                      timApiVersion;
   private final String                      buildVersion;
   private String                            buildID;
   private String                            copyright;
-  private final String                      license                      = DEFAULT_LICENSE;
+  private final String                      license                    = DEFAULT_LICENSE;
 
   // XXX: Can't have a logger in this class...
   // private static final TCLogger logger = TCLogging.getLogger(ProductInfo.class);
@@ -109,9 +106,8 @@ public final class ProductInfo {
 
     // Get all release build properties
     this.buildVersion = getBuildProperty(properties, BUILD_DATA_VERSION_KEY, UNKNOWN_VALUE);
-    this.mavenVersion = getBuildProperty(properties, BUILD_DATA_MAVEN_VERSION_KEY, UNKNOWN_VALUE);
     this.timApiVersion = Version.getVersion().getFullVersionString();
-    this.edition = getBuildProperty(properties, BUILD_DATA_EDITION_KEY, OPENSOURCE);
+    this.edition = detectEdition();
     if (!isOpenSource() && !isEnterprise() && !isDevMode()) { throw new AssertionError("Can't recognize kit edition: "
                                                                                        + edition); }
 
@@ -131,8 +127,19 @@ public final class ProductInfo {
     this.patchEERevision = getPatchProperty(properties, BUILD_DATA_EE_REVISION_KEY, UNKNOWN_VALUE);
     this.patchBranch = getPatchProperty(properties, BUILD_DATA_BRANCH_KEY, UNKNOWN_VALUE);
 
-    Matcher matcher = KITIDPATTERN.matcher(mavenVersion);
+    Matcher matcher = KITIDPATTERN.matcher(buildVersion);
     kitID = matcher.matches() ? matcher.group(1) : UNKNOWN_VALUE;
+  }
+
+  private static final String detectEdition() {
+    String edition = OPENSOURCE;
+    try {
+      Class.forName("com.tc.util.ProductInfoEnterpriseBundle");
+      edition = ENTERPRISE;
+    } catch (ClassNotFoundException e) {
+      // ignore
+    }
+    return edition;
   }
 
   static Date parseTimestamp(String timestampString) throws java.text.ParseException {
@@ -226,19 +233,16 @@ public final class ProductInfo {
     return edition;
   }
 
-  /**
-   * Use mavenVersion here because it's consistent between TC maven artifact and kit
-   * http://jira.terracotta.org/jira/browse/DEV-3130
-   */
   public String version() {
-    return mavenVersion;
+    return buildVersion;
   }
 
   /**
    * Remains for backward compatible reason. It returns the maven artifact version we use for TC artifacts
+   * http://jira.terracotta.org/jira/browse/DEV-3130
    */
   public String mavenArtifactsVersion() {
-    return mavenVersion;
+    return buildVersion;
   }
 
   /**
