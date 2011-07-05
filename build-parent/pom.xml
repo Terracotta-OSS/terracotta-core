@@ -1,20 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
-  
+
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>terracotta-root</artifactId>
     <version>3.6.0-SNAPSHOT</version>
     <relativePath>..</relativePath>
-  </parent>  
+  </parent>
 
-  <groupId>org.terracotta</groupId>
   <artifactId>build-parent</artifactId>
-  <version>3.6.0-SNAPSHOT</version>
   <name>build-parent</name>
   <packaging>pom</packaging>
 
@@ -37,7 +34,7 @@
     <skip.testjar>false</skip.testjar>
     <extra.jvm.args></extra.jvm.args>
     <localMavenRepository>${user.home}/.m2/repository</localMavenRepository>
-	
+
     <tc.tests.configuration.properties.file>${project.build.testOutputDirectory}/tc.tests.properties</tc.tests.configuration.properties.file>
     <tc.system.tests.properties>${project.build.testOutputDirectory}/com/tc/properties/tests.properties</tc.system.tests.properties>
     <tc.config>-Dtc.config=tc-config.xml</tc.config>
@@ -52,8 +49,14 @@
     <tc.tests.info.junit-test-timeout-inseconds>1800</tc.tests.info.junit-test-timeout-inseconds>
     <tc.tests.info.l2.startup.mode>internal</tc.tests.info.l2.startup.mode>
     <tc.bootclasspath>-Xbootclasspath/p:${tc.tests.info.bootjars.normal}</tc.bootclasspath>
-    <surefire.argLine>-server ${tc.bootclasspath} -Xms64m -Xmx128m -Dtc.base-dir=${tc.base-dir} ${tc.config} -Dtc.dso.globalmode=false -Dtc.tests.info.property-files=${tc.tests.info.property-files} -Dcom.tc.l1.modules.repositories=${localMavenRepository} -Dcom.tc.properties=${tc.system.tests.properties} -Dcom.sun.management.jmxremote ${extra.jvm.args}</surefire.argLine>
-    <skip.system.tests>true</skip.system.tests>	
+    <surefire.argLine>-server ${tc.bootclasspath} -Xms64m -Xmx128m
+      -Dtc.base-dir=${tc.base-dir} ${tc.config}
+      -Dtc.dso.globalmode=false
+      -Dtc.tests.info.property-files=${tc.tests.info.property-files}
+      -Dcom.tc.l1.modules.repositories=${localMavenRepository}
+      -Dcom.tc.properties=${tc.system.tests.properties}
+      -Dcom.sun.management.jmxremote ${extra.jvm.args}</surefire.argLine>
+    <skip.system.tests>true</skip.system.tests>
   </properties>
 
   <dependencyManagement>
@@ -62,12 +65,12 @@
         <groupId>org.terracotta</groupId>
         <artifactId>linked-child-process</artifactId>
         <version>${linked-child-process.version}</version>
-      </dependency>    
+      </dependency>
       <dependency>
         <groupId>org.apache.lucene</groupId>
         <artifactId>lucene-core</artifactId>
         <version>3.2.0</version>
-      </dependency>    
+      </dependency>
       <dependency>
         <groupId>log4j</groupId>
         <artifactId>log4j</artifactId>
@@ -122,7 +125,7 @@
         <groupId>org.apache.xmlbeans</groupId>
         <artifactId>xmlbeans</artifactId>
         <version>2.4.0</version>
-      </dependency> 
+      </dependency>
       <dependency>
         <groupId>org.apache.xmlbeans</groupId>
         <artifactId>xmlbeans-jsr173-api</artifactId>
@@ -137,7 +140,7 @@
         <groupId>org.mortbay.jetty</groupId>
         <artifactId>servlet-api-2.5</artifactId>
         <version>${jetty.version}</version>
-      </dependency> 
+      </dependency>
       <dependency>
         <groupId>org.mortbay.jetty</groupId>
         <artifactId>jetty-util</artifactId>
@@ -238,8 +241,8 @@
         <groupId>jfree</groupId>
         <artifactId>jcommon</artifactId>
         <version>1.0.16</version>
-      </dependency>      
-   
+      </dependency>
+
       <dependency>
         <groupId>hsqldb</groupId>
         <artifactId>hsqldb</artifactId>
@@ -300,7 +303,7 @@
         <artifactId>libsigar-amd64-solaris</artifactId>
         <version>${sigar.version}</version>
         <type>so</type>
-      </dependency>      
+      </dependency>
       <dependency>
         <groupId>org.hyperic</groupId>
         <artifactId>libsigar-sparc-solaris</artifactId>
@@ -312,15 +315,15 @@
         <artifactId>libsigar-x86-solaris</artifactId>
         <version>${sigar.version}</version>
         <type>so</type>
-      </dependency>      
-      
+      </dependency>
+
       <!-- windows -->
       <dependency>
         <groupId>org.hyperic</groupId>
         <artifactId>sigar-amd64-winnt</artifactId>
         <version>${sigar.version}</version>
         <type>dll</type>
-      </dependency>      
+      </dependency>
       <dependency>
         <groupId>org.hyperic</groupId>
         <artifactId>sigar-x86-winnt</artifactId>
@@ -347,7 +350,7 @@
         <version>${sigar.version}</version>
         <type>dylib</type>
       </dependency>
-      
+
       <!-- tests -->
       <dependency>
         <groupId>org.apache.ant</groupId>
@@ -378,10 +381,10 @@
         <groupId>mockit</groupId>
         <artifactId>jmockit</artifactId>
         <version>0.999.9</version>
-      </dependency>       
-    </dependencies>   
+      </dependency>
+    </dependencies>
   </dependencyManagement>
-  
+
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
@@ -404,19 +407,19 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-  
+
   <build>
     <resources>
       <resource>
         <directory>src/main/resources</directory>
         <filtering>false</filtering>
-      </resource>     
+      </resource>
       <resource>
         <directory>src/main/filtered-resources</directory>
         <filtering>true</filtering>
-      </resource>      
-    </resources>  
-    
+      </resource>
+    </resources>
+
     <pluginManagement>
       <plugins>
         <plugin>
@@ -465,7 +468,7 @@
             <forkedProcessTimeoutInSeconds>${tc.tests.info.junit-test-timeout-inseconds}</forkedProcessTimeoutInSeconds>
             <useSystemClassLoader>true</useSystemClassLoader>
             <workingDirectory>${project.build.directory}</workingDirectory>
-            <argLine>${surefire.argLine}</argLine>		
+            <argLine>${surefire.argLine}</argLine>
           </configuration>
           <executions>
             <execution>
@@ -479,7 +482,7 @@
               </configuration>
             </execution>
           </executions>
-        </plugin>		
+        </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
@@ -495,7 +498,7 @@
                   <exclude>**/*Test.class</exclude>
                   <exclude>build-data.txt</exclude>
                 </excludes>
-              </configuration>            
+              </configuration>
             </execution>
           </executions>
         </plugin>
@@ -515,10 +518,10 @@
                   <exclude>**/*TestApp.java</exclude>
                   <exclude>build-data.txt</exclude>
                 </excludes>
-              </configuration>            
+              </configuration>
             </execution>
           </executions>
-        </plugin>        
+        </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-deploy-plugin</artifactId>
@@ -533,11 +536,11 @@
           <version>1.2</version>
           <executions>
             <execution>
-            <id>create-boot-jar</id>
-            <phase>process-test-resources</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
+              <id>create-boot-jar</id>
+              <phase>process-test-resources</phase>
+              <goals>
+                <goal>exec</goal>
+              </goals>
             </execution>
           </executions>
           <configuration>
@@ -545,16 +548,105 @@
             <arguments>
               <argument>-Dcom.tc.l1.modules.repositories=${localMavenRepository}</argument>
               <argument>-cp</argument>
-              <classpath/>
+              <classpath />
               <argument>com.tc.object.tools.BootJarTool</argument>
               <argument>-o</argument>
               <argument>${project.build.directory}/dso-boot.jar</argument>
             </arguments>
           </configuration>
-        </plugin>  		
-      </plugins>   
-    </pluginManagement>    
-    
+        </plugin>
+        <!--This plugin's configuration is used to store Eclipse m2e settings 
+          only. It has no influence on the Maven build itself. -->
+        <plugin>
+          <groupId>org.eclipse.m2e</groupId>
+          <artifactId>lifecycle-mapping</artifactId>
+          <version>1.0.0</version>
+          <configuration>
+            <lifecycleMappingMetadata>
+              <pluginExecutions>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>com.goldin.plugins</groupId>
+                    <artifactId>
+                      maven-properties-plugin
+                    </artifactId>
+                    <versionRange>[0.2.2,)</versionRange>
+                    <goals>
+                      <goal>set-properties</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore></ignore>
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>
+                      org.apache.maven.plugins
+                    </groupId>
+                    <artifactId>
+                      maven-dependency-plugin
+                    </artifactId>
+                    <versionRange>[2.2,)</versionRange>
+                    <goals>
+                      <goal>unpack-dependencies</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore></ignore>
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.codehaus.gmaven</groupId>
+                    <artifactId>gmaven-plugin</artifactId>
+                    <versionRange>[1.3,)</versionRange>
+                    <goals>
+                      <goal>execute</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore></ignore>
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>
+                      exec-maven-plugin
+                    </artifactId>
+                    <versionRange>[1.2,)</versionRange>
+                    <goals>
+                      <goal>exec</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore></ignore>
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.terracotta</groupId>
+                    <artifactId>
+                      maven-forge-plugin
+                    </artifactId>
+                    <versionRange>[1.0.2,)</versionRange>
+                    <goals>
+                      <goal>buildinfo</goal>
+                      <goal>manifest</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore></ignore>
+                  </action>
+                </pluginExecution>
+              </pluginExecutions>
+            </lifecycleMappingMetadata>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
     <plugins>
       <plugin>
         <groupId>org.terracotta</groupId>
@@ -564,10 +656,18 @@
         </configuration>
         <executions>
           <execution>
+            <id>create-build-info</id>
             <goals>
               <goal>buildinfo</goal>
             </goals>
             <phase>generate-resources</phase>
+          </execution>
+          <execution>
+            <id>fix-junit-reports</id>
+            <goals>
+              <goal>fix-junit-report</goal>
+            </goals>
+            <phase>integration-test</phase>
           </execution>
         </executions>
       </plugin>
@@ -582,7 +682,7 @@
           <source>1.5</source>
           <target>1.5</target>
         </configuration>
-      </plugin>      
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -590,15 +690,17 @@
       <plugin>
         <groupId>org.codehaus.gmaven</groupId>
         <artifactId>gmaven-plugin</artifactId>
-      </plugin>      
+      </plugin>
     </plugins>
   </build>
-  
+
   <profiles>
     <profile>
       <id>workaround-windows</id>
       <activation>
-        <os><family>windows</family></os>
+        <os>
+          <family>windows</family>
+        </os>
       </activation>
       <properties>
         <localMavenRepository>C:\DOCUME~1\${user.name}\.m2\repository</localMavenRepository>
@@ -624,41 +726,61 @@
           </plugin>
         </plugins>
       </build>
-    </profile>    
-  </profiles>	
+    </profile>
+  </profiles>
 
   <repositories>
     <repository>
       <id>terracotta-snapshots</id>
       <url>http://www.terracotta.org/download/reflector/snapshots</url>
-      <releases><enabled>false</enabled></releases>
-      <snapshots><enabled>true</enabled></snapshots>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
     </repository>
     <repository>
       <id>terracotta-releases</id>
       <url>http://www.terracotta.org/download/reflector/releases</url>
-      <releases><enabled>true</enabled></releases>
-      <snapshots><enabled>false</enabled></snapshots>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
     </repository>
     <repository>
       <id>jboss</id>
       <url>http://repository.jboss.com/maven2</url>
-      <releases><enabled>true</enabled></releases>
-      <snapshots><enabled>false</enabled></snapshots>
-    </repository>    
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
   </repositories>
   <pluginRepositories>
     <pluginRepository>
       <id>terracotta-snapshots</id>
       <url>http://www.terracotta.org/download/reflector/snapshots</url>
-      <releases><enabled>false</enabled></releases>
-      <snapshots><enabled>true</enabled></snapshots>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
     </pluginRepository>
     <pluginRepository>
       <id>terracotta-releases</id>
       <url>http://www.terracotta.org/download/reflector/releases</url>
-      <releases><enabled>true</enabled></releases>  
-      <snapshots><enabled>false</enabled></snapshots>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
     </pluginRepository>
   </pluginRepositories>
 </project>
