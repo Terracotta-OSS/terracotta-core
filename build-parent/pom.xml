@@ -467,7 +467,7 @@
             <forkMode>always</forkMode>
             <forkedProcessTimeoutInSeconds>${tc.tests.info.junit-test-timeout-inseconds}</forkedProcessTimeoutInSeconds>
             <useSystemClassLoader>true</useSystemClassLoader>
-            <workingDirectory>${project.build.directory}</workingDirectory>
+            <workingDirectory>${project.build.directory}/temp</workingDirectory>
             <argLine>${surefire.argLine}</argLine>
           </configuration>
           <executions>
