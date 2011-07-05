@@ -465,9 +465,9 @@
           <configuration>
             <printSummary>true</printSummary>
             <reportFormat>plain</reportFormat>
-            <excludes>
-              <exclude>**/Abstract*.java</exclude>
-            </excludes>          
+            <includes>
+             <include>**/*Test.java</include>
+            </includes>         
             <skipTests>true</skipTests>
             <forkMode>always</forkMode>
             <forkedProcessTimeoutInSeconds>${tc.tests.info.junit-test-timeout-inseconds}</forkedProcessTimeoutInSeconds>
