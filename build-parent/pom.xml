@@ -775,6 +775,16 @@
         <enabled>false</enabled>
       </snapshots>
     </repository>
+    <repository>
+      <id>evgeny-goldin</id>
+      <url>http://evgeny-goldin.org/artifactory/repo</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>    
   </repositories>
   <pluginRepositories>
     <pluginRepository>
@@ -797,6 +807,16 @@
         <enabled>false</enabled>
       </snapshots>
     </pluginRepository>
+    <pluginRepository>
+      <id>evgeny-goldin</id>
+      <url>http://evgeny-goldin.org/artifactory/repo</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>     
   </pluginRepositories>
 </project>
 
