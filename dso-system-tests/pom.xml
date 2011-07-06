@@ -127,7 +127,7 @@
     </dependency>    
     <dependency>
       <groupId>org.terracotta.test</groupId>
-      <artifactId>dso-unit-tests</artifactId>
+      <artifactId>legacy-test-tree</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>

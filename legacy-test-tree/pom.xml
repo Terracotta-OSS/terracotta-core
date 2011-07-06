@@ -17,9 +17,9 @@
   </parent>
   
   <groupId>org.terracotta.test</groupId>
-  <artifactId>dso-unit-tests</artifactId>
+  <artifactId>legacy-test-tree</artifactId>
   <packaging>jar</packaging>
-  <name>dso-unit-tests</name>
+  <name>legacy-test-tree</name>
   
   <properties>  
     <skip.deploy>true</skip.deploy>
