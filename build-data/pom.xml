@@ -31,6 +31,24 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.terracotta</groupId>
+        <artifactId>maven-forge-plugin</artifactId>
+        <version>1.0.2</version>
+        <configuration>
+          <rootPath>${basedir}/..</rootPath>
+          <eeRootPath>${basedir}/../..</eeRootPath>
+        </configuration>
+        <executions>
+          <execution>
+            <id>create-build-info</id>
+            <goals>
+              <goal>buildinfo</goal>
+            </goals>
+            <phase>generate-resources</phase>
+          </execution>
+        </executions>
+      </plugin>       
+      <plugin>
         <groupId>com.goldin.plugins</groupId>
         <artifactId>maven-properties-plugin</artifactId>
         <version>0.2.2</version>
