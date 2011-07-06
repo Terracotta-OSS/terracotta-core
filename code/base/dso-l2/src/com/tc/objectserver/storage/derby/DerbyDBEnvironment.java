@@ -236,15 +236,13 @@ public class DerbyDBEnvironment implements DBEnvironment {
     Properties attributesProps = new Properties();
     attributesProps.setProperty("create", "true");
     attributesProps.setProperty("logDevice", logDevice);
-    Connection conn;
+    Connection conn = null;
     ThreadDumpOnTimeout td = new ThreadDumpOnTimeout(Thread.currentThread(), 20 * 1000);
     try {
       td.start();
       conn = DriverManager.getConnection(PROTOCOL + envHome.getAbsolutePath() + File.separator + DB_NAME + ";",
                                          attributesProps);
-      conn.setAutoCommit(false);
       conn.close();
-      td.cancel();
     } catch (SQLException e) {
       String errorMessage;
       if (e.getErrorCode() == 40000 && e.getSQLState().equals("XJ040")
@@ -256,6 +254,8 @@ public class DerbyDBEnvironment implements DBEnvironment {
       }
       logger.fatal(errorMessage, e);
       throw new TCDatabaseException(errorMessage);
+    } finally {
+      td.cancel();
     }
   }
 
