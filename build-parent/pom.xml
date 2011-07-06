@@ -49,7 +49,7 @@
     <tc.tests.info.junit-test-timeout-inseconds>1800</tc.tests.info.junit-test-timeout-inseconds>
     <tc.tests.info.l2.startup.mode>internal</tc.tests.info.l2.startup.mode>
     <tc.bootclasspath>-Xbootclasspath/p:${tc.tests.info.bootjars.normal}</tc.bootclasspath>
-    <surefire.argLine>-server ${tc.bootclasspath} -Xms64m -Xmx128m
+    <surefire.argLine>-server ${tc.bootclasspath} -Xms64m -Xmx512m -XX:+HeapDumpOnOutOfMemoryError
       -Dtc.base-dir=${tc.base-dir} ${tc.config}
       -Dtc.dso.globalmode=false
       -Dtc.tests.info.property-files=${tc.tests.info.property-files}
