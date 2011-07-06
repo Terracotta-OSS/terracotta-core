@@ -23,15 +23,31 @@
 
   <properties>  
     <skip.testjar>true</skip.testjar>
+    <schema.version>6</schema.version>
+    <skip.schema>true</skip.schema>
   </properties>
   
   <dependencies>
     <dependency>
-        <groupId>org.apache.xmlbeans</groupId>
-        <artifactId>xmlbeans</artifactId>
-        <version>2.4.0</version>
+      <groupId>org.apache.xmlbeans</groupId>
+      <artifactId>xmlbeans</artifactId>
+      <version>2.4.0</version>
     </dependency>  
   </dependencies>
+  
+  <profiles>
+    <profile>
+      <id>docflex</id>
+      <activation>
+        <file>
+          <exists>${env.DOCFLEX_HOME}</exists>
+        </file>
+      </activation>
+      <properties>
+        <skip.schema>false</skip.schema>
+      </properties>
+    </profile>
+  </profiles>
   
   <build>
     <plugins>
@@ -46,7 +62,45 @@
             </goals>
            </execution>
         </executions>
-      </plugin>    
+      </plugin>
+      
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.2</version>
+          <executions>
+            <execution>
+              <id>generate-schema</id>
+              <phase>prepare-package</phase>
+              <goals>
+                <goal>exec</goal>
+              </goals>
+              <configuration>
+                <skip>${skip.schema}</skip>
+                <executable>${java.home}/bin/java</executable>
+                <arguments>
+                  <argument>-Xmx512m</argument>
+                  <argument>-cp</argument>
+                  <argument>${env.DOCFLEX_HOME}/lib/docflex-xml-re.jar${path.separator}${env.DOCFLEX_HOME}/lib/resolver.jar${path.separator}${env.DOCFLEX_HOME}/lib/xercesImpl.jar${path.separator}${env.DOCFLEX_HOME}/lib/xml-apis.jar</argument>
+                  <argument>com.docflex.xml.Generator</argument>
+                  <argument>-template</argument>
+                  <argument>${env.DOCFLEX_HOME}/templates/XSDDoc/FramedDoc.tpl</argument>
+                  <argument>-format</argument>
+                  <argument>HTML</argument>
+                  <argument>-p:docTitle=\"Terracotta Configuration Schema Version ${schema.version}\"</argument>
+                  <argument>-d</argument>
+                  <argument>${project.build.directory}/schema</argument>
+                  <argument>-f</argument>
+                  <argument>index.html</argument>
+                  <argument>-nodialog=true</argument>
+                  <argument>-quiet=true</argument>
+                  <argument>-launchviewer=false</argument>
+                  <argument>${basedir}/src/main/xsd/terracotta-${schema.version}.xsd</argument>
+                </arguments>
+              </configuration> 
+            </execution> 
+          </executions>        
+      </plugin>     
     </plugins>
   </build>
 

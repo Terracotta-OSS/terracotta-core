@@ -41,7 +41,7 @@
     <tc.base-dir>${project.build.directory}</tc.base-dir>
     <com.tc.l1.modules.repositories>${localMavenRepository}</com.tc.l1.modules.repositories>
     <tc.tests.configuration.transparent-tests.mode>normal</tc.tests.configuration.transparent-tests.mode>
-    <tc.tests.info.bootjars.normal>${project.build.directory}/dso-boot.jar</tc.tests.info.bootjars.normal>
+    <tc.tests.info.bootjars.normal>${basedir}/../target/dso-boot.jar</tc.tests.info.bootjars.normal>
     <tc.tests.info.property-files>${tc.tests.configuration.properties.file}</tc.tests.info.property-files>
     <tc.tests.info.temp-root>${project.build.directory}/temp</tc.tests.info.temp-root>
     <tc.tests.info.data-root>${project.build.directory}/data</tc.tests.info.data-root>
@@ -535,31 +535,6 @@
             <skip>${skip.deploy}</skip>
           </configuration>
         </plugin>
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>exec-maven-plugin</artifactId>
-          <version>1.2</version>
-          <executions>
-            <execution>
-              <id>create-boot-jar</id>
-              <phase>process-test-resources</phase>
-              <goals>
-                <goal>exec</goal>
-              </goals>
-            </execution>
-          </executions>
-          <configuration>
-            <executable>${java.home}/bin/java</executable>
-            <arguments>
-              <argument>-Dcom.tc.l1.modules.repositories=${localMavenRepository}</argument>
-              <argument>-cp</argument>
-              <classpath />
-              <argument>com.tc.object.tools.BootJarTool</argument>
-              <argument>-o</argument>
-              <argument>${project.build.directory}/dso-boot.jar</argument>
-            </arguments>
-          </configuration>
-        </plugin>
         <!--This plugin's configuration is used to store Eclipse m2e settings 
           only. It has no influence on the Maven build itself. -->
         <plugin>
@@ -710,7 +685,7 @@
       <plugin>
         <groupId>org.codehaus.gmaven</groupId>
         <artifactId>gmaven-plugin</artifactId>
-      </plugin>
+      </plugin>      
     </plugins>
   </build>
 

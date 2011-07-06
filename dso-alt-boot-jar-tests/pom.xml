@@ -23,6 +23,7 @@
 
   <properties>
     <skip.deploy>true</skip.deploy>
+    <tc.tests.info.bootjars.normal>${project.build.directory}/dso-boot.jar</tc.tests.info.bootjars.normal>
   </properties>
   
   <dependencies>
@@ -195,18 +196,18 @@
               <argument>-f</argument>
               <argument>${project.build.testOutputDirectory}/tests.system.boot-jar-config.xml</argument>              
               <argument>-o</argument>
-              <argument>${project.build.directory}/dso-boot.jar</argument>
+              <argument>${tc.tests.info.bootjars.normal}</argument>
             </arguments>
           </configuration>        
-        <executions>
-          <execution>
-            <id>create-boot-jar</id>
-            <phase>process-test-resources</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-          </execution>
-        </executions>
+          <executions>
+            <execution>
+              <id>create-boot-jar</id>
+              <phase>process-test-resources</phase>
+              <goals>
+                <goal>exec</goal>
+              </goals>
+            </execution>
+          </executions>
       </plugin>
     </plugins>
   </build>
