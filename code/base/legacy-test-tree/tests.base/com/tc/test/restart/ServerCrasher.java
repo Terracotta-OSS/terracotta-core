@@ -36,13 +36,30 @@ public class ServerCrasher implements Runnable {
     proxyConnectMode = onoff;
   }
 
+  private void startServer() throws Exception {
+    System.err.println("Starting server...");
+    server.start();
+    if (proxyConnectMode) {
+      proxyMgr.proxyUp();
+      proxyMgr.startProxyTest();
+    }
+  }
+
+  private void crashServer() throws Exception {
+    System.err.println("Crashing server...");
+    if (proxyConnectMode) {
+      proxyMgr.stopProxyTest();
+      proxyMgr.proxyDown();
+    }
+    server.crash();
+  }
+
   public void run() {
     // initial server start
     try {
       synchronized (testState) {
         if (testState.isRunning()) {
-          System.err.println("Starting server...");
-          server.start();
+          startServer();
         }
       }
     } catch (Exception e) {
@@ -54,22 +71,9 @@ public class ServerCrasher implements Runnable {
       synchronized (testState) {
         if (testState.isRunning()) {
           try {
-            System.err.println("Crashing server...");
-            if (proxyConnectMode) {
-              proxyMgr.stopProxyTest();
-              proxyMgr.proxyDown();
-            }
-            server.crash();
-
+            crashServer();
             if (server.isRunning()) throw new AssertionError("Server is still running even after shutdown or crash.");
-
-            System.err.println("Starting server...");
-            server.start();
-            if (proxyConnectMode) {
-              proxyMgr.proxyUp();
-              proxyMgr.startProxyTest();
-            }
-
+            startServer();
           } catch (Exception e) {
             throw new TCRuntimeException(e);
           }

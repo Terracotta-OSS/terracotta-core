@@ -241,6 +241,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       crashTestState = new TestState(false);
       crasher = new ServerCrasher(serverControl, getRestartInterval(helper),
                                   helper.getServerCrasherConfig().isCrashy(), crashTestState, proxyMgr);
+      if (enableManualProxyConnectControl()) proxyMgr.setManualControl(true);
       if (canRunL1ProxyConnect()) crasher.setProxyConnectMode(true);
       crasher.startAutocrash();
     }
@@ -643,13 +644,6 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       // NOTE: for crash tests the server needs to be started by the ServerCrasher.. timing issue
 
       this.runner.startServer();
-      if (canRunL1ProxyConnect() && !isMultipleServerTest()) {
-        proxyMgr.proxyUp();
-
-        if (!enableManualProxyConnectControl()) {
-          proxyMgr.startProxyTest();
-        }
-      }
       final Thread duringRunningClusterThread = executeDuringRunningCluster();
       this.runner.run();
       duringRunningClusterThread.join();

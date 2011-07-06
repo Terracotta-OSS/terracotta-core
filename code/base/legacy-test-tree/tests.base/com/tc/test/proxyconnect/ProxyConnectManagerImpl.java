@@ -13,12 +13,13 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class ProxyConnectManagerImpl implements ProxyConnectManager {
-  private TCPProxy         proxy    = null;
+  private TCPProxy         proxy         = null;
   private int              proxyPort, dsoPort;
-  private int              downtime = 100;
-  private int              waittime = 20 * 1000;
-  private Thread           td       = null;
-  private volatile boolean toStop   = false;
+  private int              downtime      = 100;
+  private int              waittime      = 20 * 1000;
+  private Thread           td            = null;
+  private volatile boolean toStop        = false;
+  private volatile boolean manualControl = false;
 
   public ProxyConnectManagerImpl() {
     PortChooser pc = new PortChooser();
@@ -49,6 +50,14 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
 
   public int getDsoPort() {
     return (dsoPort);
+  }
+
+  public void setManualControl(boolean manualControl) {
+    this.manualControl = manualControl;
+  }
+
+  public boolean isManualControl() {
+    return manualControl;
   }
 
   private String timeStamp() {
@@ -82,6 +91,10 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
   }
 
   public void stopProxyTest() {
+    if (isManualControl()) {
+      // Nothing to stop in manual control mode
+      return;
+    }
     toStop = true;
     proxyDown();
     if (td.isAlive()) td.interrupt();
@@ -97,6 +110,10 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
   }
 
   public void startProxyTest() {
+    if (isManualControl()) {
+      System.out.println("Manual proxy control mode, not starting proxy control thread.");
+      return;
+    }
     toStop = false;
     td = new Thread(new Runnable() {
       public void run() {
