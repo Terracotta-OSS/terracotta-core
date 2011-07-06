@@ -21,9 +21,12 @@ import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
@@ -84,10 +87,12 @@ public class ClientAbscondAfterServerCrashTestApp extends AbstractTransparentApp
 
   private void coordinator() {
 
+    int jmxPort = Integer.parseInt(appConfig.getAttribute(ADMIN_PORT));
+
     // Wait till all clients join the game
     try {
       // checkServerHasClients waits till the clients join
-      checkServerHasClients(3, Integer.parseInt(appConfig.getAttribute(ADMIN_PORT)));
+      checkServerHasClients(3, jmxPort);
     } catch (Exception e) {
       throw new AssertionError(e);
     }
@@ -121,10 +126,32 @@ public class ClientAbscondAfterServerCrashTestApp extends AbstractTransparentApp
     // buffer time
     ThreadUtil.reallySleep(5 * 1000);
     try {
-      checkServerHasClients(2, Integer.parseInt(appConfig.getAttribute(ADMIN_PORT)));
+      waitUntilDSOMbeanAvailable(2 * 60 * 1000, jmxPort);
+      checkServerHasClients(2, jmxPort);
     } catch (Exception e) {
       throw new AssertionError(e);
     }
+  }
+
+  private void waitUntilDSOMbeanAvailable(final long timeout, final int jmxPort) throws Exception {
+    long start = System.nanoTime();
+    while (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) < timeout) {
+      DSOMBean dsoMBean = getDSOMbean(jmxPort);
+      try {
+        dsoMBean.getClients();
+        return;
+      } catch (Exception e) {
+        // ignore
+      }
+      ThreadUtil.reallySleep(10 * 1000);
+    }
+    throw new AssertionError("Timed out waiting for DSOMBean to become available.");
+  }
+
+  private DSOMBean getDSOMbean(final int jmxPort) throws MalformedURLException, IOException {
+    JMXConnector jmxConnector = JMXUtils.getJMXConnector("localhost", jmxPort);
+    MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+    return (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DSO, DSOMBean.class, true);
   }
 
   public static class AbscondingClient {
