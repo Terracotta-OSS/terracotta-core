@@ -154,10 +154,31 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
         return;
       }
 
-      final ObjectNotFoundServerMapResponseMessage notFound = (ObjectNotFoundServerMapResponseMessage) channel
-          .createMessage(TCMessageType.OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE);
-      notFound.initialize(mapID, requestID, requestType);
-      notFound.send();
+      if (requestType == ServerMapRequestType.GET_VALUE_FOR_KEY) {
+        sendMissingObjectReponseForGetValueRequests(mapID, request, requestType, channel);
+      } else {
+        initializeAndSendObjectNotFoundMessage(mapID, requestID, requestType, channel);
+      }
+    }
+  }
+
+  private void initializeAndSendObjectNotFoundMessage(ObjectID mapID, final ServerMapRequestID requestID,
+                                                      final ServerMapRequestType requestType,
+                                                      final MessageChannel channel) {
+    final ObjectNotFoundServerMapResponseMessage notFound = (ObjectNotFoundServerMapResponseMessage) channel
+        .createMessage(TCMessageType.OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE);
+    notFound.initialize(mapID, requestID, requestType);
+    notFound.send();
+  }
+
+  private void sendMissingObjectReponseForGetValueRequests(ObjectID mapID, final ServerMapRequestContext request,
+                                                           final ServerMapRequestType requestType,
+                                                           final MessageChannel channel) {
+    ServerMapRequestValueContext valueRequest = (ServerMapRequestValueContext) request;
+    Collection<ServerMapGetValueRequest> getValueRequests = valueRequest.getValueRequests();
+    for (ServerMapGetValueRequest getValueRequest : getValueRequests) {
+      final ServerMapRequestID getValueRequestID = getValueRequest.getRequestID();
+      initializeAndSendObjectNotFoundMessage(mapID, getValueRequestID, requestType, channel);
     }
   }
 

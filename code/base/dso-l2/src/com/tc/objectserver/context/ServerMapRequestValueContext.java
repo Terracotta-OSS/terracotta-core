@@ -7,6 +7,7 @@ import com.tc.async.api.Sink;
 import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
 import com.tc.object.ServerMapGetValueRequest;
+import com.tc.object.ServerMapRequestID;
 import com.tc.object.ServerMapRequestType;
 
 import java.util.Collection;
@@ -36,4 +37,8 @@ public class ServerMapRequestValueContext extends ServerMapRequestContext {
     return ServerMapRequestType.GET_VALUE_FOR_KEY;
   }
 
+  @Override
+  public ServerMapRequestID getRequestID() {
+    return ServerMapRequestID.NULL_ID;
+  }
 }

@@ -36,9 +36,7 @@ public abstract class ServerMapRequestContext implements ObjectManagerResultsCon
   public abstract ServerMapRequestType getRequestType();
 
   // override by who has it
-  public ServerMapRequestID getRequestID() {
-    return null;
-  }
+  public abstract ServerMapRequestID getRequestID();
 
   public ClientID getClientID() {
     return this.clientID;
