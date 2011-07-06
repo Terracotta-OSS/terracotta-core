@@ -4,50 +4,43 @@
  */
 package com.tctest;
 
-import com.tc.exception.TCRuntimeException;
 import com.tc.test.proxyconnect.ProxyConnectManager;
-
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Date;
 
 public class LinkedBlockingQueueProxyCrashTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 4;
 
   public LinkedBlockingQueueProxyCrashTest() {
-    String computerName;
-    try {
-      computerName = InetAddress.getLocalHost().getHostName();
-    } catch (UnknownHostException e) {
-      throw new TCRuntimeException(e);
-    }
-    if (computerName.startsWith("rh5mo0")) {
-      disableAllUntil(new Date(Long.MAX_VALUE));
-    }
+    disableAllUntil("2011-10-01");
   }
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
   }
 
+  @Override
   protected Class getApplicationClass() {
     return LinkedBlockingQueueCrashTestApp.class;
   }
 
+  @Override
   protected boolean canRunCrash() {
     return true;
   }
 
+  @Override
   protected boolean canRunL1ProxyConnect() {
     return true;
   }
 
+  @Override
   protected boolean enableL1Reconnect() {
     return true;
   }
 
+  @Override
   protected void setupL1ProxyConnectTest(ProxyConnectManager mgr) {
     mgr.setProxyWaitTime(30 * 1000);
     mgr.setProxyDownTime(100);
