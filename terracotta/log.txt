@@ -1,7 +1,33 @@
+[INFO] Scanning for projects...
+[INFO]                                                                         
+[INFO] ------------------------------------------------------------------------
+[INFO] Building terracotta 3.6.0-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.2:tree (default-cli) @ terracotta ---
+[INFO] org.terracotta:terracotta:jar:3.6.0-SNAPSHOT
+[INFO] +- org.terracotta.internal:deploy:jar:3.6.0-SNAPSHOT:provided
+[INFO] |  +- org.terracotta.internal:deploy-api:jar:3.6.0-SNAPSHOT:provided
+[INFO] |  +- org.terracotta.internal:dso-l1:jar:3.6.0-SNAPSHOT:provided
+[INFO] |  |  +- org.terracotta.internal:aspectwerkz:jar:3.6.0-SNAPSHOT:provided
+[INFO] |  |  +- org.terracotta.internal:common-api:jar:3.6.0-SNAPSHOT:provided
+[INFO] |  |  |  \- org.terracotta.internal:build-data:jar:3.6.0-SNAPSHOT:provided
+[INFO] |  |  +- org.terracotta.internal:dso-common:jar:3.6.0-SNAPSHOT:provided
+[INFO] |  |  +- org.terracotta.internal:dso-common-jdk16:jar:3.6.0-SNAPSHOT:provided
+[INFO] |  |  +- org.terracotta.internal:dso-statistics-api:jar:3.6.0-SNAPSHOT:provided
+[INFO] |  |  +- org.terracotta.internal:sigarstats:jar:3.6.0-SNAPSHOT:provided
+[INFO] |  |  \- org.terracotta.internal:thirdparty:jar:3.6.0-SNAPSHOT:provided
+[INFO] |  \- org.terracotta.internal:dso-l2:jar:3.6.0-SNAPSHOT:provided
+[INFO] +- org.terracotta.internal:simulator:jar:3.6.0-SNAPSHOT:provided
+[INFO] +- org.terracotta.internal:tim-get-tool:jar:3.6.0-SNAPSHOT:provided
+[INFO] |  \- org.terracotta.internal:common:jar:3.6.0-SNAPSHOT:provided
+[INFO] +- org.terracotta.internal:dso-statistics:jar:3.6.0-SNAPSHOT:provided
+[INFO] |  +- org.terracotta.internal:dso-l2-common:jar:3.6.0-SNAPSHOT:provided
+[INFO] |  +- org.terracotta.internal:dso-l1-api:jar:3.6.0-SNAPSHOT:provided
+[INFO] |  \- org.terracotta.internal:management:jar:3.6.0-SNAPSHOT:provided
+[INFO] |     \- org.terracotta.internal:management-api:jar:3.6.0-SNAPSHOT:provided
 [INFO] +- org.terracotta:tcconfig:jar:3.6.0-SNAPSHOT:compile
 [INFO] +- org.terracotta.api:tim-api:jar:1.3.0:compile
-[INFO] |  +- org.terracotta.api:thirdparty-api:jar:1.3.0:compile
-[INFO] |  \- org.terracotta.api:dso-cluster-api:jar:1.3.0:compile
 [INFO] +- org.terracotta:tc-l1-reconnect-properties:jar:3.6.0-SNAPSHOT:compile
 [INFO] +- org.terracotta:tcstats:jar:3.6.0-SNAPSHOT:compile
 [INFO] +- org.terracotta:google-collections-tc:jar:1.0.0:compile
@@ -34,11 +60,13 @@
 [INFO] +- com.h2database:h2:jar:1.0.67:compile
 [INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
 [INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:compile
+[INFO] +- org.apache.derby:derby:jar:10.8-SNAPSHOT:compile
 [INFO] +- org.hyperic:sigar:jar:1.6.4:compile
 [INFO] +- org.hyperic:libsigar-amd64-linux:so:1.6.4:compile
 [INFO] +- org.hyperic:libsigar-x86-linux:so:1.6.4:compile
 [INFO] +- org.hyperic:libsigar-amd64-solaris:so:1.6.4:compile
 [INFO] +- org.hyperic:libsigar-sparc-solaris:so:1.6.4:compile
+[INFO] +- org.hyperic:libsigar-sparc64-solaris:so:1.6.4:compile
 [INFO] +- org.hyperic:libsigar-x86-solaris:so:1.6.4:compile
 [INFO] +- org.hyperic:sigar-amd64-winnt:dll:1.6.4:compile
 [INFO] +- org.hyperic:sigar-x86-winnt:dll:1.6.4:compile
@@ -46,3 +74,13 @@
 [INFO] +- org.hyperic:libsigar-universal-macosx:dylib:1.6.4:compile
 [INFO] +- org.hyperic:libsigar-universal64-macosx:dylib:1.6.4:compile
 [INFO] +- junit:junit:jar:4.8.1:test (scope not updated to compile)
+[INFO] +- org.terracotta:linked-child-process:jar:1.0.6:test
+[INFO] +- org.terracotta:native-tool:jar:1.0.1:test
+[INFO] \- org.mockito:mockito-all:jar:1.8.2:test
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 2.464s
+[INFO] Finished at: Thu Jul 07 16:23:11 PDT 2011
+[INFO] Final Memory: 7M/17M
+[INFO] ------------------------------------------------------------------------

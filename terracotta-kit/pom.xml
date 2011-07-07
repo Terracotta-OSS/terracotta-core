@@ -213,14 +213,17 @@
 
             <!-- schema -->
             <resource>
+              <runIf>{{ new File('target/schema').exists() }}</runIf>
               <targetPath>${rootDir}/config-samples/schema</targetPath>
               <directory>${basedir}/target/schema</directory>
               <preservePath>true</preservePath>
-			  <failIfNotFound>false</failIfNotFound>
+			        <failIfNotFound>false</failIfNotFound>
             </resource>            
             <resource>
+              <runIf>{{ new File('target/schema').exists() }}</runIf>
               <targetPath>${rootDir}/config-samples/schema</targetPath>
-			  <file>${basedir}/../tcconfig/src/main/xsd/terracotta-${schema.version}.xsd</file>
+			        <file>${basedir}/../tcconfig/src/main/xsd/terracotta-${schema.version}.xsd</file>
+              <failIfNotFound>false</failIfNotFound>
             </resource>            
             
             <!-- populate lib folder -->
@@ -228,7 +231,8 @@
               <targetPath>${rootDir}/lib</targetPath>
               <dependency>
                 <excludeScope>provided</excludeScope>
-                <excludeArtifactIds>${terracotta.artifactId},build-data,thirdparty-api,dso-cluster-api,stax-api</excludeArtifactIds>
+                <excludeArtifactIds>${terracotta.artifactId},build-data,thirdparty-api,dso-cluster-api,stax-api,native-tool,ant,mockito-all,ant-launcher,junit,linked-child-process
+                </excludeArtifactIds>
               </dependency>
               <dependenciesAtM2>true</dependenciesAtM2>
             </resource>

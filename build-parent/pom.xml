@@ -312,6 +312,12 @@
       </dependency>
       <dependency>
         <groupId>org.hyperic</groupId>
+        <artifactId>libsigar-sparc64-solaris</artifactId>
+        <version>${sigar.version}</version>
+        <type>so</type>
+      </dependency>      
+      <dependency>
+        <groupId>org.hyperic</groupId>
         <artifactId>libsigar-x86-solaris</artifactId>
         <version>${sigar.version}</version>
         <type>so</type>
@@ -400,12 +406,27 @@
       <groupId>org.terracotta</groupId>
       <artifactId>native-tool</artifactId>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.commons</groupId>
+          <artifactId>commons-io</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.ant</groupId>
+          <artifactId>ant</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-all</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.ant</groupId>
+      <artifactId>ant</artifactId>
+      <scope>test</scope>
+    </dependency>    
   </dependencies>
 
   <build>
