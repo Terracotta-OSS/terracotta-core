@@ -136,6 +136,9 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Chann
 
   public void notifyChannelEvent(final ChannelEvent event) {
     if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT) {
+      if (logger.isDebugEnabled()) {
+        logger.debug("Got a transport connected event.");
+      }
       synchronized (jmxReadyLock) {
         transportConnected = true;
       }
@@ -174,6 +177,11 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Chann
       send = isTunnelingReady() && !sentReadyMessage;
       if (send) {
         sentReadyMessage = true;
+      } else {
+        if (logger.isDebugEnabled()) {
+          logger.debug("Not sending JMX message. localJmxServerReady: " + localJmxServerReady.isSet()
+                       + " transportConnected: " + transportConnected + " sentReadyMessage: " + sentReadyMessage);
+        }
       }
     }
 

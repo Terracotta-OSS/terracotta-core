@@ -134,6 +134,9 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     if (event.getType() == ChannelEventType.TRANSPORT_DISCONNECTED_EVENT) {
       this.pauseSink.add(new PauseContext(true, event.getChannel().getRemoteNodeID()));
     } else if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT) {
+      if (logger.isDebugEnabled()) {
+        logger.debug("Got a transport connected event.");
+      }
       this.pauseSink.add(new PauseContext(false, event.getChannel().getRemoteNodeID()));
     } else if (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT) {
       if (!isShutdown) {
