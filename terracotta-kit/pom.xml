@@ -213,10 +213,14 @@
 
             <!-- schema -->
             <resource>
-              <runIf>{{ new File("target/schema").exists() }}</runIf>
               <targetPath>${rootDir}/config-samples/schema</targetPath>
               <directory>${basedir}/target/schema</directory>
               <preservePath>true</preservePath>
+			  <failIfNotFound>false</failIfNotFound>
+            </resource>            
+            <resource>
+              <targetPath>${rootDir}/config-samples/schema</targetPath>
+			  <file>${basedir}/../tcconfig/src/main/xsd/terracotta-${schema.version}.xsd</file>
             </resource>            
             
             <!-- populate lib folder -->
