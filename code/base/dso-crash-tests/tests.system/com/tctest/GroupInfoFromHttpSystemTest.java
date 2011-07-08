@@ -77,13 +77,19 @@ public class GroupInfoFromHttpSystemTest extends BaseDSOTestCase {
     URL theURL = new URL("http", "localhost", dsoPort, TCServerImpl.GROUP_INFO_SERVLET_PATH);
     InputStream l1PropFromL2Stream = null;
     System.out.println("Trying to get groupinfo from " + theURL.toString());
-    try {
-      URLConnection connection = theURL.openConnection();
-      l1PropFromL2Stream = connection.getInputStream();
-      Assert.assertNotNull(l1PropFromL2Stream);
-    } catch (IOException e) {
-      if (shouldPass) {
-        Assert.fail("should have connected to [localhost:" + dsoPort + "].");
+    int trials = 0;
+    while (true) {
+      try {
+        URLConnection connection = theURL.openConnection();
+        l1PropFromL2Stream = connection.getInputStream();
+        Assert.assertNotNull(l1PropFromL2Stream);
+        break;
+      } catch (IOException e) {
+        if (shouldPass) {
+          System.out.println("should have connected to [localhost:" + dsoPort + "]. trials so far: " + ++trials);
+        } else {
+          break;
+        }
       }
     }
 
