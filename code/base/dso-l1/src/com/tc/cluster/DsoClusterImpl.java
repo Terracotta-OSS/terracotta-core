@@ -304,14 +304,25 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   }
 
   public DsoNode waitUntilNodeJoinsCluster() {
+    /*
+     * It might be nice to throw InterruptedException here, but since the method is defined inside tim-api, we can't so
+     * re-interrupting once the node is identified is the best option we have available
+     */
+    boolean interrupted = false;
     try {
       synchronized (nodeJoinsClusterSync) {
         while (currentNode == null) {
-          nodeJoinsClusterSync.wait();
+          try {
+            nodeJoinsClusterSync.wait();
+          } catch (InterruptedException e) {
+            interrupted = true;
+          }
         }
       }
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
     }
     return currentNode;
   }

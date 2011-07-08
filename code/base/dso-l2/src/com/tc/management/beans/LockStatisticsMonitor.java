@@ -27,7 +27,7 @@ public class LockStatisticsMonitor extends AbstractNotifyingMBean implements Loc
     this.lockStatsManager = lockStatsManager;
   }
 
-  public Collection<LockSpec> getLockSpecs() {
+  public Collection<LockSpec> getLockSpecs() throws InterruptedException {
     return this.lockStatsManager.getLockSpecs();
   }
 

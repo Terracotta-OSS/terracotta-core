@@ -722,9 +722,11 @@ public class ManagerImpl implements ManagerInternal {
   }
 
   public StatisticRetrievalAction getStatisticRetrievalActionInstance(final String name) {
-    this.statisticsAgentSubSystem.waitUntilSetupComplete();
-
-    return this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry().getActionInstance(name);
+    if (this.statisticsAgentSubSystem.waitUntilSetupComplete()) {
+      return this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry().getActionInstance(name);
+    } else {
+      return null;
+    }
   }
 
   public void registerStatisticRetrievalAction(StatisticRetrievalAction sra) {

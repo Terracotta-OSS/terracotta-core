@@ -502,34 +502,37 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
     try {
       ObjectLatchState ols;
-      synchronized (this) {
-        while (true) {
-          obj = basicLookupByID(id);
-          if (obj != null) {
-            // object exists in local cache
-            return obj;
-          }
-          ols = getObjectLatchState(id);
-          if (ols != null && ols.isCreateState()) {
-            // if the object is being created, add to the wait set and return the object
-            lookupContext.getObjectLatchWaitSet().add(ols);
-            return ols.getObject();
-          } else if (ols != null && ols.isLookupState()) {
-            // the object is being looked up, wait.
-            try {
-              wait(CONCURRENT_LOOKUP_TIMED_WAIT); // using a timed out to avoid needing to catch all notify conditions
-            } catch (final InterruptedException ie) {
-              isInterrupted = true;
+      try {
+        synchronized (this) {
+          while (true) {
+            obj = basicLookupByID(id);
+            if (obj != null) {
+              // object exists in local cache
+              return obj;
             }
-          } else {
-            // otherwise, we need to lookup the object
-            retrieveNeeded = true;
-            ols = markLookupInProgress(id);
-            break;
+            ols = getObjectLatchState(id);
+            if (ols != null && ols.isCreateState()) {
+              // if the object is being created, add to the wait set and return the object
+              lookupContext.getObjectLatchWaitSet().add(ols);
+              return ols.getObject();
+            } else if (ols != null && ols.isLookupState()) {
+              // the object is being looked up, wait.
+              try {
+                wait(CONCURRENT_LOOKUP_TIMED_WAIT); // using a timed out to avoid needing to catch all notify conditions
+              } catch (final InterruptedException ie) {
+                isInterrupted = true;
+              }
+            } else {
+              // otherwise, we need to lookup the object
+              retrieveNeeded = true;
+              ols = markLookupInProgress(id);
+              break;
+            }
           }
         }
+      } finally {
+        Util.selfInterruptIfNeeded(isInterrupted);
       }
-      Util.selfInterruptIfNeeded(isInterrupted);
 
       // retrieving object required, first looking up the DNA from the remote server, and creating
       // a pre-init TCObject, then hydrating the object
@@ -838,31 +841,34 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     boolean lookupInProgress = false;
     boolean isInterrupted = false;
 
-    synchronized (this) {
-      while (true) {
-        if (!replaceRootIfExistWhenCreate) {
-          rootID = (ObjectID) this.roots.get(rootName);
-          if (rootID != null) {
-            break;
+    try {
+      synchronized (this) {
+        while (true) {
+          if (!replaceRootIfExistWhenCreate) {
+            rootID = (ObjectID) this.roots.get(rootName);
+            if (rootID != null) {
+              break;
+            }
+          } else {
+            rootID = ObjectID.NULL_ID;
           }
-        } else {
-          rootID = ObjectID.NULL_ID;
-        }
-        if (!rootLookupInProgress(rootName)) {
-          lookupInProgress = true;
-          markRootLookupInProgress(rootName);
-          break;
-        } else {
-          try {
-            wait();
-          } catch (final InterruptedException e) {
-            e.printStackTrace();
-            isInterrupted = true;
+          if (!rootLookupInProgress(rootName)) {
+            lookupInProgress = true;
+            markRootLookupInProgress(rootName);
+            break;
+          } else {
+            try {
+              wait();
+            } catch (final InterruptedException e) {
+              e.printStackTrace();
+              isInterrupted = true;
+            }
           }
         }
       }
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
     }
-    Util.selfInterruptIfNeeded(isInterrupted);
 
     retrieveNeeded = lookupInProgress && !replaceRootIfExistWhenCreate;
 

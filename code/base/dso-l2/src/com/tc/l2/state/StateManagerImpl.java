@@ -117,7 +117,6 @@ public class StateManagerImpl implements StateManager {
         wait(timeout);
       } catch (InterruptedException e) {
         logger.warn("Interrupted while waiting for ACTIVE to declare WON message ! ", e);
-        Thread.currentThread().interrupt();
         break;
       }
       timeout = timeout - (System.currentTimeMillis() - start);

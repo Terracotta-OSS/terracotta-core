@@ -125,12 +125,19 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
   }
 
   private void waitWhileBlocked() {
+    boolean interrupted = false;
     try {
       while (this.isBlocking) {
-        this.lock.wait();
+        try {
+          this.lock.wait();
+        } catch (InterruptedException e) {
+          interrupted = true;
+        }
       }
-    } catch (final InterruptedException e) {
-      Thread.currentThread().interrupt();
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
     }
   }
 

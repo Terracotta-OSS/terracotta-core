@@ -154,6 +154,9 @@ public class ElectionManagerImpl implements ElectionManager {
       }
       try {
         winnerID = doElection(myNodeId, isNew, weightsFactory);
+      } catch (InterruptedException e) {
+        logger.error("Interrupted during election : ", e);
+        reset(null);
       } catch (GroupException e1) {
         logger.error("Error during election : ", e1);
         reset(null);
@@ -173,7 +176,7 @@ public class ElectionManagerImpl implements ElectionManager {
   }
 
   private NodeID doElection(NodeID myNodeId, boolean isNew, WeightGeneratorFactory weightsFactory)
-      throws GroupException {
+      throws GroupException, InterruptedException {
 
     // Step 1: publish to cluster NodeID, weight and election start
     Enrollment e = EnrollmentFactory.createEnrollment(myNodeId, isNew, weightsFactory);
@@ -239,18 +242,12 @@ public class ElectionManagerImpl implements ElectionManager {
     return computedWinner;
   }
 
-  private synchronized void waitTillElectionComplete() {
+  private synchronized void waitTillElectionComplete() throws InterruptedException {
     long diff = electionTime;
     debugInfo("Waiting till election complete, electionTime=" + electionTime);
     while (state == ELECTION_IN_PROGRESS && diff > 0) {
       long start = System.currentTimeMillis();
-      try {
-        wait(diff);
-      } catch (InterruptedException e) {
-        logger.error("Interrupted during election : ", e);
-        Thread.currentThread().interrupt();
-        break;
-      }
+      wait(diff);
       diff = diff - (System.currentTimeMillis() - start);
     }
   }

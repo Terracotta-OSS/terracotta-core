@@ -239,7 +239,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
     return globalLockRecallCounter.getMostRecentSample();
   }
 
-  public synchronized Collection<LockSpec> getLockSpecs() {
+  public synchronized Collection<LockSpec> getLockSpecs() throws InterruptedException {
     if (!lockStatisticsEnabled) { return Collections.EMPTY_LIST; }
 
     if (lockSpecRequestedNodeIDs.isEmpty()) {
@@ -250,12 +250,8 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
       }
     }
 
-    try {
-      while (!lockSpecRequestedNodeIDs.isEmpty()) {
-        wait();
-      }
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
+    while (!lockSpecRequestedNodeIDs.isEmpty()) {
+      wait();
     }
 
     for (Iterator<LockStatisticsInfo> i = lockStats.values().iterator(); i.hasNext();) {

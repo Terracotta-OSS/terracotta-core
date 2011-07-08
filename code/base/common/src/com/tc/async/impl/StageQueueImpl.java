@@ -134,23 +134,25 @@ public class StageQueueImpl implements Sink {
     }
 
     boolean interrupted = false;
-    while (true) {
-      try {
-        if (context instanceof MultiThreadedEventContext) {
-          SourceQueueImpl sourceQueue = getSourceQueueFor((MultiThreadedEventContext) context);
-          sourceQueue.put(context);
-        } else {
-          this.sourceQueues[0].put(context);
+    try {
+      while (true) {
+        try {
+          if (context instanceof MultiThreadedEventContext) {
+            SourceQueueImpl sourceQueue = getSourceQueueFor((MultiThreadedEventContext) context);
+            sourceQueue.put(context);
+          } else {
+            this.sourceQueues[0].put(context);
+          }
+          break;
+        } catch (InterruptedException e) {
+          this.logger.error("StageQueue Add: " + e);
+          interrupted = true;
         }
-        break;
-      } catch (InterruptedException e) {
-        this.logger.error("StageQueue Add: " + e);
-        interrupted = true;
       }
-    }
-
-    if (interrupted) {
-      Thread.currentThread().interrupt();
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
     }
   }
 

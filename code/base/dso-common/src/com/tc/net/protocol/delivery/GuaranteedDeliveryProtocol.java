@@ -25,19 +25,21 @@ class GuaranteedDeliveryProtocol {
 
   public void send(TCNetworkMessage message) {
     boolean interrupted = false;
-    do {
-      try {
-        sender.put(message);
-        break;
-      } catch (InterruptedException e) {
-        interrupted = true;
+    try {
+      do {
+        try {
+          sender.put(message);
+          break;
+        } catch (InterruptedException e) {
+          interrupted = true;
+        }
+      } while (true);
+
+      sender.execute(null);
+    } finally {
+      if (interrupted) {
+        Util.selfInterruptIfNeeded(interrupted);
       }
-    } while (true);
-
-    sender.execute(null);
-
-    if (interrupted) {
-      Util.selfInterruptIfNeeded(interrupted);
     }
   }
 

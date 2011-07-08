@@ -16,7 +16,7 @@ public interface LockStatisticsMonitorMBean extends TerracottaMBean {
   public static final String[] ALL_EVENTS      = new String[] { TRACE_DEPTH, GATHER_INTERVAL, TRACES_ENABLED };
   public static final String   DESCRIPTION     = "Terracotta Lock Statistics Event Notification";
 
-  public Collection<LockSpec> getLockSpecs();
+  public Collection<LockSpec> getLockSpecs() throws InterruptedException;
 
   public void setLockStatisticsConfig(int traceDepth, int gatherInterval);
 

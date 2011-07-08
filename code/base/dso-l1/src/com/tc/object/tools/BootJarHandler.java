@@ -147,16 +147,19 @@ public class BootJarHandler {
     OutputStream out = null;
     try {
       boolean interrupted = false;
-      // wait until it's okay to copy over the bootjar
-      tmplck = new File(dest.getParentFile(), "tc-bootjar.lck");
-      while (tmplck.exists()) {
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException e) {
-          interrupted = true;
+      try {
+        // wait until it's okay to copy over the bootjar
+        tmplck = new File(dest.getParentFile(), "tc-bootjar.lck");
+        while (tmplck.exists()) {
+          try {
+            Thread.sleep(1000);
+          } catch (InterruptedException e) {
+            interrupted = true;
+          }
         }
+      } finally {
+        Util.selfInterruptIfNeeded(interrupted);
       }
-      Util.selfInterruptIfNeeded(interrupted);
       
       // block everyone else from copying over their bootjar
       tmplck.createNewFile();

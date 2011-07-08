@@ -131,7 +131,7 @@ public interface L2LockStatsManager {
   
   public long getNumberOfLockHopRequests(LockID lockID);
   
-  public Collection<LockSpec> getLockSpecs();
+  public Collection<LockSpec> getLockSpecs() throws InterruptedException;
   
   public int getTraceDepth();
   

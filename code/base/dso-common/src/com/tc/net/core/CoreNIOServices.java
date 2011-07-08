@@ -361,10 +361,8 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
         }
       } finally {
         this.selector.wakeup();
+        Util.selfInterruptIfNeeded(isInterrupted);
       }
-
-      Util.selfInterruptIfNeeded(isInterrupted);
-
     }
 
     void unregister(final SelectableChannel channel) {

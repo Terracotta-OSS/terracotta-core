@@ -197,17 +197,17 @@ public class TransactionSequencer {
 
   private ClientTransactionBatch get() {
     boolean isInterrupted = false;
-    ClientTransactionBatch returnValue = null;
-    while (true) {
-      try {
-        returnValue = this.pendingBatches.poll(0, TimeUnit.MILLISECONDS);
-        break;
-      } catch (InterruptedException e) {
-        isInterrupted = true;
+    try {
+      while (true) {
+        try {
+          return this.pendingBatches.poll(0, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+          isInterrupted = true;
+        }
       }
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
     }
-    Util.selfInterruptIfNeeded(isInterrupted);
-    return returnValue;
   }
 
   private ClientTransactionBatch peek() {

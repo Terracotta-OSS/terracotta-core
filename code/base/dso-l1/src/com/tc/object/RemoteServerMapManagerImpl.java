@@ -127,25 +127,26 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
 
   private Object waitForResult(final AbstractServerMapRequestContext context) {
     boolean isInterrupted = false;
-    Object result;
-    while (true) {
-      try {
-        wait();
-      } catch (final InterruptedException e) {
-        isInterrupted = true;
+    try {
+      while (true) {
+        try {
+          wait();
+        } catch (final InterruptedException e) {
+          isInterrupted = true;
+        }
+        if (context.isMissing()) {
+          removeRequestContext(context);
+          throw new TCObjectNotFoundException(context.getMapID().toString());
+        }
+        Object result = context.getResult();
+        if (result != null) {
+          removeRequestContext(context);
+          return result;
+        }
       }
-      if (context.isMissing()) {
-        removeRequestContext(context);
-        throw new TCObjectNotFoundException(context.getMapID().toString());
-      }
-      result = context.getResult();
-      if (result != null) {
-        removeRequestContext(context);
-        break;
-      }
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
     }
-    Util.selfInterruptIfNeeded(isInterrupted);
-    return result;
   }
 
   private void sendRequest(final AbstractServerMapRequestContext context) {
@@ -367,15 +368,18 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
 
   private void waitUntilRunning() {
     boolean isInterrupted = false;
-    while (this.state != State.RUNNING) {
-      try {
-        if (isStopped()) { throw new TCNotRunningException(); }
-        wait();
-      } catch (final InterruptedException e) {
-        isInterrupted = true;
+    try {
+      while (this.state != State.RUNNING) {
+        try {
+          if (isStopped()) { throw new TCNotRunningException(); }
+          wait();
+        } catch (final InterruptedException e) {
+          isInterrupted = true;
+        }
       }
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
     }
-    Util.selfInterruptIfNeeded(isInterrupted);
   }
 
   public synchronized void pause(final NodeID remote, final int disconnected) {

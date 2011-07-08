@@ -33,10 +33,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Map.Entry;
 
 /**
  * This class is responsible for any communications to the server for object retrieval and removal
@@ -51,20 +51,16 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
 
   private static final int     MAX_OUTSTANDING_REQUESTS_SENT_IMMEDIATELY = TCPropertiesImpl
                                                                              .getProperties()
-                                                                             .getInt(
-                                                                                     TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY);
+                                                                             .getInt(TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY);
   private static final long    BATCH_LOOKUP_TIME_PERIOD                  = TCPropertiesImpl
                                                                              .getProperties()
-                                                                             .getInt(
-                                                                                     TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD);
+                                                                             .getInt(TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD);
   private final static int     MAX_LRU                                   = TCPropertiesImpl
                                                                              .getProperties()
-                                                                             .getInt(
-                                                                                     TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_MAX_DNALRU_SIZE);
+                                                                             .getInt(TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_MAX_DNALRU_SIZE);
   private final static boolean ENABLE_LOGGING                            = TCPropertiesImpl
                                                                              .getProperties()
-                                                                             .getBoolean(
-                                                                                         TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_LOGGING_ENABLED);
+                                                                             .getBoolean(TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_LOGGING_ENABLED);
 
   private static enum State {
     PAUSED, RUNNING, STARTING, STOPPED
@@ -230,37 +226,40 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     long totalTime = 0;
 
     DNA dna;
-    while ((dna = this.dnaCache.remove(id)) == null) {
-      waitUntilRunning();
-      ObjectLookupState ols = this.objectLookupStates.get(id);
-      if (ols == null) {
-        ols = new ObjectLookupState(getNextRequestID(), id, depth, parentContext);
-        ols.makeLookupRequest();
-        sendRequest(ols);
-      } else if (ols.isMissing()) {
-        this.objectLookupStates.remove(id);
-        throw new TCObjectNotFoundException(id.toString());
-      } else if (ols.isPrefetch()) {
-        ols.makeLookupRequest();
-      }
+    try {
+      while ((dna = this.dnaCache.remove(id)) == null) {
+        waitUntilRunning();
+        ObjectLookupState ols = this.objectLookupStates.get(id);
+        if (ols == null) {
+          ols = new ObjectLookupState(getNextRequestID(), id, depth, parentContext);
+          ols.makeLookupRequest();
+          sendRequest(ols);
+        } else if (ols.isMissing()) {
+          this.objectLookupStates.remove(id);
+          throw new TCObjectNotFoundException(id.toString());
+        } else if (ols.isPrefetch()) {
+          ols.makeLookupRequest();
+        }
 
-      inMemory = false;
-      final long current = System.currentTimeMillis();
-      if (current - startTime >= RETRIEVE_WAIT_INTERVAL) {
-        totalTime += current - startTime;
-        startTime = current;
-        this.logger.warn("Still waiting for " + totalTime + " ms to retrieve " + id + " depth : " + depth
-                         + " parent : " + parentContext);
+        inMemory = false;
+        final long current = System.currentTimeMillis();
+        if (current - startTime >= RETRIEVE_WAIT_INTERVAL) {
+          totalTime += current - startTime;
+          startTime = current;
+          this.logger.warn("Still waiting for " + totalTime + " ms to retrieve " + id + " depth : " + depth
+                           + " parent : " + parentContext);
+        }
+        try {
+          wait(RETRIEVE_WAIT_INTERVAL);
+        } catch (final InterruptedException e) {
+          isInterrupted = true;
+        }
       }
-      try {
-        wait(RETRIEVE_WAIT_INTERVAL);
-      } catch (final InterruptedException e) {
-        isInterrupted = true;
-      }
+      this.objectLookupStates.remove(id);
+      this.lru.remove(id);
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
     }
-    this.objectLookupStates.remove(id);
-    this.lru.remove(id);
-    Util.selfInterruptIfNeeded(isInterrupted);
     increamentStatsAndLogIfNecessary(inMemory);
     return dna;
   }
@@ -383,17 +382,20 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     }
 
     boolean isInterrupted = false;
-    while (ObjectID.NULL_ID.equals(this.rootRequests.get(name))) {
-      waitUntilRunning();
-      try {
-        if (ObjectID.NULL_ID.equals(this.rootRequests.get(name))) {
-          wait();
+    try {
+      while (ObjectID.NULL_ID.equals(this.rootRequests.get(name))) {
+        waitUntilRunning();
+        try {
+          if (ObjectID.NULL_ID.equals(this.rootRequests.get(name))) {
+            wait();
+          }
+        } catch (final InterruptedException e) {
+          isInterrupted = true;
         }
-      } catch (final InterruptedException e) {
-        isInterrupted = true;
       }
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
     }
-    Util.selfInterruptIfNeeded(isInterrupted);
 
     return (this.rootRequests.containsKey(name) ? this.rootRequests.get(name) : ObjectID.NULL_ID);
   }

@@ -362,48 +362,48 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     barrier2.await();
   }
 
-  private void verifyLockRequest(LockID lock, int expectedValue) {
+  private void verifyLockRequest(LockID lock, int expectedValue) throws InterruptedException {
     LockSpec ls = getLockSpecFor(lock);
     Assert.assertEquals(expectedValue, ls.getClientStats().getNumOfLockRequested());
   }
 
-  private void verifyLockAwarded(LockID lock, long expectedValue) {
+  private void verifyLockAwarded(LockID lock, long expectedValue) throws InterruptedException {
     LockSpec ls = getLockSpecFor(lock);
     Assert.assertEquals(expectedValue, ls.getClientStats().getNumOfLockAwarded());
   }
 
-  private long getServerAggregateAverageHeldTime(LockID lock) {
+  private long getServerAggregateAverageHeldTime(LockID lock) throws InterruptedException {
     LockSpec ls = getLockSpecFor(lock);
     return ls.getServerStats().getAvgHeldTimeInMillis();
   }
 
-  private long getAggregateAverageHeldTime(LockID lock) {
+  private long getAggregateAverageHeldTime(LockID lock) throws InterruptedException {
     LockSpec ls = getLockSpecFor(lock);
     return ls.getClientStats().getAvgHeldTimeInMillis();
   }
 
-  private long getServerAggregateAverageWaitTime(LockID lock) {
+  private long getServerAggregateAverageWaitTime(LockID lock) throws InterruptedException {
     LockSpec ls = getLockSpecFor(lock);
     return ls.getServerStats().getAvgWaitTimeToAwardInMillis();
   }
 
-  private long getAggregateAverageWaitTime(LockID lock) {
+  private long getAggregateAverageWaitTime(LockID lock) throws InterruptedException {
     LockSpec ls = getLockSpecFor(lock);
     return ls.getClientStats().getAvgWaitTimeToAwardInMillis();
   }
 
-  private void verifyLockHop(LockID lock, int expectedValue) {
+  private void verifyLockHop(LockID lock, int expectedValue) throws InterruptedException {
     LockSpec ls = getLockSpecFor(lock);
     Assert.assertEquals(expectedValue, ls.getClientStats().getNumOfLockHopRequests());
   }
 
-  private void verifyClientStat(LockID lock, int numOfClientsStackTraces, int traceDepth) {
+  private void verifyClientStat(LockID lock, int numOfClientsStackTraces, int traceDepth) throws InterruptedException {
     LockSpec ls = getLockSpecFor(lock);
     Assert.assertEquals(numOfClientsStackTraces, ls.children().size());
     assertStackTracesDepth(ls.children(), traceDepth);
   }
 
-  private void verifyClientStat(LockID lock, String lockType, int numOfClientsStackTraces, int traceDepth) {
+  private void verifyClientStat(LockID lock, String lockType, int numOfClientsStackTraces, int traceDepth) throws InterruptedException {
     LockSpec ls = getLockSpecFor(lock);
     // Assert.assertEquals(lockType, ls.getObjectType());
     Assert.assertEquals(numOfClientsStackTraces, ls.children().size());
@@ -422,7 +422,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     System.err.println(msg);
   }
 
-  private LockSpec getLockSpecFor(LockID lock) {
+  private LockSpec getLockSpecFor(LockID lock) throws InterruptedException {
     Collection<LockSpec> c = statMBean.getLockSpecs();
     System.err.println("Statistics For: ");
     for (LockSpec ls : c) {

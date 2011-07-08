@@ -219,7 +219,7 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
 
   void setLockProfilingEnabled(boolean lockStatsEnabled);
 
-  Collection<LockSpec> getLockSpecs();
+  Collection<LockSpec> getLockSpecs() throws InterruptedException;
 
   boolean isClusterStatsSupported();
 

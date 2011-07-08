@@ -276,22 +276,20 @@ public class SendStateMachine extends AbstractStateMachine {
   }
 
   private static TCNetworkMessage dequeue(BoundedLinkedQueue q) {
-    TCNetworkMessage rv;
     boolean interrupted = false;
-    do {
-      try {
-        rv = (TCNetworkMessage) q.take();
-        break;
-      } catch (InterruptedException e) {
-        interrupted = true;
+    try {
+      while (true) {
+        try {
+          return (TCNetworkMessage) q.take();
+        } catch (InterruptedException e) {
+          interrupted = true;
+        }
       }
-    } while (true);
-
-    if (interrupted) {
-      Util.selfInterruptIfNeeded(true);
+    } finally {
+      if (interrupted) {
+        Util.selfInterruptIfNeeded(true);
+      }
     }
-
-    return rv;
   }
 
   public void put(TCNetworkMessage message) throws InterruptedException {

@@ -283,15 +283,18 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
 
   public synchronized void waitForHandshake() {
     boolean isInterrupted = false;
-    while (this.disconnected != 0) {
-      try {
-        wait();
-      } catch (InterruptedException e) {
-        this.logger.error("Interrupted while waiting for handshake");
-        isInterrupted = true;
+    try {
+      while (this.disconnected != 0) {
+        try {
+          wait();
+        } catch (InterruptedException e) {
+          this.logger.error("Interrupted while waiting for handshake");
+          isInterrupted = true;
+        }
       }
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
     }
-    Util.selfInterruptIfNeeded(isInterrupted);
   }
 
   private synchronized void changeToPaused(final NodeID node) {

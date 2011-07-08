@@ -1670,7 +1670,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     }
   }
 
-  public Collection<LockSpec> getLockSpecs() {
+  public Collection<LockSpec> getLockSpecs() throws InterruptedException {
     LockStatisticsMonitorMBean theLockProfilerBean = getLockProfilerBean();
     if (theLockProfilerBean != null) { return theLockProfilerBean.getLockSpecs(); }
     return Collections.emptySet();

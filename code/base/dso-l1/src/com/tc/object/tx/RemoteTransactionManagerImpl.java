@@ -213,24 +213,27 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     final long start = System.currentTimeMillis();
     long lastPrinted = 0;
     boolean isInterrupted = false;
-    Collection c;
-    synchronized (this.lock) {
-      while ((!(c = this.lockAccounting.getTransactionsFor(lockID)).isEmpty())) {
-        try {
-          this.lock.wait(FLUSH_WAIT_INTERVAL);
-          final long now = System.currentTimeMillis();
-          if ((now - start) > FLUSH_WAIT_INTERVAL && (now - lastPrinted) > FLUSH_WAIT_INTERVAL / 3) {
-            this.logger.info("Flush for " + lockID + " took longer than: " + (FLUSH_WAIT_INTERVAL / 1000)
-                             + " sec. Took : " + (now - start) + " ms. # Transactions not yet Acked = "
-                             + (c.size() + (c.size() < 50 ? (". " + c) : "")) + "\n");
-            lastPrinted = now;
+    try {
+      Collection c;
+      synchronized (this.lock) {
+        while ((!(c = this.lockAccounting.getTransactionsFor(lockID)).isEmpty())) {
+          try {
+            this.lock.wait(FLUSH_WAIT_INTERVAL);
+            final long now = System.currentTimeMillis();
+            if ((now - start) > FLUSH_WAIT_INTERVAL && (now - lastPrinted) > FLUSH_WAIT_INTERVAL / 3) {
+              this.logger.info("Flush for " + lockID + " took longer than: " + (FLUSH_WAIT_INTERVAL / 1000)
+                               + " sec. Took : " + (now - start) + " ms. # Transactions not yet Acked = "
+                               + (c.size() + (c.size() < 50 ? (". " + c) : "")) + "\n");
+              lastPrinted = now;
+            }
+          } catch (final InterruptedException e) {
+            isInterrupted = true;
           }
-        } catch (final InterruptedException e) {
-          isInterrupted = true;
         }
       }
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
     }
-    Util.selfInterruptIfNeeded(isInterrupted);
   }
 
   public void waitForServerToReceiveTxnsForThisLock(final LockID lockId) {
@@ -238,23 +241,25 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     final long start = System.currentTimeMillis();
     long lastPrinted = 0;
     boolean isInterrupted = false;
-    synchronized (this.lock) {
-      while (!this.lockAccounting.areTransactionsReceivedForThisLockID(lockId)) {
-        try {
-          this.lock.wait(FLUSH_WAIT_INTERVAL);
-          final long now = System.currentTimeMillis();
-          if ((now - start) > FLUSH_WAIT_INTERVAL && (now - lastPrinted) > FLUSH_WAIT_INTERVAL / 3) {
-            this.logger.info("Sync Write for " + lockId + " took longer than: " + (FLUSH_WAIT_INTERVAL / 1000)
-                             + " sec. Took : " + (now - start) + " ms.\n");
-            lastPrinted = now;
+    try {
+      synchronized (this.lock) {
+        while (!this.lockAccounting.areTransactionsReceivedForThisLockID(lockId)) {
+          try {
+            this.lock.wait(FLUSH_WAIT_INTERVAL);
+            final long now = System.currentTimeMillis();
+            if ((now - start) > FLUSH_WAIT_INTERVAL && (now - lastPrinted) > FLUSH_WAIT_INTERVAL / 3) {
+              this.logger.info("Sync Write for " + lockId + " took longer than: " + (FLUSH_WAIT_INTERVAL / 1000)
+                               + " sec. Took : " + (now - start) + " ms.\n");
+              lastPrinted = now;
+            }
+          } catch (final InterruptedException e) {
+            isInterrupted = true;
           }
-        } catch (final InterruptedException e) {
-          isInterrupted = true;
         }
       }
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
     }
-
-    Util.selfInterruptIfNeeded(isInterrupted);
   }
 
   /**

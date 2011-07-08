@@ -53,14 +53,16 @@ public class NoExceptionLinkedQueue implements Channel {
 
   public Object take() {
     boolean interrupted = false;
-    while (true) {
-      try {
-        Object o = queue.take();
-        Util.selfInterruptIfNeeded(interrupted);
-        return o;
-      } catch (InterruptedException e) {
-        interrupted = true;
+    try {
+      while (true) {
+        try {
+          return queue.take();
+        } catch (InterruptedException e) {
+          interrupted = true;
+        }
       }
+    } finally {
+      Util.selfInterruptIfNeeded(interrupted);
     }
   }
 

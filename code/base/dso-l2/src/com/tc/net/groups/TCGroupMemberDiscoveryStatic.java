@@ -210,11 +210,14 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
 
   private void waitTillNoConnecting(long timeout) {
     synchronized (local) {
-      if (nodeThreadConnectingSet.size() > 0) {
+      if (!nodeThreadConnectingSet.isEmpty()) {
         try {
           local.wait(timeout);
+          if (!nodeThreadConnectingSet.isEmpty()) {
+            logger.debug("Timeout occurred while waiting for connecting completed");
+          }
         } catch (InterruptedException e) {
-          logger.debug("Timeouted while waiting for connecting completed");
+          logger.debug("Interrupted while waiting for connecting completed");
           Thread.currentThread().interrupt();
         }
       }
@@ -247,10 +250,17 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   }
 
   public synchronized void pauseDiscovery() {
-    while (joinedNodes == (nodeStateMap.size() - 1) && !stopAttempt.get()) {
-      try {
-        this.wait();
-      } catch (InterruptedException e) {
+    boolean interrupted = false;
+    try {
+      while (joinedNodes == (nodeStateMap.size() - 1) && !stopAttempt.get()) {
+        try {
+          this.wait();
+        } catch (InterruptedException e) {
+          interrupted = true;
+        }
+      }
+    } finally {
+      if (interrupted) {
         Thread.currentThread().interrupt();
       }
     }

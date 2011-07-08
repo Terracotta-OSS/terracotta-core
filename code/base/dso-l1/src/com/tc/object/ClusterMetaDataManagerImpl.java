@@ -225,7 +225,11 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      // todo: should we return something special here?
+      /*
+       * This should probably just throw InterruptedException, in the same way that it should probably throw
+       * TimeoutException when no response arrives in time. Since the baked in signatures in tim-api don't allow either
+       * of these we stick with returning a partial result.
+       */
     } finally {
       synchronized (waitObjects) {
         waitObjects.remove(thisThread);

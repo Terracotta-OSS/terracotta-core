@@ -113,7 +113,7 @@ public class LockStatManagerTest extends TestCase {
     }
   }
 
-  public void testLockHeldAggregateDuration() {
+  public void testLockHeldAggregateDuration() throws InterruptedException {
     try {
       LockID l1 = new StringLockID("1");
       final ClientID cid1 = new ClientID(1);
@@ -153,7 +153,7 @@ public class LockStatManagerTest extends TestCase {
     }
   }
 
-  public void testNestedDepth() {
+  public void testNestedDepth() throws InterruptedException {
     try {
       LockID l1 = new StringLockID("1");
       LockID l2 = new StringLockID("2");
