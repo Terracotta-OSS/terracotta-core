@@ -5,9 +5,9 @@ package com.tc.object;
 
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
+import com.tc.object.locks.LockID;
 import com.tc.object.cache.CachedItem;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
-import com.tc.object.locks.LockID;
 import com.tc.object.session.SessionID;
 
 import java.util.Collection;
@@ -45,7 +45,7 @@ public interface RemoteServerMapManager extends ClientHandshakeCallback {
 
   public void flush(Object id);
 
-  public void clearCachedItemsForLocks(Set<LockID> toEvict);
+  public void clearCachedItemsForLocks(Set<LockID> toEvict, boolean waitforRecallComplete);
 
   public void initiateCachedItemEvictionFor(TCObjectServerMap serverMap);
 

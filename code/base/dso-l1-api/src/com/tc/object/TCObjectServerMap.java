@@ -158,6 +158,14 @@ public interface TCObjectServerMap<L> extends TCObject {
   public void clearLocalCache(final TCServerMap map);
 
   /**
+   * Clears local cache of all entries. It is not immediate as all associated locks needs to be recalled. This method
+   * will wait until lock recall is complete.
+   * 
+   * @param map ServerTCMap
+   */
+  public void clearAllLocalCacheInline(final TCServerMap map);
+
+  /**
    * Runs Target capacity eviction to evict Cached Entries from local cache
    */
   public void doCapacityEviction();

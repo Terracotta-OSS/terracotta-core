@@ -352,9 +352,13 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
    * Can't just remove from local cache as pending changes in transaction buffers can't be cleared from cache, else u
    * get wrong answers from the server. Recalling the locks which will do the right thing here.
    */
-  public void clearCachedItemsForLocks(final Set<LockID> toEvict) {
+  public void clearCachedItemsForLocks(final Set<LockID> toEvict, boolean waitforRecallComplete) {
     // NOTE:: If this implementation changes for any reason, checkout RemoteServerMapManagerGroupImpl
-    this.lockRecallSink.add(new LocksToRecallContext(toEvict));
+    LocksToRecallContext recallContext = new LocksToRecallContext(toEvict);
+    this.lockRecallSink.add(recallContext);
+    if (waitforRecallComplete) {
+      recallContext.waitUntilRecallComplete();
+    }
   }
 
   public void expired(final TCObjectServerMap serverMap, final CachedItem ci) {

@@ -372,6 +372,16 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     this.cache.clearAllLocalCache();
   }
 
+  /**
+   * Clears local cache of all entries. It is not immediate as all associated locks needs to be recalled. This method
+   * will wait until lock recall is complete.
+   * 
+   * @param map ServerTCMap
+   */
+  public void clearAllLocalCacheInline(final TCServerMap map) {
+    this.cache.inlineClearAllLocalCache();
+  }
+
   public void removeFromLocalCache(Object key) {
     this.cache.removeFromLocalCache(key);
   }
@@ -657,7 +667,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
                     + cleared + " incoherent items removed: " + incoherentItemsRemoved);
       }
       if (!toEvict.isEmpty()) {
-        TCObjectServerMapImpl.this.serverMapManager.clearCachedItemsForLocks(toEvict);
+        TCObjectServerMapImpl.this.serverMapManager.clearCachedItemsForLocks(toEvict, false);
       }
       return cleared;
     }
@@ -692,6 +702,20 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
 
     public void clearAllLocalCache() {
+      Set<LockID> toClear = clearAllLocalCacheHelper();
+      if (!toClear.isEmpty()) {
+        TCObjectServerMapImpl.this.serverMapManager.clearCachedItemsForLocks(toClear, false);
+      }
+    }
+
+    public void inlineClearAllLocalCache() {
+      Set<LockID> toClear = clearAllLocalCacheHelper();
+      if (!toClear.isEmpty()) {
+        TCObjectServerMapImpl.this.serverMapManager.clearCachedItemsForLocks(toClear, true);
+      }
+    }
+
+    private Set<LockID> clearAllLocalCacheHelper() {
       final Set<LockID> toClear = new HashSet<LockID>();
       for (final CachedItem ci : this.map.values()) {
         if (isIncoherent(ci)) {
@@ -707,9 +731,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
           throw new AssertionError("Unknown cached Item : " + ci);
         }
       }
-      if (!toClear.isEmpty()) {
-        TCObjectServerMapImpl.this.serverMapManager.clearCachedItemsForLocks(toClear);
-      }
+      return toClear;
     }
 
     // TODO:: Code repetition, avoid it
@@ -722,7 +744,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
         TCObjectServerMapImpl.this.serverMapManager.flush(ci.getID());
       } else if (isLockedCoherent(ci)) {
         TCObjectServerMapImpl.this.serverMapManager
-            .clearCachedItemsForLocks(Collections.singleton((LockID) ci.getID()));
+            .clearCachedItemsForLocks(Collections.singleton((LockID) ci.getID()), false);
       } else {
         throw new AssertionError("Unknown cached Item : " + ci);
       }
