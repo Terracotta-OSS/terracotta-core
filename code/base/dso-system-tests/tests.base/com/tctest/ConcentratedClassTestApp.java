@@ -129,13 +129,13 @@ public class ConcentratedClassTestApp extends AbstractTransparentApp {
       });
     }
 
-    for (int i = 0; i < threads.length; i++) {
-      threads[i].start();
+    for (Thread thread : threads) {
+      thread.start();
     }
 
-    for (int i = 0; i < threads.length; i++) {
+    for (Thread thread : threads) {
       try {
-        threads[i].join(runtime + 1000);
+        thread.join(runtime + 1000);
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
@@ -154,7 +154,7 @@ public class ConcentratedClassTestApp extends AbstractTransparentApp {
     synchronized int increment() {
       counter1++;
       counter2++;
-      return counter1;
+      return counter1 + counter2;
     }
   }
 

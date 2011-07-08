@@ -98,8 +98,6 @@ public class Stack<T> {
     return -1;
   }
 
-  private static final long serialVersionUID = 343422342343423234L;
-
   /* I am not in big favor of having these interfaces */
 
   public T get(int index) {

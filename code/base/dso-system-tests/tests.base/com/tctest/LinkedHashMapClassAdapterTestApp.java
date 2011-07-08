@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -24,12 +25,10 @@ import java.util.Vector;
 public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
 
   private final CyclicBarrier barrier;
-  private final Map linkedHashMap;
-  private int nodeId;
+  private final Map           linkedHashMap;
 
   public LinkedHashMapClassAdapterTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
-    nodeId += 1;
     barrier = new CyclicBarrier(getParticipantCount());
     linkedHashMap = new CustomLinkedHashMap();
   }
@@ -76,11 +75,11 @@ public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
     put(elem2);
     put(elem3);
     Assert.assertTrue(linkedHashMap.containsKey("key1"));
-    //Assert.assertTrue(linkedHashMap.containsValue(elem1));
+    // Assert.assertTrue(linkedHashMap.containsValue(elem1));
     Assert.assertTrue(linkedHashMap.containsKey("key2"));
-    //Assert.assertTrue(linkedHashMap.containsValue(elem2));
+    // Assert.assertTrue(linkedHashMap.containsValue(elem2));
     Assert.assertTrue(linkedHashMap.containsKey("key3"));
-    //Assert.assertTrue(linkedHashMap.containsValue(elem3));
+    // Assert.assertTrue(linkedHashMap.containsValue(elem3));
     barrier.barrier();
   }
 
@@ -92,7 +91,7 @@ public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
   }
 
   private void removeTesting() throws Exception {
-    synchronized(linkedHashMap) {
+    synchronized (linkedHashMap) {
       linkedHashMap.remove("key1");
       Assert.assertFalse(linkedHashMap.containsKey("key1"));
     }
@@ -100,7 +99,7 @@ public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
   }
 
   private void clearTesting() throws Exception {
-    synchronized(linkedHashMap) {
+    synchronized (linkedHashMap) {
       linkedHashMap.clear();
       Assert.assertTrue(linkedHashMap.isEmpty());
     }
@@ -108,7 +107,7 @@ public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
   }
 
   private void putAllTesting() throws Exception {
-    synchronized(linkedHashMap) {
+    synchronized (linkedHashMap) {
       final Map expect = new HashMap();
       expect.put("key1", new Element("key1", "value1"));
       expect.put("key2", new Element("key2", "value2"));
@@ -128,27 +127,28 @@ public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
   }
 
   private void put(final Element element) {
-    synchronized(linkedHashMap) {
+    synchronized (linkedHashMap) {
       linkedHashMap.put(element.getKey(), element);
     }
   }
 
   private Element get(final String key) {
-    synchronized(linkedHashMap) {
-      return (Element)linkedHashMap.get(key);
+    synchronized (linkedHashMap) {
+      return (Element) linkedHashMap.get(key);
     }
   }
 
   private static final class CustomLinkedHashMap extends LinkedHashMap {
-    private static final int INITIAL_CAPACITY = 100;
-    private static final float GROWTH_FACTOR = .75F;
+    private static final int   INITIAL_CAPACITY = 100;
+    private static final float GROWTH_FACTOR    = .75F;
 
     public CustomLinkedHashMap() {
-        super(INITIAL_CAPACITY, GROWTH_FACTOR, true);
+      super(INITIAL_CAPACITY, GROWTH_FACTOR, true);
     }
 
+    @Override
     protected final boolean removeEldestEntry(Map.Entry eldest) {
-      Element element = (Element)eldest.getValue();
+      Element element = (Element) eldest.getValue();
       return (element.getValue() == null);
     }
   }

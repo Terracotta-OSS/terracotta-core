@@ -8,7 +8,6 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.TCRuntimeException;
-import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
@@ -38,8 +37,7 @@ import java.util.Timer;
  */
 public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTransport implements
     OnceAndOnlyOnceProtocolNetworkLayer, OOOProtocolMessageDelivery {
-  private static final TCLogger            logger           = TCLogging
-                                                                .getLogger(OnceAndOnlyOnceProtocolNetworkLayerImpl.class);
+
   private final OOOProtocolMessageFactory  messageFactory;
   private final OOOProtocolMessageParser   messageParser;
   boolean                                  wasConnected     = false;
@@ -66,7 +64,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
                                                  OOOProtocolMessageParser messageParser,
                                                  ReconnectConfig reconnectConfig, boolean isClient,
                                                  Timer restoreConnectTimer) {
-    super(logger);
+    super(TCLogging.getLogger(OnceAndOnlyOnceProtocolNetworkLayerImpl.class));
     this.messageFactory = messageFactory;
     this.messageParser = messageParser;
     this.isClient = isClient;

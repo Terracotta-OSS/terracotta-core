@@ -64,28 +64,6 @@ public class TIMUtil {
     // singleton
   }
 
-  private static String lookup(String pattern) {
-    String name = searchModuleName(pattern);
-    if (name == null) { throw new RuntimeException("Can't find module with pattern: [" + pattern + "]"); }
-    return name;
-  }
-
-  /**
-   * @param pattern: java regular expression
-   */
-  private static String searchModuleName(String pattern) {
-    if (modules.containsKey(pattern)) { return pattern; }
-    String name = null;
-    for (Object element : modules.keySet()) {
-      String moduleName = (String) element;
-      if (moduleName.matches(pattern)) {
-        name = moduleName;
-        break;
-      }
-    }
-    return name;
-  }
-
   public static String getVersion(String moduleName) {
     String spec = modules.getProperty(moduleName);
     BundleSpec bundleSpec = BundleSpec.newInstance(spec);

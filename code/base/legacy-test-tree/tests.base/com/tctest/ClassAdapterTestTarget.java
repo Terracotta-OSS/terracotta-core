@@ -15,8 +15,7 @@ import java.util.List;
  */
 public class ClassAdapterTestTarget {
   private static final String              C                                    = ClassAdapterTestTarget.class
-                                                                                    .getName()
-                                                                                  + ".";
+                                                                                    .getName() + ".";
 
   public static final String               KEY                                  = C + "key";
   public static final String               CSTR_THROW_EXCEPTION                 = C + "cstr-throw-exception";
@@ -25,17 +24,19 @@ public class ClassAdapterTestTarget {
                                                                                   + "cstr-autolock-throw-exception-inside";
 
   // This isn't a real serialVersionUID, but it needs to be here for tests
+  @SuppressWarnings("unused")
   private static final long                serialVersionUID                     = 42L;
 
   // Again, this isn't really for serialization, but it needs to be here for tests
+  @SuppressWarnings("unused")
   private static final ObjectStreamField[] serialPersistentFields               = { new java.io.ObjectStreamField(
                                                                                                                   "foo",
                                                                                                                   char[].class) };
-  
-  private static TestClientObjectManager testClientObjectManager;
+
+  private static TestClientObjectManager   testClientObjectManager;
 
   List                                     myRoot                               = new ArrayList();
-  
+
   public synchronized static void setTestClientObjectManager(TestClientObjectManager clientObjectManager) {
     testClientObjectManager = clientObjectManager;
   }
@@ -118,7 +119,7 @@ public class ClassAdapterTestTarget {
   }
 
   public void internalSynchronizedInstanceMethodThrowsException() throws LockTestThrowsExceptionException {
-    
+
     synchronized (this) {
       System.out.println("You called internalSynchronizedInstanceMethodThrowsException");
       throwException();

@@ -38,7 +38,6 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import javax.swing.event.EventListenerList;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
@@ -52,15 +51,14 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 public class TreeComboBox extends XContainer implements TreeWillExpandListener, TreeModelListener {
-  private AbstractButton          triggerButton;
-  private TriggerHandler          triggerHandler;
-  protected JTree                 tree;
-  protected TreeModel             treeModel;
-  protected TreePath              selectionPath;
-  private TreeMouseHandler        treeMouseHandler;
-  private SelectionRenderer       selectionRenderer;
-  private JPopupMenu              popup;
-  private final EventListenerList listenerList;
+  private AbstractButton    triggerButton;
+  private TriggerHandler    triggerHandler;
+  protected JTree           tree;
+  protected TreeModel       treeModel;
+  protected TreePath        selectionPath;
+  private TreeMouseHandler  treeMouseHandler;
+  private SelectionRenderer selectionRenderer;
+  private JPopupMenu        popup;
 
   public TreeComboBox() {
     this(null);
@@ -109,7 +107,6 @@ public class TreeComboBox extends XContainer implements TreeWillExpandListener, 
     tree.addMouseMotionListener(treeMouseHandler);
     tree.setSelectionModel(new TreeSelectionModel());
 
-    this.listenerList = new EventListenerList();
     if (listener != null) {
       this.listenerList.add(ActionListener.class, listener);
     }

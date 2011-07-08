@@ -1047,7 +1047,6 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
   }
 
   class FeatureSelectorAction extends XAbstractAction implements HyperlinkListener {
-    private boolean      enabled;
     private final Icon   icon;
     private final Icon   disabledIcon;
     private XButton      btn;
@@ -1057,13 +1056,12 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       super(name);
       icon = new ImageIcon(getClass().getResource(iconPath));
       disabledIcon = new ImageIcon(getClass().getResource(disabledIconPath));
-      enabled = true;
       this.page = page;
     }
 
     @Override
     public void setEnabled(boolean enabled) {
-      this.enabled = enabled;
+      super.setEnabled(enabled);
       btn.setIcon(enabled ? icon : disabledIcon);
     }
 
@@ -1077,7 +1075,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     }
 
     public void actionPerformed(ActionEvent ae) {
-      if (enabled) {
+      if (isEnabled()) {
         XRootNode root = (XRootNode) tree.getModel().getRoot();
         selectNode(root, getName());
       } else {

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -24,6 +25,7 @@ public class AsmMethodInfoTestHelper {
   private static Map myRoot;     // = new HashMap();
   private long       count;
 
+  @SuppressWarnings("unused")
   private int        commits = 0;
 
   public long test4(int i, Object foo) {
@@ -57,11 +59,11 @@ public class AsmMethodInfoTestHelper {
   }
 
   public static class TestObj {
-    private TestObj obj;
-    private String  string  = "Steve";
-    private int     integer = 22;
-    private boolean bool    = false;
-    private Map     map     = new HashMap();
+    private TestObj       obj;
+    private final String  string  = "Steve";
+    private final int     integer = 22;
+    private final boolean bool    = false;
+    private final Map     map     = new HashMap();
 
     private TestObj() {
       //
@@ -79,7 +81,8 @@ public class AsmMethodInfoTestHelper {
     }
 
     public boolean check() {
-      return string.equals("Steve") && integer == 22 && bool == false;
+      return string.equals("Steve") && Integer.valueOf(integer).equals(Integer.valueOf(22))
+             && Boolean.valueOf(bool) == Boolean.FALSE;
     }
   }
 }
