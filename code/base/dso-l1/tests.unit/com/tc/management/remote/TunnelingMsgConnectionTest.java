@@ -47,8 +47,6 @@ public class TunnelingMsgConnectionTest extends TCTestCase {
       }
     });
 
-    mc.addListener(teh);
-
     /*
      * JmxRemoteTunnelMessage messageEnvelope = (JmxRemoteTunnelMessage) mc
      * .createMessage(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE); messageEnvelope.setInitConnection();
