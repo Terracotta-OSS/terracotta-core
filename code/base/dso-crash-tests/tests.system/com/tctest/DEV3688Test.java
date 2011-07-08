@@ -9,6 +9,7 @@ import com.tc.config.schema.test.GroupsConfigBuilder;
 import com.tc.config.schema.test.MembersConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
+import com.tc.simulator.app.ErrorContext;
 import com.tc.test.MultipleServersCrashMode;
 import com.tc.test.MultipleServersPersistenceMode;
 import com.tc.test.MultipleServersSharedDataMode;
@@ -114,7 +115,7 @@ public class DEV3688Test extends ActivePassiveTransparentTestBase {
           System.out.println("5. Start B which will become PASSIVE");
           manager.startServer(1);
           Thread.sleep(1000);
-          manager.waitServerIsPassiveStandby(1, 20);
+          Assert.assertTrue("B didn't become passive standby in time.", manager.waitServerIsPassiveStandby(1, 300));
 
           System.out.println("6. Stop A so B becomes ACTIVE");
           manager.stopServer(0);
@@ -140,6 +141,7 @@ public class DEV3688Test extends ActivePassiveTransparentTestBase {
           client.waitUntilShutdown();
         } catch (Exception e) {
           e.printStackTrace();
+          runner.notifyError(new ErrorContext(e));
         }
       }
     });
