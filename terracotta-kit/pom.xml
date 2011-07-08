@@ -200,6 +200,15 @@
           <resources>
             <!-- prepare skeleton structure of the kit -->
             <resource>
+              <runIf>{{ new File( project.build.directory, "${kit.name}" ).isDirectory() }}</runIf>
+              <directory>${rootDir}</directory>
+              <includes>
+                <include>**/**</include>
+              </includes>
+              <clean>true</clean>
+              <cleanEmptyDirectories>true</cleanEmptyDirectories>
+            </resource>            
+            <resource>
               <targetPath>${rootDir}</targetPath>
               <directory>${basedir}/src/packaging</directory>
               <preservePath>true</preservePath>
