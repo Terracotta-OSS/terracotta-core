@@ -680,13 +680,6 @@
             </goals>
             <phase>generate-resources</phase>
           </execution>
-          <execution>
-            <id>fix-junit-reports</id>
-            <goals>
-              <goal>fix-junit-report</goal>
-            </goals>
-            <phase>post-integration-test</phase>
-          </execution>
         </executions>
       </plugin>
       <plugin>
