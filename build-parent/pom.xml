@@ -728,6 +728,24 @@
         <skip.system.tests>false</skip.system.tests>
       </properties>
     </profile>
+    <profile>
+      <id>checkshort</id>
+      <properties>
+        <skip.system.tests>false</skip.system.tests>
+      </properties>      
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <test>CheckShortTest</test>
+              <failIfNoTests>false</failIfNoTests>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>    
   </profiles>
 
   <repositories>
