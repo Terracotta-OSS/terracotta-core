@@ -1,0 +1,5 @@
+# fully qualified testname
+
+com.tctest.statistics.SRACorrectnessTest
+com.tctest.statistics.L1SRACorrectnessTest
+com.tctest.statistics.L2SRACorrectnessTest

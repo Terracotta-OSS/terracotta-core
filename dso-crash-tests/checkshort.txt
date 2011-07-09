@@ -1,0 +1,3 @@
+# fully qualified testname
+
+com.tctest.restart.system.ObjectDataTest

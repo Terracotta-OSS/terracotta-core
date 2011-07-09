@@ -1,0 +1,5 @@
+# fully qualified testname
+
+com.tctest.GenericMapTest
+com.tctest.jdk15.AtomicIntegerTest
+com.tcverify.DSOVerifierTest
