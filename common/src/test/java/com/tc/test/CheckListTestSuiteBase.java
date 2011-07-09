@@ -11,17 +11,18 @@ import junit.framework.TestSuite;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 
-public class CheckShortTestBase {
+public class CheckListTestSuiteBase {
 	
 	@SuppressWarnings("unchecked")
 	public static Test suite()  {
 		String basedir = System.getProperty("basedir");
-		File checkShortList = new File(basedir + File.separator + "checkshort.txt");
-		Assert.assertTrue(checkShortList.exists());
-		
+		String listName = System.getProperty("listName", "checkshort.txt");
+		File listFileName = new File(basedir + File.separator + listName);
+		Assert.assertTrue(listFileName.exists());
+		System.out.println("Running tests from list " + listName);
 		FileReader reader = null;
 		try {
-			reader = new FileReader(checkShortList);
+			reader = new FileReader(listFileName);
 			List<String> tests = IOUtils.readLines(reader);
 			TestSuite suite = new TestSuite();
 			for (String test : tests) {
