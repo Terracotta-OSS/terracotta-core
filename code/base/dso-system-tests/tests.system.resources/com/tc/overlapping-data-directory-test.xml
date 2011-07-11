@@ -1,0 +1,50 @@
+
+	<!--
+		All content copyright (c) 2003-2008 Terracotta, Inc., except as may
+		otherwise be noted in a separate copyright notice. All rights reserved
+	-->
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config">
+	<servers>
+		<server host="localhost" name="server1">
+			<data>terracotta/server1-data</data>
+			<logs>terracotta/server1-logs</logs>
+			<statistics>terracotta/server1-statistics</statistics>
+			<dso-port>9510</dso-port>
+			<jmx-port>9520</jmx-port>
+			<l2-group-port>9530</l2-group-port>
+			<dso>
+				<persistence>
+					<mode>permanent-store</mode>
+				</persistence>
+				<garbage-collection>
+					<enabled>true</enabled>
+					<interval>10</interval>
+					<verbose>true</verbose>
+				</garbage-collection>
+			</dso>
+		</server>
+
+		<server host="localhost" name="server2">
+			<data>terracotta/server1-data</data>
+			<logs>terracotta/server2-logs</logs>
+			<statistics>terracotta/server2-statistics</statistics>
+			<dso-port>8510</dso-port>
+			<jmx-port>8520</jmx-port>
+			<l2-group-port>8530</l2-group-port>
+			<dso>
+				<persistence>
+					<mode>permanent-store</mode>
+				</persistence>
+				<garbage-collection>
+					<enabled>true</enabled>
+					<interval>10</interval>
+					<verbose>true</verbose>
+				</garbage-collection>
+			</dso>
+		</server>
+
+	</servers>
+	<clients>
+		<logs>terracotta/client-logs</logs>
+	</clients>
+</tc:tc-config>
