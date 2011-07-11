@@ -96,8 +96,10 @@ public class StartupLock {
     try {
       if (block) {
         blocking = true;
+        lock = channel.lock();
+      } else {
+        lock = channel.tryLock();
       }
-      lock = channel.tryLock();
     } catch (OverlappingFileLockException e) {
       // File is already locked in this thread or virtual machine
       throw new AssertionError(e);
@@ -132,7 +134,8 @@ public class StartupLock {
         location.forceMkdir();
       } catch (IOException e) {
         throw new LocationNotCreatedException("Could not create location for startup lock: " + location
-                                              + ". Please ensure that this directory can be created. " + e.getMessage());
+                                              + ". Please ensure that this directory can be created. "
+                                              + e.getMessage());
       }
     }
   }
