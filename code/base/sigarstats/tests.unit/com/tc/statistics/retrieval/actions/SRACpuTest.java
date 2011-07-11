@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.statistics.retrieval.actions;
 
@@ -36,7 +37,7 @@ public class SRACpuTest extends TestCase {
 
     StatisticData[] data1;
     BigDecimal[][] values1;
-    
+
     final MathContext mathcontext = new MathContext(1, RoundingMode.UP);
 
     // continue looping until the CPU measurements are within the expected ranges to do the test
@@ -46,21 +47,21 @@ public class SRACpuTest extends TestCase {
 
       data1 = action.retrieveStatisticData();
       values1 = assertCpuData(cpuCount, data1);
-      
+
       int cpuOkCount = 0;
       for (int i = 0; i < cpuCount; i++) {
         // applying rounding for some occasional sampling errors compensation
         BigDecimal values1_0 = values1[i][0].round(mathcontext);
         BigDecimal values1_1 = values1[i][1].round(mathcontext);
-        
-        System.out.println("baseline test values for cpu " + i + ": " + values1_0 + " <= 0.9, " + values1_1 + " >= 0.0");
 
-        if (values1_0.compareTo(new BigDecimal("0.9")) <= 0 &&
-            values1_1.compareTo(new BigDecimal("0.0")) >= 0) {
+        System.out
+            .println("baseline test values for cpu " + i + ": " + values1_0 + " <= 0.9, " + values1_1 + " >= 0.0");
+
+        if (values1_0.compareTo(new BigDecimal("0.9")) <= 0 && values1_1.compareTo(new BigDecimal("0.0")) >= 0) {
           cpuOkCount++;
         }
       }
-      
+
       if (cpuCount == cpuOkCount) {
         System.out.println("baseline test values are acceptable, proceeding to next test phase");
         break;
@@ -69,7 +70,7 @@ public class SRACpuTest extends TestCase {
     }
 
     // creating more threads than CPUs, this should have at least one of these threads running on each CPU
-    int threadCount = cpuCount*2;
+    int threadCount = cpuCount * 2;
     Thread[] threads = new Thread[threadCount];
     for (int i = 0; i < threadCount; i++) {
       threads[i] = new UseCpuThread();
@@ -99,8 +100,8 @@ public class SRACpuTest extends TestCase {
       BigDecimal values2_0 = values2[i][0].round(mathcontext);
       BigDecimal values2_1 = values2[i][1].round(mathcontext);
 
-      System.out.println("test values for cpu " + i + ": " + values1_0 + " <= " + values2_0 + ", "
-                         + values1_1 + " >= " + values2_1);
+      System.out.println("test values for cpu " + i + ": " + values1_0 + " <= " + values2_0 + ", " + values1_1 + " >= "
+                         + values2_1);
       assertTrue(values1_0.compareTo(values2_0) <= 0);
       assertTrue(values1_1.compareTo(values2_1) >= 0);
     }
@@ -111,9 +112,7 @@ public class SRACpuTest extends TestCase {
     public void run() {
       for (int i = 0; i < Integer.MAX_VALUE; i++) {
         if (0 == i % 1000) {
-          if (isInterrupted()) {
-            return;
-          }
+          if (isInterrupted()) { return; }
           Thread.yield();
         }
       }
@@ -131,14 +130,16 @@ public class SRACpuTest extends TestCase {
 
       int part = i % 6;
       int cpu = i / 6;
-
       assertEquals("cpu " + cpu, data[i].getElement());
+      System.out.println("cpu " + cpu + " details: " + data[i] + " data " + data[i].getData());
       switch (part) {
         case 0:
           assertEquals(SRACpuConstants.DATA_NAME_COMBINED, data[i].getName());
+          assertNotNull(SRACpuConstants.DATA_NAME_COMBINED + " value is null", data[i].getData());
           break;
         case 1:
           assertEquals(SRACpuConstants.DATA_NAME_IDLE, data[i].getName());
+          assertNotNull(SRACpuConstants.DATA_NAME_IDLE + " value is null", data[i].getData());
           break;
         case 2:
           assertEquals(SRACpuConstants.DATA_NAME_NICE, data[i].getName());
@@ -156,7 +157,7 @@ public class SRACpuTest extends TestCase {
           fail();
           break;
       }
-      values[cpu][part] = (BigDecimal)data[i].getData();
+      values[cpu][part] = (BigDecimal) data[i].getData();
     }
 
     return values;
