@@ -21,8 +21,8 @@
   <properties>
     <skip.deploy>true</skip.deploy>
     <skip.testjar>true</skip.testjar>
-	  <kit.edition>opensource</kit.edition>
-	  <ee.suffix></ee.suffix>
+    <kit.edition>opensource</kit.edition>
+    <ee.suffix></ee.suffix>
     <packaging>dir</packaging>
     <kit.name>${terracotta.artifactId}-${project.version}</kit.name>
     <rootDir>${project.build.directory}/${kit.name}</rootDir>
@@ -39,7 +39,7 @@
     <terracotta.artifactId>terracotta${ee.suffix}</terracotta.artifactId>
     <toolkit.artifactId>terracotta-toolkit-${toolkit.api}-runtime${ee.suffix}</toolkit.artifactId>
     <quartz-terracotta.artifactId>quartz-terracotta${ee.suffix}</quartz-terracotta.artifactId>    
-	  <ehcache-core.artifactId>ehcache-core</ehcache-core.artifactId>
+    <ehcache-core.artifactId>ehcache-core</ehcache-core.artifactId>
     <ehcache-terracotta.artifactId>ehcache-terracotta${ee.suffix}</ehcache-terracotta.artifactId>
     
     <ehcache-core.readme.url>http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/README.html</ehcache-core.readme.url>
@@ -107,6 +107,12 @@
       <classifier>distribution</classifier>
       <type>tar.gz</type>
       <scope>provided</scope>
+	  <exclusions>
+        <exclusion>
+		  <groupId>com.sun</groupId>
+		  <artifactId>tools</artifactId>
+	    </exclusion>
+	  </exclusions>
     </dependency>     
     <dependency>
       <groupId>net.sf.ehcache</groupId>
