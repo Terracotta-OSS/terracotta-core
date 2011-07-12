@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ReconnectionRejectedEventTest extends TCTestCase {
   private final int                  timeout = (int) ClientMessageTransport.TRANSPORT_HANDSHAKE_SYNACK_TIMEOUT;
@@ -46,8 +48,9 @@ public class ReconnectionRejectedEventTest extends TCTestCase {
                                                      new PlainNetworkStackHarnessFactory(), new NullConnectionPolicy());
     this.clientComms = new CommunicationsManagerImpl("ClientTestCommsMgr", new NullMessageMonitor(),
                                                      new PlainNetworkStackHarnessFactory(), new NullConnectionPolicy());
-    this.listener = serverComms.createListener(new NullSessionManager(), new TCSocketAddress("localhost", proxyMgr
-        .getDsoPort()), true, new DefaultConnectionIdFactory());
+    this.listener = serverComms.createListener(new NullSessionManager(),
+                                               new TCSocketAddress("localhost", proxyMgr.getDsoPort()), true,
+                                               new DefaultConnectionIdFactory());
     this.listener.start(Collections.EMPTY_SET);
   }
 
@@ -107,8 +110,7 @@ public class ReconnectionRejectedEventTest extends TCTestCase {
     ClientMessageChannel channel = createClientMessageChannel(proxyMgr.getDsoPort());
     channel.addListener(eventListener); // fire transport ReconnectionRejectedEvent
     getTestClientMessageTransport().fireReconnectionRejectedEvent();
-    ThreadUtil.reallySleep(1000);
-    Assert.assertEquals(1, eventListener.getEventCount());
+    Assert.assertEquals(1, eventListener.waitForEventCount(1, 10 * 1000));
   }
 
   public void testProxyOffForRejectedEvent() {
@@ -140,22 +142,30 @@ public class ReconnectionRejectedEventTest extends TCTestCase {
     ThreadUtil.reallySleep(10000);
     this.proxyMgr.proxyUp();
 
-    ThreadUtil.reallySleep(1000);
-
-    Assert.assertEquals(1, eventListener.getEventCount());
+    Assert.assertEquals(1, eventListener.waitForEventCount(1, 10 * 1000));
   }
 
   private static class RejectedEventListener implements ChannelEventListener {
-    private int counter = 0;
+    private final AtomicInteger counter = new AtomicInteger(0);
 
     public void notifyChannelEvent(ChannelEvent event) {
       if (event.getType() == ChannelEventType.TRANSPORT_RECONNECTION_REJECTED_EVENT) {
-        ++counter;
+        counter.incrementAndGet();
       }
     }
 
     public int getEventCount() {
-      return counter;
+      return counter.get();
+    }
+
+    public int waitForEventCount(int expectedCount, int timeout) {
+      long start = System.nanoTime();
+      while (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) < timeout) {
+        int count = getEventCount();
+        if (count == expectedCount) { return count; }
+        ThreadUtil.reallySleep(1 * 1000);
+      }
+      return getEventCount();
     }
 
   }
