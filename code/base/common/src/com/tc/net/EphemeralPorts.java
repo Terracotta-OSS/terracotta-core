@@ -96,10 +96,62 @@ public class EphemeralPorts {
   }
 
   private static class Windows implements RangeGetter {
-    private static final int DEFAULT_LOWER = 1024;
-    private static final int DEFAULT_UPPER = 5000;
 
     public Range getRange() {
+      String osName = System.getProperty("os.name");
+
+      // windows XP and server 2003
+      if (osName.equalsIgnoreCase("windows xp") || osName.equalsIgnoreCase("windows 2003")) { return getLegacySettings(); }
+
+      // Assume all other windows OS use the new network parameters
+      return getNetshRange();
+    }
+
+    private Range getNetshRange() {
+      final int DEFAULT_LOWER = 49151;
+      final int DEFAULT_UPPER = 65535;
+
+      try {
+        // and use netsh to determine dynamic port range
+        File netshExe = new File(new File(Os.findWindowsSystemRoot(), "system32"), "netsh.exe");
+
+        String[] cmd = new String[] { netshExe.getAbsolutePath(), "int", "ipv4", "show", "dynamicport", "tcp" };
+        Exec exec = new Exec(cmd);
+        BufferedReader reader = new BufferedReader(new StringReader(exec.execute(Exec.STDOUT)));
+
+        Pattern startPattern = Pattern.compile("^Start Port.*: (\\p{XDigit}+)");
+        Pattern numPattern = Pattern.compile("^Number of Ports.*: (\\p{XDigit}+)");
+        int start = -1;
+        int num = -1;
+        String line = null;
+        while ((line = reader.readLine()) != null) {
+          Matcher matcher = startPattern.matcher(line);
+          if (matcher.matches()) {
+            if (start != -1) { throw new AssertionError("start already seen: " + start); }
+            start = Integer.parseInt(matcher.group(1));
+          }
+
+          matcher = numPattern.matcher(line);
+          if (matcher.matches()) {
+            if (num != -1) { throw new AssertionError("number already seen: " + num); }
+            num = Integer.parseInt(matcher.group(1));
+          }
+        }
+
+        if ((num == -1) || (start == -1)) { throw new AssertionError("start: " + start + ", num = " + num); }
+
+        return new Range(start, start + num);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+
+      return new Range(DEFAULT_LOWER, DEFAULT_UPPER);
+    }
+
+    private Range getLegacySettings() {
+      final int DEFAULT_LOWER = 1024;
+      final int DEFAULT_UPPER = 5000;
+
       try {
         // use reg.exe if available to see if MaxUserPort is tweaked
         String sysRoot = Os.findWindowsSystemRoot();
@@ -128,6 +180,7 @@ public class EphemeralPorts {
 
       return new Range(DEFAULT_LOWER, DEFAULT_UPPER);
     }
+
   }
 
   private static class Mac implements RangeGetter {
@@ -245,6 +298,10 @@ public class EphemeralPorts {
       return err.toString();
     }
 
+  }
+
+  public static void main(String[] args) {
+    System.err.println(getRange());
   }
 
 }
