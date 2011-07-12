@@ -12,6 +12,7 @@ import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
 import com.tc.lcp.LinkedJavaProcess;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
+import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.process.StreamCopier;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -506,4 +507,67 @@ public class ExtraProcessServerControl extends ServerControlBase {
     }
   }
 
+  public void waitUntilL2BecomesActive() {
+    JMXConnector jmxConnector = null;
+    try {
+      jmxConnector = JMXUtils.getJMXConnector("localhost", getAdminPort());
+      MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+      TCServerInfoMBean infoMBean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO,
+                                                                             TCServerInfoMBean.class, false);
+      while (true) {
+        try {
+          if (!infoMBean.isActive()) {
+            System.out.println("waiting for L2 to become active...");
+            Thread.sleep(1000);
+          } else {
+            return;
+          }
+        } catch (Exception e) {
+          // ignore
+        }
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      if (jmxConnector != null) {
+        try {
+          jmxConnector.close();
+        } catch (Exception e) {
+          System.out.println("Exception while trying to close the JMX connector for port no: " + getAdminPort());
+        }
+      }
+    }
+  }
+
+  public void waitUntilL2BecomesPassiveStandBy() {
+    JMXConnector jmxConnector = null;
+    try {
+      jmxConnector = JMXUtils.getJMXConnector("localhost", getAdminPort());
+      MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+      TCServerInfoMBean infoMBean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO,
+                                                                             TCServerInfoMBean.class, false);
+      while (true) {
+        try {
+          if (!infoMBean.isPassiveStandby()) {
+            System.out.println("waiting for L2 to become passive standby...");
+            Thread.sleep(1000);
+          } else {
+            return;
+          }
+        } catch (Exception e) {
+          // ignore
+        }
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      if (jmxConnector != null) {
+        try {
+          jmxConnector.close();
+        } catch (Exception e) {
+          System.out.println("Exception while trying to close the JMX connector for port no: " + getAdminPort());
+        }
+      }
+    }
+  }
 }
