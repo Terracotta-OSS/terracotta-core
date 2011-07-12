@@ -107,6 +107,7 @@ public class PassiveClrDirtyDbActivePassiveTest extends ActivePassiveTransparent
     Thread.sleep(1000);
     Assert.assertTrue(manager.waitServerIsPassiveStandby(1, 60));
 
+    System.out.println("XXX Starting test client");
     File client1Workspace = new File(getTempDirectory(), "l1-logs" + File.separator + "client1");
     client1Workspace.mkdirs();
     ExtraL1ProcessControl client1 = new ExtraL1ProcessControl("localhost", manager.getDsoPort(), TestApp.class,
@@ -127,6 +128,8 @@ public class PassiveClrDirtyDbActivePassiveTest extends ActivePassiveTransparent
     LinkedJavaProcess setDbCleanProcess = new LinkedJavaProcess(SetDbClean.class.getName(), Arrays.asList(manager
         .getConfigCreator().getDataLocation(1) + File.separator + "objectdb"), getTCPropertyJvmArgs());
     setDbCleanProcess.start();
+    setDbCleanProcess.mergeSTDOUT("[SetDbClean] ");
+    setDbCleanProcess.mergeSTDERR("[SetDbClean] ");
     System.out.println("XXX SetDbCleanCommand exited with status " + setDbCleanProcess.waitFor());
 
     System.out.println("XXX Start passive server[1] as active");
