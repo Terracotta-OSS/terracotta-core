@@ -23,17 +23,13 @@ public class CallableWaiter {
   public static void waitOnCallable(final Callable<Boolean> callable, final long timeoutMs, final int interval)
       throws Exception {
     final long start = System.nanoTime();
-    try {
-      while (!callable.call()) {
-        if (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) >= timeoutMs) { throw new TCTimeoutException(
-                                                                                                                  "Timed out waiting for callable after "
-                                                                                                                      + timeoutMs
-                                                                                                                      + "ms"); }
-        ThreadUtil.reallySleep(interval);
-      }
-      return;
-    } catch (Exception e) {
-      throw e;
+    while (!callable.call()) {
+      if (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) >= timeoutMs) { throw new TCTimeoutException(
+                                                                                                                "Timed out waiting for callable after "
+                                                                                                                    + timeoutMs
+                                                                                                                    + "ms"); }
+      ThreadUtil.reallySleep(interval);
     }
+    return;
   }
 }
