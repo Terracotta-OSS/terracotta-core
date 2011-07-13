@@ -28,6 +28,7 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
     super(ObjectManagementMonitorMBean.class, false);
 
     gcRunner = new GCRunner() {
+      private boolean isStarted = false;
       private boolean isRunning = false;
 
       public void run() {
@@ -37,16 +38,23 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
       }
 
       private synchronized void setRunningState() {
-        if (isRunning) {
+        if (isStarted) {
           logger.warn("Cannot run DGC because DGC is already running.");
           return;
         }
+
+        if (isRunning) {
+          logger.warn("Can not run DGC since last cycle was not finished");
+          return;
+        }
+
+        isStarted = true;
         isRunning = true;
         logger.info("Running DGC.");
       }
 
       private synchronized void setStopState() {
-        if (!isRunning) {
+        if (!isStarted) {
           logger.warn("Cannot stop DGC because DGC is not running.");
           return;
         }
@@ -57,11 +65,24 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
       public synchronized boolean isGCRunning() {
         return isRunning;
       }
+
+      public synchronized boolean isGCStarted() {
+        return isStarted;
+      }
+
+      public synchronized void reset() {
+        isRunning = false;
+        isStarted = false;
+      }
     };
   }
 
   public boolean isGCRunning() {
     return gcRunner.isGCRunning();
+  }
+
+  public boolean isGCStarted() {
+    return gcRunner.isGCStarted();
   }
 
   public synchronized boolean runGC() {
@@ -101,9 +122,10 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
     }
 
     Thread gcRunnerThread = new Thread(gcRunner);
+    gcRunner.reset();
     gcRunnerThread.setName("DGCRunnerThread");
     gcRunnerThread.start();
-    
+
     return true;
   }
 
@@ -147,5 +169,9 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
 
   static interface GCRunner extends Runnable {
     boolean isGCRunning();
+
+    boolean isGCStarted();
+
+    void reset();
   }
 }

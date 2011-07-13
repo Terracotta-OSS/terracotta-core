@@ -14,5 +14,7 @@ public interface ObjectManagementMonitorMBean extends TerracottaMBean {
 
   boolean isGCRunning();
 
+  boolean isGCStarted();
+
   SortedSet getAllObjectIds();
 }
