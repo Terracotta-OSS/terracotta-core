@@ -11,16 +11,20 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.AdaptedClassDumper;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
 public class DistributedMethodCallGCTest extends GCTestBase {
 
-  public DistributedMethodCallGCTest() {
+  public DistributedMethodCallGCTest() throws IOException {
+    AdaptedClassDumper.INSTANCE.setRoot(new File(getTempDirectory(), "adapted"));
     // MNK-714
     // disableAllUntil("2010-3-19"); //extended timebomb
   }

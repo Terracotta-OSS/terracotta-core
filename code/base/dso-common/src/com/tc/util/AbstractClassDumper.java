@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -11,7 +12,11 @@ import java.io.FileOutputStream;
  */
 public abstract class AbstractClassDumper {
 
-  private final File adaptedRoot = getFileRoot();
+  private volatile File adaptedRoot = getFileRoot();
+
+  public void setRoot(File root) {
+    adaptedRoot = root;
+  }
 
   public synchronized void write(String name, byte[] b) {
     if (adaptedRoot == null) { return; }
@@ -75,7 +80,8 @@ public abstract class AbstractClassDumper {
       return null;
     }
   }
-  
+
   protected abstract String getDumpDirectoryName();
+
   protected abstract String getPropertyName();
 }
