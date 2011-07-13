@@ -31,9 +31,6 @@ import java.util.Properties;
  * base directory where tc.jar is present. TODO:: Improve tcbuild to aggregate properties from different directories
  * during build time.
  */
-/**
- *
- */
 public class TCPropertiesImpl implements TCProperties {
 
   private static final TCLogger         logger                     = newLoggingProxy();
@@ -77,8 +74,6 @@ public class TCPropertiesImpl implements TCProperties {
     // this happens last -- system properties have highest precedence
     processSystemProperties();
 
-    trimWhiteSpace();
-
     warnForOldProperties();
   }
 
@@ -96,13 +91,6 @@ public class TCPropertiesImpl implements TCProperties {
                   + oldProperties[i]
                   + "\" has been removed/renamed in the latest release. Please update the tc.properties file or some of your settings might not work");
       }
-    }
-  }
-
-  private void trimWhiteSpace() {
-    for (Object element : props.entrySet()) {
-      Map.Entry entry = (Entry) element;
-      entry.setValue(((String) entry.getValue()).trim());
     }
   }
 
@@ -170,15 +158,11 @@ public class TCPropertiesImpl implements TCProperties {
   }
 
   Properties addAllPropertiesTo(Properties properties, String filter) {
-    if (filter == null) {
-      properties.putAll(props);
-      return properties;
-    }
-    for (Object element : props.entrySet()) {
-      Map.Entry e = (Entry) element;
-      String key = (String) e.getKey();
-      if (key.startsWith(filter)) {
-        properties.put(key.substring(filter.length()), e.getValue());
+    for (String key : props.keysArray()) {
+      if (filter == null) {
+        properties.put(key, props.getProperty(key));
+      } else if (key.startsWith(filter)) {
+        properties.put(key.substring(filter.length()), props.getProperty(key));
       }
     }
     return properties;
@@ -265,11 +249,11 @@ public class TCPropertiesImpl implements TCProperties {
   }
 
   private String sortedPropertiesToString() {
-    Object properties[] = props.keySet().toArray();
+    String properties[] = props.keysArray();
     Arrays.sort(properties);
     StringBuffer sb = new StringBuffer();
     for (int i = 0; i < properties.length; i++) {
-      sb.append(properties[i]).append(" = ").append(props.get(properties[i]));
+      sb.append(properties[i]).append(" = ").append(props.getProperty(properties[i]));
       if (i != properties.length - 1) {
         sb.append(", ");
       }
