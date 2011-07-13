@@ -78,7 +78,7 @@ public class RootsTool {
         w.println(off + "  " + name + " = null");
         return;
       }
-      facade = dsoBean.lookupFacade(objectId, 10);
+      facade = dsoBean.lookupFacade(objectId, Integer.MAX_VALUE);
       if (facade.isArray()) {
         int arrayLength = facade.getArrayLength();
         if (arrayLength > 0 && facade.isPrimitive("0")) {
