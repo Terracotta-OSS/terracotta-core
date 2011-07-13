@@ -14,22 +14,28 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.CounterImpl;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterImpl;
+import com.tc.util.CallableWaiter;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
 import com.tc.util.concurrent.ThreadUtil;
 
+import java.lang.Thread.State;
 import java.util.Collection;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import junit.framework.TestCase;
 
 public class TransactionSequencerTest extends TestCase {
 
   public TransactionSequencer txnSequencer;
-  private static final long   TIME_TO_RUN = 5 * 60 * 1000;
+  private static final long   TIME_TO_RUN         = 5 * 60 * 1000;
+  private static final int    MAX_PENDING_BATCHES = 5;
 
   @Override
   protected void setUp() throws Exception {
-    TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXPENDING_BATCHES, "5");
+    TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXPENDING_BATCHES,
+                                                 MAX_PENDING_BATCHES + "");
     this.txnSequencer = new TransactionSequencer(GroupID.NULL_ID, new TransactionIDGenerator(),
                                                  new TestTransactionBatchFactory(), new TestLockAccounting(),
                                                  new CounterImpl(),
@@ -56,6 +62,49 @@ public class TransactionSequencerTest extends TestCase {
 
     producer1.join();
     consumer.join();
+  }
+
+  public void testInterruptAddTransaction() throws Exception {
+    // DEV-5589: Allow interrupting adding to the transaction sequencer.
+    for (int i = 0; i < MAX_PENDING_BATCHES; i++) {
+      this.txnSequencer.addTransaction(new TestClientTransaction());
+    }
+
+    final AtomicBoolean failed = new AtomicBoolean(false);
+    final Thread waiter = new Thread("waiter") {
+      @Override
+      public void run() {
+        try {
+          txnSequencer.addTransaction(new TestClientTransaction());
+          System.out.println("Transaction added successfully.");
+        } catch (Exception e) {
+          System.out.println("Got an exception adding to txnSequencer: " + e.getMessage());
+          e.printStackTrace();
+          failed.set(true);
+        }
+        if (!interrupted()) {
+          System.out.println("Thread was not interrupted.");
+          failed.set(true);
+        }
+      }
+    };
+    waiter.setDaemon(true);
+    waiter.start();
+
+    System.out.println("Waiting for the thread to get into a wait state.");
+    CallableWaiter.waitOnCallable(new Callable<Boolean>() {
+      public Boolean call() throws Exception {
+        return waiter.getState() != State.RUNNABLE;
+      }
+    });
+
+    System.out.println("Interrupting the thread.");
+    waiter.interrupt();
+
+    System.out.println("Unblocking the thread.");
+    this.txnSequencer.getNextBatch();
+    waiter.join();
+    assertFalse(failed.get());
   }
 
   private static class Producer implements Runnable {

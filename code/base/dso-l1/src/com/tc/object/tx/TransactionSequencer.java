@@ -4,7 +4,6 @@
  */
 package com.tc.object.tx;
 
-import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
@@ -160,17 +159,22 @@ public class TransactionSequencer {
   }
 
   private void waitIfNecessary() {
-    do {
-      int diff = this.pendingBatches.size() - this.slowDownStartsAt;
-      if (diff >= 0) {
-        long sleepTime = (long) (1 + diff * this.sleepTimeIncrements);
-        try {
-          wait(sleepTime);
-        } catch (InterruptedException e) {
-          throw new TCRuntimeException(e);
+    boolean isInterrupted = false;
+    try {
+      do {
+        int diff = this.pendingBatches.size() - this.slowDownStartsAt;
+        if (diff >= 0) {
+          long sleepTime = (long) (1 + diff * this.sleepTimeIncrements);
+          try {
+            wait(sleepTime);
+          } catch (InterruptedException e) {
+            isInterrupted = true;
+          }
         }
-      }
-    } while (this.pendingBatches.size() >= MAX_PENDING_BATCHES);
+      } while (this.pendingBatches.size() >= MAX_PENDING_BATCHES);
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
+    }
   }
 
   private void reconcilePendingSize() {
@@ -178,10 +182,18 @@ public class TransactionSequencer {
   }
 
   private void put(ClientTransactionBatch batch) {
+    boolean isInterrupted = false;
     try {
-      this.pendingBatches.put(batch);
-    } catch (InterruptedException e) {
-      throw new TCRuntimeException(e);
+      while (true) {
+        try {
+          this.pendingBatches.put(batch);
+          break;
+        } catch (InterruptedException e) {
+          isInterrupted = true;
+        }
+      }
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
     }
   }
 
