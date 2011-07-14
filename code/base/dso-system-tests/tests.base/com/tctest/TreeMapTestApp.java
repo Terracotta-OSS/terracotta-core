@@ -25,22 +25,28 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TreeMapTestApp extends AbstractTransparentApp {
 
-  private static final long   RUNTIME_SECONDS = 15 * 60;
+  // MNK-2626: We should put a reasonable bound on the number of loops too, otherwise the
+  // test can spin pretty out of control and overwhelm our console logs.
+  // Just stop when either the max time runs out, or the max loops to prevent
+  // this.
+  private static final long   MAX_RUNTIME_SECONDS = 15 * 60;
+  private static final long   MAX_LOOPS           = 200;
 
   // plain old TreeMap
-  private final TreeMap       map             = new TreeMap();
+  private final TreeMap       map                 = new TreeMap();
 
   // Use a comparator with a shared TreeMap too. If the comparator doesn't make it across VMs,
   // then we should get some ClassCastExceptions
-  private final TreeMap       map2            = new TreeMap(new WrappedStringComparator());
+  private final TreeMap       map2                = new TreeMap(new WrappedStringComparator());
 
-  private final AtomicBoolean running         = new AtomicBoolean(true);
+  private final AtomicBoolean running             = new AtomicBoolean(true);
 
   private final CyclicBarrier barrier;
 
-  private final SubMapKey     subMapKeyRoot   = new SubMapKey(0);
+  private final SubMapKey     subMapKeyRoot       = new SubMapKey(0);
 
-  private final long          startTime       = System.nanoTime();
+  private long                startTime;
+  private int                 loop;
 
   public TreeMapTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -48,25 +54,26 @@ public class TreeMapTestApp extends AbstractTransparentApp {
   }
 
   public void run() {
-    int i = 0;
+    loop = 0;
+    startTime = System.nanoTime();
     try {
       while (running.get()) {
-        System.out.println("*** TreeMap LoopCount:" + ++i);
+        System.out.println("*** TreeMap LoopCount:" + ++loop);
         clear();
         run0();
         run1();
-        checkTime();
+        checkCompletion();
       }
     } catch (Throwable t) {
       notifyError(t);
     }
   }
 
-  private void checkTime() throws BrokenBarrierException, InterruptedException {
+  private void checkCompletion() throws BrokenBarrierException, InterruptedException {
     int node = barrier.barrier();
     if (node == 0) {
       long currentTime = System.nanoTime();
-      if (TimeUnit.NANOSECONDS.toSeconds(currentTime - startTime) > RUNTIME_SECONDS) {
+      if (TimeUnit.NANOSECONDS.toSeconds(currentTime - startTime) >= MAX_RUNTIME_SECONDS || loop >= MAX_LOOPS) {
         running.set(false);
       }
     }
