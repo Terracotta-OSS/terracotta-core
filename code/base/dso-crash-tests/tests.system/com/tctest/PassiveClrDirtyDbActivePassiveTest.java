@@ -105,7 +105,7 @@ public class PassiveClrDirtyDbActivePassiveTest extends ActivePassiveTransparent
     System.out.println("XXX Start passive server[1]");
     manager.startServer(1);
     Thread.sleep(1000);
-    Assert.assertTrue(manager.waitServerIsPassiveStandby(1, 60));
+    Assert.assertTrue(manager.waitServerIsPassiveStandby(1, 600));
 
     System.out.println("XXX Starting test client");
     File client1Workspace = new File(getTempDirectory(), "l1-logs" + File.separator + "client1");
