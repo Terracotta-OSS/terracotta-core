@@ -48,4 +48,8 @@ public class NullObjectIDManager implements ObjectIDManager {
   public boolean putAll(final PersistenceTransaction tx, final SortedSet<ManagedObject> managedObjects) {
     return true;
   }
+
+  public void close() {
+    // Nothing to close
+  }
 }

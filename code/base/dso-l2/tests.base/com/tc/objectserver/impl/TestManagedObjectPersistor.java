@@ -105,11 +105,10 @@ public class TestManagedObjectPersistor implements ManagedObjectPersistor {
     }
     removeAllFromOtherExtantSets(sortedOids);
   }
-  
+
   private void removeAllFromOtherExtantSets(final Collection ids) {
     this.extantObjectIDs.removeAll(ids);
   }
-
 
   public Map loadRootNamesToIDs() {
     return null;
@@ -123,4 +122,7 @@ public class TestManagedObjectPersistor implements ManagedObjectPersistor {
     throw new ImplementMe();
   }
 
+  public void close() {
+    // Nothing to close
+  }
 }

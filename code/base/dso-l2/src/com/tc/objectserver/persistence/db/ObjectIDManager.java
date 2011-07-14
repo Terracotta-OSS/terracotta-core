@@ -13,13 +13,14 @@ import java.util.SortedSet;
 
 public interface ObjectIDManager {
 
+  public void close();
+
   public boolean put(PersistenceTransaction tx, ManagedObject mo) throws TCDatabaseException;
 
-  public boolean putAll(PersistenceTransaction tx, SortedSet<ManagedObject> managedObjects)
-      throws TCDatabaseException;
+  public boolean putAll(PersistenceTransaction tx, SortedSet<ManagedObject> managedObjects) throws TCDatabaseException;
 
   public boolean deleteAll(PersistenceTransaction tx, SortedSet<ObjectID> oidsToDelete,
-                                   SyncObjectIdSet extantMapTypeOidSet, SyncObjectIdSet extantEvictableOidSet)
+                           SyncObjectIdSet extantMapTypeOidSet, SyncObjectIdSet extantEvictableOidSet)
       throws TCDatabaseException;
 
   public Runnable getObjectIDReader(SyncObjectIdSet objectIDSet);

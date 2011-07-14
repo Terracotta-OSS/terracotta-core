@@ -503,4 +503,14 @@ public final class FastObjectIDManagerImpl extends DBPersistorBase implements Ob
     return (status);
   }
 
+  public void close() {
+    stopCheckpointRunner();
+    try {
+      this.checkpointThread.join();
+    } catch (InterruptedException e) {
+      logger.warn("Interrupted while shutting down the checkpointer.");
+      Thread.currentThread().interrupt();
+    }
+  }
+
 }

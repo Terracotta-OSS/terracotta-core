@@ -16,6 +16,8 @@ import java.util.SortedSet;
 
 public interface ManagedObjectPersistor {
 
+  public void close();
+
   public Set loadRoots();
 
   public Set loadRootNames();

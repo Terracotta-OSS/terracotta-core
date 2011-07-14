@@ -10,8 +10,8 @@ import com.tc.objectserver.storage.api.DBEnvironment;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.storage.api.TCDatabaseEntry;
-import com.tc.objectserver.storage.api.TCStringToStringDatabase;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
+import com.tc.objectserver.storage.api.TCStringToStringDatabase;
 import com.tc.util.State;
 
 import java.io.File;
@@ -75,7 +75,7 @@ public class SetDbClean extends BaseUtility {
       log("Failed to setDbClean");
     }
     tx.commit();
-    env.close();
+    getPersistor(1).close();
   }
 
   public static void main(String[] args) {

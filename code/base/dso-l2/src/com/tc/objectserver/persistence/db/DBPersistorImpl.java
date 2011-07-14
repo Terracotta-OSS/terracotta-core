@@ -42,10 +42,10 @@ public class DBPersistorImpl implements Persistor {
   private final ClassPersistor                 classPersistor;
   private final PersistenceTransactionProvider persistenceTransactionProvider;
   private final DBEnvironment                  env;
-  private final PersistableCollectionFactory   sleepycatCollectionFactory;
+  private final PersistableCollectionFactory   collectionFactory;
   private final PersistentMapStore             persistentStateStore;
 
-  private final TCCollectionsPersistor         sleepycatCollectionsPersistor;
+  private final TCCollectionsPersistor         collectionsPersistor;
 
   // only for tests
   public DBPersistorImpl(final TCLogger logger, final DBEnvironment env,
@@ -72,14 +72,18 @@ public class DBPersistorImpl implements Persistor {
 
     this.stringIndex = new StringIndexImpl(this.stringIndexPersistor, DEFAULT_CAPACITY);
     final TCCollectionsSerializer serializer = new TCCollectionsSerializerImpl();
-    this.sleepycatCollectionFactory = new PersistableCollectionFactory(env.getMapsDatabase()
-        .getBackingMapFactory(serializer), env.isParanoidMode());
-    this.sleepycatCollectionsPersistor = new TCCollectionsPersistor(logger, env.getMapsDatabase(),
-                                                                    this.sleepycatCollectionFactory, serializer);
-    this.managedObjectPersistor = new ManagedObjectPersistorImpl(logger, serializationAdapterFactory, env, env
-        .getSequence(this.persistenceTransactionProvider, logger, DBSequenceKeys.OBJECTID_SEQUENCE_NAME, 1000), env
-        .getRootDatabase(), this.persistenceTransactionProvider, this.sleepycatCollectionsPersistor, env
-        .isParanoidMode(), objectStatsRecorder);
+    this.collectionFactory = new PersistableCollectionFactory(env.getMapsDatabase().getBackingMapFactory(serializer),
+                                                              env.isParanoidMode());
+    this.collectionsPersistor = new TCCollectionsPersistor(logger, env.getMapsDatabase(), this.collectionFactory,
+                                                           serializer);
+    this.managedObjectPersistor = new ManagedObjectPersistorImpl(logger, serializationAdapterFactory, env,
+                                                                 env.getSequence(this.persistenceTransactionProvider,
+                                                                                 logger,
+                                                                                 DBSequenceKeys.OBJECTID_SEQUENCE_NAME,
+                                                                                 1000), env.getRootDatabase(),
+                                                                 this.persistenceTransactionProvider,
+                                                                 this.collectionsPersistor, env.isParanoidMode(),
+                                                                 objectStatsRecorder);
   }
 
   protected PersistenceTransactionProvider createPersistenceTransactionProvider(final DBEnvironment dbenv) {
@@ -99,9 +103,10 @@ public class DBPersistorImpl implements Persistor {
   }
 
   protected ClientStatePersistor createClientStatePersistor(final TCLogger logger) throws TCDatabaseException {
-    return new ClientStatePersistorImpl(logger, this.persistenceTransactionProvider, env
-        .getSequence(this.persistenceTransactionProvider, logger, DBSequenceKeys.CLIENTID_SEQUENCE_NAME, 0), env
-        .getClientStateDatabase());
+    return new ClientStatePersistorImpl(logger, this.persistenceTransactionProvider,
+                                        env.getSequence(this.persistenceTransactionProvider, logger,
+                                                        DBSequenceKeys.CLIENTID_SEQUENCE_NAME, 0),
+                                        env.getClientStateDatabase());
   }
 
   protected TransactionPersistor createTransactionPersistor() throws TCDatabaseException {
@@ -127,8 +132,8 @@ public class DBPersistorImpl implements Persistor {
   private void sanityCheckAndClean(final DBEnvironment dbenv, final File l2DataPath, final TCLogger logger)
       throws TCDatabaseException {
     final PersistenceTransactionProvider persistentTxProvider = dbenv.getPersistenceTransactionProvider();
-    final PersistentMapStore persistentMapStore = new TCMapStore(persistentTxProvider, logger, dbenv
-        .getClusterStateStoreDatabase());
+    final PersistentMapStore persistentMapStore = new TCMapStore(persistentTxProvider, logger,
+                                                                 dbenv.getClusterStateStoreDatabase());
 
     // check for DBversion mismatch
     final DBVersionChecker dbVersionChecker = new DBVersionChecker(persistentMapStore);
@@ -188,7 +193,7 @@ public class DBPersistorImpl implements Persistor {
   }
 
   public PersistentCollectionFactory getPersistentCollectionFactory() {
-    return this.sleepycatCollectionFactory;
+    return this.collectionFactory;
   }
 
   public PersistentMapStore getPersistentStateStore() {
@@ -197,6 +202,7 @@ public class DBPersistorImpl implements Persistor {
 
   public void close() {
     try {
+      this.managedObjectPersistor.close();
       this.env.close();
     } catch (final TCDatabaseException e) {
       throw new DBException(e);
@@ -248,7 +254,7 @@ public class DBPersistorImpl implements Persistor {
    * This is only exposed for tests.
    */
   public TCCollectionsPersistor getCollectionsPersistor() {
-    return this.sleepycatCollectionsPersistor;
+    return this.collectionsPersistor;
   }
 
 }

@@ -548,4 +548,8 @@ public final class ManagedObjectPersistorImpl extends DBPersistorBase implements
   ObjectIDManager getOibjectIDManager() {
     return this.objectIDManager;
   }
+
+  public void close() {
+    this.objectIDManager.close();
+  }
 }
