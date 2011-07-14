@@ -49,9 +49,9 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   private final Persistence       persistence;
   private final Offheap           offHeapConfig;
   private final GarbageCollection garbageCollection;
+  private final DsoServerData     dso;
   private final BindPort          dsoPort;
   private final BindPort          l2GroupPort;
-  private final int               clientReconnectWindow;
   private final String            host;
   private final String            serverName;
   private final String            bind;
@@ -61,13 +61,13 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
 
     this.context.ensureRepositoryProvides(Server.class);
     Server server = (Server) this.context.bean();
+    this.dso = server.getDso();
     this.persistence = server.getDso().getPersistence();
 
     Assert.assertTrue((this.persistence.getMode() == PersistenceMode.PERMANENT_STORE)
                       || (this.persistence.getMode() == PersistenceMode.TEMPORARY_SWAP_ONLY));
 
     this.garbageCollection = server.getDso().getGarbageCollection();
-    this.clientReconnectWindow = server.getDso().getClientReconnectWindow();
 
     this.bind = server.getBind();
     this.host = server.getHost();
@@ -113,8 +113,12 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     return this.garbageCollection;
   }
 
+  public DsoServerData getDso() {
+    return this.dso;
+  }
+
   public int clientReconnectWindow() {
-    return this.clientReconnectWindow;
+    return this.dso.getClientReconnectWindow();
   }
 
   public String bind() {

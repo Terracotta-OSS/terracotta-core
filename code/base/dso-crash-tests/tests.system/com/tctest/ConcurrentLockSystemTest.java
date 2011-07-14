@@ -17,8 +17,8 @@ public class ConcurrentLockSystemTest extends TransparentTestBase {
   }
 
   @Override
-  protected void customerizeRestartTestHelper(RestartTestHelper helper) {
-    super.customerizeRestartTestHelper(helper);
+  protected void customizeRestartTestHelper(RestartTestHelper helper) {
+    super.customizeRestartTestHelper(helper);
     helper.getServerCrasherConfig().setRestartInterval(60 * 1000);
   }
 

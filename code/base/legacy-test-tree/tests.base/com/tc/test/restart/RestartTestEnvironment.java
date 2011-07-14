@@ -165,6 +165,7 @@ public class RestartTestEnvironment {
         l2.setOffHeapEnabled(configFactory.isOffHeapEnabled());
         l2.setOffHeapMaxDataSize(configFactory.getOffHeapMaxDataSize());
       }
+      l2.setReconnectWindowForPrevConnectedClients(configFactory.l2DSOConfig().clientReconnectWindow());
     }
     L2ConfigBuilder[] l2s = new L2ConfigBuilder[] { l2 };
     L2SConfigBuilder servers = new L2SConfigBuilder();
