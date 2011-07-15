@@ -53,7 +53,7 @@ public class FeatureClassLoader extends URLClassLoader {
   }
 
   public Iterator<TIMByteProviderMBean> byteProviders() {
-    return byteProviderMap.values().iterator();
+    return new LinkedHashMap(byteProviderMap).values().iterator();
   }
 
   public int getTIMByteProviderCount() {

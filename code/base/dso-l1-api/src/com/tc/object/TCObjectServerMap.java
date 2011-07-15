@@ -181,6 +181,11 @@ public interface TCObjectServerMap<L> extends TCObject {
   public Set getLocalKeySet();
 
   /**
+   * Is key local.
+   */
+  public boolean containsLocalKey(Object key);
+
+  /**
    * Get from local cache.
    */
   public Object getValueFromLocalCache(Object key);

@@ -39,6 +39,8 @@ public class XContainer extends JPanel {
         ((XContainer) comp).tearDown();
       } else if (comp instanceof XTabbedPane) {
         ((XTabbedPane) comp).tearDown();
+      } else if (comp instanceof XSplitPane) {
+        ((XSplitPane) comp).tearDown();
       }
     }
     removeAll();

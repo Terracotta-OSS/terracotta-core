@@ -57,7 +57,7 @@ public abstract class ClusterElementChooser extends TreeComboBox {
       root.addChild(child);
     }
     root.nodeStructureChanged();
-    reSetToLastSelectedPath();
+    resetToLastSelectedPath();
   }
 
   public TreePath getPath(IClusterModelElement clusterElement) {

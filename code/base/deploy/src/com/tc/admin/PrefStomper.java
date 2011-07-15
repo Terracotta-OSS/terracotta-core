@@ -8,22 +8,19 @@ import java.util.prefs.Preferences;
 
 public class PrefStomper {
   public static void main(String[] args) throws Exception {
-    Preferences prefs = Preferences.userRoot();
-    String[] children = prefs.childrenNames();
+    handleNode(Preferences.userRoot());
+    handleNode(Preferences.systemRoot());
+  }
 
-    for (int i = 0; i < children.length; i++) {
-      System.out.println("Removing " + children[i]);
-      prefs.node(children[i]).removeNode();
+  private static void handleNode(Preferences prefs) throws Exception {
+    for (String element : prefs.childrenNames()) {
+      Preferences node = prefs.node(element);
+      for (String child : node.childrenNames()) {
+        handleNode(node.node(child));
+      }
+      System.out.println("Removing " + node);
+      node.removeNode();
     }
-
-    prefs = Preferences.systemRoot();
-    children = prefs.childrenNames();
-    
-    for (int i = 0; i < children.length; i++) {
-      System.out.println("Removing " + children[i]);
-      prefs.node(children[i]).removeNode();
-    }
-
     prefs.flush();
   }
 }

@@ -87,8 +87,8 @@ public class XObjectTableModel extends AbstractTableModel {
   public void configure(Class theType, String[] fields, String[] headings) {
     this.type = theType;
     fieldNames = Arrays.asList(fields).toArray(new String[0]);
-
     createColumns(fields, headings);
+    fireTableStructureChanged();
   }
 
   private void determineMethods(FieldDescription fieldDesc) {
