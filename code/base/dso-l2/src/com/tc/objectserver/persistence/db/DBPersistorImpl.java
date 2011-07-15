@@ -202,7 +202,12 @@ public class DBPersistorImpl implements Persistor {
 
   public void close() {
     try {
-      this.managedObjectPersistor.close();
+      if (this.managedObjectPersistor != null) {
+        // If starting up from a passive with a dirty db, it's possible to
+        // get a close() call (from sanityCheckAndClean()) before managedObjectPersistor
+        // is created.
+        this.managedObjectPersistor.close();
+      }
       this.env.close();
     } catch (final TCDatabaseException e) {
       throw new DBException(e);
