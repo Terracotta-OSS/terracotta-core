@@ -88,6 +88,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1208,15 +1209,29 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     locks.add(0, new Lock(methodPattern, lockDefinition));
   }
 
+  private static void debug(String msg) {
+    Date date = new Date();
+    System.out.println(":::::::: XXX " + date + " [" + date.getTime() + "] " + Thread.currentThread().getName() + ": "
+                       + msg);
+  }
+
   public boolean shouldBeAdapted(final ClassInfo classInfo) {
     // now check if class is adaptable
     String fullClassName = classInfo.getName();
+
+    // XXX: debugging for MNK-2290
+    final boolean DEBUG = fullClassName != null && fullClassName.endsWith("DMITarget");
+
     Boolean cache = readAdaptableCache(fullClassName);
-    if (cache != null) { return cache.booleanValue(); }
+    if (cache != null) {
+      if (DEBUG) debug("cached value: " + cache);
+      return cache.booleanValue();
+    }
 
     // @see isTCPatternMatchingHack() note elsewhere
     if (isTCPatternMatchingHack(classInfo) || permanentExcludesMatcher.match(classInfo)) {
       // permanent Excludes
+      if (DEBUG) debug("permanent exclude");
       return cacheIsAdaptable(fullClassName, false);
     }
 
@@ -1233,16 +1248,24 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       // We make inner classes of logical classes not instrumented while logical
       // bases are instrumented...UNLESS there is a explicit spec for said inner class
       boolean adaptable = getSpec(fullClassName) != null || outerClassname.equals(fullClassName);
+      if (DEBUG) debug("outer is logical, this class adaptable = " + adaptable);
       return cacheIsAdaptable(fullClassName, adaptable);
     }
 
     // If a root is defined then we automagically instrument
-    if (classContainsAnyRoots(classInfo)) { return cacheIsAdaptable(fullClassName, true); }
+    if (classContainsAnyRoots(classInfo)) {
+      if (DEBUG) debug("contains roots");
+      return cacheIsAdaptable(fullClassName, true);
+    }
 
     // existing class specs trump config
-    if (hasSpec(fullClassName)) { return cacheIsAdaptable(fullClassName, true); }
+    if (hasSpec(fullClassName)) {
+      if (DEBUG) debug("has spec");
+      return cacheIsAdaptable(fullClassName, true);
+    }
 
     InstrumentationDescriptor desc = getInstrumentationDescriptorFor(classInfo);
+    if (DEBUG) debug("matched desc: " + desc);
     return cacheIsAdaptable(fullClassName, desc.isInclude());
   }
 

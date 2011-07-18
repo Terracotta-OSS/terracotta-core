@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.config;
 
@@ -32,7 +33,7 @@ final class InstrumentationDescriptorImpl implements InstrumentationDescriptor {
   public boolean isHonorTransient() {
     return isExclude() ? false : classDescriptor.honorTransient();
   }
-  
+
   public boolean isHonorVolatile() {
     return isExclude() ? false : classDescriptor.honorVolatile();
   }
@@ -49,8 +50,9 @@ final class InstrumentationDescriptorImpl implements InstrumentationDescriptor {
     return !isInclude();
   }
 
+  @Override
   public String toString() {
-    return "InstrumentationDescriptorImpl[" + classDescriptor.classExpression() + "]";
+    return "InstrumentationDescriptorImpl[" + classDescriptor + "]";
   }
 
 }

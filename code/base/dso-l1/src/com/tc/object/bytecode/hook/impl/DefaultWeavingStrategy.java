@@ -59,6 +59,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -137,7 +138,20 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
     }
   }
 
+  private static void debug(String msg) {
+    Date date = new Date();
+    System.out.println(":::::::: XXX " + date + " [" + date.getTime() + "] " + Thread.currentThread().getName() + ": "
+                       + msg);
+  }
+
   private void transformInternal(final String className, final InstrumentationContext context) {
+    // XXX: debugging for MNK-2290
+    final boolean DEBUG = className != null && className.endsWith("DMITarget");
+
+    if (DEBUG) {
+      debug("In transformInternal(" + className + " for loader " + context.getLoader());
+    }
+
     try {
       InitialClassDumper.INSTANCE.write(className, context.getInitialBytecode());
 
@@ -153,6 +167,10 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
         logger.warn("Exception parsing intial bytes for class " + className + ". " + e.getClass().getName() + "("
                     + e.getMessage() + ")");
         return;
+      }
+
+      if (DEBUG) {
+        debug("CI.getName() " + classInfo.getName());
       }
 
       Map aspectModules = m_configHelper.getAspectModules();
@@ -171,18 +189,24 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       // Note: we use an heuristic assuming JDK proxy are classes named "$..."
       // to avoid to call getSuperClass everytime
       if (classInfo.getName().startsWith("$") && classInfo.getSuperclass().getName().equals("java.lang.reflect.Proxy")) {
+        if (DEBUG) debug("is proxy");
         context.setCurrentBytecode(context.getInitialBytecode());
         return;
       }
 
       // filtering out all proxy classes that have been transformed by DSO already
       if (context.isProxy() && isInstrumentedByDSO(classInfo)) {
+        if (DEBUG) debug("already instremented");
         context.setCurrentBytecode(context.getInitialBytecode());
         return;
       }
 
       final boolean isDsoAdaptable = m_skipDSO ? false : m_configHelper.shouldBeAdapted(classInfo);
       final boolean hasCustomAdapters = m_configHelper.hasCustomAdapters(classInfo);
+
+      if (DEBUG) {
+        debug("isDsoAdaptable = " + isDsoAdaptable + ", skipDso = " + m_skipDSO);
+      }
 
       // TODO match on (within, null, classInfo) should be equivalent to those ones.
       final Set definitions = context.getDefinitions();
@@ -194,6 +218,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       final boolean needsClassLoaderInstrumentation = needsClassLoaderInstrumentation(classInfo);
 
       if (!isAdvisable && !isDsoAdaptable && !hasCustomAdapters && !needsClassLoaderInstrumentation) {
+        if (DEBUG) debug("no instrumentation necessary");
         context.setCurrentBytecode(context.getInitialBytecode());
         return;
       }
