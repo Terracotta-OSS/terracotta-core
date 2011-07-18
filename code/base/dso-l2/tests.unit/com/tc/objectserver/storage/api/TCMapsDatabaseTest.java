@@ -35,11 +35,6 @@ public class TCMapsDatabaseTest extends TCTestCase {
   private TCMapsDatabase                       database;
 
   @Override
-  public int getTimeoutValueInSeconds() {
-    return 45 * 60;
-  }
-
-  @Override
   protected void setUp() throws Exception {
     super.setUp();
     final File dataPath = getTempDirectory();
