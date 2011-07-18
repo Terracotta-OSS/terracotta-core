@@ -99,6 +99,13 @@ artifacts:
     explode: true
     kit_edition: opensource
     
+  - maven_artifact: true
+    groupId: net.sf.ehcache
+    artifactId: sizeof-agent
+    version: 1.0.0-SNAPSHOT
+    destination: ehcache/lib/agent
+    kit_edition: opensource    
+    
   - maven_artifact: false
     name: README.html
     destination: ehcache
