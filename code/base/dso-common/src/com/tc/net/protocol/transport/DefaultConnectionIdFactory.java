@@ -12,16 +12,16 @@ import java.util.Set;
 
 public class DefaultConnectionIdFactory implements ConnectionIDFactory {
 
-  private long   sequence;
+  private long         sequence;
 
-  private String uid = UUID.getUUID().toString();
+  private final String uid = UUID.getUUID().toString();
 
-  public synchronized ConnectionID nextConnectionId() {
-    return new ConnectionID(sequence++, uid);
+  public synchronized ConnectionID nextConnectionId(String clientJvmID) {
+    return new ConnectionID(clientJvmID, sequence++, uid);
   }
 
-  public ConnectionID makeConnectionId(long channelID) {
-    return new ConnectionID(channelID, uid);
+  public ConnectionID makeConnectionId(String clientJvmID, long channelID) {
+    return new ConnectionID(clientJvmID, channelID, uid);
   }
 
   public Set loadConnectionIDs() {

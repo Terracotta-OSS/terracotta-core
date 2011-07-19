@@ -49,7 +49,7 @@ public class ClientMessageTransportTest extends TCTestCase {
   @Override
   public void setUp() {
     DefaultConnectionIdFactory connectionIDProvider = new DefaultConnectionIdFactory();
-    this.connectionId = connectionIDProvider.nextConnectionId();
+    this.connectionId = connectionIDProvider.nextConnectionId(JvmIDUtil.getJvmID());
     this.connectionManager = new MockConnectionManager();
     this.connection = new MockTCConnection();
     this.connectionManager.setConnection(connection);
@@ -237,8 +237,7 @@ public class ClientMessageTransportTest extends TCTestCase {
 
     ClientMessageChannel channel;
     channel = clientCommsMgr
-        .createClientChannel(
-                             new NullSessionManager(),
+        .createClientChannel(new NullSessionManager(),
                              0,
                              TCSocketAddress.LOOPBACK_IP,
                              port,

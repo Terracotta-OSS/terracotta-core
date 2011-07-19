@@ -40,6 +40,7 @@ public class WireProtocolGroupMessageImplTest extends TestCase {
 
   private final AtomicBoolean fullySent     = new AtomicBoolean(false);
 
+  @Override
   protected void setUp() throws Exception {
     connMgr = new TCConnectionManagerImpl();
 
@@ -52,6 +53,7 @@ public class WireProtocolGroupMessageImplTest extends TestCase {
     server = connMgr.createListener(new TCSocketAddress(5678), factory);
   }
 
+  @Override
   protected void tearDown() throws Exception {
     connMgr.shutdown();
     server.stop();
@@ -96,7 +98,7 @@ public class WireProtocolGroupMessageImplTest extends TestCase {
             }
 
             endBarrier.await();
-            
+
           } catch (BrokenBarrierException ie) {
             System.out.println("XXX Thread " + ie);
           } catch (InterruptedException e) {
@@ -112,7 +114,7 @@ public class WireProtocolGroupMessageImplTest extends TestCase {
 
       int count = 10000;
       fullySent.set(false);
-      
+
       startBarrier.await();
       startBarrier.reset();
 
@@ -148,7 +150,8 @@ public class WireProtocolGroupMessageImplTest extends TestCase {
       switch (value) {
         case 0:
         case 1:
-          messages.add(msgFactory.createSyn(new ConnectionID(1), new MockTCConnection(), (short) 1, 1));
+          messages.add(msgFactory.createSyn(new ConnectionID(JvmIDUtil.getJvmID(), 1), new MockTCConnection(),
+                                            (short) 1, 1));
           break;
         default:
           messages.add(getDSOMessage(monitor, seq));

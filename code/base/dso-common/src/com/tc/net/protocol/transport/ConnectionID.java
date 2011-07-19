@@ -10,9 +10,12 @@ public class ConnectionID {
 
   private final long               channelID;
   private final String             serverID;
+  private final String             jvmID;
 
   private static final String      NULL_SERVER_ID = "ffffffffffffffffffffffffffffffff";
-  public static final ConnectionID NULL_ID        = new ConnectionID(ChannelID.NULL_ID.toLong(), NULL_SERVER_ID);
+  public static final String       NULL_JVM_ID    = "ffffffffffffffffffffffffffffffffffffffffffffffff";
+  public static final ConnectionID NULL_ID        = new ConnectionID(NULL_JVM_ID, ChannelID.NULL_ID.toLong(),
+                                                                     NULL_SERVER_ID);
 
   private static final char        SEP            = '.';
 
@@ -24,8 +27,17 @@ public class ConnectionID {
       // make formatter sane
       throw new InvalidConnectionIDException(compositeID, "Invalid format. Separator (.) found at : " + idx);
     }
+    int idx2 = compositeID.indexOf(SEP, idx + 1);
+    if (idx2 <= idx + 1 || idx2 >= compositeID.length() - 1) {
+      // make formatter sane
+      throw new InvalidConnectionIDException(compositeID, "Invalid format. Separator (.) found at : " + idx2);
+    }
 
-    String channelID = compositeID.substring(0, idx);
+    String jvmID = compositeID.substring(0, idx);
+    if (jvmID.length() != 48) { throw new InvalidConnectionIDException(compositeID, "invalid jvmId length: "
+                                                                                    + jvmID.length()); }
+
+    String channelID = compositeID.substring(idx + 1, idx2);
     final long channel;
     try {
       channel = Long.parseLong(channelID);
@@ -33,7 +45,7 @@ public class ConnectionID {
       throw new InvalidConnectionIDException(compositeID, "parse exception for channelID " + channelID, e);
     }
 
-    String server = compositeID.substring(idx + 1);
+    String server = compositeID.substring(idx2 + 1);
     if (server.length() != 32) { throw new InvalidConnectionIDException(compositeID, "invalid serverID length: "
                                                                                      + server.length()); }
 
@@ -41,7 +53,7 @@ public class ConnectionID {
                                                                                    "invalid chars in serverID: "
                                                                                        + server); }
 
-    return new ConnectionID(channel, server);
+    return new ConnectionID(jvmID, channel, server);
   }
 
   /**
@@ -55,13 +67,14 @@ public class ConnectionID {
     return true;
   }
 
-  public ConnectionID(long channelID, String serverID) {
+  public ConnectionID(String jvmID, long channelID, String serverID) {
+    this.jvmID = jvmID;
     this.channelID = channelID;
     this.serverID = serverID;
   }
 
-  public ConnectionID(long channelID) {
-    this(channelID, NULL_SERVER_ID);
+  public ConnectionID(String jvmID, long channelID) {
+    this(jvmID, channelID, NULL_SERVER_ID);
   }
 
   @Override
@@ -94,6 +107,10 @@ public class ConnectionID {
 
   @Override
   public boolean equals(Object obj) {
+    // equals does NOT take into account jvmID on purpose.
+    // there are cases where we do not have a value (cases where a ConnectionID
+    // can only be built with a channelID ... true identification is based
+    // on channelId
     if (obj instanceof ConnectionID) {
       ConnectionID other = (ConnectionID) obj;
       return (this.channelID == other.channelID) && (this.serverID.equals(other.serverID));
@@ -105,9 +122,13 @@ public class ConnectionID {
     return this.channelID;
   }
 
+  public String getJvmID() {
+    return this.jvmID;
+  }
+
   public String getID() {
     StringBuilder sb = new StringBuilder(64);
-    sb.append(this.channelID).append(SEP).append(this.serverID);
+    sb.append(this.jvmID).append(SEP).append(this.channelID).append(SEP).append(this.serverID);
     return sb.toString();
   }
 

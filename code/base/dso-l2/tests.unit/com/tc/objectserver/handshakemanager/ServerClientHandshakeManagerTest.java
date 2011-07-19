@@ -105,7 +105,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     final HashSet ns = new HashSet();
     for (final Iterator i = s.iterator(); i.hasNext();) {
       final ClientID cid = (ClientID) i.next();
-      ns.add(new ConnectionID(cid.toLong(), "FORTESTING"));
+      ns.add(new ConnectionID("jvmTEST", cid.toLong(), "FORTESTING"));
     }
     return ns;
   }

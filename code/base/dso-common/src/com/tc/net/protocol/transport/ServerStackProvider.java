@@ -101,9 +101,9 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     final MessageTransport rv;
     if (connectionId.isNewConnection()) {
       if (connectionId.getChannelID() == ChannelID.NULL_ID.toLong()) {
-        connectionId = connectionIdFactory.nextConnectionId();
+        connectionId = connectionIdFactory.nextConnectionId(connectionId.getJvmID());
       } else {
-        connectionId = connectionIdFactory.makeConnectionId(connectionId.getChannelID());
+        connectionId = connectionIdFactory.makeConnectionId(connectionId.getJvmID(), connectionId.getChannelID());
       }
 
       rv = messageTransportFactory.createNewTransport(connectionId, connection, createHandshakeErrorHandler(),

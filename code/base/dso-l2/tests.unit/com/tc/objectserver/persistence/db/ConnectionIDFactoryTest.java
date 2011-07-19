@@ -6,7 +6,6 @@ package com.tc.objectserver.persistence.db;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.objectserver.persistence.api.ClientStatePersistor;
-import com.tc.objectserver.persistence.db.ConnectionIDFactoryImpl;
 import com.tc.objectserver.persistence.inmemory.InMemoryClientStatePersistor;
 import com.tc.test.TCTestCase;
 
@@ -15,6 +14,7 @@ public class ConnectionIDFactoryTest extends TCTestCase {
   private ClientStatePersistor    clientStatePersistor;
   private ConnectionIDFactoryImpl idFactory;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     clientStatePersistor = new InMemoryClientStatePersistor();
@@ -22,15 +22,15 @@ public class ConnectionIDFactoryTest extends TCTestCase {
   }
 
   public void testNextConnectionID() {
-    ConnectionID cid = idFactory.nextConnectionId();
+    ConnectionID cid = idFactory.nextConnectionId("jvm1");
     assertTrue(clientStatePersistor.containsClient(new ChannelID(cid.getChannelID())));
     assertEquals(cid.getChannelID(), clientStatePersistor.getConnectionIDSequence().current());
 
-    cid = idFactory.nextConnectionId();
+    cid = idFactory.nextConnectionId("jvm1");
     assertTrue(clientStatePersistor.containsClient(new ChannelID(cid.getChannelID())));
     assertEquals(cid.getChannelID(), clientStatePersistor.getConnectionIDSequence().current());
 
-    cid = idFactory.nextConnectionId();
+    cid = idFactory.nextConnectionId("jvm1");
     assertTrue(clientStatePersistor.containsClient(new ChannelID(cid.getChannelID())));
     assertEquals(cid.getChannelID(), clientStatePersistor.getConnectionIDSequence().current());
 
@@ -39,17 +39,17 @@ public class ConnectionIDFactoryTest extends TCTestCase {
 
   public void testMakeConnectionId() {
     clientStatePersistor.getConnectionIDSequence().next();
-    ConnectionID cid = idFactory.makeConnectionId(clientStatePersistor.getConnectionIDSequence().current());
+    ConnectionID cid = idFactory.makeConnectionId("jvm1", clientStatePersistor.getConnectionIDSequence().current());
     assertTrue(clientStatePersistor.containsClient(new ChannelID(cid.getChannelID())));
     assertEquals(cid.getChannelID(), clientStatePersistor.getConnectionIDSequence().current());
 
     clientStatePersistor.getConnectionIDSequence().next();
-    cid = idFactory.makeConnectionId(clientStatePersistor.getConnectionIDSequence().current());
+    cid = idFactory.makeConnectionId("jvm1", clientStatePersistor.getConnectionIDSequence().current());
     assertTrue(clientStatePersistor.containsClient(new ChannelID(cid.getChannelID())));
     assertEquals(cid.getChannelID(), clientStatePersistor.getConnectionIDSequence().current());
 
     clientStatePersistor.getConnectionIDSequence().next();
-    cid = idFactory.makeConnectionId(clientStatePersistor.getConnectionIDSequence().current());
+    cid = idFactory.makeConnectionId("jvm1", clientStatePersistor.getConnectionIDSequence().current());
     assertTrue(clientStatePersistor.containsClient(new ChannelID(cid.getChannelID())));
     assertEquals(cid.getChannelID(), clientStatePersistor.getConnectionIDSequence().current());
 

@@ -109,9 +109,9 @@ public class ClusterStateMessageTest extends TestCase {
   }
 
   private void modifyClusterState(int clusterState) {
-    ConnectionID connectionID_1 = new ConnectionID(10, "foo");
-    ConnectionID connectionID_2 = new ConnectionID(11, "foo");
-    ConnectionID connectionID_3 = new ConnectionID(12, "goo");
+    ConnectionID connectionID_1 = new ConnectionID("jvm10", 10, "foo");
+    ConnectionID connectionID_2 = new ConnectionID("jvm11", 11, "foo");
+    ConnectionID connectionID_3 = new ConnectionID("jvm12", 12, "goo");
 
     if (clusterState == CLUSTER_STATE_1) {
       clusterState_1.addNewConnection(connectionID_1);
@@ -149,7 +149,7 @@ public class ClusterStateMessageTest extends TestCase {
   }
 
   public void testInitState() throws Exception {
-    ConnectionID connectionID = new ConnectionID(10, "foo");
+    ConnectionID connectionID = new ConnectionID("jvm10", 10, "foo");
 
     // COMPLETE_STATE
     modifyClusterState(CLUSTER_STATE_1);

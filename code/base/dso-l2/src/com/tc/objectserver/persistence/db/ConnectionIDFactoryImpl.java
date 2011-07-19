@@ -1,5 +1,5 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * All content copyright (c) 2003-2011 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
 package com.tc.objectserver.persistence.db;
@@ -28,7 +28,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   private final ClientStatePersistor clientStateStore;
   private final MutableSequence      connectionIDSequence;
   private String                     uid;
-  private List                       listeners = new CopyOnWriteArrayList();
+  private final List                 listeners = new CopyOnWriteArrayList();
 
   public ConnectionIDFactoryImpl(ClientStatePersistor clientStateStore) {
     this.clientStateStore = clientStateStore;
@@ -36,20 +36,20 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
     this.uid = connectionIDSequence.getUID();
   }
 
-  public ConnectionID nextConnectionId() {
-    return buildConnectionId(connectionIDSequence.next());
+  public ConnectionID nextConnectionId(String clientJvmID) {
+    return buildConnectionId(clientJvmID, connectionIDSequence.next());
   }
 
-  private ConnectionID buildConnectionId(long channelID) {
+  private ConnectionID buildConnectionId(String jvmID, long channelID) {
     Assert.assertNotNull(uid);
     // Make sure we save the fact that we are giving out this id to someone in the database before giving it out.
     clientStateStore.saveClientState(new ChannelID(channelID));
-    ConnectionID rv = new ConnectionID(channelID, uid);
+    ConnectionID rv = new ConnectionID(jvmID, channelID, uid);
     fireCreationEvent(rv);
     return rv;
   }
 
-  public ConnectionID makeConnectionId(long channelID) {
+  public ConnectionID makeConnectionId(String clientJvmID, long channelID) {
     Assert.assertTrue(channelID != ChannelID.NULL_ID.toLong());
     // provided channelID shall not be using
     if (clientStateStore.containsClient(new ChannelID(channelID))) { throw new TCRuntimeException(
@@ -58,7 +58,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
                                                                                                       + " has been used. "
                                                                                                       + " One possible cause: restarted some mirror groups but not all."); }
 
-    return buildConnectionId(channelID);
+    return buildConnectionId(clientJvmID, channelID);
   }
 
   public void restoreConnectionId(ConnectionID rv) {
@@ -95,7 +95,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
     Assert.assertNotNull(uid);
     Set connections = new HashSet();
     for (Iterator i = clientStateStore.loadClientIDs().iterator(); i.hasNext();) {
-      connections.add(new ConnectionID(((ChannelID) i.next()).toLong(), uid));
+      connections.add(new ConnectionID(ConnectionID.NULL_JVM_ID, ((ChannelID) i.next()).toLong(), uid));
     }
     return connections;
   }
@@ -115,7 +115,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
     } catch (ClientNotFoundException e) {
       throw new AssertionError(e);
     }
-    fireDestroyedEvent(new ConnectionID(clientID.toLong(), uid));
+    fireDestroyedEvent(new ConnectionID(ConnectionID.NULL_JVM_ID, clientID.toLong(), uid));
   }
 
   public long getCurrentConnectionID() {

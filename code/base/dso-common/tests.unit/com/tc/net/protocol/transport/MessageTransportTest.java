@@ -58,7 +58,7 @@ public class MessageTransportTest extends TCTestCase {
     this.clientErrorRef = new SynchronizedRef(null);
     this.serverErrorRef = new SynchronizedRef(null);
     DefaultConnectionIdFactory connectionIDProvider = new DefaultConnectionIdFactory();
-    this.connectionId = connectionIDProvider.nextConnectionId();
+    this.connectionId = connectionIDProvider.nextConnectionId(JvmIDUtil.getJvmID());
 
     this.transportHandshakeMessageFactory = new TransportMessageFactoryImpl();
     serverConnection = new MockTCConnection();

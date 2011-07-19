@@ -13,6 +13,7 @@ import com.tc.net.NodeID;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.ConnectionID;
+import com.tc.net.protocol.transport.JvmIDUtil;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.session.SessionID;
@@ -50,7 +51,9 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
     synchronized (status) {
       if (status.isOpen()) { throw new IllegalStateException("Channel already open"); }
-      ((MessageTransport) this.sendLayer).initConnectionID(new ConnectionID((((ClientID) getLocalNodeID()).toLong())));
+      // initialize the connection ID, using the local JVM ID
+      ((MessageTransport) this.sendLayer).initConnectionID(new ConnectionID(JvmIDUtil.getJvmID(),
+                                                                            (((ClientID) getLocalNodeID()).toLong())));
       final NetworkStackID id = this.sendLayer.open();
       channelOpened();
       this.channelID = new ChannelID(id.toLong());

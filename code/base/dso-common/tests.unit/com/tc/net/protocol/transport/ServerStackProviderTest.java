@@ -40,6 +40,7 @@ public class ServerStackProviderTest extends TCTestCase {
     super();
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
@@ -58,9 +59,10 @@ public class ServerStackProviderTest extends TCTestCase {
                                             transportHandshakeMessageFactory, this.connectionIdFactory,
                                             connectionPolicy, wpaFactory, new ReentrantLock());
     connectionIDProvider = new DefaultConnectionIdFactory();
-    this.connId = connectionIDProvider.nextConnectionId();
+    this.connId = connectionIDProvider.nextConnectionId(JvmIDUtil.getJvmID());
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
   }
@@ -177,7 +179,7 @@ public class ServerStackProviderTest extends TCTestCase {
     connectionPolicy.maxConnectionsExceeded = false;
     connectionPolicy.maxConnections = 2;
     connectionPolicy.clientConnected = 0;
-    connectionPolicy.clientSet.clear();
+    connectionPolicy.clientsByJvm.clear();
 
     WireProtocolMessageSink sink;
     TestSynMessage syn;
@@ -259,8 +261,8 @@ public class ServerStackProviderTest extends TCTestCase {
   }
 
   public void testRebuildStack() throws Exception {
-    ConnectionID connectionID1 = connectionIDProvider.nextConnectionId();
-    ConnectionID connectionID2 = connectionIDProvider.nextConnectionId();
+    ConnectionID connectionID1 = connectionIDProvider.nextConnectionId(JvmIDUtil.getJvmID());
+    ConnectionID connectionID2 = connectionIDProvider.nextConnectionId(JvmIDUtil.getJvmID());
     Set rebuild = new HashSet();
     rebuild.add(connectionID1);
 
@@ -379,7 +381,7 @@ public class ServerStackProviderTest extends TCTestCase {
     assertFalse(harness.wasFinalizeStackCalled);
 
     // cause lookup failure
-    ConnectionID differentConnId = connectionIDProvider.nextConnectionId();
+    ConnectionID differentConnId = connectionIDProvider.nextConnectionId(JvmIDUtil.getJvmID());
     harness.wasAttachNewConnectionCalled = false;
     harness.wasFinalizeStackCalled = false;
 
@@ -395,13 +397,15 @@ public class ServerStackProviderTest extends TCTestCase {
 
   private class TestConnectionIDFactory extends DefaultConnectionIdFactory {
 
-    public synchronized ConnectionID nextConnectionId() {
-      connId = super.nextConnectionId();
+    @Override
+    public synchronized ConnectionID nextConnectionId(String clientJvmID) {
+      connId = super.nextConnectionId(clientJvmID);
       return connId;
     }
 
-    public ConnectionID makeConnectionId(long channelID) {
-      return (super.makeConnectionId(channelID));
+    @Override
+    public ConnectionID makeConnectionId(String clientJvmID, long channelID) {
+      return (super.makeConnectionId(clientJvmID, channelID));
     }
   }
 
