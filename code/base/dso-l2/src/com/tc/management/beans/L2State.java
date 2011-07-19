@@ -41,10 +41,7 @@ public class L2State implements StateChangeListener {
   }
 
   private boolean validateState(State state) {
-    for (int i = 0; i < StateManager.validStates.length; i++) {
-      if (StateManager.validStates[i].equals(state)) { return true; }
-    }
-    return false;
+    return StateManager.validStates.contains(state);
   }
 
   public void l2StateChanged(StateChangedEvent sce) {
@@ -75,12 +72,13 @@ public class L2State implements StateChangeListener {
     if (getState().equals(StateManager.STOP_STATE)) { return true; }
     return false;
   }
-  
+
   public void registerStateChangeListener(StateChangeListener listener) {
     if (changeListener != null) { throw new AssertionError("State change listerer is already set."); }
     changeListener = listener;
   }
 
+  @Override
   public String toString() {
     return getState().getName();
   }

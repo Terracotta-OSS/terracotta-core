@@ -10,15 +10,20 @@ import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
 import com.tc.util.State;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 public interface StateManager {
 
-  public static final State   ACTIVE_COORDINATOR   = new State("ACTIVE-COORDINATOR");
-  public static final State   PASSIVE_UNINTIALIZED = new State("PASSIVE-UNINITIALIZED");
-  public static final State   PASSIVE_STANDBY      = new State("PASSIVE-STANDBY");
-  public static final State   START_STATE          = new State("START-STATE");
-  public static final State   STOP_STATE           = new State("STOP-STATE");
-  public static final State[] validStates          = new State[] { START_STATE, PASSIVE_UNINTIALIZED, PASSIVE_STANDBY,
-      ACTIVE_COORDINATOR, STOP_STATE              };
+  public static final State       ACTIVE_COORDINATOR   = new State("ACTIVE-COORDINATOR");
+  public static final State       PASSIVE_UNINTIALIZED = new State("PASSIVE-UNINITIALIZED");
+  public static final State       PASSIVE_STANDBY      = new State("PASSIVE-STANDBY");
+  public static final State       START_STATE          = new State("START-STATE");
+  public static final State       STOP_STATE           = new State("STOP-STATE");
+  public static final List<State> validStates          = Collections.unmodifiableList(Arrays
+                                                           .asList(START_STATE, PASSIVE_UNINTIALIZED, PASSIVE_STANDBY,
+                                                                   ACTIVE_COORDINATOR, STOP_STATE));
 
   public void startElection();
 
