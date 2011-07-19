@@ -72,8 +72,9 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     this.bind = server.getBind();
     this.host = server.getHost();
     if (this.host.equalsIgnoreCase(LOCALHOST)) {
-      logger.warn("The specified hostname \"" + this.host + "\" may not work correctly. Please replace \"" + this.host
-                  + "\" with appropriate hostname in configuration file");
+      logger.warn("The specified hostname \"" + this.host
+                  + "\" may not work correctly if clients and operator console are connecting from other hosts. "
+                  + "Replace \"" + this.host + "\" with an appropriate hostname in configuration.");
     }
     this.serverName = server.getName();
     this.dsoPort = server.getDsoPort();
