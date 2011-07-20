@@ -140,7 +140,7 @@ public class EphemeralPorts {
 
         if ((num == -1) || (start == -1)) { throw new AssertionError("start: " + start + ", num = " + num); }
 
-        return new Range(start, start + num);
+        return new Range(start, start + num - 1);
       } catch (Exception e) {
         e.printStackTrace();
       }
