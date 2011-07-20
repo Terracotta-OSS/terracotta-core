@@ -34,8 +34,8 @@ public class ConnectionID {
     }
 
     String jvmID = compositeID.substring(0, idx);
-    if (jvmID.length() != 48) { throw new InvalidConnectionIDException(compositeID, "invalid jvmId length: "
-                                                                                    + jvmID.length()); }
+    if (jvmID.length() < 1) { throw new InvalidConnectionIDException(compositeID, "invalid jvmId length: "
+                                                                                  + jvmID.length()); }
 
     String channelID = compositeID.substring(idx + 1, idx2);
     final long channel;
@@ -123,6 +123,8 @@ public class ConnectionID {
   }
 
   public String getJvmID() {
+    if (this.jvmID == null || this.jvmID.equals(NULL_JVM_ID)) { throw new IllegalStateException(
+                                                                                                "Attempt to get jvmID from pseudo-ConnectionID that was not initialized with one."); }
     return this.jvmID;
   }
 

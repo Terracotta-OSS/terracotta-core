@@ -32,17 +32,18 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
   }
 
   public synchronized boolean connectClient(ConnectionID connID) {
-    if (isMaxConnectionsReached()) {
+
+    HashSet<ConnectionID> jvmClients = clientsByJvm.get(connID.getJvmID());
+
+    if (isMaxConnectionsReached() && jvmClients == null) {
       logger.info("Rejecting " + connID + "; " + toString());
       return false;
     }
 
-    HashSet<ConnectionID> jvmClients = clientsByJvm.get(connID.getJvmID());
-
     if (jvmClients == null) {
       jvmClients = new HashSet<ConnectionID>();
       clientsByJvm.put(connID.getJvmID(), jvmClients);
-      logger.info("Allocating connection license for jvm " + connID.getJvmID() + "; " + toString());
+      logger.info("Allocated connection license for jvm " + connID.getJvmID() + "; " + toString());
     }
 
     if (!jvmClients.contains(connID)) jvmClients.add(connID);

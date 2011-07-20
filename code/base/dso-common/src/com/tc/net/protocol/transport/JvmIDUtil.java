@@ -8,10 +8,10 @@ import java.lang.management.RuntimeMXBean;
 import java.util.UUID;
 
 /**
- * Generates a 48-byte unique identifier that is global to the JVM. One portion of the id (36 bytes) comes from a
- * java.util.UUID which is shared among all class loaders by storing it as a system property. To deter from easy
- * spoofing (e.g. a rogue class setting the system property to some same-value on all jvms) the remaining portion of the
- * id (12 bytes) is appended after being generated from the JVM's start time, represented as hex.
+ * Generates a unique identifier that is global to the JVM. One portion of the id comes from a java.util.UUID which is
+ * shared among all class loaders by storing it as a system property. To deter from easy spoofing (e.g. a rogue class
+ * setting the system property to some same-value on all jvms) the remaining portion of the id is appended after being
+ * generated from the JVM's start time, represented as hex.
  * 
  * @author jhouse
  */
