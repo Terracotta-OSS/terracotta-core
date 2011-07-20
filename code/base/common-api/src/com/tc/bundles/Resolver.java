@@ -410,7 +410,7 @@ public class Resolver {
 
   protected URL resolveLocation(final String name, final String version, final String groupId) {
     final String symname = MavenToOSGi.artifactIdToSymbolicName(groupId, name);
-    final Version osgiVersion = Version.parse(MavenToOSGi.projectVersionToBundleVersion(version));
+    final OsgiVersion osgiVersion = OsgiVersion.parse(MavenToOSGi.projectVersionToBundleVersion(version));
     Check check = new Check() {
       public boolean check(URL bundle, Manifest manifest) {
         if (!isBundleMatch(bundle, manifest, symname, osgiVersion)) return false;
@@ -422,7 +422,7 @@ public class Resolver {
     return jar;
   }
 
-  private boolean isBundleMatch(URL bundle, Manifest manifest, String symname, Version version) {
+  private boolean isBundleMatch(URL bundle, Manifest manifest, String symname, OsgiVersion version) {
     Assert.assertNotNull(manifest);
     if (logger.isDebugEnabled()) logger.debug("Checking " + bundle + " for " + symname + ":" + version);
 
@@ -430,7 +430,7 @@ public class Resolver {
     final String bundleversion = manifest.getMainAttributes().getValue(BUNDLE_VERSION);
     try {
       return BundleSpecUtil.isMatchingSymbolicName(symname, bundlesymname)
-             && version.equals(Version.parse(bundleversion));
+             && version.equals(OsgiVersion.parse(bundleversion));
     } catch (NumberFormatException e) { // thrown by parseVersion()
       consoleLogger.warn("Bad version attribute in TIM manifest from jar file: '" + ResolverUtils.canonicalize(bundle)
                          + "', version='" + bundleversion + "'.  Skipping...", e);
@@ -655,8 +655,8 @@ public class Resolver {
       if (this == object) return true;
       if (!(object instanceof Entry)) return false;
       final Entry entry = (Entry) object;
-      return location.equals(entry.getLocation()) && getVersion().equals(entry.getVersion())
-             && getSymbolicName().equals(entry.getSymbolicName());
+      return location.toExternalForm().equals(entry.location.toExternalForm())
+             && getVersion().equals(entry.getVersion()) && getSymbolicName().equals(entry.getSymbolicName());
     }
 
     private static final int SEED1 = 18181;
