@@ -7,8 +7,8 @@ package com.tc.object.config;
 import org.knopflerfish.framework.BundleClassLoader;
 import org.osgi.framework.Bundle;
 import org.terracotta.groupConfigForL1.ServerGroup;
-import org.terracotta.groupConfigForL1.ServerGroupsDocument.ServerGroups;
 import org.terracotta.groupConfigForL1.ServerInfo;
+import org.terracotta.groupConfigForL1.ServerGroupsDocument.ServerGroups;
 import org.terracotta.license.LicenseException;
 
 import com.tc.asm.ClassAdapter;
@@ -69,9 +69,9 @@ import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
-import com.tc.util.ClassUtils.ClassSpec;
 import com.tc.util.ProductInfo;
 import com.tc.util.UUID;
+import com.tc.util.ClassUtils.ClassSpec;
 import com.tc.util.runtime.Vm;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.L1ReconnectPropertiesDocument;
@@ -95,8 +95,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -327,13 +327,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     if (hasSpec(classInfo)) { return; }
 
     // The addition of the lock expression and the include need to be atomic -- see LKC-2616
-    synchronized (this.instrumentationDescriptors) {
-      // TODO see LKC-1893. Need to check for primitive types, logically managed classes, etc.
-      if (!hasIncludeExcludePattern(classInfo)) {
-        // only add include if not specified in tc-config
-        addIncludePattern(expression, honorTransient, oldStyleCallConstructorOnLoad, honorVolatile);
-        addWriteAutolock(lockExpression);
-      }
+    // TODO see LKC-1893. Need to check for primitive types, logically managed classes, etc.
+    if (!hasIncludeExcludePattern(classInfo)) {
+      // only add include if not specified in tc-config
+      addIncludePattern(expression, honorTransient, oldStyleCallConstructorOnLoad, honorVolatile);
+      addWriteAutolock(lockExpression);
     }
   }
 
@@ -660,9 +658,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       type = fi.getType().getName();
     }
     InjectionInstrumentation instrumentation = injectionRegistry.lookupInstrumentation(type);
-    if (null == instrumentation) { throw new UnsupportedInjectedDsoInstanceTypeException(classInfo.getName(),
-                                                                                         fi.getName(), fi.getType()
-                                                                                             .getName()); }
+    if (null == instrumentation) { throw new UnsupportedInjectedDsoInstanceTypeException(classInfo.getName(), fi
+        .getName(), fi.getType().getName()); }
 
     TransparencyClassSpec spec = getOrCreateSpec(classInfo.getName());
     spec.setHasOnLoadInjection(true);
@@ -1884,8 +1881,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       ConnectionInfo[] connectionInfo = connectionInfoItems[i].getConnectionInfos();
       for (int j = 0; j < connectionInfo.length; j++) {
         ConnectionInfo connectionIn = new ConnectionInfo(getIpAddressOfServer(connectionInfo[j].getHostname()),
-                                                         connectionInfo[j].getPort(), i * j + j,
-                                                         connectionInfo[j].getGroupName());
+                                                         connectionInfo[j].getPort(), i * j + j, connectionInfo[j]
+                                                             .getGroupName());
         connInfoFromL1.add(connectionIn);
       }
     }
