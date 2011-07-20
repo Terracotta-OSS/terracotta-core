@@ -1215,7 +1215,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.managementContext = new ServerManagementContext(this.transactionManager, this.objectRequestManager,
                                                          (LockManagerMBean) this.lockManager,
                                                          (DSOChannelManagerMBean) channelManager, serverStats,
-                                                         channelStats, instanceMonitor, appEvents, indexHACoordinator);
+                                                         channelStats, instanceMonitor, appEvents, indexHACoordinator,
+                                                         connectionPolicy);
     if (this.l2Properties.getBoolean("beanshell.enabled")) {
       startBeanShell(this.l2Properties.getInt("beanshell.port"));
     }

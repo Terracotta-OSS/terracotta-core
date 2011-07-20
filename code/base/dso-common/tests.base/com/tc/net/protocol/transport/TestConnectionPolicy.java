@@ -4,6 +4,7 @@
  */
 package com.tc.net.protocol.transport;
 
+import com.tc.exception.ImplementMe;
 import com.tc.util.Assert;
 
 import java.util.HashMap;
@@ -56,5 +57,9 @@ public class TestConnectionPolicy implements ConnectionPolicy {
 
   public synchronized int getMaxConnections() {
     return maxConnections;
+  }
+
+  public int getNumberOfActiveConnections() {
+    throw new ImplementMe();
   }
 }

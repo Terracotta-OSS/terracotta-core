@@ -74,4 +74,8 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
   public synchronized int getMaxConnections() {
     return maxConnections;
   }
+
+  public synchronized int getNumberOfActiveConnections() {
+    return clientsByJvm.size();
+  }
 }

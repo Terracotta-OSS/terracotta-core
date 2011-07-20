@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.core.impl;
 
+import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.DSOApplicationEventsMBean;
@@ -25,12 +26,13 @@ public class ServerManagementContext {
   private final ObjectInstanceMonitorMBean    instanceMonitor;
   private final DSOApplicationEventsMBean     appEvents;
   private final IndexManager                  indexManager;
+  private final ConnectionPolicy              connectionPolicy;
 
   public ServerManagementContext(ServerTransactionManagerMBean txnMgr, ObjectManagerMBean objMgr,
                                  LockManagerMBean lockMgr, DSOChannelManagerMBean channelMgr,
                                  DSOGlobalServerStats serverStats, ChannelStats channelStats,
                                  ObjectInstanceMonitorMBean instanceMonitor, DSOApplicationEventsMBean appEvents,
-                                 IndexManager indexManager) {
+                                 IndexManager indexManager, ConnectionPolicy connectionPolicy) {
     this.txnMgr = txnMgr;
     this.objMgr = objMgr;
     this.lockMgr = lockMgr;
@@ -40,6 +42,7 @@ public class ServerManagementContext {
     this.instanceMonitor = instanceMonitor;
     this.appEvents = appEvents;
     this.indexManager = indexManager;
+    this.connectionPolicy = connectionPolicy;
   }
 
   public IndexManager getIndexManager() {
@@ -76,5 +79,9 @@ public class ServerManagementContext {
 
   public DSOApplicationEventsMBean getDSOAppEventsMBean() {
     return this.appEvents;
+  }
+
+  public ConnectionPolicy getConnectionPolicy() {
+    return this.connectionPolicy;
   }
 }

@@ -11,6 +11,7 @@ import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.object.ObjectID;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManagerEventListener;
@@ -88,6 +89,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   private final TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider;
   private final OffheapStats                           offheapStats;
   private final IndexManager                           indexManager;
+  private final ConnectionPolicy                       connectionPolicy;
 
   public DSO(final ServerManagementContext managementContext, final ServerConfigurationContext configContext,
              final MBeanServer mbeanServer, final GCStatsEventPublisher gcStatsPublisher,
@@ -111,6 +113,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     this.clientStateManager = configContext.getClientStateManager();
     this.operatorEventHistoryProvider = operatorEventHistoryProvider;
     this.offheapStats = offheapStats;
+    this.connectionPolicy = managementContext.getConnectionPolicy();
 
     // add various listeners (do this before the setupXXX() methods below so we don't ever miss anything)
     txnMgr.addRootListener(new TransactionManagerListener());
@@ -783,5 +786,9 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
   public long getOffheapObjectAllocatedMemory() {
     return offheapStats.getOffheapObjectAllocatedMemory();
+  }
+
+  public int getActiveLicensedClientCount() {
+    return connectionPolicy.getNumberOfActiveConnections();
   }
 }
