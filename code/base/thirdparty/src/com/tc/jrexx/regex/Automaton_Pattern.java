@@ -25,7 +25,7 @@ package com.tc.jrexx.regex;
 import com.tc.jrexx.set.*;
 import com.tc.jrexx.automaton.*;
 import java.text.*;
-import java.util.*;
+// import java.util.*;
 
 
 public class Automaton_Pattern extends com.tc.jrexx.set.AutomatonSet_String {
@@ -71,7 +71,7 @@ public class Automaton_Pattern extends com.tc.jrexx.set.AutomatonSet_String {
 
   }
 
-  private Map preDefinedAutomatons = null;
+  // private Map preDefinedAutomatons = null;
   protected String regEx = null;
 
   protected Automaton_Pattern(ISet_char fullSet) {
@@ -193,7 +193,7 @@ public class Automaton_Pattern extends com.tc.jrexx.set.AutomatonSet_String {
 
   protected void retainAll(String regEx) {
     if (this.regEx==null) return;
-    if (this.regEx=="" || regEx=="") this.regEx = "";
+    if (this.regEx.equals("") || regEx.equals("")) this.regEx = "";
     else {
       this.regEx = new StringBuffer(this.regEx.length()+regEx.length()+5)
                  .append('(').append(this.regEx).append(')')
@@ -291,24 +291,24 @@ public class Automaton_Pattern extends com.tc.jrexx.set.AutomatonSet_String {
   /////     P A R S I N G
   //////////////////////////////////////////////////////////////////////////
 
-      private static final int  ERROR         = -2,	// the possible parser
-                              SHIFT         = -3,	// actions used in ACTIONTABLE
-                              REDUCE        = -4,	// value -1 is reserved
-                              ACCEPT        = -5,	// for unknown constant value
+      private static final int  ERROR         = -2,  // the possible parser
+                              SHIFT         = -3,  // actions used in ACTIONTABLE
+                              REDUCE        = -4,  // value -1 is reserved
+                              ACCEPT        = -5,  // for unknown constant value
 
-                              RE            =  0,	// NonTerminal Symbols
-                              TERM          =  1,	// IMPORTANT: the value represents the
-                              ELEMENT       =  2,	//	      rowNr in ACTIONTABLE
+                              RE            =  0,  // NonTerminal Symbols
+                              TERM          =  1,  // IMPORTANT: the value represents the
+                              ELEMENT       =  2,  //        rowNr in ACTIONTABLE
 
-                              notOp 	  =  3,	// Terminal Symbols
-                              andOp 	  =  4,	//	.
+                              notOp     =  3,  // Terminal Symbols
+                              andOp     =  4,  //  .
                               orOp          =  5, //      .
-                              groupBegin	  =  6, //      .
-                              groupEnd	  =  7,	//	.
-                              repetition	  =  8, //      .
-                              label	  =  9, //      .
-                              regExp	  = 10,	// IMPORTANT: the value represents the
-                              EOF           = 11;	//	      rowNr in ACTIONTABLE
+                              groupBegin    =  6, //      .
+                              groupEnd    =  7,  //  .
+                              repetition    =  8, //      .
+                              label    =  9, //      .
+                              regExp    = 10,  // IMPORTANT: the value represents the
+                              EOF           = 11;  //        rowNr in ACTIONTABLE
 
       private static final int[][][] ACTIONTABLE = {
       // state  RE         TERM      ELEMENT   notOp      andOp      orOp      groupBegin groupEnd  repetition  label       regExp     EOF
@@ -333,7 +333,7 @@ public class Automaton_Pattern extends com.tc.jrexx.set.AutomatonSet_String {
 
 
       //  the number after a SHIFT action is the next state to go to (see case SHIFT)
-      //	the number after a REDUCE action is the number of a rule (see case REDUCE)
+      //  the number after a REDUCE action is the number of a rule (see case REDUCE)
 
 
     private static final Integer[] INTEGERS = new Integer[ACTIONTABLE.length];
@@ -356,16 +356,16 @@ public class Automaton_Pattern extends com.tc.jrexx.set.AutomatonSet_String {
     int stateNr = 0, tokenSymbol=-1, action = Automaton_Pattern.ERROR;
     do {
       if (tokenSymbol==-1) {
-        if	(token instanceof SState) 	tokenSymbol = Automaton_Pattern.regExp;
-        else if	(token instanceof Terminal_Repetition) 	tokenSymbol = Automaton_Pattern.repetition;
-        else if	(token instanceof Terminal_GroupBegin) 	tokenSymbol = Automaton_Pattern.groupBegin;
-        else if	(token instanceof Terminal_GroupEnd) 	tokenSymbol = Automaton_Pattern.groupEnd;
-        else if	(token instanceof String) 	        tokenSymbol = Automaton_Pattern.label;
-        else if	(token instanceof Terminal_OrOp) 	tokenSymbol = Automaton_Pattern.orOp;
-        else if	(token instanceof Terminal_RegExp) 	tokenSymbol = Automaton_Pattern.regExp;
-        else if	(token instanceof Terminal_AndOp) 	tokenSymbol = Automaton_Pattern.andOp;
-        else if	(token instanceof Terminal_NotOp) 	tokenSymbol = Automaton_Pattern.notOp;
-        else if (token instanceof Terminal_EOF)		tokenSymbol = Automaton_Pattern.EOF;
+        if  (token instanceof SState)   tokenSymbol = Automaton_Pattern.regExp;
+        else if  (token instanceof Terminal_Repetition)   tokenSymbol = Automaton_Pattern.repetition;
+        else if  (token instanceof Terminal_GroupBegin)   tokenSymbol = Automaton_Pattern.groupBegin;
+        else if  (token instanceof Terminal_GroupEnd)   tokenSymbol = Automaton_Pattern.groupEnd;
+        else if  (token instanceof String)           tokenSymbol = Automaton_Pattern.label;
+        else if  (token instanceof Terminal_OrOp)   tokenSymbol = Automaton_Pattern.orOp;
+        else if  (token instanceof Terminal_RegExp)   tokenSymbol = Automaton_Pattern.regExp;
+        else if  (token instanceof Terminal_AndOp)   tokenSymbol = Automaton_Pattern.andOp;
+        else if  (token instanceof Terminal_NotOp)   tokenSymbol = Automaton_Pattern.notOp;
+        else if (token instanceof Terminal_EOF)    tokenSymbol = Automaton_Pattern.EOF;
         else {
           String message = "Unknown symbol/token: " + token;
           message+= "\n(check Parser or Scanner for this symbol/token)";
@@ -452,21 +452,21 @@ public class Automaton_Pattern extends com.tc.jrexx.set.AutomatonSet_String {
           {
             node = symbolStack.pop();
             if (node instanceof Terminal_RegExp) { // or  instanceOf Terminal_RuntimeValue
-              Automaton_Pattern preDefAutomaton;
+              /* Automaton_Pattern preDefAutomaton;
               if (this.preDefinedAutomatons==null) preDefAutomaton = null;
               else {
                 preDefAutomaton = (Automaton_Pattern)this.preDefinedAutomatons.get(((Terminal_RegExp)node).name);
               }
-              if (preDefAutomaton==null) throw new IllegalArgumentException(((Terminal_RegExp)node).name+" is not defined");
+              if (preDefAutomaton==null) */ throw new IllegalArgumentException(((Terminal_RegExp)node).name+" is not defined");
 
-              final Automaton.State startState = preDefAutomaton.getStartState();
+              /* final Automaton.State startState = preDefAutomaton.getStartState();
               if (startState==null) {
                 node = this.addState(false);
               } else {
                 java.util.Map map = this.cloneState(startState);
                 node = (Automaton_Pattern.PState)map.get(startState);
+              } */
               }
-            }
             nodeSymbol = Automaton_Pattern.ELEMENT;
             break;
           }
@@ -517,7 +517,7 @@ public class Automaton_Pattern extends com.tc.jrexx.set.AutomatonSet_String {
         symbolStack.push( node );
         stateNr = Automaton_Pattern.ACTIONTABLE[stateNr][nodeSymbol][1];
         break;
-      }	// end switch(action)
+      }  // end switch(action)
 
     } while (action!=Automaton_Pattern.ACCEPT && action!=Automaton_Pattern.ERROR);
 
@@ -571,36 +571,36 @@ interface TerminalFormat {
 /*
 final class TerminalFormat_SPECIALLITERALS implements TerminalFormat {
 
-	public TerminalFormat_SPECIALLITERALS() {};
+  public TerminalFormat_SPECIALLITERALS() {};
 
-	public Object parseObject(char[] source, ParsePosition status) {
-		final int index = status.getIndex();
+  public Object parseObject(char[] source, ParsePosition status) {
+    final int index = status.getIndex();
 
-		switch (source[index]) {
-			case '|' : 	status.setIndex(index+1); return Terminal_OrOp.INSTANCE;
-			case '(' : 	status.setIndex(index+1); return Terminal_GroupBegin.INSTANCE;
-			case ')' : 	status.setIndex(index+1); return Terminal_GroupEnd.INSTANCE;
-			case '*' : 	status.setIndex(index+1); return new Terminal_Repetition(0,Terminal_Repetition.UNLIMITED);
-			case '+' : 	status.setIndex(index+1); return new Terminal_Repetition(1,Terminal_Repetition.UNLIMITED);
-			case '?' : 	status.setIndex(index+1); return new Terminal_Repetition(0,1);
-			case '.' : 	status.setIndex(index+1); return Det_AnyLiteral.INSTANCE;
-			default  : 	return null;	// throw new ParseException
-		}
-	}
+    switch (source[index]) {
+      case '|' :   status.setIndex(index+1); return Terminal_OrOp.INSTANCE;
+      case '(' :   status.setIndex(index+1); return Terminal_GroupBegin.INSTANCE;
+      case ')' :   status.setIndex(index+1); return Terminal_GroupEnd.INSTANCE;
+      case '*' :   status.setIndex(index+1); return new Terminal_Repetition(0,Terminal_Repetition.UNLIMITED);
+      case '+' :   status.setIndex(index+1); return new Terminal_Repetition(1,Terminal_Repetition.UNLIMITED);
+      case '?' :   status.setIndex(index+1); return new Terminal_Repetition(0,1);
+      case '.' :   status.setIndex(index+1); return Det_AnyLiteral.INSTANCE;
+      default  :   return null;  // throw new ParseException
+    }
+  }
 
-	public int maxLength() {return 1;}
+  public int maxLength() {return 1;}
 
 }
 */
 
 final class TerminalFormat_LITERAL implements TerminalFormat {
 
-	private final static char ESCAPE_CHAR = '\\';
+  private final static char ESCAPE_CHAR = '\\';
 
-	public TerminalFormat_LITERAL() {
+  public TerminalFormat_LITERAL() {
         };
 
-	public Object parseObject(char[] source, ParsePosition status) {
+  public Object parseObject(char[] source, ParsePosition status) {
           int index = status.getIndex();
 
           switch (source[index]) {
@@ -652,27 +652,27 @@ final class TerminalFormat_LITERAL implements TerminalFormat {
               return startState;
             }
           }
-	}
+  }
 
-	public int maxLength() {return 2;}
+  public int maxLength() {return 2;}
 
 }
 
 
 final class TerminalFormat_LITERALSET implements TerminalFormat {
 
-	private static final int START = 0;
-	private static final int FIRSTCHAR = 1;
-	private static final int NORMAL = 2;
-	private static final int ESCAPED = 3;
+  private static final int START = 0;
+  private static final int FIRSTCHAR = 1;
+  private static final int NORMAL = 2;
+  private static final int ESCAPED = 3;
 
-	public TerminalFormat_LITERALSET() {
+  public TerminalFormat_LITERALSET() {
 //          this.automaton = automaton;
           //startState = automaton.addState(false);
           //automaton.addTransition(new CharSet('.'),automaton.addState(true));
         };
 
-	public Object parseObject(char[] source, ParsePosition status) {
+  public Object parseObject(char[] source, ParsePosition status) {
           int index = status.getIndex();
           final int sourceLength = source.length;
 
@@ -747,9 +747,9 @@ final class TerminalFormat_LITERALSET implements TerminalFormat {
           }
 
           return null;
-	}
+  }
 
-	public int maxLength() {return PScanner.UNLIMITED_MAX_LENGTH;}
+  public int maxLength() {return PScanner.UNLIMITED_MAX_LENGTH;}
 }
 
 
@@ -972,7 +972,7 @@ final class TerminalFormat_RegExp implements TerminalFormat {
         ,new TerminalFormat_LABEL()
         ,new TerminalFormat_GroupBegin()
         ,new TerminalFormat_GroupEnd()
-        ,new TerminalFormat_LITERAL()		// RegEx_LiteralFormat();
+        ,new TerminalFormat_LITERAL()    // RegEx_LiteralFormat();
         ,new TerminalFormat_RegExp()
       },
       /*terminalFormatsAreExclusive=*/true

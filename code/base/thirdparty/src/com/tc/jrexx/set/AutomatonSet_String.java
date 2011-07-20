@@ -600,6 +600,7 @@ public class AutomatonSet_String extends Automaton {
     }
 
     public boolean equals(Object obj) {
+      if (! (obj instanceof EClosure)) return false;
       return this.states.equals( ((EClosure)obj).states );
     }
     public int hashCode() {
@@ -764,6 +765,7 @@ public class AutomatonSet_String extends Automaton {
 
     public boolean equals(Object obj) {
       if (this==obj) return true;
+      if (! (obj instanceof Tupel)) return false;
 
       final Tupel tupel = (Tupel)obj;
       if (this.a!=tupel.a && this.a!=tupel.b) return false;

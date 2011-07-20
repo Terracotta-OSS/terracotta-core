@@ -26,6 +26,7 @@ import java.util.*;
 import java.lang.ref.SoftReference;
 
 import com.tc.jrexx.set.ISet_char;
+import com.tc.util.FindbugsSuppressWarnings;
 
 public abstract class Automaton implements Cloneable {
 
@@ -426,7 +427,7 @@ public abstract class Automaton implements Cloneable {
 
 
     protected void setDeterministic(Boolean isDeterministic) {
-      if (isDeterministic==null) this.isDeterministic = State.UNKNOWN;
+      if (isDeterministic==null) { this.isDeterministic = State.UNKNOWN; return; }
       if (isDeterministic.booleanValue()) this.isDeterministic = State.TRUE;
       else this.isDeterministic = State.FALSE;
     }
@@ -582,6 +583,7 @@ public abstract class Automaton implements Cloneable {
       return states;
     }
 
+    @FindbugsSuppressWarnings("CN_IDIOM_NO_SUPER_CALL")
     public final Object clone() {
       return Automaton.this.cloneState(this).get(this);
     }
@@ -755,6 +757,8 @@ public abstract class Automaton implements Cloneable {
     }
 
     public boolean equals(LinkedSet_State set) {
+      if (set == null) return false;
+
       if (this==set) return true;
       try {
         if (this.size!=set.size) return false;
@@ -887,7 +891,7 @@ public abstract class Automaton implements Cloneable {
   }
 
   protected void setDeterminstic(Boolean isDeterministic) {
-    if (isDeterministic==null) this.isDeterministic = Automaton.UNKNOWN;
+    if (isDeterministic==null) { this.isDeterministic = Automaton.UNKNOWN; return; }
     if (isDeterministic.booleanValue()) this.isDeterministic = Automaton.TRUE;
     else this.isDeterministic = Automaton.FALSE;
   }

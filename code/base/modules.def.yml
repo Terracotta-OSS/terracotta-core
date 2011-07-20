@@ -14,9 +14,6 @@ modules:
   - junit-formatter:
       options:
         jdk: J2SE-1.5
-  - thirdparty:
-      options:
-        jdk: J2SE-1.5
   - common-api:
       options:
         jdk: J2SE-1.5
@@ -29,6 +26,11 @@ modules:
       dependencies:
         - common-api
         - tim-api
+  - thirdparty:
+      options:
+        jdk: J2SE-1.5
+      dependencies:
+        - common
   - aspectwerkz:
       options:
         jdk: J2SE-1.5
