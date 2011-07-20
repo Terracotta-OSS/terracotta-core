@@ -108,17 +108,13 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
 
   private void unlockAll() {
     for (ReentrantReadWriteLock lock : locks) {
-      try {
-        lock.readLock().unlock();
-      } catch (Throwable th) {
-        // ignore
-      }
+      lock.readLock().unlock();
     }
   }
 
   public boolean isEmpty() {
+    lockAll();
     try {
-      lockAll();
       for (int index = 0; index < concurrency; index++) {
         if (!objectIdSets[index].isEmpty()) { return false; }
       }
@@ -173,9 +169,8 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
 
   public int size() {
     int size = 0;
-
+    lockAll();
     try {
-      lockAll();
       for (int index = 0; index < concurrency; index++) {
         size += objectIdSets[index].size();
       }
@@ -226,9 +221,8 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.print("Striped ObjectIDSet: concurreny = " + concurrency).flush();
-
+    lockAll();
     try {
-      lockAll();
       for (int index = 0; index < concurrency; index++) {
         out.print("ObjectIDSet Index: " + index).flush();
         out.print(objectIdSets[index]).flush();
