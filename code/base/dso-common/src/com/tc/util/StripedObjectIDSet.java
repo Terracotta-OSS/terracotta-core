@@ -100,19 +100,30 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
     return true;
   }
 
-  public boolean isEmpty() {
-    for (int index = 0; index < concurrency; index++) {
-      locks[index].readLock().lock();
+  private void lockAll() {
+    for (ReentrantReadWriteLock lock : locks) {
+      lock.readLock().lock();
     }
+  }
 
+  private void unlockAll() {
+    for (ReentrantReadWriteLock lock : locks) {
+      try {
+        lock.readLock().unlock();
+      } catch (Throwable th) {
+        // ignore
+      }
+    }
+  }
+
+  public boolean isEmpty() {
     try {
+      lockAll();
       for (int index = 0; index < concurrency; index++) {
         if (!objectIdSets[index].isEmpty()) { return false; }
       }
     } finally {
-      for (int index = 0; index < concurrency; index++) {
-        locks[index].readLock().unlock();
-      }
+      unlockAll();
     }
     return true;
   }
@@ -162,18 +173,14 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
 
   public int size() {
     int size = 0;
-    for (int index = 0; index < concurrency; index++) {
-      locks[index].readLock().lock();
-    }
 
     try {
+      lockAll();
       for (int index = 0; index < concurrency; index++) {
         size += objectIdSets[index].size();
       }
     } finally {
-      for (int index = 0; index < concurrency; index++) {
-        locks[index].readLock().unlock();
-      }
+      unlockAll();
     }
 
     return size;
@@ -219,19 +226,15 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.print("Striped ObjectIDSet: concurreny = " + concurrency).flush();
-    for (int index = 0; index < concurrency; index++) {
-      locks[index].readLock().lock();
-    }
 
     try {
+      lockAll();
       for (int index = 0; index < concurrency; index++) {
         out.print("ObjectIDSet Index: " + index).flush();
         out.print(objectIdSets[index]).flush();
       }
     } finally {
-      for (int index = 0; index < concurrency; index++) {
-        locks[index].readLock().unlock();
-      }
+      unlockAll();
     }
 
     return out;
