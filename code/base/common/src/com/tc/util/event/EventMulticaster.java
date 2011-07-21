@@ -19,29 +19,29 @@ import java.util.List;
  * 
  * <pre>
  *  class Worker implements Runnable {
- *  
+ * 
  *  private final EventMulticaster updateObserver;
- *  
+ * 
  *  private void doWork() {
  *    if (stateChanged()) updateObserver.fireUpdateEvent();
- *  
+ * 
  *  ...
- *  
+ * 
  *  public void addWorkEventListener(UpdateEventListener listener) {
  *    updateObserver.addListener(listener);
- *  
+ * 
  *  ...
- *  
+ * 
  *  class Master {
- *  
+ * 
  *  private void delegateTask() {
  *    Worker worker = new Worker();
  *    worker.addWorkEventListener(new UpdateEventListener() {
  *      public void handleUpdate(Object data) {
- *        System.out.println(data);       
+ *        System.out.println(data);
  *      }
  *    });
- *  
+ * 
  *  ...
  * </pre>
  */
@@ -156,8 +156,8 @@ public final class EventMulticaster implements Serializable {
   // --------------------------------------------------------------------------------
 
   private static class QueueEvent implements Serializable {
-    private UpdateEventListener listener;
-    private UpdateEvent         data;
+    private transient UpdateEventListener listener;
+    private transient UpdateEvent         data;
   }
 
   // --------------------------------------------------------------------------------
