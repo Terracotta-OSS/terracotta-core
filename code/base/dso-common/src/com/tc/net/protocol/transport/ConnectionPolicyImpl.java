@@ -17,9 +17,9 @@ import java.util.HashSet;
 public class ConnectionPolicyImpl implements ConnectionPolicy {
 
   private final HashMap<String, HashSet<ConnectionID>> clientsByJvm = new HashMap<String, HashSet<ConnectionID>>();
-
-  private final int                                    maxConnections;
   private final TCLogger                               logger       = TCLogging.getLogger(ConnectionPolicyImpl.class);
+  private final int                                    maxConnections;
+  private int                                          maxReached;
 
   public ConnectionPolicyImpl(int maxConnections) {
     Assert.assertTrue("negative maxConnections", maxConnections >= 0);
@@ -43,6 +43,7 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
     if (jvmClients == null) {
       jvmClients = new HashSet<ConnectionID>();
       clientsByJvm.put(connID.getJvmID(), jvmClients);
+      maxReached = clientsByJvm.size();
       logger.info("Allocated connection license for jvm " + connID.getJvmID() + "; " + toString());
     }
 
@@ -77,5 +78,9 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
 
   public synchronized int getNumberOfActiveConnections() {
     return clientsByJvm.size();
+  }
+
+  public synchronized int getConnectionHighWatermark() {
+    return maxReached;
   }
 }

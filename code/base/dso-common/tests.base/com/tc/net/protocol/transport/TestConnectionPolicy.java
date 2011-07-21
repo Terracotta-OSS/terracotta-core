@@ -61,4 +61,8 @@ public class TestConnectionPolicy implements ConnectionPolicy {
   public int getNumberOfActiveConnections() {
     throw new ImplementMe();
   }
+
+  public int getConnectionHighWatermark() {
+    throw new ImplementMe();
+  }
 }

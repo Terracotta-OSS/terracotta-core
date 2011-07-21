@@ -16,4 +16,6 @@ public interface ConnectionPolicy {
 
   public int getNumberOfActiveConnections();
 
+  public int getConnectionHighWatermark();
+
 }

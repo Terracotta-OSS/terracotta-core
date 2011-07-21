@@ -25,4 +25,9 @@ public class NullConnectionPolicy implements ConnectionPolicy {
   public int getNumberOfActiveConnections() {
     return 0;
   }
+
+  public int getConnectionHighWatermark() {
+    return 0;
+  }
+
 }

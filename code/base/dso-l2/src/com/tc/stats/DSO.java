@@ -791,4 +791,8 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   public int getActiveLicensedClientCount() {
     return connectionPolicy.getNumberOfActiveConnections();
   }
+
+  public int getLicensedClientHighCount() {
+    return connectionPolicy.getConnectionHighWatermark();
+  }
 }
