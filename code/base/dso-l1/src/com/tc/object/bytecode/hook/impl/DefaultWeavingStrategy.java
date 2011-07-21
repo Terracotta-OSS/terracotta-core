@@ -102,18 +102,11 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
 
   private final DSOClientConfigHelper             m_configHelper;
   private final InstrumentationLogger             m_instrumentationLogger;
-  private final boolean                           m_skipDSO;
 
   public DefaultWeavingStrategy(final DSOClientConfigHelper configHelper,
                                 final InstrumentationLogger instrumentationLogger) {
-    this(configHelper, instrumentationLogger, false);
-  }
-
-  public DefaultWeavingStrategy(final DSOClientConfigHelper configHelper,
-                                final InstrumentationLogger instrumentationLogger, boolean skipDSO) {
     m_configHelper = configHelper;
     m_instrumentationLogger = instrumentationLogger;
-    m_skipDSO = skipDSO;
 
     // deploy all system aspect modules
     StandardAspectModuleDeployer.deploy(getClass().getClassLoader(), StandardAspectModuleDeployer.ASPECT_MODULES);
@@ -201,11 +194,11 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
         return;
       }
 
-      final boolean isDsoAdaptable = m_skipDSO ? false : m_configHelper.shouldBeAdapted(classInfo);
+      final boolean isDsoAdaptable = m_configHelper.shouldBeAdapted(classInfo);
       final boolean hasCustomAdapters = m_configHelper.hasCustomAdapters(classInfo);
 
       if (DEBUG) {
-        debug("isDsoAdaptable = " + isDsoAdaptable + ", skipDso = " + m_skipDSO);
+        debug("isDsoAdaptable = " + isDsoAdaptable);
       }
 
       // TODO match on (within, null, classInfo) should be equivalent to those ones.
