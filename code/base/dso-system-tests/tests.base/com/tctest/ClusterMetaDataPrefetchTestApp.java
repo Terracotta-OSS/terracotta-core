@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ClusterMetaDataPrefetchTestApp extends AbstractTransparentApp {
 
@@ -97,15 +98,19 @@ public class ClusterMetaDataPrefetchTestApp extends AbstractTransparentApp {
         }
       } else {
         synchronized (map) {
-          Assert.assertEquals(2, cluster.getKeysForOrphanedValues(map).size());
-          Assert.assertEquals(2, cluster.getKeysForLocalValues(map).size());
+          Set keysForOrphanedValues = cluster.getKeysForOrphanedValues(map);
+          Set keysForLocalValues = cluster.getKeysForLocalValues(map);
+          Assert.assertEquals("orphaned keys are " + keysForOrphanedValues, 2, keysForOrphanedValues.size());
+          Assert.assertEquals("local keys are " + keysForLocalValues, 2, keysForLocalValues.size());
 
           for (Object value : map.values()) {
             value.toString();
           }
 
-          Assert.assertEquals(0, cluster.getKeysForOrphanedValues(map).size());
-          Assert.assertEquals(4, cluster.getKeysForLocalValues(map).size());
+          keysForOrphanedValues = cluster.getKeysForOrphanedValues(map);
+          keysForLocalValues = cluster.getKeysForLocalValues(map);
+          Assert.assertEquals("orphaned keys are " + keysForOrphanedValues, 0, keysForOrphanedValues.size());
+          Assert.assertEquals("local keys are " + keysForLocalValues, 4, keysForLocalValues.size());
         }
       }
     }
@@ -120,9 +125,8 @@ public class ClusterMetaDataPrefetchTestApp extends AbstractTransparentApp {
 
     List jvmArgs = new ArrayList();
     addTestTcPropertiesFile(jvmArgs);
-    ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, L1Client.class,
-                                                             configFile.getAbsolutePath(), Collections.EMPTY_LIST,
-                                                             workingDir, jvmArgs);
+    ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, L1Client.class, configFile
+        .getAbsolutePath(), Collections.EMPTY_LIST, workingDir, jvmArgs);
     client.start();
     client.mergeSTDERR();
     client.mergeSTDOUT();
