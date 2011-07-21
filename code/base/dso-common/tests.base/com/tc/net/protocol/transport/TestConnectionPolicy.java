@@ -25,10 +25,10 @@ public class TestConnectionPolicy implements ConnectionPolicy {
     if (jvmClients == null) {
       jvmClients = new HashSet<ConnectionID>();
       clientsByJvm.put(connID.getJvmID(), jvmClients);
-      clientConnected++;
     }
 
     if (!jvmClients.contains(connID)) {
+      clientConnected++;
       jvmClients.add(connID);
     }
 
@@ -41,12 +41,11 @@ public class TestConnectionPolicy implements ConnectionPolicy {
 
     if (jvmClients == null) return; // must have already received the event for this client
 
-    jvmClients.remove(connID);
+    if (jvmClients.remove(connID)) clientConnected--;
 
     if (jvmClients.size() == 0) {
       clientsByJvm.remove(connID.getJvmID());
       Assert.assertTrue(clientConnected > 0);
-      clientConnected--;
     }
   }
 

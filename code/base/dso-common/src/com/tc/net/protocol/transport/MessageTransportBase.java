@@ -21,6 +21,7 @@ import com.tc.net.protocol.IllegalReconnectException;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 
@@ -33,7 +34,8 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     TCConnectionEventListener, ConnectionIDProvider {
   private TCConnection                             connection;
 
-  protected ConnectionID                           connectionId           = ConnectionID.NULL_ID;
+  protected ConnectionID                           connectionId           = new ConnectionID(JvmIDUtil.getJvmID(),
+                                                                                             ChannelID.NULL_ID.toLong());
   protected final MessageTransportStatus           status;
   protected final SynchronizedBoolean              isOpen;
   protected final TransportHandshakeMessageFactory messageFactory;
@@ -319,7 +321,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     TCConnection conn;
     if ((conn = getConnection()) != null) {
       conn.close(10000);
-      this.connectionId = ConnectionID.NULL_ID;
+      this.connectionId = new ConnectionID(JvmIDUtil.getJvmID(), ChannelID.NULL_ID.toLong());
       conn.removeListener(this);
       this.connection = null;
     }

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.transport;
 
@@ -13,7 +14,7 @@ public class ConnectionIDTest extends TCTestCase {
 
   public void test() {
     try {
-      ConnectionID connectionID = ConnectionID.parse("12." + VALID_SERVER_ID);
+      ConnectionID connectionID = ConnectionID.parse("jvm1.12." + VALID_SERVER_ID);
       assertEquals(12, connectionID.getChannelID());
       assertEquals(VALID_SERVER_ID, connectionID.getServerID());
     } catch (InvalidConnectionIDException e) {
@@ -40,7 +41,6 @@ public class ConnectionIDTest extends TCTestCase {
     } catch (InvalidConnectionIDException e) {
       // expected
     }
-
 
     try {
       ConnectionID.parse("." + VALID_SERVER_ID);
@@ -69,7 +69,6 @@ public class ConnectionIDTest extends TCTestCase {
     } catch (InvalidConnectionIDException e) {
       // expected
     }
-
 
     try {
       ConnectionID.parse("144." + INVALID_SERVER_ID2);

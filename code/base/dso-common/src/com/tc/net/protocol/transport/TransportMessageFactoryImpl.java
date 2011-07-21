@@ -10,8 +10,6 @@ import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.TCProtocolException;
 
 public class TransportMessageFactoryImpl implements TransportHandshakeMessageFactory, HealthCheckerProbeMessageFactory {
-  public static final ConnectionID DEFAULT_ID = ConnectionID.NULL_ID;
-
   public HealthCheckerProbeMessage createPing(ConnectionID connectionId, TCConnection source) {
     return createNewMessage(TransportMessageImpl.PING, connectionId, null, source, false, 0,
                             WireProtocolHeader.PROTOCOL_HEALTHCHECK_PROBES);
