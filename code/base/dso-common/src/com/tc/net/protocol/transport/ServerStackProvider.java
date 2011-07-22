@@ -186,7 +186,8 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
    */
   public void notifyTransportClosed(MessageTransport transport) {
     close(transport.getConnectionId());
-    this.connectionPolicy.clientDisconnected(transport.getConnectionId());
+    if (!transport.getConnectionId().isJvmIDNull()) this.connectionPolicy.clientDisconnected(transport
+        .getConnectionId());
   }
 
   public void notifyTransportReconnectionRejected(MessageTransport transport) {
@@ -238,6 +239,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     }
 
     private boolean verifyAndHandleSyn(WireProtocolMessage message) {
+
       boolean isSynced = false;
       if (!verifySyn(message)) {
         handleHandshakeError(new TransportHandshakeErrorContext("Expected a SYN message but received: " + message,
@@ -272,6 +274,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     }
 
     private void handleSyn(SynMessage syn) throws StackNotFoundException {
+
       ConnectionID connectionId = syn.getConnectionId();
       boolean isMaxConnectionReached = false;
 
@@ -304,7 +307,13 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
             logger.warn("Client attempting an illegal reconnect for id " + connectionId + ", " + syn.getSource());
             return;
           }
+          ConnectionID sentConnectionId = connectionId;
           connectionId = this.transport.getConnectionId();
+          if (connectionId.isJvmIDNull()) {
+            connectionId = new ConnectionID(sentConnectionId.getJvmID(), connectionId.getChannelID(),
+                                            connectionId.getServerID());
+            this.transport.initConnectionID(connectionId);
+          }
           isMaxConnectionReached = !connectionPolicy.connectClient(connectionId);
         }
       } finally {

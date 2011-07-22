@@ -12,6 +12,8 @@ public class ConnectionID {
   private final String             serverID;
   private final String             jvmID;
 
+  private Exception                initEx;
+
   private static final String      NULL_SERVER_ID = "ffffffffffffffffffffffffffffffff";
   public static final String       NULL_JVM_ID    = "ffffffffffffffffffffffffffffffffffffffffffffffff";
   public static final ConnectionID NULL_ID        = new ConnectionID(NULL_JVM_ID, ChannelID.NULL_ID.toLong(),
@@ -71,6 +73,9 @@ public class ConnectionID {
     this.jvmID = jvmID;
     this.channelID = channelID;
     this.serverID = serverID;
+    if (jvmID == null || jvmID.equals(NULL_JVM_ID)) {
+      initEx = new Exception("Created (" + getID() + ") by:-----------------------------------------------------------");
+    }
   }
 
   public ConnectionID(String jvmID, long channelID) {
@@ -124,8 +129,13 @@ public class ConnectionID {
 
   public String getJvmID() {
     if (this.jvmID == null || this.jvmID.equals(NULL_JVM_ID)) { throw new IllegalStateException(
-                                                                                                "Attempt to get jvmID from pseudo-ConnectionID that was not initialized with one."); }
+                                                                                                "Attempt to get jvmID from pseudo-ConnectionID that was not initialized with one.",
+                                                                                                initEx); }
     return this.jvmID;
+  }
+
+  public boolean isJvmIDNull() {
+    return this.jvmID == null || this.jvmID.endsWith(NULL_JVM_ID);
   }
 
   public String getID() {

@@ -5,7 +5,6 @@
 package com.tc.net.protocol.transport;
 
 import com.tc.exception.ImplementMe;
-import com.tc.util.Assert;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,7 +44,6 @@ public class TestConnectionPolicy implements ConnectionPolicy {
 
     if (jvmClients.size() == 0) {
       clientsByJvm.remove(connID.getJvmID());
-      Assert.assertTrue(clientConnected > 0);
     }
   }
 
