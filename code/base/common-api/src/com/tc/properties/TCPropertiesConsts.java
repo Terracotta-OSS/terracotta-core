@@ -917,5 +917,8 @@ public interface TCPropertiesConsts {
   public static final String SEARCH_LUCENE_MERGEPOLICY_CLASS                                 = "search.lucene.mergePolicyClass";
   public static final String SEARCH_LUCENE_MERGESCHEDULER_CLASS                              = "search.lucene.mergeSchedulerClass";
 
+  public static final String SEARCH_LUCENE_MERGESCHEDULER_PREFIX                             = "search.lucene.mergeScheduler";
+  public static final String SEARCH_LUCENE_MERGEPOLICY_PREFIX                                = "search.lucene.mergePolicy";
+
   public static final String SIGAR_ENABLED                                                   = "sigar.enabled";
 }
