@@ -4,14 +4,13 @@
 package com.tc.aspectwerkz.aspect;
 
 import com.tc.asm.Type;
-
 import com.tc.aspectwerkz.DeploymentModel;
-import com.tc.aspectwerkz.expression.ExpressionInfo;
-import com.tc.aspectwerkz.expression.ExpressionContext;
 import com.tc.aspectwerkz.definition.AdviceDefinition;
+import com.tc.aspectwerkz.expression.ExpressionContext;
+import com.tc.aspectwerkz.expression.ExpressionInfo;
 import com.tc.aspectwerkz.transform.inlining.AsmHelper;
 
-import java.io.Serializable;
+import java.util.Arrays;
 
 /**
  * Contains advice info, like indexes describing the aspect and a method (advice or introduced),
@@ -20,7 +19,7 @@ import java.io.Serializable;
  * @author <a href="mailto:jboner@codehaus.org">Jonas Bonér </a>
  * @author <a href="mailto:alex@gnilux.com">Alexandre Vasseur </a>
  */
-public class AdviceInfo implements Serializable {
+public class AdviceInfo /* implements Serializable */ {
 
   public final static AdviceInfo[] EMPTY_ADVICE_INFO_ARRAY = new AdviceInfo[0];
 
@@ -313,7 +312,7 @@ public class AdviceInfo implements Serializable {
     sb.append(m_name).append(',');
     sb.append(m_methodName).append(',');
     sb.append(m_methodSignature).append(',');
-    sb.append(m_methodParameterTypes).append(',');
+    sb.append(Arrays.toString(m_methodParameterTypes)).append(',');
     sb.append(m_specialArgumentTypeDesc).append(',');
     sb.append(m_expressionInfo).append(',');
     sb.append(m_expressionContext).append(',');

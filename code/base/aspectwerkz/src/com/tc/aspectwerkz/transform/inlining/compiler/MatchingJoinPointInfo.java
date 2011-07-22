@@ -40,6 +40,9 @@ final public class MatchingJoinPointInfo {
   }
 
   public boolean equals(Object o) {
+    if (! (o instanceof MatchingJoinPointInfo)) {
+      return false;
+    }
     return ((MatchingJoinPointInfo) o).m_compilationInfo == m_compilationInfo;
   }
 }

@@ -96,7 +96,7 @@ public class AsmClassInfoRepository {
     // Construct the repo outside of the lock (see CDV-116)
     AsmClassInfoRepository repo = new AsmClassInfoRepository(loader);
 
-    synchronized (s_repositories) {
+    synchronized (AsmClassInfoRepository.class) {
       // check again
       repository = lookup(loader);
 

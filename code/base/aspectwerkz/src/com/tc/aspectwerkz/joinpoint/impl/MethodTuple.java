@@ -4,14 +4,13 @@
 package com.tc.aspectwerkz.joinpoint.impl;
 
 import java.lang.reflect.Method;
-import java.io.Serializable;
 
 /**
  * Contains a pair of the original method and the wrapper method if such a method exists.
  *
  * @author <a href="mailto:jboner@codehaus.org">Jonas Bonér </a>
  */
-public class MethodTuple implements Serializable {
+public class MethodTuple /* implements Serializable */ {
   private final Method m_wrapperMethod;
 
   private final Method m_originalMethod;

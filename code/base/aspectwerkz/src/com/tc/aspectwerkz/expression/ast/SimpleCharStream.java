@@ -3,6 +3,8 @@
  */
 package com.tc.aspectwerkz.expression.ast;
 
+import com.tc.util.FindbugsSuppressWarnings;
+
 /**
  * An implementation of interface CharStream, where the stream is assumed to contain only ASCII characters (without
  * unicode processing).
@@ -248,6 +250,7 @@ public class SimpleCharStream {
     this(dstream, 1, 1, 4096);
   }
 
+  @FindbugsSuppressWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
   public void ReInit(java.io.Reader dstream, int startline, int startcolumn, int buffersize) {
     inputStream = dstream;
     line = startline;

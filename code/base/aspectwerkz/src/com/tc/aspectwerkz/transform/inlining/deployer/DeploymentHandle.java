@@ -84,8 +84,14 @@ public final class DeploymentHandle {
   public String toString() {
     return new StringBuffer().append("DeploymentHandle [").
             append(UUID.toString()).append(',').
-            append(((Class) m_classRef.get()).getName()).append(',').
+            append(className()).append(',').
             append(m_loaderRef.get()).append(']').toString();
+  }
+
+  private String className() {
+    Class c = (Class) m_classRef.get();
+    if (c == null) return "<class ref cleared>";
+    return c.getName();
   }
 
   public int hashCode() {
@@ -93,6 +99,9 @@ public final class DeploymentHandle {
   }
 
   public boolean equals(Object o) {
+    if (! (o instanceof DeploymentHandle)) {
+      return false;
+    }
     return ((DeploymentHandle) o).UUID.equals(UUID);
   }
 

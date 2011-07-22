@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public class StandardAspectModuleDeployer implements AspectModuleDeployer {
 
-  public static final String[]   ASPECT_MODULES;
+  private static final String[]   ASPECT_MODULES;
   static {
     ASPECT_MODULES = Strings.splitString(Properties.ASPECT_MODULES, ",");
   }
@@ -45,7 +45,8 @@ public class StandardAspectModuleDeployer implements AspectModuleDeployer {
    * @param loader
    * @param moduleNames
    */
-  public static void deploy(final ClassLoader loader, String[] moduleNames) {
+  public static void deploy(final ClassLoader loader) {
+    String[] moduleNames = ASPECT_MODULES;
     for (int i = 0; i < moduleNames.length; i++) {
       deploy(loader, moduleNames[i]);
     }

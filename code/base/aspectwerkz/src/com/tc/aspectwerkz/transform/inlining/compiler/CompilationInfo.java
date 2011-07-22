@@ -139,6 +139,9 @@ public final class CompilationInfo {
     }
 
     public boolean equals(Object o) {
+      if (! (o instanceof Model)) {
+        return false;
+      }
       return ((Model) o).m_emittedJoinPoint == m_emittedJoinPoint;
     }
   }

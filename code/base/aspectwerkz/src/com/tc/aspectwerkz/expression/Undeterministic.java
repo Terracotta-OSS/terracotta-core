@@ -3,6 +3,8 @@
  */
 package com.tc.aspectwerkz.expression;
 
+import com.tc.util.FindbugsSuppressWarnings;
+
 /**
  * Helper class to have boolean operation on true / false and null, null is assumed to be undetermined, and "not null"="null"
  * A "false && null" will stay false, but a "true && null" will become undetermined (null).
@@ -12,6 +14,7 @@ package com.tc.aspectwerkz.expression;
  *
  * @author <a href="mailto:alex@gnilux.com">Alexandre Vasseur</a>
  */
+@FindbugsSuppressWarnings("NP_BOOLEAN_RETURN_NULL")
 public abstract class Undeterministic {
 
   /**

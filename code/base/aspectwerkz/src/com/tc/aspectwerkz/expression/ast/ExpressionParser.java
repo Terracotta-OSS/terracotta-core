@@ -3,6 +3,8 @@
  */
 package com.tc.aspectwerkz.expression.ast;
 
+import com.tc.util.FindbugsSuppressWarnings;
+
 import java.lang.reflect.Modifier;
 import java.io.Reader;
 import java.io.StringReader;
@@ -24,7 +26,7 @@ import java.io.StringReader;
  * @author <a href="mailto:the_mindstorm@evolva.ro">Alex Popescu</a>
  */
 public class ExpressionParser/*@bgen(jjtree)*/ implements ExpressionParserTreeConstants, ExpressionParserConstants {/*@bgen(jjtree)*/
-  protected static JJTExpressionParserState jjtree = new JJTExpressionParserState();
+  protected static final JJTExpressionParserState jjtree = new JJTExpressionParserState();
 
   public ASTRoot parse(String expression) throws ParseException {
     return parse(new StringReader(expression));
@@ -3357,6 +3359,7 @@ public class ExpressionParser/*@bgen(jjtree)*/ implements ExpressionParserTreeCo
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
+  @FindbugsSuppressWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
   public void ReInit(ExpressionParserTokenManager tm) {
     token_source = tm;
     token = new Token();

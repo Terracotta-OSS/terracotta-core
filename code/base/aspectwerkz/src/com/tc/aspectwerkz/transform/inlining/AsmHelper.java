@@ -965,7 +965,7 @@ public class AsmHelper implements TransformationConstants {
    * @return the incremented index
    */
   public static int incrementIndex(int index, final Type type) {
-    return index += type.getSize();
+    return index + type.getSize();
   }
 
   /**

@@ -637,6 +637,9 @@ public class SystemDefinition {
   }
 
   public boolean equals(Object o) {
+    if (! (o instanceof SystemDefinition)) {
+      return false;
+    }
     return ((SystemDefinition) o).m_uuid.equals(m_uuid);
   }
 

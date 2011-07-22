@@ -47,7 +47,7 @@ import java.util.List;
  * This implementation guarantees that the method, fields and constructors can be retrieved in the same order as they
  * were in the bytecode (it can depends of the compiler and might not be the order of the source code - f.e. IBM
  * compiler)
- * 
+ *
  * @author <a href="mailto:jboner@codehaus.org">Jonas Bonér </a>
  * @author <a href="mailto:alex@gnilux.com">Alexandre Vasseur </a>
  */
@@ -175,7 +175,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Creates a new ClassInfo instance.
-   * 
+   *
    * @param bytecode
    * @param loader
    */
@@ -195,7 +195,7 @@ public class AsmClassInfo implements ClassInfo {
    * Create a ClassInfo based on a component type and a given dimension Due to java.lang.reflect. behavior, the
    * ClassInfo is almost empty. It is not an interface, only subclass of java.lang.Object, no methods, fields, or
    * constructor, no annotation.
-   * 
+   *
    * @param className
    * @param loader
    * @param componentInfo
@@ -219,7 +219,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Returns a completely new class info for a specific class. Does not cache.
-   * 
+   *
    * @param bytecode
    * @param loader
    * @return the class info
@@ -232,7 +232,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Returns the class info for a specific class.
-   * 
+   *
    * @param className
    * @param loader
    * @return the class info
@@ -249,7 +249,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Returns the class info for a specific class.
-   * 
+   *
    * @param className
    * @param bytecode
    * @param loader
@@ -279,7 +279,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Returns the class info for a specific class.
-   * 
+   *
    * @param stream
    * @param loader
    * @return the class info
@@ -302,7 +302,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Marks the class as dirty (since it has been modified and needs to be rebuild).
-   * 
+   *
    * @param className
    */
   public static void markDirty(final String className, final ClassLoader loader) {
@@ -311,7 +311,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Checks if the class is a of a primitive type, if so create and return the class for the type else return null.
-   * 
+   *
    * @param className
    * @return the class for the primitive type or null
    */
@@ -341,7 +341,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Returns the annotations.
-   * 
+   *
    * @return the annotations
    */
   public AnnotationElement.Annotation[] getAnnotations() {
@@ -350,7 +350,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Returns the name of the class.
-   * 
+   *
    * @return the name of the class
    */
   public String getName() {
@@ -359,7 +359,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Returns the signature for the class.
-   * 
+   *
    * @return the signature for the class
    */
   public String getSignature() {
@@ -368,7 +368,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Returns the internal generics signature for the element.
-   * 
+   *
    * @return the internal generics signature for the element
    */
   public String getGenericsSignature() {
@@ -377,7 +377,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Returns the class modifiers.
-   * 
+   *
    * @return the class modifiers
    */
   public int getModifiers() {
@@ -386,7 +386,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Returns the class loader that loaded this class.
-   * 
+   *
    * @return the class loader
    */
   public ClassLoader getClassLoader() {
@@ -395,7 +395,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Checks if the class has a static initalizer.
-   * 
+   *
    * @return
    */
   public boolean hasStaticInitializer() {
@@ -404,7 +404,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Return the static initializer info or null if not present
-   * 
+   *
    * @see org.codehaus.aspectwerkz.reflect.ClassInfo#staticInitializer()
    */
   public StaticInitializationInfo staticInitializer() {
@@ -416,7 +416,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Returns a constructor info by its hash.
-   * 
+   *
    * @param hash
    * @return
    */
@@ -430,7 +430,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Returns a list with all the constructors info.
-   * 
+   *
    * @return the constructors info
    */
   public synchronized ConstructorInfo[] getConstructors() {
@@ -446,7 +446,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Returns a method info by its hash.
-   * 
+   *
    * @param hash
    * @return
    */
@@ -468,7 +468,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Returns a list with all the methods info.
-   * 
+   *
    * @return the methods info
    */
   public synchronized MethodInfo[] getMethods() {
@@ -484,7 +484,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Returns a field info by its hash.
-   * 
+   *
    * @param hash
    * @return
    */
@@ -507,7 +507,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Returns a list with all the field info.
-   * 
+   *
    * @return the field info
    */
   public FieldInfo[] getFields() {
@@ -523,7 +523,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Returns the interfaces.
-   * 
+   *
    * @return the interfaces
    */
   public synchronized ClassInfo[] getInterfaces() {
@@ -538,7 +538,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Returns the super class.
-   * 
+   *
    * @return the super class
    */
   public ClassInfo getSuperclass() {
@@ -550,11 +550,11 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Returns the component type if array type else null.
-   * 
+   *
    * @return the component type
    */
   public ClassInfo getComponentType() {
-    if (isArray() && (m_componentTypeName == null)) {
+    if (isArray() && (m_componentType == null)) {
       m_componentType = AsmClassInfo.getClassInfo(m_componentTypeName, (ClassLoader) m_loaderRef.get());
     }
     return m_componentType;
@@ -562,7 +562,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Is the class an interface.
-   * 
+   *
    * @return
    */
   public boolean isInterface() {
@@ -571,7 +571,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Is the class a primitive type.
-   * 
+   *
    * @return
    */
   public boolean isPrimitive() {
@@ -580,7 +580,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Is the class an array type.
-   * 
+   *
    * @return
    */
   public boolean isArray() {
@@ -610,7 +610,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Create a ClassInfo based on a component type which can be himself an array
-   * 
+   *
    * @param className
    * @param loader
    * @param componentClassInfo
@@ -623,7 +623,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Creates a ClassInfo based on the stream retrieved from the class loader through <code>getResourceAsStream</code>.
-   * 
+   *
    * @param name java name as in source code
    * @param loader
    */
@@ -825,7 +825,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Extracts method parameter names as they appear in the source code from debug infos
-   * 
+   *
    * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur</a>
    */
   static class MethodParameterNamesCodeAdapter extends AsmNullAdapter.NullMethodAdapter {
@@ -890,7 +890,7 @@ public class AsmClassInfo implements ClassInfo {
     /**
      * Update the parameter name given the parameter information the index is the one from the register ie a long or
      * double will needs 2 register
-     * 
+     *
      * @param registerIndex
      * @param parameterName
      */
@@ -912,7 +912,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Converts the class name from VM type class name to Java type class name.
-   * 
+   *
    * @param className the VM type class name
    * @return the Java type class name
    */
@@ -928,7 +928,7 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * Returns the annotation reader
-   * 
+   *
    * @return
    */
   public AnnotationReader getAnnotationReader() {
@@ -962,7 +962,7 @@ public class AsmClassInfo implements ClassInfo {
   static boolean isIgnoreError(String className) {
     return isIgnoreError(IGNORE_ERRORS, className);
   }
-  
+
   static boolean isIgnoreError(List<String> toIgnore, String className) {
     className = className.replace('/', '.');
     for (String ignore : toIgnore) {

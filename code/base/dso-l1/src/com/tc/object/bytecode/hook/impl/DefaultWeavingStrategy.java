@@ -109,7 +109,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
     m_instrumentationLogger = instrumentationLogger;
 
     // deploy all system aspect modules
-    StandardAspectModuleDeployer.deploy(getClass().getClassLoader(), StandardAspectModuleDeployer.ASPECT_MODULES);
+    StandardAspectModuleDeployer.deploy(getClass().getClassLoader());
 
     // workaround for ClassCircularityError in ConcurrentHashMap
     configHelper.getAspectModules().entrySet().iterator();
