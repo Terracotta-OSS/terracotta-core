@@ -4,7 +4,6 @@
  */
 package com.tc.util;
 
-import com.tc.exception.ImplementMe;
 import com.tc.io.TCFile;
 import com.tc.io.TCFileChannel;
 import com.tc.io.TCFileLock;
@@ -23,16 +22,16 @@ public class StartupLockTest extends TestCase {
   private static final int lockedAlreadyOnThisVM = 0;
   private static final int lockCanBeAquired      = 1;
 
-  public void testBasics() throws Throwable {
+  public void testBlocking() throws Throwable {
     TestTCRandomFileAccessImpl randomFileAccess = new TestTCRandomFileAccessImpl();
 
     boolean locationIsMakable = false;
     boolean fileIsmakable = false;
     TestTCFileImpl location = new TestTCFileImpl(locationIsMakable);
     location.setNewFileIsMakable(fileIsmakable);
-    StartupLock startupLock = new StartupLock(location);
+    StartupLock startupLock = new BlockingStartupLock(location, false);
     try {
-      startupLock.canProceed(randomFileAccess, true);
+      startupLock.canProceed(randomFileAccess);
       fail("Expected LocationNotCreatedException. Not thrown.");
     } catch (LocationNotCreatedException se) {
       // ok
@@ -43,9 +42,9 @@ public class StartupLockTest extends TestCase {
     fileIsmakable = false;
     location = new TestTCFileImpl(locationIsMakable);
     location.setNewFileIsMakable(fileIsmakable);
-    startupLock = new StartupLock(location);
+    startupLock = new BlockingStartupLock(location, false);
     try {
-      startupLock.canProceed(randomFileAccess, true);
+      startupLock.canProceed(randomFileAccess);
       fail("Expected FileNotCreatedException. Not thrown.");
     } catch (FileNotCreatedException se) {
       // ok
@@ -57,9 +56,9 @@ public class StartupLockTest extends TestCase {
     fileIsmakable = true;
     location = new TestTCFileImpl(locationIsMakable);
     location.setNewFileIsMakable(fileIsmakable);
-    startupLock = new StartupLock(location);
+    startupLock = new BlockingStartupLock(location, false);
     try {
-      startupLock.canProceed(randomFileAccess, true);
+      startupLock.canProceed(randomFileAccess);
       fail("Expected AssertionError for OverlappingFileLockException. Not thrown.");
     } catch (AssertionError se) {
       // ok
@@ -70,8 +69,61 @@ public class StartupLockTest extends TestCase {
     fileIsmakable = true;
     location = new TestTCFileImpl(locationIsMakable);
     location.setNewFileIsMakable(fileIsmakable);
-    startupLock = new StartupLock(location);
-    boolean result = startupLock.canProceed(randomFileAccess, true);
+    startupLock = new BlockingStartupLock(location, false);
+    boolean result = startupLock.canProceed(randomFileAccess);
+    Assert.assertTrue(location.exists());
+    Assert.assertTrue(result);
+  }
+
+  public void testNonBlocking() throws Throwable {
+    TestTCRandomFileAccessImpl randomFileAccess = new TestTCRandomFileAccessImpl();
+
+    boolean locationIsMakable = false;
+    boolean fileIsmakable = false;
+    TestTCFileImpl location = new TestTCFileImpl(locationIsMakable);
+    location.setNewFileIsMakable(fileIsmakable);
+    StartupLock startupLock = new NonBlockingStartupLock(location, false);
+    try {
+      startupLock.canProceed(randomFileAccess);
+      fail("Expected LocationNotCreatedException. Not thrown.");
+    } catch (LocationNotCreatedException se) {
+      // ok
+    }
+    Assert.assertFalse(location.exists());
+
+    locationIsMakable = true;
+    fileIsmakable = false;
+    location = new TestTCFileImpl(locationIsMakable);
+    location.setNewFileIsMakable(fileIsmakable);
+    startupLock = new NonBlockingStartupLock(location, false);
+    try {
+      startupLock.canProceed(randomFileAccess);
+      fail("Expected FileNotCreatedException. Not thrown.");
+    } catch (FileNotCreatedException se) {
+      // ok
+    }
+    Assert.assertTrue(location.exists());
+
+    randomFileAccess.setLockAvailability(lockedAlreadyOnThisVM);
+    locationIsMakable = true;
+    fileIsmakable = true;
+    location = new TestTCFileImpl(locationIsMakable);
+    location.setNewFileIsMakable(fileIsmakable);
+    startupLock = new NonBlockingStartupLock(location, false);
+    try {
+      startupLock.canProceed(randomFileAccess);
+      fail("Expected AssertionError for OverlappingFileLockException. Not thrown.");
+    } catch (AssertionError se) {
+      // ok
+    }
+
+    randomFileAccess.setLockAvailability(lockCanBeAquired);
+    locationIsMakable = true;
+    fileIsmakable = true;
+    location = new TestTCFileImpl(locationIsMakable);
+    location.setNewFileIsMakable(fileIsmakable);
+    startupLock = new NonBlockingStartupLock(location, false);
+    boolean result = startupLock.canProceed(randomFileAccess);
     Assert.assertTrue(location.exists());
     Assert.assertTrue(result);
   }
@@ -106,7 +158,7 @@ public class StartupLockTest extends TestCase {
     }
 
     public TCFileLock tryLock() throws OverlappingFileLockException {
-      throw new ImplementMe();
+      return lock();
     }
 
   }
