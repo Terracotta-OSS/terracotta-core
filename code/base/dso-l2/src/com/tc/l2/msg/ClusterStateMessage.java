@@ -135,7 +135,8 @@ public class ClusterStateMessage extends AbstractGroupMessage {
   }
 
   private void writeConnectionID(ConnectionID conn, TCByteBufferOutput out) {
-    out.writeString(conn.getJvmID());
+    if (conn.isJvmIDNull()) out.writeString(ConnectionID.NULL_JVM_ID);
+    else out.writeString(conn.getJvmID());
     out.writeLong(conn.getChannelID());
     out.writeString(conn.getServerID());
   }
