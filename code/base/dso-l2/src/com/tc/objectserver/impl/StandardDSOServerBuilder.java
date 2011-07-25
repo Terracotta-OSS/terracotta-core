@@ -9,6 +9,7 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.config.HaConfig;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import com.tc.io.TCFile;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
@@ -81,6 +82,9 @@ import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.util.BlockingStartupLock;
+import com.tc.util.NonBlockingStartupLock;
+import com.tc.util.StartupLock;
 import com.tc.util.runtime.ThreadDumpUtil;
 import com.tc.util.sequence.DGCSequenceProvider;
 import com.tc.util.sequence.SequenceGenerator;
@@ -301,5 +305,15 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
 
   public LongGCLogger createLongGCLogger(long gcTimeOut) {
     return new LongGCLogger(gcTimeOut);
+  }
+
+  public StartupLock createStartupLock(final TCFile location, final boolean retries) {
+    if (this.haConfig.isNetworkedActivePassive()) {
+      return new NonBlockingStartupLock(location, retries);
+    } else if (this.haConfig.isDiskedBasedActivePassive()) {
+      return new BlockingStartupLock(location, retries);
+    } else {
+      throw new AssertionError("Invalid HA mode");
+    }
   }
 }

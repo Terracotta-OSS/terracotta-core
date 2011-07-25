@@ -62,8 +62,8 @@ import com.tc.management.beans.L2State;
 import com.tc.management.beans.LockStatisticsMonitor;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
-import com.tc.management.beans.object.ObjectManagementMonitor.ObjectIdsFetcher;
 import com.tc.management.beans.object.ServerDBBackupMBean;
+import com.tc.management.beans.object.ObjectManagementMonitor.ObjectIdsFetcher;
 import com.tc.management.lock.stats.L2LockStatisticsManagerImpl;
 import com.tc.management.lock.stats.LockStatisticsMessage;
 import com.tc.management.lock.stats.LockStatisticsResponseMessageImpl;
@@ -79,7 +79,6 @@ import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
-import com.tc.net.groups.Node;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
@@ -541,9 +540,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     }
 
     final TCFile location = new TCFileImpl(this.configSetupManager.commonl2Config().dataPath());
-    this.startupLock = new StartupLock(location, this.l2Properties.getBoolean("startuplock.retries.enabled"));
+    boolean retries = this.l2Properties.getBoolean("startuplock.retries.enabled");
+    this.startupLock = this.serverBuilder.createStartupLock(location, retries);
 
-    if (!this.startupLock.canProceed(new TCRandomFileAccessImpl(), persistent)) {
+    if (!this.startupLock.canProceed(new TCRandomFileAccessImpl())) {
       consoleLogger.error("Another L2 process is using the directory " + location + " as data directory.");
       if (!persistent) {
         consoleLogger.error("This is not allowed with persistence mode set to temporary-swap-only.");
@@ -1398,8 +1398,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     if (TCSocketAddress.WILDCARD_IP.equals(host)) {
       host = l2DSOConfig.host();
     }
-    final Node node = new Node(host, l2DSOConfig.dsoPort().getIntValue());
-    final ServerID aNodeID = new ServerID(node.getServerNodeName(), UUID.getUUID().toString().getBytes());
+    final ServerID aNodeID = new ServerID(l2DSOConfig.serverName(), UUID.getUUID().toString().getBytes());
     logger.info("Creating server nodeID: " + aNodeID);
     return aNodeID;
   }
@@ -1466,7 +1465,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   public boolean isBlocking() {
-    return this.startupLock != null && this.startupLock.isBlocking();
+    return this.startupLock != null && this.startupLock.isBlocked();
   }
 
   public void startActiveMode() {
