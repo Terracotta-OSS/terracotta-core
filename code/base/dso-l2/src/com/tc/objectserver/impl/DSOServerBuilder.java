@@ -7,7 +7,6 @@ import com.tc.async.api.PostInit;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
-import com.tc.io.TCFile;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.objectserver.L2IndexStateManager;
@@ -65,7 +64,6 @@ import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.stats.counter.sampled.SampledCounter;
-import com.tc.util.StartupLock;
 import com.tc.util.sequence.DGCSequenceProvider;
 import com.tc.util.sequence.SequenceGenerator;
 
@@ -182,6 +180,4 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
       throws IOException;
 
   LongGCLogger createLongGCLogger(long gcTimeOut);
-
-  StartupLock createStartupLock(TCFile location, boolean retries);
 }
