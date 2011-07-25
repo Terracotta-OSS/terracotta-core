@@ -398,8 +398,8 @@ public class StateManagerImpl implements StateManager {
   }
 
   private void fireStateChangedOperatorEvent() {
-    operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory
-        .createClusterNodeStateChangedEvent(new Object[] { state.getName() }));
+    operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createClusterNodeStateChangedEvent(state
+        .getName()));
   }
 
   private void info(String message) {

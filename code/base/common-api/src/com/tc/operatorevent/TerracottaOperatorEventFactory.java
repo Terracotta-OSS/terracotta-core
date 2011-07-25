@@ -85,9 +85,9 @@ public class TerracottaOperatorEventFactory {
                                            nodeName + "left");
   }
 
-  public static TerracottaOperatorEvent createClusterNodeStateChangedEvent(Object[] arguments) {
+  public static TerracottaOperatorEvent createClusterNodeStateChangedEvent(String newState) {
     return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.CLUSTER_TOPOLOGY, MessageFormat
-        .format(TerracottaOperatorEventResources.getClusterNodeStateChangedMessage(), arguments), "");
+        .format(TerracottaOperatorEventResources.getClusterNodeStateChangedMessage(), new Object[] { newState }), "");
   }
 
   public static TerracottaOperatorEvent createHandShakeRejectedEvent(String clientVersion, NodeID remoteNodeID,

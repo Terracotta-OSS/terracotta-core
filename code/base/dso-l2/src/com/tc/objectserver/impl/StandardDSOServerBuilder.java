@@ -74,7 +74,10 @@ import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchManagerImpl;
 import com.tc.objectserver.tx.TransactionFilter;
 import com.tc.objectserver.tx.TransactionalObjectManager;
+import com.tc.operatorevent.TerracottaOperatorEventCallbackLogger;
 import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
+import com.tc.operatorevent.TerracottaOperatorEventLogger;
+import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.statistics.StatisticsAgentSubSystem;
@@ -192,7 +195,8 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                            managedObjectRequestSink);
   }
 
-  public ServerConfigurationContext createServerConfigurationContext(StageManager stageManager,
+  public ServerConfigurationContext createServerConfigurationContext(
+                                                                     StageManager stageManager,
                                                                      ObjectManager objMgr,
                                                                      ObjectRequestManager objRequestMgr,
                                                                      ServerMapRequestManager serverTCMapRequestManager,
@@ -291,7 +295,9 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   public void registerForOperatorEvents(final L2Management l2Management,
                                         final TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider,
                                         final MBeanServer l2MbeanServer) {
-    // NOP
+    // register logger for OSS version
+    TerracottaOperatorEventLogger tcEventLogger = TerracottaOperatorEventLogging.getEventLogger();
+    tcEventLogger.registerEventCallback(new TerracottaOperatorEventCallbackLogger());
   }
 
   public DBEnvironment createDBEnvironment(final boolean persistent, final File dbhome, final L2DSOConfig l2DSOCofig,
