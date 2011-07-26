@@ -1,5 +1,5 @@
 INCLUDEDIRS=-I${JAVA_HOME}/include
-ARCH += -arch ppc -arch i386
+ARCH += -arch ppc -arch i386 -arch x86_64
 
 all:
 	gcc $(INCLUDEDIRS) $(ARCH) -c GetPid.c
