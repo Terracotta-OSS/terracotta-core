@@ -47,7 +47,10 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
       logger.info("Allocated connection license for jvm " + connID.getJvmID() + "; " + toString());
     }
 
-    if (!jvmClients.contains(connID)) jvmClients.add(connID);
+    if (!jvmClients.contains(connID)) {
+      logger.info("New connection [" + connID.getChannelID() + "] from jvm " + connID.getJvmID());
+      jvmClients.add(connID);
+    }
 
     return true;
   }
@@ -60,7 +63,9 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
 
     if (jvmClients == null) return; // must have already received the event for this client
 
-    jvmClients.remove(connID);
+    if (jvmClients.remove(connID)) {
+      logger.info("Removed connection [" + connID.getChannelID() + "] from jvm " + connID.getJvmID());
+    }
 
     if (jvmClients.size() == 0) {
       clientsByJvm.remove(connID.getJvmID());
