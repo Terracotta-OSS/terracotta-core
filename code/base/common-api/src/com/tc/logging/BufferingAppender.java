@@ -47,12 +47,19 @@ public class BufferingAppender extends AppenderSkeleton {
       on = false;
     }
 
-    while (true) {
-      try {
-        LoggingEvent event = (LoggingEvent) this.buffer.poll(0);
-        if (event == null) break;
-        otherAppender.doAppend(event);
-      } catch (InterruptedException ie) {
+    boolean interrupted = false;
+    try {
+      while (true) {
+        try {
+          LoggingEvent event = (LoggingEvent) this.buffer.poll(0);
+          if (event == null) break;
+          otherAppender.doAppend(event);
+        } catch (InterruptedException ie) {
+          interrupted = true;
+        }
+      }
+    } finally {
+      if (interrupted) {
         Thread.currentThread().interrupt();
       }
     }
