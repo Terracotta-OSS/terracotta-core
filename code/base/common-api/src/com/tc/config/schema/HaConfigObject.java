@@ -24,10 +24,18 @@ public class HaConfigObject extends BaseConfigObject implements HaConfigSchema {
     super(context);
     context.ensureRepositoryProvides(Ha.class);
     ha = (Ha) context.bean();
+    Assert.assertTrue(this.ha.getMode().equals(HaMode.NETWORKED_ACTIVE_PASSIVE)
+                      && !this.ha.getMode().equals(HaMode.DISK_BASED_ACTIVE_PASSIVE)
+                      || (!this.ha.getMode().equals(HaMode.NETWORKED_ACTIVE_PASSIVE) && this.ha.getMode()
+                          .equals(HaMode.DISK_BASED_ACTIVE_PASSIVE)));
   }
 
   public boolean isNetworkedActivePassive() {
     return this.ha.getMode().equals(HaMode.NETWORKED_ACTIVE_PASSIVE);
+  }
+
+  public boolean isDiskBasedActivePassive() {
+    return this.ha.getMode().equals(HaMode.DISK_BASED_ACTIVE_PASSIVE);
   }
 
   public Ha getHa() {

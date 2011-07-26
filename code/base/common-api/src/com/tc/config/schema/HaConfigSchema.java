@@ -9,5 +9,7 @@ import com.terracottatech.config.Ha;
 public interface HaConfigSchema extends Config {
   boolean isNetworkedActivePassive();
 
+  boolean isDiskBasedActivePassive();
+
   Ha getHa();
 }

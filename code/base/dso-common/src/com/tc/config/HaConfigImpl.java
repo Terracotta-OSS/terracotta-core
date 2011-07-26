@@ -24,13 +24,13 @@ import java.util.Set;
 public class HaConfigImpl implements HaConfig {
 
   private final L2ConfigurationSetupManager configSetupManager;
-  private final GroupID[]                      groupIDs;
-  private final GroupID                        thisGroupID;
-  private final GroupID                        activeCoordinatorGroupID;
+  private final GroupID[]                   groupIDs;
+  private final GroupID                     thisGroupID;
+  private final GroupID                     activeCoordinatorGroupID;
 
-  private final NodesStoreImpl                 nodeStore;
-  private final ServerGroup[]                  groups;
-  private final Node                           thisNode;
+  private final NodesStoreImpl              nodeStore;
+  private final ServerGroup[]               groups;
+  private final Node                        thisNode;
 
   public HaConfigImpl(L2ConfigurationSetupManager configSetupManager) {
     this.configSetupManager = configSetupManager;
@@ -122,7 +122,7 @@ public class HaConfigImpl implements HaConfig {
   }
 
   public boolean isDiskedBasedActivePassive() {
-    return !isActiveActive() && !isNetworkedActivePassive();
+    return this.configSetupManager.haConfig().isDiskBasedActivePassive();
   }
 
   public boolean isNetworkedActivePassive() {
