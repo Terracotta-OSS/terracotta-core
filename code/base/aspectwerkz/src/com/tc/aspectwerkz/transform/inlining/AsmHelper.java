@@ -82,17 +82,23 @@ public class AsmHelper implements TransformationConstants {
    * A boolean to check if we have a J2SE 5 support
    */
   public final static boolean IS_JAVA_5;
-  public static int JAVA_VERSION = V1_3;
+  public final static int JAVA_VERSION;
 
   static {
+    int version;
+
     Class annotation = null;
     try {
       annotation = Class.forName("java.lang.annotation.Annotation");
       new ClassReader("java.lang.annotation.Annotation");
-      JAVA_VERSION = V1_5;
+      version = V1_5;
     } catch (Throwable e) {
+      version = V1_3;
       annotation = null;
     }
+
+    JAVA_VERSION = version;
+
     if (annotation == null) {
       IS_JAVA_5 = false;
     } else {
