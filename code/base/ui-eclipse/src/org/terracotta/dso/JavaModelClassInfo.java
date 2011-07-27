@@ -76,7 +76,7 @@ public class JavaModelClassInfo extends SimpleClassInfo {
     return fInterfaces.clone();
   }
 
-  public MethodInfo getMethod(ClassInfoFactory classInfoFactory, IMethod method) throws JavaModelException {
+  public MethodInfo getMethod(ClassInformationFactory classInfoFactory, IMethod method) throws JavaModelException {
     MethodInfo info = null;
     synchronized (fMethodInfoCache) {
       SoftReference ref = fMethodInfoCache.get(method);
@@ -91,7 +91,7 @@ public class JavaModelClassInfo extends SimpleClassInfo {
     return info;
   }
 
-  public FieldInfo getField(ClassInfoFactory classInfoFactory, IField field) {
+  public FieldInfo getField(ClassInformationFactory classInfoFactory, IField field) {
     FieldInfo info = null;
     synchronized (fFieldInfoCache) {
       String key = field.getElementName();

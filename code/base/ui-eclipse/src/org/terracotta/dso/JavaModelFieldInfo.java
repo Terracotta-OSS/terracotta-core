@@ -16,14 +16,14 @@ import com.tc.backport175.bytecode.AnnotationElement;
 import com.tc.exception.ImplementMe;
 
 public class JavaModelFieldInfo implements FieldInfo {
-  private ClassInfoFactory        fClassInfoFactory;
+  private ClassInformationFactory        fClassInfoFactory;
   private IField                  fField;
   private JavaModelAnnotationInfo fAnnotationInfo;
   private String                  fTypeName;
   private IType                   fType;
   private ClassInfo               fClassInfo;
 
-  public JavaModelFieldInfo(ClassInfoFactory classInfoFactory, IField field) {
+  public JavaModelFieldInfo(ClassInformationFactory classInfoFactory, IField field) {
     fClassInfoFactory = classInfoFactory;
     fField = field;
     fAnnotationInfo = new JavaModelAnnotationInfo(field);

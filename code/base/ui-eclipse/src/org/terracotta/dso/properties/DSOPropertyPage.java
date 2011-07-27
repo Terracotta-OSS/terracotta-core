@@ -26,7 +26,7 @@ import org.terracotta.ui.util.SWTUtil;
 import com.tc.util.event.UpdateEvent;
 import com.tc.util.event.UpdateEventListener;
 
-public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
+public final class DSOPropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
   private static final String  TERRACOTTA_CONFIG                   = "Terracotta Configuration";
   private static final String  BROWSE                              = "Browse...";
   private static final String  RESET                               = "Reset";

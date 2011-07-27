@@ -83,8 +83,8 @@ import javax.swing.tree.DefaultTreeModel;
 
 public abstract class AbstractApplicationEventDialog extends MessageDialog {
   protected IJavaProject                      fJavaProject;
-  private AbstractApplicationEvent            fEvent;
-  private FormToolkit                         fFormToolkit;
+  private final AbstractApplicationEvent      fEvent;
+  private final FormToolkit                   fFormToolkit;
   private SashForm                            fTopSashForm;
   private SashForm                            fBottomSashForm;
   protected Table                             fIssueTable;
@@ -114,15 +114,20 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
                                                                              + ".DIALOG_BOTTOM_SASH_WEIGHTS_2";
 
   protected static final Image                NOT_PORTABLE_ICON            = TcPlugin
-                                                                               .createImage(AbstractApplicationEventDialog.class.getResource("/com/tc/admin/icons/field_private_obj.gif"));
+                                                                               .createImage(AbstractApplicationEventDialog.class
+                                                                                   .getResource("/com/tc/admin/icons/field_private_obj.gif"));
   protected static final Image                NEVER_PORTABLE_ICON          = TcPlugin
-                                                                               .createImage(AbstractApplicationEventDialog.class.getResource("/com/tc/admin/icons/field_private_obj.gif"));
+                                                                               .createImage(AbstractApplicationEventDialog.class
+                                                                                   .getResource("/com/tc/admin/icons/field_private_obj.gif"));
   protected static final Image                TRANSIENT_ICON               = TcPlugin
-                                                                               .createImage(AbstractApplicationEventDialog.class.getResource("/com/tc/admin/icons/field_public_obj.gif"));
+                                                                               .createImage(AbstractApplicationEventDialog.class
+                                                                                   .getResource("/com/tc/admin/icons/field_public_obj.gif"));
   protected static final Image                PORTABLE_ICON                = TcPlugin
-                                                                               .createImage(AbstractApplicationEventDialog.class.getResource("/com/tc/admin/icons/field_default_obj.gif"));
+                                                                               .createImage(AbstractApplicationEventDialog.class
+                                                                                   .getResource("/com/tc/admin/icons/field_default_obj.gif"));
   protected static final Image                PRE_INSTRUMENTED_ICON        = TcPlugin
-                                                                               .createImage(AbstractApplicationEventDialog.class.getResource("/com/tc/admin/icons/field_protected_obj.gif"));
+                                                                               .createImage(AbstractApplicationEventDialog.class
+                                                                                   .getResource("/com/tc/admin/icons/field_protected_obj.gif"));
   protected static final Image                OBJ_CYCLE_ICON               = TcPlugin
                                                                                .createImage("/images/eclipse/obj_cycle.gif");
   protected static final Image                RESOLVED_ICON                = TcPlugin
@@ -135,6 +140,7 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
   protected static final Iterator             EMPTY_ITERATOR               = new EmptyIterator();
 
   protected static final MultiChangeSignaller NULL_SIGNALLER               = new MultiChangeSignaller() {
+                                                                             @Override
                                                                              public void signal(IProject project) {/**/
                                                                              }
                                                                            };
@@ -143,7 +149,7 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
    * In Eclipse 3.3 JavaElementImageDescriptor, used by TcPlugin.createImage, started having problems with transparent
    * images. The code below creates a transparent image manually.
    */
-  protected static Image                      BLANK_ICON;
+  protected static final Image                BLANK_ICON;
 
   static {
     final ImageData blankImageData = new ImageData(16, 16, 1, new PaletteData(new RGB[] { new RGB(255, 0, 0) }));
@@ -167,6 +173,7 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
     return fEvent;
   }
 
+  @Override
   protected IDialogSettings getDialogBoundsSettings() {
     return getDialogSettings();
   }
@@ -179,6 +186,7 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
    * (non-Javadoc)
    * @see org.eclipse.jface.window.Window#initializeBounds()
    */
+  @Override
   protected void initializeBounds() {
     IDialogSettings settings = getDialogSettings();
     if (fTopSashForm != null) {
@@ -229,6 +237,7 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
     return section;
   }
 
+  @Override
   public boolean close() {
     persistSashWeights();
     return super.close();
@@ -245,11 +254,13 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
       super(fJavaProject.getProject());
     }
 
+    @Override
     public TcConfig getConfig() {
       return fNewConfig;
     }
   }
 
+  @Override
   protected Control createCustomArea(Composite parent) {
     fFormToolkit.setBackground(parent.getBackground());
 
@@ -341,6 +352,7 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
     return composite;
   }
 
+  @Override
   protected void buttonPressed(int buttonId) {
     switch (buttonId) {
       case 0:
@@ -446,12 +458,14 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
   }
 
   class IssueTableSelectionListener extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent e) {
       handleTableSelectionChange();
     }
   }
 
   class IssueTreeSelectionListener extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent e) {
       handleTreeSelectionChange();
     }
@@ -571,9 +585,9 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
       ActionTreeContentProvider contentProvider = (ActionTreeContentProvider) fActionTreeViewer.getContentProvider();
       AbstractResolutionAction[] actions = contentProvider.getEnabledActions();
 
-      for (int i = 0; i < actions.length; i++) {
-        actions[i].setSelected(false);
-        fActionTreeViewer.setChecked(actions[i], false);
+      for (AbstractResolutionAction action : actions) {
+        action.setSelected(false);
+        fActionTreeViewer.setChecked(action, false);
       }
 
       TableItem[] selection = fIssueTable.getSelection();
@@ -705,6 +719,7 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
       callMethodCombo = new Combo(onLoadGroup, SWT.BORDER);
       callMethodCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
       callMethodCombo.addFocusListener(new FocusAdapter() {
+        @Override
         public void focusLost(FocusEvent e) {
           OnLoad onLoad = include.getOnLoad();
           onLoad.setMethod(callMethodCombo.getText());
@@ -791,9 +806,9 @@ public abstract class AbstractApplicationEventDialog extends MessageDialog {
         IType type = fJavaProject.findType(include.getClassExpression());
         if (type != null) {
           IMethod[] methods = type.getMethods();
-          for (int i = 0; i < methods.length; i++) {
-            if (methods[i].getParameterNames().length == 0) {
-              callMethodCombo.add(methods[i].getElementName());
+          for (IMethod method : methods) {
+            if (method.getParameterNames().length == 0) {
+              callMethodCombo.add(method.getElementName());
             }
           }
         }

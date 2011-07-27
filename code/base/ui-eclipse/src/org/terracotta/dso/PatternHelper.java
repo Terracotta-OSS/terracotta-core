@@ -38,7 +38,7 @@ import java.util.HashMap;
 public class PatternHelper {
   private static PatternHelper   m_helper = new PatternHelper();
   private final ExpressionHelper m_expressionHelper;
-  private final ClassInfoFactory m_classInfoFactory;
+  private final ClassInformationFactory m_classInfoFactory;
   private final HashMap          m_expressionContextCache;
   private final HashMap          m_executionExpressionContextCache;
 
@@ -48,7 +48,7 @@ public class PatternHelper {
 
   private PatternHelper() {
     m_expressionHelper = new ExpressionHelper();
-    m_classInfoFactory = new ClassInfoFactory();
+    m_classInfoFactory = new ClassInformationFactory();
     m_expressionContextCache = new HashMap();
     m_executionExpressionContextCache = new HashMap();
   }

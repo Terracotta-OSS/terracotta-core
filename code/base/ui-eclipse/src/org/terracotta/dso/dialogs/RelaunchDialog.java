@@ -49,34 +49,33 @@ import java.util.List;
 
 public class RelaunchDialog extends MessageDialog implements SelectionListener {
 
-  private IProject      fProject;
-  private Tree          fTree;
-  private TreeItem      fServersItem;
-  private TreeItem      fLaunchesItem;
-  private List<ILaunch> fServerLaunches;
-  private List<ILaunch> fLaunches;
+  private final IProject      fProject;
+  private Tree                fTree;
+  private TreeItem            fServersItem;
+  private TreeItem            fLaunchesItem;
+  private final List<ILaunch> fServerLaunches;
+  private final List<ILaunch> fLaunches;
 
-  private Button        fDisableRelaunchQueryButton;
+  private Button              fDisableRelaunchQueryButton;
 
-  private static String DISABLE_RELAUNCH_QUERY_MSG = "Don't bother me with this anymore";
+  private static String       DISABLE_RELAUNCH_QUERY_MSG = "Don't bother me with this anymore";
 
-  private static String TITLE                      = "Terracotta";
-  private static String MSG                        = "The configuration file changed. Relaunch all related launch targets?";
+  private static String       TITLE                      = "Terracotta";
+  private static String       MSG                        = "The configuration file changed. Relaunch all related launch targets?";
 
-  public static int     CONTINUE_ID                = 0;
-  public static int     TERMINATE_ID               = CONTINUE_ID + 1;
-  public static int     RESTART_ID                 = TERMINATE_ID + 1;
+  public static final int     CONTINUE_ID                = 0;
+  public static final int     TERMINATE_ID               = CONTINUE_ID + 1;
 
-  private static String CONTINUE_LABEL             = "Continue";
-  private static String TERMINATE_LABEL            = "Terminate";
-  private static String RESTART_LABEL              = "Restart";
+  private static String       CONTINUE_LABEL             = "Continue";
+  private static String       TERMINATE_LABEL            = "Terminate";
+  private static String       RESTART_LABEL              = "Restart";
 
   /*
    * We attempt to show all the launch items by expanding the nodes and setting hints on the tree layout to display it's
    * full content. This is the maximum number of items we'll try to accomodate in that way before the tree will scrolled
    * vertically. This is all about the initial dialog size.
    */
-  private static int    MAX_VISIBLE_LAUNCH_ITEMS   = 10;
+  private static int          MAX_VISIBLE_LAUNCH_ITEMS   = 10;
 
   public RelaunchDialog(Shell shell, IProject project, List<ILaunch> serverLaunches, List<ILaunch> launches) {
     super(shell, TITLE, null, MSG, MessageDialog.NONE, new String[] { CONTINUE_LABEL, TERMINATE_LABEL, RESTART_LABEL },
@@ -87,11 +86,13 @@ public class RelaunchDialog extends MessageDialog implements SelectionListener {
     fLaunches = launches;
   }
 
+  @Override
   protected Control createDialogArea(Composite parent) {
     parent.setLayout(new GridLayout());
     return super.createDialogArea(parent);
   }
 
+  @Override
   protected Control createCustomArea(Composite parent) {
     Composite comp = new Composite(parent, SWT.NONE);
     comp.setLayout(new GridLayout());
@@ -162,6 +163,7 @@ public class RelaunchDialog extends MessageDialog implements SelectionListener {
     fDisableRelaunchQueryButton.setText(DISABLE_RELAUNCH_QUERY_MSG);
     fDisableRelaunchQueryButton.setSelection(!TcPlugin.getDefault().getQueryRestartOption(fProject));
     fDisableRelaunchQueryButton.addSelectionListener(new SelectionAdapter() {
+      @Override
       public void widgetSelected(SelectionEvent e) {
         boolean disableQueryRelaunch = fDisableRelaunchQueryButton.getSelection();
         TcPlugin.getDefault().setQueryRestartOption(fProject, !disableQueryRelaunch);
@@ -171,6 +173,7 @@ public class RelaunchDialog extends MessageDialog implements SelectionListener {
     return parent;
   }
 
+  @Override
   protected void setReturnCode(int code) {
     super.setReturnCode(code);
 
