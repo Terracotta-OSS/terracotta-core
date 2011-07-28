@@ -36,12 +36,12 @@ Sign up at http://www.terracotta.org/kit/reflector?kitID=default&pageID=Register
 Resources
 ---------
 The latest release notes are available on the web at 
-http://www.terracotta.org/kit/reflector?kitID=3.6.0&pageID=ReleaseNotes
+http://www.terracotta.org/kit/reflector?kitID=default&pageID=ReleaseNotes
 
 Help and additional information is available on the web at the following URLs:
 
  - Product Documentation: 
-    http://www.terracotta.org/kit/reflector?kitID=3.6.0&pageID=ProductDocumentation 
+    http://www.terracotta.org/kit/reflector?kitID=Default&pageID=Documentation 
  - Forums:        http://forums.terracotta.org
  - Mailing Lists: http://lists.terracotta.org
  - Services:      
@@ -50,7 +50,7 @@ Help and additional information is available on the web at the following URLs:
      
 Java Virtual Machine
 --------------------
-Terracotta clusters can be run with any supported JRE.  The product guide
+Terracotta clusters can be run with any supported JRE.  The product documentation
 contains a list of supported JREs.  The JRE used by Terracotta Clients need not
 match the one used by the Terracotta Server. Control the JVM that the Terracotta
 uses by setting the JAVA_HOME environment variable.
