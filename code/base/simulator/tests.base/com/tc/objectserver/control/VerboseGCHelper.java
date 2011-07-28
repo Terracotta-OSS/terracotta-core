@@ -3,6 +3,8 @@
  */
 package com.tc.objectserver.control;
 
+import com.tc.util.runtime.Vm;
+
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -57,7 +59,10 @@ public class VerboseGCHelper {
         }
       }
     }
-    jvmArgs.add(XLOGGC + verboseGcOutputFile.getAbsolutePath());
+
+    if (!Vm.isJRockit()) {
+      jvmArgs.add(XLOGGC + verboseGcOutputFile.getAbsolutePath());
+    }
     jvmArgs.add(XX_PRINT_GC_TIME_STAMPS);
     jvmArgs.add(XX_PRINT_GC_DETAILS);
   }
