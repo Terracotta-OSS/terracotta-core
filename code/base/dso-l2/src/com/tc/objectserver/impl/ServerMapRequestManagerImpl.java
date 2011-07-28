@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 
 public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
@@ -193,11 +194,16 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
       results.put(clientID, responses);
     }
     for (final ServerMapGetValueRequest r : request.getValueRequests()) {
-      Object portableValue = cdsmState.getValueForKey(r.getKey());
-      // Null Value is not supported in CDSM
-      portableValue = (portableValue == null ? ObjectID.NULL_ID : portableValue);
-      responses.add(new ServerMapGetValueResponse(r.getRequestID(), portableValue));
-      gatherPreFetchPortableValues(prefetches, clientID, portableValue);
+      Set<Object> portableKeys = r.getKeys();
+      Map<Object, Object> portableValues = new HashMap<Object, Object>();
+      for (Object portableKey : portableKeys) {
+        Object portableValue = cdsmState.getValueForKey(portableKey);
+        // Null Value is not supported in CDSM
+        portableValue = (portableValue == null ? ObjectID.NULL_ID : portableValue);
+        portableValues.put(portableKey, portableValue);
+        gatherPreFetchPortableValues(prefetches, clientID, portableValue);
+      }
+      responses.add(new ServerMapGetValueResponse(r.getRequestID(), portableValues));
     }
   }
 

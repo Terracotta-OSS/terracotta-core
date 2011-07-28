@@ -21,6 +21,9 @@ import com.tc.object.session.SessionID;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class GetValueServerMapResponseMessageImpl extends DSOMessageBase implements GetValueServerMapResponseMessage {
 
@@ -55,6 +58,7 @@ public class GetValueServerMapResponseMessageImpl extends DSOMessageBase impleme
     this.mapID = mapObjectID;
   }
 
+  // TODO: write a test to test hydrating and dehydrating
   @Override
   protected void dehydrateValues() {
     putNVPair(MAP_OBJECT_ID, this.mapID.toLong());
@@ -63,7 +67,11 @@ public class GetValueServerMapResponseMessageImpl extends DSOMessageBase impleme
     final TCByteBufferOutputStream outStream = getOutputStream();
     for (final ServerMapGetValueResponse r : this.responses) {
       outStream.writeLong(r.getRequestID().toLong());
-      encoder.encode(r.getValue(), getOutputStream());
+      outStream.writeInt(r.getValues().size());
+      for (Entry<Object, Object> entry : r.getValues().entrySet()) {
+        encoder.encode(entry.getKey(), getOutputStream());
+        encoder.encode(entry.getValue(), getOutputStream());
+      }
     }
   }
 
@@ -81,8 +89,13 @@ public class GetValueServerMapResponseMessageImpl extends DSOMessageBase impleme
         final TCByteBufferInputStream inputStream = getInputStream();
         while (size-- > 0) {
           try {
-            this.responses.add(new ServerMapGetValueResponse(new ServerMapRequestID(getLongValue()), this.decoder
-                .decode(inputStream)));
+            final long responseId = getLongValue();
+            final int numResponses = getIntValue();
+            final Map<Object, Object> values = new HashMap<Object, Object>();
+            for (int i = 0; i < numResponses; i++) {
+              values.put(this.decoder.decode(inputStream), this.decoder.decode(inputStream));
+            }
+            this.responses.add(new ServerMapGetValueResponse(new ServerMapRequestID(responseId), values));
           } catch (final ClassNotFoundException e) {
             throw new AssertionError(e);
           }

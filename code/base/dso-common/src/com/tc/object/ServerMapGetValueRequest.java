@@ -3,22 +3,24 @@
  */
 package com.tc.object;
 
+import java.util.Set;
+
 public class ServerMapGetValueRequest {
 
   private final ServerMapRequestID requestID;
-  private final Object             key;
+  private final Set<Object>        keys;
 
-  public ServerMapGetValueRequest(final ServerMapRequestID serverMapRequestID, final Object key) {
+  public ServerMapGetValueRequest(final ServerMapRequestID serverMapRequestID, final Set<Object> keys) {
     this.requestID = serverMapRequestID;
-    this.key = key;
+    this.keys = keys;
   }
 
   public ServerMapRequestID getRequestID() {
     return this.requestID;
   }
 
-  public Object getKey() {
-    return this.key;
+  public Set<Object> getKeys() {
+    return this.keys;
   }
 
 }

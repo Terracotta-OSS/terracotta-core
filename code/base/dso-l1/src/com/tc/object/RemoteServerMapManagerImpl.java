@@ -25,25 +25,34 @@ import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.Assert;
 import com.tc.util.Util;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Map.Entry;
 
 public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
 
   // TODO::Make its own property
   private static final int                                               MAX_OUTSTANDING_REQUESTS_SENT_IMMEDIATELY = TCPropertiesImpl
                                                                                                                        .getProperties()
-                                                                                                                       .getInt(TCPropertiesConsts.L1_SERVERMAPMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY);
+                                                                                                                       .getInt(
+                                                                                                                               TCPropertiesConsts.L1_SERVERMAPMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY);
   private static final long                                              BATCH_LOOKUP_TIME_PERIOD                  = TCPropertiesImpl
                                                                                                                        .getProperties()
-                                                                                                                       .getInt(TCPropertiesConsts.L1_SERVERMAPMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD);
+                                                                                                                       .getInt(
+                                                                                                                               TCPropertiesConsts.L1_SERVERMAPMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD);
+
+  private static final String                                            SIZE_KEY                                  = "SIZE_KEY";
+  private static final String                                            ALL_KEYS                                  = "ALL-KEYS";
 
   private final GroupID                                                  groupID;
   private final ServerMapMessageFactory                                  smmFactory;
@@ -91,10 +100,28 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     assertSameGroupID(oid);
     waitUntilRunning();
 
-    final AbstractServerMapRequestContext context = createLookupValueRequestContext(oid, portableKey);
+    final AbstractServerMapRequestContext context = createLookupValueRequestContext(oid, Collections
+        .singleton(portableKey));
     context.makeLookupRequest();
     sendRequest(context);
-    return waitForResult(context);
+    Map<Object, Object> result = waitForResult(context);
+    return result.get(portableKey);
+  }
+
+  public synchronized void getMappingForAllKeys(final Map<ObjectID, Set<Object>> mapIdToKeysMap, Map<Object, Object> rv) {
+    Set<AbstractServerMapRequestContext> contextsToWaitFor = new HashSet<AbstractServerMapRequestContext>();
+    for (Entry<ObjectID, Set<Object>> entry : mapIdToKeysMap.entrySet()) {
+      ObjectID mapId = entry.getKey();
+      Set<Object> keys = entry.getValue();
+      assertSameGroupID(mapId);
+      waitUntilRunning();
+      final AbstractServerMapRequestContext context = createLookupValueRequestContext(mapId, keys);
+      context.makeLookupRequest();
+      contextsToWaitFor.add(context);
+      sendRequest(context);
+    }
+
+    waitForResults(contextsToWaitFor, rv);
   }
 
   public synchronized Set getAllKeys(ObjectID mapID) {
@@ -104,7 +131,9 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     final AbstractServerMapRequestContext context = createGetAllKeysRequestContext(mapID);
     context.makeLookupRequest();
     sendRequestNow(context);
-    return (Set) waitForResult(context);
+    Map<Object, Object> result = waitForResult(context);
+    Assert.assertTrue(result.containsKey(ALL_KEYS));
+    return (Set) result.get(ALL_KEYS);
   }
 
   private void assertSameGroupID(final ObjectID oid) {
@@ -122,10 +151,12 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     final AbstractServerMapRequestContext context = createGetAllSizeRequestContext(mapIDs);
     context.makeLookupRequest();
     sendRequestNow(context);
-    return (Long) waitForResult(context);
+    Map<Object, Object> result = waitForResult(context);
+    Assert.assertTrue(result.containsKey(SIZE_KEY));
+    return (Long) result.get(SIZE_KEY);
   }
 
-  private Object waitForResult(final AbstractServerMapRequestContext context) {
+  private Map<Object, Object> waitForResult(final AbstractServerMapRequestContext context) {
     boolean isInterrupted = false;
     try {
       while (true) {
@@ -138,11 +169,41 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
           removeRequestContext(context);
           throw new TCObjectNotFoundException(context.getMapID().toString());
         }
-        Object result = context.getResult();
+        Map<Object, Object> result = context.getResult();
         if (result != null) {
           removeRequestContext(context);
           return result;
         }
+      }
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
+    }
+  }
+
+  private void waitForResults(Set<AbstractServerMapRequestContext> contextsToWaitFor, Map<Object, Object> rv) {
+    boolean isInterrupted = false;
+    try {
+      while (true) {
+        try {
+          wait();
+        } catch (final InterruptedException e) {
+          isInterrupted = true;
+        }
+        for (Iterator<AbstractServerMapRequestContext> iterator = contextsToWaitFor.iterator(); iterator.hasNext();) {
+          AbstractServerMapRequestContext context = iterator.next();
+          if (context.isMissing()) {
+            removeRequestContext(context);
+            iterator.remove();
+            throw new TCObjectNotFoundException(context.getMapID().toString());
+          }
+          Map<Object, Object> result = context.getResult();
+          if (result != null) {
+            removeRequestContext(context);
+            iterator.remove();
+            rv.putAll(result);
+          }
+        }
+        if (contextsToWaitFor.isEmpty()) { return; }
       }
     } finally {
       Util.selfInterruptIfNeeded(isInterrupted);
@@ -212,8 +273,8 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   }
 
   private void sendRequestNow(final AbstractServerMapRequestContext context) {
-    final ServerMapRequestMessage msg = this.smmFactory.newServerMapRequestMessage(this.groupID,
-                                                                                   context.getRequestType());
+    final ServerMapRequestMessage msg = this.smmFactory.newServerMapRequestMessage(this.groupID, context
+        .getRequestType());
     context.initializeMessage(msg);
     msg.send();
   }
@@ -237,9 +298,10 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     if (old != context) { throw new AssertionError("Removed wrong context. context = " + context + " old = " + old); }
   }
 
-  private AbstractServerMapRequestContext createLookupValueRequestContext(final ObjectID oid, final Object portableKey) {
+  private AbstractServerMapRequestContext createLookupValueRequestContext(final ObjectID oid,
+                                                                          final Set<Object> portableKeys) {
     final ServerMapRequestID requestID = getNextRequestID();
-    final GetValueServerMapRequestContext context = new GetValueServerMapRequestContext(requestID, oid, portableKey,
+    final GetValueServerMapRequestContext context = new GetValueServerMapRequestContext(requestID, oid, portableKeys,
                                                                                         this.groupID);
     this.outstandingRequests.put(requestID, context);
     return context;
@@ -267,7 +329,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
       return;
     }
     for (final ServerMapGetValueResponse r : responses) {
-      setResultForRequest(sessionID, mapID, r.getRequestID(), r.getValue(), nodeID);
+      setResultForRequest(sessionID, mapID, r.getRequestID(), r.getValues(), nodeID);
     }
     notifyAll();
   }
@@ -281,7 +343,9 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
                        + " : from a different session: " + sessionID + ", " + this.sessionManager);
       return;
     }
-    setResultForRequest(sessionID, ObjectID.NULL_ID, requestID, size, nodeID);
+    Map<Object, Object> sizeMap = new HashMap<Object, Object>();
+    sizeMap.put(SIZE_KEY, size);
+    setResultForRequest(sessionID, ObjectID.NULL_ID, requestID, sizeMap, nodeID);
     notifyAll();
   }
 
@@ -294,7 +358,9 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
                        + keys.size() + " : from a different session: " + sessionID + ", " + this.sessionManager);
       return;
     }
-    setResultForRequest(sessionID, mapID, requestID, keys, nodeID);
+    Map<Object, Object> allKeysMap = new HashMap<Object, Object>();
+    allKeysMap.put(ALL_KEYS, keys);
+    setResultForRequest(sessionID, mapID, requestID, allKeysMap, nodeID);
     notifyAll();
   }
 
@@ -312,13 +378,13 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   }
 
   private void setResultForRequest(final SessionID sessionID, final ObjectID mapID, final ServerMapRequestID requestID,
-                                   final Object result, final NodeID nodeID) {
+                                   final Map<Object, Object> rv, final NodeID nodeID) {
     final AbstractServerMapRequestContext context = getRequestContext(requestID);
     if (context != null) {
-      context.setResult(mapID, result);
+      context.setResult(mapID, rv);
     } else {
       this.logger.warn("Server Map Request Context is null for " + mapID + " request ID : " + requestID + " result : "
-                       + result);
+                       + rv);
     }
   }
 
@@ -447,7 +513,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     protected final GroupID              groupID;
     protected final ServerMapRequestID   requestID;
     protected final ServerMapRequestType requestType;
-    protected Object                     result;
+    protected Map<Object, Object>        result;
 
     public AbstractServerMapRequestContext(final ServerMapRequestType requestType, final ServerMapRequestID requestID,
                                            final ObjectID mapID, final GroupID groupID) {
@@ -466,14 +532,14 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
       return this.requestType;
     }
 
-    public void setResult(final ObjectID mapID, final Object result) {
+    public void setResult(final ObjectID mapID, final Map<Object, Object> rv) {
       if (!this.oid.equals(mapID)) { throw new AssertionError("Wrong request to response : this map id : " + this.oid
                                                               + " response is for : " + mapID + " type : "
                                                               + getRequestType()); }
-      this.result = result;
+      this.result = rv;
     }
 
-    public Object getResult() {
+    public Map<Object, Object> getResult() {
       return this.result;
     }
 
@@ -501,18 +567,18 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
 
   private class GetValueServerMapRequestContext extends AbstractServerMapRequestContext {
 
-    private final Object portableKey;
+    private final Set<Object> portableKeys;
 
     public GetValueServerMapRequestContext(final ServerMapRequestID requestID, final ObjectID mapID,
-                                           final Object portableKey, final GroupID groupID) {
+                                           final Set<Object> portableKeys, final GroupID groupID) {
       super(ServerMapRequestType.GET_VALUE_FOR_KEY, requestID, mapID, groupID);
-      this.portableKey = portableKey;
+      this.portableKeys = portableKeys;
     }
 
     @Override
     public void initializeMessage(final ServerMapRequestMessage requestMessage) {
       ((GetValueServerMapRequestMessage) requestMessage).addGetValueRequestTo(this.requestID, this.oid,
-                                                                              this.portableKey);
+                                                                              this.portableKeys);
     }
 
   }

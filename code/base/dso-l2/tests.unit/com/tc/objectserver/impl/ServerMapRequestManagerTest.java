@@ -30,7 +30,9 @@ import com.tc.objectserver.managedobject.ConcurrentDistributedServerMapManagedOb
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import junit.framework.TestCase;
@@ -53,7 +55,9 @@ public class ServerMapRequestManagerTest extends TestCase {
                                                                                                 respondToServerTCMapSink,
                                                                                                 managedObjectRequestSink);
     final ArrayList requests = new ArrayList();
-    requests.add(new ServerMapGetValueRequest(requestID, portableKey));
+    Set<Object> keys = new HashSet<Object>();
+    keys.add(portableKey);
+    requests.add(new ServerMapGetValueRequest(requestID, keys));
     serverMapRequestManager.requestValues(clientID, mapID, requests);
     final Set<ObjectID> lookupIDs = new HashSet<ObjectID>();
     lookupIDs.add(mapID);
@@ -93,7 +97,9 @@ public class ServerMapRequestManagerTest extends TestCase {
     verify(messageChannel, atLeastOnce()).createMessage(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE);
 
     final ArrayList responses = new ArrayList();
-    responses.add(new ServerMapGetValueResponse(requestID, portableValue));
+    Map<Object, Object> values = new HashMap<Object, Object>();
+    values.put(portableKey, portableValue);
+    responses.add(new ServerMapGetValueResponse(requestID, values));
     verify(message, atLeastOnce()).initializeGetValueResponse(mapID, responses);
 
     verify(message, atLeastOnce()).send();
@@ -118,9 +124,13 @@ public class ServerMapRequestManagerTest extends TestCase {
                                                                                                 respondToServerMapSink,
                                                                                                 managedObjectRequestSink);
     final ArrayList request1 = new ArrayList();
-    request1.add(new ServerMapGetValueRequest(requestID1, portableKey1));
+    Set<Object> keys1 = new HashSet<Object>();
+    keys1.add(portableKey1);
+    request1.add(new ServerMapGetValueRequest(requestID1, keys1));
     final ArrayList request2 = new ArrayList();
-    request2.add(new ServerMapGetValueRequest(requestID2, portableKey2));
+    Set<Object> keys2 = new HashSet<Object>();
+    keys2.add(portableKey2);
+    request2.add(new ServerMapGetValueRequest(requestID2, keys2));
     serverMapRequestManager.requestValues(clientID, mapID, request1);
     serverMapRequestManager.requestValues(clientID, mapID, request2);
 
@@ -163,23 +173,25 @@ public class ServerMapRequestManagerTest extends TestCase {
 
     verify(messageChannel, atLeastOnce()).createMessage(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE);
 
-    final ArgumentCaptor<Collection> responsesArg = ArgumentCaptor
-    .forClass(Collection.class);
+    final ArgumentCaptor<Collection> responsesArg = ArgumentCaptor.forClass(Collection.class);
 
     final ArrayList responses = new ArrayList();
     verify(message, atLeastOnce()).initializeGetValueResponse(Matchers.eq(mapID), responsesArg.capture());
-   
-    ServerMapGetValueResponse response2 = new ServerMapGetValueResponse(requestID1, portableValue1);
-    ServerMapGetValueResponse response1 = new ServerMapGetValueResponse(requestID2, portableValue2);
-    
+
+    Map<Object, Object> values1 = new HashMap<Object, Object>();
+    values1.put(portableKey1, portableValue1);
+    Map<Object, Object> values2 = new HashMap<Object, Object>();
+    values2.put(portableKey2, portableValue2);
+    ServerMapGetValueResponse response2 = new ServerMapGetValueResponse(requestID1, values1);
+    ServerMapGetValueResponse response1 = new ServerMapGetValueResponse(requestID2, values2);
+
     responses.add(response1);
     responses.add(response2);
-  
 
     verify(message, atLeastOnce()).send();
     assertTrue(responsesArg.getValue().contains(response1));
     assertTrue(responsesArg.getValue().contains(response2));
-     
+
   }
 
 }

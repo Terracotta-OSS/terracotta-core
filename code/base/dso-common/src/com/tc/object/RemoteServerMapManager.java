@@ -5,12 +5,13 @@ package com.tc.object;
 
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
-import com.tc.object.locks.LockID;
 import com.tc.object.cache.CachedItem;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
+import com.tc.object.locks.LockID;
 import com.tc.object.session.SessionID;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 public interface RemoteServerMapManager extends ClientHandshakeCallback {
@@ -50,4 +51,6 @@ public interface RemoteServerMapManager extends ClientHandshakeCallback {
   public void initiateCachedItemEvictionFor(TCObjectServerMap serverMap);
 
   public void expired(TCObjectServerMap serverMap, CachedItem ci);
+
+  public void getMappingForAllKeys(final Map<ObjectID, Set<Object>> mapIdToKeysMap, final Map<Object, Object> rv);
 }
