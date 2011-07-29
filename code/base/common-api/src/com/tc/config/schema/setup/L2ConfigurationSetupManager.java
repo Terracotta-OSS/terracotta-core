@@ -12,6 +12,7 @@ import com.tc.config.schema.SystemConfig;
 import com.tc.config.schema.UpdateCheckConfig;
 import com.tc.object.config.schema.DSOApplicationConfig;
 import com.tc.object.config.schema.L2DSOConfig;
+import com.tc.operatorevent.TerracottaOperatorEventLogger;
 import com.tc.server.ServerConnectionValidator;
 
 import java.io.InputStream;
@@ -54,6 +55,7 @@ public interface L2ConfigurationSetupManager {
 
   L2DSOConfig dsoL2ConfigFor(String name) throws ConfigurationSetupException;
 
-  TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator)
+  TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator,
+                                           TerracottaOperatorEventLogger opeventlogger)
       throws ConfigurationSetupException;
 }

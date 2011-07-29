@@ -35,6 +35,7 @@ import com.tc.object.config.schema.DSOApplicationConfig;
 import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
+import com.tc.operatorevent.TerracottaOperatorEventLogger;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.server.TCServer;
 import com.tc.server.TCServerImpl;
@@ -275,9 +276,10 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
       return this.l2Config.rawConfigFile();
     }
 
-    public TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator)
+    public TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator,
+                                                    TerracottaOperatorEventLogger opEventLogger)
         throws ConfigurationSetupException {
-      return this.l2Config.reloadConfiguration(serverConnectionValidator);
+      return this.l2Config.reloadConfiguration(serverConnectionValidator, opEventLogger);
     }
 
     public SystemConfig systemConfig() {

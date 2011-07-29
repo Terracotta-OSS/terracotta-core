@@ -139,4 +139,13 @@ public class TerracottaOperatorEventFactory {
                                            "config reload");
   }
 
+  /**
+   * Cluste state events
+   */
+  public static TerracottaOperatorEvent createActiveServerWithOldDataBaseEvent(String serverName) {
+    return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.SYSTEM_SETUP, MessageFormat
+        .format(TerracottaOperatorEventResources.getActiveStartedWithOldDBMessage(), new Object[] { serverName }),
+                                           "old db");
+  }
+
 }

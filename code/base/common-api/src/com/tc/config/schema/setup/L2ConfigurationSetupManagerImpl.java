@@ -36,7 +36,6 @@ import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.operatorevent.TerracottaOperatorEventFactory;
 import com.tc.operatorevent.TerracottaOperatorEventLogger;
-import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.ServerConnectionValidator;
@@ -74,20 +73,18 @@ import java.util.Set;
 public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManager implements
     L2ConfigurationSetupManager {
 
-  private static final TerracottaOperatorEventLogger opEventLogger = TerracottaOperatorEventLogging.getEventLogger();
-  private static final TCLogger                      logger        = TCLogging
-                                                                       .getLogger(L2ConfigurationSetupManagerImpl.class);
+  private static final TCLogger             logger = TCLogging.getLogger(L2ConfigurationSetupManagerImpl.class);
 
-  private final Map                                  l2ConfigData;
-  private final HaConfigSchema                       haConfig;
-  private final UpdateCheckConfig                    updateCheckConfig;
-  private final String                               thisL2Identifier;
-  private final L2ConfigData                         myConfigData;
-  private final ConfigTCProperties                   configTCProperties;
-  private final Set<InetAddress>                     localInetAddresses;
+  private final Map                         l2ConfigData;
+  private final HaConfigSchema              haConfig;
+  private final UpdateCheckConfig           updateCheckConfig;
+  private final String                      thisL2Identifier;
+  private final L2ConfigData                myConfigData;
+  private final ConfigTCProperties          configTCProperties;
+  private final Set<InetAddress>            localInetAddresses;
 
-  private SystemConfig                               systemConfig;
-  private volatile ActiveServerGroupsConfig          activeServerGroupsConfig;
+  private SystemConfig                      systemConfig;
+  private volatile ActiveServerGroupsConfig activeServerGroupsConfig;
 
   public L2ConfigurationSetupManagerImpl(ConfigurationCreator configurationCreator, String thisL2Identifier,
                                          DefaultValueProvider defaultValueProvider,
@@ -158,7 +155,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     validateHaConfiguration();
   }
 
-  public TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator)
+  public TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator,
+                                                  TerracottaOperatorEventLogger opEventLogger)
       throws ConfigurationSetupException {
     MutableBeanRepository changedL2sBeanRepository = new StandardBeanRepository(Servers.class);
 

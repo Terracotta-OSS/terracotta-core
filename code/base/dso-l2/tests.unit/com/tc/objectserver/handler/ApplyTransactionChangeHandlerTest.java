@@ -8,6 +8,7 @@ import com.tc.async.impl.MockSink;
 import com.tc.async.impl.MockStage;
 import com.tc.l2.ha.L2HADisabledCooridinator;
 import com.tc.net.ClientID;
+import com.tc.net.groups.SingleNodeGroupManager;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -17,6 +18,7 @@ import com.tc.object.locks.NotifyImpl;
 import com.tc.object.locks.StringLockID;
 import com.tc.object.locks.TestLockManager;
 import com.tc.object.locks.ThreadID;
+import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
@@ -40,6 +42,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import junit.framework.TestCase;
 
@@ -67,7 +70,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     TestServerConfigurationContext context = new TestServerConfigurationContext();
     context.transactionManager = this.transactionManager;
     context.txnObjectManager = new NullTransactionalObjectManager();
-    context.l2Coordinator = new L2HADisabledCooridinator();
+    context.l2Coordinator = new L2HADisabledCooridinator(new SingleNodeGroupManager(), new TestPersistentMapStore());
     context.addStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, stageBo);
     context.addStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE, stageCo);
     context.addStage(ServerConfigurationContext.SERVER_MAP_CAPACITY_EVICTION_STAGE, stageCpEv);
@@ -131,6 +134,23 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
   private ApplyTransactionContext getApplyTxnContext(ServerTransaction txt) {
     ApplyTransactionContext atc = new ApplyTransactionContext(txt, new HashMap());
     return atc;
+  }
+
+  private static class TestPersistentMapStore implements PersistentMapStore {
+    private final ConcurrentHashMap<String, String> store = new ConcurrentHashMap<String, String>();
+
+    public String get(String key) {
+      return store.get(key);
+    }
+
+    public void put(String key, String value) {
+      store.put(key, value);
+    }
+
+    public boolean remove(String key) {
+      return store.remove(key) != null;
+    }
+
   }
 
 }

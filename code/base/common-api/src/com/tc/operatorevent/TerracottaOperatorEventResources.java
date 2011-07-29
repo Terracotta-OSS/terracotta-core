@@ -103,11 +103,18 @@ class TerracottaOperatorEventResources {
   /**
    * Cluster configuration events
    */
-  public static String getTimeDifferentMessage() {
+  static String getTimeDifferentMessage() {
     return instance.resources.getString("time.different");
   }
 
-  public static String getConfigReloadedMessage() {
+  static String getConfigReloadedMessage() {
     return instance.resources.getString("config.reloaded");
+  }
+
+  /**
+   * Cluster state events
+   */
+  static String getActiveStartedWithOldDBMessage() {
+    return instance.resources.getString("db.state");
   }
 }

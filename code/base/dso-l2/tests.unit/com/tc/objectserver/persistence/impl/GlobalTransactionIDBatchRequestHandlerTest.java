@@ -5,6 +5,8 @@
 package com.tc.objectserver.persistence.impl;
 
 import com.tc.l2.ha.L2HADisabledCooridinator;
+import com.tc.net.groups.SingleNodeGroupManager;
+import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.core.impl.TestServerConfigurationContext;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
@@ -12,6 +14,8 @@ import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler.Global
 import com.tc.test.TCTestCase;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.sequence.BatchSequenceReceiver;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 public class GlobalTransactionIDBatchRequestHandlerTest extends TCTestCase {
 
@@ -29,7 +33,7 @@ public class GlobalTransactionIDBatchRequestHandlerTest extends TCTestCase {
     provider.setRequestBatchSink(requestBatchSink);
 
     TestServerConfigurationContext scc = new TestServerConfigurationContext();
-    scc.l2Coordinator = new L2HADisabledCooridinator();
+    scc.l2Coordinator = new L2HADisabledCooridinator(new SingleNodeGroupManager(), new TestPersistentMapStore());
     provider.initializeContext(scc);
 
     receiver = new TestBatchSequenceReceiver();
@@ -68,6 +72,23 @@ public class GlobalTransactionIDBatchRequestHandlerTest extends TCTestCase {
 
     public boolean isBatchRequestPending() {
       return true;
+    }
+
+  }
+
+  private static class TestPersistentMapStore implements PersistentMapStore {
+    private final ConcurrentHashMap<String, String> store = new ConcurrentHashMap<String, String>();
+
+    public String get(String key) {
+      return store.get(key);
+    }
+
+    public void put(String key, String value) {
+      store.put(key, value);
+    }
+
+    public boolean remove(String key) {
+      return store.remove(key) != null;
     }
 
   }

@@ -4,6 +4,8 @@
  */
 package com.tc.l2.ha;
 
+import static com.tc.l2.ha.ClusterStateDBKeyNames.DATABASE_CREATION_TIMESTAMP_KEY;
+
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.context.StateChangedEvent;
@@ -18,9 +20,12 @@ import com.tc.l2.state.NullStateSyncManager;
 import com.tc.l2.state.StateManager;
 import com.tc.l2.state.StateSyncManager;
 import com.tc.net.groups.GroupManager;
-import com.tc.net.groups.SingleNodeGroupManager;
+import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 public class L2HADisabledCooridinator implements L2Coordinator, PrettyPrintable {
 
@@ -31,14 +36,12 @@ public class L2HADisabledCooridinator implements L2Coordinator, PrettyPrintable 
   private final ReplicatedTransactionManager  replicatedTxnMgr   = new NonReplicatedTransactionManager();
   private final StateSyncManager              stateSyncManager   = new NullStateSyncManager();
   private final L2ObjectStateManager          objectStateManager = new NullL2ObjectStateManager();
+  private final boolean                       startedWithCleanDB;
 
-  public L2HADisabledCooridinator(GroupManager groupCommManager) {
+  public L2HADisabledCooridinator(GroupManager groupCommManager, PersistentMapStore persistentMapStore) {
     this.groupManager = groupCommManager;
     this.stateMgr = new DummyStateManager(this.groupManager.getLocalNodeID());
-  }
-
-  public L2HADisabledCooridinator() {
-    this(new SingleNodeGroupManager());
+    this.startedWithCleanDB = isCleanDB(persistentMapStore);
   }
 
   public GroupManager getGroupManager() {
@@ -86,6 +89,20 @@ public class L2HADisabledCooridinator implements L2Coordinator, PrettyPrintable 
 
   public L2ObjectStateManager getL2ObjectStateManager() {
     return objectStateManager;
+  }
+
+  public boolean isStartedWithCleanDB() {
+    return startedWithCleanDB;
+  }
+
+  private boolean isCleanDB(final PersistentMapStore clusterStateStore) {
+    if (clusterStateStore.get(DATABASE_CREATION_TIMESTAMP_KEY) == null) {
+      final Calendar cal = Calendar.getInstance();
+      final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
+      clusterStateStore.put(DATABASE_CREATION_TIMESTAMP_KEY, sdf.format(cal.getTime()));
+      return true;
+    }
+    return false;
   }
 
 }

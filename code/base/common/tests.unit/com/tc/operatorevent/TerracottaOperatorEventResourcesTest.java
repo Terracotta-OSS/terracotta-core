@@ -81,5 +81,10 @@ public class TerracottaOperatorEventResourcesTest extends TCTestCase {
     Assert.assertTrue(TerracottaOperatorEventResources.getConfigReloadedMessage()
         .equals(this.resources.getObject("config.reloaded")));
 
+    /**
+     * cluster state events messages
+     */
+    Assert.assertEquals(TerracottaOperatorEventResources.getActiveStartedWithOldDBMessage(), this.resources.getObject("db.state"));
+
   }
 }

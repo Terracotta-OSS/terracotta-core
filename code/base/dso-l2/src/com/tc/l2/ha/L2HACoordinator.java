@@ -15,7 +15,6 @@ import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.handler.GCResultHandler;
 import com.tc.l2.handler.GroupEventsDispatchHandler;
-import com.tc.l2.handler.GroupEventsDispatchHandler.GroupEventsDispatcher;
 import com.tc.l2.handler.L2IndexSyncHandler;
 import com.tc.l2.handler.L2IndexSyncRequestHandler;
 import com.tc.l2.handler.L2ObjectSyncHandler;
@@ -25,6 +24,7 @@ import com.tc.l2.handler.L2StateChangeHandler;
 import com.tc.l2.handler.L2StateMessageHandler;
 import com.tc.l2.handler.ServerTransactionAckHandler;
 import com.tc.l2.handler.TransactionRelayHandler;
+import com.tc.l2.handler.GroupEventsDispatchHandler.GroupEventsDispatcher;
 import com.tc.l2.msg.GCResultMessage;
 import com.tc.l2.msg.IndexSyncAckMessage;
 import com.tc.l2.msg.IndexSyncCompleteMessage;
@@ -100,6 +100,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
   private final CopyOnWriteArrayList<StateChangeListener> listeners = new CopyOnWriteArrayList<StateChangeListener>();
   private final L2PassiveSyncStateManager                 l2PassiveSyncStateManager;
   private final L2ObjectStateManager                      l2ObjectStateManager;
+  private boolean                                         isCleanDB;
 
   public L2HACoordinator(final TCLogger consoleLogger, final DistributedObjectServer server,
                          final StageManager stageManager, final GroupManager groupCommsManager,
@@ -136,7 +137,8 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                     final StripeIDStateManager stripeIDStateManager,
                     final ServerTransactionFactory serverTransactionFactory, DGCSequenceProvider dgcSequenceProvider) {
 
-    final boolean isCleanDB = isCleanDB(persistentStateStore);
+    isCleanDB = isCleanDB(persistentStateStore);
+
     final int MAX_STAGE_SIZE = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
 
     final ClusterState clusterState = new ClusterState(persistentStateStore, this.server.getManagedObjectStore(),
@@ -392,5 +394,9 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
   public StateSyncManager getStateSyncManager() {
     return this.l2PassiveSyncStateManager;
+  }
+
+  public boolean isStartedWithCleanDB() {
+    return this.isCleanDB;
   }
 }

@@ -31,4 +31,6 @@ public interface L2Coordinator extends StateChangeListener, PrettyPrintable {
 
   public L2ObjectStateManager getL2ObjectStateManager();
 
+  public boolean isStartedWithCleanDB();
+
 }

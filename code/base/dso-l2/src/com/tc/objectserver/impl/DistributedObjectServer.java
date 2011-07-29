@@ -253,7 +253,9 @@ import com.tc.objectserver.tx.TransactionFilter;
 import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.objectserver.tx.TransactionalStagesCoordinatorImpl;
 import com.tc.operatorevent.DsoOperatorEventHistoryProvider;
+import com.tc.operatorevent.TerracottaOperatorEventFactory;
 import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
+import com.tc.operatorevent.TerracottaOperatorEventLogger;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
@@ -1185,7 +1187,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       dgcSequenceProvider.registerSequecePublisher(this.l2Coordinator.getReplicatedClusterStateManager());
     } else {
       this.l2State.setState(StateManager.ACTIVE_COORDINATOR);
-      this.l2Coordinator = new L2HADisabledCooridinator(this.groupCommManager);
+      this.l2Coordinator = new L2HADisabledCooridinator(this.groupCommManager, this.persistor.getPersistentStateStore());
     }
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.l2Coordinator));
@@ -1235,6 +1237,11 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     startGroupManagers();
     this.l2Coordinator.start();
+    if (!this.l2Coordinator.isStartedWithCleanDB() && this.l2Coordinator.getStateManager().isActiveCoordinator()) {
+      TerracottaOperatorEventLogger operatorEventLogger = TerracottaOperatorEventLogging.getEventLogger();
+      operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory
+          .createActiveServerWithOldDataBaseEvent(l2DSOConfig.serverName()));
+    }
     if (!networkedHA) {
       // In non-network enabled HA, Only active server reached here.
       startActiveMode();
