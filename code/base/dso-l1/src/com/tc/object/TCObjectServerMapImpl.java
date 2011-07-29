@@ -12,8 +12,8 @@ import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.cache.CachedItem;
-import com.tc.object.cache.CachedItem.CachedItemInitialization;
 import com.tc.object.cache.IncoherentCachedItem;
+import com.tc.object.cache.CachedItem.CachedItemInitialization;
 import com.tc.object.locks.LockID;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
@@ -23,11 +23,12 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -274,7 +275,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   public Map<Object, Object> getAllValuesUnlocked(final Map<ObjectID, Set<Object>> mapIdToKeysMap) {
-    Map<Object, Object> rv = new ConcurrentHashMap<Object, Object>();
+    Map<Object, Object> rv = new HashMap<Object, Object>();
     if (CACHE_ENABLED) {
       for (Iterator<Entry<ObjectID, Set<Object>>> iterator = mapIdToKeysMap.entrySet().iterator(); iterator.hasNext();) {
         Entry<ObjectID, Set<Object>> entry = iterator.next();
