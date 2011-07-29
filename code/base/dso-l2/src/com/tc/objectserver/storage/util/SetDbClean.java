@@ -21,14 +21,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SetDbClean extends BaseUtility {
-  protected List oidlogsStatsList = new ArrayList();
+  protected List        oidlogsStatsList = new ArrayList();
+  private final OPTIONS option;
 
-  public SetDbClean(File dir) throws Exception {
-    this(dir, new OutputStreamWriter(System.out));
+  private enum OPTIONS {
+    S, C
   }
 
-  public SetDbClean(File dir, Writer writer) throws Exception {
+  public SetDbClean(File dir, String opt) throws Exception {
+    this(dir, new OutputStreamWriter(System.out), opt);
+  }
+
+  public SetDbClean(File dir, Writer writer, String opt) throws Exception {
     super(writer, new File[] { dir });
+    option = validateOption(opt);
   }
 
   public void setDbClean() throws Exception {
@@ -61,38 +67,61 @@ public class SetDbClean extends BaseUtility {
     }
 
     State state = new State(stateStr);
-    if (!StateManager.PASSIVE_STANDBY.equals(state)) {
-      log("Failed to set DB clean for " + state);
-      env.close();
-      return;
+    switch (option) {
+      case S:
+        log("This server last staus was " + stateStr);
+        break;
+      case C:
+        if (!StateManager.PASSIVE_STANDBY.equals(state)) {
+          log("Failed to set DB clean for " + state);
+          env.close();
+          return;
+        }
+        tx = ptp.newTransaction();
+        status = db.put(ClusterState.getL2StateKey(), StateManager.ACTIVE_COORDINATOR.getName(), tx);
+        if (Status.SUCCESS.equals(status)) {
+          log("SetDbClean success!");
+        } else {
+          log("Failed to setDbClean");
+        }
+        tx.commit();
+        break;
+      default:
+        break;
     }
 
-    tx = ptp.newTransaction();
-    status = db.put(ClusterState.getL2StateKey(), StateManager.ACTIVE_COORDINATOR.getName(), tx);
-    if (Status.SUCCESS.equals(status)) {
-      log("SetDbClean success!");
-    } else {
-      log("Failed to setDbClean");
-    }
-    tx.commit();
     getPersistor(1).close();
   }
 
   public static void main(String[] args) {
-    if (args == null || args.length < 1) {
+    if (args == null || args.length < 2) {
       usage();
       System.exit(1);
     }
 
     try {
-      File dir = new File(args[0]);
+      String opt = args[0];
+      File dir = new File(args[1]);
       validateDir(dir);
-      SetDbClean cleaner = new SetDbClean(dir);
+      SetDbClean cleaner = new SetDbClean(dir, opt);
       cleaner.setDbClean();
     } catch (Exception e) {
       e.printStackTrace();
+      usage();
       System.exit(2);
     }
+  }
+
+  private OPTIONS validateOption(String opt) {
+    if (opt == null || (opt.length() != 2) || !opt.startsWith("-")) { throw new RuntimeException("invalid option \""
+                                                                                                 + opt + "\""); }
+    OPTIONS opts;
+    try {
+      opts = OPTIONS.valueOf(opt.substring(1).toUpperCase());
+    } catch (IllegalArgumentException e) {
+      throw new RuntimeException("invalid option \"" + opt + "\"");
+    }
+    return opts;
   }
 
   private static void validateDir(File dir) {
@@ -100,7 +129,7 @@ public class SetDbClean extends BaseUtility {
   }
 
   private static void usage() {
-    System.out.println("Usage: SetDbClean <environment home directory>");
+    System.out.println("Usage: SetDbClean [-s status] [-c clean] <environment home directory>");
   }
 
 }

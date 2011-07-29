@@ -17,16 +17,17 @@ public class SetDbCleanCommand extends BaseCommand {
 
   public void execute(String[] args) {
 
-    if (args.length < 1) {
-      println("database source required.");
+    if (args.length < 2) {
+      println("both option and database source are required.");
       printUsage();
       return;
     }
 
-    File dir = new File(args[0]);
+    String opt = args[0];
+    File dir = new File(args[1]);
     if (dir.exists()) {
       try {
-        SetDbClean cleaner = new SetDbClean(dir, writer);
+        SetDbClean cleaner = new SetDbClean(dir, writer, opt);
         cleaner.setDbClean();
       } catch (Exception e) {
         e.printStackTrace();
@@ -45,12 +46,16 @@ public class SetDbCleanCommand extends BaseCommand {
     return "set-db-clean";
   }
 
+  public String setDBCleanOptions() {
+    return "[-s status] [-c clean]";
+  }
+
   public String description() {
-    return "This utility clean up passive dirty DB at <database source directory>.";
+    return "This utility get the last staus or clean up passive dirty DB at <database source directory>.";
   }
 
   public void printUsage() {
-    println("\tUsage: " + optionName() + " <database source directory>");
+    println("\tUsage: " + optionName() + " " + setDBCleanOptions() + " <database source directory>");
     println("\t" + description());
   }
 }
