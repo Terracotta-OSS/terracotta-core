@@ -7,14 +7,14 @@ package com.tc.handler;
 import com.tc.logging.CallbackOnExitState;
 import com.tc.logging.TCLogger;
 import com.tc.object.persistence.api.PersistentMapStore;
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 
 public class CallbackZapDirtyDbExceptionAdapter extends CallbackDirtyDatabaseCleanUpAdapter {
 
-  private final TCLogger consoleLogger;
-  private String         consoleMessage = "This Terracotta server instance shut down because it went into "
-                                          + "standby mode with an out-of-date database. The database must "
-                                          + "be manually wiped before the Terracotta server instance can be "
-                                          + "started and allowed to rejoin the cluster.";
+  private static final TCProperties l2Props = TCPropertiesImpl.getProperties();
+  private final TCLogger            consoleLogger;
 
   public CallbackZapDirtyDbExceptionAdapter(TCLogger logger, TCLogger consoleLogger,
                                             PersistentMapStore clusterStateStore) {
@@ -25,7 +25,17 @@ public class CallbackZapDirtyDbExceptionAdapter extends CallbackDirtyDatabaseCle
   @Override
   public void callbackOnExit(CallbackOnExitState state) {
     super.callbackOnExit(state);
-    consoleLogger.error(consoleMessage + "\n");
-  }
+    boolean autoDelete = l2Props.getBoolean(TCPropertiesConsts.L2_NHA_DIRTYDB_AUTODELETE, true);
+    boolean autoRestart = l2Props.getBoolean(TCPropertiesConsts.L2_NHA_AUTORESTART, true);
+    if (autoDelete && autoRestart) {
+      consoleLogger.error(CallbackHandlerResources.getDirtyDBAutodeleteAutoRestartZapMessage() + "\n");
+    } else if (autoDelete && !autoRestart) {
+      consoleLogger.error(CallbackHandlerResources.getDirtyDBAutodeleteZapMessage() + "\n");
+    } else if (!autoDelete && autoRestart) {
+      consoleLogger.error(CallbackHandlerResources.getDirtyDBAutoRestartZapMessage() + "\n");
+    } else {
+      consoleLogger.error(CallbackHandlerResources.getDirtyDBZapMessage() + "\n");
+    }
 
+  }
 }
