@@ -7,6 +7,8 @@ import com.tc.object.ObjectID;
 import com.tc.object.metadata.NVPair;
 import com.tc.objectserver.metadata.MetaDataProcessingContext;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,4 +40,6 @@ public interface IndexManager {
   void optimizeSearchIndex(String indexName);
 
   String[] getSearchIndexNames();
+
+  InputStream getIndexFile(String indexName, String fileName) throws IOException;
 }

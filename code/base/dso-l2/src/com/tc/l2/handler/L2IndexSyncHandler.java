@@ -72,7 +72,8 @@ public class L2IndexSyncHandler extends AbstractEventHandler {
 
   private void doSyncIndex(final IndexSyncMessage syncMsg) {
     byte[] data = syncMsg.getData();
-    this.indexHACoordinator.applyIndexSync(syncMsg.getCacheName(), syncMsg.getFileName(), data);
+    this.indexHACoordinator.applyIndexSync(syncMsg.getCacheName(), syncMsg.getFileName(), data, syncMsg.isTCFile(),
+                                           syncMsg.isLast());
 
     IndexSyncAckMessage ack = IndexSyncMessageFactory.createIndexSyncAckMessage(syncMsg.getMessageID(), data.length);
     try {

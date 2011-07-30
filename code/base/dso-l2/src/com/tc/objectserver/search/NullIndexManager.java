@@ -7,6 +7,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.metadata.NVPair;
 import com.tc.objectserver.metadata.MetaDataProcessingContext;
 
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -65,5 +66,9 @@ public class NullIndexManager implements IndexManager {
 
   public String[] getSearchIndexNames() {
     return new String[] {};
+  }
+
+  public InputStream getIndexFile(String cacheName, String fileName) {
+    throw new AssertionError();
   }
 }

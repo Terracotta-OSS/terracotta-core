@@ -8,6 +8,7 @@ import com.tc.l2.state.StateManager;
 import com.tc.net.NodeID;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 public class NullIndexHACoordinator extends NullIndexManager implements IndexHACoordinator {
 
@@ -24,7 +25,7 @@ public class NullIndexHACoordinator extends NullIndexManager implements IndexHAC
     //
   }
 
-  public void applyIndexSync(String cacheName, String fileName, byte[] data) {
+  public void applyIndexSync(String cacheName, String fileName, byte[] data, boolean isTCFile, boolean isLast) {
     //
   }
 
@@ -38,6 +39,10 @@ public class NullIndexHACoordinator extends NullIndexManager implements IndexHAC
 
   public void doSyncPrepare() {
     //
+  }
+
+  public InputStream getIndexFile(String name) {
+    throw new AssertionError();
   }
 
 }

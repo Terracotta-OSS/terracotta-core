@@ -3,12 +3,14 @@
  */
 package com.tc.objectserver.search;
 
-import java.io.File;
-
 public interface IndexFile {
 
-  public String getFilename();
+  public boolean isTCFile();
 
-  public File getFile();
+  public String getDestFilename();
+
+  public String getLuceneFilename();
+
+  public long length();
 
 }

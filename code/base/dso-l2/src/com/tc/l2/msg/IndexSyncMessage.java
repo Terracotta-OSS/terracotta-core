@@ -17,9 +17,11 @@ public class IndexSyncMessage extends AbstractGroupMessage implements OrderedEve
 
   private String          cacheName;
   private String          fileName;
-  private int             fileLength;
+  private int             length;
   private byte[]          data;
   private long            sequenceID;
+  private boolean         isTCFile;
+  private boolean         isLast;
 
   public IndexSyncMessage() {
     // Make serialization happy
@@ -30,22 +32,27 @@ public class IndexSyncMessage extends AbstractGroupMessage implements OrderedEve
     super(type);
   }
 
-  public void initialize(final String cName, final String fName, final byte[] fileData, long sID) {
+  public void initialize(final String cName, final String fName, final byte[] fileData, long sID, boolean tcFile,
+                         boolean last) {
     this.cacheName = cName;
     this.fileName = fName;
-    this.fileLength = fileData.length;
+    this.length = fileData.length;
     this.data = fileData;
     this.sequenceID = sID;
+    this.isTCFile = tcFile;
+    this.isLast = last;
   }
 
   @Override
   protected void basicDeserializeFrom(final TCByteBufferInput in) throws IOException {
     Assert.assertEquals(INDEX_SYNC_TYPE, getType());
     this.cacheName = in.readString();
-    this.fileLength = in.readInt();
+    this.length = in.readInt();
     this.fileName = in.readString();
     this.sequenceID = in.readLong();
-    this.data = new byte[this.fileLength];
+    this.isLast = in.readBoolean();
+    this.isTCFile = in.readBoolean();
+    this.data = new byte[this.length];
     in.read(this.data);
   }
 
@@ -53,9 +60,11 @@ public class IndexSyncMessage extends AbstractGroupMessage implements OrderedEve
   protected void basicSerializeTo(final TCByteBufferOutput out) {
     Assert.assertEquals(INDEX_SYNC_TYPE, getType());
     out.writeString(this.cacheName);
-    out.writeInt(this.fileLength);
+    out.writeInt(this.length);
     out.writeString(this.fileName);
     out.writeLong(this.sequenceID);
+    out.writeBoolean(this.isLast);
+    out.writeBoolean(this.isTCFile);
     out.write(this.data);
   }
 
@@ -69,6 +78,14 @@ public class IndexSyncMessage extends AbstractGroupMessage implements OrderedEve
 
   public byte[] getData() {
     return this.data;
+  }
+
+  public boolean isTCFile() {
+    return this.isTCFile;
+  }
+
+  public boolean isLast() {
+    return this.isLast;
   }
 
   public long getSequenceID() {
