@@ -14,6 +14,7 @@ import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.objectserver.api.EvictableMap;
+import com.tc.objectserver.l1.impl.ServerMapEvictionClientObjectReferenceSet;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 
@@ -29,7 +30,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
-import java.util.SortedSet;
 
 public class ConcurrentDistributedServerMapManagedObjectState extends ConcurrentDistributedMapManagedObjectState
     implements EvictableMap {
@@ -328,7 +328,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
 
   // TODO:: This implementation could be better, could use LinkedHashMap to increase the chances of getting the
   // right samples, also should it return a sorted Map ? Are objects with lower OIDs having more changes to be evicted ?
-  public Map getRandomSamples(final int count, final SortedSet<ObjectID> ignoreList) {
+  public Map getRandomSamples(final int count,
+                              final ServerMapEvictionClientObjectReferenceSet serverMapEvictionClientObjectRefSet) {
     if (evictionStatus == EvictionStatus.SAMPLED) {
       // There is already a random sample that is yet to be processed, so returning empty collection. This can happen if
       // both period and capacity Evictors are working at the same object one after the other.
@@ -343,7 +344,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     for (final Iterator i = this.references.entrySet().iterator(); samples.size() < count && i.hasNext();) {
       final Entry e = (Entry) i.next();
       Object value = e.getValue();
-      if (ignoreList.contains(value)) {
+      if (serverMapEvictionClientObjectRefSet.contains(value)) {
         continue;
       }
       if (r.nextInt(100) < chance) {

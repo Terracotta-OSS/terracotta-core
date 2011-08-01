@@ -64,4 +64,9 @@ public interface ClientStateManager {
   public int getReferenceCount(NodeID nodeID);
 
   public Set<NodeID> getConnectedClientIDs();
+
+  public void registerObjectReferenceAddListener(ObjectReferenceAddListener listener);
+
+  public void unregisterObjectReferenceAddListener(ObjectReferenceAddListener listener);
+
 }

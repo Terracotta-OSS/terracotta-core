@@ -10,6 +10,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.objectserver.l1.api.ClientState;
 import com.tc.objectserver.l1.api.ClientStateManager;
+import com.tc.objectserver.l1.api.ObjectReferenceAddListener;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
@@ -22,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -29,12 +31,14 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintable {
 
-  private final ConcurrentHashMap<NodeID, ClientStateImpl> clientStates;
-  private final TCLogger                                   logger;
+  private final ConcurrentHashMap<NodeID, ClientStateImpl>      clientStates;
+  private final TCLogger                                        logger;
+  private final CopyOnWriteArraySet<ObjectReferenceAddListener> objectRefsAddListener;
 
   public ClientStateManagerImpl(final TCLogger logger) {
     this.logger = logger;
     this.clientStates = new ConcurrentHashMap<NodeID, ClientStateImpl>();
+    this.objectRefsAddListener = new CopyOnWriteArraySet<ObjectReferenceAddListener>();
   }
 
   public List<DNA> createPrunedChangesAndAddObjectIDTo(final Collection<DNA> changes,
@@ -93,12 +97,32 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
       c.lock();
       try {
         c.addReference(objectID);
+
+        for (ObjectReferenceAddListener listener : this.objectRefsAddListener) {
+          listener.objectReferenceAdded(objectID);
+        }
+
       } finally {
         c.unlock();
       }
     } else {
       this.logger.warn(": addReference : Client state is NULL (probably due to disconnect) : " + id);
     }
+  }
+
+  public void registerObjectReferenceAddListener(ObjectReferenceAddListener listener) {
+    boolean added = this.objectRefsAddListener.add(listener);
+    if (!added) {
+      logger.warn("Object Reference Add Listener " + listener + " already registered.");
+    }
+  }
+
+  public void unregisterObjectReferenceAddListener(ObjectReferenceAddListener listener) {
+    boolean removed = this.objectRefsAddListener.remove(listener);
+    if (!removed) {
+      logger.warn("Object Reference Add Listener " + listener + " not in registered set.");
+    }
+
   }
 
   /**
@@ -190,6 +214,11 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
           newReferences.add(oid);
         }
       }
+
+      for (ObjectReferenceAddListener listener : this.objectRefsAddListener) {
+        listener.objectReferencesAdded(oids);
+      }
+
       return newReferences;
     } finally {
       c.unlock();
@@ -303,4 +332,8 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     }
   }
 
+  // testing
+  public ObjectReferenceAddListener[] getObjectReferenceAddRegisteredListeners() {
+    return this.objectRefsAddListener.toArray(new ObjectReferenceAddListener[] {});
+  }
 }

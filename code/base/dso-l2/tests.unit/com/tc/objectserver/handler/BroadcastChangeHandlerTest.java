@@ -56,6 +56,7 @@ import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.api.InvalidateObjectManager;
+import com.tc.objectserver.l1.api.ObjectReferenceAddListener;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
@@ -677,6 +678,16 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
     public boolean startupNode(final NodeID nodeID) {
       throw new ImplementMe();
+    }
+
+    public void registerObjectReferenceAddListener(ObjectReferenceAddListener listener) {
+      throw new ImplementMe();
+
+    }
+
+    public void unregisterObjectReferenceAddListener(ObjectReferenceAddListener listener) {
+      throw new ImplementMe();
+
     }
 
   }

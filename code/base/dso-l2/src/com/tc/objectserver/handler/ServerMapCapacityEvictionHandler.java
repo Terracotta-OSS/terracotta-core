@@ -12,14 +12,13 @@ import com.tc.objectserver.api.ServerMapEvictionManager;
 import com.tc.objectserver.context.ServerMapEvictionInitiateContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.api.ClientStateManager;
-import com.tc.util.ObjectIDSet;
-
-import java.util.SortedSet;
+import com.tc.objectserver.l1.impl.ServerMapEvictionClientObjectReferenceSet;
 
 public class ServerMapCapacityEvictionHandler extends AbstractEventHandler implements EventHandler {
 
-  private final ServerMapEvictionManager serverMapEvictor;
-  private ClientStateManager             clientStateManager;
+  private final ServerMapEvictionManager     serverMapEvictor;
+  private ClientStateManager                 clientStateManager;
+  private ServerMapEvictionClientObjectReferenceSet clientObjectReferencesOptimizedSet;
 
   public ServerMapCapacityEvictionHandler(final ServerMapEvictionManager serverMapEvictor) {
     this.serverMapEvictor = serverMapEvictor;
@@ -28,10 +27,8 @@ public class ServerMapCapacityEvictionHandler extends AbstractEventHandler imple
   @Override
   public void handleEvent(final EventContext context) {
     final ServerMapEvictionInitiateContext smec = (ServerMapEvictionInitiateContext) context;
-    final SortedSet<ObjectID> faultedInClients = new ObjectIDSet();
-    this.clientStateManager.addAllReferencedIdsTo(faultedInClients);
     for (final ObjectID id : smec.getObjectIDs()) {
-      this.serverMapEvictor.doEvictionOn(id, faultedInClients, false);
+      this.serverMapEvictor.doEvictionOn(id, clientObjectReferencesOptimizedSet, false);
     }
   }
 
@@ -39,5 +36,6 @@ public class ServerMapCapacityEvictionHandler extends AbstractEventHandler imple
   protected void initialize(final ConfigurationContext context) {
     final ServerConfigurationContext scc = (ServerConfigurationContext) context;
     this.clientStateManager = scc.getClientStateManager();
+    this.clientObjectReferencesOptimizedSet = new ServerMapEvictionClientObjectReferenceSet(clientStateManager);
   }
 }

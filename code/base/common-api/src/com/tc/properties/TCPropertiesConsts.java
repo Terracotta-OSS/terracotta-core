@@ -536,6 +536,17 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
+   * Section : L2 ServerMap Properties
+   * Description : This section contains the defaults for the ServerMap for the L2
+   * 
+   * eviction.clientObjectReferences.refresh.interval
+   *              : ServerMap Eviction Client Object References refresh interval in milliseconds
+   * </code>
+   ********************************************************************************************************************/
+  public static final String L2_SERVERMAP_EVICTION_CLIENTOBJECT_REFERENCES_REFRESH_INTERVAL  = "l2.servermap.eviction.clientObjectReferences.refresh.interval";
+
+  /*********************************************************************************************************************
+   * <code>
    * Section : Common Logging properties for both L1 and L2
    * Description : Logging attributes that can be overridden.
    * maxBackups       - The maximum number of backup log files to keep maxLogFileSize - The maximum size of a log file in megabytes

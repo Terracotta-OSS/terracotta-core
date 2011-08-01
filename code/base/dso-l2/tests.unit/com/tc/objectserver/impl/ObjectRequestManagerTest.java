@@ -10,6 +10,7 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.async.api.Sink;
 import com.tc.bytes.TCByteBuffer;
+import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -55,6 +56,7 @@ import com.tc.objectserver.impl.ObjectRequestManagerImpl.ObjectRequestCache;
 import com.tc.objectserver.impl.ObjectRequestManagerImpl.RequestedObject;
 import com.tc.objectserver.impl.ObjectRequestManagerImpl.ResponseContext;
 import com.tc.objectserver.l1.api.ClientStateManager;
+import com.tc.objectserver.l1.api.ObjectReferenceAddListener;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListenerProviderImpl;
@@ -814,6 +816,16 @@ public class ObjectRequestManagerTest extends TestCase {
 
     public void removeReferences(NodeID nodeID, Set<ObjectID> removed, Set<ObjectID> requested) {
       throw new NotImplementedException(TestClientStateManager.class);
+    }
+
+    public void registerObjectReferenceAddListener(ObjectReferenceAddListener listener) {
+      throw new ImplementMe();
+
+    }
+
+    public void unregisterObjectReferenceAddListener(ObjectReferenceAddListener listener) {
+      throw new ImplementMe();
+
     }
 
   }
