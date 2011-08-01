@@ -32,7 +32,6 @@ bundled_components:
           - TERRACOTTA-TRIAL-LICENSE
           - INSTALL
           - SUBSCRIPTION-AGREEMENT
-          - terracotta-license.key
         guides:
           - QUICK-START
   - express-base:

@@ -200,6 +200,10 @@ artifacts:
         
 # end QUARTZ
 
+  - maven_artifact: false
+    name: terracotta-license.key
+    destination: .
+    url: http://kong/output/cage/terracotta-license.key
 # begin express products
   - maven_artifact: true
     groupId: org.terracotta.quartz
