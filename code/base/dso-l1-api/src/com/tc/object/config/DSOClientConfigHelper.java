@@ -302,4 +302,6 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig, DSOMBeanCon
   void addWebApplication(String pattern, SessionConfiguration config);
 
   L1ConfigurationSetupManager reloadServersConfiguration() throws ConfigurationSetupException;
+
+  Collection<ClassAdapterFactory> getAfterDSOAdapters(ClassInfo classInfo);
 }

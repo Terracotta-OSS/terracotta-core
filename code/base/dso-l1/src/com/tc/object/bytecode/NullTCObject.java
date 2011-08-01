@@ -15,6 +15,8 @@ import com.tc.object.util.ToggleableStrongReference;
 
 import gnu.trove.TLinkable;
 
+import java.lang.ref.WeakReference;
+
 /**
  * Null impl of TCObject
  */
@@ -112,7 +114,7 @@ public class NullTCObject implements TCObject {
     // do nothing
   }
 
-  public void hydrate(final DNA from, final boolean force) throws DNAException {
+  public void hydrate(final DNA from, final boolean force, WeakReference peer) throws DNAException {
     // do nothing
   }
 

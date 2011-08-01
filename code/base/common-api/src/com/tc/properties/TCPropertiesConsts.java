@@ -706,6 +706,7 @@ public interface TCPropertiesConsts {
    ********************************************************************************************************************/
   public static final String L1_LOCKMANAGER_STRIPED_COUNT                                    = "l1.lockmanager.striped.count";
   public static final String L1_LOCKMANAGER_TIMEOUT_INTERVAL                                 = "l1.lockmanager.timeout.interval";
+  public static final String L1_LOCKMANAGER_PINNING_ENABLED                                  = "l1.lockmanager.pinning.enabled";
 
   /*********************************************************************************************************************
    * <code>

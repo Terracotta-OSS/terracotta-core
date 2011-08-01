@@ -37,6 +37,7 @@ import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.field.TCFieldFactory;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.gtx.ClientGlobalTransactionManagerImpl;
+import com.tc.object.gtx.PreTransactionFlushCallback;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
@@ -59,6 +60,7 @@ import com.tc.object.msg.NodeMetaDataMessageFactory;
 import com.tc.object.msg.NodesWithKeysMessageFactory;
 import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.net.DSOClientMessageChannel;
+import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
@@ -126,8 +128,8 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
   }
 
   public ClientGlobalTransactionManager createClientGlobalTransactionManager(final RemoteTransactionManager remoteTxnMgr,
-                                                                             final RemoteServerMapManager remoteServerMapManager) {
-    return new ClientGlobalTransactionManagerImpl(remoteTxnMgr, remoteServerMapManager);
+                                                                             final PreTransactionFlushCallback preTransactionFlushCallback) {
+    return new ClientGlobalTransactionManagerImpl(remoteTxnMgr, preTransactionFlushCallback);
   }
 
   public RemoteObjectManagerImpl createRemoteObjectManager(final TCLogger logger,
@@ -164,10 +166,11 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                      final TCObjectFactory objectFactory,
                                                      final Portability portability,
                                                      final DSOClientMessageChannel dsoChannel,
-                                                     final ToggleableReferenceManager toggleRefMgr) {
+                                                     final ToggleableReferenceManager toggleRefMgr,
+                                                     TCObjectSelfStore tcObjectSelfStore) {
     return new ClientObjectManagerImpl(remoteObjectManager, dsoConfig, idProvider, rtLogger, clientIDProvider,
                                        classProviderLocal, classFactory, objectFactory, portability, dsoChannel,
-                                       toggleRefMgr);
+                                       toggleRefMgr, tcObjectSelfStore);
   }
 
   public ClientLockManager createLockManager(final DSOClientMessageChannel dsoChannel,
@@ -272,22 +275,22 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
 
   public TCClassFactory createTCClassFactory(final DSOClientConfigHelper config, final ClassProvider classProvider,
                                              final DNAEncoding dnaEncoding, final Manager manager,
+                                             final L1ServerMapLocalCacheManager localCacheManager,
                                              final RemoteServerMapManager remoteServerMapManager) {
     return new TCClassFactoryImpl(new TCFieldFactory(config), config, classProvider, dnaEncoding, manager,
-                                  remoteServerMapManager);
+                                  localCacheManager, remoteServerMapManager);
   }
 
   public RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger,
                                                              final DSOClientMessageChannel dsoChannel,
                                                              final SessionManager sessionManager,
-                                                             final Sink recallLockSink,
-                                                             final Sink capacityEvictionSink,
-                                                             final Sink ttiTTLEvitionSink) {
+                                                             final Sink ttiTTLEvitionSink,
+                                                             final L1ServerMapLocalCacheManager globalLocalCacheManager) {
     final GroupID defaultGroups[] = dsoChannel.getGroupIDs();
     Assert.assertNotNull(defaultGroups);
     Assert.assertEquals(1, defaultGroups.length);
     return new RemoteServerMapManagerImpl(defaultGroups[0], logger, dsoChannel.getServerMapMessageFactory(),
-                                          sessionManager, recallLockSink, capacityEvictionSink, ttiTTLEvitionSink);
+                                          sessionManager, ttiTTLEvitionSink, globalLocalCacheManager);
   }
 
   public RemoteSearchRequestManager createRemoteSearchRequestManager(final TCLogger logger,

@@ -9,6 +9,7 @@ import org.mockito.Matchers;
 import org.mockito.Mockito;
 
 import com.tc.exception.ImplementMe;
+import com.tc.invalidation.Invalidations;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
@@ -23,12 +24,12 @@ import com.tc.net.protocol.tcm.TestTCMessage;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.object.ObjectID;
 import com.tc.object.locks.ClientServerExchangeLockContext;
-import com.tc.object.locks.ServerLockContext.State;
-import com.tc.object.locks.ServerLockContext.Type;
 import com.tc.object.locks.StringLockID;
 import com.tc.object.locks.TestLockManager;
-import com.tc.object.locks.TestLockManager.ReestablishLockContext;
 import com.tc.object.locks.ThreadID;
+import com.tc.object.locks.ServerLockContext.State;
+import com.tc.object.locks.ServerLockContext.Type;
+import com.tc.object.locks.TestLockManager.ReestablishLockContext;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.TestClientHandshakeMessage;
@@ -201,7 +202,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     handshake.transactionSequenceIDs = sequenceIDs;
     handshake.clientObjectIds.add(new ObjectID(200));
     handshake.clientObjectIds.add(new ObjectID(20002));
-    handshake.validateObjectIds.add(new ObjectID(20002));
+    handshake.validateObjectIds.add(new ObjectID(200), new ObjectID(20002));
 
     final List<ClientServerExchangeLockContext> lockContexts = new LinkedList();
     lockContexts.add(new ClientServerExchangeLockContext(new StringLockID("my lock"), clientID1, new ThreadID(10001),
@@ -257,9 +258,10 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
 
     // make sure object validation ids are added to InvalidateObjectManager
     assertTrue(handshake.validateObjectIds.size() > 0);
-    final ArgumentCaptor<Set> requestContextArg = ArgumentCaptor.forClass(Set.class);
+    final ArgumentCaptor<Invalidations> requestContextArg = ArgumentCaptor.forClass(Invalidations.class);
 
-    Mockito.verify(invalidateObjMgr, Mockito.atMost(1)).addObjectsToValidateFor((ClientID) Matchers.eq(handshake
+    Mockito.verify(invalidateObjMgr, Mockito.atMost(1)).addObjectsToValidateFor(
+                                                                                (ClientID) Matchers.eq(handshake
                                                                                     .getSourceNodeID()),
                                                                                 requestContextArg.capture());
     assertEquals(handshake.validateObjectIds, requestContextArg.getValue());

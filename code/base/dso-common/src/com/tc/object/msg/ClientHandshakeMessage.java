@@ -4,6 +4,7 @@
  */
 package com.tc.object.msg;
 
+import com.tc.invalidation.Invalidations;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 
@@ -17,7 +18,7 @@ public interface ClientHandshakeMessage extends TCMessage {
 
   public Set getObjectIDs();
 
-  public Set getObjectIDsToValidate();
+  public Invalidations getObjectIDsToValidate();
 
   public void addLockContext(ClientServerExchangeLockContext ctxt);
 

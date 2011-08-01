@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.managedobject;
 
+import com.tc.invalidation.Invalidations;
 import com.tc.object.ObjectID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.util.ObjectIDSet;
@@ -24,8 +25,8 @@ public class ApplyTransactionInfo {
   private final boolean             isActiveTxn;
   private Set<ObjectID>             ignoreBroadcasts = Collections.EMPTY_SET;
   private Set<ObjectID>             initiateEviction = Collections.EMPTY_SET;
-  private Set<ObjectID>             invalidate       = Collections.EMPTY_SET;
   private SortedSet<ObjectID>       deleteObjects    = TCCollections.EMPTY_SORTED_SET;
+  private Invalidations             invalidate       = null;
 
   // For tests
   public ApplyTransactionInfo() {
@@ -142,14 +143,14 @@ public class ApplyTransactionInfo {
     return this.initiateEviction;
   }
 
-  public void invalidate(ObjectID old) {
-    if (this.invalidate == Collections.EMPTY_SET) {
-      this.invalidate = new ObjectIDSet();
+  public void invalidate(ObjectID mapID, ObjectID old) {
+    if (this.invalidate == null) {
+      this.invalidate = new Invalidations();
     }
-    this.invalidate.add(old);
+    this.invalidate.add(mapID, old);
   }
 
-  public Set<ObjectID> getObjectIDsToInvalidate() {
+  public Invalidations getObjectIDsToInvalidate() {
     return invalidate;
   }
 

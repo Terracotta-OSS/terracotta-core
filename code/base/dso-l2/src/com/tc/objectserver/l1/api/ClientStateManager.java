@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.l1.api;
 
+import com.tc.invalidation.Invalidations;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
@@ -53,7 +54,7 @@ public interface ClientStateManager {
    */
   public List<DNA> createPrunedChangesAndAddObjectIDTo(Collection<DNA> changes, ApplyTransactionInfo references,
                                                        NodeID clientID, Set<ObjectID> objectIDs,
-                                                       Set<ObjectID> invalidateObjectIDs);
+                                                       Invalidations invalidationsForClient);
 
   public Set<ObjectID> addAllReferencedIdsTo(Set<ObjectID> rescueIds);
 

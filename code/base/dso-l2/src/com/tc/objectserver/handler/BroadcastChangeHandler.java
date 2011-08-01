@@ -8,6 +8,7 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
+import com.tc.invalidation.Invalidations;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -78,7 +79,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
       final Set notifiedWaiters = bcc.getNewlyPendingWaiters().getNotifiedFor(clientID);
       List prunedChanges = Collections.EMPTY_LIST;
       final SortedSet<ObjectID> lookupObjectIDs = new ObjectIDSet();
-      final SortedSet<ObjectID> invalidateObjectIDs = new ObjectIDSet();
+      final Invalidations invalidateObjectIDs = new Invalidations();
 
       if (!clientID.equals(committerID)) {
         prunedChanges = this.clientStateManager.createPrunedChangesAndAddObjectIDTo(bcc.getChanges(), bcc

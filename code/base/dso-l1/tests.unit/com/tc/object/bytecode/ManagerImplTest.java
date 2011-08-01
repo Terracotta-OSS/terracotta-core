@@ -13,6 +13,7 @@ import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
+import com.tc.object.TCObjectSelf;
 import com.tc.object.appevent.ApplicationEvent;
 import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.dna.api.DNA;
@@ -343,6 +344,16 @@ public class ManagerImplTest extends BaseDSOTestCase {
 
     public void preFetchObject(final ObjectID id) {
       throw new ImplementMe();
+    }
+
+    public void removedTCObjectSelfFromStore(TCObjectSelf value) {
+      throw new ImplementMe();
+
+    }
+
+    public void initializeTCClazzIfRequired(TCObjectSelf tcoObjectSelf) {
+      throw new ImplementMe();
+
     }
   }
 }

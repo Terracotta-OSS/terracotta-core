@@ -5,6 +5,7 @@
 package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.invalidation.Invalidations;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCSerializable;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -27,27 +28,27 @@ import java.util.Set;
 
 public class ClientHandshakeMessageImpl extends DSOMessageBase implements ClientHandshakeMessage {
 
-  private static final byte MANAGED_OBJECT_IDS       = 1;
-  private static final byte LOCK_CONTEXT             = 2;
-  private static final byte TRANSACTION_SEQUENCE_IDS = 3;
-  private static final byte RESENT_TRANSACTION_IDS   = 4;
-  private static final byte REQUEST_OBJECT_IDS       = 5;
-  private static final byte CLIENT_VERSION           = 6;
-  private static final byte SERVER_HIGH_WATER_MARK   = 7;
-  private static final byte ENTERPRISE_CLIENT        = 8;
-  private static final byte OBJECTS_TO_VALIDATE      = 9;
-  private static final byte LOCAL_TIME_MILLS         = 10;
+  private static final byte   MANAGED_OBJECT_IDS       = 1;
+  private static final byte   LOCK_CONTEXT             = 2;
+  private static final byte   TRANSACTION_SEQUENCE_IDS = 3;
+  private static final byte   RESENT_TRANSACTION_IDS   = 4;
+  private static final byte   REQUEST_OBJECT_IDS       = 5;
+  private static final byte   CLIENT_VERSION           = 6;
+  private static final byte   SERVER_HIGH_WATER_MARK   = 7;
+  private static final byte   ENTERPRISE_CLIENT        = 8;
+  private static final byte   OBJECTS_TO_VALIDATE      = 9;
+  private static final byte   LOCAL_TIME_MILLS         = 10;
 
-  private final ObjectIDSet objectIDs                = new ObjectIDSet();
-  private final ObjectIDSet objectsToValidate        = new ObjectIDSet();
-  private final Set         lockContexts             = new HashSet();
-  private final List        sequenceIDs              = new ArrayList();
-  private final List        txnIDs                   = new ArrayList();
-  private long              currentLocalTimeMills    = System.currentTimeMillis();
-  private boolean           requestObjectIDs;
-  private boolean           enterpriseClient         = false;
-  private long              serverHighWaterMark      = 0;
-  private String            clientVersion            = "UNKNOW";
+  private final ObjectIDSet   objectIDs                = new ObjectIDSet();
+  private final Invalidations objectsToValidate        = new Invalidations();
+  private final Set           lockContexts             = new HashSet();
+  private final List          sequenceIDs              = new ArrayList();
+  private final List          txnIDs                   = new ArrayList();
+  private long                currentLocalTimeMills    = System.currentTimeMillis();
+  private boolean             requestObjectIDs;
+  private boolean             enterpriseClient         = false;
+  private long                serverHighWaterMark      = 0;
+  private String              clientVersion            = "UNKNOW";
 
   public ClientHandshakeMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                     MessageChannel channel, TCMessageType messageType) {
@@ -67,7 +68,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
     return this.objectIDs;
   }
 
-  public Set getObjectIDsToValidate() {
+  public Invalidations getObjectIDsToValidate() {
     return this.objectsToValidate;
   }
 
@@ -154,7 +155,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
         this.objectIDs.deserializeFrom(getInputStream());
         return true;
       case OBJECTS_TO_VALIDATE:
-        this.objectsToValidate.deserializeFrom(getInputStream());
+        objectsToValidate.deserializeFrom(getInputStream());
         return true;
       case LOCK_CONTEXT:
         this.lockContexts.add(getObject(new ClientServerExchangeLockContext()));

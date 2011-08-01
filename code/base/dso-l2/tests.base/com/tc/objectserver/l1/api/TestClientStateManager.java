@@ -5,6 +5,7 @@
 package com.tc.objectserver.l1.api;
 
 import com.tc.exception.ImplementMe;
+import com.tc.invalidation.Invalidations;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
@@ -45,7 +46,7 @@ public class TestClientStateManager implements ClientStateManager {
 
   public List<DNA> createPrunedChangesAndAddObjectIDTo(final Collection<DNA> changes,
                                                        final ApplyTransactionInfo includeIDs, final NodeID clientID,
-                                                       final Set<ObjectID> objectIDs, final Set<ObjectID> invalidIDs) {
+                                                       final Set<ObjectID> objectIDs, Invalidations invalidIDs) {
     return Collections.emptyList();
   }
 

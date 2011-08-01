@@ -5,6 +5,7 @@
 package com.tc.object.msg;
 
 import com.tc.exception.ImplementMe;
+import com.tc.invalidation.Invalidations;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -23,7 +24,7 @@ import java.util.Set;
 
 public class TestClientHandshakeMessage extends TestTCMessage implements ClientHandshakeMessage {
   public Set                    clientObjectIds                = new HashSet();
-  public Set                    validateObjectIds              = new HashSet();
+  public Invalidations          validateObjectIds              = new Invalidations();
   public NoExceptionLinkedQueue sendCalls                      = new NoExceptionLinkedQueue();
   public ClientID               clientID;
   public List                   lockContexts                   = new ArrayList();
@@ -143,7 +144,7 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
     this.enterpriseClient = isEnterpirseClient;
   }
 
-  public Set getObjectIDsToValidate() {
+  public Invalidations getObjectIDsToValidate() {
     return validateObjectIds;
   }
 

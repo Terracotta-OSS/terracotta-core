@@ -824,6 +824,15 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
+  public Collection<ClassAdapterFactory> getAfterDSOAdapters(ClassInfo classInfo) {
+    TransparencyClassSpecInternal spec = getSpec(classInfo.getName());
+    if (spec == null) {
+      return Collections.EMPTY_LIST;
+    } else {
+      return spec.getAfterDSOClassAdapters();
+    }
+  }
+
   public void addClassReplacement(final String originalClassName, final String replacementClassName,
                                   final URL replacementResource, final ClassReplacementTest test) {
     this.classReplacements.addMapping(originalClassName, replacementClassName, replacementResource, test);
@@ -1599,14 +1608,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     userDefinedBootSpecs.remove(className);
   }
 
-  public TransparencyClassSpec getSpec(String className) {
+  public TransparencyClassSpecInternal getSpec(String className) {
     synchronized (specLock) {
       // NOTE: This method doesn't create a spec for you. If you want that use getOrCreateSpec()
       className = className.replace('/', '.');
-      TransparencyClassSpec rv = (TransparencyClassSpec) classSpecs.get(className);
+      TransparencyClassSpecInternal rv = (TransparencyClassSpecInternal) classSpecs.get(className);
 
       if (rv == null) {
-        rv = (TransparencyClassSpec) userDefinedBootSpecs.get(className);
+        rv = (TransparencyClassSpecInternal) userDefinedBootSpecs.get(className);
       } else {
         // shouldn't have a spec in both of the spec collections
         Assert.assertNull(userDefinedBootSpecs.get(className));

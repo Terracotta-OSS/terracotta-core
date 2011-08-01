@@ -7,11 +7,11 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
-import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.l1.impl.ServerMapEvictionClientObjectReferenceSet;
@@ -27,9 +27,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
+import java.util.Map.Entry;
 
 public class ConcurrentDistributedServerMapManagedObjectState extends ConcurrentDistributedMapManagedObjectState
     implements EvictableMap {
@@ -184,11 +184,11 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   protected void applyMethod(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
                              final Object[] params) {
     if (method == SerializationUtil.REMOVE_IF_VALUE_EQUAL) {
-      applyRemoveIfValueEqual(applyInfo, params);
+      applyRemoveIfValueEqual(objectID, applyInfo, params);
     } else if (method == SerializationUtil.PUT_IF_ABSENT) {
-      applyPutIfAbsent(applyInfo, params);
+      applyPutIfAbsent(objectID, applyInfo, params);
     } else if (method == SerializationUtil.REPLACE_IF_VALUE_EQUAL) {
-      applyReplaceIfValueEqual(applyInfo, params);
+      applyReplaceIfValueEqual(objectID, applyInfo, params);
     } else if (method == SerializationUtil.EVICTION_COMPLETED) {
       evictionCompleted();
     } else if (method != SerializationUtil.CLEAR_LOCAL_CACHE) {
@@ -204,9 +204,9 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   }
 
   @Override
-  protected void removedValueFromMap(ApplyTransactionInfo applyInfo, ObjectID old) {
+  protected void removedValueFromMap(final ObjectID mapID, ApplyTransactionInfo applyInfo, ObjectID old) {
     if (invalidateOnChange) {
-      applyInfo.invalidate(old);
+      applyInfo.invalidate(mapID, old);
     }
     if (deleteValueOnRemove && ENABLE_DELETE_VALUE_ON_REMOVE) {
       applyInfo.deleteObject(old);
@@ -225,19 +225,19 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     }
   }
 
-  private void applyRemoveIfValueEqual(ApplyTransactionInfo applyInfo, final Object[] params) {
+  private void applyRemoveIfValueEqual(final ObjectID mapID, ApplyTransactionInfo applyInfo, final Object[] params) {
     final Object key = getKey(params);
     final Object value = getValue(params);
     final Object valueInMap = this.references.get(key);
     if (value.equals(valueInMap)) {
       this.references.remove(key);
       if (valueInMap instanceof ObjectID) {
-        removedValueFromMap(applyInfo, (ObjectID) valueInMap);
+        removedValueFromMap(mapID, applyInfo, (ObjectID) valueInMap);
       }
     }
   }
 
-  private void applyReplaceIfValueEqual(ApplyTransactionInfo applyInfo, Object[] params) {
+  private void applyReplaceIfValueEqual(final ObjectID mapID, ApplyTransactionInfo applyInfo, Object[] params) {
     final Object key = params[0];
     final Object current = params[1];
     final Object newValue = params[2];
@@ -245,15 +245,15 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     if (current.equals(valueInMap)) {
       this.references.put(key, newValue);
       if (valueInMap instanceof ObjectID) {
-        removedValueFromMap(applyInfo, (ObjectID) valueInMap);
+        removedValueFromMap(mapID, applyInfo, (ObjectID) valueInMap);
       }
     } else if (newValue instanceof ObjectID) {
       // Invalidate the newValue so that the VM that initiated this call can remove it from the local cache.
-      removedValueFromMap(applyInfo, (ObjectID) newValue);
+      removedValueFromMap(mapID, applyInfo, (ObjectID) newValue);
     }
   }
 
-  private void applyPutIfAbsent(ApplyTransactionInfo applyInfo, Object[] params) {
+  private void applyPutIfAbsent(final ObjectID mapID, ApplyTransactionInfo applyInfo, Object[] params) {
     final Object key = getKey(params);
     final Object value = getValue(params);
     final Object valueInMap = this.references.get(key);
@@ -261,7 +261,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
       this.references.put(key, value);
     } else if (value instanceof ObjectID) {
       // Invalidate the value so that the VM that initiated this call can remove it from the local cache.
-      removedValueFromMap(applyInfo, (ObjectID) value);
+      removedValueFromMap(mapID, applyInfo, (ObjectID) value);
     }
   }
 

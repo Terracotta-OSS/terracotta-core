@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -9,7 +10,7 @@ import com.tc.object.dna.api.DNA;
 public class TestObjectFactory implements TCObjectFactory {
 
   public TCObject tcObject;
-  public Object peerObject;
+  public Object   peerObject;
 
   public void setObjectManager(ClientObjectManager objectManager) {
     return;
@@ -24,7 +25,7 @@ public class TestObjectFactory implements TCObjectFactory {
   }
 
   public Object getNewPeerObject(TCClass type, Object parent) throws IllegalArgumentException, SecurityException {
-   return peerObject;
+    return peerObject;
   }
 
   public Object getNewArrayInstance(TCClass type, int size) {
@@ -32,11 +33,16 @@ public class TestObjectFactory implements TCObjectFactory {
   }
 
   public Object getNewPeerObject(TCClass type) throws IllegalArgumentException, SecurityException {
-   return peerObject;
+    return peerObject;
   }
 
   public Object getNewPeerObject(TCClass type, DNA dna) {
     return peerObject;
+  }
+
+  public void initClazzIfRequired(Class clazz, TCObjectSelf tcObjectSelf) {
+    throw new ImplementMe();
+
   }
 
 }

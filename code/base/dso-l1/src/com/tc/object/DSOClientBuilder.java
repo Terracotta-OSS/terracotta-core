@@ -28,6 +28,7 @@ import com.tc.object.config.MBeanSpec;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
+import com.tc.object.gtx.PreTransactionFlushCallback;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.idprovider.api.ObjectIDProvider;
@@ -45,6 +46,7 @@ import com.tc.object.msg.NodeMetaDataMessageFactory;
 import com.tc.object.msg.NodesWithKeysMessageFactory;
 import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.net.DSOClientMessageChannel;
+import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
@@ -85,14 +87,14 @@ public interface DSOClientBuilder {
                                                     final TunnelingEventHandler teh);
 
   ClientGlobalTransactionManager createClientGlobalTransactionManager(final RemoteTransactionManager remoteTxnMgr,
-                                                                      final RemoteServerMapManager remoteServerMapManager);
+                                                                      final PreTransactionFlushCallback preTransactionFlushCallback);
 
   RemoteObjectManager createRemoteObjectManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
                                                 final int faultCount, final SessionManager sessionManager);
 
   RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
-                                                      final SessionManager sessionManager, Sink lockRecallSink,
-                                                      Sink capacityEvictionSink, Sink ttiTTLEvitionSink);
+                                                      final SessionManager sessionManager, Sink ttiTTLEvitionSink,
+                                                      final L1ServerMapLocalCacheManager globalLocalCacheManager);
 
   RemoteSearchRequestManager createRemoteSearchRequestManager(final TCLogger logger,
                                                               final DSOClientMessageChannel dsoChannel,
@@ -112,7 +114,8 @@ public interface DSOClientBuilder {
                                               final ClassProvider classProviderLocal,
                                               final TCClassFactory classFactory, final TCObjectFactory objectFactory,
                                               final Portability portability, final DSOClientMessageChannel dsoChannel,
-                                              final ToggleableReferenceManager toggleRefMgr);
+                                              final ToggleableReferenceManager toggleRefMgr,
+                                              TCObjectSelfStore tcObjectSelfStore);
 
   ClientLockManager createLockManager(final DSOClientMessageChannel dsoChannel, final ClientIDLogger clientIDLogger,
                                       final SessionManager sessionManager, final ClientLockStatManager lockStatManager,
@@ -159,6 +162,7 @@ public interface DSOClientBuilder {
 
   TCClassFactory createTCClassFactory(final DSOClientConfigHelper config, final ClassProvider classProvider,
                                       final DNAEncoding dnaEncoding, final Manager manager,
+                                      final L1ServerMapLocalCacheManager globalLocalCacheManager,
                                       final RemoteServerMapManager remoteServerMapManager);
 
   LongGCLogger createLongGCLogger(long gcTimeOut);

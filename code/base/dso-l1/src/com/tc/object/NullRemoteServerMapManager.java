@@ -3,10 +3,11 @@
  */
 package com.tc.object;
 
+import com.tc.invalidation.Invalidations;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
-import com.tc.object.cache.CachedItem;
 import com.tc.object.locks.LockID;
+import com.tc.object.locks.ServerLockLevel;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 
@@ -15,6 +16,11 @@ import java.util.Map;
 import java.util.Set;
 
 public final class NullRemoteServerMapManager implements RemoteServerMapManager {
+
+  public void initialize(ClientObjectManager clientObjectManager) {
+    //
+  }
+
   public void unpause(final NodeID remoteNode, final int disconnected) {
     //
   }
@@ -32,10 +38,6 @@ public final class NullRemoteServerMapManager implements RemoteServerMapManager 
     //
   }
 
-  public void removeCachedItem(final Object id, final CachedItem item) {
-    //
-  }
-
   public long getAllSize(final ObjectID[] mapIDs) {
     return -1;
   }
@@ -47,10 +49,6 @@ public final class NullRemoteServerMapManager implements RemoteServerMapManager 
   public Set getAllKeys(ObjectID oid) {
     //
     return null;
-  }
-
-  public void flush(final Object id) {
-    //
   }
 
   public void addResponseForGetAllSize(final SessionID localSessionID, final GroupID groupID,
@@ -68,24 +66,20 @@ public final class NullRemoteServerMapManager implements RemoteServerMapManager 
     //
   }
 
-  public void addCachedItem(final Object id, final CachedItem item) {
-    //
-  }
-
-  public void clearCachedItemsForLocks(final Set<LockID> toEvict, boolean waitforRecallComplete) {
-    //
-  }
-
   public void initiateCachedItemEvictionFor(final TCObjectServerMap serverMap) {
-    //
-  }
-
-  public void expired(final TCObjectServerMap serverMap, final CachedItem ci) {
     //
   }
 
   public void addResponseForGetAllKeys(SessionID localSessionID, ObjectID mapID, ServerMapRequestID requestID,
                                        Set keys, NodeID nodeID) {
+    //
+  }
+
+  public void processInvalidations(Invalidations invalidations) {
+    //
+  }
+
+  public void preTransactionFlush(LockID lockID, ServerLockLevel level) {
     //
   }
 

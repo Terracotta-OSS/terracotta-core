@@ -18,7 +18,7 @@ public interface TCObjectFactory {
 
   public TCObject getNewInstance(ObjectID id, Object peer, Class clazz, boolean isNew);
 
-  public TCObject getNewInstance(ObjectID id, Class clazz, boolean isNew);
+  // public TCObject getNewInstance(ObjectID id, Class clazz, boolean isNew);
 
   public Object getNewPeerObject(TCClass type, Object parent) throws IllegalArgumentException, SecurityException,
       InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException;
@@ -29,5 +29,7 @@ public interface TCObjectFactory {
       IllegalAccessException, InvocationTargetException, SecurityException, NoSuchMethodException;
 
   public Object getNewPeerObject(TCClass type, DNA dna) throws IOException, ClassNotFoundException;
+
+  public void initClazzIfRequired(Class clazz, TCObjectSelf tcObjectSelf);
 
 }

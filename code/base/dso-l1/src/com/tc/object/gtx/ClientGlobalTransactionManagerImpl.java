@@ -7,7 +7,6 @@ package com.tc.object.gtx;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
-import com.tc.object.RemoteServerMapManager;
 import com.tc.object.locks.LockFlushCallback;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.ServerLockLevel;
@@ -18,30 +17,29 @@ import com.tc.object.tx.TransactionID;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.Map.Entry;
 
 public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransactionManager {
 
-  private static final TCLogger          logger               = TCLogging
-                                                                  .getLogger(ClientGlobalTransactionManagerImpl.class);
+  private static final TCLogger             logger               = TCLogging
+                                                                     .getLogger(ClientGlobalTransactionManagerImpl.class);
 
-  private static final int               ALLOWED_LWM_DELTA    = 100;
-  private final Set                      applied              = new HashSet();
-  private final SortedMap                globalTransactionIDs = new TreeMap();
+  private static final int                  ALLOWED_LWM_DELTA    = 100;
+  private final Set                         applied              = new HashSet();
+  private final SortedMap                   globalTransactionIDs = new TreeMap();
 
-  private GlobalTransactionID            lowWatermark         = GlobalTransactionID.NULL_ID;
-  private final RemoteTransactionManager remoteTransactionManager;
-  private int                            ignoredCount         = 0;
-
-  private final RemoteServerMapManager   remoteServerMapManager;
+  private GlobalTransactionID               lowWatermark         = GlobalTransactionID.NULL_ID;
+  private final RemoteTransactionManager    remoteTransactionManager;
+  private int                               ignoredCount         = 0;
+  private final PreTransactionFlushCallback preTransactionFlushCallback;
 
   public ClientGlobalTransactionManagerImpl(final RemoteTransactionManager remoteTransactionManager,
-                                            final RemoteServerMapManager serverMapManager) {
+                                            final PreTransactionFlushCallback preTransactionFlushCallback) {
     this.remoteTransactionManager = remoteTransactionManager;
-    this.remoteServerMapManager = serverMapManager;
+    this.preTransactionFlushCallback = preTransactionFlushCallback;
   }
 
   // For testing
@@ -98,9 +96,7 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
   }
 
   public void flush(final LockID lockID, ServerLockLevel level) {
-    if (level == ServerLockLevel.WRITE) {
-      this.remoteServerMapManager.flush(lockID);
-    }
+    preTransactionFlushCallback.preTransactionFlush(lockID, level);
     this.remoteTransactionManager.flush(lockID);
   }
 
@@ -109,9 +105,7 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
   }
 
   public boolean asyncFlush(final LockID lockID, final LockFlushCallback callback, ServerLockLevel level) {
-    if (level == ServerLockLevel.WRITE) {
-      this.remoteServerMapManager.flush(lockID);
-    }
+    preTransactionFlushCallback.preTransactionFlush(lockID, level);
     return this.remoteTransactionManager.asyncFlush(lockID, callback);
   }
 }

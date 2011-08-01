@@ -424,6 +424,23 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       }
 
       // ------------------------------------------------
+      // -- After DSO Adapters phase
+      factories = Collections.EMPTY_LIST;
+      synchronized (m_configHelper) {
+        factories = m_configHelper.getAfterDSOAdapters(classInfo);
+      }
+
+      // These class adapters are not run the synchronized(m_configHelper) block above since additional classloading in
+      // the adapter(s) can cause a deadlock
+      for (ClassAdapterFactory factory : factories) {
+        final ClassReader reader = new ClassReader(context.getCurrentBytecode());
+        final ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
+        ClassVisitor adapter = factory.create(writer, context.getLoader());
+        reader.accept(adapter, ClassReader.SKIP_FRAMES);
+        context.setCurrentBytecode(writer.toByteArray());
+      }
+
+      // ------------------------------------------------
       // -- Generic finalization -- serialVersionUID
       if (context.isAdvised() || isDsoAdaptable) {
         if (ClassInfoHelper.implementsInterface(classInfo, "java.io.Serializable")) {

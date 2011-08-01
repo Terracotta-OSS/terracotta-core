@@ -14,7 +14,6 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAException;
@@ -43,7 +42,7 @@ public abstract class TCObjectImpl implements TCObject {
   // This initial negative version number is important since GID is assigned in the server from 0.
   private long                  version                   = -1;
 
-  private final ObjectID        objectID;
+  protected final ObjectID      objectID;
   protected final TCClass       tcClazz;
   private WeakReference         peerObject;
   private byte                  flags                     = 0;
@@ -81,11 +80,6 @@ public abstract class TCObjectImpl implements TCObject {
 
   protected void setPeerObject(final WeakReference pojo) {
     this.peerObject = pojo;
-    Object realPojo;
-    if ((realPojo = this.peerObject.get()) instanceof Manageable) {
-      final Manageable m = (Manageable) realPojo;
-      m.__tc_managed(this);
-    }
   }
 
   public TCClass getTCClass() {
@@ -99,20 +93,23 @@ public abstract class TCObjectImpl implements TCObject {
   /**
    * Reconstitutes the object using the data in the DNA strand. XXX: We may need to signal (via a different signature or
    * args) that the hydration is intended to initialize the object from scratch or if it's a delta. We must avoid
-   * creating a new instance of the peer object if the strand is just a delta.
+   * creating a new instance of the peer object if the strand is just a delta.<br>
+   * <p>
+   * TODO:: Split into two interface, peer is null if not new.
    * 
    * @throws ClassNotFoundException
    */
-  public void hydrate(final DNA from, final boolean force) throws ClassNotFoundException {
+  public void hydrate(final DNA from, final boolean force, final WeakReference peer) throws ClassNotFoundException {
     synchronized (getResolveLock()) {
-      final boolean isNewLoad = isNull();
-      createPeerObjectIfNecessary(from);
-
+      if (peer != null) {
+        setPeerObject(peer);
+      }
       final Object po = getPeerObject();
       if (po == null) { return; }
       try {
         this.tcClazz.hydrate(this, from, po, force);
-        if (isNewLoad) {
+        if (peer != null) {
+          // This is newly created object, load action
           performOnLoadActionIfNecessary(po);
         }
       } catch (final ClassNotFoundException e) {
@@ -207,12 +204,6 @@ public abstract class TCObjectImpl implements TCObject {
       return true;
     }
     return false;
-  }
-
-  private void createPeerObjectIfNecessary(final DNA from) {
-    if (isNull()) {
-      setPeerObject(getObjectManager().createNewPeer(this.tcClazz, from));
-    }
   }
 
   public ObjectID setReference(final String fieldName, final ObjectID id) {

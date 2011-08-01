@@ -13,17 +13,22 @@ import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.ServerLockLevel;
 
-public class LockRecallHandler extends AbstractEventHandler {
+import java.util.Set;
+
+public class LockRecallHandler extends AbstractEventHandler implements LockRecaller {
 
   private ClientLockManager lockManager;
 
   @Override
   public void handleEvent(final EventContext context) {
     final LocksToRecallContext recallContext = (LocksToRecallContext) context;
-    for (final LockID lock : recallContext.getLocksToRecall()) {
+    recallLocksInline(recallContext.getLocksToRecall());
+  }
+
+  public void recallLocksInline(final Set<LockID> locks) {
+    for (final LockID lock : locks) {
       this.lockManager.recall(null, null, lock, ServerLockLevel.WRITE, -1, true);
     }
-    recallContext.recallComplete();
   }
 
   @Override

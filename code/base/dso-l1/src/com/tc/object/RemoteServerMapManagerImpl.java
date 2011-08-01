@@ -6,26 +6,25 @@ package com.tc.object;
 import com.tc.async.api.Sink;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCObjectNotFoundException;
+import com.tc.invalidation.Invalidations;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
-import com.tc.object.cache.CachedItem;
-import com.tc.object.cache.CachedItemStore;
-import com.tc.object.context.CachedItemEvictionContext;
-import com.tc.object.context.CachedItemExpiredContext;
-import com.tc.object.context.LocksToRecallContext;
 import com.tc.object.locks.LockID;
+import com.tc.object.locks.ServerLockLevel;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.GetAllKeysServerMapRequestMessage;
 import com.tc.object.msg.GetAllSizeServerMapRequestMessage;
 import com.tc.object.msg.GetValueServerMapRequestMessage;
 import com.tc.object.msg.ServerMapMessageFactory;
 import com.tc.object.msg.ServerMapRequestMessage;
+import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.Util;
 
 import java.util.Collection;
@@ -34,22 +33,20 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Map.Entry;
 
 public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
 
   // TODO::Make its own property
   private static final int                                               MAX_OUTSTANDING_REQUESTS_SENT_IMMEDIATELY = TCPropertiesImpl
                                                                                                                        .getProperties()
-                                                                                                                       .getInt(
-                                                                                                                               TCPropertiesConsts.L1_SERVERMAPMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY);
+                                                                                                                       .getInt(TCPropertiesConsts.L1_SERVERMAPMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY);
   private static final long                                              BATCH_LOOKUP_TIME_PERIOD                  = TCPropertiesImpl
                                                                                                                        .getProperties()
-                                                                                                                       .getInt(
-                                                                                                                               TCPropertiesConsts.L1_SERVERMAPMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD);
+                                                                                                                       .getInt(TCPropertiesConsts.L1_SERVERMAPMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD);
 
   private static final String                                            SIZE_KEY                                  = "SIZE_KEY";
   private static final String                                            ALL_KEYS                                  = "ALL-KEYS";
@@ -59,7 +56,6 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   private final TCLogger                                                 logger;
   private final SessionManager                                           sessionManager;
   private final Map<ServerMapRequestID, AbstractServerMapRequestContext> outstandingRequests                       = new HashMap<ServerMapRequestID, AbstractServerMapRequestContext>();
-
   private final Timer                                                    requestTimer                              = new Timer(
                                                                                                                                "RemoteServerMapManager Request Scheduler",
                                                                                                                                true);
@@ -68,13 +64,8 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   private long                                                           requestIDCounter                          = 0;
   private boolean                                                        pendingSendTaskScheduled                  = false;
 
-  private final CachedItemStore                                          cachedItems                               = new CachedItemStore(
-                                                                                                                                         16384,
-                                                                                                                                         0.75f,
-                                                                                                                                         1024);
-  private final Sink                                                     lockRecallSink;
-  private final Sink                                                     capacityEvictionSink;
-  private final Sink                                                     ttiTTLEvitionSink;
+  // private final Sink ttiTTLEvitionSink;
+  private final L1ServerMapLocalCacheManager                             globalLocalCacheManager;
 
   private static enum State {
     PAUSED, RUNNING, STARTING, STOPPED
@@ -82,15 +73,13 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
 
   public RemoteServerMapManagerImpl(final GroupID groupID, final TCLogger logger,
                                     final ServerMapMessageFactory smmFactory, final SessionManager sessionManager,
-                                    final Sink lockRecallSink, final Sink capacityEvictionSink,
-                                    final Sink ttiTTLEvitionSink) {
+                                    final Sink ttiTTLEvitionSink, L1ServerMapLocalCacheManager globalLocalCacheManager) {
     this.groupID = groupID;
     this.logger = logger;
     this.smmFactory = smmFactory;
     this.sessionManager = sessionManager;
-    this.lockRecallSink = lockRecallSink;
-    this.capacityEvictionSink = capacityEvictionSink;
-    this.ttiTTLEvitionSink = ttiTTLEvitionSink;
+    // this.ttiTTLEvitionSink = ttiTTLEvitionSink;
+    this.globalLocalCacheManager = globalLocalCacheManager;
   }
 
   /**
@@ -100,8 +89,8 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     assertSameGroupID(oid);
     waitUntilRunning();
 
-    final AbstractServerMapRequestContext context = createLookupValueRequestContext(oid, Collections
-        .singleton(portableKey));
+    final AbstractServerMapRequestContext context = createLookupValueRequestContext(oid,
+                                                                                    Collections.singleton(portableKey));
     context.makeLookupRequest();
     sendRequest(context);
     Map<Object, Object> result = waitForResult(context);
@@ -273,8 +262,8 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   }
 
   private void sendRequestNow(final AbstractServerMapRequestContext context) {
-    final ServerMapRequestMessage msg = this.smmFactory.newServerMapRequestMessage(this.groupID, context
-        .getRequestType());
+    final ServerMapRequestMessage msg = this.smmFactory.newServerMapRequestMessage(this.groupID,
+                                                                                   context.getRequestType());
     context.initializeMessage(msg);
     msg.send();
   }
@@ -388,50 +377,6 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     }
   }
 
-  /**
-   * Adds this CachedItem to LockID or ObjectID. When the lock is recalled or the Object is invalidated this CachedItem
-   * will be invalidated too.
-   */
-  public void addCachedItem(final Object id, final CachedItem item) {
-    if (id == null) { throw new AssertionError("ID cannot be null"); }
-    this.cachedItems.add(id, item);
-  }
-
-  /**
-   * Removes the mapping from ObjectID or LockID to CachedItem
-   */
-  public void removeCachedItem(final Object id, final CachedItem item) {
-    if (id == null) { throw new AssertionError("ID cannot be null"); }
-    this.cachedItems.remove(id, item);
-  }
-
-  public void flush(final Object id) {
-    if (id == null) { throw new AssertionError("ID cannot be null"); }
-    this.cachedItems.flush(id);
-  }
-
-  public void initiateCachedItemEvictionFor(final TCObjectServerMap serverMap) {
-    // NOTE:: If this implementation changes for any reason, checkout RemoteServerMapManagerGroupImpl
-    this.capacityEvictionSink.add(new CachedItemEvictionContext(serverMap));
-  }
-
-  /**
-   * Can't just remove from local cache as pending changes in transaction buffers can't be cleared from cache, else u
-   * get wrong answers from the server. Recalling the locks which will do the right thing here.
-   */
-  public void clearCachedItemsForLocks(final Set<LockID> toEvict, boolean waitforRecallComplete) {
-    // NOTE:: If this implementation changes for any reason, checkout RemoteServerMapManagerGroupImpl
-    LocksToRecallContext recallContext = new LocksToRecallContext(toEvict);
-    this.lockRecallSink.add(recallContext);
-    if (waitforRecallComplete) {
-      recallContext.waitUntilRecallComplete();
-    }
-  }
-
-  public void expired(final TCObjectServerMap serverMap, final CachedItem ci) {
-    this.ttiTTLEvitionSink.add(new CachedItemExpiredContext(serverMap, ci));
-  }
-
   private void waitUntilRunning() {
     boolean isInterrupted = false;
     try {
@@ -460,7 +405,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     if (isStopped()) { return; }
     assertPaused("Attempt to init handshake while not PAUSED");
     this.state = State.STARTING;
-    addObjectIDsToValidateTo(handshakeMessage.getObjectIDsToValidate());
+    globalLocalCacheManager.addAllObjectIDsToValidate(handshakeMessage.getObjectIDsToValidate());
   }
 
   public synchronized void unpause(final NodeID remote, final int disconnected) {
@@ -469,15 +414,6 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     this.state = State.RUNNING;
     requestOutstanding();
     notifyAll();
-  }
-
-  private void addObjectIDsToValidateTo(Set objectIDs) {
-    Set keys = cachedItems.addAllKeysTo(new HashSet(1024));
-    for (Object key : keys) {
-      if (key instanceof ObjectID) {
-        objectIDs.add(key);
-      }
-    }
   }
 
   public synchronized void shutdown() {
@@ -612,4 +548,29 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     }
 
   }
+
+  /**
+   * Flush all entries for invalidated objectId's
+   */
+  public void processInvalidations(Invalidations invalidations) {
+    // NOTE: if this impl changes, check RemoteServerMapManagerGroupImpl
+    Set<ObjectID> mapIDs = invalidations.getMapIds();
+    for (ObjectID mapID : mapIDs) {
+      ObjectIDSet set = invalidations.getObjectIDSetForMapId(mapID);
+      globalLocalCacheManager.removeEntriesForObjectId(mapID, set);
+    }
+  }
+
+  /**
+   * Flush all local entries corresponding for the lock that is about to be flushed
+   */
+  public void preTransactionFlush(LockID lockID, ServerLockLevel level) {
+    // NOTE: if this impl changes, check RemoteServerMapManagerGroupImpl
+    if (lockID == null) { throw new AssertionError("ID cannot be null"); }
+    if (level == ServerLockLevel.WRITE) {
+      this.globalLocalCacheManager.removeEntriesForLockId(lockID);
+      // TODO: remove all TCObjectSelf from here
+    }
+  }
+
 }

@@ -100,7 +100,7 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
       this.type = ObjectIDSetType.BITSET_BASED_SET;
       this.oidSet = new BitSetObjectIDSet();
     } else {
-      throw new AssertionError("wrong type: " + this.type);
+      throw new AssertionError("wrong type: " + oidSetType);
     }
     this.oidSet.deserializeFrom(in);
     return this;

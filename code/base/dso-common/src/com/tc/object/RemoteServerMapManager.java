@@ -3,18 +3,19 @@
  */
 package com.tc.object;
 
+import com.tc.invalidation.InvalidationsProcessor;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
-import com.tc.object.cache.CachedItem;
+import com.tc.object.gtx.PreTransactionFlushCallback;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
-import com.tc.object.locks.LockID;
 import com.tc.object.session.SessionID;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-public interface RemoteServerMapManager extends ClientHandshakeCallback {
+public interface RemoteServerMapManager extends ClientHandshakeCallback, PreTransactionFlushCallback,
+    InvalidationsProcessor {
 
   public Object getMappingForKey(ObjectID mapID, Object portableKey);
 
@@ -32,25 +33,6 @@ public interface RemoteServerMapManager extends ClientHandshakeCallback {
                                        Long size, NodeID sourceNodeID);
 
   public void objectNotFoundFor(SessionID sessionID, ObjectID mapID, ServerMapRequestID requestID, NodeID nodeID);
-
-  /**
-   * Adds this CachedItem to LockID or ObjectID. When the lock is recalled or the Object is invalidated this CachedItem
-   * will be invalidated too.
-   */
-  public void addCachedItem(Object id, CachedItem item);
-
-  /**
-   * Removes the mapping from ObjectID or LockID to CachedItem
-   */
-  public void removeCachedItem(Object id, CachedItem item);
-
-  public void flush(Object id);
-
-  public void clearCachedItemsForLocks(Set<LockID> toEvict, boolean waitforRecallComplete);
-
-  public void initiateCachedItemEvictionFor(TCObjectServerMap serverMap);
-
-  public void expired(TCObjectServerMap serverMap, CachedItem ci);
 
   public void getMappingForAllKeys(final Map<ObjectID, Set<Object>> mapIdToKeysMap, final Map<Object, Object> rv);
 }

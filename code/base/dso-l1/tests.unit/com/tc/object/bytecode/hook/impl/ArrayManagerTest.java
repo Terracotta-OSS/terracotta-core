@@ -16,6 +16,7 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import gnu.trove.TLinkable;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -266,7 +267,7 @@ public class ArrayManagerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public void hydrate(final DNA from, final boolean force) throws DNAException {
+    public void hydrate(final DNA from, final boolean force, WeakReference peer) throws DNAException {
       throw new ImplementMe();
     }
 

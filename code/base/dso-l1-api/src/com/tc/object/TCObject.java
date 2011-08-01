@@ -9,6 +9,8 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.util.ToggleableStrongReference;
 
+import java.lang.ref.WeakReference;
+
 /**
  * Terracotta class attached to each shared instance Object. The TCObject may be a simple object value or may have
  * TCFields representing internal field values.
@@ -184,9 +186,10 @@ public interface TCObject extends Cacheable, TCObjectExternal {
    * Takes a DNA strand and hydrates the object with it.
    * 
    * @param force true if the DNA should be applied w/o any version checking
+   * @param weakReference
    * @throws ClassNotFoundException If class not found
    */
-  public void hydrate(DNA from, boolean force) throws ClassNotFoundException;
+  public void hydrate(DNA from, boolean force, WeakReference peer) throws ClassNotFoundException;
 
   /**
    * Fault in field object if necessary

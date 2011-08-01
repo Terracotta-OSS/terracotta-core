@@ -20,7 +20,7 @@ import java.lang.ref.WeakReference;
 /**
  * Manages client-side (L1) object state in a VM.
  */
-public interface ClientObjectManager extends ApplicatorObjectManager {
+public interface ClientObjectManager extends ApplicatorObjectManager, TCObjectSelfCallback {
 
   /**
    * Find a class based on the class name and the classloader name

@@ -26,6 +26,9 @@ import com.tc.asm.tree.MethodNode;
 import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
+import com.tc.async.api.EventContext;
+import com.tc.bytes.BufferPool;
+import com.tc.bytes.TCByteBuffer;
 import com.tc.cache.ExpirableEntry;
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterEvent;
@@ -49,12 +52,24 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.injection.annotations.InjectedDsoInstance;
 import com.tc.injection.exceptions.UnsupportedInjectedDsoInstanceTypeException;
 import com.tc.io.TCByteArrayOutputStream;
+import com.tc.io.TCByteBufferInput;
+import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCDataInput;
+import com.tc.io.TCDataOutput;
+import com.tc.io.TCByteBufferInput.Mark;
+import com.tc.lang.Recyclable;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.LogLevel;
 import com.tc.logging.NullTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.management.TerracottaMBean;
+import com.tc.net.ClientID;
+import com.tc.net.GroupID;
 import com.tc.net.NIOWorkarounds;
+import com.tc.net.NodeID;
+import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.object.ClientIDProvider;
+import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.Portability;
 import com.tc.object.PortabilityImpl;
@@ -62,7 +77,16 @@ import com.tc.object.SerializationUtil;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectExternal;
+import com.tc.object.TCObjectSelf;
+import com.tc.object.TCObjectSelfImpl;
+import com.tc.object.TCObjectSelfCallback;
+import com.tc.object.TCObjectSelfStore;
+import com.tc.object.TCObjectSelfStoreValue;
 import com.tc.object.TCObjectServerMap;
+import com.tc.object.TraversedReferences;
+import com.tc.object.appevent.ApplicationEvent;
+import com.tc.object.appevent.ApplicationEventContext;
+import com.tc.object.applicator.ApplicatorObjectManager;
 import com.tc.object.bytecode.AAFairDistributionPolicyMarker;
 import com.tc.object.bytecode.AbstractStringBuilderAdapter;
 import com.tc.object.bytecode.AccessibleObjectAdapter;
@@ -139,20 +163,52 @@ import com.tc.object.compression.StringCompressionUtil;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.dmi.DmiClassSpec;
+import com.tc.object.dmi.DmiDescriptor;
+import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.api.DNACursor;
+import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.LogicalAction;
+import com.tc.object.dna.api.PhysicalAction;
+import com.tc.object.dna.api.DNA.DNAType;
+import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.ProxyInstance;
 import com.tc.object.field.TCField;
 import com.tc.object.ibm.SystemInitializationAdapter;
 import com.tc.object.loaders.BytecodeProvider;
 import com.tc.object.loaders.ClassProvider;
+import com.tc.object.loaders.LoaderDescription;
 import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.loaders.NamedLoaderAdapter;
 import com.tc.object.loaders.Namespace;
 import com.tc.object.loaders.StandardClassLoaderAdapter;
+import com.tc.object.locks.Notify;
+import com.tc.object.locks.ThreadID;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.InstrumentationLoggerImpl;
 import com.tc.object.logging.NullInstrumentationLogger;
 import com.tc.object.metadata.MetaDataDescriptor;
+import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.object.metadata.NVPair;
+import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
+import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
+import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStoreListener;
+import com.tc.object.servermap.localcache.LocalCacheStoreEventualValue;
+import com.tc.object.servermap.localcache.LocalCacheStoreIncoherentValue;
+import com.tc.object.servermap.localcache.LocalCacheStoreStrongValue;
+import com.tc.object.servermap.localcache.PutType;
+import com.tc.object.servermap.localcache.RemoveType;
+import com.tc.object.servermap.localcache.impl.TCObjectSelfWrapper;
+import com.tc.object.session.SessionID;
+import com.tc.object.tx.ClientTransaction;
+import com.tc.object.tx.ClientTransactionManager;
+import com.tc.object.tx.TransactionCompleteListener;
+import com.tc.object.tx.TransactionContext;
+import com.tc.object.tx.TransactionID;
+import com.tc.object.tx.TxnBatchID;
+import com.tc.object.tx.TxnType;
+import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.object.util.OverrideCheck;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.operatorevent.TerracottaOperatorEvent;
@@ -177,9 +233,11 @@ import com.tc.util.FieldUtils;
 import com.tc.util.HashtableKeySetWrapper;
 import com.tc.util.HashtableValuesWrapper;
 import com.tc.util.ListIteratorWrapper;
+import com.tc.util.SequenceID;
 import com.tc.util.SetIteratorWrapper;
 import com.tc.util.THashMapCollectionWrapper;
 import com.tc.util.UnsafeUtil;
+import com.tc.util.SequenceID.SequenceIDComparator;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.UnknownJvmVersionException;
 import com.tc.util.runtime.UnknownRuntimeVersionException;
@@ -526,6 +584,8 @@ public class BootJarTool {
       loadTerracottaClass(SessionConfiguration.class.getName());
       loadTerracottaClass(ManagerUtil.class.getName() + "$GlobalManagerHolder");
       loadTerracottaClass(TCObject.class.getName());
+      loadTerracottaClassesReachableFromTCObject();
+      loadTerracottaClassesForTCObjectSelf();
       loadTerracottaClass(TCObjectServerMap.class.getName());
       loadTerracottaClass(TCObjectExternal.class.getName());
       loadTerracottaClass(CloneUtil.class.getName());
@@ -597,6 +657,27 @@ public class BootJarTool {
 
       addLiterals();
 
+      // local cache store classes
+      loadTerracottaClass(L1ServerMapLocalCacheStore.class.getName());
+
+      loadTerracottaClass(AbstractLocalCacheStoreValue.class.getName());
+      loadTerracottaClass(TCObjectSelfStore.class.getName());
+      loadTerracottaClass(TCObjectSelfStoreValue.class.getName());
+      loadTerracottaClass(TCObjectSelfWrapper.class.getName());
+      loadTerracottaClass(LocalCacheStoreEventualValue.class.getName());
+      loadTerracottaClass(LocalCacheStoreStrongValue.class.getName());
+      loadTerracottaClass(LocalCacheStoreIncoherentValue.class.getName());
+
+      loadTerracottaClass(L1ServerMapLocalCacheStoreListener.class.getName());
+      loadTerracottaClass(PutType.class.getName());
+      for (int i = 1; i <= PutType.values().length; i++) {
+        loadTerracottaClass(PutType.class.getName() + "$" + i);
+      }
+      loadTerracottaClass(RemoveType.class.getName());
+      for (int i = 1; i <= RemoveType.values().length; i++) {
+        loadTerracottaClass(RemoveType.class.getName() + "$" + i);
+      }
+
       addSunStandardLoaders();
       addInstrumentedAccessibleObject();
       addInstrumentedJavaLangThrowable();
@@ -644,6 +725,80 @@ public class BootJarTool {
     } catch (final BootJarHandlerException e) {
       exit(e.getMessage(), e.getCause());
     }
+  }
+
+  private void loadTerracottaClassesForTCObjectSelf() {
+    loadTerracottaClass(TCObjectSelf.class.getName());
+    loadTerracottaClass(TCObjectSelfImpl.class.getName());
+    loadTerracottaClass(TCObjectSelfCallback.class.getName());
+  }
+
+  private void loadTerracottaClassesReachableFromTCObject() {
+    // the following classes are referenced from TCObject
+    // commented ones are those which are already added elsewhere
+
+    // loadTerracottaClass(AbstractIdentifier.class.getName());
+    loadTerracottaClass(ApplicationEvent.class.getName());
+    loadTerracottaClass(ApplicationEventContext.class.getName());
+    loadTerracottaClass(ApplicatorObjectManager.class.getName());
+    loadTerracottaClass(BufferPool.class.getName());
+    // loadTerracottaClass(Cacheable.class.getName());
+    loadTerracottaClass(ChannelID.class.getName());
+    loadTerracottaClass(ClientID.class.getName());
+    loadTerracottaClass(ClientIDProvider.class.getName());
+    loadTerracottaClass(ClientObjectManager.class.getName());
+    loadTerracottaClass(ClientTransaction.class.getName());
+    loadTerracottaClass(ClientTransactionManager.class.getName());
+    loadTerracottaClass(DNA.class.getName());
+    loadTerracottaClass(DNACursor.class.getName());
+    loadTerracottaClass(DNAEncoding.class.getName());
+    // loadTerracottaClass(DNAException.class.getName());
+    loadTerracottaClass(DNAType.class.getName());
+    loadTerracottaClass(DNAWriter.class.getName());
+    loadTerracottaClass(DmiClassSpec.class.getName());
+    loadTerracottaClass(DmiDescriptor.class.getName());
+    loadTerracottaClass(EventContext.class.getName());
+    loadTerracottaClass(GroupID.class.getName());
+    loadTerracottaClass(LoaderDescription.class.getName());
+    // loadTerracottaClass(LockID.class.getName());
+    // loadTerracottaClass(LockIDType.class.getName());
+    // loadTerracottaClass(LockLevel.class.getName());
+    loadTerracottaClass(LogicalAction.class.getName());
+    loadTerracottaClass(Mark.class.getName());
+    // loadTerracottaClass(MetaDataDescriptor.class.getName());
+    loadTerracottaClass(MetaDataDescriptorInternal.class.getName());
+    loadTerracottaClass(NodeID.class.getName());
+    loadTerracottaClass(Notify.class.getName());
+    // loadTerracottaClass(ObjectID.class.getName());
+    loadTerracottaClass(ObjectStringSerializer.class.getName());
+    loadTerracottaClass(PhysicalAction.class.getName());
+    loadTerracottaClass(Recyclable.class.getName());
+    loadTerracottaClass(SequenceID.class.getName());
+    loadTerracottaClass(SequenceIDComparator.class.getName());
+    loadTerracottaClass(SessionID.class.getName());
+    loadTerracottaClass(TCByteBuffer.class.getName());
+    loadTerracottaClass(TCByteBufferInput.class.getName());
+    loadTerracottaClass(TCByteBufferOutput.class.getName());
+    // loadTerracottaClass(TCClass.class.getName());
+    loadTerracottaClass(TCDataInput.class.getName());
+    loadTerracottaClass(TCDataOutput.class.getName());
+    // loadTerracottaClass(TCError.class.getName());
+    // loadTerracottaClass(TCField.class.getName());
+    // loadTerracottaClass(TCNonPortableObjectError.class.getName());
+    // loadTerracottaClass(TCObject.class.getName());
+    // loadTerracottaClass(TCObjectExternal.class.getName());
+    // loadTerracottaClass(TCRuntimeException.class.getName());
+    // loadTerracottaClass(TCSerializable.class.getName());
+    // loadTerracottaClass(TLinkable.class.getName());
+    loadTerracottaClass(ThreadID.class.getName());
+    // loadTerracottaClass(ToggleableStrongReference.class.getName());
+    loadTerracottaClass(TransactionCompleteListener.class.getName());
+    loadTerracottaClass(TransactionContext.class.getName());
+    loadTerracottaClass(TransactionID.class.getName());
+    loadTerracottaClass(TraversedReferences.class.getName());
+    loadTerracottaClass(TxnBatchID.class.getName());
+    loadTerracottaClass(TxnType.class.getName());
+    loadTerracottaClass(UnlockedSharedObjectException.class.getName());
   }
 
   private void addClusterEventsAndMetaDataClasses() {
@@ -1275,8 +1430,8 @@ public class BootJarTool {
     final ClassReader cr = new ClassReader(orig);
     final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
 
-    final ClassVisitor cv = new JavaLangStringAdapter(cw, Vm.VERSION, shouldIncludeStringBufferAndFriends(),
-                                                      Vm.isAzul(), Vm.isIBM());
+    final ClassVisitor cv = new JavaLangStringAdapter(cw, Vm.VERSION, shouldIncludeStringBufferAndFriends(), Vm
+        .isAzul(), Vm.isIBM());
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     loadClassIntoJar("java.lang.String", cw.toByteArray(), false);
@@ -1501,8 +1656,8 @@ public class BootJarTool {
           .getOrCreateSpec("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper");
       spec.markPreInstrumented();
       bytes = doDSOTransform(spec.getClassName(), bytes);
-      loadClassIntoJar("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper", bytes,
-                       spec.isPreInstrumented());
+      loadClassIntoJar("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper", bytes, spec
+          .isPreInstrumented());
     }
   }
 
@@ -1730,9 +1885,8 @@ public class BootJarTool {
 
     final ClassReader cr = new ClassReader(bytes);
     final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    final ClassVisitor cv = new LogicalClassSerializationAdapter.LogicalClassSerializationClassAdapter(
-                                                                                                       cw,
-                                                                                                       spec.getClassName());
+    final ClassVisitor cv = new LogicalClassSerializationAdapter.LogicalClassSerializationClassAdapter(cw, spec
+        .getClassName());
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     bytes = cw.toByteArray();

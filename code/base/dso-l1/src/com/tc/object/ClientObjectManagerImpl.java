@@ -75,8 +75,8 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
@@ -104,7 +104,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private State                                 state                        = RUNNING;
   private final Object                          shutdownLock                 = new Object();
   private final Map                             roots                        = new HashMap();
-  private final ObjectStore                     objectStore                  = new ObjectStore();
   private final ConcurrentMap<Object, TCObject> pojoToManaged                = new MapMaker()
                                                                                  .concurrencyLevel(REFERENCE_MAP_SEGS)
                                                                                  .weakKeys().makeMap();
@@ -118,6 +117,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private final Set                             rootLookupsInProgress        = new HashSet();
   private final ObjectIDProvider                idProvider;
   private final TCObjectFactory                 factory;
+  private final ObjectStore                     objectStore;
 
   private ClientTransactionManager              txManager;
 
@@ -150,7 +150,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
                                  final ClassProvider classProvider, final TCClassFactory classFactory,
                                  final TCObjectFactory objectFactory, final Portability portability,
                                  final DSOClientMessageChannel channel,
-                                 final ToggleableReferenceManager referenceManager) {
+                                 final ToggleableReferenceManager referenceManager, TCObjectSelfStore tcObjectSelfStore) {
+    this.objectStore = new ObjectStore(tcObjectSelfStore);
     this.remoteObjectManager = remoteObjectManager;
     this.clientConfiguration = clientConfiguration;
     this.idProvider = idProvider;
@@ -395,6 +396,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   public ObjectID lookupExistingObjectID(final Object pojo) {
+    if (pojo instanceof TCObjectSelf) { return ((TCObjectSelf) pojo).getObjectID(); }
+
     final TCObject obj = basicLookup(pojo);
     if (obj == null) { throw new AssertionError("Missing object ID for: Object of class " + pojo.getClass().getName()
                                                 + " [Identity Hashcode : 0x"
@@ -544,8 +547,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
                   .retrieveWithParentContext(id, parentContext));
           // TODO: make DNA.getDefiningLoaderDescription() return LoaderDescription
           final LoaderDescription desc = LoaderDescription.fromString(dna.getDefiningLoaderDescription());
-          obj = this.factory.getNewInstance(id, this.classProvider.getClassFor(Namespace.parseClassNameIfNecessary(dna
-              .getTypeName()), desc), false);
+          Class clazz = this.classProvider.getClassFor(Namespace.parseClassNameIfNecessary(dna.getTypeName()), desc);
+          TCClass tcClazz = clazzFactory.getOrCreate(clazz, this);
+          Object pojo = createNewPojoObject(tcClazz, dna);
+          obj = this.factory.getNewInstance(id, pojo, clazz, false);
 
           // object is retrieved, now you want to make this as Creation in progress
           markCreateInProgress(ols, obj, lookupContext);
@@ -553,7 +558,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
           Assert.assertFalse(dna.isDelta());
           // now hydrate the object, this could call resolveReferences which would call this method recursively
-          obj.hydrate(dna, false);
+          if (obj instanceof TCObjectSelf) {
+            obj.hydrate(dna, false, null);
+          } else {
+            obj.hydrate(dna, false, newWeakObjectReference(id, pojo));
+          }
           if (this.runtimeLogger.getFaultDebug()) {
             this.runtimeLogger.updateFaultStats(dna.getTypeName());
           }
@@ -580,6 +589,17 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
     return obj;
 
+  }
+
+  public void removedTCObjectSelfFromStore(TCObjectSelf tcoSelf) {
+    synchronized (this) {
+      // Calling remove from within the synchronized block to make sure there are no races between the lookups and
+      // remove.
+      this.remoteObjectManager.removed(tcoSelf.getObjectID());
+    }
+    if (ClientObjectManagerImpl.this.runtimeLogger.getFlushDebug()) {
+      this.runtimeLogger.updateFlushStats(tcoSelf.getClass().getName());
+    }
   }
 
   private void waitAndClearLatchSet(final Set waitSet) {
@@ -919,6 +939,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   private TCObject basicLookup(final Object obj) {
     if (obj == null) { return null; }
+    // if (obj instanceof TCObjectSelf) { return (TCObjectSelf) obj; }
 
     if (obj instanceof Manageable) { return ((Manageable) obj).__tc_managed(); }
 
@@ -976,8 +997,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
         for (final Method method : entry.getValue()) {
           try {
-            executeMethod(target, method,
-                          "postCreate method (" + method.getName() + ") failed on object of " + target.getClass());
+            executeMethod(target, method, "postCreate method (" + method.getName() + ") failed on object of "
+                                          + target.getClass());
           } catch (final Throwable t) {
             if (exception == null) {
               exception = t;
@@ -1083,8 +1104,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     TCObject obj = null;
 
     if ((obj = basicLookup(pojo)) == null) {
-      obj = this.factory.getNewInstance(nextObjectID(this.txManager.getCurrentTransaction(), pojo, gid), pojo,
-                                        pojo.getClass(), true);
+      obj = this.factory.getNewInstance(nextObjectID(this.txManager.getCurrentTransaction(), pojo, gid), pojo, pojo
+          .getClass(), true);
       this.txManager.createObject(obj);
       basicAddLocal(obj, false);
       if (this.runtimeLogger.getNewManagedObjectDebug()) {
@@ -1129,26 +1150,34 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   public WeakReference createNewPeer(final TCClass clazz, final DNA dna) {
+    return newWeakObjectReference(dna.getObjectID(), createNewPojoObject(clazz, dna));
+  }
+
+  private Object createNewPojoObject(TCClass clazz, DNA dna) {
     if (clazz.isUseNonDefaultConstructor()) {
       try {
-        return newWeakObjectReference(dna.getObjectID(), this.factory.getNewPeerObject(clazz, dna));
+        return this.factory.getNewPeerObject(clazz, dna);
       } catch (final Exception e) {
         throw new TCRuntimeException(e);
       }
     } else {
-      return createNewPeer(clazz, dna.getArraySize(), dna.getObjectID(), dna.getParentObjectID());
+      return createNewPojoObject(clazz, dna.getArraySize(), dna.getObjectID(), dna.getParentObjectID());
     }
   }
 
   public WeakReference createNewPeer(final TCClass clazz, final int size, final ObjectID id, final ObjectID parentID) {
+    return newWeakObjectReference(id, createNewPojoObject(clazz, size, id, parentID));
+  }
+
+  private Object createNewPojoObject(TCClass clazz, int size, ObjectID id, ObjectID parentID) {
     try {
       if (clazz.isIndexed()) {
         final Object array = this.factory.getNewArrayInstance(clazz, size);
-        return newWeakObjectReference(id, array);
+        return array;
       } else if (parentID.isNull()) {
-        return newWeakObjectReference(id, this.factory.getNewPeerObject(clazz));
+        return this.factory.getNewPeerObject(clazz);
       } else {
-        return newWeakObjectReference(id, this.factory.getNewPeerObject(clazz, lookupObject(parentID)));
+        return this.factory.getNewPeerObject(clazz, lookupObject(parentID));
       }
     } catch (final Exception e) {
       throw new TCRuntimeException(e);
@@ -1284,13 +1313,15 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     private final ConcurrentHashMap             cacheUnmanaged = new ConcurrentHashMap<ObjectID, TCObject>(10240,
                                                                                                            0.75f, 128);
     private final ConcurrentClockEvictionPolicy cache;
+    private final TCObjectSelfStore             tcObjectSelfStore;
 
-    ObjectStore() {
+    ObjectStore(TCObjectSelfStore tcObjectSelfStore) {
+      this.tcObjectSelfStore = tcObjectSelfStore;
       this.cache = new ConcurrentClockEvictionPolicy(this.cacheManaged);
     }
 
     public int size() {
-      return this.cacheManaged.size() + this.cacheUnmanaged.size();
+      return this.cacheManaged.size() + this.cacheUnmanaged.size() + tcObjectSelfStore.size();
     }
 
     public Collection getRemovalCandidates(final int maxCount) {
@@ -1298,6 +1329,12 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
 
     public void add(final TCObject obj) {
+      // Ignoring this currently as this is expected to be added in tc object self store
+      if (obj instanceof TCObjectSelf) {
+        this.tcObjectSelfStore.addTCObjectSelf((TCObjectSelf) obj);
+        return;
+      }
+
       if (obj.isCacheManaged()) {
         this.cache.add(obj);
       } else {
@@ -1310,16 +1347,24 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       if (tc == null) {
         tc = (TCObject) this.cacheManaged.get(id);
       }
+      if (tc == null) {
+        tc = (TCObject) tcObjectSelfStore.getById(id);
+      }
       return tc;
     }
 
     public Set addAllObjectIDs(final Set oids) {
       oids.addAll(this.cacheManaged.keySet());
       oids.addAll(this.cacheUnmanaged.keySet());
+      this.tcObjectSelfStore.addAllObjectIDs(oids);
       return oids;
     }
 
     public void remove(final TCObject tcobj) {
+      if (tcobj instanceof TCObjectSelf) { throw new AssertionError(
+                                                                    "TCObjectSelf should not have called removed from here: "
+                                                                        + tcobj); }
+
       if (tcobj.isCacheManaged()) {
         this.cache.remove(tcobj);
       } else {
@@ -1328,7 +1373,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
 
     public boolean contains(final ObjectID objectID) {
-      return this.cacheUnmanaged.containsKey(objectID) || this.cacheManaged.containsKey(objectID);
+      return this.cacheUnmanaged.containsKey(objectID) || this.cacheManaged.containsKey(objectID)
+             || this.tcObjectSelfStore.contains(objectID);
     }
 
   }
@@ -1408,6 +1454,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   private interface PostCreateMethodGatherer {
     Map<Object, List<Method>> getPostCreateMethods();
+  }
+
+  public void initializeTCClazzIfRequired(TCObjectSelf tcObjectSelf) {
+    this.factory.initClazzIfRequired(tcObjectSelf.getClass(), tcObjectSelf);
   }
 
 }

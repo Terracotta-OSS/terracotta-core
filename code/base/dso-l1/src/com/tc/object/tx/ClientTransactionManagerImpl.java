@@ -336,7 +336,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       l.add(obj);
       if (obj != null) {
         try {
-          tcobj.hydrate(dna, force);
+          tcobj.hydrate(dna, force, null);
         } catch (final ClassNotFoundException cnfe) {
           logger.warn("Could not apply change because class not local: " + cnfe.getMessage());
           throw new TCClassNotFoundException(cnfe);

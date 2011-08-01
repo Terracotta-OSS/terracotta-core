@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +32,7 @@ import java.util.Set;
 /**
  * Describe the Custom adaption of a class
  */
-public class TransparencyClassSpecImpl implements TransparencyClassSpec {
+public class TransparencyClassSpecImpl implements TransparencyClassSpecInternal {
 
   private static final String                     HONOR_TRANSIENT_KEY        = "honor-transient";
   private static final String                     HONOR_VOLATILE_KEY         = "honor-volatile";
@@ -44,9 +43,11 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   private final List<MethodCreator>               supportMethodCreators      = new LinkedList<MethodCreator>();
   private final Map<String, MethodAdapter>        methodAdapters             = new HashMap<String, MethodAdapter>();
   private final List<ClassAdapterFactory>         customClassAdapters        = new ArrayList<ClassAdapterFactory>();
+  private final List<ClassAdapterFactory>         afterDsoClassAdapters      = new ArrayList<ClassAdapterFactory>();
   private final Map<String, Boolean>              flags                      = new HashMap<String, Boolean>();
   private final Map<String, TransparencyCodeSpec> codeSpecs                  = new HashMap<String, TransparencyCodeSpec>();
-  private final Set<String>                       nonInstrumentedMethods     = Collections.synchronizedSet(new HashSet<String>());
+  private final Set<String>                       nonInstrumentedMethods     = Collections
+                                                                                 .synchronizedSet(new HashSet<String>());
   private String                                  changeApplicatorClassName;
   private ChangeApplicatorSpec                    changeApplicatorSpec;
   private boolean                                 isLogical;
@@ -200,8 +201,8 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   }
 
   public void createClassSupportMethods(final ClassVisitor classVisitor) {
-    for (Iterator i = supportMethodCreators.iterator(); i.hasNext();) {
-      MethodCreator mc = (MethodCreator) i.next();
+    for (Object element : supportMethodCreators) {
+      MethodCreator mc = (MethodCreator) element;
       mc.createMethods(classVisitor);
     }
   }
@@ -271,9 +272,7 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
                                               final String[] exceptions, final InstrumentationLogger logger,
                                               final MemberInfo memberInfo) {
     MethodAdapter ma = getMethodAdapter(memberInfo);
-    ma
-        .initialize(access, className, methodName, origMethodName, description, signature, exceptions, logger,
-                    memberInfo);
+    ma.initialize(access, className, methodName, origMethodName, description, signature, exceptions, logger, memberInfo);
     return ma;
   }
 
@@ -418,7 +417,7 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     flags.put(IGNORE_REWRITE_KEY, b);
     return this;
   }
-  
+
   public TransparencyClassSpec setCallConstructorOnLoad(final boolean b) {
     onLoad.setToCallConstructorOnLoad(b);
     return this;
@@ -544,5 +543,28 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   public TransparencyClassSpec setHasOnLoadInjection(final boolean flag) {
     this.onLoadInjection = flag;
     return this;
+  }
+
+  public void addAfterDSOClassAdapter(ClassAdapterFactory customClassAdapter) {
+    // don't add the same factory again, based on classname, if already present
+    if (customClassAdapter == null) {
+      // sane formatter
+      throw new AssertionError("Custom adapter cannot be null");
+    }
+    for (ClassAdapterFactory f : afterDsoClassAdapters) {
+      if (isSameFactory(f, customClassAdapter)) {
+        // already present, return
+        return;
+      }
+    }
+    this.afterDsoClassAdapters.add(customClassAdapter);
+  }
+
+  private boolean isSameFactory(ClassAdapterFactory one, ClassAdapterFactory two) {
+    return one.getClass().getName().equals(two.getClass().getName());
+  }
+
+  public List<ClassAdapterFactory> getAfterDSOClassAdapters() {
+    return this.afterDsoClassAdapters;
   }
 }

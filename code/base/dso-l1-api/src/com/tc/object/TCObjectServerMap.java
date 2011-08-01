@@ -5,6 +5,7 @@ package com.tc.object;
 
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.metadata.MetaDataDescriptor;
+import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 
 import java.util.Map;
 import java.util.Set;
@@ -32,6 +33,16 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param value Object in the mapping
    */
   public void doLogicalRemove(final TCServerMap map, final L lockID, final Object key);
+
+  /**
+   * When an element has expired.<br>
+   * Check if local cache doesn't has this key, then call remove on the server.
+   * 
+   * @param map ServerTCMap
+   * @param key Key Object
+   * @param lockID LockID of lock protecting this key
+   */
+  public boolean evictExpired(final TCServerMap map, final L lockID, final Object key, final Object oldValue);
 
   /**
    * Does a logic remove and mark as removed in the local cache if present. The cached item is not associated to a lock.
@@ -115,12 +126,10 @@ public interface TCObjectServerMap<L> extends TCObject {
 
   public Map<Object, Object> getAllValuesUnlocked(final Map<ObjectID, Set<Object>> mapIdToKeysMap);
 
-  public void updateLocalCache(final Object key, final Object value);
-
   /**
-   * Returns a snapshot of keys for the giver ServerTCMap
+   * Returns a snapshot of keys for the giver TCServerMap
    * 
-   * @param map ServerTCMap
+   * @param map TCServerMap
    * @return set Set return snapshot of keys
    */
   public Set keySet(final TCServerMap map);
@@ -162,18 +171,7 @@ public interface TCObjectServerMap<L> extends TCObject {
    */
   public void clearLocalCache(final TCServerMap map);
 
-  /**
-   * Clears local cache of all entries. It is not immediate as all associated locks needs to be recalled. This method
-   * will wait until lock recall is complete.
-   * 
-   * @param map ServerTCMap
-   */
   public void clearAllLocalCacheInline(final TCServerMap map);
-
-  /**
-   * Runs Target capacity eviction to evict Cached Entries from local cache
-   */
-  public void doCapacityEviction();
 
   /**
    * Clears local cache for the corresponding key
@@ -199,4 +197,9 @@ public interface TCObjectServerMap<L> extends TCObject {
    * Add meta data to this server map
    */
   public void addMetaData(MetaDataDescriptor mdd);
+
+  /**
+   * Setup the local store for use. This method is called whenever the map is created or faulted in the L1 first time.
+   */
+  void setupLocalStore(L1ServerMapLocalCacheStore serverMapLocalStore);
 }

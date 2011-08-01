@@ -15,8 +15,9 @@ import java.util.List;
 
 public class MockClientLockManager implements ClientLockManager {
 
-  private final List begins = new ArrayList();
+  private final List begins     = new ArrayList();
   private int        unlockCount;
+  private final List recallList = new ArrayList();
 
   public void clearBegins() {
     this.begins.clear();
@@ -55,7 +56,7 @@ public class MockClientLockManager implements ClientLockManager {
   }
 
   public void recall(NodeID node, SessionID session, LockID lock, ServerLockLevel level, int lease, boolean batch) {
-    throw new ImplementMe();
+    recallList.add(lock);
   }
 
   public void refuse(NodeID node, SessionID session, LockID lock, ThreadID thread, ServerLockLevel level) {
@@ -196,6 +197,10 @@ public class MockClientLockManager implements ClientLockManager {
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     throw new ImplementMe();
+  }
+
+  public List<LockID> getRecallList() {
+    return this.recallList;
   }
 
 }

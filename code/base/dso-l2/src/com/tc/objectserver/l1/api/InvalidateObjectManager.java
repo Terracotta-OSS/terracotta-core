@@ -3,19 +3,17 @@
  */
 package com.tc.objectserver.l1.api;
 
+import com.tc.invalidation.Invalidations;
 import com.tc.net.ClientID;
-import com.tc.object.ObjectID;
 import com.tc.util.ObjectIDSet;
-
-import java.util.Set;
 
 public interface InvalidateObjectManager {
 
-  public void invalidateObjectFor(ClientID clientID, Set<ObjectID> oids);
+  public void invalidateObjectFor(ClientID clientID, Invalidations invalidations);
 
-  public Set<ObjectID> getObjectsIDsToInvalidate(ClientID clientID);
+  public Invalidations getObjectsIDsToInvalidate(ClientID clientID);
 
-  public void addObjectsToValidateFor(ClientID clientID, Set objectIDsToValidate);
+  public void addObjectsToValidateFor(ClientID clientID, Invalidations objectIDsToValidate);
 
   public void start();
 

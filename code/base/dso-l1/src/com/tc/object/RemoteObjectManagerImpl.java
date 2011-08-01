@@ -33,10 +33,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Map.Entry;
 
 /**
  * This class is responsible for any communications to the server for object retrieval and removal
@@ -51,16 +51,20 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
 
   private static final int     MAX_OUTSTANDING_REQUESTS_SENT_IMMEDIATELY = TCPropertiesImpl
                                                                              .getProperties()
-                                                                             .getInt(TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY);
+                                                                             .getInt(
+                                                                                     TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY);
   private static final long    BATCH_LOOKUP_TIME_PERIOD                  = TCPropertiesImpl
                                                                              .getProperties()
-                                                                             .getInt(TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD);
+                                                                             .getInt(
+                                                                                     TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD);
   private final static int     MAX_LRU                                   = TCPropertiesImpl
                                                                              .getProperties()
-                                                                             .getInt(TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_MAX_DNALRU_SIZE);
+                                                                             .getInt(
+                                                                                     TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_MAX_DNALRU_SIZE);
   private final static boolean ENABLE_LOGGING                            = TCPropertiesImpl
                                                                              .getProperties()
-                                                                             .getBoolean(TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_LOGGING_ENABLED);
+                                                                             .getBoolean(
+                                                                                         TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_LOGGING_ENABLED);
 
   private static enum State {
     PAUSED, RUNNING, STARTING, STOPPED

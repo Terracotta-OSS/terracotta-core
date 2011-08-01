@@ -11,6 +11,7 @@ import com.tc.object.util.ToggleableStrongReference;
 
 import gnu.trove.TLinkable;
 
+import java.lang.ref.WeakReference;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -98,7 +99,7 @@ public class MockTCObject implements TCObject {
     this.hydrateException = hydrateException;
   }
 
-  public void hydrate(final DNA from, final boolean force) throws ClassNotFoundException {
+  public void hydrate(final DNA from, final boolean force, WeakReference peer1) throws ClassNotFoundException {
     if (this.hydrateException != null) {
       if (this.hydrateException instanceof RuntimeException) { throw (RuntimeException) this.hydrateException; }
       throw (ClassNotFoundException) this.hydrateException;

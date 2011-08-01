@@ -518,4 +518,8 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
   public String[] processArguments() {
     return null;
   }
+
+  public Collection<ClassAdapterFactory> getAfterDSOAdapters(ClassInfo classInfo) {
+    return null;
+  }
 }

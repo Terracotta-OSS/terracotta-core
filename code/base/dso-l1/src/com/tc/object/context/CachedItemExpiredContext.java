@@ -4,25 +4,32 @@
 package com.tc.object.context;
 
 import com.tc.async.api.EventContext;
-import com.tc.object.TCObjectServerMap;
-import com.tc.object.cache.CachedItem;
+import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
+import com.tc.object.servermap.localcache.ServerMapLocalCache;
 
 public class CachedItemExpiredContext implements EventContext {
 
-  private final TCObjectServerMap serverMap;
-  private final CachedItem        expired;
+  private final ServerMapLocalCache          serverMapLocalCache;
+  private final Object                       key;
+  private final AbstractLocalCacheStoreValue value;
 
-  public CachedItemExpiredContext(final TCObjectServerMap serverMap, final CachedItem expired) {
-    this.serverMap = serverMap;
-    this.expired = expired;
+  public CachedItemExpiredContext(final ServerMapLocalCache serverMapLocalCache, final Object key,
+                                  final AbstractLocalCacheStoreValue value) {
+    this.serverMapLocalCache = serverMapLocalCache;
+    this.key = key;
+    this.value = value;
   }
 
-  public TCObjectServerMap getTCObjectServerMap() {
-    return this.serverMap;
+  public ServerMapLocalCache getServerMapLocalCache() {
+    return this.serverMapLocalCache;
   }
 
-  public CachedItem getExpiredCachedItem() {
-    return this.expired;
+  public Object getKey() {
+    return this.key;
+  }
+
+  public AbstractLocalCacheStoreValue getValue() {
+    return this.value;
   }
 
 }
