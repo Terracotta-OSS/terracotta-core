@@ -46,7 +46,7 @@ public class RootsTool {
     jmxc.close();
   }
 
-  private void print(PrintWriter w) throws Exception {
+  public void print(PrintWriter w) throws Exception {
     connect();
     try {
       ObjectName[] rootBeanNames = dsoBean.getRoots();
