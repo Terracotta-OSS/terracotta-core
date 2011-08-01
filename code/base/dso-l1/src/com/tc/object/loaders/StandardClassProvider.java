@@ -6,6 +6,8 @@ package com.tc.object.loaders;
 
 import com.tc.aspectwerkz.transform.inlining.AsmHelper;
 import com.tc.object.logging.RuntimeLogger;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 
@@ -15,8 +17,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Standard ClassProvider, using named classloaders and aware of boot, extension, and system classloaders.
@@ -31,6 +33,10 @@ public class StandardClassProvider implements ClassProvider {
   private static final String                                ISOLATION          = Namespace.getIsolationLoaderName();
 
   private static final LoaderDescription                     BOOT_DESC          = new LoaderDescription(null, BOOT);
+
+  private static final boolean                               DEBUG              = TCPropertiesImpl
+                                                                                    .getProperties()
+                                                                                    .getBoolean(TCPropertiesConsts.APP_GROUPS_DEBUG);
 
   // Modifications to the following fields must be done atomically. We achieve this
   // by synchronizing on 'this' all methods that access them.
@@ -67,6 +73,11 @@ public class StandardClassProvider implements ClassProvider {
     return rv;
   }
 
+  private static void debug(String msg) {
+    if (!DEBUG) { throw new AssertionError(); }
+    System.err.println("APP_GROUP_DEBUG: [" + Thread.currentThread().getName() + "]: " + msg);
+  }
+
   public Class getClassFor(final String className, LoaderDescription desc) throws ClassNotFoundException {
     final ClassLoader loader = lookupLoader(desc);
 
@@ -76,7 +87,8 @@ public class StandardClassProvider implements ClassProvider {
                                                                + "(http://www.terracotta.org/kit/reflector?kitID="
                                                                + ProductInfo.getInstance().kitID()
                                                                + "&pageID=ConfigGuideAndRef) for more "
-                                                               + "information on how to configure application groups."); }
+                                                               + "information on how to configure application groups. [class: "
+                                                               + className + ", loaderDesc: " + desc + "]"); }
 
     // debugging
     // StringBuilder sb = new StringBuilder();
@@ -139,7 +151,7 @@ public class StandardClassProvider implements ClassProvider {
 
     NamedClassLoader prev = prevRef == null ? null : (NamedClassLoader) prevRef.get();
 
-    if (runtimeLogger.getNamedLoaderDebug()) {
+    if (DEBUG || runtimeLogger.getNamedLoaderDebug()) {
       runtimeLogger.namedLoaderRegistered(loader, name, appGroup, prev);
     }
   }
@@ -192,6 +204,8 @@ public class StandardClassProvider implements ClassProvider {
    * This method must be externally synchronized on 'this'.
    */
   private ClassLoader lookupLoaderWithAppGroup(LoaderDescription desc) {
+    if (DEBUG) debug("Starting lookup for loader description: " + desc);
+
     // Testing support: allow substitution of IsolationClassLoader for system classloader,
     // unless they were explicitly registered within app-groups.
     if (SYSTEM.equals(desc.name()) && null == desc.appGroup()) {
@@ -205,6 +219,14 @@ public class StandardClassProvider implements ClassProvider {
       if (desc.appGroup() != null) {
         appGroupLoaders = appGroups.get(desc.appGroup());
 
+        if (DEBUG) {
+        if (appGroupLoaders != null) {
+            debug("Loaders in app-group: " + appGroupLoaders);
+          } else {
+            debug("Zero loaders present in app-group");
+          }
+        }
+
         if (appGroupLoaders != null) {
           // if (the DNA specifies an app-group,
           // and there is a loader that exactly matches both the app-group and the name,
@@ -213,6 +235,8 @@ public class StandardClassProvider implements ClassProvider {
           // }
           if (appGroupLoaders.contains(desc.name())) {
             Set<String> children = loaderChildren.get(desc.name());
+            if (DEBUG) debug("loaderChildren: " + children);
+
             // Clean up GC'ed children before deciding that there is exactly one
             ClassLoader firstChild = null;
             boolean exactlyOne = false;
@@ -224,15 +248,20 @@ public class StandardClassProvider implements ClassProvider {
                   // keep a ref so it doesn't get GC'ed before we come back to it
                   firstChild = loader;
                   exactlyOne = true;
+                  if (DEBUG) debug("Found first possible child: " + child);
                 } else {
                   // no point in looking further; there are at least two non-GC'ed children
                   exactlyOne = false;
+                  if (DEBUG) debug("Found another child: " + child);
                   break;
                 }
               }
             }
+
             if (exactlyOne) { return firstChild; }
           }
+
+          if (DEBUG) debug("Could not pick/find a child loader");
 
           // there might not be an observable parent/child relationship. If there is exactly
           // one loader in the app-group that is not a "standard" loader, select it
@@ -243,6 +272,8 @@ public class StandardClassProvider implements ClassProvider {
               iter.remove();
             }
           }
+
+          if (DEBUG) debug("After remove: " + copy);
           if (copy.size() == 1) {
             loader = lookupLoaderByName(copy.iterator().next());
             if (loader == REMOVED) {
@@ -260,7 +291,12 @@ public class StandardClassProvider implements ClassProvider {
       if (loader == REMOVED) {
         continue;
       }
-      if (loader != null) { return loader; }
+      if (loader != null) {
+        if (DEBUG) debug("Loader found for name " + desc.name() + " is " + loader);
+        return loader;
+      } else {
+        if (DEBUG) debug("No loader found for name: " + desc.name());
+      }
 
       // else if (the DNA specifies an app-group
       // and there is exactly one loader that matches the app-group) {
@@ -350,6 +386,8 @@ public class StandardClassProvider implements ClassProvider {
     } else {
       rv = null;
     }
+
+    if (DEBUG) debug("Lookup for name [" + name + "] returning " + rv);
     return rv;
   }
 

@@ -937,4 +937,7 @@ public interface TCPropertiesConsts {
   public static final String SEARCH_LUCENE_MERGEPOLICY_PREFIX                                = "search.lucene.mergePolicy";
 
   public static final String SIGAR_ENABLED                                                   = "sigar.enabled";
+
+  public static final String APP_GROUPS_DEBUG                                                = "appgroups.debug";
+
 }
