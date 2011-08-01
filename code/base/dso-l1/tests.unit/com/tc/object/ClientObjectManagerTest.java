@@ -8,6 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
+import com.tc.async.impl.MockSink;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
@@ -23,8 +24,10 @@ import com.tc.object.dna.api.DNAException;
 import com.tc.object.field.TCField;
 import com.tc.object.idprovider.api.ObjectIDProvider;
 import com.tc.object.loaders.ClassProvider;
+import com.tc.object.locks.TestLocksRecallService;
 import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.logging.RuntimeLogger;
+import com.tc.object.servermap.localcache.impl.L1ServerMapLocalCacheManagerImpl;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.MockTransactionManager;
 import com.tc.util.Assert;
@@ -51,6 +54,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
   private ObjectID                objectID;
   private MockTCObject            tcObject;
   private CyclicBarrier           mutualRefBarrier;
+  private TCObjectSelfStore       tcObjectSelfStore;
 
   @Override
   public void setUp() throws Exception {
@@ -60,6 +64,8 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     this.classFactory = new TestClassFactory();
     this.objectFactory = new TestObjectFactory();
     this.runtimeLogger = new NullRuntimeLogger();
+    this.tcObjectSelfStore = new L1ServerMapLocalCacheManagerImpl(new TestLocksRecallService(), new MockSink(),
+                                                                  new MockSink());
 
     this.rootName = "myRoot";
     this.object = new Object();
@@ -71,7 +77,8 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     this.mgr = new ClientObjectManagerImpl(this.remoteObjectManager, this.clientConfiguration, this.idProvider,
                                            this.runtimeLogger, new ClientIDProviderImpl(new TestChannelIDProvider()),
                                            this.classProvider, this.classFactory, this.objectFactory,
-                                           new PortabilityImpl(this.clientConfiguration), null, null, null);
+                                           new PortabilityImpl(this.clientConfiguration), null, null,
+                                           this.tcObjectSelfStore);
     this.mgr.setTransactionManager(new MockTransactionManager());
   }
 
@@ -141,7 +148,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
                                                                                     testMutualReferenceObjectFactory,
                                                                                     new PortabilityImpl(
                                                                                                         this.clientConfiguration),
-                                                                                    null, null, null);
+                                                                                    null, null, this.tcObjectSelfStore);
     this.mgr = clientObjectManager;
     final MockTransactionManager mockTransactionManager = new MockTransactionManager();
     this.mgr.setTransactionManager(mockTransactionManager);
@@ -490,10 +497,6 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     }
 
     public TCObject getNewInstance(final ObjectID id, final Object peer, final Class clazz, final boolean isNew) {
-      throw new ImplementMe();
-    }
-
-    public TCObject getNewInstance(final ObjectID id, final Class clazz, final boolean isNew) {
       TCObjectPhysical tcObj = null;
       if (id.toLong() == 1) {
         if (getLocalDepthCounter().get() == 0) {
