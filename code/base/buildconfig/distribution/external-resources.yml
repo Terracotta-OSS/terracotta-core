@@ -204,6 +204,8 @@ artifacts:
     name: terracotta-license.key
     destination: .
     url: http://kong/output/cage/terracotta-license.key
+    kit_edition: enterprise 
+
 # begin express products
   - maven_artifact: true
     groupId: org.terracotta.quartz
