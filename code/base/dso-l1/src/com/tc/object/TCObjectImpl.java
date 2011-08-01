@@ -28,6 +28,9 @@ import gnu.trove.TLinkable;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Implementation of TCObject interface.
@@ -235,9 +238,29 @@ public abstract class TCObjectImpl implements TCObject {
         ta.__tc_setfield(field.getName(), obj);
       }
     } catch (final Exception e) {
+      logger.error("Error setting field [" + fieldName + "] to value of type " + typeOf(obj) + " on instance of "
+                   + getTCClass().getPeerClass().getName() + " that has fields: " + fieldDesc());
+
       // TODO: More elegant exception handling.
       throw new com.tc.object.dna.api.DNAException(e);
     }
+  }
+
+  private String fieldDesc() {
+    List<String> fields = new ArrayList<String>();
+    Class c = getTCClass().getPeerClass();
+    while (c != null) {
+      for (Field f : c.getDeclaredFields()) {
+        fields.add(c.getName() + "." + f.getName() + "(" + f.getType().getName() + ")");
+      }
+      c = c.getSuperclass();
+    }
+    return fields.toString();
+  }
+
+  private static String typeOf(Object obj) {
+    if (obj == null) { return "null"; }
+    return obj.getClass().getSimpleName();
   }
 
   public final int clearReferences(final int toClear) {
