@@ -125,7 +125,7 @@ public class PassiveClrDirtyDbActivePassiveTest extends ActivePassiveTransparent
 
     // clean up passive dirty db
     System.out.println("XXX Clean passive db dirty bit");
-    LinkedJavaProcess setDbCleanProcess = new LinkedJavaProcess(SetDbClean.class.getName(), Arrays.asList(manager
+    LinkedJavaProcess setDbCleanProcess = new LinkedJavaProcess(SetDbClean.class.getName(), Arrays.asList("-c", manager
         .getConfigCreator().getDataLocation(1) + File.separator + "objectdb"), getTCPropertyJvmArgs());
     setDbCleanProcess.start();
     setDbCleanProcess.mergeSTDOUT("[SetDbClean] ");
