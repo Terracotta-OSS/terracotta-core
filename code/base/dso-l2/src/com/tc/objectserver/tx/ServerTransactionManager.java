@@ -5,15 +5,18 @@
 package com.tc.objectserver.tx;
 
 import com.tc.net.NodeID;
+import com.tc.object.ObjectID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
+import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 
 public interface ServerTransactionManager {
 
@@ -61,20 +64,22 @@ public interface ServerTransactionManager {
    * 
    * @param instanceMonitor
    */
-  public void apply(ServerTransaction txn, Map objects, ApplyTransactionInfo includeIDs, ObjectInstanceMonitor instanceMonitor);
+  public void apply(ServerTransaction txn, Map objects, ApplyTransactionInfo includeIDs,
+                    ObjectInstanceMonitor instanceMonitor);
 
   /**
    * Commits all the changes in objects and releases the objects This could potentially trigger an acknowledgment to the
    * originating client.
    */
-  public void commit(PersistenceTransactionProvider ptxp, Collection objects, Map newRoots,
-                     Collection appliedServerTransactionIDs);
+  public void commit(PersistenceTransactionProvider ptxp, Collection<ManagedObject> objects,
+                     Map<String, ObjectID> newRoots, Collection<ServerTransactionID> appliedServerTransactionIDs,
+                     SortedSet<ObjectID> deletedObjects);
 
   /**
    * The broadcast stage is completed. This could potentially trigger an acknowledgment to the originating client.
    */
   public void broadcasted(NodeID waiter, TransactionID requestID);
-  
+
   public void processingMetaDataCompleted(NodeID sourceID, TransactionID txnID);
 
   /**

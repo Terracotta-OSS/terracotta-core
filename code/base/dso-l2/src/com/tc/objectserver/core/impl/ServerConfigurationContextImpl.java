@@ -9,6 +9,7 @@ import com.tc.async.impl.ConfigurationContextImpl;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManager;
+import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.api.ServerMapRequestManager;
@@ -53,6 +54,7 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
   private final MetaDataManager                metaDataManager;
   private final IndexManager                   indexManager;
   private final SearchRequestManager           searchRequestManager;
+  private final GarbageCollectionManager       garbageCollectionManager;
 
   public ServerConfigurationContextImpl(final StageManager stageManager, final ObjectManager objectManager,
                                         final ObjectRequestManager objectRequestManager,
@@ -68,9 +70,9 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
                                         final TransactionBatchManager transactionBatchManager,
                                         final ServerGlobalTransactionManager serverGlobalTransactionManager,
                                         final ServerClusterMetaDataManager serverClusterMetaDataManager,
-                                        final MetaDataManager metaDataManager,
-                                        final IndexManager indexManager,
-                                        final SearchRequestManager searchRequestManager) {
+                                        final MetaDataManager metaDataManager, final IndexManager indexManager,
+                                        final SearchRequestManager searchRequestManager,
+                                        final GarbageCollectionManager garbageCollectionManager) {
     super(stageManager);
     this.objectManager = objectManager;
     this.objectRequestManager = objectRequestManager;
@@ -91,6 +93,7 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
     this.metaDataManager = metaDataManager;
     this.indexManager = indexManager;
     this.searchRequestManager = searchRequestManager;
+    this.garbageCollectionManager = garbageCollectionManager;
   }
 
   public L2Coordinator getL2Coordinator() {
@@ -164,10 +167,12 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
   public IndexManager getIndexManager() {
     return indexManager;
   }
-  
+
   public SearchRequestManager getSearchRequestManager() {
     return searchRequestManager;
   }
-  
-  
+
+  public GarbageCollectionManager getGarbageCollectionManager() {
+    return garbageCollectionManager;
+  }
 }

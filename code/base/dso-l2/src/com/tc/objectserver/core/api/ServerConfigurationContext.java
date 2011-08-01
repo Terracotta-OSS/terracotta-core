@@ -8,6 +8,7 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManager;
+import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.api.ServerMapRequestManager;
@@ -81,6 +82,7 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String SEARCH_QUERY_REQUEST_STAGE                         = "search_query_request_stage";
   public static final String INVALIDATE_OBJECTS_STAGE                           = "invalidate_objects_stage";
   public static final String VALIDATE_OBJECTS_STAGE                             = "validate_objects_stage";
+  public static final String GARBAGE_COLLECT_STAGE                              = "garbage_collect_stage";
 
   // TODO::Move to enterprise
   public static final String AA_TRANSACTION_WATERMARK_BROADCAST_STAGE           = "aa_transaction_watermark_broadcast_stage";
@@ -128,4 +130,6 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public IndexManager getIndexManager();
 
   public SearchRequestManager getSearchRequestManager();
+
+  public GarbageCollectionManager getGarbageCollectionManager();
 }

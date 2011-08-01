@@ -30,7 +30,7 @@ import com.tc.net.groups.GroupMessageListener;
 import com.tc.net.groups.GroupResponse;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.context.GCResultContext;
+import com.tc.objectserver.context.PeriodicDGCResultContext;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.impl.GarbageCollectorEventListenerAdapter;
 import com.tc.objectserver.tx.ServerTransactionManager;
@@ -38,11 +38,10 @@ import com.tc.objectserver.tx.TxnsInSystemCompletionListener;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.State;
-import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.TCCollections;
 import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -105,9 +104,9 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     try {
       final GroupResponse gr = this.groupManager.sendAllAndWaitForResponse(ObjectListSyncMessageFactory
           .createObjectListSyncRequestMessage());
-      final Map<NodeID, SyncingPassiveValue> nodeIDSyncingPassives = new LinkedHashMap();
-      for (final Iterator i = gr.getResponses().iterator(); i.hasNext();) {
-        final ObjectListSyncMessage msg = (ObjectListSyncMessage) i.next();
+      final Map<NodeID, SyncingPassiveValue> nodeIDSyncingPassives = new LinkedHashMap<NodeID, SyncingPassiveValue>();
+      for (GroupMessage groupMessage : gr.getResponses()) {
+        final ObjectListSyncMessage msg = (ObjectListSyncMessage) groupMessage;
         if (msg.getType() == ObjectListSyncMessage.RESPONSE) {
           nodeIDSyncingPassives.put(msg.messageFrom(),
                                     new SyncingPassiveValue(msg.getObjectIDs(), msg.getCurrentState()));
@@ -176,7 +175,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
                   + gcMsg);
       return;
     }
-    final boolean deleted = this.objectManager.getGarbageCollector().deleteGarbage(new GCResultContext(gcedOids, gcMsg
+    final boolean deleted = this.objectManager.getGarbageCollector().deleteGarbage(new PeriodicDGCResultContext(gcedOids, gcMsg
                                                                                        .getGCInfo()));
     if (deleted) {
       logger.info("Removed " + gcedOids.size() + " objects from passive ObjectManager from last DGC from Active");
@@ -242,7 +241,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     }
   }
 
-  private boolean add2L2StateManager(final NodeID nodeID, final State currentState, final Set oids) {
+  private boolean add2L2StateManager(final NodeID nodeID, final State currentState, final Set<ObjectID> oids) {
     return this.passiveSyncStateManager.addL2(nodeID, oids, currentState);
   }
 
@@ -354,20 +353,19 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
   public final class GCMonitor extends GarbageCollectorEventListenerAdapter {
 
-    boolean disabled        = false;
-    Map     syncingPassives = new HashMap();
+    boolean                          disabled        = false;
+    Map<NodeID, SyncingPassiveValue> syncingPassives = new HashMap<NodeID, SyncingPassiveValue>();
 
     @Override
     public void garbageCollectorCycleCompleted(final GarbageCollectionInfo info, final ObjectIDSet toDeleted) {
-      Map toAdd = null;
+      Map<NodeID, SyncingPassiveValue> toAdd = null;
       notifyGCResultToPassives(info, toDeleted);
       synchronized (this) {
         if (this.syncingPassives.isEmpty()) { return; }
-        toAdd = new LinkedHashMap();
-        for (final Iterator i = this.syncingPassives.entrySet().iterator(); i.hasNext();) {
-          final Entry e = (Entry) i.next();
+        toAdd = new LinkedHashMap<NodeID, SyncingPassiveValue>();
+        for (Entry<NodeID, SyncingPassiveValue> e : this.syncingPassives.entrySet()) {
           if (e.getValue() != ADDED) {
-            final NodeID nodeID = (NodeID) e.getKey();
+            final NodeID nodeID = e.getKey();
             logger.info("DGC Completed : Starting scheduled passive sync for " + nodeID);
             disableGCIfPossible();
             // Shouldn't happen as this is in DGC call back after DGC completion
@@ -398,11 +396,10 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
           });
     }
 
-    private void add2L2StateManager(final Map toAdd) {
-      for (final Iterator i = toAdd.entrySet().iterator(); i.hasNext();) {
-        final Entry e = (Entry) i.next();
-        final NodeID nodeID = (NodeID) e.getKey();
-        final SyncingPassiveValue value = (SyncingPassiveValue) e.getValue();
+    private void add2L2StateManager(final Map<NodeID, SyncingPassiveValue> toAdd) {
+      for (Entry<NodeID, SyncingPassiveValue> e : toAdd.entrySet()) {
+        final NodeID nodeID = e.getKey();
+        final SyncingPassiveValue value = e.getValue();
         if (!ReplicatedObjectManagerImpl.this.add2L2StateManager(nodeID, value.getCurrentState(), value.getOids())) {
           logger.warn(nodeID + " is already added to L2StateManager, clearing our internal data structures.");
           syncCompleteFor(nodeID);
@@ -412,26 +409,21 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
     private void disableGCIfPossible() {
       if (!this.disabled) {
-        this.disabled = ReplicatedObjectManagerImpl.this.objectManager.getGarbageCollector().disableGC();
+        this.disabled = ReplicatedObjectManagerImpl.this.objectManager.getGarbageCollector().requestDisableGC();
         logger.info((this.disabled ? "DGC is disabled." : "DGC is is not disabled."));
       }
     }
 
     private void disableGC() {
-      while (!this.disabled) {
-        this.disabled = ReplicatedObjectManagerImpl.this.objectManager.getGarbageCollector().disableGC();
-        if (!this.disabled) {
-          logger.warn("DGC is running. Waiting for it to complete before disabling it...");
-          ThreadUtil.reallySleep(3000); // FIXME:: use wait notify instead
-        }
-      }
+      ReplicatedObjectManagerImpl.this.objectManager.getGarbageCollector().waitToDisableGC();
+      this.disabled = true;
     }
 
     private void assertGCDisabled() {
       if (!this.disabled) { throw new AssertionError("DGC is not disabled"); }
     }
 
-    public void add2L2StateManagerWhenGCDisabled(final NodeID nodeID, final Set oids, final State currentState) {
+    public void add2L2StateManagerWhenGCDisabled(final NodeID nodeID, final Set<ObjectID> oids, final State currentState) {
       boolean toAdd = false;
       synchronized (this) {
         disableGCIfPossible();
@@ -482,7 +474,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       }
     }
 
-    public void disableAndAdd2L2StateManager(final Map nodeID2ObjectIDs) {
+    public void disableAndAdd2L2StateManager(final Map<NodeID, SyncingPassiveValue> nodeID2ObjectIDs) {
       synchronized (this) {
         if (nodeID2ObjectIDs.size() > 0 && !this.disabled) {
           logger.info("Disabling DGC since " + nodeID2ObjectIDs.size() + " passives [" + nodeID2ObjectIDs.keySet()
@@ -490,9 +482,9 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
           disableGC();
           assertGCDisabled();
         }
-        for (final Iterator i = nodeID2ObjectIDs.entrySet().iterator(); i.hasNext();) {
-          final Entry e = (Entry) i.next();
-          final NodeID nodeID = (NodeID) e.getKey();
+        for (final Iterator<Entry<NodeID, SyncingPassiveValue>> i = nodeID2ObjectIDs.entrySet().iterator(); i.hasNext();) {
+          final Entry<NodeID, SyncingPassiveValue> e = i.next();
+          final NodeID nodeID = e.getKey();
           // XXX: syncingPassives can contain the node and still not ADDED state as the DGC was not disabled. They
           // contain syncingPassiveValue. So, you are missing to sync them here.
           if (!this.syncingPassives.containsKey(nodeID)) {
@@ -514,15 +506,15 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     protected final State         currentState;
 
     public SyncingPassiveValue() {
-      this(Collections.emptySet(), new State("NO_STATE"));
+      this(TCCollections.EMPTY_OBJECT_ID_SET, new State("NO_STATE"));
     }
 
-    public SyncingPassiveValue(Set oids, State currentState) {
+    public SyncingPassiveValue(Set<ObjectID> oids, State currentState) {
       this.oids = oids;
       this.currentState = currentState;
     }
 
-    public Set getOids() {
+    public Set<ObjectID> getOids() {
       return oids;
     }
 

@@ -4,29 +4,22 @@
  */
 package com.tc.objectserver.context;
 
-import com.tc.async.api.EventContext;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 
 import java.util.SortedSet;
 
-public class GCResultContext implements EventContext {
+public class PeriodicDGCResultContext extends DGCResultContext {
 
- 
-  private final SortedSet<ObjectID>            gcedOids;
-  private final GarbageCollectionInfo          gcInfo;
+  private final GarbageCollectionInfo gcInfo;
 
-  public GCResultContext(SortedSet gcedOids, GarbageCollectionInfo gcInfo) {
-    this.gcedOids = gcedOids;
+  public PeriodicDGCResultContext(SortedSet<ObjectID> garbage, GarbageCollectionInfo gcInfo) {
+    super(garbage);
     this.gcInfo = gcInfo;
   }
 
   public int getGCIterationCount() {
     return this.gcInfo.getIteration();
-  }
-
-  public SortedSet<ObjectID> getGCedObjectIDs() {
-    return this.gcedOids;
   }
 
   public GarbageCollectionInfo getGCInfo() {
@@ -35,6 +28,6 @@ public class GCResultContext implements EventContext {
 
   @Override
   public String toString() {
-    return "GCResultContext [ " + this.gcInfo.getIteration() + " , " + this.gcedOids.size() + " ]";
+    return "PeriodicDGCResultContext [ " + this.gcInfo.getIteration() + " , " + getGarbageIDs().size() + " ]";
   }
 }

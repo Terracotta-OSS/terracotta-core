@@ -10,6 +10,10 @@
 <tc:tc-config xmlns:tc="http://www.terracotta.org/config"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-6.xsd">
+    
+    <tc-properties>
+    	<property name="l2.objectmanager.dgc.inline.enabled" value="false"/>
+    </tc-properties>
 
 	<servers>
 		<server host="localhost" name="server-1">

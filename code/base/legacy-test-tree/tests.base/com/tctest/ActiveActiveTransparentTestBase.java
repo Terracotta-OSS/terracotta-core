@@ -67,8 +67,8 @@ public abstract class ActiveActiveTransparentTestBase extends MultipleServersTra
       ConfigurationSetupException {
     File configFile = new File(aaServerManager.getConfigFileLocation());
     TcConfigDocument configDoc = TcConfigDocument.Factory.parse(configFile);
-    L2DSOConfigObject.initializeServers(configDoc.getTcConfig(), new SchemaDefaultValueProvider(), configFile
-        .getParentFile());
+    L2DSOConfigObject.initializeServers(configDoc.getTcConfig(), new SchemaDefaultValueProvider(),
+                                        configFile.getParentFile());
     aaServerManager.addGroupsToL1Config(configFactory(), configDoc.getTcConfig().getServers());
   }
 
@@ -77,6 +77,6 @@ public abstract class ActiveActiveTransparentTestBase extends MultipleServersTra
     return TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_ACTIVE.equals(mode());
   }
 
-  protected abstract void setupActiveActiveTest(ActiveActiveTestSetupManager setupManager);
+  protected abstract void setupActiveActiveTest(ActiveActiveTestSetupManager setupManager) throws Exception;
 
 }

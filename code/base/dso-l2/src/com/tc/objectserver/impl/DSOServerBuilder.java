@@ -32,6 +32,7 @@ import com.tc.object.msg.MessageRecycler;
 import com.tc.object.net.ChannelStatsImpl;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.persistence.api.PersistentMapStore;
+import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.api.ServerMapRequestManager;
@@ -143,7 +144,8 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                                               DumpHandlerStore dumpHandlerStore,
                                                               MetaDataManager metaDataManager,
                                                               IndexManager indexManager,
-                                                              SearchRequestManager searchRequestManager);
+                                                              SearchRequestManager searchRequestManager,
+                                                              GarbageCollectionManager deleteObjectManager);
 
   GroupManager getClusterGroupCommManager();
 

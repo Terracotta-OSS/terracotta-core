@@ -6,8 +6,9 @@ package com.tc.objectserver.api;
 
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
-import com.tc.objectserver.context.GCResultContext;
+import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
+import com.tc.objectserver.context.PeriodicDGCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
@@ -108,9 +109,11 @@ public interface ObjectManager extends ManagedObjectProvider, ObjectManagerMBean
   /**
    * Called by DGC thread (in object manager)
    * 
-   * @param resultContext
+   * @param periodicDGCResultContext
    */
-  public void notifyGCComplete(GCResultContext resultContext);
+  public void notifyGCComplete(PeriodicDGCResultContext periodicDGCResultContext);
+
+  public void deleteObjects(DGCResultContext dgcResultContext);
 
   public void setStatsListener(ObjectManagerStatsListener listener);
 

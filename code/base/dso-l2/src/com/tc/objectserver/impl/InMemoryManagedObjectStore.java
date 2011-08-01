@@ -6,7 +6,7 @@ package com.tc.objectserver.impl;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ShutdownError;
-import com.tc.objectserver.context.GCResultContext;
+import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
@@ -22,7 +22,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.TreeSet;
 
 public class InMemoryManagedObjectStore implements ManagedObjectStore {
 
@@ -75,8 +74,8 @@ public class InMemoryManagedObjectStore implements ManagedObjectStore {
     }
   }
 
-  public void removeAllObjectsByID(final GCResultContext gcResult) {
-    removeAllObjectsByIDNow(new TreeSet(gcResult.getGCedObjectIDs()));
+  public void removeAllObjectsByID(final DGCResultContext dgcResultContext) {
+    removeAllObjectsByIDNow(dgcResultContext.getGarbageIDs());
   }
 
   public synchronized ObjectIDSet getAllObjectIDs() {

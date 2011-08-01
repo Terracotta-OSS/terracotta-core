@@ -40,13 +40,15 @@ import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.objectserver.api.ObjectManagerStatsListener;
 import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.api.TestSink;
-import com.tc.objectserver.context.GCResultContext;
+import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.context.ObjectRequestServerContextImpl;
+import com.tc.objectserver.context.PeriodicDGCResultContext;
 import com.tc.objectserver.context.RespondToObjectRequestContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.dgc.api.GarbageCollector;
+import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.impl.ObjectRequestManagerImpl.BatchAndSend;
 import com.tc.objectserver.impl.ObjectRequestManagerImpl.LookupContext;
 import com.tc.objectserver.impl.ObjectRequestManagerImpl.ObjectRequestCache;
@@ -888,7 +890,7 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
-    public void notifyGCComplete(final GCResultContext resultContext) {
+    public void notifyGCComplete(final PeriodicDGCResultContext dgcResultContext) {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
@@ -974,6 +976,13 @@ public class ObjectRequestManagerTest extends TestCase {
       return getObjectByID(id);
     }
 
+    public void deleteObjects(DGCResultContext dgcResultContext) {
+      throw new NotImplementedException(TestObjectManager.class);
+    }
+
+    public void scheduleGarbageCollection(GCType type, long delay) {
+      throw new NotImplementedException(TestObjectManager.class);
+    }
   }
 
   private static class TestMessageChannel implements MessageChannel {

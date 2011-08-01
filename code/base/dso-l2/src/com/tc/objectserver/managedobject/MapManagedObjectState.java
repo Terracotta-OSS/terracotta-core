@@ -22,6 +22,7 @@ import com.tc.text.PrettyPrinter;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -72,16 +73,17 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
           addBackReferenceForValue(applyInfo, v, objectID);
         }
         if (old instanceof ObjectID) {
-          invalidateIfNeeded(applyInfo, (ObjectID) old);
+          removedValueFromMap(applyInfo, (ObjectID) old);
         }
         break;
       case SerializationUtil.REMOVE:
         old = this.references.remove(params[0]);
         if (old instanceof ObjectID) {
-          invalidateIfNeeded(applyInfo, (ObjectID) old);
+          removedValueFromMap(applyInfo, (ObjectID) old);
         }
         break;
       case SerializationUtil.CLEAR:
+        clearedMap(applyInfo, references.values());
         this.references.clear();
         break;
       default:
@@ -90,7 +92,11 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
 
   }
 
-  protected void invalidateIfNeeded(ApplyTransactionInfo applyInfo, ObjectID objectID) {
+  protected void clearedMap(ApplyTransactionInfo applyInfo, Collection values) {
+    // Overridden by subclasses
+  }
+
+  protected void removedValueFromMap(ApplyTransactionInfo applyInfo, ObjectID objectID) {
     // Overridden by subclasses
   }
 

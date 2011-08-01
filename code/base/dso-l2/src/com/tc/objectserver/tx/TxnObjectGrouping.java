@@ -4,13 +4,18 @@
  */
 package com.tc.objectserver.tx;
 
+import com.tc.object.ObjectID;
 import com.tc.object.tx.ServerTransactionID;
+import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.State;
+import com.tc.util.TCCollections;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -20,50 +25,55 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.SortedSet;
 
 public final class TxnObjectGrouping implements PrettyPrintable {
-  private static final int          MAX_OBJECTS    = TCPropertiesImpl
-                                                       .getProperties()
-                                                       .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_MAXOBJECTS_INTXNOBJ_GROUPING);
-  private static final int          MAX_TXNS       = TCPropertiesImpl
-                                                       .getProperties()
-                                                       .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_MAXTXNS_INTXNOBJECT_GROUPING);
+  private static final int                MAX_OBJECTS    = TCPropertiesImpl
+                                                             .getProperties()
+                                                             .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_MAXOBJECTS_INTXNOBJ_GROUPING);
+  private static final int                MAX_TXNS       = TCPropertiesImpl
+                                                             .getProperties()
+                                                             .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_MAXTXNS_INTXNOBJECT_GROUPING);
 
-  private static final State        APPLY_PENDING  = new State("APPLY_PENDING");
-  private static final State        COMMIT_PENDING = new State("COMMIT_PENDING");
+  private static final State              APPLY_PENDING  = new State("APPLY_PENDING");
+  private static final State              COMMIT_PENDING = new State("COMMIT_PENDING");
 
-  private final ServerTransactionID txID;
-  private Map                       txns;
-  private Map                       objects;
-  private Map                       newRootsMap;
-  private int                       pendingApplys;
-  private boolean                   isActive       = true;
+  private final ServerTransactionID       txID;
+  private Map<ServerTransactionID, State> txns;
+  private Map<ObjectID, ManagedObject>    objects;
+  private Map<String, ObjectID>           newRootsMap;
+  private SortedSet<ObjectID>             deletedObjects;
+  private int                             pendingApplys;
+  private boolean                         isActive       = true;
 
-  public TxnObjectGrouping(ServerTransactionID sTxID, Map newRootsMap) {
+  public TxnObjectGrouping(ServerTransactionID sTxID, Map<String, ObjectID> newRootsMap) {
     this.txID = sTxID;
     if (newRootsMap.isEmpty()) {
       this.newRootsMap = Collections.EMPTY_MAP;
     } else {
-      this.newRootsMap = new HashMap(newRootsMap);
+      this.newRootsMap = new HashMap<String, ObjectID>(newRootsMap);
     }
-    this.txns = new HashMap();
+    this.txns = new HashMap<ServerTransactionID, State>();
     this.txns.put(sTxID, APPLY_PENDING);
     this.pendingApplys = 1;
     this.objects = Collections.EMPTY_MAP;
+    this.deletedObjects = new ObjectIDSet();
   }
 
-  public TxnObjectGrouping(Map lookedupObjects) {
+  public TxnObjectGrouping(Map<ObjectID, ManagedObject> lookedupObjects) {
     this.txID = ServerTransactionID.NULL_ID;
     this.newRootsMap = Collections.EMPTY_MAP;
     this.txns = Collections.EMPTY_MAP;
     objects = lookedupObjects;
     this.pendingApplys = 0;
+    this.deletedObjects = TCCollections.EMPTY_OBJECT_ID_SET;
   }
 
-  public boolean applyComplete(ServerTransactionID txnId) {
-    Object o = txns.put(txnId, COMMIT_PENDING);
-    Assert.assertTrue(o == APPLY_PENDING);
+  public boolean applyComplete(ApplyTransactionInfo applyTxnInfo) {
+    State s = txns.put(applyTxnInfo.getServerTransactionID(), COMMIT_PENDING);
+    Assert.assertTrue(s == APPLY_PENDING);
     --pendingApplys;
+    this.deletedObjects.addAll(applyTxnInfo.getObjectIDsToDelete());
     return (pendingApplys == 0);
   }
 
@@ -71,12 +81,16 @@ public final class TxnObjectGrouping implements PrettyPrintable {
     return txID;
   }
 
-  public Map getObjects() {
+  public Map<ObjectID, ManagedObject> getObjects() {
     return objects;
   }
 
-  public Map getNewRoots() {
+  public Map<String, ObjectID> getNewRoots() {
     return newRootsMap;
+  }
+
+  public SortedSet<ObjectID> getDeletedObjects() {
+    return deletedObjects;
   }
 
   /*
@@ -88,14 +102,14 @@ public final class TxnObjectGrouping implements PrettyPrintable {
     if (txns.size() >= oldGrouping.txns.size()) {
       txns.putAll(oldGrouping.txns);
     } else {
-      Map temp = txns;
+      Map<ServerTransactionID, State> temp = txns;
       txns = oldGrouping.txns;
       txns.putAll(temp);
     }
     if (objects.size() >= oldGrouping.objects.size()) {
       objects.putAll(oldGrouping.objects);
     } else {
-      Map temp = objects;
+      Map<ObjectID, ManagedObject> temp = objects;
       objects = oldGrouping.objects;
       objects.putAll(temp);
     }
@@ -106,12 +120,14 @@ public final class TxnObjectGrouping implements PrettyPrintable {
         newRootsMap.putAll(oldGrouping.newRootsMap);
       }
     }
+    deletedObjects.addAll(oldGrouping.getDeletedObjects());
     pendingApplys += oldGrouping.pendingApplys;
 
-    // Setting these references to null so that we disable any futher access to these through old grouping
+    // Setting these references to null so that we disable any further access to these through old grouping
     oldGrouping.txns = null;
     oldGrouping.objects = null;
     oldGrouping.newRootsMap = null;
+    oldGrouping.deletedObjects = null;
     oldGrouping.isActive = false;
   }
 
@@ -137,11 +153,11 @@ public final class TxnObjectGrouping implements PrettyPrintable {
     return false;
   }
 
-  public Iterator getApplyPendingTxnsIterator() {
+  public Iterator<ServerTransactionID> getApplyPendingTxnsIterator() {
     return new ApplyPendingTxnsIterator();
   }
 
-  public Collection getTxnIDs() {
+  public Collection<ServerTransactionID> getTxnIDs() {
     return txns.keySet();
   }
 
@@ -172,22 +188,22 @@ public final class TxnObjectGrouping implements PrettyPrintable {
            + ", roots = " + newRootsMap.size() + "]";
   }
 
-  private final class ApplyPendingTxnsIterator implements Iterator {
+  private final class ApplyPendingTxnsIterator implements Iterator<ServerTransactionID> {
 
-    int      remaining = pendingApplys;
-    int      save      = pendingApplys;
-    Iterator pointer   = txns.entrySet().iterator();
+    int                                         remaining = pendingApplys;
+    int                                         save      = pendingApplys;
+    Iterator<Entry<ServerTransactionID, State>> pointer   = txns.entrySet().iterator();
 
     public boolean hasNext() {
       return (remaining > 0);
     }
 
-    public Object next() {
+    public ServerTransactionID next() {
       if (remaining <= 0) { throw new NoSuchElementException(); }
       if (save != pendingApplys) { throw new ConcurrentModificationException(); }
       remaining--;
       while (pointer.hasNext()) {
-        Map.Entry e = (Entry) pointer.next();
+        Entry<ServerTransactionID, State> e = pointer.next();
         if (e.getValue() == APPLY_PENDING) { return e.getKey(); }
       }
       throw new AssertionError("Shouldnt reach here");

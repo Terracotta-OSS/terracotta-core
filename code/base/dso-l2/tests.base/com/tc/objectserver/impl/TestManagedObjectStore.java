@@ -6,7 +6,7 @@ package com.tc.objectserver.impl;
 
 import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
-import com.tc.objectserver.context.GCResultContext;
+import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
@@ -65,8 +65,8 @@ public class TestManagedObjectStore implements ManagedObjectStore {
     return;
   }
 
-  public void removeAllObjectsByID(final GCResultContext gcResult) {
-    removeAllObjectsByIDNow(new TreeSet(gcResult.getGCedObjectIDs()));
+  public void removeAllObjectsByID(final DGCResultContext dgcResultContext) {
+    removeAllObjectsByIDNow(new TreeSet(dgcResultContext.getGarbageIDs()));
   }
 
   public void shutdown() {

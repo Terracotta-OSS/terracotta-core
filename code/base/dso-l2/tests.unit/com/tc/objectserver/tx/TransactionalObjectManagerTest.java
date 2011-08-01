@@ -22,6 +22,7 @@ import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.core.impl.TestManagedObject;
 import com.tc.objectserver.gtx.TestGlobalTransactionManager;
 import com.tc.objectserver.impl.TestObjectManager;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.test.TCTestCase;
 import com.tc.util.SequenceID;
 
@@ -119,7 +120,8 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     assertNotNull(args);
 
     // Apply and commit complete for the first transaction
-    this.txObjectManager.applyTransactionComplete(stxn1.getServerTransactionID());
+    this.txObjectManager.applyTransactionComplete(new ApplyTransactionInfo(stxn1.isActiveTxn(), stxn1
+        .getServerTransactionID()));
     ApplyCompleteEventContext acec = (ApplyCompleteEventContext) this.coordinator.applyCompleteSink.queue.take();
     assertNotNull(acec);
     assertTrue(this.coordinator.applyCompleteSink.queue.isEmpty());
@@ -267,7 +269,8 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     assertNotNull(args);
 
     // Apply and commit complete for the first transaction
-    this.txObjectManager.applyTransactionComplete(stxn1.getServerTransactionID());
+    this.txObjectManager.applyTransactionComplete(new ApplyTransactionInfo(stxn1.isActiveTxn(), stxn1
+        .getServerTransactionID()));
     ApplyCompleteEventContext acec = (ApplyCompleteEventContext) this.coordinator.applyCompleteSink.queue.take();
     assertNotNull(acec);
     assertTrue(this.coordinator.applyCompleteSink.queue.isEmpty());
@@ -376,7 +379,8 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     assertNotNull(args);
 
     // Apply and commit complete for the 3'rd transaction
-    this.txObjectManager.applyTransactionComplete(stxn3.getServerTransactionID());
+    this.txObjectManager.applyTransactionComplete(new ApplyTransactionInfo(stxn3.isActiveTxn(), stxn3
+        .getServerTransactionID()));
     acec = (ApplyCompleteEventContext) this.coordinator.applyCompleteSink.queue.take();
     assertNotNull(acec);
     assertTrue(this.coordinator.applyCompleteSink.queue.isEmpty());

@@ -6,9 +6,11 @@ package com.tc.objectserver.tx;
 
 import com.tc.exception.ImplementMe;
 import com.tc.net.NodeID;
+import com.tc.object.ObjectID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
+import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
@@ -18,6 +20,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 
 public class TestServerTransactionManager implements ServerTransactionManager {
 
@@ -64,7 +67,8 @@ public class TestServerTransactionManager implements ServerTransactionManager {
     // NOP
   }
 
-  public void apply(ServerTransaction txn, Map objects, ApplyTransactionInfo includeIDs, ObjectInstanceMonitor instanceMonitor) {
+  public void apply(ServerTransaction txn, Map objects, ApplyTransactionInfo includeIDs,
+                    ObjectInstanceMonitor instanceMonitor) {
     // NOP
   }
 
@@ -77,8 +81,9 @@ public class TestServerTransactionManager implements ServerTransactionManager {
     throw new ImplementMe();
   }
 
-  public void commit(PersistenceTransactionProvider ptxp, Collection objects, Map newRoots,
-                     Collection appliedServerTransactionIDs) {
+  public void commit(PersistenceTransactionProvider ptxp, Collection<ManagedObject> objects,
+                     Map<String, ObjectID> newRoots, Collection<ServerTransactionID> appliedServerTransactionIDs,
+                     SortedSet<ObjectID> deletedObjects) {
     // NOP
   }
 

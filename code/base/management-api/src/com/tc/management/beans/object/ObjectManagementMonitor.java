@@ -19,7 +19,7 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
 
   private static final TCLogger  logger = TCLogging.getLogger(ObjectManagementMonitor.class);
 
-  private volatile GCComptroller gcController;
+  private volatile GCController gcController;
 
   private final GCRunner         gcRunner;
   private ObjectIdsFetcher       objectIdsFetcher;
@@ -133,7 +133,7 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
     // nothing to reset
   }
 
-  public void registerGCController(GCComptroller controller) {
+  public void registerGCController(GCController controller) {
     if (isEnabled()) {
       if (gcController != null) {
         logger.warn("Registering new dgc-controller while one already registered. Old : " + gcController);
@@ -155,7 +155,7 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
     return treeSet;
   }
 
-  public static interface GCComptroller {
+  public static interface GCController {
     void startGC();
 
     boolean isGCDisabled();

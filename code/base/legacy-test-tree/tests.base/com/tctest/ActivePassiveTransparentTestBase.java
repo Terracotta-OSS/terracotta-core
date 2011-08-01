@@ -30,7 +30,7 @@ public abstract class ActivePassiveTransparentTestBase extends MultipleServersTr
     customizeActivePassiveTest((ActivePassiveServerManager) multipleServerManager);
   }
 
-  protected abstract void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager);
+  protected abstract void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) throws Exception;
 
   @Override
   protected void setUpMultipleServersTest(PortChooser portChooser, ArrayList jvmArgs) throws Exception {
@@ -67,8 +67,8 @@ public abstract class ActivePassiveTransparentTestBase extends MultipleServersTr
       IOException, ConfigurationSetupException {
     File configFile = new File(apServerManager.getConfigFileLocation());
     TcConfigDocument configDoc = TcConfigDocument.Factory.parse(configFile);
-    L2DSOConfigObject.initializeServers(configDoc.getTcConfig(), new SchemaDefaultValueProvider(), configFile
-        .getParentFile());
+    L2DSOConfigObject.initializeServers(configDoc.getTcConfig(), new SchemaDefaultValueProvider(),
+                                        configFile.getParentFile());
     apServerManager.addServersAndGroupToL1Config(configFactory(), configDoc.getTcConfig().getServers());
   }
 

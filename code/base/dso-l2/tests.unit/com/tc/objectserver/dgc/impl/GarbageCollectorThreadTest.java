@@ -5,12 +5,12 @@
 package com.tc.objectserver.dgc.impl;
 
 import com.tc.object.ObjectID;
-import com.tc.objectserver.context.GCResultContext;
+import com.tc.objectserver.context.PeriodicDGCResultContext;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
 import com.tc.objectserver.impl.ObjectManagerConfig;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.concurrent.StoppableThread;
+import com.tc.util.concurrent.LifeCycleState;
 
 import java.util.Collection;
 
@@ -27,7 +27,8 @@ public class GarbageCollectorThreadTest extends TestCase {
 
   public void testYoungGCOnNoFullGC() {
 
-    ObjectManagerConfig config = new ObjectManagerConfig(FULL_GC_FREQUENCY, false, true, true, true, YOUNG_GC_FREQUENCY, 1000);
+    ObjectManagerConfig config = new ObjectManagerConfig(FULL_GC_FREQUENCY, false, true, true, true,
+                                                         YOUNG_GC_FREQUENCY, 1000);
     TestGarbageCollector collector = new TestGarbageCollector();
 
     ThreadGroup gp = new ThreadGroup("test group");
@@ -49,7 +50,8 @@ public class GarbageCollectorThreadTest extends TestCase {
 
   public void testYoungGCOn() {
 
-    ObjectManagerConfig config = new ObjectManagerConfig(FULL_GC_FREQUENCY, true, true, true, true, YOUNG_GC_FREQUENCY, 1000);
+    ObjectManagerConfig config = new ObjectManagerConfig(FULL_GC_FREQUENCY, true, true, true, true, YOUNG_GC_FREQUENCY,
+                                                         1000);
     TestGarbageCollector collector = new TestGarbageCollector();
 
     ThreadGroup gp = new ThreadGroup("test group");
@@ -105,16 +107,20 @@ public class GarbageCollectorThreadTest extends TestCase {
       //
     }
 
-    public boolean deleteGarbage(GCResultContext resultContext) {
+    public boolean deleteGarbage(PeriodicDGCResultContext resultContext) {
       return false;
     }
 
-    public boolean disableGC() {
+    public void waitToDisableGC() {
+      // do nothing
+    }
+
+    public boolean requestDisableGC() {
       return false;
     }
 
     public void enableGC() {
-      //    
+      //
     }
 
     public boolean isDisabled() {
@@ -157,7 +163,15 @@ public class GarbageCollectorThreadTest extends TestCase {
       //
     }
 
-    public void setState(StoppableThread st) {
+    public void setPeriodicEnabled(final boolean periodEnable) {
+      // do nothing
+    }
+
+    public boolean isPeriodicEnabled() {
+      return false;
+    }
+
+    public void setState(LifeCycleState st) {
       //
     }
 
@@ -175,6 +189,14 @@ public class GarbageCollectorThreadTest extends TestCase {
 
     public boolean requestGCStart() {
       return true;
+    }
+
+    public void waitToStartGC() {
+      // do nothing
+    }
+
+    public void waitToStartInlineGC() {
+      // do nothing
     }
 
     public void doGC(GCType type) {

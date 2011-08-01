@@ -5,11 +5,11 @@
 package com.tc.objectserver.dgc.impl;
 
 import com.tc.object.ObjectID;
-import com.tc.objectserver.context.GCResultContext;
+import com.tc.objectserver.context.PeriodicDGCResultContext;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.concurrent.StoppableThread;
+import com.tc.util.concurrent.LifeCycleState;
 
 import java.util.Collection;
 
@@ -55,7 +55,7 @@ public class NullGarbageCollector implements GarbageCollector {
     // do nothing null
   }
 
-  public void setState(StoppableThread st) {
+  public void setState(LifeCycleState st) {
     // do nothing null
   }
 
@@ -63,12 +63,16 @@ public class NullGarbageCollector implements GarbageCollector {
     //
   }
 
-  public boolean disableGC() {
+  public boolean requestDisableGC() {
     return true;
   }
 
   public void enableGC() {
     // do nothing null
+  }
+
+  public void waitToDisableGC() {
+    // do nothing
   }
 
   public boolean isDisabled() {
@@ -79,7 +83,7 @@ public class NullGarbageCollector implements GarbageCollector {
     return false;
   }
 
-  public boolean deleteGarbage(GCResultContext resultContext) {
+  public boolean deleteGarbage(PeriodicDGCResultContext resultContext) {
     return true;
   }
 
@@ -96,6 +100,22 @@ public class NullGarbageCollector implements GarbageCollector {
   }
 
   public boolean requestGCStart() {
+    return false;
+  }
+
+  public void waitToStartGC() {
+    // do nothing
+  }
+
+  public void waitToStartInlineGC() {
+    // do nothing
+  }
+
+  public void setPeriodicEnabled(boolean periodicEnabled) {
+    // do nothing
+  }
+
+  public boolean isPeriodicEnabled() {
     return false;
   }
 }

@@ -6,7 +6,7 @@ package com.tc.objectserver.persistence.api;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ManagedObjectProvider;
-import com.tc.objectserver.context.GCResultContext;
+import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.text.PrettyPrintable;
@@ -60,5 +60,5 @@ public interface ManagedObjectStore extends ManagedObjectStoreStats, ManagedObje
   /**
    * This method is used by the DGC to trigger removing Garbage.
    */
-  public void removeAllObjectsByID(GCResultContext gcResult);
+  public void removeAllObjectsByID(DGCResultContext gcDisposalContext);
 }

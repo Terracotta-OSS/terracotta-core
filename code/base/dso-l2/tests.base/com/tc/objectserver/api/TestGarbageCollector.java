@@ -8,7 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
-import com.tc.objectserver.context.GCResultContext;
+import com.tc.objectserver.context.PeriodicDGCResultContext;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollector;
@@ -18,7 +18,6 @@ import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.NullLifeCycleState;
-import com.tc.util.concurrent.StoppableThread;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -251,7 +250,7 @@ public class TestGarbageCollector implements GarbageCollector {
                                new NullLifeCycleState());
     this.requestGCPause();
     this.blockUntilReadyToGC();
-    this.deleteGarbage(new GCResultContext(collectedObjects, new GarbageCollectionInfo()));
+    this.deleteGarbage(new PeriodicDGCResultContext(collectedObjects, new GarbageCollectionInfo()));
   }
 
   public void start() {
@@ -262,7 +261,7 @@ public class TestGarbageCollector implements GarbageCollector {
     throw new ImplementMe();
   }
 
-  public void setState(final StoppableThread st) {
+  public void setState(final LifeCycleState st) {
     throw new ImplementMe();
   }
 
@@ -270,7 +269,11 @@ public class TestGarbageCollector implements GarbageCollector {
     //
   }
 
-  public boolean disableGC() {
+  public void waitToDisableGC() {
+    // do nothing
+  }
+
+  public boolean requestDisableGC() {
     return false;
   }
 
@@ -286,7 +289,7 @@ public class TestGarbageCollector implements GarbageCollector {
     return false;
   }
 
-  public boolean deleteGarbage(final GCResultContext resultContext) {
+  public boolean deleteGarbage(final PeriodicDGCResultContext resultContext) {
     this.notifyGCComplete();
     this.objectProvider.notifyGCComplete(resultContext);
     return true;
@@ -309,6 +312,22 @@ public class TestGarbageCollector implements GarbageCollector {
       this.isStarted = true;
       return true;
     }
+    return false;
+  }
+
+  public void waitToStartInlineGC() {
+    // do nothing
+  }
+
+  public void waitToStartGC() {
+    // do nothing
+  }
+
+  public void setPeriodicEnabled(boolean periodicEnabled) {
+    // do nothing
+  }
+
+  public boolean isPeriodicEnabled() {
     return false;
   }
 }

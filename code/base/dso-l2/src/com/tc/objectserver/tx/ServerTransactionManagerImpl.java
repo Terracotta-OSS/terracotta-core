@@ -20,6 +20,7 @@ import com.tc.object.gtx.GlobalTransactionManager;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -49,8 +50,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -68,6 +70,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
                                                                                          .synchronizedMap(new HashMap<NodeID, TransactionAccount>());
   private final ClientStateManager                      stateManager;
   private final ObjectManager                           objectManager;
+  private final GarbageCollectionManager                garbageCollectionManager;
   private final ResentTransactionSequencer              resentTxnSequencer;
   private final TransactionAcknowledgeAction            action;
   private final LockManager                             lockManager;
@@ -106,7 +109,8 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
                                       final TransactionAcknowledgeAction action, final Counter transactionRateCounter,
                                       final ChannelStats channelStats, final ServerTransactionManagerConfig config,
                                       final ObjectStatsRecorder objectStatsRecorder,
-                                      final MetaDataManager metaDataManager) {
+                                      final MetaDataManager metaDataManager,
+                                      final GarbageCollectionManager garbageCollectionManager) {
     this.gtxm = gtxm;
     this.lockManager = lockManager;
     this.objectManager = objectManager;
@@ -124,6 +128,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     this.broadcastStatsLoggingEnabled = config.isPrintBroadcastStatsEnabled();
     this.objectStatsRecorder = objectStatsRecorder;
     this.metaDataManager = metaDataManager;
+    this.garbageCollectionManager = garbageCollectionManager;
   }
 
   public void enableTransactionLogger() {
@@ -381,12 +386,15 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
    * 
    * @see ObjectManagerImpl.releaseAll() for more details.
    */
-  public void commit(final PersistenceTransactionProvider ptxp, final Collection objects, final Map newRoots,
-                     final Collection appliedServerTransactionIDs) {
+  public void commit(final PersistenceTransactionProvider ptxp, final Collection<ManagedObject> objects,
+                     final Map<String, ObjectID> newRoots,
+                     final Collection<ServerTransactionID> appliedServerTransactionIDs,
+                     final SortedSet<ObjectID> deletedObjects) {
     final PersistenceTransaction ptx = ptxp.newTransaction();
     this.gtxm.commitAll(ptx, appliedServerTransactionIDs);
     // This call commits the transaction too.
     this.objectManager.releaseAllAndCommit(ptx, objects);
+    this.garbageCollectionManager.deleteObjects(deletedObjects);
     fireRootCreatedEvents(newRoots);
     committed(appliedServerTransactionIDs);
     if (this.commitLoggingEnabled) {
@@ -415,10 +423,9 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
    * NOTE: Its important to have released all objects in the TXN before calling this event as the listeners tries to
    * lookup for the object and blocks
    */
-  private void fireRootCreatedEvents(final Map newRoots) {
-    for (final Iterator i = newRoots.entrySet().iterator(); i.hasNext();) {
-      final Map.Entry entry = (Entry) i.next();
-      fireRootCreatedEvent((String) entry.getKey(), (ObjectID) entry.getValue());
+  private void fireRootCreatedEvents(final Map<String, ObjectID> newRoots) {
+    for (Entry<String, ObjectID> entry : newRoots.entrySet()) {
+      fireRootCreatedEvent(entry.getKey(), entry.getValue());
     }
   }
 
@@ -479,11 +486,10 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
   }
 
-  private void committed(final Collection txnsIds) {
-    for (final Iterator i = txnsIds.iterator(); i.hasNext();) {
-      final ServerTransactionID txnId = (ServerTransactionID) i.next();
-      final NodeID waiter = txnId.getSourceID();
-      final TransactionID txnID = txnId.getClientTransactionID();
+  private void committed(final Collection<ServerTransactionID> txnsIds) {
+    for (final ServerTransactionID stxnId : txnsIds) {
+      final NodeID waiter = stxnId.getSourceID();
+      final TransactionID txnID = stxnId.getClientTransactionID();
 
       final TransactionAccount ci = getTransactionAccount(waiter);
       if (ci != null && ci.applyCommitted(txnID)) {

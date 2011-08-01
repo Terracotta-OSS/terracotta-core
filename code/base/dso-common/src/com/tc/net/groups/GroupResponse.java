@@ -13,7 +13,7 @@ public interface GroupResponse {
   /**
    * @return a list of all responses received
    */
-  public List getResponses();
+  public List<? extends GroupMessage> getResponses();
 
   /**
    * @return returns a response from nodeID. If the node corresponding to the nodeID did not send any response (due to

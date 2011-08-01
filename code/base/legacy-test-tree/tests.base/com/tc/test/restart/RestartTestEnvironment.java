@@ -14,11 +14,13 @@ import com.tc.config.schema.test.L2SConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.management.beans.L2DumperMBean;
 import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.objectserver.control.ExtraProcessServerControl.DebugParams;
 import com.tc.objectserver.control.NullServerControl;
 import com.tc.objectserver.control.ServerControl;
+import com.tc.stats.api.DSOMBean;
 import com.tc.test.TestConfigObject;
 import com.tc.util.PortChooser;
 import com.tctest.restart.TestThreadGroup;
@@ -385,6 +387,16 @@ public class RestartTestEnvironment {
 
     public int waitFor() throws Exception {
       return server.waitFor();
+    }
+
+    public DSOMBean getDSOMBean() throws Exception {
+      assertServerNotNull();
+      return server.getDSOMBean();
+    }
+
+    public L2DumperMBean getL2DumperMBean() throws Exception {
+      assertServerNotNull();
+      return server.getL2DumperMBean();
     }
   }
 }

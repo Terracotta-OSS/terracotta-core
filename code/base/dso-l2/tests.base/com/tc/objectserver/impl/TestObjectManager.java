@@ -14,11 +14,13 @@ import com.tc.objectserver.api.GCStatsEventListener;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerStatsListener;
 import com.tc.objectserver.api.ObjectStatsManager;
-import com.tc.objectserver.context.GCResultContext;
+import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
+import com.tc.objectserver.context.PeriodicDGCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.impl.TestManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollector;
+import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.text.PrettyPrinterImpl;
@@ -187,7 +189,11 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
     throw new ImplementMe();
   }
 
-  public void notifyGCComplete(GCResultContext resultContext) {
+  public void notifyGCComplete(PeriodicDGCResultContext periodicDGCResultContext) {
+    throw new ImplementMe();
+  }
+
+  public void deleteObjects(DGCResultContext dgcResultContext) {
     throw new ImplementMe();
   }
 
@@ -258,5 +264,9 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
 
   public ManagedObject getQuietObjectByID(ObjectID id) {
     return getObjectByID(id);
+  }
+
+  public void scheduleGarbageCollection(GCType type, long delay) {
+    throw new ImplementMe();
   }
 }

@@ -5,10 +5,10 @@
 package com.tc.objectserver.dgc.api;
 
 import com.tc.object.ObjectID;
-import com.tc.objectserver.context.GCResultContext;
+import com.tc.objectserver.context.PeriodicDGCResultContext;
 import com.tc.text.PrettyPrintable;
 import com.tc.util.State;
-import com.tc.util.concurrent.StoppableThread;
+import com.tc.util.concurrent.LifeCycleState;
 
 import java.util.Collection;
 
@@ -27,9 +27,18 @@ public interface GarbageCollector extends PrettyPrintable {
 
   public boolean requestGCStart();
 
+  /**
+   * Used by inline GC to delete objects.
+   */
+  public void waitToStartInlineGC();
+
+  public void waitToStartGC();
+
   public void enableGC();
 
-  public boolean disableGC();
+  public void waitToDisableGC();
+
+  public boolean requestDisableGC();
 
   public boolean isDisabled();
 
@@ -65,11 +74,15 @@ public interface GarbageCollector extends PrettyPrintable {
 
   public boolean isStarted();
 
-  public void setState(StoppableThread st);
+  public void setPeriodicEnabled(final boolean periodicEnabled);
+
+  public boolean isPeriodicEnabled();
+
+  public void setState(LifeCycleState st);
 
   public void addListener(GarbageCollectorEventListener listener);
 
-  public boolean deleteGarbage(GCResultContext resultContext);
+  public boolean deleteGarbage(PeriodicDGCResultContext resultContext);
 
   /**
    * Whenever a new object is created, this method is called from the Object Manager. This is used for YoungGen

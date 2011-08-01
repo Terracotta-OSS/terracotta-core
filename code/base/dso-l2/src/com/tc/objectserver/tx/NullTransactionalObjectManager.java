@@ -4,9 +4,9 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.context.CommitTransactionContext;
 import com.tc.objectserver.context.RecallObjectsContext;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 
 import java.util.Collection;
 
@@ -16,7 +16,7 @@ public class NullTransactionalObjectManager implements TransactionalObjectManage
     // Nop
   }
 
-  public boolean applyTransactionComplete(ServerTransactionID stxnID) {
+  public boolean applyTransactionComplete(ApplyTransactionInfo applyTxnInfo) {
     // Nop
     return false;
   }

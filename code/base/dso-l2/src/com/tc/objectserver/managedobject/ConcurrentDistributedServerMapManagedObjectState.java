@@ -20,6 +20,7 @@ import com.tc.properties.TCPropertiesImpl;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,6 +36,10 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
 
   private static final TCLogger LOGGER                               = TCLogging
                                                                          .getLogger(ConcurrentDistributedMapManagedObjectState.class);
+  private static final boolean  ENABLE_DELETE_VALUE_ON_REMOVE        = TCPropertiesImpl
+                                                                         .getProperties()
+                                                                         .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_ENABLED,
+                                                                                     true);
 
   public static final String    MAX_TTI_SECONDS_FIELDNAME            = "maxTTISeconds";
   public static final String    MAX_TTL_SECONDS_FIELDNAME            = "maxTTLSeconds";
@@ -43,6 +48,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   public static final String    INVALIDATE_ON_CHANGE                 = "invalidateOnChange";
   public static final String    CACHE_NAME_FIELDNAME                 = "cacheName";
   public static final String    LOCAL_CACHE_ENABLED_FIELDNAME        = "localCacheEnabled";
+  public static final String    DELETE_VALUE_ON_REMOVE               = "deleteValueOnRemove";
 
   private static final double   OVERSHOOT                            = getOvershoot();
 
@@ -64,6 +70,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   private int            targetMaxTotalCount;
   private String         cacheName;
   private boolean        localCacheEnabled;
+  private boolean        deleteValueOnRemove;
 
   protected ConcurrentDistributedServerMapManagedObjectState(final ObjectInput in) throws IOException {
     super(in);
@@ -74,6 +81,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     this.invalidateOnChange = in.readBoolean();
     this.cacheName = in.readUTF();
     this.localCacheEnabled = in.readBoolean();
+    this.deleteValueOnRemove = in.readBoolean();
   }
 
   protected ConcurrentDistributedServerMapManagedObjectState(final long classId, final Map map) {
@@ -111,6 +119,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     writer.addPhysicalAction(INVALIDATE_ON_CHANGE, Boolean.valueOf(this.invalidateOnChange));
     writer.addPhysicalAction(CACHE_NAME_FIELDNAME, cacheName);
     writer.addPhysicalAction(LOCAL_CACHE_ENABLED_FIELDNAME, localCacheEnabled);
+    writer.addPhysicalAction(DELETE_VALUE_ON_REMOVE, deleteValueOnRemove);
   }
 
   @Override
@@ -139,6 +148,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
           this.targetMaxTotalCount = ((Integer) physicalAction.getObject());
         } else if (fieldName.equals(INVALIDATE_ON_CHANGE)) {
           this.invalidateOnChange = ((Boolean) physicalAction.getObject());
+        } else if (fieldName.equals(DELETE_VALUE_ON_REMOVE)) {
+          this.deleteValueOnRemove = ((Boolean) physicalAction.getObject());
         } else if (fieldName.equals(CACHE_NAME_FIELDNAME)) {
           Object value = physicalAction.getObject();
           String name;
@@ -193,9 +204,24 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   }
 
   @Override
-  protected void invalidateIfNeeded(ApplyTransactionInfo applyInfo, ObjectID old) {
+  protected void removedValueFromMap(ApplyTransactionInfo applyInfo, ObjectID old) {
     if (invalidateOnChange) {
       applyInfo.invalidate(old);
+    }
+    if (deleteValueOnRemove && ENABLE_DELETE_VALUE_ON_REMOVE) {
+      applyInfo.deleteObject(old);
+    }
+  }
+
+  @Override
+  protected void clearedMap(ApplyTransactionInfo applyInfo, Collection values) {
+    // Does not need to be batched here since deletion batching will happen in the lower layers.
+    if (deleteValueOnRemove && ENABLE_DELETE_VALUE_ON_REMOVE) {
+      for (Object o : values) {
+        if (o instanceof ObjectID) {
+          applyInfo.deleteObject((ObjectID) o);
+        }
+      }
     }
   }
 
@@ -206,7 +232,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     if (value.equals(valueInMap)) {
       this.references.remove(key);
       if (valueInMap instanceof ObjectID) {
-        invalidateIfNeeded(applyInfo, (ObjectID) valueInMap);
+        removedValueFromMap(applyInfo, (ObjectID) valueInMap);
       }
     }
   }
@@ -219,11 +245,11 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     if (current.equals(valueInMap)) {
       this.references.put(key, newValue);
       if (valueInMap instanceof ObjectID) {
-        invalidateIfNeeded(applyInfo, (ObjectID) valueInMap);
+        removedValueFromMap(applyInfo, (ObjectID) valueInMap);
       }
     } else if (newValue instanceof ObjectID) {
       // Invalidate the newValue so that the VM that initiated this call can remove it from the local cache.
-      invalidateIfNeeded(applyInfo, (ObjectID) newValue);
+      removedValueFromMap(applyInfo, (ObjectID) newValue);
     }
   }
 
@@ -235,7 +261,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
       this.references.put(key, value);
     } else if (value instanceof ObjectID) {
       // Invalidate the value so that the VM that initiated this call can remove it from the local cache.
-      invalidateIfNeeded(applyInfo, (ObjectID) value);
+      removedValueFromMap(applyInfo, (ObjectID) value);
     }
   }
 
@@ -249,6 +275,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     out.writeBoolean(this.invalidateOnChange);
     out.writeUTF(this.cacheName);
     out.writeBoolean(localCacheEnabled);
+    out.writeBoolean(deleteValueOnRemove);
   }
 
   public Object getValueForKey(final Object portableKey) {
@@ -262,7 +289,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     return super.basicEquals(o) && this.maxTTISeconds == mmo.maxTTISeconds && this.maxTTLSeconds == mmo.maxTTLSeconds
            && this.targetMaxInMemoryCount == mmo.targetMaxInMemoryCount
            && this.invalidateOnChange == mmo.invalidateOnChange && this.targetMaxTotalCount == mmo.targetMaxTotalCount
-           && localCacheEnabled == mmo.localCacheEnabled;
+           && this.localCacheEnabled == mmo.localCacheEnabled && this.deleteValueOnRemove == mmo.deleteValueOnRemove;
   }
 
   static MapManagedObjectState readFrom(final ObjectInput in) throws IOException {
@@ -345,6 +372,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     result = prime * result + ((cacheName == null) ? 0 : cacheName.hashCode());
     result = prime * result + ((evictionStatus == null) ? 0 : evictionStatus.hashCode());
     result = prime * result + (invalidateOnChange ? 1231 : 1237);
+    result = prime * result + (deleteValueOnRemove ? 1231 : 1237);
     result = prime * result + (localCacheEnabled ? 1231 : 1237);
     result = prime * result + maxTTISeconds;
     result = prime * result + maxTTLSeconds;

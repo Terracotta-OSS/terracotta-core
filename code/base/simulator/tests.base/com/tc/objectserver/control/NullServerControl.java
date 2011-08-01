@@ -4,6 +4,9 @@
  */
 package com.tc.objectserver.control;
 
+import com.tc.management.beans.L2DumperMBean;
+import com.tc.stats.api.DSOMBean;
+
 public class NullServerControl implements ServerControl {
 
   private boolean isRunning;
@@ -60,4 +63,11 @@ public class NullServerControl implements ServerControl {
     return 1;
   }
 
+  public DSOMBean getDSOMBean() throws Exception {
+    return null;
+  }
+
+  public L2DumperMBean getL2DumperMBean() throws Exception {
+    return null;
+  }
 }

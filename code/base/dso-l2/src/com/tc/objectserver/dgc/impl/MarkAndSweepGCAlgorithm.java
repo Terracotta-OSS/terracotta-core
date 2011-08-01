@@ -5,7 +5,7 @@
 package com.tc.objectserver.dgc.impl;
 
 import com.tc.object.ObjectID;
-import com.tc.objectserver.context.GCResultContext;
+import com.tc.objectserver.context.PeriodicDGCResultContext;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.impl.GarbageCollectionID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
@@ -15,7 +15,6 @@ import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.LifeCycleState;
-import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -40,12 +39,7 @@ final class MarkAndSweepGCAlgorithm {
   }
 
   void doGC() {
-    while (!collector.requestGCStart()) {
-      MarkAndSweepGarbageCollector.logger
-          .info(gcHook.getDescription()
-                + "AA-DGC: It is either disabled or is already running. Waiting for 1 min before checking again ...");
-      ThreadUtil.reallySleep(60000);
-    }
+    this.collector.waitToStartGC();
 
     GarbageCollectionID gcID = new GarbageCollectionID(gcIteration, uuid);
     GarbageCollectionInfo gcInfo = gcHook.createGCInfo(gcID);
@@ -115,7 +109,7 @@ final class MarkAndSweepGCAlgorithm {
     gcPublisher.fireGCMarkCompleteEvent(gcInfo);
 
     // Delete Garbage
-    collector.deleteGarbage(new GCResultContext(toDelete, gcInfo));
+    collector.deleteGarbage(new PeriodicDGCResultContext(toDelete, gcInfo));
 
     long endMillis = System.currentTimeMillis();
     gcInfo.setTotalMarkCycleTime(endMillis - gcInfo.getStartTime());

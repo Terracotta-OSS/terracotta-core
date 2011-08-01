@@ -7,7 +7,7 @@ package com.tc.objectserver.impl;
 import com.tc.async.api.Sink;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ShutdownError;
-import com.tc.objectserver.context.GCResultContext;
+import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
@@ -98,12 +98,12 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
   /**
    * This method is used by the GC to trigger removing Garbage.
    */
-  public void removeAllObjectsByID(final GCResultContext gcResult) {
+  public void removeAllObjectsByID(final DGCResultContext dgcResultContext) {
     assertNotInShutdown();
     // NOTE:: Calling removeAllObjectIDs to remove the object IDs in-line so that the next DGC cycle doesn't pick up
     // the same GCed object IDs again if the delete stage is falling behind.
-    this.objectPersistor.removeAllObjectIDs(gcResult.getGCedObjectIDs());
-    this.gcDisposerSink.add(gcResult);
+    this.objectPersistor.removeAllObjectIDs(dgcResultContext.getGarbageIDs());
+    this.gcDisposerSink.add(dgcResultContext);
   }
 
   public ObjectIDSet getAllObjectIDs() {

@@ -4,6 +4,9 @@
  */
 package com.tc.objectserver.control;
 
+import com.tc.management.beans.L2DumperMBean;
+import com.tc.stats.api.DSOMBean;
+
 public interface ServerControl {
 
   public void mergeSTDOUT();
@@ -50,5 +53,9 @@ public interface ServerControl {
   public int getDsoPort();
 
   public int getAdminPort();
+
+  public DSOMBean getDSOMBean() throws Exception;
+
+  public L2DumperMBean getL2DumperMBean() throws Exception;
 
 }

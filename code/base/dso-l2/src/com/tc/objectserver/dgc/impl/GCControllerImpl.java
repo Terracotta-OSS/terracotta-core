@@ -4,15 +4,15 @@
  */
 package com.tc.objectserver.dgc.impl;
 
-import com.tc.management.beans.object.ObjectManagementMonitor.GCComptroller;
+import com.tc.management.beans.object.ObjectManagementMonitor.GCController;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 
-public class GCComptrollerImpl implements GCComptroller {
+public class GCControllerImpl implements GCController {
 
   private final GarbageCollector collector;
 
-  public GCComptrollerImpl(GarbageCollector collector) {
+  public GCControllerImpl(GarbageCollector collector) {
     this.collector = collector;
   }
 
