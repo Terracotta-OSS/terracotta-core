@@ -10,8 +10,8 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.async.api.Sink;
 import com.tc.bytes.TCByteBuffer;
-import com.tc.invalidation.Invalidations;
 import com.tc.exception.ImplementMe;
+import com.tc.invalidation.Invalidations;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -50,7 +50,6 @@ import com.tc.objectserver.context.RespondToObjectRequestContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.dgc.api.GarbageCollector;
-import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.impl.ObjectRequestManagerImpl.BatchAndSend;
 import com.tc.objectserver.impl.ObjectRequestManagerImpl.LookupContext;
 import com.tc.objectserver.impl.ObjectRequestManagerImpl.ObjectRequestCache;
@@ -504,10 +503,12 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new AssertionError(e);
     }
 
-    objectRequestManager.sendObjects(respondToObjectRequestContext.getRequestedNodeID(), respondToObjectRequestContext
-        .getObjs(), respondToObjectRequestContext.getRequestedObjectIDs(), respondToObjectRequestContext
-        .getMissingObjectIDs(), respondToObjectRequestContext.isServerInitiated(), respondToObjectRequestContext
-        .getRequestDepth());
+    objectRequestManager.sendObjects(respondToObjectRequestContext.getRequestedNodeID(),
+                                     respondToObjectRequestContext.getObjs(),
+                                     respondToObjectRequestContext.getRequestedObjectIDs(),
+                                     respondToObjectRequestContext.getMissingObjectIDs(),
+                                     respondToObjectRequestContext.isServerInitiated(),
+                                     respondToObjectRequestContext.getRequestDepth());
 
   }
 
@@ -674,11 +675,11 @@ public class ObjectRequestManagerTest extends TestCase {
         synchronized (this) {
           System.out.println("in the reponse thread: " + respondToObjectRequestContext);
           this.objectRequestManager.sendObjects(respondToObjectRequestContext.getRequestedNodeID(),
-                                                respondToObjectRequestContext.getObjs(), respondToObjectRequestContext
-                                                    .getRequestedObjectIDs(), respondToObjectRequestContext
-                                                    .getMissingObjectIDs(), respondToObjectRequestContext
-                                                    .isServerInitiated(), respondToObjectRequestContext
-                                                    .getRequestDepth());
+                                                respondToObjectRequestContext.getObjs(),
+                                                respondToObjectRequestContext.getRequestedObjectIDs(),
+                                                respondToObjectRequestContext.getMissingObjectIDs(),
+                                                respondToObjectRequestContext.isServerInitiated(),
+                                                respondToObjectRequestContext.getRequestDepth());
           if (testReqManObjResMsgIter.hasNext()) {
             final TestRequestManagedObjectResponseMessage message = (TestRequestManagedObjectResponseMessage) testReqManObjResMsgIter
                 .next();
@@ -988,10 +989,6 @@ public class ObjectRequestManagerTest extends TestCase {
     }
 
     public void deleteObjects(DGCResultContext dgcResultContext) {
-      throw new NotImplementedException(TestObjectManager.class);
-    }
-
-    public void scheduleGarbageCollection(GCType type, long delay) {
       throw new NotImplementedException(TestObjectManager.class);
     }
   }
