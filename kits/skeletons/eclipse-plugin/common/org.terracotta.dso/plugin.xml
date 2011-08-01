@@ -775,7 +775,7 @@
    <extension point="org.eclipse.ui.propertyPages"
               id="propertyPages">
       <page
-            class="org.terracotta.dso.properties.PropertyPage"
+            class="org.terracotta.dso.properties.DSOPropertyPage"
             icon="images/eclipse/logo16.gif"
             id="org.terracotta.dso.ui.propertyPages.PropertyPage"
             name="%propertyPageName">
