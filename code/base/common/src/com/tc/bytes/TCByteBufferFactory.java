@@ -32,10 +32,12 @@ public class TCByteBufferFactory {
   private static final boolean            disablePooling          = !(TCPropertiesImpl.getProperties()
                                                                       .getBoolean(TCPropertiesConsts.TC_BYTEBUFFER_POOLING_ENABLED));
   private static final int                poolMaxBufCount         = (TCPropertiesImpl.getProperties()
-                                                                      .getInt(TCPropertiesConsts.TC_BYTEBUFFER_THREADLOCAL_POOL_MAXCOUNT,
+                                                                      .getInt(
+                                                                              TCPropertiesConsts.TC_BYTEBUFFER_THREADLOCAL_POOL_MAXCOUNT,
                                                                               2000));
   private static final int                commonPoolMaxBufCount   = (TCPropertiesImpl.getProperties()
-                                                                      .getInt(TCPropertiesConsts.TC_BYTEBUFFER_COMMON_POOL_MAXCOUNT,
+                                                                      .getInt(
+                                                                              TCPropertiesConsts.TC_BYTEBUFFER_COMMON_POOL_MAXCOUNT,
                                                                               3000));
 
   // always use ThreadLocal variables for accessing the buffer pools.
@@ -196,7 +198,7 @@ public class TCByteBufferFactory {
         buf.checkedOut();
       }
     } catch (InterruptedException e) {
-      logger.warn("interrupted while getting buffer from pool", e);
+      logger.warn("interrupted while getting buffer from pool");
       Thread.currentThread().interrupt();
       return null;
     }
