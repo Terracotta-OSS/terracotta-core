@@ -435,6 +435,10 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
         return;
       }
 
+      if (this.logger.isDebugEnabled()) {
+        this.logger.debug("Got a notification for " + lock + " with thread " + thread);
+      }
+
       final ClientLock lockState = getClientLockState(lock);
       if (lockState == null) {
         throw new AssertionError("Server attempting to notify on non-existent lock " + lock);
@@ -534,6 +538,9 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   public void wait(final LockID lock, final WaitListener listener, final Object waitObject) throws InterruptedException {
     waitUntilRunning();
     final ClientLock lockState = getOrCreateClientLockState(lock);
+    if (logger.isDebugEnabled()) {
+      logger.debug(this.threadManager.getThreadID() + " waiting on log " + lock);
+    }
     lockState.wait(this.remoteManager, listener, this.threadManager.getThreadID(), waitObject);
   }
 
@@ -541,6 +548,9 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       throws InterruptedException {
     waitUntilRunning();
     final ClientLock lockState = getOrCreateClientLockState(lock);
+    if (logger.isDebugEnabled()) {
+      logger.debug(this.threadManager.getThreadID() + " waiting on log " + lock);
+    }
     lockState.wait(this.remoteManager, listener, this.threadManager.getThreadID(), waitObject, timeout);
   }
 

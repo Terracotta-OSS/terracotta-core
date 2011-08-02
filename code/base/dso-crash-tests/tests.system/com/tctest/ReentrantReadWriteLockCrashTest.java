@@ -4,11 +4,16 @@
  */
 package com.tctest;
 
+import com.tc.logging.LogLevel;
+import com.tc.logging.LogLevelImpl;
+import com.tc.object.locks.ClientLockManager;
 import com.tc.test.MultipleServersCrashMode;
 import com.tc.test.MultipleServersPersistenceMode;
 import com.tc.test.MultipleServersSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tctest.runner.TransparentAppConfig;
+
+import java.util.Map;
 
 public class ReentrantReadWriteLockCrashTest extends ActivePassiveTransparentTestBase {
 
@@ -20,6 +25,11 @@ public class ReentrantReadWriteLockCrashTest extends ActivePassiveTransparentTes
     appConfig.setClientCount(NODE_COUNT);
     t.initializeTestRunner();
     appConfig.setAttribute(ReentrantReadWriteLockTestApp.CRASH_TEST, "true");
+  }
+
+  @Override
+  protected void setL1ClassLoggingLevels(Map<Class<?>, LogLevel> logLevels) {
+    logLevels.put(ClientLockManager.class, LogLevelImpl.DEBUG);
   }
 
   @Override
