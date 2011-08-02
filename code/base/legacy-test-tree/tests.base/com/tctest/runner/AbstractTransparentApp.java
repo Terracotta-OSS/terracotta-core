@@ -4,6 +4,8 @@
  */
 package com.tctest.runner;
 
+import com.tc.logging.LogLevel;
+import com.tc.logging.TCLogging;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOApplicationConfig;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -15,16 +17,20 @@ import com.tc.simulator.listener.ListenerProvider;
 import com.tc.test.JMXUtils;
 
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.management.remote.JMXConnector;
 
 public abstract class AbstractTransparentApp implements Application {
 
+  public static final String              L1_LOG_LEVELS = "l1LogLevels";
+
   private final TransparentAppCoordinator coordinator;
   private final int                       intensity;
   private final ListenerProvider          listenerProvider;
-  private final Set                       appIds = new HashSet();
+  private final Set                       appIds        = new HashSet();
 
   public AbstractTransparentApp(String appId, ApplicationConfig config, ListenerProvider listenerProvider) {
     synchronized (appIds) {
@@ -34,6 +40,11 @@ public abstract class AbstractTransparentApp implements Application {
     this.listenerProvider = listenerProvider;
     this.intensity = config.getIntensity();
     this.coordinator = new TransparentAppCoordinator(appId, config.getGlobalParticipantCount());
+
+    Map<Class<?>, LogLevel> logLevels = (Map<Class<?>, LogLevel>) config.getAttributeObject(L1_LOG_LEVELS);
+    for (Entry<Class<?>, LogLevel> logLevelEntry : logLevels.entrySet()) {
+      TCLogging.getLogger(logLevelEntry.getKey()).setLevel(logLevelEntry.getValue());
+    }
   }
 
   protected int getIntensity() {

@@ -11,6 +11,7 @@ import com.tc.config.schema.defaults.SchemaDefaultValueProvider;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
+import com.tc.logging.LogLevel;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.net.proxy.TCPProxy;
@@ -37,6 +38,7 @@ import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.ThreadDump;
+import com.tctest.runner.AbstractTransparentApp;
 import com.tctest.runner.DistributedTestRunner;
 import com.tctest.runner.DistributedTestRunnerConfig;
 import com.tctest.runner.PostAction;
@@ -467,8 +469,14 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
                                                       DEFAULT_VALIDATOR_COUNT, DEFAULT_ADAPTED_MUTATOR_COUNT,
                                                       DEFAULT_ADAPTED_VALIDATOR_COUNT);
     }
-
+    Map<Class<?>, LogLevel> logLevels = new HashMap<Class<?>, LogLevel>();
+    setL1ClassLoggingLevels(logLevels);
+    transparentAppConfig.setAttribute(AbstractTransparentApp.L1_LOG_LEVELS, logLevels);
     transparentAppConfig.setAttribute(TransparentAppConfig.PROXY_CONNECT_MGR, proxyMgr);
+  }
+
+  protected void setL1ClassLoggingLevels(Map<Class<?>, LogLevel> logLevels) {
+    // Override in subclasses
   }
 
   protected synchronized final String mode() {
