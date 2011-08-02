@@ -72,13 +72,6 @@ public abstract class AbstractLocalCacheStoreValue implements Externalizable {
   }
 
   /**
-   * Returns true only if {@link #isIncoherentValue()} and has been incoherent for too long
-   */
-  public boolean isIncoherentTooLong() {
-    return false;
-  }
-
-  /**
    * Returns this object as {@link LocalCacheStoreStrongValue}. Use only when {@link #isStrongConsistentValue()} is
    * true, otherwise will throw ClassCastException
    */

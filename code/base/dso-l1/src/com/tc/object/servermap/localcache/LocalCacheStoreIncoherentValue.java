@@ -8,7 +8,6 @@ import com.tc.object.ObjectID;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.concurrent.TimeUnit;
 
 public class LocalCacheStoreIncoherentValue extends AbstractLocalCacheStoreValue {
   public static final long SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS = 300000;
@@ -34,11 +33,6 @@ public class LocalCacheStoreIncoherentValue extends AbstractLocalCacheStoreValue
   }
 
   @Override
-  public boolean isIncoherentTooLong() {
-    return TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - this.lastCoherentTime)) >= SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS;
-  }
-
-  @Override
   public void writeExternal(ObjectOutput out) throws IOException {
     super.writeExternal(out);
     out.writeLong(lastCoherentTime);
@@ -48,6 +42,10 @@ public class LocalCacheStoreIncoherentValue extends AbstractLocalCacheStoreValue
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
     super.readExternal(in);
     lastCoherentTime = in.readLong();
+  }
+
+  public long getLastCoherentTime() {
+    return lastCoherentTime;
   }
 
 }
