@@ -7,6 +7,8 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.PeriodicDGCResultContext;
@@ -18,6 +20,7 @@ import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import java.util.SortedSet;
 
 public class GarbageDisposeHandler extends AbstractEventHandler {
+  private static final TCLogger                logger = TCLogging.getLogger(GarbageDisposeHandler.class);
 
   private final GarbageCollectionInfoPublisher publisher;
   private ManagedObjectStore                   objectStore;
@@ -58,6 +61,9 @@ public class GarbageDisposeHandler extends AbstractEventHandler {
   }
 
   private void handleDGCResult(DGCResultContext inlineDGCResult) {
+    if (logger.isDebugEnabled()) {
+      logger.debug("Deleting objects: " + inlineDGCResult.getGarbageIDs());
+    }
     this.objectStore.removeAllObjectsByIDNow(inlineDGCResult.getGarbageIDs());
   }
 
