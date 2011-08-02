@@ -48,6 +48,7 @@ import com.terracottatech.config.TcConfigDocument;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
 import java.util.ArrayList;
@@ -56,6 +57,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
@@ -166,11 +168,31 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     // to be overwritten
   }
 
+  protected void setExtraLog4jProperties(final Properties properties) {
+    // override in subclasses
+  }
+
+  private void writeLog4jProperties(final Properties properties) throws IOException {
+    File log4jPropertiesFile = new File(getTempDirectory(), ".tc.dev.log4j.properties");
+    if (log4jPropertiesFile.createNewFile()) {
+      FileOutputStream fos = new FileOutputStream(log4jPropertiesFile);
+      try {
+        properties.store(fos, "something");
+      } finally {
+        fos.close();
+      }
+    }
+  }
+
   @Override
   protected void setUp() throws Exception {
     setUpTransparent(configFactory(), configHelper());
 
     VerboseGCHelper.getInstance().setupTempDir(getTempDirectory());
+
+    Properties log4jProperties = new Properties();
+    setExtraLog4jProperties(log4jProperties);
+    writeLog4jProperties(log4jProperties);
 
     // config should be set up before tc-config for external L2s are written out
     setupConfig(configFactory());

@@ -12,10 +12,10 @@ import com.tc.net.NodeID;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.ServerLockContext;
-import com.tc.object.locks.ServerLockLevel;
-import com.tc.object.locks.ThreadID;
 import com.tc.object.locks.ServerLockContext.State;
 import com.tc.object.locks.ServerLockContext.Type;
+import com.tc.object.locks.ServerLockLevel;
+import com.tc.object.locks.ThreadID;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.locks.context.LinkedServerLockContext;
 import com.tc.objectserver.locks.context.SingleServerLockContext;
@@ -76,13 +76,14 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
       switch (context.getState().getType()) {
         case GREEDY_HOLDER:
         case HOLDER:
-          cselc = new ClientServerExchangeLockContext(lockID, context.getClientID(), context.getThreadID(), context
-              .getState());
+          cselc = new ClientServerExchangeLockContext(lockID, context.getClientID(), context.getThreadID(),
+                                                      context.getState());
           holdersAndWaiters.add(cselc);
           break;
         case WAITER:
-          cselc = new ClientServerExchangeLockContext(lockID, context.getClientID(), context.getThreadID(), context
-              .getState(), ((WaitServerLockContext) context).getTimeout());
+          cselc = new ClientServerExchangeLockContext(lockID, context.getClientID(), context.getThreadID(),
+                                                      context.getState(),
+                                                      ((WaitServerLockContext) context).getTimeout());
           holdersAndWaiters.add(cselc);
           break;
         case PENDING:
@@ -92,8 +93,10 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
       }
     }
 
-    LockResponseContext lrc = LockResponseContextFactory.createLockQueriedResponseContext(this.lockID, cid, tid, this
-        .holderLevel(), holdersAndWaiters, pendingCount);
+    LockResponseContext lrc = LockResponseContextFactory.createLockQueriedResponseContext(this.lockID, cid, tid,
+                                                                                          this.holderLevel(),
+                                                                                          holdersAndWaiters,
+                                                                                          pendingCount);
     helper.getLockSink().add(lrc);
   }
 
@@ -117,9 +120,13 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
     List<ServerLockContext> waiters = removeWaiters(action);
     for (ServerLockContext waiter : waiters) {
       moveWaiterToPending(waiter, helper);
-      ClientServerExchangeLockContext cselc = new ClientServerExchangeLockContext(lockID, waiter.getClientID(), waiter
-          .getThreadID(), State.WAITER);
+      ClientServerExchangeLockContext cselc = new ClientServerExchangeLockContext(lockID, waiter.getClientID(),
+                                                                                  waiter.getThreadID(), State.WAITER);
       addNotifiedWaitersTo.addNotification(cselc);
+    }
+
+    if (logger.isDebugEnabled()) {
+      logger.debug("Notify " + cid + " " + tid + " " + addNotifiedWaitersTo);
     }
 
     return addNotifiedWaitersTo;
@@ -202,8 +209,8 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
       }
       contextsPresent.add(clonedContext);
     }
-    LockMBean bean = new LockMBeanImpl(lockID, contextsPresent
-        .toArray(new ServerLockContextBean[contextsPresent.size()]));
+    LockMBean bean = new LockMBeanImpl(lockID,
+                                       contextsPresent.toArray(new ServerLockContextBean[contextsPresent.size()]));
 
     return bean;
   }
@@ -256,8 +263,9 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
   }
 
   protected ServerLockContext createWaiterAndScheduleTask(ClientServerExchangeLockContext cselc, LockHelper helper) {
-    WaitServerLockContext context = createWaitOrTryPendingServerLockContext((ClientID) cselc.getNodeID(), cselc
-        .getThreadID(), cselc.getState(), cselc.timeout(), helper);
+    WaitServerLockContext context = createWaitOrTryPendingServerLockContext((ClientID) cselc.getNodeID(),
+                                                                            cselc.getThreadID(), cselc.getState(),
+                                                                            cselc.timeout(), helper);
     if (cselc.timeout() > 0) {
       LockTimerContext ltc = new LockTimerContext(lockID, cselc.getThreadID(), (ClientID) cselc.getNodeID(), helper);
       TimerTask task = helper.getLockTimer().scheduleTimer(helper.getTimerCallback(), cselc.timeout(), ltc);
@@ -276,8 +284,9 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
   }
 
   protected void reestablishLock(ClientServerExchangeLockContext cselc, LockHelper helper) {
-    awardLock(helper, createPendingContext((ClientID) cselc.getNodeID(), cselc.getThreadID(), cselc.getState()
-        .getLockLevel(), helper), false);
+    awardLock(helper,
+              createPendingContext((ClientID) cselc.getNodeID(), cselc.getThreadID(), cselc.getState().getLockLevel(),
+                                   helper), false);
   }
 
   protected void moveFromHolderToWaiter(ClientID cid, ThreadID tid, long timeout, LockHelper helper) {
@@ -650,8 +659,8 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
     switch (request.getState().getType()) {
       case WAITER:
       case TRY_PENDING:
-        request = createSingleOrLinkedServerLockContext(request.getClientID(), request.getThreadID(), request
-            .getState(), helper);
+        request = createSingleOrLinkedServerLockContext(request.getClientID(), request.getThreadID(),
+                                                        request.getState(), helper);
         break;
       default:
     }
@@ -708,8 +717,8 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
   // record stats
   protected void recordLockAward(LockHelper helper, ServerLockContext request, ThreadID tid) {
     L2LockStatsManager l2LockStats = helper.getLockStatsManager();
-    l2LockStats.recordLockAwarded(lockID, request.getClientID(), tid, request.isGreedyHolder(), System
-        .currentTimeMillis());
+    l2LockStats.recordLockAwarded(lockID, request.getClientID(), tid, request.isGreedyHolder(),
+                                  System.currentTimeMillis());
   }
 
   protected void recordLockHop(LockHelper helper) {

@@ -329,12 +329,12 @@ public class ActivePassiveServerManager extends MultipleServerManager {
 
   private ServerControl getServerControl(int dsoPort, int jmxPort, String serverName) {
     return new ExtraProcessServerControl(HOST, dsoPort, jmxPort, configFileLocation, true, serverName, this.jvmArgs,
-                                         javaHome, true);
+                                         javaHome, true, tempDir);
   }
 
   private ServerControl getServerControl(int dsoPort, int jmxPort, String serverName, List aJvmArgs) {
     return new ExtraProcessServerControl(HOST, dsoPort, jmxPort, configFileLocation, true, serverName, aJvmArgs,
-                                         javaHome, true);
+                                         javaHome, true, tempDir);
   }
 
   public void startServer(int index) throws Exception {

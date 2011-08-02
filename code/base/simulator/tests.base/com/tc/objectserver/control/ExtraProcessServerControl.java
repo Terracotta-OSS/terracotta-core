@@ -101,6 +101,13 @@ public class ExtraProcessServerControl extends ServerControlBase {
          NOT_DEF, javaHome, useIdentifier);
   }
 
+  public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput,
+                                   String servername, List additionalJvmArgs, File javaHome, boolean useIdentifier,
+                                   File runningDirectory) {
+    this(new DebugParams(), host, dsoPort, adminPort, configFileLoc, runningDirectory, mergeOutput, servername,
+         additionalJvmArgs, NOT_DEF, javaHome, useIdentifier);
+  }
+
   // constructor 6: used by constructor 4, crash tests, and normal tests running in 1.4 jvm
   public ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
                                    String configFileLoc, boolean mergeOutput, File javaHome) {
