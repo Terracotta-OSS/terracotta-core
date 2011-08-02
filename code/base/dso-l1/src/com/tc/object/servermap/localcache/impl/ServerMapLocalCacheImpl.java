@@ -422,7 +422,10 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       if (list == null) {
         list = new ArrayList();
       }
-      list.add(key);
+
+      if (!list.contains(key)) {
+        list.add(key);
+      }
 
       // add the list back
       backingMap.put(id, list, PutType.PINNED_NO_SIZE_INCREMENT);
