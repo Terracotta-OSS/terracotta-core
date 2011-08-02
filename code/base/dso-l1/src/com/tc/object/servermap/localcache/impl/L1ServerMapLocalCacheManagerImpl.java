@@ -291,7 +291,13 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
             return null;
           }
 
-          Object key = setFetched.iterator().next();
+          Object key = null;
+          try {
+            key = setFetched.iterator().next();
+          } catch (Exception e) {
+            //
+          }
+
           AbstractLocalCacheStoreValue localCacheStoreValue = (AbstractLocalCacheStoreValue) store.get(key);
 
           if (localCacheStoreValue == null) {
@@ -361,7 +367,12 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
           // all keys have been invalidated already, return null (lookup will happen)
           return null;
         }
-        Object key = set.iterator().next();
+        Object key = null;
+        try {
+          key = set.iterator().next();
+        } catch (Exception e) {
+          //
+        }
         AbstractLocalCacheStoreValue localCacheStoreValue = (AbstractLocalCacheStoreValue) store.get(key);
         return localCacheStoreValue == null ? null : localCacheStoreValue.asEventualValue().getValue();
       } else {
