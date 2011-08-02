@@ -33,10 +33,9 @@ import com.tc.util.concurrent.TCConcurrentMultiMap;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -46,7 +45,8 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
 
   private static final boolean                                                     PINNING_ENABLED         = TCPropertiesImpl
                                                                                                                .getProperties()
-                                                                                                               .getBoolean(TCPropertiesConsts.L1_LOCKMANAGER_PINNING_ENABLED);
+                                                                                                               .getBoolean(
+                                                                                                                           TCPropertiesConsts.L1_LOCKMANAGER_PINNING_ENABLED);
 
   private final ConcurrentHashMap<ObjectID, ServerMapLocalCache>                   localCaches             = new ConcurrentHashMap<ObjectID, ServerMapLocalCache>();
   private final TCConcurrentMultiMap<LockID, ObjectID>                             lockIdsToCdsmIds        = new TCConcurrentMultiMap<LockID, ObjectID>();
@@ -281,16 +281,18 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
           Object rv = ((TCObjectSelfStoreValue) object).getTCObjectSelf();
           initializeTCObjectSelfIfRequired(rv);
           return self;
-        } else if (object instanceof List) {
+        } else if (object instanceof Set) {
           // for eventual value invalidation, use any of them to look up the value
-          List list = (List) object;
-          if (list.size() <= 0) {
+          Set setFetched = (Set) object;
+          if (setFetched.size() <= 0) {
             // all keys have been invalidated already, return null (lookup will happen)
             // we should wait until the server has been notified that the object id is not present
             waitUntilObjectIDAbsent(oid);
             return null;
           }
-          AbstractLocalCacheStoreValue localCacheStoreValue = (AbstractLocalCacheStoreValue) store.get(list.get(0));
+
+          Object key = setFetched.iterator().next();
+          AbstractLocalCacheStoreValue localCacheStoreValue = (AbstractLocalCacheStoreValue) store.get(key);
 
           if (localCacheStoreValue == null) {
             waitUntilObjectIDAbsent(oid);
@@ -301,7 +303,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
           return rv;
         } else {
           throw new AssertionError("Unknown type mapped to oid: " + oid + ", value: " + object
-                                   + ". Expected to be mapped to either of TCObjectSelfStoreValue or a List");
+                                   + ". Expected to be mapped to either of TCObjectSelfStoreValue or a Set");
         }
       }
       return null;
@@ -352,18 +354,19 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
       if (object == null) { return null; }
       if (object instanceof TCObjectSelfStoreValue) {
         return ((TCObjectSelfStoreValue) object).getTCObjectSelf();
-      } else if (object instanceof List) {
+      } else if (object instanceof Set) {
         // for eventual value invalidation, use any of them to look up the value
-        List list = (List) object;
-        if (list.size() <= 0) {
+        Set set = (Set) object;
+        if (set.size() <= 0) {
           // all keys have been invalidated already, return null (lookup will happen)
           return null;
         }
-        AbstractLocalCacheStoreValue localCacheStoreValue = (AbstractLocalCacheStoreValue) store.get(list.get(0));
+        Object key = set.iterator().next();
+        AbstractLocalCacheStoreValue localCacheStoreValue = (AbstractLocalCacheStoreValue) store.get(key);
         return localCacheStoreValue == null ? null : localCacheStoreValue.asEventualValue().getValue();
       } else {
         throw new AssertionError("Unknown type mapped to oid: " + oid + ", value: " + object
-                                 + ". Expected to be mapped to either of TCObjectSelfStoreValue or a List");
+                                 + ". Expected to be mapped to either of TCObjectSelfStoreValue or a Set");
       }
     } finally {
       tcObjectStoreLock.readLock().unlock();
@@ -466,15 +469,15 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
 
   private void assertEventualIdMappingValue(ObjectID valueOid, Object object) throws AssertionError {
     if (object != null) {
-      if (!(object instanceof List)) {
+      if (!(object instanceof Set)) {
         //
-        throw new AssertionError("With eventual, oid's can be mapped to List only, oid: " + valueOid + ", mapped to: "
+        throw new AssertionError("With eventual, oid's can be mapped to Set only, oid: " + valueOid + ", mapped to: "
                                  + object);
       } else {
-        List list = (List) object;
-        if (list.size() > 1) { throw new AssertionError(
-                                                        "With eventual, oid's should be mapped to maximum of one key, oid: "
-                                                            + valueOid + ", list: " + list); }
+        Set set = (Set) object;
+        if (set.size() > 1) { throw new AssertionError(
+                                                       "With eventual, oid's should be mapped to maximum of one key, oid: "
+                                                           + valueOid + ", set: " + set); }
       }
     }
   }

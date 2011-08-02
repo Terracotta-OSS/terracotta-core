@@ -27,10 +27,8 @@ import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -325,7 +323,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
           for (Object id : currentSet) {
             // TODO: keys added from serverMapLocalCache can never be ObjectID, need other special handling here?
             if (id instanceof ObjectID && id != ObjectID.NULL_ID) {
-              if (localStore.get(id) instanceof List) {
+              if (localStore.get(id) instanceof Set) {
                 // only add for eventual consistency values
                 invalidations.add(mapID, (ObjectID) id);
               }
@@ -417,15 +415,15 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
     public Void callback(Object id, Object key, Object unused, L1ServerMapLocalCacheStore backingMap,
                          ServerMapLocalCacheRemoveCallback removeCallback) {
-      List list;
-      list = (List) backingMap.get(id);
-      if (list == null) {
-        list = new ArrayList();
+      Set set;
+      set = (Set) backingMap.get(id);
+      if (set == null) {
+        set = new HashSet();
       }
-      list.add(key);
+      set.add(key);
 
       // add the list back
-      backingMap.put(id, list, PutType.PINNED_NO_SIZE_INCREMENT);
+      backingMap.put(id, set, PutType.PINNED_NO_SIZE_INCREMENT);
       return null;
     }
   }
@@ -435,19 +433,19 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
     public LockID callback(Object id, Object key, Object removed, L1ServerMapLocalCacheStore backingMap,
                            ServerMapLocalCacheRemoveCallback removeCallback) {
-      List list = (List) backingMap.get(id);
-      if (list == null) { return null; }
-      list.remove(key);
+      Set set = (Set) backingMap.get(id);
+      if (set == null) { return null; }
+      set.remove(key);
 
       // put back or remove the list
-      if (list.size() == 0) {
+      if (set.size() == 0) {
         backingMap.remove(id, RemoveType.NO_SIZE_DECREMENT);
       } else {
-        backingMap.put(id, list, PutType.PINNED_NO_SIZE_INCREMENT);
+        backingMap.put(id, set, PutType.PINNED_NO_SIZE_INCREMENT);
       }
 
       entryRemovedCallback(removeCallback, key, removed);
-      return list.size() == 0 && (id instanceof LockID) ? (LockID) id : null;
+      return set.size() == 0 && (id instanceof LockID) ? (LockID) id : null;
     }
   }
 
@@ -457,9 +455,9 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     public Void callback(Object id, Object unusedParam, Object unusedParam2, L1ServerMapLocalCacheStore backingMap,
                          ServerMapLocalCacheRemoveCallback removeCallback) {
       // remove the list
-      List list = (List) backingMap.remove(id, RemoveType.NO_SIZE_DECREMENT);
-      if (list != null) {
-        for (Object key : list) {
+      Set set = (Set) backingMap.remove(id, RemoveType.NO_SIZE_DECREMENT);
+      if (set != null) {
+        for (Object key : set) {
           // remove each key from the backing map/store
           Object removed = backingMap.remove(key, RemoveType.NORMAL);
           entryRemovedCallback(removeCallback, key, removed);
@@ -483,10 +481,10 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
     public LockID callback(Object id, Object key, Object removed, L1ServerMapLocalCacheStore backingMap,
                            ServerMapLocalCacheRemoveCallback removeCallback) {
-      List list = (List) backingMap.get(id);
-      if (list != null) {
+      Set set = (Set) backingMap.get(id);
+      if (set != null) {
         // remove the key from the id->list(keys)
-        list.remove(key);
+        set.remove(key);
 
         if (removeKey) {
           // remove the key from the backing map/store
@@ -495,13 +493,13 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         entryRemovedCallback(removeCallback, key, removed);
 
         // put back or remove the list
-        if (list.size() == 0) {
+        if (set.size() == 0) {
           backingMap.remove(id, RemoveType.NO_SIZE_DECREMENT);
         } else {
-          backingMap.put(id, list, PutType.PINNED_NO_SIZE_INCREMENT);
+          backingMap.put(id, set, PutType.PINNED_NO_SIZE_INCREMENT);
         }
       }
-      return list != null && list.size() == 0 && (id instanceof LockID) ? (LockID) id : null;
+      return set != null && set.size() == 0 && (id instanceof LockID) ? (LockID) id : null;
     }
   }
 
