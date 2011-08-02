@@ -73,13 +73,13 @@ public class GarbageCollectHandler extends AbstractEventHandler {
         }
       }
     } else if (context instanceof InlineGCContext) {
+      collector.waitToStartInlineGC();
       final SortedSet<ObjectID> objectsToDelete = garbageCollectionManager.nextObjectsToDelete();
 
       if (logger.isDebugEnabled()) {
         logger.debug("Deleting objects: " + objectsToDelete);
       }
 
-      collector.waitToStartInlineGC();
       objectManager.deleteObjects(new DGCResultContext(objectsToDelete));
       collector.notifyGCComplete();
       garbageCollectionManager.scheduleInlineGarbageCollectionIfNecessary();
