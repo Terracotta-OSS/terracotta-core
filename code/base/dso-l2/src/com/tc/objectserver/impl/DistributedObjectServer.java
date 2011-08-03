@@ -1563,7 +1563,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   public synchronized void stop() {
 
     try {
-      this.indexHACoordinator.shutdown();
+      if (this.indexHACoordinator != null) {
+        this.indexHACoordinator.shutdown();
+      }
     } catch (Throwable t) {
       logger.warn(t);
     }
