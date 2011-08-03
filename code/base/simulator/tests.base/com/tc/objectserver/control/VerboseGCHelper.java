@@ -13,10 +13,14 @@ import java.util.List;
 
 public class VerboseGCHelper {
 
-  private static final String          XX_PRINT_GC_DETAILS     = "-XX:+PrintGCDetails";
-  private static final String          XX_PRINT_GC_TIME_STAMPS = "-XX:+PrintGCTimeStamps";
-  private static final String          XLOGGC                  = "-Xloggc:";
-  private final static VerboseGCHelper instance                = new VerboseGCHelper();
+  private static final String          XX_PRINT_GC_DETAILS         = "-XX:+PrintGCDetails";
+  private static final String          XX_PRINT_GC_TIME_STAMPS     = "-XX:+PrintGCTimeStamps";
+  private static final String          XLOGGC                      = "-Xloggc:";
+
+  private static final String          XX_PRINT_GC_DETAILS_JROCKIT = "-Xverbose:gcpause,gcreport";
+  private static final String          XLOGGC_JROCKIT              = "-Xverboselog:";
+
+  private final static VerboseGCHelper instance                    = new VerboseGCHelper();
   private File                         tempDir;
 
   public static final VerboseGCHelper getInstance() {
@@ -53,18 +57,22 @@ public class VerboseGCHelper {
     for (Iterator<String> iter = jvmArgs.iterator(); iter.hasNext();) {
       String arg = iter.next();
       if (arg != null) {
-        if (arg.startsWith(XLOGGC) || arg.startsWith(XX_PRINT_GC_TIME_STAMPS) || arg.startsWith(XX_PRINT_GC_DETAILS)) {
+        if (arg.startsWith(XLOGGC) || arg.startsWith(XX_PRINT_GC_TIME_STAMPS) || arg.startsWith(XX_PRINT_GC_DETAILS)
+            || arg.startsWith(XLOGGC_JROCKIT) || arg.startsWith(XX_PRINT_GC_DETAILS_JROCKIT)) {
           System.out.println("XXX: Removing previous verbose gc arg: " + arg);
           iter.remove();
         }
       }
     }
 
-    if (!Vm.isJRockit()) {
+    if (Vm.isJRockit()) {
+      jvmArgs.add(XX_PRINT_GC_DETAILS_JROCKIT);
+      jvmArgs.add(XLOGGC_JROCKIT + verboseGcOutputFile.getAbsolutePath());
+    } else {
       jvmArgs.add(XLOGGC + verboseGcOutputFile.getAbsolutePath());
+      jvmArgs.add(XX_PRINT_GC_TIME_STAMPS);
+      jvmArgs.add(XX_PRINT_GC_DETAILS);
     }
-    jvmArgs.add(XX_PRINT_GC_TIME_STAMPS);
-    jvmArgs.add(XX_PRINT_GC_DETAILS);
   }
 
   private static String getTimestamp() {
