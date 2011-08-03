@@ -35,8 +35,8 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -46,7 +46,8 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
 
   private static final boolean                                                     PINNING_ENABLED         = TCPropertiesImpl
                                                                                                                .getProperties()
-                                                                                                               .getBoolean(TCPropertiesConsts.L1_LOCKMANAGER_PINNING_ENABLED);
+                                                                                                               .getBoolean(
+                                                                                                                           TCPropertiesConsts.L1_LOCKMANAGER_PINNING_ENABLED);
 
   private final ConcurrentHashMap<ObjectID, ServerMapLocalCache>                   localCaches             = new ConcurrentHashMap<ObjectID, ServerMapLocalCache>();
   private final TCConcurrentMultiMap<LockID, ObjectID>                             lockIdsToCdsmIds        = new TCConcurrentMultiMap<LockID, ObjectID>();
@@ -251,7 +252,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     }
 
     public void notifySizeChanged(L1ServerMapLocalCacheStore store) {
-      initiateCapacityEvictionIfRequired(store);
+      // initiateCapacityEvictionIfRequired(store);
     }
 
   }
@@ -506,7 +507,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   public boolean contains(ObjectID objectID) {
     tcObjectStoreLock.readLock().lock();
     try {
-      return this.tcObjectSelfStoreOids.contains(objectID);
+      return this.tcObjectSelfTempCache.containsKey(objectID) || this.tcObjectSelfStoreOids.contains(objectID);
     } finally {
       tcObjectStoreLock.readLock().unlock();
     }

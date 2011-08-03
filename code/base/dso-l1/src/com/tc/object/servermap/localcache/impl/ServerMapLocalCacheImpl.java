@@ -133,6 +133,10 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       } else {
         old = this.localStore.put(key, localCacheValue, PutType.NORMAL);
       }
+
+      // TODO: if ignoring when old is not null, make sure if we have removed a pinned entry we pin it back
+      if (old != null && old.getObjectId().equals(localCacheValue.getObjectId())) { return; }
+
       removeIdToKeysMappingIfNecessary(old, key);
     }
 
