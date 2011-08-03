@@ -15,9 +15,11 @@ import java.io.Serializable;
  * dev-console needs java serialization, Serializable, of ClientID.
  */
 public class ClientID implements NodeID, Serializable {
-  private static final int     NULL_NUMBER = -1;
+  private static final long    serialVersionUID = 1L;
 
-  public static final ClientID NULL_ID     = new ClientID(NULL_NUMBER);
+  private static final int     NULL_NUMBER      = -1;
+
+  public static final ClientID NULL_ID          = new ClientID(NULL_NUMBER);
   private long                 id;
 
   // private ChannelID channelID;
