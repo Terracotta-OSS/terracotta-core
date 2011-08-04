@@ -36,7 +36,7 @@ public interface ServerMapLocalCache {
   /**
    * Called when the key has been evicted from the local store
    */
-  void evictedFromStore(Object id, Object key, Object value);
+  void evictedFromStore(Object id, Object key, AbstractLocalCacheStoreValue value);
 
   /**
    * Unpin entry for this object key. Becomes eligible for eviction if not before
