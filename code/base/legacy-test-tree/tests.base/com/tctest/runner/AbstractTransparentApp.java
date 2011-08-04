@@ -18,8 +18,8 @@ import com.tc.test.JMXUtils;
 
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import javax.management.remote.JMXConnector;
 
@@ -42,8 +42,10 @@ public abstract class AbstractTransparentApp implements Application {
     this.coordinator = new TransparentAppCoordinator(appId, config.getGlobalParticipantCount());
 
     Map<Class<?>, LogLevel> logLevels = (Map<Class<?>, LogLevel>) config.getAttributeObject(L1_LOG_LEVELS);
-    for (Entry<Class<?>, LogLevel> logLevelEntry : logLevels.entrySet()) {
-      TCLogging.getLogger(logLevelEntry.getKey()).setLevel(logLevelEntry.getValue());
+    if (logLevels != null) {
+      for (Entry<Class<?>, LogLevel> logLevelEntry : logLevels.entrySet()) {
+        TCLogging.getLogger(logLevelEntry.getKey()).setLevel(logLevelEntry.getValue());
+      }
     }
   }
 
