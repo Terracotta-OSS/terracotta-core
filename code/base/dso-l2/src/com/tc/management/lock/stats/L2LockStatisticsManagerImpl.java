@@ -25,7 +25,6 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -33,7 +32,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.WeakHashMap;
 
-public class L2LockStatisticsManagerImpl extends LockStatisticsManager implements L2LockStatsManager, Serializable {
+public class L2LockStatisticsManagerImpl extends LockStatisticsManager implements L2LockStatsManager {
   private static final TCLogger             logger                   = TCLogging
                                                                          .getLogger(L2LockStatisticsManagerImpl.class);
 
