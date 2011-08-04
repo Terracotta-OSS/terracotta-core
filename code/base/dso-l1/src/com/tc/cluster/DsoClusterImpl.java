@@ -18,6 +18,7 @@ import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TCMap;
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.util.Assert;
+import com.tc.util.Util;
 import com.tcclient.cluster.ClusterInternalEventsContext;
 import com.tcclient.cluster.ClusterNodeStatus;
 import com.tcclient.cluster.DsoClusterInternal;
@@ -54,6 +55,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   private final ReentrantReadWriteLock.ReadLock  stateReadLock        = stateLock.readLock();
   private final ReentrantReadWriteLock.WriteLock stateWriteLock       = stateLock.writeLock();
   private final ClusterNodeStatus                nodeStatus           = new ClusterNodeStatus();
+  private final FiredEventsStatus                firedEventsStatus    = new FiredEventsStatus();
 
   private ClusterMetaDataManager                 clusterMetaDataManager;
   private ClientObjectManager                    clientObjectManager;
@@ -375,6 +377,9 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
 
     if (fireOperationsDisabled) {
       fireOperationsDisabledNoCheck();
+    } else {
+      // don't fire node left right away, but wait until operations disabled is fired first
+      firedEventsStatus.waitUntilOperationsDisabledFired();
     }
     fireNodeLeft(new ClientID(currentNode.getChannelId()));
   }
@@ -419,6 +424,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
       for (DsoClusterListener listener : listeners) {
         fireEvent(DsoClusterEventType.OPERATIONS_ENABLED, event, listener);
       }
+      firedEventsStatus.operationsEnabledFired();
     }
   }
 
@@ -439,6 +445,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     for (DsoClusterListener listener : listeners) {
       fireEvent(DsoClusterEventType.OPERATIONS_DISABLED, event, listener);
     }
+    firedEventsStatus.operationsDisabledFired();
   }
 
   private void fireEvent(final DsoClusterEventType eventType, final DsoClusterEvent event,
@@ -510,6 +517,36 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
       serverResult.add(currentClientID);
     }
     return serverResult;
+  }
+
+  private static final class FiredEventsStatus {
+
+    private DsoClusterEventType lastFiredEvent = null;
+
+    public synchronized void operationsDisabledFired() {
+      lastFiredEvent = DsoClusterEventType.OPERATIONS_DISABLED;
+      this.notifyAll();
+    }
+
+    public synchronized void operationsEnabledFired() {
+      lastFiredEvent = DsoClusterEventType.OPERATIONS_ENABLED;
+      this.notifyAll();
+    }
+
+    public synchronized void waitUntilOperationsDisabledFired() {
+      boolean interrupted = false;
+      try {
+        while (lastFiredEvent != DsoClusterEventType.OPERATIONS_DISABLED) {
+          try {
+            this.wait();
+          } catch (InterruptedException e) {
+            interrupted = true;
+          }
+        }
+      } finally {
+        Util.selfInterruptIfNeeded(interrupted);
+      }
+    }
   }
 
 }
