@@ -313,7 +313,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   public void addStrongValueToCache(LockID lockId, Object key, Object value, MapOperationType mapOperation) {
-    Object valueToAdd = value instanceof TCObject ? ((TCObject) value).getObjectID() : value;
+    Object valueToAdd = value instanceof TCObjectSelf ? ((TCObjectSelf) value).getObjectID() : value;
     final LocalCacheStoreStrongValue localCacheValue = new LocalCacheStoreStrongValue(lockId, valueToAdd, this.objectID);
     addToCache(key, localCacheValue, value, mapOperation);
   }
@@ -325,7 +325,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   public void addIncoherentValueToCache(Object key, Object value, MapOperationType mapOperation) {
-    Object valueToAdd = value instanceof TCObject ? ((TCObject) value).getObjectID() : value;
+    Object valueToAdd = value instanceof TCObjectSelf ? ((TCObjectSelf) value).getObjectID() : value;
     final LocalCacheStoreIncoherentValue localCacheValue = new LocalCacheStoreIncoherentValue(valueToAdd, this.objectID);
     addToCache(key, localCacheValue, value, mapOperation);
   }
