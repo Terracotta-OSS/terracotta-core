@@ -92,6 +92,13 @@ public class L2Management extends TerracottaManagement {
                                    "Unable to construct one of the L2 MBeans: this is a programming error in one of those beans",
                                    ncmbe);
     }
+    // LKC-2990 and LKC-3171: Remove the JMX generic optional logging
+    java.util.logging.Logger jmxLogger = java.util.logging.Logger.getLogger("javax.management.remote.generic");
+    jmxLogger.setLevel(java.util.logging.Level.OFF);
+
+    // DEV-1304: ClientCommunicatorAdmin uses a different logger
+    jmxLogger = java.util.logging.Logger.getLogger("javax.management.remote.misc");
+    jmxLogger.setLevel(java.util.logging.Level.OFF);
 
     final List jmxServers = MBeanServerFactory.findMBeanServer(null);
     if (jmxServers != null && !jmxServers.isEmpty()) {

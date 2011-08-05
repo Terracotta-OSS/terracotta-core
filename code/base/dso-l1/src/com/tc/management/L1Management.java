@@ -286,6 +286,14 @@ public class L1Management extends TerracottaManagement {
 
     JMXServiceURL url = null;
     try {
+      // LKC-2990 and LKC-3171: Remove the JMX generic optional logging
+      java.util.logging.Logger jmxLogger = java.util.logging.Logger.getLogger("javax.management.remote.generic");
+      jmxLogger.setLevel(java.util.logging.Level.OFF);
+    } catch (Throwable t) {
+      logger.warn("Unable to disable default logging in Sun's JMX package; when Terracotta clients go"
+                  + " up/down you may see stack traces printed to the log");
+    }
+    try {
       final Map environment = new HashMap();
       environment.put("jmx.remote.x.server.connection.timeout", Long.valueOf(Long.MAX_VALUE));
       ProtocolProvider.addTerracottaJmxProvider(environment);
