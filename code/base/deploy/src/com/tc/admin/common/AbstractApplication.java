@@ -6,6 +6,7 @@ package com.tc.admin.common;
 
 import org.apache.commons.io.IOUtils;
 
+import com.tc.logging.JDKLogging;
 import com.tc.util.runtime.Os;
 
 import java.io.File;
@@ -13,7 +14,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -22,8 +22,8 @@ public abstract class AbstractApplication implements IApplication {
 
   static {
     if (!Boolean.getBoolean("javax.management.remote.debug")) {
-      Logger.getLogger("javax.management.remote").setLevel(Level.OFF);
-      Logger.getLogger("com.sun.jmx.remote.opt.util").setLevel(Level.OFF);
+      JDKLogging.setLevel("javax.management.remote", Level.OFF);
+      JDKLogging.setLevel("com.sun.jmx.remote.opt.util", Level.OFF);
     }
     System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
 

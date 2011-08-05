@@ -14,6 +14,7 @@ import com.tc.async.api.Sink;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.CustomerLogging;
+import com.tc.logging.JDKLogging;
 import com.tc.logging.JMXLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -38,6 +39,7 @@ import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
@@ -92,13 +94,12 @@ public class L2Management extends TerracottaManagement {
                                    "Unable to construct one of the L2 MBeans: this is a programming error in one of those beans",
                                    ncmbe);
     }
+
     // LKC-2990 and LKC-3171: Remove the JMX generic optional logging
-    java.util.logging.Logger jmxLogger = java.util.logging.Logger.getLogger("javax.management.remote.generic");
-    jmxLogger.setLevel(java.util.logging.Level.OFF);
+    JDKLogging.setLevel("javax.management.remote.generic", Level.OFF);
 
     // DEV-1304: ClientCommunicatorAdmin uses a different logger
-    jmxLogger = java.util.logging.Logger.getLogger("javax.management.remote.misc");
-    jmxLogger.setLevel(java.util.logging.Level.OFF);
+    JDKLogging.setLevel("javax.management.remote.misc", Level.OFF);
 
     final List jmxServers = MBeanServerFactory.findMBeanServer(null);
     if (jmxServers != null && !jmxServers.isEmpty()) {

@@ -5,6 +5,7 @@
 package com.tc.admin;
 
 import com.tc.config.schema.L2Info;
+import com.tc.logging.JDKLogging;
 import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 
@@ -23,7 +24,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.management.AttributeChangeNotification;
 import javax.management.InstanceNotFoundException;
@@ -78,7 +78,8 @@ public class ServerConnectionManager implements NotificationListener {
           level = Level.ALL;
         }
       }
-      Logger.getLogger("javax.management.remote").setLevel(level);
+
+      JDKLogging.setLevel("javax.management.remote", level);
     }
   }
 
