@@ -128,14 +128,14 @@ public class ExtraProcessServerControl extends ServerControlBase {
       for (Object vmArgObj : vmArgs) {
         String vmArg = (String) vmArgObj;
         String[] kv = vmArg.split("=");
-        if (kv.length == 1) {
-          map.put(kv[0], null);
-        } else if (kv.length == 2) {
+        if (kv.length == 2) {
           if (map.containsKey(kv[0]) && !map.get(kv[0]).equals(kv[1])) {
             System.out.println("Overriding duplicate JVM arg definition " + kv[0] + "=" + map.get(kv[0]) + " with "
                                + kv[0] + "=" + kv[1]);
           }
           map.put(kv[0], kv[1]);
+        } else {
+          map.put(kv.length == 1 ? kv[0] : vmArg, null);
         }
       }
       vmArgs.clear();
