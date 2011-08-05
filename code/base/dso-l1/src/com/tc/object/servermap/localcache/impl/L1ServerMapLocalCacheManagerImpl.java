@@ -35,8 +35,8 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -46,8 +46,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
 
   private static final boolean                                                     PINNING_ENABLED         = TCPropertiesImpl
                                                                                                                .getProperties()
-                                                                                                               .getBoolean(
-                                                                                                                           TCPropertiesConsts.L1_LOCKMANAGER_PINNING_ENABLED);
+                                                                                                               .getBoolean(TCPropertiesConsts.L1_LOCKMANAGER_PINNING_ENABLED);
 
   private final ConcurrentHashMap<ObjectID, ServerMapLocalCache>                   localCaches             = new ConcurrentHashMap<ObjectID, ServerMapLocalCache>();
   private final TCConcurrentMultiMap<LockID, ObjectID>                             lockIdsToCdsmIds        = new TCConcurrentMultiMap<LockID, ObjectID>();
@@ -214,14 +213,14 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     }
   }
 
-  private void initiateCapacityEvictionIfRequired(L1ServerMapLocalCacheStore store) {
-    L1ServerMapLocalStoreEvictionInfo evictionInfo = stores.get(store);
-    if (evictionInfo == null) { throw new AssertionError(); }
-
-    if (evictionInfo.attemptEvictionStart()) {
-      capacityEvictionSink.add(evictionInfo);
-    }
-  }
+  // private void initiateCapacityEvictionIfRequired(L1ServerMapLocalCacheStore store) {
+  // L1ServerMapLocalStoreEvictionInfo evictionInfo = stores.get(store);
+  // if (evictionInfo == null) { throw new AssertionError(); }
+  //
+  // if (evictionInfo.attemptEvictionStart()) {
+  // capacityEvictionSink.add(evictionInfo);
+  // }
+  // }
 
   private class GlobalL1ServerMapLocalCacheStoreListener<K, V> implements L1ServerMapLocalCacheStoreListener<K, V> {
 
