@@ -9,26 +9,33 @@ import java.text.FieldPosition;
 
 public class ThinDecimalFormat extends DecimalFormat {
   public static final ThinDecimalFormat INSTANCE     = new ThinDecimalFormat();
+
   private static final DecimalFormat    stdFormatter = new DecimalFormat("0.##");
+
+  public static final long              KILO        = 1000;
+  public static final long              MEGA         = KILO * KILO;
+  public static final long              GIGA         = MEGA * KILO;
+  public static final long              TERA         = GIGA * KILO;
 
   @Override
   public final StringBuffer format(long number, StringBuffer result, FieldPosition fieldPosition) {
-    if (number < 1000) { return stdFormatter.format(number, result, fieldPosition); }
-
     StringBuffer sb;
-    if (number < 1000000) {
-      sb = stdFormatter.format(number / 1000d, result, fieldPosition);
-      sb.append("K");
-      return sb;
-    }
-    if (number < 1000000000) {
-      sb = stdFormatter.format(number / 1000000d, result, fieldPosition);
-      sb.append("M");
-      return sb;
-    }
 
-    sb = stdFormatter.format(number / 1000000000d, result, fieldPosition);
-    sb.append("G");
+    if (number < KILO) {
+      sb = stdFormatter.format(number, result, fieldPosition);
+    } else if (number < MEGA) {
+      sb = stdFormatter.format(number / (double) KILO, result, fieldPosition);
+      sb.append("K");
+    } else if (number < GIGA) {
+      sb = stdFormatter.format(number / (double) MEGA, result, fieldPosition);
+      sb.append("M");
+    } else if (number < TERA) {
+      sb = stdFormatter.format(number / (double) GIGA, result, fieldPosition);
+      sb.append("G");
+    } else {
+      sb = stdFormatter.format(number / (double) TERA, result, fieldPosition);
+      sb.append("T");
+    }
 
     return sb;
   }

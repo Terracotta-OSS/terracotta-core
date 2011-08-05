@@ -297,7 +297,7 @@ public class TreeComboBox extends XContainer implements TreeWillExpandListener, 
   }
 
   public void setSelectedPath(String nodeName) {
-    XTreeNode node = ((XRootNode) treeModel.getRoot()).findNodeByName(nodeName);
+    XTreeNode node = ((XTreeNode) treeModel.getRoot()).findNodeByName(nodeName);
     if (node != null) {
       setSelectedPath(new TreePath(node.getPath()));
     }
@@ -415,7 +415,7 @@ public class TreeComboBox extends XContainer implements TreeWillExpandListener, 
 
   public void reset() {
     treeModel.removeTreeModelListener(this);
-    XRootNode root = (XRootNode) treeModel.getRoot();
+    XTreeNode root = (XTreeNode) treeModel.getRoot();
     root.removeAllChildren();
     root.nodeStructureChanged();
   }
