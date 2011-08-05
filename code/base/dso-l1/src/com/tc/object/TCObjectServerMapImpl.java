@@ -28,8 +28,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObject, TCObjectServerMap<L> {
 
@@ -37,8 +37,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
   private static final boolean         EVICTOR_LOGGING  = TCPropertiesImpl
                                                             .getProperties()
-                                                            .getBoolean(
-                                                                        TCPropertiesConsts.EHCACHE_EVICTOR_LOGGING_ENABLED);
+                                                            .getBoolean(TCPropertiesConsts.EHCACHE_EVICTOR_LOGGING_ENABLED);
 
   private static final Object[]        NO_ARGS          = new Object[] {};
 
@@ -245,7 +244,9 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     if (item != null) { return item.getValueObject(tcObjectSelfStore, serverMapLocalStore); }
 
     final Object value = getValueForKeyFromServer(map, key);
-    addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, value, MapOperationType.GET);
+    if (value != null) {
+      addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, value, MapOperationType.GET);
+    }
 
     return value;
   }
@@ -273,7 +274,9 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
     if (item != null) return item.getValueObject(tcObjectSelfStore, serverMapLocalStore);
     final Object value = getValueForKeyFromServer(map, key);
-    updateLocalCacheIfNecessary(key, value);
+    if (value != null) {
+      updateLocalCacheIfNecessary(key, value);
+    }
     return value;
   }
 

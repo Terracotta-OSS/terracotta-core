@@ -40,8 +40,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                                                                                                                               .getLogger(ServerMapLocalCacheImpl.class);
   private static final long                                                         SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS = TCPropertiesImpl
                                                                                                                                               .getProperties()
-                                                                                                                                              .getLong(
-                                                                                                                                                       TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
+                                                                                                                                              .getLong(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
 
   private final static int                                                          CONCURRENCY                                           = 128;
   private static final LocalStoreKeySetFilter                                       IGNORE_ID_FILTER                                      = new IgnoreIdsFilter();
@@ -137,7 +136,14 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       // TODO: if ignoring when old is not null, make sure if we have removed a pinned entry we pin it back
       if (old != null && old.getObjectId().equals(localCacheValue.getObjectId())) { return; }
 
-      removeIdToKeysMappingIfNecessary(old, key);
+      if (!localCacheValue.isStrongConsistentValue()) {
+        // remove id->keys mapping if not strong value. The new id can be different from the old one
+        removeIdToKeysMappingIfNecessary(old, key);
+      } else {
+        // no need to remove id->keys mapping, as same key going to be added again
+        // but need to remove the tcoSelf
+        entryRemovedCallback(this.removeCallback, key, old);
+      }
     }
 
     addIdToKeysMappingIfNecessary(localCacheValue, key);
@@ -156,9 +162,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     if (localCacheValue != null) {
       if (localCacheValue.getId() != null && localCacheValue.getId() != ObjectID.NULL_ID) {
 
-        LockID lockID = executeUnderSegmentWriteLock(localCacheValue.getId(), key, localCacheValue,
-                                                     RemoveIdKeyMappingCallback.INSTANCE);
-        initiateLockRecall(lockID);
+        executeUnderSegmentWriteLock(localCacheValue.getId(), key, localCacheValue, RemoveIdKeyMappingCallback.INSTANCE);
       } // else: we don't add for null_id
     }
   }
@@ -170,8 +174,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(
-                                                                                            final Object key,
+  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
                                                                                             MapOperationType mapOperation) {
     if (!mapOperation.isMutateOperation()) {
       // no listener required for non mutate ops
