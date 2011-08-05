@@ -14,9 +14,11 @@ public class ConnectionIDTest extends TCTestCase {
 
   public void test() {
     try {
-      ConnectionID connectionID = ConnectionID.parse("jvm1.12." + VALID_SERVER_ID);
+      ConnectionID connectionID = ConnectionID.parse("12." + VALID_SERVER_ID + ".jvm1");
       assertEquals(12, connectionID.getChannelID());
       assertEquals(VALID_SERVER_ID, connectionID.getServerID());
+      assertEquals("jvm1", connectionID.getJvmID());
+      assertEquals(false, connectionID.isJvmIDNull());
     } catch (InvalidConnectionIDException e) {
       fail(e);
     }
