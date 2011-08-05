@@ -92,7 +92,10 @@ public abstract class AbstractDBCollectionsDeleteTestParent extends TCTestCase {
       PersistenceTransaction tx = this.ptp.newTransaction();
       this.collectionsPersistor.saveCollections(tx, state);
       tx.commit();
-      // System.out.println("  Time take to add: " + (System.currentTimeMillis() - addStart));
+      if (i != 0 && i % 100 == 0) {
+        System.out
+            .println("  Time taken to add " + i + " maps: " + (System.currentTimeMillis() - totalAddStart) + "ms");
+      }
       Assert.assertEquals(totalEntries, this.env.getMapsDatabase().count(ptp.newTransaction()));
       deleteIds.add(id);
     }

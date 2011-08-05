@@ -17,7 +17,7 @@ public class DBDeleteMultipleSmallMapDerbyTest extends AbstractDBCollectionsDele
   }
 
   public void testMap() throws Exception {
-    super.doTestDeleteMap(5000, 10);
+    super.doTestDeleteMap(2500, 10);
   }
 
 }
