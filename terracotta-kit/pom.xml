@@ -451,7 +451,7 @@
                 </goals>
                 <configuration>
                   <source>
-                    pluginVersion = project.version.replace('-', '_')
+                    pluginVersion = project.version.replace("-", ".")
                     pluginVersion += "_r" + project.properties['build.revision']
                     pluginVersion += "_v" + new java.text.SimpleDateFormat("yyMMdd").format(new Date())
                     project.properties.setProperty('eclipse.plugin.version', pluginVersion)
@@ -481,12 +481,25 @@
                   <cleanEmptyDirectories>true</cleanEmptyDirectories>
                 </resource>
 
+                <!-- non-filtered resource -->
                 <resource>
                   <targetPath>${rootDir}</targetPath>
                   <directory>${basedir}/src/packaging/eclipse</directory>
                   <preservePath>true</preservePath>
+                </resource>
+
+                <!-- filtered resource -->
+                <resource>
+                  <targetPath>${rootDir}</targetPath>
+                  <directory>${basedir}/src/packaging/eclipse</directory>
+                  <includes>
+                    <include>**/site.xml</include>
+                    <include>**/feature.xml</include>
+                    <include>**/MANIFEST.MF</include>
+                  </includes>
+                  <preservePath>true</preservePath>
                   <filtering>true</filtering>
-                </resource>                
+                </resource>                 
           
                 <!-- populate lib folder -->
                 <resource>
@@ -530,6 +543,14 @@
                   <filtering>true</filtering>
                   <process>Util.createFeatureJar(project)</process>
                 </resource>
+                
+                <!-- create plugin jar -->
+                <resource>
+                  <targetPath>${rootDir}/update/plugins/META-INF</targetPath>
+                  <file>${basedir}/src/packaging/eclipse/update/plugins/META-INF/MANIFEST.MF</file>
+                  <filtering>true</filtering>
+                  <process>Util.createPluginJar(project)</process>
+                </resource>                
                         
                 <!-- package tar.gz kit -->
                 <resource>

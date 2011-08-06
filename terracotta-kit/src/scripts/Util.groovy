@@ -45,6 +45,24 @@ class Util {
     }
     
     static void createPluginJar(project) {
-      def rootDir = project.properties['rootDir'].replace('\\', '/')   
+      def rootDir = project.properties['rootDir']
+      def pluginJar = "org.terracotta.dso_" + project.properties['eclipse.plugin.version']
+      def destFile = rootDir + "/update/plugins/" + pluginJar + ".jar" 
+      def baseDir =  rootDir + "/update/plugins"
+      def manifestFile = baseDir + "/META-INF/MANIFEST.MF"
+      // generate classpath from lib folder
+      def bundleClasspath = new StringBuilder()
+      def libs = new File(baseDir, "lib").listFiles()
+      for (def file : libs) {
+        bundleClasspath.append("lib/").append(file.getName()).append(",")
+      }
+      if (bundleClasspath.length() > 0) {
+        bundleClasspath.deleteCharAt(bundleClasspath.length() - 1)
+      }
+      ant.replace(file: manifestFile, token: "@BUNDLE-CLASSPATH@", value: bundleClasspath.toString())
+      ant.jar(destfile: destFile, basedir: baseDir, manifest: manifestFile)
+      ant.delete(includeEmptyDirs: "true") {
+        ant.fileset(dir: baseDir, excludes: pluginJar + ".jar")
+      }
     }
 }
