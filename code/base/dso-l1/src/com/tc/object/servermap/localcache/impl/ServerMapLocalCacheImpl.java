@@ -548,4 +548,12 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
 
   }
+
+  public long onHeapSizeInBytes() {
+    return this.localStore.onHeapSizeInBytes();
+  }
+
+  public long offHeapSizeInBytes() {
+    return this.localStore.offHeapSizeInBytes();
+  }
 }

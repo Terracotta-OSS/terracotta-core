@@ -90,6 +90,16 @@ public interface ServerMapLocalCache {
   int size();
 
   /**
+   * Size of this local cache on local heap in bytes
+   */
+  long onHeapSizeInBytes();
+
+  /**
+   * Size of this local cache off heap in bytes
+   */
+  long offHeapSizeInBytes();
+
+  /**
    * Clear all elements from the local cache
    */
   void clear();

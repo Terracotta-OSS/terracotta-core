@@ -67,6 +67,16 @@ public interface L1ServerMapLocalCacheStore<K, V> {
   public int size();
 
   /**
+   * Bytes this local cache is taking up on heap.
+   */
+  public long onHeapSizeInBytes();
+
+  /**
+   * Bytes this local cache is taking up off heap.
+   */
+  public long offHeapSizeInBytes();
+
+  /**
    * Unpin entry so that it is eligible for eviction
    */
   public void unpinEntry(K key);

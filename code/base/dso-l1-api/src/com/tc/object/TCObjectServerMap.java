@@ -165,6 +165,16 @@ public interface TCObjectServerMap<L> extends TCObject {
   public int getLocalSize();
 
   /**
+   * Get the local cache's on heap size in bytes
+   */
+  public long getLocalOnHeapSizeInBytes();
+
+  /**
+   * Get the local cache's off heap size in bytes
+   */
+  public long getLocalOffHeapSizeInBytes();
+
+  /**
    * Clears local cache of all entries. It is not immediate as all associated locks needs to be recalled.
    * 
    * @param map ServerTCMap

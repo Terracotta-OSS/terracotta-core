@@ -136,4 +136,14 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
     return listeners;
   }
 
+  public long onHeapSizeInBytes() {
+    // HashMap doesn't have heap size calculations.
+    return 0;
+  }
+
+  public long offHeapSizeInBytes() {
+    // No offheap for the simple hashmap case
+    return 0;
+  }
+
 }

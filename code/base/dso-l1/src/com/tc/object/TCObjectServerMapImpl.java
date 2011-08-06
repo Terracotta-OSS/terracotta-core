@@ -620,4 +620,12 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       cache.setupLocalStore(serverMapLocalStore);
     }
   }
+
+  public long getLocalOnHeapSizeInBytes() {
+    return this.cache.onHeapSizeInBytes();
+  }
+
+  public long getLocalOffHeapSizeInBytes() {
+    return this.cache.offHeapSizeInBytes();
+  }
 }
