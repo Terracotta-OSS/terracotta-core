@@ -204,9 +204,9 @@
       </properties>
     </profile>
     
-    <!-- *********************************** -->
-    <!--   profile to build Terracotta kit   -->    
-    <!-- *********************************** -->    
+    <!-- ********************************************** -->
+    <!--   profile to build opensource Terracotta kit   -->    
+    <!-- ********************************************** -->    
     <profile>
       <id>kit</id>
       <build>
@@ -322,17 +322,7 @@
                   </dependency>
                   <dependenciesAtM2>true</dependenciesAtM2>
                   <unpack>true</unpack>
-                  <process>{{
-                  def rootEhcacheFolder = "/ehcache-core-${ehcache.version}"
-                  if ("${kit.edition}" == 'enterprise') {
-                    rootEhcacheFolder = "/ehcache-core-ee-${ehcache.version}"
-                  }
-                  def rootDir = project.properties['rootDir']
-                  def currentName =  rootDir + rootEhcacheFolder
-                  def newName = rootDir  + "/ehcache"
-                  Util.rename(currentName, newName) 
-                  }}
-                  </process>              
+                  <process>Util.processEhcacheDistribution(project)</process>              
                 </resource>
                 <resource>
                   <directory>${rootDir}/ehcache</directory>
@@ -402,18 +392,7 @@
                   <targetPath>${rootDir}</targetPath>
                   <file>${quartz-kit.url}</file>
                   <unpack>true</unpack>
-                  <process>{{
-                  def rootDir = project.properties['rootDir']
-                  def currentName =  rootDir + "/quartz-${quartz.version}"
-                  def newName = rootDir  + "/quartz"
-                  Util.rename(currentName, newName)
-                  if ("${kit.edition}" == "enterprise") {
-                    def ant = new AntBuilder()
-                    ant.replace(dir: newName, includes: "**/example15/instance*.properties", 
-                                token: "TerracottaJobStore", value: "EnterpriseTerracottaJobStore")
-                  }
-                  }}
-                  </process>
+                  <process>Util.processQuartzDistribution(project)</process>
                 </resource>
                 <resource>
                   <targetPath>${rootDir}/quartz</targetPath>
@@ -542,6 +521,14 @@
                     <zipEntry>tim-get.properties</zipEntry>
                   </zipEntries>
                   <unpack>true</unpack>              
+                </resource>
+                
+                <!-- create feature jar -->
+                <resource>
+                  <targetPath>${rootDir}/update/features</targetPath>
+                  <file>${basedir}/src/packaging/eclipse/update/features/feature.xml</file>
+                  <filtering>true</filtering>
+                  <process>Util.createFeatureJar(project)</process>
                 </resource>
                         
                 <!-- package tar.gz kit -->
