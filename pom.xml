@@ -89,6 +89,13 @@
         <module>tcstats</module>
       </modules>
     </profile>
+    
+    <profile>
+      <id>eclipse</id>
+      <modules>
+        <module>ui-eclipse</module>
+      </modules>
+    </profile>    
   </profiles>
 
 
