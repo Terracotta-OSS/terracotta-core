@@ -108,7 +108,7 @@
                 <manifestFile>${project.build.directory}/MANIFEST.MF</manifestFile>
               </archive>            
               <descriptors>
-                <descriptor>src/assemble/jar.xml</descriptor>
+                <descriptor>${basedir}/src/assemble/jar.xml</descriptor>
               </descriptors>
               <appendAssemblyId>false</appendAssemblyId>
             </configuration>            
@@ -121,7 +121,7 @@
             </goals>
             <configuration>
               <descriptors>
-                <descriptor>src/assemble/sources.xml</descriptor>
+                <descriptor>${basedir}/src/assemble/sources.xml</descriptor>
               </descriptors>
               <appendAssemblyId>true</appendAssemblyId>
             </configuration>            

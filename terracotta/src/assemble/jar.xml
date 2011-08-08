@@ -16,7 +16,7 @@
   </dependencySets>
   <files>
     <file>
-      <source>target/MANIFEST.MF</source>
+      <source>${project.build.directory}/MANIFEST.MF</source>
       <outputDirectory>META-INF</outputDirectory>
     </file>
   </files>
