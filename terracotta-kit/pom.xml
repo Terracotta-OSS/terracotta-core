@@ -216,6 +216,7 @@
             <artifactId>maven-copy-plugin</artifactId>
             <version>0.2.3</version>
             <executions>
+              <!-- assemble kit content -->
               <execution>
                 <id>preparing-terracotta-kit</id>
                 <phase>prepare-package</phase>
