@@ -345,7 +345,9 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       }
     }
     cache.addToCache(key, localCacheValue, mapOperation);
-    this.tcObjectSelfStore.removeTCObjectSelfTemp((TCObjectSelf) value, notifyServerForRemove);
+    if (value instanceof TCObjectSelf) {
+      this.tcObjectSelfStore.removeTCObjectSelfTemp((TCObjectSelf) value, notifyServerForRemove);
+    }
   }
 
   private Object getValueForKeyFromServer(final TCServerMap map, final Object key) {
