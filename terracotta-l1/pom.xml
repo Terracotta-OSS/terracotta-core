@@ -17,6 +17,10 @@
   <artifactId>terracotta-l1</artifactId>
   <packaging>jar</packaging>
   <name>terracotta-l1</name>
+  
+  <properties>
+    <skip.testjar>true</skip.testjar>
+  </properties>
 
   <dependencies>
     <dependency>
@@ -24,8 +28,15 @@
       <artifactId>dso-l1</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
-      <optional>true</optional>
     </dependency>
+    
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>dso-l1</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+      <classifier>sources</classifier>
+    </dependency>    
   </dependencies>
 
   <build>
@@ -44,71 +55,43 @@
             <phase>generate-resources</phase>
           </execution>
         </executions>
-      </plugin>     
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>2.2</version>
-        <executions>
-          <execution>
-            <id>unpack-dependencies</id>
-            <phase>process-resources</phase>
-            <goals>
-              <goal>unpack-dependencies</goal>
-            </goals>
-            <configuration>
-              <overwrite>false</overwrite>
-              <includeGroupIds>org.terracotta.internal</includeGroupIds>
-              <excludes>tim-get.properties</excludes>
-              <outputDirectory>${project.build.outputDirectory}</outputDirectory>
-            </configuration>
-          </execution>
-          <execution>
-            <id>unpack-sources</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>unpack-dependencies</goal>
-            </goals>
-            <configuration>
-              <overwrite>false</overwrite>
-              <includeGroupIds>org.terracotta.internal</includeGroupIds>
-              <classifier>sources</classifier>
-              <outputDirectory>${project.build.directory}/sources</outputDirectory>
-            </configuration>
-          </execution>          
-        </executions>
       </plugin>
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
-        <version>1.5</version>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.2.1</version>
         <executions>
           <execution>
-            <id>add-sources</id>
+            <id>assemble-jar</id>
+            <phase>package</phase>
             <goals>
-              <goal>add-source</goal>
+              <goal>single</goal>
             </goals>
             <configuration>
-              <sources>
-                <source>${project.build.directory}/sources</source>
-              </sources>
-            </configuration>
+              <archive>
+                <manifestFile>${project.build.directory}/MANIFEST.MF</manifestFile>
+              </archive>            
+              <descriptors>
+                <descriptor>${basedir}/src/assemble/jar.xml</descriptor>
+              </descriptors>
+              <appendAssemblyId>false</appendAssemblyId>
+            </configuration>            
           </execution>
+          <execution>
+            <id>assemble-sources</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <descriptors>
+                <descriptor>${basedir}/src/assemble/sources.xml</descriptor>
+              </descriptors>
+              <appendAssemblyId>true</appendAssemblyId>
+            </configuration>            
+          </execution>          
         </executions>
-      </plugin>     
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>2.3.1</version>
-        <configuration>
-          <archive>
-            <manifest>
-              <addClasspath>true</addClasspath>
-            </manifest>
-            <manifestFile>${project.build.directory}/MANIFEST.MF</manifestFile>
-          </archive>
-        </configuration>
-      </plugin>       
+      </plugin>      
     </plugins>
   </build>
 </project>
