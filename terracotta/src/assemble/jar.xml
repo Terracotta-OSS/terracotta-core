@@ -1,0 +1,23 @@
+<assembly>
+  <id>jar</id>
+  <formats>
+    <format>jar</format>
+  </formats>
+  <includeBaseDirectory>false</includeBaseDirectory>
+  <dependencySets>
+    <dependencySet>
+      <outputDirectory>/</outputDirectory>
+      <includes>
+        <include>org.terracotta.internal:*</include>
+      </includes>
+      <unpack>true</unpack>
+      <scope>provided</scope>
+    </dependencySet>
+  </dependencySets>
+  <files>
+    <file>
+      <source>target/MANIFEST.MF</source>
+      <outputDirectory>META-INF</outputDirectory>
+    </file>
+  </files>
+</assembly>

@@ -43,6 +43,35 @@
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
+    
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>deploy</artifactId>
+      <version>${project.version}</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>simulator</artifactId>
+      <version>${project.version}</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>tim-get-tool</artifactId>
+      <version>${project.version}</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>dso-statistics</artifactId>
+      <version>${project.version}</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>    
   </dependencies>
 
   <build>
@@ -52,88 +81,58 @@
         <artifactId>maven-forge-plugin</artifactId>
         <configuration>
           <rootPath>${basedir}/..</rootPath>
+          <addClasspath>true</addClasspath>
+          <manifestEntries>
+            <Main-Class>com.tc.cli.CommandLineMain</Main-Class>
+            <Class-Path>resources/</Class-Path>
+            <BuildInfo-Edition>opensource</BuildInfo-Edition>
+          </manifestEntries>
         </configuration>
         <executions>
           <execution>
             <goals>
               <goal>manifest</goal>
             </goals>
-            <phase>generate-resources</phase>
+            <phase>compile</phase>
           </execution>
         </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>2.2</version>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.2.1</version>
         <executions>
           <execution>
-            <id>unpack-dependencies</id>
-            <phase>prepare-package</phase>
+            <id>assemble-jar</id>
+            <phase>package</phase>
             <goals>
-              <goal>unpack-dependencies</goal>
+              <goal>single</goal>
             </goals>
             <configuration>
-              <overwrite>false</overwrite>
-              <includeGroupIds>org.terracotta.internal</includeGroupIds>
-              <excludes>tim-get.properties</excludes>
-              <outputDirectory>${project.build.outputDirectory}</outputDirectory>
-            </configuration>
+              <archive>
+                <manifestFile>${project.build.directory}/MANIFEST.MF</manifestFile>
+              </archive>            
+              <descriptors>
+                <descriptor>src/assemble/jar.xml</descriptor>
+              </descriptors>
+              <appendAssemblyId>false</appendAssemblyId>
+            </configuration>            
           </execution>
           <execution>
-            <id>unpack-sources</id>
-            <phase>prepare-package</phase>
+            <id>assemble-sources</id>
+            <phase>package</phase>
             <goals>
-              <goal>unpack-dependencies</goal>
+              <goal>single</goal>
             </goals>
             <configuration>
-              <overwrite>false</overwrite>
-              <includeGroupIds>org.terracotta.internal</includeGroupIds>
-              <classifier>sources</classifier>
-              <outputDirectory>${project.build.directory}/sources</outputDirectory>
-            </configuration>
-          </execution>
+              <descriptors>
+                <descriptor>src/assemble/sources.xml</descriptor>
+              </descriptors>
+              <appendAssemblyId>true</appendAssemblyId>
+            </configuration>            
+          </execution>          
         </executions>
-      </plugin>
-      <plugin>
-        <groupId>com.goldin.plugins</groupId>
-        <artifactId>maven-copy-plugin</artifactId>
-        <version>0.2.3</version>
-        <executions>
-          <execution>
-            <id>create-source-archive</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>copy</goal>
-            </goals>
-            <configuration>
-              <verbose>false</verbose>
-              <resource>
-                <targetPath>${project.build.directory}/${project.artifactId}-${project.version}-sources.jar</targetPath>
-                <directory>${project.build.directory}/sources</directory>
-                <pack>true</pack>
-                <attachArtifact>false</attachArtifact>
-              </resource>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>2.3.1</version>
-        <configuration>
-          <archive>
-            <manifestEntries>
-              <Class-Path>resources/</Class-Path>
-            </manifestEntries>
-            <manifest>        
-              <addClasspath>true</addClasspath>
-            </manifest>
-            <manifestFile>${project.build.directory}/MANIFEST.MF</manifestFile>
-          </archive>
-        </configuration>
-      </plugin>
+      </plugin>     
     </plugins>
   </build>
 </project>
