@@ -323,8 +323,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   public void addEventualValueToCache(Object key, Object value, ObjectID valueObjectID, MapOperationType mapOperation) {
-    ObjectID valueId = value instanceof TCObject ? valueObjectID : ObjectID.NULL_ID;
-    final LocalCacheStoreEventualValue localCacheValue = new LocalCacheStoreEventualValue(valueId, value, this.objectID);
+    final LocalCacheStoreEventualValue localCacheValue = new LocalCacheStoreEventualValue(valueObjectID, value,
+                                                                                          this.objectID);
     addToCache(key, localCacheValue, value, mapOperation);
   }
 
