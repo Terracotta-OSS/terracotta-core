@@ -145,6 +145,12 @@
     <dependency>
       <groupId>jline</groupId>
       <artifactId>jline</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>jfree</groupId>

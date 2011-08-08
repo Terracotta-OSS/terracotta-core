@@ -18,6 +18,10 @@
   <packaging>jar</packaging>
   <name>terracotta</name>
 
+  <properties>
+    <skip.testjar>true</skip.testjar>
+  </properties>
+  
   <dependencies>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
@@ -41,35 +45,6 @@
       <groupId>org.terracotta.internal</groupId>
       <artifactId>dso-statistics</artifactId>
       <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>deploy</artifactId>
-      <version>${project.version}</version>
-      <classifier>sources</classifier>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>simulator</artifactId>
-      <version>${project.version}</version>
-      <classifier>sources</classifier>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>tim-get-tool</artifactId>
-      <version>${project.version}</version>
-      <classifier>sources</classifier>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>dso-statistics</artifactId>
-      <version>${project.version}</version>
-      <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>    
   </dependencies>
@@ -97,6 +72,26 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.2</version>
+        <executions>
+          <execution>
+            <id>unpack-sources</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>unpack-dependencies</goal>
+            </goals>
+            <configuration>
+              <overwrite>false</overwrite>
+              <includeGroupIds>org.terracotta.internal</includeGroupIds>
+              <classifier>sources</classifier>
+              <outputDirectory>${project.build.directory}/sources</outputDirectory>
+            </configuration>
+          </execution>          
+        </executions>
+      </plugin>      
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
