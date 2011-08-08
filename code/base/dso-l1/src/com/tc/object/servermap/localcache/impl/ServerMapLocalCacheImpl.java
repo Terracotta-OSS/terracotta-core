@@ -40,7 +40,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                                                                                                                               .getLogger(ServerMapLocalCacheImpl.class);
   private static final long                                                         SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS = TCPropertiesImpl
                                                                                                                                               .getProperties()
-                                                                                                                                              .getLong(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
+                                                                                                                                              .getLong(
+                                                                                                                                                       TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
 
   private final static int                                                          CONCURRENCY                                           = 128;
   private static final LocalStoreKeySetFilter                                       IGNORE_ID_FILTER                                      = new IgnoreIdsFilter();
@@ -124,6 +125,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       globalLocalCacheManager.rememberMapIdForValueLockId(localCacheValue.asStrongValue().getLockId(), this.mapID);
     }
 
+    addIdToKeysMappingIfNecessary(localCacheValue, key);
+
     { // scoping 'old' variable
       final AbstractLocalCacheStoreValue old;
       if (mapOperation.isMutateOperation()) {
@@ -145,8 +148,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         entryRemovedCallback(this.removeCallback, key, old);
       }
     }
-
-    addIdToKeysMappingIfNecessary(localCacheValue, key);
 
     // register for transaction complete if mutate operation
     if (mapOperation.isMutateOperation()) {
@@ -174,7 +175,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
+  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(
+                                                                                            final Object key,
                                                                                             MapOperationType mapOperation) {
     if (!mapOperation.isMutateOperation()) {
       // no listener required for non mutate ops

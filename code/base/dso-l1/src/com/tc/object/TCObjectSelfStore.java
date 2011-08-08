@@ -25,5 +25,5 @@ public interface TCObjectSelfStore {
 
   void addTCObjectSelf(TCObjectSelf obj);
 
-  void removeTCObjectSelf(TCObjectSelf value);
+  void removeTCObjectSelfTemp(TCObjectSelf value);
 }
