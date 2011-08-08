@@ -215,210 +215,226 @@
             <groupId>com.goldin.plugins</groupId>
             <artifactId>maven-copy-plugin</artifactId>
             <version>0.2.3</version>
-            <configuration>
-              <groovyConfig>
-                <classpath>${project.basedir}/src/scripts</classpath>
-              </groovyConfig>        
-              <verbose>false</verbose>
-              <resources>
-                <!-- prepare skeleton structure of the kit -->
-                <resource>
-                  <runIf>{{ new File( project.build.directory, "${kit.name}" ).isDirectory() }}</runIf>
-                  <directory>${rootDir}</directory>
-                  <includes>
-                    <include>**/**</include>
-                  </includes>
-                  <clean>true</clean>
-                  <cleanEmptyDirectories>true</cleanEmptyDirectories>
-                </resource>            
-                <resource>
-                  <targetPath>${rootDir}</targetPath>
-                  <directory>${basedir}/src/packaging/opensource</directory>
-                  <preservePath>true</preservePath>
-                </resource>
-                <resource>
-                  <runIf>{{ "${kit.edition}" == "enterprise" }}</runIf>
-                  <targetPath>${rootDir}</targetPath>
-                  <directory>${basedir}/src/packaging/enterprise</directory>
-                  <preservePath>true</preservePath>
-                </resource>
-
-                <!-- schema -->
-                <resource>
-                  <runIf>{{ new File('target/schema').exists() }}</runIf>
-                  <targetPath>${rootDir}/config-samples/schema</targetPath>
-                  <directory>${basedir}/target/schema</directory>
-                  <preservePath>true</preservePath>
-                  <failIfNotFound>false</failIfNotFound>
-                </resource>            
-                <resource>
-                  <runIf>{{ new File('target/schema').exists() }}</runIf>
-                  <targetPath>${rootDir}/config-samples/schema</targetPath>
-                  <file>${basedir}/../tcconfig/src/main/xsd/terracotta-${schema.version}.xsd</file>
-                  <failIfNotFound>false</failIfNotFound>
-                </resource>            
-                
-                <!-- populate lib folder -->
-                <resource>
-                  <targetPath>${rootDir}/lib</targetPath>
-                  <dependency>
-                    <excludeScope>provided</excludeScope>
-                    <excludeArtifactIds>${terracotta.artifactId},build-data,thirdparty-api,dso-cluster-api,stax-api,native-tool,ant,mockito-all,ant-launcher,junit,linked-child-process
-                    </excludeArtifactIds>
-                  </dependency>
-                  <dependenciesAtM2>true</dependenciesAtM2>
-                </resource>
-                
-                <!-- remove build-data.txt from terracotta jar -->
-                <resource>
-                  <targetPath>${rootDir}/lib</targetPath>
-                  <dependency>
-                    <groupId>org.terracotta</groupId>
-                    <artifactId>${terracotta.artifactId}</artifactId>
-                  </dependency>
-                  <process>{{ ('zip -d ' + files.first() + ' build-data.txt').execute().text }}</process>
-                </resource>
-                
-                <!-- build data -->
-                <resource>
-                  <targetPath>${rootDir}/lib/resources</targetPath>
-                  <dependency>
-                    <groupId>org.terracotta.internal</groupId>
-                    <artifactId>build-data</artifactId>
-                  </dependency>
-                  <zipEntries>
-                    <zipEntry>build-data.txt</zipEntry>
-                    <zipEntry>tim-get.properties</zipEntry>
-                  </zipEntries>
-                  <unpack>true</unpack>              
-                </resource>
-                
-                <!-- tookit -->
-                <resource>
-                  <targetPath>${rootDir}/common</targetPath>
-                  <dependency>
-                    <groupId>org.terracotta</groupId>
-                    <artifactId>${toolkit.artifactId}</artifactId>
-                  </dependency>            
-                </resource>
-                <resource>
-                  <targetPath>${rootDir}/common/docs/javadoc</targetPath>
-                  <dependency>
-                    <groupId>org.terracotta</groupId>
-                    <artifactId>${toolkit.artifactId}</artifactId>
-                    <classifier>javadoc</classifier>
-                  </dependency>
-                  <unpack>true</unpack>
-                </resource>            
-                
-                <!-- ehcache-core -->
-                <resource>
-                  <targetPath>${rootDir}</targetPath>
-                  <dependency>
-                    <groupId>net.sf.ehcache</groupId>
-                    <artifactId>${ehcache-core.artifactId}</artifactId>
-                    <classifier>distribution</classifier>
-                    <type>tar.gz</type>
-                  </dependency>
-                  <dependenciesAtM2>true</dependenciesAtM2>
-                  <unpack>true</unpack>
-                  <process>Util.processEhcacheDistribution(project)</process>              
-                </resource>
-                <resource>
-                  <directory>${rootDir}/ehcache</directory>
-                  <include>**/SLF4J-LICENSE.txt,**/TERRACOTTA-TRIAL-LICENSE.txt,**/SUBSCRIPTION-AGREEMENT.pdf</include>
-                  <clean>true</clean>
-                </resource>
-                <resource>
-                  <targetPath>${rootDir}/ehcache</targetPath>
-                  <file>${ehcache-core.readme.url}</file>
-                </resource>
-                <resource>
-                  <targetPath>${rootDir}/ehcache</targetPath>
-                  <file>${ehcache-core.quickstart.url}</file>
-                </resource>
-                <resource>
-                  <targetPath>${rootDir}/ehcache</targetPath>
-                  <file>${ehcache-core.tcschema.url}</file>
-                  <destFileName>ehcache.xml</destFileName>
-                </resource>
-                <resource>
-                  <targetPath>${rootDir}/ehcache/licenses</targetPath>
-                  <file>${ehcache-core.tclicense.url}</file>
-                </resource>            
-                
-                <!-- ehcache terracotta -->
-                <resource>
-                  <targetPath>${rootDir}/ehcache/lib</targetPath>
-                  <dependencies>
-                    <dependency>
-                      <groupId>net.sf.ehcache</groupId>
-                      <artifactId>${ehcache-terracotta.artifactId}</artifactId>
-                    </dependency>
-                  </dependencies>
-                </resource>
-                
-                <!-- ehcache samples-->
-                <resource>
-                  <targetPath>${rootDir}/ehcache/samples</targetPath>
-                  <dependencies>
-                    <dependency>
-                      <groupId>org.terracotta.samples.ehcache</groupId>
-                      <artifactId>colorcache</artifactId>
-                      <classifier>distribution</classifier>
-                      <type>tar.gz</type>
-                    </dependency>
-                    <dependency>
-                      <groupId>org.terracotta.samples.ehcache.hibernate</groupId>
-                      <artifactId>events</artifactId>
-                      <classifier>distribution</classifier>
-                      <type>tar.gz</type>
-                    </dependency>
-                  </dependencies>
-                  <unpack>true</unpack>
-                </resource>             
-                
-                <!-- session express -->
-                <resource>
-                  <targetPath>${rootDir}/sessions</targetPath>
-                  <dependency>
-                    <groupId>org.terracotta.session</groupId>
-                    <artifactId>terracotta-session</artifactId>
-                  </dependency>
-                </resource>
-                
-                <!-- quartz -->
-                <resource>
-                  <targetPath>${rootDir}</targetPath>
-                  <file>${quartz-kit.url}</file>
-                  <unpack>true</unpack>
-                  <process>Util.processQuartzDistribution(project)</process>
-                </resource>
-                <resource>
-                  <targetPath>${rootDir}/quartz</targetPath>
-                  <dependency>
-                    <groupId>org.terracotta.quartz</groupId>
-                    <artifactId>${quartz-terracotta.artifactId}</artifactId>
-                  </dependency>
-                </resource>
-                
-                <!-- package tar.gz kit -->
-                <resource>
-                  <runIf>{{ "${packaging}" == "tarball" }}</runIf>
-                  <targetPath>${rootDir}.tar.gz</targetPath>
-                  <directory>${project.build.directory}</directory>
-                  <include>${kit.name}/**</include>
-                  <pack>true</pack>
-                </resource>
-              </resources>
-            </configuration>
             <executions>
+              <execution>
+                <id>preparing-terracotta-kit</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy</goal>
+                </goals>
+                <configuration>
+                  <groovyConfig>
+                    <classpath>${project.basedir}/src/scripts</classpath>
+                  </groovyConfig>        
+                  <verbose>false</verbose>
+                  <resources>
+                    <!-- prepare skeleton structure of the kit -->
+                    <resource>
+                      <runIf>{{ new File( project.build.directory, "${kit.name}" ).isDirectory() }}</runIf>
+                      <directory>${rootDir}</directory>
+                      <includes>
+                        <include>**/**</include>
+                      </includes>
+                      <clean>true</clean>
+                      <cleanEmptyDirectories>true</cleanEmptyDirectories>
+                    </resource>            
+                    <resource>
+                      <targetPath>${rootDir}</targetPath>
+                      <directory>${basedir}/src/packaging/opensource</directory>
+                      <preservePath>true</preservePath>
+                    </resource>
+                    <resource>
+                      <runIf>{{ "${kit.edition}" == "enterprise" }}</runIf>
+                      <targetPath>${rootDir}</targetPath>
+                      <directory>${basedir}/src/packaging/enterprise</directory>
+                      <preservePath>true</preservePath>
+                    </resource>
+
+                    <!-- schema -->
+                    <resource>
+                      <runIf>{{ new File('target/schema').exists() }}</runIf>
+                      <targetPath>${rootDir}/config-samples/schema</targetPath>
+                      <directory>${basedir}/target/schema</directory>
+                      <preservePath>true</preservePath>
+                      <failIfNotFound>false</failIfNotFound>
+                    </resource>            
+                    <resource>
+                      <runIf>{{ new File('target/schema').exists() }}</runIf>
+                      <targetPath>${rootDir}/config-samples/schema</targetPath>
+                      <file>${basedir}/../tcconfig/src/main/xsd/terracotta-${schema.version}.xsd</file>
+                      <failIfNotFound>false</failIfNotFound>
+                    </resource>            
+                    
+                    <!-- populate lib folder -->
+                    <resource>
+                      <targetPath>${rootDir}/lib</targetPath>
+                      <dependency>
+                        <excludeScope>provided</excludeScope>
+                        <excludeArtifactIds>${terracotta.artifactId},build-data,thirdparty-api,dso-cluster-api,stax-api,native-tool,ant,mockito-all,ant-launcher,junit,linked-child-process
+                        </excludeArtifactIds>
+                      </dependency>
+                      <dependenciesAtM2>true</dependenciesAtM2>
+                    </resource>
+                    
+                    <!-- remove build-data.txt from terracotta jar -->
+                    <resource>
+                      <targetPath>${rootDir}/lib</targetPath>
+                      <dependency>
+                        <groupId>org.terracotta</groupId>
+                        <artifactId>${terracotta.artifactId}</artifactId>
+                      </dependency>
+                      <process>{{ ('zip -d ' + files.first() + ' build-data.txt').execute().text }}</process>
+                    </resource>
+                    
+                    <!-- build data -->
+                    <resource>
+                      <targetPath>${rootDir}/lib/resources</targetPath>
+                      <dependency>
+                        <groupId>org.terracotta.internal</groupId>
+                        <artifactId>build-data</artifactId>
+                      </dependency>
+                      <zipEntries>
+                        <zipEntry>build-data.txt</zipEntry>
+                        <zipEntry>tim-get.properties</zipEntry>
+                      </zipEntries>
+                      <unpack>true</unpack>              
+                    </resource>
+                    
+                    <!-- tookit -->
+                    <resource>
+                      <targetPath>${rootDir}/common</targetPath>
+                      <dependency>
+                        <groupId>org.terracotta</groupId>
+                        <artifactId>${toolkit.artifactId}</artifactId>
+                      </dependency>            
+                    </resource>
+                    <resource>
+                      <targetPath>${rootDir}/common/docs/javadoc</targetPath>
+                      <dependency>
+                        <groupId>org.terracotta</groupId>
+                        <artifactId>${toolkit.artifactId}</artifactId>
+                        <classifier>javadoc</classifier>
+                      </dependency>
+                      <unpack>true</unpack>
+                    </resource>            
+                    
+                    <!-- ehcache-core -->
+                    <resource>
+                      <targetPath>${rootDir}</targetPath>
+                      <dependency>
+                        <groupId>net.sf.ehcache</groupId>
+                        <artifactId>${ehcache-core.artifactId}</artifactId>
+                        <classifier>distribution</classifier>
+                        <type>tar.gz</type>
+                      </dependency>
+                      <dependenciesAtM2>true</dependenciesAtM2>
+                      <unpack>true</unpack>
+                      <process>Util.processEhcacheDistribution(project)</process>              
+                    </resource>
+                    <resource>
+                      <directory>${rootDir}/ehcache</directory>
+                      <include>**/SLF4J-LICENSE.txt,**/TERRACOTTA-TRIAL-LICENSE.txt,**/SUBSCRIPTION-AGREEMENT.pdf</include>
+                      <clean>true</clean>
+                    </resource>
+                    <resource>
+                      <targetPath>${rootDir}/ehcache</targetPath>
+                      <file>${ehcache-core.readme.url}</file>
+                    </resource>
+                    <resource>
+                      <targetPath>${rootDir}/ehcache</targetPath>
+                      <file>${ehcache-core.quickstart.url}</file>
+                    </resource>
+                    <resource>
+                      <targetPath>${rootDir}/ehcache</targetPath>
+                      <file>${ehcache-core.tcschema.url}</file>
+                      <destFileName>ehcache.xml</destFileName>
+                    </resource>
+                    <resource>
+                      <targetPath>${rootDir}/ehcache/licenses</targetPath>
+                      <file>${ehcache-core.tclicense.url}</file>
+                    </resource>            
+                    
+                    <!-- ehcache terracotta -->
+                    <resource>
+                      <targetPath>${rootDir}/ehcache/lib</targetPath>
+                      <dependencies>
+                        <dependency>
+                          <groupId>net.sf.ehcache</groupId>
+                          <artifactId>${ehcache-terracotta.artifactId}</artifactId>
+                        </dependency>
+                      </dependencies>
+                    </resource>
+                    
+                    <!-- ehcache samples-->
+                    <resource>
+                      <targetPath>${rootDir}/ehcache/samples</targetPath>
+                      <dependencies>
+                        <dependency>
+                          <groupId>org.terracotta.samples.ehcache</groupId>
+                          <artifactId>colorcache</artifactId>
+                          <classifier>distribution</classifier>
+                          <type>tar.gz</type>
+                        </dependency>
+                        <dependency>
+                          <groupId>org.terracotta.samples.ehcache.hibernate</groupId>
+                          <artifactId>events</artifactId>
+                          <classifier>distribution</classifier>
+                          <type>tar.gz</type>
+                        </dependency>
+                      </dependencies>
+                      <unpack>true</unpack>
+                    </resource>             
+                    
+                    <!-- session express -->
+                    <resource>
+                      <targetPath>${rootDir}/sessions</targetPath>
+                      <dependency>
+                        <groupId>org.terracotta.session</groupId>
+                        <artifactId>terracotta-session</artifactId>
+                      </dependency>
+                    </resource>
+                    
+                    <!-- quartz -->
+                    <resource>
+                      <targetPath>${rootDir}</targetPath>
+                      <file>${quartz-kit.url}</file>
+                      <unpack>true</unpack>
+                      <process>Util.processQuartzDistribution(project)</process>
+                    </resource>
+                    <resource>
+                      <targetPath>${rootDir}/quartz</targetPath>
+                      <dependency>
+                        <groupId>org.terracotta.quartz</groupId>
+                        <artifactId>${quartz-terracotta.artifactId}</artifactId>
+                      </dependency>
+                    </resource>
+                  </resources>
+                </configuration>                
+              </execution>
+              
+              <!-- packaging phase -->
               <execution>
                 <id>packaging-terracotta-kit</id>
                 <phase>package</phase>
                 <goals>
                   <goal>copy</goal>
                 </goals>
+                <configuration>
+                  <groovyConfig>
+                    <classpath>${project.basedir}/src/scripts</classpath>
+                  </groovyConfig>        
+                  <verbose>false</verbose>  
+                  <resources>
+                    <!-- package tar.gz kit if tarball profile is on -->
+                    <resource>
+                      <runIf>{{ "${packaging}" == "tarball" }}</runIf>
+                      <targetPath>${rootDir}.tar.gz</targetPath>
+                      <directory>${project.build.directory}</directory>
+                      <include>${kit.name}/**</include>
+                      <pack>true</pack>
+                    </resource>
+                  </resources>
+                </configuration>
               </execution>
             </executions>
           </plugin>
