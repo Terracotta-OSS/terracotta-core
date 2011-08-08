@@ -229,7 +229,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   public int evictCachedEntries(int toClear) {
-    return this.localStore.evict(toClear);
+    if (this.localStore != null) { return this.localStore.evict(toClear); }
+    return 0;
   }
 
   /**
