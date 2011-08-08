@@ -400,10 +400,12 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     }
   }
 
-  public void removeTCObjectSelfTemp(TCObjectSelf objectSelf) {
+  public void removeTCObjectSelfTemp(TCObjectSelf objectSelf, boolean notifyServer) {
     if (objectSelf == null) { return; }
 
-    tcObjectSelfRemovedFromStoreCallback.removedTCObjectSelfFromStore(objectSelf);
+    if (notifyServer) {
+      tcObjectSelfRemovedFromStoreCallback.removedTCObjectSelfFromStore(objectSelf);
+    }
 
     // Tiny race left to resolve here ...
     tcObjectStoreLock.writeLock().lock();

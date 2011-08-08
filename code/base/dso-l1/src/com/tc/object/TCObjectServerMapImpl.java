@@ -336,13 +336,16 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
   private void addToCache(Object key, final AbstractLocalCacheStoreValue localCacheValue, Object value,
                           MapOperationType mapOperation) {
+    boolean notifyServerForRemove = false;
     if (value instanceof TCObjectSelf) {
       if (localCacheEnabled || mapOperation.isMutateOperation()) {
         this.tcObjectSelfStore.addTCObjectSelf(serverMapLocalStore, localCacheValue, value);
+      } else {
+        notifyServerForRemove = true;
       }
     }
     cache.addToCache(key, localCacheValue, mapOperation);
-    this.tcObjectSelfStore.removeTCObjectSelfTemp((TCObjectSelf) value);
+    this.tcObjectSelfStore.removeTCObjectSelfTemp((TCObjectSelf) value, notifyServerForRemove);
   }
 
   private Object getValueForKeyFromServer(final TCServerMap map, final Object key) {
