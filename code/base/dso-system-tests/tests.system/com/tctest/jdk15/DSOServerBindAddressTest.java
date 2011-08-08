@@ -18,6 +18,8 @@ import com.tc.object.BaseDSOTestCase;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.NullTCServerInfo;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
@@ -62,6 +64,7 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
     }
 
     public void execute() throws Throwable {
+      TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_ENABLED, "false");
       server = new DistributedObjectServer(createL2Manager(bindAddr, dsoPort, jmxPort), group,
                                            new NullConnectionPolicy(), new NullTCServerInfo(),
                                            new ObjectStatsRecorder());
