@@ -6,6 +6,8 @@ package com.tc.object.servermap.localcache.impl;
 import com.tc.async.api.Sink;
 import com.tc.exception.TCRuntimeException;
 import com.tc.invalidation.Invalidations;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
@@ -65,7 +67,8 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   private final Map<ObjectID, TCObjectSelf>                                        tcObjectSelfTempCache   = new HashMap<ObjectID, TCObjectSelf>();
   private volatile ClientLockManager                                               lockManager;
 
-  // private final Sink ttittlExpiredSink;
+  private static final TCLogger                                                    logger                  = TCLogging
+                                                                                                               .getLogger(L1ServerMapLocalCacheManagerImpl.class);
 
   public L1ServerMapLocalCacheManagerImpl(LocksRecallService locksRecallHelper, Sink capacityEvictionSink,
                                           Sink ttittlExpiredSink) {
@@ -271,7 +274,12 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
       TCObjectSelf self = tcObjectSelfTempCache.get(oid);
       if (self != null) { return self; }
 
-      if (!tcObjectSelfStoreOids.contains(oid)) { return null; }
+      if (!tcObjectSelfStoreOids.contains(oid)) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("XXX GetById failed at TCObjectSelfStoreIDs, ObjectID=" + oid);
+        }
+        return null;
+      }
 
       for (L1ServerMapLocalCacheStore store : this.stores.keySet()) {
         Object object = store.get(oid);
@@ -289,6 +297,9 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
             // all keys have been invalidated already, return null (lookup will happen)
             // we should wait until the server has been notified that the object id is not present
             waitUntilObjectIDAbsent(oid);
+            if (logger.isDebugEnabled()) {
+              logger.debug("XXX GetById failed when it got empty List, ObjectID=" + oid);
+            }
             return null;
           }
           AbstractLocalCacheStoreValue localCacheStoreValue = (AbstractLocalCacheStoreValue) store.get(list.get(0));
@@ -299,11 +310,20 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
 
           Object rv = localCacheStoreValue == null ? null : localCacheStoreValue.asEventualValue().getValue();
           initializeTCObjectSelfIfRequired(rv);
+
+          if (rv == null && logger.isDebugEnabled()) {
+            logger.debug("XXX GetById failed when localCacheStoreValue was null for eventual, ObjectID=" + oid);
+          }
+
           return rv;
         } else {
           throw new AssertionError("Unknown type mapped to oid: " + oid + ", value: " + object
                                    + ". Expected to be mapped to either of TCObjectSelfStoreValue or a List");
         }
+      }
+
+      if (logger.isDebugEnabled()) {
+        logger.debug("XXX GetById failed when it couldn't find in any stores, ObjectID=" + oid);
       }
       return null;
     } finally {
@@ -374,6 +394,9 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   public void addTCObjectSelf(TCObjectSelf tcObjectSelf) {
     tcObjectStoreLock.writeLock().lock();
     try {
+      if (logger.isDebugEnabled()) {
+        logger.debug("XXX Adding TCObjectSelf to temp cache, ObjectID=" + tcObjectSelf.getObjectID());
+      }
       this.tcObjectSelfTempCache.put(tcObjectSelf.getObjectID(), tcObjectSelf);
     } finally {
       tcObjectStoreLock.writeLock().unlock();
@@ -387,6 +410,10 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
       if (tcoself instanceof TCObject) {
         // no need of instanceof check if tcoself is declared as TCObject only... skipping for tests.. refactor later
         ObjectID oid = ((TCObject) tcoself).getObjectID();
+        if (logger.isDebugEnabled()) {
+          logger.debug("XXX Adding TCObjectSelf to Store if necessary, ObjectID=" + oid);
+        }
+
         tcObjectSelfStoreOids.add(oid);
         tcObjectSelfStoreSize.incrementAndGet();
         if (!localStoreValue.isEventualConsistentValue()) {
@@ -404,6 +431,10 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     if (objectSelf == null) { return; }
 
     if (notifyServer) {
+      if (logger.isDebugEnabled()) {
+        logger.debug("XXX Removing TCObjectSelf from temp cache, ObjectID=" + objectSelf.getObjectID());
+      }
+
       tcObjectSelfRemovedFromStoreCallback.removedTCObjectSelfFromStore(objectSelf);
     }
 
@@ -426,6 +457,11 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     tcObjectStoreLock.writeLock().lock();
     try {
       tcObjectSelfTempCache.remove(valueOid);
+
+      if (logger.isDebugEnabled()) {
+        logger.debug("XXX Removing TCObjectSelf from Store, ObjectID=" + valueOid
+                     + " , TCObjectSelfStore contains it = " + tcObjectSelfStoreOids.contains(valueOid));
+      }
 
       if (ObjectID.NULL_ID.equals(valueOid) || !tcObjectSelfStoreOids.contains(valueOid)) { return; }
 

@@ -595,6 +595,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     synchronized (this) {
       // Calling remove from within the synchronized block to make sure there are no races between the lookups and
       // remove.
+      if (logger.isDebugEnabled()) {
+        logger.debug("XXX Removing TCObjectSelf from L1 with ObjectID=" + tcoSelf.getObjectID());
+      }
+
       this.remoteObjectManager.removed(tcoSelf.getObjectID());
     }
     if (ClientObjectManagerImpl.this.runtimeLogger.getFlushDebug()) {
