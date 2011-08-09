@@ -6,7 +6,6 @@ package com.tctest;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
-import com.tc.exception.TCNonPortableObjectError;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -18,8 +17,6 @@ import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -27,8 +24,6 @@ public class DistributedMethodCallGCTest extends GCTestBase {
 
   public DistributedMethodCallGCTest() throws IOException {
     AdaptedClassDumper.INSTANCE.setRoot(new File(getTempDirectory(), "adapted"));
-    // MNK-714
-    // disableAllUntil("2010-3-19"); //extended timebomb
   }
 
   @Override
@@ -57,17 +52,8 @@ public class DistributedMethodCallGCTest extends GCTestBase {
       if (getParticipantCount() < 2) { throw new AssertionError(); }
     }
 
-    private static void debug(String msg) {
-      Date date = new Date();
-      System.out.println(":::::::: XXX " + date + " [" + date.getTime() + "] " + Thread.currentThread().getName()
-                         + ": " + msg);
-    }
-
     @Override
     protected void runTest() throws Throwable {
-
-      debug("In runTest()");
-
       DMITarget.setAppThread(Thread.currentThread());
 
       while (!shouldEnd()) {
@@ -78,21 +64,8 @@ public class DistributedMethodCallGCTest extends GCTestBase {
     private void makeDMICall() {
       DMITarget t = new DMITarget();
       synchronized (root) {
-        try {
-          root.add(t);
-        } catch (TCNonPortableObjectError npoe) {
-          debug("class: " + t.getClass().getName());
-          for (Class iface : t.getClass().getInterfaces()) {
-            debug("iface: " + iface.getName());
-          }
-          for (Field field : t.getClass().getDeclaredFields()) {
-            debug("field: " + field.getName());
-          }
-          throw npoe;
-        }
-
+        root.add(t);
         root.remove(t);
-
       }
 
       t.foo();
@@ -107,7 +80,6 @@ public class DistributedMethodCallGCTest extends GCTestBase {
     }
 
     public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-      debug("visitL1DSOConfig ENTER");
       String testClassName = App.class.getName();
       TransparencyClassSpec spec = config.getOrCreateSpec(testClassName);
       spec.addRoot("root", "root");
@@ -117,10 +89,7 @@ public class DistributedMethodCallGCTest extends GCTestBase {
       spec = config.getOrCreateSpec(DMITarget.class.getName());
       spec.addDistributedMethodCall("foo", "()V", true);
       spec.addDistributedMethodCall("foo", "(Ljava/lang/String;I)V", true);
-      // debugging for MNK-1810
-      TransparencyClassSpec requiredSpec = config.getSpec(DMITarget.class.getName());
-      debug("Got required spec: " + requiredSpec);
-      debug("visitL1DSOConfig EXIT");
+      config.getSpec(DMITarget.class.getName());
     }
 
     private static class DMITarget {
