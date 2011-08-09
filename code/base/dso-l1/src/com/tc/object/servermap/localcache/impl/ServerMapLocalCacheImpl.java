@@ -41,7 +41,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                                                                                                                               .getLong(
                                                                                                                                                        TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
 
-  private final static int                                                          CONCURRENCY                                           = 128;
+  private final static int                                                          CONCURRENCY                                           = 4;
   private static final LocalStoreKeySetFilter                                       IGNORE_ID_FILTER                                      = new IgnoreIdsFilter();
 
   private final ObjectID                                                            mapID;
