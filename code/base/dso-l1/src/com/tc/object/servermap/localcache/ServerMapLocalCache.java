@@ -117,11 +117,6 @@ public interface ServerMapLocalCache {
   Set getKeySet();
 
   /**
-   * This is called when an element has been expired.
-   */
-  void evictExpired(Object key, AbstractLocalCacheStoreValue value);
-
-  /**
    * Shutdown this local cache
    */
   void shutdown();

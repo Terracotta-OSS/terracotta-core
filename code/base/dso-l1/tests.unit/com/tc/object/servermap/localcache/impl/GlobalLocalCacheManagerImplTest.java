@@ -62,8 +62,7 @@ public class GlobalLocalCacheManagerImplTest extends TestCase {
     Mockito.when(lockRecallStage.getSink()).thenReturn(testSink);
 
     LocksRecallService locksRecallHelper = new LocksRecallServiceImpl(lockRecallHandler, lockRecallStage);
-    this.globalLocalCacheManagerImpl = new L1ServerMapLocalCacheManagerImpl(locksRecallHelper, testSink,
-                                                                            Mockito.mock(Sink.class));
+    this.globalLocalCacheManagerImpl = new L1ServerMapLocalCacheManagerImpl(locksRecallHelper, testSink);
   }
 
   public void testCapacityEviction() {
@@ -73,8 +72,7 @@ public class GlobalLocalCacheManagerImplTest extends TestCase {
     this.globalLocalCacheManagerImpl.addStoreListener(store);
 
     ObjectID mapID = new ObjectID(100);
-    this.globalLocalCacheManagerImpl.getOrCreateLocalCache(mapID, Mockito.mock(ClientObjectManager.class), null, true,
-                                                           null);
+    this.globalLocalCacheManagerImpl.getOrCreateLocalCache(mapID, Mockito.mock(ClientObjectManager.class), null, true);
 
     for (int i = 0; i < 15; i++) {
       // store.put("key" + i, new LocalCacheStoreStrongValue(new LongLockID(i), "value" + i, mapID), PutType.NORMAL);
@@ -132,7 +130,7 @@ public class GlobalLocalCacheManagerImplTest extends TestCase {
     ObjectID mapID = new ObjectID(100);
     LockID lockID = new LongLockID(100);
     ServerMapLocalCache localCache = this.globalLocalCacheManagerImpl.getOrCreateLocalCache(mapID, Mockito
-        .mock(ClientObjectManager.class), null, true, null);
+        .mock(ClientObjectManager.class), null, true);
     localCache.setupLocalStore(store);
 
     // localCache.addStrongValueToCache(lockID, "key", "value", MapOperationType.GET);
@@ -247,22 +245,17 @@ public class GlobalLocalCacheManagerImplTest extends TestCase {
 
   private static class MyHandler extends AbstractEventHandler {
 
-    private final LockRecallHandler                  lockRecallHandler;
-    private final L1ServerMapCapacityEvictionHandler l1ServerMapCapacityEvictionHandler;
+    private final LockRecallHandler lockRecallHandler;
 
     public MyHandler(LockRecallHandler lockRecallHandler,
                      L1ServerMapCapacityEvictionHandler l1ServerMapCapacityEvictionHandler) {
       this.lockRecallHandler = lockRecallHandler;
-      this.l1ServerMapCapacityEvictionHandler = l1ServerMapCapacityEvictionHandler;
-
     }
 
     @Override
     public void handleEvent(EventContext context) {
       if (context instanceof LocksToRecallContext) {
         lockRecallHandler.handleEvent(context);
-      } else if (context instanceof L1ServerMapLocalStoreEvictionInfo) {
-        l1ServerMapCapacityEvictionHandler.handleEvent(context);
       }
     }
 

@@ -14,7 +14,6 @@ import com.tc.object.TCObject;
 import com.tc.object.TCObjectSelf;
 import com.tc.object.TCObjectSelfCallback;
 import com.tc.object.TCObjectSelfStoreValue;
-import com.tc.object.TCObjectServerMap;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.LockID;
@@ -46,35 +45,33 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheManager {
 
-  private static final boolean                                                     PINNING_ENABLED         = TCPropertiesImpl
-                                                                                                               .getProperties()
-                                                                                                               .getBoolean(
-                                                                                                                           TCPropertiesConsts.L1_LOCKMANAGER_PINNING_ENABLED);
+  private static final boolean                                   PINNING_ENABLED         = TCPropertiesImpl
+                                                                                             .getProperties()
+                                                                                             .getBoolean(
+                                                                                                         TCPropertiesConsts.L1_LOCKMANAGER_PINNING_ENABLED);
 
-  private final ConcurrentHashMap<ObjectID, ServerMapLocalCache>                   localCaches             = new ConcurrentHashMap<ObjectID, ServerMapLocalCache>();
-  private final TCConcurrentMultiMap<LockID, ObjectID>                             lockIdsToCdsmIds        = new TCConcurrentMultiMap<LockID, ObjectID>();
-  private final Map<L1ServerMapLocalCacheStore, L1ServerMapLocalStoreEvictionInfo> stores                  = new IdentityHashMap<L1ServerMapLocalCacheStore, L1ServerMapLocalStoreEvictionInfo>();
-  private final GlobalL1ServerMapLocalCacheStoreListener                           localCacheStoreListener = new GlobalL1ServerMapLocalCacheStoreListener();
-  private final AtomicBoolean                                                      shutdown                = new AtomicBoolean();
-  private final LocksRecallService                                                 locksRecallHelper;
-  private final Sink                                                               capacityEvictionSink;
-  private final RemoveCallback                                                     removeCallback;
+  private final ConcurrentHashMap<ObjectID, ServerMapLocalCache> localCaches             = new ConcurrentHashMap<ObjectID, ServerMapLocalCache>();
+  private final TCConcurrentMultiMap<LockID, ObjectID>           lockIdsToCdsmIds        = new TCConcurrentMultiMap<LockID, ObjectID>();
+  private final Map<L1ServerMapLocalCacheStore, Object>          stores                  = new IdentityHashMap<L1ServerMapLocalCacheStore, Object>();
+  private final GlobalL1ServerMapLocalCacheStoreListener         localCacheStoreListener = new GlobalL1ServerMapLocalCacheStoreListener();
+  private final AtomicBoolean                                    shutdown                = new AtomicBoolean();
+  private final LocksRecallService                               locksRecallHelper;
+  private final Sink                                             capacityEvictionSink;
+  private final RemoveCallback                                   removeCallback;
 
-  private final ObjectIDSet                                                        tcObjectSelfStoreOids   = new ObjectIDSet();
-  private final ReentrantReadWriteLock                                             tcObjectStoreLock       = new ReentrantReadWriteLock();
-  private final AtomicInteger                                                      tcObjectSelfStoreSize   = new AtomicInteger();
-  private volatile TCObjectSelfCallback                                            tcObjectSelfRemovedFromStoreCallback;
-  private final Map<ObjectID, TCObjectSelf>                                        tcObjectSelfTempCache   = new HashMap<ObjectID, TCObjectSelf>();
-  private volatile ClientLockManager                                               lockManager;
+  private final ObjectIDSet                                      tcObjectSelfStoreOids   = new ObjectIDSet();
+  private final ReentrantReadWriteLock                           tcObjectStoreLock       = new ReentrantReadWriteLock();
+  private final AtomicInteger                                    tcObjectSelfStoreSize   = new AtomicInteger();
+  private volatile TCObjectSelfCallback                          tcObjectSelfRemovedFromStoreCallback;
+  private final Map<ObjectID, TCObjectSelf>                      tcObjectSelfTempCache   = new HashMap<ObjectID, TCObjectSelf>();
+  private volatile ClientLockManager                             lockManager;
 
-  private static final TCLogger                                                    logger                  = TCLogging
-                                                                                                               .getLogger(L1ServerMapLocalCacheManagerImpl.class);
+  private static final TCLogger                                  logger                  = TCLogging
+                                                                                             .getLogger(L1ServerMapLocalCacheManagerImpl.class);
 
-  public L1ServerMapLocalCacheManagerImpl(LocksRecallService locksRecallHelper, Sink capacityEvictionSink,
-                                          Sink ttittlExpiredSink) {
+  public L1ServerMapLocalCacheManagerImpl(LocksRecallService locksRecallHelper, Sink capacityEvictionSink) {
     this.locksRecallHelper = locksRecallHelper;
     this.capacityEvictionSink = capacityEvictionSink;
-    // this.ttittlExpiredSink = ttittlExpiredSink;
     removeCallback = new RemoveCallback();
   }
 
@@ -87,14 +84,14 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   }
 
   public ServerMapLocalCache getOrCreateLocalCache(ObjectID mapId, ClientObjectManager objectManager, Manager manager,
-                                                   boolean localCacheEnabled, TCObjectServerMap tcObjectServerMap) {
+                                                   boolean localCacheEnabled) {
     if (shutdown.get()) {
       throwAlreadyShutdownException();
     }
     ServerMapLocalCache serverMapLocalCache = localCaches.get(mapId);
     if (serverMapLocalCache == null) {
       serverMapLocalCache = new ServerMapLocalCacheImpl(mapId, objectManager, manager, this, localCacheEnabled,
-                                                        tcObjectServerMap, removeCallback);
+                                                        removeCallback);
       ServerMapLocalCache old = localCaches.putIfAbsent(mapId, serverMapLocalCache);
       if (old != null) {
         serverMapLocalCache = old;
@@ -112,7 +109,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     try {
       if (!stores.containsKey(store)) {
         store.addListener(localCacheStoreListener);
-        stores.put(store, new L1ServerMapLocalStoreEvictionInfo(store));
+        stores.put(store, null);
       }
     } finally {
       tcObjectStoreLock.writeLock().unlock();
@@ -217,15 +214,6 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     }
   }
 
-  // private void initiateCapacityEvictionIfRequired(L1ServerMapLocalCacheStore store) {
-  // L1ServerMapLocalStoreEvictionInfo evictionInfo = stores.get(store);
-  // if (evictionInfo == null) { throw new AssertionError(); }
-  //
-  // if (evictionInfo.attemptEvictionStart()) {
-  // capacityEvictionSink.add(evictionInfo);
-  // }
-  // }
-
   private class GlobalL1ServerMapLocalCacheStoreListener<K, V> implements L1ServerMapLocalCacheStoreListener<K, V> {
 
     public void notifyElementEvicted(K key, V value) {
@@ -243,19 +231,10 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
 
     public void notifyElementExpired(K key, V v) {
       notifyElementEvicted(key, v);
-      // AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) v;
-      // ObjectID mapID = value.getMapID();
-      // ServerMapLocalCache localCache = localCaches.get(mapID);
-      // if (localCache != null) {
-      // CachedItemExpiredContext cachedItemExpiredContext = new CachedItemExpiredContext(localCache, key, value);
-      // ttittlExpiredSink.add(cachedItemExpiredContext);
-      // } else {
-      // throwAssert("LocalCache not mapped for mapId: " + mapID);
-      // }
     }
 
     public void notifySizeChanged(L1ServerMapLocalCacheStore store) {
-      // initiateCapacityEvictionIfRequired(store);
+      //
     }
 
   }

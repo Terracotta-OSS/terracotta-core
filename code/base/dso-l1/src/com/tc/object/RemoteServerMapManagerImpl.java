@@ -3,7 +3,6 @@
  */
 package com.tc.object;
 
-import com.tc.async.api.Sink;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.invalidation.Invalidations;
@@ -33,20 +32,22 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Map.Entry;
 
 public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
 
   // TODO::Make its own property
   private static final int                                               MAX_OUTSTANDING_REQUESTS_SENT_IMMEDIATELY = TCPropertiesImpl
                                                                                                                        .getProperties()
-                                                                                                                       .getInt(TCPropertiesConsts.L1_SERVERMAPMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY);
+                                                                                                                       .getInt(
+                                                                                                                               TCPropertiesConsts.L1_SERVERMAPMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY);
   private static final long                                              BATCH_LOOKUP_TIME_PERIOD                  = TCPropertiesImpl
                                                                                                                        .getProperties()
-                                                                                                                       .getInt(TCPropertiesConsts.L1_SERVERMAPMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD);
+                                                                                                                       .getInt(
+                                                                                                                               TCPropertiesConsts.L1_SERVERMAPMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD);
 
   private static final String                                            SIZE_KEY                                  = "SIZE_KEY";
   private static final String                                            ALL_KEYS                                  = "ALL-KEYS";
@@ -73,7 +74,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
 
   public RemoteServerMapManagerImpl(final GroupID groupID, final TCLogger logger,
                                     final ServerMapMessageFactory smmFactory, final SessionManager sessionManager,
-                                    final Sink ttiTTLEvitionSink, L1ServerMapLocalCacheManager globalLocalCacheManager) {
+                                    L1ServerMapLocalCacheManager globalLocalCacheManager) {
     this.groupID = groupID;
     this.logger = logger;
     this.smmFactory = smmFactory;
@@ -89,8 +90,8 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     assertSameGroupID(oid);
     waitUntilRunning();
 
-    final AbstractServerMapRequestContext context = createLookupValueRequestContext(oid,
-                                                                                    Collections.singleton(portableKey));
+    final AbstractServerMapRequestContext context = createLookupValueRequestContext(oid, Collections
+        .singleton(portableKey));
     context.makeLookupRequest();
     sendRequest(context);
     Map<Object, Object> result = waitForResult(context);
@@ -262,8 +263,8 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   }
 
   private void sendRequestNow(final AbstractServerMapRequestContext context) {
-    final ServerMapRequestMessage msg = this.smmFactory.newServerMapRequestMessage(this.groupID,
-                                                                                   context.getRequestType());
+    final ServerMapRequestMessage msg = this.smmFactory.newServerMapRequestMessage(this.groupID, context
+        .getRequestType());
     context.initializeMessage(msg);
     msg.send();
   }

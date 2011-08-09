@@ -78,7 +78,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     locksRecallHelper = testLocksRecallHelper;
     maxInMemory = maxElementsInMemory;
     sink = new MySink();
-    globalLocalCacheManager = new L1ServerMapLocalCacheManagerImpl(locksRecallHelper, sink, Mockito.mock(Sink.class));
+    globalLocalCacheManager = new L1ServerMapLocalCacheManagerImpl(locksRecallHelper, sink);
     sink.setGlobalLocalCacheManager(globalLocalCacheManager);
     locksRecallHelper.setGlobalLocalCacheManager(globalLocalCacheManager);
     final ClientTransaction clientTransaction = new MyClientTransaction(latch1, latch2);
@@ -86,7 +86,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     ClientTransactionManager ctm = Mockito.mock(ClientTransactionManager.class);
     Mockito.when(com.getTransactionManager()).thenReturn(ctm);
     Mockito.when(ctm.getCurrentTransaction()).thenReturn(clientTransaction);
-    cache = (ServerMapLocalCacheImpl) globalLocalCacheManager.getOrCreateLocalCache(mapID, com, null, true, null);
+    cache = (ServerMapLocalCacheImpl) globalLocalCacheManager.getOrCreateLocalCache(mapID, com, null, true);
     localCacheStore = new L1ServerMapLocalCacheStoreHashMap(maxElementsInMemory);
     cache.setupLocalStore(localCacheStore);
     cacheIDStore = cache.getL1ServerMapLocalCacheStore();

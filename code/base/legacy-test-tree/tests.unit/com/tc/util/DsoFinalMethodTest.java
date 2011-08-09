@@ -53,7 +53,7 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
     final TCObject tcObject = new MockTCObject(objectID, this.rootObject);
     final TestObjectFactory objectFactory = new TestObjectFactory();
     final TCObjectSelfStore tcObjectSelfStore = new L1ServerMapLocalCacheManagerImpl(new TestLocksRecallService(),
-                                                                                     new MockSink(), new MockSink());
+                                                                                     new MockSink());
     objectFactory.peerObject = this.rootObject;
     objectFactory.tcObject = tcObject;
     this.objectManager = new MockClientObjectManagerImpl(new MockRemoteObjectManagerImpl(), configHelper(),

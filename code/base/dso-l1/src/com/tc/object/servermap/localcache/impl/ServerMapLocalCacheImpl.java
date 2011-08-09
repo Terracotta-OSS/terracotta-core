@@ -8,9 +8,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
-import com.tc.object.TCObjectServerMap;
 import com.tc.object.bytecode.Manager;
-import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.locks.LockID;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
@@ -40,7 +38,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                                                                                                                               .getLogger(ServerMapLocalCacheImpl.class);
   private static final long                                                         SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS = TCPropertiesImpl
                                                                                                                                               .getProperties()
-                                                                                                                                              .getLong(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
+                                                                                                                                              .getLong(
+                                                                                                                                                       TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
 
   private final static int                                                          CONCURRENCY                                           = 128;
   private static final LocalStoreKeySetFilter                                       IGNORE_ID_FILTER                                      = new IgnoreIdsFilter();
@@ -52,7 +51,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   private final ClientObjectManager                                                 objectManager;
   private final Manager                                                             manager;
   private final ReentrantReadWriteLock[]                                            segmentLocks                                          = new ReentrantReadWriteLock[CONCURRENCY];
-  private final TCObjectServerMap                                                   tcObjectServerMap;
   private final ServerMapLocalCacheRemoveCallback                                   removeCallback;
 
   /**
@@ -60,13 +58,12 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
    */
   ServerMapLocalCacheImpl(ObjectID mapID, ClientObjectManager objectManager, Manager manager,
                           L1ServerMapLocalCacheManager globalLocalCacheManager, boolean islocalCacheEnbaled,
-                          TCObjectServerMap tcObjectServerMap, ServerMapLocalCacheRemoveCallback removeCallback) {
+                          ServerMapLocalCacheRemoveCallback removeCallback) {
     this.mapID = mapID;
     this.objectManager = objectManager;
     this.manager = manager;
     this.globalLocalCacheManager = globalLocalCacheManager;
     this.localCacheEnabled = islocalCacheEnbaled;
-    this.tcObjectServerMap = tcObjectServerMap;
     this.removeCallback = removeCallback;
     for (int i = 0; i < segmentLocks.length; i++) {
       this.segmentLocks[i] = new ReentrantReadWriteLock();
@@ -174,7 +171,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
+  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(
+                                                                                            final Object key,
                                                                                             MapOperationType mapOperation) {
     if (!mapOperation.isMutateOperation()) {
       // no listener required for non mutate ops
@@ -361,15 +359,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   private void initiateInlineLockRecall(Set<LockID> ids) {
     globalLocalCacheManager.recallLocksInline(ids);
-  }
-
-  public void evictExpired(Object key, AbstractLocalCacheStoreValue value) {
-    final TCServerMap serverMap = (TCServerMap) tcObjectServerMap.getPeerObject();
-
-    if (serverMap != null && localStore.get(key) == null) {
-      // TODO: NEED TO IMPLEMENT
-      // serverMap.evictExpired(key, value.getValue());
-    }
   }
 
   /**
