@@ -14,8 +14,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class Invalidations implements TCSerializable {
   private final Map<ObjectID, ObjectIDSet> invalidationsPerCdsm;
@@ -119,13 +119,7 @@ public class Invalidations implements TCSerializable {
         .hasNext();) {
       Entry<ObjectID, ObjectIDSet> entry = mapIterator.next();
       ObjectIDSet existingOids = entry.getValue();
-
-      for (Iterator<ObjectID> oidSetIterator = existingOids.iterator(); oidSetIterator.hasNext();) {
-        ObjectID oid = oidSetIterator.next();
-        if (!validEntries.contains(oid)) {
-          oidSetIterator.remove();
-        }
-      }
+      existingOids.removeAll(validEntries);
 
       if (existingOids.size() == 0) {
         mapIterator.remove();
