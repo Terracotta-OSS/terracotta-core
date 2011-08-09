@@ -4,6 +4,7 @@
  */
 package com.tc.util;
 
+import com.tc.async.impl.MockSink;
 import com.tc.exception.ImplementMe;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
 import com.tc.object.BaseDSOTestCase;
@@ -17,6 +18,7 @@ import com.tc.object.RemoteObjectManager;
 import com.tc.object.TCClassFactory;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectFactory;
+import com.tc.object.TCObjectSelfStore;
 import com.tc.object.TestClassFactory;
 import com.tc.object.TestObjectFactory;
 import com.tc.object.TestRemoteObjectManager;
@@ -25,8 +27,10 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.idprovider.api.ObjectIDProvider;
 import com.tc.object.idprovider.impl.ObjectIDProviderImpl;
 import com.tc.object.loaders.ClassProvider;
+import com.tc.object.locks.TestLocksRecallService;
 import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.logging.RuntimeLogger;
+import com.tc.object.servermap.localcache.impl.L1ServerMapLocalCacheManagerImpl;
 import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.MockTransactionManager;
 import com.tc.util.sequence.SimpleSequence;
@@ -48,13 +52,16 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
     final ObjectID objectID = new ObjectID(1);
     final TCObject tcObject = new MockTCObject(objectID, this.rootObject);
     final TestObjectFactory objectFactory = new TestObjectFactory();
+    final TCObjectSelfStore tcObjectSelfStore = new L1ServerMapLocalCacheManagerImpl(new TestLocksRecallService(),
+                                                                                     new MockSink(), new MockSink());
     objectFactory.peerObject = this.rootObject;
     objectFactory.tcObject = tcObject;
     this.objectManager = new MockClientObjectManagerImpl(new MockRemoteObjectManagerImpl(), configHelper(),
                                                          new ObjectIDProviderImpl(new SimpleSequence()),
                                                          new NullRuntimeLogger(),
                                                          new ClientIDProviderImpl(new TestChannelIDProvider()),
-                                                         new MockClassProvider(), new TestClassFactory(), objectFactory);
+                                                         new MockClassProvider(), new TestClassFactory(),
+                                                         objectFactory, tcObjectSelfStore);
 
     this.objectManager.setTransactionManager(new MockTransactionManagerImpl());
   }
@@ -91,9 +98,10 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
                                        final DSOClientConfigHelper clientConfiguration,
                                        final ObjectIDProvider idProvider, final RuntimeLogger runtimeLogger,
                                        final ClientIDProvider provider, final ClassProvider classProvider,
-                                       final TCClassFactory classFactory, final TCObjectFactory objectFactory) {
+                                       final TCClassFactory classFactory, final TCObjectFactory objectFactory,
+                                       final TCObjectSelfStore tcObjectSelfStore) {
       super(remoteObjectManager, clientConfiguration, idProvider, runtimeLogger, provider, classProvider, classFactory,
-            objectFactory, new TestPortability(), null, null, null);
+            objectFactory, new TestPortability(), null, null, tcObjectSelfStore);
     }
 
     @Override
