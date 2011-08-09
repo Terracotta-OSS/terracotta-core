@@ -22,6 +22,7 @@
   <name>dso-alt-boot-jar-tests</name>
 
   <properties>
+    <group>dso2</group>
     <skip.deploy>true</skip.deploy>
     <tc.tests.info.bootjars.normal>${project.build.directory}/dso-boot.jar</tc.tests.info.bootjars.normal>
   </properties>

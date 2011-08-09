@@ -24,6 +24,7 @@
 
   <properties>  
     <skip.deploy>true</skip.deploy>
+    <tc.bootclasspath>-Xbootclasspath/p:${tc.tests.info.bootjars.normal}</tc.bootclasspath>
   </properties>
   
   <dependencies>

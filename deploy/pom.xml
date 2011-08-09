@@ -24,7 +24,16 @@
   <properties>  
     <skip.deploy>true</skip.deploy>
   </properties>
-
+  
+  <profiles>
+    <profile>
+      <id>unit-tests</id>
+      <properties>
+        <should-run-test>true</should-run-test>
+      </properties>
+    </profile>
+  </profiles>
+    
   <dependencies>
     <dependency>
       <groupId>org.terracotta.internal</groupId>

@@ -22,9 +22,20 @@
   <name>legacy-test-tree</name>
   
   <properties>  
+    <group>dso2</group>
     <skip.deploy>true</skip.deploy>
+    <tc.bootclasspath>-Xbootclasspath/p:${tc.tests.info.bootjars.normal}</tc.bootclasspath>
   </properties>
-  
+
+  <profiles>
+    <profile>
+      <id>system-tests</id>
+      <properties>
+        <should-skip-test>false</should-skip-test>
+      </properties>
+    </profile>
+  </profiles>
+    
   <dependencies>
     <dependency>
       <groupId>org.terracotta.internal</groupId>

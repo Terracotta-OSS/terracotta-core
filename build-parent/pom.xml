@@ -23,6 +23,8 @@
   </licenses>
 
   <properties>
+    <group>unit</group>
+    
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <tim-api.version>1.3.0</tim-api.version>
     <sigar.version>1.6.4</sigar.version>
@@ -34,10 +36,11 @@
     <sleepycat.version>4.1.10</sleepycat.version>
     <linked-child-process.version>1.0.6</linked-child-process.version>
     <gmaven-plugin.version>1.3</gmaven-plugin.version>
+    <surefire.version>2.9</surefire.version>
+    <toolkit-resolver.version>1.0.6-SNAPSHOT</toolkit-resolver.version>
     <skip.deploy>false</skip.deploy>
     <skip.testjar>false</skip.testjar>
     <listName>checkshort.txt</listName>
-    <extra.jvm.args></extra.jvm.args>
     <localMavenRepository>${user.home}/.m2/repository</localMavenRepository>
 
     <tc.tests.configuration.properties.file>${project.build.testOutputDirectory}/tc.tests.properties</tc.tests.configuration.properties.file>
@@ -49,20 +52,27 @@
     <tc.tests.info.bootjars.normal>${basedir}/../target/dso-boot.jar</tc.tests.info.bootjars.normal>
     <tc.tests.info.property-files>${tc.tests.configuration.properties.file}</tc.tests.info.property-files>
     <tc.tests.info.temp-root>${project.build.directory}/temp</tc.tests.info.temp-root>
-    <tc.tests.info.data-root>${project.build.directory}/data</tc.tests.info.data-root>
     <tc.tests.info.linked-child-process-classpath>${localMavenRepository}/org/terracotta/linked-child-process/${linked-child-process.version}/linked-child-process-${linked-child-process.version}.jar</tc.tests.info.linked-child-process-classpath>
     <tc.tests.info.junit-test-timeout-inseconds>1800</tc.tests.info.junit-test-timeout-inseconds>
     <tc.tests.info.l2.startup.mode>internal</tc.tests.info.l2.startup.mode>
-    <tc.bootclasspath>-Xbootclasspath/p:${tc.tests.info.bootjars.normal}</tc.bootclasspath>
-    <surefire.argLine>-server ${tc.bootclasspath} -Xms64m -Xmx512m -XX:+HeapDumpOnOutOfMemoryError
+    <tc.bootclasspath></tc.bootclasspath>
+    <surefire.min-memory>64m</surefire.min-memory>
+    <surefire.max-memory>512m</surefire.max-memory>
+    <surefire.additional-jvm-args></surefire.additional-jvm-args>
+    <should_skip_tests>true</should_skip_tests>
+    <surefire.argLine>-server ${tc.bootclasspath}
+      -Xms${surefire.min-memory}
+      -Xmx${surefire.max-memory}
+      -XX:+HeapDumpOnOutOfMemoryError
       -DlistName=${listName}
       -Dtc.base-dir=${tc.base-dir} ${tc.config}
       -Dtc.dso.globalmode=false
       -Dtc.tests.info.property-files=${tc.tests.info.property-files}
       -Dcom.tc.l1.modules.repositories=${localMavenRepository}
       -Dcom.tc.properties=${tc.system.tests.properties}
-      -Dcom.sun.management.jmxremote ${extra.jvm.args}</surefire.argLine>
-    <skip.system.tests>true</skip.system.tests>
+      -Dtc.install-root.ignore-checks=true
+      -Dcom.sun.management.jmxremote 
+      ${surefire.additional-jvm-args}</surefire.argLine>   
   </properties>
 
   <dependencyManagement>
@@ -438,11 +448,11 @@
   <build>
     <resources>
       <resource>
-        <directory>src/main/resources</directory>
+        <directory>${basedir}/src/main/resources</directory>
         <filtering>false</filtering>
       </resource>
       <resource>
-        <directory>src/main/filtered-resources</directory>
+        <directory>${basedir}/src/main/filtered-resources</directory>
         <filtering>true</filtering>
       </resource>
     </resources>
@@ -486,35 +496,47 @@
           </executions>
         </plugin>
         <plugin>
+          <!-- we include the surefire plugin to get a known version and to always tell
+               it to skip tests. The toolkit resolver plugin is the actual thing that runs
+               tests -->
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.8</version>
+          <version>${surefire.version}</version>
           <configuration>
-            <printSummary>true</printSummary>
-            <reportFormat>plain</reportFormat>
-            <includes>
-             <include>**/*Test.java</include>
-            </includes>         
             <skipTests>true</skipTests>
-            <forkMode>always</forkMode>
-            <forkedProcessTimeoutInSeconds>${tc.tests.info.junit-test-timeout-inseconds}</forkedProcessTimeoutInSeconds>
-            <useSystemClassLoader>true</useSystemClassLoader>
-            <workingDirectory>${project.build.directory}/temp</workingDirectory>
-            <argLine>${surefire.argLine}</argLine>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.terracotta.maven.plugins</groupId>
+          <artifactId>toolkit-resolver-plugin</artifactId>
+          <version>${toolkit-resolver.version}</version>
+          <configuration>
+            <skipTests>true</skipTests>
           </configuration>
           <executions>
             <execution>
-              <id>surefire-integration-test</id>
+              <id>surefire-it</id>
               <phase>integration-test</phase>
               <goals>
-                <goal>test</goal>
+                <goal>toolkit-resolve-test</goal>
               </goals>
               <configuration>
-                <skipTests>${skip.system.tests}</skipTests>
+                <printSummary>true</printSummary>
+                <reportFormat>plain</reportFormat>
+                <includes>
+                 <include>**/*Test.java</include>
+                </includes>         
+                <skipTests>${should_skip_tests}</skipTests>
+                <forkMode>always</forkMode>
+                <forkedProcessTimeoutInSeconds>${tc.tests.info.junit-test-timeout-inseconds}</forkedProcessTimeoutInSeconds>
+                <useSystemClassLoader>true</useSystemClassLoader>
+                <workingDirectory>${project.build.directory}/temp</workingDirectory>
+                <argLine>${surefire.argLine}</argLine>
               </configuration>
             </execution>
           </executions>
-        </plugin>
+        </plugin>        
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
@@ -704,9 +726,9 @@
         </configuration>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-      </plugin>
+        <groupId>org.terracotta.maven.plugins</groupId>
+        <artifactId>toolkit-resolver-plugin</artifactId>
+      </plugin>      
       <plugin>
         <groupId>org.codehaus.gmaven</groupId>
         <artifactId>gmaven-plugin</artifactId>
@@ -726,16 +748,11 @@
         <localMavenRepository>C:\DOCUME~1\${user.name}\.m2\repository</localMavenRepository>
       </properties>
     </profile>
-    <profile>
-      <id>system-tests</id>
-      <properties>
-        <skip.system.tests>false</skip.system.tests>
-      </properties>
-    </profile>
+    
     <profile>
       <id>checkshort</id>
       <properties>
-        <skip.system.tests>false</skip.system.tests>
+        <should_skip_tests>false</should_skip_tests>
         <tc.tests.info.l2.startup.mode>external</tc.tests.info.l2.startup.mode>
       </properties>      
       <build>
@@ -751,6 +768,50 @@
         </plugins>
       </build>
     </profile>    
+
+    <profile>
+      <id>system-tests</id>
+      <properties>
+        <should_skip_tests>false</should_skip_tests>
+      </properties>
+    </profile>
+    
+    <profile>
+      <id>check</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.gmaven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+            <version>${gmaven-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>decide-which-group-should-run-tests</id>
+                <phase>process-test-resources</phase>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+                <configuration>
+                  <source>
+                    def target = project.properties['target']
+                    if (target == null) fail("-Dtarget needs to be set for this profile")
+                    def targetSet = new HashSet(Arrays.asList(target.split(",")))
+                    def projectGroups = new HashSet()
+                    if (project.properties['group'] != null) {
+                      projectGroups.addAll(Arrays.asList(project.properties['group'].split(",")))
+                    }
+                    targetSet.retainAll(projectGroups)
+                    def shouldSkipTest = targetSet.size() == 0
+                    project.properties.should_skip_tests = String.valueOf(shouldSkipTest)
+                  </source>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>         
+        </plugins>          
+      </build>
+    </profile>
+
   </profiles>
 
   <repositories>

@@ -22,8 +22,10 @@
   <name>dso-crash-tests</name>
 
   <properties>
+    <group>crash,active-active,active-passive</group>
     <tc.tests.configuration.transparent-tests.mode>crash</tc.tests.configuration.transparent-tests.mode>
     <skip.deploy>true</skip.deploy>
+    <tc.bootclasspath>-Xbootclasspath/p:${tc.tests.info.bootjars.normal}</tc.bootclasspath>
   </properties>
   
   <dependencies>
