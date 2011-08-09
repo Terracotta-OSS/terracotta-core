@@ -146,4 +146,7 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
     return 0;
   }
 
+  public void shutdown() {
+    // Nothing to do
+  }
 }

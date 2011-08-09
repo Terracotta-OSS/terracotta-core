@@ -28,8 +28,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObject, TCObjectServerMap<L> {
 
@@ -37,8 +37,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
   private static final boolean         EVICTOR_LOGGING  = TCPropertiesImpl
                                                             .getProperties()
-                                                            .getBoolean(
-                                                                        TCPropertiesConsts.EHCACHE_EVICTOR_LOGGING_ENABLED);
+                                                            .getBoolean(TCPropertiesConsts.EHCACHE_EVICTOR_LOGGING_ENABLED);
 
   private static final Object[]        NO_ARGS          = new Object[] {};
 
@@ -632,5 +631,11 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
   public long getLocalOffHeapSizeInBytes() {
     return this.cache.offHeapSizeInBytes();
+  }
+
+  public void shutdown() {
+    if (this.cache != null) {
+      this.cache.shutdown();
+    }
   }
 }
