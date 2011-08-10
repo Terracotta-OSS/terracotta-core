@@ -136,9 +136,11 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     } else if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT) {
       this.pauseSink.add(new PauseContext(false, event.getChannel().getRemoteNodeID()));
     } else if (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT) {
-      if (!isShutdown) {
-        dsoClusterEventsGun.fireOperationsDisabled();
-      }
+      // ReconnectionRejectedListenerImpl is anyway firing thisNodeLeft on Channel Close. Below one seems to be
+      // redundant.
+      // if (!isShutdown) {
+      // dsoClusterEventsGun.fireOperationsDisabled();
+      // }
     }
   }
 
