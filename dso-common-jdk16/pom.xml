@@ -23,7 +23,8 @@
   <name>dso-common-jdk16</name>
 
   <properties>  
-    <skip.deploy>true</skip.deploy>
+    <!-- this module needed to be deployed so compilation with JDK15 is possible -->
+    <skip.deploy>false</skip.deploy>
   </properties>
   
   <dependencies>
@@ -53,5 +54,21 @@
       <scope>test</scope>
     </dependency>    
   </dependencies>
- 
+  
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.3.2</version>
+        <configuration>
+          <fork>true</fork>
+          <meminitial>128</meminitial>
+          <maxmem>512</maxmem>
+          <source>1.6</source>
+          <target>1.5</target>
+        </configuration>
+      </plugin>      
+    </plugins>
+  </build> 
 </project>

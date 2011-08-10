@@ -33,7 +33,6 @@
     <module>dso-l1-api</module>
     <module>sigarstats</module>
     <module>dso-common</module>
-    <module>dso-common-jdk16</module>
     <module>management-api</module>
     <module>management</module>
     <module>dso-l2-common</module> 
@@ -59,6 +58,18 @@
   </modules>
   
   <profiles>
+    <!-- activate for modules that needs JDK16 -->
+    <profile>
+      <id>jdk16</id>
+      <activation>
+        <jdk>1.6</jdk>
+      </activation>
+      <modules>
+        <module>dso-common-jdk16</module>
+      </modules>
+    </profile>
+    
+    <!-- activate to include EE modules if it's EE branch -->
     <profile>
       <id>ee-modules</id>
       <properties>
@@ -81,6 +92,7 @@
       </modules>        
     </profile>
     
+    <!-- activate to compile xmlbeans from schema -->
     <profile>
       <id>xmlbeans</id>
       <modules>
@@ -90,8 +102,9 @@
       </modules>
     </profile>
     
+    <!-- activate to compile eclipse plugin modules -->
     <profile>
-      <id>eclipse</id>
+      <id>eclipse-plugin</id>
       <modules>
         <module>ui-eclipse</module>
       </modules>
