@@ -248,65 +248,91 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   // ----------------------------------------
 
   public Object getById(ObjectID oid) {
-    tcObjectStoreLock.readLock().lock();
-    try {
-      TCObjectSelf self = tcObjectSelfTempCache.get(oid);
-      if (self != null) { return self; }
+    return getByIdInternal(oid, 0);
+  }
 
-      if (!tcObjectSelfStoreOids.contains(oid)) {
-        if (logger.isDebugEnabled()) {
-          logger.debug("XXX GetById failed at TCObjectSelfStoreIDs, ObjectID=" + oid);
-        }
-        return null;
-      }
+  public Object getByIdInternal(ObjectID oid, int counter) {
+    while (true) {
+      Object rv = null;
+      tcObjectStoreLock.readLock().lock();
+      try {
+        TCObjectSelf self = tcObjectSelfTempCache.get(oid);
+        if (self != null) { return self; }
 
-      for (L1ServerMapLocalCacheStore store : this.stores.keySet()) {
-        Object object = store.get(oid);
-        if (object == null) {
-          continue;
+        if (!tcObjectSelfStoreOids.contains(oid)) {
+          if (logger.isDebugEnabled()) {
+            logger.debug("XXX GetById failed at TCObjectSelfStoreIDs, ObjectID=" + oid);
+          }
+          return null;
         }
-        if (object instanceof TCObjectSelfStoreValue) {
-          Object rv = ((TCObjectSelfStoreValue) object).getTCObjectSelf();
-          initializeTCObjectSelfIfRequired(rv);
-          return self;
-        } else if (object instanceof List) {
-          // for eventual value invalidation, use any of them to look up the value
-          List list = (List) object;
-          if (list.size() <= 0) {
-            // all keys have been invalidated already, return null (lookup will happen)
-            // we should wait until the server has been notified that the object id is not present
-            waitUntilObjectIDAbsent(oid);
-            if (logger.isDebugEnabled()) {
-              logger.debug("XXX GetById failed when it got empty List, ObjectID=" + oid);
+
+        for (L1ServerMapLocalCacheStore store : this.stores.keySet()) {
+          Object object = store.get(oid);
+          if (object == null) {
+            continue;
+          }
+          if (object instanceof TCObjectSelfStoreValue) {
+            rv = ((TCObjectSelfStoreValue) object).getTCObjectSelf();
+            initializeTCObjectSelfIfRequired(rv);
+            return self;
+          } else if (object instanceof List) {
+            // for eventual value invalidation, use any of them to look up the value
+            List list = (List) object;
+            if (list.size() <= 0) {
+              // all keys have been invalidated already, return null (lookup will happen)
+              // we should wait until the server has been notified that the object id is not present
+              if (logger.isDebugEnabled()) {
+                logger.debug("XXX GetById failed when it got empty List, ObjectID=" + oid);
+              }
+              break;
             }
-            return null;
+            AbstractLocalCacheStoreValue localCacheStoreValue = (AbstractLocalCacheStoreValue) store.get(list.get(0));
+
+            rv = localCacheStoreValue == null ? null : localCacheStoreValue.asEventualValue().getValue();
+            initializeTCObjectSelfIfRequired(rv);
+
+            if (rv == null && logger.isDebugEnabled()) {
+              logger.debug("XXX GetById failed when localCacheStoreValue was null for eventual, ObjectID=" + oid);
+            }
+
+            break;
+          } else {
+            throw new AssertionError("Unknown type mapped to oid: " + oid + ", value: " + object
+                                     + ". Expected to be mapped to either of TCObjectSelfStoreValue or a List");
           }
-          AbstractLocalCacheStoreValue localCacheStoreValue = (AbstractLocalCacheStoreValue) store.get(list.get(0));
-
-          if (localCacheStoreValue == null) {
-            waitUntilObjectIDAbsent(oid);
-          }
-
-          Object rv = localCacheStoreValue == null ? null : localCacheStoreValue.asEventualValue().getValue();
-          initializeTCObjectSelfIfRequired(rv);
-
-          if (rv == null && logger.isDebugEnabled()) {
-            logger.debug("XXX GetById failed when localCacheStoreValue was null for eventual, ObjectID=" + oid);
-          }
-
-          return rv;
-        } else {
-          throw new AssertionError("Unknown type mapped to oid: " + oid + ", value: " + object
-                                   + ". Expected to be mapped to either of TCObjectSelfStoreValue or a List");
         }
+
+        if (logger.isDebugEnabled()) {
+          logger.debug("XXX GetById failed when it couldn't find in any stores, ObjectID=" + oid);
+        }
+      } finally {
+        tcObjectStoreLock.readLock().unlock();
       }
 
-      if (logger.isDebugEnabled()) {
-        logger.debug("XXX GetById failed when it couldn't find in any stores, ObjectID=" + oid);
+      if (rv != null) { return rv; }
+
+      if (counter % 10 == 0 && counter > 0) {
+        logger.warn("Still waiting to get the Object from local cache, ObjectID=" + oid + " , times tried=" + counter);
       }
-      return null;
+      waitUntilNotified();
+      counter++;
+      // Retry to get the object id
+    }
+  }
+
+  private void waitUntilNotified() {
+    boolean isInterrupted = false;
+    try {
+      // since i know I am going to wait, let me wait on client lock manager instead of this condition
+      synchronized (this.tcObjectSelfRemovedFromStoreCallback) {
+        this.tcObjectSelfRemovedFromStoreCallback.wait(1000);
+      }
+    } catch (InterruptedException e) {
+      isInterrupted = true;
     } finally {
-      tcObjectStoreLock.readLock().unlock();
+      if (isInterrupted) {
+        Thread.currentThread().interrupt();
+      }
     }
   }
 
@@ -315,31 +341,6 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
       TCObjectSelf self = (TCObjectSelf) rv;
       tcObjectSelfRemovedFromStoreCallback.initializeTCClazzIfRequired(self);
     }
-  }
-
-  private void waitUntilObjectIDAbsent(ObjectID oid) {
-    tcObjectStoreLock.readLock().unlock();
-
-    boolean isInterrupted = false;
-    try {
-      while (tcObjectSelfStoreOids.contains(oid)) {
-        try {
-          // since i know I am going to wait, let me wait on client lock manager instead of this condition
-          synchronized (this.tcObjectSelfRemovedFromStoreCallback) {
-            this.tcObjectSelfRemovedFromStoreCallback.wait(1000);
-          }
-        } catch (InterruptedException e) {
-          isInterrupted = true;
-        }
-      }
-
-    } finally {
-      if (isInterrupted) {
-        Thread.currentThread().interrupt();
-      }
-    }
-
-    tcObjectStoreLock.readLock().lock();
   }
 
   public Object getByIdFromStore(ObjectID oid, L1ServerMapLocalCacheStore store) {
@@ -426,6 +427,12 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     }
   }
 
+  private void signalAll() {
+    synchronized (this.tcObjectSelfRemovedFromStoreCallback) {
+      this.tcObjectSelfRemovedFromStoreCallback.notifyAll();
+    }
+  }
+
   /**
    * TODO: Re-write this method, its a mess right now
    */
@@ -467,7 +474,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
 
     // TODO: remove the cast to TCObjectSelf, right now done to appease unit tests
     // to avoid deadlock, do this outside lock
-    if (removed != null && removed instanceof TCObjectSelf) {
+    if (removed instanceof TCObjectSelf) {
       this.tcObjectSelfRemovedFromStoreCallback.removedTCObjectSelfFromStore((TCObjectSelf) removed);
     }
 
@@ -494,12 +501,6 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
                                                         "With eventual, oid's should be mapped to maximum of one key, oid: "
                                                             + valueOid + ", list: " + list); }
       }
-    }
-  }
-
-  private void signalAll() {
-    synchronized (this.tcObjectSelfRemovedFromStoreCallback) {
-      this.tcObjectSelfRemovedFromStoreCallback.notifyAll();
     }
   }
 
