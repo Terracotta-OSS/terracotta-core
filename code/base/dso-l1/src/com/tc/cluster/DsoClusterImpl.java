@@ -338,12 +338,14 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   public void fireThisNodeJoined(final NodeID nodeId, final NodeID[] clusterMembers) {
     stateWriteLock.lock();
     try {
+
       // we might get multiple calls in a row, ignore all but the first one
-      if (currentNode != null) return;
+      if (currentNode != null) { return; }
 
       currentClientID = (ClientID) nodeId;
       currentNode = topology.registerThisDsoNode(nodeId);
       nodeStatus.nodeJoined();
+      nodeStatus.operationsEnabled();
 
       for (NodeID otherNodeId : clusterMembers) {
         if (!currentClientID.equals(otherNodeId)) {
@@ -352,12 +354,16 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
       }
     } finally {
       stateWriteLock.unlock();
+
       if (currentNode != null) {
         notifyWaiters();
+      } else {
+        fireNodeJoined(nodeId);
       }
+
+      fireOperationsEnabled();
     }
 
-    fireNodeJoined(nodeId);
   }
 
   public void fireThisNodeLeft() {

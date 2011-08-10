@@ -231,9 +231,8 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
 
     // only send out out these events when no groups are paused anymore
     if (areAllGroupsConnected()) {
+      // first node joined event will also fire ops enabled event.
       dsoClusterEventsGun.fireThisNodeJoined(thisNodeId, clusterMembers);
-      dsoClusterEventsGun.fireOperationsEnabled();
-
     }
   }
 

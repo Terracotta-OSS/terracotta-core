@@ -148,7 +148,7 @@ public class DsoClusterTest extends TestCase {
 
     // if this node is connected, adding a listener should result in an immediate callback
     cluster.addClusterListener(listener);
-    assertEquals(1, listener.getOccurredEvents().size());
+    assertEquals(2, listener.getOccurredEvents().size());
     assertEquals("ClientID[1] JOINED", listener.getOccurredEvents().get(0));
     Collection<DsoNode> nodes = cluster.getClusterTopology().getNodes();
     Iterator<DsoNode> nodesIt = nodes.iterator();
