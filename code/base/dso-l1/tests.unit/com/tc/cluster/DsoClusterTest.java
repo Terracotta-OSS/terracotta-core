@@ -165,7 +165,7 @@ public class DsoClusterTest extends TestCase {
     cluster.fireThisNodeLeft();
     listener.reset();
     cluster.fireThisNodeJoined(thisNodeId, nodeIds);
-    assertTrue(listener.getOccurredEvents().isEmpty());
+    assertTrue(listener.getOccurredEvents().size() == 1);
     assertTrue(cluster.getClusterTopology().getNodes().isEmpty());
 
     // no callback if listener is added again
@@ -189,7 +189,7 @@ public class DsoClusterTest extends TestCase {
     final ClientID otherNodeId = new ClientID(2);
     final ClientID[] otherNodeIds = new ClientID[] { otherNodeId };
     cluster.fireThisNodeJoined(otherNodeId, otherNodeIds);
-    assertTrue(listener.getOccurredEvents().isEmpty());
+    assertTrue(listener.getOccurredEvents().size() == 1);
     assertTrue(cluster.getClusterTopology().getNodes().isEmpty());
 
     assertEquals(thisNodeId.toString(), cluster.getCurrentNode().getId());
@@ -336,7 +336,7 @@ public class DsoClusterTest extends TestCase {
     // if this node is connected, adding a listener should result in an immediate callback
     cluster.addClusterListener(listener);
     Thread.sleep(2000);
-    assertEquals(1, listener.getOccurredEvents().size());
+    assertEquals(2, listener.getOccurredEvents().size());
     assertEquals("ClientID[1] JOINED", listener.getOccurredEvents().get(0));
 
     cluster.fireOperationsDisabled();
@@ -347,7 +347,7 @@ public class DsoClusterTest extends TestCase {
 
     System.out.println("Occured events: " + listener.getOccurredEvents());
 
-    assertEquals(4, listener.getOccurredEvents().size());
+    assertEquals(6, listener.getOccurredEvents().size());
     // all events use oob notification, assert contains instead of ordering
     assertTrue(listener.getOccurredEvents().contains("ClientID[1] JOINED"));
     assertTrue(listener.getOccurredEvents().contains("ClientID[1] ENABLED"));
