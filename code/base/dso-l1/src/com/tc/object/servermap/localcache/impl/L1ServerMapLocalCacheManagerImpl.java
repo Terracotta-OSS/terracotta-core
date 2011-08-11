@@ -274,7 +274,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
           if (object instanceof TCObjectSelfStoreValue) {
             rv = ((TCObjectSelfStoreValue) object).getTCObjectSelf();
             initializeTCObjectSelfIfRequired(rv);
-            return self;
+            return rv;
           } else if (object instanceof List) {
             // for eventual value invalidation, use any of them to look up the value
             List list = (List) object;
