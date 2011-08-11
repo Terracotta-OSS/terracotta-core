@@ -76,7 +76,7 @@ public class VerboseGCHelper {
   }
 
   private static String getTimestamp() {
-    SimpleDateFormat fmt = new SimpleDateFormat("yyyy.MM.dd_HH:mm:ss.S");
+    SimpleDateFormat fmt = new SimpleDateFormat("yyyy.MM.dd_HH.mm.ss.S");
     return fmt.format(new Date());
   }
 
