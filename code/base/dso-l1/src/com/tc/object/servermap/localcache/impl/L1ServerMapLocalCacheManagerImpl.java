@@ -380,7 +380,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     }
   }
 
-  public void addTCObjectSelf(TCObjectSelf tcObjectSelf) {
+  public void addTCObjectSelfTemp(TCObjectSelf tcObjectSelf) {
     tcObjectStoreLock.writeLock().lock();
     try {
       if (logger.isDebugEnabled()) {

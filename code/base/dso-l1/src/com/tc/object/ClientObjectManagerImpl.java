@@ -1335,7 +1335,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     public void add(final TCObject obj) {
       // Ignoring this currently as this is expected to be added in tc object self store
       if (obj instanceof TCObjectSelf) {
-        this.tcObjectSelfStore.addTCObjectSelf((TCObjectSelf) obj);
+        this.tcObjectSelfStore.addTCObjectSelfTemp((TCObjectSelf) obj);
         return;
       }
 

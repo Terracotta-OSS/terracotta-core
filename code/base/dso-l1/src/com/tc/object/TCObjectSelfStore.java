@@ -23,7 +23,7 @@ public interface TCObjectSelfStore {
 
   Object getByIdFromStore(ObjectID value, L1ServerMapLocalCacheStore store);
 
-  void addTCObjectSelf(TCObjectSelf obj);
+  void addTCObjectSelfTemp(TCObjectSelf obj);
 
   void removeTCObjectSelfTemp(TCObjectSelf value, boolean notifyServer);
 }
