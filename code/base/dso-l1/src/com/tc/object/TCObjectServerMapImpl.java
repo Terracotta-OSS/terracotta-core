@@ -331,6 +331,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
         notifyServerForRemove = true;
       }
     }
+    // TODO: the check for local cache disabled and mutate op can be done here only
     cache.addToCache(key, localCacheValue, mapOperation);
     if (value instanceof TCObjectSelf) {
       this.tcObjectSelfStore.removeTCObjectSelfTemp((TCObjectSelf) value, notifyServerForRemove);

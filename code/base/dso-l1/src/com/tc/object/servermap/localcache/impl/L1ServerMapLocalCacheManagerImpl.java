@@ -286,7 +286,16 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
               }
               break;
             }
-            AbstractLocalCacheStoreValue localCacheStoreValue = (AbstractLocalCacheStoreValue) store.get(list.get(0));
+
+            // TODO: revisit this logic
+            AbstractLocalCacheStoreValue localCacheStoreValue = null;
+            try {
+              localCacheStoreValue = (AbstractLocalCacheStoreValue) store.get(list.get(0));
+            } catch (Exception e) {
+              if (logger.isDebugEnabled()) {
+                logger.debug("XXX Got Exception while trying to do a get " + e.getMessage());
+              }
+            }
 
             rv = localCacheStoreValue == null ? null : localCacheStoreValue.asEventualValue().getValue();
             initializeTCObjectSelfIfRequired(rv);
