@@ -54,7 +54,7 @@ public class BoundedConcurrentHashMap<K, V> extends ConcurrentHashMap<K, V> {
     }
 
     @Override
-    protected void postRemove() {
+    protected void postRemove(HashEntry<X, Y> oldEntry) {
       int countBefore = this.count + 1;
       unblockIfNecessary(countBefore);
     }
