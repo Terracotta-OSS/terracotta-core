@@ -96,15 +96,25 @@ public class LockInfoThreadDumpTestApp extends AbstractTransparentApp {
       new LockInfoDeadLockAction(lock3, lock1, "DEAD_LOCK_THREAD_2").start();
     }
 
-    ThreadUtil.reallySleep(2000);
-    waitForMBeanReady(l1Info, 60);
-    String threadDump = l1Info.takeThreadDump(System.currentTimeMillis());
-    ThreadUtil.reallySleep(2000);
+    boolean lockedFound = false;
+    boolean waitingFound = false;
+    do {
+      ThreadUtil.reallySleep(5000);
+      waitForMBeanReady(l1Info, 60);
+      String threadDump = l1Info.takeThreadDump(System.currentTimeMillis());
 
-    Assert.eval("The text \"LOCKED : [\" should be present in the thread dump", threadDump.indexOf("LOCKED : [") >= 0);
+      if (!lockedFound && threadDump.indexOf("LOCKED : [") >= 0) {
+        lockedFound = true;
+      }
 
-    Assert.eval("The text \"WAITING TO LOCK: [\" should be present in the thread dump",
-                threadDump.indexOf("WAITING TO LOCK: [") >= 0);
+      if (!waitingFound && threadDump.indexOf("WAITING TO LOCK: [") >= 0) {
+        waitingFound = true;
+      }
+
+      System.err.println("XXX waiting for the needed lock state. lock found = " + lockedFound + "; waiting found = "
+                         + waitingFound);
+      l1Info = getL1InfoBean(myIndex);
+    } while (!waitingFound || !lockedFound);
 
     System.out.println("XXX DONE");
   }
