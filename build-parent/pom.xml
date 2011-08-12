@@ -750,7 +750,7 @@
     </profile>
     
     <profile>
-      <id>checkshort</id>
+      <id>check-short</id>
       <properties>
         <should_skip_tests>false</should_skip_tests>
         <tc.tests.info.l2.startup.mode>external</tc.tests.info.l2.startup.mode>
@@ -758,8 +758,8 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
+            <groupId>org.terracotta.maven.plugins</groupId>
+            <artifactId>toolkit-resolver-plugin</artifactId>
             <configuration>
               <test>CheckListTestSuite</test>
               <failIfNoTests>false</failIfNoTests>
