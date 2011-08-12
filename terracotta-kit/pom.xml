@@ -42,6 +42,7 @@
     <ehcache-core.artifactId>ehcache-core</ehcache-core.artifactId>
     <ehcache-terracotta.artifactId>ehcache-terracotta${ee.suffix}</ehcache-terracotta.artifactId>
     
+    <terracotta.license>LICENSE.txt</terracotta.license>
     <ehcache-core.readme.url>http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/README.html</ehcache-core.readme.url>
     <ehcache-core.quickstart.url>http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/QUICK-START.html</ehcache-core.quickstart.url>    
     <ehcache-core.tclicense.url>http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/EHCACHE-TERRACOTTA-LICENSE.txt</ehcache-core.tclicense.url>
@@ -179,6 +180,7 @@
         <kit.edition>enterprise</kit.edition>
         <ee.suffix>-ee</ee.suffix>
         <ehcache-core.artifactId>ehcache-core-ee-kit</ehcache-core.artifactId>
+        <terracotta.license>TERRACOTTA-TRIAL-LICENSE.txt</terracotta.license>
       </properties>
 	  </profile>
 
@@ -438,6 +440,102 @@
                 </configuration>
               </execution>
             </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>installer</id>
+      <properties>
+        <izpack.src.directory>src/packaging/izpack</izpack.src.directory>
+        <izpack.output.directory>${project.build.directory}/izpack</izpack.output.directory>
+        <izpack.install.xml>${izpack.output.directory}/install.xml</izpack.install.xml>
+        <izpack.installer.output>${project.build.directory}/${kit.name}-installer.jar</izpack.installer.output>
+        <izpack.basedir>${rootDir}</izpack.basedir>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.goldin.plugins</groupId>
+            <artifactId>maven-copy-plugin</artifactId>
+            <version>0.2.3</version>
+            <executions>
+              <execution>
+                <id>prepare-izpack-installer</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy</goal>
+                </goals>
+                <configuration>
+                  <groovyConfig>
+                    <classpath>${project.basedir}/src/scripts</classpath>
+                  </groovyConfig>        
+                  <verbose>false</verbose>  
+                  <resources>
+                    <!-- Copy and filter the IzPack shortcut files. -->
+                    <resource>
+                      <targetPath>${izpack.output.directory}</targetPath>
+                      <directory>${izpack.src.directory}</directory>
+                      <include>*.xml</include>
+                      <filtering>true</filtering>
+                      <encoding>UTF-8</encoding>
+                    </resource>
+                    <resource>
+                      <targetPath>${izpack.output.directory}</targetPath>
+                      <directory>${izpack.src.directory}/resources</directory>
+                      <include>*.*</include>
+                      <filtering>false</filtering>
+                    </resource>
+                      <resource>
+                        <targetPath>${izpack.output.directory}</targetPath>
+                        <directory>${izpack.src.directory}/resources/${kit.edition}</directory>
+                        <include>*.*</include>
+                        <filtering>false</filtering>
+                      </resource>
+                  </resources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.codehaus.gmaven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+            <version>1.3</version>
+            <executions>
+              <execution>
+                <id>generate-install-xml</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+                <configuration>
+                  <source>${izpack.src.directory}/InstallXmlBuilder.groovy</source>
+                </configuration>
+              </execution>
+              <execution>
+                <id>create-izpack-installer</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+                <configuration>
+                  <source>${project.basedir}/src/scripts/IzpackPackage.groovy</source>
+                </configuration>
+              </execution>
+            </executions>
+            <dependencies>
+              <dependency>
+                  <groupId>org.apache.ant</groupId>
+                  <artifactId>ant</artifactId>
+                  <version>1.8.2</version>
+              </dependency>
+              <dependency>
+                <groupId>org.terracotta</groupId>
+                <artifactId>izpack-standalone-compiler</artifactId>
+                <version>4.3.0</version>
+              </dependency>
+            </dependencies>
           </plugin>
         </plugins>
       </build>
