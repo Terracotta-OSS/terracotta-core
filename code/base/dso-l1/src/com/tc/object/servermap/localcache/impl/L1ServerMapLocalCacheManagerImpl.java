@@ -436,66 +436,57 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     }
   }
 
-  private void signalAll() {
-    synchronized (this.tcObjectSelfRemovedFromStoreCallback) {
-      this.tcObjectSelfRemovedFromStoreCallback.notifyAll();
-    }
-  }
-
-  /**
-   * TODO: Re-write this method, its a mess right now
-   */
   private void removeTCObjectSelfForId(ServerMapLocalCache serverMapLocalCache,
                                        AbstractLocalCacheStoreValue localStoreValue) {
-    Object removed = null;
-    ObjectID valueOid = localStoreValue.getObjectId();
-    tcObjectStoreLock.writeLock().lock();
-    try {
-      tcObjectSelfTempCache.remove(valueOid);
-
-      if (logger.isDebugEnabled()) {
-        logger.debug("XXX Removing TCObjectSelf from Store, ObjectID=" + valueOid
-                     + " , TCObjectSelfStore contains it = " + tcObjectSelfStoreOids.contains(valueOid));
-      }
-
-      if (ObjectID.NULL_ID.equals(valueOid) || !tcObjectSelfStoreOids.contains(valueOid)) { return; }
-
-      // some asertions... can be removed?
-      Object object = serverMapLocalCache.getInternalStore().get(valueOid);
-      if (localStoreValue.isEventualConsistentValue()) {
-        assertEventualIdMappingValue(valueOid, object);
-        removed = localStoreValue.asEventualValue().getValue();
-      } else {
-        if (object != null) {
-          if (!(object instanceof TCObjectSelfStoreValue)) {
-            //
-            throw new AssertionError("Object mapped by oid is not TCObjectSelfStoreValue, oid: " + valueOid
-                                     + ", value: " + object);
-          }
-          removed = serverMapLocalCache.getInternalStore().remove(valueOid, RemoveType.NO_SIZE_DECREMENT);
-          removed = ((TCObjectSelfStoreValue) removed).getTCObjectSelf();
+    synchronized (tcObjectSelfRemovedFromStoreCallback) {
+      Object removed = null;
+      ObjectID valueOid = localStoreValue.getObjectId();
+      tcObjectStoreLock.writeLock().lock();
+      try {
+        if (ObjectID.NULL_ID.equals(valueOid) || !tcObjectSelfStoreOids.contains(valueOid)) {
+          logger.info("XXX Removing TCObjectSelf from Store Failed, ObjectID=" + valueOid
+                      + " , TCObjectSelfStore contains it = " + tcObjectSelfStoreOids.contains(valueOid));
+          return;
         }
+
+        // some asertions... can be removed?
+        Object object = serverMapLocalCache.getInternalStore().get(valueOid);
+        if (localStoreValue.isEventualConsistentValue()) {
+          assertEventualIdMappingValue(valueOid, object);
+          removed = localStoreValue.asEventualValue().getValue();
+        } else {
+          if (object != null) {
+            if (!(object instanceof TCObjectSelfStoreValue)) {
+              //
+              throw new AssertionError("Object mapped by oid is not TCObjectSelfStoreValue, oid: " + valueOid
+                                       + ", value: " + object);
+            }
+            removed = serverMapLocalCache.getInternalStore().remove(valueOid, RemoveType.NO_SIZE_DECREMENT);
+            removed = ((TCObjectSelfStoreValue) removed).getTCObjectSelf();
+          }
+        }
+
+        if (logger.isDebugEnabled()) {
+          logger.debug("XXX Removing TCObjectSelf from Store, ObjectID=" + valueOid
+                       + " , TCObjectSelfStore contains it = " + tcObjectSelfStoreOids.contains(valueOid)
+                       + " removed==null " + (removed == null));
+        }
+
+        // TODO: remove the cast to TCObjectSelf, right now done to appease unit tests
+        // to avoid deadlock, do this outside lock
+        if (removed instanceof TCObjectSelf) {
+          this.tcObjectSelfRemovedFromStoreCallback.removedTCObjectSelfFromStore((TCObjectSelf) removed);
+        }
+
+        tcObjectSelfTempCache.remove(valueOid);
+        tcObjectSelfStoreOids.remove(valueOid);
+        tcObjectSelfStoreSize.decrementAndGet();
+      } finally {
+        tcObjectStoreLock.writeLock().unlock();
       }
 
-    } finally {
-      tcObjectStoreLock.writeLock().unlock();
+      this.tcObjectSelfRemovedFromStoreCallback.notifyAll();
     }
-
-    // TODO: remove the cast to TCObjectSelf, right now done to appease unit tests
-    // to avoid deadlock, do this outside lock
-    if (removed instanceof TCObjectSelf) {
-      this.tcObjectSelfRemovedFromStoreCallback.removedTCObjectSelfFromStore((TCObjectSelf) removed);
-    }
-
-    tcObjectStoreLock.writeLock().lock();
-    try {
-      tcObjectSelfStoreOids.remove(valueOid);
-      tcObjectSelfStoreSize.decrementAndGet();
-    } finally {
-      tcObjectStoreLock.writeLock().unlock();
-    }
-
-    signalAll();
   }
 
   private void assertEventualIdMappingValue(ObjectID valueOid, Object object) throws AssertionError {
