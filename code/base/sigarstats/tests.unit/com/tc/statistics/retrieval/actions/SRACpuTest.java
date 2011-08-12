@@ -6,6 +6,8 @@ package com.tc.statistics.retrieval.actions;
 
 import org.hyperic.sigar.Sigar;
 
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.retrieval.SigarUtil;
@@ -21,6 +23,7 @@ public class SRACpuTest extends TestCase {
 
   @Override
   public void setUp() {
+    TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.SIGAR_ENABLED, "true");
     sigar = SigarUtil.newSigar();
   }
 
