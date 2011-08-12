@@ -16,12 +16,15 @@ import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
 import com.tc.objectserver.storage.berkeleydb.BerkeleyDBPersistenceTransactionProvider;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +37,16 @@ public class TransactionPersistorTest extends TCTestCase {
   private EnvironmentConfig ecfg;
   private DatabaseConfig    dbcfg;
   private static int        count = 0;
+
+  public TransactionPersistorTest() {
+    super();
+    if (!TCPropertiesImpl.getProperties().getProperty(TCPropertiesConsts.L2_DB_FACTORY_NAME)
+        .endsWith("BerkeleyDBFactory")) {
+      // This test is trying some functionality that's specific to BerkeleyDB, disable if we're not
+      // running with BerkeleyDB
+      disableAllUntil(new Date(Long.MAX_VALUE));
+    }
+  }
 
   @Override
   protected void setUp() throws Exception {
@@ -70,8 +83,7 @@ public class TransactionPersistorTest extends TCTestCase {
     BerkeleyDBEnvironment env = newEnv(true);
     assertTrue(env.open());
     final BerkeleyDBPersistenceTransactionProvider persistenceTransactionProvider = new BerkeleyDBPersistenceTransactionProvider(
-                                                                                                                                 env
-                                                                                                                                     .getEnvironment());
+                                                                                                                                 env.getEnvironment());
     final TransactionPersistorImpl tpl = new TransactionPersistorImpl(env.getTransactionDatabase(),
                                                                       persistenceTransactionProvider);
     final ServerTransactionID sid = new ServerTransactionID(new ClientID(9), new TransactionID(10));
