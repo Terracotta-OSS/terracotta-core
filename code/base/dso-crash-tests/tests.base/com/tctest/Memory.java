@@ -9,16 +9,16 @@ import org.hyperic.sigar.SigarException;
 
 import com.tc.statistics.retrieval.SigarUtil;
 
-
 public class Memory {
-  
-  
+
   // This number isn't exact of course but it is appropriate for our monkey environments
   private static final long TWO_GIGABYTES = 2000000000L;
 
   public static long getCurrentMemorySize() {
     try {
-      Sigar sigar = SigarUtil.newSigar();
+      // we manually init sigar here for testing purpose
+      SigarUtil.sigarInit();
+      Sigar sigar = new Sigar();
 
       Mem mem = sigar.getMem();
 
@@ -27,7 +27,7 @@ public class Memory {
       throw new RuntimeException(se);
     }
   }
-  
+
   public static boolean isMemoryLow() {
     return getCurrentMemorySize() < TWO_GIGABYTES;
   }

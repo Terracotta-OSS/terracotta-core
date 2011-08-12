@@ -10,8 +10,6 @@ import org.hyperic.sigar.SigarException;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
@@ -37,11 +35,8 @@ public class SRANetworkActivity implements StatisticRetrievalAction {
 
   private final Sigar          sigar;
 
-  private static final boolean SIGAR_ENABLED         = TCPropertiesImpl.getProperties()
-                                                         .getBoolean(TCPropertiesConsts.SIGAR_ENABLED);
-
   public SRANetworkActivity() {
-    sigar = SIGAR_ENABLED ? SigarUtil.newSigar() : null;
+    sigar = SigarUtil.createSigarIfEnabled();
   }
 
   public StatisticData[] retrieveStatisticData() {

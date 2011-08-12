@@ -6,6 +6,10 @@ package com.tc.statistics.retrieval;
 
 import org.hyperic.sigar.Sigar;
 
+import com.tc.logging.CustomerLogging;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.net.URL;
@@ -13,22 +17,30 @@ import java.util.Properties;
 
 public class SigarUtil {
 
-  private static final String PATH_SEPARATOR        = System.getProperty("path.separator");
-  private static final String FILE_SEPARATOR        = System.getProperty("file.separator");
-  private static final String LIBRARY_PATH_PROPERTY = "org.hyperic.sigar.path";
+  private static final String     PATH_SEPARATOR        = System.getProperty("path.separator");
+  private static final String     FILE_SEPARATOR        = System.getProperty("file.separator");
+  private static final String     LIBRARY_PATH_PROPERTY = "org.hyperic.sigar.path";
+  private static final boolean    SIGAR_ENABLED         = TCPropertiesImpl.getProperties()
+                                                            .getBoolean(TCPropertiesConsts.SIGAR_ENABLED);
+  private static volatile boolean initialized;
 
-  static {
-    sigarInit();
-  }
-
-  public static Sigar newSigar() {
-    return new Sigar();
+  public static Sigar createSigarIfEnabled() {
+    if (!initialized) {
+      if (SIGAR_ENABLED) {
+        sigarInit();
+      }
+    }
+    return SIGAR_ENABLED ? new Sigar() : null;
   }
 
   /**
-   * Attempts to ensure that Sigar native libraries are in the native library path.
+   * Attempts to ensure that Sigar native libraries are in the native library path. Don't call this in production code.
+   * It's for testing purpose, use createSigarIfEnabled() instead
    */
-  static void sigarInit() {
+  public static void sigarInit() {
+    CustomerLogging.getConsoleLogger().warn("SIGAR is enabled. Its use is not recommended in production environment.");
+    initialized = true;
+
     // If it's already there, nothing to do (this would be the case with tests run from tcbuild)
     if (isSigarInLibraryPath()) return;
 

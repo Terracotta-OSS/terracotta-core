@@ -24,7 +24,7 @@ public class SRACpuTest extends TestCase {
   @Override
   public void setUp() {
     TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.SIGAR_ENABLED, "true");
-    sigar = SigarUtil.newSigar();
+    sigar = SigarUtil.createSigarIfEnabled();
   }
 
   @Override
