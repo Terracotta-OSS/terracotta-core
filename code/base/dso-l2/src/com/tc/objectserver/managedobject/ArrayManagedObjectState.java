@@ -24,7 +24,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.reflect.Array;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -184,7 +184,7 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
       limit = Math.min(limit, size);
     }
 
-    Map dataCopy = new HashMap(limit);
+    Map dataCopy = new LinkedHashMap(limit);
 
     for (int i = 0; i < limit; i++) {
       // XXX: Yuck...don't use reflection (need to separate primitive and object array state impls first through)

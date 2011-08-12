@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.mgmt;
 
@@ -33,18 +34,23 @@ public class PhysicalManagedObjectFacade extends AbstractObjectFacade implements
     this.isInner = isInner;
     this.isArray = isArray;
     this.arrayLength = arrayLength;
-    this.fieldNames = sortFieldNames((String[]) this.fields.keySet().toArray(EMPTY_STRING_ARRAY));
+
+    if (isArray) {
+      this.fieldNames = (String[]) this.fields.keySet().toArray(EMPTY_STRING_ARRAY);
+    } else {
+      this.fieldNames = sortFieldNames((String[]) this.fields.keySet().toArray(EMPTY_STRING_ARRAY));
+    }
   }
 
   private String[] sortFieldNames(String[] names) {
     List special = new ArrayList();
     List regular = new ArrayList();
 
-    for (int i = 0; i < names.length; i++) {
-      if (names[i].indexOf('$') >= 0) {
-        special.add(names[i]);
+    for (String name : names) {
+      if (name.indexOf('$') >= 0) {
+        special.add(name);
       } else {
-        regular.add(names[i]);
+        regular.add(name);
       }
     }
 
@@ -68,6 +74,7 @@ public class PhysicalManagedObjectFacade extends AbstractObjectFacade implements
     return this.fieldNames.clone();
   }
 
+  @Override
   protected Object basicGetFieldValue(String fieldName) {
     checkValidName(fieldName);
     return this.fields.get(fieldName);
