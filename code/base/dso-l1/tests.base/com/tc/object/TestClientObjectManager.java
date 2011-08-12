@@ -108,6 +108,10 @@ public class TestClientObjectManager implements ClientObjectManager {
     throw new ImplementMe();
   }
 
+  public Object lookupObjectQuiet(final ObjectID id) {
+    return lookupObject(id);
+  }
+
   public Object lookupObject(final ObjectID id) {
     return ((TCObject) this.objects.get(id)).getPeerObject();
   }

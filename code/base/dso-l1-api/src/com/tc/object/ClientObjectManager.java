@@ -104,6 +104,16 @@ public interface ClientObjectManager extends ApplicatorObjectManager, TCObjectSe
   public void preFetchObject(ObjectID id);
 
   /**
+   * Find object by ID. If necessary, the object will be faulted into the JVM. This method will not log any exceptions
+   * encountered.
+   * 
+   * @param id Identifier
+   * @return Instance for the id
+   * @throws ClassNotFoundException If class can't be found in this VM
+   */
+  public Object lookupObjectQuiet(ObjectID id) throws ClassNotFoundException;
+
+  /**
    * Find object by ID. If necessary, the object will be faulted into the JVM. The default fault-count will be used to
    * limit the number of dependent objects that are also faulted in.
    * 

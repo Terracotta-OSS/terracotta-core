@@ -75,8 +75,8 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
@@ -427,24 +427,28 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
+  public Object lookupObjectQuiet(ObjectID id) throws ClassNotFoundException {
+    return lookupObject(id, null, false, true);
+  }
+
   public Object lookupObjectNoDepth(final ObjectID id) throws ClassNotFoundException {
-    return lookupObject(id, null, true);
+    return lookupObject(id, null, true, false);
   }
 
   public Object lookupObject(final ObjectID objectID) throws ClassNotFoundException {
-    return lookupObject(objectID, null, false);
+    return lookupObject(objectID, null, false, false);
   }
 
   public Object lookupObject(final ObjectID id, final ObjectID parentContext) throws ClassNotFoundException {
-    return lookupObject(id, parentContext, false);
+    return lookupObject(id, parentContext, false, false);
   }
 
-  private Object lookupObject(final ObjectID objectID, final ObjectID parentContext, final boolean noDepth)
-      throws ClassNotFoundException {
+  private Object lookupObject(final ObjectID objectID, final ObjectID parentContext, final boolean noDepth,
+                              final boolean quiet) throws ClassNotFoundException {
     if (objectID.isNull()) { return null; }
     Object o = null;
     while (o == null) {
-      final TCObject tco = lookup(objectID, parentContext, noDepth);
+      final TCObject tco = lookup(objectID, parentContext, noDepth, quiet);
       if (tco == null) { throw new AssertionError("TCObject was null for " + objectID);// continue;
       }
 
@@ -486,10 +490,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   // Done
 
   public TCObject lookup(final ObjectID id) throws ClassNotFoundException {
-    return lookup(id, null, false);
+    return lookup(id, null, false, false);
   }
 
-  private TCObject lookup(final ObjectID id, final ObjectID parentContext, final boolean noDepth)
+  private TCObject lookup(final ObjectID id, final ObjectID parentContext, final boolean noDepth, final boolean quiet)
       throws ClassNotFoundException {
     TCObject obj = null;
     boolean retrieveNeeded = false;
@@ -570,7 +574,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
           // remove the object creating in progress from the list.
           lookupDone(id, createInProgressSet);
           this.remoteObjectManager.removed(id);
-          this.logger.warn("Exception: ", t);
+          if (!quiet) {
+            logger.warn("Exception retrieving object " + id, t);
+          }
           if (t instanceof ClassNotFoundException) { throw (ClassNotFoundException) t; }
           if (t instanceof RuntimeException) { throw (RuntimeException) t; }
           throw new RuntimeException(t);
@@ -925,7 +931,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       }
     }
 
-    return lookupObject(rootID, null, noDepth);
+    return lookupObject(rootID, null, noDepth, false);
   }
 
   private TCObject basicCreate(final Object rootPojo) {
@@ -1001,8 +1007,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
         for (final Method method : entry.getValue()) {
           try {
-            executeMethod(target, method, "postCreate method (" + method.getName() + ") failed on object of "
-                                          + target.getClass());
+            executeMethod(target, method,
+                          "postCreate method (" + method.getName() + ") failed on object of " + target.getClass());
           } catch (final Throwable t) {
             if (exception == null) {
               exception = t;
@@ -1108,8 +1114,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     TCObject obj = null;
 
     if ((obj = basicLookup(pojo)) == null) {
-      obj = this.factory.getNewInstance(nextObjectID(this.txManager.getCurrentTransaction(), pojo, gid), pojo, pojo
-          .getClass(), true);
+      obj = this.factory.getNewInstance(nextObjectID(this.txManager.getCurrentTransaction(), pojo, gid), pojo,
+                                        pojo.getClass(), true);
       this.txManager.createObject(obj);
       basicAddLocal(obj, false);
       if (this.runtimeLogger.getNewManagedObjectDebug()) {
@@ -1463,5 +1469,4 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   public void initializeTCClazzIfRequired(TCObjectSelf tcObjectSelf) {
     this.factory.initClazzIfRequired(tcObjectSelf.getClass(), tcObjectSelf);
   }
-
 }

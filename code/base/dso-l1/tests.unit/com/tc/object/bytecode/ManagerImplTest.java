@@ -229,6 +229,10 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
+    public Object lookupObjectQuiet(final ObjectID id) {
+      throw new ImplementMe();
+    }
+
     public Object lookupObject(final ObjectID id) {
       throw new ImplementMe();
     }
