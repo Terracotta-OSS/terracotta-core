@@ -657,6 +657,14 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     return this.cache.offHeapSizeInBytes();
   }
 
+  public int getLocalOnHeapSize() {
+    return this.cache.onHeapSize();
+  }
+
+  public int getLocalOffHeapSize() {
+    return this.cache.offHeapSize();
+  }
+
   public void shutdown() {
     if (this.cache != null) {
       this.cache.shutdown();

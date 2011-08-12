@@ -77,6 +77,16 @@ public interface L1ServerMapLocalCacheStore<K, V> {
   public long offHeapSizeInBytes();
 
   /**
+   * Get the number of items on the local heap
+   */
+  public int onHeapSize();
+
+  /**
+   * Get the number of items on the local offheap
+   */
+  public int offHeapSize();
+
+  /**
    * Unpin entry so that it is eligible for eviction
    */
   public void unpinEntry(K key);

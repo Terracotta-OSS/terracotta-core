@@ -149,4 +149,12 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
   public void shutdown() {
     // Nothing to do
   }
+
+  public int onHeapSize() {
+    return cacheSize.get();
+  }
+
+  public int offHeapSize() {
+    return 0;
+  }
 }
