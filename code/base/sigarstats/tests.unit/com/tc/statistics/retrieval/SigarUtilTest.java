@@ -14,7 +14,8 @@ public class SigarUtilTest extends TestCase {
   }
 
   public void testSigarMem() throws Exception {
-    Sigar sigar = SigarUtil.createSigarIfEnabled();
+    SigarUtil.sigarInit();
+    Sigar sigar = new Sigar();
     Mem mem = sigar.getMem();
     System.out.println("Total memory: " + mem.getTotal());
     assertTrue(mem.getTotal() > 0);
