@@ -1,0 +1,67 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<modules format-version='3'>
+  <module artifactId='baz' version='0.0.0' groupId='foo.bar'>
+    <tc-version>0.0.0</tc-version>
+  </module>
+  <module artifactId='baz' version='0.0.1' groupId='foo.bar'>
+    <tc-version>0.0.0</tc-version>
+    <dependencies>
+      <moduleRef artifactId='baz' version='0.0.3' groupId='foo.bar' />
+    </dependencies>
+  </module>
+  <module artifactId='baz' version='0.0.3' groupId='foo.bar'>
+    <tc-version>0.0.0</tc-version>
+    <dependencies>
+      <moduleRef artifactId='baz' version='0.0.7' groupId='foo.bar' />
+      <module  artifactId='baz' version='0.0.5' groupId='foo.bar' />
+    </dependencies>
+  </module>
+  <module artifactId='baz' version='0.0.7' groupId='foo.bar'>
+    <tc-version>0.0.0</tc-version>
+  </module>
+
+  <!--  this entry references a non-existent module on purpose -->
+  <module artifactId='baz' version='0.0.4' groupId='foo.bar'>
+    <tc-version>0.0.0</tc-version>
+    <dependencies>
+      <moduleRef artifactId='baz' version='0.0.6' groupId='foo.bar' />
+    </dependencies>
+  </module>
+
+  <module artifactId='quux' version='0.0.0' groupId='foo.bar'>
+    <tc-version>0.0.0</tc-version>
+  </module>
+  <module artifactId='quux' version='0.0.1' groupId='foo.bar'>
+    <tc-version>0.0.0</tc-version>
+    <dependencies>
+      <moduleRef artifactId='quux' version='0.0.3' groupId='foo.bar' />
+    </dependencies>
+  </module>
+  <module artifactId='quux' version='0.0.3' groupId='foo.bar'>
+    <tc-version>0.0.0</tc-version>
+    <dependencies>
+      <moduleRef artifactId='quux' version='0.0.4' groupId='foo.bar' />
+      <module  artifactId='quux' version='0.0.5' groupId='foo.bar' />
+    </dependencies>
+  </module>
+  <module artifactId='quux' version='0.0.4' groupId='foo.bar'>
+    <tc-version>0.0.0</tc-version>
+    <dependencies>
+      <moduleRef artifactId='baz' version='0.0.5' groupId='foo.bar' />
+    </dependencies>
+  </module>
+  <module artifactId='quux' version='0.0.5' groupId='foo.bar'>
+    <tc-version>0.0.0</tc-version>
+  </module>
+
+  <module artifactId='baz' version='0.0.6' groupId='foo.bar'>
+    <tc-version>0.0.1</tc-version>
+  </module>
+
+  <module artifactId='zoo' version='0.0.0' groupId='foo.bar'>
+    <tc-version>0.0.2</tc-version>
+    <installPath>foo/bar/zoo/0.0.0</installPath>
+    <filename>zoo-0.0.0.jar</filename>
+    <repoURL>http://127.0.0.1/repo/foo/bar/zoo/0.0.0/zoo-0.0.0.jar</repoURL>
+  </module>
+</modules>

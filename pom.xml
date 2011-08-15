@@ -25,9 +25,9 @@
   <modules>
     <module>build-parent</module>
     <module>build-data</module>
-    <module>thirdparty</module>
     <module>common-api</module>
     <module>common</module>
+    <module>thirdparty</module>
     <module>aspectwerkz</module>
     <module>dso-statistics-api</module>
     <module>dso-l1-api</module>
@@ -71,13 +71,13 @@
     
     <!-- activate to include EE modules if it's EE branch -->
     <profile>
-      <id>ee-modules</id>
+      <id>ee</id>
       <properties>
         <build.edition>Enterprise</build.edition>
       </properties>
       <activation>
         <file>
-          <exists>${basedir}/../terracotta-ee</exists>
+          <exists>../terracotta-ee</exists>
         </file>
       </activation>
       <modules>

@@ -1,0 +1,60 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!-- - - - - - - - - - - - - -->
+<!--  Terracotta             -->
+<!--  Intro.html             -->
+<!-- - - - - - - - - - - - - -->
+<html>
+<head>
+<title>Terracotta Developer Console</title>
+<style>
+   body { color:#666666; font-family: sans-serif; margin: 10px 10px }
+   h1 { text-align: right; margin: 0px 0px 20px 0px }
+   a { color:#8B4513; font-weight: bold; text-decoration: underline }
+   a:hover { color:red; text-decoration: none }
+   img.topic { margin-right: 0px }
+   div.main { margin: 10px 0px 0px 30px }
+   div.description { margin: 0px 0px 0px 20px }
+   div.footer { text-align: center; font-size: 95%; margin-top: 15px }
+   </style>
+</head>
+<body>
+
+<h1><img src="/com/tc/welcome/tc-logo.png"><br>Welcome to Terracotta Developer Console</h1>
+
+<p>The Terracotta Developer Console is a full-featured monitoring and diagnostics tool aimed at the development and testing phases of an application clustered with Terracotta. Use the Developer Console to isolate issues, discover tuning opportunities, observe application behavior with clustering, and learn how the cluster holds up under load and failure conditions.
+
+<p>The upper-left pane of the Developer Console contains a collapsible hierarchical navigation tree for accessing various features. Features are divided into these categories:
+<table cellpadding=10>
+   <tr>
+      <td valign=top><a href="FeaturesNode"><img border=0 src="/com/tc/admin/icons/chart_organisation.png" class=topic></a></td>
+      <td><a href="FeaturesNode">My Application</a>
+         <div class=description>
+          Provides feature-specific presentations relating to various aspects of your distributed application, including HTTP Sessions, Ehcache/Hibernate, and Quartz.
+         </div>
+      </td></tr>
+   <tr>
+      <td valign=top><a href="MonitoringNode"><img border=0 src="/com/tc/admin/icons/monitor_obj.gif" class=topic></a></td>
+      <td><a href="MonitoringNode">Monitoring</a>
+         <div class=description>
+          Contains real-time, graphical system performance metrics and distributed garbage collection events to diagnose problems and recognize and interpret trends.
+         </div>
+      </td></tr>
+   <tr>
+      <td valign=top><a href="TopologyNode"><img border=0 src="/com/tc/admin/icons/chart_organisation.png" class=topic></a></td>
+      <td><a href="TopologyNode">Topology</a>
+         <div class=description>
+          Contains detailed information about the clients and server arrays. Mirror Groups (sets of active-"hot" standby server instances) are listed under Server Arrays, while Terracotta server instances are listed under their parent mirror group.
+         </div>
+      </td></tr>
+   <tr>
+      <td valign=top><a href="PlatformNode"><img border=0 src="/com/tc/admin/icons/newex_wiz.gif" class=topic></a></td>
+      <td><a href="PlatformNode">Platform</a>
+         <div class=description>
+          Contains detailed information about the underlying <strong>Distributed Shared Objects</strong> platform, used as the basis for the Express Ehcache, Quartz, and HTTP Session clustering product suites. Browse the Clustered Heap of shared objects and access Diagnostics that can be critical to understanding the operation of your cluster.
+         </div>
+      </td></tr>
+</table>
+
+<div class=footer>Copyright &copy; Terracotta, Inc.</div>
+</body>
+</html>
