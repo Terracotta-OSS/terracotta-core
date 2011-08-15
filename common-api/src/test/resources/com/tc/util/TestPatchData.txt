@@ -1,7 +1,0 @@
-terracotta.patch.level=5
-terracotta.patch.host=thepatchhost
-terracotta.patch.user=thepatchuser
-terracotta.patch.timestamp=20080620-235959
-terracotta.patch.revision=12112
-terracotta.patch.branch=thepatchbranch
-terracotta.patch.ee.revision=9999
