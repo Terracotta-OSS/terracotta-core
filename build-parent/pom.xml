@@ -60,7 +60,8 @@
     <surefire.max-memory>512m</surefire.max-memory>
     <surefire.additional-jvm-args></surefire.additional-jvm-args>
     <should_skip_tests>true</should_skip_tests>
-    <surefire.argLine>-server ${tc.bootclasspath}
+    <surefire.jvm.mode>server</surefire.jvm.mode>
+    <surefire.argLine>${surefire.jvm.mode} ${tc.bootclasspath}
       -Xms${surefire.min-memory}
       -Xmx${surefire.max-memory}
       -XX:+HeapDumpOnOutOfMemoryError
@@ -737,6 +738,19 @@
   </build>
 
   <profiles>
+    <profile>
+      <id>client-jvm</id>
+      <properties>
+        <surefire.jvm.mode>client</surefire.jvm.mode>
+      </properties>
+    </profile>
+    <profile>
+      <id>server-jvm</id>
+      <properties>
+        <surefire.jvm.mode>server</surefire.jvm.mode>
+      </properties>
+    </profile>
+
     <profile>
       <id>workaround-windows</id>
       <activation>
