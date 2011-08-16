@@ -5,6 +5,7 @@ package com.tc.object;
 
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
+import com.tc.object.servermap.localcache.ServerMapLocalCache;
 
 import java.util.Set;
 
@@ -26,4 +27,6 @@ public interface TCObjectSelfStore {
   void addTCObjectSelfTemp(TCObjectSelf obj);
 
   void removeTCObjectSelfTemp(TCObjectSelf value, boolean notifyServer);
+
+  void removeTCObjectSelf(ServerMapLocalCache serverMapLocalCache, AbstractLocalCacheStoreValue localStoreValue);
 }
