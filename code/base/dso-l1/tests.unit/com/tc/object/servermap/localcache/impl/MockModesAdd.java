@@ -31,7 +31,8 @@ public class MockModesAdd {
   public static void addStrongValueToCache(ServerMapLocalCache cache, TCObjectSelfStore store, String key,
                                            LockID lockID, MockSerializedEntry value, ObjectID mapID,
                                            MapOperationType operationType) {
-    AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreStrongValue(lockID, value.getObjectID(), mapID);
+    Object valueToAdd = value != null ? value.getObjectID() : value;
+    AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreStrongValue(lockID, valueToAdd, mapID);
     addToCache(cache, store, key, value, operationType, localStoreValue);
   }
 
@@ -40,7 +41,8 @@ public class MockModesAdd {
   // valueOid -> List<key>
   public static void addEventualValueToCache(ServerMapLocalCache cache, TCObjectSelfStore store, String key,
                                              MockSerializedEntry value, ObjectID mapID, MapOperationType operationType) {
-    AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreEventualValue(value.getObjectID(), value, mapID);
+    ObjectID valueID = value != null ? value.getObjectID() : ObjectID.NULL_ID;
+    AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreEventualValue(valueID, value, mapID);
     addToCache(cache, store, key, value, operationType, localStoreValue);
   }
 
@@ -49,7 +51,8 @@ public class MockModesAdd {
   // oid -> value
   public static void addIncoherentValueToCache(ServerMapLocalCache cache, TCObjectSelfStore store, String key,
                                                MockSerializedEntry value, ObjectID mapID, MapOperationType operationType) {
-    AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreIncoherentValue(value.getObjectID(), mapID);
+    Object valueToAdd = value != null ? value.getObjectID() : value;
+    AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreIncoherentValue(valueToAdd, mapID);
     addToCache(cache, store, key, value, operationType, localStoreValue);
   }
 
