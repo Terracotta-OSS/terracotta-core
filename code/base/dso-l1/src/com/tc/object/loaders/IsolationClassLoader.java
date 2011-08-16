@@ -11,8 +11,8 @@ import com.tc.asm.ClassVisitor;
 import com.tc.asm.ClassWriter;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.RemoteSearchRequestManager;
-import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerImpl;
+import com.tc.object.bytecode.ManagerInternal;
 import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.bytecode.hook.impl.DSOContextImpl;
@@ -20,6 +20,7 @@ import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.locks.ClientLockManager;
 import com.tc.object.tx.ClientTransactionManager;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,6 +29,8 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * DSO Class loader for internal testing. The main purpose of this loader is to force test classes to be be defined
@@ -36,7 +39,7 @@ import java.util.Map;
 public class IsolationClassLoader extends URLClassLoader implements NamedClassLoader {
   private static final ClassLoader    SYSTEM_LOADER = ClassLoader.getSystemClassLoader();
 
-  private final Manager               manager;
+  private final ManagerInternal       manager;
   private final DSOClientConfigHelper config;
   private final Map                   onLoadErrors;
   private final Map                   adapters      = new HashMap();
@@ -57,26 +60,34 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
                                PreparedComponentsFromL2Connection connectionComponents) {
     super(getSystemURLS(), null);
     this.config = config;
-    this.manager = createManager(startClient, objectManager, txManager, lockManager, searchRequestManager, config, connectionComponents);
+    this.manager = createManager(startClient, objectManager, txManager, lockManager, searchRequestManager, config,
+                                 connectionComponents);
     this.onLoadErrors = new HashMap();
   }
 
   public void init() {
     DSOContext context = DSOContextImpl.createContext(config, manager);
-    manager.initForTests();
+    CountDownLatch latch = new CountDownLatch(1);
+    manager.initForTests(latch);
+
+    // put in sleep to help catch races if they exist
+    ThreadUtil.reallySleep(new Random().nextInt(2000));
+
     ClassProcessorHelper.setContext(this, context);
+    latch.countDown();
   }
 
   private static URL[] getSystemURLS() {
     return ((URLClassLoader) SYSTEM_LOADER).getURLs();
   }
 
-  private Manager createManager(boolean startClient, ClientObjectManager objectManager,
-                                ClientTransactionManager txManager, ClientLockManager lockManager,
-                                RemoteSearchRequestManager searchRequestManager,
-                                DSOClientConfigHelper theConfig, PreparedComponentsFromL2Connection connectionComponents) {
-    Manager rv = new ManagerImpl(startClient, objectManager, txManager, lockManager, searchRequestManager, theConfig, connectionComponents,
-                                 false, null, null, false);
+  private ManagerInternal createManager(boolean startClient, ClientObjectManager objectManager,
+                                        ClientTransactionManager txManager, ClientLockManager lockManager,
+                                        RemoteSearchRequestManager searchRequestManager,
+                                        DSOClientConfigHelper theConfig,
+                                        PreparedComponentsFromL2Connection connectionComponents) {
+    ManagerInternal rv = new ManagerImpl(startClient, objectManager, txManager, lockManager, searchRequestManager,
+                                         theConfig, connectionComponents, false, null, null, false);
     rv.registerNamedLoader(this, null);
     return rv;
   }

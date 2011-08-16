@@ -12,6 +12,7 @@ import com.tc.search.SearchQueryResults;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 
 public interface ManagerInternal extends Manager, TerracottaLockingInternal {
 
@@ -28,5 +29,7 @@ public interface ManagerInternal extends Manager, TerracottaLockingInternal {
   void fireOperatorEvent(EventType eventLevel, EventSubsystem subsystem, String eventMessage);
 
   void stopImmediate();
+
+  void initForTests(CountDownLatch latch);
 
 }

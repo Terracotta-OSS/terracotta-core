@@ -23,6 +23,7 @@ import com.tc.statistics.StatisticRetrievalAction;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 
 import javax.management.MBeanServer;
 
@@ -59,6 +60,10 @@ public class NullManagerInternal implements ManagerInternal {
 
   public void initForTests() {
     NULL_MANAGER.initForTests();
+  }
+
+  public void initForTests(CountDownLatch latch) {
+    //
   }
 
   public Notify notify(LockID lock, Object waitObject) {

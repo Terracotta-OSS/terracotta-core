@@ -175,7 +175,7 @@ public class DsoNodeGetIpAndHostNameTest extends BaseDSOTestCase {
                                             configHelper, l2Connection);
     DSOContext context = DSOContextImpl.createContext(configHelper, tcmanager);
     ClassProcessorHelper.setContext(Thread.currentThread().getContextClassLoader(), context);
-    tcmanager.initForTests();
+    tcmanager.initForTests(null);
     return tcmanager;
   }
 

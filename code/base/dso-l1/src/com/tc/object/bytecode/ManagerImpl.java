@@ -83,6 +83,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 
 import javax.management.MBeanServer;
 
@@ -185,19 +186,24 @@ public class ManagerImpl implements ManagerInternal {
   }
 
   public void init() {
-    init(false);
+    init(false, null);
   }
 
   public void initForTests() {
-    init(true);
+    // The method that takes a latch is what we should use in tests now to avoid DMI issues
+    throw new UnsupportedOperationException();
   }
 
-  private void init(final boolean forTests) {
+  public void initForTests(CountDownLatch latch) {
+    init(true, latch);
+  }
+
+  private void init(final boolean forTests, final CountDownLatch testStartLatch) {
     resolveClasses(); // call this before starting any threads (SEDA, DistributedMethod call stuff, etc)
 
     if (this.startClient) {
       if (this.clientStarted.attemptSet()) {
-        startClient(forTests);
+        startClient(forTests, testStartLatch);
       }
     }
   }
@@ -241,7 +247,7 @@ public class ManagerImpl implements ManagerInternal {
     logicalInvoke(new FakeManageableObject(), SerializationUtil.CLEAR_SIGNATURE, new Object[] {});
   }
 
-  private void startClient(final boolean forTests) {
+  private void startClient(final boolean forTests, final CountDownLatch testStartLatch) {
     final TCThreadGroup group = new TCThreadGroup(new ThrowableHandler(
                                                                        TCLogging
                                                                            .getLogger(DistributedObjectClient.class)));
@@ -259,7 +265,7 @@ public class ManagerImpl implements ManagerInternal {
         if (forTests) {
           ManagerImpl.this.dso.setCreateDedicatedMBeanServer(true);
         }
-        ManagerImpl.this.dso.start();
+        ManagerImpl.this.dso.start(testStartLatch);
         ManagerImpl.this.objectManager = ManagerImpl.this.dso.getObjectManager();
         ManagerImpl.this.txManager = ManagerImpl.this.dso.getTransactionManager();
         ManagerImpl.this.lockManager = ManagerImpl.this.dso.getLockManager();
