@@ -44,7 +44,7 @@ public class OverlappingDataDirectoryNetworkedHATest extends BaseDSOTestCase {
     System.out.println("server1 became active");
 
     // Second server when started will get fatal error "Another L2 process is using the directory"
-    server_2.start();
+    server_2.startWithoutWait();
     System.out.println("server2 started. Sleep for 30s");
     ThreadUtil.reallySleep(30000);
     System.out.println("Waitig for Server 2 to exit.");
