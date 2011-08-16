@@ -761,7 +761,7 @@
             <groupId>org.terracotta.maven.plugins</groupId>
             <artifactId>toolkit-resolver-plugin</artifactId>
             <configuration>
-              <test>CheckListTestSuite</test>
+              <__TC_listFile>${basedir}/checkshort.txt</__TC_listFile>
               <failIfNoTests>false</failIfNoTests>
             </configuration>
           </plugin>
