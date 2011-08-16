@@ -19,7 +19,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <build.edition>Opensource</build.edition>
+    <build.edition>opensource</build.edition>
   </properties>
   
   <modules>
@@ -72,14 +72,6 @@
     <!-- activate to include EE modules if it's EE branch -->
     <profile>
       <id>ee</id>
-      <properties>
-        <build.edition>Enterprise</build.edition>
-      </properties>
-      <activation>
-        <file>
-          <exists>../terracotta-ee</exists>
-        </file>
-      </activation>
       <modules>
         <module>../ent-common</module>
         <module>../ent-dso-l1</module>
