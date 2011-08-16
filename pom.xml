@@ -72,6 +72,14 @@
     <!-- activate to include EE modules if it's EE branch -->
     <profile>
       <id>ee</id>
+      <properties>
+        <build.edition>enterprise</build.edition>
+      </properties>
+      <activation>
+        <file>
+          <exists>../terracotta-ee</exists>
+        </file>
+      </activation>      
       <modules>
         <module>../ent-common</module>
         <module>../ent-dso-l1</module>
