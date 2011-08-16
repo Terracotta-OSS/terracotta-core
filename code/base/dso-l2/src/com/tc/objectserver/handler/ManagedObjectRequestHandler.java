@@ -94,8 +94,8 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
       }
     }
     long diff = repeatLookups.addAndGet(numObjectsRequested - requestedIDs.size());
-    if (diff > 0 && diff % 10000 == 0) {
-      logger.warn(" Number of repeated/wasted lookups : " + diff);
+    if (diff > 0 && diff % 100000 == 0) {
+      logger.info(" Number of repeated/wasted lookups : " + diff);
     }
 
     if (requestedIDs.size() > 0) {
