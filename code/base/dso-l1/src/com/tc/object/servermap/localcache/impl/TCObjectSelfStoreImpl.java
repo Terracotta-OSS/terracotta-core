@@ -342,4 +342,13 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
       tcObjectStoreLock.writeLock().unlock();
     }
   }
+
+  public void removeStore(L1ServerMapLocalCacheStore store) {
+    tcObjectStoreLock.writeLock().lock();
+    try {
+      stores.remove(store);
+    } finally {
+      tcObjectStoreLock.writeLock().unlock();
+    }
+  }
 }

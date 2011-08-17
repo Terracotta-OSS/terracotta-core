@@ -29,4 +29,6 @@ public interface TCObjectSelfStore {
   void removeTCObjectSelfTemp(TCObjectSelf value, boolean notifyServer);
 
   void removeTCObjectSelf(ServerMapLocalCache serverMapLocalCache, AbstractLocalCacheStoreValue localStoreValue);
+
+  void removeStore(L1ServerMapLocalCacheStore store);
 }

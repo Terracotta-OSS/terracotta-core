@@ -64,5 +64,4 @@ public interface L1ServerMapLocalCacheManager extends LocksRecallService, TCObje
   public void evictElements(Map evictedElements);
 
   public void setLockManager(ClientLockManager lockManager);
-
 }

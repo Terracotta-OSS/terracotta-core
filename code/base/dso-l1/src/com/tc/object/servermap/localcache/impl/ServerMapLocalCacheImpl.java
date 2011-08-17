@@ -71,6 +71,13 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   public void setupLocalStore(L1ServerMapLocalCacheStore store) {
+    if (this.localStore != null) {
+      // We need to trash the old localStore in the event that this cache is getting reinitialized. For example,
+      // consider if a clustered cache is in a CacheManager that is destroyed, then recreated from a the same config.
+      // The old localStore winds up lingering around in the CacheManager, but since it's already been shut down, it
+      // won't do anything. It'll just waste lookup time.
+      this.globalLocalCacheManager.removeStore(this.localStore);
+    }
     this.localStore = store;
     this.globalLocalCacheManager.addStoreListener(store);
   }
@@ -548,12 +555,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   public long offHeapSizeInBytes() {
     return this.localStore.offHeapSizeInBytes();
-  }
-
-  public void shutdown() {
-    if (this.localStore != null) {
-      this.localStore.shutdown();
-    }
   }
 
   public int onHeapSize() {

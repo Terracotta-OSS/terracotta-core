@@ -95,9 +95,4 @@ public interface L1ServerMapLocalCacheStore<K, V> {
    * Max elements in memory
    */
   public int getMaxElementsInMemory();
-
-  /**
-   * Shutdown this local cache store
-   */
-  public void shutdown();
 }
