@@ -36,7 +36,7 @@ class Util {
     }                  
     
     static void createFeatureJar(project) {
-      def rootDir = project.properties['rootDir'].replace('\\', '/')
+      def rootDir = project.properties['rootDir']
       def featureJar = "org.terracotta.dso_" + project.properties['eclipse.plugin.version']
       def destFile = rootDir + "/update/features/" + featureJar + ".jar" 
       def baseDir =  rootDir + "/update/features"
@@ -64,5 +64,17 @@ class Util {
       ant.delete(includeEmptyDirs: "true") {
         ant.fileset(dir: baseDir, excludes: pluginJar + ".jar")
       }
+    }
+    
+    static void processTerracottaJar(project, tcJar) {
+      ('zip -d ' + tcJar + ' build-data.txt').execute()
+      def rootDir = project.properties['rootDir']
+      rename(tcJar.toString(), rootDir + "/lib/tc.jar")
+    }
+    
+    static void setPermission(project) {
+      def rootDir = project.properties['rootDir']
+      ant.chmod(dir: rootDir, perm: "a+x",
+                includes: "**/*.sh **/*.bat **/*.exe **/bin/** **/lib/**")
     }
 }

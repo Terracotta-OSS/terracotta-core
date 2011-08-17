@@ -37,6 +37,7 @@
     <quartz-terracotta.version>2.1.0-SNAPSHOT</quartz-terracotta.version>
     
     <terracotta.artifactId>terracotta${ee.suffix}</terracotta.artifactId>
+    <terracotta.jarname>${terracotta.artifactId}-${project.version}.jar</terracotta.jarname>
     <toolkit.artifactId>terracotta-toolkit-${toolkit.api}-runtime${ee.suffix}</toolkit.artifactId>
     <quartz-terracotta.artifactId>quartz-terracotta${ee.suffix}</quartz-terracotta.artifactId>    
     <ehcache-core.artifactId>ehcache-core</ehcache-core.artifactId>
@@ -279,15 +280,6 @@
                       <dependenciesAtM2>true</dependenciesAtM2>
                     </resource>
                     
-                    <!-- remove build-data.txt from terracotta jar -->
-                    <resource>
-                      <targetPath>${rootDir}/lib</targetPath>
-                      <dependency>
-                        <groupId>org.terracotta</groupId>
-                        <artifactId>${terracotta.artifactId}</artifactId>
-                      </dependency>
-                      <process>{{ ('zip -d ' + files.first() + ' build-data.txt').execute().text }}</process>
-                    </resource>
                     
                     <!-- build data -->
                     <resource>
@@ -411,6 +403,20 @@
                         <artifactId>${quartz-terracotta.artifactId}</artifactId>
                       </dependency>
                     </resource>
+                    
+                    <!-- 1. remove build-data.txt from terracotta jar and rename it to tc.jar 
+                         2. set execution permissions for scripts and library files
+                    -->
+                    <resource>
+                      <targetPath>${rootDir}/lib</targetPath>
+                      <dependency>
+                        <groupId>org.terracotta</groupId>
+                        <artifactId>${terracotta.artifactId}</artifactId>
+                      </dependency>
+                      <process>Util.processTerracottaJar(project, files.first())
+                               Util.setPermission(project)
+                      </process>
+                    </resource>                    
                   </resources>
                 </configuration>                
               </execution>
