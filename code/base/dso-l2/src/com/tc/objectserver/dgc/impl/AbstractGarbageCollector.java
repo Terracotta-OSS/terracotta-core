@@ -48,6 +48,7 @@ public abstract class AbstractGarbageCollector implements GarbageCollector {
       return true;
     }
     // DGC is already running, can't be disabled
+    logger.warn("DGC can't be disabled since its current state is: " + this.state);
     return false;
   }
 
