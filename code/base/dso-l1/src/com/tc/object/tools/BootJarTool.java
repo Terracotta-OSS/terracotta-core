@@ -183,6 +183,7 @@ import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.loaders.NamedLoaderAdapter;
 import com.tc.object.loaders.Namespace;
 import com.tc.object.loaders.StandardClassLoaderAdapter;
+import com.tc.object.locks.LongLockID;
 import com.tc.object.locks.Notify;
 import com.tc.object.locks.ThreadID;
 import com.tc.object.logging.InstrumentationLogger;
@@ -643,6 +644,7 @@ public class BootJarTool {
 
       // Locking System Classes
       loadTerracottaClass(com.tc.object.locks.LockID.class.getName());
+      loadTerracottaClass(LongLockID.class.getName());
       loadTerracottaClass(com.tc.object.locks.LockID.LockIDType.class.getName());
       loadTerracottaClass(com.tc.object.locks.UnclusteredLockID.class.getName());
       loadTerracottaClass(com.tc.object.locks.LockLevel.class.getName());
