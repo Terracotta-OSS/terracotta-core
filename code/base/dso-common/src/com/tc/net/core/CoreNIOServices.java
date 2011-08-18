@@ -550,6 +550,12 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
             logger.warn("working around Sun bug 4504001");
             continue;
           }
+
+          if (NIOWorkarounds.solarisOnX86SelectWorkaround(ioe)) {
+            logger.warn("working around Solaris x86 select IOException");
+            continue;
+          }
+
           throw ioe;
         } catch (CancelledKeyException cke) {
           logger.warn("Cencelled Key " + cke);

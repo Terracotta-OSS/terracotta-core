@@ -3,6 +3,6 @@
   <info organisation="org.terracotta" module="tim-api"/>
   <dependencies defaultconf="default">
     <dependency name="knopflerfish-tc" rev="2.0.1-20100819" org="knopflerfish-tc"/>
-    <dependency name="tim-api" rev="1.3.0" org="org.terracotta.api" changing="true"/>
+    <dependency name="tim-api" rev="1.3.1-SNAPSHOT" org="org.terracotta.api" changing="true"/>
   </dependencies>
 </ivy-module>

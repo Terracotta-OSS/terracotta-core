@@ -36,7 +36,7 @@
 
   <properties>
     <tcVersion>3.6.0-SNAPSHOT</tcVersion>
-    <tim-api.version>1.3.0</tim-api.version>
+    <tim-api.version>1.3.1-SNAPSHOT</tim-api.version>
     <sigar.version>1.6.4</sigar.version>
     <jetty.version>6.1.8</jetty.version>
   </properties>
