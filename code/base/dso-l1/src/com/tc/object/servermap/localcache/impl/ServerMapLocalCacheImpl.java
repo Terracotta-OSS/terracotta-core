@@ -132,21 +132,24 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       }
 
       // TODO: if ignoring when old is not null, make sure if we have removed a pinned entry we pin it back
-      if (old != null && old.getObjectId().equals(localCacheValue.getObjectId())) { return; }
+      if (!(old != null && old.getObjectId().equals(localCacheValue.getObjectId()))) {
 
-      if (!localCacheValue.isStrongConsistentValue()) {
-        // remove id->keys mapping if not strong value. The new id can be different from the old one
-        removeIdToKeysMappingIfNecessary(old, key);
-      } else {
-        // no need to remove id->keys mapping, as same key going to be added again
-        // but need to remove the tcoSelf
-        entryRemovedCallback(this.removeCallback, key, old);
+        if (!localCacheValue.isStrongConsistentValue()) {
+          // remove id->keys mapping if not strong value. The new id can be different from the old one
+          removeIdToKeysMappingIfNecessary(old, key);
+        } else {
+          // no need to remove id->keys mapping, as same key going to be added again
+          // but need to remove the tcoSelf
+          entryRemovedCallback(this.removeCallback, key, old);
+        }
       }
     }
 
     // register for transaction complete if mutate operation
     if (mapOperation.isMutateOperation()) {
-      L1ServerMapLocalStoreTransactionCompletionListener listener = getTransactionCompleteListener(key, mapOperation);
+      L1ServerMapLocalStoreTransactionCompletionListener listener = getTransactionCompleteListener(key,
+                                                                                                   localCacheValue,
+                                                                                                   mapOperation);
       if (listener == null) { throw new AssertionError("Transaction Complete Listener cannot be null for mutate ops"); }
       registerTransactionCompleteListener(listener);
     }
@@ -171,6 +174,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
+                                                                                            AbstractLocalCacheStoreValue value,
                                                                                             MapOperationType mapOperation) {
     if (!mapOperation.isMutateOperation()) {
       // no listener required for non mutate ops
@@ -181,12 +185,14 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       // when local cache is enabled, remove the cached value if the operation is a REMOVE, otherwise just unpin
       TransactionCompleteOperation onTransactionComplete = mapOperation.isRemoveOperation() ? TransactionCompleteOperation.UNPIN_AND_REMOVE_ENTRY
           : TransactionCompleteOperation.UNPIN_ENTRY;
-      txnCompleteListener = new L1ServerMapLocalStoreTransactionCompletionListener(this, key, onTransactionComplete);
+      txnCompleteListener = new L1ServerMapLocalStoreTransactionCompletionListener(this, key, value,
+                                                                                   onTransactionComplete);
     } else {
       // when local cache is disabled, always remove the cached value on txn complete
       txnCompleteListener = new L1ServerMapLocalStoreTransactionCompletionListener(
                                                                                    this,
                                                                                    key,
+                                                                                   value,
                                                                                    TransactionCompleteOperation.UNPIN_AND_REMOVE_ENTRY);
     }
     return txnCompleteListener;
@@ -293,8 +299,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return value;
   }
 
-  public void unpinEntry(Object key) {
-    this.localStore.unpinEntry(key);
+  public void unpinEntry(Object key, AbstractLocalCacheStoreValue value) {
+    this.localStore.unpinEntry(key, value);
   }
 
   public void removeEntriesForObjectId(ObjectID objectId) {

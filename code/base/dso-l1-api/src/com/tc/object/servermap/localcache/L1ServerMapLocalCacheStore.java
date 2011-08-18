@@ -88,8 +88,10 @@ public interface L1ServerMapLocalCacheStore<K, V> {
 
   /**
    * Unpin entry so that it is eligible for eviction
+   * 
+   * @param value
    */
-  public void unpinEntry(K key);
+  public void unpinEntry(K key, V value);
 
   /**
    * Max elements in memory

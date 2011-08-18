@@ -13,8 +13,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -61,7 +61,7 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
     pinnedEntries.add(key);
   }
 
-  public synchronized void unpinEntry(K key) {
+  public synchronized void unpinEntry(K key, V value) {
     pinnedEntries.remove(key);
   }
 

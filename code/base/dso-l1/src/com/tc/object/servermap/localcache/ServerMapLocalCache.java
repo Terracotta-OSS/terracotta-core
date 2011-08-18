@@ -41,7 +41,7 @@ public interface ServerMapLocalCache {
   /**
    * Unpin entry for this object key. Becomes eligible for eviction if not before
    */
-  void unpinEntry(Object key);
+  void unpinEntry(Object key, AbstractLocalCacheStoreValue value);
 
   /**
    * Used in handshake to send a list of ObjectIDs to the server for validation
