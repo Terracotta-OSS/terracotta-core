@@ -38,8 +38,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                                                                                                                               .getLogger(ServerMapLocalCacheImpl.class);
   private static final long                                                         SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS = TCPropertiesImpl
                                                                                                                                               .getProperties()
-                                                                                                                                              .getLong(
-                                                                                                                                                       TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
+                                                                                                                                              .getLong(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
 
   private final static int                                                          CONCURRENCY                                           = 4;
   private static final LocalStoreKeySetFilter                                       IGNORE_ID_FILTER                                      = new IgnoreIdsFilter();
@@ -71,13 +70,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   public void setupLocalStore(L1ServerMapLocalCacheStore store) {
-    if (this.localStore != null) {
-      // We need to trash the old localStore in the event that this cache is getting reinitialized. For example,
-      // consider if a clustered cache is in a CacheManager that is destroyed, then recreated from a the same config.
-      // The old localStore winds up lingering around in the CacheManager, but since it's already been shut down, it
-      // won't do anything. It'll just waste lookup time.
-      this.globalLocalCacheManager.removeStore(this.localStore);
-    }
     this.localStore = store;
     this.globalLocalCacheManager.addStoreListener(store);
   }
@@ -178,8 +170,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(
-                                                                                            final Object key,
+  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
                                                                                             MapOperationType mapOperation) {
     if (!mapOperation.isMutateOperation()) {
       // no listener required for non mutate ops

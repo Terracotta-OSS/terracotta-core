@@ -209,6 +209,9 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
       //
     }
 
+    public void notifyDisposed(L1ServerMapLocalCacheStore store) {
+      removeStore(store);
+    }
   }
 
   private void throwAssert(String msg) {

@@ -153,4 +153,8 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
   public int offHeapSize() {
     return 0;
   }
+
+  public void dispose() {
+    // Nothing to dispose of
+  }
 }

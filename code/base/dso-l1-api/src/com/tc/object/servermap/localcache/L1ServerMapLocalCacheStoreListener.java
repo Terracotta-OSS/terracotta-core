@@ -32,4 +32,9 @@ public interface L1ServerMapLocalCacheStoreListener<K, V> {
    * Called whenever the store size changes
    */
   public void notifySizeChanged(L1ServerMapLocalCacheStore store);
+
+  /**
+   * Called whenever a store is diposed of
+   */
+  public void notifyDisposed(L1ServerMapLocalCacheStore store);
 }
