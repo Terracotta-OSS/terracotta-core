@@ -551,7 +551,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
             continue;
           }
 
-          if (NIOWorkarounds.solarisOnX86SelectWorkaround(ioe)) {
+          if (NIOWorkaroundsTemp.solarisOnX86SelectWorkaround(ioe)) {
             logger.warn("working around Solaris x86 select IOException");
             continue;
           }
@@ -857,6 +857,33 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
       return buf.toString();
     }
+  }
+
+  /**
+   * A temporary class. These apis are available in the latest tim-api version. Since, TC 3.6 can't use the newer
+   * tim-api version, having a copy of them here.
+   */
+  private static class NIOWorkaroundsTemp {
+    /**
+     * Workaround for select() throwing IOException("Bad file number") in Solaris running on x86 arch. Couldn't find a
+     * exact bug reported on this.
+     */
+    private static boolean solarisOnX86SelectWorkaround(IOException ioe) {
+      if (Os.isSolaris() && isArchx86()) {
+        String msg = ioe.getMessage();
+        if ((msg != null) && msg.contains("Bad file number")) { return true; }
+      }
+      return false;
+    }
+
+    private static boolean isArchx86() {
+      return getOsArch().toLowerCase().indexOf("x86") >= 0;
+    }
+
+    private static String getOsArch() {
+      return System.getProperty("os.arch", "unknown");
+    }
+
   }
 
 }
