@@ -26,8 +26,8 @@ import com.tc.util.concurrent.TCConcurrentMultiMap;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -35,7 +35,8 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
 
   private static final boolean                                   PINNING_ENABLED         = TCPropertiesImpl
                                                                                              .getProperties()
-                                                                                             .getBoolean(TCPropertiesConsts.L1_LOCKMANAGER_PINNING_ENABLED);
+                                                                                             .getBoolean(
+                                                                                                         TCPropertiesConsts.L1_LOCKMANAGER_PINNING_ENABLED);
 
   private final ConcurrentHashMap<ObjectID, ServerMapLocalCache> localCaches             = new ConcurrentHashMap<ObjectID, ServerMapLocalCache>();
   private final TCConcurrentMultiMap<LockID, ObjectID>           lockIdsToCdsmIds        = new TCConcurrentMultiMap<LockID, ObjectID>();
@@ -44,13 +45,14 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   private final LocksRecallService                               locksRecallHelper;
   private final Sink                                             capacityEvictionSink;
   private final RemoveCallback                                   removeCallback;
-  private final TCObjectSelfStoreImpl                            tcObjectSelfStore       = new TCObjectSelfStoreImpl();
+  private final TCObjectSelfStoreImpl                            tcObjectSelfStore;
   private volatile ClientLockManager                             lockManager;
 
   public L1ServerMapLocalCacheManagerImpl(LocksRecallService locksRecallHelper, Sink capacityEvictionSink) {
     this.locksRecallHelper = locksRecallHelper;
     this.capacityEvictionSink = capacityEvictionSink;
     removeCallback = new RemoveCallback();
+    tcObjectSelfStore = new TCObjectSelfStoreImpl(localCaches);
   }
 
   public void initializeTCObjectSelfStore(TCObjectSelfCallback callback) {
@@ -78,12 +80,12 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     return serverMapLocalCache;
   }
 
-  public void addStoreListener(L1ServerMapLocalCacheStore store) {
+  public void addStoreListener(L1ServerMapLocalCacheStore store, ObjectID mapID) {
     if (shutdown.get()) {
       throwAlreadyShutdownException();
     }
 
-    tcObjectSelfStore.addStoreListener(store, localCacheStoreListener);
+    tcObjectSelfStore.addStoreListener(store, localCacheStoreListener, mapID);
   }
 
   public void removeStore(L1ServerMapLocalCacheStore store) {

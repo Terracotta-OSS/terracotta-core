@@ -52,9 +52,10 @@ public interface L1ServerMapLocalCacheManager extends LocksRecallService, TCObje
   /**
    * Add a listener to the store.
    * 
+   * @param mapID
    * @param maxElementsInMemory
    */
-  public void addStoreListener(L1ServerMapLocalCacheStore store);
+  public void addStoreListener(L1ServerMapLocalCacheStore store, ObjectID mapID);
 
   /**
    * Shut down all local caches

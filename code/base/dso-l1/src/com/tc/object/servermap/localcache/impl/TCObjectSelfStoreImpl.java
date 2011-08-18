@@ -21,27 +21,29 @@ import com.tc.util.ObjectIDSet;
 
 import java.util.HashMap;
 import java.util.IdentityHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
-  private final ObjectIDSet                             tcObjectSelfStoreOids = new ObjectIDSet();
-  private final ReentrantReadWriteLock                  tcObjectStoreLock     = new ReentrantReadWriteLock();
-  private final AtomicInteger                           tcObjectSelfStoreSize = new AtomicInteger();
-  private volatile TCObjectSelfCallback                 tcObjectSelfRemovedFromStoreCallback;
-  private final Map<ObjectID, TCObjectSelf>             tcObjectSelfTempCache = new HashMap<ObjectID, TCObjectSelf>();
-  private final Map<L1ServerMapLocalCacheStore, Object> stores                = new IdentityHashMap<L1ServerMapLocalCacheStore, Object>();
-  private static final TCLogger                         logger                = TCLogging
-                                                                                  .getLogger(TCObjectSelfStoreImpl.class);
+  private final ObjectIDSet                                      tcObjectSelfStoreOids = new ObjectIDSet();
+  private final ReentrantReadWriteLock                           tcObjectStoreLock     = new ReentrantReadWriteLock();
+  private final AtomicInteger                                    tcObjectSelfStoreSize = new AtomicInteger();
+  private volatile TCObjectSelfCallback                          tcObjectSelfRemovedFromStoreCallback;
+  private final Map<ObjectID, TCObjectSelf>                      tcObjectSelfTempCache = new HashMap<ObjectID, TCObjectSelf>();
+  private final Map<L1ServerMapLocalCacheStore, ObjectID>        stores                = new IdentityHashMap<L1ServerMapLocalCacheStore, ObjectID>();
+  private final ConcurrentHashMap<ObjectID, ServerMapLocalCache> localCaches;
+  private static final TCLogger                                  logger                = TCLogging
+                                                                                           .getLogger(TCObjectSelfStoreImpl.class);
 
-  public Object getById(ObjectID oid) {
-    return getByIdInternal(oid, 0);
+  public TCObjectSelfStoreImpl(ConcurrentHashMap<ObjectID, ServerMapLocalCache> localCaches) {
+    this.localCaches = localCaches;
   }
 
-  public Object getByIdInternal(ObjectID oid, int counter) {
+  public Object getById(ObjectID oid) {
+    int counter = 0;
     while (true) {
       Object rv = null;
       tcObjectStoreLock.readLock().lock();
@@ -57,7 +59,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
         }
 
         for (L1ServerMapLocalCacheStore store : this.stores.keySet()) {
-          Object object = store.get(oid);
+          Object object = getObjectFromLocalCache(oid, store);
           if (object == null) {
             continue;
           }
@@ -65,39 +67,15 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
             rv = ((TCObjectSelfStoreValue) object).getTCObjectSelf();
             initializeTCObjectSelfIfRequired(rv);
             return rv;
-          } else if (object instanceof List) {
-            // for eventual value invalidation, use any of them to look up the value
-            List list = (List) object;
-            if (list.size() <= 0) {
-              // all keys have been invalidated already, return null (lookup will happen)
-              // we should wait until the server has been notified that the object id is not present
-              if (logger.isDebugEnabled()) {
-                logger.debug("XXX GetById failed when it got empty List, ObjectID=" + oid);
-              }
-              break;
-            }
-
-            // TODO: revisit this logic
-            AbstractLocalCacheStoreValue localCacheStoreValue = null;
-            try {
-              localCacheStoreValue = (AbstractLocalCacheStoreValue) store.get(list.get(0));
-            } catch (Exception e) {
-              if (logger.isDebugEnabled()) {
-                logger.debug("XXX Got Exception while trying to do a get " + e.getMessage());
-              }
-            }
-
+          } else {
+            AbstractLocalCacheStoreValue localCacheStoreValue = (AbstractLocalCacheStoreValue) store.get(object);
             rv = localCacheStoreValue == null ? null : localCacheStoreValue.asEventualValue().getValue();
             initializeTCObjectSelfIfRequired(rv);
 
             if (rv == null && logger.isDebugEnabled()) {
               logger.debug("XXX GetById failed when localCacheStoreValue was null for eventual, ObjectID=" + oid);
             }
-
             break;
-          } else {
-            throw new AssertionError("Unknown type mapped to oid: " + oid + ", value: " + object
-                                     + ". Expected to be mapped to either of TCObjectSelfStoreValue or a List");
           }
         }
 
@@ -117,6 +95,12 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
       counter++;
       // Retry to get the object id
     }
+  }
+
+  private Object getObjectFromLocalCache(ObjectID oid, L1ServerMapLocalCacheStore store) {
+    ServerMapLocalCache localCache = localCaches.get(stores.get(store));
+    Object object = localCache.getKeyOrValueForObjectID(oid);
+    return object;
   }
 
   private void waitUntilNotified() {
@@ -148,22 +132,16 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
       TCObjectSelf self = tcObjectSelfTempCache.get(oid);
       if (self != null) { return self; }
 
-      Object object = store.get(oid);
+      if (!tcObjectSelfStoreOids.contains(oid)) { return null; }
+
+      Object object = getObjectFromLocalCache(oid, store);
       if (object == null) { return null; }
       if (object instanceof TCObjectSelfStoreValue) {
         return ((TCObjectSelfStoreValue) object).getTCObjectSelf();
-      } else if (object instanceof List) {
-        // for eventual value invalidation, use any of them to look up the value
-        List list = (List) object;
-        if (list.size() <= 0) {
-          // all keys have been invalidated already, return null (lookup will happen)
-          return null;
-        }
-        AbstractLocalCacheStoreValue localCacheStoreValue = (AbstractLocalCacheStoreValue) store.get(list.get(0));
-        return localCacheStoreValue == null ? null : localCacheStoreValue.asEventualValue().getValue();
       } else {
-        throw new AssertionError("Unknown type mapped to oid: " + oid + ", value: " + object
-                                 + ". Expected to be mapped to either of TCObjectSelfStoreValue or a List");
+        // for eventual value invalidation, use any of them to look up the value
+        AbstractLocalCacheStoreValue localCacheStoreValue = (AbstractLocalCacheStoreValue) store.get(object);
+        return localCacheStoreValue == null ? null : localCacheStoreValue.asEventualValue().getValue();
       }
     } finally {
       tcObjectStoreLock.readLock().unlock();
@@ -241,7 +219,6 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
         // some asertions... can be removed?
         Object object = serverMapLocalCache.getInternalStore().get(valueOid);
         if (localStoreValue.isEventualConsistentValue()) {
-          assertEventualIdMappingValue(valueOid, object);
           removed = localStoreValue.asEventualValue().getValue();
         } else {
           if (object != null) {
@@ -275,21 +252,6 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
       }
 
       this.tcObjectSelfRemovedFromStoreCallback.notifyAll();
-    }
-  }
-
-  private void assertEventualIdMappingValue(ObjectID valueOid, Object object) throws AssertionError {
-    if (object != null) {
-      if (!(object instanceof List)) {
-        //
-        throw new AssertionError("With eventual, oid's can be mapped to List only, oid: " + valueOid + ", mapped to: "
-                                 + object);
-      } else {
-        List list = (List) object;
-        if (list.size() > 1) { throw new AssertionError(
-                                                        "With eventual, oid's should be mapped to maximum of one key, oid: "
-                                                            + valueOid + ", list: " + list); }
-      }
     }
   }
 
@@ -331,12 +293,12 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   }
 
   public void addStoreListener(L1ServerMapLocalCacheStore store,
-                               GlobalL1ServerMapLocalCacheStoreListener localCacheStoreListener) {
+                               GlobalL1ServerMapLocalCacheStoreListener localCacheStoreListener, ObjectID mapID) {
     tcObjectStoreLock.writeLock().lock();
     try {
       if (!stores.containsKey(store)) {
         store.addListener(localCacheStoreListener);
-        stores.put(store, null);
+        stores.put(store, mapID);
       }
     } finally {
       tcObjectStoreLock.writeLock().unlock();
