@@ -104,9 +104,15 @@ public class H2StatisticsStoreTest extends TestCase {
     boolean tmpDirReadOnly = tmp_dir.setReadOnly();
 
     if (tmpDirReadOnly) {
+
+      if (tmp_dir.canWrite()) {
+        System.err.println(tmp_dir + " is set read only but still writable. Probably an OS issue ?");
+        return;
+      }
+
       try {
         new H2StatisticsStoreImpl(tmp_dir);
-        fail("expected exception");
+        fail("unexpected exception");
       } catch (TCAssertionError e) {
         // dir is not writable
       } finally {
