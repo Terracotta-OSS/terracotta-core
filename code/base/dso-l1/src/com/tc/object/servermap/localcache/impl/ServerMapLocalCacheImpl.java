@@ -91,7 +91,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   private ReentrantReadWriteLock getLock(Object key) {
-    int index = Math.abs(key.hashCode() % CONCURRENCY);
+    int index = Math.abs(key.hashCode()) % CONCURRENCY;
     return segmentLocks[index];
   }
 
@@ -242,20 +242,19 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     Object value = localStore.remove(key, RemoveType.NORMAL);
     if (value != null && value instanceof AbstractLocalCacheStoreValue) {
       AbstractLocalCacheStoreValue localValue = (AbstractLocalCacheStoreValue) value;
-      if (localValue.getId() != null) {
-        // not incoherent item, remove id-key mapping
-        evictedFromStore(localValue.getId(), key, localValue);
-      } else {
-        entryRemovedCallback(key, value);
-      }
+      evictedFromStore(localValue.getId(), key, localValue);
     }
   }
 
   public void evictedFromStore(Object id, Object key, AbstractLocalCacheStoreValue value) {
     if (!isStoreInitialized()) { return; }
-    // no need to attempt to remove the key again, as its already been removed on eviction notification
-    LockID lockID = executeUnderSegmentWriteLock(id, key, value,
-                                                 RemoveEntryForKeyCallback.REMOVE_ONLY_META_MAPPING_CALLBACK_INSTANCE);
+
+    LockID lockID = null;
+    if (id != null) {
+      // no need to attempt to remove the key again, as its already been removed on eviction notification
+      lockID = executeUnderSegmentWriteLock(id, key, value,
+                                            RemoveEntryForKeyCallback.REMOVE_ONLY_META_MAPPING_CALLBACK_INSTANCE);
+    }
     entryRemovedCallback(key, value);
     initiateLockRecall(lockID);
   }
