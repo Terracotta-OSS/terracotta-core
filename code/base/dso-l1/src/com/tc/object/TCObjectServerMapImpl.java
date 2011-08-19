@@ -664,4 +664,17 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   public int getLocalOffHeapSize() {
     return this.cache.offHeapSize();
   }
+
+  public boolean containsKeyLocalOnHeap(Object key) {
+    if (this.cache.containsKeyOnHeap(key)) {
+      AbstractLocalCacheStoreValue cacheStoreValue = this.cache.getLocalValue(key);
+      if (cacheStoreValue == null) { return false; }
+      return cacheStoreValue.isValueObjectOnHeap(serverMapLocalStore);
+    }
+    return false;
+  }
+
+  public boolean containsKeyLocalOffHeap(Object key) {
+    return this.cache.containsKeyOffHeap(key);
+  }
 }

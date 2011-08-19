@@ -13,8 +13,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -156,5 +156,13 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
 
   public void dispose() {
     // Nothing to dispose of
+  }
+
+  public boolean containsKeyOnHeap(K key) {
+    return backingCache.containsKey(key);
+  }
+
+  public boolean containsKeyOffHeap(K key) {
+    return false;
   }
 }

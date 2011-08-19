@@ -50,6 +50,14 @@ public abstract class AbstractLocalCacheStoreValue implements Externalizable {
     }
   }
 
+  public boolean isValueObjectOnHeap(L1ServerMapLocalCacheStore store) {
+    if (value instanceof ObjectID) {
+      return store.containsKeyOnHeap(value);
+    } else {
+      return true;
+    }
+  }
+
   /**
    * Returns true if this is cached value for eventual consistency
    */

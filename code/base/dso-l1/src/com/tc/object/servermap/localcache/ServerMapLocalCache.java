@@ -85,6 +85,16 @@ public interface ServerMapLocalCache {
   AbstractLocalCacheStoreValue getLocalValue(Object key);
 
   /**
+   * Check if the key is on-heap
+   */
+  boolean containsKeyOnHeap(Object key);
+
+  /**
+   * Check if the key is in off-heap
+   */
+  boolean containsKeyOffHeap(Object key);
+
+  /**
    * Returns the size of the local cache
    */
   int size();

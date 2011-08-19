@@ -102,4 +102,14 @@ public interface L1ServerMapLocalCacheStore<K, V> {
    * Dispose of this local cache store
    */
   public void dispose();
+
+  /**
+   * Check if the key is available on heap
+   */
+  public boolean containsKeyOnHeap(K key);
+
+  /**
+   * Check if the key is available off heap
+   */
+  public boolean containsKeyOffHeap(K key);
 }

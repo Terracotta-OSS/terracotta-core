@@ -543,4 +543,14 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   public int offHeapSize() {
     return this.localStore.offHeapSize();
   }
+
+  public boolean containsKeyOnHeap(Object key) {
+    return this.localStore.containsKeyOnHeap(key);
+  }
+
+  public boolean containsKeyOffHeap(Object key) {
+    // If the key -> AbstractLocalCacheStoreEntry is around, the key->value mapping it corresponds to must also be
+    // around
+    return this.localStore.containsKeyOffHeap(key);
+  }
 }

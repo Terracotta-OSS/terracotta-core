@@ -199,6 +199,16 @@ public interface TCObjectServerMap<L> extends TCObject {
   public boolean containsLocalKey(Object key);
 
   /**
+   * Check if the requested key is on the local heap
+   */
+  public boolean containsKeyLocalOnHeap(Object key);
+
+  /**
+   * Check if the requested key is on the local offheap
+   */
+  public boolean containsKeyLocalOffHeap(Object key);
+
+  /**
    * Get from local cache.
    */
   public Object getValueFromLocalCache(Object key);
