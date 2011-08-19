@@ -40,6 +40,10 @@ class DerbyTCMapsDatabase extends AbstractDerbyTCDatabase implements TCMapsDatab
                                                                   public Map createBackingMapFor(final ObjectID mapID) {
                                                                     return new HashMap(0);
                                                                   }
+
+                                                                  public Map createBackingTinyMapFor(ObjectID mapID) {
+                                                                    return new HashMap(0);
+                                                                  }
                                                                 };
 
   private final String                   deleteQuery;

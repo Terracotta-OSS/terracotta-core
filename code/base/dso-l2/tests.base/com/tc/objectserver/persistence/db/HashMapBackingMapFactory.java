@@ -12,7 +12,11 @@ import java.util.Map;
 public class HashMapBackingMapFactory implements BackingMapFactory {
 
   public Map createBackingMapFor(final ObjectID mapID) {
-    return new HashMap();
+    return new HashMap(0);
+  }
+
+  public Map createBackingTinyMapFor(ObjectID mapID) {
+    return new HashMap(0);
   }
 
 }

@@ -22,18 +22,22 @@ public class PersistableCollectionFactory implements PersistentCollectionFactory
   }
 
   public Map createPersistentMap(final ObjectID id) {
-    if(this.paranoid) {
+    if (this.paranoid) {
       return new TCPersistableMap(id, this.factory.createBackingMapFor(id));
     } else {
-      return new TCPersistableMap(id, this.factory.createBackingMapFor(id), this.factory.createBackingMapFor(id));
+      /**
+       * In temp-swap mode, delta map retains most the the entries and the main map is less used. So, creating tiny one
+       * for the main map. Useful in Offheap cases to reduced memory footprints of the the newly-created/empty caches.
+       */
+      return new TCPersistableMap(id, this.factory.createBackingTinyMapFor(id), this.factory.createBackingMapFor(id));
     }
   }
 
   public Set createPersistentSet(final ObjectID id) {
-    if(this.paranoid) {
+    if (this.paranoid) {
       return new TCPersistableSet(id, this.factory.createBackingMapFor(id));
     } else {
-      return new TCPersistableSet(id, this.factory.createBackingMapFor(id), this.factory.createBackingMapFor(id));
+      return new TCPersistableSet(id, this.factory.createBackingTinyMapFor(id), this.factory.createBackingMapFor(id));
     }
   }
 

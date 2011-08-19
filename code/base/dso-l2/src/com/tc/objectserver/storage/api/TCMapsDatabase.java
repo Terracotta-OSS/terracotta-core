@@ -69,6 +69,9 @@ public interface TCMapsDatabase {
   public interface BackingMapFactory {
 
     public Map createBackingMapFor(ObjectID mapID);
+
+    public Map createBackingTinyMapFor(ObjectID mapID);
+
   }
 
 }

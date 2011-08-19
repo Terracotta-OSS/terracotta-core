@@ -31,6 +31,10 @@ public class BerkeleyDBTCMapsDatabase extends BerkeleyDBTCBytesBytesDatabase imp
                                             public Map createBackingMapFor(final ObjectID mapID) {
                                               return new HashMap(0);
                                             }
+
+                                            public Map createBackingTinyMapFor(ObjectID mapID) {
+                                              return new HashMap(0);
+                                            }
                                           };
 
   public BerkeleyDBTCMapsDatabase(final Database db) {
