@@ -27,6 +27,7 @@ public class L1ServerMapLocalStoreTransactionCompletionListener implements Trans
   }
 
   public void transactionComplete(TransactionID txnID) {
+    serverMapLocalCache.transactionComplete(key, value);
     serverMapLocalCache.unpinEntry(key, value);
     if (transactionCompleteOperation == TransactionCompleteOperation.UNPIN_AND_REMOVE_ENTRY) {
       // TODO: could this be a race or a problem ?

@@ -137,4 +137,6 @@ public interface ServerMapLocalCache {
   Set getKeySet();
 
   Object getKeyOrValueForObjectID(ObjectID oid);
+
+  void transactionComplete(Object key, AbstractLocalCacheStoreValue value);
 }

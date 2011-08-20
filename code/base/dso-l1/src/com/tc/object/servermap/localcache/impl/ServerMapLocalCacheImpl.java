@@ -27,9 +27,11 @@ import com.tc.properties.TCPropertiesImpl;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
@@ -51,6 +53,10 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   private final Manager                                                             manager;
   private final ReentrantReadWriteLock[]                                            segmentLocks                                          = new ReentrantReadWriteLock[CONCURRENCY];
   private final ServerMapLocalCacheRemoveCallback                                   removeCallback;
+
+  private final Set<ObjectID>                                                       transactionsInProgressObjectIDs                       = new HashSet<ObjectID>();
+  private final Set<ObjectID>                                                       removedObjectIDs                                      = new HashSet<ObjectID>();
+  private final ReentrantLock                                                       lockForTransactionsObjectIDs                          = new ReentrantLock();
 
   /**
    * Not public constructor, should be created only by the global local cache manager
@@ -126,6 +132,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       final AbstractLocalCacheStoreValue old;
       if (mapOperation.isMutateOperation()) {
         // put a pinned entry for mutate ops, unpinned on txn complete
+        transactionStarted(localCacheValue.getObjectId());
         old = this.localStore.put(key, localCacheValue, PutType.PINNED);
       } else {
         old = this.localStore.put(key, localCacheValue, PutType.NORMAL);
@@ -213,6 +220,12 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     Set keySet = this.localStore.getKeySet();
     for (Object key : keySet) {
       if (!isMetaInfoMapping(key)) {
+        Object value = this.localStore.get(key);
+        if (value instanceof AbstractLocalCacheStoreValue
+            && !((AbstractLocalCacheStoreValue) value).getMapID().equals(mapID)) {
+          continue;
+        }
+
         removeFromLocalCache(key);
       }
     }
@@ -510,7 +523,56 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
         return;
       }
+
+      ObjectID objectID = ((AbstractLocalCacheStoreValue) removed).getObjectId();
+      if (isTransactionInProgressFor(objectID)) { return; }
+
       removeCallback.removedElement(key, (AbstractLocalCacheStoreValue) removed);
+    }
+  }
+
+  private boolean isTransactionInProgressFor(ObjectID objectId) {
+    if (ObjectID.NULL_ID.equals(objectId)) { return false; }
+
+    lockForTransactionsObjectIDs.lock();
+    try {
+      if (transactionsInProgressObjectIDs.contains(objectId)) {
+        removedObjectIDs.add(objectId);
+        return true;
+      } else {
+        return false;
+      }
+    } finally {
+      lockForTransactionsObjectIDs.unlock();
+    }
+  }
+
+  public void transactionComplete(Object key, AbstractLocalCacheStoreValue value) {
+    final ObjectID objectId = value.getObjectId();
+    if (ObjectID.NULL_ID.equals(objectId)) { return; }
+
+    boolean doRemove;
+    lockForTransactionsObjectIDs.lock();
+    try {
+      transactionsInProgressObjectIDs.remove(objectId);
+      doRemove = removedObjectIDs.remove(objectId);
+    } finally {
+      lockForTransactionsObjectIDs.unlock();
+    }
+
+    if (doRemove) {
+      entryRemovedCallback(key, value);
+    }
+  }
+
+  private void transactionStarted(ObjectID objectId) {
+    if (ObjectID.NULL_ID.equals(objectId)) { return; }
+
+    lockForTransactionsObjectIDs.lock();
+    try {
+      transactionsInProgressObjectIDs.add(objectId);
+    } finally {
+      lockForTransactionsObjectIDs.unlock();
     }
   }
 
