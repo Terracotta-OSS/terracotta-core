@@ -33,8 +33,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import junit.framework.AssertionFailedError;
-
 public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObject, TCObjectServerMap<L> {
 
   private final static TCLogger        logger                          = TCLogging
@@ -535,7 +533,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   @Override
   protected int clearReferences(final Object pojo, final int toClear) {
     // if this method is called, means there is a bug in the code, throwing AssertionError
-    throw new AssertionFailedError("we DO NOT want L1 cache manager to handle unclustered ehcache eviction");
+    throw new AssertionError("we DO NOT want L1 cache manager to handle unclustered ehcache eviction");
   }
 
   public Set getLocalKeySet() {
