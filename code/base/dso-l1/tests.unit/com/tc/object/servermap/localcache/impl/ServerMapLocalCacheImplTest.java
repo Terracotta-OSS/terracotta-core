@@ -53,15 +53,15 @@ import junit.framework.Assert;
 import junit.framework.TestCase;
 
 public class ServerMapLocalCacheImplTest extends TestCase {
-  private volatile ServerMapLocalCacheImpl  cache;
-  private final ObjectID                    mapID       = new ObjectID(50000);
-  private int                               maxInMemory = 1000;
-  private L1ServerMapLocalCacheStore        cacheIDStore;
-  private TestLocksRecallHelper             locksRecallHelper;
-  private L1ServerMapLocalCacheManagerImpl  globalLocalCacheManager;
-  private MySink                            sink;
-  private L1ServerMapLocalCacheStoreHashMap localCacheStore;
-  private MockTCObjectSelfCallback          mockTCObjectSelfCallback;
+  private volatile ServerMapLocalCacheImpl cache;
+  private final ObjectID                   mapID       = new ObjectID(50000);
+  private int                              maxInMemory = 1000;
+  private L1ServerMapLocalCacheStore       cacheIDStore;
+  private TestLocksRecallHelper            locksRecallHelper;
+  private L1ServerMapLocalCacheManagerImpl globalLocalCacheManager;
+  private MySink                           sink;
+  private L1ServerMapLocalCacheStore       localCacheStore;
+  private MockTCObjectSelfCallback         mockTCObjectSelfCallback;
 
   @Override
   protected void setUp() throws Exception {
@@ -496,7 +496,6 @@ public class ServerMapLocalCacheImplTest extends TestCase {
       MockModesAdd.addEventualValueToCache(cache, globalLocalCacheManager, "key" + i,
                                            createMockSerializedEntry("value" + i, i), mapID, MapOperationType.PUT);
     }
-    cache.evictCachedEntries(25);
     System.err.println("Sleeping for 10 seconds, Current size in testEvictCachedEntries " + cache.size());
 
     ThreadUtil.reallySleep(10 * 1000);
@@ -1081,8 +1080,8 @@ public class ServerMapLocalCacheImplTest extends TestCase {
       // expected
     }
 
-    Assert.assertEquals(createMockSerializedEntry(expectedValue, expectedObjectId.toLong()), value
-        .getValueObject(globalLocalCacheManager, this.localCacheStore));
+    Assert.assertEquals(createMockSerializedEntry(expectedValue, expectedObjectId.toLong()),
+                        value.getValueObject(globalLocalCacheManager, this.localCacheStore));
     Assert.assertEquals(expectedObjectId, value.getId());
     Assert.assertEquals(expectedObjectId, value.asEventualValue().getObjectId());
   }
@@ -1107,8 +1106,8 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     } catch (ClassCastException ignored) {
       // expected
     }
-    Assert.assertEquals(createMockSerializedEntry(expectedValue, expectedObjectId.toLong()), value
-        .getValueObject(globalLocalCacheManager, this.localCacheStore));
+    Assert.assertEquals(createMockSerializedEntry(expectedValue, expectedObjectId.toLong()),
+                        value.getValueObject(globalLocalCacheManager, this.localCacheStore));
     Assert.assertEquals(null, value.getId());
   }
 
@@ -1133,8 +1132,8 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     } catch (ClassCastException ignored) {
       // expected
     }
-    Assert.assertEquals(createMockSerializedEntry(expectedValue, expectedObjectId.toLong()), value
-        .getValueObject(globalLocalCacheManager, this.localCacheStore));
+    Assert.assertEquals(createMockSerializedEntry(expectedValue, expectedObjectId.toLong()),
+                        value.getValueObject(globalLocalCacheManager, this.localCacheStore));
     Assert.assertEquals(expectedLockId, value.getId());
     Assert.assertEquals(expectedLockId, value.asStrongValue().getLockId());
   }

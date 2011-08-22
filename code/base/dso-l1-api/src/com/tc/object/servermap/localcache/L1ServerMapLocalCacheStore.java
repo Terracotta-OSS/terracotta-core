@@ -44,11 +44,6 @@ public interface L1ServerMapLocalCacheStore<K, V> {
   public boolean removeListener(L1ServerMapLocalCacheStoreListener<K, V> listener);
 
   /**
-   * evict "count" number of entries from the backing map
-   */
-  public int evict(int count);
-
-  /**
    * Clear the map
    */
   public void clear();

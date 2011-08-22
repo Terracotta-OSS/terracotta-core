@@ -39,8 +39,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                                                                                                                               .getLogger(ServerMapLocalCacheImpl.class);
   private static final long                                                         SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS = TCPropertiesImpl
                                                                                                                                               .getProperties()
-                                                                                                                                              .getLong(
-                                                                                                                                                       TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
+                                                                                                                                              .getLong(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
 
   private final static int                                                          CONCURRENCY                                           = 4;
   private static final LocalStoreKeySetFilter                                       IGNORE_ID_FILTER                                      = new IgnoreIdsFilter();
@@ -178,8 +177,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(
-                                                                                            final Object key,
+  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
                                                                                             AbstractLocalCacheStoreValue value,
                                                                                             MapOperationType mapOperation) {
     if (!mapOperation.isMutateOperation()) {
@@ -239,11 +237,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     if (!isStoreInitialized()) { return 0; }
 
     return this.localStore.size();
-  }
-
-  public int evictCachedEntries(int toClear) {
-    if (this.localStore != null) { return this.localStore.evict(toClear); }
-    return 0;
   }
 
   /**

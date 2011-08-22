@@ -38,10 +38,6 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   private final static TCLogger        logger                          = TCLogging
                                                                            .getLogger(TCObjectServerMapImpl.class);
 
-  private static final boolean         EVICTOR_LOGGING                 = TCPropertiesImpl
-                                                                           .getProperties()
-                                                                           .getBoolean(TCPropertiesConsts.EHCACHE_EVICTOR_LOGGING_ENABLED);
-
   private static final Object[]        NO_ARGS                         = new Object[] {};
 
   private static final long            GET_VALUE_FOR_KEY_LOG_THRESHOLD = 10 * 1000;
@@ -65,7 +61,6 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   private final RemoteServerMapManager serverMapManager;
   private final Manager                manager;
   private final ServerMapLocalCache    cache;
-  private volatile int                 maxInMemoryCount                = 0;
   private volatile boolean             invalidateOnChange;
   private volatile boolean             localCacheEnabled;
 
@@ -91,7 +86,6 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   public void initialize(final int maxTTISeconds, final int maxTTLSeconds, final int targetMaxInMemoryCount,
                          final int targetMaxTotalCount, final boolean invalidateOnChangeFlag,
                          final boolean localCacheEnabledFlag) {
-    this.maxInMemoryCount = targetMaxInMemoryCount;
     this.invalidateOnChange = invalidateOnChangeFlag;
     this.localCacheEnabled = localCacheEnabledFlag;
     // if tcobject is being faulted in, the TCO is created and the peer is hydrated afterwards
@@ -538,19 +532,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    */
   @Override
   protected int clearReferences(final Object pojo, final int toClear) {
-    if (this.maxInMemoryCount > 0) {
-      // don't clear, let target capacity eviction handle this.
-      return 0;
-    } else {
-      if (EVICTOR_LOGGING) {
-        logEviction("Memory Manager requesting eviction: toClear=" + toClear);
-      }
-      return this.cache.evictCachedEntries(toClear);
-    }
-  }
-
-  private void logEviction(final String msg) {
-    logger.info("ServerMap Eviction: " + getObjectID() + " : " + msg);
+    throw new IllegalArgumentException("DO NOT want L1 cache manager to handle unclustered ehcache eviction");
   }
 
   public Set getLocalKeySet() {

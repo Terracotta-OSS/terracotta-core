@@ -127,11 +127,6 @@ public interface ServerMapLocalCache {
   void clearInline();
 
   /**
-   * Attempt to remove 'count' entries from the local cache. May be called under memory pressure
-   */
-  int evictCachedEntries(int count);
-
-  /**
    * Returns the keys present in the local cache (does not include meta items stored)
    */
   Set getKeySet();
