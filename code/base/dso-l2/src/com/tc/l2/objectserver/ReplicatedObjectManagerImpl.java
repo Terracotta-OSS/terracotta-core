@@ -175,8 +175,8 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
                   + gcMsg);
       return;
     }
-    final boolean deleted = this.objectManager.getGarbageCollector().deleteGarbage(new PeriodicDGCResultContext(gcedOids, gcMsg
-                                                                                       .getGCInfo()));
+    final boolean deleted = this.objectManager.getGarbageCollector()
+        .deleteGarbage(new PeriodicDGCResultContext(gcedOids, gcMsg.getGCInfo()));
     if (deleted) {
       logger.info("Removed " + gcedOids.size() + " objects from passive ObjectManager from last DGC from Active");
     } else {
@@ -360,6 +360,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     public void garbageCollectorCycleCompleted(final GarbageCollectionInfo info, final ObjectIDSet toDeleted) {
       Map<NodeID, SyncingPassiveValue> toAdd = null;
       notifyGCResultToPassives(info, toDeleted);
+      boolean havePassivesToSync = false;
       synchronized (this) {
         if (this.syncingPassives.isEmpty()) { return; }
         toAdd = new LinkedHashMap<NodeID, SyncingPassiveValue>();
@@ -367,15 +368,17 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
           if (e.getValue() != ADDED) {
             final NodeID nodeID = e.getKey();
             logger.info("DGC Completed : Starting scheduled passive sync for " + nodeID);
-            disableGCIfPossible();
-            // Shouldn't happen as this is in DGC call back after DGC completion
-            assertGCDisabled();
             toAdd.put(nodeID, e.getValue());
             e.setValue(ADDED);
+            havePassivesToSync = true;
           }
         }
       }
-      add2L2StateManager(toAdd);
+      if (havePassivesToSync) {
+        disableGC();
+        assertGCDisabled();
+        add2L2StateManager(toAdd);
+      }
     }
 
     private void notifyGCResultToPassives(final GarbageCollectionInfo gcInfo, final ObjectIDSet deleted) {
