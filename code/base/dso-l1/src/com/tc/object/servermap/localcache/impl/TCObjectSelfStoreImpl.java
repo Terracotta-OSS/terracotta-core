@@ -43,7 +43,8 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   }
 
   public Object getById(ObjectID oid) {
-    int counter = 0;
+    long timePrev = System.currentTimeMillis();
+    long startTime = timePrev;
     while (true) {
       Object rv = null;
       tcObjectStoreLock.readLock().lock();
@@ -88,11 +89,13 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
       if (rv != null) { return rv; }
 
-      if (counter % 10 == 0 && counter > 0) {
-        logger.warn("Still waiting to get the Object from local cache, ObjectID=" + oid + " , times tried=" + counter);
+      long currTime = System.currentTimeMillis();
+      if ((currTime - timePrev) > (15 * 1000)) {
+        timePrev = currTime;
+        logger.warn("Still waiting to get the Object from local cache, ObjectID=" + oid + " , times spent="
+                    + ((currTime - startTime) / 1000) + "seconds");
       }
       waitUntilNotified();
-      counter++;
       // Retry to get the object id
     }
   }
