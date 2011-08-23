@@ -167,9 +167,10 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     Set<Map.Entry> entries = evictedElements.entrySet();
 
     for (Entry entry : entries) {
-      if (!(entry.getValue() instanceof AbstractLocalCacheStoreValue)) {
-        continue;
-      }
+      if (!(entry.getValue() instanceof AbstractLocalCacheStoreValue)) { throw new AssertionError(
+                                                                                                  "Pinned elements should not be evicted, key="
+                                                                                                      + entry
+                                                                                                          .getValue()); }
 
       AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) entry.getValue();
       ObjectID mapID = value.getMapID();
