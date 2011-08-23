@@ -10,6 +10,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.protocol.transport.ReconnectionRejectedCallback;
 import com.tc.util.runtime.Os;
 
 import java.lang.management.GarbageCollectorMXBean;
@@ -17,7 +18,7 @@ import java.lang.management.ManagementFactory;
 import java.util.Iterator;
 import java.util.List;
 
-public class TCMemoryManagerImpl implements TCMemoryManager {
+public class TCMemoryManagerImpl implements TCMemoryManager, ReconnectionRejectedCallback {
 
   private static final TCLogger logger        = TCLogging.getLogger(TCMemoryManagerImpl.class);
   private final String          CMS_NAME      = "ConcurrentMarkSweep";
@@ -82,10 +83,9 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
     }
   }
 
-  public synchronized void shutdown() {
-    stopMonitorThread();
-  }
-
+  /**
+   * XXX: Should we wait for the monitor thread to stop completely.
+   */
   private void stopMonitorThread() {
     if (monitor != null) {
       monitor.stop();
@@ -183,4 +183,9 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
       return oldGen;
     }
   }
+
+  public synchronized void shutdown() {
+    stopMonitorThread();
+  }
+
 }

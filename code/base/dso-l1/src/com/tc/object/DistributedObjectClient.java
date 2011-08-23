@@ -57,6 +57,7 @@ import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.HealthCheckerConfigClientImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
+import com.tc.net.protocol.transport.ReconnectionRejectedCallback;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.cache.CacheConfig;
@@ -750,7 +751,11 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                       dsoCluster, pInfo.version(), Collections
                                           .unmodifiableCollection(clientHandshakeCallbacks));
     this.channel.addListener(this.clientHandshakeManager);
-    reconnectionRejectedListener = new ReconnectionRejectedListenerImpl(dsoCluster, clientHandshakeManager);
+
+    final List<ReconnectionRejectedCallback> reconnectionRejectedCallbacks = new ArrayList<ReconnectionRejectedCallback>();
+    reconnectionRejectedCallbacks.add(tcMemManager);
+    reconnectionRejectedListener = new ReconnectionRejectedListenerImpl(dsoCluster, clientHandshakeManager,
+                                                                        reconnectionRejectedCallbacks);
     this.channel.addListener(reconnectionRejectedListener);
 
     final ClientConfigurationContext cc = new ClientConfigurationContext(stageManager, this.lockManager,
