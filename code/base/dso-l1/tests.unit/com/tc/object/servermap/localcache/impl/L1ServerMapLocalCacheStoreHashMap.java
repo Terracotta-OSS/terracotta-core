@@ -13,8 +13,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -53,8 +53,35 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
     if (oldValue == null && putType.incrementSizeOnPut()) {
       cacheSize.incrementAndGet();
     }
+    checkIfEvictionIsRequired();
 
     return oldValue;
+  }
+
+  private void checkIfEvictionIsRequired() {
+    if (maxElementsInMemory == 0) { return; }
+
+    Map evictedEntries = new HashMap();
+
+    synchronized (this) {
+      if (cacheSize.get() <= maxElementsInMemory) { return; }
+      int overshoot = cacheSize.get() - maxElementsInMemory;
+      int evicted = 0;
+      for (Iterator iter = backingCache.entrySet().iterator(); iter.hasNext() && evicted <= overshoot;) {
+        Entry entry = (Entry) iter.next();
+        if (pinnedEntries.contains(entry.getKey())) {
+          continue;
+        }
+        evictedEntries.put(entry.getKey(), entry.getValue());
+        iter.remove();
+        cacheSize.decrementAndGet();
+        evicted++;
+      }
+    }
+
+    if (evictedEntries.size() > 0) {
+      notifyListeners(evictedEntries);
+    }
   }
 
   private synchronized void pinEntry(K key) {
@@ -71,7 +98,7 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
       value = backingCache.remove(key);
       pinnedEntries.remove(key);
     }
-    if (removeType.decrementSizeOnRemove()) {
+    if (value != null && removeType.decrementSizeOnRemove()) {
       cacheSize.decrementAndGet();
     }
     return value;
@@ -85,27 +112,6 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
     for (L1ServerMapLocalCacheStoreListener<K, V> listener : listeners) {
       listener.notifyElementsEvicted(evictedElements);
     }
-  }
-
-  public int evict(int count) {
-    Map<K, V> tempMap = new HashMap<K, V>();
-    synchronized (this) {
-      int deletedElements = 0;
-      Iterator<Entry<K, V>> iterator = backingCache.entrySet().iterator();
-      while (iterator.hasNext() && deletedElements < count) {
-        Entry<K, V> entry = iterator.next();
-        if (pinnedEntries.contains(entry.getKey())) {
-          continue;
-        }
-        tempMap.put(entry.getKey(), entry.getValue());
-        iterator.remove();
-        cacheSize.decrementAndGet();
-        deletedElements++;
-      }
-    }
-
-    notifyListeners(tempMap);
-    return tempMap.size();
   }
 
   public synchronized int size() {
