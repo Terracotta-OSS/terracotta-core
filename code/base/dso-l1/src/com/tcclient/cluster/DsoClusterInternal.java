@@ -35,6 +35,8 @@ public interface DsoClusterInternal extends DsoCluster, DsoClusterInternalEvents
   public void init(final ClusterMetaDataManager metaDataManager, final ClientObjectManager objectManager,
                    Stage dsoClusterEventsStage);
 
+  public void shutdown();
+
   public DsoNodeMetaData retrieveMetaDataForDsoNode(DsoNodeInternal node);
 
   public <K> Map<K, Set<DsoNode>> getNodesWithKeys(final Map<K, ?> map, final Collection<? extends K> keys)

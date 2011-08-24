@@ -479,6 +479,7 @@ public interface TCPropertiesConsts {
   public static final String L1_CONNECT_VERSION_MATCH_CHECK                                  = "l1.connect.versionMatchCheck.enabled";
   public static final String L1_SOCKET_CONNECT_TIMEOUT                                       = "l1.socket.connect.timeout";
   public static final String L1_SOCKET_RECONNECT_WAIT_INTERVAL                               = "l1.socket.reconnect.waitInterval";
+  public static final String L1_CLUSTEREVENTS_OOB_JOINTIME_MILLIS                            = "l1.clusterevents.outofbandnotifier.jointime.millis";
 
   /*********************************************************************************************************************
    * <code>

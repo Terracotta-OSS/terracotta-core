@@ -17,6 +17,8 @@ import com.tc.object.ObjectID;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TCMap;
 import com.tc.object.bytecode.TCServerMap;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.Util;
 import com.tcclient.cluster.ClusterInternalEventsContext;
@@ -38,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEventsGun {
@@ -56,6 +59,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   private final ReentrantReadWriteLock.WriteLock stateWriteLock       = stateLock.writeLock();
   private final ClusterNodeStatus                nodeStatus           = new ClusterNodeStatus();
   private final FiredEventsStatus                firedEventsStatus    = new FiredEventsStatus();
+  private final OutOfBandNotifier                outOfBandNotifier    = new OutOfBandNotifier();
 
   private ClusterMetaDataManager                 clusterMetaDataManager;
   private ClientObjectManager                    clientObjectManager;
@@ -71,6 +75,11 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     for (DsoNodeInternal node : topology.getInternalNodes()) {
       retrieveMetaDataForDsoNode(node);
     }
+    outOfBandNotifier.start();
+  }
+
+  public void shutdown() {
+    this.outOfBandNotifier.shutdown();
   }
 
   public void addClusterListener(final DsoClusterListener listener) {
@@ -456,16 +465,16 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
 
   private void fireEvent(final DsoClusterEventType eventType, final DsoClusterEvent event,
                          final DsoClusterListener listener) {
-    // use out-of-band notification depending on listener
-    // otherwise use the single threaded eventProcessorSink to process the cluster event
+    /**
+     * use out-of-band notification depending on listener otherwise use the single threaded eventProcessorSink to
+     * process the cluster event.
+     */
     if (useOOBNotification(eventType, event, listener)) {
-      Thread t = new Thread(new Runnable() {
+      outOfBandNotifier.submit(new Runnable() {
         public void run() {
           notifyDsoClusterListener(eventType, event, listener);
         }
-      }, "Out of band notifier");
-      t.setDaemon(true);
-      t.start();
+      });
     } else {
       this.eventsProcessorSink.add(new ClusterInternalEventsContext(eventType, event, listener));
     }
@@ -552,6 +561,63 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
       } finally {
         Util.selfInterruptIfNeeded(interrupted);
       }
+    }
+  }
+
+  private static class OutOfBandNotifier {
+    private static final String                 TASK_THREAD_PREFIX   = "Out of band notifier";
+    private static final long                   TASK_RUN_TIME_MILLIS = TCPropertiesImpl
+                                                                         .getProperties()
+                                                                         .getLong(TCPropertiesConsts.L1_CLUSTEREVENTS_OOB_JOINTIME_MILLIS,
+                                                                                  100);
+    private final LinkedBlockingQueue<Runnable> taskQueue            = new LinkedBlockingQueue<Runnable>();
+    private volatile long                       count                = 0;
+    private volatile boolean                    shutdown;
+
+    private void submit(final Runnable taskToExecute) {
+      taskQueue.add(taskToExecute);
+    }
+
+    private void start() {
+      Thread outOfBandNotifierThread = new Thread(new Runnable() {
+
+        public void run() {
+
+          Runnable taskToExecute;
+          while (true) {
+
+            if (shutdown) { return; }
+
+            try {
+              taskToExecute = taskQueue.take();
+            } catch (InterruptedException e) {
+              continue;
+            }
+
+            Thread oobTask = new Thread(taskToExecute, TASK_THREAD_PREFIX + " - " + count++);
+            oobTask.setDaemon(true);
+            oobTask.start();
+            try {
+              oobTask.join(TASK_RUN_TIME_MILLIS);
+            } catch (InterruptedException e) {
+              continue;
+            }
+          }
+
+        }
+      }, TASK_THREAD_PREFIX + " - Main");
+
+      outOfBandNotifierThread.setDaemon(true);
+      outOfBandNotifierThread.start();
+    }
+
+    public void shutdown() {
+      this.shutdown = true;
+      this.taskQueue.add(new Runnable() {
+        public void run() {
+          // dummy task to notify other thread
+        }
+      });
     }
   }
 
