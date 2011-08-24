@@ -19,10 +19,10 @@ J2SE-1.5:
     min_version: 1.5.0_0
     max_version: 1.5.999_999
     env:
-      #- JDK_15
+      - JDK_1_5_HOME
       - J2SE_15
       - JAVA_HOME_15
-      - JDK_1_5_HOME
+     
     alias:
       - tests-1.5
       - "1.5"
@@ -31,11 +31,11 @@ JavaSE-1.6:
     min_version: 1.6.0_0
     max_version: 1.6.999_999
     env:
-      #- JDK_16
+      - JDK_1_6_HOME
       - JAVASE_16
       - JAVASE_6
       - JAVA_HOME_16
-      - JDK_1_6_HOME
+      
     alias:
       - tests-1.6
       - "1.6"
