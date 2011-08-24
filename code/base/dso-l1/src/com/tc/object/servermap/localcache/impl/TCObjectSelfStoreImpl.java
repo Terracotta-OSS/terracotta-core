@@ -214,14 +214,9 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
       tcObjectStoreLock.writeLock().lock();
       try {
         if (ObjectID.NULL_ID.equals(valueOid) || !tcObjectSelfStoreOids.contains(valueOid)) {
-          if (ObjectID.NULL_ID.equals(valueOid)) {
-            if (logger.isDebugEnabled()) {
-              logger.debug("XXX Removing TCObjectSelf from Store Failed, ObjectID=" + valueOid
-                           + " , TCObjectSelfStore contains it = " + tcObjectSelfStoreOids.contains(valueOid));
-            }
-          } else {
-            logger.info("XXX Removing TCObjectSelf from Store Failed, ObjectID=" + valueOid
-                        + " , TCObjectSelfStore contains it = " + tcObjectSelfStoreOids.contains(valueOid));
+          if (logger.isDebugEnabled()) {
+            logger.debug("XXX Removing TCObjectSelf from Store Failed, ObjectID=" + valueOid
+                         + " , TCObjectSelfStore contains it = " + tcObjectSelfStoreOids.contains(valueOid));
           }
           return;
         }
