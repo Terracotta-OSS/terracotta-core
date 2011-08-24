@@ -17,19 +17,19 @@ import java.util.Properties;
 
 public class SigarUtil {
 
-  private static final String     PATH_SEPARATOR        = System.getProperty("path.separator");
-  private static final String     FILE_SEPARATOR        = System.getProperty("file.separator");
-  private static final String     LIBRARY_PATH_PROPERTY = "org.hyperic.sigar.path";
-  private static final boolean    SIGAR_ENABLED         = TCPropertiesImpl.getProperties()
-                                                            .getBoolean(TCPropertiesConsts.SIGAR_ENABLED);
-  private static volatile boolean initialized;
+  private static final String  PATH_SEPARATOR        = System.getProperty("path.separator");
+  private static final String  FILE_SEPARATOR        = System.getProperty("file.separator");
+  private static final String  LIBRARY_PATH_PROPERTY = "org.hyperic.sigar.path";
+  private static final boolean SIGAR_ENABLED         = TCPropertiesImpl.getProperties()
+                                                         .getBoolean(TCPropertiesConsts.SIGAR_ENABLED);
+
+  static {
+    if (SIGAR_ENABLED) {
+      sigarInit();
+    }
+  }
 
   public static Sigar createSigarIfEnabled() {
-    if (!initialized) {
-      if (SIGAR_ENABLED) {
-        sigarInit();
-      }
-    }
     return SIGAR_ENABLED ? new Sigar() : null;
   }
 
@@ -39,7 +39,6 @@ public class SigarUtil {
    */
   public static void sigarInit() {
     CustomerLogging.getConsoleLogger().warn("SIGAR is enabled. Its use is not recommended in production environment.");
-    initialized = true;
 
     // If it's already there, nothing to do (this would be the case with tests run from tcbuild)
     if (isSigarInLibraryPath()) return;
