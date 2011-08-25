@@ -237,9 +237,9 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     tcObjectSelfStore.addTCObjectSelfTemp(tcObjectSelf);
   }
 
-  public void addTCObjectSelf(L1ServerMapLocalCacheStore store, AbstractLocalCacheStoreValue localStoreValue,
-                              Object tcoself) {
-    tcObjectSelfStore.addTCObjectSelf(store, localStoreValue, tcoself);
+  public boolean addTCObjectSelf(L1ServerMapLocalCacheStore store, AbstractLocalCacheStoreValue localStoreValue,
+                                 Object tcoself, boolean isNew) {
+    return tcObjectSelfStore.addTCObjectSelf(store, localStoreValue, tcoself, isNew);
   }
 
   public void removeTCObjectSelfTemp(TCObjectSelf objectSelf, boolean notifyServer) {

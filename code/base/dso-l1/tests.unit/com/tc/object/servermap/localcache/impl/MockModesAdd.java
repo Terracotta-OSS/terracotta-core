@@ -59,7 +59,7 @@ public class MockModesAdd {
   private static void addToCache(ServerMapLocalCache cache, TCObjectSelfStore store, String key,
                                  MockSerializedEntry value, MapOperationType operationType,
                                  AbstractLocalCacheStoreValue localStoreValue) {
-    store.addTCObjectSelf(cache.getInternalStore(), localStoreValue, value);
+    store.addTCObjectSelf(cache.getInternalStore(), localStoreValue, value, operationType.isMutateOperation());
     cache.addToCache(key, localStoreValue, operationType);
   }
 

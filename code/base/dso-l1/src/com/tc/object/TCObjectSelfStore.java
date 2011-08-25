@@ -14,7 +14,8 @@ public interface TCObjectSelfStore {
 
   Object getById(ObjectID oid);
 
-  void addTCObjectSelf(L1ServerMapLocalCacheStore store, AbstractLocalCacheStoreValue localStoreValue, Object tcoself);
+  boolean addTCObjectSelf(L1ServerMapLocalCacheStore store, AbstractLocalCacheStoreValue localStoreValue,
+                          Object tcoself, boolean isNew);
 
   int size();
 

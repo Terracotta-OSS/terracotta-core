@@ -163,8 +163,8 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     }
   }
 
-  public void addTCObjectSelf(L1ServerMapLocalCacheStore store, AbstractLocalCacheStoreValue localStoreValue,
-                              Object tcoself) {
+  public boolean addTCObjectSelf(L1ServerMapLocalCacheStore store, AbstractLocalCacheStoreValue localStoreValue,
+                                 Object tcoself, final boolean isNew) {
     tcObjectStoreLock.writeLock().lock();
     try {
       if (tcoself instanceof TCObject) {
@@ -174,17 +174,25 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
           logger.debug("XXX Adding TCObjectSelf to Store if necessary, ObjectID=" + oid);
         }
 
-        tcObjectSelfStoreOids.add(oid);
-        tcObjectSelfStoreSize.incrementAndGet();
-        if (!localStoreValue.isEventualConsistentValue()) {
-          store.put(((TCObject) tcoself).getObjectID(), new TCObjectSelfWrapper(tcoself),
-                    PutType.PINNED_NO_SIZE_INCREMENT);
-        } // else no need to store another mapping as for eventual already oid->localCacheEventualValue mapping exists,
-        // and actual value is present in the localCacheEventualValue
+        if (isNew || (tcObjectSelfTempCache.containsKey(oid) && !tcObjectSelfStoreOids.contains(oid))) {
+          tcObjectSelfStoreOids.add(oid);
+          tcObjectSelfStoreSize.incrementAndGet();
+          if (!localStoreValue.isEventualConsistentValue()) {
+            store.put(((TCObject) tcoself).getObjectID(), new TCObjectSelfWrapper(tcoself),
+                      PutType.PINNED_NO_SIZE_INCREMENT);
+          } // else no need to store another mapping as for eventual already oid->localCacheEventualValue mapping
+          // exists,
+          // and actual value is present in the localCacheEventualValue
+          return true;
+        } else {
+          return false;
+        }
       }
     } finally {
       tcObjectStoreLock.writeLock().unlock();
     }
+
+    return true;
   }
 
   public void removeTCObjectSelfTemp(TCObjectSelf objectSelf, boolean notifyServer) {
@@ -249,7 +257,6 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
           this.tcObjectSelfRemovedFromStoreCallback.removedTCObjectSelfFromStore((TCObjectSelf) removed);
         }
 
-        tcObjectSelfTempCache.remove(valueOid);
         tcObjectSelfStoreOids.remove(valueOid);
         tcObjectSelfStoreSize.decrementAndGet();
       } finally {
