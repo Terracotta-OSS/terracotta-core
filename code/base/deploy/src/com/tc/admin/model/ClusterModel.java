@@ -575,6 +575,7 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
   }
 
   public void disconnect() {
+    connectServer.disconnect();
     for (IServerGroup group : getServerGroups()) {
       group.disconnect();
     }

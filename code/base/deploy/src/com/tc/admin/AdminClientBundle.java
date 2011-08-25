@@ -21,6 +21,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "get.svt.url", "http://www.terracotta.org/kit/reflector?kitID={0}&pageID=GetSVT" },
         { "show.svt.label", "Show SVT..." },
         { "cluster.node.label", "Terracotta cluster" },
+        { "rename.label", "Rename" },
         { "connect.label", "Connect" },
         { "disconnect.label", "Disconnect" },
         { "shutdown.label", "Shutdown" },

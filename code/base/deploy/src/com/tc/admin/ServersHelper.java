@@ -21,13 +21,15 @@ public class ServersHelper extends BaseHelper {
   private Icon                       activityIcon;
 
   public static final String         SERVERS      = "Servers";
+  public static final String         NAME         = "Name";
   public static final String         HOST         = "Host";
   public static final String         PORT         = "Port";
   public static final String         AUTO_CONNECT = "AutoConnect";
   public static final String         SPLIT        = "Split";
 
-  private ServersHelper() {/**/}
-  
+  private ServersHelper() {/**/
+  }
+
   public static ServersHelper getHelper() {
     return helper;
   }

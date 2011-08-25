@@ -55,6 +55,7 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
   private JDialog                     versionMismatchDialog;
   private final AtomicBoolean         versionCheckOccurred;
   private JPopupMenu                  popupMenu;
+  private RenameAction                renameAction;
   private ConnectAction               connectAction;
   private DisconnectAction            disconnectAction;
   private DeleteAction                deleteAction;
@@ -69,6 +70,7 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
   private static final String         DELETE_ACTION       = "Delete";
   private static final String         AUTO_CONNECT_ACTION = "AutoConnect";
 
+  private static final String         NAME                = ServersHelper.NAME;
   private static final String         HOST                = ServersHelper.HOST;
   private static final String         PORT                = ServersHelper.PORT;
   private static final String         AUTO_CONNECT        = ServersHelper.AUTO_CONNECT;
@@ -85,7 +87,7 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
     this.adminClientContext = adminClientContext;
     this.clusterModel = clusterModel;
 
-    setLabel(adminClientContext.getString("cluster.node.label"));
+    setClusterName(adminClientContext.getString("cluster.node.label"));
     initMenu(autoConnect);
     setComponent(clusterPanel = createClusterPanel());
     setIcon(ServersHelper.getHelper().getServerIcon());
@@ -220,6 +222,15 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
     return clusterModel.getConnectionEnvironment();
   }
 
+  void setClusterName(String name) {
+    setLabel(name);
+    clusterModel.setName(name);
+  }
+
+  String getClusterName() {
+    return clusterModel.getName();
+  }
+
   void setHost(String host) {
     clusterModel.setHost(host);
   }
@@ -239,6 +250,7 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
   private void initMenu(boolean autoConnect) {
     popupMenu = new JPopupMenu("Server Actions");
 
+    renameAction = new RenameAction();
     connectAction = new ConnectAction();
     disconnectAction = new DisconnectAction();
     deleteAction = new DeleteAction();
@@ -252,6 +264,7 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
     popupMenu.add(connectAction);
     popupMenu.add(disconnectAction);
     popupMenu.add(new JSeparator());
+    popupMenu.add(renameAction);
     popupMenu.add(deleteAction);
     popupMenu.add(new JSeparator());
 
@@ -378,9 +391,31 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
   }
 
   public void setPreferences(Preferences prefs) {
+    prefs.put(NAME, getClusterName());
     prefs.put(HOST, getHost());
     prefs.putInt(PORT, getPort());
     prefs.putBoolean(AUTO_CONNECT, isAutoConnect());
+  }
+
+  private void rename() {
+    Frame frame = (Frame) SwingUtilities.getAncestorOfClass(Frame.class, clusterPanel);
+    String name = (String) JOptionPane.showInputDialog(clusterPanel, "Enter new name:", frame.getTitle(),
+                                                       JOptionPane.QUESTION_MESSAGE, null, null, getLabel());
+    if (name != null) {
+      setClusterName(name);
+      adminClientContext.getAdminClientController().updateServerPrefs();
+    }
+  }
+
+  private class RenameAction extends XAbstractAction {
+    RenameAction() {
+      super(adminClientContext.getString("rename.label"));
+      setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, MENU_SHORTCUT_KEY_MASK, true));
+    }
+
+    public void actionPerformed(ActionEvent ae) {
+      rename();
+    }
   }
 
   private class ConnectAction extends XAbstractAction {

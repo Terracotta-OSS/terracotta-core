@@ -12,6 +12,7 @@ import java.util.prefs.Preferences;
 
 public class NavTreeModel extends XTreeModel {
   private static final String SERVERS      = ServersHelper.SERVERS;
+  private static final String NAME         = ServersHelper.NAME;
   private static final String HOST         = ServersHelper.HOST;
   private static final String PORT         = ServersHelper.PORT;
   private static final String AUTO_CONNECT = ServersHelper.AUTO_CONNECT;
@@ -26,6 +27,7 @@ public class NavTreeModel extends XTreeModel {
     int count = children.length;
     Preferences serverPref;
     ClusterNode serverNode;
+    String name;
     String host;
     int port;
     boolean autoConnect;
@@ -33,10 +35,12 @@ public class NavTreeModel extends XTreeModel {
     if (count > 0) {
       for (int i = 0; i < count; i++) {
         serverPref = serverPrefs.node(children[i]);
+        name = serverPref.get(NAME, adminClientContext.getString("cluster.node.label"));
         host = serverPref.get(HOST, ConnectionContext.DEFAULT_HOST);
         port = serverPref.getInt(PORT, ConnectionContext.DEFAULT_PORT);
         autoConnect = serverPref.getBoolean(AUTO_CONNECT, ConnectionContext.DEFAULT_AUTO_CONNECT);
         serverNode = adminClientContext.getNodeFactory().createClusterNode(adminClientContext, host, port, autoConnect);
+        serverNode.setClusterName(name);
 
         insertNodeInto(serverNode, (XTreeNode) getRoot(), i);
       }
