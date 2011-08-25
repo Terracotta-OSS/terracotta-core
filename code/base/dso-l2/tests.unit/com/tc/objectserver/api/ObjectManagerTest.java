@@ -40,6 +40,7 @@ import com.tc.object.tx.TxnType;
 import com.tc.objectserver.context.ApplyCompleteEventContext;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.CommitTransactionContext;
+import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.LookupEventContext;
 import com.tc.objectserver.context.ManagedObjectFaultingContext;
 import com.tc.objectserver.context.ManagedObjectFlushingContext;
@@ -112,7 +113,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author steve
@@ -1242,9 +1247,10 @@ public class ObjectManagerTest extends TCTestCase {
     return rv;
   }
 
-  private void createObjects(final int num, final int inCache) {
-    createObjects(num);
+  private Set<ObjectID> createObjects(final int num, final int inCache) {
+    Set<ObjectID> oids = createObjects(num);
     evictCache(inCache);
+    return oids;
   }
 
   private Set<ObjectID> createObjects(final int num) {
@@ -1695,6 +1701,75 @@ public class ObjectManagerTest extends TCTestCase {
     final Set<ObjectID> returnedCachedReapSet = this.objectManager.getObjectReferencesFrom(new ObjectID(4), true);
     assertEquals(0, returnedCachedReapSet.size());
 
+  }
+
+  public void testFaultWithConcurrentRemove() throws InterruptedException {
+    this.config.paranoid = true;
+    initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))),
+                      new LRUEvictionPolicy(-1));
+    final TestGarbageCollector gc = new TestGarbageCollector(this.objectManager);
+    this.objectManager.setGarbageCollector(gc);
+    this.objectManager.start();
+
+    final Set<ObjectID> oids = createObjects(100, 0);
+    final AtomicBoolean fail = new AtomicBoolean(true);
+    final CyclicBarrier barrier = new CyclicBarrier(2);
+
+    final Thread faulter = new Thread("testFaultWithConcurrentRemove-faulter") {
+      @Override
+      public void run() {
+        try {
+          for (ObjectID oid : oids) {
+            barrier.await(5, TimeUnit.SECONDS);
+            ManagedObject mo = objectManager.getObjectByIDOrNull(oid);
+            if (mo != null) {
+              // Only need to release if we actually got it, since we're intentionally racing with the remove below,
+              // it's possible that the ManagedObject was already gone before we got it.
+              objectManager.releaseReadOnly(mo);
+            }
+          }
+          fail.set(false);
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    };
+    faulter.setDaemon(true);
+
+    final Thread remover = new Thread("testFaultWithConcurrentRemove-remover") {
+      @Override
+      public void run() {
+        try {
+          for (ObjectID oid : oids) {
+            DGCResultContext dgcResultContext = new DGCResultContext(new ObjectIDSet(Collections.singleton(oid)));
+            barrier.await(5, TimeUnit.SECONDS);
+            objectManager.deleteObjects(dgcResultContext);
+          }
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    };
+    remover.setDaemon(true);
+
+    faulter.start();
+    remover.start();
+
+    // Setup a timeout of 5 minutes so this test doesn't wind up taking forever, both the remover and faulter threads
+    // end up blocking forever if any error occurs, so we need this so we don't wait for 29 minutes if the test fails.
+    Timer watchdog = new Timer();
+    watchdog.schedule(new TimerTask() {
+      @Override
+      public void run() {
+        faulter.interrupt();
+        remover.interrupt();
+      }
+    }, 300 * 1000);
+
+    faulter.join();
+    watchdog.cancel();
+    // Don't wait up for the remover, there's an infinite loop if the faulter thread fails
+    assertFalse(fail.get());
   }
 
   public static class CacheStatsYoungGC implements CacheStats {

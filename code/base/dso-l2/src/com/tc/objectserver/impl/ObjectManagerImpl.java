@@ -683,19 +683,27 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private void removeAllObjectsByID(final Set<ObjectID> toDelete) {
-    this.lock.writeLock().lock();
+    Set<ObjectID> referenced = null;
+    this.lock.readLock().lock();
     try {
       for (final ObjectID id : toDelete) {
-        ManagedObjectReference ref = this.references.remove(id);
-        while (ref != null && ref.isReferenced()) {
-          // This is possible if the cache manager is evicting this *unreachable* object or somehow the admin console is
-          // looking up this object.
-          logger.warn("Reference : " + ref + " was referenced. So waiting to remove !");
-          // reconcile
-          this.references.putIfAbsent(id, ref);
+        ManagedObjectReference ref = this.references.get(id);
+        if (ref != null) {
+          if (markReferenced(ref)) {
+            references.remove(id);
+            unmarkReferenced(ref);
+            makeUnBlocked(id);
 
-          wait(1000, TimeUnit.MILLISECONDS);
-          ref = this.references.remove(id);
+          } else {
+            // This is possible if the cache manager is evicting this *unreachable* object or the admin console is
+            // looking up this object or with eventual consistency another node is looking up/faulting this object.
+            logger.warn("Reference : " + ref + " is referenced by someone. So waiting to remove !");
+            if (referenced == null) {
+              referenced = new ObjectIDSet();
+            }
+            referenced.add(id);
+            continue;
+          }
         }
         this.noReferencesIDStore.clearFromNoReferencesStore(id);
         if (ref != null) {
@@ -705,8 +713,23 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         }
       }
     } finally {
+      this.lock.readLock().unlock();
+    }
+    if (referenced != null) {
+      logger.warn("References : " + referenced + " are referenced by someone. So waiting to remove !");
+      lockAndwait(1000, TimeUnit.MILLISECONDS);
+      removeAllObjectsByID(referenced);
+    }
+  }
+
+  private void lockAndwait(int time, TimeUnit unit) {
+    this.lock.writeLock().lock();
+    try {
+      wait(time, unit);
+    } finally {
       this.lock.writeLock().unlock();
     }
+
   }
 
   public int getCheckedOutCount() {
