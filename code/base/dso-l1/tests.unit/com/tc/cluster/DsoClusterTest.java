@@ -472,7 +472,7 @@ public class DsoClusterTest extends TestCase {
 
     @Override
     public void check() {
-      if (!Thread.currentThread().getName().equals("Out of band notifier")) {
+      if (!Thread.currentThread().getName().contains("Out of band notifier")) {
         error.set(new AssertionError());
       }
     }
