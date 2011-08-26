@@ -125,12 +125,6 @@
       <type>test-jar</type>
       <version>${project.version}</version>
       <scope>test</scope>
-    </dependency>     
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>tctest-xmlbeans</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>hsqldb</groupId>
@@ -138,4 +132,18 @@
       <scope>test</scope>
     </dependency>    
   </dependencies>
+  
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.terracotta.maven.plugins</groupId>
+        <artifactId>toolkit-resolver-plugin</artifactId>
+        <configuration>
+          <additionalClasspathElements>
+            <additionalClasspathElement>${basedir}/src/test/extra/tctest-xmlbeans-generated.jar</additionalClasspathElement>
+          </additionalClasspathElements>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
