@@ -114,9 +114,9 @@
         <version>1.1</version>
       </dependency>
       <dependency>
-        <groupId>commons-io</groupId>
+        <groupId>org.apache.commons</groupId>
         <artifactId>commons-io</artifactId>
-        <version>1.2</version>
+        <version>1.3.2</version>
       </dependency>
       <dependency>
         <groupId>commons-httpclient</groupId>
@@ -259,6 +259,11 @@
         <artifactId>jcommon</artifactId>
         <version>1.0.16</version>
       </dependency>
+      <dependency>
+        <groupId>commons-codec</groupId>
+        <artifactId>commons-codec</artifactId>
+        <version>1.2</version>
+      </dependency>      
 
       <dependency>
         <groupId>hsqldb</groupId>
@@ -384,11 +389,6 @@
         <groupId>org.mockito</groupId>
         <artifactId>mockito-all</artifactId>
         <version>1.8.2</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-codec</groupId>
-        <artifactId>commons-codec</artifactId>
-        <version>1.2</version>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
