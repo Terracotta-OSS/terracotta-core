@@ -120,6 +120,12 @@
     
     <!-- tests dependency -->
     <dependency>
+      <groupId>org.terracotta.test</groupId>
+      <artifactId>tctest-xmlbeans</artifactId>
+      <version>1.0.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>common-api</artifactId>
       <type>test-jar</type>
@@ -133,17 +139,4 @@
     </dependency>    
   </dependencies>
   
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.terracotta.maven.plugins</groupId>
-        <artifactId>toolkit-resolver-plugin</artifactId>
-        <configuration>
-          <additionalClasspathElements>
-            <additionalClasspathElement>${basedir}/src/test/extra/tctest-xmlbeans-generated.jar</additionalClasspathElement>
-          </additionalClasspathElements>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
 </project>

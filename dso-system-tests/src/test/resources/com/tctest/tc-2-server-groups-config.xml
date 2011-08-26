@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<!--
+
+		All content copyright (c) 2003-2008 Terracotta, Inc., except as may
+		otherwise be noted in a separate copyright notice. All rights
+		reserved.
+	-->
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-6.xsd">
+
+	<servers>
+		<server host="localhost" name="server1">
+			<data>server1-data</data>
+			<logs>server1-logs</logs>
+			<statistics>server1-stats</statistics>
+			<dso-port>1310</dso-port>
+			<jmx-port>1320</jmx-port>
+			<l2-group-port>1330</l2-group-port>
+		</server>
+		<server host="localhost" name="server2">
+			<data>server2-data</data>
+			<logs>server2-logs</logs>
+			<statistics>server2-stats</statistics>
+			<dso-port>1311</dso-port>
+			<jmx-port>1321</jmx-port>
+			<l2-group-port>1331</l2-group-port>
+		</server>
+		<mirror-groups>
+			<mirror-group>
+				<members>
+					<member>server1</member>
+				</members>
+			</mirror-group>
+			<mirror-group>
+				<members>
+					<member>server2</member>
+				</members>
+			</mirror-group>
+		</mirror-groups>
+	</servers>
+
+	<system>
+		<configuration-model>development</configuration-model>
+	</system>
+
+	<clients>
+		<logs>client-logs</logs>
+  </clients>
+
+</tc:tc-config>
