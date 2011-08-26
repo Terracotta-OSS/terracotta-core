@@ -29,7 +29,7 @@ public class CheckListTestSuiteBase {
         if (test.startsWith("#") || test.length() == 0) {
           continue;
         }
-        suite.addTestSuite(Class.forName(test));
+        suite.addTestSuite((Class<? extends junit.framework.TestCase>)Class.forName(test));
       }
       return suite;
     } catch (Exception e) {
