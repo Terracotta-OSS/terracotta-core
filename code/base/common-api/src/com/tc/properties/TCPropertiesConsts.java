@@ -462,6 +462,7 @@ public interface TCPropertiesConsts {
 
   public static final String TC_TRANSPORT_HANDSHAKE_TIMEOUT                                  = "tc.transport.handshake.timeout";
   public static final String TC_CONFIG_SOURCEGET_TIMEOUT                                     = "tc.config.getFromSource.timeout";
+  public static final String TC_CONFIG_TOTAL_TIMEOUT                                         = "tc.config.total.timeout";
 
   /*********************************************************************************************************************
    * <code>

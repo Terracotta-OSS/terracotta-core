@@ -51,7 +51,10 @@ import javax.xml.parsers.ParserConfigurationException;
 public class StandardXMLFileConfigurationCreator implements ConfigurationCreator {
 
   private static final TCLogger      consoleLogger                        = CustomerLogging.getConsoleLogger();
-  private static final long          GET_CONFIGURATION_TOTAL_TIMEOUT      = 5 * 60 * 1000;
+  private static final long          GET_CONFIGURATION_TOTAL_TIMEOUT      = TCPropertiesImpl
+                                                                              .getProperties()
+                                                                              .getLong(TCPropertiesConsts.TC_CONFIG_TOTAL_TIMEOUT);
+
   private static final long          MIN_RETRY_TIMEOUT                    = 5 * 1000;
   private static final Pattern       SERVER_PATTERN                       = Pattern.compile("(.*):(.*)",
                                                                                             Pattern.CASE_INSENSITIVE);
@@ -61,8 +64,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   private static final Pattern       URL_PATTERN                          = Pattern.compile("[A-Za-z][A-Za-z]+://.*");
   private static final long          GET_CONFIGURATION_ONE_SOURCE_TIMEOUT = TCPropertiesImpl
                                                                               .getProperties()
-                                                                              .getLong(
-                                                                                       TCPropertiesConsts.TC_CONFIG_SOURCEGET_TIMEOUT,
+                                                                              .getLong(TCPropertiesConsts.TC_CONFIG_SOURCEGET_TIMEOUT,
                                                                                        30000);
 
   private final ConfigurationSpec    configurationSpec;
