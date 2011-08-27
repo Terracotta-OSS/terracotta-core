@@ -46,6 +46,7 @@ import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tc.statistics.retrieval.SigarUtil;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -311,6 +312,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
   // MNK-831
   private int getNetInfoEstablishedConnectionsCount(int bindPort) throws SigarException {
     int establishedConnections = 0;
+    SigarUtil.sigarInit();
     Sigar s = new Sigar();
     NetInfo info = s.getNetInfo();
     NetInterfaceConfig config = s.getNetInterfaceConfig(null);
