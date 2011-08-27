@@ -25,6 +25,7 @@ public class SigarUtil {
 
   static {
     if (SIGAR_ENABLED) {
+      CustomerLogging.getConsoleLogger().warn("SIGAR is enabled. Its use is not recommended in production environment.");
       sigarInit();
     }
   }
@@ -38,8 +39,6 @@ public class SigarUtil {
    * It's for testing purpose, use createSigarIfEnabled() instead
    */
   public static void sigarInit() {
-    CustomerLogging.getConsoleLogger().warn("SIGAR is enabled. Its use is not recommended in production environment.");
-
     // If it's already there, nothing to do (this would be the case with tests run from tcbuild)
     if (isSigarInLibraryPath()) return;
 
