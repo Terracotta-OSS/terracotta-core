@@ -71,6 +71,7 @@
       -Dtc.tests.info.property-files=${tc.tests.info.property-files}
       -Dcom.tc.l1.modules.repositories=${localMavenRepository}
       -Dcom.tc.properties=${tc.system.tests.properties}
+      -Dcom.tc.sigar.enabled=true
       -Dtc.install-root.ignore-checks=true
       -Dcom.sun.management.jmxremote 
       ${surefire.additional-jvm-args}</surefire.argLine>   
