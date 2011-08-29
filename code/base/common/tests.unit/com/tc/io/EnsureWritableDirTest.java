@@ -103,6 +103,12 @@ public class EnsureWritableDirTest extends TCTestCase {
       }
     }
 
+    if (tmpDir.canWrite()) {
+      System.err.println("XXX " + tmpDir.getAbsolutePath()
+                         + " is writable even after read only set. Read test comments.");
+      return;
+    }
+
     final int calls[] = new int[] { 0 };
     boolean result = TCFileUtils.ensureWritableDir(tmpDir, new EnsureWritableDirReporter() {
       public void reportFailedCreate(File dir, Exception e) {
