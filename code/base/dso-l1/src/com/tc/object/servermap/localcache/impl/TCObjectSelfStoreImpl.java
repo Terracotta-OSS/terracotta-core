@@ -230,13 +230,12 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
         }
 
         // some asertions... can be removed?
-        Object object = serverMapLocalCache.getInternalStore().get(valueOid);
         if (localStoreValue.isEventualConsistentValue()) {
           removed = localStoreValue.asEventualValue().getValue();
         } else {
+          Object object = serverMapLocalCache.getInternalStore().get(valueOid);
           if (object != null) {
             if (!(object instanceof TCObjectSelfStoreValue)) {
-              //
               throw new AssertionError("Object mapped by oid is not TCObjectSelfStoreValue, oid: " + valueOid
                                        + ", value: " + object);
             }
