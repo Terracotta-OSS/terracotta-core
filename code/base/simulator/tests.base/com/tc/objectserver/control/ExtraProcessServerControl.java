@@ -38,25 +38,27 @@ import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 
 public class ExtraProcessServerControl extends ServerControlBase {
-  private static final String NOT_DEF            = "";
-  private static final String ERR_STREAM         = "ERR";
-  private static final String OUT_STREAM         = "OUT";
-  private final long          SHUTDOWN_WAIT_TIME = 2 * 60 * 1000;
+  private static final String  DEFAULT_MIN_HEAP   = "-Xms128m";
+  private static final String  DEFAULT_MAX_HEAP   = "-Xmx128m";
+  private static final String  NOT_DEF            = "";
+  private static final String  ERR_STREAM         = "ERR";
+  private static final String  OUT_STREAM         = "OUT";
+  private final long           SHUTDOWN_WAIT_TIME = 2 * 60 * 1000;
 
-  private final String        name;
-  private final boolean       mergeOutput;
+  private final String         name;
+  private final boolean        mergeOutput;
 
-  protected LinkedJavaProcess process;
-  protected File              javaHome;
-  protected final String      configFileLoc;
-  protected final List        jvmArgs;
-  private final File          runningDirectory;
-  private String              serverName;
-  private OutputStream        outStream;
-  private StreamCopier        outCopier;
-  private StreamCopier        errCopier;
-  private final boolean       useIdentifier;
-  private String              stopperOutput;
+  protected LinkedJavaProcess  process;
+  protected File               javaHome;
+  protected final String       configFileLoc;
+  protected final List<String> jvmArgs;
+  private final File           runningDirectory;
+  private String               serverName;
+  private OutputStream         outStream;
+  private StreamCopier         outCopier;
+  private StreamCopier         errCopier;
+  private final boolean        useIdentifier;
+  private String               stopperOutput;
 
   // constructor 1: used by container tests
   public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput) {
@@ -121,12 +123,11 @@ public class ExtraProcessServerControl extends ServerControlBase {
          false);
   }
 
-  private void pruneJVMArgsList(List vmArgs) {
+  private void pruneJVMArgsList(List<String> vmArgs) {
     // Arguments added later in the list have precedence.
     try {
       Map<String, String> map = new HashMap<String, String>();
-      for (Object vmArgObj : vmArgs) {
-        String vmArg = (String) vmArgObj;
+      for (String vmArg : vmArgs) {
         String[] kv = vmArg.split("=");
         if (kv.length == 2) {
           if (map.containsKey(kv[0]) && !map.get(kv[0]).equals(kv[1])) {
@@ -192,6 +193,29 @@ public class ExtraProcessServerControl extends ServerControlBase {
       }
     }
     pruneJVMArgsList(jvmArgs);
+    setDefaultHeapIfUnspecified();
+  }
+
+  private void setDefaultHeapIfUnspecified() {
+    boolean hasMin = false;
+    boolean hasMax = false;
+
+    for (String arg : jvmArgs) {
+      arg = arg.trim();
+      if (arg.startsWith("-Xms")) {
+        hasMin = true;
+      } else if (arg.startsWith("-Xmx")) {
+        hasMax = true;
+      }
+    }
+
+    if (!hasMin) {
+      jvmArgs.add(DEFAULT_MIN_HEAP);
+    }
+
+    if (!hasMax) {
+      jvmArgs.add(DEFAULT_MAX_HEAP);
+    }
   }
 
   protected void addProductKeyIfExists(List args) {
