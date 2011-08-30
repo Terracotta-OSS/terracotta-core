@@ -29,6 +29,7 @@ public class TCObjectSelfImpl implements TCObjectSelf {
   // DO NOT ADD ANY CONSTRUCTORS AS THEY WILL BE SKIPPED WHILE MERGE
 
   public void initializeTCObject(final ObjectID id, final TCClass clazz, final boolean isNewObject) {
+    if (oid != null) { throw new AssertionError("Old oid=" + oid + " id=" + id); }
     oid = id;
     tcClazz = clazz;
     isNew = isNewObject;
@@ -41,7 +42,9 @@ public class TCObjectSelfImpl implements TCObjectSelf {
 
   public void deserialize(ObjectInput in) throws IOException {
     this.version = in.readLong();
-    this.oid = new ObjectID(in.readLong());
+    ObjectID newId = new ObjectID(in.readLong());
+    if (oid != null) { throw new AssertionError("Old oid=" + oid + " id=" + newId); }
+    this.oid = newId;
     // Assuming isNew to be false
     this.isNew = false;
   }
@@ -137,6 +140,22 @@ public class TCObjectSelfImpl implements TCObjectSelf {
         throw new AssertionError();
       } else {
         ta.__tc_setfield(field.getName(), obj);
+      }
+    } catch (final Exception e) {
+      // TODO: More elegant exception handling.
+      throw new com.tc.object.dna.api.DNAException(e);
+    }
+  }
+
+  public void setValueSerialized(String fieldName, Object obj) {
+    try {
+      final TransparentAccess ta = (TransparentAccess) getPeerObject();
+      if (ta == null) { throw new AssertionError(); }
+      if (obj instanceof ObjectID) {
+        // no references should ever be cleared, as no references itself
+        throw new AssertionError();
+      } else {
+        ta.__tc_setfield(fieldName, obj);
       }
     } catch (final Exception e) {
       // TODO: More elegant exception handling.

@@ -253,6 +253,16 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
         // TODO: remove the cast to TCObjectSelf, right now done to appease unit tests
         // to avoid deadlock, do this outside lock
         if (removed instanceof TCObjectSelf) {
+          if (!((TCObjectSelf) removed).getObjectID().equals(valueOid)) { throw new AssertionError(
+                                                                                                   "valueOid "
+                                                                                                       + valueOid
+                                                                                                       + " and "
+                                                                                                       + ((TCObjectSelf) removed)
+                                                                                                           .getObjectID()
+                                                                                                       + " do not match. isEventual="
+                                                                                                       + localStoreValue
+                                                                                                           .isEventualConsistentValue()); }
+
           this.tcObjectSelfRemovedFromStoreCallback.removedTCObjectSelfFromStore((TCObjectSelf) removed);
         }
 
