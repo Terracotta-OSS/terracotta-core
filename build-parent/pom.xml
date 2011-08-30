@@ -768,7 +768,6 @@
       <id>check-short</id>
       <properties>
         <should_skip_tests>false</should_skip_tests>
-        <tc.tests.info.l2.startup.mode>external</tc.tests.info.l2.startup.mode>
       </properties>      
       <build>
         <plugins>
