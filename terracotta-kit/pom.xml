@@ -557,6 +557,13 @@
         <rootDir>${project.build.directory}/${kit.name}</rootDir>
         <eclipse.plugin.version></eclipse.plugin.version>        
       </properties>
+      <dependencies>
+        <dependency>
+          <groupId>org.terracotta.internal</groupId>
+          <artifactId>ui-eclipse</artifactId>
+          <version>${project.version}</version>
+        </dependency>
+      </dependencies>
       <build>
         <plugins>      
           <plugin>

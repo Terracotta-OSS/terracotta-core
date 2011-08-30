@@ -21,19 +21,10 @@
   
   <dependencies>
     <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>dso-l1</artifactId>
+      <groupId>org.terracotta</groupId>
+      <artifactId>terracotta</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>deploy</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.xmlbeans</groupId>
-      <artifactId>xmlbeans</artifactId>
+      <scope>provided</scope>
     </dependency>
     
     <dependency>
@@ -53,14 +44,7 @@
       <artifactId>commands</artifactId>
       <version>3.3.0-I20070605-0010</version>
       <scope>provided</scope>
-    </dependency>
-    <!--dependency>
-      <groupId>org.eclipse.core</groupId>
-      <artifactId>contenttype</artifactId>
-      <version>3.2.100-v20070319</version>
-      <scope>provided</scope>
-    </dependency-->
-    
+    </dependency>   
     <dependency>
       <groupId>org.eclipse.ui</groupId>
       <artifactId>ide</artifactId>
@@ -79,7 +63,6 @@
       <version>3.3.0-v3346</version>
       <scope>provided</scope>
     </dependency>
-
     <dependency>
       <groupId>org.eclipse.ltk.core</groupId>
       <artifactId>refactoring</artifactId>
@@ -92,14 +75,12 @@
       <version>3.3.0-v20070607-0010</version>
       <scope>provided</scope>
     </dependency>
-
     <dependency>
       <groupId>org.eclipse.ui</groupId>
       <artifactId>workbench</artifactId>
       <version>3.3.0-I20070608-1100</version>
       <scope>provided</scope>
     </dependency>
-    
     <dependency>
       <groupId>org.eclipse.jdt</groupId>
       <artifactId>junit</artifactId>
