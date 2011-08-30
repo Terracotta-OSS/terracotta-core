@@ -13,6 +13,7 @@
   
   <groupId>org.terracotta.internal</groupId>
   <artifactId>ui-eclipse</artifactId>
+  <name>ui-eclipse</name>
   <packaging>jar</packaging>
 
   <properties>  
