@@ -22,7 +22,6 @@
   <name>build-data</name>
   
   <properties>
-    <skip.deploy>true</skip.deploy>
     <includeSnapshots>false</includeSnapshots>
     <dataFileUrl>http://www.terracotta.org/download/reflector/releases/tim-get/3/index.xml.gz</dataFileUrl>
     <relativeUrlBase>http://www.terracotta.org/download/reflector/releases</relativeUrlBase>
