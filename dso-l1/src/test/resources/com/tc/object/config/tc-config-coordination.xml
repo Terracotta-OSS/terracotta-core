@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  All content copyright (c) 2003-2008 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved.
+
+-->
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config">
+  <!-- Server is colocated with client and DSO is listening on
+       default port (9510). -->
+  <servers>
+    <server host="%i"/>
+  </servers>
+
+  <!-- Tell DSO where to put the generated client logs.
+       See the Terracotta DSO Guide for additional information. -->
+  <clients>
+    <logs>%(user.home)/terracotta/coordination/client-logs</logs>
+  </clients>
+
+  <application>
+    <dso>
+      <!-- Our app requires these custom objects/classes to be shared - the following declarations
+           tells DSO which ones they are. When the app runs under DSO, instances of these classes
+           will broadcast changes in their state.
+
+           A good idiom when writing an app that you intend to cluster via TC DSO, is to group the 
+           classes you wish to share under a single package (although if you follow the MVC pattern
+           this tends to happen naturally) - this way the list of classes you wish to instrument
+           can be concise -->
+      <instrumented-classes>
+        <include>
+          <class-expression>*..*</class-expression>
+        </include>
+      </instrumented-classes>
+
+      <!-- These methods (originating from local objects) operates on objects declared as shared. This 
+           section tells DSO to assume a lock on those objects for the duration of the call; essentially this
+           section declares that all methods found for all classes found for all packages should assume the 
+           behavior described -->
+      <locks>
+        <autolock>
+          <method-expression>* *..*.*(..)</method-expression>
+        </autolock>
+      </locks>
+
+      <!-- We declare the following fields a root, making it 
+           available for all instances of our app that runs via DSO -->
+      <roots>
+        <root>
+          <field-name>demo.coordination.Main.enterBarrier</field-name>
+        </root>
+        <root>
+          <field-name>demo.coordination.Main.exitBarrier</field-name>
+        </root>
+      </roots>
+    </dso>
+  </application>
+</tc:tc-config>
