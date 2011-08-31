@@ -91,6 +91,7 @@
         <module>../terracotta-l1-ee</module>         
       </modules>        
     </profile>
+  </profiles>
 </project>
 
 
