@@ -91,17 +91,6 @@
         <module>../terracotta-l1-ee</module>         
       </modules>        
     </profile>
-    
-    <!-- activate to compile eclipse plugin modules -->
-    <profile>
-      <id>eclipse-plugin</id>
-      <modules>
-        <module>ui-eclipse</module>
-      </modules>
-    </profile>    
-  </profiles>
-
-
 </project>
 
 
