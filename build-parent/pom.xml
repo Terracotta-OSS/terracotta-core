@@ -536,6 +536,7 @@
                 <goal>toolkit-resolve-test</goal>
               </goals>
               <configuration>
+                <failIfNoTests>false</failIfNoTests>
                 <printSummary>true</printSummary>
                 <reportFormat>plain</reportFormat>
                 <includes>
