@@ -413,7 +413,7 @@
                         <groupId>org.terracotta</groupId>
                         <artifactId>${terracotta.artifactId}</artifactId>
                       </dependency>
-                      <process>Util.processTerracottaJar(project, files.first())
+                      <process>Util.processTerracottaJar(project, files.first(), "${project.properties['rootDir']}/lib")
                                Util.setPermission(project)
                       </process>
                     </resource>                    
@@ -615,7 +615,14 @@
                   <directory>${basedir}/src/packaging/eclipse</directory>
                   <preservePath>true</preservePath>
                 </resource>
-
+                
+                <!-- modules folder -->
+                <resource>
+                  <targetPath>${rootDir}/update/plugins/platform/modules</targetPath>
+                  <directory>${basedir}/src/packaging/opensource/platform/modules</directory>
+                  <preservePath>true</preservePath>
+                </resource>
+                
                 <!-- filtered resource -->
                 <resource>
                   <targetPath>${rootDir}</targetPath>
@@ -639,17 +646,7 @@
                   </dependency>
                   <dependenciesAtM2>true</dependenciesAtM2>
                 </resource>
-                
-                <!-- remove build-data.txt from terracotta jar -->
-                <resource>
-                  <targetPath>${rootDir}/update/plugins/lib</targetPath>
-                  <dependency>
-                    <groupId>org.terracotta</groupId>
-                    <artifactId>${terracotta.artifactId}</artifactId>
-                  </dependency>
-                  <process>{{ ('zip -d ' + files.first() + ' build-data.txt').execute().text }}</process>
-                </resource>
-                
+            
                 <!-- build data -->
                 <resource>
                   <targetPath>${rootDir}/update/plugins/lib/resources</targetPath>
@@ -663,6 +660,20 @@
                   </zipEntries>
                   <unpack>true</unpack>              
                 </resource>
+                
+                <!-- 1. remove build-data.txt from terracotta jar and rename it to tc.jar 
+                     2. set execution permissions for scripts and library files
+                -->
+                <resource>
+                  <targetPath>${rootDir}/update/plugins/lib</targetPath>
+                  <dependency>
+                    <groupId>org.terracotta</groupId>
+                    <artifactId>${terracotta.artifactId}</artifactId>
+                  </dependency>
+                  <process>Util.processTerracottaJar(project, files.first(), "${project.properties['rootDir']}/update/plugins/lib")
+                           Util.setPermission(project)
+                  </process>
+                </resource>                    
                 
                 <!-- create feature jar -->
                 <resource>

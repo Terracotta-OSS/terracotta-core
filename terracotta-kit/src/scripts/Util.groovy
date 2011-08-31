@@ -54,7 +54,9 @@ class Util {
       def bundleClasspath = new StringBuilder()
       def libs = new File(baseDir, "lib").listFiles()
       for (def file : libs) {
-        bundleClasspath.append("lib/").append(file.getName()).append(",")
+        if (file.getName().endsWith(".jar")) {
+          bundleClasspath.append("lib/").append(file.getName()).append(",")
+        }
       }
       if (bundleClasspath.length() > 0) {
         bundleClasspath.deleteCharAt(bundleClasspath.length() - 1)
@@ -66,10 +68,9 @@ class Util {
       }
     }
     
-    static void processTerracottaJar(project, tcJar) {
+    static void processTerracottaJar(project, tcJar, targetDir) {
       ('zip -d ' + tcJar + ' build-data.txt').execute()
-      def rootDir = project.properties['rootDir']
-      rename(tcJar.toString(), rootDir + "/lib/tc.jar")
+      rename(tcJar.toString(), targetDir + "/tc.jar")
     }
     
     static void setPermission(project) {
