@@ -4,6 +4,7 @@
 package com.tc.object.servermap.localcache;
 
 import com.tc.object.ObjectID;
+import com.tc.object.TCObjectSelf;
 import com.tc.object.TCObjectSelfStore;
 import com.tc.object.locks.LockID;
 
@@ -132,7 +133,8 @@ public abstract class AbstractLocalCacheStoreValue implements Externalizable {
 
   @Override
   public String toString() {
-    return "AbstractLocalCacheStoreValue [id=" + id + ", mapID=" + mapID + ", value=" + value + "]";
+    return "AbstractLocalCacheStoreValue [id=" + id + ", mapID=" + mapID + ", value="
+           + (value instanceof TCObjectSelf ? ((TCObjectSelf) value).getObjectID() : value) + "]";
   }
 
   @Override
