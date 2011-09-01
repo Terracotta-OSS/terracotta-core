@@ -25,7 +25,6 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.Banner;
 import com.tc.util.Assert;
-import com.tc.util.runtime.Vm;
 
 import java.lang.reflect.Modifier;
 import java.util.HashSet;
@@ -117,13 +116,15 @@ public class TransparencyClassAdapter extends ClassAdapterBase implements Transp
   @Override
   protected FieldVisitor basicVisitField(int access, final String name, final String desc, final String signature,
                                          final Object value) {
+    boolean wasOriginallyFinal = Modifier.isFinal(access);
+
     try {
       if ((spec.isClassPortable() && spec.isPhysical() && !ByteCodeUtil.isTCSynthetic(name))
           || (spec.isClassAdaptable() && isRoot(access, name))) {
-        if (Vm.isJRockit() && fieldCanBeFlushed(access, name, desc)) {
+        if (fieldCanBeFlushed(access, name, desc)) {
           access &= ~Modifier.FINAL;
         }
-        generateGettersSetters(access, name, desc, Modifier.isStatic(access));
+        generateGettersSetters(access, name, desc, Modifier.isStatic(access), wasOriginallyFinal);
       }
     } catch (RuntimeException e) {
       e.printStackTrace();
@@ -143,7 +144,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase implements Transp
   }
 
   private void generateGettersSetters(final int fieldAccess, final String name, final String desc,
-                                      final boolean isStatic) {
+                                      final boolean isStatic, boolean wasOriginallyFinal) {
     boolean isTransient = getTransparencyClassSpec().isTransient(fieldAccess, spec.getClassInfo(), name);
     // Plain getter and setters are generated for transient fields as other instrumented classes might call them.
     boolean createPlainAccessors = isTransient && !isStatic;
@@ -159,7 +160,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase implements Transp
       createRootGetter(methodAccess, name, desc);
     } else if (createInstrumentedAccessors) {
       if (!ByteCodeUtil.isPrimitive(Type.getType(desc))) {
-        createInstrumentedGetter(methodAccess, fieldAccess, name, desc);
+        createInstrumentedGetter(methodAccess, fieldAccess, name, desc, wasOriginallyFinal);
       } else {
         createPlainGetter(methodAccess, fieldAccess, name, desc);
       }
@@ -768,10 +769,10 @@ public class TransparencyClassAdapter extends ClassAdapterBase implements Transp
   }
 
   private void createInstrumentedGetter(final int methodAccess, final int fieldAccess, final String name,
-                                        final String desc) {
+                                        final String desc, boolean wasOriginallyFinal) {
     Assert.eval(!getTransparencyClassSpec().isLogical());
     MethodVisitor gv = this.visitMethod(methodAccess, ByteCodeUtil.fieldGetterMethod(name), "()" + desc, null, null);
-    if (useFastFinalFields && Modifier.isFinal(fieldAccess)) {
+    if (useFastFinalFields && wasOriginallyFinal) {
       createInstrumentedFinalGetter(gv, fieldAccess, name, desc);
     } else {
       createInstrumentedNonFinalGetter(gv, fieldAccess, name, desc);
