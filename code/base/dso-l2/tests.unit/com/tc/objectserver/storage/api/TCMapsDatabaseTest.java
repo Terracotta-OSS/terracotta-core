@@ -21,7 +21,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
 
@@ -42,7 +41,7 @@ public class TCMapsDatabaseTest extends TCTestCase {
     this.dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
     this.dbHome.mkdir();
 
-    this.dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, this.dbHome, null, false);
+    this.dbenv = DBFactory.getInstance().createEnvironment(true, this.dbHome, null, false);
     this.dbenv.open();
 
     this.ptp = this.dbenv.getPersistenceTransactionProvider();

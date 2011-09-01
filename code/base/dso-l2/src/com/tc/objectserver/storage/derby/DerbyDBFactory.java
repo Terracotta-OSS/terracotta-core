@@ -16,7 +16,7 @@ import java.util.Properties;
 
 import javax.management.NotCompliantMBeanException;
 
-public class DerbyDBFactory implements DBFactory {
+public class DerbyDBFactory extends DBFactory {
   private final Properties properties;
 
   public DerbyDBFactory(final TCProperties l2Properties) {

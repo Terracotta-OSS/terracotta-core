@@ -20,15 +20,11 @@ import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.DBEnvironment;
 import com.tc.objectserver.storage.api.DBFactory;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
-import com.tc.properties.TCProperties;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -46,7 +42,8 @@ public class DBPerf {
   private int                            noWorkers = 4;
 
   public DBPerf(File envHome, boolean paranoid) throws IOException, TCDatabaseException {
-    dbEnvironment = getDBFactory().createEnvironment(paranoid, envHome, SampledCounter.NULL_SAMPLED_COUNTER, false);
+    dbEnvironment = DBFactory.getInstance().createEnvironment(paranoid, envHome, SampledCounter.NULL_SAMPLED_COUNTER,
+                                                              false);
     dbEnvironment.open();
     objectDBTester = new TCLongToBytesDatabaseTester(dbEnvironment.getObjectDatabase());
     mapsDBTester = new TCMapsDatabaseTester(dbEnvironment.getMapsDatabase());
@@ -64,19 +61,6 @@ public class DBPerf {
 
   public void setWorkers(int workers) {
     this.noWorkers = workers;
-  }
-
-  private DBFactory getDBFactory() {
-    String factoryName = TCPropertiesImpl.getProperties().getProperty(TCPropertiesConsts.L2_DB_FACTORY_NAME);
-    DBFactory dbFactory = null;
-    try {
-      Class dbClass = Class.forName(factoryName);
-      Constructor<DBFactory> constructor = dbClass.getConstructor(TCProperties.class);
-      dbFactory = constructor.newInstance(TCPropertiesImpl.getProperties().getPropertiesFor("l2"));
-    } catch (Exception e) {
-      logger.error("Failed to create db factory of class: " + factoryName, e);
-    }
-    return dbFactory;
   }
 
   public void runDBPerf() throws InterruptedException, EvalError {

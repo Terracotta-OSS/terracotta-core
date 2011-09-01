@@ -15,10 +15,9 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
-import java.util.Map.Entry;
 
 public class TCRootDatabaseTest extends TCTestCase {
   private final Random                   random = new Random();
@@ -36,7 +35,7 @@ public class TCRootDatabaseTest extends TCTestCase {
     dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
     dbHome.mkdir();
 
-    dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, dbHome, null, false);
+    dbenv = DBFactory.getInstance().createEnvironment(true, dbHome, null, false);
     dbenv.open();
 
     ptp = dbenv.getPersistenceTransactionProvider();

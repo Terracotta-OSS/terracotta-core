@@ -4,145 +4,109 @@
  */
 package com.tc.objectserver.persistence.db;
 
-import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
-
-import com.sleepycat.je.DatabaseConfig;
-import com.sleepycat.je.EnvironmentConfig;
 import com.tc.net.ClientID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
+import com.tc.objectserver.persistence.api.TransactionPersistor;
+import com.tc.objectserver.storage.api.DBEnvironment;
+import com.tc.objectserver.storage.api.DBFactory;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
-import com.tc.objectserver.storage.berkeleydb.BerkeleyDBPersistenceTransactionProvider;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
+import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.test.TCTestCase;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 public class TransactionPersistorTest extends TCTestCase {
 
-  private File              envHome;
-  private EnvironmentConfig ecfg;
-  private DatabaseConfig    dbcfg;
-  private static int        count = 0;
-
-  public TransactionPersistorTest() {
-    super();
-    if (!TCPropertiesImpl.getProperties().getProperty(TCPropertiesConsts.L2_DB_FACTORY_NAME)
-        .endsWith("BerkeleyDBFactory")) {
-      // This test is trying some functionality that's specific to BerkeleyDB, disable if we're not
-      // running with BerkeleyDB
-      disableAllUntil(new Date(Long.MAX_VALUE));
-    }
-  }
+  private DBEnvironment                  dbEnv;
+  private PersistenceTransactionProvider ptp;
+  private TransactionPersistor           transactionPersistor;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ecfg = new EnvironmentConfig();
-    ecfg.setAllowCreate(true);
-    ecfg.setReadOnly(false);
-    ecfg.setTransactional(true);
-
-    dbcfg = new DatabaseConfig();
-    dbcfg.setAllowCreate(true);
-    dbcfg.setReadOnly(false);
-    dbcfg.setTransactional(true);
+    File envHome = null;
+    int count = 0;
     while ((envHome = new File(this.getTempDirectory(), ++count + "")).exists()) {
       //
     }
-    System.out.println("DB home: " + envHome);
+    dbEnv = DBFactory.getInstance().createEnvironment(true, envHome);
+    assertTrue(dbEnv.open());
+    ptp = dbEnv.getPersistenceTransactionProvider();
+    transactionPersistor = new TransactionPersistorImpl(dbEnv.getTransactionDatabase(), ptp);
   }
 
-  private BerkeleyDBEnvironment newEnv(boolean paranoid) throws IOException {
-    return newEnv(new HashMap(), new ArrayList(), paranoid);
+  public void testSave() throws Exception {
+    assertEquals(0, transactionPersistor.loadAllGlobalTransactionDescriptors().size());
+
+    Set<GlobalTransactionDescriptor> expectedGTDs = new HashSet<GlobalTransactionDescriptor>();
+    PersistenceTransaction tx = ptp.newTransaction();
+    for (int i = 0; i < 100; i++) {
+      GlobalTransactionDescriptor gtd = createGlobalTransactionDescriptor(0, i, i);
+      transactionPersistor.saveGlobalTransactionDescriptor(tx, gtd);
+      expectedGTDs.add(gtd);
+    }
+    tx.commit();
+
+    Collection<GlobalTransactionDescriptor> gtds = transactionPersistor.loadAllGlobalTransactionDescriptors();
+    assertEquals(expectedGTDs.size(), gtds.size());
+    assertTrue(gtds.containsAll(expectedGTDs));
   }
 
-  private BerkeleyDBEnvironment newEnv(Map map, List list, boolean paranoid) throws IOException {
-    return new BerkeleyDBEnvironment(map, list, paranoid, envHome, ecfg, dbcfg);
+  public void testDelete() throws Exception {
+    assertEquals(0, transactionPersistor.loadAllGlobalTransactionDescriptors().size());
+
+    List<GlobalTransactionDescriptor> expectedGTDs = new ArrayList<GlobalTransactionDescriptor>();
+    PersistenceTransaction tx = ptp.newTransaction();
+    for (int i = 0; i < 100; i++) {
+      GlobalTransactionDescriptor gtd = createGlobalTransactionDescriptor(0, i, i);
+      transactionPersistor.saveGlobalTransactionDescriptor(tx, gtd);
+      expectedGTDs.add(gtd);
+    }
+    tx.commit();
+
+    int toDelete = 20;
+    SortedSet<GlobalTransactionID> gtdsToDelete = new TreeSet<GlobalTransactionID>();
+    for (int i = 0; i < toDelete; i++) {
+      gtdsToDelete.add(expectedGTDs.remove(0).getGlobalTransactionID());
+    }
+    tx = ptp.newTransaction();
+    transactionPersistor.deleteAllGlobalTransactionDescriptors(tx, gtdsToDelete);
+    tx.commit();
+
+    Collection<GlobalTransactionDescriptor> gtds = transactionPersistor.loadAllGlobalTransactionDescriptors();
+    assertEquals(expectedGTDs.size(), gtds.size());
+    assertTrue(gtds.containsAll(expectedGTDs));
+
+    SortedSet<GlobalTransactionID> remainingGTDs = new TreeSet<GlobalTransactionID>();
+    for (GlobalTransactionDescriptor gtd : expectedGTDs) {
+      remainingGTDs.add(gtd.getGlobalTransactionID());
+    }
+    tx = ptp.newTransaction();
+    transactionPersistor.deleteAllGlobalTransactionDescriptors(tx, remainingGTDs);
+    tx.commit();
+    assertEquals(0, transactionPersistor.loadAllGlobalTransactionDescriptors().size());
   }
 
-  /**
-   * This test was written just so that I can understand sleepycat behavior under various conditions. Things that I
-   * noticed are 1) If save happens before delete, delete doesnt go thru until save is committed. (record level lock) 2)
-   * If commit doesnt happen with the default(500ms) time sleepcat throws a deadlock exception.
-   */
-  public void testSimultaneousSaveAndDeletes() throws Exception {
-    BerkeleyDBEnvironment env = newEnv(true);
-    assertTrue(env.open());
-    final BerkeleyDBPersistenceTransactionProvider persistenceTransactionProvider = new BerkeleyDBPersistenceTransactionProvider(
-                                                                                                                                 env.getEnvironment());
-    final TransactionPersistorImpl tpl = new TransactionPersistorImpl(env.getTransactionDatabase(),
-                                                                      persistenceTransactionProvider);
-    final ServerTransactionID sid = new ServerTransactionID(new ClientID(9), new TransactionID(10));
-    final GlobalTransactionDescriptor gtd = new GlobalTransactionDescriptor(sid, new GlobalTransactionID(909));
-    final CyclicBarrier cb = new CyclicBarrier(2);
-    final Exception ex[] = new Exception[2];
-
-    Thread t1 = new Thread() {
-      @Override
-      public void run() {
-        try {
-          Collection gdts = tpl.loadAllGlobalTransactionDescriptors();
-          assertEquals(0, gdts.size());
-          PersistenceTransaction pt = persistenceTransactionProvider.newTransaction();
-          tpl.saveGlobalTransactionDescriptor(pt, gtd);
-          System.err.println("T1 : save done.");
-          cb.barrier();
-          pt.commit();
-          System.err.println("T1 : save commit done.");
-          gdts = tpl.loadAllGlobalTransactionDescriptors();
-          assertEquals(0, gdts.size());
-        } catch (Exception e) {
-          e.printStackTrace();
-          ex[0] = e;
-        }
-      }
-    };
-
-    Thread t2 = new Thread() {
-      @Override
-      public void run() {
-        try {
-          PersistenceTransaction pt = persistenceTransactionProvider.newTransaction();
-          SortedSet ss = new TreeSet();
-          ss.add(gtd.getGlobalTransactionID());
-          cb.barrier();
-          tpl.deleteAllGlobalTransactionDescriptors(pt, ss);
-          System.err.println("T2 : Delete done");
-          pt.commit();
-          System.err.println("T2 : Delete commit done");
-        } catch (Exception e) {
-          e.printStackTrace();
-          ex[1] = e;
-        }
-      }
-    };
-
-    t1.start();
-    t2.start();
-
-    t1.join();
-    t2.join();
-    if (ex[0] != null) throw ex[0];
-    if (ex[1] != null) throw ex[1];
+  private GlobalTransactionDescriptor createGlobalTransactionDescriptor(long clientId, long transactionId,
+                                                                        long globalTransactionId) {
+    return new GlobalTransactionDescriptor(new ServerTransactionID(new ClientID(clientId),
+                                                                   new TransactionID(transactionId)),
+                                           new GlobalTransactionID(globalTransactionId));
   }
 
   @Override
   protected void tearDown() throws Exception {
+    dbEnv.close();
     super.tearDown();
   }
-
 }

@@ -16,22 +16,25 @@ import java.util.Properties;
 
 import javax.management.NotCompliantMBeanException;
 
-public class BerkeleyDBFactory implements DBFactory {
+public class BerkeleyDBFactory extends DBFactory {
   private final Properties properties;
 
   public BerkeleyDBFactory(final TCProperties l2Properties) {
     this.properties = l2Properties.getPropertiesFor("berkeleydb").addAllPropertiesTo(new Properties());
   }
 
+  @Override
   public DBEnvironment createEnvironment(boolean paranoid, File envHome, SampledCounter l2FaultFromDisk,
                                          boolean offheapEnabled) throws IOException {
     return new BerkeleyDBEnvironment(paranoid, envHome, properties, l2FaultFromDisk, offheapEnabled);
   }
 
+  @Override
   public DBEnvironment createEnvironment(boolean paranoid, File envHome) throws IOException {
     return new BerkeleyDBEnvironment(paranoid, envHome);
   }
 
+  @Override
   public ServerDBBackupMBean getServerDBBackupMBean(final L2ConfigurationSetupManager configurationSetupManager)
       throws NotCompliantMBeanException {
     return new BerkeleyServerDBBackup(configurationSetupManager);

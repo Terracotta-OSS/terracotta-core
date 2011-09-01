@@ -29,11 +29,11 @@ class TransactionPersistorImpl extends DBPersistorBase implements TransactionPer
     this.ptp = ptp;
   }
 
-  public Collection loadAllGlobalTransactionDescriptors() {
+  public Collection<GlobalTransactionDescriptor> loadAllGlobalTransactionDescriptors() {
     TCDatabaseCursor<Long, byte[]> cursor = null;
     PersistenceTransaction tx = null;
     try {
-      Collection rv = new HashSet();
+      Collection<GlobalTransactionDescriptor> rv = new HashSet<GlobalTransactionDescriptor>();
       tx = ptp.newTransaction();
       cursor = this.db.openCursor(tx);
       while (cursor.hasNext()) {

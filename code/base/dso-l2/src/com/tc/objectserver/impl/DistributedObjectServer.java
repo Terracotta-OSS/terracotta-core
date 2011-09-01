@@ -332,7 +332,6 @@ import com.terracottatech.config.PersistenceMode;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.ArrayList;
@@ -532,7 +531,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     final Offheap offHeapConfig = l2DSOConfig.offHeapConfig();
 
-    final DBFactory dbFactory = getDBFactory();
+    final DBFactory dbFactory = DBFactory.getInstance();
 
     // start the JMX server
     try {
@@ -1254,20 +1253,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       startL1Listener();
     }
     setLoggerOnExit();
-  }
-
-  private DBFactory getDBFactory() {
-    String factoryName = TCPropertiesImpl.getProperties().getProperty(TCPropertiesConsts.L2_DB_FACTORY_NAME);
-    DBFactory dbFactory = null;
-    try {
-      Class dbClass = Class.forName(factoryName);
-      Constructor<DBFactory> constructor = dbClass.getConstructor(TCProperties.class);
-      dbFactory = constructor.newInstance(this.l2Properties);
-    } catch (Exception e) {
-      consoleLogger.warn("Unable to create db class:" + factoryName, e);
-      System.exit(1);
-    }
-    return dbFactory;
   }
 
   protected StateSyncManager createStateSyncManager(IndexHACoordinator coordinator) {

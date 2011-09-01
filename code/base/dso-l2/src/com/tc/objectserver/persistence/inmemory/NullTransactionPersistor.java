@@ -15,7 +15,7 @@ import java.util.SortedSet;
 
 public class NullTransactionPersistor implements TransactionPersistor {
 
-  public Collection loadAllGlobalTransactionDescriptors() {
+  public Collection<GlobalTransactionDescriptor> loadAllGlobalTransactionDescriptors() {
     return Collections.EMPTY_SET;
   }
 

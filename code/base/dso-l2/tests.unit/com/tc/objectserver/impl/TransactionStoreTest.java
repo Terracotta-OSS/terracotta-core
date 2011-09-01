@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -259,7 +258,9 @@ public class TransactionStoreTest extends TCTestCase {
     persistor = new TestTransactionPersistor();
     for (int i = initialMin; i < initialMax; i++) {
       ServerTransactionID stxid = new ServerTransactionID(new ClientID(i % 2), new TransactionID(i));
-      persistor.persisted.put(stxid, new GlobalTransactionDescriptor(stxid, new GlobalTransactionID(persistor.next())));
+      GlobalTransactionDescriptor gtx = new GlobalTransactionDescriptor(stxid,
+                                                                        new GlobalTransactionID(persistor.next()));
+      persistor.persisted.put(gtx.getGlobalTransactionID(), gtx);
     }
     store = new TransactionStoreImpl(persistor, persistor);
     GlobalTransactionID lowmk1 = store.getLeastGlobalTransactionID();
@@ -294,7 +295,9 @@ public class TransactionStoreTest extends TCTestCase {
     persistor = new TestTransactionPersistor();
     for (int i = initialMin; i < initialMax; i++) {
       ServerTransactionID stxid = new ServerTransactionID(new ClientID(i), new TransactionID(i));
-      persistor.persisted.put(stxid, new GlobalTransactionDescriptor(stxid, new GlobalTransactionID(persistor.next())));
+      GlobalTransactionDescriptor gtx = new GlobalTransactionDescriptor(stxid,
+                                                                        new GlobalTransactionID(persistor.next()));
+      persistor.persisted.put(gtx.getGlobalTransactionID(), gtx);
     }
     store = new TransactionStoreImpl(persistor, persistor);
 
@@ -378,19 +381,18 @@ public class TransactionStoreTest extends TCTestCase {
 
   private static final class TestTransactionPersistor implements TransactionPersistor, Sequence {
 
-    public final NoExceptionLinkedQueue deleteQueue = new NoExceptionLinkedQueue();
-    public final LinkedHashMap          persisted   = new LinkedHashMap();
-    public final NoExceptionLinkedQueue storeQueue  = new NoExceptionLinkedQueue();
-    public long                         sequence    = 0;
+    public final NoExceptionLinkedQueue                                          deleteQueue = new NoExceptionLinkedQueue();
+    public final LinkedHashMap<GlobalTransactionID, GlobalTransactionDescriptor> persisted   = new LinkedHashMap<GlobalTransactionID, GlobalTransactionDescriptor>();
+    public final NoExceptionLinkedQueue                                          storeQueue  = new NoExceptionLinkedQueue();
+    public long                                                                  sequence    = 0;
 
-    public Collection loadAllGlobalTransactionDescriptors() {
+    public Collection<GlobalTransactionDescriptor> loadAllGlobalTransactionDescriptors() {
       return getNewGlobalTransactionDescs(persisted.values());
     }
 
-    private Collection getNewGlobalTransactionDescs(Collection c) {
-      Collection newList = new ArrayList(c.size());
-      for (Iterator i = c.iterator(); i.hasNext();) {
-        GlobalTransactionDescriptor oldGD = (GlobalTransactionDescriptor) i.next();
+    private Collection<GlobalTransactionDescriptor> getNewGlobalTransactionDescs(Collection<GlobalTransactionDescriptor> c) {
+      Collection<GlobalTransactionDescriptor> newList = new ArrayList<GlobalTransactionDescriptor>(c.size());
+      for (GlobalTransactionDescriptor oldGD : c) {
         newList.add(new GlobalTransactionDescriptor(oldGD.getServerTransactionID(), oldGD.getGlobalTransactionID()));
       }
       return newList;

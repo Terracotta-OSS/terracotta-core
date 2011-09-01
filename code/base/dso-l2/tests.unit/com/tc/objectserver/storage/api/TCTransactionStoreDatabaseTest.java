@@ -10,7 +10,6 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Random;
 
 public class TCTransactionStoreDatabaseTest extends TCTestCase {
@@ -29,7 +28,7 @@ public class TCTransactionStoreDatabaseTest extends TCTestCase {
     dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
     dbHome.mkdir();
 
-    dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, dbHome, null, false);
+    dbenv = DBFactory.getInstance().createEnvironment(true, dbHome, null, false);
     dbenv.open();
 
     ptp = dbenv.getPersistenceTransactionProvider();

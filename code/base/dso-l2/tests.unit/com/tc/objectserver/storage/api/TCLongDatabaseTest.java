@@ -11,7 +11,6 @@ import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 
 import java.io.File;
-import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -30,7 +29,7 @@ public class TCLongDatabaseTest extends TCTestCase {
     dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
     dbHome.mkdir();
 
-    dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, dbHome, null, false);
+    dbenv = DBFactory.getInstance().createEnvironment(true, dbHome, null, false);
     dbenv.open();
 
     ptp = dbenv.getPersistenceTransactionProvider();

@@ -13,7 +13,6 @@ import com.tc.util.Assert;
 import gnu.trove.TLongObjectHashMap;
 
 import java.io.File;
-import java.util.Properties;
 
 public class TCLongToStringDatabaseTest extends TCTestCase {
   private File                           dbHome;
@@ -30,7 +29,7 @@ public class TCLongToStringDatabaseTest extends TCTestCase {
     dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
     dbHome.mkdir();
 
-    dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, dbHome, null, false);
+    dbenv = DBFactory.getInstance().createEnvironment(true, dbHome, null, false);
     dbenv.open();
 
     ptp = dbenv.getPersistenceTransactionProvider();

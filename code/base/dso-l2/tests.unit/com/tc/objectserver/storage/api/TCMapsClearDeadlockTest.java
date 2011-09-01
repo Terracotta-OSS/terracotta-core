@@ -9,7 +9,6 @@ import com.tc.objectserver.persistence.db.TCCollectionsSerializerImpl;
 import com.tc.test.TCTestCase;
 
 import java.io.File;
-import java.util.Properties;
 import java.util.concurrent.CyclicBarrier;
 
 public class TCMapsClearDeadlockTest extends TCTestCase {
@@ -30,7 +29,7 @@ public class TCMapsClearDeadlockTest extends TCTestCase {
     this.dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
     this.dbHome.mkdir();
 
-    this.dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, this.dbHome, null, false);
+    this.dbenv = DBFactory.getInstance().createEnvironment(true, this.dbHome, null, false);
     this.dbenv.open();
 
     this.ptp = this.dbenv.getPersistenceTransactionProvider();

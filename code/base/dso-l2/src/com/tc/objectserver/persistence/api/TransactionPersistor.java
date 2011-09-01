@@ -13,7 +13,7 @@ import java.util.SortedSet;
 
 public interface TransactionPersistor {
 
-  public Collection loadAllGlobalTransactionDescriptors();
+  public Collection<GlobalTransactionDescriptor> loadAllGlobalTransactionDescriptors();
 
   public void saveGlobalTransactionDescriptor(PersistenceTransaction tx, GlobalTransactionDescriptor gtx);
 

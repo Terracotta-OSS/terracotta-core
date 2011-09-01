@@ -12,7 +12,6 @@ import com.tc.util.Assert;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Properties;
 import java.util.Random;
 
 public class TCLongToBytesDatabaseTest extends TCTestCase {
@@ -31,7 +30,7 @@ public class TCLongToBytesDatabaseTest extends TCTestCase {
     dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
     dbHome.mkdir();
 
-    dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, dbHome, null, false);
+    dbenv = DBFactory.getInstance().createEnvironment(true, dbHome, null, false);
     dbenv.open();
 
     ptp = dbenv.getPersistenceTransactionProvider();
