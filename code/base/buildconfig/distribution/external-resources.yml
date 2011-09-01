@@ -188,7 +188,7 @@ artifacts:
     destination: quartz
     explode: true
     remove_root_folder: true
-    url: http://download.terracotta.org/nightly/quartz/quartz-2.0.3-SNAPSHOT.tar.gz
+    url: http://download.terracotta.org/nightly/quartz/quartz-2.1.0-SNAPSHOT.tar.gz
     post_actions:
       - kit_edition: enterprise
         ant: replace
@@ -200,11 +200,6 @@ artifacts:
         
 # end QUARTZ
 
-  - maven_artifact: false
-    name: terracotta-license.key
-    destination: .
-    url: http://kong/output/cage/terracotta-license.key
-    kit_edition: enterprise 
 
 # begin express products
   - maven_artifact: true
