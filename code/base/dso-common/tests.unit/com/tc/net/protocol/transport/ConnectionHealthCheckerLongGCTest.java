@@ -41,6 +41,7 @@ import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
 import com.tc.properties.L1ReconnectConfigImpl;
+import com.tc.statistics.retrieval.SigarUtil;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
@@ -311,6 +312,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
   // MNK-831
   private int getNetInfoEstablishedConnectionsCount(int bindPort) throws SigarException {
     int establishedConnections = 0;
+    SigarUtil.sigarInit();
     Sigar s = new Sigar();
     NetInfo info = s.getNetInfo();
     NetInterfaceConfig config = s.getNetInterfaceConfig(null);

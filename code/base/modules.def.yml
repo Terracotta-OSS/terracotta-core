@@ -57,6 +57,14 @@ modules:
         - common-api
         - dso-statistics-api
         - tim-api
+  - sigarstats:
+      options:
+        jdk: J2SE-1.5
+      dependencies:
+        - common
+        - common-api
+        - dso-statistics-api
+        - tim-api        
   - dso-common:
       options:
         jdk: J2SE-1.5
@@ -120,14 +128,6 @@ modules:
         - dso-l2-common
         - dso-statistics-api
         - management-api
-        - tim-api
-  - sigarstats:
-      options:
-        jdk: J2SE-1.5
-      dependencies:
-        - common
-        - common-api
-        - dso-statistics-api
         - tim-api
   - dso-statistics:
       options:
