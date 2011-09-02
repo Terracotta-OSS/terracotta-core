@@ -1473,7 +1473,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       this.transactionManager.callBackOnResentTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
         public void onCompletion() {
           logger.info("Performing a DGC to cleanup objects missed by inline-dgc.");
-          garbageCollectionManager.scheduleGarbageCollection(GCType.FULL_GC);
+          garbageCollectionManager.scheduleGarbageCollection(GCType.QUIET_FULL_GC);
         }
       });
     }

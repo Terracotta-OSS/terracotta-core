@@ -79,18 +79,18 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
   }
 
   public void testEmptyRoots() {
-    Set toDelete = this.collector.collect(new FullGCHook(this.collector, this.objectManager, this.stateManager),
-                                          this.filter, this.objectManager.getRootIDs(), this.objectManager
-                                              .getAllObjectIDs());
+    Set toDelete = this.collector.collect(new FullGCHook(this.collector, this.objectManager, this.stateManager, false),
+                                          this.filter, this.objectManager.getRootIDs(),
+                                          this.objectManager.getAllObjectIDs());
     assertTrue(toDelete.size() == 0);
   }
 
   public void testOneLevelNoGarbage() {
     TestManagedObject tmo = createObject(3);
     this.root1.setReference(0, tmo.getID());
-    Set toDelete = this.collector.collect(new FullGCHook(this.collector, this.objectManager, this.stateManager),
-                                          this.filter, this.objectManager.getRootIDs(), this.objectManager
-                                              .getAllObjectIDs());
+    Set toDelete = this.collector.collect(new FullGCHook(this.collector, this.objectManager, this.stateManager, false),
+                                          this.filter, this.objectManager.getRootIDs(),
+                                          this.objectManager.getAllObjectIDs());
     assertTrue(toDelete.size() == 0);
   }
 
@@ -98,9 +98,9 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     TestManagedObject tmo = createObject(3);
     this.root1.setReference(0, tmo.getID());
     this.root2.setReference(0, tmo.getID());
-    Set toDelete = this.collector.collect(new FullGCHook(this.collector, this.objectManager, this.stateManager),
-                                          this.filter, this.objectManager.getRootIDs(), this.objectManager
-                                              .getAllObjectIDs());
+    Set toDelete = this.collector.collect(new FullGCHook(this.collector, this.objectManager, this.stateManager, false),
+                                          this.filter, this.objectManager.getRootIDs(),
+                                          this.objectManager.getAllObjectIDs());
     assertTrue(toDelete.size() == 0);
   }
 
@@ -112,9 +112,9 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
 
     this.root1.setReference(0, tmo1.getID());
 
-    Set toDelete = this.collector.collect(new FullGCHook(this.collector, this.objectManager, this.stateManager),
-                                          this.filter, this.objectManager.getRootIDs(), this.objectManager
-                                              .getAllObjectIDs());
+    Set toDelete = this.collector.collect(new FullGCHook(this.collector, this.objectManager, this.stateManager, false),
+                                          this.filter, this.objectManager.getRootIDs(),
+                                          this.objectManager.getAllObjectIDs());
     assertTrue(toDelete.size() == 0);
   }
 
@@ -128,9 +128,9 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
 
     this.root1.setReference(0, tmo1.getID());
 
-    Set toDelete = this.collector.collect(new FullGCHook(this.collector, this.objectManager, this.stateManager),
-                                          this.filter, this.objectManager.getRootIDs(), this.objectManager
-                                              .getAllObjectIDs());
+    Set toDelete = this.collector.collect(new FullGCHook(this.collector, this.objectManager, this.stateManager, false),
+                                          this.filter, this.objectManager.getRootIDs(),
+                                          this.objectManager.getAllObjectIDs());
     assertTrue(toDelete.size() == 1);
   }
 
@@ -156,14 +156,14 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     };
 
     // make sure that the filter filters out the sub-graph starting at the reference to tmo2.
-    this.collector.collect(new FullGCHook(this.collector, this.objectManager, this.stateManager), testFilter,
+    this.collector.collect(new FullGCHook(this.collector, this.objectManager, this.stateManager, false), testFilter,
                            this.objectManager.getRootIDs(), this.objectManager.getAllObjectIDs());
     assertTrue(this.lookedUp.contains(tmo1.getID()));
     assertFalse(this.lookedUp.contains(tmo2.getID()));
     assertFalse(this.lookedUp.contains(tmo3.getID()));
 
     // try it with the regular filter to make sure the behavior is actually different.
-    this.collector.collect(new FullGCHook(this.collector, this.objectManager, this.stateManager), this.filter,
+    this.collector.collect(new FullGCHook(this.collector, this.objectManager, this.stateManager, false), this.filter,
                            this.objectManager.getRootIDs(), this.objectManager.getAllObjectIDs());
     assertTrue(this.lookedUp.contains(tmo1.getID()));
     assertTrue(this.lookedUp.contains(tmo2.getID()));
@@ -182,7 +182,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
 
     this.root1.setReference(0, tmo1.getID());
 
-    this.collector.collect(new FullGCHook(this.collector, this.objectManager, this.stateManager), this.filter,
+    this.collector.collect(new FullGCHook(this.collector, this.objectManager, this.stateManager, false), this.filter,
                            this.objectManager.getRootIDs(), this.objectManager.getAllObjectIDs());
     assertTrue(this.lookedUp.equals(this.released));
   }

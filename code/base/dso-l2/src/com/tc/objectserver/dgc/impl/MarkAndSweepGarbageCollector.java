@@ -55,10 +55,13 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
     GCHook hook = null;
     switch (type) {
       case FULL_GC:
-        hook = new FullGCHook(this, this.objectManager, this.stateManager);
+        hook = new FullGCHook(this, this.objectManager, this.stateManager, false);
+        break;
+      case QUIET_FULL_GC:
+        hook = new FullGCHook(this, this.objectManager, this.stateManager, true);
         break;
       case YOUNG_GEN_GC:
-        hook = new YoungGCHook(this, this.objectManager, this.stateManager, this.youngGenReferenceCollector);
+        hook = new YoungGCHook(this, this.objectManager, this.stateManager, this.youngGenReferenceCollector, false);
         break;
     }
     final MarkAndSweepGCAlgorithm gcAlgo = new MarkAndSweepGCAlgorithm(this, hook, this.gcPublisher, this.gcState,
