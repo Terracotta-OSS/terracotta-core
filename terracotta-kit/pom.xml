@@ -73,6 +73,15 @@
       <scope>provided</scope>
     </dependency>       
     
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>tcconfig</artifactId>
+      <classifier>docflex</classifier>
+      <version>${project.version}</version>
+      <type>zip</type>
+      <scope>provided</scope>
+    </dependency>
+    
     <!-- ehcache -->
     <dependency>
       <groupId>net.sf.ehcache</groupId>
@@ -129,45 +138,7 @@
   </dependencies>
       
   <build>
-    <plugins>
-      <!-- generate schema -->
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>1.2</version>
-          <executions>
-            <execution>
-              <id>generate-schema</id>
-              <phase>prepare-package</phase>
-              <goals>
-                <goal>exec</goal>
-              </goals>
-              <configuration>
-                <skip>${skip.schema}</skip>
-                <executable>${java.home}/bin/java</executable>
-                <arguments>
-                  <argument>-Xmx512m</argument>
-                  <argument>-cp</argument>
-                  <argument>${env.DOCFLEX_HOME}/lib/docflex-xml-re.jar${path.separator}${env.DOCFLEX_HOME}/lib/resolver.jar${path.separator}${env.DOCFLEX_HOME}/lib/xercesImpl.jar${path.separator}${env.DOCFLEX_HOME}/lib/xml-apis.jar</argument>
-                  <argument>com.docflex.xml.Generator</argument>
-                  <argument>-template</argument>
-                  <argument>${env.DOCFLEX_HOME}/templates/XSDDoc/FramedDoc.tpl</argument>
-                  <argument>-format</argument>
-                  <argument>HTML</argument>
-                  <argument>-p:docTitle=\"Terracotta Configuration Schema Version ${schema.version}\"</argument>
-                  <argument>-d</argument>
-                  <argument>${project.build.directory}/schema</argument>
-                  <argument>-f</argument>
-                  <argument>index.html</argument>
-                  <argument>-nodialog=true</argument>
-                  <argument>-quiet=true</argument>
-                  <argument>-launchviewer=false</argument>
-                  <argument>${basedir}/../tcconfig/src/main/xsd/terracotta-${schema.version}.xsd</argument>
-                </arguments>
-              </configuration> 
-            </execution> 
-          </executions>        
-      </plugin>     
+    <plugins>   
     </plugins>
   </build>
       
@@ -194,18 +165,6 @@
         <packaging>tarball</packaging>
       </properties>
 	  </profile>
-    
-    <profile>
-      <id>docflex</id>
-      <activation>
-        <file>
-          <exists>${env.DOCFLEX_HOME}</exists>
-        </file>
-      </activation>
-      <properties>
-        <skip.schema>false</skip.schema>
-      </properties>
-    </profile>
     
     <!-- ********************************************** -->
     <!--   profile to build opensource Terracotta kit   -->    
@@ -256,17 +215,16 @@
 
                     <!-- schema -->
                     <resource>
-                      <runIf>{{ new File('target/schema').exists() }}</runIf>
                       <targetPath>${rootDir}/config-samples/schema</targetPath>
-                      <directory>${basedir}/target/schema</directory>
+                      <dependency>
+                        <groupId>org.terracotta</groupId>
+                        <artifactId>tcconfig</artifactId>
+                        <classifier>docflex</classifier>
+                        <type>zip</type>
+                      </dependency>
+                      <unpack>true</unpack>
                       <preservePath>true</preservePath>
-                      <failIfNotFound>false</failIfNotFound>
-                    </resource>            
-                    <resource>
-                      <runIf>{{ new File('target/schema').exists() }}</runIf>
-                      <targetPath>${rootDir}/config-samples/schema</targetPath>
-                      <file>${basedir}/../tcconfig/src/main/xsd/terracotta-${schema.version}.xsd</file>
-                      <failIfNotFound>false</failIfNotFound>
+                      <dependenciesAtM2>true</dependenciesAtM2>
                     </resource>            
                     
                     <!-- populate lib folder -->
@@ -301,7 +259,8 @@
                       <dependency>
                         <groupId>org.terracotta</groupId>
                         <artifactId>${toolkit.artifactId}</artifactId>
-                      </dependency>            
+                      </dependency>
+                      <dependenciesAtM2>true</dependenciesAtM2>
                     </resource>
                     <resource>
                       <targetPath>${rootDir}/common/docs/javadoc</targetPath>
@@ -311,6 +270,7 @@
                         <classifier>javadoc</classifier>
                       </dependency>
                       <unpack>true</unpack>
+                      <dependenciesAtM2>true</dependenciesAtM2>
                     </resource>            
                     
                     <!-- ehcache-core -->
@@ -358,6 +318,7 @@
                           <artifactId>${ehcache-terracotta.artifactId}</artifactId>
                         </dependency>
                       </dependencies>
+                      <dependenciesAtM2>true</dependenciesAtM2>
                     </resource>
                     
                     <!-- ehcache samples-->
@@ -378,6 +339,7 @@
                         </dependency>
                       </dependencies>
                       <unpack>true</unpack>
+                      <dependenciesAtM2>true</dependenciesAtM2>
                     </resource>             
                     
                     <!-- session express -->
@@ -387,6 +349,7 @@
                         <groupId>org.terracotta.session</groupId>
                         <artifactId>terracotta-session</artifactId>
                       </dependency>
+                      <dependenciesAtM2>true</dependenciesAtM2>
                     </resource>
                     
                     <!-- quartz -->
@@ -402,6 +365,7 @@
                         <groupId>org.terracotta.quartz</groupId>
                         <artifactId>${quartz-terracotta.artifactId}</artifactId>
                       </dependency>
+                      <dependenciesAtM2>true</dependenciesAtM2>
                     </resource>
                     
                     <!-- 1. remove build-data.txt from terracotta jar and rename it to tc.jar 
@@ -413,6 +377,7 @@
                         <groupId>org.terracotta</groupId>
                         <artifactId>${terracotta.artifactId}</artifactId>
                       </dependency>
+                      <dependenciesAtM2>true</dependenciesAtM2>
                       <process>Util.processTerracottaJar(project, files.first(), "${project.properties['rootDir']}/lib")
                                Util.setPermission(project)
                       </process>
