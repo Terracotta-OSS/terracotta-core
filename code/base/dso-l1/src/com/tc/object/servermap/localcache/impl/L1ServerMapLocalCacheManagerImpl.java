@@ -26,8 +26,8 @@ import com.tc.util.concurrent.TCConcurrentMultiMap;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -35,8 +35,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
 
   private static final boolean                                   PINNING_ENABLED         = TCPropertiesImpl
                                                                                              .getProperties()
-                                                                                             .getBoolean(
-                                                                                                         TCPropertiesConsts.L1_LOCKMANAGER_PINNING_ENABLED);
+                                                                                             .getBoolean(TCPropertiesConsts.L1_LOCKMANAGER_PINNING_ENABLED);
 
   private final ConcurrentHashMap<ObjectID, ServerMapLocalCache> localCaches             = new ConcurrentHashMap<ObjectID, ServerMapLocalCache>();
   private final TCConcurrentMultiMap<LockID, ObjectID>           lockIdsToCdsmIds        = new TCConcurrentMultiMap<LockID, ObjectID>();
@@ -209,10 +208,6 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
 
     public void notifyElementExpired(K key, V v) {
       notifyElementEvicted(key, v);
-    }
-
-    public void notifySizeChanged(L1ServerMapLocalCacheStore store) {
-      //
     }
 
     public void notifyDisposed(L1ServerMapLocalCacheStore store) {
