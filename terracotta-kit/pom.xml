@@ -19,6 +19,13 @@
   <name>terracotta-kit</name>
   
   <properties>
+    <toolkit.api>1.4</toolkit.api>    
+    <toolkit.version>4.0.0-SNAPSHOT</toolkit.version>    
+    <ehcache.version>2.5.0-SNAPSHOT</ehcache.version>
+    <quartz.version>2.1.0-SNAPSHOT</quartz.version>
+    <terracotta-session.version>1.2.0-SNAPSHOT</terracotta-session.version>
+    <quartz-terracotta.version>2.1.0-SNAPSHOT</quartz-terracotta.version>
+    
     <skip.deploy>true</skip.deploy>
     <skip.testjar>true</skip.testjar>
     <kit.edition>opensource</kit.edition>
@@ -28,13 +35,6 @@
     <rootDir>${project.build.directory}/${kit.name}</rootDir>
     <schema.version>6</schema.version>
     <skip.schema>true</skip.schema>    
-    
-    <toolkit.api>1.4</toolkit.api>    
-    <toolkit.version>4.0.0-SNAPSHOT</toolkit.version>    
-    <ehcache.version>2.5.0-SNAPSHOT</ehcache.version>
-    <quartz.version>2.1.0-SNAPSHOT</quartz.version>
-    <terracotta-session.version>1.2.0-SNAPSHOT</terracotta-session.version>
-    <quartz-terracotta.version>2.1.0-SNAPSHOT</quartz-terracotta.version>
     
     <terracotta.artifactId>terracotta${ee.suffix}</terracotta.artifactId>
     <terracotta.jarname>${terracotta.artifactId}-${project.version}.jar</terracotta.jarname>
