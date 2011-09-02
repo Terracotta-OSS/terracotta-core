@@ -31,7 +31,7 @@ public class GarbageCollectionInfo implements TCSerializable {
   private long                              rescue1Count          = NOT_INITIALIZED;
   private long                              rescue1Time           = NOT_INITIALIZED;
   private long                              rescue2Time           = NOT_INITIALIZED;
-  private boolean                           quiet;
+  private boolean                           inlineCleanup;
 
   public static final GarbageCollectionInfo NULL_INFO             = new GarbageCollectionInfo(
                                                                                               new GarbageCollectionID(
@@ -43,14 +43,14 @@ public class GarbageCollectionInfo implements TCSerializable {
     // for serialization
   }
 
-  public GarbageCollectionInfo(GarbageCollectionID id, boolean fullGC, boolean quiet) {
+  public GarbageCollectionInfo(GarbageCollectionID id, boolean fullGC, boolean inlineCleanup) {
     this.gcID = id;
     this.fullGC = fullGC;
-    this.quiet = quiet;
+    this.inlineCleanup = inlineCleanup;
   }
 
-  public boolean isQuiet() {
-    return quiet;
+  public boolean isInlineCleanup() {
+    return inlineCleanup;
   }
 
   public void setCandidateGarbageCount(long candidateGarbageCount) {
@@ -188,7 +188,7 @@ public class GarbageCollectionInfo implements TCSerializable {
     gcInfo.append("GarbageCollectionInfo [ Iteration = ");
     gcInfo.append(this.gcID.toLong());
     gcInfo.append(" ] = " + " type  = " + (this.fullGC ? " full, " : " young, "));
-    gcInfo.append(" quiet = " + quiet);
+    gcInfo.append(" inlineCleanup = " + inlineCleanup);
 
     if (this.startTime != NOT_INITIALIZED) {
       gcInfo.append(" startTime = " + this.startTime);
@@ -255,7 +255,7 @@ public class GarbageCollectionInfo implements TCSerializable {
     this.rescue1Count = serialInput.readLong();
     this.rescue1Time = serialInput.readLong();
     this.rescue2Time = serialInput.readLong();
-    this.quiet = serialInput.readBoolean();
+    this.inlineCleanup = serialInput.readBoolean();
     return this;
   }
 
@@ -277,7 +277,7 @@ public class GarbageCollectionInfo implements TCSerializable {
     serialOutput.writeLong(this.rescue1Count);
     serialOutput.writeLong(this.rescue1Time);
     serialOutput.writeLong(this.rescue2Time);
-    serialOutput.writeBoolean(quiet);
+    serialOutput.writeBoolean(inlineCleanup);
   }
 
 }

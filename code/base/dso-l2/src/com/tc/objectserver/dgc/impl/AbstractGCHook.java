@@ -10,14 +10,14 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 public abstract class AbstractGCHook extends DGCRequestThrottler implements GCHook {
   protected final MarkAndSweepGarbageCollector collector;
   protected final ClientStateManager           stateManager;
-  protected final boolean                      quiet;
+  protected final boolean                      inlineCleanup;
 
   protected AbstractGCHook(MarkAndSweepGarbageCollector collector, ObjectManager objectManager,
                            ClientStateManager stateManager, boolean quiet) {
     super(objectManager);
     this.collector = collector;
     this.stateManager = stateManager;
-    this.quiet = quiet;
+    this.inlineCleanup = quiet;
   }
 
   public void startMonitoringReferenceChanges() {

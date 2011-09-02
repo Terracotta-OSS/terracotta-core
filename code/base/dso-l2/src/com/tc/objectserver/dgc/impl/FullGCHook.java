@@ -27,8 +27,8 @@ public class FullGCHook extends AbstractGCHook {
                                             };
 
   public FullGCHook(MarkAndSweepGarbageCollector collector, ObjectManager objectManager,
-                    ClientStateManager stateManager, boolean quiet) {
-    super(collector, objectManager, stateManager, quiet);
+                    ClientStateManager stateManager, boolean inlineCleanup) {
+    super(collector, objectManager, stateManager, inlineCleanup);
   }
 
   public String getDescription() {
@@ -36,7 +36,7 @@ public class FullGCHook extends AbstractGCHook {
   }
 
   public GarbageCollectionInfo createGCInfo(GarbageCollectionID id) {
-    return new GarbageCollectionInfo(id, true, quiet);
+    return new GarbageCollectionInfo(id, true, inlineCleanup);
   }
 
   public ObjectIDSet getGCCandidates() {

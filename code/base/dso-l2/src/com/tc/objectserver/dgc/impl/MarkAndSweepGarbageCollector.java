@@ -57,7 +57,7 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
       case FULL_GC:
         hook = new FullGCHook(this, this.objectManager, this.stateManager, false);
         break;
-      case QUIET_FULL_GC:
+      case INLINE_CLEANUP_GC:
         hook = new FullGCHook(this, this.objectManager, this.stateManager, true);
         break;
       case YOUNG_GEN_GC:

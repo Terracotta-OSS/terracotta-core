@@ -55,6 +55,18 @@ class TerracottaOperatorEventResources {
     return instance.resources.getString("dgc.canceled");
   }
 
+  static String getInlineDGCReferenceCleanupStartedMessage() {
+    return instance.resources.getString("inlineDgc.cleanup.started");
+  }
+
+  static String getInlineDGCReferenceCleanupFinishedMessage() {
+    return instance.resources.getString("inlineDgc.cleanup.finished");
+  }
+
+  static String getInlineDGCReferenceCleanupCanceledMessage() {
+    return instance.resources.getString("inlineDgc.cleanup.canceled");
+  }
+
   /**
    * HA Messages
    */
