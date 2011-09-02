@@ -9,6 +9,7 @@ import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.objectserver.persistence.db.DBException;
 import com.tc.objectserver.persistence.db.TCCollectionsSerializer;
 import com.tc.objectserver.persistence.db.TCCollectionsSerializerImpl;
+import com.tc.objectserver.storage.berkeleydb.BerkeleyDBTCMapsDatabase;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
@@ -133,7 +134,9 @@ public class TCMapsDatabaseTest extends TCTestCase {
     tx = ptp.newTransaction();
     try {
       database.insert(tx, mapId, key, value, serializer);
-      assertTrue(false);
+      // BDB doesn't detect duplicate inserts, both update and insert just map to put, so we don't fail in the case of
+      // bdb.
+      assertTrue(database instanceof BerkeleyDBTCMapsDatabase);
     } catch (DBException e) {
       assertEquals("Duplicate key insert into map " + mapId, e.getMessage());
     }
