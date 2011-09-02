@@ -543,7 +543,10 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  public void transactionComplete(Object key, AbstractLocalCacheStoreValue value) {
+  public void transactionComplete(
+                                  Object key,
+                                  AbstractLocalCacheStoreValue value,
+                                  L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     final ObjectID objectId = value.getObjectId();
     if (ObjectID.NULL_ID.equals(objectId)) { return; }
 
@@ -559,6 +562,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     if (doRemove) {
       entryRemovedCallback(key, value);
     }
+
+    globalLocalCacheManager.transactionComplete(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 
   private void transactionStarted(ObjectID objectId) {

@@ -11,6 +11,7 @@ import com.tc.object.bytecode.Manager;
 import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LocksRecallService;
+import com.tc.object.servermap.localcache.impl.L1ServerMapLocalStoreTransactionCompletionListener;
 
 import java.util.Map;
 import java.util.Set;
@@ -65,4 +66,7 @@ public interface L1ServerMapLocalCacheManager extends LocksRecallService, TCObje
   public void evictElements(Map evictedElements);
 
   public void setLockManager(ClientLockManager lockManager);
+
+  public void transactionComplete(
+                                  L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
 }

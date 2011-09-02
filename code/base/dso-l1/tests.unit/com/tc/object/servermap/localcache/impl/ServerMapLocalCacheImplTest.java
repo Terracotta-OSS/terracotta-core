@@ -78,7 +78,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     locksRecallHelper = testLocksRecallHelper;
     maxInMemory = maxElementsInMemory;
     sink = new MySink();
-    globalLocalCacheManager = new L1ServerMapLocalCacheManagerImpl(locksRecallHelper, sink);
+    globalLocalCacheManager = new L1ServerMapLocalCacheManagerImpl(locksRecallHelper, sink, new TxnCompleteSink());
     mockTCObjectSelfCallback = new MockTCObjectSelfCallback();
     globalLocalCacheManager.initializeTCObjectSelfStore(mockTCObjectSelfCallback);
     sink.setGlobalLocalCacheManager(globalLocalCacheManager);
@@ -972,6 +972,64 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     };
 
     public abstract boolean isValueOfType(AbstractLocalCacheStoreValue value);
+  }
+
+  private static class TxnCompleteSink implements Sink {
+    L1ServerMapTransactionCompletionHandler completionHandler = new L1ServerMapTransactionCompletionHandler();
+
+    public void add(EventContext context) {
+      completionHandler.handleEvent(context);
+    }
+
+    public boolean addLossy(EventContext context) {
+      throw new ImplementMe();
+    }
+
+    public void addMany(Collection contexts) {
+      throw new ImplementMe();
+
+    }
+
+    public void clear() {
+      throw new ImplementMe();
+
+    }
+
+    public AddPredicate getPredicate() {
+      throw new ImplementMe();
+    }
+
+    public void setAddPredicate(AddPredicate predicate) {
+      throw new ImplementMe();
+
+    }
+
+    public int size() {
+      throw new ImplementMe();
+    }
+
+    public void enableStatsCollection(boolean enable) {
+      throw new ImplementMe();
+
+    }
+
+    public Stats getStats(long frequency) {
+      throw new ImplementMe();
+    }
+
+    public Stats getStatsAndReset(long frequency) {
+      throw new ImplementMe();
+    }
+
+    public boolean isStatsCollectionEnabled() {
+      throw new ImplementMe();
+    }
+
+    public void resetStats() {
+      throw new ImplementMe();
+
+    }
+
   }
 
   private static class MySink implements Sink {

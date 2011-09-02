@@ -16,7 +16,4 @@ public interface TCObjectSelf extends TCObject {
   public void deserialize(ObjectInput in) throws IOException;
 
   public void initClazzIfRequired(TCClass tcc);
-
-  public void setValueSerialized(String fieldName, Object obj);
-
 }

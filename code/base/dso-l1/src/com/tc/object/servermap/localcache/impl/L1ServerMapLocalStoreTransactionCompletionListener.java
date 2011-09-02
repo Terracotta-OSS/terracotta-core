@@ -3,6 +3,7 @@
  */
 package com.tc.object.servermap.localcache.impl;
 
+import com.tc.async.api.EventContext;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.object.tx.TransactionCompleteListener;
@@ -11,7 +12,7 @@ import com.tc.object.tx.TransactionID;
 /**
  * To be used only when a transaction is completed.
  */
-public class L1ServerMapLocalStoreTransactionCompletionListener implements TransactionCompleteListener {
+public class L1ServerMapLocalStoreTransactionCompletionListener implements TransactionCompleteListener, EventContext {
   private final ServerMapLocalCache          serverMapLocalCache;
   private final Object                       key;
   private final TransactionCompleteOperation transactionCompleteOperation;
@@ -27,11 +28,12 @@ public class L1ServerMapLocalStoreTransactionCompletionListener implements Trans
   }
 
   public void transactionComplete(TransactionID txnID) {
-    serverMapLocalCache.transactionComplete(key, value);
+    serverMapLocalCache.transactionComplete(key, value, this);
+  }
+
+  public void postTransactionCallback() {
     serverMapLocalCache.unpinEntry(key, value);
     if (transactionCompleteOperation == TransactionCompleteOperation.UNPIN_AND_REMOVE_ENTRY) {
-      // TODO: could this be a race or a problem ?
-      // It could be a problem actually
       serverMapLocalCache.removeFromLocalCache(key);
     }
   }

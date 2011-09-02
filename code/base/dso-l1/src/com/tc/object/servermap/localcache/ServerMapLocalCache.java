@@ -6,6 +6,7 @@ package com.tc.object.servermap.localcache;
 import com.tc.invalidation.Invalidations;
 import com.tc.object.ObjectID;
 import com.tc.object.locks.LockID;
+import com.tc.object.servermap.localcache.impl.L1ServerMapLocalStoreTransactionCompletionListener;
 
 import java.util.Set;
 
@@ -133,5 +134,8 @@ public interface ServerMapLocalCache {
 
   Object getKeyOrValueForObjectID(ObjectID oid);
 
-  void transactionComplete(Object key, AbstractLocalCacheStoreValue value);
+  void transactionComplete(
+                           Object key,
+                           AbstractLocalCacheStoreValue value,
+                           L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
 }

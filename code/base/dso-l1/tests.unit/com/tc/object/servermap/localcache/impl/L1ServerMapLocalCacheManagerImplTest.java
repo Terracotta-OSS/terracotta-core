@@ -58,7 +58,8 @@ public class L1ServerMapLocalCacheManagerImplTest extends TestCase {
     Mockito.when(lockRecallStage.getSink()).thenReturn(testSink);
 
     LocksRecallService locksRecallHelper = new LocksRecallServiceImpl(lockRecallHandler, lockRecallStage);
-    this.l1LocalCacheManagerImpl = new L1ServerMapLocalCacheManagerImpl(locksRecallHelper, testSink);
+    this.l1LocalCacheManagerImpl = new L1ServerMapLocalCacheManagerImpl(locksRecallHelper, testSink,
+                                                                        new TxnCompleteSink());
   }
 
   public void testInitiateRecall() {
@@ -221,6 +222,64 @@ public class L1ServerMapLocalCacheManagerImplTest extends TestCase {
       if (context instanceof LocksToRecallContext) {
         lockRecallHandler.handleEvent(context);
       }
+    }
+
+  }
+
+  private static class TxnCompleteSink implements Sink {
+    L1ServerMapTransactionCompletionHandler completionHandler = new L1ServerMapTransactionCompletionHandler();
+
+    public void add(EventContext context) {
+      completionHandler.handleEvent(context);
+    }
+
+    public boolean addLossy(EventContext context) {
+      throw new ImplementMe();
+    }
+
+    public void addMany(Collection contexts) {
+      throw new ImplementMe();
+
+    }
+
+    public void clear() {
+      throw new ImplementMe();
+
+    }
+
+    public AddPredicate getPredicate() {
+      throw new ImplementMe();
+    }
+
+    public void setAddPredicate(AddPredicate predicate) {
+      throw new ImplementMe();
+
+    }
+
+    public int size() {
+      throw new ImplementMe();
+    }
+
+    public void enableStatsCollection(boolean enable) {
+      throw new ImplementMe();
+
+    }
+
+    public Stats getStats(long frequency) {
+      throw new ImplementMe();
+    }
+
+    public Stats getStatsAndReset(long frequency) {
+      throw new ImplementMe();
+    }
+
+    public boolean isStatsCollectionEnabled() {
+      throw new ImplementMe();
+    }
+
+    public void resetStats() {
+      throw new ImplementMe();
+
     }
 
   }

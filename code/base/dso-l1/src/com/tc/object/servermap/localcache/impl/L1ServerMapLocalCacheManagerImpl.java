@@ -44,15 +44,18 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   private final AtomicBoolean                                    shutdown                = new AtomicBoolean();
   private final LocksRecallService                               locksRecallHelper;
   private final Sink                                             capacityEvictionSink;
+  private final Sink                                             txnCompleteSink;
   private final RemoveCallback                                   removeCallback;
   private final TCObjectSelfStoreImpl                            tcObjectSelfStore;
   private volatile ClientLockManager                             lockManager;
 
-  public L1ServerMapLocalCacheManagerImpl(LocksRecallService locksRecallHelper, Sink capacityEvictionSink) {
+  public L1ServerMapLocalCacheManagerImpl(LocksRecallService locksRecallHelper, Sink capacityEvictionSink,
+                                          Sink txnCompleteSink) {
     this.locksRecallHelper = locksRecallHelper;
     this.capacityEvictionSink = capacityEvictionSink;
     removeCallback = new RemoveCallback();
     tcObjectSelfStore = new TCObjectSelfStoreImpl(localCaches);
+    this.txnCompleteSink = txnCompleteSink;
   }
 
   public void initializeTCObjectSelfStore(TCObjectSelfCallback callback) {
@@ -270,5 +273,10 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
                                                                   + localStoreValue.getMapID()); }
       removeTCObjectSelf(serverMapLocalCache, localStoreValue);
     }
+  }
+
+  public void transactionComplete(
+                                  L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
+    txnCompleteSink.add(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 }

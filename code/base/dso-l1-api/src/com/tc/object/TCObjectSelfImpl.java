@@ -147,22 +147,6 @@ public class TCObjectSelfImpl implements TCObjectSelf {
     }
   }
 
-  public void setValueSerialized(String fieldName, Object obj) {
-    try {
-      final TransparentAccess ta = (TransparentAccess) getPeerObject();
-      if (ta == null) { throw new AssertionError(); }
-      if (obj instanceof ObjectID) {
-        // no references should ever be cleared, as no references itself
-        throw new AssertionError();
-      } else {
-        ta.__tc_setfield(fieldName, obj);
-      }
-    } catch (final Exception e) {
-      // TODO: More elegant exception handling.
-      throw new com.tc.object.dna.api.DNAException(e);
-    }
-  }
-
   // ====================================================
   // TC Cache Manager methods - not needed
   // ====================================================
