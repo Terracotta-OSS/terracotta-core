@@ -17,86 +17,62 @@ public class GCLoggerEventPublisher extends GarbageCollectorEventListenerAdapter
 
   @Override
   public void garbageCollectorStart(GarbageCollectionInfo info) {
-    if (!info.isQuiet()) {
-      gcLogger.log_start(info.getGarbageCollectionID(), info.isFullGC());
-    }
+    gcLogger.log_start(info.getGarbageCollectionID(), info.isFullGC());
   }
 
   @Override
   public void garbageCollectorMark(GarbageCollectionInfo info) {
-    if (!info.isQuiet()) {
-      gcLogger.log_markStart(info.getGarbageCollectionID(), info.getBeginObjectCount());
-    }
+    gcLogger.log_markStart(info.getGarbageCollectionID(), info.getBeginObjectCount());
   }
 
   @Override
   public void garbageCollectorMarkResults(GarbageCollectionInfo info) {
-    if (!info.isQuiet()) {
-      gcLogger.log_markResults(info.getGarbageCollectionID(), info.getPreRescueCount());
-    }
+    gcLogger.log_markResults(info.getGarbageCollectionID(), info.getPreRescueCount());
   }
 
   @Override
   public void garbageCollectorRescue1Complete(GarbageCollectionInfo info) {
-    if (!info.isQuiet()) {
-      gcLogger.log_rescue_complete(info.getGarbageCollectionID(), 1, info.getRescue1Count());
-    }
+    gcLogger.log_rescue_complete(info.getGarbageCollectionID(), 1, info.getRescue1Count());
   }
 
   @Override
   public void garbageCollectorPausing(GarbageCollectionInfo info) {
-    if (!info.isQuiet()) {
-      gcLogger.log_quiescing(info.getGarbageCollectionID());
-    }
+    gcLogger.log_quiescing(info.getGarbageCollectionID());
   }
 
   @Override
   public void garbageCollectorPaused(GarbageCollectionInfo info) {
-    if (!info.isQuiet()) {
-      gcLogger.log_paused(info.getGarbageCollectionID());
-    }
+    gcLogger.log_paused(info.getGarbageCollectionID());
   }
 
   @Override
   public void garbageCollectorRescue2Start(GarbageCollectionInfo info) {
-    if (!info.isQuiet()) {
-      gcLogger.log_rescue_start(info.getGarbageCollectionID(), 2, info.getCandidateGarbageCount());
-    }
+    gcLogger.log_rescue_start(info.getGarbageCollectionID(), 2, info.getCandidateGarbageCount());
   }
 
   @Override
   public void garbageCollectorMarkComplete(GarbageCollectionInfo info) {
-    if (!info.isQuiet()) {
-      gcLogger.log_markComplete(info.getGarbageCollectionID(), info.getCandidateGarbageCount());
-    }
+    gcLogger.log_markComplete(info.getGarbageCollectionID(), info.getCandidateGarbageCount());
   }
 
   @Override
   public void garbageCollectorCycleCompleted(GarbageCollectionInfo info, ObjectIDSet toDelete) {
-    if (!info.isQuiet()) {
-      gcLogger.log_cycleComplete(info.getGarbageCollectionID(), info);
-    }
+    gcLogger.log_cycleComplete(info.getGarbageCollectionID(), info);
   }
 
   @Override
   public void garbageCollectorDelete(GarbageCollectionInfo info) {
-    if (!info.isQuiet()) {
-      gcLogger.log_deleteStart(info.getGarbageCollectionID(), info.getCandidateGarbageCount());
-    }
+    gcLogger.log_deleteStart(info.getGarbageCollectionID(), info.getCandidateGarbageCount());
   }
 
   @Override
   public void garbageCollectorCompleted(GarbageCollectionInfo info) {
-    if (!info.isQuiet()) {
-      gcLogger.log_complete(info.getGarbageCollectionID(), info.getActualGarbageCount(), info.getDeleteStageTime(),
-                            info.getElapsedTime());
-    }
+    gcLogger.log_complete(info.getGarbageCollectionID(), info.getActualGarbageCount(), info.getDeleteStageTime(),
+                          info.getElapsedTime());
   }
 
   @Override
   public void garbageCollectorCanceled(GarbageCollectionInfo info) {
-    if (!info.isQuiet()) {
-      gcLogger.log_canceled(info.getGarbageCollectionID());
-    }
+    gcLogger.log_canceled(info.getGarbageCollectionID());
   }
 }

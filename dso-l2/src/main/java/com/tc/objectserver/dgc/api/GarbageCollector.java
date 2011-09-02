@@ -15,7 +15,7 @@ import java.util.Collection;
 public interface GarbageCollector extends PrettyPrintable {
 
   public static enum GCType {
-    YOUNG_GEN_GC, FULL_GC, QUIET_FULL_GC
+    YOUNG_GEN_GC, FULL_GC, INLINE_CLEANUP_GC
   }
 
   public static final State GC_DISABLED = new State("GC_DISABLED");
