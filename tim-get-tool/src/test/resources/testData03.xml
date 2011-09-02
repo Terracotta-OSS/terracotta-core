@@ -1,0 +1,56 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<modules format-version='3'>
+  <module artifactId='baz' version='0.0.0' groupId='foo.bar'>
+    <tc-version>0.0.0</tc-version>
+    <repoURL>
+      http://127.0.0.1:8888/foo/bar/baz/0.0.0/baz-0.0.0.jar
+    </repoURL>
+    <installPath>foo/bar/baz/0.0.0</installPath>
+    <filename>baz-0.0.0.jar</filename>
+  </module>
+  <module artifactId='baz' version='0.0.1' groupId='foo.bar'>
+    <tc-version>0.0.0</tc-version>
+    <repoURL>
+      http://127.0.0.1:8888/foo/bar/baz/0.0.1/baz-0.0.1.jar
+    </repoURL>
+    <installPath>foo/bar/baz/0.0.1</installPath>
+    <filename>baz-0.0.1.jar</filename>
+    <dependencies>
+      <moduleRef artifactId='quux' version='0.0.0' groupId='foo.bar' />
+    </dependencies>
+  </module>
+  <module artifactId='quux' version='0.0.0' groupId='foo.bar'>
+    <tc-version>0.0.0</tc-version>
+    <repoURL>
+      http://127.0.0.1:8888/foo/bar/quux/0.0.0/quux-0.0.0.jar
+    </repoURL>
+    <installPath>foo/bar/quux/0.0.0</installPath>
+    <filename>quux-0.0.0.jar</filename>
+    <dependencies>
+      <module artifactId='tuus' version='0.0.0' groupId='foo.zoo'>
+        <repoURL>
+          http://127.0.0.1:8888/foo/zoo/tuus/0.0.0/tuus-0.0.0.jar
+        </repoURL>
+        <installPath>foo/zoo/tuus/0.0.0</installPath>
+        <filename>tuus-0.0.0.jar</filename>
+      </module>
+      <moduleRef artifactId='zoo' version='0.0.0' groupId='foo.bar' />
+    </dependencies>
+  </module>
+  <module artifactId='zoo' version='0.0.0' groupId='foo.bar'>
+    <tc-version>0.0.0</tc-version>
+    <repoURL>
+      http://127.0.0.1:8888/foo/bar/zoo/0.0.0/zoo-0.0.0.jar
+    </repoURL>
+    <installPath>foo/bar/zoo/0.0.0</installPath>
+    <filename>zoo-0.0.0.jar</filename>
+  </module>
+  <module artifactId='baz' version='0.0.2' groupId='foo.bar'>
+    <tc-version>0.0.1</tc-version>
+    <repoURL>
+      http://127.0.0.1:8888/foo/bar/baz/0.0.2/baz-0.0.2.jar
+    </repoURL>
+    <installPath>foo/bar/baz/0.0.2</installPath>
+    <filename>baz-0.0.2.jar</filename>
+  </module>
+</modules>

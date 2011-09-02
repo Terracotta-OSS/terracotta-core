@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config">
+  <clients>
+    <modules>
+      <module name="tim-annotations"/>
+    </modules>
+  </clients>
+
+</tc:tc-config>

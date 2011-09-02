@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<modules format-version='3'>
+  <module artifactId='tim-ehcache-2.x' version='1.6.0' groupId='org.terracotta.modules'>
+    <tc-version>*</tc-version>
+    <dependencies>
+      <moduleRef artifactId='terracotta-toolkit-1.0' version='[1.0.0-SNAPSHOT,]' groupId='org.terracotta.toolkit'/>
+    </dependencies>
+  </module>
+  <module artifactId='tim-ehcache-2.x' version='1.6.1' groupId='org.terracotta.modules'>
+    <tc-version>*</tc-version>
+    <dependencies>
+      <moduleRef artifactId='terracotta-toolkit-1.2' version='[1.0.0-SNAPSHOT,]' groupId='org.terracotta.toolkit'/>
+    </dependencies>
+  </module>
+
+  <module artifactId='terracotta-toolkit-1.0' version='1.0.0' groupId='org.terracotta.toolkit'>
+    <tc-version>1.0.0</tc-version>
+  </module>
+  <module artifactId='terracotta-toolkit-1.1' version='1.0.0' groupId='org.terracotta.toolkit'>
+    <tc-version>1.0.0</tc-version>
+  </module>
+  <module artifactId='terracotta-toolkit-1.1' version='1.0.1' groupId='org.terracotta.toolkit'>
+    <tc-version>1.0.0</tc-version>
+  </module>
+  <module artifactId='terracotta-toolkit-1.2' version='1.0.0' groupId='org.terracotta.toolkit'>
+    <tc-version>2.0.0</tc-version>
+  </module>
+  
+  <module artifactId='terracotta-toolkit-1.2-ee' version='1.0.0' groupId='org.terracotta.toolkit'>
+    <tc-version>1.0.0</tc-version>
+    <tc-kit>enterprise</tc-kit>
+  </module>
+  <module artifactId='not-terracotta-toolkit-1.2' version='1.0.0' groupId='org.terracotta.toolkit'>
+    <tc-version>1.0.0</tc-version>
+  </module>
+</modules>

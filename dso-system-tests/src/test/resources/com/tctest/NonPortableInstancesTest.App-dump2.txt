@@ -1,0 +1,36 @@
+Dumping object graph of non-portable instance of type com.tctest.NonPortableInstancesTest$Portable. Lines that start with !! are non-portable types.
+   com.tctest.NonPortableInstancesTest$Portable (id 0)
+!!   Runtime honeredTransient = (java.lang.Runtime) (transient)
+     Thread nullThread1 = null
+     Thread nullThread2 = null
+     com.tctest.NonPortableInstancesTest$Ref ref = (id 1)
+       Object ref = (LinkedHashMap, id 2)
+         [entry 0]
+           key = "ref"
+           value = (com.tctest.NonPortableInstancesTest$Ref, id 3)
+             Object ref = (com.tctest.NonPortableInstancesTest$Ref, id 4)
+!!             Object ref = (com.tctest.NonPortableInstancesTest$NotPortable, id 5)
+                 Map m = (LinkedHashMap, id 6)
+                   [entry 0]
+                     key = "ref"
+                     value = (com.tctest.NonPortableInstancesTest$Ref, id 7)
+                       Object ref = (com.tctest.NonPortableInstancesTest$Ref, id 8)
+!!                       Object ref = (ref id 5)
+                   [entry 1]
+                     key = "array"
+                     value = (Object[][], id 9)
+                       [0] = (Object[], id 10)
+                         [0] = null
+                       [1] = (Object[], id 11)
+                         [0] = (com.tctest.NonPortableInstancesTest$Ref, id 12)
+                           Object ref = (ref id 6)
+!!               Thread t = (java.lang.Thread) (never portable)
+         [entry 1]
+           key = "array"
+           value = (Object[][], id 13)
+             [0] = (Object[], id 14)
+               [0] = null
+             [1] = (Object[], id 15)
+               [0] = (com.tctest.NonPortableInstancesTest$Ref, id 16)
+                 Object ref = (ref id 2)
+!!   java.net.ServerSocket ss = (java.net.ServerSocket) (transient)
