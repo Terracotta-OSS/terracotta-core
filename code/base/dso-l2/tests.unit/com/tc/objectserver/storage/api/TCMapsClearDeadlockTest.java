@@ -29,7 +29,7 @@ public class TCMapsClearDeadlockTest extends TCTestCase {
     this.dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
     this.dbHome.mkdir();
 
-    this.dbenv = DBFactory.getInstance().createEnvironment(true, this.dbHome, null, false);
+    this.dbenv = DBFactory.getInstance().createEnvironment(true, this.dbHome);
     this.dbenv.open();
 
     this.ptp = this.dbenv.getPersistenceTransactionProvider();
