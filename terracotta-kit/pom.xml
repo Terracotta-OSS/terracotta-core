@@ -378,7 +378,7 @@
                         <artifactId>${terracotta.artifactId}</artifactId>
                       </dependency>
                       <dependenciesAtM2>true</dependenciesAtM2>
-                      <process>Util.processTerracottaJar(project, files.first(), "${project.properties['rootDir']}/lib")
+                      <process>Util.processTerracottaJar(project, files.first(), "lib")
                                Util.setPermission(project)
                       </process>
                     </resource>                    
@@ -635,7 +635,7 @@
                     <groupId>org.terracotta</groupId>
                     <artifactId>${terracotta.artifactId}</artifactId>
                   </dependency>
-                  <process>Util.processTerracottaJar(project, files.first(), "${project.properties['rootDir']}/update/plugins/lib")
+                  <process>Util.processTerracottaJar(project, files.first(), "update/plugins/lib")
                            Util.setPermission(project)
                   </process>
                 </resource>                    

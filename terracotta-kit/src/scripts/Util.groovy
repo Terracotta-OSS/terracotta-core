@@ -69,8 +69,10 @@ class Util {
     }
     
     static void processTerracottaJar(project, tcJar, targetDir) {
+      def rootDir = project.properties['rootDir']
+      def dest = rootDir + "/" + targetDir + "/tc.jar"
       ('zip -d ' + tcJar + ' build-data.txt').execute()
-      rename(tcJar.toString(), targetDir + "/tc.jar")
+      rename(tcJar.toString(), dest)
     }
     
     static void setPermission(project) {
