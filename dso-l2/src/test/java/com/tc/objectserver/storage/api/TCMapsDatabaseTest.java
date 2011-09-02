@@ -41,7 +41,7 @@ public class TCMapsDatabaseTest extends TCTestCase {
     this.dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
     this.dbHome.mkdir();
 
-    this.dbenv = DBFactory.getInstance().createEnvironment(true, this.dbHome, null, false);
+    this.dbenv = DBFactory.getInstance().createEnvironment(true, this.dbHome);
     this.dbenv.open();
 
     this.ptp = this.dbenv.getPersistenceTransactionProvider();
@@ -105,7 +105,7 @@ public class TCMapsDatabaseTest extends TCTestCase {
 
     Map<String, String> reference = new HashMap<String, String>();
     PersistenceTransaction tx = ptp.newTransaction();
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 10; i++) {
       String key = getRandomString(mapId, size);
       String value = getRandomString(mapId, size);
       reference.put(key, value);
@@ -153,7 +153,7 @@ public class TCMapsDatabaseTest extends TCTestCase {
 
     Map<String, String> reference = new HashMap<String, String>();
     PersistenceTransaction tx = ptp.newTransaction();
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 10; i++) {
       String key = getRandomString(mapId, size);
       String value = getRandomString(mapId, size);
       reference.put(key, value);
@@ -326,7 +326,8 @@ public class TCMapsDatabaseTest extends TCTestCase {
   public void testSmallBigKeyTransition() throws Exception {
     long mapId = 1;
     Map<String, String> referenceMap = new HashMap<String, String>();
-    for (int i = 15800; i < 16200; i++) {
+    // Transition is 15992
+    for (int i = 15990; i < 15995; i++) {
       referenceMap.put(getRandomString(1, i), getRandomString(1, 100));
     }
     PersistenceTransaction tx = ptp.newTransaction();

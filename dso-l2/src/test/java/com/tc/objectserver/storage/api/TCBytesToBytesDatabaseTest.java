@@ -31,7 +31,7 @@ public class TCBytesToBytesDatabaseTest extends TCTestCase {
     dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
     dbHome.mkdir();
 
-    dbenv = DBFactory.getInstance().createEnvironment(true, dbHome, null, false);
+    dbenv = DBFactory.getInstance().createEnvironment(true, dbHome);
     dbenv.open();
 
     ptp = dbenv.getPersistenceTransactionProvider();
