@@ -12,7 +12,6 @@
     <relativePath>../build-parent</relativePath>
   </parent>
 
-  <groupId>org.terracotta</groupId>
   <artifactId>terracotta-parent</artifactId>
   <packaging>pom</packaging>
   <name>terracotta-parent</name>

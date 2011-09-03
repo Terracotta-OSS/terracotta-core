@@ -13,7 +13,6 @@
     <relativePath>../terracotta-parent</relativePath>
   </parent>
 
-  <groupId>org.terracotta</groupId>
   <artifactId>terracotta</artifactId>
   <packaging>jar</packaging>
   <name>terracotta</name>

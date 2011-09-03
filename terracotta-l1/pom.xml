@@ -13,7 +13,6 @@
   </parent>
 
   <!-- artifact that contains classes for L1 -->
-  <groupId>org.terracotta</groupId>
   <artifactId>terracotta-l1</artifactId>
   <packaging>jar</packaging>
   <name>terracotta-l1</name>
