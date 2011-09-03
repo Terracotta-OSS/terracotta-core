@@ -19,7 +19,6 @@
   <groupId>org.terracotta.internal</groupId>
   <artifactId>dso-common-jdk16</artifactId>
   <packaging>jar</packaging>
-  <version>3.6.0-SNAPSHOT</version>
   <name>dso-common-jdk16</name>
 
   <properties>  
@@ -60,7 +59,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.3.2</version>
         <configuration>
           <fork>true</fork>
           <meminitial>128</meminitial>

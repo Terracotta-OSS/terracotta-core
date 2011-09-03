@@ -33,11 +33,13 @@
     <offheap-store.version>1.0.5-SNAPSHOT</offheap-store.version>
     <terracotta-license.version>1.0.2</terracotta-license.version>
     <derby.version>10.8-SNAPSHOT</derby.version>
+    <tc-config.version>3.6.0-SNAPSHOT</tc-config.version>
     <sleepycat.version>4.1.10</sleepycat.version>
     <linked-child-process.version>1.0.6</linked-child-process.version>
     <gmaven-plugin.version>1.3</gmaven-plugin.version>
     <surefire.version>2.9</surefire.version>
     <toolkit-resolver.version>1.0.6-SNAPSHOT</toolkit-resolver.version>
+    <maven-forge-plugin.version>1.0.3-SNAPSHOT</maven-forge-plugin.version>
     <skip.deploy>false</skip.deploy>
     <skip.testjar>false</skip.testjar>
     <listName>checkshort.txt</listName>
@@ -281,17 +283,17 @@
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>tcconfig</artifactId>
-        <version>${project.version}</version>
+        <version>${tc-config.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>tc-l1-reconnect-properties</artifactId>
-        <version>${project.version}</version>
+        <version>${tc-config.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>tcstats</artifactId>
-        <version>${project.version}</version>
+        <version>${tc-config.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta.api</groupId>
@@ -707,7 +709,7 @@
         <plugin>
           <groupId>org.terracotta</groupId>
           <artifactId>maven-forge-plugin</artifactId>
-          <version>1.0.3-SNAPSHOT</version>
+          <version>${maven-forge-plugin.version}</version>
         </plugin>        
       </plugins>
     </pluginManagement>

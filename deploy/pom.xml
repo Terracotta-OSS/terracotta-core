@@ -44,7 +44,6 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>tcstats</artifactId>
-      <version>${project.version}</version>
     </dependency>
         
     

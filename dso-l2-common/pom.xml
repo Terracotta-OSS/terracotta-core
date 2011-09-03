@@ -19,7 +19,6 @@
   <groupId>org.terracotta.internal</groupId>
   <artifactId>dso-l2-common</artifactId>
   <packaging>jar</packaging>
-  <version>3.6.0-SNAPSHOT</version>
   <name>dso-l2-common</name>
   
   <properties>  

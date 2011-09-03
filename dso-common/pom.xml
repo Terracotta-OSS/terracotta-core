@@ -19,7 +19,6 @@
   <groupId>org.terracotta.internal</groupId>
   <artifactId>dso-common</artifactId>
   <packaging>jar</packaging>
-  <version>3.6.0-SNAPSHOT</version>
   <name>dso-common</name>
   
   <properties>  
@@ -30,7 +29,6 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>tc-l1-reconnect-properties</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>

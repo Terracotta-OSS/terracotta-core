@@ -32,7 +32,6 @@
       <plugin>
         <groupId>org.terracotta</groupId>
         <artifactId>maven-forge-plugin</artifactId>
-        <version>1.0.2</version>
         <configuration>
           <rootPath>${basedir}/..</rootPath>
           <eeRootPath>${basedir}/../..</eeRootPath>
