@@ -11,6 +11,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.locks.LockID;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
+import com.tc.object.servermap.localcache.L1ServerMapLocalCacheLockProvider;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.MapOperationType;
@@ -39,19 +40,17 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                                                                                                                               .getLogger(ServerMapLocalCacheImpl.class);
   private static final long                                                         SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS = TCPropertiesImpl
                                                                                                                                               .getProperties()
-                                                                                                                                              .getLong(
-                                                                                                                                                       TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
+                                                                                                                                              .getLong(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
 
-  private final static int                                                          CONCURRENCY                                           = 4;
   private static final LocalStoreKeySetFilter                                       IGNORE_ID_FILTER                                      = new IgnoreIdsFilter();
 
   private final ObjectID                                                            mapID;
   private final L1ServerMapLocalCacheManager                                        globalLocalCacheManager;
   private volatile boolean                                                          localCacheEnabled;
   private volatile L1ServerMapLocalCacheStore<Object, AbstractLocalCacheStoreValue> localStore;
+  private volatile L1ServerMapLocalCacheLockProvider                                lockProvider;
   private final ClientObjectManager                                                 objectManager;
   private final Manager                                                             manager;
-  private final ReentrantReadWriteLock[]                                            segmentLocks                                          = new ReentrantReadWriteLock[CONCURRENCY];
   private final ServerMapLocalCacheRemoveCallback                                   removeCallback;
 
   private final Set<ObjectID>                                                       transactionsInProgressObjectIDs                       = new HashSet<ObjectID>();
@@ -70,14 +69,12 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     this.globalLocalCacheManager = globalLocalCacheManager;
     this.localCacheEnabled = islocalCacheEnbaled;
     this.removeCallback = removeCallback;
-    for (int i = 0; i < segmentLocks.length; i++) {
-      this.segmentLocks[i] = new ReentrantReadWriteLock();
-    }
   }
 
   public void setupLocalStore(L1ServerMapLocalCacheStore store) {
     this.localStore = store;
     this.globalLocalCacheManager.addStoreListener(store, mapID);
+    this.lockProvider = this.localStore.getLockProvider();
   }
 
   public L1ServerMapLocalCacheStore getInternalStore() {
@@ -94,11 +91,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   public void setLocalCacheEnabled(boolean enable) {
     this.localCacheEnabled = enable;
-  }
-
-  private ReentrantReadWriteLock getLock(Object key) {
-    int index = Math.abs(key.hashCode()) % CONCURRENCY;
-    return segmentLocks[index];
   }
 
   private void registerTransactionCompleteListener(final L1ServerMapLocalStoreTransactionCompletionListener listener) {
@@ -178,8 +170,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(
-                                                                                            final Object key,
+  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
                                                                                             AbstractLocalCacheStoreValue value,
                                                                                             MapOperationType mapOperation) {
     if (!mapOperation.isMutateOperation()) {
@@ -343,7 +334,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   public void addAllObjectIDsToValidate(Invalidations invalidations) {
     if (!isStoreInitialized()) { return; }
 
-    for (ReentrantReadWriteLock readWriteLock : segmentLocks) {
+    for (ReentrantReadWriteLock readWriteLock : this.lockProvider.getAllLocks()) {
       readWriteLock.readLock().lock();
     }
     try {
@@ -362,7 +353,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         }
       }
     } finally {
-      for (ReentrantReadWriteLock readWriteLock : segmentLocks) {
+      for (ReentrantReadWriteLock readWriteLock : this.localStore.getLockProvider().getAllLocks()) {
         readWriteLock.readLock().unlock();
       }
     }
@@ -383,7 +374,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   private <V> V executeUnderSegmentReadLock(final Object id, final ExecuteUnderLockCallback<V> callback) {
-    ReentrantReadWriteLock lock = getLock(id);
+    ReentrantReadWriteLock lock = this.lockProvider.getLock(id);
     try {
       lock.readLock().lock();
       return callback.callback(id, null, null, this.localStore, this.removeCallback);
@@ -394,7 +385,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   private <V> V executeUnderSegmentWriteLock(final Object id, final Object key, Object value,
                                              final ExecuteUnderLockCallback<V> callback) {
-    ReentrantReadWriteLock lock = getLock(id);
+    ReentrantReadWriteLock lock = this.lockProvider.getLock(id);
     try {
       lock.writeLock().lock();
       return callback.callback(id, key, value, this.localStore, this.removeCallback);
@@ -405,7 +396,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   private <V> V executeUnderSegmentWriteLock(final Object id, final Object key,
                                              final ExecuteUnderLockCallback<V> callback) {
-    ReentrantReadWriteLock lock = getLock(id);
+    ReentrantReadWriteLock lock = this.lockProvider.getLock(id);
     try {
       lock.writeLock().lock();
       return callback.callback(id, key, null, this.localStore, this.removeCallback);
@@ -543,8 +534,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  public void transactionComplete(
-                                  Object key,
+  public void transactionComplete(Object key,
                                   AbstractLocalCacheStoreValue value,
                                   L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     final ObjectID objectId = value.getObjectId();
