@@ -193,6 +193,7 @@ import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.object.metadata.NVPair;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
+import com.tc.object.servermap.localcache.L1ServerMapLocalCacheLockProvider;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStoreListener;
 import com.tc.object.servermap.localcache.LocalCacheStoreEventualValue;
@@ -661,7 +662,7 @@ public class BootJarTool {
 
       // local cache store classes
       loadTerracottaClass(L1ServerMapLocalCacheStore.class.getName());
-
+      loadTerracottaClass(L1ServerMapLocalCacheLockProvider.class.getName());
       loadTerracottaClass(AbstractLocalCacheStoreValue.class.getName());
       loadTerracottaClass(TCObjectSelfStore.class.getName());
       loadTerracottaClass(TCObjectSelfStoreValue.class.getName());

@@ -16,8 +16,8 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.SortedSet;
 
-abstract class ObjectIDSetBase extends AbstractSet<ObjectID> implements SortedSet<ObjectID>,
-    PrettyPrintable, TCSerializable {
+abstract class ObjectIDSetBase extends AbstractSet<ObjectID> implements SortedSet<ObjectID>, PrettyPrintable,
+    TCSerializable {
   protected transient volatile int modCount;
   protected final AATreeSet        ranges;
   protected int                    size = 0;
@@ -36,7 +36,7 @@ abstract class ObjectIDSetBase extends AbstractSet<ObjectID> implements SortedSe
   public abstract boolean contains(ObjectID id);
 
   public abstract boolean remove(ObjectID id);
-  
+
   @Override
   public boolean remove(Object o) {
     if (o instanceof ObjectID) {
@@ -60,7 +60,7 @@ abstract class ObjectIDSetBase extends AbstractSet<ObjectID> implements SortedSe
 
   @Override
   public String toString() {
-     if (size() <= 10) { return toVerboseString(); }
+    if (size() <= 200) { return toVerboseString(); }
 
     StringBuffer sb = new StringBuffer(getObjectIDSetType() + " " + getCompressionDetails() + "[");
     for (Iterator i = this.ranges.iterator(); i.hasNext();) {

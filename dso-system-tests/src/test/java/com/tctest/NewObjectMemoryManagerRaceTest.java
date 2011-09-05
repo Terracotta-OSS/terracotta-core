@@ -44,6 +44,7 @@ public class NewObjectMemoryManagerRaceTest extends ServerCrashingTestBase {
     super(1); // only need 1 node
   }
 
+  @Override
   protected Class getApplicationClass() {
     return NewObjectMemoryManagerTestApp.class;
   }
@@ -52,6 +53,7 @@ public class NewObjectMemoryManagerRaceTest extends ServerCrashingTestBase {
     return Shared.isEnd() || System.currentTimeMillis() > END;
   }
 
+  @Override
   protected void createConfig(TerracottaConfigBuilder cb) {
     String sharedClassName = Shared.class.getName();
 
@@ -153,8 +155,10 @@ public class NewObjectMemoryManagerRaceTest extends ServerCrashingTestBase {
       config.addWriteAutolock("* " + Shared.class.getName() + ".take()");
     }
 
+    @Override
     public void runTest() throws Throwable {
       Thread t = new Thread() {
+        @Override
         public void run() {
           createNewObjects();
         }
@@ -188,6 +192,8 @@ public class NewObjectMemoryManagerRaceTest extends ServerCrashingTestBase {
         jvmArgs.add("-Dcom.tc.l1.cachemanager.sleepInterval=1");
         jvmArgs.add("-Dcom.tc.l1.cachemanager.criticalThreshold=2");
         jvmArgs.add("-Dcom.tc.l1.cachemanager.threshold=1");
+        jvmArgs.add("-Xms512m");
+        jvmArgs.add("-Xmx512m");
 
         ExtraL1ProcessControl client = new ExtraL1ProcessControl(getHostName(), getPort(), External.class,
                                                                  getConfigFilePath(), Collections.EMPTY_LIST,

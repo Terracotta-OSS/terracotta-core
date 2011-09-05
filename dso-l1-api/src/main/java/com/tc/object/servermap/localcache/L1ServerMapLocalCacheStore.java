@@ -107,4 +107,10 @@ public interface L1ServerMapLocalCacheStore<K, V> {
    * Check if the key is available off heap
    */
   public boolean containsKeyOffHeap(K key);
+
+  /**
+   * get L1ServerMapLocalCacheLockProvider to lock/unlock this store
+   */
+  public L1ServerMapLocalCacheLockProvider getLockProvider();
+
 }

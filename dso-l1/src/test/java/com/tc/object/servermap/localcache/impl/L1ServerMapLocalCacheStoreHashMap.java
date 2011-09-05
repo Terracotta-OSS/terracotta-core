@@ -3,20 +3,24 @@
  */
 package com.tc.object.servermap.localcache.impl;
 
+import com.tc.object.servermap.localcache.L1ServerMapLocalCacheLockProvider;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStoreListener;
 import com.tc.object.servermap.localcache.PutType;
 import com.tc.object.servermap.localcache.RemoveType;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocalCacheStore<K, V> {
   private final List<L1ServerMapLocalCacheStoreListener<K, V>> listeners     = new CopyOnWriteArrayList<L1ServerMapLocalCacheStoreListener<K, V>>();
@@ -24,6 +28,7 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
   private final HashSet<K>                                     pinnedEntries = new HashSet<K>();
   private final AtomicInteger                                  cacheSize     = new AtomicInteger();
   private final int                                            maxElementsInMemory;
+  private final L1ServerMapLocalCacheLockProvider              lockProvider  = new DummyLockProvider();
 
   public L1ServerMapLocalCacheStoreHashMap() {
     this(0);
@@ -171,4 +176,35 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
   public boolean containsKeyOffHeap(K key) {
     return false;
   }
+
+  public L1ServerMapLocalCacheLockProvider getLockProvider() {
+    return lockProvider;
+  }
+
+  private static class DummyLockProvider implements L1ServerMapLocalCacheLockProvider {
+
+    private final int                               numLocks;
+    private final ArrayList<ReentrantReadWriteLock> locks;
+
+    public DummyLockProvider() {
+      numLocks = 256;
+      locks = new ArrayList<ReentrantReadWriteLock>(numLocks);
+      initilizeLocks();
+    }
+
+    private void initilizeLocks() {
+      for (int i = 0; i < numLocks; ++i) {
+        locks.add(new ReentrantReadWriteLock());
+      }
+    }
+
+    public ReentrantReadWriteLock getLock(Object key) {
+      return locks.get(Math.abs(key.hashCode()) % numLocks);
+    }
+
+    public Collection<ReentrantReadWriteLock> getAllLocks() {
+      return locks;
+    }
+  }
+
 }
