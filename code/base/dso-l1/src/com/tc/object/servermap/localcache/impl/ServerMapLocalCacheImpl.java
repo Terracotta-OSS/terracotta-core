@@ -548,21 +548,20 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                   AbstractLocalCacheStoreValue value,
                                   L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     final ObjectID objectId = value.getObjectId();
-    if (ObjectID.NULL_ID.equals(objectId)) { return; }
+    if (!ObjectID.NULL_ID.equals(objectId)) {
+      boolean doRemove;
+      lockForTransactionsObjectIDs.lock();
+      try {
+        transactionsInProgressObjectIDs.remove(objectId);
+        doRemove = removedObjectIDs.remove(objectId);
+      } finally {
+        lockForTransactionsObjectIDs.unlock();
+      }
 
-    boolean doRemove;
-    lockForTransactionsObjectIDs.lock();
-    try {
-      transactionsInProgressObjectIDs.remove(objectId);
-      doRemove = removedObjectIDs.remove(objectId);
-    } finally {
-      lockForTransactionsObjectIDs.unlock();
+      if (doRemove) {
+        entryRemovedCallback(key, value);
+      }
     }
-
-    if (doRemove) {
-      entryRemovedCallback(key, value);
-    }
-
     globalLocalCacheManager.transactionComplete(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 
