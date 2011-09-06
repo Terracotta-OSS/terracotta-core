@@ -16,6 +16,10 @@
   <packaging>jar</packaging>
   <name>test-api</name>
 
+  <properties>
+    <skip.findbugs>true</skip.findbugs>
+  </properties>
+
   <dependencies>
     <!-- Version and scope for each dependency is declared in the dependencyManagement 
       section of the parent POM. -->

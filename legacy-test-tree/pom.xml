@@ -24,6 +24,7 @@
   <properties>  
     <group>dso2</group>
     <skip.deploy>true</skip.deploy>
+    <skip.findbugs>true</skip.findbugs>
     <tc.bootclasspath>-Xbootclasspath/p:${tc.tests.info.bootjars.normal}</tc.bootclasspath>
   </properties>
 
