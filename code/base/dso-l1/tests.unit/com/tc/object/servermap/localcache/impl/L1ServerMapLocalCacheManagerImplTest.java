@@ -86,10 +86,8 @@ public class L1ServerMapLocalCacheManagerImplTest extends TestCase {
   public void testRememberMapIDToLockID() {
     L1ServerMapLocalCacheStore store = new L1ServerMapLocalCacheStoreHashMap();
     ObjectID mapID = new ObjectID(100);
-    this.l1LocalCacheManagerImpl.addStoreListener(store, mapID);
     ServerMapLocalCache localCache = this.l1LocalCacheManagerImpl.getOrCreateLocalCache(mapID, Mockito
-        .mock(ClientObjectManager.class), null, true);
-    localCache.setupLocalStore(store);
+        .mock(ClientObjectManager.class), null, true, store);
     localCache.setLocalCacheEnabled(true);
 
     MockTCObjectSelfCallback tcObjectSelfCallback = new MockTCObjectSelfCallback();

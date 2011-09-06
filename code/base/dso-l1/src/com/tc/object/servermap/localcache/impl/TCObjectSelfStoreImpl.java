@@ -16,11 +16,9 @@ import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PutType;
 import com.tc.object.servermap.localcache.RemoveType;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
-import com.tc.object.servermap.localcache.impl.L1ServerMapLocalCacheManagerImpl.GlobalL1ServerMapLocalCacheStoreListener;
 import com.tc.util.ObjectIDSet;
 
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,17 +26,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
-  private final ObjectIDSet                                      tcObjectSelfStoreOids = new ObjectIDSet();
-  private final ReentrantReadWriteLock                           tcObjectStoreLock     = new ReentrantReadWriteLock();
-  private final AtomicInteger                                    tcObjectSelfStoreSize = new AtomicInteger();
-  private volatile TCObjectSelfCallback                          tcObjectSelfRemovedFromStoreCallback;
-  private final Map<ObjectID, TCObjectSelf>                      tcObjectSelfTempCache = new HashMap<ObjectID, TCObjectSelf>();
-  private final Map<L1ServerMapLocalCacheStore, ObjectID>        stores                = new IdentityHashMap<L1ServerMapLocalCacheStore, ObjectID>();
-  private final ConcurrentHashMap<ObjectID, ServerMapLocalCache> localCaches;
-  private static final TCLogger                                  logger                = TCLogging
-                                                                                           .getLogger(TCObjectSelfStoreImpl.class);
+  private final ObjectIDSet                                    tcObjectSelfStoreOids = new ObjectIDSet();
+  private final ReentrantReadWriteLock                         tcObjectStoreLock     = new ReentrantReadWriteLock();
+  private final AtomicInteger                                  tcObjectSelfStoreSize = new AtomicInteger();
+  private volatile TCObjectSelfCallback                        tcObjectSelfRemovedFromStoreCallback;
+  private final Map<ObjectID, TCObjectSelf>                    tcObjectSelfTempCache = new HashMap<ObjectID, TCObjectSelf>();
 
-  public TCObjectSelfStoreImpl(ConcurrentHashMap<ObjectID, ServerMapLocalCache> localCaches) {
+  private final ConcurrentHashMap<ServerMapLocalCache, Object> localCaches;
+
+  private static final TCLogger                                logger                = TCLogging
+                                                                                         .getLogger(TCObjectSelfStoreImpl.class);
+
+  public TCObjectSelfStoreImpl(ConcurrentHashMap<ServerMapLocalCache, Object> localCaches) {
     this.localCaches = localCaches;
   }
 
@@ -59,8 +58,8 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
           return null;
         }
 
-        for (L1ServerMapLocalCacheStore store : this.stores.keySet()) {
-          Object object = getObjectFromLocalCache(oid, store);
+        for (ServerMapLocalCache localCache : this.localCaches.keySet()) {
+          Object object = localCache.getKeyOrValueForObjectID(oid);
           if (object == null) {
             continue;
           }
@@ -69,7 +68,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
             initializeTCObjectSelfIfRequired(rv);
             return rv;
           } else {
-            AbstractLocalCacheStoreValue localCacheStoreValue = (AbstractLocalCacheStoreValue) store.get(object);
+            AbstractLocalCacheStoreValue localCacheStoreValue = localCache.getValue(object);
             rv = localCacheStoreValue == null ? null : localCacheStoreValue.asEventualValue().getValue();
             initializeTCObjectSelfIfRequired(rv);
 
@@ -100,12 +99,6 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     }
   }
 
-  private Object getObjectFromLocalCache(ObjectID oid, L1ServerMapLocalCacheStore store) {
-    ServerMapLocalCache localCache = localCaches.get(stores.get(store));
-    Object object = localCache.getKeyOrValueForObjectID(oid);
-    return object;
-  }
-
   private void waitUntilNotified() {
     boolean isInterrupted = false;
     try {
@@ -129,7 +122,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     }
   }
 
-  public Object getByIdFromStore(ObjectID oid, L1ServerMapLocalCacheStore store) {
+  public Object getByIdFromCache(ObjectID oid, ServerMapLocalCache localCache) {
     tcObjectStoreLock.readLock().lock();
     try {
       TCObjectSelf self = tcObjectSelfTempCache.get(oid);
@@ -137,13 +130,13 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
       if (!tcObjectSelfStoreOids.contains(oid)) { return null; }
 
-      Object object = getObjectFromLocalCache(oid, store);
+      Object object = localCache.getKeyOrValueForObjectID(oid);
       if (object == null) { return null; }
       if (object instanceof TCObjectSelfStoreValue) {
         return ((TCObjectSelfStoreValue) object).getTCObjectSelf();
       } else {
         // for eventual value invalidation, use any of them to look up the value
-        AbstractLocalCacheStoreValue localCacheStoreValue = (AbstractLocalCacheStoreValue) store.get(object);
+        AbstractLocalCacheStoreValue localCacheStoreValue = localCache.getValue(object);
         return localCacheStoreValue == null ? null : localCacheStoreValue.asEventualValue().getValue();
       }
     } finally {
@@ -235,10 +228,10 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
         } else {
           Object object = serverMapLocalCache.getInternalStore().get(valueOid);
           if (object != null) {
-            if (!(object instanceof TCObjectSelfStoreValue)) {
-              throw new AssertionError("Object mapped by oid is not TCObjectSelfStoreValue, oid: " + valueOid
-                                       + ", value: " + object);
-            }
+            if (!(object instanceof TCObjectSelfStoreValue)) { throw new AssertionError(
+                                                                                        "Object mapped by oid is not TCObjectSelfStoreValue, oid: "
+                                                                                            + valueOid + ", value: "
+                                                                                            + object); }
             removed = serverMapLocalCache.getInternalStore().remove(valueOid, RemoveType.NO_SIZE_DECREMENT);
             removed = ((TCObjectSelfStoreValue) removed).getTCObjectSelf();
           }
@@ -305,33 +298,5 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
   public void initializeTCObjectSelfStore(TCObjectSelfCallback callback) {
     this.tcObjectSelfRemovedFromStoreCallback = callback;
-  }
-
-  public void clear() {
-    for (L1ServerMapLocalCacheStore store : stores.keySet()) {
-      store.clear();
-    }
-  }
-
-  public void addStoreListener(L1ServerMapLocalCacheStore store,
-                               GlobalL1ServerMapLocalCacheStoreListener localCacheStoreListener, ObjectID mapID) {
-    tcObjectStoreLock.writeLock().lock();
-    try {
-      if (!stores.containsKey(store)) {
-        store.addListener(localCacheStoreListener);
-        stores.put(store, mapID);
-      }
-    } finally {
-      tcObjectStoreLock.writeLock().unlock();
-    }
-  }
-
-  public void removeStore(L1ServerMapLocalCacheStore store) {
-    tcObjectStoreLock.writeLock().lock();
-    try {
-      stores.remove(store);
-    } finally {
-      tcObjectStoreLock.writeLock().unlock();
-    }
   }
 }

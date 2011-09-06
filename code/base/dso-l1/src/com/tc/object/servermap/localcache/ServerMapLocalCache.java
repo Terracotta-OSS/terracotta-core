@@ -11,12 +11,6 @@ import com.tc.object.servermap.localcache.impl.L1ServerMapLocalStoreTransactionC
 import java.util.Set;
 
 public interface ServerMapLocalCache {
-
-  /**
-   * Set up local cache store for use
-   */
-  void setupLocalStore(L1ServerMapLocalCacheStore serverMapLocalStore);
-
   L1ServerMapLocalCacheStore getInternalStore();
 
   /**
@@ -47,7 +41,7 @@ public interface ServerMapLocalCache {
   /**
    * Used in handshake to send a list of ObjectIDs to the server for validation
    */
-  void addAllObjectIDsToValidate(Invalidations invalidations);
+  void addAllObjectIDsToValidate(Invalidations invalidations, ObjectID mapID);
 
   // ///////////////////////////////
   // TCObjectServerMap methods
@@ -84,6 +78,11 @@ public interface ServerMapLocalCache {
    * Get the value corresponding to the key if present
    */
   AbstractLocalCacheStoreValue getLocalValue(Object key);
+
+  /**
+   * Get the value corresponding to the key if present
+   */
+  AbstractLocalCacheStoreValue getValue(Object key);
 
   /**
    * Check if the key is on-heap

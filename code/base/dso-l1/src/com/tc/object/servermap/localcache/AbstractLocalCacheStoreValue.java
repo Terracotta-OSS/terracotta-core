@@ -43,9 +43,9 @@ public abstract class AbstractLocalCacheStoreValue implements Externalizable {
     return this.mapID;
   }
 
-  public Object getValueObject(TCObjectSelfStore tcObjectSelfStore, L1ServerMapLocalCacheStore store) {
+  public Object getValueObject(TCObjectSelfStore tcObjectSelfStore, ServerMapLocalCache store) {
     if (value instanceof ObjectID) {
-      return tcObjectSelfStore.getByIdFromStore((ObjectID) value, store);
+      return tcObjectSelfStore.getByIdFromCache((ObjectID) value, store);
     } else {
       return value;
     }

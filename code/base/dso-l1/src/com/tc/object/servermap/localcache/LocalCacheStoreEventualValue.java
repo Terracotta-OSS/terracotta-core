@@ -30,7 +30,7 @@ public class LocalCacheStoreEventualValue extends AbstractLocalCacheStoreValue {
   }
 
   @Override
-  public Object getValueObject(TCObjectSelfStore tcObjectSelfStore, L1ServerMapLocalCacheStore store) {
+  public Object getValueObject(TCObjectSelfStore tcObjectSelfStore, ServerMapLocalCache store) {
     return value;
   }
 }

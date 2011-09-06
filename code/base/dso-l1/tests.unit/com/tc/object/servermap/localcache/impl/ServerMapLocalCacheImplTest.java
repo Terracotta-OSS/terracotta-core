@@ -88,14 +88,10 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     ClientTransactionManager ctm = Mockito.mock(ClientTransactionManager.class);
     Mockito.when(com.getTransactionManager()).thenReturn(ctm);
     Mockito.when(ctm.getCurrentTransaction()).thenReturn(clientTransaction);
-    cache = (ServerMapLocalCacheImpl) globalLocalCacheManager.getOrCreateLocalCache(mapID, com, null, true);
     localCacheStore = new L1ServerMapLocalCacheStoreHashMap(maxElementsInMemory);
-    cache.setupLocalStore(localCacheStore);
+    cache = (ServerMapLocalCacheImpl) globalLocalCacheManager.getOrCreateLocalCache(mapID, com, null, true,
+                                                                                    localCacheStore);
     cacheIDStore = cache.getL1ServerMapLocalCacheStore();
-  }
-
-  public void testGetMapID() throws Exception {
-    Assert.assertEquals(mapID, cache.getMapID());
   }
 
   public void testAddEventualValueToCache() throws Exception {
@@ -181,7 +177,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
                                          MapOperationType.REMOVE);
 
     value = cache.getCoherentLocalValue("key1");
-    Assert.assertEquals(null, value.getValueObject(globalLocalCacheManager, this.localCacheStore));
+    Assert.assertEquals(null, value.getValueObject(globalLocalCacheManager, cache));
     Assert.assertEquals(ObjectID.NULL_ID, value.asEventualValue().getId());
     Assert.assertNull(cacheIDStore.get(new ObjectID(1)));
 
@@ -415,7 +411,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     }
 
     Invalidations invalidations = new Invalidations();
-    cache.addAllObjectIDsToValidate(invalidations);
+    cache.addAllObjectIDsToValidate(invalidations, mapID);
 
     Assert.assertEquals(0, invalidations.size());
 
@@ -423,7 +419,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
       MockModesAdd.addEventualValueToCache(cache, globalLocalCacheManager, "key" + i,
                                            createMockSerializedEntry("value" + i, i), mapID, MapOperationType.PUT);
     }
-    cache.addAllObjectIDsToValidate(invalidations);
+    cache.addAllObjectIDsToValidate(invalidations, mapID);
 
     Assert.assertEquals(50, invalidations.size());
 
@@ -1141,7 +1137,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     }
 
     Assert.assertEquals(createMockSerializedEntry(expectedValue, expectedObjectId.toLong()), value
-        .getValueObject(globalLocalCacheManager, this.localCacheStore));
+        .getValueObject(globalLocalCacheManager, cache));
     Assert.assertEquals(expectedObjectId, value.getId());
     Assert.assertEquals(expectedObjectId, value.asEventualValue().getObjectId());
   }
@@ -1167,7 +1163,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
       // expected
     }
     Assert.assertEquals(createMockSerializedEntry(expectedValue, expectedObjectId.toLong()), value
-        .getValueObject(globalLocalCacheManager, this.localCacheStore));
+        .getValueObject(globalLocalCacheManager, cache));
     Assert.assertEquals(null, value.getId());
   }
 
@@ -1193,7 +1189,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
       // expected
     }
     Assert.assertEquals(createMockSerializedEntry(expectedValue, expectedObjectId.toLong()), value
-        .getValueObject(globalLocalCacheManager, this.localCacheStore));
+        .getValueObject(globalLocalCacheManager, cache));
     Assert.assertEquals(expectedLockId, value.getId());
     Assert.assertEquals(expectedLockId, value.asStrongValue().getLockId());
   }

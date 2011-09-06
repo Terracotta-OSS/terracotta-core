@@ -24,9 +24,12 @@ public interface L1ServerMapLocalCacheManager extends LocksRecallService, TCObje
 
   /**
    * Create a local cache for use or return already created local cache for the mapId
+   * 
+   * @param serverMapLocalStore
    */
   public ServerMapLocalCache getOrCreateLocalCache(ObjectID mapId, ClientObjectManager objectManager, Manager manager,
-                                                   boolean localCacheEnabled);
+                                                   boolean localCacheEnabled,
+                                                   L1ServerMapLocalCacheStore serverMapLocalStore);
 
   /**
    * flush the entries from the LocalCache associated with the given map id.<br>
@@ -48,15 +51,7 @@ public interface L1ServerMapLocalCacheManager extends LocksRecallService, TCObje
   /**
    * Remember the mapId associated with the valueLockId
    */
-  public void rememberMapIdForValueLockId(LockID valueLockId, ObjectID mapID);
-
-  /**
-   * Add a listener to the store.
-   * 
-   * @param mapID
-   * @param maxElementsInMemory
-   */
-  public void addStoreListener(L1ServerMapLocalCacheStore store, ObjectID mapID);
+  public void rememberMapIdForValueLockId(LockID valueLockId, ServerMapLocalCache localCache);
 
   /**
    * Shut down all local caches

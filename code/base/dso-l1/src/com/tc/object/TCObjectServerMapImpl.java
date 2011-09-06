@@ -60,12 +60,13 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   private final ClientObjectManager    objectManager;
   private final RemoteServerMapManager serverMapManager;
   private final Manager                manager;
-  private final ServerMapLocalCache    cache;
+  private volatile ServerMapLocalCache cache;
   private volatile boolean             invalidateOnChange;
   private volatile boolean             localCacheEnabled;
 
   private L1ServerMapLocalCacheStore   serverMapLocalStore;
   private final TCObjectSelfStore      tcObjectSelfStore;
+  final L1ServerMapLocalCacheManager   globalLocalCacheManager;
 
   public TCObjectServerMapImpl(final Manager manager, final ClientObjectManager objectManager,
                                final RemoteServerMapManager serverMapManager, final ObjectID id, final Object peer,
@@ -77,9 +78,9 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     this.objectManager = objectManager;
     this.serverMapManager = serverMapManager;
     this.manager = manager;
-    this.cache = globalLocalCacheManager.getOrCreateLocalCache(id, objectManager, manager, localCacheEnabled);
+    this.globalLocalCacheManager = globalLocalCacheManager;
     if (serverMapLocalStore != null) {
-      cache.setupLocalStore(serverMapLocalStore);
+      setupLocalCache(serverMapLocalStore);
     }
   }
 
@@ -131,7 +132,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
   public boolean doLogicalPutIfAbsentUnlocked(TCServerMap map, Object key, Object value) {
     AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
-    if (item != null && item.getValueObject(tcObjectSelfStore, serverMapLocalStore) != null) {
+    if (item != null && item.getValueObject(tcObjectSelfStore, cache) != null) {
       // Item already present
       return false;
     }
@@ -149,7 +150,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
   public boolean doLogicalReplaceUnlocked(TCServerMap map, Object key, Object current, Object newValue) {
     AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
-    if (item != null && current != item.getValueObject(tcObjectSelfStore, serverMapLocalStore)) {
+    if (item != null && current != item.getValueObject(tcObjectSelfStore, cache)) {
       // Item already present but not equal. We are doing reference equality coz equals() is called at higher layer
       // and coz of DEV-5462
       return false;
@@ -203,7 +204,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    */
   public boolean doLogicalRemoveUnlocked(TCServerMap map, Object key, Object value) {
     AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
-    if (item != null && value != item.getValueObject(tcObjectSelfStore, serverMapLocalStore)) {
+    if (item != null && value != item.getValueObject(tcObjectSelfStore, cache)) {
       // Item already present but not equal. We are doing reference equality coz equals() is called at higher layer
       // and coz of DEV-5462
       return false;
@@ -231,7 +232,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    */
   public Object getValue(final TCServerMap map, final L lockID, final Object key) {
     final AbstractLocalCacheStoreValue item = this.cache.getCoherentLocalValue(key);
-    if (item != null) { return item.getValueObject(tcObjectSelfStore, serverMapLocalStore); }
+    if (item != null) { return item.getValueObject(tcObjectSelfStore, cache); }
 
     final Object value = getValueForKeyFromServer(map, key, false);
     if (value != null) {
@@ -262,7 +263,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    */
   public Object getValueUnlocked(TCServerMap map, Object key) {
     AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
-    if (item != null) return item.getValueObject(tcObjectSelfStore, serverMapLocalStore);
+    if (item != null) return item.getValueObject(tcObjectSelfStore, cache);
     final Object value = getValueForKeyFromServer(map, key, true);
     if (value != null) {
       updateLocalCacheIfNecessary(key, value);
@@ -280,7 +281,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
         AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
         if (item != null) {
           i.remove();
-          rv.put(key, item.getValueObject(tcObjectSelfStore, serverMapLocalStore));
+          rv.put(key, item.getValueObject(tcObjectSelfStore, cache));
         }
       }
       if (keys.isEmpty()) {
@@ -552,7 +553,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   public Object getValueFromLocalCache(final Object key) {
     AbstractLocalCacheStoreValue cachedItem = this.cache.getLocalValue(key);
     if (cachedItem != null) {
-      return cachedItem.getValueObject(tcObjectSelfStore, serverMapLocalStore);
+      return cachedItem.getValueObject(tcObjectSelfStore, cache);
     } else {
       return null;
     }
@@ -628,9 +629,14 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   public void setupLocalStore(L1ServerMapLocalCacheStore serverMapLocalStore) {
     // this is called from CDSMDso.__tc_managed(tco)
     this.serverMapLocalStore = serverMapLocalStore;
-    if (cache != null) {
-      cache.setupLocalStore(serverMapLocalStore);
+    if (cache == null) {
+      setupLocalCache(serverMapLocalStore);
     }
+  }
+
+  private void setupLocalCache(L1ServerMapLocalCacheStore serverMapLocalStore) {
+    this.cache = globalLocalCacheManager.getOrCreateLocalCache(this.objectID, objectManager, manager,
+                                                               localCacheEnabled, serverMapLocalStore);
   }
 
   public long getLocalOnHeapSizeInBytes() {

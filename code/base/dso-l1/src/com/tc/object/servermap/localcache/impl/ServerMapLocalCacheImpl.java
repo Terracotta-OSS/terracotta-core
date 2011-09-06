@@ -32,7 +32,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
@@ -40,11 +39,11 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                                                                                                                               .getLogger(ServerMapLocalCacheImpl.class);
   private static final long                                                         SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS = TCPropertiesImpl
                                                                                                                                               .getProperties()
-                                                                                                                                              .getLong(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
+                                                                                                                                              .getLong(
+                                                                                                                                                       TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
 
   private static final LocalStoreKeySetFilter                                       IGNORE_ID_FILTER                                      = new IgnoreIdsFilter();
 
-  private final ObjectID                                                            mapID;
   private final L1ServerMapLocalCacheManager                                        globalLocalCacheManager;
   private volatile boolean                                                          localCacheEnabled;
   private volatile L1ServerMapLocalCacheStore<Object, AbstractLocalCacheStoreValue> localStore;
@@ -55,25 +54,20 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   private final Set<ObjectID>                                                       transactionsInProgressObjectIDs                       = new HashSet<ObjectID>();
   private final Set<ObjectID>                                                       removedObjectIDs                                      = new HashSet<ObjectID>();
-  private final ReentrantLock                                                       lockForTransactionsObjectIDs                          = new ReentrantLock();
 
   /**
    * Not public constructor, should be created only by the global local cache manager
    */
-  ServerMapLocalCacheImpl(ObjectID mapID, ClientObjectManager objectManager, Manager manager,
+  ServerMapLocalCacheImpl(ClientObjectManager objectManager, Manager manager,
                           L1ServerMapLocalCacheManager globalLocalCacheManager, boolean islocalCacheEnbaled,
-                          ServerMapLocalCacheRemoveCallback removeCallback) {
-    this.mapID = mapID;
+                          ServerMapLocalCacheRemoveCallback removeCallback,
+                          L1ServerMapLocalCacheStore<Object, AbstractLocalCacheStoreValue> localStore) {
     this.objectManager = objectManager;
     this.manager = manager;
     this.globalLocalCacheManager = globalLocalCacheManager;
     this.localCacheEnabled = islocalCacheEnbaled;
     this.removeCallback = removeCallback;
-  }
-
-  public void setupLocalStore(L1ServerMapLocalCacheStore store) {
-    this.localStore = store;
-    this.globalLocalCacheManager.addStoreListener(store, mapID);
+    this.localStore = localStore;
     this.lockProvider = this.localStore.getLockProvider();
   }
 
@@ -115,7 +109,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     if (localCacheValue.isStrongConsistentValue()) {
       // Before putting we should remember the mapId for the lock Id as upon recall need to flush from these maps
       // (TODO: can lockId be potentially used by multiple maps?)
-      globalLocalCacheManager.rememberMapIdForValueLockId(localCacheValue.asStrongValue().getLockId(), this.mapID);
+      globalLocalCacheManager.rememberMapIdForValueLockId(localCacheValue.asStrongValue().getLockId(), this);
     }
 
     addIdToKeysMappingIfNecessary(localCacheValue, key);
@@ -170,7 +164,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
+  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(
+                                                                                            final Object key,
                                                                                             AbstractLocalCacheStoreValue value,
                                                                                             MapOperationType mapOperation) {
     if (!mapOperation.isMutateOperation()) {
@@ -212,12 +207,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     for (Object key : keySet) {
       if (!isMetaInfoMapping(key)) {
         Object value = this.localStore.remove(key, RemoveType.NORMAL);
-        if (value instanceof AbstractLocalCacheStoreValue
-            && !((AbstractLocalCacheStoreValue) value).getMapID().equals(mapID)) {
+        if (value instanceof AbstractLocalCacheStoreValue) {
           this.globalLocalCacheManager.evictElements(Collections.singletonMap(key, value));
-        } else if (value instanceof AbstractLocalCacheStoreValue) {
-          AbstractLocalCacheStoreValue localValue = (AbstractLocalCacheStoreValue) value;
-          evictedFromStore(localValue.getId(), key, localValue);
         }
       }
     }
@@ -282,6 +273,10 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return value;
   }
 
+  public AbstractLocalCacheStoreValue getValue(final Object key) {
+    return this.localStore.get(key);
+  }
+
   private boolean isIncoherentTooLong(AbstractLocalCacheStoreValue value) {
     long lastCoherentTime = value.asIncoherentValue().getLastCoherentTime();
     return TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - lastCoherentTime)) >= SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS;
@@ -327,11 +322,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  public ObjectID getMapID() {
-    return this.mapID;
-  }
-
-  public void addAllObjectIDsToValidate(Invalidations invalidations) {
+  public void addAllObjectIDsToValidate(Invalidations invalidations, ObjectID mapID) {
     if (!isStoreInitialized()) { return; }
 
     for (ReentrantReadWriteLock readWriteLock : this.lockProvider.getAllLocks()) {
@@ -521,7 +512,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   private boolean isTransactionInProgressFor(ObjectID objectId) {
     if (ObjectID.NULL_ID.equals(objectId)) { return false; }
 
-    lockForTransactionsObjectIDs.lock();
+    ReentrantReadWriteLock lock = lockProvider.getLock(objectId);
+    lock.writeLock().lock();
     try {
       if (transactionsInProgressObjectIDs.contains(objectId)) {
         removedObjectIDs.add(objectId);
@@ -530,22 +522,24 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         return false;
       }
     } finally {
-      lockForTransactionsObjectIDs.unlock();
+      lock.writeLock().unlock();
     }
   }
 
-  public void transactionComplete(Object key,
+  public void transactionComplete(
+                                  Object key,
                                   AbstractLocalCacheStoreValue value,
                                   L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     final ObjectID objectId = value.getObjectId();
     if (!ObjectID.NULL_ID.equals(objectId)) {
       boolean doRemove;
-      lockForTransactionsObjectIDs.lock();
+      ReentrantReadWriteLock lock = lockProvider.getLock(objectId);
+      lock.writeLock().lock();
       try {
         transactionsInProgressObjectIDs.remove(objectId);
         doRemove = removedObjectIDs.remove(objectId);
       } finally {
-        lockForTransactionsObjectIDs.unlock();
+        lock.writeLock().unlock();
       }
 
       if (doRemove) {
@@ -558,11 +552,12 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   private void transactionStarted(ObjectID objectId) {
     if (ObjectID.NULL_ID.equals(objectId)) { return; }
 
-    lockForTransactionsObjectIDs.lock();
+    ReentrantReadWriteLock lock = lockProvider.getLock(objectId);
+    lock.writeLock().lock();
     try {
       transactionsInProgressObjectIDs.add(objectId);
     } finally {
-      lockForTransactionsObjectIDs.unlock();
+      lock.writeLock().unlock();
     }
   }
 
