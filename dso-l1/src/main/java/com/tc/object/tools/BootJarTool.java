@@ -201,6 +201,7 @@ import com.tc.object.servermap.localcache.LocalCacheStoreIncoherentValue;
 import com.tc.object.servermap.localcache.LocalCacheStoreStrongValue;
 import com.tc.object.servermap.localcache.PutType;
 import com.tc.object.servermap.localcache.RemoveType;
+import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.object.servermap.localcache.impl.TCObjectSelfWrapper;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.ClientTransaction;
@@ -661,6 +662,7 @@ public class BootJarTool {
       addLiterals();
 
       // local cache store classes
+      loadTerracottaClass(ServerMapLocalCache.class.getName());
       loadTerracottaClass(L1ServerMapLocalCacheStore.class.getName());
       loadTerracottaClass(L1ServerMapLocalCacheLockProvider.class.getName());
       loadTerracottaClass(AbstractLocalCacheStoreValue.class.getName());
