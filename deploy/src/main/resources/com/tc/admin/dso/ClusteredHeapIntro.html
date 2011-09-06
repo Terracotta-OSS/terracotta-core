@@ -1,0 +1,46 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!-- - - - - - - - - - - - - - -->
+<!--  Terracotta               -->
+<!--  ClusteredHeapIntro.html  -->
+<!-- - - - - - - - - - - - - - -->
+<html>
+<head>
+<title>Terracotta Developer Console</title>
+<style>
+   body { color:#666666; font-family: sans-serif; margin: 10px 10px }
+   h1 { text-align: right; margin: 0px 0px 20px 0px }
+   a { color:#8B4513; font-weight: bold; text-decoration: underline }
+   a:hover { color:red; text-decoration: none }
+   img.topic { margin-right: 0px}
+   td.topic { vertical-align: top}
+   div.main { margin: 10px 0px 0px 30px }
+   div.description { margin: 0px 0px 0px 20px }
+   div.footer { text-align: center; font-size: 95%; margin-top: 15px }
+   </style>
+</head>
+<body>
+
+<h1><img src="/com/tc/welcome/tc-logo.png"><br>Terracotta Developer Console: Clustered Heap</h1>
+
+<p>Contains tools for monitoring shared objects in the clustered heap. The clustered heap is the memory shared with Terracotta across JVMs. Shared object graphs are found in the clustered heap.
+
+<table cellpadding=10>
+   <tr>
+      <td valign=top><a href="RootsNode"><img border=0 src="/com/tc/admin/icons/hierarchicalLayout.gif" class=topic></a></td>
+      <td><a href="RootsNode">Object browser</a>
+         <div class=description>
+         Use the object browser to inspect objects currently in the clustered heap, for example to ensure that specified Terracotta roots are being clustered or that shared objects appear on clients as expected. The object browser displays shared object graphs for the entire cluster or by client, depending on how the filter is set.  
+         </div>
+      </td></tr>
+   <tr>
+      <td valign=top><a href="ClassesNode"><img border=0 src="/com/tc/admin/icons/class_obj.gif" class=topic></a></td>
+      <td><a href="ClassesNode">Instance counts</a>
+         <div class=description>
+         Use the instance browser to determined which instrumented application classes have been instantiated on the clustered heap. The instantiated classes can be viewed in different formats, including tabular (with counts) and hierarchical.
+         </div>
+      </td></tr>
+</table>
+
+<div class=footer>Copyright &copy; Terracotta, Inc.</div>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	targetNamespace="http://www.terracotta.org/group-config-for-l1" xmlns="http://www.terracotta.org/group-config-for-l1"
+	version="1">
+	<xs:element name="server-groups">
+		<xs:complexType>
+			<xs:sequence minOccurs="1" maxOccurs="unbounded">
+				<xs:element name="server-group" type="server-group" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="server-group">
+		<xs:sequence minOccurs="1" maxOccurs="unbounded">
+			<xs:element name="server-info" type="server-info" />
+		</xs:sequence>
+		<xs:attribute name="group-name" type="xs:string" />
+	</xs:complexType>
+	<xs:complexType name="server-info">
+		<xs:sequence minOccurs="1" maxOccurs="1">
+			<xs:element name="name" type="xs:string" />
+			<xs:element name="dso-port" type="xs:integer" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="groupname-id-map">
+		<xs:complexType>
+			<xs:sequence minOccurs="0" maxOccurs="unbounded">
+				<xs:element name="groupname-id" type="groupname-id" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="groupname-id">
+		<xs:sequence minOccurs="1" maxOccurs="1">
+			<xs:element name="name" type="xs:string" />
+			<xs:element name="gid" type="xs:integer" />
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>

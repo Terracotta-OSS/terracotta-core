@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  All content copyright (c) 2003-2008 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved.
+
+-->
+<!--
+ This is a Terracotta configuration file that has been pre-configured
+ for use with DSO.  All classes are included for instrumentation,
+ and all instrumented methods are write locked.
+     
+ For more information, please see the product documentation.
+-->
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.terracotta.org/config C:\dev\terr\tc-trunk\code\base\common\src.resources\com\tc\config\schema\terracotta-6.xsd">
+  <servers>
+    <server host="%i">
+      <data>%(user.home)/terracotta/server-data</data>
+      <logs>%(user.home)/terracotta/server-logs</logs>
+    </server>
+  </servers>
+  
+  <clients>
+    <logs>%(user.home)/terracotta/client-logs</logs>
+  </clients>
+  
+  <application>
+    <dso>
+      <!-- Start by including all classes for instrumentation.
+           It's more efficient to instrument only those classes that
+           hold shared roots or are part of a shared root graph.
+        -->
+      <instrumented-classes>
+        <include>
+          <class-expression>*..*</class-expression>
+        </include>
+        <include>
+          <class-expression>@org.Clusterable *..*</class-expression>
+        </include>
+        <include>
+          <class-expression>*..Clusterable+</class-expression>
+        </include>
+      </instrumented-classes>
+
+      <!-- Create a single write autolock for all instrumented methods.
+           It's more efficient to create finer-grain locks as dictated
+           by your application needs.
+        -->
+      <locks>
+        <autolock>
+          <lock-level>write</lock-level>
+          <method-expression>* *..*.*(..)</method-expression>
+        </autolock>
+        <autolock>
+          <method-expression>* java.lang.String[] tc.qa.SynchDictionary.allKeys()</method-expression>
+          <lock-level>read</lock-level>
+        </autolock>
+        <autolock>
+          <method-expression>String[] * org.apache.wicket.IClusterable+.*(..)</method-expression>
+        </autolock>
+        <autolock>
+          <method-expression>@*..Clusterable * org.apache.wicket.IClusterable+.*(..)</method-expression>
+        </autolock>
+      </locks>
+      <distributed-methods>
+        <method-expression>@*..DMI * *..*(..)</method-expression>
+      </distributed-methods>
+      <injected-instances>
+      	<injected-field>
+      		<field-name>org.Clusterable.someField</field-name>
+      	</injected-field>
+      	<injected-field>
+      		<field-name>org.Clusterable.someOtherField</field-name>
+      		<instance-type>com.tc.cluster.DsoCluster</instance-type>
+      	</injected-field>
+      </injected-instances>
+    </dso>
+  </application>
+</tc:tc-config>

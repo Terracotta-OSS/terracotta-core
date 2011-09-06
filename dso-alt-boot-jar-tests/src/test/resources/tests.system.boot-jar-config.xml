@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+All content copyright (c) 2003-2008 Terracotta, Inc.,
+except as may otherwise be noted in a separate copyright notice.
+All rights reserved
+
+-->
+
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config">
+  <system>
+    <configuration-model>development</configuration-model>
+  </system>
+  
+  <application>
+    <dso>
+      <instrumented-classes>
+      </instrumented-classes>
+    
+      <additional-boot-jar-classes>
+        <include>java.lang.StringBuffer</include>
+        <include>java.lang.StringBuilder</include>
+
+        <include>java.io.BufferedWriter</include>
+        <include>java.io.DataOutputStream</include>
+        <include>java.io.FilterOutputStream</include>
+        <include>java.io.Writer</include>
+        <include>java.io.OutputStream</include>
+        <include>java.io.StringWriter</include>
+        <include>java.io.ByteArrayOutputStream</include>
+
+        <include>java.util.Calendar</include>
+        <include>java.util.TimeZone</include>
+        <include>java.util.SimpleTimeZone</include>
+        <include>java.util.GregorianCalendar</include>
+        <include>sun.util.BuddhistCalendar</include>
+        <include>sun.util.calendar.ZoneInfo</include>       
+      </additional-boot-jar-classes>
+
+      <locks>
+        <autolock>
+          <method-expression>* java.util.Hashtable$*.*(..)</method-expression>
+        </autolock>
+        <autolock>
+          <method-expression>* java.util.Hashtable*.*(..)</method-expression>
+        </autolock>
+        <autolock>
+          <method-expression>* java.util.Vector$*.*(..)</method-expression>
+        </autolock>
+        <autolock>
+          <method-expression>* java.util.Vector*.*(..)</method-expression>
+        </autolock>
+        <autolock>
+          <method-expression>* java.util.Collections$SynchronizedSet*.*(..)</method-expression>
+        </autolock>
+        <autolock>
+          <method-expression>* java.util.Collections$SynchronizedCollection*.*(..)</method-expression>
+        </autolock>
+        <autolock>
+          <method-expression>* java.util.Collections$SynchronizedList*.*(..)</method-expression>
+        </autolock>
+        <autolock>
+          <method-expression>* java.util.Collections$SynchronizedSortedMap*.*(..)</method-expression>
+        </autolock>
+        <autolock>
+          <method-expression>* java.util.Collections$SynchronizedSortedSet*.*(..)</method-expression>
+        </autolock>
+        <autolock>
+          <method-expression>* java.util.Collections$SynchronizedMap*.*(..)</method-expression>
+        </autolock>
+        <autolock>
+          <method-expression>* java.util.Collections$SynchronizedRandomAccessList*.*(..)</method-expression>
+        </autolock>
+      </locks>           
+    </dso>
+  </application>
+
+</tc:tc-config>

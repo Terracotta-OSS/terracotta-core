@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- All content copyright (c) 2003-2008 Terracotta, Inc., except as may 
+	otherwise be noted in a separate copyright notice. All rights reserved. -->
+
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-6.xsd">
+
+	<servers>
+		<server host="localhost" name="server-1">
+			<dso-port bind="127.0.0.1">4210</dso-port>
+			<jmx-port bind="0.0.0.0">4220</jmx-port>
+			<l2-group-port>4200</l2-group-port>
+			<dso>
+				<persistence>
+					<mode>permanent-store</mode>
+				</persistence>
+			</dso>
+		</server>
+
+		<server host="localhost" name="server-2" bind="127.0.0.1">
+			<dso-port>5210</dso-port>
+			<jmx-port>5220</jmx-port>
+			<l2-group-port>5200</l2-group-port>
+			<dso>
+				<persistence>
+					<mode>permanent-store</mode>
+				</persistence>
+			</dso>
+		</server>
+
+		<server host="localhost" name="server-3" bind="0.0.0.0">
+			<dso-port bind="127.0.0.1">6210</dso-port>
+			<jmx-port bind="127.0.0.1">6220</jmx-port>
+			<l2-group-port bind="127.0.0.1">6200</l2-group-port>
+			<dso>
+				<persistence>
+					<mode>permanent-store</mode>
+				</persistence>
+			</dso>
+		</server>
+
+		<server host="localhost" name="server-4">
+			<dso>
+				<persistence>
+					<mode>permanent-store</mode>
+				</persistence>
+			</dso>
+		</server>
+
+		<mirror-groups>
+			<mirror-group>
+				<members>
+					<member>server-1</member>
+					<member>server-2</member>
+					<member>server-3</member>
+					<member>server-4</member>
+				</members>
+				<ha>
+					<mode>networked-active-passive</mode>
+					<networked-active-passive>
+						<election-time>5</election-time>
+					</networked-active-passive>
+				</ha>
+			</mirror-group>
+		</mirror-groups>
+
+		<update-check>
+			<enabled>true</enabled>
+		</update-check>
+
+	</servers>
+
+</tc:tc-config>

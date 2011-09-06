@@ -1,0 +1,13 @@
+# This file is an example build-data.txt file for use with ProductInfoTest
+
+terracotta.build.productname=terracotta
+terracotta.build.version=1.2.3-SNAPSHOT
+terracotta.build.maven.artifacts.version=1.2.3-SNAPSHOT
+terracotta.build.host=thehost
+terracotta.build.user=theuser
+terracotta.build.timestamp=20080616-130651
+terracotta.build.revision=12345
+terracotta.build.ee.revision=98765
+terracotta.build.change-tag=thechange
+terracotta.build.branch=thebranch
+terracotta.build.edition=Enterprise

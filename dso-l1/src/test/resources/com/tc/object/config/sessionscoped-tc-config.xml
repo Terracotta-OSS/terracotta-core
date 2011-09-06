@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  All content copyright (c) 2003-2008 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved
+
+-->
+<tc:tc-config 
+    xmlns:tc="http://www.terracotta.org/config"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xsi:schemaLocation="http://www.terracotta.org/config ..\..\..\common\src.resources\com\tc\config\schema\terracotta-2.2.xsd">
+
+	<system/>
+
+	<clients>
+		<logs>%d/client-logs-%h</logs>
+	</clients>
+
+	<servers>
+		<server host="%i" />
+	</servers>
+
+	<application>
+		<spring>
+	      <jee-application name="test-sessionscope">
+	        <session-support>true</session-support>
+	        
+	        <instrumented-classes>
+	          <include>
+	            <class-expression>com.tctest.spring.bean.SimpleBean</class-expression>
+	            <honor-transient>true</honor-transient>
+	          </include>
+	        </instrumented-classes>          
+	        
+	        <application-contexts>
+	          <application-context>
+	            <paths>
+	              <path>*.xml</path>
+	            </paths>
+	             
+	            <beans>
+	              <bean name="scopedTarget.simplebean"/>
+	            </beans>
+	            
+	          </application-context>
+	        </application-contexts>
+	      </jee-application>
+		</spring>
+	</application>
+
+</tc:tc-config>
