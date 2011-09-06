@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<ivy-module version="2.0">
-  <info organisation="org.terracotta" module="tim-get-tool-tests-unit"/>
-  <dependencies defaultconf="default">
-    <dependency name="jetty" rev="6.1.8" org="org.mortbay.jetty"/>
-    <dependency name="jetty-util" rev="6.1.8" org="org.mortbay.jetty"/>
-  </dependencies>
-</ivy-module>

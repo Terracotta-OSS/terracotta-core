@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+ 
+  <parent>
+    <groupId>org.terracotta.forge</groupId>
+    <artifactId>forge-parent</artifactId>
+    <version>2.3-SNAPSHOT</version>
+    <relativePath></relativePath>
+  </parent>
+  
+  <groupId>org.terracotta</groupId>
+  <artifactId>terracotta-root</artifactId>
+  <version>3.6.0-SNAPSHOT</version>
+  <name>terracotta-root</name>
+  <packaging>pom</packaging>
+
+  <properties>
+    <build.edition>opensource</build.edition>
+  </properties>
+  
+  <modules>
+    <module>build-parent</module>
+    <module>build-data</module>
+    <module>common-api</module>
+    <module>common</module>
+    <module>thirdparty</module>
+    <module>aspectwerkz</module>
+    <module>dso-statistics-api</module>
+    <module>dso-l1-api</module>
+    <module>sigarstats</module>
+    <module>dso-common</module>
+    <module>management-api</module>
+    <module>management</module>
+    <module>dso-l2-common</module> 
+    <module>deploy-api</module>
+    <module>dso-statistics</module>
+    <module>dso-l1</module>
+    <module>dso-l2</module>
+    <module>deploy</module>
+    <module>simulator</module>
+    <module>tim-get-tool</module>
+    
+    <module>legacy-test-tree</module>
+    <module>dso-system-tests</module>
+    <module>dso-crash-tests</module>
+    <module>dso-statistics-tests</module>
+    <module>dso-alt-boot-jar-tests</module>
+    
+    <module>terracotta-parent</module>
+    <module>terracotta</module>
+    <module>terracotta-l1-parent</module>
+    <module>terracotta-l1</module>
+    <module>terracotta-test-api</module>    
+  </modules>
+  
+  <profiles>
+    <!-- activate for modules that needs JDK16 -->
+    <profile>
+      <id>jdk16</id>
+      <activation>
+        <jdk>1.6</jdk>
+      </activation>
+      <modules>
+        <module>dso-common-jdk16</module>
+      </modules>
+    </profile>
+    
+    <!-- activate to include EE modules if it's EE branch -->
+    <profile>
+      <id>ee</id>
+      <properties>
+        <build.edition>enterprise</build.edition>
+      </properties>
+      <activation>
+        <file>
+          <exists>../terracotta-ee</exists>
+        </file>
+      </activation>      
+      <modules>
+        <module>../ent-common</module>
+        <module>../ent-dso-l1</module>
+        <module>../ent-dso-l2</module>
+        <module>../ent-deploy</module>
+        <module>../ent-system-tests</module>
+        <module>../ent-active-active-tests</module>
+        <module>../terracotta-ee</module>
+        <module>../terracotta-l1-ee</module>         
+      </modules>        
+    </profile>
+  </profiles>
+</project>
+
+

@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<ivy-module version="2.0">
-  <info organisation="org.terracotta" module="tim-get-tool"/>
-  <dependencies defaultconf="default">
-    <dependency name="guice" rev="1.0" org="com.google.code.guice"/>
-  </dependencies>
-</ivy-module>

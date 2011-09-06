@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  All content copyright (c) 2003-2010 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved.
+
+-->
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-6.xsd">
+  	<tc-properties>
+		<!--
+                        This configuration snippet provides a ready set of High Availability 
+                        tuning properties that can be added to the <tc-properties> block of a
+                        working Terracotta configuration file. The optional <tc-properties>
+                        block is found at the beginning of the Terracotta configuration file.
+
+                        The properties provided below are specifically intended to tune the 
+                        HealthChecker feature. For more information on High Availability
+                        features, see the chapter on High Availability in the Terracotta Product
+                        Documentation
+                        (http://www.terracotta.org/kit/reflector?kitID=default&pageID=HA).
+		-->
+
+		<!-- 
+			The following properties configure HealthChecker in a manner
+			appropriate for a typical production environment.
+		-->
+
+		<!-- Section L2<==>L2 
+			Detects network disconnects in 8 seconds
+			Allows Long GCs upto 20 seconds
+		-->
+		<!--
+			# A ping is sent if no data is received for 5 seconds.
+		-->
+		<property name="l2.healthcheck.l2.ping.idletime" value="5000" />
+
+		<!--
+			# HealthChecker thread's sleep time (1 second) between pings.
+		-->
+		<property name="l2.healthCheck.l2.ping.interval" value="1000" />
+
+		<!--
+			# The number of probes sent (every l2.healthCheck.l2.ping.interval) 
+                        before a problem is assumed to exist.
+		-->
+		<property name="l2.healthCheck.l2.ping.probes" value="3" />
+
+		<!--
+                        # When the number of successful pings has reached its limit and no replies
+                        have been received, an attempt is made to open a socket connection, with the
+                        following possible results:
+
+                        1. Success - return to the ping cycle.
+                        2. Hanging connection - after a period of time equal to 5 times the ping
+                        interval, the node is assumed to be dead.
+                        3. Failure to connect - the node is assumed to be dead.
+		-->
+		<property name="l2.healthCheck.l2.socketConnect" value="true" />
+
+		<!--
+                        # The number of successful socket connections allowed before the node is
+                        considered to be dead.
+		-->
+		<property name="l2.healthCheck.l2.socketConnectCount" value="5" />
+
+
+		<!-- Section L1<==>L2
+			Detects network disconnects in 8 seconds
+			Allows Long GCs upto 30 seconds
+		-->
+		<property name="l1.healthCheck.l2.ping.idletime" value="5000" />
+		<property name="l1.healthCheck.l2.ping.interval" value="1000" />
+		<property name="l1.healthCheck.l2.ping.probes" value="3" />
+		<property name="l1.healthCheck.l2.socketConnect" value="true" />
+		<property name="l1.healthCheck.l2.socketConnectCount" value="8" />
+
+		<!-- Section L2<==>L1 
+			Detects network disconnects in 8 seconds
+			Allows Long GCs upto 20 seconds
+		-->
+		<property name="l2.healthCheck.l1.ping.idletime" value="5000" />
+		<property name="l2.healthCheck.l1.ping.interval" value="1000" />
+		<property name="l2.healthCheck.l1.ping.probes" value="3" />
+		<property name="l2.healthCheck.l1.socketConnect" value="true" />
+		<property name="l2.healthCheck.l1.socketConnectCount" value="5" />
+
+	</tc-properties>
+</tc:tc-config>
+

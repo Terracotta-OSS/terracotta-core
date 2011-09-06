@@ -1,0 +1,809 @@
+Index: modules/jetty/src/main/java/org/mortbay/jetty/servlet/FileServlet.java
+===================================================================
+--- modules/jetty/src/main/java/org/mortbay/jetty/servlet/FileServlet.java	(revision 0)
++++ modules/jetty/src/main/java/org/mortbay/jetty/servlet/FileServlet.java	(revision 0)
+@@ -0,0 +1,541 @@
++// ========================================================================
++// Copyright 199-2004 Mort Bay Consulting Pty. Ltd.
++// ------------------------------------------------------------------------
++// Licensed under the Apache License, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at 
++// http://www.apache.org/licenses/LICENSE-2.0
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++// ========================================================================
++
++package org.mortbay.jetty.servlet;
++
++import java.io.File;
++import java.io.FileInputStream;
++import java.io.IOException;
++import java.io.InputStream;
++import java.io.OutputStream;
++import java.net.MalformedURLException;
++
++import javax.servlet.RequestDispatcher;
++import javax.servlet.ServletContext;
++import javax.servlet.ServletException;
++import javax.servlet.UnavailableException;
++import javax.servlet.http.HttpServlet;
++import javax.servlet.http.HttpServletRequest;
++import javax.servlet.http.HttpServletResponse;
++
++import org.mortbay.io.Buffer;
++import org.mortbay.io.ByteArrayBuffer;
++import org.mortbay.io.IO;
++import org.mortbay.io.View;
++import org.mortbay.io.WriterOutputStream;
++import org.mortbay.jetty.Connector;
++import org.mortbay.jetty.HttpConnection;
++import org.mortbay.jetty.HttpContent;
++import org.mortbay.jetty.HttpFields;
++import org.mortbay.jetty.HttpHeaders;
++import org.mortbay.jetty.HttpMethods;
++import org.mortbay.jetty.MimeTypes;
++import org.mortbay.jetty.Response;
++import org.mortbay.log.Log;
++import org.mortbay.util.URIUtil;
++
++
++
++/* ------------------------------------------------------------ */
++/** The default servlet.                                                 
++ * This servlet, normally mapped to /, provides the handling for static 
++ * content, OPTION and TRACE methods for the context.                   
++ * The following initParameters are supported:                          
++ * <PRE>                                                     
++ *   dirAllowed       If true, directory listings are returned if no    
++ *                    welcome file is found. Else 403 Forbidden.        
++ *
++ *   redirectWelcome  If true, welcome files are redirected rather than
++ *                    forwarded to.
++ *
++ *  fileBase          Set to the source of the files
++ *
++ * </PRE>
++ *                                                                   
++ *
++ * @author Greg Wilkins (gregw)
++ * @author Nigel Canonizado
++ */
++public class FileServlet extends HttpServlet 
++{
++    private boolean _dirAllowed=true;
++    private boolean _redirectWelcome=true;
++    
++    private MimeTypes _mimeTypes;
++    private String[] _welcomes;
++    private File docroot;
++    
++    
++    /* ------------------------------------------------------------ */
++    public void init()
++    throws UnavailableException
++    {
++        _mimeTypes = new MimeTypes();
++        _welcomes=new String[] {"index.jsp","index.html"};
++        
++        _dirAllowed=getInitBoolean("dirAllowed",_dirAllowed);
++        _redirectWelcome=getInitBoolean("redirectWelcome",_redirectWelcome);
++        
++        
++        String fb=getInitParameter("fileBase");
++        docroot = new File(fb==null?".":fb);
++       
++    }
++    
++    /* ------------------------------------------------------------ */
++    private boolean getInitBoolean(String name, boolean dft)
++    {
++        String value=getInitParameter(name);
++        if (value==null || value.length()==0)
++            return dft;
++        return (value.startsWith("t")||
++                value.startsWith("T")||
++                value.startsWith("y")||
++                value.startsWith("Y")||
++                value.startsWith("1"));
++    }
++    
++    
++    /* ------------------------------------------------------------ */
++    /** get Resource to serve.
++     * Map a path to a resource. The default implementation calls
++     * HttpContext.getResource but derived servlets may provide
++     * their own mapping.
++     * @param pathInContext The path to find a resource for.
++     * @return The resource to serve.
++     */
++    public File getResource(String pathInContext)
++    {
++        return new File(docroot,pathInContext);
++    }
++    
++    /* ------------------------------------------------------------ */
++    protected void doGet(HttpServletRequest request, HttpServletResponse response)
++    	throws ServletException, IOException
++    {
++        String servletPath=null;
++        String pathInfo=null;
++        Boolean included =(Boolean)request.getAttribute(Dispatcher.__INCLUDE_JETTY);
++        if (included!=null && included.booleanValue())
++        {
++            servletPath=(String)request.getAttribute(Dispatcher.__INCLUDE_SERVLET_PATH);
++            pathInfo=(String)request.getAttribute(Dispatcher.__INCLUDE_PATH_INFO);
++            if (servletPath==null)
++            {
++                servletPath=request.getServletPath();
++                pathInfo=request.getPathInfo();
++            }
++        }
++        else
++        {
++            included=Boolean.FALSE;
++            servletPath=request.getServletPath();
++            pathInfo=request.getPathInfo();
++            
++        }
++        
++        String pathInContext=URIUtil.addPaths(servletPath,pathInfo);
++        boolean endsWithSlash=pathInContext.endsWith("/");
++        
++        // Find the resource and content
++        String path=null;
++        File resource=null;
++        Content content=null;
++        try
++        {   
++            path=pathInContext;
++            resource=getResource(pathInContext);
++            
++            
++            // Handle resource
++            if (resource==null || !resource.exists())
++                response.sendError(HttpServletResponse.SC_NOT_FOUND);
++            else if (!resource.isDirectory())
++            {
++                // ensure we have content
++                if (content==null)
++                {
++                    content=getContent(path,resource);
++                }
++                
++                if (included.booleanValue() || passConditionalHeaders(request,response, resource,content))  
++                    sendData(request,response,included.booleanValue(),resource,content);   
++            }
++            else
++            {
++                String welcome=null;
++                
++                if (!endsWithSlash && !pathInContext.equals("/"))
++                {
++                    StringBuffer buf=request.getRequestURL();
++                    buf.append('/');
++                    String q=request.getQueryString();
++                    if (q!=null&&q.length()!=0)
++                    {
++                        buf.append('?');
++                        buf.append(q);
++                    }
++                    response.setContentLength(0);
++                    response.sendRedirect(response.encodeRedirectURL(buf.toString()));
++                }
++                // else look for a welcome file
++                else if (null!=(welcome=getWelcomeFile(resource)))
++                {
++                    String ipath=URIUtil.addPaths(pathInContext,welcome);
++                    if (_redirectWelcome)
++                    {
++                        // Redirect to the index
++                        response.setContentLength(0);
++                        String q=request.getQueryString();
++                        if (q!=null&&q.length()!=0)
++                            response.sendRedirect(URIUtil.addPaths( request.getContextPath(),ipath)+"?"+q);
++                        else
++                            response.sendRedirect(URIUtil.addPaths( request.getContextPath(),ipath));
++                    }
++                    else
++                    {
++                        // Forward to the index
++                        RequestDispatcher dispatcher=request.getRequestDispatcher(ipath);
++                        if (dispatcher!=null)
++                        {
++                            if (included.booleanValue())
++                                dispatcher.include(request,response);
++                            else
++                                dispatcher.forward(request,response);
++                        }
++                    }
++                }
++                else 
++                {
++                    content=getContent(pathInContext,resource);
++                    if (included.booleanValue() || passConditionalHeaders(request,response, resource,content))
++                        sendDirectory(request,response,resource,pathInContext.length()>1);
++                }
++            }
++        }
++        catch(IllegalArgumentException e)
++        {
++            Log.warn(Log.EXCEPTION,e);
++        }
++        finally
++        {
++        }
++        
++    }
++    
++    /* ------------------------------------------------------------ */
++    protected void doPost(HttpServletRequest request, HttpServletResponse response)
++        throws ServletException, IOException
++    {
++        doGet(request,response);
++    }
++    
++    /* ------------------------------------------------------------ */
++    private Content getContent(String pathInContext, File resource)
++    	throws IOException	
++    {
++        Content content=new Content(resource);
++        Buffer mime_type=_mimeTypes.getMimeByExtension(pathInContext);
++        Connector connector = HttpConnection.getCurrentConnection().getConnector();
++        if (mime_type!=null) content.setContentType(mime_type);
++        
++        if (!resource.isDirectory())   
++        {
++            Buffer buffer=null;
++            long length=resource.length();
++            
++            buffer = new ByteArrayBuffer((int)length);
++            byte[] array = buffer.array();
++            InputStream in = new FileInputStream(resource);
++            
++            int l = 0;
++            while (l < length) 
++            {
++                int r = in.read(array,l,array.length-l);
++                if (r < 0)
++                    throw new IOException("unexpected EOF");
++                l+=r;
++            }
++            buffer.setPutIndex(l);
++            
++            if (buffer!=null)
++            {
++                content.setBuffer(buffer);
++                if (Log.isDebugEnabled())
++                    Log.debug("content buffer is "+buffer.getClass());
++            }
++        }
++        return content;
++    }
++    
++    /* ------------------------------------------------------------ */
++    /**
++     * Finds a matching welcome file for the supplied {@link Resource}. This will be the first entry in the list of 
++     * configured {@link #_welcomes welcome files} that existing within the directory referenced by the <code>Resource</code>.
++     * If the resource is not a directory, or no matching file is found, then <code>null</code> is returned.
++     * The list of welcome files is read from the {@link ContextHandler} for this servlet, or
++     * <code>"index.jsp" , "index.html"</code> if that is <code>null</code>.
++     * @param resource
++     * @return The name of the matching welcome file.
++     * @throws IOException
++     * @throws MalformedURLException
++     */
++    private String getWelcomeFile(File resource) throws MalformedURLException, IOException
++    {
++        if (!resource.isDirectory() || _welcomes==null)
++            return null;
++
++        for (int i=0;i<_welcomes.length;i++)
++        {
++            File welcome=new File(resource,_welcomes[i]);
++            if (welcome.exists())
++                return _welcomes[i];
++        }
++
++        return null;
++    }
++
++    /* ------------------------------------------------------------ */
++    /* Check modification date headers.
++     */
++    protected boolean passConditionalHeaders(HttpServletRequest request,HttpServletResponse response, File resource,Content content)
++    throws IOException
++    {
++        if (!request.getMethod().equals(HttpMethods.HEAD) )
++        {
++            if (content!=null)
++            {
++                String ifms=request.getHeader(HttpHeaders.IF_MODIFIED_SINCE);
++                String mdlm=content.getLastModified().toString();
++                if (ifms!=null && mdlm!=null && ifms.equals(mdlm))
++                {
++                    response.reset();
++                    response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
++                    response.flushBuffer();
++                    return false;
++                }
++            }
++
++            // Parse the if[un]modified dates and compare to resource
++            long date=0;
++            
++            if ((date=request.getDateHeader(HttpHeaders.IF_UNMODIFIED_SINCE))>0)
++            {
++                if (resource.lastModified()/1000 > date/1000)
++                {
++                    response.sendError(HttpServletResponse.SC_PRECONDITION_FAILED);
++                    return false;
++                }
++            }
++            
++            if ((date=request.getDateHeader(HttpHeaders.IF_MODIFIED_SINCE))>0)
++            {
++                if (resource.lastModified()/1000 <= date/1000)
++                {
++                    response.reset();
++                    response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
++                    response.flushBuffer();
++                    return false;
++                }
++            }
++        }
++        return true;
++    }
++    
++    
++    /* ------------------------------------------------------------------- */
++    protected void sendDirectory(HttpServletRequest request,
++                                 HttpServletResponse response,
++                                 File resource,
++                                 boolean parent)
++    throws IOException
++    {
++        if (!_dirAllowed)
++        {
++            response.sendError(HttpServletResponse.SC_FORBIDDEN);
++            return;
++        }
++        
++        byte[] data=null;
++        String base = URIUtil.addPaths(request.getRequestURI(),"/");
++        String dir = null; 
++        if (dir==null)
++        {
++            response.sendError(HttpServletResponse.SC_FORBIDDEN,
++            "No directory");
++            return;
++        }
++        
++        // TODO cache this?
++        data=dir.getBytes("UTF-8");
++        response.setContentType("text/html; charset=UTF-8");
++        response.setContentLength(data.length);
++        response.getOutputStream().write(data);
++    }
++    
++    
++    /* ------------------------------------------------------------ */
++    protected void sendData(HttpServletRequest request,
++                            HttpServletResponse response,
++                            boolean include,
++                            File resource,
++                            Content content)
++    throws IOException
++    {
++        long content_length=resource.length();
++        
++        // Get the output stream (or writer)
++        OutputStream out =null;
++        try{out = response.getOutputStream();}
++        catch(IllegalStateException e) {out = new WriterOutputStream(response.getWriter());}
++        
++        //  if there were no ranges, send entire entity
++        if (include)
++        {
++            IO.copy(new FileInputStream(resource),out,content_length);
++        }
++        else
++        {
++            // See if a short direct method can be used?
++            if (out instanceof HttpConnection.Output && content.getBuffer()!=null)
++            {
++                ((HttpConnection.Output)out).sendContent(content);
++            }
++            else
++            {
++                // Write content normally
++                writeHeaders(response,content,content_length);
++                IO.copy(new FileInputStream(resource),out,content_length);
++            }
++        }
++        return;
++    }
++    
++    /* ------------------------------------------------------------ */
++    protected void writeHeaders(HttpServletResponse response,Content content,long count)
++    throws IOException
++    {
++        if (content.getContentType()!=null)
++            response.setContentType(content.getContentType().toString());
++        if (content.getLastModified()!=null)	
++            response.setHeader(HttpHeaders.LAST_MODIFIED,content.getLastModified().toString());
++       
++        if (count != -1)
++        {
++            if (response instanceof Response)
++                ((Response)response).setLongContentLength(count);
++            else if (count<Integer.MAX_VALUE)
++                response.setContentLength((int)count);
++            else 
++                response.setHeader(HttpHeaders.CONTENT_LENGTH,""+count);
++        }
++        
++    }
++
++    
++    /* ------------------------------------------------------------ */
++    /* ------------------------------------------------------------ */
++    /** MetaData associated with a context Resource.
++     */
++    public static class Content implements HttpContent
++    {
++        File _resource;
++        String _name;
++        long _lastModified;
++        Buffer _lastModifiedBytes;
++        Buffer _contentType;
++        boolean _valid;
++        Buffer _buffer;
++        
++        Content(File resource)
++        {
++            _resource=resource;
++            _name=resource.toString();
++            _lastModified=resource.lastModified();
++            _lastModifiedBytes=new ByteArrayBuffer(HttpFields.formatDate(resource.lastModified(),false));
++        }
++        
++        public File getResource()
++        {
++            return _resource;
++        }
++        
++        public Buffer getLastModified()
++        {
++            return _lastModifiedBytes;
++        }
++
++        public Buffer getContentType()
++        {
++            return _contentType;
++        }
++        
++        public void setContentType(Buffer type)
++        {
++            _contentType=type;
++        }
++
++        public void validate()
++        {
++            synchronized(this)
++            {
++                _valid=true;
++            }
++        }
++        
++        public void invalidate()
++        {
++            synchronized(this)
++            {
++                _valid=false;
++            }
++        }
++        
++        public void release()
++        {
++        }
++        
++        public boolean isValid()
++        {
++            synchronized(this)
++            {
++                return _valid;
++            }
++        }
++
++        /* ------------------------------------------------------------ */
++        public Buffer getBuffer()
++        {
++            if (_buffer==null)
++                return null;
++            return new View(_buffer);
++        }
++        
++        /* ------------------------------------------------------------ */
++        public void setBuffer(Buffer buffer)
++        {
++            _buffer=buffer;
++        }
++
++        /* ------------------------------------------------------------ */
++        public long getContentLength()
++        {
++            if (_buffer==null)
++                return -1;
++            return _buffer.length();
++        }
++        
++        
++    }
++}
+Index: modules/jetty/src/main/java/org/mortbay/jetty/servlet/DefaultServlet.java
+===================================================================
+--- modules/jetty/src/main/java/org/mortbay/jetty/servlet/DefaultServlet.java	(revision 727)
++++ modules/jetty/src/main/java/org/mortbay/jetty/servlet/DefaultServlet.java	(working copy)
+@@ -36,7 +36,6 @@
+ import org.mortbay.io.IO;
+ import org.mortbay.io.View;
+ import org.mortbay.io.WriterOutputStream;
+-import org.mortbay.io.nio.NIOBuffer;
+ import org.mortbay.jetty.Connector;
+ import org.mortbay.jetty.HttpConnection;
+ import org.mortbay.jetty.HttpContent;
+@@ -49,7 +48,6 @@
+ import org.mortbay.jetty.ResourceCache;
+ import org.mortbay.jetty.Response;
+ import org.mortbay.jetty.handler.ContextHandler;
+-import org.mortbay.jetty.nio.NIOConnector;
+ import org.mortbay.log.Log;
+ import org.mortbay.resource.Resource;
+ import org.mortbay.resource.ResourceFactory;
+@@ -473,34 +471,7 @@
+             
+             if (length<=_cache.getMaxCachedFileSize())
+             {
+-                if (connector instanceof NIOConnector) 
+                 {
+-                    if (_useFileMappedBuffer) {
+-                        
+-                        File file = resource.getFile();
+-                        if (file != null) 
+-                            buffer = new NIOBuffer(file);
+-                    } 
+-                    else 
+-                    {
+-                        FileInputStream fis = new FileInputStream(resource.getFile());
+-                        buffer = new NIOBuffer((int) length, NIOBuffer.DIRECT);
+-                        byte[] buf = new byte[8192]; 
+-                        int i = 0;
+-                        while (i < length)
+-                        {
+-                            int r = fis.read(buf, 0, buf.length);
+-                            if (r < 0)
+-                                throw new IOException("unexpected EOF");
+-                            buffer.put(buf, 0, r);
+-                            i+=r;
+-                        }
+-                        if (fis != null) 
+-                            fis.close();
+-                    }
+-                } 
+-                else 
+-                {
+                     buffer = new ByteArrayBuffer((int)length);
+                     byte[] array = buffer.array();
+                     InputStream in = resource.getInputStream();
+Index: modules/jetty/src/main/java/org/mortbay/jetty/HttpFields.java
+===================================================================
+--- modules/jetty/src/main/java/org/mortbay/jetty/HttpFields.java	(revision 727)
++++ modules/jetty/src/main/java/org/mortbay/jetty/HttpFields.java	(working copy)
+@@ -77,7 +77,7 @@
+     {
+         StringBuffer buf = new StringBuffer(32);
+         GregorianCalendar gc = new GregorianCalendar(__GMT);
+-        gc.setTimeInMillis(date);
++        gc.setTime(new Date(date));
+         formatDate(buf, gc, cookie);
+         return buf.toString();
+     }
+@@ -124,7 +124,7 @@
+         int century = year / 100;
+         year = year % 100;
+ 
+-        int epoch = (int) ((calendar.getTimeInMillis() / 1000) % (60 * 60 * 24));
++        int epoch = (int) ((calendar.getTime().getTime() / 1000) % (60 * 60 * 24));
+         int seconds = epoch % 60;
+         epoch = epoch / 60;
+         int minutes = epoch % 60;
+Index: modules/jetty/src/main/java/org/mortbay/jetty/EofException.java
+===================================================================
+--- modules/jetty/src/main/java/org/mortbay/jetty/EofException.java	(revision 727)
++++ modules/jetty/src/main/java/org/mortbay/jetty/EofException.java	(working copy)
+@@ -24,6 +24,5 @@
+     
+     public EofException(Throwable th)
+     {
+-        initCause(th);
+     }
+ }
+Index: modules/jetty/src/main/java/org/mortbay/jetty/bio/SocketConnector.java
+===================================================================
+--- modules/jetty/src/main/java/org/mortbay/jetty/bio/SocketConnector.java	(revision 727)
++++ modules/jetty/src/main/java/org/mortbay/jetty/bio/SocketConnector.java	(working copy)
+@@ -120,7 +120,7 @@
+     /* ------------------------------------------------------------------------------- */
+     public int getLocalPort()
+     {
+-        if (_serverSocket==null || _serverSocket.isClosed())
++        if (_serverSocket==null)
+             return -1;
+         return _serverSocket.getLocalPort();
+     }
+@@ -166,7 +166,7 @@
+             {
+                 connectionOpened(_connection);
+                 
+-                while (isStarted() && !isClosed())
++                while (isStarted() && isOpen())
+                 {
+                     if (_connection.isIdle())
+                     {
+Index: modules/jetty/src/main/java/org/mortbay/jetty/handler/ErrorHandler.java
+===================================================================
+--- modules/jetty/src/main/java/org/mortbay/jetty/handler/ErrorHandler.java	(revision 727)
++++ modules/jetty/src/main/java/org/mortbay/jetty/handler/ErrorHandler.java	(working copy)
+@@ -97,8 +97,8 @@
+         if (showStacks)
+         {
+             Throwable th = (Throwable)request.getAttribute("javax.servlet.error.exception");
+-            while(th!=null)
+-            {
++	    if (th!=null)
++	    {
+                 writer.write("<h3>Caused by:</h2><pre>");
+                 StringWriter sw = new StringWriter();
+                 PrintWriter pw = new PrintWriter(sw);
+@@ -106,9 +106,7 @@
+                 pw.flush();
+                 writer.write(sw.getBuffer().toString());
+                 writer.write("</pre>\n");
+-                
+-                th =th.getCause();
+-            }
++	   }
+         }
+         
+         for (int i= 0; i < 20; i++)
+Index: modules/jetty/src/main/java/org/mortbay/io/bio/SocketEndPoint.java
+===================================================================
+--- modules/jetty/src/main/java/org/mortbay/io/bio/SocketEndPoint.java	(revision 727)
++++ modules/jetty/src/main/java/org/mortbay/io/bio/SocketEndPoint.java	(working copy)
+@@ -58,8 +58,6 @@
+      */
+     public void close() throws IOException
+     {
+-        if (!(_socket instanceof SSLSocket))
+-            _socket.shutdownOutput();
+         _socket.close();
+         _in=null;
+         _out=null;
+Index: pom.xml
+===================================================================
+--- pom.xml	(revision 727)
++++ pom.xml	(working copy)
+@@ -128,8 +128,8 @@
+       <plugin>
+         <artifactId>maven-compiler-plugin</artifactId>
+         <configuration>
+-          <source>1.4</source>
+-          <target>1.4</target>
++          <source>1.2</source>
++          <target>1.2</target>
+         </configuration>
+       </plugin>
+       <plugin>
+@@ -177,19 +177,6 @@
+     <module>modules/servlet-api-2.5</module>
+     <module>modules/util</module>
+     <module>modules/jetty</module>
+-    <module>modules/jsp-api-2.1</module>
+-    <module>modules/jsp-2.1</module>
+-    <module>modules/jsp-api-2.0</module>
+-    <module>modules/jsp-2.0</module>
+-    <module>modules/management</module>
+-    <module>modules/start</module>
+-    <module>modules/maven-plugin-utils</module>
+-    <module>modules/maven-plugin</module>
+-    <module>modules/xbean</module>
+-    <module>modules/naming</module>
+-    <module>modules/plus</module>
+-    <module>modules/html</module>
+-    <module>examples/test-webapp</module>
+     <module>examples/embedded</module>
+   </modules>
+ 
+Index: examples/embedded/src/main/java/org/mortbay/jetty/example/FileServer.java
+===================================================================
+--- examples/embedded/src/main/java/org/mortbay/jetty/example/FileServer.java	(revision 0)
++++ examples/embedded/src/main/java/org/mortbay/jetty/example/FileServer.java	(revision 0)
+@@ -0,0 +1,62 @@
++//========================================================================
++//Copyright 2006 Mort Bay Consulting Pty. Ltd.
++//------------------------------------------------------------------------
++//Licensed under the Apache License, Version 2.0 (the "License");
++//you may not use this file except in compliance with the License.
++//You may obtain a copy of the License at 
++//http://www.apache.org/licenses/LICENSE-2.0
++//Unless required by applicable law or agreed to in writing, software
++//distributed under the License is distributed on an "AS IS" BASIS,
++//WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++//See the License for the specific language governing permissions and
++//limitations under the License.
++//========================================================================
++
++package org.mortbay.jetty.example;
++
++import java.io.IOException;
++
++import javax.servlet.ServletException;
++import javax.servlet.http.HttpServlet;
++import javax.servlet.http.HttpServletRequest;
++import javax.servlet.http.HttpServletResponse;
++
++import org.mortbay.jetty.Connector;
++import org.mortbay.jetty.Server;
++import org.mortbay.jetty.servlet.Context;
++import org.mortbay.jetty.bio.SocketConnector;
++import org.mortbay.jetty.servlet.ServletHandler;
++import org.mortbay.jetty.servlet.FileServlet;
++import org.mortbay.jetty.servlet.ServletHolder;
++
++public class FileServer
++{
++    public static void main(String[] args)
++        throws Exception
++    {
++        Server server = new Server();
++        Connector connector=new SocketConnector();
++        connector.setPort(8080);
++        server.setConnectors(new Connector[]{connector});
++
++        ServletHandler handler=new ServletHandler();
++        server.setHandler(handler);
++        ServletHolder holder=handler.addServletWithMapping("org.mortbay.jetty.servlet.FileServlet", "/");
++        if (args.length==1)
++            holder.setInitParameter("fileBase",args[0]);
++            
++        
++        server.start();
++        server.join();
++    }
++
++    public static class HelloServlet extends HttpServlet
++    {
++        protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
++        {
++            response.setContentType("text/html");
++            response.setStatus(HttpServletResponse.SC_OK);
++            response.getWriter().println("<h1>Hello SimpleServlet</h1>");
++        }
++    }
++}
+Index: examples/embedded/src/main/java/org/mortbay/jetty/example/MinimalServlets.java
+===================================================================
+--- examples/embedded/src/main/java/org/mortbay/jetty/example/MinimalServlets.java	(revision 727)
++++ examples/embedded/src/main/java/org/mortbay/jetty/example/MinimalServlets.java	(working copy)
+@@ -24,7 +24,6 @@
+ import org.mortbay.jetty.Connector;
+ import org.mortbay.jetty.Server;
+ import org.mortbay.jetty.bio.SocketConnector;
+-import org.mortbay.jetty.nio.SelectChannelConnector;
+ import org.mortbay.jetty.servlet.ServletHandler;
+ 
+ public class MinimalServlets

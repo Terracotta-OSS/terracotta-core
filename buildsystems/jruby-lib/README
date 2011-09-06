@@ -1,9 +1,0 @@
-Some of the libraries we use here included Ant inside the jar which leads to version mismatch propblem
-
-There should be only one source of Ant classes and currently it's coming from ant-1.7.1.jar
-
-Leafcutter and izpack jars used to contain Ant classes in it. I've deleted org/apache/tools/ant inside them.
-
-If you make an update of leafcutter and izpack, or adding a new library to be on JRuby path, make sure
-you remove any existing Ant classes.
-

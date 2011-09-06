@@ -1,9 +1,0 @@
-Here lies the native source for com.tc.util.runtime.GetPid.getPid().
-
-NOTES:
-- The generated com_tc_util_runtime_GetPid.h is needlessly replicated
-  in each OS specific directory.
-- Additionally, the JVM include files are copied in the Windows
-  directory since I didn't know how to set the proper include path in
-  the Visual Studio project.
-- The output of each build resides in tc/lib/src.test/native/${OS}

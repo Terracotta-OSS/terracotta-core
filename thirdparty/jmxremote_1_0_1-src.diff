@@ -1,6 +1,0 @@
---- src/jmxremote_optional/javax/management/remote/generic/GenericConnectorServer.java	2006-10-13 14:49:08.000000000 -0700
-+++ src/jmxremote_optional/javax/management/remote/generic/GenericConnectorServer.java	2006-10-13 14:50:01.000000000 -0700
-@@ -246,2 +246,3 @@
- 	    receiver = new Receiver();
-+	    receiver.setDaemon(true);
- 	    receiver.start();

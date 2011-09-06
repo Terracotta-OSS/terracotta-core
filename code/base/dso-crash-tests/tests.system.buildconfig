@@ -1,4 +1,0 @@
-include-dso-boot-jar=true
-# time out in 30 min (30 * 60)
-timeout=1800
-test.tc.properties=com/tc/properties/tests.properties

@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<ivy-module version="2.0">
-  <info organisation="org.terracotta" module="dso-statistics-tests-tests-base"/>
-  <dependencies defaultconf="default">
-    <dependency name="httpunit" rev="1.6.2" org="httpunit"/>
-  </dependencies>
-</ivy-module>

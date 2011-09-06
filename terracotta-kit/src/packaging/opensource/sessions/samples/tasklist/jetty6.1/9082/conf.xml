@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<!DOCTYPE Configure PUBLIC "-//Mort Bay Consulting//DTD Configure//EN" "http://jetty.mortbay.org/configure.dtd">
+
+
+<Configure id="Server" class="org.mortbay.jetty.Server">
+
+    <Set name="Connectors">
+      <Array type="org.mortbay.jetty.Connector">
+        <Item>
+          <New class="org.mortbay.jetty.nio.SelectChannelConnector">
+            <Set name="port"><SystemProperty name="jetty.port" default="9082"/></Set>
+          </New>
+        </Item>
+      </Array>
+    </Set>
+
+    <Set name="handler">
+      <New id="Handlers" class="org.mortbay.jetty.handler.HandlerCollection">
+        <Set name="handlers">
+         <Array type="org.mortbay.jetty.Handler">
+           <Item>
+             <New id="Contexts" class="org.mortbay.jetty.handler.ContextHandlerCollection"/>
+           </Item>
+           <Item>
+             <New id="DefaultHandler" class="org.mortbay.jetty.handler.DefaultHandler"/>
+           </Item>
+           <Item>
+             <New id="RequestLog" class="org.mortbay.jetty.handler.RequestLogHandler"/>
+           </Item>
+         </Array>
+        </Set>
+      </New>
+    </Set>
+
+    <Call name="addLifeCycle">
+      <Arg>
+        <New class="org.mortbay.jetty.deployer.WebAppDeployer">
+          <Set name="contexts"><Ref id="Contexts"/></Set>
+          <Set name="webAppDir"><SystemProperty name="user.dir" default="."/>/webapps</Set>
+	  <Set name="parentLoaderPriority">false</Set>
+	  <Set name="extract">true</Set>
+	  <Set name="allowDuplicates">false</Set>
+        </New>
+      </Arg>
+    </Call>
+
+    <New id="ServerLog" class="java.io.PrintStream">
+      <Arg>
+        <New class="org.mortbay.util.RolloverFileOutputStream">
+          <Arg>./logs/console.yyyy_mm_dd.log</Arg>
+          <Arg type="boolean">false</Arg>
+          <Arg type="int">90</Arg>
+          <Arg><Call class="java.util.TimeZone" name="getTimeZone"><Arg>GMT</Arg></Call></Arg>
+          <Get id="ServerLogName" name="datedFilename"/>
+        </New>
+      </Arg>
+    </New>
+
+    <Call class="org.mortbay.log.Log" name="info"><Arg>Redirecting stderr/stdout to <Ref id="ServerLogName"/></Arg></Call>
+    <Call class="java.lang.System" name="setErr"><Arg><Ref id="ServerLog"/></Arg></Call>
+    <Call class="java.lang.System" name="setOut"><Arg><Ref id="ServerLog"/></Arg></Call>   
+ 
+</Configure>

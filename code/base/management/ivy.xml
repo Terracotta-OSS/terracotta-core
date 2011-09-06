@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<ivy-module version="2.0">
-  <info organisation="org.terracotta" module="management"/>
-  <dependencies defaultconf="default">
-    <dependency name="jmxremote_optional-tc" rev="1.0.1" org="org.terracotta"/>
-    <dependency name="jmxremote" rev="1.0.1_04" org="javax.management"/>
-  </dependencies>
-</ivy-module>
