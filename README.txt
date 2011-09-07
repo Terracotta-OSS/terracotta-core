@@ -52,3 +52,14 @@ Under root or 'community' folder:
 Under "terracotta-kit" there's a README showing you 
 how to build different types of Terracotta kits
 
+******************************************************************************
+6. To include terracotta-toolkit(-ee) in the build
+******************************************************************************
+Check out either or both "terracotta-toolkit" and "terracotta-toolkit-ee" under
+"community/devwork". You have to create "devwork" folder manually since it's set
+to be ignored in SVN. 
+
+
+
+
+

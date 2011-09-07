@@ -98,11 +98,11 @@
       <id>toolkit</id>
       <activation>
         <file>
-          <exists>terracotta-toolkit</exists>
+          <exists>devwork/terracotta-toolkit</exists>
         </file>
       </activation>      
       <modules>
-        <module>terracotta-toolkit</module>
+        <module>devwork/terracotta-toolkit</module>
       </modules>
     </profile>
     <!-- activate by default if 'terracotta-toolkit-ee' module exists. 
@@ -111,11 +111,11 @@
       <id>toolkit-ee</id>
       <activation>
         <file>
-          <exists>terracotta-toolkit-ee</exists>
+          <exists>devwork/terracotta-toolkit-ee</exists>
         </file>
       </activation>      
       <modules>
-        <module>terracotta-toolkit-ee</module>
+        <module>devwork/terracotta-toolkit-ee</module>
       </modules>
     </profile>    
   </profiles>
