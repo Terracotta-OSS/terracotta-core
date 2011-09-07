@@ -34,7 +34,8 @@
     <kit.name>${terracotta.artifactId}-${project.version}</kit.name>
     <rootDir>${project.build.directory}/${kit.name}</rootDir>
     <schema.version>6</schema.version>
-    <skip.schema>true</skip.schema>    
+    <skip.schema>true</skip.schema>
+    <no.extra>false</no.extra>    
     
     <terracotta.artifactId>terracotta${ee.suffix}</terracotta.artifactId>
     <terracotta.jarname>${terracotta.artifactId}-${project.version}.jar</terracotta.jarname>
@@ -166,6 +167,16 @@
       </properties>
 	  </profile>
     
+    <!-- ******************************************************************* -->
+    <!--   profile to exclude extra packaging of ehcache, quartz, sessions   -->    
+    <!-- ******************************************************************* -->     
+    <profile>
+	    <id>no-extra</id>
+      <properties>
+        <no.extra>true</no.extra>
+      </properties>
+	  </profile>    
+    
     <!-- ********************************************** -->
     <!--   profile to build opensource Terracotta kit   -->    
     <!-- ********************************************** -->    
@@ -215,6 +226,7 @@
 
                     <!-- schema -->
                     <resource>
+                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
                       <targetPath>${rootDir}/config-samples/schema</targetPath>
                       <dependency>
                         <groupId>org.terracotta</groupId>
@@ -255,6 +267,7 @@
                     
                     <!-- tookit -->
                     <resource>
+                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
                       <targetPath>${rootDir}/common</targetPath>
                       <dependency>
                         <groupId>org.terracotta</groupId>
@@ -263,6 +276,7 @@
                       <dependenciesAtM2>true</dependenciesAtM2>
                     </resource>
                     <resource>
+                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
                       <targetPath>${rootDir}/common/docs/javadoc</targetPath>
                       <dependency>
                         <groupId>org.terracotta</groupId>
@@ -275,6 +289,7 @@
                     
                     <!-- ehcache-core -->
                     <resource>
+                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
                       <targetPath>${rootDir}</targetPath>
                       <dependency>
                         <groupId>net.sf.ehcache</groupId>
@@ -287,30 +302,36 @@
                       <process>Util.processEhcacheDistribution(project)</process>              
                     </resource>
                     <resource>
+                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
                       <directory>${rootDir}/ehcache</directory>
                       <include>**/SLF4J-LICENSE.txt,**/TERRACOTTA-TRIAL-LICENSE.txt,**/SUBSCRIPTION-AGREEMENT.pdf</include>
                       <clean>true</clean>
                     </resource>
                     <resource>
+                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
                       <targetPath>${rootDir}/ehcache</targetPath>
                       <file>${ehcache-core.readme.url}</file>
                     </resource>
                     <resource>
+                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
                       <targetPath>${rootDir}/ehcache</targetPath>
                       <file>${ehcache-core.quickstart.url}</file>
                     </resource>
                     <resource>
+                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
                       <targetPath>${rootDir}/ehcache</targetPath>
                       <file>${ehcache-core.tcschema.url}</file>
                       <destFileName>ehcache.xml</destFileName>
                     </resource>
                     <resource>
+                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
                       <targetPath>${rootDir}/ehcache/licenses</targetPath>
                       <file>${ehcache-core.tclicense.url}</file>
                     </resource>            
                     
                     <!-- ehcache terracotta -->
                     <resource>
+                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
                       <targetPath>${rootDir}/ehcache/lib</targetPath>
                       <dependencies>
                         <dependency>
@@ -323,6 +344,7 @@
                     
                     <!-- ehcache samples-->
                     <resource>
+                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
                       <targetPath>${rootDir}/ehcache/samples</targetPath>
                       <dependencies>
                         <dependency>
@@ -344,6 +366,7 @@
                     
                     <!-- session express -->
                     <resource>
+                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
                       <targetPath>${rootDir}/sessions</targetPath>
                       <dependency>
                         <groupId>org.terracotta.session</groupId>
@@ -354,12 +377,14 @@
                     
                     <!-- quartz -->
                     <resource>
+                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
                       <targetPath>${rootDir}</targetPath>
                       <file>${quartz-kit.url}</file>
                       <unpack>true</unpack>
                       <process>Util.processQuartzDistribution(project)</process>
                     </resource>
                     <resource>
+                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
                       <targetPath>${rootDir}/quartz</targetPath>
                       <dependency>
                         <groupId>org.terracotta.quartz</groupId>
