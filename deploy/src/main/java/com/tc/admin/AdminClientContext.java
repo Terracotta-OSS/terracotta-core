@@ -171,5 +171,9 @@ public class AdminClientContext implements IAdminClientContext, Thread.UncaughtE
 
   public void uncaughtException(Thread t, Throwable e) {
     log(e);
+
+    // print to console for debugging purpose. This is necessary for uncaught exception upon startup where
+    // users have no idea where the log might be.
+    e.printStackTrace();
   }
 }
