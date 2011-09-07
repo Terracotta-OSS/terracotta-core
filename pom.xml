@@ -104,6 +104,19 @@
       <modules>
         <module>terracotta-toolkit</module>
       </modules>
+    </profile>
+    <!-- activate by default if 'terracotta-toolkit-ee' module exists. 
+         You have to check out this module manually under 'community' -->
+    <profile>
+      <id>toolkit-ee</id>
+      <activation>
+        <file>
+          <exists>terracotta-toolkit-ee</exists>
+        </file>
+      </activation>      
+      <modules>
+        <module>terracotta-toolkit-ee</module>
+      </modules>
     </profile>    
   </profiles>
 </project>
