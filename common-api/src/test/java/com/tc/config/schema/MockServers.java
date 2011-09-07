@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.List;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamReader;
@@ -291,15 +292,15 @@ public class MockServers implements Servers {
   public Ha getHaArray(int arg0) {
     throw new ImplementMe();
   }
-  
+
   public UpdateCheck addNewUpdateCheck() {
-    throw new ImplementMe();    
+    throw new ImplementMe();
   }
-  
+
   public MirrorGroups insertNewMirrorGroups(int arg0) {
     throw new ImplementMe();
   }
-  
+
   public Ha insertNewHa(int arg0) {
     throw new ImplementMe();
   }
@@ -390,31 +391,35 @@ public class MockServers implements Servers {
 
   public void setMirrorGroups(MirrorGroups arg0) {
     throw new ImplementMe();
-    
+
   }
 
   public void setHa(Ha arg0) {
     throw new ImplementMe();
-    
+
   }
 
   public void setUpdateCheck(UpdateCheck arg0) {
     throw new ImplementMe();
-    
+
   }
 
   public void unsetMirrorGroups() {
     throw new ImplementMe();
-    
+
   }
 
   public void unsetHa() {
     throw new ImplementMe();
-    
+
   }
 
   public void unsetUpdateCheck() {
     throw new ImplementMe();
-    
+
+  }
+
+  public List<Server> getServerList() {
+    throw new ImplementMe();
   }
 }
