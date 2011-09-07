@@ -1,12 +1,14 @@
 /**
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util.concurrent;
 
-import java.lang.reflect.Field;
-
 import sun.misc.Unsafe;
 
+import java.lang.reflect.Field;
+
+@SuppressWarnings("restriction")
 public class MonitorUtils {
 
   private static final Unsafe unsafe;
@@ -43,7 +45,7 @@ public class MonitorUtils {
 
   /**
    * Completely release the monitor on the given object (calling thread needs to own the monitor obviously)
-   *
+   * 
    * @return the number of monitorExit calls performed
    */
   public static int releaseMonitor(Object object) {

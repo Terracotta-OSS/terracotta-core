@@ -45,6 +45,7 @@ import java.util.Map;
  * 
  * @author orion
  */
+@SuppressWarnings("restriction")
 public class TCClassImpl implements TCClass {
   private final static TCLogger          logger                 = TCLogging.getLogger(TCClassImpl.class);
   private final static Unsafe            unsafe                 = UnsafeUtil.getUnsafe();

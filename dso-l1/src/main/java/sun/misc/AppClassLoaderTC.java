@@ -12,6 +12,7 @@ import java.net.URL;
  * Sun VM). We add a call in it's findClass() to make sure that exported classes destined only for the system loader are
  * properly located
  */
+@SuppressWarnings("restriction")
 public class AppClassLoaderTC extends Launcher.AppClassLoader {
 
   AppClassLoaderTC(URL[] urls, ClassLoader parent) {

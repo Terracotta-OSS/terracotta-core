@@ -17,6 +17,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
+@SuppressWarnings("restriction")
 public class FieldUtils {
   public final static String CLASS       = "com/tc/util/FieldUtils";
 

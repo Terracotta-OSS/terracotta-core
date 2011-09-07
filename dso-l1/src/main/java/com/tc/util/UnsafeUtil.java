@@ -15,6 +15,7 @@ import java.lang.reflect.Field;
 /**
  * A wrapper for unsafe usage in class like Atomic Variables, ReentrantLock, etc.
  */
+@SuppressWarnings("restriction")
 public class UnsafeUtil {
   public final static String  CLASS_SLASH       = "com/tc/util/UnsafeUtil";
   public final static String  CLASS_DESCRIPTION = "Lcom/tc/util/UnsafeUtil;";

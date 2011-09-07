@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -12,6 +13,7 @@ import java.lang.reflect.Constructor;
 /**
  * A wrapper for unsafe usage in class like Atomic Variables, ReentrantLock, etc.
  */
+@SuppressWarnings("restriction")
 public class ReflectionUtil {
   private static final Constructor       refConstructor;
   private static final ReflectionFactory rf = ReflectionFactory.getReflectionFactory();
