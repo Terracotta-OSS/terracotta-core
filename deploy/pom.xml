@@ -146,4 +146,50 @@
       <scope>test</scope>
     </dependency>      
   </dependencies>
+  
+  <profiles>
+    <profile>
+      <id>start-server</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <configuration>
+              <executable>${java.home}/bin/java</executable>
+              <arguments>
+                <argument>-Xms512m</argument>
+                <argument>-Xmx512m</argument>
+                <argument>-XX:+HeapDumpOnOutOfMemoryError</argument>
+                <argument>-Dcom.sun.management.jmxremote</argument>
+                <argument>-Dsun.rmi.dgc.server.gcInterval=31536000</argument>
+                <argument>-classpath</argument>
+                <classpath/>
+                <argument>com.tc.server.TCServerMain</argument>
+              </arguments>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>stop-server</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <configuration>
+              <executable>${java.home}/bin/java</executable>
+              <arguments>
+                <argument>-classpath</argument>
+                <classpath/>
+                <argument>com.tc.admin.TCStop</argument>
+              </arguments>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>    
+  </profiles>
 </project>

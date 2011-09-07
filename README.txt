@@ -52,6 +52,7 @@ Under root or 'community' folder:
 Under "terracotta-kit" there's a README showing you 
 how to build different types of Terracotta kits
 
+
 ******************************************************************************
 6. To include terracotta-toolkit(-ee) in the build
 ******************************************************************************
