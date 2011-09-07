@@ -58,7 +58,7 @@ public final class ProductInfo {
   private static ProductInfo                INSTANCE                   = null;
 
   private final String                      moniker;
-  private final Date                        timestamp;
+  private final String                      timestamp;
   private final String                      host;
   private final String                      user;
   private final String                      branch;
@@ -70,7 +70,7 @@ public final class ProductInfo {
   private final String                      patchLevel;
   private final String                      patchHost;
   private final String                      patchUser;
-  private final Date                        patchTimestamp;
+  private final String                      patchTimestamp;
   private final String                      patchRevision;
   private final String                      patchEERevision;
   private final String                      patchBranch;
@@ -111,7 +111,7 @@ public final class ProductInfo {
     if (!isOpenSource() && !isEnterprise() && !isDevMode()) { throw new AssertionError("Can't recognize kit edition: "
                                                                                        + edition); }
 
-    this.timestamp = parseTimestamp(getBuildProperty(properties, BUILD_DATA_TIMESTAMP_KEY, null));
+    this.timestamp = getBuildProperty(properties, BUILD_DATA_TIMESTAMP_KEY, UNKNOWN_VALUE);
     this.host = getBuildProperty(properties, BUILD_DATA_HOST_KEY, UNKNOWN_VALUE);
     this.user = getBuildProperty(properties, BUILD_DATA_USER_KEY, UNKNOWN_VALUE);
     this.branch = getBuildProperty(properties, BUILD_DATA_BRANCH_KEY, UNKNOWN_VALUE);
@@ -122,7 +122,7 @@ public final class ProductInfo {
     this.patchLevel = getPatchProperty(properties, PATCH_DATA_LEVEL_KEY, UNKNOWN_VALUE);
     this.patchHost = getPatchProperty(properties, BUILD_DATA_HOST_KEY, UNKNOWN_VALUE);
     this.patchUser = getPatchProperty(properties, BUILD_DATA_USER_KEY, UNKNOWN_VALUE);
-    this.patchTimestamp = parseTimestamp(getPatchProperty(properties, BUILD_DATA_TIMESTAMP_KEY, null));
+    this.patchTimestamp = getPatchProperty(properties, BUILD_DATA_TIMESTAMP_KEY, UNKNOWN_VALUE);
     this.patchRevision = getPatchProperty(properties, BUILD_DATA_REVISION_KEY, UNKNOWN_VALUE);
     this.patchEERevision = getPatchProperty(properties, BUILD_DATA_EE_REVISION_KEY, UNKNOWN_VALUE);
     this.patchBranch = getPatchProperty(properties, BUILD_DATA_BRANCH_KEY, UNKNOWN_VALUE);
@@ -153,7 +153,7 @@ public final class ProductInfo {
         InputStream patchData = getData(PATCH_DATA_RESOURCE_NAME);
         INSTANCE = new ProductInfo(buildData, patchData);
       } catch (Exception e) {
-        throw new RuntimeException(e.getMessage());
+        throw new RuntimeException(e);
       }
     }
     return INSTANCE;
@@ -261,8 +261,8 @@ public final class ProductInfo {
     return kitID;
   }
 
-  public Date buildTimestamp() {
-    return (timestamp == null) ? null : (Date) timestamp.clone();
+  public String buildTimestamp() {
+    return timestamp;
   }
 
   public String buildTimestampAsString() {
@@ -316,8 +316,8 @@ public final class ProductInfo {
     return patchUser;
   }
 
-  public Date patchTimestamp() {
-    return (patchTimestamp == null) ? null : (Date) patchTimestamp.clone();
+  public String patchTimestamp() {
+    return patchTimestamp;
   }
 
   public String patchTimestampAsString() {

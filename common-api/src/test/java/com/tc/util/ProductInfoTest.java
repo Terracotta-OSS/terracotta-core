@@ -92,7 +92,7 @@ public class ProductInfoTest extends TestCase {
     assertEquals("20080616-130651 (Revision 12345 by theuser@thehost from thebranch)", info.buildID());
     assertEquals("12345", info.buildRevision());
     assertEquals("98765", info.buildRevisionFromEE());
-    assertEquals(toDate(2008, 5, 16, 13, 6, 51), info.buildTimestamp());
+    assertEquals("20080616-130651", info.buildTimestamp());
     assertEquals("20080616-130651", info.buildTimestampAsString());
     assertEquals("theuser", info.buildUser());
 
