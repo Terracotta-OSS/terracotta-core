@@ -96,7 +96,7 @@ public final class ProductInfo {
    * @throws IOException If there is an error reading the build or patch data streams
    * @throws ParseException If there is an error reading the timestamp format in build or patch data streams
    */
-  ProductInfo(InputStream buildData, InputStream patchData) throws IOException, java.text.ParseException {
+  ProductInfo(InputStream buildData, InputStream patchData) throws IOException {
     Assert.assertNotNull("buildData", buildData);
 
     Properties properties = new Properties();
