@@ -172,6 +172,8 @@ public class TCTestCase extends TestCase {
     }
 
     final String testMethod = getName();
+    System.out.println("**** Test case: " + testMethod + " ****");
+    System.out.println();
     if (isTestDisabled(testMethod)) {
       System.out.println("NOTE: Test method " + testMethod + "() is disabled until "
                          + this.disabledUntil.get(testMethod));
