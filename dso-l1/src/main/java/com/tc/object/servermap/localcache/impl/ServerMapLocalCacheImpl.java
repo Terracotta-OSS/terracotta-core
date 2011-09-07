@@ -28,9 +28,10 @@ import com.tc.properties.TCPropertiesImpl;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -43,6 +44,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                                                                                                                                        TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
 
   private static final LocalStoreKeySetFilter                                       IGNORE_ID_FILTER                                      = new IgnoreIdsFilter();
+  private static final Object                                                       NULL_VALUE                                            = new Object();
 
   private final L1ServerMapLocalCacheManager                                        globalLocalCacheManager;
   private volatile boolean                                                          localCacheEnabled;
@@ -52,8 +54,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   private final Manager                                                             manager;
   private final ServerMapLocalCacheRemoveCallback                                   removeCallback;
 
-  private final Set<ObjectID>                                                       transactionsInProgressObjectIDs                       = new HashSet<ObjectID>();
-  private final Set<ObjectID>                                                       removedObjectIDs                                      = new HashSet<ObjectID>();
+  private final Map<ObjectID, Object>                                               transactionsInProgressObjectIDs                       = new ConcurrentHashMap<ObjectID, Object>();
+  private final Map<ObjectID, Object>                                               removedObjectIDs                                      = new ConcurrentHashMap<ObjectID, Object>();
 
   /**
    * Not public constructor, should be created only by the global local cache manager
@@ -515,8 +517,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     ReentrantReadWriteLock lock = lockProvider.getLock(objectId);
     lock.writeLock().lock();
     try {
-      if (transactionsInProgressObjectIDs.contains(objectId)) {
-        removedObjectIDs.add(objectId);
+      if (transactionsInProgressObjectIDs.containsKey(objectId)) {
+        removedObjectIDs.put(objectId, NULL_VALUE);
         return true;
       } else {
         return false;
@@ -526,13 +528,18 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
+  public void addToSink(
+                        L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
+    globalLocalCacheManager.transactionComplete(l1ServerMapLocalStoreTransactionCompletionListener);
+  }
+
   public void transactionComplete(
                                   Object key,
                                   AbstractLocalCacheStoreValue value,
                                   L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     final ObjectID objectId = value.getObjectId();
     if (!ObjectID.NULL_ID.equals(objectId)) {
-      boolean doRemove;
+      Object doRemove;
       ReentrantReadWriteLock lock = lockProvider.getLock(objectId);
       lock.writeLock().lock();
       try {
@@ -542,11 +549,10 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         lock.writeLock().unlock();
       }
 
-      if (doRemove) {
+      if (doRemove != null) {
         entryRemovedCallback(key, value);
       }
     }
-    globalLocalCacheManager.transactionComplete(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 
   private void transactionStarted(ObjectID objectId) {
@@ -555,7 +561,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     ReentrantReadWriteLock lock = lockProvider.getLock(objectId);
     lock.writeLock().lock();
     try {
-      transactionsInProgressObjectIDs.add(objectId);
+      transactionsInProgressObjectIDs.put(objectId, NULL_VALUE);
     } finally {
       lock.writeLock().unlock();
     }

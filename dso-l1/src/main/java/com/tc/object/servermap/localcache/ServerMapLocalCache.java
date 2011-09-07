@@ -137,4 +137,6 @@ public interface ServerMapLocalCache {
                            Object key,
                            AbstractLocalCacheStoreValue value,
                            L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
+
+  void addToSink(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
 }
