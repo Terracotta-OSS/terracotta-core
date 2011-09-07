@@ -4,8 +4,6 @@
  */
 package com.tc.management.beans;
 
-import sun.management.ManagementFactory;
-
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.l2.context.StateChangedEvent;
@@ -26,6 +24,7 @@ import com.tc.util.State;
 import com.tc.util.StringUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
 
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
