@@ -21,6 +21,10 @@
   <packaging>jar</packaging>
   <name>simulator</name>
   
+  <properties>
+    <skip.deploy>true</skip.deploy>
+  </properties>
+  
   <dependencies>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
