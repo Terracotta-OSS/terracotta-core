@@ -54,7 +54,18 @@ how to build different types of Terracotta kits
 
 
 ******************************************************************************
-6. To include terracotta-toolkit(-ee) in the build
+6. To start/stop TC server from the build (not using kit)
+******************************************************************************
+under "deploy" module, run:
+
+to start:
+%> mvn exec:exec -P start-server &
+
+to stop:
+%> mvn exec:exec -P stop-server
+
+******************************************************************************
+7. To include terracotta-toolkit(-ee) in the build
 ******************************************************************************
 Check out either or both "terracotta-toolkit" and "terracotta-toolkit-ee" under
 "community/devwork". You have to create "devwork" folder manually since it's set
