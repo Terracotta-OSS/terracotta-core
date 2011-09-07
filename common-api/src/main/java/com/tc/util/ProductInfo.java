@@ -266,7 +266,7 @@ public final class ProductInfo {
   }
 
   public String buildTimestampAsString() {
-    return (timestamp == null) ? UNKNOWN_VALUE : new SimpleDateFormat(DATE_FORMAT).format(timestamp);
+    return timestamp;
   }
 
   public String buildHost() {
@@ -321,7 +321,7 @@ public final class ProductInfo {
   }
 
   public String patchTimestampAsString() {
-    return (patchTimestamp == null) ? UNKNOWN_VALUE : new SimpleDateFormat(DATE_FORMAT).format(patchTimestamp);
+    return patchTimestamp;
   }
 
   public String patchRevision() {
