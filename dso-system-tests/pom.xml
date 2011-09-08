@@ -50,8 +50,13 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
+      <artifactId>tcconfig</artifactId>
+      <scope>compile</scope>
+    </dependency>    
+    <dependency>
+      <groupId>org.terracotta</groupId>
       <artifactId>tcstats</artifactId>
-      <scope>test</scope>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
