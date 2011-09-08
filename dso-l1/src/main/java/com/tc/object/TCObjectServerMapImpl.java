@@ -29,8 +29,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObject, TCObjectServerMap<L> {
@@ -329,8 +329,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     boolean notifyServerForRemove = false;
     if (value instanceof TCObjectSelf) {
       if (localCacheEnabled || mapOperation.isMutateOperation()) {
-        if (!this.tcObjectSelfStore.addTCObjectSelf(serverMapLocalStore, localCacheValue, value, mapOperation
-            .isMutateOperation())) { return; }
+        if (!this.tcObjectSelfStore.addTCObjectSelf(serverMapLocalStore, localCacheValue, value,
+                                                    mapOperation.isMutateOperation())) { return; }
       } else {
         notifyServerForRemove = true;
       }
@@ -517,7 +517,12 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   public void removeFromLocalCache(Object key) {
-    this.cache.removeFromLocalCache(key);
+    // MNK-2875: Since server side eviction messages come in asynchronously with the initialization process, it's
+    // possible to get eviction messages prior to the TCObjectServerMap being fully initialized. If that happens, we can
+    // just safely ignore any local cache removals since the local cache is uninitialized and thus empty.
+    if (this.cache != null) {
+      this.cache.removeFromLocalCache(key);
+    }
   }
 
   public void clearAllLocalCacheInline(final TCServerMap map) {
