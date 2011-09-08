@@ -12,6 +12,7 @@ import com.tc.net.protocol.transport.ConnectionHealthChecker;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportFactory;
+import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandler;
 import com.tc.net.protocol.transport.TransportHandshakeMessageFactory;
 import com.tc.net.protocol.transport.WireProtocolAdaptorFactory;
@@ -28,13 +29,15 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
   private final int                              timeout;
   private final int                              callbackport;
   private final TransportHandshakeErrorHandler   defaultHandshakeErrorHandler;
+  private final ReconnectionRejectedHandler      reconnectionRejectedHandler;
 
   public MessageTransportFactoryImpl(final TransportHandshakeMessageFactory transportMessageFactory,
                                      final ConnectionHealthChecker connectionHealthChecker,
                                      final TCConnectionManager connectionManager,
                                      final ConnectionAddressProvider addressProvider, final int maxReconnectTries,
                                      final int timeout, int callbackPort,
-                                     TransportHandshakeErrorHandler defaultHandshakeErrorHandler) {
+                                     TransportHandshakeErrorHandler defaultHandshakeErrorHandler,
+                                     ReconnectionRejectedHandler reconnectionRejectedBehaviour) {
     this.transportMessageFactory = transportMessageFactory;
     this.connectionHealthChecker = connectionHealthChecker;
     this.connectionMgr = connectionManager;
@@ -43,6 +46,7 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
     this.timeout = timeout;
     this.callbackport = callbackPort;
     this.defaultHandshakeErrorHandler = defaultHandshakeErrorHandler;
+    this.reconnectionRejectedHandler = reconnectionRejectedBehaviour;
   }
 
   public MessageTransport createNewTransport() {
@@ -50,21 +54,20 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
                                                                                               addressProvider,
                                                                                               maxReconnectTries,
                                                                                               timeout);
-    ClientMessageTransport cmt = createClientMessageTransport(clientConnectionEstablisher, defaultHandshakeErrorHandler,
-                                                              transportMessageFactory,
+    ClientMessageTransport cmt = createClientMessageTransport(clientConnectionEstablisher,
+                                                              defaultHandshakeErrorHandler, transportMessageFactory,
                                                               new WireProtocolAdaptorFactoryImpl(), callbackport);
     cmt.addTransportListener(connectionHealthChecker);
     return cmt;
   }
 
-  protected ClientMessageTransport createClientMessageTransport(
-                                                                ClientConnectionEstablisher clientConnectionEstablisher,
+  protected ClientMessageTransport createClientMessageTransport(ClientConnectionEstablisher clientConnectionEstablisher,
                                                                 TransportHandshakeErrorHandler handshakeErrorHandler,
                                                                 TransportHandshakeMessageFactory messageFactory,
                                                                 WireProtocolAdaptorFactory wireProtocolAdaptorFactory,
                                                                 int callbackPortNum) {
     return new ClientMessageTransport(clientConnectionEstablisher, handshakeErrorHandler, transportMessageFactory,
-                                      wireProtocolAdaptorFactory, callbackPortNum);
+                                      wireProtocolAdaptorFactory, callbackPortNum, reconnectionRejectedHandler);
   }
 
   public MessageTransport createNewTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handler,

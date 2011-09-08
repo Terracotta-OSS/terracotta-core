@@ -137,8 +137,7 @@ public class ChannelManagerTest extends TestCase {
 
       ClientMessageChannel channel;
       channel = clientComms
-          .createClientChannel(
-                               sessionManager,
+          .createClientChannel(sessionManager,
                                0,
                                TCSocketAddress.LOOPBACK_IP,
                                lsnr.getBindPort(),
@@ -146,8 +145,7 @@ public class ChannelManagerTest extends TestCase {
                                new ConnectionAddressProvider(
                                                              new ConnectionInfo[] { new ConnectionInfo(
                                                                                                        "localhost",
-                                                                                                       lsnr
-                                                                                                           .getBindPort()) }));
+                                                                                                       lsnr.getBindPort()) }));
       channel.open();
       assertTrue(channel.isConnected());
 
@@ -205,8 +203,7 @@ public class ChannelManagerTest extends TestCase {
 
       ClientMessageChannel clientChannel;
       clientChannel = clientComms
-          .createClientChannel(
-                               sessionManager,
+          .createClientChannel(sessionManager,
                                -1,
                                TCSocketAddress.LOOPBACK_IP,
                                lsnr.getBindPort(),
@@ -214,8 +211,7 @@ public class ChannelManagerTest extends TestCase {
                                new ConnectionAddressProvider(
                                                              new ConnectionInfo[] { new ConnectionInfo(
                                                                                                        "localhost",
-                                                                                                       lsnr
-                                                                                                           .getBindPort()) }));
+                                                                                                       lsnr.getBindPort()) }));
       clientChannel.open();
 
       while (!clientChannel.isConnected()) {
@@ -332,12 +328,16 @@ public class ChannelManagerTest extends TestCase {
                        + ConnectionHealthCheckerLongGCTest
                            .getMinScoketConnectResultTimeAfterSocketConnectStart(hcConfig);
 
-      System.out.println("XXX sleeping for " + sleepTime);
+      System.err.println("XXX sleeping for " + sleepTime);
       ThreadUtil.reallySleep(sleepTime);
+      System.err.println("XXX proxy set delay 0");
       proxy.setDelay(0);
 
-      ThreadUtil.reallySleep(15000);
-      assertEquals(false, channel.isConnected());
+      ThreadUtil.reallySleep(30000);
+      while (channel.isConnected()) {
+        ThreadUtil.reallySleep(1000);
+        System.err.println("XXX Client is still connected");
+      }
       assertEquals(0, channelManager.getChannels().length);
 
       channel.close();

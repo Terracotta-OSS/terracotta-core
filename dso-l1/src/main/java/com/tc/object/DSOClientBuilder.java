@@ -20,6 +20,7 @@ import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
+import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -49,9 +50,9 @@ import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
+import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.TransactionIDGenerator;
-import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.stats.counter.Counter;
@@ -72,23 +73,22 @@ public interface DSOClientBuilder {
                                                         final SessionProvider sessionProvider, int maxReconnectTries,
                                                         int socketConnectTimeout, TCClient client);
 
-  CommunicationsManager createCommunicationsManager(
-                                                    final MessageMonitor monitor,
+  CommunicationsManager createCommunicationsManager(final MessageMonitor monitor,
                                                     TCMessageRouter messageRouter,
                                                     final NetworkStackHarnessFactory stackHarnessFactory,
                                                     final ConnectionPolicy connectionPolicy,
                                                     int workerCommThreads,
                                                     final HealthCheckerConfig hcConfig,
                                                     Map<TCMessageType, Class> messageTypeClassMapping,
-                                                    Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping);
+                                                    Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping,
+                                                    ReconnectionRejectedHandler reconnectionRejectedBehaviour);
 
   TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch, final DSOMBeanConfig config);
 
   TunneledDomainManager createTunneledDomainManager(final ClientMessageChannel ch, final DSOMBeanConfig config,
                                                     final TunnelingEventHandler teh);
 
-  ClientGlobalTransactionManager createClientGlobalTransactionManager(
-                                                                      final RemoteTransactionManager remoteTxnMgr,
+  ClientGlobalTransactionManager createClientGlobalTransactionManager(final RemoteTransactionManager remoteTxnMgr,
                                                                       final PreTransactionFlushCallback preTransactionFlushCallback);
 
   RemoteObjectManager createRemoteObjectManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,

@@ -26,6 +26,8 @@ import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
+import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
+import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForL1;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.ConnectionInfoConfig;
@@ -63,12 +65,12 @@ import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
+import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.RemoteTransactionManagerImpl;
 import com.tc.object.tx.TransactionBatchFactory;
 import com.tc.object.tx.TransactionBatchWriterFactory;
 import com.tc.object.tx.TransactionIDGenerator;
-import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.logging.LongGCLogger;
@@ -105,18 +107,19 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     return cap;
   }
 
-  public CommunicationsManager createCommunicationsManager(
-                                                           final MessageMonitor monitor,
+  public CommunicationsManager createCommunicationsManager(final MessageMonitor monitor,
                                                            final TCMessageRouter messageRouter,
                                                            final NetworkStackHarnessFactory stackHarnessFactory,
                                                            final ConnectionPolicy connectionPolicy,
                                                            final int commThread,
                                                            final HealthCheckerConfig aConfig,
                                                            Map<TCMessageType, Class> messageTypeClassMapping,
-                                                           Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping) {
+                                                           Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping,
+                                                           ReconnectionRejectedHandler reconnectionRejectediHandler) {
     return new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_CLIENT, monitor, messageRouter,
-                                         stackHarnessFactory, connectionPolicy, aConfig, messageTypeClassMapping,
-                                         messageTypeFactoryMapping);
+                                         stackHarnessFactory, null, connectionPolicy, 0, aConfig,
+                                         new TransportHandshakeErrorHandlerForL1(), messageTypeClassMapping,
+                                         messageTypeFactoryMapping, reconnectionRejectediHandler);
   }
 
   public TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch, final DSOMBeanConfig config) {
@@ -128,8 +131,7 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     return new TunneledDomainManager(ch, config, teh);
   }
 
-  public ClientGlobalTransactionManager createClientGlobalTransactionManager(
-                                                                             final RemoteTransactionManager remoteTxnMgr,
+  public ClientGlobalTransactionManager createClientGlobalTransactionManager(final RemoteTransactionManager remoteTxnMgr,
                                                                              final PreTransactionFlushCallback preTransactionFlushCallback) {
     return new ClientGlobalTransactionManagerImpl(remoteTxnMgr, preTransactionFlushCallback);
   }
@@ -140,8 +142,8 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     final GroupID defaultGroups[] = dsoChannel.getGroupIDs();
     Assert.assertNotNull(defaultGroups);
     Assert.assertEquals(1, defaultGroups.length);
-    return new RemoteObjectManagerImpl(defaultGroups[0], logger, dsoChannel.getRequestRootMessageFactory(), dsoChannel
-        .getRequestManagedObjectMessageFactory(), faultCount, sessionManager);
+    return new RemoteObjectManagerImpl(defaultGroups[0], logger, dsoChannel.getRequestRootMessageFactory(),
+                                       dsoChannel.getRequestManagedObjectMessageFactory(), faultCount, sessionManager);
   }
 
   public ClusterMetaDataManager createClusterMetaDataManager(final DSOClientMessageChannel dsoChannel,
@@ -210,8 +212,10 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     final GroupID defaultGroups[] = dsoChannel.getGroupIDs();
     Assert.assertNotNull(defaultGroups);
     Assert.assertEquals(1, defaultGroups.length);
-    final TransactionBatchFactory txBatchFactory = new TransactionBatchWriterFactory(dsoChannel
-        .getCommitTransactionMessageFactory(), encoding, foldingConfig);
+    final TransactionBatchFactory txBatchFactory = new TransactionBatchWriterFactory(
+                                                                                     dsoChannel
+                                                                                         .getCommitTransactionMessageFactory(),
+                                                                                     encoding, foldingConfig);
     return new RemoteTransactionManagerImpl(
                                             defaultGroups[0],
                                             new ClientIDLogger(cidProvider, TCLogging

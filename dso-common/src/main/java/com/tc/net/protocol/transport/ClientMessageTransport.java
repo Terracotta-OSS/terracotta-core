@@ -18,6 +18,7 @@ import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import com.tc.net.protocol.transport.ReconnectionRejectedHandler.ReconnectionRejectedCleanupAction;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
@@ -31,7 +32,7 @@ import java.util.List;
 /**
  * Client implementation of the transport network layer.
  */
-public class ClientMessageTransport extends MessageTransportBase {
+public class ClientMessageTransport extends MessageTransportBase implements ReconnectionRejectedCleanupAction {
   public static final long                  TRANSPORT_HANDSHAKE_SYNACK_TIMEOUT = TCPropertiesImpl
                                                                                    .getProperties()
                                                                                    .getLong(TCPropertiesConsts.TC_TRANSPORT_HANDSHAKE_TIMEOUT,
@@ -42,6 +43,15 @@ public class ClientMessageTransport extends MessageTransportBase {
   private final WireProtocolAdaptorFactory  wireProtocolAdaptorFactory;
   private final SynchronizedBoolean         isOpening                          = new SynchronizedBoolean(false);
   private final int                         callbackPort;
+  private final ReconnectionRejectedHandler reconnectionRejectedHandler;
+
+  public ClientMessageTransport(ClientConnectionEstablisher clientConnectionEstablisher,
+                                TransportHandshakeErrorHandler handshakeErrorHandler,
+                                TransportHandshakeMessageFactory messageFactory,
+                                WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort) {
+    this(clientConnectionEstablisher, handshakeErrorHandler, messageFactory, wireProtocolAdaptorFactory, callbackPort,
+         ReconnectionRejectedHandler.DEFAULT_BEHAVIOUR);
+  }
 
   /**
    * Constructor for when you want a transport that isn't connected yet (e.g., in a client). This constructor will
@@ -52,13 +62,15 @@ public class ClientMessageTransport extends MessageTransportBase {
   public ClientMessageTransport(ClientConnectionEstablisher clientConnectionEstablisher,
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory,
-                                WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort) {
+                                WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort,
+                                ReconnectionRejectedHandler reconnectionRejectedHandler) {
 
     super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, false, TCLogging
         .getLogger(ClientMessageTransport.class));
     this.wireProtocolAdaptorFactory = wireProtocolAdaptorFactory;
     this.connectionEstablisher = clientConnectionEstablisher;
     this.callbackPort = callbackPort;
+    this.reconnectionRejectedHandler = reconnectionRejectedHandler;
   }
 
   /**
@@ -100,8 +112,8 @@ public class ClientMessageTransport extends MessageTransportBase {
           cleanConnectionWithoutNotifyListeners();
           throw new CommStackMismatchException("Disconnect due to comm stack mismatch");
         case TransportHandshakeError.ERROR_RECONNECTION_REJECTED:
-          cleanConnectionWithoutNotifyListeners();
-          throw new ReconnectionRejectedException("Reconnection rejected due to stack not found");
+          this.reconnectionRejectedHandler.reconnectionRejected(this);
+          break;
         default:
           throw new IOException("Disconnect due to transport handshake error");
       }
@@ -117,6 +129,12 @@ public class ClientMessageTransport extends MessageTransportBase {
     clearConnection();
     this.addTransportListeners(tl);
     this.status.reset();
+  }
+
+  public void reconnectionRejectedCleanupAction() {
+    Assert.eval("Client Message Transport :" + this.status, this.status.isSynSent());
+    cleanConnectionWithoutNotifyListeners();
+    fireTransportReconnectionRejectedEvent();
   }
 
   /**
@@ -297,11 +315,6 @@ public class ClientMessageTransport extends MessageTransportBase {
     wireNewConnection(connection);
     try {
       handshakeConnection(connection);
-    } catch (ReconnectionRejectedException e) {
-      // fire transport reconnection rejected event and
-      // let exception propagate up to handle both reconnect and restoreConnect at one place
-      fireTransportReconnectionRejectedEvent();
-      throw e;
     } catch (Exception t) {
       this.status.reset();
       throw t;

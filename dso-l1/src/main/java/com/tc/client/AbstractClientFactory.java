@@ -29,5 +29,5 @@ public abstract class AbstractClientFactory extends AbstractFactory {
                                                        Manager manager,
                                                        StatisticsAgentSubSystem statisticsAgentSubSystem,
                                                        DsoClusterInternal dsoCluster, RuntimeLogger runtimeLogger,
-                                                       boolean isExpressMode);
+                                                       ClientMode clientMode);
 }

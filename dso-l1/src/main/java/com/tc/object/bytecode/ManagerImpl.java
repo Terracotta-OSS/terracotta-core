@@ -9,6 +9,7 @@ import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.client.AbstractClientFactory;
+import com.tc.client.ClientMode;
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterImpl;
 import com.tc.exception.ExceptionWrapper;
@@ -101,7 +102,7 @@ public class ManagerImpl implements ManagerInternal {
   private final DsoClusterInternal                 dsoCluster;
   private final RuntimeLogger                      runtimeLogger;
   private final LockIdFactory                      lockIdFactory;
-  private final boolean                            isExpressMode;
+  private final ClientMode                         clientMode;
 
   private final InstrumentationLogger              instrumentationLogger;
 
@@ -137,7 +138,7 @@ public class ManagerImpl implements ManagerInternal {
                      final RemoteSearchRequestManager searchRequestManager, final DSOClientConfigHelper config,
                      final PreparedComponentsFromL2Connection connectionComponents,
                      final boolean shutdownActionRequired, final RuntimeLogger runtimeLogger,
-                     final ClassProvider classProvider, final boolean isExpressMode) {
+                     final ClassProvider classProvider, final boolean isExpressRejoinMode) {
     this.objectManager = objectManager;
     this.portability = config.getPortability();
     this.txManager = txManager;
@@ -162,7 +163,7 @@ public class ManagerImpl implements ManagerInternal {
       registerStandardLoaders();
     }
     this.lockIdFactory = new LockIdFactory(this);
-    this.isExpressMode = isExpressMode;
+    this.clientMode = isExpressRejoinMode ? ClientMode.EXPRESS_REJOIN_MODE : ClientMode.DSO_MODE;
   }
 
   private void registerStandardLoaders() {
@@ -260,7 +261,7 @@ public class ManagerImpl implements ManagerInternal {
                                                           ManagerImpl.this.connectionComponents, ManagerImpl.this,
                                                           ManagerImpl.this.statisticsAgentSubSystem,
                                                           ManagerImpl.this.dsoCluster, ManagerImpl.this.runtimeLogger,
-                                                          ManagerImpl.this.isExpressMode);
+                                                          ManagerImpl.this.clientMode);
 
         if (forTests) {
           ManagerImpl.this.dso.setCreateDedicatedMBeanServer(true);
@@ -953,7 +954,7 @@ public class ManagerImpl implements ManagerInternal {
       logger.fatal(wrapper.wrap(formatter.format(UNLOCK_SHARE_LOCK_ERROR)), e);
       System.exit(-1);
     } catch (final Throwable t) {
-      if (isExpressMode) {
+      if (clientMode.isExpressRejoinClient()) {
         logger
             .info("Ignoring " + t.getClass().getName() + " in unlock(lockID=" + lock + ", level=" + level + "). " + t);
         logger.info("Shutting down this Express Client");
