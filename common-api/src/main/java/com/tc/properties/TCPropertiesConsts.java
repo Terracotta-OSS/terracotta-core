@@ -189,6 +189,7 @@ public interface TCPropertiesConsts {
   public static final String L2_SEDA_QUERY_THREADS                                           = "l2.seda.query.threads";
   public static final String L2_LOCAL_CACHE_TXN_COMPLETE_THREADS                             = "l2.seda.local.cache.transaction.complete.threads";
   public static final String L2_LOCAL_CACHE_TXN_COMPLETE_SINK_CAPACITY                       = "l2.seda.local.cache.transaction.complete.sink.capacity";
+  public static final String L2_LOCAL_CACHE_INVALIDATIONS_SINK_CAPACITY                      = "l2.seda.local.cache.invalidations.sink.capacity";
 
   /*********************************************************************************************************************
    * <code>
