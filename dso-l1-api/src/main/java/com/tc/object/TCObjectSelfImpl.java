@@ -315,4 +315,8 @@ public class TCObjectSelfImpl implements TCObjectSelf {
     throw new UnsupportedOperationException();
   }
 
+  public boolean isInitialized() {
+    if (oid == null) { return false; }
+    return true;
+  }
 }
