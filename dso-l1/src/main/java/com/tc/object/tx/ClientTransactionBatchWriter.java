@@ -76,6 +76,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   private int                                   numTxnsBeforeFolding   = 0;
   private int                                   numTxnsAfterFolding    = 0;
   private boolean                               containsSyncWriteTxn   = false;
+  private boolean                               committed              = false;
 
   public ClientTransactionBatchWriter(final GroupID groupID, final TxnBatchID batchID,
                                       final ObjectStringSerializer serializer, final DNAEncodingInternal encoding,
@@ -248,7 +249,6 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
                                                                 txn.getTransactionID());
 
     if (this.foldingEnabled) {
-
       final FoldingKey key = new FoldingKey(txnBuffer, txn.getLockType(), new HashSet(txn.getChangeBuffers().keySet()));
       ++this.numTxnsAfterFolding;
       registerKeyForOids(txn.getChangeBuffers().keySet(), key);
@@ -320,6 +320,8 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
 
   public synchronized FoldedInfo addTransaction(final ClientTransaction txn, final SequenceGenerator sequenceGenerator,
                                                 final TransactionIDGenerator tidGenerator) {
+    if (committed) { throw new AssertionError("Already committed"); }
+
     this.numTxnsBeforeFolding++;
 
     if (txn.getLockType().equals(TxnType.SYNC_WRITE)) {
@@ -348,6 +350,9 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
 
   // Called from CommitTransactionMessageImpl
   public synchronized TCByteBuffer[] getData() {
+    this.committed = true;
+    this.foldingKeys.clear();
+
     this.outstandingWriteCount++;
     final TCByteBufferOutputStream out = newOutputStream();
     writeHeader(out);
