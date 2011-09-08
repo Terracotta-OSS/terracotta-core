@@ -177,7 +177,7 @@ public class ReconnectionRejectedEventTest extends TCTestCase {
                                       TransportHandshakeMessageFactory messageFactory,
                                       WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort) {
       super(clientConnectionEstablisher, handshakeErrorHandler, messageFactory, wireProtocolAdaptorFactory,
-            callbackPort);
+            callbackPort, new ReconnectionRejectedExpressRejoinClientBehaviour());
     }
 
     public void fireReconnectionRejectedEvent() {
