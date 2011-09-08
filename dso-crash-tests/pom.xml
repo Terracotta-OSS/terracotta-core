@@ -32,6 +32,12 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
+      <artifactId>common-api</artifactId>
+      <version>${project.version}</version>
+      <scope>compile</scope>
+    </dependency>    
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
       <artifactId>deploy</artifactId>
       <version>${project.version}</version>
       <scope>compile</scope>
