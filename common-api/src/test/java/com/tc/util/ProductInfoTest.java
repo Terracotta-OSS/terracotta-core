@@ -62,7 +62,6 @@ public class ProductInfoTest extends TestCase {
     assertEquals("20080616-130651 (Revision 12345 by theuser@thehost from thebranch)", info.buildID());
     assertEquals("12345", info.buildRevision());
     assertEquals(ProductInfo.UNKNOWN_VALUE, info.buildRevisionFromEE());
-    assertEquals(toDate(2008, 5, 16, 13, 6, 51), info.buildTimestamp());
     assertEquals("20080616-130651", info.buildTimestampAsString());
     assertEquals("theuser", info.buildUser());
 
@@ -122,7 +121,6 @@ public class ProductInfoTest extends TestCase {
     assertEquals("5", info.patchLevel());
     assertEquals("12112", info.patchRevision());
     assertEquals("9999", info.patchEERevision());
-    assertEquals(toDate(2008, 5, 20, 23, 59, 59), info.patchTimestamp());
     assertEquals("20080620-235959", info.patchTimestampAsString());
     assertEquals("thepatchuser", info.patchUser());
     assertEquals("Patch Level 5", info.toShortPatchString());
@@ -135,7 +133,7 @@ public class ProductInfoTest extends TestCase {
     assertEquals(ProductInfo.UNKNOWN_VALUE, info.patchHost());
     assertEquals(ProductInfo.UNKNOWN_VALUE, info.patchLevel());
     assertEquals(ProductInfo.UNKNOWN_VALUE, info.patchRevision());
-    assertEquals(null, info.patchTimestamp());
+    assertEquals(ProductInfo.UNKNOWN_VALUE, info.patchTimestamp());
     assertEquals(ProductInfo.UNKNOWN_VALUE, info.patchTimestampAsString());
     assertEquals(ProductInfo.UNKNOWN_VALUE, info.patchUser());
     assertEquals(ProductInfo.UNKNOWN_VALUE, info.patchEERevision());
