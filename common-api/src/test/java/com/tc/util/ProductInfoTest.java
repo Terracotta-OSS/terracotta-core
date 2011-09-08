@@ -5,8 +5,6 @@
 package com.tc.util;
 
 import java.io.InputStream;
-import java.util.Calendar;
-import java.util.Date;
 
 import junit.framework.TestCase;
 
@@ -140,12 +138,5 @@ public class ProductInfoTest extends TestCase {
     assertEquals("Patch Level [unknown], as of [unknown] (Revision [unknown] by [unknown]@[unknown] from [unknown])",
                  info.toLongPatchString());
     assertEquals("Patch Level [unknown]", info.toShortPatchString());
-  }
-
-  private Date toDate(int year, int month, int day, int hour, int min, int sec) {
-    Calendar cal = Calendar.getInstance();
-    cal.set(year, month, day, hour, min, sec);
-    cal.set(Calendar.MILLISECOND, 0);
-    return cal.getTime();
   }
 }
