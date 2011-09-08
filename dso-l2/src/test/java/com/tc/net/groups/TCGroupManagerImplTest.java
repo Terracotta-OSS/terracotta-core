@@ -137,12 +137,12 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     // close test
     member1.getChannel().close();
-    for (int i = 0; i < 30; i++) {
-      if (groups[0].size() == 0 && groups[1].size() == 0) break;
-      Thread.sleep(100);
+
+    while ((groups[0].size() != 0) || (groups[1].size() != 0)) {
+      System.err.println("XXX " + member1 + "; size: " + groups[0].size());
+      System.err.println("XXX " + member2 + "; size: " + groups[1].size());
+      ThreadUtil.reallySleep(5000);
     }
-    assertEquals(0, groups[0].size());
-    assertEquals(0, groups[1].size());
 
     tearGroups();
   }
