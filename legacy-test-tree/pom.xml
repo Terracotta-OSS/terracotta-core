@@ -60,7 +60,7 @@
       <groupId>org.terracotta</groupId>
       <artifactId>tcstats</artifactId>
       <scope>test</scope>
-    </dependency>
+    </dependency>   
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>simulator</artifactId>
@@ -135,7 +135,7 @@
     </dependency>
   </dependencies>
 
-  <build>
+  <!--build>
     <plugins>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
@@ -164,6 +164,6 @@
         </executions>
       </plugin>
     </plugins>
-  </build>  
+  </build-->  
 
 </project>
