@@ -24,7 +24,7 @@ public class L1ServerMapLocalStoreTransactionCompletionListener implements Trans
     this.serverMapLocalCache = serverMapLocalCache;
     this.key = key;
     this.transactionCompleteOperation = onCompleteOperation;
-    this.value = value;
+    this.value = value.clone();
   }
 
   public void transactionComplete(TransactionID txnID) {

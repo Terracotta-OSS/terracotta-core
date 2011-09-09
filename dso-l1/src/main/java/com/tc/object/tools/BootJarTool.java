@@ -236,6 +236,7 @@ import com.tc.util.FieldUtils;
 import com.tc.util.HashtableKeySetWrapper;
 import com.tc.util.HashtableValuesWrapper;
 import com.tc.util.ListIteratorWrapper;
+import com.tc.util.ObjectCloneUtil;
 import com.tc.util.SequenceID;
 import com.tc.util.SequenceID.SequenceIDComparator;
 import com.tc.util.SetIteratorWrapper;
@@ -672,6 +673,7 @@ public class BootJarTool {
       loadTerracottaClass(LocalCacheStoreEventualValue.class.getName());
       loadTerracottaClass(LocalCacheStoreStrongValue.class.getName());
       loadTerracottaClass(LocalCacheStoreIncoherentValue.class.getName());
+      loadTerracottaClass(ObjectCloneUtil.class.getName());
 
       loadTerracottaClass(L1ServerMapLocalCacheStoreListener.class.getName());
       loadTerracottaClass(PutType.class.getName());
