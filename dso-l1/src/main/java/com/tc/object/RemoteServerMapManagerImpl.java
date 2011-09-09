@@ -190,7 +190,9 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
           if (result != null) {
             removeRequestContext(context);
             iterator.remove();
-            rv.putAll(result);
+            synchronized (rv) {
+              rv.putAll(result);
+            }
           }
         }
         if (contextsToWaitFor.isEmpty()) { return; }
