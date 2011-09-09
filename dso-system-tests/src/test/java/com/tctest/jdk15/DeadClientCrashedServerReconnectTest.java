@@ -31,6 +31,7 @@ import com.tc.test.proxyconnect.ProxyConnectManagerImpl;
 import com.tc.test.restart.RestartTestEnvironment;
 import com.tc.test.restart.RestartTestHelper;
 import com.tc.util.PortChooser;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -90,7 +91,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
     // wait until client handshake is complete...
     waitUntilUnpaused(client);
 
-    checkServerHasClients(1, jmxPort);
+    waitUntilServerHasClient(1, jmxPort);
 
     Thread.sleep(5 * 1000);
 
@@ -100,6 +101,8 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
 
     // give time for server to process client disconnect
     Thread.sleep(5 * 1000);
+
+    waitUntilServerHasClient(0, jmxPort);
 
     // Now crash the server
     server.crash();
@@ -111,7 +114,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
     // give time for jmx server to start up
     Thread.sleep(15 * 1000);
 
-    checkServerHasClients(0, jmxPort);
+    waitUntilServerHasClient(0, jmxPort);
   }
 
   private void waitUntilUnpaused(final DistributedObjectClient client) {
@@ -119,19 +122,21 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
     mgr.waitForHandshake();
   }
 
-  private void checkServerHasClients(final int clientCount, final int jmxPort) throws Exception {
+  private void waitUntilServerHasClient(final int clientCount, final int jmxPort) throws Exception {
+    int actualClientCount = 0;
+    while ((actualClientCount = getServerHasClients(jmxPort)) != clientCount) {
+      System.out.println("XXX clients connected to the server : " + actualClientCount + "; expected: " + clientCount);
+      ThreadUtil.reallySleep(10000);
+    }
+  }
+
+  private int getServerHasClients(final int jmxPort) throws Exception {
     JMXConnector jmxConnector = JMXUtils.getJMXConnector("localhost", jmxPort);
     MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-    DSOMBean mbean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DSO, DSOMBean.class,
-                                                                              true);
+    DSOMBean mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DSO, DSOMBean.class, true);
     int actualClientCount = mbean.getClients().length;
-    if (actualClientCount != clientCount) { throw new AssertionError(
-                                                                     "Incorrect number of clients connected to the server: expected=["
-                                                                         + clientCount + "] but was actual=["
-                                                                         + actualClientCount + "]."); }
-
-    System.out.println("***** " + clientCount + " clients are connected to the server.");
     jmxConnector.close();
+    return actualClientCount;
   }
 
   @Override
