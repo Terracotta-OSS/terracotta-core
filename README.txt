@@ -27,6 +27,11 @@ You can skip the 'cd' step if you specify the pom of the sub module via '-f'
 
 %> mvn verify -Dtest=ArrayCopyTest -P system-tests -f dso-system-tests/pom.xml
 
+EXTRA TEST PROFILES:
+* berkeleydb: run tests with bdb
+* derby:      run tests with derby
+* normal,active-passive:  see dso-crash-tests/README.txt
+
 
 ******************************************************************************
 3. To pound a test:
