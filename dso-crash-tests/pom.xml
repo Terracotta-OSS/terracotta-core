@@ -203,9 +203,9 @@
       </properties>
     </profile>
     <profile>
-      <id>active-active</id>
+      <id>normal</id>
       <properties>
-        <tc.tests.configuration.transparent-tests.mode>active-active</tc.tests.configuration.transparent-tests.mode>
+        <tc.tests.configuration.transparent-tests.mode>normal</tc.tests.configuration.transparent-tests.mode>
       </properties>
     </profile>     
   </profiles>
