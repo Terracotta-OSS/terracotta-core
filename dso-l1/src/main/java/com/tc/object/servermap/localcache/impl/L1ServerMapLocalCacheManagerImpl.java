@@ -28,8 +28,8 @@ import com.tc.util.concurrent.TCConcurrentMultiMap;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -40,13 +40,14 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
 
   private static final boolean                                                   PINNING_ENABLED         = TCPropertiesImpl
                                                                                                              .getProperties()
-                                                                                                             .getBoolean(
-                                                                                                                         TCPropertiesConsts.L1_LOCKMANAGER_PINNING_ENABLED);
+                                                                                                             .getBoolean(TCPropertiesConsts.L1_LOCKMANAGER_PINNING_ENABLED);
 
   /**
    * For invalidations
    */
   private final ConcurrentHashMap<ObjectID, ServerMapLocalCache>                 mapIdTolocalCache       = new ConcurrentHashMap<ObjectID, ServerMapLocalCache>();
+  // We also need the reverse mapping to easily remove the server map from existence on disposal
+  private final TCConcurrentMultiMap<ServerMapLocalCache, ObjectID>              localCacheToMapIds      = new TCConcurrentMultiMap<ServerMapLocalCache, ObjectID>();
 
   /**
    * For lock recalls
@@ -110,13 +111,18 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
 
     if (!mapIdTolocalCache.containsKey(mapId)) {
       mapIdTolocalCache.put(mapId, serverMapLocalCache);
+      localCacheToMapIds.add(serverMapLocalCache, mapId);
     }
 
     return serverMapLocalCache;
   }
 
   public void removeStore(L1ServerMapLocalCacheStore store) {
-    localStores.remove(store);
+    ServerMapLocalCache localCache = localStores.remove(store);
+    localCaches.remove(localCache);
+    for (ObjectID mapId : localCacheToMapIds.removeAll(localCache)) {
+      mapIdTolocalCache.remove(mapId);
+    }
   }
 
   private void throwAlreadyShutdownException() {
@@ -305,8 +311,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     }
   }
 
-  public void transactionComplete(
-                                  L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
+  public void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     txnCompleteSink.add(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 }

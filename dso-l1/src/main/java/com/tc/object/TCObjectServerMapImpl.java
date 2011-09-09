@@ -634,9 +634,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   public void setupLocalStore(L1ServerMapLocalCacheStore serverMapLocalStore) {
     // this is called from CDSMDso.__tc_managed(tco)
     this.serverMapLocalStore = serverMapLocalStore;
-    if (cache == null) {
-      setupLocalCache(serverMapLocalStore);
-    }
+    setupLocalCache(serverMapLocalStore);
   }
 
   private void setupLocalCache(L1ServerMapLocalCacheStore serverMapLocalStore) {
