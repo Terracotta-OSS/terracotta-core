@@ -685,13 +685,27 @@
                     <versionRange>[1.0.2,)</versionRange>
                     <goals>
                       <goal>buildinfo</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <execute/>
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.terracotta</groupId>
+                    <artifactId>
+                      maven-forge-plugin
+                    </artifactId>
+                    <versionRange>[1.0.2,)</versionRange>
+                    <goals>
                       <goal>manifest</goal>
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <ignore></ignore>
+                    <ignore/>
                   </action>
-                </pluginExecution>
+                </pluginExecution>                
                 <pluginExecution>
                   <pluginExecutionFilter>
                     <groupId>org.codehaus.mojo</groupId>
