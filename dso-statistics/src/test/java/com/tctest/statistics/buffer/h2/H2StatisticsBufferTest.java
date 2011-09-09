@@ -92,6 +92,14 @@ public class H2StatisticsBufferTest extends TestCase {
     tmp_dir = createTmpDir();
     boolean tmpDirReadOnly = tmp_dir.setReadOnly();
 
+    if (tmp_dir.canWrite()) {
+      System.err
+          .println("XXX "
+                   + tmp_dir.getAbsolutePath()
+                   + " though set readonly is still writable. Below expected assertion error will not happen in tht case. Java/OS issue.");
+      return;
+    }
+
     if (tmpDirReadOnly) {
       try {
         new H2StatisticsBufferImpl(StatisticsSystemType.CLIENT, new StatisticsConfigImpl(), tmp_dir);
