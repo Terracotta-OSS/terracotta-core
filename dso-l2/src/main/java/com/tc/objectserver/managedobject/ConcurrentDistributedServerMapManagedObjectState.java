@@ -43,7 +43,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
 
   public static final String    MAX_TTI_SECONDS_FIELDNAME            = "maxTTISeconds";
   public static final String    MAX_TTL_SECONDS_FIELDNAME            = "maxTTLSeconds";
-  public static final String    TARGET_MAX_IN_MEMORY_COUNT_FIELDNAME = "targetMaxInMemoryCount";
   public static final String    TARGET_MAX_TOTAL_COUNT_FIELDNAME     = "targetMaxTotalCount";
   public static final String    INVALIDATE_ON_CHANGE                 = "invalidateOnChange";
   public static final String    CACHE_NAME_FIELDNAME                 = "cacheName";
@@ -114,7 +113,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     super.dehydrateFields(objectID, writer);
     writer.addPhysicalAction(MAX_TTI_SECONDS_FIELDNAME, Integer.valueOf(this.maxTTISeconds));
     writer.addPhysicalAction(MAX_TTL_SECONDS_FIELDNAME, Integer.valueOf(this.maxTTLSeconds));
-    writer.addPhysicalAction(TARGET_MAX_IN_MEMORY_COUNT_FIELDNAME, Integer.valueOf(this.targetMaxInMemoryCount));
     writer.addPhysicalAction(TARGET_MAX_TOTAL_COUNT_FIELDNAME, Integer.valueOf(this.targetMaxTotalCount));
     writer.addPhysicalAction(INVALIDATE_ON_CHANGE, Boolean.valueOf(this.invalidateOnChange));
     writer.addPhysicalAction(CACHE_NAME_FIELDNAME, cacheName);
@@ -142,8 +140,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
           this.maxTTISeconds = ((Integer) physicalAction.getObject());
         } else if (fieldName.equals(MAX_TTL_SECONDS_FIELDNAME)) {
           this.maxTTLSeconds = ((Integer) physicalAction.getObject());
-        } else if (fieldName.equals(TARGET_MAX_IN_MEMORY_COUNT_FIELDNAME)) {
-          this.targetMaxInMemoryCount = ((Integer) physicalAction.getObject());
         } else if (fieldName.equals(TARGET_MAX_TOTAL_COUNT_FIELDNAME)) {
           this.targetMaxTotalCount = ((Integer) physicalAction.getObject());
         } else if (fieldName.equals(INVALIDATE_ON_CHANGE)) {

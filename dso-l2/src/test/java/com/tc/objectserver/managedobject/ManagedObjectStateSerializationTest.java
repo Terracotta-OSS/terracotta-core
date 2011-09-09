@@ -372,8 +372,6 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
                              Integer.valueOf(0), false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.MAX_TTL_SECONDS_FIELDNAME,
                              Integer.valueOf(0), false);
-    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.TARGET_MAX_IN_MEMORY_COUNT_FIELDNAME,
-                             Integer.valueOf(0), false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.TARGET_MAX_TOTAL_COUNT_FIELDNAME,
                              Integer.valueOf(0), false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.INVALIDATE_ON_CHANGE,

@@ -17,12 +17,11 @@ public interface TCObjectServerMap<L> extends TCObject {
    * 
    * @param maxTTISeconds TTI
    * @param maxTTLSeconds TTL
-   * @param targetMaxInMemoryCount targetMaxInMemoryCount
    * @param targetMaxTotalCount targetMaxTotalCount
    * @param invalidateOnChange invalidateOnChange
    */
-  public void initialize(int maxTTISeconds, int maxTTLSeconds, int targetMaxInMemoryCount, int targetMaxTotalCount,
-                         boolean invalidateOnChange, boolean localCacheEnabled);
+  public void initialize(int maxTTISeconds, int maxTTLSeconds, int targetMaxTotalCount, boolean invalidateOnChange,
+                         boolean localCacheEnabled);
 
   /**
    * Does a logic remove and removes from the local cache if present

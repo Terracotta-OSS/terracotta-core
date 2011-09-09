@@ -30,8 +30,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObject, TCObjectServerMap<L> {
@@ -85,9 +85,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
   }
 
-  public void initialize(final int maxTTISeconds, final int maxTTLSeconds, final int targetMaxInMemoryCount,
-                         final int targetMaxTotalCount, final boolean invalidateOnChangeFlag,
-                         final boolean localCacheEnabledFlag) {
+  public void initialize(final int maxTTISeconds, final int maxTTLSeconds, final int targetMaxTotalCount,
+                         final boolean invalidateOnChangeFlag, final boolean localCacheEnabledFlag) {
     this.invalidateOnChange = invalidateOnChangeFlag;
     this.localCacheEnabled = localCacheEnabledFlag;
     // if tcobject is being faulted in, the TCO is created and the peer is hydrated afterwards
