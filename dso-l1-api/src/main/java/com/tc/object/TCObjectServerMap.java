@@ -221,4 +221,9 @@ public interface TCObjectServerMap<L> extends TCObject {
    * Setup the local store for use. This method is called whenever the map is created or faulted in the L1 first time.
    */
   void setupLocalStore(L1ServerMapLocalCacheStore serverMapLocalStore);
+
+  /**
+   * Destroy the local store.
+   */
+  void destroyLocalStore();
 }

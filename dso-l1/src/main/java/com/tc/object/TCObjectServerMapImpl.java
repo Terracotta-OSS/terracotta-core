@@ -30,22 +30,22 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObject, TCObjectServerMap<L> {
 
-  private final static TCLogger        logger                          = TCLogging
-                                                                           .getLogger(TCObjectServerMapImpl.class);
+  private final static TCLogger               logger                          = TCLogging
+                                                                                  .getLogger(TCObjectServerMapImpl.class);
 
-  private static final Object[]        NO_ARGS                         = new Object[] {};
+  private static final Object[]               NO_ARGS                         = new Object[] {};
 
-  private static final long            GET_VALUE_FOR_KEY_LOG_THRESHOLD = 10 * 1000;
+  private static final long                   GET_VALUE_FOR_KEY_LOG_THRESHOLD = 10 * 1000;
 
   // The condition that can require a retry is transient so we could retry immediately, this throttle is here just to
   // prevent hammering the server
-  private static final long            RETRY_GET_VALUE_FOR_KEY_SLEEP   = 10;
+  private static final long                   RETRY_GET_VALUE_FOR_KEY_SLEEP   = 10;
 
   static {
     boolean deprecatedProperty = TCPropertiesImpl.getProperties()
@@ -57,17 +57,17 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
   }
 
-  private final GroupID                groupID;
-  private final ClientObjectManager    objectManager;
-  private final RemoteServerMapManager serverMapManager;
-  private final Manager                manager;
-  private volatile ServerMapLocalCache cache;
-  private volatile boolean             invalidateOnChange;
-  private volatile boolean             localCacheEnabled;
+  private final GroupID                       groupID;
+  private final ClientObjectManager           objectManager;
+  private final RemoteServerMapManager        serverMapManager;
+  private final Manager                       manager;
+  private volatile ServerMapLocalCache        cache;
+  private volatile boolean                    invalidateOnChange;
+  private volatile boolean                    localCacheEnabled;
 
-  private L1ServerMapLocalCacheStore   serverMapLocalStore;
-  private final TCObjectSelfStore      tcObjectSelfStore;
-  final L1ServerMapLocalCacheManager   globalLocalCacheManager;
+  private volatile L1ServerMapLocalCacheStore serverMapLocalStore;
+  private final TCObjectSelfStore             tcObjectSelfStore;
+  final L1ServerMapLocalCacheManager          globalLocalCacheManager;
 
   public TCObjectServerMapImpl(final Manager manager, final ClientObjectManager objectManager,
                                final RemoteServerMapManager serverMapManager, final ObjectID id, final Object peer,
@@ -647,6 +647,11 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     // this is called from CDSMDso.__tc_managed(tco)
     this.serverMapLocalStore = serverMapLocalStore;
     setupLocalCache(serverMapLocalStore);
+  }
+
+  public void destroyLocalStore() {
+    this.serverMapLocalStore = null;
+    this.cache = null;
   }
 
   private void setupLocalCache(L1ServerMapLocalCacheStore serverMapLocalStore) {
