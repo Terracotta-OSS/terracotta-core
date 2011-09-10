@@ -174,9 +174,7 @@ public abstract class AbstractLocalCacheStoreValue implements Externalizable, Cl
     } catch (CloneNotSupportedException e1) {
       throw new RuntimeException("Clone should be supported");
     }
-    if (value instanceof Cloneable) {
-      clone.value = ObjectCloneUtil.clone((Cloneable) value);
-    }
+    clone.value = ObjectCloneUtil.clone(value);
     return clone;
   }
 }
