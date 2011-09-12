@@ -65,12 +65,12 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
           }
           if (object instanceof TCObjectSelfStoreValue) {
             rv = ((TCObjectSelfStoreValue) object).getTCObjectSelf();
-            initializeTCObjectSelfIfRequired(rv);
+            initTCObjectSelfIfRequired(rv);
             return rv;
           } else {
             AbstractLocalCacheStoreValue localCacheStoreValue = localCache.getValue(object);
             rv = localCacheStoreValue == null ? null : localCacheStoreValue.asEventualValue().getValue();
-            initializeTCObjectSelfIfRequired(rv);
+            initTCObjectSelfIfRequired(rv);
 
             if (rv == null && logger.isDebugEnabled()) {
               logger.debug("XXX GetById failed when localCacheStoreValue was null for eventual, ObjectID=" + oid);
@@ -115,10 +115,15 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     }
   }
 
-  private void initializeTCObjectSelfIfRequired(Object rv) {
-    if (rv != null && rv instanceof TCObjectSelf) {
-      TCObjectSelf self = (TCObjectSelf) rv;
-      tcObjectSelfRemovedFromStoreCallback.initializeTCClazzIfRequired(self);
+  private void initTCObjectSelfIfRequired(Object rv) {
+    if (rv instanceof TCObjectSelf) {
+      initializeTCObjectSelfIfRequired((TCObjectSelf) rv);
+    }
+  }
+
+  public void initializeTCObjectSelfIfRequired(TCObjectSelf tcoSelf) {
+    if (tcoSelf != null) {
+      tcObjectSelfRemovedFromStoreCallback.initializeTCClazzIfRequired(tcoSelf);
     }
   }
 
@@ -132,13 +137,16 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
       Object object = localCache.getKeyOrValueForObjectID(oid);
       if (object == null) { return null; }
+      final Object rv;
       if (object instanceof TCObjectSelfStoreValue) {
-        return ((TCObjectSelfStoreValue) object).getTCObjectSelf();
+        rv = ((TCObjectSelfStoreValue) object).getTCObjectSelf();
       } else {
         // for eventual value invalidation, use any of them to look up the value
         AbstractLocalCacheStoreValue localCacheStoreValue = localCache.getValue(object);
-        return localCacheStoreValue == null ? null : localCacheStoreValue.asEventualValue().getValue();
+        rv = localCacheStoreValue == null ? null : localCacheStoreValue.asEventualValue().getValue();
       }
+      initTCObjectSelfIfRequired(rv);
+      return rv;
     } finally {
       tcObjectStoreLock.readLock().unlock();
     }

@@ -44,12 +44,17 @@ public abstract class AbstractLocalCacheStoreValue implements Externalizable, Cl
     return this.mapID;
   }
 
-  public Object getValueObject(TCObjectSelfStore tcObjectSelfStore, ServerMapLocalCache store) {
+  public final Object getValueObject(TCObjectSelfStore tcObjectSelfStore, ServerMapLocalCache store) {
+    final Object rv;
     if (value instanceof ObjectID) {
-      return tcObjectSelfStore.getByIdFromCache((ObjectID) value, store);
+      rv = tcObjectSelfStore.getByIdFromCache((ObjectID) value, store);
     } else {
-      return value;
+      rv = value;
     }
+    if (rv instanceof TCObjectSelf) {
+      tcObjectSelfStore.initializeTCObjectSelfIfRequired((TCObjectSelf) rv);
+    }
+    return rv;
   }
 
   public boolean isValueObjectOnHeap(L1ServerMapLocalCacheStore store) {

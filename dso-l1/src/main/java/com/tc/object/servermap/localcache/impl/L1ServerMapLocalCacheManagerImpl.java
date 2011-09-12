@@ -90,6 +90,10 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     this.lockManager = lockManager;
   }
 
+  public void initializeTCObjectSelfIfRequired(TCObjectSelf tcoSelf) {
+    this.tcObjectSelfStore.initializeTCObjectSelfIfRequired(tcoSelf);
+  }
+
   public synchronized ServerMapLocalCache getOrCreateLocalCache(ObjectID mapId, ClientObjectManager objectManager,
                                                                 Manager manager, boolean localCacheEnabled,
                                                                 L1ServerMapLocalCacheStore serverMapLocalStore) {
