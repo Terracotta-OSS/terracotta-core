@@ -22,7 +22,7 @@
     <toolkit.api>1.4</toolkit.api>    
     <toolkit.version>4.0.0-SNAPSHOT</toolkit.version>    
     <ehcache.version>2.5.0-SNAPSHOT</ehcache.version>
-    <quartz.version>2.1.0-SNAPSHOT</quartz.version>
+    <quartz.version>2.1.0</quartz.version>
     <terracotta-session.version>1.2.0-SNAPSHOT</terracotta-session.version>
     <quartz-terracotta.version>2.1.0-SNAPSHOT</quartz-terracotta.version>
     

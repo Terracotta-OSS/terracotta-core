@@ -78,6 +78,6 @@ class Util {
     static void setPermission(project) {
       def rootDir = project.properties['rootDir']
       ant.chmod(dir: rootDir, perm: "a+x",
-                includes: "**/*.sh **/*.bat **/*.exe **/bin/** **/lib/**")
+                includes: "**/*.sh,**/*.bat,**/*.exe,**/bin/**,**/lib/**")
     }
 }
