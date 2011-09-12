@@ -49,7 +49,7 @@
     <ehcache-core.quickstart.url>http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/QUICK-START.html</ehcache-core.quickstart.url>    
     <ehcache-core.tclicense.url>http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/EHCACHE-TERRACOTTA-LICENSE.txt</ehcache-core.tclicense.url>
     <ehcache-core.tcschema.url>http://svn.terracotta.org/svn/ehcache/trunk/core/src/main/config/ehcache-terracotta.xml</ehcache-core.tcschema.url>
-    <quartz-kit.url>http://download.terracotta.org/nightly/quartz/quartz-${quartz.version}.tar.gz</quartz-kit.url>
+    <quartz-kit.url>http://kong/output/release-kits/quartz/quartz-2.1.0.tar.gz</quartz-kit.url>
   </properties>
 
   <dependencies>
