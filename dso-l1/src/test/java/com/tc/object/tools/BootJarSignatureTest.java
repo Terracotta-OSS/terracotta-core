@@ -4,11 +4,11 @@
  */
 package com.tc.object.tools;
 
-import com.tc.test.TCTestCase;
-
 import java.util.Properties;
 
-public class BootJarSignatureTest extends TCTestCase {
+import junit.framework.TestCase;
+
+public class BootJarSignatureTest extends TestCase {
 
   public void testExceptions() {
     try {
@@ -43,11 +43,11 @@ public class BootJarSignatureTest extends TCTestCase {
   public void testSolaris() throws UnsupportedVMException {
     Properties props = makeProps("SunOS", "Sun Microsystems Inc.", "1.5.0_06", null, "sparc");
     BootJarSignature sig = new BootJarSignature(props);
-    assertEquals("hotspot_solaris_150_06", sig.getSignature());
+    assertEquals("hotspot_solaris_150", sig.getSignature());
 
     props = makeProps("SunOS", "Sun Microsystems Inc.", "1.4.2_12", null, "x86");
     sig = new BootJarSignature(props);
-    assertEquals("hotspot_solaris-x86_142_12", sig.getSignature());
+    assertEquals("hotspot_solaris-x86_142", sig.getSignature());
 
     try {
       props = makeProps("SunOS", "Sun Microsystems Inc.", "1.5.0_06", null, null);
@@ -62,37 +62,37 @@ public class BootJarSignatureTest extends TCTestCase {
   public void testWindows() throws UnsupportedVMException {
     Properties props = makeProps("Windows XP", "Sun Microsystems Inc.", "1.5.0_06", null, null);
     BootJarSignature sig = new BootJarSignature(props);
-    assertEquals("hotspot_win32_150_06", sig.getSignature());
+    assertEquals("hotspot_win32_150", sig.getSignature());
 
     props = makeProps("Windows 2000", "Sun Microsystems Inc.", "1.4.2_12", null, null);
     sig = new BootJarSignature(props);
-    assertEquals("hotspot_win32_142_12", sig.getSignature());
+    assertEquals("hotspot_win32_142", sig.getSignature());
   }
 
   public void testUnknown() throws UnsupportedVMException {
     Properties props = makeProps("Joe bob's OS", "Sun Microsystems Inc.", "1.5.0_06", null, null);
     BootJarSignature sig = new BootJarSignature(props);
-    assertEquals("hotspot_unknown_150_06", sig.getSignature());
+    assertEquals("hotspot_unknown_150", sig.getSignature());
 
     props = makeProps("Windows XP", "hot dog vendor", "1.6.0_23", null, null);
     sig = new BootJarSignature(props);
-    assertEquals("unknown_win32_160_23", sig.getSignature());
+    assertEquals("unknown_win32_160", sig.getSignature());
   }
 
   public void testMac() throws UnsupportedVMException {
     Properties props = makeProps("Mac OS X", "Apple Computer, Inc.", "1.5.0_05", null, null);
     BootJarSignature sig = new BootJarSignature(props);
-    assertEquals("hotspot_osx_150_05", sig.getSignature());
+    assertEquals("hotspot_osx_150", sig.getSignature());
   }
 
   public void testLinux() throws UnsupportedVMException {
     Properties props = makeProps("Linux", "Sun Microsystems, Inc.", "1.5.0_01", null, null);
     BootJarSignature sig = new BootJarSignature(props);
-    assertEquals("hotspot_linux_150_01", sig.getSignature());
+    assertEquals("hotspot_linux_150", sig.getSignature());
 
     props = makeProps("Linux", "BEA Systems, Inc.", "1.5.0_03", null, null);
     sig = new BootJarSignature(props);
-    assertEquals("jrockit_linux_150_03", sig.getSignature());
+    assertEquals("jrockit_linux_150", sig.getSignature());
 
     props = makeProps("Linux", "IBM Corporation", "1.5.0", "pxi32dev-20070201 (SR4)", null);
     sig = new BootJarSignature(props);
@@ -101,14 +101,14 @@ public class BootJarSignatureTest extends TCTestCase {
     // experimental version identifiers in case these should pop up one day
     props = makeProps("Linux", "IBM Corporation, Inc.", "1.5.0_11", "pxi32dev-20070201 (SR4)", null);
     sig = new BootJarSignature(props);
-    assertEquals("ibm_linux_150_11", sig.getSignature());
+    assertEquals("ibm_linux_150", sig.getSignature());
 
     // test this exceptional case
     props = makeProps("Linux", "Sun Microsystems, Inc.", "1.4.2_05", null, null);
     props.setProperty("java.vm.name", "BEA WebLogic JRockit(TM) 1.4.2_05 JVM R24.5.0-0");
     props.setProperty("jrockit.version", "ari-41062-20050215-0919-linux-ia32");
     sig = new BootJarSignature(props);
-    assertEquals("jrockit_linux_142_05", sig.getSignature());
+    assertEquals("jrockit_linux_142", sig.getSignature());
   }
 
   private Properties makeProps(String os, String vendor, String version, String runtime, String arch) {
