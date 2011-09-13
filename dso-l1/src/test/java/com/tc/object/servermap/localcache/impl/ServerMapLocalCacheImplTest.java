@@ -448,7 +448,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     }
 
     Invalidations invalidations = new Invalidations();
-    cache.addAllObjectIDsToValidate(invalidations, mapID);
+    globalLocalCacheManager.addAllObjectIDsToValidate(invalidations);
 
     Assert.assertEquals(0, invalidations.size());
 
@@ -456,11 +456,11 @@ public class ServerMapLocalCacheImplTest extends TestCase {
       MockModesAdd.addEventualValueToCache(cache, globalLocalCacheManager, "key" + i,
                                            createMockSerializedEntry("value" + i, i), mapID, MapOperationType.PUT);
     }
-    cache.addAllObjectIDsToValidate(invalidations, mapID);
+    globalLocalCacheManager.addAllObjectIDsToValidate(invalidations);
 
     Assert.assertEquals(50, invalidations.size());
 
-    ObjectIDSet set = invalidations.getObjectIDSetForMapId(this.mapID);
+    ObjectIDSet set = invalidations.getObjectIDSetForMapId(ObjectID.NULL_ID);
     Assert.assertEquals(50, set.size());
     for (int i = 50; i < 100; i++) {
       Assert.assertTrue(set.contains(new ObjectID(i)));
@@ -1173,8 +1173,8 @@ public class ServerMapLocalCacheImplTest extends TestCase {
       // expected
     }
 
-    Assert.assertEquals(createMockSerializedEntry(expectedValue, expectedObjectId.toLong()),
-                        value.getValueObject(globalLocalCacheManager, cache));
+    Assert.assertEquals(createMockSerializedEntry(expectedValue, expectedObjectId.toLong()), value
+        .getValueObject(globalLocalCacheManager, cache));
     Assert.assertEquals(expectedObjectId, value.getId());
     Assert.assertEquals(expectedObjectId, value.asEventualValue().getObjectId());
   }
@@ -1199,8 +1199,8 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     } catch (ClassCastException ignored) {
       // expected
     }
-    Assert.assertEquals(createMockSerializedEntry(expectedValue, expectedObjectId.toLong()),
-                        value.getValueObject(globalLocalCacheManager, cache));
+    Assert.assertEquals(createMockSerializedEntry(expectedValue, expectedObjectId.toLong()), value
+        .getValueObject(globalLocalCacheManager, cache));
     Assert.assertEquals(null, value.getId());
   }
 
@@ -1225,8 +1225,8 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     } catch (ClassCastException ignored) {
       // expected
     }
-    Assert.assertEquals(createMockSerializedEntry(expectedValue, expectedObjectId.toLong()),
-                        value.getValueObject(globalLocalCacheManager, cache));
+    Assert.assertEquals(createMockSerializedEntry(expectedValue, expectedObjectId.toLong()), value
+        .getValueObject(globalLocalCacheManager, cache));
     Assert.assertEquals(expectedLockId, value.getId());
     Assert.assertEquals(expectedLockId, value.asStrongValue().getLockId());
   }

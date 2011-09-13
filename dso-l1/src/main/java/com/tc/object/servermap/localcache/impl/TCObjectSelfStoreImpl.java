@@ -3,6 +3,7 @@
  */
 package com.tc.object.servermap.localcache.impl;
 
+import com.tc.invalidation.Invalidations;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
@@ -22,13 +23,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
-  private final ObjectIDSet                                    tcObjectSelfStoreOids = new ObjectIDSet();
+  private final TCObjectSelfStoreObjectIDSet                   tcObjectSelfStoreOids = new TCObjectSelfStoreObjectIDSet();
   private final ReentrantReadWriteLock                         tcObjectStoreLock     = new ReentrantReadWriteLock();
-  private final AtomicInteger                                  tcObjectSelfStoreSize = new AtomicInteger();
   private volatile TCObjectSelfCallback                        tcObjectSelfRemovedFromStoreCallback;
   private final Map<ObjectID, TCObjectSelf>                    tcObjectSelfTempCache = new HashMap<ObjectID, TCObjectSelf>();
 
@@ -176,8 +175,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
         }
 
         if (isNew || (tcObjectSelfTempCache.containsKey(oid) && !tcObjectSelfStoreOids.contains(oid))) {
-          tcObjectSelfStoreOids.add(oid);
-          tcObjectSelfStoreSize.incrementAndGet();
+          tcObjectSelfStoreOids.add(localStoreValue.isEventualConsistentValue(), oid);
           if (!localStoreValue.isEventualConsistentValue()) {
             store.put(((TCObject) tcoself).getObjectID(), new TCObjectSelfWrapper(tcoself),
                       PutType.PINNED_NO_SIZE_INCREMENT);
@@ -267,8 +265,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
           this.tcObjectSelfRemovedFromStoreCallback.removedTCObjectSelfFromStore((TCObjectSelf) removed);
         }
 
-        tcObjectSelfStoreOids.remove(valueOid);
-        tcObjectSelfStoreSize.decrementAndGet();
+        tcObjectSelfStoreOids.remove(localStoreValue.isEventualConsistentValue(), valueOid);
       } finally {
         tcObjectStoreLock.writeLock().unlock();
       }
@@ -277,10 +274,19 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     }
   }
 
+  public void addAllObjectIDsToValidate(Invalidations invalidations) {
+    tcObjectStoreLock.writeLock().lock();
+    try {
+      tcObjectSelfStoreOids.addAllObjectIDsToValidate(invalidations);
+    } finally {
+      tcObjectStoreLock.writeLock().unlock();
+    }
+  }
+
   public int size() {
     tcObjectStoreLock.readLock().lock();
     try {
-      return tcObjectSelfStoreSize.get();
+      return tcObjectSelfStoreOids.size();
     } finally {
       tcObjectStoreLock.readLock().unlock();
     }
@@ -289,7 +295,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   public void addAllObjectIDs(Set oids) {
     tcObjectStoreLock.readLock().lock();
     try {
-      oids.addAll(this.tcObjectSelfStoreOids);
+      tcObjectSelfStoreOids.addAll(oids);
     } finally {
       tcObjectStoreLock.readLock().unlock();
     }
@@ -306,5 +312,45 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
   public void initializeTCObjectSelfStore(TCObjectSelfCallback callback) {
     this.tcObjectSelfRemovedFromStoreCallback = callback;
+  }
+
+  private static class TCObjectSelfStoreObjectIDSet {
+    private final ObjectIDSet nonEventualIds = new ObjectIDSet();
+    private final ObjectIDSet eventualIds    = new ObjectIDSet();
+
+    public void add(boolean isEventual, ObjectID id) {
+      if (isEventual) {
+        eventualIds.add(id);
+      } else {
+        nonEventualIds.add(id);
+      }
+    }
+
+    public void remove(boolean isEventual, ObjectID id) {
+      if (isEventual) {
+        eventualIds.remove(id);
+      } else {
+        nonEventualIds.remove(id);
+      }
+    }
+
+    public int size() {
+      return eventualIds.size() + nonEventualIds.size();
+    }
+
+    public boolean contains(ObjectID id) {
+      return eventualIds.contains(id) || nonEventualIds.contains(id);
+    }
+
+    public void addAllObjectIDsToValidate(Invalidations invalidations) {
+      for (ObjectID id : eventualIds) {
+        invalidations.add(ObjectID.NULL_ID, id);
+      }
+    }
+
+    public void addAll(Set oids) {
+      oids.addAll(eventualIds);
+      oids.addAll(nonEventualIds);
+    }
   }
 }

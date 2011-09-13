@@ -3,7 +3,6 @@
  */
 package com.tc.object.servermap.localcache;
 
-import com.tc.invalidation.Invalidations;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObjectSelfStore;
@@ -42,11 +41,6 @@ public interface L1ServerMapLocalCacheManager extends LocksRecallService, TCObje
    * All the local cache entries associated with this lock id will be removed
    */
   public void removeEntriesForLockId(LockID lockID);
-
-  /**
-   * Handshake manager tries to get hold of all the objects present in the local caches
-   */
-  public void addAllObjectIDsToValidate(Invalidations invalidations);
 
   /**
    * Remember the mapId associated with the valueLockId

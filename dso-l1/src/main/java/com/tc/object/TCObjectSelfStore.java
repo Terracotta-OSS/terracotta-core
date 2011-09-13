@@ -3,6 +3,7 @@
  */
 package com.tc.object;
 
+import com.tc.invalidation.Invalidations;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
@@ -32,4 +33,9 @@ public interface TCObjectSelfStore {
   void removeTCObjectSelf(ServerMapLocalCache serverMapLocalCache, AbstractLocalCacheStoreValue localStoreValue);
 
   void initializeTCObjectSelfIfRequired(TCObjectSelf tcoSelf);
+
+  /**
+   * Handshake manager tries to get hold of all the objects present in the local caches
+   */
+  public void addAllObjectIDsToValidate(Invalidations invalidations);
 }

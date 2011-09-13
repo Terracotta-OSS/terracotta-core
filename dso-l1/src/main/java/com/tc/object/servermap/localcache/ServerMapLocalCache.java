@@ -3,7 +3,6 @@
  */
 package com.tc.object.servermap.localcache;
 
-import com.tc.invalidation.Invalidations;
 import com.tc.object.ObjectID;
 import com.tc.object.locks.LockID;
 import com.tc.object.servermap.localcache.impl.L1ServerMapLocalStoreTransactionCompletionListener;
@@ -37,11 +36,6 @@ public interface ServerMapLocalCache {
    * Unpin entry for this object key. Becomes eligible for eviction if not before
    */
   void unpinEntry(Object key, AbstractLocalCacheStoreValue value);
-
-  /**
-   * Used in handshake to send a list of ObjectIDs to the server for validation
-   */
-  void addAllObjectIDsToValidate(Invalidations invalidations, ObjectID mapID);
 
   // ///////////////////////////////
   // TCObjectServerMap methods

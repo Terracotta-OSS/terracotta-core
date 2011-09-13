@@ -3,7 +3,6 @@
  */
 package com.tc.object.servermap.localcache.impl;
 
-import com.tc.invalidation.Invalidations;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ClientObjectManager;
@@ -320,34 +319,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         // remove each key from the backing map/store
         Object removed = localStore.remove(key, RemoveType.NORMAL);
         entryRemovedCallback(key, removed);
-      }
-    }
-  }
-
-  public void addAllObjectIDsToValidate(Invalidations invalidations, ObjectID mapID) {
-    if (!isStoreInitialized()) { return; }
-
-    for (ReentrantReadWriteLock readWriteLock : this.lockProvider.getAllLocks()) {
-      readWriteLock.readLock().lock();
-    }
-    try {
-      if (this.localStore.size() != 0) {
-        Set currentSet = this.localStore.getKeySet();
-        if (currentSet != null) {
-          for (Object id : currentSet) {
-            // TODO: keys added from serverMapLocalCache can never be ObjectID, need other special handling here?
-            if (id instanceof ObjectID && id != ObjectID.NULL_ID) {
-              if (localStore.get(id) instanceof List) {
-                // only add for eventual consistency values
-                invalidations.add(mapID, (ObjectID) id);
-              }
-            }
-          }
-        }
-      }
-    } finally {
-      for (ReentrantReadWriteLock readWriteLock : this.localStore.getLockProvider().getAllLocks()) {
-        readWriteLock.readLock().unlock();
       }
     }
   }

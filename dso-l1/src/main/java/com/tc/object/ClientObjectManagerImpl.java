@@ -1334,7 +1334,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
 
     public int size() {
-      return this.cacheManaged.size() + this.cacheUnmanaged.size() + tcObjectSelfStore.size();
+      return this.cacheManaged.size() + this.cacheUnmanaged.size();
     }
 
     public Collection getRemovalCandidates(final int maxCount) {
