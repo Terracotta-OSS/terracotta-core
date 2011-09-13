@@ -88,7 +88,7 @@ public class DSOContextImpl implements DSOContext {
                                                                              + "Enter the make-boot-jar command with the -h switch for help.\n"
                                                                              + "********************************************************************************\n";
   private final EmbeddedOSGiRuntime                 osgiRuntime;
-  private final boolean                             immediateStop;
+  private final boolean                             expressRejoinClient;
 
   /**
    * Creates a "global" DSO Context. This context is appropriate only when there is only one DSO Context that applies to
@@ -125,7 +125,7 @@ public class DSOContextImpl implements DSOContext {
 
   public static DSOContext createStandaloneContext(String configSpec, ClassLoader loader,
                                                    Map<String, URL> virtualTimJars, Collection<URL> additionalModules,
-                                                   URL bootJarURL, boolean immediateStop)
+                                                   URL bootJarURL, boolean expressRejoinClient)
       throws ConfigurationSetupException {
     // XXX: refactor this method to not duplicate createContext() so much
 
@@ -164,11 +164,11 @@ public class DSOContextImpl implements DSOContext {
     // state too
     ClassProvider classProvider = new SingleLoaderClassProvider(null, "standalone", loader);
     Manager manager = new ManagerImpl(true, null, null, null, null, configHelper, l2Connection, true, runtimeLogger,
-                                      classProvider, true);
+                                      classProvider, expressRejoinClient);
 
     Collection<Repository> repos = new ArrayList<Repository>();
     repos.add(new VirtualTimRepository(virtualTimJars));
-    DSOContext context = createContext(configHelper, manager, repos, immediateStop);
+    DSOContext context = createContext(configHelper, manager, repos, expressRejoinClient);
     if (additionalModules != null && !additionalModules.isEmpty()) {
       try {
         context.addModules(additionalModules.toArray(new URL[0]));
@@ -190,17 +190,17 @@ public class DSOContextImpl implements DSOContext {
   }
 
   public static DSOContext createContext(DSOClientConfigHelper configHelper, Manager manager,
-                                         Collection<Repository> repos, boolean immediateStop) {
-    return new DSOContextImpl(configHelper, manager.getClassProvider(), manager, repos, immediateStop);
+                                         Collection<Repository> repos, boolean expressRejoinClient) {
+    return new DSOContextImpl(configHelper, manager.getClassProvider(), manager, repos, expressRejoinClient);
   }
 
   private DSOContextImpl(DSOClientConfigHelper configHelper, ClassProvider classProvider, Manager manager,
-                         Collection<Repository> repos, boolean immediateStop) {
+                         Collection<Repository> repos, boolean expressRejoinClient) {
     Assert.assertNotNull(configHelper);
 
     resolveClasses();
 
-    this.immediateStop = immediateStop;
+    this.expressRejoinClient = expressRejoinClient;
     this.configHelper = configHelper;
     this.manager = manager;
     this.instrumentationLogger = manager.getInstrumentationLogger();
@@ -407,7 +407,7 @@ public class DSOContextImpl implements DSOContext {
 
   public void shutdown() {
     osgiRuntime.shutdown();
-    if (immediateStop) {
+    if (expressRejoinClient) {
       ((ManagerInternal) manager).stopImmediate();
     } else {
       manager.stop();
