@@ -19,7 +19,7 @@
   <name>terracotta-kit</name>
   
   <properties>
-    <toolkit.api>1.4</toolkit.api>    
+    <toolkit.api>1.4</toolkit.api>
     <toolkit.version>4.0.0-SNAPSHOT</toolkit.version>    
     <ehcache.version>2.5.0-SNAPSHOT</ehcache.version>
     <quartz.version>2.1.0</quartz.version>
@@ -33,7 +33,6 @@
     <packaging>dir</packaging>
     <kit.name>${terracotta.artifactId}-${project.version}</kit.name>
     <rootDir>${project.build.directory}/${kit.name}</rootDir>
-    <schema.version>6</schema.version>
     <skip.schema>true</skip.schema>
     <no.extra>false</no.extra>    
     
@@ -156,17 +155,7 @@
         <terracotta.license>TERRACOTTA-TRIAL-LICENSE.txt</terracotta.license>
       </properties>
 	  </profile>
-
-    <!-- *************************************** -->
-    <!--   profile to make tar ball of the kit   -->    
-    <!-- *************************************** -->     
-    <profile>
-	    <id>tarball</id>
-      <properties>
-        <packaging>tarball</packaging>
-      </properties>
-	  </profile>
-    
+  
     <!-- ******************************************************************* -->
     <!--   profile to exclude extra packaging of ehcache, quartz, sessions   -->    
     <!-- ******************************************************************* -->     
@@ -410,37 +399,15 @@
                   </resources>
                 </configuration>                
               </execution>
-              
-              <!-- packaging phase -->
-              <execution>
-                <id>packaging-terracotta-kit</id>
-                <phase>package</phase>
-                <goals>
-                  <goal>copy</goal>
-                </goals>
-                <configuration>
-                  <groovyConfig>
-                    <classpath>${project.basedir}/src/scripts</classpath>
-                  </groovyConfig>        
-                  <verbose>false</verbose>  
-                  <resources>
-                    <!-- package tar.gz kit if tarball profile is on -->
-                    <resource>
-                      <runIf>{{ "${packaging}" == "tarball" }}</runIf>
-                      <targetPath>${rootDir}.tar.gz</targetPath>
-                      <directory>${project.build.directory}</directory>
-                      <include>${kit.name}/**</include>
-                      <pack>true</pack>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
             </executions>
           </plugin>
         </plugins>
       </build>
     </profile>
-
+    
+    <!-- *********************************************** -->
+    <!--   profile to make Izpack installer of the kit   -->    
+    <!-- *********************************************** -->     
     <profile>
       <id>installer</id>
       <properties>
@@ -679,17 +646,7 @@
                   <file>${basedir}/src/packaging/eclipse/update/plugins/META-INF/MANIFEST.MF</file>
                   <filtering>true</filtering>
                   <process>Util.createPluginJar(project)</process>
-                </resource>                
-                        
-                <!-- package tar.gz kit -->
-                <resource>
-                  <runIf>{{ "${packaging}" == "tarball" }}</runIf>
-                  <targetPath>${rootDir}.tar.gz</targetPath>
-                  <directory>${project.build.directory}</directory>
-                  <include>${kit.name}/**</include>
-                  <pack>true</pack>
                 </resource>
-                
               </resources>
             </configuration>
             <executions>
@@ -704,7 +661,41 @@
           </plugin>            
         </plugins>
       </build>
-    </profile>    
+    </profile>
+
+    <!-- *************************************** -->
+    <!--   profile to make tar ball of the kit   -->    
+    <!-- *************************************** -->     
+    <profile>
+	    <id>tarball</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.gmaven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+            <version>1.3</version>
+            <executions>
+              <execution>
+                <id>create-tarball</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+                <configuration>         
+                  <source>
+                    def srcdir = new File(project.basedir, "target/${kit.name}") 
+                    ant.tar(destfile: "${srcdir}.tar.gz", longfile: "gnu", compression: "gzip") {
+                      tarfileset(dir: "${srcdir}", prefix: "${kit.name}", excludes: "**/bin/**,**/lib/**,**/*.sh,**/*.bat")
+                      tarfileset(dir: "${srcdir}", prefix: "${kit.name}", includes: "**/bin/**,**/lib/**,**/*.sh,**/*.bat", filemode: "755")
+                    } 
+                  </source>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>            
+        </plugins>
+      </build>
+	  </profile>    
   </profiles>
   
 </project>
