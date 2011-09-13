@@ -26,6 +26,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.ObjectCloneUtil;
 import com.tc.util.concurrent.ThreadUtil;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -556,7 +557,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   public Set getLocalKeySet() {
-    return this.cache.getKeySet();
+    if (this.cache != null) { return this.cache.getKeySet(); }
+    return Collections.EMPTY_SET;
   }
 
   public boolean containsLocalKey(final Object key) {

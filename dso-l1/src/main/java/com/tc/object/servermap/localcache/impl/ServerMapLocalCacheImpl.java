@@ -27,6 +27,7 @@ import com.tc.properties.TCPropertiesImpl;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -205,16 +206,35 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     Set keySet = this.localStore.getKeySet();
     for (Object key : keySet) {
       if (!isMetaInfoMapping(key)) {
-        Object value = this.localStore.remove(key, RemoveType.NORMAL);
-        if (value instanceof AbstractLocalCacheStoreValue) {
-          this.globalLocalCacheManager.evictElements(Collections.singletonMap(key, value));
-        }
+        removeFromLocalCache(key);
       }
     }
   }
 
   public void clearInline() {
-    clear();
+    if (!isStoreInitialized()) { return; }
+
+    Set<LockID> lockIDs = new HashSet<LockID>();
+    Set keySet = this.localStore.getKeySet();
+    for (Object key : keySet) {
+      if (!isMetaInfoMapping(key)) {
+        Object value = localStore.remove(key, RemoveType.NORMAL);
+        if (value != null && value instanceof AbstractLocalCacheStoreValue) {
+          AbstractLocalCacheStoreValue localValue = (AbstractLocalCacheStoreValue) value;
+          LockID lockID = null;
+          if (localValue.getId() != null) {
+            // no need to attempt to remove the key again, as its already been removed on eviction notification
+            lockID = executeUnderSegmentWriteLock(localValue.getId(), key, value,
+                                                  RemoveEntryForKeyCallback.REMOVE_ONLY_META_MAPPING_CALLBACK_INSTANCE);
+            if (lockID != null) {
+              lockIDs.add(lockID);
+            }
+          }
+          entryRemovedCallback(key, value);
+        }
+      }
+    }
+    recallLocksInline(lockIDs);
   }
 
   public int size() {
@@ -328,6 +348,10 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       Set<LockID> lockID = Collections.singleton(id);
       globalLocalCacheManager.recallLocks(lockID);
     }
+  }
+
+  private void recallLocksInline(Set<LockID> lockIds) {
+    globalLocalCacheManager.recallLocksInline(lockIds);
   }
 
   /**
@@ -474,7 +498,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
         return;
       }
-
       ObjectID objectID = ((AbstractLocalCacheStoreValue) removed).getObjectId();
       if (isTransactionInProgressFor(objectID, true)) { return; }
 
