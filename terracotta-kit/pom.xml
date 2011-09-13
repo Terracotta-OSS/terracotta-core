@@ -411,7 +411,7 @@
     <profile>
       <id>installer</id>
       <properties>
-        <izpack.src.directory>src/packaging/izpack</izpack.src.directory>
+        <izpack.src.directory>${project.basedir}/src/packaging/izpack</izpack.src.directory>
         <izpack.output.directory>${project.build.directory}/izpack</izpack.output.directory>
         <izpack.install.xml>${izpack.output.directory}/install.xml</izpack.install.xml>
         <izpack.installer.output>${project.build.directory}/${kit.name}-installer.jar</izpack.installer.output>
