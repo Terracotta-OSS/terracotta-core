@@ -5,6 +5,9 @@ package com.tc.object.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
+import com.tc.exception.TCNotRunningException;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tcclient.cluster.ClusterInternalEventsContext;
 import com.tcclient.cluster.DsoClusterEventsNotifier;
 
@@ -13,6 +16,7 @@ import com.tcclient.cluster.DsoClusterEventsNotifier;
  */
 public class ClusterInternalEventsHandler extends AbstractEventHandler {
 
+  private static final TCLogger          logger = TCLogging.getLogger(ClusterInternalEventsHandler.class);
   private final DsoClusterEventsNotifier dsoClusterEventsNotifier;
 
   public ClusterInternalEventsHandler(final DsoClusterEventsNotifier eventsNotifier) {
@@ -29,7 +33,12 @@ public class ClusterInternalEventsHandler extends AbstractEventHandler {
   }
 
   private void handleClusterInternalEvents(ClusterInternalEventsContext context) {
-    dsoClusterEventsNotifier.notifyDsoClusterListener(context.getEventType(), context.getEvent(),
-                                                      context.getDsoClusterListener());
+    try {
+      dsoClusterEventsNotifier.notifyDsoClusterListener(context.getEventType(), context.getEvent(),
+                                                        context.getDsoClusterListener());
+    } catch (TCNotRunningException tcnre) {
+      logger.warn("Unable to notify " + context.getEventType() + " to " + context.getDsoClusterListener() + " - "
+                  + tcnre.getMessage());
+    }
   }
 }
