@@ -16,13 +16,16 @@ import java.util.regex.Pattern;
  */
 public final class VmVersion {
 
-  private static final Pattern JVM_VERSION_PATTERN = Pattern
-                                                       .compile("^(\\p{Digit})\\.(\\p{Digit})\\.(\\p{Digit})(?:(.+))?$");
+  private static final Pattern JVM_VERSION_PATTERN         = Pattern
+                                                               .compile("^(\\p{Digit})\\.(\\p{Digit})\\.(\\p{Digit})(?:.(.+))?$");
+  static final Pattern         IBM_SERVICE_RELEASE_PATTERN = Pattern
+                                                               .compile("^[^-]+-\\p{Digit}{8}[^\\p{Space}]*\\p{Space}*.*$");
 
   private final String         vmVersion;
   private final int            mega;
   private final int            major;
   private final int            minor;
+  private final String         patch;
   private final boolean        isIBM;
   private final boolean        isJRockit;
   private final boolean        isAzul;
@@ -64,10 +67,33 @@ public final class VmVersion {
       mega = Integer.parseInt(versionMatcher.group(1));
       major = Integer.parseInt(versionMatcher.group(2));
       minor = Integer.parseInt(versionMatcher.group(3));
+      String version_patch = versionMatcher.groupCount() == 4 ? versionMatcher.group(4) : null;
+      if (isIBM) {
+        final Matcher serviceReleaseMatcher = IBM_SERVICE_RELEASE_PATTERN.matcher(runtimeVersion);
+        if (serviceReleaseMatcher.matches()) {
+          String serviceRelease = serviceReleaseMatcher.groupCount() == 1 ? serviceReleaseMatcher.group(1)
+              .toLowerCase() : null;
+          if (null == version_patch && null == serviceRelease) {
+            patch = null;
+          } else if (null == version_patch) {
+            patch = serviceRelease;
+          } else if (null == serviceRelease) {
+            patch = version_patch;
+          } else {
+            patch = version_patch + serviceRelease;
+          }
+        } else {
+          patch = version_patch;
+          // throw new UnknownRuntimeVersionException(vendorVersion,
+          // runtimeVersion);
+        }
+      } else {
+        patch = version_patch;
+      }
     } else {
       throw new RuntimeException("Unknown version: " + vendorVersion);
     }
-    this.vmVersion = this.mega + "." + this.major + "." + this.minor;
+    this.vmVersion = this.mega + "." + this.major + "." + this.minor + (null == patch ? "" : "_" + patch);
   }
 
   /**
@@ -96,6 +122,15 @@ public final class VmVersion {
    */
   public int getMinorVersion() {
     return minor;
+  }
+
+  /**
+   * Get patch level (ie 12 in 1.2.3_12)
+   * 
+   * @return Patch level
+   */
+  public String getPatchLevel() {
+    return patch;
   }
 
   /**

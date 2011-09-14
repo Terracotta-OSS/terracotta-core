@@ -8,8 +8,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 /**
- * Utility class for understanding the current JVM version. Access the VM version information by looking at
- * {@link #VERSION} directly or calling the static helper methods.
+ * Utility class for understanding the current JVM version. Access the VM
+ * version information by looking at {@link #VERSION} directly or calling the
+ * static helper methods.
  */
 public class Vm {
 
@@ -50,6 +51,15 @@ public class Vm {
    */
   public static int getMinorVersion() {
     return VERSION.getMinorVersion();
+  }
+
+  /**
+   * Get patch level (ie 12 in 1.4.2_12)
+   * 
+   * @return Patch level
+   */
+  public static String getPatchLevel() {
+    return VERSION.getPatchLevel();
   }
 
   /**
@@ -183,8 +193,9 @@ public class Vm {
   }
 
   /**
-   * return maxDirectMemory if Sun, returns 66650112 if not set via jvmarg if JRockit, returns Long.MAX_VALUE if not set
-   * via jvmarg
+   * return maxDirectMemory
+   * if Sun, returns 66650112 if not set via jvmarg
+   * if JRockit, returns Long.MAX_VALUE if not set via jvmarg
    * 
    * @return
    */
