@@ -182,13 +182,11 @@ public class MockClientLockManager implements ClientLockManager {
   }
 
   public void pinLock(LockID lock) {
-    throw new ImplementMe();
-
+    //
   }
 
   public void unpinLock(LockID lock) {
-    throw new ImplementMe();
-
+    //
   }
 
   public boolean isLockedByCurrentThread(LockLevel level) {

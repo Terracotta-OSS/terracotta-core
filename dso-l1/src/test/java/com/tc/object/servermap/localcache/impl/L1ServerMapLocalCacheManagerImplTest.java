@@ -60,6 +60,7 @@ public class L1ServerMapLocalCacheManagerImplTest extends TestCase {
     LocksRecallService locksRecallHelper = new LocksRecallServiceImpl(lockRecallHandler, lockRecallStage);
     this.l1LocalCacheManagerImpl = new L1ServerMapLocalCacheManagerImpl(locksRecallHelper, testSink,
                                                                         new TxnCompleteSink());
+    this.l1LocalCacheManagerImpl.setLockManager(clientLockManager);
   }
 
   public void testInitiateRecall() {
@@ -95,8 +96,8 @@ public class L1ServerMapLocalCacheManagerImplTest extends TestCase {
 
     LockID lockID = new LongLockID(100);
 
-    MockModesAdd.addStrongValueToCache(localCache, l1LocalCacheManagerImpl, "key", lockID, MockModesAdd
-        .createMockSerializedEntry(12345), mapID, MapOperationType.GET);
+    MockModesAdd.addStrongValueToCache(localCache, l1LocalCacheManagerImpl, "key", lockID,
+                                       MockModesAdd.createMockSerializedEntry(12345), mapID, MapOperationType.GET);
 
     this.l1LocalCacheManagerImpl.removeEntriesForLockId(lockID);
 
