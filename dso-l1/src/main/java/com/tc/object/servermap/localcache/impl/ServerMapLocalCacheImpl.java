@@ -290,7 +290,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       return null;
     }
     if (value != null && isTransactionInProgressFor(value.getObjectId())) {
-      return value.clone();
+      return value; // value.clone();
     } else return value;
   }
 

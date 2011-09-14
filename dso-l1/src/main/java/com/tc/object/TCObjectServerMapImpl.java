@@ -274,7 +274,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     if (value != null) {
       AddToCacheReturnType addType = updateLocalCacheIfNecessary(key, value);
       if (addType == AddToCacheReturnType.ADD_IN_PROGRESS) {
-        value = ObjectCloneUtil.clone(value);
+        // value = ObjectCloneUtil.clone(value);
       }
     }
     return value;
