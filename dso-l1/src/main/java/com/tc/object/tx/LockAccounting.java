@@ -76,7 +76,7 @@ public class LockAccounting {
     if (txnSet == null) { return; }
 
     for (TransactionIDWrapper txIDWrapper : txnSet) {
-      if (txnsRecvd.contains(txIDWrapper)) {
+      if (txnsRecvd.contains(txIDWrapper.getTransactionID())) {
         txIDWrapper.received();
       }
     }
