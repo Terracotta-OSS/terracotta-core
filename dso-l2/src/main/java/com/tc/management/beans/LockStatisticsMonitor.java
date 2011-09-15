@@ -9,7 +9,6 @@ import com.tc.management.lock.stats.LockSpec;
 import com.tc.objectserver.locks.L2LockStatisticsChangeListener;
 import com.tc.stats.AbstractNotifyingMBean;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -18,8 +17,8 @@ import javax.management.AttributeChangeNotification;
 import javax.management.MBeanNotificationInfo;
 import javax.management.NotCompliantMBeanException;
 
-public class LockStatisticsMonitor extends AbstractNotifyingMBean implements LockStatisticsMonitorMBean, Serializable {
-  private final L2LockStatsManager                                    lockStatsManager;
+public class LockStatisticsMonitor extends AbstractNotifyingMBean implements LockStatisticsMonitorMBean {
+  private final L2LockStatsManager                   lockStatsManager;
   private final List<L2LockStatisticsChangeListener> listeners = new ArrayList<L2LockStatisticsChangeListener>();
 
   public LockStatisticsMonitor(L2LockStatsManager lockStatsManager) throws NotCompliantMBeanException {
@@ -62,6 +61,7 @@ public class LockStatisticsMonitor extends AbstractNotifyingMBean implements Loc
     return this.lockStatsManager.getGatherInterval();
   }
 
+  @Override
   public MBeanNotificationInfo[] getNotificationInfo() {
     return new MBeanNotificationInfo[] { new MBeanNotificationInfo(ALL_EVENTS, AttributeChangeNotification.class
         .getName(), DESCRIPTION) };
