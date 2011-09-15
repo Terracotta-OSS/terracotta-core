@@ -30,6 +30,8 @@ public interface TCObjectSelfStore {
 
   void removeTCObjectSelfTemp(TCObjectSelf value, boolean notifyServer);
 
+  public void removeTCObjectSelf(AbstractLocalCacheStoreValue localStoreValue);
+
   void removeTCObjectSelf(ServerMapLocalCache serverMapLocalCache, AbstractLocalCacheStoreValue localStoreValue);
 
   void initializeTCObjectSelfIfRequired(TCObjectSelf tcoSelf);

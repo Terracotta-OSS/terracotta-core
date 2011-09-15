@@ -23,7 +23,6 @@ import com.tc.object.servermap.localcache.MapOperationType;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.util.ObjectCloneUtil;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Collections;
@@ -31,8 +30,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObject, TCObjectServerMap<L> {
@@ -341,8 +340,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     boolean notifyServerForRemove = false;
     if (value instanceof TCObjectSelf) {
       if (localCacheEnabled || mapOperation.isMutateOperation()) {
-        if (!this.tcObjectSelfStore.addTCObjectSelf(serverMapLocalStore, localCacheValue, value,
-                                                    mapOperation.isMutateOperation())) { return AddToCacheReturnType.ADD_IN_PROGRESS; }
+        if (!this.tcObjectSelfStore.addTCObjectSelf(serverMapLocalStore, localCacheValue, value, mapOperation
+            .isMutateOperation())) { return AddToCacheReturnType.ADD_IN_PROGRESS; }
       } else {
         notifyServerForRemove = true;
       }

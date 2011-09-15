@@ -230,4 +230,9 @@ public class TestClientObjectManager implements ClientObjectManager {
     throw new ImplementMe();
 
   }
+
+  public void removedTCObjectSelfFromStore(ObjectID objectID) {
+    throw new ImplementMe();
+
+  }
 }

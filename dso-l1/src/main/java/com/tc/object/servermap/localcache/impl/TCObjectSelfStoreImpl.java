@@ -214,6 +214,22 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     }
   }
 
+  public void removeTCObjectSelf(AbstractLocalCacheStoreValue localStoreValue) {
+    synchronized (tcObjectSelfRemovedFromStoreCallback) {
+      tcObjectStoreLock.writeLock().lock();
+
+      try {
+        ObjectID valueOid = localStoreValue.getObjectId();
+        if (!ObjectID.NULL_ID.equals(valueOid)) {
+          tcObjectSelfRemovedFromStoreCallback.removedTCObjectSelfFromStore(valueOid);
+          tcObjectSelfStoreOids.remove(localStoreValue.isEventualConsistentValue(), valueOid);
+        }
+      } finally {
+        tcObjectStoreLock.writeLock().unlock();
+      }
+    }
+  }
+
   public void removeTCObjectSelf(ServerMapLocalCache serverMapLocalCache, AbstractLocalCacheStoreValue localStoreValue) {
     synchronized (tcObjectSelfRemovedFromStoreCallback) {
       Object removed = null;

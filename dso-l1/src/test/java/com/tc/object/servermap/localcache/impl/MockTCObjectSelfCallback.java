@@ -25,4 +25,8 @@ public class MockTCObjectSelfCallback implements TCObjectSelfCallback {
   public synchronized Set<ObjectID> getRemovedSet() {
     return oids;
   }
+
+  public void removedTCObjectSelfFromStore(ObjectID objectID) {
+    oids.add(objectID);
+  }
 }

@@ -612,6 +612,18 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
+  public void removedTCObjectSelfFromStore(ObjectID objectID) {
+    synchronized (this) {
+      // Calling remove from within the synchronized block to make sure there are no races between the lookups and
+      // remove.
+      if (logger.isDebugEnabled()) {
+        logger.debug("XXX Removing TCObjectSelf from L1 with ObjectID=" + objectID);
+      }
+
+      this.remoteObjectManager.removed(objectID);
+    }
+  }
+
   private void waitAndClearLatchSet(final Set waitSet) {
     boolean isInterrupted = false;
     // now wait till all the other objects you are waiting for releases there latch.

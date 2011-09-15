@@ -6,6 +6,8 @@ package com.tc.object.servermap.localcache.impl;
 import com.tc.async.api.Sink;
 import com.tc.exception.TCRuntimeException;
 import com.tc.invalidation.Invalidations;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObjectSelf;
@@ -71,6 +73,9 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   private final RemoveCallback                                                   removeCallback;
   private final TCObjectSelfStore                                                tcObjectSelfStore;
   private volatile ClientLockManager                                             lockManager;
+
+  private static TCLogger                                                        logger                  = TCLogging
+                                                                                                             .getLogger(L1ServerMapLocalCacheManagerImpl.class);
 
   public L1ServerMapLocalCacheManagerImpl(LocksRecallService locksRecallHelper, Sink capacityEvictionSink,
                                           Sink txnCompleteSink) {
@@ -286,6 +291,10 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     tcObjectSelfStore.removeTCObjectSelfTemp(objectSelf, notifyServer);
   }
 
+  public void removeTCObjectSelf(AbstractLocalCacheStoreValue localStoreValue) {
+    tcObjectSelfStore.removeTCObjectSelf(localStoreValue);
+  }
+
   public void removeTCObjectSelf(ServerMapLocalCache serverMapLocalCache, AbstractLocalCacheStoreValue localStoreValue) {
     tcObjectSelfStore.removeTCObjectSelf(serverMapLocalCache, localStoreValue);
   }
@@ -306,9 +315,12 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     public void removedElement(Object key, AbstractLocalCacheStoreValue localStoreValue) {
       // clear the oid->value mapping from the tcoSelfStore
       ServerMapLocalCache serverMapLocalCache = mapIdTolocalCache.get(localStoreValue.getMapID());
-      if (serverMapLocalCache == null) { throw new AssertionError("No local cache mapped for mapId: "
-                                                                  + localStoreValue.getMapID()); }
-      removeTCObjectSelf(serverMapLocalCache, localStoreValue);
+      if (serverMapLocalCache == null) {
+        logger.warn("No local cache mapped for mapId: " + localStoreValue.getMapID());
+        removeTCObjectSelf(localStoreValue);
+      } else {
+        removeTCObjectSelf(serverMapLocalCache, localStoreValue);
+      }
     }
   }
 

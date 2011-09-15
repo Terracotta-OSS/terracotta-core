@@ -13,5 +13,7 @@ public interface TCObjectSelfCallback {
    */
   void removedTCObjectSelfFromStore(TCObjectSelf tcoObjectSelf);
 
+  void removedTCObjectSelfFromStore(ObjectID objectID);
+
   void initializeTCClazzIfRequired(TCObjectSelf tcoObjectSelf);
 }
