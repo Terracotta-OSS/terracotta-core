@@ -8,6 +8,7 @@ import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.Format;
@@ -48,7 +49,20 @@ public class XTable extends JTable {
     setDefaultRenderer(Float.class, new FloatRenderer());
     setDefaultRenderer(Double.class, new FloatRenderer());
 
-    popupHelper = new XPopupListener(this);
+    popupHelper = new XPopupListener(this) {
+      @Override
+      public void testPopup(MouseEvent e) {
+        if (e.isPopupTrigger()) {
+          int row = rowAtPoint(e.getPoint());
+          int column = columnAtPoint(e.getPoint());
+
+          if (!isRowSelected(row)) {
+            changeSelection(row, column, false, false);
+          }
+          popupMenu.show(target, e.getX(), e.getY());
+        }
+      }
+    };
 
     columnPrefsTimer = new Timer(1000, new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -266,9 +280,9 @@ public class XTable extends JTable {
 
   public void setSelectedRows(int[] rows) {
     int rowCount = getRowCount();
-    for (int i = 0; i < rows.length; i++) {
-      if (rows[i] < rowCount) {
-        setRowSelectionInterval(rows[i], rows[i]);
+    for (int row : rows) {
+      if (row < rowCount) {
+        setRowSelectionInterval(row, row);
       }
     }
   }
