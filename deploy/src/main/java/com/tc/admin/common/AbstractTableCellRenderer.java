@@ -16,7 +16,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 
 public abstract class AbstractTableCellRenderer implements TableCellRenderer {
-  protected static Border noFocusBorder = BorderFactory.createEmptyBorder(1, 1, 1, 1);
+  protected static final Border noFocusBorder = BorderFactory.createEmptyBorder(1, 1, 1, 1);
 
   public java.awt.Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                           boolean hasFocus, int row, int col) {
