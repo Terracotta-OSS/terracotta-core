@@ -425,7 +425,7 @@ public class TCLogging {
 
       boolean isDev = developmentConfiguration();
 
-      consoleAppender = new TCConsoleAppender(new PatternLayout(CONSOLE_PATTERN), ConsoleAppender.SYSTEM_ERR);
+      consoleAppender = new TCConsoleAppender(new PatternLayout(CONSOLE_PATTERN), ConsoleAppender.SYSTEM_OUT);
 
       if (!isDev) {
         // Only the console logger goes to the console (by default)
