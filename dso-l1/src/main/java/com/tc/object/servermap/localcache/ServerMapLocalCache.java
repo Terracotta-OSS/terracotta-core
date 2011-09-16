@@ -46,22 +46,7 @@ public interface ServerMapLocalCache {
    */
   void setLocalCacheEnabled(boolean enable);
 
-  // /**
-  // * Cache strong consistent values
-  // */
-  // void addStrongValueToCache(LockID lockId, Object key, Object value, MapOperationType operationType);
-  //
-  // /**
-  // * Cache eventual consistent values
-  // */
-  // void addEventualValueToCache(ObjectID valueObjectId, Object key, Object value, MapOperationType operationType);
-  //
-  // /**
-  // * Cache incoherent/bulk-load values
-  // */
-  // void addIncoherentValueToCache(Object key, Object value, MapOperationType operationType);
-
-  void addToCache(Object key, AbstractLocalCacheStoreValue value, MapOperationType operationType);
+  void addToCache(Object key, Object actualValue, AbstractLocalCacheStoreValue localCacheValue, MapOperationType operationType);
 
   /**
    * Get a coherent value from the local cache. If an incoherent value is present, then return null.
@@ -127,8 +112,7 @@ public interface ServerMapLocalCache {
 
   Object getKeyOrValueForObjectID(ObjectID oid);
 
-  void transactionComplete(
-                           Object key,
+  void transactionComplete(Object key,
                            AbstractLocalCacheStoreValue value,
                            L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
 

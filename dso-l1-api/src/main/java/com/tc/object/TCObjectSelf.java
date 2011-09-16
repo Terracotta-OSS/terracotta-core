@@ -18,4 +18,8 @@ public interface TCObjectSelf extends TCObject {
   public void initClazzIfRequired(TCClass tcc);
 
   public boolean isInitialized();
+
+  int touch();
+
+  int untouch();
 }

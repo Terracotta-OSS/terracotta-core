@@ -79,6 +79,7 @@ import com.tc.object.TCObject;
 import com.tc.object.TCObjectExternal;
 import com.tc.object.TCObjectSelf;
 import com.tc.object.TCObjectSelfCallback;
+import com.tc.object.TCObjectSelfCompilationHelper;
 import com.tc.object.TCObjectSelfImpl;
 import com.tc.object.TCObjectSelfStore;
 import com.tc.object.TCObjectSelfStoreValue;
@@ -236,7 +237,6 @@ import com.tc.util.FieldUtils;
 import com.tc.util.HashtableKeySetWrapper;
 import com.tc.util.HashtableValuesWrapper;
 import com.tc.util.ListIteratorWrapper;
-import com.tc.util.ObjectCloneUtil;
 import com.tc.util.SequenceID;
 import com.tc.util.SequenceID.SequenceIDComparator;
 import com.tc.util.SetIteratorWrapper;
@@ -673,7 +673,6 @@ public class BootJarTool {
       loadTerracottaClass(LocalCacheStoreEventualValue.class.getName());
       loadTerracottaClass(LocalCacheStoreStrongValue.class.getName());
       loadTerracottaClass(LocalCacheStoreIncoherentValue.class.getName());
-      loadTerracottaClass(ObjectCloneUtil.class.getName());
 
       loadTerracottaClass(L1ServerMapLocalCacheStoreListener.class.getName());
       loadTerracottaClass(PutType.class.getName());
@@ -738,6 +737,7 @@ public class BootJarTool {
     loadTerracottaClass(TCObjectSelf.class.getName());
     loadTerracottaClass(TCObjectSelfImpl.class.getName());
     loadTerracottaClass(TCObjectSelfCallback.class.getName());
+    loadTerracottaClass(TCObjectSelfCompilationHelper.class.getName());
   }
 
   private void loadTerracottaClassesReachableFromTCObject() {

@@ -7,14 +7,13 @@ import com.tc.object.ObjectID;
 import com.tc.object.TCObjectSelf;
 import com.tc.object.TCObjectSelfStore;
 import com.tc.object.locks.LockID;
-import com.tc.util.ObjectCloneUtil;
 
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-public abstract class AbstractLocalCacheStoreValue implements Externalizable, Cloneable {
+public abstract class AbstractLocalCacheStoreValue implements Externalizable {
   /**
    * This corresponds to a ObjectID/LockID
    */
@@ -169,17 +168,5 @@ public abstract class AbstractLocalCacheStoreValue implements Externalizable, Cl
       if (other.value != null) return false;
     } else if (!value.equals(other.value)) return false;
     return true;
-  }
-
-  @Override
-  public AbstractLocalCacheStoreValue clone() {
-    AbstractLocalCacheStoreValue clone;
-    try {
-      clone = (AbstractLocalCacheStoreValue) super.clone();
-    } catch (CloneNotSupportedException e1) {
-      throw new RuntimeException("Clone should be supported");
-    }
-    clone.value = ObjectCloneUtil.clone(value);
-    return clone;
   }
 }

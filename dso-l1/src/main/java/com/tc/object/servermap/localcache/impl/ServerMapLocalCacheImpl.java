@@ -99,8 +99,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   // TODO::FIXME:: There is a race for puts for same key from same vm - it races between the map.put() and
   // serverMapManager.put()
-  public void addToCache(final Object key, final AbstractLocalCacheStoreValue localCacheValue,
-                         final MapOperationType mapOperation) {
+  public void addToCache(final Object key, final Object actualValue,
+                         final AbstractLocalCacheStoreValue localCacheValue, final MapOperationType mapOperation) {
     if (!localCacheEnabled && !mapOperation.isMutateOperation()) {
       // local cache NOT enabled AND NOT a mutate operation, do not cache anything locally
       // for mutate ops keep in local cache till txn is complete
@@ -139,7 +139,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
     // register for transaction complete if mutate operation
     if (mapOperation.isMutateOperation()) {
-      L1ServerMapLocalStoreTransactionCompletionListener listener = getTransactionCompleteListener(key,
+      L1ServerMapLocalStoreTransactionCompletionListener listener = getTransactionCompleteListener(key, actualValue,
                                                                                                    localCacheValue,
                                                                                                    mapOperation);
       if (listener == null) { throw new AssertionError("Transaction Complete Listener cannot be null for mutate ops"); }
@@ -166,6 +166,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
+                                                                                            Object actualValue,
                                                                                             AbstractLocalCacheStoreValue value,
                                                                                             MapOperationType mapOperation) {
     if (!mapOperation.isMutateOperation()) {
@@ -177,13 +178,14 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       // when local cache is enabled, remove the cached value if the operation is a REMOVE, otherwise just unpin
       TransactionCompleteOperation onTransactionComplete = mapOperation.isRemoveOperation() ? TransactionCompleteOperation.UNPIN_AND_REMOVE_ENTRY
           : TransactionCompleteOperation.UNPIN_ENTRY;
-      txnCompleteListener = new L1ServerMapLocalStoreTransactionCompletionListener(this, key, value,
+      txnCompleteListener = new L1ServerMapLocalStoreTransactionCompletionListener(this, key, actualValue, value,
                                                                                    onTransactionComplete);
     } else {
       // when local cache is disabled, always remove the cached value on txn complete
       txnCompleteListener = new L1ServerMapLocalStoreTransactionCompletionListener(
                                                                                    this,
                                                                                    key,
+                                                                                   actualValue,
                                                                                    value,
                                                                                    TransactionCompleteOperation.UNPIN_AND_REMOVE_ENTRY);
     }
@@ -289,9 +291,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       entryRemovedCallback(key, value);
       return null;
     }
-    if (value != null && isTransactionInProgressFor(value.getObjectId())) {
-      return value; // value.clone();
-    } else return value;
+    return value;
   }
 
   public AbstractLocalCacheStoreValue getValue(final Object key) {
@@ -499,26 +499,20 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         return;
       }
       ObjectID objectID = ((AbstractLocalCacheStoreValue) removed).getObjectId();
-      if (isTransactionInProgressFor(objectID, true)) { return; }
+      if (isTransactionInProgressFor(objectID)) { return; }
 
       removeCallback.removedElement(key, (AbstractLocalCacheStoreValue) removed);
     }
   }
 
   private boolean isTransactionInProgressFor(ObjectID objectId) {
-    return isTransactionInProgressFor(objectId, false);
-  }
-
-  private boolean isTransactionInProgressFor(ObjectID objectId, boolean removedRequired) {
     if (ObjectID.NULL_ID.equals(objectId)) { return false; }
 
     ReentrantReadWriteLock lock = lockProvider.getLock(objectId);
     lock.readLock().lock();
     try {
       if (transactionsInProgressObjectIDs.containsKey(objectId)) {
-        if (removedRequired) {
-          removedObjectIDs.put(objectId, NULL_VALUE);
-        }
+        removedObjectIDs.put(objectId, NULL_VALUE);
         return true;
       } else {
         return false;

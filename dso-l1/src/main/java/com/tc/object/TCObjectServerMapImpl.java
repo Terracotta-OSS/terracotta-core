@@ -271,10 +271,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     if (item != null) return item.getValueObject(tcObjectSelfStore, cache);
     Object value = getValueForKeyFromServer(map, key, true);
     if (value != null) {
-      AddToCacheReturnType addType = updateLocalCacheIfNecessary(key, value);
-      if (addType == AddToCacheReturnType.ADD_IN_PROGRESS) {
-        // value = ObjectCloneUtil.clone(value);
-      }
+      updateLocalCacheIfNecessary(key, value);
     }
     return value;
   }
@@ -337,21 +334,30 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
   private AddToCacheReturnType addToCache(Object key, final AbstractLocalCacheStoreValue localCacheValue, Object value,
                                           MapOperationType mapOperation) {
-    boolean notifyServerForRemove = false;
     if (value instanceof TCObjectSelf) {
-      if (localCacheEnabled || mapOperation.isMutateOperation()) {
-        if (!this.tcObjectSelfStore.addTCObjectSelf(serverMapLocalStore, localCacheValue, value, mapOperation
-            .isMutateOperation())) { return AddToCacheReturnType.ADD_IN_PROGRESS; }
-      } else {
-        notifyServerForRemove = true;
+      ((TCObjectSelf) value).touch();
+    }
+    try {
+      boolean notifyServerForRemove = false;
+      if (value instanceof TCObjectSelf) {
+        if (localCacheEnabled || mapOperation.isMutateOperation()) {
+          if (!this.tcObjectSelfStore.addTCObjectSelf(serverMapLocalStore, localCacheValue, value,
+                                                      mapOperation.isMutateOperation())) { return AddToCacheReturnType.ADD_IN_PROGRESS; }
+        } else {
+          notifyServerForRemove = true;
+        }
+      }
+      // TODO: the check for local cache disabled and mutate op can be done here only
+      cache.addToCache(key, value, localCacheValue, mapOperation);
+      if (value instanceof TCObjectSelf) {
+        this.tcObjectSelfStore.removeTCObjectSelfTemp((TCObjectSelf) value, notifyServerForRemove);
+      }
+      return AddToCacheReturnType.ADD_OK;
+    } finally {
+      if (value instanceof TCObjectSelf) {
+        ((TCObjectSelf) value).untouch();
       }
     }
-    // TODO: the check for local cache disabled and mutate op can be done here only
-    cache.addToCache(key, localCacheValue, mapOperation);
-    if (value instanceof TCObjectSelf) {
-      this.tcObjectSelfStore.removeTCObjectSelfTemp((TCObjectSelf) value, notifyServerForRemove);
-    }
-    return AddToCacheReturnType.ADD_OK;
   }
 
   private Object getValueForKeyFromServer(final TCServerMap map, final Object key, final boolean retry) {
