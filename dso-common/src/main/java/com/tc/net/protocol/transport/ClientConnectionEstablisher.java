@@ -159,7 +159,7 @@ public class ClientConnectionEstablisher {
         ConnectionAddressIterator addresses = this.connAddressProvider.getIterator();
         while (addresses.hasNext() && !connected) {
 
-          if (cmt.isReconnectionRejected()) {
+          if (cmt.isRejoinExpected()) {
             cmt.logger.warn("Skipping reconnect as it has been rejected. Expecting Rejoin.");
             return;
           }
@@ -224,6 +224,12 @@ public class ClientConnectionEstablisher {
 
     this.asyncReconnecting.set(true);
     while (!connected) {
+
+      if (cmt.isRejoinExpected()) {
+        cmt.logger.warn("Skipping restore as it has been rejected. Expecting Rejoin.");
+        return;
+      }
+
       TCConnection connection = null;
       try {
         connection = connect(sa, cmt);

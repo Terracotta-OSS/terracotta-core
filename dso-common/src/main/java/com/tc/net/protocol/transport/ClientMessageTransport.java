@@ -44,7 +44,7 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
   private final SynchronizedBoolean         isOpening                          = new SynchronizedBoolean(false);
   private final int                         callbackPort;
   private final ReconnectionRejectedHandler reconnectionRejectedHandler;
-  private volatile boolean                  reconnectionRejected               = false;
+  private volatile boolean                  rejoinExpected                     = false;
 
   public ClientMessageTransport(ClientConnectionEstablisher clientConnectionEstablisher,
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
@@ -136,11 +136,11 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
     Assert.eval("Client Message Transport :" + this.status, this.status.isSynSent());
     cleanConnectionWithoutNotifyListeners();
     fireTransportReconnectionRejectedEvent();
-    this.reconnectionRejected = true;
+    this.rejoinExpected = true;
   }
 
-  public boolean isReconnectionRejected() {
-    return reconnectionRejected;
+  public boolean isRejoinExpected() {
+    return rejoinExpected;
   }
 
   /**
