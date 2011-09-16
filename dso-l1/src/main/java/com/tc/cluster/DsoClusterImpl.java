@@ -7,6 +7,7 @@ package com.tc.cluster;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.cluster.exceptions.UnclusteredObjectException;
+import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
@@ -506,13 +507,12 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
         default:
           throw new AssertionError("Unknown type of cluster event - " + eventType);
       }
-    } catch (Throwable e) {
-      log(event, e);
+    } catch (TCNotRunningException tcnre) {
+      LOGGER.error("Ignoring TCNotRunningException when notifying " + event + " : " + eventType);
+    } catch (Throwable t) {
+      LOGGER.error("Problem firing the cluster event : " + eventType + " - " + event, t);
     }
-  }
 
-  private void log(final DsoClusterEvent event, final Throwable t) {
-    LOGGER.error("Problem firing the cluster event : " + event, t);
   }
 
   private Map<ObjectID, Set<NodeID>> mergeLocalInformation(Map<ObjectID, Set<NodeID>> serverResult) {
