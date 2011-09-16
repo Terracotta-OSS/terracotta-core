@@ -34,10 +34,13 @@ public class EphemeralPorts {
 
   private static Range findRange() {
     if (Os.isLinux()) { return new Linux().getRange(); }
-    if (Os.isSolaris()) { return new Solaris().getRange(); }
+    if (Os.isSolaris()) { return new SolarisAndHPUX(false).getRange(); }
     if (Os.isMac()) { return new Mac().getRange(); }
     if (Os.isWindows()) { return new Windows().getRange(); }
     if (Os.isAix()) { return new Aix().getRange(); }
+
+    // XXX: Fold this into OS class when it is not longer in tim-api
+    if (System.getProperty("os.name").toLowerCase().startsWith("hp-ux")) { return new SolarisAndHPUX(true).getRange(); }
 
     throw new AssertionError("No support for this OS: " + Os.getOsName());
   }
@@ -70,9 +73,16 @@ public class EphemeralPorts {
     Range getRange();
   }
 
-  private static class Solaris implements RangeGetter {
+  private static class SolarisAndHPUX implements RangeGetter {
+
+    private final String ndd;
+
+    public SolarisAndHPUX(boolean isHpux) {
+      this.ndd = isHpux ? "/usr/bin/ndd" : "/usr/sbin/ndd";
+    }
+
     public Range getRange() {
-      Exec exec = new Exec(new String[] { "/usr/sbin/ndd", "/dev/tcp", "tcp_smallest_anon_port" });
+      Exec exec = new Exec(new String[] { ndd, "/dev/tcp", "tcp_smallest_anon_port" });
       final String lower;
       try {
         lower = exec.execute(Exec.STDOUT);
@@ -80,7 +90,7 @@ public class EphemeralPorts {
         throw new RuntimeException(e);
       }
 
-      exec = new Exec(new String[] { "/usr/sbin/ndd", "/dev/tcp", "tcp_largest_anon_port" });
+      exec = new Exec(new String[] { ndd, "/dev/tcp", "tcp_largest_anon_port" });
       final String upper;
       try {
         upper = exec.execute(Exec.STDOUT);
