@@ -10,6 +10,13 @@
   <name>Cart</name>
   <packaging>war</packaging>
 
+  <properties>
+    <tc-maven-plugin.version>1.8.0-SNAPSHOT</tc-maven-plugin.version>
+    <terracotta-session.version>1.2.0-SNAPSHOT</terracotta-session.version>
+    <toolkit-api.version>1.4</toolkit-api.version>
+    <toolkit-runtime.version>4.0.0-SNAPSHOT</toolkit-runtime.version>
+  </properties>
+  
   <dependencies>
     <dependency>
       <groupId>javax.servlet</groupId>
@@ -20,13 +27,13 @@
     <dependency>
       <groupId>org.terracotta.session</groupId>
       <artifactId>terracotta-session</artifactId>
-      <version>1.1.0-SNAPSHOT</version>
+      <version>${terracotta-session.version}</version>
     </dependency>      
 
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>terracotta-toolkit-1.0-runtime</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
+      <artifactId>terracotta-toolkit-${toolkit-api}-runtime</artifactId>
+      <version>${toolkit-runtime.version}</version>
     </dependency>      
   </dependencies>
 
@@ -55,7 +62,7 @@
       <plugin>
         <groupId>org.terracotta.maven.plugins</groupId>
         <artifactId>tc-maven-plugin</artifactId>
-        <version>1.6.0-SNAPSHOT</version>
+        <version>${tc-maven-plugin.version}</version>
       </plugin>
     </plugins>
   </build>
@@ -64,13 +71,7 @@
   <repositories>
     <repository>
       <id>terracotta-repository</id>
-      <url>http://www.terracotta.org/download/reflector/maven2</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
+      <url>http://www.terracotta.org/download/reflector/releases</url>
     </repository>
   </repositories>
 

@@ -11,7 +11,10 @@
   <packaging>war</packaging>
 
   <properties>
-    <terracotta-session.version>1.1.0-SNAPSHOT</terracotta-session.version>
+    <tc-maven-plugin.version>1.8.0-SNAPSHOT</tc-maven-plugin.version>
+    <terracotta-session.version>1.2.0-SNAPSHOT</terracotta-session.version>
+    <ehcache-core.version>2.5.0-SNAPSHOT</ehcache-core.version>
+    <ehcache-terracotta.version>2.5.0-SNAPSHOT</ehcache-terracotta.version>
   </properties>
 
   <dependencies>
@@ -31,14 +34,20 @@
       <groupId>org.terracotta.session</groupId>
       <artifactId>terracotta-session</artifactId>
       <version>${terracotta-session.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>net.sf.ehcache</groupId>
+      <artifactId>ehcache-core</artifactId>
+      <version>${ehcache-core.version}</version>
     </dependency>      
 
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>terracotta-toolkit-1.0-runtime</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
-    </dependency>      
-
+      <groupId>net.sf.ehcache</groupId>
+      <artifactId>ehcache-terracotta</artifactId>
+      <version>${ehcache-terracotta.version}</version>
+    </dependency>
+    
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-jdk14</artifactId>
@@ -68,19 +77,6 @@
           <artifactId>servlet-api</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-
-    <dependency>
-      <groupId>net.sf.ehcache</groupId>
-      <artifactId>ehcache-core</artifactId>
-      <version>2.2.0-SNAPSHOT</version>
-    </dependency>      
-
-    <dependency>
-      <groupId>net.sf.ehcache</groupId>
-      <artifactId>ehcache-terracotta</artifactId>
-      <version>3.0.0-SNAPSHOT</version>
-      <scope>runtime</scope>
     </dependency>      
   </dependencies>
 
@@ -109,7 +105,7 @@
       <plugin>
         <groupId>org.terracotta.maven.plugins</groupId>
         <artifactId>tc-maven-plugin</artifactId>
-        <version>1.6.0-SNAPSHOT</version>
+        <version>${tc-maven-plugin.version}</version>
       </plugin>
     </plugins>
   </build>
@@ -117,19 +113,7 @@
   <repositories>
     <repository>
       <id>terracotta-repository</id>
-      <url>http://www.terracotta.org/download/reflector/maven2</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>terracotta-snapshots</id>
-      <url>http://www.terracotta.org/download/reflector/snapshots</url>
-      <releases><enabled>false</enabled></releases>
-      <snapshots><enabled>true</enabled></snapshots>
+      <url>http://www.terracotta.org/download/reflector/releases</url>
     </repository>
   </repositories>
 
