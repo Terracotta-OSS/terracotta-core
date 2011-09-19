@@ -460,7 +460,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
                      final int lease, final boolean batch) {
     this.stateGuard.readLock().lock();
     try {
-      if (paused() || (node != null && !sessionManager.isCurrentSession(node, session))) {
+      if (paused() || isShutdown() || (node != null && !sessionManager.isCurrentSession(node, session))) {
         this.logger.warn("Ignoring recall request from a dead server :" + session + ", " + this.sessionManager + " : "
                          + lock + ", interestedLevel : " + level + " state: " + state);
         return;
