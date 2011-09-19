@@ -7,11 +7,11 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.l1.impl.ServerMapEvictionClientObjectReferenceSet;
@@ -27,29 +27,29 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
-import java.util.Map.Entry;
 
 public class ConcurrentDistributedServerMapManagedObjectState extends ConcurrentDistributedMapManagedObjectState
     implements EvictableMap {
 
-  private static final TCLogger LOGGER                               = TCLogging
-                                                                         .getLogger(ConcurrentDistributedMapManagedObjectState.class);
-  private static final boolean  ENABLE_DELETE_VALUE_ON_REMOVE        = TCPropertiesImpl
-                                                                         .getProperties()
-                                                                         .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_ENABLED,
-                                                                                     true);
+  private static final TCLogger LOGGER                           = TCLogging
+                                                                     .getLogger(ConcurrentDistributedMapManagedObjectState.class);
+  private static final boolean  ENABLE_DELETE_VALUE_ON_REMOVE    = TCPropertiesImpl
+                                                                     .getProperties()
+                                                                     .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_ENABLED,
+                                                                                 true);
 
-  public static final String    MAX_TTI_SECONDS_FIELDNAME            = "maxTTISeconds";
-  public static final String    MAX_TTL_SECONDS_FIELDNAME            = "maxTTLSeconds";
-  public static final String    TARGET_MAX_TOTAL_COUNT_FIELDNAME     = "targetMaxTotalCount";
-  public static final String    INVALIDATE_ON_CHANGE                 = "invalidateOnChange";
-  public static final String    CACHE_NAME_FIELDNAME                 = "cacheName";
-  public static final String    LOCAL_CACHE_ENABLED_FIELDNAME        = "localCacheEnabled";
-  public static final String    DELETE_VALUE_ON_REMOVE               = "deleteValueOnRemove";
+  public static final String    MAX_TTI_SECONDS_FIELDNAME        = "maxTTISeconds";
+  public static final String    MAX_TTL_SECONDS_FIELDNAME        = "maxTTLSeconds";
+  public static final String    TARGET_MAX_TOTAL_COUNT_FIELDNAME = "targetMaxTotalCount";
+  public static final String    INVALIDATE_ON_CHANGE             = "invalidateOnChange";
+  public static final String    CACHE_NAME_FIELDNAME             = "cacheName";
+  public static final String    LOCAL_CACHE_ENABLED_FIELDNAME    = "localCacheEnabled";
+  public static final String    DELETE_VALUE_ON_REMOVE           = "deleteValueOnRemove";
 
-  private static final double   OVERSHOOT                            = getOvershoot();
+  private static final double   OVERSHOOT                        = getOvershoot();
 
   static {
     LOGGER.info("Eviction overshoot threshold is " + OVERSHOOT);
@@ -65,7 +65,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   private boolean        invalidateOnChange;
   private int            maxTTISeconds;
   private int            maxTTLSeconds;
-  private int            targetMaxInMemoryCount;
   private int            targetMaxTotalCount;
   private String         cacheName;
   private boolean        localCacheEnabled;
@@ -75,7 +74,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     super(in);
     this.maxTTISeconds = in.readInt();
     this.maxTTLSeconds = in.readInt();
-    this.targetMaxInMemoryCount = in.readInt();
     this.targetMaxTotalCount = in.readInt();
     this.invalidateOnChange = in.readBoolean();
     this.cacheName = in.readUTF();
@@ -266,7 +264,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     super.basicWriteTo(out);
     out.writeInt(this.maxTTISeconds);
     out.writeInt(this.maxTTLSeconds);
-    out.writeInt(this.targetMaxInMemoryCount);
     out.writeInt(this.targetMaxTotalCount);
     out.writeBoolean(this.invalidateOnChange);
     out.writeUTF(this.cacheName);
@@ -283,7 +280,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     if (!(o instanceof ConcurrentDistributedServerMapManagedObjectState)) { return false; }
     final ConcurrentDistributedServerMapManagedObjectState mmo = (ConcurrentDistributedServerMapManagedObjectState) o;
     return super.basicEquals(o) && this.maxTTISeconds == mmo.maxTTISeconds && this.maxTTLSeconds == mmo.maxTTLSeconds
-           && this.targetMaxInMemoryCount == mmo.targetMaxInMemoryCount
            && this.invalidateOnChange == mmo.invalidateOnChange && this.targetMaxTotalCount == mmo.targetMaxTotalCount
            && this.localCacheEnabled == mmo.localCacheEnabled && this.deleteValueOnRemove == mmo.deleteValueOnRemove;
   }
@@ -373,7 +369,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     result = prime * result + (localCacheEnabled ? 1231 : 1237);
     result = prime * result + maxTTISeconds;
     result = prime * result + maxTTLSeconds;
-    result = prime * result + targetMaxInMemoryCount;
     result = prime * result + targetMaxTotalCount;
     return result;
   }
