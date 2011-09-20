@@ -546,9 +546,12 @@ public interface TCPropertiesConsts {
    * 
    * eviction.clientObjectReferences.refresh.interval
    *              : ServerMap Eviction Client Object References refresh interval in milliseconds
+   * eviction.broadcast.maxkeys
+   *              : ServerMap Eviction Broadcast Message contain max key count entries  
    * </code>
    ********************************************************************************************************************/
   public static final String L2_SERVERMAP_EVICTION_CLIENTOBJECT_REFERENCES_REFRESH_INTERVAL  = "l2.servermap.eviction.clientObjectReferences.refresh.interval";
+  public static final String L2_SERVERMAP_EVICTION_BROADCAST_MAXKEYS                         = "l2.servermap.eviction.broadcast.maxkeys";
 
   /*********************************************************************************************************************
    * <code>

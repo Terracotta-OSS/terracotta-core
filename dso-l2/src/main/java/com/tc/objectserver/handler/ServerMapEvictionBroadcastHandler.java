@@ -14,6 +14,8 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.context.ServerMapEvictionBroadcastContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.api.ClientStateManager;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
 
 import java.util.ArrayList;
@@ -24,7 +26,10 @@ import java.util.Set;
 
 public class ServerMapEvictionBroadcastHandler extends AbstractEventHandler implements EventHandler {
 
-  private static final int     EVICTION_BROADCAST_MAX_KEYS = 10000;
+  private static final int     EVICTION_BROADCAST_MAX_KEYS = TCPropertiesImpl
+                                                               .getProperties()
+                                                               .getInt(TCPropertiesConsts.L2_SERVERMAP_EVICTION_BROADCAST_MAXKEYS,
+                                                                       10000);
 
   private DSOChannelManager    channelManager;
   private final SampledCounter broadcastCounter;
