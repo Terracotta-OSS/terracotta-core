@@ -17,7 +17,7 @@ public interface L1ServerMapLocalCacheStore<K, V> {
    * 
    * @return the old value if present
    */
-  public V put(K key, V value, PutType putType);
+  public V put(K key, V value, PutType putType) throws LocalCacheStoreFullException;
 
   /**
    * @return the value if present
@@ -93,7 +93,7 @@ public interface L1ServerMapLocalCacheStore<K, V> {
    * 
    * @param value
    */
-  public void unpinEntry(K key, V value);
+  public void unpinEntry(K key, V value) throws LocalCacheStoreFullException;
 
   /**
    * Max elements in memory

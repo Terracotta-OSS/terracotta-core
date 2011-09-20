@@ -198,6 +198,7 @@ import com.tc.object.servermap.localcache.L1ServerMapLocalCacheLockProvider;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStoreListener;
 import com.tc.object.servermap.localcache.LocalCacheStoreEventualValue;
+import com.tc.object.servermap.localcache.LocalCacheStoreFullException;
 import com.tc.object.servermap.localcache.LocalCacheStoreIncoherentValue;
 import com.tc.object.servermap.localcache.LocalCacheStoreStrongValue;
 import com.tc.object.servermap.localcache.PutType;
@@ -663,6 +664,7 @@ public class BootJarTool {
       addLiterals();
 
       // local cache store classes
+      loadTerracottaClass(LocalCacheStoreFullException.class.getName());
       loadTerracottaClass(ServerMapLocalCache.class.getName());
       loadTerracottaClass(L1ServerMapLocalCacheStore.class.getName());
       loadTerracottaClass(L1ServerMapLocalCacheLockProvider.class.getName());
