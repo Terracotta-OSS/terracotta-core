@@ -177,17 +177,32 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   @Override
   protected void applyMethod(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
                              final Object[] params) {
-    if (method == SerializationUtil.REMOVE_IF_VALUE_EQUAL) {
-      applyRemoveIfValueEqual(objectID, applyInfo, params);
-    } else if (method == SerializationUtil.PUT_IF_ABSENT) {
-      applyPutIfAbsent(objectID, applyInfo, params);
-    } else if (method == SerializationUtil.REPLACE_IF_VALUE_EQUAL) {
-      applyReplaceIfValueEqual(objectID, applyInfo, params);
-    } else if (method == SerializationUtil.EVICTION_COMPLETED) {
-      evictionCompleted();
-    } else if (method != SerializationUtil.CLEAR_LOCAL_CACHE) {
-      // ignore CLEAR_LOCAL_CACHE, nothing to do, but broadcast
-      super.applyMethod(objectID, applyInfo, method, params);
+    switch (method) {
+      case SerializationUtil.SET_MAX_TTI:
+        this.maxTTISeconds = (Integer) params[0];
+        break;
+      case SerializationUtil.SET_MAX_TTL:
+        this.maxTTLSeconds = (Integer) params[0];
+        break;
+      case SerializationUtil.SET_TARGET_MAX_TOTAL_COUNT:
+        this.targetMaxTotalCount = (Integer) params[0];
+        break;
+      case SerializationUtil.REMOVE_IF_VALUE_EQUAL:
+        applyRemoveIfValueEqual(objectID, applyInfo, params);
+        break;
+      case SerializationUtil.PUT_IF_ABSENT:
+        applyPutIfAbsent(objectID, applyInfo, params);
+        break;
+      case SerializationUtil.REPLACE_IF_VALUE_EQUAL:
+        applyReplaceIfValueEqual(objectID, applyInfo, params);
+        break;
+      case SerializationUtil.EVICTION_COMPLETED:
+        evictionCompleted();
+        break;
+      case SerializationUtil.CLEAR_LOCAL_CACHE:
+        break;
+      default:
+        super.applyMethod(objectID, applyInfo, method, params);
     }
     if (applyInfo.isActiveTxn() && method == SerializationUtil.PUT && this.targetMaxTotalCount > 0
         && this.evictionStatus == EvictionStatus.NOT_INITIATED
