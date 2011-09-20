@@ -28,6 +28,11 @@ public interface ServerMapLocalCache {
   void removeFromLocalCache(Object key);
 
   /**
+   * Removes a key value pair from the local cache if the key is actually mapped to the provided value
+   */
+  void removeFromLocalCache(Object key, AbstractLocalCacheStoreValue value);
+
+  /**
    * Called when the key has been evicted from the local store
    */
   void evictedFromStore(Object id, Object key, AbstractLocalCacheStoreValue value);
@@ -46,7 +51,8 @@ public interface ServerMapLocalCache {
    */
   void setLocalCacheEnabled(boolean enable);
 
-  void addToCache(Object key, Object actualValue, AbstractLocalCacheStoreValue localCacheValue, MapOperationType operationType);
+  void addToCache(Object key, Object actualValue, AbstractLocalCacheStoreValue localCacheValue,
+                  MapOperationType operationType);
 
   /**
    * Get a coherent value from the local cache. If an incoherent value is present, then return null.
@@ -117,4 +123,5 @@ public interface ServerMapLocalCache {
                            L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
 
   void addToSink(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
+
 }

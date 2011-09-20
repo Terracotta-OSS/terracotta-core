@@ -32,6 +32,13 @@ public interface L1ServerMapLocalCacheStore<K, V> {
   public V remove(K key, RemoveType removeType);
 
   /**
+   * Removes an entry in the backing map if the key is actually mapped to the given value<br>
+   * 
+   * @return the old value if present
+   */
+  public Object remove(K key, V value, RemoveType removeType);
+
+  /**
    * Add a listener which will get called when <br>
    * 1) capacity eviction evicts entries from map<br>
    * 2) evict (count) method evicts entries from map<br>

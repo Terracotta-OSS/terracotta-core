@@ -109,6 +109,10 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
     return value;
   }
 
+  public Object remove(K key, V value, RemoveType removeType) {
+    return remove(key, removeType);
+  }
+
   public boolean removeListener(L1ServerMapLocalCacheStoreListener<K, V> listener) {
     return listeners.remove(listener);
   }

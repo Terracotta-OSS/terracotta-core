@@ -44,7 +44,7 @@ public class L1ServerMapLocalStoreTransactionCompletionListener implements Trans
       ((TCObjectSelf) actualValue).untouch();
     }
     if (transactionCompleteOperation == TransactionCompleteOperation.UNPIN_AND_REMOVE_ENTRY) {
-      serverMapLocalCache.removeFromLocalCache(key);
+      serverMapLocalCache.removeFromLocalCache(key, value);
     }
   }
 

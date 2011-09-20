@@ -14,16 +14,17 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 public abstract class AbstractLocalCacheStoreValue implements Externalizable {
+  public static final Object LOOKUP_FROM_SERVER = new Object();
   /**
    * This corresponds to a ObjectID/LockID
    */
-  protected volatile Object id;
+  protected volatile Object  id;
   /**
    * this is the value object <br>
    * TODO: make this Serializable. This would be a SerializedEntry for the serialized caches.
    */
-  protected volatile Object value;
-  private volatile ObjectID mapID;
+  protected volatile Object  value;
+  private volatile ObjectID  mapID;
 
   public AbstractLocalCacheStoreValue() {
     //
@@ -47,6 +48,7 @@ public abstract class AbstractLocalCacheStoreValue implements Externalizable {
     final Object rv;
     if (value instanceof ObjectID) {
       rv = tcObjectSelfStore.getByIdFromCache((ObjectID) value, store);
+      if (!ObjectID.NULL_ID.equals(value) && rv == null) { return LOOKUP_FROM_SERVER; }
     } else {
       rv = value;
     }

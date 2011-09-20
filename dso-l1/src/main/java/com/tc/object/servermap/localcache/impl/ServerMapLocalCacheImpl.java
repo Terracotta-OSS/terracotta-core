@@ -258,6 +258,16 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
+  public void removeFromLocalCache(Object key, AbstractLocalCacheStoreValue value) {
+    if (!isStoreInitialized()) { return; }
+
+    Object removedValue = localStore.remove(key, value, RemoveType.NORMAL);
+    if (removedValue != null && removedValue instanceof AbstractLocalCacheStoreValue) {
+      AbstractLocalCacheStoreValue localValue = (AbstractLocalCacheStoreValue) removedValue;
+      evictedFromStore(localValue.getId(), key, localValue);
+    }
+  }
+
   public void evictedFromStore(Object id, Object key, AbstractLocalCacheStoreValue value) {
     if (!isStoreInitialized()) { return; }
 

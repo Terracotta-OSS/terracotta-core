@@ -132,9 +132,12 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
   public boolean doLogicalPutIfAbsentUnlocked(TCServerMap map, Object key, Object value) {
     AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
-    if (item != null && item.getValueObject(tcObjectSelfStore, cache) != null) {
-      // Item already present
-      return false;
+    if (item != null) {
+      Object valueObject = item.getValueObject(tcObjectSelfStore, cache);
+      if (valueObject != null && valueObject != AbstractLocalCacheStoreValue.LOOKUP_FROM_SERVER) {
+        // Item already present
+        return false;
+      }
     }
 
     ObjectID valueObjectID = invokeLogicalPutIfAbsent(map, key, value);
@@ -232,9 +235,15 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    */
   public Object getValue(final TCServerMap map, final L lockID, final Object key) {
     final AbstractLocalCacheStoreValue item = this.cache.getCoherentLocalValue(key);
-    if (item != null) { return item.getValueObject(tcObjectSelfStore, cache); }
 
-    final Object value = getValueForKeyFromServer(map, key, false);
+    Object value = null;
+    if (item != null) {
+      value = item.getValueObject(tcObjectSelfStore, cache);
+      if ((value != null && value != AbstractLocalCacheStoreValue.LOOKUP_FROM_SERVER) || value == null) { return value; }
+    }
+
+    value = getValueForKeyFromServer(map, key, false);
+
     if (value != null) {
       addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, value, MapOperationType.GET);
     }
@@ -268,8 +277,15 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    */
   public Object getValueUnlocked(TCServerMap map, Object key) {
     AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
-    if (item != null) return item.getValueObject(tcObjectSelfStore, cache);
-    Object value = getValueForKeyFromServer(map, key, true);
+
+    Object value = null;
+    if (item != null) {
+      value = item.getValueObject(tcObjectSelfStore, cache);
+      if ((value != null && value != AbstractLocalCacheStoreValue.LOOKUP_FROM_SERVER) || value == null) { return value; }
+    }
+
+    value = getValueForKeyFromServer(map, key, true);
+
     if (value != null) {
       updateLocalCacheIfNecessary(key, value);
     }
@@ -577,7 +593,12 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   public Object getValueFromLocalCache(final Object key) {
     AbstractLocalCacheStoreValue cachedItem = this.cache.getLocalValue(key);
     if (cachedItem != null) {
-      return cachedItem.getValueObject(tcObjectSelfStore, cache);
+      Object valueObject = cachedItem.getValueObject(tcObjectSelfStore, cache);
+      if (valueObject == AbstractLocalCacheStoreValue.LOOKUP_FROM_SERVER) {
+        return null;
+      } else {
+        return valueObject;
+      }
     } else {
       return null;
     }
