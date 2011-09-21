@@ -40,7 +40,6 @@ import com.tc.object.tx.TxnType;
 import com.tc.objectserver.context.ApplyCompleteEventContext;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.CommitTransactionContext;
-import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.LookupEventContext;
 import com.tc.objectserver.context.ManagedObjectFaultingContext;
 import com.tc.objectserver.context.ManagedObjectFlushingContext;
@@ -195,8 +194,8 @@ public class ObjectManagerTest extends TCTestCase {
                                                this.persistenceTransactionProvider, faultSink, flushSink,
                                                this.objectStatsRecorder);
     this.testFaultSinkContext = new TestSinkContext();
-    new TestMOFaulter(this.objectManager, store, faultSink, this.testFaultSinkContext).start();
-    new TestMOFlusher(this.objectManager, flushSink, new NullSinkContext()).start();
+    new TestMOFaulter(this.objectManager, store, faultSink, this.testFaultSinkContext, this.logger).start();
+    new TestMOFlusher(this.objectManager, flushSink, new NullSinkContext(), this.logger).start();
   }
 
   private TestMOFlusherWithLatch initObjectManagerAndGetFlusher(final ThreadGroup threadGroup,
@@ -208,9 +207,9 @@ public class ObjectManagerTest extends TCTestCase {
                                                this.persistenceTransactionProvider, faultSink, flushSink,
                                                this.objectStatsRecorder);
     this.testFaultSinkContext = new TestSinkContext();
-    new TestMOFaulter(this.objectManager, this.objectStore, faultSink, this.testFaultSinkContext).start();
+    new TestMOFaulter(this.objectManager, this.objectStore, faultSink, this.testFaultSinkContext, this.logger).start();
     TestMOFlusherWithLatch flusherWithLatch = new TestMOFlusherWithLatch(objectManager, flushSink,
-                                                                         this.testFaultSinkContext);
+                                                                         this.testFaultSinkContext, this.logger);
     flusherWithLatch.start();
     return flusherWithLatch;
   }
@@ -860,8 +859,8 @@ public class ObjectManagerTest extends TCTestCase {
     this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, store, new LRUEvictionPolicy(100),
                                                this.persistenceTransactionProvider, faultSink, flushSink,
                                                this.objectStatsRecorder);
-    new TestMOFaulter(this.objectManager, store, faultSink, new NullSinkContext()).start();
-    new TestMOFlusher(this.objectManager, flushSink, new NullSinkContext()).start();
+    new TestMOFaulter(this.objectManager, store, faultSink, new NullSinkContext(), logger).start();
+    new TestMOFlusher(this.objectManager, flushSink, new NullSinkContext(), logger).start();
 
     final ObjectID id = new ObjectID(1);
     final ObjectIDSet ids = new ObjectIDSet();
@@ -1703,7 +1702,7 @@ public class ObjectManagerTest extends TCTestCase {
 
   }
 
-  public void testFaultWithConcurrentRemove() throws InterruptedException {
+  public void testFaultWithConcurrentRemove() throws Exception {
     this.config.paranoid = true;
     initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))),
                       new LRUEvictionPolicy(-1));
@@ -1721,6 +1720,7 @@ public class ObjectManagerTest extends TCTestCase {
         try {
           for (ObjectID oid : oids) {
             barrier.await(5, TimeUnit.SECONDS);
+            logger.info("Looking up " + oid);
             ManagedObject mo = objectManager.getObjectByIDOrNull(oid);
             if (mo != null) {
               // Only need to release if we actually got it, since we're intentionally racing with the remove below,
@@ -1741,9 +1741,13 @@ public class ObjectManagerTest extends TCTestCase {
       public void run() {
         try {
           for (ObjectID oid : oids) {
-            DGCResultContext dgcResultContext = new DGCResultContext(new ObjectIDSet(Collections.singleton(oid)));
+            logger.info("Deleting " + oid);
+            PeriodicDGCResultContext dgcResultContext = new PeriodicDGCResultContext(
+                                                                                     new ObjectIDSet(Collections
+                                                                                         .singleton(oid)),
+                                                                                     null);
             barrier.await(5, TimeUnit.SECONDS);
-            objectManager.deleteObjects(dgcResultContext);
+            objectManager.notifyGCComplete(dgcResultContext);
           }
         } catch (Exception e) {
           e.printStackTrace();
@@ -2477,13 +2481,15 @@ public class ObjectManagerTest extends TCTestCase {
     private final ManagedObjectStore store;
     private final TestSink           faultSink;
     private final SinkContext        sinkContext;
+    private final TCLogger           logger;
 
     public TestMOFaulter(final ObjectManagerImpl objectManager, final ManagedObjectStore store,
-                         final TestSink faultSink, final SinkContext sinkContext) {
+                         final TestSink faultSink, final SinkContext sinkContext, final TCLogger logger) {
       this.store = store;
       this.faultSink = faultSink;
       this.objectManager = objectManager;
       this.sinkContext = sinkContext;
+      this.logger = logger;
       setName("TestMOFaulter");
       setDaemon(true);
     }
@@ -2496,8 +2502,8 @@ public class ObjectManagerTest extends TCTestCase {
           this.objectManager.addFaultedObject(ec.getId(), this.store.getObjectByID(ec.getId()), ec.isRemoveOnRelease());
           this.sinkContext.postProcess();
 
-        } catch (final InterruptedException e) {
-          throw new AssertionError(e);
+        } catch (final Throwable t) {
+          logger.error("TestMOFaulter died with exception.", t);
         }
       }
     }
@@ -2508,11 +2514,14 @@ public class ObjectManagerTest extends TCTestCase {
     final ObjectManagerImpl objectManager;
     final TestSink          flushSink;
     final SinkContext       sinkContext;
+    final TCLogger          logger;
 
-    public TestMOFlusher(final ObjectManagerImpl objectManager, final TestSink flushSink, final SinkContext sinkContext) {
+    public TestMOFlusher(final ObjectManagerImpl objectManager, final TestSink flushSink,
+                         final SinkContext sinkContext, final TCLogger logger) {
       this.objectManager = objectManager;
       this.flushSink = flushSink;
       this.sinkContext = sinkContext;
+      this.logger = logger;
       setName("TestMOFlusher");
       setDaemon(true);
     }
@@ -2524,8 +2533,8 @@ public class ObjectManagerTest extends TCTestCase {
           final ManagedObjectFlushingContext ec = (ManagedObjectFlushingContext) this.flushSink.take();
           this.objectManager.flushAndEvict(ec.getObjectToFlush());
           this.sinkContext.postProcess();
-        } catch (final InterruptedException e) {
-          throw new AssertionError(e);
+        } catch (final Throwable t) {
+          logger.error("TestMOFlusher died with exception", t);
         }
       }
     }
@@ -2536,8 +2545,8 @@ public class ObjectManagerTest extends TCTestCase {
     private final Latch latch = new Latch();
 
     public TestMOFlusherWithLatch(final ObjectManagerImpl objectManager, final TestSink flushSink,
-                                  final SinkContext sinkContext) {
-      super(objectManager, flushSink, sinkContext);
+                                  final SinkContext sinkContext, final TCLogger logger) {
+      super(objectManager, flushSink, sinkContext, logger);
     }
 
     public Latch getLatch() {
