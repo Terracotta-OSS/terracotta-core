@@ -6,6 +6,7 @@ package com.tc.object.tx;
 
 import EDU.oswego.cs.dl.util.concurrent.Latch;
 
+import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.locks.LockID;
 
@@ -19,14 +20,21 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class LockAccounting {
-  private final CopyOnWriteArrayList<TxnRemovedListener> listeners = new CopyOnWriteArrayList<TxnRemovedListener>();
+  private static final long                              WAIT_FOR_TRANSACTIONS_INTERVAL = 10 * 1000;
 
-  private final Map<TransactionIDWrapper, Set<LockID>>   tx2Locks  = new HashMap();
-  private final Map<LockID, Set<TransactionIDWrapper>>   lock2Txs  = new HashMap();
-  private final Map<TransactionID, TransactionIDWrapper> tid2wrap  = new HashMap();
+  private final CopyOnWriteArrayList<TxnRemovedListener> listeners                      = new CopyOnWriteArrayList<TxnRemovedListener>();
+
+  private final Map<TransactionIDWrapper, Set<LockID>>   tx2Locks                       = new HashMap();
+  private final Map<LockID, Set<TransactionIDWrapper>>   lock2Txs                       = new HashMap();
+  private final Map<TransactionID, TransactionIDWrapper> tid2wrap                       = new HashMap();
+  private volatile boolean                               shutdown                       = false;
 
   public synchronized Object dump() {
     return toString();
+  }
+
+  public void shutdown() {
+    this.shutdown = true;
   }
 
   @Override
@@ -131,7 +139,11 @@ public class LockAccounting {
       listeners.add(listener);
     }
     try {
-      latch.acquire();
+      // DEV-6271: During rejoin, the client could be shut down. In that case we need to get
+      // out of this wait and throw a TCNotRunningException for upper layers to handle
+      do {
+        if (shutdown) { throw new TCNotRunningException(); }
+      } while (!latch.attempt(WAIT_FOR_TRANSACTIONS_INTERVAL));
     } catch (InterruptedException e) {
       throw new TCRuntimeException(e);
     } finally {
@@ -168,7 +180,9 @@ public class LockAccounting {
     TxnRemovedListener(Set<TransactionIDWrapper> txnSet, Latch latch) {
       this.txnSet = txnSet;
       this.latch = latch;
-      if (txnSet.size() == 0) allTxnCompleted();
+      if (txnSet.size() == 0) {
+        allTxnCompleted();
+      }
     }
 
     void txnRemoved(TransactionIDWrapper txnID) {
