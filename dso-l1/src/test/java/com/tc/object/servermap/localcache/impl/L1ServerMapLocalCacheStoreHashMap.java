@@ -211,4 +211,12 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
     }
   }
 
+  public void setMaxEntriesLocalHeap(int maxEntriesLocalHeap) {
+    // Not used for this local cache store implementation
+  }
+
+  public void setMaxBytesLocalHeap(long maxBytesLocalHeap) {
+    // Not used for this local cache store implementation
+  }
+
 }

@@ -120,4 +120,14 @@ public interface L1ServerMapLocalCacheStore<K, V> {
    */
   public L1ServerMapLocalCacheLockProvider getLockProvider();
 
+  /**
+   * Set the max number entries to be stored in local heap
+   */
+  public void setMaxEntriesLocalHeap(int maxEntriesLocalHeap);
+
+  /**
+   * Set the max local heap usage in bytes
+   */
+  public void setMaxBytesLocalHeap(long maxBytesLocalHeap);
+
 }
