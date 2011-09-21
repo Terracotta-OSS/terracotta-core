@@ -6,7 +6,7 @@ deployments such as those performed by operations staff.
 
 For more information on installing and configuring Terracotta for specific use
 cases, see
-http://www.terracotta.org/kit/reflector?kitID=3.6.0&pageID=Documentation
+http://www.terracotta.org/kit/reflector?kitID=default&pageID=Documentation
 
 
 Preparing to Run a Terracotta Cluster
@@ -71,7 +71,7 @@ Then start all clients with the following flag:
 Clients started this way obtain their configuration from the specified server 
 (see Starting Terracotta, below).
 
-See http://www.terracotta.org/kit/reflector?kitID=3.6.0&pageID=AboutConfigurationFiles 
+See http://www.terracotta.org/kit/reflector?kitID=default&pageID=AboutConfigurationFiles 
 for more information on how Terracotta configuration is propagated.
 
 Using a License Key
@@ -134,7 +134,7 @@ For Microsoft Windows, enter the following:
 More Information
 ----------------
 You'll find a number of helpful guides in the documentation section 
-(http://www.terracotta.org/kit/reflector?kitID=3.6.0&pageID=Documentation).
+(http://www.terracotta.org/kit/reflector?kitID=default&pageID=Documentation).
 
 
 ----

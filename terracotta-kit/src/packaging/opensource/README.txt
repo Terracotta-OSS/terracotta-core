@@ -36,12 +36,12 @@ Sign up at http://www.terracotta.org/kit/reflector?kitID=default&pageID=Register
 Resources
 ---------
 The latest release notes are available on the web at 
-http://www.terracotta.org/kit/reflector?kitID=3.6.0&pageID=ReleaseNotes
+http://www.terracotta.org/kit/reflector?kitID=default&pageID=ReleaseNotes
 
 Help and additional information is available on the web at the following URLs:
 
  - Product Documentation: 
-    http://www.terracotta.org/kit/reflector?kitID=3.6.0&pageID=ProductDocumentation 
+    http://www.terracotta.org/kit/reflector?kitID=default&pageID=ProductDocumentation 
  - Forums:        http://forums.terracotta.org
  - Mailing Lists: http://lists.terracotta.org
  - Services:      
