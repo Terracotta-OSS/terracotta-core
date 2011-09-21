@@ -79,6 +79,7 @@ import com.tcclient.cluster.DsoClusterInternal;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -223,6 +224,9 @@ public class ManagerImpl implements ManagerInternal {
   }
 
   private void resolveClasses() {
+    // fix for deadlock on JDK 1.5 (MNK-2890, MNK-2914)
+    new Date().toString();
+
     // See LKC-2323 -- A number of Manager methods can be entered from the internals of URLClassLoader (specifically
     // sun.misc.URLClassPath.getLoader()) and can cause deadlocks. Making sure these methods are invoked once, thus
     // resolving any class loads, should eliminate the problem.
