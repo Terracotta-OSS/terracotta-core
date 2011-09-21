@@ -896,7 +896,7 @@
     </repository>
     <repository>
       <id>oracle</id>
-      <url>http://download.oracle.com/maven/<url>
+      <url>http://download.oracle.com/maven/</url>
       <releases>
         <enabled>true</enabled>
       </releases>
