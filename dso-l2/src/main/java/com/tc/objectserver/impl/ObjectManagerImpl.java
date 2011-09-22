@@ -97,7 +97,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private static final int                                      MAX_COMMIT_SIZE = TCPropertiesImpl
                                                                                     .getProperties()
-                                                                                    .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_MAXOBJECTS_TO_COMMIT);
+                                                                                    .getInt(
+                                                                                            TCPropertiesConsts.L2_OBJECTMANAGER_MAXOBJECTS_TO_COMMIT);
 
   private final ManagedObjectStore                              objectStore;
   private final ConcurrentMap<ObjectID, ManagedObjectReference> references;
@@ -139,7 +140,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     this.persistenceTransactionProvider = persistenceTransactionProvider;
     this.references = new ConcurrentHashMap<ObjectID, ManagedObjectReference>(16384, 0.75f, 256);
     this.objectStatsRecorder = objectStatsRecorder;
-    this.noReferencesIDStore = new NoReferencesIDStoreImpl();
+    this.noReferencesIDStore = new NoReferencesIDStoreImpl(config.doGC());
   }
 
   public void setTransactionalObjectManager(final TransactionalObjectManager txnObjectManager) {
@@ -551,8 +552,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     if (available) {
       final ObjectIDSet processLater = addReachableObjectsIfNecessary(nodeID, maxReachableObjects, objects,
                                                                       newObjectIDs);
-      final ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(objects, processLater,
-                                                                                    context.getMissingObjectIDs());
+      final ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(objects, processLater, context
+          .getMissingObjectIDs());
       context.setResults(results);
       return LookupState.AVAILABLE;
     } else {

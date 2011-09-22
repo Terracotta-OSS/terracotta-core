@@ -18,8 +18,8 @@ public class NoReferencesIDStoreImpl implements NoReferencesIDStore {
                                                                           true);
   private final NoReferencesIDStore delegate;
 
-  public NoReferencesIDStoreImpl() {
-    if (FAULTING_OPTIMIZATION) {
+  public NoReferencesIDStoreImpl(boolean isGcEnabled) {
+    if (FAULTING_OPTIMIZATION && isGcEnabled) {
       this.delegate = new OidSetStore();
     } else {
       this.delegate = NoReferencesIDStore.NULL_NO_REFERENCES_ID_STORE;
