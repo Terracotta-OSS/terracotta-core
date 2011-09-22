@@ -47,20 +47,18 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.Map.Entry;
 
 public class ObjectRequestManagerImpl implements ObjectRequestManager {
 
   public static final int           SPLIT_SIZE      = TCPropertiesImpl
                                                         .getProperties()
-                                                        .getInt(
-                                                                TCPropertiesConsts.L2_OBJECTMANAGER_OBJECT_REQUEST_SPLIT_SIZE);
+                                                        .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_OBJECT_REQUEST_SPLIT_SIZE);
   public static final boolean       LOGGING_ENABLED = TCPropertiesImpl
                                                         .getProperties()
-                                                        .getBoolean(
-                                                                    TCPropertiesConsts.L2_OBJECTMANAGER_OBJECT_REQUEST_LOGGING_ENABLED);
+                                                        .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_OBJECT_REQUEST_LOGGING_ENABLED);
 
   private final static TCLogger     logger          = TCLogging.getLogger(ObjectRequestManagerImpl.class);
 
@@ -89,9 +87,9 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
   }
 
   public void requestObjects(final ObjectRequestServerContext requestContext) {
-    splitAndRequestObjects(requestContext.getClientID(), requestContext.getRequestID(), requestContext
-        .getRequestedObjectIDs(), requestContext.getRequestDepth(), requestContext.isServerInitiated(), requestContext
-        .getRequestingThreadName());
+    splitAndRequestObjects(requestContext.getClientID(), requestContext.getRequestID(),
+                           requestContext.getRequestedObjectIDs(), requestContext.getRequestDepth(),
+                           requestContext.isServerInitiated(), requestContext.getRequestingThreadName());
   }
 
   private void splitAndRequestObjects(final ClientID clientID, final ObjectRequestID requestID,
@@ -119,9 +117,9 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
 
     synchronized (this) {
       if (this.objectRequestCache.add(requestedObject, clientID)) {
-        lookupContext = new LookupContext(clientID, requestID, requestedObject.getLookupIDSet(), requestedObject
-            .getMaxDepth(), requestingThreadName, serverInitiated, this.objectRequestSink,
-                                          this.respondObjectRequestSink);
+        lookupContext = new LookupContext(clientID, requestID, requestedObject.getLookupIDSet(),
+                                          requestedObject.getMaxDepth(), requestingThreadName, serverInitiated,
+                                          this.objectRequestSink, this.respondObjectRequestSink);
       }
     }
     if (lookupContext != null) {
@@ -157,8 +155,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     final Map<ClientID, Set<ObjectID>> clientNewIDsMap = new HashMap<ClientID, Set<ObjectID>>();
     final Map<ClientID, BatchAndSend> messageMap = new HashMap<ClientID, BatchAndSend>();
 
-    for (final Object element : clientList) {
-      final ClientID clientID = (ClientID) element;
+    for (final ClientID clientID : clientList) {
       try {
         // make batch and send object for each client.
         final MessageChannel channel = this.channelManager.getActiveChannel(clientID);
