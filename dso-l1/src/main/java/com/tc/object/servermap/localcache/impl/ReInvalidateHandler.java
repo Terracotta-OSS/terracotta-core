@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Map.Entry;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ReInvalidateHandler {
   private final static long                  EXPIRE_SET_TIMER_PERIOD    = 60 * 1000;
@@ -38,7 +38,7 @@ public class ReInvalidateHandler {
   private class ExpireSetTimerTask extends TimerTask {
     @Override
     public void run() {
-      synchronized (this) {
+      synchronized (ReInvalidateHandler.this) {
         prev = current;
         current = new ConcurrentMapToObjectIDSet();
       }
@@ -51,7 +51,7 @@ public class ReInvalidateHandler {
       final ConcurrentMapToObjectIDSet tempPrev;
       final ConcurrentMapToObjectIDSet tempCurrent;
 
-      synchronized (this) {
+      synchronized (ReInvalidateHandler.this) {
         tempPrev = prev;
         tempCurrent = current;
       }
@@ -74,7 +74,7 @@ public class ReInvalidateHandler {
 
     private static final int                   CONCURRENCY = 4;
 
-    private final ReentrantReadWriteLock[]     locks;
+    private final ReentrantLock[]              locks;
     private final Map<ObjectID, ObjectIDSet>[] maps;
 
     public ConcurrentMapToObjectIDSet() {
@@ -82,15 +82,15 @@ public class ReInvalidateHandler {
     }
 
     public ConcurrentMapToObjectIDSet(int concurrency) {
-      locks = new ReentrantReadWriteLock[concurrency];
+      locks = new ReentrantLock[concurrency];
       maps = new Map[concurrency];
       for (int i = 0; i < concurrency; i++) {
         maps[i] = new HashMap<ObjectID, ObjectIDSet>();
-        locks[i] = new ReentrantReadWriteLock();
+        locks[i] = new ReentrantLock();
       }
     }
 
-    private ReentrantReadWriteLock getLock(ObjectID oid) {
+    private ReentrantLock getLock(ObjectID oid) {
       return locks[(int) (Math.abs(oid.toLong()) % CONCURRENCY)];
     }
 
@@ -100,10 +100,10 @@ public class ReInvalidateHandler {
 
     public void processInvalidations() {
       for (int i = 0; i < maps.length; i++) {
-        ReentrantReadWriteLock lock = locks[i];
+        ReentrantLock lock = locks[i];
         Map<ObjectID, ObjectIDSet> map = maps[i];
 
-        lock.writeLock().lock();
+        lock.lock();
         try {
           if (map.size() == 0) {
             continue;
@@ -124,15 +124,15 @@ public class ReInvalidateHandler {
             }
           }
         } finally {
-          lock.writeLock().unlock();
+          lock.unlock();
         }
       }
     }
 
     public void add(ObjectID mapId, ObjectIDSet set) {
-      ReentrantReadWriteLock lock = getLock(mapId);
+      ReentrantLock lock = getLock(mapId);
       Map<ObjectID, ObjectIDSet> map = getMap(mapId);
-      lock.writeLock().lock();
+      lock.lock();
 
       try {
         ObjectIDSet setFetched = map.get(mapId);
@@ -143,7 +143,7 @@ public class ReInvalidateHandler {
 
         setFetched.addAll(set);
       } finally {
-        lock.writeLock().unlock();
+        lock.unlock();
       }
     }
   }
