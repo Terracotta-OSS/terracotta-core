@@ -53,7 +53,8 @@ public class ServerMapRequestManagerTest extends TestCase {
                                                                                                 objManager,
                                                                                                 channelManager,
                                                                                                 respondToServerTCMapSink,
-                                                                                                managedObjectRequestSink);
+                                                                                                managedObjectRequestSink,
+                                                                                                null);
     final ArrayList requests = new ArrayList();
     Set<Object> keys = new HashSet<Object>();
     keys.add(portableKey);
@@ -119,10 +120,12 @@ public class ServerMapRequestManagerTest extends TestCase {
     final Sink respondToServerMapSink = mock(Sink.class);
     final Sink managedObjectRequestSink = mock(Sink.class);
     final DSOChannelManager channelManager = mock(DSOChannelManager.class);
-    final ServerMapRequestManagerImpl serverMapRequestManager = new ServerMapRequestManagerImpl(objManager,
+    final ServerMapRequestManagerImpl serverMapRequestManager = new ServerMapRequestManagerImpl(
+                                                                                                objManager,
                                                                                                 channelManager,
                                                                                                 respondToServerMapSink,
-                                                                                                managedObjectRequestSink);
+                                                                                                managedObjectRequestSink,
+                                                                                                null);
     final ArrayList request1 = new ArrayList();
     Set<Object> keys1 = new HashSet<Object>();
     keys1.add(portableKey1);

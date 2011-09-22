@@ -503,12 +503,10 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new AssertionError(e);
     }
 
-    objectRequestManager.sendObjects(respondToObjectRequestContext.getRequestedNodeID(),
-                                     respondToObjectRequestContext.getObjs(),
-                                     respondToObjectRequestContext.getRequestedObjectIDs(),
-                                     respondToObjectRequestContext.getMissingObjectIDs(),
-                                     respondToObjectRequestContext.isServerInitiated(),
-                                     respondToObjectRequestContext.getRequestDepth());
+    objectRequestManager.sendObjects(respondToObjectRequestContext.getRequestedNodeID(), respondToObjectRequestContext
+        .getObjs(), respondToObjectRequestContext.getRequestedObjectIDs(), respondToObjectRequestContext
+        .getMissingObjectIDs(), respondToObjectRequestContext.isServerInitiated(), respondToObjectRequestContext
+        .getRequestDepth());
 
   }
 
@@ -675,11 +673,11 @@ public class ObjectRequestManagerTest extends TestCase {
         synchronized (this) {
           System.out.println("in the reponse thread: " + respondToObjectRequestContext);
           this.objectRequestManager.sendObjects(respondToObjectRequestContext.getRequestedNodeID(),
-                                                respondToObjectRequestContext.getObjs(),
-                                                respondToObjectRequestContext.getRequestedObjectIDs(),
-                                                respondToObjectRequestContext.getMissingObjectIDs(),
-                                                respondToObjectRequestContext.isServerInitiated(),
-                                                respondToObjectRequestContext.getRequestDepth());
+                                                respondToObjectRequestContext.getObjs(), respondToObjectRequestContext
+                                                    .getRequestedObjectIDs(), respondToObjectRequestContext
+                                                    .getMissingObjectIDs(), respondToObjectRequestContext
+                                                    .isServerInitiated(), respondToObjectRequestContext
+                                                    .getRequestDepth());
           if (testReqManObjResMsgIter.hasNext()) {
             final TestRequestManagedObjectResponseMessage message = (TestRequestManagedObjectResponseMessage) testReqManObjResMsgIter
                 .next();
@@ -824,6 +822,16 @@ public class ObjectRequestManagerTest extends TestCase {
     }
 
     public void unregisterObjectReferenceAddListener(ObjectReferenceAddListener listener) {
+      throw new ImplementMe();
+
+    }
+
+    public void addPrefetchedObjectIDs(NodeID nodeId, ObjectIDSet prefetchedIds) {
+      throw new ImplementMe();
+
+    }
+
+    public void missingObjectIDs(NodeID clientID, ObjectIDSet missingObjectIDs) {
       throw new ImplementMe();
 
     }

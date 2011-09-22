@@ -15,7 +15,7 @@ public interface ServerMapLocalCache {
   /**
    * Removes all entries associated with this objectId
    */
-  void removeEntriesForObjectId(ObjectID objectId);
+  boolean removeEntriesForObjectId(ObjectID objectId);
 
   /**
    * Remove all the entries associated with this lockId
@@ -118,7 +118,8 @@ public interface ServerMapLocalCache {
 
   Object getKeyOrValueForObjectID(ObjectID oid);
 
-  void transactionComplete(Object key,
+  void transactionComplete(
+                           Object key,
                            AbstractLocalCacheStoreValue value,
                            L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
 

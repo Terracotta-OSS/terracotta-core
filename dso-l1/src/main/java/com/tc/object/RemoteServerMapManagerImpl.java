@@ -18,6 +18,7 @@ import com.tc.object.msg.GetValueServerMapRequestMessage;
 import com.tc.object.msg.ServerMapMessageFactory;
 import com.tc.object.msg.ServerMapRequestMessage;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
+import com.tc.object.servermap.localcache.impl.ReInvalidateHandler;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.properties.TCPropertiesConsts;
@@ -32,20 +33,22 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Map.Entry;
 
 public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
 
   // TODO::Make its own property
   private static final int                                               MAX_OUTSTANDING_REQUESTS_SENT_IMMEDIATELY = TCPropertiesImpl
                                                                                                                        .getProperties()
-                                                                                                                       .getInt(TCPropertiesConsts.L1_SERVERMAPMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY);
+                                                                                                                       .getInt(
+                                                                                                                               TCPropertiesConsts.L1_SERVERMAPMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY);
   private static final long                                              BATCH_LOOKUP_TIME_PERIOD                  = TCPropertiesImpl
                                                                                                                        .getProperties()
-                                                                                                                       .getInt(TCPropertiesConsts.L1_SERVERMAPMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD);
+                                                                                                                       .getInt(
+                                                                                                                               TCPropertiesConsts.L1_SERVERMAPMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD);
   private static final long                                              RESULT_WAIT_MAXTIME_MILLIS                = 30 * 1000;
 
   private static final String                                            SIZE_KEY                                  = "SIZE_KEY";
@@ -66,6 +69,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
 
   // private final Sink ttiTTLEvitionSink;
   private final L1ServerMapLocalCacheManager                             globalLocalCacheManager;
+  private final ReInvalidateHandler                                      reInvalidateHandler;
 
   private static enum State {
     PAUSED, RUNNING, STARTING, STOPPED
@@ -80,6 +84,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     this.sessionManager = sessionManager;
     // this.ttiTTLEvitionSink = ttiTTLEvitionSink;
     this.globalLocalCacheManager = globalLocalCacheManager;
+    this.reInvalidateHandler = new ReInvalidateHandler(globalLocalCacheManager);
   }
 
   /**
@@ -89,8 +94,8 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     assertSameGroupID(oid);
     waitUntilRunning();
 
-    final AbstractServerMapRequestContext context = createLookupValueRequestContext(oid,
-                                                                                    Collections.singleton(portableKey));
+    final AbstractServerMapRequestContext context = createLookupValueRequestContext(oid, Collections
+        .singleton(portableKey));
     context.makeLookupRequest();
     sendRequest(context);
     Map<Object, Object> result = waitForResult(context);
@@ -266,8 +271,8 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   }
 
   private void sendRequestNow(final AbstractServerMapRequestContext context) {
-    final ServerMapRequestMessage msg = this.smmFactory.newServerMapRequestMessage(this.groupID,
-                                                                                   context.getRequestType());
+    final ServerMapRequestMessage msg = this.smmFactory.newServerMapRequestMessage(this.groupID, context
+        .getRequestType());
     context.initializeMessage(msg);
     msg.send();
   }
@@ -564,7 +569,8 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     Set<ObjectID> mapIDs = invalidations.getMapIds();
     for (ObjectID mapID : mapIDs) {
       ObjectIDSet set = invalidations.getObjectIDSetForMapId(mapID);
-      globalLocalCacheManager.removeEntriesForObjectId(mapID, set);
+      ObjectIDSet invalidationsFailed = globalLocalCacheManager.removeEntriesForObjectId(mapID, set);
+      reInvalidateHandler.add(mapID, invalidationsFailed);
     }
   }
 

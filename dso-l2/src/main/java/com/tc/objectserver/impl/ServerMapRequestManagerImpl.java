@@ -31,6 +31,7 @@ import com.tc.objectserver.context.ServerMapRequestSizeContext;
 import com.tc.objectserver.context.ServerMapRequestValueContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
+import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.managedobject.ConcurrentDistributedServerMapManagedObjectState;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
@@ -52,13 +53,16 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
   private final Sink                  respondToServerTCMapSink;
   private final Sink                  managedObjectRequestSink;
   private final ServerMapRequestQueue requestQueue = new ServerMapRequestQueue();
+  private final ClientStateManager    clientStateManager;
 
   public ServerMapRequestManagerImpl(final ObjectManager objectManager, final DSOChannelManager channelManager,
-                                     final Sink respondToServerTCMapSink, final Sink managedObjectRequestSink) {
+                                     final Sink respondToServerTCMapSink, final Sink managedObjectRequestSink,
+                                     ClientStateManager clientStateManager) {
     this.channelManager = channelManager;
     this.objectManager = objectManager;
     this.respondToServerTCMapSink = respondToServerTCMapSink;
     this.managedObjectRequestSink = managedObjectRequestSink;
+    this.clientStateManager = clientStateManager;
   }
 
   public void requestValues(final ClientID clientID, final ObjectID mapID,
@@ -123,7 +127,16 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
             sendResponseForGetAllKeys(mapID, (ServerMapRequestAllKeysContext) request, cdsmState);
             break;
           case GET_VALUE_FOR_KEY:
-            gatherResponseForGetValue(mapID, (ServerMapRequestValueContext) request, cdsmState, results, prefetches);
+            ClientID clientID = ((ServerMapRequestValueContext) request).getClientID();
+            ObjectIDSet valueObjectIds = gatherResponseForGetValue(mapID, (ServerMapRequestValueContext) request,
+                                                                   cdsmState, results);
+            for (ObjectID valueObjectId : valueObjectIds) {
+              gatherPreFetchPortableValues(prefetches, clientID, valueObjectId);
+            }
+
+            if (!valueObjectIds.isEmpty()) {
+              clientStateManager.addPrefetchedObjectIDs(clientID, valueObjectIds);
+            }
             break;
           default:
             throw new AssertionError("Unknown request type : " + requestType);
@@ -183,10 +196,10 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     }
   }
 
-  private void gatherResponseForGetValue(final ObjectID mapID, final ServerMapRequestValueContext request,
-                                         final ConcurrentDistributedServerMapManagedObjectState cdsmState,
-                                         final Map<ClientID, Collection<ServerMapGetValueResponse>> results,
-                                         final Map<ClientID, ObjectIDSet> prefetches) {
+  private ObjectIDSet gatherResponseForGetValue(final ObjectID mapID, final ServerMapRequestValueContext request,
+                                                final ConcurrentDistributedServerMapManagedObjectState cdsmState,
+                                                final Map<ClientID, Collection<ServerMapGetValueResponse>> results) {
+    ObjectIDSet rv = new ObjectIDSet();
     final ClientID clientID = request.getClientID();
     Collection<ServerMapGetValueResponse> responses = results.get(clientID);
     if (responses == null) {
@@ -198,27 +211,27 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
       Map<Object, Object> portableValues = new HashMap<Object, Object>();
       for (Object portableKey : portableKeys) {
         Object portableValue = cdsmState.getValueForKey(portableKey);
+        if (portableValue instanceof ObjectID) {
+          rv.add((ObjectID) portableValue);
+        }
         // Null Value is not supported in CDSM
         portableValue = (portableValue == null ? ObjectID.NULL_ID : portableValue);
         portableValues.put(portableKey, portableValue);
-        gatherPreFetchPortableValues(prefetches, clientID, portableValue);
       }
       responses.add(new ServerMapGetValueResponse(r.getRequestID(), portableValues));
     }
+    return rv;
   }
 
   private void gatherPreFetchPortableValues(final Map<ClientID, ObjectIDSet> prefetches, final ClientID clientID,
-                                            final Object portableValue) {
-    if (portableValue instanceof ObjectID) {
-      final ObjectID valueID = (ObjectID) portableValue;
-      if (valueID.isNull()) { return; }
-      ObjectIDSet lookupIDs = prefetches.get(clientID);
-      if (lookupIDs == null) {
-        lookupIDs = new ObjectIDSet();
-        prefetches.put(clientID, lookupIDs);
-      }
-      lookupIDs.add(valueID);
+                                            final ObjectID valueID) {
+    if (valueID.isNull()) { return; }
+    ObjectIDSet lookupIDs = prefetches.get(clientID);
+    if (lookupIDs == null) {
+      lookupIDs = new ObjectIDSet();
+      prefetches.put(clientID, lookupIDs);
     }
+    lookupIDs.add(valueID);
   }
 
   private void sendResponseForGetValue(final ObjectID mapID,

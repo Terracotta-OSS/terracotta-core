@@ -7,6 +7,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
+import com.tc.object.TCObjectSelfStoreValue;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.locks.LockID;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
@@ -40,7 +41,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                                                                                                                               .getLogger(ServerMapLocalCacheImpl.class);
   private static final long                                                         SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS = TCPropertiesImpl
                                                                                                                                               .getProperties()
-                                                                                                                                              .getLong(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
+                                                                                                                                              .getLong(
+                                                                                                                                                       TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
 
   private static final LocalStoreKeySetFilter                                       IGNORE_ID_FILTER                                      = new IgnoreIdsFilter();
   private static final Object                                                       NULL_VALUE                                            = new Object();
@@ -165,7 +167,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
+  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(
+                                                                                            final Object key,
                                                                                             Object actualValue,
                                                                                             AbstractLocalCacheStoreValue value,
                                                                                             MapOperationType mapOperation) {
@@ -331,19 +334,36 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     this.localStore.unpinEntry(key, value);
   }
 
-  public void removeEntriesForObjectId(ObjectID objectId) {
-    removeEntriesForId(objectId);
+  public boolean removeEntriesForObjectId(ObjectID objectId) {
+    Object key = executeUnderSegmentWriteLock(objectId, null,
+                                              GetKeyOrValueForObjectIDCallback.GET_KEY_OR_VALUE_FOR_OBJECTID_INSTANCE);
+    if (key == null) { return false; }
+
+    if (key instanceof TCObjectSelfStoreValue) {
+      // It was put as a strong value, so just remove it ...
+      // TODO: remove other mappings
+      localStore.remove(objectId, RemoveType.NO_SIZE_DECREMENT);
+      return true;
+    }
+
+    Object value = localStore.get(key);
+    if (value == null) { return false; }
+
+    localStore.remove(objectId, RemoveType.NO_SIZE_DECREMENT);
+
+    AbstractLocalCacheStoreValue actualValue = (AbstractLocalCacheStoreValue) value;
+    if (actualValue.getObjectId().equals(objectId)) {
+      removeFromLocalCache(key, actualValue);
+    }
+
+    return true;
   }
 
   public void removeEntriesForLockId(LockID lockId) {
-    removeEntriesForId(lockId);
-  }
-
-  private void removeEntriesForId(Object id) {
     if (!isStoreInitialized()) { return; }
 
     // This should be called when a lock has already been recalled, so shouldn't be a problem
-    List list = executeUnderSegmentWriteLock(id, null, RemoveEntriesForIdCallback.INSTANCE);
+    List list = executeUnderSegmentWriteLock(lockId, null, RemoveEntriesForIdCallback.INSTANCE);
     if (list != null) {
       for (Object key : list) {
         // remove each key from the backing map/store
@@ -532,11 +552,13 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  public void addToSink(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
+  public void addToSink(
+                        L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     globalLocalCacheManager.transactionComplete(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 
-  public void transactionComplete(Object key,
+  public void transactionComplete(
+                                  Object key,
                                   AbstractLocalCacheStoreValue value,
                                   L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     final ObjectID objectId = value.getObjectId();

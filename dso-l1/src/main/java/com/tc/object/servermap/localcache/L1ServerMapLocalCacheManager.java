@@ -11,6 +11,7 @@ import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LocksRecallService;
 import com.tc.object.servermap.localcache.impl.L1ServerMapLocalStoreTransactionCompletionListener;
+import com.tc.util.ObjectIDSet;
 
 import java.util.Map;
 import java.util.Set;
@@ -34,7 +35,7 @@ public interface L1ServerMapLocalCacheManager extends LocksRecallService, TCObje
    * flush the entries from the LocalCache associated with the given map id.<br>
    * This is used in the process of invalidations
    */
-  public void removeEntriesForObjectId(ObjectID mapID, Set<ObjectID> set);
+  public ObjectIDSet removeEntriesForObjectId(ObjectID mapID, Set<ObjectID> set);
 
   /**
    * Used when a lock recall happens<br>

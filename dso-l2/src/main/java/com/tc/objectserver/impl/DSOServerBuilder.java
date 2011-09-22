@@ -98,7 +98,8 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                                             StateSyncManager stateSyncManager);
 
   ServerMapRequestManager createServerMapRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,
-                                                        Sink respondToServerTCMapSink, Sink managedObjectRequestSink);
+                                                        Sink respondToServerTCMapSink, Sink managedObjectRequestSink,
+                                                        ClientStateManager clientStateManager);
 
   ObjectRequestManager createObjectRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,
                                                   ClientStateManager clientStateMgr,

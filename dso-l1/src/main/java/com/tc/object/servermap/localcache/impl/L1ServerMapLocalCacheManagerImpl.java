@@ -25,6 +25,7 @@ import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.object.servermap.localcache.ServerMapLocalCacheRemoveCallback;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.TCConcurrentMultiMap;
 
 import java.util.Collections;
@@ -169,21 +170,31 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   /**
    * This method is called only for invalidations
    */
-  public void removeEntriesForObjectId(ObjectID mapID, Set<ObjectID> set) {
+  public ObjectIDSet removeEntriesForObjectId(ObjectID mapID, Set<ObjectID> set) {
+    ObjectIDSet invalidationsFailed = new ObjectIDSet();
+
     if (ObjectID.NULL_ID.equals(mapID)) {
       for (ServerMapLocalCache cache : localCaches.keySet()) {
         for (ObjectID id : set) {
-          cache.removeEntriesForObjectId(id);
+          boolean success = cache.removeEntriesForObjectId(id);
+          if (!success) {
+            invalidationsFailed.add(id);
+          }
         }
       }
     } else {
       ServerMapLocalCache cache = mapIdTolocalCache.get(mapID);
       if (cache != null) {
         for (ObjectID id : set) {
-          cache.removeEntriesForObjectId(id);
+          boolean success = cache.removeEntriesForObjectId(id);
+          if (!success) {
+            invalidationsFailed.add(id);
+          }
         }
       }
     }
+
+    return invalidationsFailed;
   }
 
   /**

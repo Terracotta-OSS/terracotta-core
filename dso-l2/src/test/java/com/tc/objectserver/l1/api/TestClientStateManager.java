@@ -10,6 +10,7 @@ import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
+import com.tc.util.ObjectIDSet;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -94,6 +95,16 @@ public class TestClientStateManager implements ClientStateManager {
   }
 
   public void unregisterObjectReferenceAddListener(ObjectReferenceAddListener listener) {
+    throw new ImplementMe();
+
+  }
+
+  public void addPrefetchedObjectIDs(NodeID nodeId, ObjectIDSet prefetchedIds) {
+    throw new ImplementMe();
+
+  }
+
+  public void missingObjectIDs(NodeID clientID, ObjectIDSet missingObjectIDs) {
     throw new ImplementMe();
 
   }
