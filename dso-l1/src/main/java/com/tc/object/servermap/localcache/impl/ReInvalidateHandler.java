@@ -6,6 +6,7 @@ package com.tc.object.servermap.localcache.impl;
 import com.tc.object.ObjectID;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 import com.tc.util.ObjectIDSet;
+import com.tc.util.TCTimerService;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -23,7 +24,8 @@ public class ReInvalidateHandler {
   private final L1ServerMapLocalCacheManager l1ServerMapLocalCacheManager;
   private ConcurrentMapToObjectIDSet         prev                       = null;
   private ConcurrentMapToObjectIDSet         current                    = new ConcurrentMapToObjectIDSet();
-  private final Timer                        timer                      = new Timer("Re-invalidation Timer", true);
+  private final Timer                        timer                      = TCTimerService.getInstance()
+                                                                            .getTimer("Re-invalidation Timer");
 
   public ReInvalidateHandler(L1ServerMapLocalCacheManager l1ServerMapLocalCacheManager) {
     this.l1ServerMapLocalCacheManager = l1ServerMapLocalCacheManager;
