@@ -14,6 +14,8 @@ import com.tc.object.ClientObjectManager;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
+import com.tc.object.TCObjectSelf;
+import com.tc.object.TCObjectSelfStore;
 import com.tc.object.appevent.NonPortableEventContextFactory;
 import com.tc.object.appevent.ReadOnlyObjectEvent;
 import com.tc.object.appevent.ReadOnlyObjectEventContext;
@@ -73,11 +75,13 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   private final SampledCounter                 txCounter;
 
   private final boolean                        sendErrors  = System.getProperty("project.name") != null;
+  private final TCObjectSelfStore              tcObjectSelfStore;
 
   public ClientTransactionManagerImpl(final ClientIDProvider cidProvider, final ClientObjectManager objectManager,
                                       final ClientTransactionFactory txFactory, final ClientLockManager lockManager,
                                       final RemoteTransactionManager remoteTxManager,
-                                      final RuntimeLogger runtimeLogger, final SampledCounter txCounter) {
+                                      final RuntimeLogger runtimeLogger, final SampledCounter txCounter,
+                                      TCObjectSelfStore store) {
     this.cidProvider = cidProvider;
     this.txFactory = txFactory;
     this.lockManager = lockManager;
@@ -86,6 +90,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     this.objectManager.setTransactionManager(this);
     this.txCounter = txCounter;
     this.appEventContextFactory = new NonPortableEventContextFactory(cidProvider);
+    this.tcObjectSelfStore = store;
   }
 
   public void begin(final LockID lock, final LockLevel lockLevel) {
@@ -337,6 +342,10 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       if (obj != null) {
         try {
           tcobj.hydrate(dna, force, null);
+          if (tcobj instanceof TCObjectSelf) {
+            this.tcObjectSelfStore.updateLocalCache(tcobj.getObjectID(), (TCObjectSelf) tcobj);
+          }
+
         } catch (final ClassNotFoundException cnfe) {
           logger.warn("Could not apply change because class not local: " + cnfe.getMessage());
           throw new TCClassNotFoundException(cnfe);

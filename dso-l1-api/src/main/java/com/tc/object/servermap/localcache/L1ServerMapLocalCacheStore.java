@@ -130,4 +130,6 @@ public interface L1ServerMapLocalCacheStore<K, V> {
    */
   public void setMaxBytesLocalHeap(long maxBytesLocalHeap);
 
+  public void replace(K key, V oldValue, V newValue, PutType putType);
+
 }

@@ -33,7 +33,7 @@ public class ClientTransactionManagerTest extends TestCase {
     objMgr = new TestClientObjectManager();
     clientTxnMgr = new ClientTransactionManagerImpl(new ClientIDProviderImpl(new TestChannelIDProvider()), objMgr,
                                                     clientTxnFactory, new MockClientLockManager(), rmtTxnMgr,
-                                                    new NullRuntimeLogger(), SampledCounter.NULL_SAMPLED_COUNTER);
+                                                    new NullRuntimeLogger(), SampledCounter.NULL_SAMPLED_COUNTER, null);
   }
 
   @Override

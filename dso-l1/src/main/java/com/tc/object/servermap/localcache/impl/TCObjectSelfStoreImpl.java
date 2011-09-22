@@ -14,6 +14,7 @@ import com.tc.object.TCObjectSelfStore;
 import com.tc.object.TCObjectSelfStoreValue;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
+import com.tc.object.servermap.localcache.LocalCacheStoreEventualValue;
 import com.tc.object.servermap.localcache.PutType;
 import com.tc.object.servermap.localcache.RemoveType;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
@@ -38,6 +39,44 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
   public TCObjectSelfStoreImpl(ConcurrentHashMap<ServerMapLocalCache, Object> localCaches) {
     this.localCaches = localCaches;
+  }
+
+  public void updateLocalCache(ObjectID oid, TCObjectSelf self) {
+    tcObjectStoreLock.writeLock().lock();
+
+    if (!tcObjectSelfStoreOids.contains(oid)) { return; }
+
+    try {
+      for (ServerMapLocalCache cache : localCaches.keySet()) {
+        Object value = cache.getKeyOrValueForObjectID(oid);
+        if (value instanceof TCObjectSelfWrapper) {
+          // non eventual case
+          updateLocalCacheNonEventual(oid, self, cache, value);
+          return;
+        } else if (value != null) {
+          // eventual case
+          updateLocalCacheEventual(oid, self, cache, value);
+          return;
+        }
+      }
+    } finally {
+      tcObjectStoreLock.writeLock().unlock();
+    }
+  }
+
+  public void updateLocalCacheEventual(ObjectID oid, TCObjectSelf self, ServerMapLocalCache cache, Object valueFetched) {
+    Object key = valueFetched;
+    AbstractLocalCacheStoreValue value = cache.getValue(key);
+    if (value != null && value.getObjectId().equals(oid)) {
+      LocalCacheStoreEventualValue newEventualValue = new LocalCacheStoreEventualValue(oid, value, value.getMapID());
+      cache.getInternalStore().replace(key, value, newEventualValue, PutType.NORMAL);
+    }
+  }
+
+  public void updateLocalCacheNonEventual(ObjectID oid, TCObjectSelf self, ServerMapLocalCache cache,
+                                          Object valueFetched) {
+    cache.getInternalStore()
+        .replace(oid, valueFetched, new TCObjectSelfWrapper(self), PutType.PINNED_NO_SIZE_INCREMENT);
   }
 
   public Object getById(ObjectID oid) {

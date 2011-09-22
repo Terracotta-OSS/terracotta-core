@@ -322,6 +322,10 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     return tcObjectSelfStore.contains(objectID);
   }
 
+  public void updateLocalCache(ObjectID oid, TCObjectSelf self) {
+    tcObjectSelfStore.updateLocalCache(oid, self);
+  }
+
   private class RemoveCallback implements ServerMapLocalCacheRemoveCallback {
     public void removedElement(Object key, AbstractLocalCacheStoreValue localStoreValue) {
       // clear the oid->value mapping from the tcoSelfStore

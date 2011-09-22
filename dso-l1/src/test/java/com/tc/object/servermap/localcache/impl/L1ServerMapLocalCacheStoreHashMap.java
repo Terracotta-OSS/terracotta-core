@@ -16,8 +16,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -217,6 +217,14 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
 
   public void setMaxBytesLocalHeap(long maxBytesLocalHeap) {
     // Not used for this local cache store implementation
+  }
+
+  public void replace(K key, V oldValue, V newValue, PutType putType) {
+    synchronized (this) {
+      if (backingCache.containsKey(key)) {
+        backingCache.put(key, newValue);
+      }
+    }
   }
 
 }
