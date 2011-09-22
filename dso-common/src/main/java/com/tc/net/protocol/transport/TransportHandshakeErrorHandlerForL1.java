@@ -5,15 +5,19 @@ package com.tc.net.protocol.transport;
 
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.util.concurrent.ThreadUtil;
 
 public class TransportHandshakeErrorHandlerForL1 implements TransportHandshakeErrorHandler {
 
   private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
+  private static final TCLogger logger        = TCLogging.getLogger(TransportHandshakeErrorHandlerForL1.class);
 
   public void handleHandshakeError(final TransportHandshakeErrorContext e) {
     if (e.getErrorType() == TransportHandshakeError.ERROR_STACK_MISMATCH) {
       consoleLogger.error(e.getMessage());
+    } else if (e.getErrorType() == TransportHandshakeError.ERROR_RECONNECTION_REJECTED) {
+      logger.error(e);
     } else {
       consoleLogger.error(e);
     }

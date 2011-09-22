@@ -6,7 +6,6 @@ package com.tc.net.protocol.transport;
 
 import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
 
-import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.IllegalReconnectException;
@@ -45,7 +44,6 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   private final MessageTransportFactory          messageTransportFactory;
   private final List                             transportListeners = new ArrayList(1);
   private final TCLogger                         logger;
-  private final TCLogger                         consoleLogger      = CustomerLogging.getConsoleLogger();
   private final ReentrantLock                    licenseLock;
   private final String                           commsMgrName;
 
@@ -132,19 +130,10 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   }
 
   private TransportHandshakeErrorHandler createHandshakeErrorHandler() {
-    if (this.commsMgrName.equals(CommunicationsManager.COMMSMGR_GROUPS)) { return new TransportHandshakeErrorHandler() {
-      public void handleHandshakeError(TransportHandshakeErrorContext e) {
-        logger.info(e.getMessage());
-      }
-    }; }
-
     return new TransportHandshakeErrorHandler() {
-
-      public void handleHandshakeError(TransportHandshakeErrorContext e) {
-        consoleLogger.info(e.getMessage());
-        logger.info(e.getMessage());
+      public void handleHandshakeError(TransportHandshakeErrorContext thec) {
+        logger.info(thec.getMessage());
       }
-
     };
   }
 
