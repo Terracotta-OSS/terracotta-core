@@ -1747,7 +1747,7 @@ public class ObjectManagerTest extends TCTestCase {
                                                                                          .singleton(oid)),
                                                                                      null);
             barrier.await(5, TimeUnit.SECONDS);
-            objectManager.notifyGCComplete(dgcResultContext);
+            objectManager.deleteObjects(dgcResultContext);
           }
         } catch (Exception e) {
           e.printStackTrace();

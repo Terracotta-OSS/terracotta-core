@@ -97,8 +97,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private static final int                                      MAX_COMMIT_SIZE = TCPropertiesImpl
                                                                                     .getProperties()
-                                                                                    .getInt(
-                                                                                            TCPropertiesConsts.L2_OBJECTMANAGER_MAXOBJECTS_TO_COMMIT);
+                                                                                    .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_MAXOBJECTS_TO_COMMIT);
 
   private final ManagedObjectStore                              objectStore;
   private final ConcurrentMap<ObjectID, ManagedObjectReference> references;
@@ -552,8 +551,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     if (available) {
       final ObjectIDSet processLater = addReachableObjectsIfNecessary(nodeID, maxReachableObjects, objects,
                                                                       newObjectIDs);
-      final ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(objects, processLater, context
-          .getMissingObjectIDs());
+      final ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(objects, processLater,
+                                                                                    context.getMissingObjectIDs());
       context.setResults(results);
       return LookupState.AVAILABLE;
     } else {
@@ -883,14 +882,14 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   public void notifyGCComplete(final PeriodicDGCResultContext gcResult) {
     Assert.assertFalse(this.collector.isPausingOrPaused());
     deleteObjects(gcResult);
-    // Process pending, since we disabled process pending while GC pause was initiate.
-    processPendingLookups();
   }
 
   public void deleteObjects(final DGCResultContext dgcResultContext) {
     final Set<ObjectID> toDelete = dgcResultContext.getGarbageIDs();
     removeAllObjectsByID(toDelete);
     this.objectStore.removeAllObjectsByID(dgcResultContext);
+    // Process pending, since we disabled process pending while GC pause was initiate.
+    processPendingLookups();
   }
 
   private void flushAndCommit(final PersistenceTransaction persistenceTransaction, final ManagedObject managedObject) {
