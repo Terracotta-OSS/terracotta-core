@@ -82,6 +82,7 @@ projects under "community/devwork". List of projects currently recognize are:
 - tim-ehcache(-ee)
 - tim-quartz(-ee)
 - ehcache-core(-ee)
+- quartz
 
 Let say you have terracotta-toolkit-ee under devwork. This step will compile
 core, terracotta-toolkit and terracotta-toolkit-ee all in one command:
@@ -89,10 +90,3 @@ core, terracotta-toolkit and terracotta-toolkit-ee all in one command:
 %> mvn clean install -P os -DskipTests
 
 The profile 'os' is recognized by terracotta-toolkit-ee to include terracotta-toolkit
-
-
-
-
-
-
-

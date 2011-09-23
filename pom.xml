@@ -249,6 +249,18 @@
       <modules>
         <module>devwork/ehcache-core-ee</module>
       </modules>
+    </profile>  
+
+    <profile>
+      <id>quartz</id>
+      <activation>
+        <file>
+          <exists>devwork/quartz</exists>
+        </file>
+      </activation>      
+      <modules>
+        <module>devwork/quartz</module>
+      </modules>
     </profile>     
   </profiles>
 </project>
