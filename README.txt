@@ -70,11 +70,27 @@ to stop:
 %> mvn exec:exec -P stop-server
 
 ******************************************************************************
-7. To include terracotta-toolkit(-ee) in the build
+7. To include other Forge projects in the build
 ******************************************************************************
-Check out either or both "terracotta-toolkit" and "terracotta-toolkit-ee" under
-"community/devwork". You have to create "devwork" folder manually since it's set
-to be ignored in SVN. 
+For convenience, you can include other Forge projects into the main build to 
+have them all compile in one go. To be able to do that, svn checkout those
+projects under "community/devwork". List of projects currently recognize are:
+
+- terracotta-toolkit(-ee)
+- terracotta-ehcache(-ee)
+- terracotta-quartz(-ee)
+- tim-ehcache(-ee)
+- tim-quartz(-ee)
+- ehcache-core(-ee)
+
+Let say you have terracotta-toolkit-ee under devwork. This step will compile
+core, terracotta-toolkit and terracotta-toolkit-ee all in one command:
+
+%> mvn clean install -P os -DskipTests
+
+The profile 'os' is recognized by terracotta-toolkit-ee to include terracotta-toolkit
+
+
 
 
 
