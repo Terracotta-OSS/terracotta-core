@@ -399,6 +399,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   public ObjectID lookupExistingObjectID(final Object pojo) {
+    if (LiteralValues.isLiteralInstance(pojo)) { return ObjectID.NULL_ID; }
     if (pojo instanceof TCObjectSelf) { return ((TCObjectSelf) pojo).getObjectID(); }
 
     final TCObject obj = basicLookup(pojo);
