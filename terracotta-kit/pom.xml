@@ -688,7 +688,7 @@
                   <source>
                     def srcdir = new File(project.basedir, "target/${kit.name}") 
                     ant.tar(destfile: "${srcdir}.tar.gz", longfile: "gnu", compression: "gzip") {
-                      tarfileset(dir: "${srcdir}", prefix: "${kit.name}", excludes: "**/bin/**,**/lib/**,**/*.sh,**/*.bat")
+                      tarfileset(dir: "${srcdir}", prefix: "${kit.name}", excludes: "**/.placeholder,**/bin/**,**/lib/**,**/*.sh,**/*.bat")
                       tarfileset(dir: "${srcdir}", prefix: "${kit.name}", includes: "**/bin/**,**/lib/**,**/*.sh,**/*.bat", filemode: "755")
                     } 
                   </source>
