@@ -10,20 +10,14 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 public class LocalCacheStoreIncoherentValue extends AbstractLocalCacheStoreValue {
-  public static final long SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS = 300000;
-  // TCPropertiesImpl
-  // .getProperties()
-  // .getLong(
-  // TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
-
-  private volatile long    lastCoherentTime;
+  private volatile long lastCoherentTime;
 
   public LocalCacheStoreIncoherentValue() {
     //
   }
 
-  public LocalCacheStoreIncoherentValue(Object value, ObjectID mapID) {
-    super(null, value, mapID);
+  public LocalCacheStoreIncoherentValue(ObjectID oid, Object value, ObjectID mapID) {
+    super(oid, value, mapID);
     this.lastCoherentTime = System.nanoTime();
   }
 
@@ -46,6 +40,11 @@ public class LocalCacheStoreIncoherentValue extends AbstractLocalCacheStoreValue
 
   public long getLastCoherentTime() {
     return lastCoherentTime;
+  }
+
+  @Override
+  public ObjectID getValueObjectId() {
+    return (ObjectID) id;
   }
 
 }

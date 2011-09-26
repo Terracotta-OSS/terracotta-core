@@ -18,28 +18,28 @@ public class L1ServerMapLocalStoreTransactionCompletionListener implements Trans
   private final Object                       key;
   private final TransactionCompleteOperation transactionCompleteOperation;
   private final AbstractLocalCacheStoreValue value;
-  private final Object                       actualValue;
 
   public L1ServerMapLocalStoreTransactionCompletionListener(ServerMapLocalCache serverMapLocalCache, Object key,
-                                                            Object actualValue, AbstractLocalCacheStoreValue value,
+                                                            AbstractLocalCacheStoreValue value,
                                                             TransactionCompleteOperation onCompleteOperation) {
     this.serverMapLocalCache = serverMapLocalCache;
     this.key = key;
-    this.actualValue = actualValue;
     this.transactionCompleteOperation = onCompleteOperation;
     this.value = value;
+    Object actualValue = value.getValueObject();
     if (actualValue instanceof TCObjectSelf) {
       ((TCObjectSelf) actualValue).touch();
     }
   }
 
   public void transactionComplete(TransactionID txnID) {
-    serverMapLocalCache.addToSink(this);
+    serverMapLocalCache.transactionComplete(this);
   }
 
   public void postTransactionCallback() {
-    serverMapLocalCache.transactionComplete(key, value, this);
+    serverMapLocalCache.postTransactionCallback(key, value, this);
     serverMapLocalCache.unpinEntry(key, value);
+    Object actualValue = value.getValueObject();
     if (actualValue instanceof TCObjectSelf) {
       ((TCObjectSelf) actualValue).untouch();
     }

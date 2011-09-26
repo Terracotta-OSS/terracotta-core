@@ -5,7 +5,6 @@ package com.tc.object.servermap.localcache;
 
 import com.tc.object.ObjectID;
 import com.tc.object.TCObjectSelf;
-import com.tc.object.TCObjectSelfStore;
 import com.tc.object.locks.LockID;
 
 import java.io.Externalizable;
@@ -14,17 +13,16 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 public abstract class AbstractLocalCacheStoreValue implements Externalizable {
-  public static final Object LOOKUP_FROM_SERVER = new Object();
   /**
    * This corresponds to a ObjectID/LockID
    */
-  protected volatile Object  id;
+  protected volatile Object id;
   /**
    * this is the value object <br>
    * TODO: make this Serializable. This would be a SerializedEntry for the serialized caches.
    */
-  protected volatile Object  value;
-  private volatile ObjectID  mapID;
+  protected volatile Object value;
+  private volatile ObjectID mapID;
 
   public AbstractLocalCacheStoreValue() {
     //
@@ -36,7 +34,7 @@ public abstract class AbstractLocalCacheStoreValue implements Externalizable {
     this.mapID = mapID;
   }
 
-  public Object getId() {
+  public Object getMetaId() {
     return id;
   }
 
@@ -44,25 +42,15 @@ public abstract class AbstractLocalCacheStoreValue implements Externalizable {
     return this.mapID;
   }
 
-  public final Object getValueObject(TCObjectSelfStore tcObjectSelfStore, ServerMapLocalCache store) {
-    final Object rv;
-    if (value instanceof ObjectID) {
-      rv = tcObjectSelfStore.getByIdFromCache((ObjectID) value, store);
-      if (!ObjectID.NULL_ID.equals(value) && rv == null) { return LOOKUP_FROM_SERVER; }
-    } else {
-      rv = value;
-    }
-    if (rv instanceof TCObjectSelf) {
-      tcObjectSelfStore.initializeTCObjectSelfIfRequired((TCObjectSelf) rv);
-    }
-    return rv;
+  public final Object getValueObject() {
+    return value;
   }
 
   public boolean isValueObjectOnHeap(L1ServerMapLocalCacheStore store) {
-    if (value instanceof ObjectID) {
-      return store.containsKeyOnHeap(value);
+    if (value instanceof TCObjectSelf) {
+      return store.containsKeyOnHeap(((TCObjectSelf) value).getObjectID());
     } else {
-      return true;
+      return store.containsKeyOffHeap(id);
     }
   }
 
@@ -118,13 +106,7 @@ public abstract class AbstractLocalCacheStoreValue implements Externalizable {
     throw new UnsupportedOperationException("This should only be called for Strong consistent cached values");
   }
 
-  /**
-   * Use only when {@link #isEventualConsistentValue()} is true. Returns the object id
-   */
-  public ObjectID getObjectId() {
-    if (value instanceof ObjectID) { return (ObjectID) value; }
-    return ObjectID.NULL_ID;
-  }
+  public abstract ObjectID getValueObjectId();
 
   public void writeExternal(ObjectOutput out) throws IOException {
     out.writeObject(id);

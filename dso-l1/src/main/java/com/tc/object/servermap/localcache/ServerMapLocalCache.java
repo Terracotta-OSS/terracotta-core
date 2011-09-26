@@ -51,7 +51,7 @@ public interface ServerMapLocalCache {
    */
   void setLocalCacheEnabled(boolean enable);
 
-  void addToCache(Object key, Object actualValue, AbstractLocalCacheStoreValue localCacheValue,
+  void addToCache(Object key, Object actualValue, AbstractLocalCacheStoreValue localCacheValue, ObjectID valueObjectID,
                   MapOperationType operationType);
 
   /**
@@ -67,7 +67,7 @@ public interface ServerMapLocalCache {
   /**
    * Get the value corresponding to the key if present
    */
-  AbstractLocalCacheStoreValue getValue(Object key);
+  Object getValue(Object key);
 
   /**
    * Check if the key is on-heap
@@ -116,13 +116,11 @@ public interface ServerMapLocalCache {
    */
   Set getKeySet();
 
-  Object getKeyOrValueForObjectID(ObjectID oid);
-
-  void transactionComplete(
+  void postTransactionCallback(
                            Object key,
                            AbstractLocalCacheStoreValue value,
                            L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
 
-  void addToSink(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
+  void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
 
 }

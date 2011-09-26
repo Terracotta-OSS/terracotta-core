@@ -20,11 +20,7 @@ public class LocalCacheStoreEventualValue extends AbstractLocalCacheStoreValue {
   }
 
   @Override
-  public ObjectID getObjectId() {
+  public ObjectID getValueObjectId() {
     return (ObjectID) id;
-  }
-
-  public Object getValue() {
-    return value;
   }
 }

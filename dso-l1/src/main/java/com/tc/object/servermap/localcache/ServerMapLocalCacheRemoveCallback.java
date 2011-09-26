@@ -5,5 +5,5 @@ package com.tc.object.servermap.localcache;
 
 public interface ServerMapLocalCacheRemoveCallback {
 
-  public void removedElement(Object key, AbstractLocalCacheStoreValue value);
+  public void removedElement(AbstractLocalCacheStoreValue value);
 }

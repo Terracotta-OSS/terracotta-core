@@ -31,8 +31,8 @@ public class MockModesAdd {
   public static void addStrongValueToCache(ServerMapLocalCache cache, TCObjectSelfStore store, String key,
                                            LockID lockID, MockSerializedEntry value, ObjectID mapID,
                                            MapOperationType operationType) {
-    Object valueToAdd = value != null ? value.getObjectID() : value;
-    AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreStrongValue(lockID, valueToAdd, mapID);
+    ObjectID valueObjectID = value != null ? value.getObjectID() : ObjectID.NULL_ID;
+    AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreStrongValue(lockID, value, mapID, valueObjectID);
     addToCache(cache, store, key, value, operationType, localStoreValue);
   }
 
@@ -51,16 +51,16 @@ public class MockModesAdd {
   // oid -> value
   public static void addIncoherentValueToCache(ServerMapLocalCache cache, TCObjectSelfStore store, String key,
                                                MockSerializedEntry value, ObjectID mapID, MapOperationType operationType) {
-    Object valueToAdd = value != null ? value.getObjectID() : value;
-    AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreIncoherentValue(valueToAdd, mapID);
+    AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreIncoherentValue(value.getObjectID(), value, mapID);
     addToCache(cache, store, key, value, operationType, localStoreValue);
   }
 
   private static void addToCache(ServerMapLocalCache cache, TCObjectSelfStore store, String key,
                                  MockSerializedEntry value, MapOperationType operationType,
                                  AbstractLocalCacheStoreValue localStoreValue) {
-    store.addTCObjectSelf(cache.getInternalStore(), localStoreValue, value, operationType.isMutateOperation());
-    cache.addToCache(key, value, localStoreValue, operationType);
+    ObjectID id = value == null ? ObjectID.NULL_ID : value.getObjectID();
+    store.addTCObjectSelf(cache.getInternalStore(), localStoreValue, value, true);
+    cache.addToCache(key, value, localStoreValue, id, operationType);
   }
 
   public static MockSerializedEntry createMockSerializedEntry(int oid) {
