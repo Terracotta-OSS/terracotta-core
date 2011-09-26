@@ -44,9 +44,8 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   public void updateLocalCache(ObjectID oid, TCObjectSelf self) {
     tcObjectStoreLock.writeLock().lock();
 
-    if (!tcObjectSelfStoreOids.contains(oid)) { return; }
-
     try {
+      if (!tcObjectSelfStoreOids.contains(oid)) { return; }
       for (ServerMapLocalCache cache : localCaches.keySet()) {
         Object key = cache.getValue(oid);
         if (key != null) {
