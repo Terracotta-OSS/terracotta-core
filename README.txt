@@ -90,3 +90,19 @@ core, terracotta-toolkit and terracotta-toolkit-ee all in one command:
 %> mvn clean install -P os -DskipTests
 
 The profile 'os' is recognized by terracotta-toolkit-ee to include terracotta-toolkit
+
+******************************************************************************
+8. Smart build: making the build a bit faster by specify what module was changed.
+******************************************************************************
+
+If you only change dso-l1, this is how you would make Maven only compile that module
+and its dependencies:
+
+%> mvn install -amd -pl dso-l1
+
+Notice the absence of "clean" step. Usually, you don't need to clean every time.
+
+
+
+
+
