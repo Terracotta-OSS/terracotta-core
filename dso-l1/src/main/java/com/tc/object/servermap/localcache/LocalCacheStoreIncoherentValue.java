@@ -16,8 +16,8 @@ public class LocalCacheStoreIncoherentValue extends AbstractLocalCacheStoreValue
     //
   }
 
-  public LocalCacheStoreIncoherentValue(ObjectID oid, Object value, ObjectID mapID) {
-    super(oid, value, mapID);
+  public LocalCacheStoreIncoherentValue(ObjectID oid, Object value) {
+    super(oid, value);
     this.lastCoherentTime = System.nanoTime();
   }
 

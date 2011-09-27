@@ -32,7 +32,7 @@ public class MockModesAdd {
                                            LockID lockID, MockSerializedEntry value, ObjectID mapID,
                                            MapOperationType operationType) {
     ObjectID valueObjectID = value != null ? value.getObjectID() : ObjectID.NULL_ID;
-    AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreStrongValue(lockID, value, mapID, valueObjectID);
+    AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreStrongValue(lockID, value, valueObjectID);
     addToCache(cache, store, key, value, operationType, localStoreValue);
   }
 
@@ -42,7 +42,7 @@ public class MockModesAdd {
   public static void addEventualValueToCache(ServerMapLocalCache cache, TCObjectSelfStore store, String key,
                                              MockSerializedEntry value, ObjectID mapID, MapOperationType operationType) {
     ObjectID valueID = value != null ? value.getObjectID() : ObjectID.NULL_ID;
-    AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreEventualValue(valueID, value, mapID);
+    AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreEventualValue(valueID, value);
     addToCache(cache, store, key, value, operationType, localStoreValue);
   }
 
@@ -51,7 +51,7 @@ public class MockModesAdd {
   // oid -> value
   public static void addIncoherentValueToCache(ServerMapLocalCache cache, TCObjectSelfStore store, String key,
                                                MockSerializedEntry value, ObjectID mapID, MapOperationType operationType) {
-    AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreIncoherentValue(value.getObjectID(), value, mapID);
+    AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreIncoherentValue(value.getObjectID(), value);
     addToCache(cache, store, key, value, operationType, localStoreValue);
   }
 

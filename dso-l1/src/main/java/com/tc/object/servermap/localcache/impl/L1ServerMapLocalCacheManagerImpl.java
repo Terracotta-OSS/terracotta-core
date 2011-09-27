@@ -35,37 +35,36 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheManager {
-  private final Object                                                           NULL_VALUE              = new Object();
+  private final Object                                                           NULL_VALUE          = new Object();
 
-  private static final boolean                                                   PINNING_ENABLED         = TCPropertiesImpl
-                                                                                                             .getProperties()
-                                                                                                             .getBoolean(
-                                                                                                                         TCPropertiesConsts.L1_LOCKMANAGER_PINNING_ENABLED);
+  private static final boolean                                                   PINNING_ENABLED     = TCPropertiesImpl
+                                                                                                         .getProperties()
+                                                                                                         .getBoolean(
+                                                                                                                     TCPropertiesConsts.L1_LOCKMANAGER_PINNING_ENABLED);
 
   /**
    * For invalidations
    */
-  private final ConcurrentHashMap<ObjectID, ServerMapLocalCache>                 mapIdTolocalCache       = new ConcurrentHashMap<ObjectID, ServerMapLocalCache>();
+  private final ConcurrentHashMap<ObjectID, ServerMapLocalCache>                 mapIdTolocalCache   = new ConcurrentHashMap<ObjectID, ServerMapLocalCache>();
   // We also need the reverse mapping to easily remove the server map from existence on disposal
-  private final TCConcurrentMultiMap<ServerMapLocalCache, ObjectID>              localCacheToMapIds      = new TCConcurrentMultiMap<ServerMapLocalCache, ObjectID>();
+  private final TCConcurrentMultiMap<ServerMapLocalCache, ObjectID>              localCacheToMapIds  = new TCConcurrentMultiMap<ServerMapLocalCache, ObjectID>();
 
   /**
    * For lock recalls
    */
-  private final TCConcurrentMultiMap<LockID, ServerMapLocalCache>                lockIdsToLocalCache     = new TCConcurrentMultiMap<LockID, ServerMapLocalCache>();
+  private final TCConcurrentMultiMap<LockID, ServerMapLocalCache>                lockIdsToLocalCache = new TCConcurrentMultiMap<LockID, ServerMapLocalCache>();
 
   /**
    * All local caches
    */
-  private final ConcurrentHashMap<ServerMapLocalCache, Object>                   localCaches             = new ConcurrentHashMap<ServerMapLocalCache, Object>();
+  private final ConcurrentHashMap<ServerMapLocalCache, Object>                   localCaches         = new ConcurrentHashMap<ServerMapLocalCache, Object>();
 
   /**
    * Identity HashMap of all stores
    */
-  private final IdentityHashMap<L1ServerMapLocalCacheStore, ServerMapLocalCache> localStores             = new IdentityHashMap<L1ServerMapLocalCacheStore, ServerMapLocalCache>();
+  private final IdentityHashMap<L1ServerMapLocalCacheStore, ServerMapLocalCache> localStores         = new IdentityHashMap<L1ServerMapLocalCacheStore, ServerMapLocalCache>();
 
-  private final GlobalL1ServerMapLocalCacheStoreListener                         localCacheStoreListener = new GlobalL1ServerMapLocalCacheStoreListener();
-  private final AtomicBoolean                                                    shutdown                = new AtomicBoolean();
+  private final AtomicBoolean                                                    shutdown            = new AtomicBoolean();
   private final LocksRecallService                                               locksRecallHelper;
   private final Sink                                                             capacityEvictionSink;
   private final Sink                                                             txnCompleteSink;
@@ -110,7 +109,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
                                                         removeCallback, serverMapLocalStore);
       localStores.put(serverMapLocalStore, serverMapLocalCache);
       localCaches.put(serverMapLocalCache, NULL_VALUE);
-      serverMapLocalStore.addListener(localCacheStoreListener);
+      serverMapLocalStore.addListener(new L1ServerMapLocalCacheStoreListenerImpl(serverMapLocalCache));
     }
 
     if (!mapIdTolocalCache.containsKey(mapId)) {
@@ -215,7 +214,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     lockIdsToLocalCache.add(valueLockId, localCache);
   }
 
-  public void evictElements(Map evictedElements) {
+  public void evictElements(Map evictedElements, ServerMapLocalCache localCache) {
     Set<Map.Entry> entries = evictedElements.entrySet();
 
     for (Entry entry : entries) {
@@ -225,14 +224,8 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
                                                                                                           .getValue()); }
 
       AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) entry.getValue();
-      ObjectID mapID = value.getMapID();
-      ServerMapLocalCache localCache = mapIdTolocalCache.get(mapID);
-      if (localCache != null) {
-        // the entry has been already removed from the local store, this will remove the id->key mapping if it exists
-        localCache.evictedFromStore(value.getMetaId(), entry.getKey(), value);
-      } else {
-        throwAssert("LocalCache not mapped for mapId: " + mapID);
-      }
+      // the entry has been already removed from the local store, this will remove the id->key mapping if it exists
+      localCache.evictedFromStore(value.getMetaId(), entry.getKey(), value);
     }
   }
 
@@ -244,7 +237,12 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     }
   }
 
-  class GlobalL1ServerMapLocalCacheStoreListener<K, V> implements L1ServerMapLocalCacheStoreListener<K, V> {
+  class L1ServerMapLocalCacheStoreListenerImpl<K, V> implements L1ServerMapLocalCacheStoreListener<K, V> {
+    private final ServerMapLocalCache serverMapLocalCache;
+
+    public L1ServerMapLocalCacheStoreListenerImpl(ServerMapLocalCache serverMapLocalCache) {
+      this.serverMapLocalCache = serverMapLocalCache;
+    }
 
     public void notifyElementEvicted(K key, V value) {
       notifyElementsEvicted(Collections.singletonMap(key, value));
@@ -253,9 +251,8 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     // TODO: does this need to be present in the interface? not called from outside
     public void notifyElementsEvicted(Map<K, V> evictedElements) {
       // This should be inside another thread, if not it will cause a deadlock
-      L1ServerMapEvictedElementsContext context = new L1ServerMapEvictedElementsContext(
-                                                                                        evictedElements,
-                                                                                        L1ServerMapLocalCacheManagerImpl.this);
+      L1ServerMapEvictedElementsContext context = new L1ServerMapEvictedElementsContext(evictedElements,
+                                                                                        serverMapLocalCache);
       capacityEvictionSink.add(context);
     }
 
@@ -266,10 +263,6 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     public void notifyDisposed(L1ServerMapLocalCacheStore store) {
       removeStore(store);
     }
-  }
-
-  private void throwAssert(String msg) {
-    throw new AssertionError(msg);
   }
 
   // ----------------------------------------

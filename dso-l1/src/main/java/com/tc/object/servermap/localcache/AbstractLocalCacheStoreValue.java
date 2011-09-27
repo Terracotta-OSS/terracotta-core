@@ -22,24 +22,18 @@ public abstract class AbstractLocalCacheStoreValue implements Externalizable {
    * TODO: make this Serializable. This would be a SerializedEntry for the serialized caches.
    */
   protected volatile Object value;
-  private volatile ObjectID mapID;
 
   public AbstractLocalCacheStoreValue() {
     //
   }
 
-  public AbstractLocalCacheStoreValue(Object id, Object value, ObjectID mapID) {
+  public AbstractLocalCacheStoreValue(Object id, Object value) {
     this.id = id;
     this.value = value;
-    this.mapID = mapID;
   }
 
   public Object getMetaId() {
     return id;
-  }
-
-  public ObjectID getMapID() {
-    return this.mapID;
   }
 
   public final Object getValueObject() {
@@ -111,18 +105,16 @@ public abstract class AbstractLocalCacheStoreValue implements Externalizable {
   public void writeExternal(ObjectOutput out) throws IOException {
     out.writeObject(id);
     out.writeObject(value);
-    out.writeObject(mapID);
   }
 
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
     id = in.readObject();
     value = in.readObject();
-    mapID = (ObjectID) in.readObject();
   }
 
   @Override
   public String toString() {
-    return "AbstractLocalCacheStoreValue [id=" + id + ", mapID=" + mapID + ", value="
+    return "AbstractLocalCacheStoreValue [id=" + id + ", value="
            + (value instanceof TCObjectSelf ? ((TCObjectSelf) value).getObjectID() : value) + "]";
   }
 
@@ -131,7 +123,6 @@ public abstract class AbstractLocalCacheStoreValue implements Externalizable {
     final int prime = 31;
     int result = 1;
     result = prime * result + ((id == null) ? 0 : id.hashCode());
-    result = prime * result + ((mapID == null) ? 0 : mapID.hashCode());
     result = prime * result + ((value == null) ? 0 : value.hashCode());
     return result;
   }
@@ -145,9 +136,6 @@ public abstract class AbstractLocalCacheStoreValue implements Externalizable {
     if (id == null) {
       if (other.id != null) return false;
     } else if (!id.equals(other.id)) return false;
-    if (mapID == null) {
-      if (other.mapID != null) return false;
-    } else if (!mapID.equals(other.mapID)) return false;
     if (value == null) {
       if (other.value != null) return false;
     } else if (!value.equals(other.value)) return false;

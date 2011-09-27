@@ -322,22 +322,19 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
   public AddToCacheReturnType addStrongValueToCache(LockID lockId, Object key, Object value, ObjectID valueObjectID,
                                                     MapOperationType mapOperation) {
-    final LocalCacheStoreStrongValue localCacheValue = new LocalCacheStoreStrongValue(lockId, value, this.objectID,
-                                                                                      valueObjectID);
+    final LocalCacheStoreStrongValue localCacheValue = new LocalCacheStoreStrongValue(lockId, value, valueObjectID);
     return addToCache(key, localCacheValue, valueObjectID, mapOperation);
   }
 
   public AddToCacheReturnType addEventualValueToCache(Object key, Object value, ObjectID valueObjectID,
                                                       MapOperationType mapOperation) {
-    final LocalCacheStoreEventualValue localCacheValue = new LocalCacheStoreEventualValue(valueObjectID, value,
-                                                                                          this.objectID);
+    final LocalCacheStoreEventualValue localCacheValue = new LocalCacheStoreEventualValue(valueObjectID, value);
     return addToCache(key, localCacheValue, valueObjectID, mapOperation);
   }
 
   public AddToCacheReturnType addIncoherentValueToCache(Object key, Object value, ObjectID valueObjectID,
                                                         MapOperationType mapOperation) {
-    final LocalCacheStoreIncoherentValue localCacheValue = new LocalCacheStoreIncoherentValue(valueObjectID, value,
-                                                                                              this.objectID);
+    final LocalCacheStoreIncoherentValue localCacheValue = new LocalCacheStoreIncoherentValue(valueObjectID, value);
     return addToCache(key, localCacheValue, valueObjectID, mapOperation);
   }
 

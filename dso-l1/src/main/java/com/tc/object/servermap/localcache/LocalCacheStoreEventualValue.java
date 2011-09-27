@@ -10,8 +10,8 @@ public class LocalCacheStoreEventualValue extends AbstractLocalCacheStoreValue {
     //
   }
 
-  public LocalCacheStoreEventualValue(ObjectID id, Object value, ObjectID mapID) {
-    super(id, value, mapID);
+  public LocalCacheStoreEventualValue(ObjectID id, Object value) {
+    super(id, value);
   }
 
   @Override

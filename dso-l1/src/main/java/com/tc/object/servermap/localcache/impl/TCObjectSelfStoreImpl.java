@@ -63,12 +63,11 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   private AbstractLocalCacheStoreValue createNewValue(AbstractLocalCacheStoreValue oldValue, TCObjectSelf self) {
     final AbstractLocalCacheStoreValue newValue;
     if (oldValue.isEventualConsistentValue()) {
-      newValue = new LocalCacheStoreEventualValue(self.getObjectID(), self, oldValue.getMapID());
+      newValue = new LocalCacheStoreEventualValue(self.getObjectID(), self);
     } else if (oldValue.isStrongConsistentValue()) {
-      newValue = new LocalCacheStoreStrongValue(oldValue.getLockId(), self, oldValue.getMapID(), oldValue
-          .getValueObjectId());
+      newValue = new LocalCacheStoreStrongValue(oldValue.getLockId(), self, oldValue.getValueObjectId());
     } else if (oldValue.isIncoherentValue()) {
-      newValue = new LocalCacheStoreIncoherentValue(self.getObjectID(), self, oldValue.getMapID());
+      newValue = new LocalCacheStoreIncoherentValue(self.getObjectID(), self);
     } else {
       throw new AssertionError("Neither strong, incoherent or eventual");
     }

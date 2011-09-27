@@ -10,19 +10,16 @@ import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 import java.util.Map;
 
 public class L1ServerMapCapacityEvictionHandler extends AbstractEventHandler {
-  private volatile L1ServerMapLocalCacheManager globalLocalCacheManager;
+  private volatile L1ServerMapLocalCacheManager l1LocalCacheManager;
 
   @Override
   public void handleEvent(EventContext context) {
-    evictElements((L1ServerMapEvictedElementsContext) context);
-  }
-
-  private void evictElements(L1ServerMapEvictedElementsContext context) {
-    Map evictedElements = context.getEvictedElements();
-    globalLocalCacheManager.evictElements(evictedElements);
+    L1ServerMapEvictedElementsContext evictedElementsContext = (L1ServerMapEvictedElementsContext) context;
+    Map evictedElements = evictedElementsContext.getEvictedElements();
+    l1LocalCacheManager.evictElements(evictedElements, evictedElementsContext.getServerMapLocalCache());
   }
 
   public void initialize(L1ServerMapLocalCacheManager localCacheManager) {
-    this.globalLocalCacheManager = localCacheManager;
+    this.l1LocalCacheManager = localCacheManager;
   }
 }

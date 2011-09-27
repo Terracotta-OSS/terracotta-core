@@ -17,8 +17,8 @@ public class LocalCacheStoreStrongValue extends AbstractLocalCacheStoreValue {
     //
   }
 
-  public LocalCacheStoreStrongValue(LockID id, Object value, ObjectID mapID, ObjectID valueObjectID) {
-    super(id, value, mapID);
+  public LocalCacheStoreStrongValue(LockID id, Object value, ObjectID valueObjectID) {
+    super(id, value);
     this.valueObjectID = valueObjectID;
   }
 
