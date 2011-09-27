@@ -14,6 +14,7 @@ import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.ClusterMetaDataTestApp.MyMojo;
 import com.tctest.ClusterMetaDataTestApp.SomePojo;
 import com.tctest.ClusterMetaDataTestApp.YourMojo;
@@ -66,7 +67,7 @@ public class ClusterMetaDataPrefetchTestApp extends AbstractTransparentApp {
 
     Assert.assertEquals("The test L1Client did not exit with a success status", 0, spawnNewClient());
 
-    Thread.sleep(5000);
+    Thread.sleep(10000);
 
     Assert.assertEquals("The test L1Client did not exit with a success status", 0, spawnNewClient());
   }
@@ -125,13 +126,21 @@ public class ClusterMetaDataPrefetchTestApp extends AbstractTransparentApp {
 
     List jvmArgs = new ArrayList();
     addTestTcPropertiesFile(jvmArgs);
-    ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, L1Client.class, configFile
-        .getAbsolutePath(), Collections.EMPTY_LIST, workingDir, jvmArgs);
+    ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, L1Client.class,
+                                                             configFile.getAbsolutePath(), Collections.EMPTY_LIST,
+                                                             workingDir, jvmArgs);
     client.start();
     client.mergeSTDERR();
     client.mergeSTDOUT();
     System.err.println("\n### Started new client - Waiting for end");
-    return client.waitFor();
+    int rv = client.waitFor();
+
+    // Explicitly making sure that client has finished
+    while (client.isRunning()) {
+      ThreadUtil.reallySleep(1000);
+    }
+
+    return rv;
   }
 
   private void addTestTcPropertiesFile(final List jvmArgs) {
