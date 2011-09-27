@@ -15,6 +15,7 @@ import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.handler.GCResultHandler;
 import com.tc.l2.handler.GroupEventsDispatchHandler;
+import com.tc.l2.handler.GroupEventsDispatchHandler.GroupEventsDispatcher;
 import com.tc.l2.handler.L2IndexSyncHandler;
 import com.tc.l2.handler.L2IndexSyncRequestHandler;
 import com.tc.l2.handler.L2ObjectSyncHandler;
@@ -24,7 +25,6 @@ import com.tc.l2.handler.L2StateChangeHandler;
 import com.tc.l2.handler.L2StateMessageHandler;
 import com.tc.l2.handler.ServerTransactionAckHandler;
 import com.tc.l2.handler.TransactionRelayHandler;
-import com.tc.l2.handler.GroupEventsDispatchHandler.GroupEventsDispatcher;
 import com.tc.l2.msg.GCResultMessage;
 import com.tc.l2.msg.IndexSyncAckMessage;
 import com.tc.l2.msg.IndexSyncCompleteMessage;
@@ -136,6 +136,17 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                     final WeightGeneratorFactory weightGeneratorFactory, final MessageRecycler recycler,
                     final StripeIDStateManager stripeIDStateManager,
                     final ServerTransactionFactory serverTransactionFactory, DGCSequenceProvider dgcSequenceProvider) {
+
+    objectManager.getGarbageCollector().waitToDisableGC();
+    registerForStateChangeEvents(new StateChangeListener() {
+      public void l2StateChanged(StateChangedEvent sce) {
+        if (sce.getCurrentState() == StateManager.ACTIVE_COORDINATOR
+            || sce.getCurrentState() == StateManager.PASSIVE_STANDBY) {
+          logger.info("Enabling DGC since the server is now " + sce.getCurrentState());
+          objectManager.getGarbageCollector().enableGC();
+        }
+      }
+    });
 
     isCleanDB = isCleanDB(persistentStateStore);
 
