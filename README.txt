@@ -102,7 +102,11 @@ and its dependencies:
 
 Notice the absence of "clean" step. Usually, you don't need to clean every time.
 
+You can also build projects along with it's dependencies (reverse of the above):
 
+%> mvn install -am -pl devwork/terracotta-toolkit-ee/toolkit-runtime-ee
 
-
+This will build toolkit-runtime-ee and all it's direct and indirect dependencies.
+Note that you need to specify the actual file path to toolkit-runtime-ee in order
+for maven to find it.
 
