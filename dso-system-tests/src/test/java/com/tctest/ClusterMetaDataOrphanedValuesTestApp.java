@@ -14,6 +14,7 @@ import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.ClusterMetaDataTestApp.MyMojo;
 import com.tctest.ClusterMetaDataTestApp.SomePojo;
 import com.tctest.ClusterMetaDataTestApp.YourMojo;
@@ -99,7 +100,7 @@ public class ClusterMetaDataOrphanedValuesTestApp extends AbstractTransparentApp
       } else {
         synchronized (map) {
           final Set keysBeforeFault = cluster.getKeysForOrphanedValues(map);
-          Assert.assertEquals(3, keysBeforeFault.size());
+          Assert.assertEquals("keysBeforeFault: " + keysBeforeFault, 3, keysBeforeFault.size());
           Assert.assertTrue(keysBeforeFault.contains("key1"));
           Assert.assertTrue(keysBeforeFault.contains("key2"));
           Assert.assertTrue(keysBeforeFault.contains(new MyMojo("mojo quattro")));
@@ -108,7 +109,7 @@ public class ClusterMetaDataOrphanedValuesTestApp extends AbstractTransparentApp
           map.get("key2");
 
           final Set keysAfterFault = cluster.getKeysForOrphanedValues(map);
-          Assert.assertEquals(1, keysAfterFault.size());
+          Assert.assertEquals("keysAfterFault: " + keysAfterFault, 1, keysAfterFault.size());
           Assert.assertFalse(keysAfterFault.contains("key1"));
           Assert.assertFalse(keysAfterFault.contains("key2"));
           Assert.assertTrue(keysAfterFault.contains(new MyMojo("mojo quattro")));
@@ -126,13 +127,21 @@ public class ClusterMetaDataOrphanedValuesTestApp extends AbstractTransparentApp
 
     List jvmArgs = new ArrayList();
     addTestTcPropertiesFile(jvmArgs);
-    ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, L1Client.class, configFile
-        .getAbsolutePath(), Collections.EMPTY_LIST, workingDir, jvmArgs);
+    ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, L1Client.class,
+                                                             configFile.getAbsolutePath(), Collections.EMPTY_LIST,
+                                                             workingDir, jvmArgs);
     client.start();
     client.mergeSTDERR();
     client.mergeSTDOUT();
     System.err.println("\n### Started new client - Waiting for end");
-    return client.waitFor();
+    int rv = client.waitFor();
+
+    // Explicitly making sure that client has finished
+    while (client.isRunning()) {
+      ThreadUtil.reallySleep(1000);
+    }
+
+    return rv;
   }
 
   private void addTestTcPropertiesFile(final List jvmArgs) {
