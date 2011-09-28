@@ -433,7 +433,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   private void removeRemainingMappingsForLockID(Object keyOrValueId) {
-    Object key = null;
+    Object key = keyOrValueId;
     if (keyOrValueId instanceof ObjectID) {
       key = localStore.remove(keyOrValueId, RemoveType.NO_SIZE_DECREMENT);
     }
