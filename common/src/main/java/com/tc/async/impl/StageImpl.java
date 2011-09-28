@@ -23,7 +23,8 @@ import com.tc.util.concurrent.QueueFactory;
  * The SEDA Stage
  */
 public class StageImpl implements Stage {
-  private static final long    pollTime = 3000; // This is the poor man's solution for stage
+  private static final long    pollTime = 3000; // This is the poor man's solution for
+                                                // stage
   private final String         name;
   private final EventHandler   handler;
   private final StageQueueImpl stageQueue;
@@ -82,7 +83,7 @@ public class StageImpl implements Stage {
       } else {
         threadName = threadName + ")";
       }
-      threads[i] = new WorkerThread(threadName, this.stageQueue.getSource(i), handler, group);
+      threads[i] = new WorkerThread(threadName, this.stageQueue.getSource(i), handler, group, logger);
       threads[i].start();
     }
   }
@@ -103,9 +104,11 @@ public class StageImpl implements Stage {
     private final Source       source;
     private final EventHandler handler;
     private volatile boolean   shutdownRequested = false;
+    private final TCLogger     tcLogger;
 
-    public WorkerThread(String name, Source source, EventHandler handler, ThreadGroup group) {
+    public WorkerThread(String name, Source source, EventHandler handler, ThreadGroup group, TCLogger logger) {
       super(group, name);
+      tcLogger = logger;
       setDaemon(true);
       this.source = source;
       this.handler = handler;
@@ -122,7 +125,7 @@ public class StageImpl implements Stage {
     @Override
     public void run() {
       while (!shutdownRequested()) {
-        EventContext ctxt;
+        EventContext ctxt = null;
         try {
           ctxt = source.poll(pollTime);
           if (ctxt != null) {
@@ -136,8 +139,13 @@ public class StageImpl implements Stage {
           if (shutdownRequested()) { return; }
           throw new TCRuntimeException(ie);
         } catch (TCNotRunningException ie) {
-          if (shutdownRequested()) return;
-          throw new TCRuntimeException(ie);
+          if (shutdownRequested()) {
+            return;
+          } else {
+            tcLogger.info("Ignoring " + TCNotRunningException.class.getSimpleName() + " while handling context: "
+                          + ctxt);
+          }
+          return;
         } catch (EventHandlerException ie) {
           if (shutdownRequested()) return;
           throw new TCRuntimeException(ie);
