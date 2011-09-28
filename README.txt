@@ -96,7 +96,7 @@ The profile 'os' is recognized by terracotta-toolkit-ee to include terracotta-to
 ******************************************************************************
 
 If you only change dso-l1, this is how you would make Maven only compile that module
-and its dependencies:
+and its dependents:
 
 %> mvn install -amd -pl dso-l1
 
@@ -109,4 +109,21 @@ You can also build projects along with it's dependencies (reverse of the above):
 This will build toolkit-runtime-ee and all it's direct and indirect dependencies.
 Note that you need to specify the actual file path to toolkit-runtime-ee in order
 for maven to find it.
+
+******************************************************************************
+9. Using Maven Shell
+******************************************************************************
+
+The Maven Shell, created by Sonatype, can also speed up builds to some degree,
+since it preloads the entire Maven environment--including plugins--and keeps it
+all loaded in memory. To use the Maven Shell, download it from here:
+
+http://shell.sonatype.org/
+
+You can then add the mvnsh command to your path and fire up the Maven Shell in
+the root of the project. Thereafter you can issue standard Maven commands and
+everything will work as before, except faster and with colorized output.
+
+NOTE: Maven Shell is still somewhat buggy in the 1.0.1 release, so you should
+experiment with it to see if it works for you.
 
