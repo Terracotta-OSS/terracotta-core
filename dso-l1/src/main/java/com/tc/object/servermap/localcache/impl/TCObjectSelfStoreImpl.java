@@ -195,21 +195,23 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   public void removeTCObjectSelfTemp(TCObjectSelf objectSelf, boolean notifyServer) {
     if (objectSelf == null) { return; }
 
-    if (notifyServer) {
-      if (logger.isDebugEnabled()) {
-        logger.debug("XXX Removing TCObjectSelf from temp cache, ObjectID=" + objectSelf.getObjectID());
+    synchronized (tcObjectSelfRemovedFromStoreCallback) {
+      tcObjectStoreLock.writeLock().lock();
+      try {
+        Object removedValue = tcObjectSelfTempCache.remove(objectSelf.getObjectID());
+        if (removedValue != null) {
+          if (notifyServer) {
+            if (logger.isDebugEnabled()) {
+              logger.debug("XXX Removing TCObjectSelf from temp cache, ObjectID=" + objectSelf.getObjectID());
+            }
+            tcObjectSelfRemovedFromStoreCallback.removedTCObjectSelfFromStore(objectSelf);
+          }
+        }
+      } finally {
+        tcObjectStoreLock.writeLock().unlock();
       }
-
-      tcObjectSelfRemovedFromStoreCallback.removedTCObjectSelfFromStore(objectSelf);
     }
 
-    // Tiny race left to resolve here ...
-    tcObjectStoreLock.writeLock().lock();
-    try {
-      tcObjectSelfTempCache.remove(objectSelf.getObjectID());
-    } finally {
-      tcObjectStoreLock.writeLock().unlock();
-    }
   }
 
   public void removeTCObjectSelf(AbstractLocalCacheStoreValue localStoreValue) {
