@@ -9,6 +9,7 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.object.ObjectRequestServerContext;
+import com.tc.object.ObjectRequestServerContext.LOOKUP_STATE;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.api.ObjectManager;
@@ -136,10 +137,10 @@ public class ObjectRequestManagerRestartImpl extends AbstractServerTransactionLi
   }
 
   public void sendObjects(final ClientID requestedNodeID, final Collection objs, final ObjectIDSet requestedObjectIDs,
-                          final ObjectIDSet missingObjectIDs, final boolean isServerInitiated, final int maxRequestDepth) {
+                          final ObjectIDSet missingObjectIDs, final LOOKUP_STATE lookupState, final int maxRequestDepth) {
 
-    this.delegate.sendObjects(requestedNodeID, objs, requestedObjectIDs, missingObjectIDs, isServerInitiated,
-                              maxRequestDepth);
+    this.delegate
+        .sendObjects(requestedNodeID, objs, requestedObjectIDs, missingObjectIDs, lookupState, maxRequestDepth);
 
   }
 

@@ -15,6 +15,7 @@ import com.tc.object.ServerMapGetValueRequest;
 import com.tc.object.ServerMapGetValueResponse;
 import com.tc.object.ServerMapRequestID;
 import com.tc.object.ServerMapRequestType;
+import com.tc.object.ObjectRequestServerContext.LOOKUP_STATE;
 import com.tc.object.msg.GetAllKeysServerMapResponseMessage;
 import com.tc.object.msg.GetAllSizeServerMapResponseMessage;
 import com.tc.object.msg.GetValueServerMapResponseMessage;
@@ -40,6 +41,7 @@ import com.tc.util.concurrent.TCConcurrentMultiMap;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -128,15 +130,17 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
             break;
           case GET_VALUE_FOR_KEY:
             ClientID clientID = ((ServerMapRequestValueContext) request).getClientID();
-            ObjectIDSet valueObjectIds = gatherResponseForGetValue(mapID, (ServerMapRequestValueContext) request,
-                                                                   cdsmState, results);
-            for (ObjectID valueObjectId : valueObjectIds) {
+            ObjectIDSet objectIdsForKeys = gatherResponseForGetValue(mapID, (ServerMapRequestValueContext) request,
+                                                                     cdsmState, results);
+            Set<ObjectID> objectIdstoPrefetch = Collections.EMPTY_SET;
+            if (!objectIdsForKeys.isEmpty()) {
+              objectIdstoPrefetch = clientStateManager.addReferences(clientID, objectIdsForKeys);
+            }
+
+            for (ObjectID valueObjectId : objectIdstoPrefetch) {
               gatherPreFetchPortableValues(prefetches, clientID, valueObjectId);
             }
 
-            if (!valueObjectIds.isEmpty()) {
-              clientStateManager.addPrefetchedObjectIDs(clientID, valueObjectIds);
-            }
             break;
           default:
             throw new AssertionError("Unknown request type : " + requestType);
@@ -301,7 +305,8 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     for (final Entry<ClientID, ObjectIDSet> element : prefetches.entrySet()) {
       this.managedObjectRequestSink.add(new ObjectRequestServerContextImpl(element.getKey(), ObjectRequestID.NULL_ID,
                                                                            element.getValue(), Thread.currentThread()
-                                                                               .getName(), 1, true));
+                                                                               .getName(), 1,
+                                                                           LOOKUP_STATE.SERVER_INITIATED_FORCED));
     }
   }
 

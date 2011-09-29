@@ -71,8 +71,8 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
     return "TestThreadDummy";
   }
 
-  public boolean isServerInitiated() {
-    return false;
+  public LOOKUP_STATE getLookupState() {
+    return LOOKUP_STATE.CLIENT;
   }
 
   public ClientID getClientID() {

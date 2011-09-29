@@ -112,10 +112,6 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
     return this.threadName;
   }
 
-  public boolean isServerInitiated() {
-    return false;
-  }
-
   public ClientID getClientID() {
     return (ClientID) getSourceNodeID();
   }
@@ -124,4 +120,7 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
     return getSourceNodeID();
   }
 
+  public LOOKUP_STATE getLookupState() {
+    return LOOKUP_STATE.CLIENT;
+  }
 }

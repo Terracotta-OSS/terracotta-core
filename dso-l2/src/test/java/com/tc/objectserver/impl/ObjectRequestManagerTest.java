@@ -27,6 +27,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
 import com.tc.object.ObjectRequestID;
 import com.tc.object.TestDNACursor;
+import com.tc.object.ObjectRequestServerContext.LOOKUP_STATE;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
@@ -163,7 +164,7 @@ public class ObjectRequestManagerTest extends TestCase {
       final ClientID clientID = new ClientID(i);
       final ObjectRequestThread objectRequestThread = new ObjectRequestThread(requestBarrier, objectRequestManager,
                                                                               clientID, new ObjectRequestID(i), ids,
-                                                                              false);
+                                                                              LOOKUP_STATE.CLIENT);
       objectRequestThreadList.add(objectRequestThread);
     }
 
@@ -204,7 +205,7 @@ public class ObjectRequestManagerTest extends TestCase {
       assertNotNull(respondToObjectRequestContext);
       numOfRespondedObjects += respondToObjectRequestContext.getObjs().size();
       numOfRequestedObjects += respondToObjectRequestContext.getRequestedObjectIDs().size();
-      assertEquals(false, respondToObjectRequestContext.isServerInitiated());
+      assertEquals(false, respondToObjectRequestContext.getLookupState().isServerInitiated());
       assertEquals(0, respondToObjectRequestContext.getMissingObjectIDs().size());
     }
     assertEquals(objectsToBeRequested, numOfRequestedObjects);
@@ -238,7 +239,7 @@ public class ObjectRequestManagerTest extends TestCase {
       final ClientID clientID = new ClientID(i);
       final ObjectRequestThread objectRequestThread = new ObjectRequestThread(requestBarrier, objectRequestManager,
                                                                               clientID, new ObjectRequestID(i), ids,
-                                                                              false);
+                                                                              LOOKUP_STATE.CLIENT);
       objectRequestThreadList.add(objectRequestThread);
     }
 
@@ -350,7 +351,7 @@ public class ObjectRequestManagerTest extends TestCase {
       final ClientID clientID = new ClientID(i);
       final ObjectRequestThread objectRequestThread = new ObjectRequestThread(requestBarrier, objectRequestManager,
                                                                               clientID, new ObjectRequestID(i), ids,
-                                                                              false);
+                                                                              LOOKUP_STATE.CLIENT);
       objectRequestThreadList.add(objectRequestThread);
     }
 
@@ -452,7 +453,7 @@ public class ObjectRequestManagerTest extends TestCase {
     final ObjectIDSet ids = createObjectIDSet(objectsToBeRequested);
 
     objectRequestManager.requestObjects(new ObjectRequestServerContextImpl(clientID, requestID, ids, Thread
-        .currentThread().getName(), -1, false));
+        .currentThread().getName(), -1, LOOKUP_STATE.CLIENT));
 
     RespondToObjectRequestContext respondToObjectRequestContext = null;
 
@@ -470,7 +471,7 @@ public class ObjectRequestManagerTest extends TestCase {
       numOfRespondedObjects += respondToObjectRequestContext.getObjs().size();
       numOfRequestedObjects += respondToObjectRequestContext.getRequestedObjectIDs().size();
       assertEquals(clientID, respondToObjectRequestContext.getRequestedNodeID());
-      assertEquals(false, respondToObjectRequestContext.isServerInitiated());
+      assertEquals(false, respondToObjectRequestContext.getLookupState().isServerInitiated());
       assertEquals(0, respondToObjectRequestContext.getMissingObjectIDs().size());
     }
     assertEquals(objectsToBeRequested, numOfRequestedObjects);
@@ -494,7 +495,7 @@ public class ObjectRequestManagerTest extends TestCase {
     final ObjectIDSet ids = createObjectIDSet(100);
 
     objectRequestManager.requestObjects(new ObjectRequestServerContextImpl(clientID, requestID, ids, Thread
-        .currentThread().getName(), -1, false));
+        .currentThread().getName(), -1, LOOKUP_STATE.CLIENT));
 
     RespondToObjectRequestContext respondToObjectRequestContext = null;
     try {
@@ -503,12 +504,10 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new AssertionError(e);
     }
 
-    objectRequestManager.sendObjects(respondToObjectRequestContext.getRequestedNodeID(),
-                                     respondToObjectRequestContext.getObjs(),
-                                     respondToObjectRequestContext.getRequestedObjectIDs(),
-                                     respondToObjectRequestContext.getMissingObjectIDs(),
-                                     respondToObjectRequestContext.isServerInitiated(),
-                                     respondToObjectRequestContext.getRequestDepth());
+    objectRequestManager.sendObjects(respondToObjectRequestContext.getRequestedNodeID(), respondToObjectRequestContext
+        .getObjs(), respondToObjectRequestContext.getRequestedObjectIDs(), respondToObjectRequestContext
+        .getMissingObjectIDs(), respondToObjectRequestContext.getLookupState(), respondToObjectRequestContext
+        .getRequestDepth());
 
   }
 
@@ -521,16 +520,16 @@ public class ObjectRequestManagerTest extends TestCase {
     final Sink respondSink = new TestSink();
     final Collection objs = null;
 
-    final LookupContext lookupContext = new LookupContext(clientID, objectRequestID, ids, 0, "Thread-1", false,
-                                                          requestSink, respondSink);
+    final LookupContext lookupContext = new LookupContext(clientID, objectRequestID, ids, 0, "Thread-1",
+                                                          LOOKUP_STATE.CLIENT, requestSink, respondSink);
     assertEquals(lookupContext.getLookupIDs().size(), ids.size());
     assertEquals(0, lookupContext.getMaxRequestDepth());
     assertEquals(clientID, lookupContext.getRequestedNodeID());
     assertEquals(objectRequestID, lookupContext.getRequestID());
     assertEquals("Thread-1", lookupContext.getRequestingThreadName());
-    assertEquals(false, lookupContext.isServerInitiated());
+    assertEquals(false, lookupContext.getLookupState().isServerInitiated());
 
-    final ResponseContext responseContext = new ResponseContext(clientID, objs, ids, missingIds, false, 0);
+    final ResponseContext responseContext = new ResponseContext(clientID, objs, ids, missingIds, LOOKUP_STATE.CLIENT, 0);
     assertEquals(clientID, responseContext.getRequestedNodeID());
   }
 
@@ -615,17 +614,17 @@ public class ObjectRequestManagerTest extends TestCase {
     private final ClientID             clientID;
     private final ObjectRequestID      requestID;
     private final ObjectIDSet          ids;
-    private final boolean              serverInitiated;
+    private final LOOKUP_STATE         lookupState;
     private final CyclicBarrier        barrier;
 
     public ObjectRequestThread(final CyclicBarrier barrier, final ObjectRequestManager objectRequestManager,
                                final ClientID clientID, final ObjectRequestID requestID, final ObjectIDSet ids,
-                               final boolean serverInitiated) {
+                               final LOOKUP_STATE lookupState) {
       this.objectRequestManager = objectRequestManager;
       this.clientID = clientID;
       this.requestID = requestID;
       this.ids = ids;
-      this.serverInitiated = serverInitiated;
+      this.lookupState = lookupState;
       this.barrier = barrier;
     }
 
@@ -636,10 +635,9 @@ public class ObjectRequestManagerTest extends TestCase {
       } catch (final Exception e) {
         throw new AssertionError(e);
       }
-      this.objectRequestManager.requestObjects(new ObjectRequestServerContextImpl(this.clientID, this.requestID,
-                                                                                  this.ids, Thread.currentThread()
-                                                                                      .getName(), -1,
-                                                                                  this.serverInitiated));
+      this.objectRequestManager
+          .requestObjects(new ObjectRequestServerContextImpl(this.clientID, this.requestID, this.ids, Thread
+              .currentThread().getName(), -1, this.lookupState));
     }
   }
 
@@ -675,11 +673,10 @@ public class ObjectRequestManagerTest extends TestCase {
         synchronized (this) {
           System.out.println("in the reponse thread: " + respondToObjectRequestContext);
           this.objectRequestManager.sendObjects(respondToObjectRequestContext.getRequestedNodeID(),
-                                                respondToObjectRequestContext.getObjs(),
-                                                respondToObjectRequestContext.getRequestedObjectIDs(),
-                                                respondToObjectRequestContext.getMissingObjectIDs(),
-                                                respondToObjectRequestContext.isServerInitiated(),
-                                                respondToObjectRequestContext.getRequestDepth());
+                                                respondToObjectRequestContext.getObjs(), respondToObjectRequestContext
+                                                    .getRequestedObjectIDs(), respondToObjectRequestContext
+                                                    .getMissingObjectIDs(), respondToObjectRequestContext
+                                                    .getLookupState(), respondToObjectRequestContext.getRequestDepth());
           if (testReqManObjResMsgIter.hasNext()) {
             final TestRequestManagedObjectResponseMessage message = (TestRequestManagedObjectResponseMessage) testReqManObjResMsgIter
                 .next();
@@ -751,8 +748,7 @@ public class ObjectRequestManagerTest extends TestCase {
 
   private static class TestClientStateManager implements ClientStateManager {
 
-    private final Map<NodeID, Set<ObjectID>> clientStateMap         = new HashMap<NodeID, Set<ObjectID>>();
-    private final Map<NodeID, ObjectIDSet>   clientPrefetchStateMap = new HashMap<NodeID, ObjectIDSet>();
+    private final Map<NodeID, Set<ObjectID>> clientStateMap = new HashMap<NodeID, Set<ObjectID>>();
 
     public void addReference(final NodeID nodeID, final ObjectID objectID) {
       throw new NotImplementedException(TestClientStateManager.class);
@@ -828,22 +824,6 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new ImplementMe();
 
     }
-
-    public void addPrefetchedObjectIDs(NodeID nodeId, ObjectIDSet prefetchedIds) {
-      if (!clientPrefetchStateMap.containsKey(nodeId)) {
-        clientPrefetchStateMap.put(nodeId, new ObjectIDSet());
-      }
-      ObjectIDSet prefetches = clientPrefetchStateMap.get(nodeId);
-      prefetches.addAll(prefetchedIds);
-    }
-
-    public void missingObjectIDs(NodeID clientID, ObjectIDSet missingObjectIDs) {
-      if (clientPrefetchStateMap.containsKey(clientID)) {
-        ObjectIDSet prefetches = clientPrefetchStateMap.get(clientID);
-        prefetches.removeAll(missingObjectIDs);
-      }
-    }
-
   }
 
   /**

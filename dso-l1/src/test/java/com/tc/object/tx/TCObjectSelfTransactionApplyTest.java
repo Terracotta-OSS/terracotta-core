@@ -21,7 +21,6 @@ import com.tc.object.locks.ClientLockManager;
 import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
-import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.object.servermap.localcache.impl.MockSerializedEntry;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.Assert;
@@ -177,10 +176,6 @@ public class TCObjectSelfTransactionApplyTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public Object getByIdFromCache(ObjectID value, ServerMapLocalCache store) {
-      throw new ImplementMe();
-    }
-
     public void initializeTCObjectSelfIfRequired(TCObjectSelf tcoSelf) {
       throw new ImplementMe();
 
@@ -192,11 +187,6 @@ public class TCObjectSelfTransactionApplyTest extends TestCase {
     }
 
     public void removeTCObjectSelf(AbstractLocalCacheStoreValue localStoreValue) {
-      throw new ImplementMe();
-
-    }
-
-    public void removeTCObjectSelf(ServerMapLocalCache serverMapLocalCache, AbstractLocalCacheStoreValue localStoreValue) {
       throw new ImplementMe();
 
     }

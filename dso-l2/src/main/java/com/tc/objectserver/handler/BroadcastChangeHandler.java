@@ -17,6 +17,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
 import com.tc.object.ObjectRequestID;
+import com.tc.object.ObjectRequestServerContext.LOOKUP_STATE;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.msg.BroadcastTransactionMessage;
@@ -85,10 +86,8 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
       final Invalidations invalidateObjectIDs = new Invalidations();
 
       if (!clientID.equals(committerID)) {
-        prunedChanges = this.clientStateManager.createPrunedChangesAndAddObjectIDTo(bcc.getChanges(),
-                                                                                    bcc.getApplyInfo(), clientID,
-                                                                                    lookupObjectIDs,
-                                                                                    invalidateObjectIDs);
+        prunedChanges = this.clientStateManager.createPrunedChangesAndAddObjectIDTo(bcc.getChanges(), bcc
+            .getApplyInfo(), clientID, lookupObjectIDs, invalidateObjectIDs);
       }
 
       if (!invalidateObjectIDs.isEmpty()) {
@@ -116,14 +115,15 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
         if (lookupObjectIDs.size() > 0) {
           this.managedObjectRequestSink.add(new ObjectRequestServerContextImpl(clientID, ObjectRequestID.NULL_ID,
                                                                                lookupObjectIDs, Thread.currentThread()
-                                                                                   .getName(), -1, true));
+                                                                                   .getName(), -1,
+                                                                               LOOKUP_STATE.SERVER_INITIATED));
         }
         final DmiDescriptor[] dmi = (includeDmi) ? prunedDmis : DmiDescriptor.EMPTY_ARRAY;
         final BroadcastTransactionMessage responseMessage = (BroadcastTransactionMessage) client
             .createMessage(TCMessageType.BROADCAST_TRANSACTION_MESSAGE);
         responseMessage.initialize(prunedChanges, bcc.getSerializer(), bcc.getLockIDs(), getNextChangeIDFor(clientID),
-                                   txnID, committerID, bcc.getGlobalTransactionID(), bcc.getTransactionType(),
-                                   bcc.getLowGlobalTransactionIDWatermark(), notifiedWaiters, newRoots, dmi);
+                                   txnID, committerID, bcc.getGlobalTransactionID(), bcc.getTransactionType(), bcc
+                                       .getLowGlobalTransactionIDWatermark(), notifiedWaiters, newRoots, dmi);
 
         responseMessage.send();
 

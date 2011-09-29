@@ -6,6 +6,7 @@ package com.tc.objectserver.context;
 
 import com.tc.async.api.EventContext;
 import com.tc.net.ClientID;
+import com.tc.object.ObjectRequestServerContext.LOOKUP_STATE;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
@@ -20,7 +21,7 @@ public interface RespondToObjectRequestContext extends EventContext {
 
   public ObjectIDSet getMissingObjectIDs();
 
-  public boolean isServerInitiated();
+  public LOOKUP_STATE getLookupState();
 
   public int getRequestDepth();
 }

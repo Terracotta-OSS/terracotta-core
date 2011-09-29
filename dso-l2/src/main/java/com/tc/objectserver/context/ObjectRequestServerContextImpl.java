@@ -18,17 +18,17 @@ public class ObjectRequestServerContextImpl implements ObjectRequestServerContex
   private final SortedSet<ObjectID> lookupIDs;
   private final String              requestingThreadName;
   private final int                 requestDepth;
-  private final boolean             serverInitiated;
+  private final LOOKUP_STATE        lookupState;
 
   public ObjectRequestServerContextImpl(final ClientID requestNodeID, final ObjectRequestID objectRequestID,
                                         final SortedSet<ObjectID> lookupObjectIDs, final String requestingThreadName,
-                                        final int requestDepth, final boolean serverInitiated) {
+                                        final int requestDepth, final LOOKUP_STATE lookupState) {
     this.requestDepth = requestDepth;
     this.requestedNodeID = requestNodeID;
     this.objectRequestID = objectRequestID;
     this.lookupIDs = lookupObjectIDs;
     this.requestingThreadName = requestingThreadName;
-    this.serverInitiated = serverInitiated;
+    this.lookupState = lookupState;
   }
 
   /**
@@ -54,8 +54,8 @@ public class ObjectRequestServerContextImpl implements ObjectRequestServerContex
     return this.requestingThreadName;
   }
 
-  public boolean isServerInitiated() {
-    return this.serverInitiated;
+  public LOOKUP_STATE getLookupState() {
+    return this.lookupState;
   }
 
   public Object getKey() {

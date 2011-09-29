@@ -7,6 +7,7 @@ package com.tc.objectserver.impl;
 import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
 import com.tc.object.ObjectRequestServerContext;
+import com.tc.object.ObjectRequestServerContext.LOOKUP_STATE;
 import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.text.PrettyPrinter;
@@ -30,7 +31,7 @@ public class TestObjectRequestManager implements ObjectRequestManager {
   }
 
   public void sendObjects(ClientID requestedNodeID, Collection objs, ObjectIDSet requestedObjectIDs,
-                          ObjectIDSet missingObjectIDs, boolean isServerInitiated, int maxRequestDepth) {
+                          ObjectIDSet missingObjectIDs, LOOKUP_STATE lookupState, int maxRequestDepth) {
     // not implemented
   }
 

@@ -627,8 +627,8 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
       return "TestThreadDummy";
     }
 
-    public boolean isServerInitiated() {
-      return false;
+    public LOOKUP_STATE getLookupState() {
+      return LOOKUP_STATE.CLIENT;
     }
 
     public ClientID getClientID() {

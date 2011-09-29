@@ -11,27 +11,44 @@ import static org.mockito.Mockito.when;
 
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
+import org.mockito.Mockito;
 
+import com.tc.async.api.AddPredicate;
+import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
+import com.tc.exception.ImplementMe;
+import com.tc.invalidation.Invalidations;
 import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
 import com.tc.object.ServerMapGetValueRequest;
 import com.tc.object.ServerMapGetValueResponse;
 import com.tc.object.ServerMapRequestID;
+import com.tc.object.ObjectRequestServerContext.LOOKUP_STATE;
+import com.tc.object.dna.api.DNA;
 import com.tc.object.msg.GetValueServerMapResponseMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.objectserver.api.ObjectManager;
+import com.tc.objectserver.context.ObjectRequestServerContextImpl;
 import com.tc.objectserver.context.ServerMapRequestContext;
 import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.objectserver.l1.api.ClientStateManager;
+import com.tc.objectserver.l1.api.ObjectReferenceAddListener;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ConcurrentDistributedServerMapManagedObjectState;
+import com.tc.stats.Stats;
+import com.tc.util.Assert;
+import com.tc.util.ObjectIDSet;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -197,4 +214,168 @@ public class ServerMapRequestManagerTest extends TestCase {
 
   }
 
+  public void testPrefetch() throws Exception {
+    final ObjectManager objManager = mock(ObjectManager.class);
+    final ClientID clientID = new ClientID(0);
+    final ServerMapRequestID requestID1 = new ServerMapRequestID(0);
+    final ObjectID mapID = new ObjectID(1);
+    final Object portableKey1 = "key1";
+    final ObjectID portableValue1ObjID = new ObjectID(1001);
+    HashMap map = new HashMap();
+    map.put(portableKey1, portableValue1ObjID);
+
+    final Sink respondToServerMapSink = mock(Sink.class);
+    final TestSink managedObjectRequestSink = new TestSink();
+    final DSOChannelManager channelManager = mock(DSOChannelManager.class);
+    TestClientStateManager clientStateManager = new TestClientStateManager();
+    final ServerMapRequestManagerImpl serverMapRequestManager = new ServerMapRequestManagerImpl(
+                                                                                                objManager,
+                                                                                                channelManager,
+                                                                                                respondToServerMapSink,
+                                                                                                managedObjectRequestSink,
+                                                                                                clientStateManager);
+    ServerMapGetValueRequest mapGetValueRequest = new ServerMapGetValueRequest(requestID1, Collections
+        .singleton(portableKey1));
+    serverMapRequestManager.requestValues(clientID, mapID, Collections.singletonList(mapGetValueRequest));
+
+    ConcurrentDistributedServerMapManagedObjectState managedObjectState = new TestCDSMManagedObjectState(0, map);
+    ManagedObject managedObject = Mockito.mock(ManagedObject.class);
+    Mockito.when(managedObject.getManagedObjectState()).thenReturn(managedObjectState);
+    serverMapRequestManager.sendResponseFor(mapID, managedObject);
+
+    ObjectRequestServerContextImpl context = (ObjectRequestServerContextImpl) managedObjectRequestSink.lastAdded;
+    Assert.assertEquals(LOOKUP_STATE.SERVER_INITIATED_FORCED, context.getLookupState());
+    Assert.assertTrue(clientStateManager.set.contains(portableValue1ObjID));
+  }
+
+  public class TestClientStateManager implements ClientStateManager {
+    private final Set<ObjectID> set = new ObjectIDSet();
+
+    public Set<ObjectID> addAllReferencedIdsTo(Set<ObjectID> rescueIds) {
+      return null;
+    }
+
+    public void addReference(NodeID nodeID, ObjectID objectID) {
+      throw new ImplementMe();
+    }
+
+    public Set<ObjectID> addReferences(NodeID nodeID, Set<ObjectID> oids) {
+      set.addAll(oids);
+      return oids;
+    }
+
+    public List<DNA> createPrunedChangesAndAddObjectIDTo(Collection<DNA> changes, ApplyTransactionInfo references,
+                                                         NodeID clientID, Set<ObjectID> objectIDs,
+                                                         Invalidations invalidationsForClient) {
+      throw new ImplementMe();
+    }
+
+    public Set<NodeID> getConnectedClientIDs() {
+      throw new ImplementMe();
+    }
+
+    public int getReferenceCount(NodeID nodeID) {
+      throw new ImplementMe();
+    }
+
+    public boolean hasReference(NodeID nodeID, ObjectID objectID) {
+      throw new ImplementMe();
+    }
+
+    public void registerObjectReferenceAddListener(ObjectReferenceAddListener listener) {
+      throw new ImplementMe();
+
+    }
+
+    public void removeReferencedFrom(NodeID nodeID, Set<ObjectID> secondPass) {
+      throw new ImplementMe();
+
+    }
+
+    public void removeReferences(NodeID nodeID, Set<ObjectID> removed, Set<ObjectID> requested) {
+      throw new ImplementMe();
+
+    }
+
+    public void shutdownNode(NodeID deadNode) {
+      throw new ImplementMe();
+
+    }
+
+    public boolean startupNode(NodeID nodeID) {
+      throw new ImplementMe();
+    }
+
+    public void unregisterObjectReferenceAddListener(ObjectReferenceAddListener listener) {
+      throw new ImplementMe();
+
+    }
+
+  }
+
+  private static class TestCDSMManagedObjectState extends ConcurrentDistributedServerMapManagedObjectState {
+
+    protected TestCDSMManagedObjectState(long classId, Map map) {
+      super(classId, map);
+    }
+
+  }
+
+  private static class TestSink implements Sink {
+    private Object lastAdded;
+
+    public void add(EventContext context) {
+      lastAdded = context;
+    }
+
+    public boolean addLossy(EventContext context) {
+      throw new ImplementMe();
+    }
+
+    public void addMany(Collection contexts) {
+      throw new ImplementMe();
+
+    }
+
+    public void clear() {
+      throw new ImplementMe();
+
+    }
+
+    public AddPredicate getPredicate() {
+      throw new ImplementMe();
+    }
+
+    public void setAddPredicate(AddPredicate predicate) {
+      throw new ImplementMe();
+
+    }
+
+    public int size() {
+      throw new ImplementMe();
+    }
+
+    public void enableStatsCollection(boolean enable) {
+      throw new ImplementMe();
+
+    }
+
+    public Stats getStats(long frequency) {
+      throw new ImplementMe();
+    }
+
+    public Stats getStatsAndReset(long frequency) {
+      throw new ImplementMe();
+    }
+
+    public boolean isStatsCollectionEnabled() {
+      throw new ImplementMe();
+    }
+
+    public void resetStats() {
+      throw new ImplementMe();
+
+    }
+
+  }
 }

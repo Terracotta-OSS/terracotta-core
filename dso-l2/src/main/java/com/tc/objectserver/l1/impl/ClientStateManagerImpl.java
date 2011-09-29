@@ -89,39 +89,10 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     for (ObjectID mapID : mapIDs) {
       ObjectIDSet invalidatedOids = allInvalidations.getObjectIDSetForMapId(mapID);
       for (ObjectID objectID : invalidatedOids) {
-        if (clientState.containsReference(objectID) || clientState.isPrefetchInProgress(objectID)) {
+        if (clientState.containsReference(objectID)) {
           invalidationsForClient.add(mapID, objectID);
         }
       }
-    }
-  }
-
-  public void addPrefetchedObjectIDs(NodeID nodeId, ObjectIDSet prefetchedIds) {
-    final ClientStateImpl c = getClientState(nodeId);
-    if (c != null) {
-      c.lock();
-      try {
-        // Add it to the prefetched ObjectID
-        c.addPrefetchedObjectIDs(prefetchedIds);
-      } finally {
-        c.unlock();
-      }
-    } else {
-      this.logger.warn(": addReference : Client state is NULL (probably due to disconnect) : " + nodeId);
-    }
-  }
-
-  public void missingObjectIDs(NodeID nodeId, ObjectIDSet missingObjectIDs) {
-    final ClientStateImpl c = getClientState(nodeId);
-    if (c != null) {
-      c.lock();
-      try {
-        c.removePrefetched(missingObjectIDs);
-      } finally {
-        c.unlock();
-      }
-    } else {
-      this.logger.warn(": addReference : Client state is NULL (probably due to disconnect) : " + nodeId);
     }
   }
 
@@ -236,9 +207,6 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     }
     c.lock();
     try {
-      // Just remove everything from prefetched ...
-      c.removePrefetched(oids);
-
       final Set<ObjectID> refs = c.getReferences();
       if (refs.isEmpty()) {
         refs.addAll(oids);
@@ -308,9 +276,8 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
 
   private static class ClientStateImpl implements PrettyPrintable, ClientState {
     private final NodeID        nodeID;
-    private final Set<ObjectID> managed    = new ObjectIDSet();
-    private final Set<ObjectID> prefetched = new ObjectIDSet();
-    private final ReentrantLock lock       = new ReentrantLock();
+    private final Set<ObjectID> managed = new ObjectIDSet();
+    private final ReentrantLock lock    = new ReentrantLock();
 
     public ClientStateImpl(final NodeID nodeID) {
       this.nodeID = nodeID;
@@ -322,20 +289,6 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
 
     public void unlock() {
       this.lock.unlock();
-    }
-
-    public boolean isPrefetchInProgress(ObjectID objectID) {
-      return this.prefetched.contains(objectID);
-    }
-
-    public void addPrefetchedObjectIDs(ObjectIDSet prefetchedIds) {
-      for (ObjectID oid : prefetchedIds) {
-        prefetched.add(oid);
-      }
-    }
-
-    public void removePrefetched(Set<ObjectID> oids) {
-      prefetched.removeAll(oids);
     }
 
     public void removeReferencedObjectIDsFrom(final Set<ObjectID> lookupObjectIDs) {

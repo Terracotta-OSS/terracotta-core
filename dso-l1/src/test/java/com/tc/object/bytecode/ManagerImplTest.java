@@ -360,9 +360,5 @@ public class ManagerImplTest extends BaseDSOTestCase {
 
     }
 
-    public void removedTCObjectSelfFromStore(ObjectID objectID) {
-      throw new ImplementMe();
-
-    }
   }
 }

@@ -6,6 +6,7 @@ package com.tc.objectserver.api;
 
 import com.tc.net.ClientID;
 import com.tc.object.ObjectRequestServerContext;
+import com.tc.object.ObjectRequestServerContext.LOOKUP_STATE;
 import com.tc.text.PrettyPrintable;
 import com.tc.util.ObjectIDSet;
 
@@ -16,6 +17,6 @@ public interface ObjectRequestManager extends ObjectManagerMBean, PrettyPrintabl
   public void requestObjects(ObjectRequestServerContext requestContext);
 
   public void sendObjects(ClientID requestedNodeID, Collection objs, ObjectIDSet requestedObjectIDs,
-                          ObjectIDSet missingObjectIDs, boolean isServerInitiated, int maxRequestDepth);
+                          ObjectIDSet missingObjectIDs, LOOKUP_STATE lookupState, int maxRequestDepth);
 
 }

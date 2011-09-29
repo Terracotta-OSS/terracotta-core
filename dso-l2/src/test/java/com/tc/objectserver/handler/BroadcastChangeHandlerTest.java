@@ -690,17 +690,6 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
 
     }
-
-    public void addPrefetchedObjectIDs(NodeID nodeId, ObjectIDSet prefetchedIds) {
-      throw new ImplementMe();
-
-    }
-
-    public void missingObjectIDs(NodeID clientID, ObjectIDSet missingObjectIDs) {
-      throw new ImplementMe();
-
-    }
-
   }
 
   private static class TestServerTransactionManager implements ServerTransactionManager {
