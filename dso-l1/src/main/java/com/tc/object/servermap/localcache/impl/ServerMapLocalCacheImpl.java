@@ -7,6 +7,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
+import com.tc.object.TCObjectSelf;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.locks.LockID;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
@@ -66,8 +67,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                                                                                                .getLogger(ServerMapLocalCacheImpl.class);
   private static final long                          SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS = TCPropertiesImpl
                                                                                                                .getProperties()
-                                                                                                               .getLong(
-                                                                                                                        TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
+                                                                                                               .getLong(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
 
   private static final LocalStoreKeySetFilter        IGNORE_ID_FILTER                                      = new IgnoreIdsFilter();
   private static final Object                        NULL_VALUE                                            = new Object();
@@ -257,8 +257,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(
-                                                                                            final Object key,
+  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
                                                                                             AbstractLocalCacheStoreValue value,
                                                                                             MapOperationType mapOperation) {
     if (!mapOperation.isMutateOperation()) {
@@ -361,15 +360,26 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         .unmodifiableSet(new LocalStoreKeySet(localStore.getKeySet(), localStore.size(), IGNORE_ID_FILTER));
   }
 
-  public Object getValue(final Object key) {
-    return this.localStore.get(key);
+  public Object getValue(final Object keyOrId) {
+    return getFromLocalCacheStore(keyOrId);
+  }
+
+  private Object getFromLocalCacheStore(final Object keyOrId) {
+    Object rv = this.localStore.get(keyOrId);
+    if (rv instanceof AbstractLocalCacheStoreValue) {
+      AbstractLocalCacheStoreValue localValue = (AbstractLocalCacheStoreValue) rv;
+      if (localValue.getValueObject() instanceof TCObjectSelf) {
+        this.l1LocalCacheManager.initializeTCObjectSelfIfRequired((TCObjectSelf) localValue.getValueObject());
+      }
+    }
+    return rv;
   }
 
   /**
    * Returned value may be coherent or incoherent or null
    */
   public AbstractLocalCacheStoreValue getLocalValue(final Object key) {
-    AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) this.localStore.get(key);
+    AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) getFromLocalCacheStore(key);
     if (value != null && value.isIncoherentValue() && isIncoherentTooLong(value)) {
       // if incoherent and been incoherent too long, remove from cache/map
       removeFromLocalCache(key, value);
@@ -382,7 +392,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
    * Returned value is always coherent or null.
    */
   public AbstractLocalCacheStoreValue getCoherentLocalValue(final Object key) {
-    final AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) this.localStore.get(key);
+    final AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) getFromLocalCacheStore(key);
     if (value != null && value.isIncoherentValue()) {
       // don't return incoherent items from here
       removeFromLocalCache(key, value);
@@ -403,10 +413,10 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   public boolean removeEntriesForObjectId(ObjectID objectId) {
     if (!isStoreInitialized()) { return true; }
 
-    Object key = this.localStore.get(objectId);
+    Object key = getFromLocalCacheStore(objectId);
     if (key == null) { return false; }
 
-    Object value = localStore.get(key);
+    Object value = getFromLocalCacheStore(key);
     if (value == null) { return false; }
 
     localStore.remove(objectId, RemoveType.NO_SIZE_DECREMENT);
@@ -480,13 +490,11 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  public void transactionComplete(
-                                  L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
+  public void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     l1LocalCacheManager.transactionComplete(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 
-  public void postTransactionCallback(
-                                      Object key,
+  public void postTransactionCallback(Object key,
                                       AbstractLocalCacheStoreValue value,
                                       L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     final ObjectID objectId = value.getValueObjectId();
