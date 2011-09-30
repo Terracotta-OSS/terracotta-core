@@ -3,7 +3,6 @@
  */
 package com.tc.object;
 
-
 enum LookupState implements LookupStateTransition {
 
   UNINITALIZED {
@@ -61,6 +60,11 @@ enum LookupState implements LookupStateTransition {
     @Override
     public LookupState makeUnPending() {
       return LOOKUP_REQUEST;
+    }
+
+    @Override
+    public LookupState makeMissingObject() {
+      return MISSING_OBJECT_ID;
     }
   },
 
