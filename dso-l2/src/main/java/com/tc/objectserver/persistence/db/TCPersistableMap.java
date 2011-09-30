@@ -16,7 +16,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-class TCPersistableMap implements Map, PersistableCollection {
+class TCPersistableMap implements Map, TCDestroyable, PersistableCollection {
 
   // This is a carefully selected ObjectID that will never be assigned to any object.
   // TODO:: Move this Object ID to ObjectID class
@@ -393,6 +393,15 @@ class TCPersistableMap implements Map, PersistableCollection {
     @Override
     protected Object getNext() {
       return this.next;
+    }
+  }
+
+  public void destroy() {
+    if (delta instanceof TCDestroyable) {
+      ((TCDestroyable) this.delta).destroy();
+    }
+    if (map instanceof TCDestroyable) {
+      ((TCDestroyable) this.map).destroy();
     }
   }
 }

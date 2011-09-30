@@ -6,13 +6,14 @@ package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
-import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.persistence.db.PersistableCollection;
+import com.tc.objectserver.persistence.db.TCDestroyable;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -24,7 +25,7 @@ import java.util.Set;
 /**
  * ManagedObjectState for sets.
  */
-public class SetManagedObjectState extends LogicalManagedObjectState implements PersistableObjectState {
+public class SetManagedObjectState extends LogicalManagedObjectState implements PersistableObjectState, TCDestroyable {
   protected Set references;
 
   SetManagedObjectState(long classID, Set set) {
@@ -149,5 +150,11 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
     int result = 1;
     result = prime * result + ((references == null) ? 0 : references.hashCode());
     return result;
+  }
+
+  public void destroy() {
+    if (this.references instanceof TCDestroyable) {
+      ((TCDestroyable) this.references).destroy();
+    }
   }
 }

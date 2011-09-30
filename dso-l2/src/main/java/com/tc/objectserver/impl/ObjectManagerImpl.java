@@ -5,6 +5,7 @@
 package com.tc.objectserver.impl;
 
 import com.tc.async.api.Sink;
+import com.tc.l2.handler.DestroyableMapHandler.DestroyableMapContext;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
@@ -24,6 +25,7 @@ import com.tc.objectserver.context.ManagedObjectFlushingContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.context.PeriodicDGCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.impl.NullGarbageCollector;
 import com.tc.objectserver.l1.api.ClientStateManager;
@@ -33,6 +35,7 @@ import com.tc.objectserver.managedobject.ManagedObjectTraverser;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
+import com.tc.objectserver.persistence.db.TCDestroyable;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.tx.NullTransactionalObjectManager;
@@ -97,7 +100,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private static final int                                      MAX_COMMIT_SIZE = TCPropertiesImpl
                                                                                     .getProperties()
-                                                                                    .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_MAXOBJECTS_TO_COMMIT);
+                                                                                    .getInt(
+                                                                                            TCPropertiesConsts.L2_OBJECTMANAGER_MAXOBJECTS_TO_COMMIT);
 
   private final ManagedObjectStore                              objectStore;
   private final ConcurrentMap<ObjectID, ManagedObjectReference> references;
@@ -124,11 +128,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private final ObjectStatsRecorder                             objectStatsRecorder;
   private final NoReferencesIDStore                             noReferencesIDStore;
+  private final Sink                                            destroyableMapSink;
 
   public ObjectManagerImpl(final ObjectManagerConfig config, final ClientStateManager stateManager,
                            final ManagedObjectStore objectStore, final EvictionPolicy cache,
                            final PersistenceTransactionProvider persistenceTransactionProvider, final Sink faultSink,
-                           final Sink flushSink, final ObjectStatsRecorder objectStatsRecorder) {
+                           final Sink flushSink, final ObjectStatsRecorder objectStatsRecorder, Sink destroyableMapSink) {
     this.faultSink = faultSink;
     this.flushSink = flushSink;
     Assert.assertNotNull(objectStore);
@@ -140,6 +145,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     this.references = new ConcurrentHashMap<ObjectID, ManagedObjectReference>(16384, 0.75f, 256);
     this.objectStatsRecorder = objectStatsRecorder;
     this.noReferencesIDStore = new NoReferencesIDStoreImpl(config.doGC());
+    this.destroyableMapSink = destroyableMapSink;
   }
 
   public void setTransactionalObjectManager(final TransactionalObjectManager txnObjectManager) {
@@ -450,7 +456,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
               toFlush.add(removalCandidate.getObject());
             } else {
               // paranoid mode or the object is not dirty - just remove from reference
-              final ManagedObjectReference inMap = this.references.remove(id);
+              final ManagedObjectReference inMap = this.removeReferenceAndDestroyIfNecessary(id);
               if (inMap != removalCandidate) { throw new AssertionError("Not the same element : removalCandidate : "
                                                                         + removalCandidate + " inMap : " + inMap); }
               removedObjects.add(removalCandidate);
@@ -477,7 +483,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     for (final Iterator i = managedObjects.iterator(); i.hasNext();) {
       final ManagedObject mo = (ManagedObject) i.next();
       final ObjectID oid = mo.getID();
-      final Object o = this.references.remove(oid);
+      final Object o = this.removeReferenceAndDestroyIfNecessary(oid);
       if (o == null) {
         logger.warn("Object ID : " + mo.getID() + " was mapped to null but should have been mapped to a reference of  "
                     + mo);
@@ -551,8 +557,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     if (available) {
       final ObjectIDSet processLater = addReachableObjectsIfNecessary(nodeID, maxReachableObjects, objects,
                                                                       newObjectIDs);
-      final ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(objects, processLater,
-                                                                                    context.getMissingObjectIDs());
+      final ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(objects, processLater, context
+          .getMissingObjectIDs());
       context.setResults(results);
       return LookupState.AVAILABLE;
     } else {
@@ -690,7 +696,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         ManagedObjectReference ref = this.references.get(id);
         if (ref != null) {
           if (markReferenced(ref)) {
-            references.remove(id);
+            removeReferenceAndDestroyIfNecessary(id);
             unmarkReferenced(ref);
             makeUnBlocked(id);
 
@@ -830,10 +836,21 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         logger.info(mor + " is DIRTY but isRemoveOnRelease is true, resetting it");
         mor.setRemoveOnRelease(false);
       } else {
-        final Object removed = this.references.remove(mor.getObjectID());
+        final Object removed = this.removeReferenceAndDestroyIfNecessary(mor.getObjectID());
         if (removed == null) { throw new AssertionError("Removed is null : " + mor); }
       }
     }
+  }
+
+  private ManagedObjectReference removeReferenceAndDestroyIfNecessary(ObjectID oid) {
+    final ManagedObjectReference removed = this.references.remove(oid);
+    if (removed != null && removed.getObject() != null) {
+      ManagedObjectState removedManagedObjectState = removed.getObject().getManagedObjectState();
+      if (removedManagedObjectState instanceof TCDestroyable) {
+        destroyableMapSink.add(new DestroyableMapContext((TCDestroyable) removedManagedObjectState));
+      }
+    }
+    return removed;
   }
 
   private void checkAndNotifyGC() {

@@ -15,7 +15,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
-class TCPersistableSet extends AbstractSet implements PersistableCollection {
+class TCPersistableSet extends AbstractSet implements PersistableCollection, TCDestroyable {
 
   private final TCPersistableMap map;
   private static final Boolean   VALUE = true;
@@ -98,12 +98,16 @@ class TCPersistableSet extends AbstractSet implements PersistableCollection {
   }
 
   public int commit(final TCCollectionsSerializer serializer, final PersistenceTransaction tx, final TCMapsDatabase db)
-  throws IOException, TCDatabaseException {
+      throws IOException, TCDatabaseException {
     return this.map.commit(serializer, tx, db);
   }
 
   public void load(final TCCollectionsSerializer serializer, final PersistenceTransaction tx, final TCMapsDatabase db)
-  throws TCDatabaseException {
+      throws TCDatabaseException {
     this.map.load(serializer, tx, db);
+  }
+
+  public void destroy() {
+    this.map.destroy();
   }
 }

@@ -16,6 +16,7 @@ import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.MapEntryFacade;
 import com.tc.objectserver.mgmt.MapEntryFacadeImpl;
 import com.tc.objectserver.persistence.db.PersistableCollection;
+import com.tc.objectserver.persistence.db.TCDestroyable;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 
@@ -31,7 +32,8 @@ import java.util.Map.Entry;
 /**
  * state for maps
  */
-public class MapManagedObjectState extends LogicalManagedObjectState implements PrettyPrintable, PersistableObjectState {
+public class MapManagedObjectState extends LogicalManagedObjectState implements PrettyPrintable,
+    PersistableObjectState, TCDestroyable {
   protected Map references;
 
   protected MapManagedObjectState(final long classID, final Map map) {
@@ -229,5 +231,11 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     int result = 1;
     result = prime * result + ((references == null) ? 0 : references.hashCode());
     return result;
+  }
+
+  public void destroy() {
+    if (this.references instanceof TCDestroyable) {
+      ((TCDestroyable) this.references).destroy();
+    }
   }
 }

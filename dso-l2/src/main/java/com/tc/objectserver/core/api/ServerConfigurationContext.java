@@ -92,6 +92,7 @@ public interface ServerConfigurationContext extends ConfigurationContext {
 
   public static final String INDEXES_SYNC_REQUEST_STAGE                         = "indexes_sync_request_stage";
   public static final String INDEXES_SYNC_STAGE                                 = "indexes_sync_stage";
+  public static final String DESTROYABLE_MAP_STAGE                              = "destroyable_map_stage";
 
   public L2Coordinator getL2Coordinator();
 

@@ -39,6 +39,7 @@ import com.tc.l2.ha.L2HADisabledCooridinator;
 import com.tc.l2.ha.StripeIDStateManagerImpl;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.ha.ZapNodeProcessorWeightGeneratorFactory;
+import com.tc.l2.handler.DestroyableMapHandler;
 import com.tc.l2.objectserver.L2IndexStateManager;
 import com.tc.l2.objectserver.L2ObjectStateManager;
 import com.tc.l2.objectserver.L2PassiveSyncStateManager;
@@ -768,10 +769,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.garbageCollectionManager = new GarbageCollectionManagerImpl(garbageCollectStage.getSink());
 
+    final Stage destroyableMapStage = stageManager.createStage(ServerConfigurationContext.DESTROYABLE_MAP_STAGE,
+                                                               new DestroyableMapHandler(), 1, -1);
     this.objectManager = new ObjectManagerImpl(objectManagerConfig, this.clientStateManager, this.objectStore,
                                                swapCache, dbenv.getPersistenceTransactionProvider(),
                                                faultManagedObjectStage.getSink(), flushManagedObjectStage.getSink(),
-                                               this.objectStatsRecorder);
+                                               this.objectStatsRecorder, destroyableMapStage.getSink());
 
     this.objectManager.setStatsListener(objMgrStats);
     this.gcStatsEventPublisher = new GCStatsEventPublisher();
