@@ -42,14 +42,14 @@ public class BoundedConcurrentHashMapTest extends TCTestCase {
     Thread t = new Thread(runnable);
     t.start();
 
-    ThreadUtil.reallySleep(1000);
+    ThreadUtil.reallySleep(10000);
     Assert.assertTrue(t.isAlive());
 
     for (int i = 0; i < 64; i++) {
       Integer k = boundedConcurrentHashMap.remove("key" + i);
       Assert.assertTrue(k.intValue() == i);
       System.err.println("Remove success " + i);
-      ThreadUtil.reallySleep(1);
+      ThreadUtil.reallySleep(100);
     }
 
     Assert.assertEquals(0, boundedConcurrentHashMap.size());
