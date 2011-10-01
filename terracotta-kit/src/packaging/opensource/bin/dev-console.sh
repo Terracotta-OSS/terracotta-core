@@ -24,7 +24,7 @@ fi
 
 CP=$TC_INSTALL_DIR/lib/tc.jar
 
-JAVA_OPTS="-Xmx128m -Dtc.install-root=${TC_INSTALL_DIR} $JAVA_OPTS"
+JAVA_OPTS="-Xmx256m -Dtc.install-root=${TC_INSTALL_DIR} $JAVA_OPTS"
 exec "${JAVA_HOME}/bin/java" \
   ${JAVA_OPTS} \
   -cp "$CP" \
