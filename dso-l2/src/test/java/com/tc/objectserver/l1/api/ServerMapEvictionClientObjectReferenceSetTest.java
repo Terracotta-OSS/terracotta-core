@@ -28,7 +28,7 @@ public class ServerMapEvictionClientObjectReferenceSetTest extends TCTestCase {
     TCPropertiesImpl.getProperties()
         .setProperty(TCPropertiesConsts.L2_SERVERMAP_EVICTION_CLIENTOBJECT_REFERENCES_REFRESH_INTERVAL, "1000");
 
-    final AtomicLong currentObjectID = new AtomicLong(0);
+    final AtomicLong currentObjectID = new AtomicLong(-1);
     final AtomicBoolean stop = new AtomicBoolean(false);
     final TCLogger logger = TCLogging.getLogger(ServerMapEvictionClientObjectReferenceSetTest.class);
     final ClientStateManagerImpl clientStateManager = new ClientStateManagerImpl(logger);
