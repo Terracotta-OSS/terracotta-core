@@ -16,7 +16,6 @@ import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.LocalCacheStoreEventualValue;
 import com.tc.object.servermap.localcache.LocalCacheStoreIncoherentValue;
 import com.tc.object.servermap.localcache.LocalCacheStoreStrongValue;
-import com.tc.object.servermap.localcache.PutType;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.util.ObjectIDSet;
 
@@ -51,7 +50,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
         if (key != null) {
           AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) cache.getMappingUnlocked(key);
           if (value != null && value.getValueObjectId().equals(oid)) {
-            cache.getInternalStore().replace(key, value, createNewValue(value, self), PutType.NORMAL);
+            cache.getInternalStore().replace(key, value, createNewValue(value, self));
           }
         }
       }
@@ -97,7 +96,8 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
             continue;
           }
 
-          AbstractLocalCacheStoreValue localCacheStoreValue = (AbstractLocalCacheStoreValue) localCache.getMappingUnlocked(key);
+          AbstractLocalCacheStoreValue localCacheStoreValue = (AbstractLocalCacheStoreValue) localCache
+              .getMappingUnlocked(key);
           rv = localCacheStoreValue == null ? null : localCacheStoreValue.getValueObject();
           initTCObjectSelfIfRequired(rv);
 

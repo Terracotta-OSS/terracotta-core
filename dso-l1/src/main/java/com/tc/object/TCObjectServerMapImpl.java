@@ -30,8 +30,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObject, TCObjectServerMap<L> {
@@ -240,8 +240,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     Object value = getValueForKeyFromServer(map, key, false);
 
     if (value != null) {
-      addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, value, objectManager
-          .lookupExistingObjectID(value), MapOperationType.GET);
+      addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, value,
+                            objectManager.lookupExistingObjectID(value), MapOperationType.GET);
     }
     return value;
   }
@@ -339,8 +339,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       boolean notifyServerForRemove = false;
       if (value instanceof TCObjectSelf) {
         if (localCacheEnabled || mapOperation.isMutateOperation()) {
-          if (!this.tcObjectSelfStore.addTCObjectSelf(serverMapLocalStore, localCacheValue, value, mapOperation
-              .isMutateOperation())) { return; }
+          if (!this.tcObjectSelfStore.addTCObjectSelf(serverMapLocalStore, localCacheValue, value,
+                                                      mapOperation.isMutateOperation())) { return; }
         } else {
           notifyServerForRemove = true;
         }
@@ -684,12 +684,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   public boolean containsKeyLocalOnHeap(Object key) {
-    if (this.cache.containsKeyOnHeap(key)) {
-      AbstractLocalCacheStoreValue cacheStoreValue = this.cache.getLocalValue(key);
-      if (cacheStoreValue == null) { return false; }
-      return cacheStoreValue.isValueObjectOnHeap(serverMapLocalStore);
-    }
-    return false;
+    return this.cache.containsKeyOnHeap(key);
   }
 
   public boolean containsKeyLocalOffHeap(Object key) {

@@ -17,7 +17,7 @@ public interface L1ServerMapLocalCacheStore<K, V> {
    * 
    * @return the old value if present
    */
-  public V put(K key, V value, PutType putType) throws LocalCacheStoreFullException;
+  public V put(K key, V value) throws LocalCacheStoreFullException;
 
   /**
    * @return the value if present
@@ -29,14 +29,14 @@ public interface L1ServerMapLocalCacheStore<K, V> {
    * 
    * @return the old value if present
    */
-  public V remove(K key, RemoveType removeType);
+  public V remove(K key);
 
   /**
    * Removes an entry in the backing map if the key is actually mapped to the given value<br>
    * 
    * @return the old value if present
    */
-  public Object remove(K key, V value, RemoveType removeType);
+  public Object remove(K key, V value);
 
   /**
    * Add a listener which will get called when <br>
@@ -89,13 +89,6 @@ public interface L1ServerMapLocalCacheStore<K, V> {
   public int offHeapSize();
 
   /**
-   * Unpin entry so that it is eligible for eviction
-   * 
-   * @param value
-   */
-  public void unpinEntry(K key, V value) throws LocalCacheStoreFullException;
-
-  /**
    * Max elements in memory
    */
   public int getMaxElementsInMemory();
@@ -125,6 +118,6 @@ public interface L1ServerMapLocalCacheStore<K, V> {
    */
   public void setMaxBytesLocalHeap(long maxBytesLocalHeap);
 
-  public void replace(K key, V oldValue, V newValue, PutType putType);
+  public void replace(K key, V oldValue, V newValue);
 
 }

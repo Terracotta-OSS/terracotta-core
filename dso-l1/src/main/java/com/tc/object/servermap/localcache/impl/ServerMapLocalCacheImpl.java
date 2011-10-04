@@ -14,8 +14,6 @@ import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.MapOperationType;
-import com.tc.object.servermap.localcache.PutType;
-import com.tc.object.servermap.localcache.RemoveType;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.object.servermap.localcache.ServerMapLocalCacheRemoveCallback;
 import com.tc.object.servermap.localcache.impl.L1ServerMapLocalStoreTransactionCompletionListener.TransactionCompleteOperation;
@@ -65,8 +63,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                                                                                                .getLogger(ServerMapLocalCacheImpl.class);
   private static final long                          SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS = TCPropertiesImpl
                                                                                                                .getProperties()
-                                                                                                               .getLong(
-                                                                                                                        TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
+                                                                                                               .getLong(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
   private static final int                           CONCURRENCY                                           = 256;
 
   private static final LocalStoreKeySetFilter        IGNORE_ID_FILTER                                      = new IgnoreIdsFilter();
@@ -186,7 +183,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         // put a pinned entry for mutate ops, unpinned on txn complete
         this.pendingTransactionEntries.put(valueObjectID, key);
       } else {
-        this.localStore.put(valueObjectID, key, PutType.PINNED_NO_SIZE_INCREMENT);
+        this.localStore.put(valueObjectID, key);
       }
     }
 
@@ -203,7 +200,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
     if (!localCacheValue.isLiteral()) {
       // removing value oid mapping
-      remove(localCacheValue.getValueObjectId(), isRemoveFromInternalStore, RemoveType.NO_SIZE_DECREMENT);
+      remove(localCacheValue.getValueObjectId(), isRemoveFromInternalStore);
     }
 
     return removeLockIDMetaMapping(key, localCacheValue);
@@ -226,8 +223,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return null;
   }
 
-  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(
-                                                                                            final Object key,
+  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
                                                                                             AbstractLocalCacheStoreValue value,
                                                                                             MapOperationType mapOperation) {
     if (!mapOperation.isMutateOperation()) {
@@ -280,7 +276,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     Set<LockID> lockIDs = new HashSet<LockID>();
     for (Object key : keySet) {
       if (!isMetaInfoMapping(key)) {
-        Object value = remove(key, removeFromInternalStore, RemoveType.NORMAL);
+        Object value = remove(key, removeFromInternalStore);
         if (value instanceof AbstractLocalCacheStoreValue) {
           AbstractLocalCacheStoreValue localValue = (AbstractLocalCacheStoreValue) value;
           LockID lockID = handleKeyValueMappingRemoved(key, localValue, true, false);
@@ -344,9 +340,9 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   private void removeFromInternalStore(Object key, AbstractLocalCacheStoreValue value) {
     final Object oldValue;
     if (value == null) {
-      oldValue = localStore.remove(key, RemoveType.NORMAL);
+      oldValue = localStore.remove(key);
     } else {
-      oldValue = localStore.remove(key, value, RemoveType.NORMAL);
+      oldValue = localStore.remove(key, value);
     }
     if (oldValue instanceof AbstractLocalCacheStoreValue) {
       AbstractLocalCacheStoreValue localValue = (AbstractLocalCacheStoreValue) oldValue;
@@ -393,7 +389,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     try {
       AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) localStore.get(key);
       if (value != null && value.getValueObjectId().equals(oid)) {
-        AbstractLocalCacheStoreValue removed = (AbstractLocalCacheStoreValue) localStore.remove(key, RemoveType.NORMAL);
+        AbstractLocalCacheStoreValue removed = (AbstractLocalCacheStoreValue) localStore.remove(key);
         if (removed != null) {
           initiateLockRecall(removeLockIDMetaMapping(key, removed));
         }
@@ -502,9 +498,9 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     lock.writeLock().lock();
 
     try {
-      key = remove(objectId, RemoveType.NO_SIZE_DECREMENT);
+      key = remove(objectId);
       if (key != null) {
-        AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) remove(key, RemoveType.NORMAL);
+        AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) remove(key);
         initiateLockRecall(removeLockIDMetaMapping(key, value));
         remoteRemoveObjectIfPossible(value);
       }
@@ -534,7 +530,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       lock.writeLock().lock();
 
       try {
-        Object value = remove(key, RemoveType.NORMAL);
+        Object value = remove(key);
         remoteRemoveObjectIfPossible((AbstractLocalCacheStoreValue) value);
       } finally {
         lock.writeLock().unlock();
@@ -576,8 +572,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  public void transactionComplete(
-                                  L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
+  public void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     l1LocalCacheManager.transactionComplete(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 
@@ -651,11 +646,11 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       if (old != null) {
         cleanupOldMetaMapping(key, value, old, false);
       } else {
-        old = (AbstractLocalCacheStoreValue) this.localStore.remove(key, RemoveType.NORMAL);
+        old = (AbstractLocalCacheStoreValue) this.localStore.remove(key);
         cleanupOldMetaMapping(key, value, old, true);
       }
     } else {
-      old = (AbstractLocalCacheStoreValue) this.localStore.put(key, value, PutType.NORMAL);
+      old = (AbstractLocalCacheStoreValue) this.localStore.put(key, value);
       cleanupOldMetaMapping(key, value, old, true);
     }
     return old;
@@ -673,17 +668,17 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     remoteRemoveObjectIfPossible(old);
   }
 
-  private Object remove(Object key, RemoveType removeType) {
+  private Object remove(Object key) {
     Object rv = null;
     if ((rv = this.pendingTransactionEntries.remove(key)) == null) {
-      rv = this.localStore.remove(key, removeType);
+      rv = this.localStore.remove(key);
     }
     return rv;
   }
 
-  private Object remove(Object key, boolean fromInternalStore, RemoveType removeType) {
+  private Object remove(Object key, boolean fromInternalStore) {
     if (fromInternalStore) {
-      return this.localStore.remove(key, removeType);
+      return this.localStore.remove(key);
     } else {
       return this.pendingTransactionEntries.remove(key);
     }
