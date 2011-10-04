@@ -116,11 +116,6 @@ public interface L1ServerMapLocalCacheStore<K, V> {
   public boolean containsKeyOffHeap(K key);
 
   /**
-   * get L1ServerMapLocalCacheLockProvider to lock/unlock this store
-   */
-  public L1ServerMapLocalCacheLockProvider getLockProvider();
-
-  /**
    * Set the max number entries to be stored in local heap
    */
   public void setMaxEntriesLocalHeap(int maxEntriesLocalHeap);

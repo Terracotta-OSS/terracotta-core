@@ -216,16 +216,8 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
 
   public void evictElements(Map evictedElements, ServerMapLocalCache localCache) {
     Set<Map.Entry> entries = evictedElements.entrySet();
-
     for (Entry entry : entries) {
-      if (!(entry.getValue() instanceof AbstractLocalCacheStoreValue)) { throw new AssertionError(
-                                                                                                  "Pinned elements should not be evicted, key="
-                                                                                                      + entry
-                                                                                                          .getValue()); }
-
-      AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) entry.getValue();
-      // the entry has been already removed from the local store, this will remove the id->key mapping if it exists
-      localCache.evictedFromStore(value.getMetaId(), entry.getKey(), value);
+      localCache.entryEvicted(entry.getKey(), entry.getValue());
     }
   }
 

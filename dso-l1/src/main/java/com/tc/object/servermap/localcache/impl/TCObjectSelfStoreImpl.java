@@ -47,9 +47,9 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     try {
       if (!tcObjectSelfStoreOids.contains(oid)) { return; }
       for (ServerMapLocalCache cache : localCaches.keySet()) {
-        Object key = cache.getValue(oid);
+        Object key = cache.getMappingUnlocked(oid);
         if (key != null) {
-          AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) cache.getValue(key);
+          AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) cache.getMappingUnlocked(key);
           if (value != null && value.getValueObjectId().equals(oid)) {
             cache.getInternalStore().replace(key, value, createNewValue(value, self), PutType.NORMAL);
           }
@@ -92,12 +92,12 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
         }
 
         for (ServerMapLocalCache localCache : this.localCaches.keySet()) {
-          Object key = localCache.getValue(oid);
+          Object key = localCache.getMappingUnlocked(oid);
           if (key == null) {
             continue;
           }
 
-          AbstractLocalCacheStoreValue localCacheStoreValue = (AbstractLocalCacheStoreValue) localCache.getValue(key);
+          AbstractLocalCacheStoreValue localCacheStoreValue = (AbstractLocalCacheStoreValue) localCache.getMappingUnlocked(key);
           rv = localCacheStoreValue == null ? null : localCacheStoreValue.getValueObject();
           initTCObjectSelfIfRequired(rv);
 

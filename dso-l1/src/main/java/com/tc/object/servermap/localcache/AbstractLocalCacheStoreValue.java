@@ -48,6 +48,14 @@ public abstract class AbstractLocalCacheStoreValue implements Externalizable {
     }
   }
 
+  public boolean isLiteral() {
+    return this.value != null && getValueObjectId().equals(ObjectID.NULL_ID);
+  }
+
+  public boolean isValueNull() {
+    return value == null;
+  }
+
   /**
    * Returns true if this is cached value for eventual consistency
    */

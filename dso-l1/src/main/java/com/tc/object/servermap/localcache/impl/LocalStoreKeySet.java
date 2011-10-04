@@ -15,18 +15,20 @@ public class LocalStoreKeySet extends AbstractSet<Object> {
   }
 
   private final int                    size;
-  private final Set                    internalSet;
+  private final Set                    internalSet1;
+  private final Set                    internalSet2;
   private final LocalStoreKeySetFilter filter;
 
-  public LocalStoreKeySet(Set internalSet, int size, LocalStoreKeySetFilter filter) {
-    this.internalSet = internalSet;
+  public LocalStoreKeySet(Set internalSet1, Set internalSet2, int size, LocalStoreKeySetFilter filter) {
+    this.internalSet1 = internalSet1;
+    this.internalSet2 = internalSet2;
     this.size = size;
     this.filter = filter;
   }
 
   @Override
   public Iterator<Object> iterator() {
-    return new FilteringIterator(internalSet.iterator(), filter);
+    return new FilteringIterator(internalSet1.iterator(), internalSet2.iterator(), filter);
   }
 
   @Override
@@ -36,27 +38,38 @@ public class LocalStoreKeySet extends AbstractSet<Object> {
 
   private static class FilteringIterator implements Iterator {
 
-    private final Iterator               internalIterator;
+    private final Iterator               internalIterator1;
+    private final Iterator               internalIterator2;
     private final LocalStoreKeySetFilter filter;
     private Object                       currentNext;
+    private Iterator                     currentIterator;
     private boolean                      nextAvailable;
 
-    public FilteringIterator(Iterator internalIterator, LocalStoreKeySetFilter filter) {
-      this.internalIterator = internalIterator;
+    public FilteringIterator(Iterator internalIterator1, Iterator internalIterator2, LocalStoreKeySetFilter filter) {
+      this.internalIterator1 = internalIterator1;
+      this.internalIterator2 = internalIterator2;
+      this.currentIterator = this.internalIterator1;
       this.filter = filter;
     }
 
     public synchronized boolean hasNext() {
       if (nextAvailable) { return true; }
-      while (internalIterator.hasNext()) {
-        Object object = internalIterator.next();
+      while (currentIterator.hasNext()) {
+        Object object = currentIterator.next();
         if (filter.accept(object)) {
           currentNext = object;
           nextAvailable = true;
           return true;
         }
       }
+      if (retry()) { return hasNext(); }
       return false;
+    }
+
+    private boolean retry() {
+      if (currentIterator == internalIterator2) { return false; }
+      currentIterator = internalIterator2;
+      return true;
     }
 
     public synchronized Object next() {

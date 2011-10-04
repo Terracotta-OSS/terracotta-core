@@ -8,6 +8,7 @@ import com.tc.object.locks.LockID;
 import com.tc.object.servermap.localcache.impl.L1ServerMapLocalStoreTransactionCompletionListener;
 
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public interface ServerMapLocalCache {
   L1ServerMapLocalCacheStore getInternalStore();
@@ -35,12 +36,7 @@ public interface ServerMapLocalCache {
   /**
    * Called when the key has been evicted from the local store
    */
-  void evictedFromStore(Object id, Object key, AbstractLocalCacheStoreValue value);
-
-  /**
-   * Unpin entry for this object key. Becomes eligible for eviction if not before
-   */
-  void unpinEntry(Object key, AbstractLocalCacheStoreValue value);
+  void entryEvicted(Object key, Object value);
 
   // ///////////////////////////////
   // TCObjectServerMap methods
@@ -51,13 +47,12 @@ public interface ServerMapLocalCache {
    */
   void setLocalCacheEnabled(boolean enable);
 
-  void addToCache(Object key, Object actualValue, AbstractLocalCacheStoreValue localCacheValue, ObjectID valueObjectID,
-                  MapOperationType operationType);
+  void addToCache(Object key, AbstractLocalCacheStoreValue localCacheValue, MapOperationType operationType);
 
   /**
    * Get a coherent value from the local cache. If an incoherent value is present, then return null.
    */
-  AbstractLocalCacheStoreValue getCoherentLocalValue(Object key);
+  AbstractLocalCacheStoreValue getLocalValueCoherent(Object key);
 
   /**
    * Get the value corresponding to the key if present
@@ -67,7 +62,7 @@ public interface ServerMapLocalCache {
   /**
    * Get the value corresponding to the key if present
    */
-  Object getValue(Object key);
+  Object getMappingUnlocked(Object key);
 
   /**
    * Check if the key is on-heap
@@ -116,11 +111,17 @@ public interface ServerMapLocalCache {
    */
   Set getKeySet();
 
-  void postTransactionCallback(
-                           Object key,
-                           AbstractLocalCacheStoreValue value,
+  void postTransactionCallback(Object key, AbstractLocalCacheStoreValue value, boolean removeEntry);
+
+  void transactionComplete(
                            L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
 
-  void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
+  <V> V executeUnderWriteLock(Object key, WriteLockCallable<V> callable, Object... params);
+
+  ReentrantReadWriteLock getLock(Object key);
+
+  public static interface WriteLockCallable<V> {
+    public V call(Object key, Object... params);
+  }
 
 }

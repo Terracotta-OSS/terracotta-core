@@ -37,14 +37,12 @@ public class L1ServerMapLocalStoreTransactionCompletionListener implements Trans
   }
 
   public void postTransactionCallback() {
-    serverMapLocalCache.postTransactionCallback(key, value, this);
-    serverMapLocalCache.unpinEntry(key, value);
+    serverMapLocalCache
+        .postTransactionCallback(key, value,
+                                 transactionCompleteOperation == TransactionCompleteOperation.UNPIN_AND_REMOVE_ENTRY);
     Object actualValue = value.getValueObject();
     if (actualValue instanceof TCObjectSelf) {
       ((TCObjectSelf) actualValue).untouch();
-    }
-    if (transactionCompleteOperation == TransactionCompleteOperation.UNPIN_AND_REMOVE_ENTRY) {
-      serverMapLocalCache.removeFromLocalCache(key, value);
     }
   }
 

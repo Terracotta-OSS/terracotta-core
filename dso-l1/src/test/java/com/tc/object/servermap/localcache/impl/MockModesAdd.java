@@ -58,9 +58,8 @@ public class MockModesAdd {
   private static void addToCache(ServerMapLocalCache cache, TCObjectSelfStore store, String key,
                                  MockSerializedEntry value, MapOperationType operationType,
                                  AbstractLocalCacheStoreValue localStoreValue) {
-    ObjectID id = value == null ? ObjectID.NULL_ID : value.getObjectID();
     store.addTCObjectSelf(cache.getInternalStore(), localStoreValue, value, true);
-    cache.addToCache(key, value, localStoreValue, id, operationType);
+    cache.addToCache(key, localStoreValue, operationType);
   }
 
   public static MockSerializedEntry createMockSerializedEntry(int oid) {
