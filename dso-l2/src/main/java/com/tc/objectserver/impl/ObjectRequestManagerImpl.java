@@ -42,6 +42,7 @@ import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -209,6 +210,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
             final ClientID clientID = entry.getKey();
             final BatchAndSend batchAndSend = entry.getValue();
             logger.warn("Sending missing ids: " + missingObjectIDs.size() + " , to client: " + clientID);
+            this.stateManager.removeReferences(clientID, missingObjectIDs, Collections.EMPTY_SET);
             batchAndSend.sendMissingObjects(missingObjectIDs);
           }
         }
