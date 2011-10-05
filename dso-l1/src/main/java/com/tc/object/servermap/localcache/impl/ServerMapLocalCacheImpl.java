@@ -13,6 +13,7 @@ import com.tc.object.locks.LockID;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
+import com.tc.object.servermap.localcache.LocalCacheStoreFullException;
 import com.tc.object.servermap.localcache.MapOperationType;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.object.servermap.localcache.ServerMapLocalCacheRemoveCallback;
@@ -150,6 +151,18 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       putKeyValueMapping(key, localCacheValue, mapOperation);
 
       registerTransactionCompleteListener(key, localCacheValue, mapOperation);
+    } catch (LocalCacheStoreFullException e) {
+      if (mapOperation.isMutateOperation()) { throw new AssertionError(
+                                                                       "Tried to put directly into local cache for mutate operation."); }
+      LOGGER.warn("Insufficient local cache memory to store the value for key " + key);
+      Object old = remove(key, true);
+      if (old != null) {
+        // This is here to handle the case where we have an existing entry in the local cache to replace. For example,
+        // two consecutive puts.
+        handleKeyValueMappingRemoved(key, (AbstractLocalCacheStoreValue) old, true);
+      }
+      initiateLockRecall(removeMetaMapping(key, localCacheValue, true));
+      remoteRemoveObjectIfPossible(localCacheValue);
     } finally {
       lock.writeLock().unlock();
     }
