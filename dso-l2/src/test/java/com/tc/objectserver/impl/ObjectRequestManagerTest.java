@@ -812,7 +812,9 @@ public class ObjectRequestManagerTest extends TestCase {
     }
 
     public void removeReferences(NodeID nodeID, Set<ObjectID> removed, Set<ObjectID> requested) {
-      throw new NotImplementedException(TestClientStateManager.class);
+      Set<ObjectID> refs = this.clientStateMap.get(nodeID);
+      refs.addAll(requested);
+      refs.removeAll(removed);
     }
 
     public void registerObjectReferenceAddListener(ObjectReferenceAddListener listener) {
