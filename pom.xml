@@ -58,6 +58,14 @@
   </modules>
   
   <profiles>
+    <!-- Allow building kit from the top level -->
+    <profile>
+      <id>kit</id>
+      <modules>
+        <module>terracotta-kit</module>
+      </modules>
+    </profile>
+
     <!-- activate for modules that needs JDK16 -->
     <profile>
       <id>jdk16</id>
