@@ -63,7 +63,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                                                                                                .getLogger(ServerMapLocalCacheImpl.class);
   private static final long                          SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS = TCPropertiesImpl
                                                                                                                .getProperties()
-                                                                                                               .getLong(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
+                                                                                                               .getLong(
+                                                                                                                        TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
   private static final int                           CONCURRENCY                                           = 256;
 
   private static final LocalStoreKeySetFilter        IGNORE_ID_FILTER                                      = new IgnoreIdsFilter();
@@ -223,7 +224,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return null;
   }
 
-  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
+  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(
+                                                                                            final Object key,
                                                                                             AbstractLocalCacheStoreValue value,
                                                                                             MapOperationType mapOperation) {
     if (!mapOperation.isMutateOperation()) {
@@ -233,7 +235,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     final L1ServerMapLocalStoreTransactionCompletionListener txnCompleteListener;
     if (localCacheEnabled) {
       // when local cache is enabled, remove the cached value if the operation is a REMOVE, otherwise just unpin
-      TransactionCompleteOperation onTransactionComplete = mapOperation.isRemoveOperation() ? TransactionCompleteOperation.UNPIN_AND_REMOVE_ENTRY
+      TransactionCompleteOperation onTransactionComplete = mapOperation.isRemoveOperation() || value.isLiteral() ? TransactionCompleteOperation.UNPIN_AND_REMOVE_ENTRY
           : TransactionCompleteOperation.UNPIN_ENTRY;
       txnCompleteListener = new L1ServerMapLocalStoreTransactionCompletionListener(this, key, value,
                                                                                    onTransactionComplete);
@@ -572,7 +574,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  public void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
+  public void transactionComplete(
+                                  L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     l1LocalCacheManager.transactionComplete(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 
