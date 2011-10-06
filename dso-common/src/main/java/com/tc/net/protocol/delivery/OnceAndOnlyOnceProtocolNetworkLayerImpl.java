@@ -117,19 +117,22 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     }
 
     if (msg.isSend() || msg.isAck()) {
-      Assert.inv(!handshakeMode.get());
+
+      if (!sessionId.equals(msg.getSessionId())) {
+        logger.warn("Dropping old session message " + msg);
+        return;
+      }
+
+      if (handshakeMode.get()) {
+        Assert.fail("Unexpected message while in handshaking mode: " + msg);
+      }
+
       if (!channelConnected.get()) {
         logger.warn("Drop stale message " + msg.getHeader().toString() + " from " + sendLayer.getConnectionId());
         return;
       }
 
-      if (!sessionId.equals(msg.getSessionId())) {
-        logger.warn("Dropping old session message " + msg);
-        return;
-      } else {
-        delivery.receive(msg);
-      }
-
+      delivery.receive(msg);
     } else if (msg.isHandshake()) {
       Assert.inv(!isClient);
       if (debug) {
