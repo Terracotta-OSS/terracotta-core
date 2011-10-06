@@ -18,22 +18,20 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
 /**
- * Test case for DEV-1283
- * To cause OOME, the following constants to said values:
- *   THREADS_PER_NODE_COUNT = 20
- *   NODE_COUNT = 5
- *   NUM_OF_OBJ_PER_THREAD = 10000
+ * Test case for DEV-1283 To cause OOME, the following constants to said values: THREADS_PER_NODE_COUNT = 20 NODE_COUNT
+ * = 5 NUM_OF_OBJ_PER_THREAD = 10000
  */
 public class HashMapValueSharedTest extends GCTestBase {
-  
-  
-  private static final int THREADS_PER_NODE_COUNT = 8;
-  private static final int NODE_COUNT = 2;
 
+  private static final int THREADS_PER_NODE_COUNT = 8;
+  private static final int NODE_COUNT             = 2;
+
+  @Override
   protected Class getApplicationClass() {
     return HashMapValuedShareApp.class;
   }
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.getTransparentAppConfig().setApplicationInstancePerClientCount(THREADS_PER_NODE_COUNT);
@@ -41,10 +39,9 @@ public class HashMapValueSharedTest extends GCTestBase {
   }
 
   public static class HashMapValuedShareApp extends AbstractTransparentApp {
-    
 
     private static final int    NUM_OF_OBJ_PER_THREAD = 1000;
-    private final HashMap       hashmapRoot = new HashMap();
+    private final HashMap       hashmapRoot           = new HashMap();
     private final CyclicBarrier barrier;
 
     public HashMapValuedShareApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
@@ -71,9 +68,10 @@ public class HashMapValueSharedTest extends GCTestBase {
 
     public void run() {
 
+      int index = 0;
       // barrier for shared value object
       try {
-        barrier.await();
+        index = barrier.await();
 
       } catch (InterruptedException e) {
         throw new AssertionError(e);
@@ -92,22 +90,24 @@ public class HashMapValueSharedTest extends GCTestBase {
             vo = new ValueObject(new Object());
             hashmapRoot.put(key, vo);
           } else {
-            //stats.incrementRead();
+            // stats.incrementRead();
           }
         }
-        
+
         synchronized (hashmapRoot) {
           String key = key("Node2");
           ValueObject vo2 = (ValueObject) hashmapRoot.get(key);
           if (vo2 == null) {
             vo2 = new ValueObject(vo.getObj());
             hashmapRoot.put(key, vo2);
-           } else {
-            vo2.setObj( vo.getObj() );
+          } else {
+            vo2.setObj(vo.getObj());
           }
         }
-        
-        
+
+        if (i % 100 == 0) System.err.println("XXX Participant: " + index + " - " + Thread.currentThread().getName()
+                                             + ": " + i);
+
       }
 
     }
@@ -119,18 +119,16 @@ public class HashMapValueSharedTest extends GCTestBase {
       }
 
       private Object obj;
-      
+
       public Object getObj() {
         return obj;
       }
-      
+
       public void setObj(Object obj) {
         this.obj = obj;
       }
 
     }
-    
-   
 
   }
 
