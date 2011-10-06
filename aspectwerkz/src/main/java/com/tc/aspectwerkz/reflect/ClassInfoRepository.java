@@ -38,6 +38,10 @@ public class ClassInfoRepository {
     m_loaderRef = new WeakReference(loader);
   }
 
+  public static synchronized void clear() {
+    s_repositories.clear();
+  }
+
   /**
    * Returns the class info repository for the specific class loader
    *

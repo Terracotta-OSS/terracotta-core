@@ -45,6 +45,15 @@ public class JavaClassInfoRepository {
     m_loaderRef = new WeakReference(loader);
   }
 
+  public static void clear() {
+    synchronized (JavaClassInfoRepository.class) {
+      s_repositories.clear();
+    }
+
+    NULL_LOADER_REPOSITORY.m_loaderRef.clear();
+    NULL_LOADER_REPOSITORY.m_repository.clear();
+  }
+
   /**
    * Returns the class info repository for the specific class loader
    *

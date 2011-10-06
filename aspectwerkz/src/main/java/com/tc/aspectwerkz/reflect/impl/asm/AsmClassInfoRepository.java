@@ -30,7 +30,7 @@ public class AsmClassInfoRepository {
                                                                                                        .weakKeys()
                                                                                                        .makeMap();
 
-  private static final AsmClassInfoRepository                              NULL_LOADER_REPOSITORYU = new AsmClassInfoRepository(
+  private static final AsmClassInfoRepository                              NULL_LOADER_REPOSITORY = new AsmClassInfoRepository(
                                                                                                                                 null);
 
   /**
@@ -85,7 +85,7 @@ public class AsmClassInfoRepository {
    * @return
    */
   public static AsmClassInfoRepository getRepository(final ClassLoader loader) {
-    if (loader == null) return NULL_LOADER_REPOSITORYU;
+    if (loader == null) return NULL_LOADER_REPOSITORY;
 
     AsmClassInfoRepository repository = lookup(loader);
 
@@ -108,6 +108,16 @@ public class AsmClassInfoRepository {
 
     return repo;
   }
+
+  public static void clear() {
+    synchronized (s_repositories) {
+      s_repositories.clear();
+    }
+
+    NULL_LOADER_REPOSITORY.m_repository.clear();
+    NULL_LOADER_REPOSITORY.m_loaderRef.clear();
+  }
+
 
   private static AsmClassInfoRepository lookup(ClassLoader loader) {
     Reference<AsmClassInfoRepository> ref = s_repositories.get(loader);

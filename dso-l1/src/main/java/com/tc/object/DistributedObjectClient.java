@@ -7,6 +7,9 @@ package com.tc.object;
 import bsh.EvalError;
 import bsh.Interpreter;
 
+import com.tc.aspectwerkz.reflect.ClassInfoRepository;
+import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfoRepository;
+import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfoRepository;
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
@@ -1147,6 +1150,11 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   public void shutdown() {
     final TCLogger logger = DSO_LOGGER;
+
+    // This seems to help perm gen GC
+    ClassInfoRepository.clear();
+    AsmClassInfoRepository.clear();
+    JavaClassInfoRepository.clear();
 
     TCTimerService.getInstance().shutdown();
 
