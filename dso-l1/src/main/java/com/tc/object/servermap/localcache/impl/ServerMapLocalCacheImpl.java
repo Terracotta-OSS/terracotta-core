@@ -629,7 +629,12 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   public int onHeapSize() {
-    return this.localStore.onHeapSize();
+    int totalInMemoryCount = this.localStore.onHeapSize() + pendingTransactionEntries.size() / 2;
+    if (this.localStore.getMaxElementsInMemory() > 0) {
+      return Math.min(totalInMemoryCount, this.localStore.getMaxElementsInMemory());
+    } else {
+      return totalInMemoryCount;
+    }
   }
 
   public int offHeapSize() {
