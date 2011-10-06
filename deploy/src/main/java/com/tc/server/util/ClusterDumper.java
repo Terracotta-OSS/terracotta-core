@@ -3,18 +3,30 @@
  */
 package com.tc.server.util;
 
+import org.apache.commons.io.IOUtils;
+
 import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.cli.CommandLineBuilder;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.management.TerracottaManagement;
+import com.tc.management.beans.L1MBeanNames;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
+import com.tc.util.Conversion;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
@@ -22,23 +34,28 @@ import javax.management.remote.JMXConnector;
 
 public class ClusterDumper {
 
-  private final String       host;
-  private final int          port;
-  private final String       username;
-  private final String       password;
+  private final String           host;
+  private final int              port;
+  private final String           username;
+  private final String           password;
 
-  public static final String DEFAULT_HOST = "localhost";
-  public static final int    DEFAULT_PORT = 9520;
+  private static final String    FILENAME        = "cluster-dump.zip";
+  private static final int       ZIP_BUFFER_SIZE = 2048;
+  private static final String    DEFAULT_HOST    = "localhost";
+  private static final int       DEFAULT_PORT    = 9520;
+
+  private final SimpleDateFormat dateFormat      = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");
 
   public static void main(String[] args) throws Exception {
     CommandLineBuilder commandLineBuilder = new CommandLineBuilder(ClusterDumper.class.getName(), args);
 
-    commandLineBuilder.addOption("n", "hostname", true, "The Terracotta Server instane hostname", String.class, false,
+    commandLineBuilder.addOption("n", "hostname", true, "Terracotta Server instance hostname", String.class, false,
                                  "l2-hostname");
     commandLineBuilder.addOption("p", "jmxport", true, "Terracotta Server instance JMX port", Integer.class, false,
                                  "l2-jmx-port");
     commandLineBuilder.addOption("u", "username", true, "username", String.class, false);
     commandLineBuilder.addOption("w", "password", true, "password", String.class, false);
+    commandLineBuilder.addOption("d", "Take cluster state dump", String.class, false);
     commandLineBuilder.addOption("h", "help", String.class, false);
 
     commandLineBuilder.parse();
@@ -76,10 +93,11 @@ public class ClusterDumper {
     }
 
     host = host == null ? DEFAULT_HOST : host;
-
+    ClusterDumper dumper = new ClusterDumper(host, port, username, password);
     try {
-      System.out.println("Taking dumps by connecting " + host + ":" + port);
-      new ClusterDumper(host, port, username, password).takeDump();
+      System.out.println("Connecting " + host + ":" + port + "...");
+      if (commandLineBuilder.hasOption('d')) dumper.takeClusterStateDump();
+      else dumper.takeClusterThreadDump();
     } catch (IOException ioe) {
       System.out.println("Unable to connect to host '" + host + "', port " + port
                          + ". Are you sure there is a Terracotta server instance running there?");
@@ -95,7 +113,7 @@ public class ClusterDumper {
       port = Integer.parseInt(portString);
     } catch (NumberFormatException e) {
       port = DEFAULT_PORT;
-      System.out.println("Invalid port number specified. Using default port '" + port + "'");
+      System.err.println("Invalid port number specified. Using default port '" + port + "'");
     }
     return port;
   }
@@ -111,15 +129,31 @@ public class ClusterDumper {
     this.password = password;
   }
 
-  public void takeDump() throws Exception {
+  public void takeClusterStateDump() throws Exception {
     ServerGroupInfo[] serverGrpInfos = getServerGroupInfo();
+    L2Info activeCoordinator = findActiveCoordinator(serverGrpInfos);
 
-    doServerDumps(serverGrpInfos);
-    findActiveAndDumpClients(serverGrpInfos);
-    System.out.println("All dumps taken. Exiting!!");
+    doServerStateDumps(serverGrpInfos);
+    doClientsStateDump(activeCoordinator.host(), activeCoordinator.jmxPort());
+    System.out.println("Cluster state dump taken successfully. ");
   }
 
-  private void doServerDumps(ServerGroupInfo[] serverGrpInfos) {
+  public void takeClusterThreadDump() throws Exception {
+    ServerGroupInfo[] serverGrpInfos = getServerGroupInfo();
+    L2Info activeCoordinator = findActiveCoordinator(serverGrpInfos);
+
+    File file = new File(FILENAME);
+    FileOutputStream fos = new FileOutputStream(file);
+    ZipOutputStream zout = new ZipOutputStream(fos);
+
+    doServerThreadDump(serverGrpInfos, zout);
+    doClientThreadDumps(activeCoordinator.host(), activeCoordinator.jmxPort(), zout);
+    zout.close();
+    System.out.println("All thread dumps taken successfully. ");
+    System.out.println("Zipped to " + file.getAbsolutePath());
+  }
+
+  private void doServerStateDumps(ServerGroupInfo[] serverGrpInfos) {
     for (ServerGroupInfo serverGrpInfo : serverGrpInfos) {
       L2Info[] members = serverGrpInfo.members();
       for (L2Info member : members) {
@@ -129,12 +163,12 @@ public class ClusterDumper {
         try {
           String hostName = member.host();
           int jmxPort = member.jmxPort();
-          System.out.println("trying to take server dump for " + hostName + ":" + jmxPort);
+          System.out.println("Trying to take Server State Dump for " + hostName + ":" + jmxPort);
           jmxConnector = CommandLineBuilder.getJMXConnector(username, password, hostName, jmxPort);
           final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
           mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.DUMPER, L2DumperMBean.class, false);
           mbean.doServerDump();
-          System.out.println("server dump taken for " + hostName + ":" + jmxPort);
+          System.out.println("Server State Dump taken for " + hostName + ":" + jmxPort);
         } catch (Exception e) {
           System.out.println((e.getCause() == null ? e.getMessage() : e.getCause().getMessage()));
         } finally {
@@ -150,7 +184,69 @@ public class ClusterDumper {
     }
   }
 
-  private void findActiveAndDumpClients(ServerGroupInfo[] serverGrpInfos) {
+  private void doServerThreadDump(ServerGroupInfo[] serverGrpInfos, ZipOutputStream zout) {
+    for (ServerGroupInfo serverGrpInfo : serverGrpInfos) {
+      L2Info[] members = serverGrpInfo.members();
+      for (L2Info member : members) {
+        TCServerInfoMBean mbean = null;
+        JMXConnector jmxConnector = null;
+
+        try {
+          String hostName = member.host();
+          int jmxPort = member.jmxPort();
+          System.out.println("Trying to take Server Thread Dump for " + hostName + ":" + jmxPort);
+          jmxConnector = CommandLineBuilder.getJMXConnector(username, password, hostName, jmxPort);
+          final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+          mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class,
+                                                           false);
+          byte[] zipped = mbean.takeCompressedThreadDump(0);
+          String node = hostName + "/" + jmxPort;
+          ZipEntry entry = new ZipEntry(String.format("server-%s/%s.log", node, dateFormat.format(new Date())));
+          zout.putNextEntry(entry);
+          zout.write(decompress(zipped));
+          zout.closeEntry();
+
+          System.out.println("Server Thread Dump taken for " + hostName + ":" + jmxPort);
+        } catch (Exception e) {
+          System.out.println((e.getCause() == null ? e.getMessage() : e.getCause().getMessage()));
+        } finally {
+          if (jmxConnector != null) {
+            try {
+              jmxConnector.close();
+            } catch (Exception e) {
+              // System.out.println("Exception while trying to close the JMX connector for port no: " + jmxPort);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  protected byte[] decompress(byte[] zippedByte) {
+    ZipInputStream zIn = new ZipInputStream(new ByteArrayInputStream(zippedByte));
+    StringBuilder sb = new StringBuilder();
+    try {
+      byte[] buffer = new byte[ZIP_BUFFER_SIZE];
+      while (zIn.getNextEntry() != null) {
+        int len = 0;
+        while ((len = zIn.read(buffer)) > 0) {
+          if (len < ZIP_BUFFER_SIZE) {
+            sb.append(Conversion.bytes2String(buffer).substring(0, len));
+          } else {
+            sb.append(Conversion.bytes2String(buffer));
+          }
+        }
+      }
+      return sb.toString().getBytes();
+    } catch (IOException e) {
+      System.err.println("Error decompressing bytes: " + e.getMessage());
+      return new byte[0];
+    } finally {
+      IOUtils.closeQuietly(zIn);
+    }
+  }
+
+  private L2Info findActiveCoordinator(ServerGroupInfo[] serverGrpInfos) {
     L2Info[] l2Infos = null;
     for (ServerGroupInfo serverGrpInfo : serverGrpInfos) {
       if (serverGrpInfo.isCoordinator()) {
@@ -159,18 +255,16 @@ public class ClusterDumper {
       }
     }
 
-    if (l2Infos == null) {
-      System.out.println("Active coordinator group not found, clients dump are not taken.");
-      return;
-    }
+    if (l2Infos == null) { throw new IllegalStateException("Active coordinator group not found,"
+                                                           + " clients dump are not taken."); }
 
     for (L2Info l2Info : l2Infos) {
       String hostName = l2Info.host();
       int jmxPort = l2Info.jmxPort();
-      if (isActive(hostName, jmxPort)) {
-        doClientsDump(hostName, jmxPort);
-      }
+      if (isActive(hostName, jmxPort)) { return l2Info; }
     }
+
+    throw new IllegalStateException("Active coordinator group not found, clients dump are not taken.");
   }
 
   private ServerGroupInfo[] getServerGroupInfo() throws Exception {
@@ -210,8 +304,44 @@ public class ClusterDumper {
     return isActive;
   }
 
-  private void doClientsDump(String hostName, int jmxPort) {
-    System.out.println("trying to take client dumps by connecting " + hostName + ":" + jmxPort);
+  private void doClientThreadDumps(String hostName, int jmxPort, ZipOutputStream zout) {
+    System.out.println("Trying to take Client Thread Dumps by connecting Active Coordinator " + hostName + ":"
+                       + jmxPort);
+    JMXConnector jmxConnector = null;
+    try {
+      jmxConnector = CommandLineBuilder.getJMXConnector(username, password, hostName, jmxPort);
+      final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+      Set allL1DumperMBeans = mbs
+          .queryNames(new ObjectName(L1MBeanNames.L1INFO_PUBLIC.getCanonicalName() + ",*"), null);
+
+      for (Iterator iterator = allL1DumperMBeans.iterator(); iterator.hasNext();) {
+        ObjectName l1DumperBean = (ObjectName) iterator.next();
+        byte[] zipped = (byte[]) mbs.invoke(l1DumperBean, "takeCompressedThreadDump", new Object[] { 0 },
+                                            new String[] { long.class.getName() });
+        String node = l1DumperBean.getKeyProperty("node");
+        ZipEntry entry = new ZipEntry(String.format("client-%s/%s.log", node, dateFormat.format(new Date())));
+        zout.putNextEntry(entry);
+        zout.write(decompress(zipped));
+        zout.closeEntry();
+
+        System.out.println("Client Thread Dump taken for " + node);
+      }
+    } catch (Exception e) {
+      System.err.println((e.getCause() == null ? e.getMessage() : e.getCause().getMessage()));
+    } finally {
+      if (jmxConnector != null) {
+        try {
+          jmxConnector.close();
+        } catch (Exception e) {
+          // System.out.println("Exception while trying to close the JMX connector for port no: " + jmxPort);
+        }
+      }
+    }
+  }
+
+  private void doClientsStateDump(String hostName, int jmxPort) {
+    System.out
+        .println("Trying to take Client State Dumps by connecting Active Coordinator " + hostName + ":" + jmxPort);
     JMXConnector jmxConnector = null;
     try {
       jmxConnector = CommandLineBuilder.getJMXConnector(username, password, hostName, jmxPort);
@@ -222,10 +352,11 @@ public class ClusterDumper {
       for (Iterator iterator = allL1DumperMBeans.iterator(); iterator.hasNext();) {
         ObjectName l1DumperBean = (ObjectName) iterator.next();
         mbs.invoke(l1DumperBean, "doClientDump", new Object[] {}, new String[] {});
-        System.out.println("dumping client " + l1DumperBean.getCanonicalName());
+        String node = l1DumperBean.getKeyProperty("node");
+        System.out.println("Client State Dump taken for " + node);
       }
     } catch (Exception e) {
-      System.out.println((e.getCause() == null ? e.getMessage() : e.getCause().getMessage()));
+      System.err.println((e.getCause() == null ? e.getMessage() : e.getCause().getMessage()));
     } finally {
       if (jmxConnector != null) {
         try {
