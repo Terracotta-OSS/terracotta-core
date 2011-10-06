@@ -245,22 +245,16 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       // no listener required for non mutate ops
       return null;
     }
-    final L1ServerMapLocalStoreTransactionCompletionListener txnCompleteListener;
+    final TransactionCompleteOperation onTransactionComplete;
     if (localCacheEnabled) {
       // when local cache is enabled, remove the cached value if the operation is a REMOVE, otherwise just unpin
-      TransactionCompleteOperation onTransactionComplete = mapOperation.isRemoveOperation() || value.isLiteral() ? TransactionCompleteOperation.UNPIN_AND_REMOVE_ENTRY
+      onTransactionComplete = mapOperation.isRemoveOperation() ? TransactionCompleteOperation.UNPIN_AND_REMOVE_ENTRY
           : TransactionCompleteOperation.UNPIN_ENTRY;
-      txnCompleteListener = new L1ServerMapLocalStoreTransactionCompletionListener(this, key, value,
-                                                                                   onTransactionComplete);
     } else {
       // when local cache is disabled, always remove the cached value on txn complete
-      txnCompleteListener = new L1ServerMapLocalStoreTransactionCompletionListener(
-                                                                                   this,
-                                                                                   key,
-                                                                                   value,
-                                                                                   TransactionCompleteOperation.UNPIN_AND_REMOVE_ENTRY);
+      onTransactionComplete = TransactionCompleteOperation.UNPIN_AND_REMOVE_ENTRY;
     }
-    return txnCompleteListener;
+    return new L1ServerMapLocalStoreTransactionCompletionListener(this, key, value, onTransactionComplete);
   }
 
   public void clear() {

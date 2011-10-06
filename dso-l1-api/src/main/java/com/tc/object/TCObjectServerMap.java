@@ -226,4 +226,6 @@ public interface TCObjectServerMap<L> extends TCObject {
    * Destroy the local store.
    */
   void destroyLocalStore();
+
+  void setLocalCacheEnabled(boolean enabled);
 }

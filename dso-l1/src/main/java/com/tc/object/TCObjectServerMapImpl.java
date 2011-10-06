@@ -691,6 +691,11 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     return this.cache.containsKeyOffHeap(key);
   }
 
+  public void setLocalCacheEnabled(boolean enabled) {
+    this.localCacheEnabled = enabled;
+    this.cache.setLocalCacheEnabled(enabled);
+  }
+
   // private static class GetValueLockedCallable implements WriteLockCallable<Object> {
   // private final static GetValueLockedCallable INSTANCE = new GetValueLockedCallable();
   //
@@ -740,4 +745,5 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   // return value;
   // }
   // }
+
 }
