@@ -294,7 +294,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         Object value = remove(key, removeFromInternalStore);
         if (value instanceof AbstractLocalCacheStoreValue) {
           AbstractLocalCacheStoreValue localValue = (AbstractLocalCacheStoreValue) value;
-          LockID lockID = handleKeyValueMappingRemoved(key, localValue, true, false);
+          LockID lockID = handleKeyValueMappingRemoved(key, localValue, removeFromInternalStore, false);
           if (lockID != null) {
             lockIDs.add(lockID);
           }
