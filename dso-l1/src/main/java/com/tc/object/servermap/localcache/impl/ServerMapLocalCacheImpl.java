@@ -64,7 +64,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                                                                                                .getLogger(ServerMapLocalCacheImpl.class);
   private static final long                          SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS = TCPropertiesImpl
                                                                                                                .getProperties()
-                                                                                                               .getLong(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
+                                                                                                               .getLong(
+                                                                                                                        TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
   private static final int                           CONCURRENCY                                           = 256;
 
   private static final LocalStoreKeySetFilter        IGNORE_ID_FILTER                                      = new IgnoreIdsFilter();
@@ -78,6 +79,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   private final ServerMapLocalCacheRemoveCallback    removeCallback;
 
   private final Map<ObjectID, Object>                removedObjectIDs                                      = new ConcurrentHashMap<ObjectID, Object>();
+  private final Map<ObjectID, Object>                oidsForWhichTxnAreInProgress                          = new ConcurrentHashMap<ObjectID, Object>();
 
   private final ConcurrentHashMap                    pendingTransactionEntries;
   private final ReentrantReadWriteLock[]             locks;
@@ -148,6 +150,10 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
       putMetaMapping(localCacheValue, key, mapOperation);
       putKeyValueMapping(key, localCacheValue, mapOperation);
+
+      if (mapOperation.isMutateOperation() && !localCacheValue.isValueNull() && !localCacheValue.isLiteral()) {
+        oidsForWhichTxnAreInProgress.put(localCacheValue.getValueObjectId(), NULL_VALUE);
+      }
 
       registerTransactionCompleteListener(key, localCacheValue, mapOperation);
     } catch (LocalCacheStoreFullException e) {
@@ -236,7 +242,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return null;
   }
 
-  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
+  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(
+                                                                                            final Object key,
                                                                                             AbstractLocalCacheStoreValue value,
                                                                                             MapOperationType mapOperation) {
     if (!mapOperation.isMutateOperation()) {
@@ -537,8 +544,9 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       lock.writeLock().lock();
 
       try {
-        Object value = remove(key);
-        remoteRemoveObjectIfPossible((AbstractLocalCacheStoreValue) value);
+        // value was a literal so dont need to remote remove it
+        remove(key);
+        // remoteRemoveObjectIfPossible((AbstractLocalCacheStoreValue) value);
       } finally {
         lock.writeLock().unlock();
       }
@@ -571,7 +579,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   private boolean isRemoteRemovePossible(ObjectID objectId) {
     if (ObjectID.NULL_ID.equals(objectId)) { return false; }
 
-    if (pendingTransactionEntries.containsKey(objectId)) {
+    if (oidsForWhichTxnAreInProgress.containsKey(objectId)) {
       removedObjectIDs.put(objectId, NULL_VALUE);
       return false;
     } else {
@@ -579,7 +587,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  public void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
+  public void transactionComplete(
+                                  L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     l1LocalCacheManager.transactionComplete(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 
@@ -589,6 +598,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
     try {
       final ObjectID objectId = value.getValueObjectId();
+      oidsForWhichTxnAreInProgress.remove(objectId);
       if (removedObjectIDs.remove(objectId) != null) {
         remoteRemoveObjectIfPossible(value);
       }
