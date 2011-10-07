@@ -13,9 +13,6 @@ import com.tc.object.TCObjectSelfCallback;
 import com.tc.object.TCObjectSelfStore;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
-import com.tc.object.servermap.localcache.LocalCacheStoreEventualValue;
-import com.tc.object.servermap.localcache.LocalCacheStoreIncoherentValue;
-import com.tc.object.servermap.localcache.LocalCacheStoreStrongValue;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.util.ObjectIDSet;
 
@@ -40,37 +37,17 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     this.localCaches = localCaches;
   }
 
-  public void updateLocalCache(ObjectID oid, TCObjectSelf self) {
+  public void removeObjectById(ObjectID oid) {
     tcObjectStoreLock.writeLock().lock();
 
     try {
       if (!tcObjectSelfStoreOids.contains(oid)) { return; }
       for (ServerMapLocalCache cache : localCaches.keySet()) {
-        Object key = cache.getMappingUnlocked(oid);
-        if (key != null) {
-          AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) cache.getMappingUnlocked(key);
-          if (value != null && value.getValueObjectId().equals(oid)) {
-            cache.getInternalStore().replace(key, value, createNewValue(value, self));
-          }
-        }
+        cache.removeEntriesForObjectId(oid);
       }
     } finally {
       tcObjectStoreLock.writeLock().unlock();
     }
-  }
-
-  private AbstractLocalCacheStoreValue createNewValue(AbstractLocalCacheStoreValue oldValue, TCObjectSelf self) {
-    final AbstractLocalCacheStoreValue newValue;
-    if (oldValue.isEventualConsistentValue()) {
-      newValue = new LocalCacheStoreEventualValue(self.getObjectID(), self);
-    } else if (oldValue.isStrongConsistentValue()) {
-      newValue = new LocalCacheStoreStrongValue(oldValue.getLockId(), self, oldValue.getValueObjectId());
-    } else if (oldValue.isIncoherentValue()) {
-      newValue = new LocalCacheStoreIncoherentValue(self.getObjectID(), self);
-    } else {
-      throw new AssertionError("Neither strong, incoherent or eventual");
-    }
-    return newValue;
   }
 
   public Object getById(ObjectID oid) {

@@ -65,11 +65,10 @@ public class TCObjectSelfTransactionApplyTest extends TestCase {
     Collection changes = Collections.singletonList(new MyDna(oid, 200));
     Assert.assertEquals(100, serializedEntry.getLastAccessedTime());
     transactionManager.apply(TxnType.NORMAL, null, changes, Collections.EMPTY_MAP);
-    Assert.assertEquals(200, serializedEntry.getLastAccessedTime());
+    Assert.assertEquals(100, serializedEntry.getLastAccessedTime());
 
     MyMockSerializedEntry entryFetched = (MyMockSerializedEntry) store.getById(oid);
-    Assert.assertEquals(200, serializedEntry.getLastAccessedTime());
-    Assert.assertTrue(entryFetched.equals(serializedEntry));
+    Assert.assertNull(entryFetched);
   }
 
   private static class MyMockSerializedEntry extends MockSerializedEntry {
@@ -149,7 +148,7 @@ public class TCObjectSelfTransactionApplyTest extends TestCase {
   }
 
   private class MyTCObjectSelfStore implements TCObjectSelfStore {
-    private final HashMap<ObjectID, byte[]> oidtoSerialzed = new HashMap<ObjectID, byte[]>();
+    private final HashMap<ObjectID, byte[]> oidtoSerialized = new HashMap<ObjectID, byte[]>();
 
     public void addAllObjectIDs(Set oids) {
       throw new ImplementMe();
@@ -163,8 +162,23 @@ public class TCObjectSelfTransactionApplyTest extends TestCase {
 
     public boolean addTCObjectSelf(L1ServerMapLocalCacheStore store, AbstractLocalCacheStoreValue localStoreValue,
                                    Object tcoself, boolean isNew) {
-      updateLocalCache(((TCObjectSelf) tcoself).getObjectID(), (TCObjectSelf) tcoself);
-      return true;
+      try {
+        if (tcoself instanceof MyMockSerializedEntry) {
+          MyMockSerializedEntry entry = (MyMockSerializedEntry) tcoself;
+          ByteArrayOutputStream baos = new ByteArrayOutputStream();
+          ObjectOutputStream oos = new ObjectOutputStream(baos);
+          oos.writeLong(entry.getLastAccessedTime());
+          oos.writeInt(entry.getSerializedBytes().length);
+          oos.write(entry.getSerializedBytes());
+          oos.flush();
+
+          byte[] b = baos.toByteArray();
+          oidtoSerialized.put(((MyMockSerializedEntry) tcoself).getObjectID(), b);
+        }
+        return true;
+      } catch (Exception e) {
+        throw new AssertionError(e);
+      }
     }
 
     public void addTCObjectSelfTemp(TCObjectSelf obj) {
@@ -200,20 +214,9 @@ public class TCObjectSelfTransactionApplyTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public void updateLocalCache(ObjectID oid, TCObjectSelf tcoself) {
+    public void removeObjectById(ObjectID oid) {
       try {
-        if (tcoself instanceof MyMockSerializedEntry) {
-          MyMockSerializedEntry entry = (MyMockSerializedEntry) tcoself;
-          ByteArrayOutputStream baos = new ByteArrayOutputStream();
-          ObjectOutputStream oos = new ObjectOutputStream(baos);
-          oos.writeLong(entry.getLastAccessedTime());
-          oos.writeInt(entry.getSerializedBytes().length);
-          oos.write(entry.getSerializedBytes());
-          oos.flush();
-
-          byte[] b = baos.toByteArray();
-          oidtoSerialzed.put(((MyMockSerializedEntry) tcoself).getObjectID(), b);
-        }
+        oidtoSerialized.remove(oid);
       } catch (Throwable t) {
         throw new AssertionError(t);
       }
@@ -221,7 +224,9 @@ public class TCObjectSelfTransactionApplyTest extends TestCase {
 
     public Object getById(ObjectID oid) {
       try {
-        ByteArrayInputStream bais = new ByteArrayInputStream(oidtoSerialzed.get(oid));
+        byte[] serialized = oidtoSerialized.get(oid);
+        if (serialized == null) { return null; }
+        ByteArrayInputStream bais = new ByteArrayInputStream(serialized);
         ObjectInputStream ois = new ObjectInputStream(bais);
         long lastAccessedTime = ois.readLong();
         int len = ois.readInt();

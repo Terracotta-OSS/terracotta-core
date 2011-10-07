@@ -341,11 +341,14 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       l.add(obj);
       if (obj != null) {
         try {
-          tcobj.hydrate(dna, force, null);
           if (tcobj instanceof TCObjectSelf) {
-            this.tcObjectSelfStore.updateLocalCache(tcobj.getObjectID(), (TCObjectSelf) tcobj);
+            // DEV-6384: Applying a transaction currently doesn't work so well due
+            // to the byte array getting nulled breaking replace. So instead, we'll be
+            // just immediately invalidating the object upon receiving a transaction.
+            this.tcObjectSelfStore.removeObjectById(tcobj.getObjectID());
+          } else {
+            tcobj.hydrate(dna, force, null);
           }
-
         } catch (final ClassNotFoundException cnfe) {
           logger.warn("Could not apply change because class not local: " + cnfe.getMessage());
           throw new TCClassNotFoundException(cnfe);

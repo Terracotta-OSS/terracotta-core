@@ -31,7 +31,7 @@ public interface TCObjectSelfStore {
 
   void initializeTCObjectSelfIfRequired(TCObjectSelf tcoSelf);
 
-  public void updateLocalCache(ObjectID oid, TCObjectSelf self);
+  public void removeObjectById(ObjectID oid);
 
   /**
    * Handshake manager tries to get hold of all the objects present in the local caches
