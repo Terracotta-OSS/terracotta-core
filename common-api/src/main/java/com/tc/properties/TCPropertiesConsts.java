@@ -547,7 +547,7 @@ public interface TCPropertiesConsts {
    * eviction.clientObjectReferences.refresh.interval
    *              : ServerMap Eviction Client Object References refresh interval in milliseconds
    * eviction.broadcast.maxkeys
-   *              : ServerMap Eviction Broadcast Message contain max key count entries  
+   *              : ServerMap Eviction Broadcast Message contain max key count entries
    * </code>
    ********************************************************************************************************************/
   public static final String L2_SERVERMAP_EVICTION_CLIENTOBJECT_REFERENCES_REFRESH_INTERVAL  = "l2.servermap.eviction.clientObjectReferences.refresh.interval";
@@ -938,12 +938,6 @@ public interface TCPropertiesConsts {
   public static final String SEARCH_PASSIVE_MAX_PENDING                                      = "search.passive.max.pending";
   public static final String SEARCH_LUCENE_USE_RAM_DIRECTORY                                 = "search.lucene.use.ram.directory";
   public static final String SEARCH_LUCENE_MAX_BUFFER                                        = "search.lucene.max.buffer";
-  public static final String SEARCH_LUCENE_MAX_THREAD_STATES                                 = "search.lucene.max.thread.states";
-  public static final String SEARCH_LUCENE_MERGEPOLICY_CLASS                                 = "search.lucene.mergePolicyClass";
-  public static final String SEARCH_LUCENE_MERGESCHEDULER_CLASS                              = "search.lucene.mergeSchedulerClass";
-
-  public static final String SEARCH_LUCENE_MERGESCHEDULER_PREFIX                             = "search.lucene.mergeScheduler";
-  public static final String SEARCH_LUCENE_MERGEPOLICY_PREFIX                                = "search.lucene.mergePolicy";
 
   public static final String SIGAR_ENABLED                                                   = "sigar.enabled";
 
