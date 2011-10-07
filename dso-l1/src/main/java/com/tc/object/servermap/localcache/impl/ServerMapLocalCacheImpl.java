@@ -105,7 +105,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  public ReentrantReadWriteLock getLock(Object key) {
+  private ReentrantReadWriteLock getLock(Object key) {
     return locks[Math.abs(key.hashCode() % CONCURRENCY)];
   }
 
@@ -123,19 +123,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   public void setLocalCacheEnabled(boolean enable) {
     this.localCacheEnabled = enable;
-  }
-
-  public <V> V executeUnderWriteLock(Object key, WriteLockCallable<V> callable, Object... params) {
-    ReentrantReadWriteLock lock = getLock(key);
-    lock.writeLock().lock();
-
-    try {
-      return callable.call(key, params);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    } finally {
-      lock.writeLock().unlock();
-    }
   }
 
   public void addToCache(final Object key, final AbstractLocalCacheStoreValue localCacheValue,

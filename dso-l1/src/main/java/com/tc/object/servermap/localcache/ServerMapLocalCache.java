@@ -8,7 +8,6 @@ import com.tc.object.locks.LockID;
 import com.tc.object.servermap.localcache.impl.L1ServerMapLocalStoreTransactionCompletionListener;
 
 import java.util.Set;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public interface ServerMapLocalCache {
   L1ServerMapLocalCacheStore getInternalStore();
@@ -115,13 +114,5 @@ public interface ServerMapLocalCache {
 
   void transactionComplete(
                            L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
-
-  <V> V executeUnderWriteLock(Object key, WriteLockCallable<V> callable, Object... params);
-
-  ReentrantReadWriteLock getLock(Object key);
-
-  public static interface WriteLockCallable<V> {
-    public V call(Object key, Object... params);
-  }
 
 }

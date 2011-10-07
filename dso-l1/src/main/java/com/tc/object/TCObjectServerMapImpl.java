@@ -30,8 +30,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObject, TCObjectServerMap<L> {
@@ -104,12 +104,12 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @param key Key Object
    * @param value Object in the mapping
    */
-  public void doLogicalPut(final TCServerMap map, final L lockID, final Object key, final Object value) {
+  public synchronized void doLogicalPut(final TCServerMap map, final L lockID, final Object key, final Object value) {
     ObjectID valueObjectID = invokeLogicalPut(map, key, value);
     addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, value, valueObjectID, MapOperationType.PUT);
   }
 
-  public void doClear(TCServerMap map) {
+  public synchronized void doClear(TCServerMap map) {
     logicalInvoke(SerializationUtil.CLEAR, SerializationUtil.PUT_SIGNATURE, NO_ARGS);
   }
 
@@ -120,7 +120,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @param key Key Object
    * @param value Object in the mapping
    */
-  public void doLogicalPutUnlocked(TCServerMap map, Object key, Object value) {
+  public synchronized void doLogicalPutUnlocked(TCServerMap map, Object key, Object value) {
     ObjectID valueObjectID = invokeLogicalPut(map, key, value);
 
     if (!invalidateOnChange) {
@@ -130,7 +130,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
   }
 
-  public boolean doLogicalPutIfAbsentUnlocked(TCServerMap map, Object key, Object value) {
+  public synchronized boolean doLogicalPutIfAbsentUnlocked(TCServerMap map, Object key, Object value) {
     AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
     if (item != null) {
       Object valueObject = item.getValueObject();
@@ -151,7 +151,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     return true;
   }
 
-  public boolean doLogicalReplaceUnlocked(TCServerMap map, Object key, Object current, Object newValue) {
+  public synchronized boolean doLogicalReplaceUnlocked(TCServerMap map, Object key, Object current, Object newValue) {
     AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
     if (item != null && current != item.getValueObject()) {
       // Item already present but not equal. We are doing reference equality coz equals() is called at higher layer
@@ -176,7 +176,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @param lockID, lock under which this entry is removed
    * @param key Key Object
    */
-  public void doLogicalRemove(final TCServerMap map, final L lockID, final Object key) {
+  public synchronized void doLogicalRemove(final TCServerMap map, final L lockID, final Object key) {
     invokeLogicalRemove(map, key);
     addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, null, ObjectID.NULL_ID,
                           MapOperationType.REMOVE);
@@ -188,7 +188,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @param map ServerTCMap
    * @param key Key Object
    */
-  public void doLogicalRemoveUnlocked(TCServerMap map, Object key) {
+  public synchronized void doLogicalRemoveUnlocked(TCServerMap map, Object key) {
     invokeLogicalRemove(map, key);
 
     if (!invalidateOnChange) {
@@ -205,7 +205,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @param key Key Object
    * @return
    */
-  public boolean doLogicalRemoveUnlocked(TCServerMap map, Object key, Object value) {
+  public synchronized boolean doLogicalRemoveUnlocked(TCServerMap map, Object key, Object value) {
     AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
     if (item != null && value != item.getValueObject()) {
       // Item already present but not equal. We are doing reference equality coz equals() is called at higher layer
@@ -234,19 +234,25 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @return value Object in the mapping, null if no mapping present.
    */
   public Object getValue(final TCServerMap map, final L lockID, final Object key) {
-    final AbstractLocalCacheStoreValue item = this.cache.getLocalValueCoherent(key);
+    AbstractLocalCacheStoreValue item = this.cache.getLocalValueCoherent(key);
     if (item != null) { return item.getValueObject(); }
 
-    Object value = getValueForKeyFromServer(map, key, false);
+    // Doing double checking to ensure correct value
+    synchronized (this) {
+      item = this.cache.getLocalValueCoherent(key);
+      if (item != null) { return item.getValueObject(); }
 
-    if (value != null) {
-      addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, value,
-                            objectManager.lookupExistingObjectID(value), MapOperationType.GET);
+      Object value = getValueForKeyFromServer(map, key, false);
+
+      if (value != null) {
+        addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, value, objectManager
+            .lookupExistingObjectID(value), MapOperationType.GET);
+      }
+      return value;
     }
-    return value;
   }
 
-  public void updateLocalCacheIfNecessary(final Object key, final Object value) {
+  private void updateLocalCacheIfNecessary(final Object key, final Object value) {
     if (invalidateOnChange) {
       // Null values (i.e. cache misses) & literal values are not cached locally
       if (value != null && !LiteralValues.isLiteralInstance(value)) {
@@ -270,15 +276,21 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
     if (item != null) { return item.getValueObject(); }
 
-    Object value = getValueForKeyFromServer(map, key, true);
+    // Doing double checking to ensure correct value
+    synchronized (this) {
+      item = getValueUnlockedFromCache(key);
+      if (item != null) { return item.getValueObject(); }
 
-    if (value != null) {
-      updateLocalCacheIfNecessary(key, value);
+      Object value = getValueForKeyFromServer(map, key, true);
+
+      if (value != null) {
+        updateLocalCacheIfNecessary(key, value);
+      }
+      return value;
     }
-    return value;
   }
 
-  public Map<Object, Object> getAllValuesUnlocked(final Map<ObjectID, Set<Object>> mapIdToKeysMap) {
+  public synchronized Map<Object, Object> getAllValuesUnlocked(final Map<ObjectID, Set<Object>> mapIdToKeysMap) {
     Map<Object, Object> rv = new HashMap<Object, Object>();
     for (Iterator<Entry<ObjectID, Set<Object>>> iterator = mapIdToKeysMap.entrySet().iterator(); iterator.hasNext();) {
       Entry<ObjectID, Set<Object>> entry = iterator.next();
@@ -339,8 +351,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       boolean notifyServerForRemove = false;
       if (value instanceof TCObjectSelf) {
         if (localCacheEnabled || mapOperation.isMutateOperation()) {
-          if (!this.tcObjectSelfStore.addTCObjectSelf(serverMapLocalStore, localCacheValue, value,
-                                                      mapOperation.isMutateOperation())) { return; }
+          if (!this.tcObjectSelfStore.addTCObjectSelf(serverMapLocalStore, localCacheValue, value, mapOperation
+              .isMutateOperation())) { return; }
         } else {
           notifyServerForRemove = true;
         }
@@ -531,11 +543,11 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * 
    * @param map ServerTCMap
    */
-  public void clearLocalCache(final TCServerMap map) {
+  public synchronized void clearLocalCache(final TCServerMap map) {
     this.cache.clear();
   }
 
-  public void removeFromLocalCache(Object key) {
+  public synchronized void removeFromLocalCache(Object key) {
     // MNK-2875: Since server side eviction messages come in asynchronously with the initialization process, it's
     // possible to get eviction messages prior to the TCObjectServerMap being fully initialized. If that happens, we can
     // just safely ignore any local cache removals since the local cache is uninitialized and thus empty.
@@ -544,7 +556,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
   }
 
-  public void clearAllLocalCacheInline(final TCServerMap map) {
+  public synchronized void clearAllLocalCacheInline(final TCServerMap map) {
     this.cache.clearInline();
   }
 
@@ -695,55 +707,4 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     this.localCacheEnabled = enabled;
     this.cache.setLocalCacheEnabled(enabled);
   }
-
-  // private static class GetValueLockedCallable implements WriteLockCallable<Object> {
-  // private final static GetValueLockedCallable INSTANCE = new GetValueLockedCallable();
-  //
-  // private GetValueLockedCallable() {
-  // //
-  // }
-  //
-  // public Object call(Object key, Object... params) {
-  // int i = 0;
-  // TCObjectServerMapImpl serverMapImpl = (TCObjectServerMapImpl) params[i++];
-  // TCServerMap map = (TCServerMap) params[i++];
-  // LockID lockID = (LockID) params[i++];
-  //
-  // AbstractLocalCacheStoreValue item = serverMapImpl.getValueUnlockedFromCache(key);
-  // if (item != null) { return item.getValueObject(); }
-  //
-  // Object value = serverMapImpl.getValueForKeyFromServer(map, key, false);
-  //
-  // if (value != null) {
-  // serverMapImpl.addStrongValueToCache(lockID, key, value, serverMapImpl.objectManager
-  // .lookupExistingObjectID(value), MapOperationType.GET);
-  // }
-  // return value;
-  // }
-  // }
-  //
-  // private static class GetValueUnockedCallable implements WriteLockCallable<Object> {
-  // private final static GetValueUnockedCallable INSTANCE = new GetValueUnockedCallable();
-  //
-  // private GetValueUnockedCallable() {
-  // //
-  // }
-  //
-  // public Object call(Object key, Object... params) {
-  // int i = 0;
-  // TCObjectServerMapImpl serverMapImpl = (TCObjectServerMapImpl) params[i++];
-  // TCServerMap map = (TCServerMap) params[i++];
-  //
-  // AbstractLocalCacheStoreValue item = serverMapImpl.getValueUnlockedFromCache(key);
-  // if (item != null) { return item.getValueObject(); }
-  //
-  // Object value = serverMapImpl.getValueForKeyFromServer(map, key, true);
-  //
-  // if (value != null) {
-  // serverMapImpl.updateLocalCacheIfNecessary(key, value);
-  // }
-  // return value;
-  // }
-  // }
-
 }
