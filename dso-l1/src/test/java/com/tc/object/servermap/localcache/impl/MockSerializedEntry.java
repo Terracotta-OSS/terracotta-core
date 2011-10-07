@@ -20,12 +20,12 @@ public class MockSerializedEntry extends TCObjectSelfImpl {
   }
 
   @Override
-  public int touch() {
+  public int retain() {
     return touchCount.incrementAndGet();
   }
 
   @Override
-  public int untouch() {
+  public int release() {
     return touchCount.decrementAndGet();
   }
 

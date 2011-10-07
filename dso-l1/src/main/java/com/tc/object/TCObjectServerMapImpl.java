@@ -345,7 +345,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
                           MapOperationType mapOperation) {
     Object value = localCacheValue.getValueObject();
     if (value instanceof TCObjectSelf) {
-      ((TCObjectSelf) value).touch();
+      ((TCObjectSelf) value).retain();
     }
     try {
       boolean notifyServerForRemove = false;
@@ -368,7 +368,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       return;
     } finally {
       if (value instanceof TCObjectSelf) {
-        ((TCObjectSelf) value).untouch();
+        ((TCObjectSelf) value).release();
       }
     }
   }

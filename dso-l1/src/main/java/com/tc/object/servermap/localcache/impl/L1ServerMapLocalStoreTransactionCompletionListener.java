@@ -28,7 +28,7 @@ public class L1ServerMapLocalStoreTransactionCompletionListener implements Trans
     this.value = value;
     Object actualValue = value.getValueObject();
     if (actualValue instanceof TCObjectSelf) {
-      ((TCObjectSelf) actualValue).touch();
+      ((TCObjectSelf) actualValue).retain();
     }
   }
 
@@ -42,7 +42,7 @@ public class L1ServerMapLocalStoreTransactionCompletionListener implements Trans
                                  transactionCompleteOperation == TransactionCompleteOperation.UNPIN_AND_REMOVE_ENTRY);
     Object actualValue = value.getValueObject();
     if (actualValue instanceof TCObjectSelf) {
-      ((TCObjectSelf) actualValue).untouch();
+      ((TCObjectSelf) actualValue).release();
     }
   }
 

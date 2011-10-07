@@ -19,7 +19,7 @@ public interface TCObjectSelf extends TCObject {
 
   public boolean isInitialized();
 
-  int touch();
+  int retain();
 
-  int untouch();
+  int release();
 }

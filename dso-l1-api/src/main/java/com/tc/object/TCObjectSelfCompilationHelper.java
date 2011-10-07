@@ -14,11 +14,11 @@ package com.tc.object;
  */
 public abstract class TCObjectSelfCompilationHelper implements TCObjectSelf {
 
-  public int touch() {
+  public int retain() {
     throw new UnsupportedOperationException();
   }
 
-  public int untouch() {
+  public int release() {
     throw new UnsupportedOperationException();
   }
 
