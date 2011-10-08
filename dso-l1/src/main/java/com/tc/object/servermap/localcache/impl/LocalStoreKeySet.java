@@ -5,6 +5,7 @@ package com.tc.object.servermap.localcache.impl;
 
 import java.util.AbstractSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -15,11 +16,11 @@ public class LocalStoreKeySet extends AbstractSet<Object> {
   }
 
   private final int                    size;
-  private final Set                    internalSet1;
+  private final List                   internalSet1;
   private final Set                    internalSet2;
   private final LocalStoreKeySetFilter filter;
 
-  public LocalStoreKeySet(Set internalSet1, Set internalSet2, int size, LocalStoreKeySetFilter filter) {
+  public LocalStoreKeySet(List internalSet1, Set internalSet2, int size, LocalStoreKeySetFilter filter) {
     this.internalSet1 = internalSet1;
     this.internalSet2 = internalSet2;
     this.size = size;
@@ -87,5 +88,4 @@ public class LocalStoreKeySet extends AbstractSet<Object> {
     }
 
   }
-
 }

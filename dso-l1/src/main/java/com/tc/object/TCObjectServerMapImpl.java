@@ -539,6 +539,20 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   /**
+   * check the key is pinned or not
+   */
+  public boolean isPinned(Object key) {
+    return cache.isPinned(key);
+  }
+
+  /**
+   * pin or unpin the key
+   */
+  public void setPinned(Object key, boolean pinned) {
+    cache.setPinned(key, pinned);
+  }
+
+  /**
    * Clears local cache of all entries. It is not immediate as all associated locks needs to be recalled.
    * 
    * @param map ServerTCMap
@@ -575,7 +589,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   public Set getLocalKeySet() {
-    if (this.cache != null) { return this.cache.getKeySet(); }
+    if (this.cache != null) { return this.cache.getKeys(); }
     return Collections.EMPTY_SET;
   }
 

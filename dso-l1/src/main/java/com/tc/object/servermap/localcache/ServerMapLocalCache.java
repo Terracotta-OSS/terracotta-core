@@ -106,13 +106,22 @@ public interface ServerMapLocalCache {
   void clearInline();
 
   /**
+   * check the key is pinned or not
+   */
+  boolean isPinned(Object key);
+
+  /**
+   * pin or unpin the key
+   */
+  void setPinned(Object key, boolean pinned);
+
+  /**
    * Returns the keys present in the local cache (does not include meta items stored)
    */
-  Set getKeySet();
+  Set getKeys();
 
   void postTransactionCallback(Object key, AbstractLocalCacheStoreValue value, boolean removeEntry);
 
-  void transactionComplete(
-                           L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
+  void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
 
 }

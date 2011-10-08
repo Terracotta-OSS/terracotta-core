@@ -6,18 +6,19 @@ package com.tc.object.servermap.localcache.impl;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStoreListener;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocalCacheStore<K, V> {
   private final List<L1ServerMapLocalCacheStoreListener<K, V>> listeners    = new CopyOnWriteArrayList<L1ServerMapLocalCacheStoreListener<K, V>>();
   private final HashMap<K, V>                                  backingCache = new HashMap<K, V>();
+  private final HashSet<K>                                     pinnedKeys   = new HashSet<K>();
   private final int                                            maxElementsInMemory;
 
   public L1ServerMapLocalCacheStoreHashMap() {
@@ -94,13 +95,25 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
     return backingCache.size() / 2;
   }
 
+  public synchronized boolean isPinned(K key) {
+    return pinnedKeys.contains(key);
+  }
+
+  public synchronized void setPinned(K key, boolean pinned) {
+    if (pinned) {
+      pinnedKeys.add(key);
+    } else {
+      pinnedKeys.remove(key);
+    }
+  }
+
   // TODO: Remove it using an iterator
   public synchronized void clear() {
     backingCache.clear();
   }
 
-  public synchronized Set getKeySet() {
-    return new HashSet(this.backingCache.keySet());
+  public synchronized List getKeys() {
+    return new ArrayList(backingCache.keySet());
   }
 
   public int getMaxElementsInMemory() {

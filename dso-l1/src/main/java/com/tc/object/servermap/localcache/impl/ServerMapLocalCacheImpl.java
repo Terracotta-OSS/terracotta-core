@@ -25,6 +25,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.concurrent.TCConcurrentMultiMap;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -255,10 +256,24 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     grabAllLocks();
     try {
       removeAllKeys(this.pendingTransactionEntries.keySet());
-      removeAllKeys(this.localStore.getKeySet());
+      removeAllKeys(this.localStore.getKeys());
     } finally {
       realeseAllLocks();
     }
+  }
+
+  /**
+   * check the key is pinned or not
+   */
+  public boolean isPinned(Object key) {
+    return this.localStore.isPinned(key);
+  }
+
+  /**
+   * pin or unpin the key
+   */
+  public void setPinned(Object key, boolean pinned) {
+    this.localStore.setPinned(key, pinned);
   }
 
   public void clearInline() {
@@ -266,14 +281,14 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
     grabAllLocks();
     try {
-      removeAllKeysWithInlineLockRecall(this.localStore.getKeySet(), true);
+      removeAllKeysWithInlineLockRecall(this.localStore.getKeys(), true);
       removeAllKeysWithInlineLockRecall(this.pendingTransactionEntries.keySet(), false);
     } finally {
       realeseAllLocks();
     }
   }
 
-  private void removeAllKeysWithInlineLockRecall(Set keySet, boolean removeFromInternalStore) {
+  private void removeAllKeysWithInlineLockRecall(Collection keySet, boolean removeFromInternalStore) {
     Set<LockID> lockIDs = new HashSet<LockID>();
     for (Object key : keySet) {
       if (!isMetaInfoMapping(key)) {
@@ -290,7 +305,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     recallLocksInline(lockIDs);
   }
 
-  private void removeAllKeys(Set keySet) {
+  private void removeAllKeys(Collection keySet) {
     for (Object key : keySet) {
       if (!isMetaInfoMapping(key)) {
         removeFromLocalCache(key);
@@ -390,11 +405,15 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     try {
       AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) localStore.get(key);
       if (value != null && value.getValueObjectId().equals(oid)) {
-        AbstractLocalCacheStoreValue removed = (AbstractLocalCacheStoreValue) localStore.remove(key);
-        if (removed != null) {
-          initiateLockRecall(removeLockIDMetaMapping(key, removed));
+        if (localStore.isPinned(key)) {
+          localStore.put(oid, key);
+        } else {
+          AbstractLocalCacheStoreValue removed = (AbstractLocalCacheStoreValue) localStore.remove(key);
+          if (removed != null) {
+            initiateLockRecall(removeLockIDMetaMapping(key, removed));
+          }
+          remoteRemoveObjectIfPossible(removed);
         }
-        remoteRemoveObjectIfPossible(removed);
       }
     } finally {
       lock.writeLock().unlock();
@@ -425,8 +444,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return lockID;
   }
 
-  public Set getKeySet() {
-    return Collections.unmodifiableSet(new LocalStoreKeySet(localStore.getKeySet(), this.pendingTransactionEntries
+  public Set getKeys() {
+    return Collections.unmodifiableSet(new LocalStoreKeySet(localStore.getKeys(), this.pendingTransactionEntries
         .keySet(), size(), IGNORE_ID_FILTER));
   }
 

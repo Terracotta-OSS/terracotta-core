@@ -3,7 +3,7 @@
  */
 package com.tc.object.servermap.localcache;
 
-import java.util.Set;
+import java.util.List;
 
 /**
  * The backing Cache Store for the Local Cache present in TCObjectServerMapImpl
@@ -51,6 +51,16 @@ public interface L1ServerMapLocalCacheStore<K, V> {
   public boolean removeListener(L1ServerMapLocalCacheStoreListener<K, V> listener);
 
   /**
+   * check the key is pinned or not
+   */
+  boolean isPinned(K key);
+
+  /**
+   * pin or unpin the key
+   */
+  void setPinned(K key, boolean pinned);
+
+  /**
    * Clear the map
    */
   public void clear();
@@ -58,7 +68,7 @@ public interface L1ServerMapLocalCacheStore<K, V> {
   /**
    * @return key set for this map
    */
-  public Set getKeySet();
+  public List getKeys();
 
   /**
    * Size does not take into consideration for elements inserted with {@link PutType#incrementSizeOnPut()} returning

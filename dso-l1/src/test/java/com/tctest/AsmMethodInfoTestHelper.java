@@ -25,7 +25,6 @@ public class AsmMethodInfoTestHelper {
   private static Map myRoot;     // = new HashMap();
   private long       count;
 
-  @SuppressWarnings("unused")
   private int        commits = 0;
 
   public long test4(int i, Object foo) {

@@ -578,7 +578,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     }
 
     Assert.assertEquals(2 * count, cache.size());
-    Set keySet = cache.getKeySet();
+    Set keySet = cache.getKeys();
     Iterator iterator = keySet.iterator();
     Assert.assertEquals(2 * count, keySet.size());
     Set keysFromKeySet = new HashSet();
@@ -614,7 +614,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
       Assert.assertTrue(keySet.contains("key" + eventualId));
     }
 
-    keySet = cache.getKeySet();
+    keySet = cache.getKeys();
     try {
       keySet.add(new Object());
       fail("Adding to keyset should fail");
@@ -670,7 +670,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     }
 
     Assert.assertEquals(count, cache.size());
-    keySet = cache.getKeySet();
+    keySet = cache.getKeys();
     iterator = keySet.iterator();
     Assert.assertEquals(count, keySet.size());
     keysFromKeySet = new HashSet();
@@ -752,7 +752,7 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     }
 
     Assert.assertEquals(0, cache.size());
-    Set keySet = cache.getKeySet();
+    Set keySet = cache.getKeys();
     Assert.assertFalse(keySet.iterator().hasNext());
   }
 

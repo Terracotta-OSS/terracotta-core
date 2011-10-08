@@ -24,11 +24,9 @@ public class ClassAdapterTestTarget {
                                                                                   + "cstr-autolock-throw-exception-inside";
 
   // This isn't a real serialVersionUID, but it needs to be here for tests
-  @SuppressWarnings("unused")
   private static final long                serialVersionUID                     = 42L;
 
   // Again, this isn't really for serialization, but it needs to be here for tests
-  @SuppressWarnings("unused")
   private static final ObjectStreamField[] serialPersistentFields               = { new java.io.ObjectStreamField(
                                                                                                                   "foo",
                                                                                                                   char[].class) };
