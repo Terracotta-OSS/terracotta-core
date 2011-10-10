@@ -32,6 +32,13 @@ EXTRA TEST PROFILES:
 * derby:      run tests with derby
 * normal,active-passive:  see dso-crash-tests/README.txt
 
+TO DEBUG A TEST:
+
+%> mvn verify -Dtest=ArrayCopyTest -P system-tests -Dmaven.surefire.debug
+
+The option -Dmaven.surefire.debug will run the test in debug mode where you 
+connect Eclipse or other IDE to the test JVM via remote debug option.
+
 
 ******************************************************************************
 3. To pound a test:
