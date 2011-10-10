@@ -28,6 +28,7 @@ public class ConcurrentHashMapIDHashCodeTest extends TransparentTestBase {
   private static final int NODE_COUNT = 3;
 
   public ConcurrentHashMapIDHashCodeTest() {
+    disableAllUntil(new Date(Long.MAX_VALUE));
     if (Vm.isIBM()) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
