@@ -156,18 +156,21 @@ public class BoundedBytesConcurrentHashMapTest extends TCTestCase {
     ThreadUtil.reallySleep(1000);
     Assert.assertTrue(t.isAlive());
 
-    while (boundedBytesConcurrentHashMap.size() != 0 || t.isAlive()) {
+    int removeCount = 0;
+    while (removeCount < 200) {
       Iterator<Entry<String, Integer>> iterator = boundedBytesConcurrentHashMap.entrySet().iterator();
       while (iterator.hasNext()) {
         // Assert.eval(boundedBytesConcurrentHashMap.getSizeInBytes() <= maxSize);
         Entry<String, Integer> entry = iterator.next();
         iterator.remove();
-        System.err.println("testBoundedIterator Remove success : " + entry.getKey() + "; currentSize : "
+        System.err.println("testBoundedIterator Remove success: " + entry.getKey() + "; currentSize : "
                            + boundedBytesConcurrentHashMap.getSizeInBytes());
+        removeCount++;
       }
+      ThreadUtil.reallySleep(1000);
+      System.err.println(".");
     }
 
-    ThreadUtil.reallySleep(1000);
     Assert.assertEquals(0, boundedBytesConcurrentHashMap.size());
     Assert.assertEquals(0, boundedBytesConcurrentHashMap.getSizeInBytes());
 
