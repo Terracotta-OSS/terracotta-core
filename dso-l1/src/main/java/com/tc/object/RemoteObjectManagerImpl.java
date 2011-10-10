@@ -629,7 +629,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
         oids.add(oid);
         final Long old = this.lruOids.put(oid, batch);
         if (old != null) { throw new AssertionError("Old Entry present for :" + dna + " oid : " + oid + " old " + old
-                                                    + " batch " + batch); }
+                                                    + " batch " + batch + " objs " + objs); }
       }
     }
 
