@@ -38,15 +38,15 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   }
 
   public void removeObjectById(ObjectID oid) {
-    tcObjectStoreLock.writeLock().lock();
-
+    tcObjectStoreLock.readLock().lock();
     try {
       if (!tcObjectSelfStoreOids.contains(oid)) { return; }
-      for (ServerMapLocalCache cache : localCaches.keySet()) {
-        cache.removeEntriesForObjectId(oid);
-      }
     } finally {
-      tcObjectStoreLock.writeLock().unlock();
+      tcObjectStoreLock.readLock().unlock();
+    }
+
+    for (ServerMapLocalCache cache : localCaches.keySet()) {
+      cache.removeEntriesForObjectId(oid);
     }
   }
 
