@@ -64,6 +64,12 @@ Under root or 'community' folder:
 Under "terracotta-kit" there's a README showing you 
 how to build different types of Terracotta kits
 
+You can also just initiate a kit build from the community folder. This will
+also take the projects in the devwork folder into account. Simply run this
+from the community folder:
+
+%> mvn install -DskipTests -Pkit,enterprise,os -am -pl terracotta-kit
+
 
 ******************************************************************************
 6. To start/stop TC server from the build (not using kit)
