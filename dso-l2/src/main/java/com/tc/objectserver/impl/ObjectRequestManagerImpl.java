@@ -144,6 +144,8 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
         } else {
           objectsInOrder.addFirst(mo);
         }
+      } else {
+        throw new AssertionError("Found duplicate id " + id + " objs " + objs);
       }
     }
 
