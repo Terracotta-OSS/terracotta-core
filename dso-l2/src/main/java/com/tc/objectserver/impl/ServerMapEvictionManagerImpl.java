@@ -22,8 +22,7 @@ import com.tc.objectserver.context.ServerMapEvictionContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.l1.api.ClientStateManager;
-import com.tc.objectserver.l1.impl.ServerMapEvictionClientObjectReferenceSet;
+import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
 import com.tc.objectserver.tx.ServerTransaction;
@@ -98,10 +97,10 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
   private GroupManager                                    groupManager;
   private TransactionBatchManager                         transactionBatchManager;
   private final ServerMapEvictionStatsManager             evictionStats;
-  private final ServerMapEvictionClientObjectReferenceSet clientObjectReferencesOptimisedSet;
+  private final ClientObjectReferenceSet clientObjectReferenceSet;
 
   public ServerMapEvictionManagerImpl(final ObjectManager objectManager, final ManagedObjectStore objectStore,
-                                      final ClientStateManager clientStateManager,
+                                      final ClientObjectReferenceSet clientObjectReferenceSet,
                                       final ServerTransactionFactory serverTransactionFactory,
                                       final long evictionSleepTime) {
     this.objectManager = objectManager;
@@ -109,7 +108,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     this.serverTransactionFactory = serverTransactionFactory;
     this.evictionSleepTime = evictionSleepTime;
     this.evictionStats = new ServerMapEvictionStatsManager();
-    this.clientObjectReferencesOptimisedSet = new ServerMapEvictionClientObjectReferenceSet(clientStateManager);
+    this.clientObjectReferenceSet = clientObjectReferenceSet;
   }
 
   public void initializeContext(final ConfigurationContext context) {
@@ -145,12 +144,11 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     }
 
     if (EVICTOR_LOGGING) {
-      logger.info("Server Map Eviction  : Number of Objects faulted in L1 : "
-                  + clientObjectReferencesOptimisedSet.size());
+      logger.info("Server Map Eviction  : Number of Objects faulted in L1 : " + clientObjectReferenceSet.size());
     }
 
     for (final ObjectID mapID : evictableObjects) {
-      doEvictionOn(mapID, clientObjectReferencesOptimisedSet, true);
+      doEvictionOn(mapID, true);
     }
 
     if (EVICTOR_LOGGING) {
@@ -159,9 +157,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     evictionStats.periodicEvictionFinished();
   }
 
-  public void doEvictionOn(final ObjectID oid,
-                           final ServerMapEvictionClientObjectReferenceSet serverMapEvictionClientObjectRefSet,
-                           final boolean periodicEvictor) {
+  public void doEvictionOn(final ObjectID oid, final boolean periodicEvictor) {
     if (!this.isStarted.get()) { throw new AssertionError("Evictor is not started yet"); }
     if (!markEvictionInProgress(oid)) {
       logger.info("Ignoring eviction request as its already in progress : " + oid);
@@ -173,7 +169,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     }
 
     try {
-      basicDoEviction(oid, serverMapEvictionClientObjectRefSet, periodicEvictor);
+      basicDoEviction(oid, clientObjectReferenceSet, periodicEvictor);
     } finally {
       markEvictionDone(oid);
     }
@@ -185,7 +181,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
   }
 
   private void basicDoEviction(final ObjectID oid,
-                               final ServerMapEvictionClientObjectReferenceSet serverMapEvictionClientObjectRefSet,
+                               final ClientObjectReferenceSet serverMapEvictionClientObjectRefSet,
                                final boolean periodicEvictor) {
     final ManagedObject mo = this.objectManager.getObjectByIDOrNull(oid);
     ServerMapEvictionContext context = null;
@@ -236,7 +232,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
    */
   private ServerMapEvictionContext doEviction(final ObjectID oid,
                                               final EvictableMap ev,
-                                              final ServerMapEvictionClientObjectReferenceSet serverMapEvictionClientObjectReferenceSet,
+                                              final ClientObjectReferenceSet serverMapEvictionClientObjectReferenceSet,
                                               final String className, final String loaderDesc,
                                               final boolean periodicEvictor, final String cacheName) {
     final int targetMaxTotalCount = ev.getMaxTotalCount();

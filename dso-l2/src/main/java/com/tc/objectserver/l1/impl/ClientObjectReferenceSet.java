@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class ServerMapEvictionClientObjectReferenceSet implements ObjectReferenceAddListener {
+public class ClientObjectReferenceSet implements ObjectReferenceAddListener {
 
   private static final long            REFRESH_INTERVAL_NANO = TimeUnit.MILLISECONDS
                                                                  .toNanos(TCPropertiesImpl
@@ -42,9 +42,9 @@ public class ServerMapEvictionClientObjectReferenceSet implements ObjectReferenc
   private boolean                      objectRefAddRegistered;
   private final Timer                  timer;
 
-  public ServerMapEvictionClientObjectReferenceSet(final ClientStateManager clientStateManager) {
+  public ClientObjectReferenceSet(final ClientStateManager clientStateManager) {
     this.clientStateManager = clientStateManager;
-    this.logger = TCLogging.getLogger(ServerMapEvictionClientObjectReferenceSet.class);
+    this.logger = TCLogging.getLogger(ClientObjectReferenceSet.class);
     this.lock = new ReentrantReadWriteLock();
     this.timer = new Timer();
 
@@ -128,7 +128,7 @@ public class ServerMapEvictionClientObjectReferenceSet implements ObjectReferenc
         lock.writeLock().lock();
         try {
           if ((lastRefreshTime < (System.nanoTime() - REFRESH_INTERVAL_NANO))) {
-            clientStateManager.unregisterObjectReferenceAddListener(ServerMapEvictionClientObjectReferenceSet.this);
+            clientStateManager.unregisterObjectReferenceAddListener(ClientObjectReferenceSet.this);
             cancel();
             objectRefAddRegistered = false;
           }

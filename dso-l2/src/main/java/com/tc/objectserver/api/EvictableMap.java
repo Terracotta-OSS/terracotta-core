@@ -3,7 +3,7 @@
  */
 package com.tc.objectserver.api;
 
-import com.tc.objectserver.l1.impl.ServerMapEvictionClientObjectReferenceSet;
+import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 
 import java.util.Map;
 
@@ -17,7 +17,7 @@ public interface EvictableMap {
 
   public int getTTISeconds();
 
-  public Map getRandomSamples(int count, ServerMapEvictionClientObjectReferenceSet serverMapEvictionClientObjectRefSet);
+  public Map getRandomSamples(int count, ClientObjectReferenceSet serverMapEvictionClientObjectRefSet);
 
   public void evictionCompleted();
 

@@ -4,21 +4,15 @@
 package com.tc.objectserver.handler;
 
 import com.tc.async.api.AbstractEventHandler;
-import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.EventHandler;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ServerMapEvictionManager;
 import com.tc.objectserver.context.ServerMapEvictionInitiateContext;
-import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.l1.api.ClientStateManager;
-import com.tc.objectserver.l1.impl.ServerMapEvictionClientObjectReferenceSet;
 
 public class ServerMapCapacityEvictionHandler extends AbstractEventHandler implements EventHandler {
 
-  private final ServerMapEvictionManager     serverMapEvictor;
-  private ClientStateManager                 clientStateManager;
-  private ServerMapEvictionClientObjectReferenceSet clientObjectReferencesOptimizedSet;
+  private final ServerMapEvictionManager serverMapEvictor;
 
   public ServerMapCapacityEvictionHandler(final ServerMapEvictionManager serverMapEvictor) {
     this.serverMapEvictor = serverMapEvictor;
@@ -28,14 +22,8 @@ public class ServerMapCapacityEvictionHandler extends AbstractEventHandler imple
   public void handleEvent(final EventContext context) {
     final ServerMapEvictionInitiateContext smec = (ServerMapEvictionInitiateContext) context;
     for (final ObjectID id : smec.getObjectIDs()) {
-      this.serverMapEvictor.doEvictionOn(id, clientObjectReferencesOptimizedSet, false);
+      this.serverMapEvictor.doEvictionOn(id, false);
     }
   }
 
-  @Override
-  protected void initialize(final ConfigurationContext context) {
-    final ServerConfigurationContext scc = (ServerConfigurationContext) context;
-    this.clientStateManager = scc.getClientStateManager();
-    this.clientObjectReferencesOptimizedSet = new ServerMapEvictionClientObjectReferenceSet(clientStateManager);
-  }
 }

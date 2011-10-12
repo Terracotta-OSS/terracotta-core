@@ -9,7 +9,7 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.l1.impl.ClientStateManagerImpl;
-import com.tc.objectserver.l1.impl.ServerMapEvictionClientObjectReferenceSet;
+import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
@@ -36,7 +36,7 @@ public class ServerMapEvictionClientObjectReferenceSetTest extends TCTestCase {
     final Random r = new Random();
 
     clientStateManager.startupNode(node);
-    ServerMapEvictionClientObjectReferenceSet clientObjRefSet = new ServerMapEvictionClientObjectReferenceSet(
+    ClientObjectReferenceSet clientObjRefSet = new ClientObjectReferenceSet(
                                                                                                               clientStateManager);
 
     for (int i = 0; i < 1000; i++) {
@@ -65,7 +65,7 @@ public class ServerMapEvictionClientObjectReferenceSetTest extends TCTestCase {
     System.err.println("XXX ServerMap Eviction running intermittently");
     for (int i = 0; i < 10; i++) {
       ThreadUtil.reallySleep(TimeUnit.NANOSECONDS
-          .toMillis(ServerMapEvictionClientObjectReferenceSet.MONITOR_INTERVAL_NANO) + 1000);
+          .toMillis(ClientObjectReferenceSet.MONITOR_INTERVAL_NANO) + 1000);
       while (clientStateManager.getObjectReferenceAddRegisteredListeners().length != 0) {
         System.err.println("XXX waiting for ref listener to be 0");
         ThreadUtil.reallySleep(1000);
