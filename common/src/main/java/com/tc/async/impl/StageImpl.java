@@ -16,8 +16,10 @@ import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggerProvider;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.QueueFactory;
+import com.tc.util.concurrent.ThreadUtil;
 
 /**
  * The SEDA Stage
@@ -31,6 +33,7 @@ public class StageImpl implements Stage {
   private final WorkerThread[] threads;
   private final ThreadGroup    group;
   private final TCLogger       logger;
+  private final int            sleepMs;
 
   /**
    * The Constructor.
@@ -60,6 +63,7 @@ public class StageImpl implements Stage {
     this.stageQueue = new StageQueueImpl(threadCount, threadsToQueueRatio, queueFactory, loggerProvider, name,
                                          queueSize);
     this.group = group;
+    this.sleepMs = TCPropertiesImpl.getProperties().getInt("seda." + name + ".sleepMs", 0);
   }
 
   public void destroy() {
@@ -83,7 +87,7 @@ public class StageImpl implements Stage {
       } else {
         threadName = threadName + ")";
       }
-      threads[i] = new WorkerThread(threadName, this.stageQueue.getSource(i), handler, group, logger);
+      threads[i] = new WorkerThread(threadName, this.stageQueue.getSource(i), handler, group, logger, sleepMs);
       threads[i].start();
     }
   }
@@ -105,13 +109,16 @@ public class StageImpl implements Stage {
     private final EventHandler handler;
     private volatile boolean   shutdownRequested = false;
     private final TCLogger     tcLogger;
+    private final int          sleepMs;
 
-    public WorkerThread(String name, Source source, EventHandler handler, ThreadGroup group, TCLogger logger) {
+    public WorkerThread(String name, Source source, EventHandler handler, ThreadGroup group, TCLogger logger,
+                        int sleepMs) {
       super(group, name);
       tcLogger = logger;
       setDaemon(true);
       this.source = source;
       this.handler = handler;
+      this.sleepMs = sleepMs;
     }
 
     public void shutdown() {
@@ -127,6 +134,9 @@ public class StageImpl implements Stage {
       while (!shutdownRequested()) {
         EventContext ctxt = null;
         try {
+          if (sleepMs > 0) {
+            ThreadUtil.reallySleep(sleepMs);
+          }
           ctxt = source.poll(pollTime);
           if (ctxt != null) {
             if (ctxt instanceof SpecializedEventContext) {
