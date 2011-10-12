@@ -22,15 +22,12 @@ public class AsmMethodInfoTestHelper {
     }
   }
 
-  private static Map myRoot;     // = new HashMap();
+  private static Map myRoot; // = new HashMap();
   private long       count;
-
-  private int        commits = 0;
 
   public long test4(int i, Object foo) {
     synchronized (myRoot) {
       long start = System.currentTimeMillis();
-      commits++;
       int s = myRoot.size();
       long c = count++;
       if (myRoot.containsKey(new Long(c))) {
@@ -47,7 +44,6 @@ public class AsmMethodInfoTestHelper {
   public long test5(int i, Object foo) {
     synchronized (myRoot) {
       long start = System.currentTimeMillis();
-      commits++;
       int s = myRoot.size();
       myRoot.remove(new Long(count - 1));
       if (myRoot.size() != s - 1) System.out.println("Wrong size!:" + s + " new size:" + myRoot.size());
