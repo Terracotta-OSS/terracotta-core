@@ -902,12 +902,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public void deleteObjects(final DGCResultContext dgcResultContext) {
     final Set<ObjectID> toDelete = dgcResultContext.getGarbageIDs();
-    if (!toDelete.isEmpty()) {
-      removeAllObjectsByID(toDelete);
-      this.objectStore.removeAllObjectsByID(dgcResultContext);
-      // Process pending, since we disabled process pending while GC pause was initiate.
-      processPendingLookups();
-    }
+    removeAllObjectsByID(toDelete);
+    this.objectStore.removeAllObjectsByID(dgcResultContext);
+    // Process pending, since we disabled process pending while GC pause was initiate.
+    processPendingLookups();
   }
 
   private void flushAndCommit(final PersistenceTransaction persistenceTransaction, final ManagedObject managedObject) {
