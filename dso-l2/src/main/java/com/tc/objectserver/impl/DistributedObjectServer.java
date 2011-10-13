@@ -212,9 +212,9 @@ import com.tc.objectserver.handler.TransactionLowWaterMarkHandler;
 import com.tc.objectserver.handler.ValidateObjectsHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
+import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.l1.impl.ClientStateManagerImpl;
 import com.tc.objectserver.l1.impl.InvalidateObjectManagerImpl;
-import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.l1.impl.TransactionAcknowledgeAction;
 import com.tc.objectserver.l1.impl.TransactionAcknowledgeActionImpl;
 import com.tc.objectserver.locks.LockManagerImpl;
@@ -719,6 +719,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     }
 
     this.clientStateManager = new ClientStateManagerImpl(TCLogging.getLogger(ClientStateManager.class));
+    final ClientObjectReferenceSet clientObjectReferenceSet = new ClientObjectReferenceSet(this.clientStateManager);
 
     final boolean gcEnabled = l2DSOConfig.garbageCollection().getEnabled();
 
@@ -768,7 +769,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage garbageCollectStage = stageManager.createStage(ServerConfigurationContext.GARBAGE_COLLECT_STAGE,
                                                                new GarbageCollectHandler(objectManagerConfig), 1, -1);
 
-    this.garbageCollectionManager = new GarbageCollectionManagerImpl(garbageCollectStage.getSink());
+    this.garbageCollectionManager = new GarbageCollectionManagerImpl(garbageCollectStage.getSink(),
+                                                                     clientObjectReferenceSet);
 
     final Stage destroyableMapStage = stageManager.createStage(ServerConfigurationContext.DESTROYABLE_MAP_STAGE,
                                                                new DestroyableMapHandler(), 1, -1);
@@ -1033,8 +1035,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.serverMapRequestManager));
 
     final ServerTransactionFactory serverTransactionFactory = new ServerTransactionFactory();
-    final ClientObjectReferenceSet clientObjectReferenceSet = new ClientObjectReferenceSet(
-                                                                                                                             clientStateManager);
     this.serverMapEvictor = new ServerMapEvictionManagerImpl(
                                                              this.objectManager,
                                                              this.objectStore,
