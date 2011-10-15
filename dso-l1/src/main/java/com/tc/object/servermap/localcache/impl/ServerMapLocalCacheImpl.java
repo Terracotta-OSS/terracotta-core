@@ -65,8 +65,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                                                                                                .getLogger(ServerMapLocalCacheImpl.class);
   private static final long                          SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS = TCPropertiesImpl
                                                                                                                .getProperties()
-                                                                                                               .getLong(
-                                                                                                                        TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
+                                                                                                               .getLong(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
   private static final int                           CONCURRENCY                                           = 256;
 
   private static final LocalStoreKeySetFilter        IGNORE_ID_FILTER                                      = new IgnoreIdsFilter();
@@ -74,7 +73,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   private final L1ServerMapLocalCacheManager         l1LocalCacheManager;
   private volatile boolean                           localCacheEnabled;
-  private volatile L1ServerMapLocalCacheStore        localStore;
+  private final L1ServerMapLocalCacheStore           localStore;
   private final ClientObjectManager                  objectManager;
   private final Manager                              manager;
   private final ServerMapLocalCacheRemoveCallback    removeCallback;
@@ -112,14 +111,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   public L1ServerMapLocalCacheStore getInternalStore() {
     return localStore;
-  }
-
-  private boolean isStoreInitialized() {
-    if (localStore == null) {
-      LOGGER.warn("Store yet not initialized");
-      return false;
-    }
-    return true;
   }
 
   public void setLocalCacheEnabled(boolean enable) {
@@ -180,7 +171,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   private void putMetaMapping(final AbstractLocalCacheStoreValue localCacheValue, final Object key,
                               MapOperationType mapOperation) {
-    if (!isStoreInitialized() || localCacheValue.getValueObject() == null) { return; }
+    if (localCacheValue.getValueObject() == null) { return; }
 
     ObjectID valueObjectID = localCacheValue.getValueObjectId();
     if (!valueObjectID.equals(ObjectID.NULL_ID)) {
@@ -202,7 +193,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   private LockID removeMetaMapping(Object key, AbstractLocalCacheStoreValue localCacheValue,
                                    final boolean isRemoveFromInternalStore) {
-    if (!isStoreInitialized()) { return null; }
     if (localCacheValue == null || localCacheValue.isValueNull()) { return null; }
 
     if (!localCacheValue.isLiteral()) {
@@ -230,8 +220,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return null;
   }
 
-  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(
-                                                                                            final Object key,
+  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
                                                                                             AbstractLocalCacheStoreValue value,
                                                                                             MapOperationType mapOperation) {
     if (!mapOperation.isMutateOperation()) {
@@ -251,8 +240,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   public void clear() {
-    if (!isStoreInitialized()) { return; }
-
     grabAllLocks();
     try {
       removeAllKeys(this.pendingTransactionEntries.keySet());
@@ -261,6 +248,13 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       realeseAllLocks();
     }
   }
+
+  // /**
+  // * unpin all pinned keys
+  // */
+  // public void unpinAll() {
+  // this.localStore.unpinAll();
+  // }
 
   /**
    * check the key is pinned or not
@@ -277,8 +271,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   public void clearInline() {
-    if (!isStoreInitialized()) { return; }
-
     grabAllLocks();
     try {
       removeAllKeysWithInlineLockRecall(this.localStore.getKeys(), true);
@@ -326,8 +318,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   public int size() {
-    if (!isStoreInitialized()) { return 0; }
-
     return this.localStore.size() + (this.pendingTransactionEntries.size() / 2);
   }
 
@@ -339,8 +329,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   public void removeFromLocalCache(Object key, AbstractLocalCacheStoreValue value) {
-    if (!isStoreInitialized()) { return; }
-
     ReentrantReadWriteLock lock = getLock(key);
     lock.writeLock().lock();
 
@@ -427,8 +415,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   private LockID handleKeyValueMappingRemoved(Object key, AbstractLocalCacheStoreValue value,
                                               boolean removeFromInternalStore, boolean initiateLockRecall) {
-    if (!isStoreInitialized()) { return null; }
-
     LockID lockID = removeMetaMapping(key, value, removeFromInternalStore);
     // this is for handling leaking lock id .. get, remove
     if (lockID == null && value.isStrongConsistentValue() && value.isValueNull()
@@ -509,8 +495,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   public boolean removeEntriesForObjectId(ObjectID objectId) {
-    if (!isStoreInitialized()) { return true; }
-
     Object key = getMappingUnlocked(objectId);
     if (key == null) { return false; }
 
@@ -531,8 +515,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   public void removeEntriesForLockId(LockID lockId) {
-    if (!isStoreInitialized()) { return; }
-
     Set removedSet = this.lockIDMappings.removeAll(lockId);
     if (removedSet != null) {
       for (Object removed : removedSet) {
@@ -593,8 +575,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  public void transactionComplete(
-                                  L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
+  public void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     l1LocalCacheManager.transactionComplete(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 

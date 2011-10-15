@@ -30,8 +30,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObject, TCObjectServerMap<L> {
@@ -154,8 +154,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   public synchronized boolean doLogicalReplaceUnlocked(TCServerMap map, Object key, Object current, Object newValue) {
     AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
     if (item != null && current != item.getValueObject()) {
-      // Item already present but not equal. We are doing reference equality coz equals() is called at higher layer
-      // and coz of DEV-5462
+      // Item already present but not equal. We are doing reference equality because equals() is called at higher layer
+      // and because of DEV-5462
       return false;
     }
     ObjectID valueObjectID = invokeLogicalReplace(map, key, current, newValue);
@@ -234,6 +234,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @return value Object in the mapping, null if no mapping present.
    */
   public Object getValue(final TCServerMap map, final L lockID, final Object key) {
+    if (!isCacheInitialized()) { return null; }
     AbstractLocalCacheStoreValue item = this.cache.getLocalValueCoherent(key);
     if (item != null) { return item.getValueObject(); }
 
@@ -245,8 +246,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       Object value = getValueForKeyFromServer(map, key, false);
 
       if (value != null) {
-        addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, value, objectManager
-            .lookupExistingObjectID(value), MapOperationType.GET);
+        addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, value,
+                              objectManager.lookupExistingObjectID(value), MapOperationType.GET);
       }
       return value;
     }
@@ -318,6 +319,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   private AbstractLocalCacheStoreValue getValueUnlockedFromCache(Object key) {
+    if (!isCacheInitialized()) { return null; }
     if (invalidateOnChange) {
       return this.cache.getLocalValueCoherent(key);
     } else {
@@ -351,14 +353,14 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       boolean notifyServerForRemove = false;
       if (value instanceof TCObjectSelf) {
         if (localCacheEnabled || mapOperation.isMutateOperation()) {
-          if (!this.tcObjectSelfStore.addTCObjectSelf(serverMapLocalStore, localCacheValue, value, mapOperation
-              .isMutateOperation())) { return; }
+          if (!this.tcObjectSelfStore.addTCObjectSelf(serverMapLocalStore, localCacheValue, value,
+                                                      mapOperation.isMutateOperation())) { return; }
         } else {
           notifyServerForRemove = true;
         }
       }
 
-      if (localCacheEnabled || mapOperation.isMutateOperation()) {
+      if (isCacheInitialized() && (localCacheEnabled || mapOperation.isMutateOperation())) {
         cache.addToCache(key, localCacheValue, mapOperation);
       }
 
@@ -535,13 +537,23 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   public int getLocalSize() {
+    if (!isCacheInitialized()) { return 0; }
     return this.cache.size();
   }
+
+  // /**
+  // * unpin all pinned keys
+  // */
+  // public void unpinAll() {
+  // if (!isCacheInitialized()) { return; }
+  // cache.unpinAll();
+  // }
 
   /**
    * check the key is pinned or not
    */
   public boolean isPinned(Object key) {
+    if (!isCacheInitialized()) { return false; }
     return cache.isPinned(key);
   }
 
@@ -549,7 +561,16 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * pin or unpin the key
    */
   public void setPinned(Object key, boolean pinned) {
+    if (!isCacheInitialized()) { return; }
     cache.setPinned(key, pinned);
+  }
+
+  private boolean isCacheInitialized() {
+    if (this.cache == null) {
+      logger.warn("Local cache yet not initialized");
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -558,6 +579,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @param map ServerTCMap
    */
   public synchronized void clearLocalCache(final TCServerMap map) {
+    if (!isCacheInitialized()) { return; }
     this.cache.clear();
   }
 
@@ -565,12 +587,12 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     // MNK-2875: Since server side eviction messages come in asynchronously with the initialization process, it's
     // possible to get eviction messages prior to the TCObjectServerMap being fully initialized. If that happens, we can
     // just safely ignore any local cache removals since the local cache is uninitialized and thus empty.
-    if (this.cache != null) {
-      this.cache.removeFromLocalCache(key);
-    }
+    if (!isCacheInitialized()) { return; }
+    this.cache.removeFromLocalCache(key);
   }
 
   public synchronized void clearAllLocalCacheInline(final TCServerMap map) {
+    if (!isCacheInitialized()) { return; }
     this.cache.clearInline();
   }
 
@@ -585,15 +607,16 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   @Override
   protected int clearReferences(final Object pojo, final int toClear) {
     // if this method is called, means there is a bug in the code, throwing AssertionError
-    throw new AssertionError("we DO NOT want L1 cache manager to handle unclustered ehcache eviction");
+    throw new AssertionError("clearReferences should not be called from L1 cache manager");
   }
 
   public Set getLocalKeySet() {
-    if (this.cache != null) { return this.cache.getKeys(); }
-    return Collections.EMPTY_SET;
+    if (!isCacheInitialized()) { return Collections.EMPTY_SET; }
+    return this.cache.getKeys();
   }
 
   public boolean containsLocalKey(final Object key) {
+    if (!isCacheInitialized()) { return false; }
     if (this.localCacheEnabled) {
       return this.cache.getLocalValue(key) != null;
     } else {
@@ -602,6 +625,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   public Object getValueFromLocalCache(final Object key) {
+    if (!isCacheInitialized()) { return null; }
     AbstractLocalCacheStoreValue cachedItem = this.cache.getLocalValue(key);
     if (cachedItem != null) {
       return cachedItem.getValueObject();
@@ -694,26 +718,32 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   public long getLocalOnHeapSizeInBytes() {
+    if (!isCacheInitialized()) { return 0; }
     return this.cache.onHeapSizeInBytes();
   }
 
   public long getLocalOffHeapSizeInBytes() {
+    if (!isCacheInitialized()) { return 0; }
     return this.cache.offHeapSizeInBytes();
   }
 
   public int getLocalOnHeapSize() {
+    if (!isCacheInitialized()) { return 0; }
     return this.cache.onHeapSize();
   }
 
   public int getLocalOffHeapSize() {
+    if (!isCacheInitialized()) { return 0; }
     return this.cache.offHeapSize();
   }
 
   public boolean containsKeyLocalOnHeap(Object key) {
+    if (!isCacheInitialized()) { return false; }
     return this.cache.containsKeyOnHeap(key);
   }
 
   public boolean containsKeyLocalOffHeap(Object key) {
+    if (!isCacheInitialized()) { return false; }
     return this.cache.containsKeyOffHeap(key);
   }
 
