@@ -95,6 +95,10 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
     return backingCache.size() / 2;
   }
 
+  public synchronized void unpinAll() {
+    pinnedKeys.clear();
+  }
+
   public synchronized boolean isPinned(K key) {
     return pinnedKeys.contains(key);
   }

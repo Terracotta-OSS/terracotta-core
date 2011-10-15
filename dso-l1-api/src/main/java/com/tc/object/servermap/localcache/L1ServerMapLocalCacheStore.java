@@ -51,6 +51,11 @@ public interface L1ServerMapLocalCacheStore<K, V> {
   public boolean removeListener(L1ServerMapLocalCacheStoreListener<K, V> listener);
 
   /**
+   * unpin all pinned keys
+   */
+  void unpinAll();
+
+  /**
    * check the key is pinned or not
    */
   boolean isPinned(K key);

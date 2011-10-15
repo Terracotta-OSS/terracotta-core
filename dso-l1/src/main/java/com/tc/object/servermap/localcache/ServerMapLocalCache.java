@@ -106,6 +106,11 @@ public interface ServerMapLocalCache {
   void clearInline();
 
   /**
+   * unpin all pinned keys
+   */
+  void unpinAll();
+
+  /**
    * check the key is pinned or not
    */
   boolean isPinned(Object key);

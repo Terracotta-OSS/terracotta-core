@@ -541,13 +541,13 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     return this.cache.size();
   }
 
-  // /**
-  // * unpin all pinned keys
-  // */
-  // public void unpinAll() {
-  // if (!isCacheInitialized()) { return; }
-  // cache.unpinAll();
-  // }
+  /**
+   * unpin all pinned keys
+   */
+  public void unpinAll() {
+    if (!isCacheInitialized()) { return; }
+    cache.unpinAll();
+  }
 
   /**
    * check the key is pinned or not

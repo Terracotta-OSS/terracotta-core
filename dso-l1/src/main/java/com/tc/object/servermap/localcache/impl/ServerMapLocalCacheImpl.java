@@ -249,12 +249,12 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  // /**
-  // * unpin all pinned keys
-  // */
-  // public void unpinAll() {
-  // this.localStore.unpinAll();
-  // }
+  /**
+   * unpin all pinned keys
+   */
+  public void unpinAll() {
+    this.localStore.unpinAll();
+  }
 
   /**
    * check the key is pinned or not

@@ -193,6 +193,11 @@ public interface TCObjectServerMap<L> extends TCObject {
   public Set getLocalKeySet();
 
   /**
+   * unpin all pinned keys
+   */
+  void unpinAll();
+
+  /**
    * check the key is pinned or not
    */
   boolean isPinned(Object key);
