@@ -33,7 +33,7 @@ public class GarbageCollectionInfo implements TCSerializable {
   private long                              rescue1Count          = NOT_INITIALIZED;
   private long                              rescue1Time           = NOT_INITIALIZED;
   private long                              rescue2Time           = NOT_INITIALIZED;
-  private Type                            type;
+  private Type                              type                  = Type.NULL_GC;
 
   public static final GarbageCollectionInfo NULL_INFO             = new GarbageCollectionInfo(
                                                                                               new GarbageCollectionID(
