@@ -43,11 +43,11 @@ import com.tc.object.tx.TxnType;
 import com.tc.objectserver.context.ApplyCompleteEventContext;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.CommitTransactionContext;
+import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.LookupEventContext;
 import com.tc.objectserver.context.ManagedObjectFaultingContext;
 import com.tc.objectserver.context.ManagedObjectFlushingContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
-import com.tc.objectserver.context.PeriodicDGCResultContext;
 import com.tc.objectserver.context.RecallObjectsContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.TestDNA;
@@ -929,8 +929,8 @@ public class ObjectManagerTest extends TCTestCase {
 
     ManagedObject lookedUpViaLookup = this.objectManager.getObjectByID(id);
     assertEquals(1, lookedUpViaLookupObjectsForCreateIfNecessary.getObjectReferences().size());
-    assertEquals(lookedUpViaLookup.getObjectReferences(), lookedUpViaLookupObjectsForCreateIfNecessary
-        .getObjectReferences());
+    assertEquals(lookedUpViaLookup.getObjectReferences(),
+                 lookedUpViaLookupObjectsForCreateIfNecessary.getObjectReferences());
 
     tx = ptp.newTransaction();
     this.objectManager.releaseAndCommit(tx, lookedUpViaLookup);
@@ -957,8 +957,8 @@ public class ObjectManagerTest extends TCTestCase {
     assertEquals(1, lookedUpViaLookupObjectsForCreateIfNecessary.getObjectReferences().size());
     assertTrue(lookedUpViaLookupObjectsForCreateIfNecessary.getObjectReferences().contains(newReferenceID));
 
-    assertEquals(lookedUpViaLookup.getObjectReferences(), lookedUpViaLookupObjectsForCreateIfNecessary
-        .getObjectReferences());
+    assertEquals(lookedUpViaLookup.getObjectReferences(),
+                 lookedUpViaLookupObjectsForCreateIfNecessary.getObjectReferences());
 
     close(persistor, store);
   }
@@ -1027,8 +1027,10 @@ public class ObjectManagerTest extends TCTestCase {
     final SerializationAdapterFactory saf = newCustomSerializationAdapterFactory();
     final Persistor persistor = newPersistor(dbEnv, saf);
     final PersistenceTransactionProvider ptp = persistor.getPersistenceTransactionProvider();
-    final PersistentManagedObjectStore persistantMOStore = new PersistentManagedObjectStore(persistor
-        .getManagedObjectPersistor(), new MockSink());
+    final PersistentManagedObjectStore persistantMOStore = new PersistentManagedObjectStore(
+                                                                                            persistor
+                                                                                                .getManagedObjectPersistor(),
+                                                                                            new MockSink());
     this.objectStore = persistantMOStore;
     this.config.paranoid = paranoid;
     initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))), new NullCache(),
@@ -1064,8 +1066,9 @@ public class ObjectManagerTest extends TCTestCase {
     final String[] fieldNames = facade.getFields();
     assertEquals(6, fieldNames.length);
     // NOTE: the order of the object fields should be alphabetic
-    assertTrue(Arrays.asList(fieldNames).toString(), Arrays.equals(fieldNames, new String[] { "access$0", "this$0",
-        "intField", "objField", "stringField", "zzzField" }));
+    assertTrue(Arrays.asList(fieldNames).toString(),
+               Arrays.equals(fieldNames, new String[] { "access$0", "this$0", "intField", "objField", "stringField",
+                   "zzzField" }));
     assertEquals("TestPhysicalDNA.class.name", facade.getClassName());
     assertEquals("Integer", facade.getFieldType("intField"));
     assertEquals("ObjectID", facade.getFieldType("objField"));
@@ -1125,8 +1128,7 @@ public class ObjectManagerTest extends TCTestCase {
 
     TestObjectManagerResultsContext context;
     assertTrue(this.objectManager
-        .lookupObjectsAndSubObjectsFor(
-                                       null,
+        .lookupObjectsAndSubObjectsFor(null,
                                        context = new TestObjectManagerResultsContext(
                                                                                      new HashMap<ObjectID, ManagedObject>(),
                                                                                      objectIDs), -1));
@@ -1142,8 +1144,7 @@ public class ObjectManagerTest extends TCTestCase {
     objectIDs.add(id1);
 
     final boolean notPending = this.objectManager
-        .lookupObjectsAndSubObjectsFor(
-                                       null,
+        .lookupObjectsAndSubObjectsFor(null,
                                        context = new TestObjectManagerResultsContext(
                                                                                      new HashMap<ObjectID, ManagedObject>(),
                                                                                      objectIDs), -1);
@@ -1407,8 +1408,10 @@ public class ObjectManagerTest extends TCTestCase {
     final SerializationAdapterFactory saf = newCustomSerializationAdapterFactory();
     final Persistor persistor = newPersistor(dbEnv, saf);
     final PersistenceTransactionProvider ptp = persistor.getPersistenceTransactionProvider();
-    final PersistentManagedObjectStore persistentMOStore = new PersistentManagedObjectStore(persistor
-        .getManagedObjectPersistor(), new MockSink());
+    final PersistentManagedObjectStore persistentMOStore = new PersistentManagedObjectStore(
+                                                                                            persistor
+                                                                                                .getManagedObjectPersistor(),
+                                                                                            new MockSink());
     this.objectStore = persistentMOStore;
     this.config.paranoid = true;
     initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))), new NullCache(),
@@ -1615,7 +1618,7 @@ public class ObjectManagerTest extends TCTestCase {
     assertTrue(gc.isPaused());
 
     // Complete gc
-    gc.deleteGarbage(new PeriodicDGCResultContext(TCCollections.EMPTY_OBJECT_ID_SET, new GarbageCollectionInfo()));
+    gc.deleteGarbage(new DGCResultContext(TCCollections.EMPTY_OBJECT_ID_SET, new GarbageCollectionInfo()));
 
     // Lookup context should have been fired
     loc = (LookupEventContext) this.coordinator.lookupSink.queue.take();
@@ -1742,10 +1745,9 @@ public class ObjectManagerTest extends TCTestCase {
         try {
           for (ObjectID oid : oids) {
             logger.info("Deleting " + oid);
-            PeriodicDGCResultContext dgcResultContext = new PeriodicDGCResultContext(new ObjectIDSet(Collections
-                .singleton(oid)), null);
+            DGCResultContext dgcResultContext = new DGCResultContext(new ObjectIDSet(Collections.singleton(oid)), null);
             barrier.await(5, TimeUnit.SECONDS);
-            objectManager.deleteObjects(dgcResultContext);
+            objectManager.notifyGCComplete(dgcResultContext);
           }
         } catch (Exception e) {
           e.printStackTrace();

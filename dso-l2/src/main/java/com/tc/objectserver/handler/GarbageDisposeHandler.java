@@ -11,7 +11,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.context.DGCResultContext;
-import com.tc.objectserver.context.PeriodicDGCResultContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
@@ -31,24 +30,24 @@ public class GarbageDisposeHandler extends AbstractEventHandler {
 
   @Override
   public void handleEvent(final EventContext context) {
-    if (context instanceof PeriodicDGCResultContext) {
-      handlePeriodicDGCResult((PeriodicDGCResultContext) context);
-    } else if (context instanceof DGCResultContext) {
-      // Plain old DGCResult currently only comes from inline DGC
+    if (context instanceof DGCResultContext) {
       handleDGCResult((DGCResultContext) context);
     } else {
       throw new AssertionError("Unknown context type: " + context.getClass().getName());
     }
   }
 
-  private void handlePeriodicDGCResult(PeriodicDGCResultContext periodicGCResult) {
-    final GarbageCollectionInfo gcInfo = periodicGCResult.getGCInfo();
-    final SortedSet<ObjectID> sortedGarbage = periodicGCResult.getGarbageIDs();
+  private void handleDGCResult(DGCResultContext dgcResultContext) {
+    final GarbageCollectionInfo gcInfo = dgcResultContext.getGCInfo();
+    final SortedSet<ObjectID> sortedGarbage = dgcResultContext.getGarbageIDs();
 
     this.publisher.fireGCDeleteEvent(gcInfo);
     gcInfo.setActualGarbageCount(sortedGarbage.size());
     final long start = System.currentTimeMillis();
 
+    if (logger.isDebugEnabled()) {
+      logger.debug("Deleting objects: " + sortedGarbage);
+    }
     this.objectStore.removeAllObjectsByIDNow(sortedGarbage);
 
     final long elapsed = System.currentTimeMillis() - start;
@@ -57,14 +56,6 @@ public class GarbageDisposeHandler extends AbstractEventHandler {
     gcInfo.setElapsedTime(elapsedTime);
     gcInfo.setEndObjectCount(this.objectStore.getObjectCount());
     this.publisher.fireGCCompletedEvent(gcInfo);
-
-  }
-
-  private void handleDGCResult(DGCResultContext inlineDGCResult) {
-    if (logger.isDebugEnabled()) {
-      logger.debug("Deleting objects: " + inlineDGCResult.getGarbageIDs());
-    }
-    this.objectStore.removeAllObjectsByIDNow(inlineDGCResult.getGarbageIDs());
   }
 
   @Override

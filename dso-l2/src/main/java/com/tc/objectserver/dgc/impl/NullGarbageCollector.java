@@ -5,7 +5,7 @@
 package com.tc.objectserver.dgc.impl;
 
 import com.tc.object.ObjectID;
-import com.tc.objectserver.context.PeriodicDGCResultContext;
+import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
 import com.tc.text.PrettyPrinter;
@@ -83,7 +83,7 @@ public class NullGarbageCollector implements GarbageCollector {
     return false;
   }
 
-  public boolean deleteGarbage(PeriodicDGCResultContext resultContext) {
+  public boolean deleteGarbage(DGCResultContext resultContext) {
     return true;
   }
 

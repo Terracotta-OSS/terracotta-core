@@ -23,7 +23,6 @@ import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.ManagedObjectFaultingContext;
 import com.tc.objectserver.context.ManagedObjectFlushingContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
-import com.tc.objectserver.context.PeriodicDGCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.dgc.api.GarbageCollector;
@@ -895,15 +894,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
   }
 
-  public void notifyGCComplete(final PeriodicDGCResultContext gcResult) {
+  public void notifyGCComplete(final DGCResultContext gcResult) {
     Assert.assertFalse(this.collector.isPausingOrPaused());
-    deleteObjects(gcResult);
-  }
-
-  public void deleteObjects(final DGCResultContext dgcResultContext) {
-    final Set<ObjectID> toDelete = dgcResultContext.getGarbageIDs();
+    final Set<ObjectID> toDelete = gcResult.getGarbageIDs();
     removeAllObjectsByID(toDelete);
-    this.objectStore.removeAllObjectsByID(dgcResultContext);
+    this.objectStore.removeAllObjectsByID(gcResult);
     // Process pending, since we disabled process pending while GC pause was initiate.
     processPendingLookups();
   }

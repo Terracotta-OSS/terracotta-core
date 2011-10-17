@@ -26,8 +26,8 @@ import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
 import com.tc.object.ObjectRequestID;
-import com.tc.object.TestDNACursor;
 import com.tc.object.ObjectRequestServerContext.LOOKUP_STATE;
+import com.tc.object.TestDNACursor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
@@ -46,7 +46,6 @@ import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.context.ObjectRequestServerContextImpl;
-import com.tc.objectserver.context.PeriodicDGCResultContext;
 import com.tc.objectserver.context.RespondToObjectRequestContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.TestDNA;
@@ -504,10 +503,12 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new AssertionError(e);
     }
 
-    objectRequestManager.sendObjects(respondToObjectRequestContext.getRequestedNodeID(), respondToObjectRequestContext
-        .getObjs(), respondToObjectRequestContext.getRequestedObjectIDs(), respondToObjectRequestContext
-        .getMissingObjectIDs(), respondToObjectRequestContext.getLookupState(), respondToObjectRequestContext
-        .getRequestDepth());
+    objectRequestManager.sendObjects(respondToObjectRequestContext.getRequestedNodeID(),
+                                     respondToObjectRequestContext.getObjs(),
+                                     respondToObjectRequestContext.getRequestedObjectIDs(),
+                                     respondToObjectRequestContext.getMissingObjectIDs(),
+                                     respondToObjectRequestContext.getLookupState(),
+                                     respondToObjectRequestContext.getRequestDepth());
 
   }
 
@@ -673,10 +674,11 @@ public class ObjectRequestManagerTest extends TestCase {
         synchronized (this) {
           System.out.println("in the reponse thread: " + respondToObjectRequestContext);
           this.objectRequestManager.sendObjects(respondToObjectRequestContext.getRequestedNodeID(),
-                                                respondToObjectRequestContext.getObjs(), respondToObjectRequestContext
-                                                    .getRequestedObjectIDs(), respondToObjectRequestContext
-                                                    .getMissingObjectIDs(), respondToObjectRequestContext
-                                                    .getLookupState(), respondToObjectRequestContext.getRequestDepth());
+                                                respondToObjectRequestContext.getObjs(),
+                                                respondToObjectRequestContext.getRequestedObjectIDs(),
+                                                respondToObjectRequestContext.getMissingObjectIDs(),
+                                                respondToObjectRequestContext.getLookupState(),
+                                                respondToObjectRequestContext.getRequestDepth());
           if (testReqManObjResMsgIter.hasNext()) {
             final TestRequestManagedObjectResponseMessage message = (TestRequestManagedObjectResponseMessage) testReqManObjResMsgIter
                 .next();
@@ -900,7 +902,7 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
-    public void notifyGCComplete(final PeriodicDGCResultContext dgcResultContext) {
+    public void notifyGCComplete(final DGCResultContext dgcResultContext) {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
@@ -984,10 +986,6 @@ public class ObjectRequestManagerTest extends TestCase {
 
     public ManagedObject getQuietObjectByID(ObjectID id) {
       return getObjectByID(id);
-    }
-
-    public void deleteObjects(DGCResultContext dgcResultContext) {
-      throw new NotImplementedException(TestObjectManager.class);
     }
   }
 

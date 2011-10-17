@@ -5,7 +5,7 @@
 package com.tc.objectserver.dgc.api;
 
 import com.tc.object.ObjectID;
-import com.tc.objectserver.context.PeriodicDGCResultContext;
+import com.tc.objectserver.context.DGCResultContext;
 import com.tc.text.PrettyPrintable;
 import com.tc.util.State;
 import com.tc.util.concurrent.LifeCycleState;
@@ -82,7 +82,7 @@ public interface GarbageCollector extends PrettyPrintable {
 
   public void addListener(GarbageCollectorEventListener listener);
 
-  public boolean deleteGarbage(PeriodicDGCResultContext resultContext);
+  public boolean deleteGarbage(DGCResultContext resultContext);
 
   /**
    * Whenever a new object is created, this method is called from the Object Manager. This is used for YoungGen

@@ -765,12 +765,18 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                             persistent, enableYoungGenDGC,
                                                                             youngGenDGCFrequency,
                                                                             enterpriseMarkStageInterval);
-
+    final boolean networkedHA = this.haConfig.isNetworkedActivePassive();
     final Stage garbageCollectStage = stageManager.createStage(ServerConfigurationContext.GARBAGE_COLLECT_STAGE,
-                                                               new GarbageCollectHandler(objectManagerConfig), 1, -1);
+                                                               new GarbageCollectHandler(objectManagerConfig,
+                                                                                         gcPublisher), 1, -1);
 
-    this.garbageCollectionManager = new GarbageCollectionManagerImpl(garbageCollectStage.getSink(),
-                                                                     clientObjectReferenceSet);
+    if (networkedHA) {
+      this.garbageCollectionManager = new GarbageCollectionManagerImpl(garbageCollectStage.getSink(),
+                                                                       clientObjectReferenceSet);
+    } else {
+      this.garbageCollectionManager = new ActiveGarbageCollectionManager(garbageCollectStage.getSink(),
+                                                                         clientObjectReferenceSet);
+    }
 
     final Stage destroyableMapStage = stageManager.createStage(ServerConfigurationContext.DESTROYABLE_MAP_STAGE,
                                                                new DestroyableMapHandler(), 1, -1);
@@ -1128,7 +1134,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                  persistent,
                                                                                                  consoleLogger);
 
-    final boolean networkedHA = this.haConfig.isNetworkedActivePassive();
     this.groupCommManager = this.serverBuilder.createGroupCommManager(networkedHA, this.configSetupManager,
                                                                       stageManager, this.thisServerNodeID,
                                                                       this.httpSink, this.stripeIDStateManager, gtxm);
@@ -1473,6 +1478,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   public void startActiveMode() {
+    this.garbageCollectionManager.startActiveMode();
     this.transactionManager.goToActiveMode();
     if (!this.objectManager.getGarbageCollector().isPeriodicEnabled()
         && TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_ENABLED, true)) {

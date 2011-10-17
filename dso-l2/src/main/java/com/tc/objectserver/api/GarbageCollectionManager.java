@@ -5,13 +5,17 @@ package com.tc.objectserver.api;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
+import com.tc.util.ObjectIDSet;
 
 import java.util.SortedSet;
 
 public interface GarbageCollectionManager {
+
+  public void startActiveMode();
+
   public void deleteObjects(SortedSet<ObjectID> objects);
 
-  public SortedSet<ObjectID> nextObjectsToDelete();
+  public ObjectIDSet nextObjectsToDelete();
 
   public void scheduleInlineGarbageCollectionIfNecessary();
 

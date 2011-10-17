@@ -5,7 +5,7 @@
 package com.tc.objectserver.dgc.impl;
 
 import com.tc.object.ObjectID;
-import com.tc.objectserver.context.PeriodicDGCResultContext;
+import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.impl.GarbageCollectionID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
@@ -109,7 +109,7 @@ final class MarkAndSweepGCAlgorithm {
     gcPublisher.fireGCMarkCompleteEvent(gcInfo);
 
     // Delete Garbage
-    collector.deleteGarbage(new PeriodicDGCResultContext(toDelete, gcInfo));
+    collector.deleteGarbage(new DGCResultContext(toDelete, gcInfo));
 
     long endMillis = System.currentTimeMillis();
     gcInfo.setTotalMarkCycleTime(endMillis - gcInfo.getStartTime());

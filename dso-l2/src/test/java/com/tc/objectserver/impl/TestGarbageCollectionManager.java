@@ -6,6 +6,7 @@ package com.tc.objectserver.impl;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
 
 import java.util.SortedSet;
@@ -16,7 +17,7 @@ public class TestGarbageCollectionManager implements GarbageCollectionManager {
     // do nothing
   }
 
-  public SortedSet<ObjectID> nextObjectsToDelete() {
+  public ObjectIDSet nextObjectsToDelete() {
     return TCCollections.EMPTY_OBJECT_ID_SET;
   }
 
@@ -33,6 +34,10 @@ public class TestGarbageCollectionManager implements GarbageCollectionManager {
   }
 
   public void scheduleGarbageCollection(GCType type) {
+    // do nothing
+  }
+
+  public void startActiveMode() {
     // do nothing
   }
 }

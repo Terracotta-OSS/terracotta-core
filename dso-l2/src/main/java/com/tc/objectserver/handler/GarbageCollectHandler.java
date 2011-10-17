@@ -9,7 +9,6 @@ import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.DGCResultContext;
@@ -17,37 +16,46 @@ import com.tc.objectserver.context.GarbageCollectContext;
 import com.tc.objectserver.context.InlineGCContext;
 import com.tc.objectserver.context.PeriodicGarbageCollectContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.core.impl.GarbageCollectionID;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.impl.ObjectManagerConfig;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.ThreadUtil;
 
-import java.util.SortedSet;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 public class GarbageCollectHandler extends AbstractEventHandler {
-  private static final TCLogger    logger    = TCLogging.getLogger(GarbageCollectHandler.class);
+  private static final GarbageCollectionInfo   INLINE_GC_INFO = new GarbageCollectionInfo(
+                                                                                          GarbageCollectionID.NULL_ID,
+                                                                                          GarbageCollectionInfo.Type.INLINE_GC);
+  private static final TCLogger                logger         = TCLogging.getLogger(GarbageCollectHandler.class);
 
-  private final Timer              timer     = new Timer();
-  private final boolean            fullGCEnabled;
-  private final boolean            youngGCEnabled;
-  private final long               fullGCInterval;
-  private final long               youngGCInterval;
-  private final LifeCycleState     gcState   = new GCState();
-  private volatile boolean         gcRunning = false;
-  private GarbageCollector         collector;
-  private ObjectManager            objectManager;
-  private GarbageCollectionManager garbageCollectionManager;
-  private Sink                     gcSink;
+  private final Timer                          timer          = new Timer("GarbageCollectHandler Timer");
+  private final boolean                        fullGCEnabled;
+  private final boolean                        youngGCEnabled;
+  private final long                           fullGCInterval;
+  private final long                           youngGCInterval;
+  private final LifeCycleState                 gcState        = new GCState();
+  private final GarbageCollectionInfoPublisher gcPublisher;
+  private volatile boolean                     gcRunning      = false;
+  private GarbageCollector                     collector;
+  private ObjectManager                        objectManager;
+  private GarbageCollectionManager             garbageCollectionManager;
+  private Sink                                 gcSink;
 
-  public GarbageCollectHandler(final ObjectManagerConfig objectManagerConfig) {
+  public GarbageCollectHandler(final ObjectManagerConfig objectManagerConfig,
+                               final GarbageCollectionInfoPublisher gcPublisher) {
     this.fullGCEnabled = objectManagerConfig.doGC();
     this.youngGCEnabled = objectManagerConfig.isYoungGenDGCEnabled();
     this.fullGCInterval = objectManagerConfig.gcThreadSleepTime();
     this.youngGCInterval = objectManagerConfig.getYoungGenDGCFrequencyInMillis();
+    this.gcPublisher = gcPublisher;
   }
 
   @Override
@@ -74,14 +82,16 @@ public class GarbageCollectHandler extends AbstractEventHandler {
       }
     } else if (context instanceof InlineGCContext) {
       collector.waitToStartInlineGC();
-      final SortedSet<ObjectID> objectsToDelete = garbageCollectionManager.nextObjectsToDelete();
-
+      final ObjectIDSet objectsToDelete = garbageCollectionManager.nextObjectsToDelete();
       if (logger.isDebugEnabled()) {
         logger.debug("Deleting objects: " + objectsToDelete);
       }
 
-      objectManager.deleteObjects(new DGCResultContext(objectsToDelete));
+      if (!objectsToDelete.isEmpty()) {
+        objectManager.notifyGCComplete(new DGCResultContext(objectsToDelete, INLINE_GC_INFO));
+      }
       collector.notifyGCComplete();
+      gcPublisher.fireGCCycleCompletedEvent(INLINE_GC_INFO, objectsToDelete);
       garbageCollectionManager.scheduleInlineGarbageCollectionIfNecessary();
     } else {
       throw new AssertionError("Unknown context type: " + context.getClass().getName());

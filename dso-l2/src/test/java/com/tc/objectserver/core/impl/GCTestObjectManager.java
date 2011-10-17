@@ -13,7 +13,6 @@ import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerStatsListener;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
-import com.tc.objectserver.context.PeriodicDGCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
@@ -183,18 +182,13 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
   }
 
   // TODO: just garbage collector complete interface.
-  public void notifyGCComplete(PeriodicDGCResultContext periodicDGCResultContext) {
-    deleteObjects(periodicDGCResultContext);
-  }
-
-  public void deleteObjects(DGCResultContext dgcResultContext) {
-    PeriodicDGCResultContext resultContext = (PeriodicDGCResultContext) dgcResultContext;
-    GarbageCollectionInfo gcInfo = resultContext.getGCInfo();
+  public void notifyGCComplete(DGCResultContext dgcResultContext) {
+    GarbageCollectionInfo gcInfo = dgcResultContext.getGCInfo();
 
     gcPublisher.fireGCDeleteEvent(gcInfo);
     long start = System.currentTimeMillis();
 
-    SortedSet<ObjectID> ids = resultContext.getGarbageIDs();
+    SortedSet<ObjectID> ids = dgcResultContext.getGarbageIDs();
     for (Object element : ids) {
       ObjectID objectID = (ObjectID) element;
       managed.remove(objectID);
@@ -211,7 +205,6 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
     gcInfo.setEndObjectCount(managed.size());
 
     gcPublisher.fireGCCompletedEvent(gcInfo);
-
   }
 
   public ObjectIDSet getObjectIDsInCache() {

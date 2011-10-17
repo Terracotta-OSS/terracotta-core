@@ -8,7 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
-import com.tc.objectserver.context.PeriodicDGCResultContext;
+import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollector;
@@ -250,7 +250,7 @@ public class TestGarbageCollector implements GarbageCollector {
                                new NullLifeCycleState());
     this.requestGCPause();
     this.blockUntilReadyToGC();
-    this.deleteGarbage(new PeriodicDGCResultContext(collectedObjects, new GarbageCollectionInfo()));
+    this.deleteGarbage(new DGCResultContext(collectedObjects, new GarbageCollectionInfo()));
   }
 
   public void start() {
@@ -289,7 +289,7 @@ public class TestGarbageCollector implements GarbageCollector {
     return false;
   }
 
-  public boolean deleteGarbage(final PeriodicDGCResultContext resultContext) {
+  public boolean deleteGarbage(final DGCResultContext resultContext) {
     this.notifyGCComplete();
     this.objectProvider.notifyGCComplete(resultContext);
     return true;

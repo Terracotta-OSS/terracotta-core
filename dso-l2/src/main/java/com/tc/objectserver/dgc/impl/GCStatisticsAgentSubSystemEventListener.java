@@ -34,6 +34,7 @@ public class GCStatisticsAgentSubSystemEventListener extends GarbageCollectorEve
 
   @Override
   public void garbageCollectorCompleted(GarbageCollectionInfo info) {
+    if (info.isInlineDGC()) { return; }
     if (statisticsAgentSubSystem.isActive()) {
       storeGCInfo(info);
     }

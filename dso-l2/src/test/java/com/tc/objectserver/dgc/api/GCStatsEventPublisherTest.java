@@ -127,11 +127,14 @@ public class GCStatsEventPublisherTest extends TestCase {
 
   public void testLastGarbageCollectorStats() {
     GCStatsEventPublisher gcEventPublisher = new GCStatsEventPublisher();
-    GarbageCollectionInfo gcInfo1 = new GarbageCollectionInfo(new GarbageCollectionID(0, "xyz0"), true, false);
+    GarbageCollectionInfo gcInfo1 = new GarbageCollectionInfo(new GarbageCollectionID(0, "xyz0"),
+                                                              GarbageCollectionInfo.Type.FULL_GC);
     gcEventPublisher.garbageCollectorStart(gcInfo1);
-    GarbageCollectionInfo gcInfo2 = new GarbageCollectionInfo(new GarbageCollectionID(1, "xyz1"), true, false);
+    GarbageCollectionInfo gcInfo2 = new GarbageCollectionInfo(new GarbageCollectionID(1, "xyz1"),
+                                                              GarbageCollectionInfo.Type.FULL_GC);
     gcEventPublisher.garbageCollectorStart(gcInfo2);
-    GarbageCollectionInfo gcInfo3 = new GarbageCollectionInfo(new GarbageCollectionID(2, "xyz2"), true, false);
+    GarbageCollectionInfo gcInfo3 = new GarbageCollectionInfo(new GarbageCollectionID(2, "xyz2"),
+                                                              GarbageCollectionInfo.Type.FULL_GC);
     gcEventPublisher.garbageCollectorStart(gcInfo3);
 
     Assert.assertEquals(gcInfo3.getIteration(), gcEventPublisher.getLastGarbageCollectorStats().getIteration());

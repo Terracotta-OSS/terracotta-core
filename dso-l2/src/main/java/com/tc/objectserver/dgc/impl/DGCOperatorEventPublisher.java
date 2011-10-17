@@ -13,6 +13,7 @@ public class DGCOperatorEventPublisher extends GarbageCollectorEventListenerAdap
 
   @Override
   public void garbageCollectorStart(GarbageCollectionInfo info) {
+    if (info.isInlineDGC()) { return; }
     if (info.isInlineCleanup()) {
       this.operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createInlineDGCCleanupStartedEvent(info
           .getIteration()));
@@ -24,6 +25,7 @@ public class DGCOperatorEventPublisher extends GarbageCollectorEventListenerAdap
 
   @Override
   public void garbageCollectorCompleted(GarbageCollectionInfo info) {
+    if (info.isInlineDGC()) { return; }
     if (info.isInlineCleanup()) {
       this.operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory
           .createInlineDGCCleanupFinishedEvent(info.getIteration(), info.getBeginObjectCount(),
@@ -38,6 +40,7 @@ public class DGCOperatorEventPublisher extends GarbageCollectorEventListenerAdap
 
   @Override
   public void garbageCollectorCanceled(GarbageCollectionInfo info) {
+    if (info.isInlineDGC()) { return; }
     if (info.isInlineCleanup()) {
       this.operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory
           .createInlineDGCCleanupCanceledEvent(info.getIteration()));

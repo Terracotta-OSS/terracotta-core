@@ -22,7 +22,8 @@ public class YoungGCHook extends AbstractGCHook {
   private final YoungGenChangeCollector youngGenChangeCollector;
 
   public YoungGCHook(MarkAndSweepGarbageCollector collector, ObjectManager objectManager,
-                     ClientStateManager stateManager, YoungGenChangeCollector youngGenChangeCollector, boolean inlineCleanup) {
+                     ClientStateManager stateManager, YoungGenChangeCollector youngGenChangeCollector,
+                     boolean inlineCleanup) {
     super(collector, objectManager, stateManager, inlineCleanup);
     this.youngGenChangeCollector = youngGenChangeCollector;
   }
@@ -32,7 +33,7 @@ public class YoungGCHook extends AbstractGCHook {
   }
 
   public GarbageCollectionInfo createGCInfo(GarbageCollectionID id) {
-    return new GarbageCollectionInfo(id, false, inlineCleanup);
+    return new GarbageCollectionInfo(id, GarbageCollectionInfo.Type.YOUNG_GC);
   }
 
   public ObjectIDSet getGCCandidates() {

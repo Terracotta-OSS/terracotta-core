@@ -16,7 +16,6 @@ import com.tc.objectserver.api.ObjectManagerStatsListener;
 import com.tc.objectserver.api.ObjectStatsManager;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
-import com.tc.objectserver.context.PeriodicDGCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.impl.TestManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollector;
@@ -189,7 +188,7 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
     throw new ImplementMe();
   }
 
-  public void notifyGCComplete(PeriodicDGCResultContext periodicDGCResultContext) {
+  public void notifyGCComplete(DGCResultContext dgcResultContext) {
     throw new ImplementMe();
   }
 

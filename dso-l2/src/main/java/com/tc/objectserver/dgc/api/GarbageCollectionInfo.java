@@ -12,11 +12,13 @@ import com.tc.objectserver.core.impl.GarbageCollectionID;
 import java.io.IOException;
 
 public class GarbageCollectionInfo implements TCSerializable {
+  public static enum Type {
+    NULL_GC, FULL_GC, YOUNG_GC, INLINE_CLEANUP, INLINE_GC
+  }
 
   protected static final long               NOT_INITIALIZED       = -1L;
   protected static final long               NULL_INITIALIZED      = -2;
   private GarbageCollectionID               gcID                  = GarbageCollectionID.NULL_ID;
-  private boolean                           fullGC;
   private long                              startTime             = NOT_INITIALIZED;
   private long                              beginObjectCount      = NOT_INITIALIZED;
   private long                              markStageTime         = NOT_INITIALIZED;
@@ -31,26 +33,29 @@ public class GarbageCollectionInfo implements TCSerializable {
   private long                              rescue1Count          = NOT_INITIALIZED;
   private long                              rescue1Time           = NOT_INITIALIZED;
   private long                              rescue2Time           = NOT_INITIALIZED;
-  private boolean                           inlineCleanup;
+  private Type                            type;
 
   public static final GarbageCollectionInfo NULL_INFO             = new GarbageCollectionInfo(
                                                                                               new GarbageCollectionID(
                                                                                                                       NULL_INITIALIZED,
                                                                                                                       "NULL INITIALIZED"),
-                                                                                              false, false);
+                                                                                              Type.NULL_GC);
 
   public GarbageCollectionInfo() {
     // for serialization
   }
 
-  public GarbageCollectionInfo(GarbageCollectionID id, boolean fullGC, boolean inlineCleanup) {
+  public GarbageCollectionInfo(GarbageCollectionID id, Type type) {
     this.gcID = id;
-    this.fullGC = fullGC;
-    this.inlineCleanup = inlineCleanup;
+    this.type = type;
   }
 
   public boolean isInlineCleanup() {
-    return inlineCleanup;
+    return type == Type.INLINE_CLEANUP;
+  }
+
+  public boolean isInlineDGC() {
+    return type == Type.INLINE_GC;
   }
 
   public void setCandidateGarbageCount(long candidateGarbageCount) {
@@ -83,7 +88,7 @@ public class GarbageCollectionInfo implements TCSerializable {
   }
 
   public boolean isFullGC() {
-    return this.fullGC;
+    return type == Type.FULL_GC;
   }
 
   public void setStartTime(long time) {
@@ -187,8 +192,7 @@ public class GarbageCollectionInfo implements TCSerializable {
     StringBuilder gcInfo = new StringBuilder();
     gcInfo.append("GarbageCollectionInfo [ Iteration = ");
     gcInfo.append(this.gcID.toLong());
-    gcInfo.append(" ] = " + " type  = " + (this.fullGC ? " full, " : " young, "));
-    gcInfo.append(" inlineCleanup = " + inlineCleanup);
+    gcInfo.append(" ] = " + " type  = " + type);
 
     if (this.startTime != NOT_INITIALIZED) {
       gcInfo.append(" startTime = " + this.startTime);
@@ -240,7 +244,6 @@ public class GarbageCollectionInfo implements TCSerializable {
     long iterationCount = serialInput.readLong();
     String uuidString = serialInput.readString();
     this.gcID = new GarbageCollectionID(iterationCount, uuidString);
-    this.fullGC = serialInput.readBoolean();
     this.startTime = serialInput.readLong();
     this.beginObjectCount = serialInput.readLong();
     this.endObjectCount = serialInput.readLong();
@@ -255,14 +258,13 @@ public class GarbageCollectionInfo implements TCSerializable {
     this.rescue1Count = serialInput.readLong();
     this.rescue1Time = serialInput.readLong();
     this.rescue2Time = serialInput.readLong();
-    this.inlineCleanup = serialInput.readBoolean();
+    this.type = Type.valueOf(serialInput.readString());
     return this;
   }
 
   public void serializeTo(TCByteBufferOutput serialOutput) {
     serialOutput.writeLong(this.gcID.toLong());
     serialOutput.writeString(this.gcID.getUUID());
-    serialOutput.writeBoolean(this.fullGC);
     serialOutput.writeLong(this.startTime);
     serialOutput.writeLong(this.beginObjectCount);
     serialOutput.writeLong(this.endObjectCount);
@@ -277,7 +279,6 @@ public class GarbageCollectionInfo implements TCSerializable {
     serialOutput.writeLong(this.rescue1Count);
     serialOutput.writeLong(this.rescue1Time);
     serialOutput.writeLong(this.rescue2Time);
-    serialOutput.writeBoolean(inlineCleanup);
+    serialOutput.writeString(this.type.toString());
   }
-
 }

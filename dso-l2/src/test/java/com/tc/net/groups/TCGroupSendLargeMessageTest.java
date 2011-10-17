@@ -129,7 +129,8 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
   }
 
   private GarbageCollectionInfo createGarbageCollectionInfo(long iteration) {
-    return new GarbageCollectionInfo(new GarbageCollectionID(iteration, UUID.getUUID().toString()), true, false);
+    return new GarbageCollectionInfo(new GarbageCollectionID(iteration, UUID.getUUID().toString()),
+                                     GarbageCollectionInfo.Type.FULL_GC);
   }
 
   private static final class MyListener implements GroupMessageListener {

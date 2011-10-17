@@ -37,6 +37,7 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
 
   @Override
   public void garbageCollectorStart(GarbageCollectionInfo info) {
+    if (info.isInlineDGC()) { return; }
     GCStatsImpl gcStats = getGCStats(info);
     push(info.getGarbageCollectionID(), gcStats);
     fireGCStatsEvent(gcStats);
@@ -44,6 +45,7 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
 
   @Override
   public void garbageCollectorMark(GarbageCollectionInfo info) {
+    if (info.isInlineDGC()) { return; }
     GCStatsImpl gcStats = getGCStats(info);
     gcStats.setMarkState();
     fireGCStatsEvent(gcStats);
@@ -51,6 +53,7 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
 
   @Override
   public void garbageCollectorPausing(GarbageCollectionInfo info) {
+    if (info.isInlineDGC()) { return; }
     GCStatsImpl gcStats = getGCStats(info);
     gcStats.setPauseState();
     fireGCStatsEvent(gcStats);
@@ -59,6 +62,7 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
 
   @Override
   public void garbageCollectorMarkComplete(GarbageCollectionInfo info) {
+    if (info.isInlineDGC()) { return; }
     GCStatsImpl gcStats = getGCStats(info);
     gcStats.setMarkCompleteState();
     gcStats.setActualGarbageCount(info.getActualGarbageCount());
@@ -67,6 +71,7 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
 
   @Override
   public void garbageCollectorDelete(GarbageCollectionInfo info) {
+    if (info.isInlineDGC()) { return; }
     GCStatsImpl gcStats = getGCStats(info);
     gcStats.setDeleteState();
     fireGCStatsEvent(gcStats);
@@ -74,6 +79,7 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
 
   @Override
   public void garbageCollectorCompleted(GarbageCollectionInfo info) {
+    if (info.isInlineDGC()) { return; }
     GCStatsImpl gcStats = getGCStats(info);
     gcStats.setEndObjectCount(info.getEndObjectCount());
     gcStats.setCompleteState();
@@ -82,6 +88,7 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
 
   @Override
   public void garbageCollectorCanceled(GarbageCollectionInfo info) {
+    if (info.isInlineDGC()) { return; }
     GCStatsImpl gcStats = getGCStats(info);
     gcStats.setCanceledState();
     fireGCStatsEvent(gcStats);

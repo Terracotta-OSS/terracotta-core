@@ -36,7 +36,8 @@ public class FullGCHook extends AbstractGCHook {
   }
 
   public GarbageCollectionInfo createGCInfo(GarbageCollectionID id) {
-    return new GarbageCollectionInfo(id, true, inlineCleanup);
+    return new GarbageCollectionInfo(id, inlineCleanup ? GarbageCollectionInfo.Type.INLINE_CLEANUP
+        : GarbageCollectionInfo.Type.FULL_GC);
   }
 
   public ObjectIDSet getGCCandidates() {

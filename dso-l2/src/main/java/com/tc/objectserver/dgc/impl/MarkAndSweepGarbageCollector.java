@@ -8,7 +8,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.context.PeriodicDGCResultContext;
+import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
@@ -69,10 +69,10 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
     gcAlgo.doGC();
   }
 
-  public boolean deleteGarbage(final PeriodicDGCResultContext periodicDGCResultContext) {
+  public boolean deleteGarbage(final DGCResultContext dgcResultContext) {
     if (requestGCDeleteStart()) {
-      this.youngGenReferenceCollector.removeGarbage(periodicDGCResultContext.getGarbageIDs());
-      this.objectManager.notifyGCComplete(periodicDGCResultContext);
+      this.youngGenReferenceCollector.removeGarbage(dgcResultContext.getGarbageIDs());
+      this.objectManager.notifyGCComplete(dgcResultContext);
       notifyGCComplete();
       return true;
     }

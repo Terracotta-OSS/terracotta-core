@@ -3,6 +3,8 @@
  */
 package com.tc.objectserver.handler;
 
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
 import org.junit.Assert;
 import org.mockito.Mockito;
 
@@ -20,13 +22,15 @@ import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerStatsListener;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
-import com.tc.objectserver.context.PeriodicDGCResultContext;
+import com.tc.objectserver.context.PeriodicGarbageCollectContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.dgc.api.GarbageCollector;
+import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
 import com.tc.objectserver.dgc.impl.AbstractGarbageCollector;
-import com.tc.objectserver.impl.GarbageCollectionManagerImpl;
+import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
+import com.tc.objectserver.impl.ActiveGarbageCollectionManager;
 import com.tc.objectserver.impl.ObjectManagerConfig;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
@@ -47,12 +51,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class GarbageCollectHandlerTest extends TCTestCase {
   {
     // Set the client object references refresh rate higher so we don't need to wait so long for refresh
     TCPropertiesImpl.getProperties()
-        .setProperty(TCPropertiesConsts.L2_SERVERMAP_EVICTION_CLIENTOBJECT_REFERENCES_REFRESH_INTERVAL, "1000");
+        .setProperty(TCPropertiesConsts.L2_SERVERMAP_EVICTION_CLIENTOBJECT_REFERENCES_REFRESH_INTERVAL, "100");
+    TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_INTERVAL_SECONDS, "1");
   }
 
   private static final TCLogger    logger = TCLogging.getLogger(GarbageCollectHandlerTest.class);
@@ -65,19 +71,26 @@ public class GarbageCollectHandlerTest extends TCTestCase {
   private GCThread                 gcThread;
   private MockSink                 gcSink;
   private ClientID                 testClientId;
+  private SortedSet<ObjectID>      deletedObjects;
+  private AtomicInteger            inlineGCCount;
+  private AtomicInteger            periodicDGCCount;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    inlineGCCount = new AtomicInteger();
+    periodicDGCCount = new AtomicInteger();
+    deletedObjects = new ObjectIDSet();
     testClientId = new ClientID(1);
     clientStateManager = new ClientStateManagerImpl(logger);
     clientStateManager.startupNode(testClientId);
-    handler = new GarbageCollectHandler(new ObjectManagerConfig(10, true, false, true, false, 10, 10));
+    handler = new GarbageCollectHandler(new ObjectManagerConfig(10, true, false, true, false, 10, 10),
+                                        new GarbageCollectionInfoPublisherImpl());
     gc = new TestGarbageCollector();
     objectManager = new TestObjectManager();
     gcStage = new MockStage(ServerConfigurationContext.GARBAGE_COLLECT_STAGE);
     gcSink = (MockSink) gcStage.getSink();
-    gcManager = new GarbageCollectionManagerImpl(gcSink, new ClientObjectReferenceSet(clientStateManager));
+    gcManager = new ActiveGarbageCollectionManager(gcSink, new ClientObjectReferenceSet(clientStateManager));
     ServerConfigurationContext scc = Mockito.mock(ServerConfigurationContext.class);
     Mockito.when(scc.getObjectManager()).thenReturn(objectManager);
     Mockito.when(scc.getStage(ServerConfigurationContext.GARBAGE_COLLECT_STAGE)).thenReturn(gcStage);
@@ -89,55 +102,74 @@ public class GarbageCollectHandlerTest extends TCTestCase {
   }
 
   public void testScheduleInlineDGC() throws Exception {
+    // Wait a bit for inline-dgc interval
+    ThreadUtil.reallySleep(5 * 1000);
+
     SortedSet<ObjectID> set1 = objectIds(0, 100);
     gcManager.deleteObjects(set1);
-    gcThread.waitForGCCount(1);
-    Assert.assertTrue(objectManager.deletedObjects.equals(set1));
+    gcThread.waitForInlineDGCCount(1);
+    Assert.assertTrue(deletedObjects.equals(set1));
 
+    ThreadUtil.reallySleep(5 * 1000);
     gc.waitToDisableGC();
     SortedSet<ObjectID> set2 = objectIds(100, 200);
     gcManager.deleteObjects(set2);
     // Sleep for a bit of time since the gc thread blocks in some not-easily-checkable location
     ThreadUtil.reallySleep(10 * 1000);
-    Assert.assertTrue(objectManager.deletedObjects.equals(set1));
+    Assert.assertTrue(deletedObjects.equals(set1));
 
     gc.enableGC();
-    gcThread.waitForGCCount(2);
-    Assert.assertTrue(objectManager.deletedObjects.equals(objectIds(0, 200)));
+    gcThread.waitForInlineDGCCount(2);
+    Assert.assertTrue(deletedObjects.equals(objectIds(0, 200)));
 
+    ThreadUtil.reallySleep(5 * 1000);
     gcManager.deleteObjects(objectIds(200, 300));
-    gcThread.waitForGCCount(3);
-    Assert.assertTrue(objectManager.deletedObjects.equals(objectIds(0, 300)));
+    gcThread.waitForInlineDGCCount(3);
+    Assert.assertTrue(deletedObjects.equals(objectIds(0, 300)));
   }
 
   public void testInlineDGCReferencedObject() throws Exception {
+    ThreadUtil.reallySleep(5 * 1000);
+
     clientStateManager.addReference(testClientId, new ObjectID(50));
     gcManager.deleteObjects(objectIds(0, 100));
-    gcThread.waitForGCCount(1);
-    Assert.assertFalse(objectManager.deletedObjects.contains(new ObjectID(50)));
-    Assert.assertTrue(objectManager.deletedObjects.containsAll(objectIds(0, 50)));
-    Assert.assertTrue(objectManager.deletedObjects.containsAll(objectIds(51, 100)));
+    gcThread.waitForInlineDGCCount(1);
+    Assert.assertFalse(deletedObjects.contains(new ObjectID(50)));
+    Assert.assertTrue(deletedObjects.containsAll(objectIds(0, 50)));
+    Assert.assertTrue(deletedObjects.containsAll(objectIds(51, 100)));
 
     // Wait for the client object refresh time to elapse
-    ThreadUtil.reallySleep(5 * 1000);
+    ThreadUtil.reallySleep(1000);
 
     // Try deleting again, since the reference is still there, delete should again fail.
     gcManager.deleteObjects(objectIds(100, 200));
-    gcThread.waitForGCCount(2);
-    Assert.assertFalse(objectManager.deletedObjects.contains(new ObjectID(50)));
-    Assert.assertTrue(objectManager.deletedObjects.containsAll(objectIds(0, 50)));
-    Assert.assertTrue(objectManager.deletedObjects.containsAll(objectIds(51, 200)));
+    gcThread.waitForInlineDGCCount(2);
+    Assert.assertFalse(deletedObjects.contains(new ObjectID(50)));
+    Assert.assertTrue(deletedObjects.containsAll(objectIds(0, 50)));
+    Assert.assertTrue(deletedObjects.containsAll(objectIds(51, 200)));
 
     // Remove the referenced object, and try to delete it again
     clientStateManager.removeReferences(testClientId, Collections.singleton(new ObjectID(50)), new ObjectIDSet());
     ThreadUtil.reallySleep(5 * 1000);
 
     gcManager.deleteObjects(objectIds(200, 300));
-    gcThread.waitForGCCount(3);
+    gcThread.waitForInlineDGCCount(3);
+
+    ThreadUtil.reallySleep(5 * 1000);
     gcManager.deleteObjects(objectIds(300, 400));
-    gcThread.waitForGCCount(4);
-    Assert.assertTrue(objectIds(0, 400).containsAll(objectManager.deletedObjects)
-                      && objectManager.deletedObjects.containsAll(objectIds(0, 400)));
+    gcThread.waitForInlineDGCCount(4);
+
+    if (!objectIds(0, 400).containsAll(deletedObjects) || !deletedObjects.containsAll(objectIds(0, 400))) {
+      Assert.fail("Deleted objectIds do not match. Expected=" + objectIds(0, 400) + " actual=" + deletedObjects);
+    }
+  }
+
+  public void testSchedulePeriodicDGC() throws Exception {
+    long start = System.nanoTime();
+    gcSink.add(new PeriodicGarbageCollectContext(GCType.FULL_GC, 5 * 1000));
+    gcThread.waitForPeriodicDGCCount(3);
+    long finish = System.nanoTime();
+    Assert.assertEquals(3, NANOSECONDS.toSeconds(finish - start) / 5);
   }
 
   private SortedSet<ObjectID> objectIds(long start, long end) {
@@ -155,8 +187,7 @@ public class GarbageCollectHandlerTest extends TCTestCase {
   }
 
   private class GCThread extends Thread {
-    private int              gcCount = 0;
-    private volatile boolean stop    = false;
+    private volatile boolean stop = false;
 
     private GCThread() {
       super("GCThread");
@@ -169,13 +200,14 @@ public class GarbageCollectHandlerTest extends TCTestCase {
         while (!stop) {
           handler.handleEvent(gcSink.take());
           synchronized (this) {
-            gcCount++;
             notifyAll();
           }
         }
       } catch (AssertionError e) {
         // Hack to get around the extra AssertionError MockSink throws when interrupted
         if (!stop || !(e.getCause() instanceof InterruptedException)) { throw e; }
+      } catch (Throwable t) {
+        t.printStackTrace();
       }
     }
 
@@ -184,9 +216,17 @@ public class GarbageCollectHandlerTest extends TCTestCase {
       interrupt();
     }
 
-    public void waitForGCCount(int count) throws InterruptedException {
+    public void waitForInlineDGCCount(int count) throws InterruptedException {
       synchronized (this) {
-        while (gcCount < count) {
+        while (inlineGCCount.get() < count) {
+          wait();
+        }
+      }
+    }
+
+    public void waitForPeriodicDGCCount(int count) throws InterruptedException {
+      synchronized (this) {
+        while (periodicDGCCount.get() < count) {
           wait();
         }
       }
@@ -194,7 +234,6 @@ public class GarbageCollectHandlerTest extends TCTestCase {
   }
 
   private class TestObjectManager implements ObjectManager {
-    private final SortedSet<ObjectID> deletedObjects = new ObjectIDSet();
 
     public ManagedObject getObjectByID(ObjectID id) {
       throw new ImplementMe();
@@ -282,12 +321,9 @@ public class GarbageCollectHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void notifyGCComplete(PeriodicDGCResultContext periodicDGCResultContext) {
-      throw new ImplementMe();
-    }
-
-    public void deleteObjects(DGCResultContext dgcResultContext) {
+    public void notifyGCComplete(DGCResultContext dgcResultContext) {
       deletedObjects.addAll(dgcResultContext.getGarbageIDs());
+      inlineGCCount.incrementAndGet();
     }
 
     public void setStatsListener(ObjectManagerStatsListener listener) {
@@ -341,7 +377,7 @@ public class GarbageCollectHandlerTest extends TCTestCase {
     }
 
     public void doGC(GCType type) {
-      // no-op
+      periodicDGCCount.incrementAndGet();
     }
 
     public void start() {
@@ -364,7 +400,7 @@ public class GarbageCollectHandlerTest extends TCTestCase {
       // no-op
     }
 
-    public boolean deleteGarbage(PeriodicDGCResultContext resultContext) {
+    public boolean deleteGarbage(DGCResultContext resultContext) {
       // no-op
       return false;
     }

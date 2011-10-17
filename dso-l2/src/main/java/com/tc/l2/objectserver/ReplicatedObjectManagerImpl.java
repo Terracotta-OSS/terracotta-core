@@ -30,7 +30,7 @@ import com.tc.net.groups.GroupMessageListener;
 import com.tc.net.groups.GroupResponse;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.context.PeriodicDGCResultContext;
+import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.impl.GarbageCollectorEventListenerAdapter;
 import com.tc.objectserver.tx.ServerTransactionManager;
@@ -175,8 +175,8 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
                   + gcMsg);
       return;
     }
-    final boolean deleted = this.objectManager.getGarbageCollector()
-        .deleteGarbage(new PeriodicDGCResultContext(gcedOids, gcMsg.getGCInfo()));
+    final boolean deleted = this.objectManager.getGarbageCollector().deleteGarbage(new DGCResultContext(gcedOids, gcMsg
+                                                                                       .getGCInfo()));
     if (deleted) {
       logger.info("Removed " + gcedOids.size() + " objects from passive ObjectManager from last DGC from Active");
     } else {
