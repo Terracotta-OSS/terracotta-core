@@ -53,6 +53,8 @@ public interface ServerMapLocalCache {
    */
   AbstractLocalCacheStoreValue getLocalValueCoherent(Object key);
 
+  AbstractLocalCacheStoreValue getLocalValueStrong(final Object key);
+
   /**
    * Get the value corresponding to the key if present
    */
@@ -127,6 +129,7 @@ public interface ServerMapLocalCache {
 
   void postTransactionCallback(Object key, AbstractLocalCacheStoreValue value, boolean removeEntry);
 
-  void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
+  void transactionComplete(
+                           L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
 
 }

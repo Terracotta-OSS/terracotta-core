@@ -30,8 +30,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObject, TCObjectServerMap<L> {
@@ -235,19 +235,19 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    */
   public Object getValue(final TCServerMap map, final L lockID, final Object key) {
     if (!isCacheInitialized()) { return null; }
-    AbstractLocalCacheStoreValue item = this.cache.getLocalValueCoherent(key);
+    AbstractLocalCacheStoreValue item = this.cache.getLocalValueStrong(key);
     if (item != null) { return item.getValueObject(); }
 
     // Doing double checking to ensure correct value
     synchronized (this) {
-      item = this.cache.getLocalValueCoherent(key);
+      item = this.cache.getLocalValueStrong(key);
       if (item != null) { return item.getValueObject(); }
 
       Object value = getValueForKeyFromServer(map, key, false);
 
       if (value != null) {
-        addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, value,
-                              objectManager.lookupExistingObjectID(value), MapOperationType.GET);
+        addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, value, objectManager
+            .lookupExistingObjectID(value), MapOperationType.GET);
       }
       return value;
     }
@@ -353,8 +353,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       boolean notifyServerForRemove = false;
       if (value instanceof TCObjectSelf) {
         if (localCacheEnabled || mapOperation.isMutateOperation()) {
-          if (!this.tcObjectSelfStore.addTCObjectSelf(serverMapLocalStore, localCacheValue, value,
-                                                      mapOperation.isMutateOperation())) { return; }
+          if (!this.tcObjectSelfStore.addTCObjectSelf(serverMapLocalStore, localCacheValue, value, mapOperation
+              .isMutateOperation())) { return; }
         } else {
           notifyServerForRemove = true;
         }

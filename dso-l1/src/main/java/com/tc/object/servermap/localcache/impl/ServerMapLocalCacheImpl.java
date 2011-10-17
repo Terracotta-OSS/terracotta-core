@@ -14,6 +14,7 @@ import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.LocalCacheStoreFullException;
+import com.tc.object.servermap.localcache.LocalCacheStoreStrongValue;
 import com.tc.object.servermap.localcache.MapOperationType;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.object.servermap.localcache.ServerMapLocalCacheRemoveCallback;
@@ -65,7 +66,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                                                                                                .getLogger(ServerMapLocalCacheImpl.class);
   private static final long                          SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS = TCPropertiesImpl
                                                                                                                .getProperties()
-                                                                                                               .getLong(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
+                                                                                                               .getLong(
+                                                                                                                        TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
   private static final int                           CONCURRENCY                                           = 256;
 
   private static final LocalStoreKeySetFilter        IGNORE_ID_FILTER                                      = new IgnoreIdsFilter();
@@ -220,7 +222,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return null;
   }
 
-  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
+  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(
+                                                                                            final Object key,
                                                                                             AbstractLocalCacheStoreValue value,
                                                                                             MapOperationType mapOperation) {
     if (!mapOperation.isMutateOperation()) {
@@ -489,6 +492,29 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return value;
   }
 
+  public AbstractLocalCacheStoreValue getLocalValueStrong(final Object key) {
+    final AbstractLocalCacheStoreValue value = getLocalValueCoherent(key);
+    if (value != null && !isValidStrongValue(key, value)) {
+      removeFromLocalCache(key, value);
+      return null;
+    }
+    return value;
+  }
+
+  private boolean isValidStrongValue(Object key, AbstractLocalCacheStoreValue value) {
+    if (!value.isStrongConsistentValue()) { return false; }
+    LocalCacheStoreStrongValue strongValue = (LocalCacheStoreStrongValue) value;
+    LockID lockId = strongValue.getLockId();
+    Set set = this.lockIDMappings.get(lockId);
+    if (set == null) { return false; }
+
+    if (value.isLiteral()) {
+      return set.contains(key);
+    } else {
+      return set.contains(value.getValueObjectId());
+    }
+  }
+
   private boolean isIncoherentTooLong(AbstractLocalCacheStoreValue value) {
     long lastCoherentTime = value.asIncoherentValue().getLastCoherentTime();
     return TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - lastCoherentTime)) >= SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS;
@@ -575,7 +601,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  public void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
+  public void transactionComplete(
+                                  L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     l1LocalCacheManager.transactionComplete(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 
