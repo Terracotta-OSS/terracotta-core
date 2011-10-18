@@ -5,7 +5,6 @@ package com.tc.cluster;
 
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
-import com.tc.util.Assert;
 import com.tcclient.cluster.DsoNode;
 import com.tcclient.cluster.DsoNodeImpl;
 import com.tcclient.cluster.DsoNodeInternal;
@@ -77,7 +76,6 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
     nodesWriteLock.lock();
     try {
       DsoNodeInternal node = nodes.remove(nodeId);
-      Assert.assertNotNull(node);
       return node;
     } finally {
       nodesWriteLock.unlock();

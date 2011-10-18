@@ -418,9 +418,10 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   }
 
   public void fireNodeLeft(final NodeID nodeId) {
-    if (!topology.containsDsoNode(nodeId)) { return; }
+    DsoNodeInternal node = topology.getAndRemoveDsoNode(nodeId);
+    if (node == null) { return; }
+    final DsoClusterEvent event = new DsoClusterEventImpl(node);
 
-    final DsoClusterEvent event = new DsoClusterEventImpl(topology.getAndRemoveDsoNode(nodeId));
     for (DsoClusterListener listener : listeners) {
       fireEvent(DsoClusterEventType.NODE_LEFT, event, listener);
     }
