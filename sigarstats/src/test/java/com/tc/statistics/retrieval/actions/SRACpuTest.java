@@ -57,10 +57,9 @@ public class SRACpuTest extends TestCase {
         BigDecimal values1_0 = values1[i][0].round(mathcontext);
         BigDecimal values1_1 = values1[i][1].round(mathcontext);
 
-        System.out
-            .println("baseline test values for cpu " + i + ": " + values1_0 + " <= 0.9, " + values1_1 + " >= 0.0");
+        System.out.println("baseline test values for cpu " + i + ": " + values1_0 + " <= 1, " + values1_1 + " >= 0.0");
 
-        if (values1_0.compareTo(new BigDecimal("0.9")) <= 0 && values1_1.compareTo(new BigDecimal("0.0")) >= 0) {
+        if (values1_0.compareTo(new BigDecimal("1")) <= 0 && values1_1.compareTo(new BigDecimal("0.0")) >= 0) {
           cpuOkCount++;
         }
       }
