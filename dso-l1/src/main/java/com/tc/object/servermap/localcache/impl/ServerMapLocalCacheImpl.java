@@ -503,6 +503,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   private boolean isValidStrongValue(Object key, AbstractLocalCacheStoreValue value) {
     if (!value.isStrongConsistentValue()) { return false; }
+    if (value.isValueNull()) { return true; }
     LocalCacheStoreStrongValue strongValue = (LocalCacheStoreStrongValue) value;
     LockID lockId = strongValue.getLockId();
     Set set = this.lockIDMappings.get(lockId);
