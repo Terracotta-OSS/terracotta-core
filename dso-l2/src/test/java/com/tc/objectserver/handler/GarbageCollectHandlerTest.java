@@ -170,7 +170,8 @@ public class GarbageCollectHandlerTest extends TCTestCase {
     gcSink.add(new PeriodicGarbageCollectContext(GCType.FULL_GC, 5 * 1000));
     gcThread.waitForPeriodicDGCCount(3);
     long finish = System.nanoTime();
-    Assert.assertEquals(3, NANOSECONDS.toSeconds(finish - start) / 5);
+    long timeTaken = NANOSECONDS.toSeconds(finish - start);
+    Assert.assertTrue("Did not finish 3 GC's in 15 seconds.", timeTaken >= 13 && timeTaken <= 17);
   }
 
   public void testBatchInlineDGC() throws Exception {
@@ -189,6 +190,14 @@ public class GarbageCollectHandlerTest extends TCTestCase {
 
     // Make sure everything was actually deleted
     Assert.assertTrue(objectIds(0, 1001).containsAll(deletedObjects) && deletedObjects.containsAll(objectIds(0, 1001)));
+  }
+
+  public void testScheduleOneOffDGC() throws Exception {
+    gcManager.scheduleGarbageCollection(GCType.FULL_GC);
+    gcThread.waitForPeriodicDGCCount(1);
+
+    ThreadUtil.reallySleep(10 * 1000);
+    Assert.assertEquals(1, periodicDGCCount.get());
   }
 
   private SortedSet<ObjectID> objectIds(long start, long end) {
