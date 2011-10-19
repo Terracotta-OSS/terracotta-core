@@ -31,6 +31,10 @@ public class ActiveGarbageCollectionManager implements GarbageCollectionManager 
                                                                         .getProperties()
                                                                         .getLong(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_INTERVAL_SECONDS,
                                                                                  10));
+  private static final long              MAX_INLINE_GC_OBJECTS  = TCPropertiesImpl
+                                                                    .getProperties()
+                                                                    .getLong(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_MAX_OBJECTS,
+                                                                             10000);
   public static final InlineGCContext    INLINE_GC_CONTEXT      = new InlineGCContext();
   private ObjectIDSet                    objectsToDelete        = new ObjectIDSet();
   private ObjectIDSet                    objectsToRetry         = new ObjectIDSet();
@@ -79,7 +83,8 @@ public class ActiveGarbageCollectionManager implements GarbageCollectionManager 
   }
 
   public synchronized void scheduleInlineGarbageCollectionIfNecessary() {
-    if (!objectsToDelete.isEmpty() && System.nanoTime() - lastInlineGCTime > INLINE_GC_INTERVAL) {
+    if (!objectsToDelete.isEmpty() && System.nanoTime() - lastInlineGCTime > INLINE_GC_INTERVAL
+        || objectsToDelete.size() > MAX_INLINE_GC_OBJECTS) {
       if (garbageCollectSink.addLossy(INLINE_GC_CONTEXT)) {
         lastInlineGCTime = System.nanoTime();
       }

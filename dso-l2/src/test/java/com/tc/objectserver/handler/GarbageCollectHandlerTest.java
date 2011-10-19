@@ -59,6 +59,7 @@ public class GarbageCollectHandlerTest extends TCTestCase {
     TCPropertiesImpl.getProperties()
         .setProperty(TCPropertiesConsts.L2_SERVERMAP_EVICTION_CLIENTOBJECT_REFERENCES_REFRESH_INTERVAL, "100");
     TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_INTERVAL_SECONDS, "1");
+    TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_MAX_OBJECTS, "500");
   }
 
   private static final TCLogger    logger = TCLogging.getLogger(GarbageCollectHandlerTest.class);
@@ -170,6 +171,24 @@ public class GarbageCollectHandlerTest extends TCTestCase {
     gcThread.waitForPeriodicDGCCount(3);
     long finish = System.nanoTime();
     Assert.assertEquals(3, NANOSECONDS.toSeconds(finish - start) / 5);
+  }
+
+  public void testBatchInlineDGC() throws Exception {
+    // below the batch limit so it shouldn't schedule an immediate inline dgc
+    gcManager.deleteObjects(objectIds(0, 499));
+    ThreadUtil.reallySleep(10 * 1000);
+    Assert.assertEquals(0, periodicDGCCount.get());
+
+    // Trigger the inline dgc to reset the timer
+    gcManager.deleteObjects(objectIds(499, 500));
+    gcThread.waitForInlineDGCCount(1);
+
+    // Should trip batch limit and immediately schedule an inline dgc
+    gcManager.deleteObjects(objectIds(500, 1001));
+    gcThread.waitForInlineDGCCount(2);
+
+    // Make sure everything was actually deleted
+    Assert.assertTrue(objectIds(0, 1001).containsAll(deletedObjects) && deletedObjects.containsAll(objectIds(0, 1001)));
   }
 
   private SortedSet<ObjectID> objectIds(long start, long end) {
