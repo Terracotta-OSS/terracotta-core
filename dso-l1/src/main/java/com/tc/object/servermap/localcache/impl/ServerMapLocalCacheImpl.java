@@ -124,6 +124,10 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     ReentrantReadWriteLock lock = getLock(key);
     lock.writeLock().lock();
 
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("XXX addToCache " + key + " " + localCacheValue);
+    }
+
     try {
       if (localCacheValue.isStrongConsistentValue()) {
         l1LocalCacheManager.rememberMapIdForValueLockId(localCacheValue.asStrongValue().getLockId(), this);
@@ -373,6 +377,10 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   public void entryEvicted(Object key, Object value) {
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("XXX entryEvicted " + key + " " + value);
+    }
+
     if (key instanceof ObjectID) {
       objectIDMappingEvicted((ObjectID) key, value);
     } else {
@@ -523,6 +531,9 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   public boolean removeEntriesForObjectId(ObjectID objectId) {
     Object key = getMappingUnlocked(objectId);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("XXX removeEntriesForObjectId " + objectId + " key=" + key);
+    }
     if (key == null) { return false; }
 
     ReentrantReadWriteLock lock = getLock(key);
@@ -580,6 +591,10 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   private void remoteRemoveObjectIfPossible(AbstractLocalCacheStoreValue removed) {
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("XXX remoteRemoveObjectIfPossible " + removed);
+    }
+
     if (removed != null) {
       ObjectID objectID = removed.getValueObjectId();
       if (isRemoteRemovePossible(objectID)) {
@@ -699,6 +714,10 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       // we dont put any meta mapping for REMOVE when value == null
       // when literal is present then lockid-> key will be present which we don want to remove
       return;
+    }
+
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("XXX cleanupOldMetaMapping " + key + " " + old + " " + isRemoveFromInternalStore);
     }
 
     removeMetaMapping(key, old, isRemoveFromInternalStore);
