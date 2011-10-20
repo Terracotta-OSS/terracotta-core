@@ -541,6 +541,9 @@
                 <goal>buildinfo</goal>
               </goals>
               <phase>generate-resources</phase>
+              <configuration>
+                <rootPath>${basedir}/..</rootPath>
+              </configuration>
             </execution>          
             <execution>
               <id>default-test</id>
