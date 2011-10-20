@@ -70,6 +70,9 @@ from the community folder:
 
 %> mvn install -DskipTests -Pkit,enterprise,os -am -pl terracotta-kit
 
+Note that for any dso-l1 changes, you will a need minimum of 
+terracotta-toolkit-ee to be present in the devwork folder (as described by 
+#7). 
 
 ******************************************************************************
 6. To start/stop TC server from the build (not using kit)
