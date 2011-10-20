@@ -13,7 +13,7 @@
   <properties>
     <tc-maven-plugin.version>1.8.0-SNAPSHOT</tc-maven-plugin.version>
     <terracotta-session.version>1.2.0-SNAPSHOT</terracotta-session.version>
-    <toolkit-api.version>1.4</toolkit-api.version>
+    <toolkit-api>1.4</toolkit-api>
     <toolkit-runtime.version>4.0.0-SNAPSHOT</toolkit-runtime.version>
   </properties> 
 
@@ -63,7 +63,7 @@
 
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>terracotta-toolkit-${toolkit-api.version}-runtime</artifactId>
+      <artifactId>terracotta-toolkit-${toolkit-api}-runtime</artifactId>
       <version>${toolkit-runtime.version}</version>
     </dependency>      
   </dependencies>
