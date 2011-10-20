@@ -38,8 +38,7 @@
     <linked-child-process.version>1.0.6</linked-child-process.version>
     <gmaven-plugin.version>1.3</gmaven-plugin.version>
     <surefire.version>2.10</surefire.version>
-    <toolkit-resolver.version>1.0.6-SNAPSHOT</toolkit-resolver.version>
-    <maven-forge-plugin.version>1.0.3</maven-forge-plugin.version>
+    <maven-forge-plugin.version>1.0.4-SNAPSHOT</maven-forge-plugin.version>
     <skip.deploy>false</skip.deploy>
     <skip.testjar>false</skip.testjar>
     <listName>checkshort.txt</listName>
@@ -529,9 +528,9 @@
         </plugin>
 
         <plugin>
-          <groupId>org.terracotta.maven.plugins</groupId>
-          <artifactId>toolkit-resolver-plugin</artifactId>
-          <version>${toolkit-resolver.version}</version>
+          <groupId>org.terracotta</groupId>
+          <artifactId>maven-forge-plugin</artifactId>
+          <version>${maven-forge-plugin.version}</version>
           <configuration>
             <skipTests>true</skipTests>
           </configuration>
@@ -540,7 +539,7 @@
               <id>surefire-it</id>
               <phase>integration-test</phase>
               <goals>
-                <goal>toolkit-resolve-test</goal>
+                <goal>test</goal>
               </goals>
               <configuration>
                 <failIfNoTests>false</failIfNoTests>
@@ -749,11 +748,7 @@
             <phase>generate-resources</phase>
           </execution>
         </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.terracotta.maven.plugins</groupId>
-        <artifactId>toolkit-resolver-plugin</artifactId>
-      </plugin>      
+      </plugin>     
       <plugin>
         <groupId>org.codehaus.gmaven</groupId>
         <artifactId>gmaven-plugin</artifactId>
@@ -795,8 +790,8 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>org.terracotta.maven.plugins</groupId>
-            <artifactId>toolkit-resolver-plugin</artifactId>
+            <groupId>org.terracotta</groupId>
+            <artifactId>maven-forge-plugin</artifactId>
             <configuration>
               <__TC_listFile>${basedir}/checkshort.txt</__TC_listFile>
               <failIfNoTests>false</failIfNoTests>
