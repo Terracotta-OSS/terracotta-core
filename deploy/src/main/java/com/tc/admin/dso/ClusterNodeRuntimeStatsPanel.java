@@ -166,63 +166,63 @@ public abstract class ClusterNodeRuntimeStatsPanel extends BaseRuntimeStatsPanel
   }
 
   protected void setupCpuLoadSeries(TimeSeries cpuLoadSeries) {
-    if (cpuLoadSeries == null) {
+    this.cpuLoadSeries = cpuLoadSeries;
+    JFreeChart cpuChart = cpuPanel.getChart();
+    if (cpuChart == null) {
+      cpuChart = createChart(cpuLoadSeries, false);
+      XYPlot plot = (XYPlot) cpuChart.getPlot();
+      NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
+      numberAxis.setRange(0.0, 1.0);
+      cpuPanel.setChart(cpuChart);
+      cpuPanel.setDomainZoomable(false);
+      cpuPanel.setRangeZoomable(false);
+    } else {
+      if (cpuUsageDataset != null) {
+        cpuUsageDataset.clear();
+        cpuUsageDataset = null;
+      }
+      XYPlot plot = (XYPlot) cpuChart.getPlot();
+      plot.setDataset(DemoChartFactory.createTimeSeriesDataset(cpuLoadSeries));
+    }
+    cpuPanel.setToolTipText(appContext.getString("stats.cpu.load.tip"));
+
+    if (clusterNode.getCpuStatNames().length == 0) {
       setupSigarMissing();
     } else {
-      this.cpuLoadSeries = cpuLoadSeries;
-      JFreeChart cpuChart = cpuPanel.getChart();
-      if (cpuChart == null) {
-        cpuChart = createChart(cpuLoadSeries, false);
-        XYPlot plot = (XYPlot) cpuChart.getPlot();
-        NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
-        numberAxis.setRange(0.0, 1.0);
-        cpuPanel.setChart(cpuChart);
-        cpuPanel.setDomainZoomable(false);
-        cpuPanel.setRangeZoomable(false);
-      } else {
-        if (cpuUsageDataset != null) {
-          cpuUsageDataset.clear();
-          cpuUsageDataset = null;
-        }
-        XYPlot plot = (XYPlot) cpuChart.getPlot();
-        plot.setDataset(DemoChartFactory.createTimeSeriesDataset(cpuLoadSeries));
-      }
-      cpuPanel.setBorder(BorderFactory.createTitledBorder(appContext.getString("stats.cpu.load")));
-      cpuPanel.setToolTipText(appContext.getString("stats.cpu.load.tip"));
-
       clusterNode.removePolledAttributeListener(POLLED_ATTR_CPU_USAGE, this);
       clusterNode.addPolledAttributeListener(POLLED_ATTR_CPU_LOAD, this);
     }
+    cpuPanel.setBorder(BorderFactory.createTitledBorder(appContext.getString("stats.cpu.load")));
   }
 
   protected void setupCpuUsageSeries(FixedTimeSeriesCollection cpuDataset) {
-    if (cpuDataset.getSeriesCount() == 0) {
+    this.cpuUsageDataset = cpuDataset;
+    JFreeChart cpuChart = cpuPanel.getChart();
+    if (cpuChart == null) {
+      cpuChart = createChart(cpuUsageDataset, false);
+      XYPlot plot = (XYPlot) cpuChart.getPlot();
+      NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
+      numberAxis.setRange(0.0, 1.0);
+      cpuPanel.setChart(cpuChart);
+      cpuPanel.setDomainZoomable(false);
+      cpuPanel.setRangeZoomable(false);
+    } else {
+      if (cpuLoadSeries != null) {
+        cpuLoadSeries.clear();
+        cpuLoadSeries = null;
+      }
+      XYPlot plot = (XYPlot) cpuChart.getPlot();
+      plot.setDataset(cpuUsageDataset);
+    }
+    cpuPanel.setToolTipText(appContext.getString("stats.cpu.usage.tip"));
+
+    if (clusterNode.getCpuStatNames().length == 0) {
       setupSigarMissing();
     } else {
-      this.cpuUsageDataset = cpuDataset;
-      JFreeChart cpuChart = cpuPanel.getChart();
-      if (cpuChart == null) {
-        cpuChart = createChart(cpuUsageDataset, false);
-        XYPlot plot = (XYPlot) cpuChart.getPlot();
-        NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
-        numberAxis.setRange(0.0, 1.0);
-        cpuPanel.setChart(cpuChart);
-        cpuPanel.setDomainZoomable(false);
-        cpuPanel.setRangeZoomable(false);
-      } else {
-        if (cpuLoadSeries != null) {
-          cpuLoadSeries.clear();
-          cpuLoadSeries = null;
-        }
-        XYPlot plot = (XYPlot) cpuChart.getPlot();
-        plot.setDataset(cpuUsageDataset);
-      }
-      cpuPanel.setBorder(BorderFactory.createTitledBorder(appContext.getString("stats.cpu.usage")));
-      cpuPanel.setToolTipText(appContext.getString("stats.cpu.usage.tip"));
-
       clusterNode.removePolledAttributeListener(POLLED_ATTR_CPU_LOAD, this);
       clusterNode.addPolledAttributeListener(POLLED_ATTR_CPU_USAGE, this);
     }
+    cpuPanel.setBorder(BorderFactory.createTitledBorder(appContext.getString("stats.cpu.usage")));
   }
 
   protected class CpuLoadPanelWorker extends BasicWorker<TimeSeries> {

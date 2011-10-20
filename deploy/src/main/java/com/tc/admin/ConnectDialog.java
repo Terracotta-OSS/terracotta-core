@@ -168,6 +168,7 @@ public final class ConnectDialog extends JDialog implements HierarchyListener {
     getContentPane().removeHierarchyListener(this);
     if (visible) {
       getContentPane().addHierarchyListener(this);
+      label.setText(appContext.format("connect-dialog.connecting.format", clusterModel));
     }
     super.setVisible(visible);
   }

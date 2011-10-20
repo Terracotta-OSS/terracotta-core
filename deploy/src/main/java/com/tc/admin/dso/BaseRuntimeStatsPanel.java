@@ -282,8 +282,7 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
   }
 
   protected TimeSeries createCpuLoadSeries(IClusterNode clusterNode) {
-    String[] cpus = clusterNode.getCpuStatNames();
-    return cpus.length > 0 ? createTimeSeries("cpu load") : null;
+    return createTimeSeries("cpu load");
   }
 
   protected TimeSeries createTimeSeries(String name) {
@@ -631,7 +630,7 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
   }
 
   protected void handleCpuUsage(TimeSeries series, StatisticData data) {
-    if (series != null) {
+    if (series != null && data != null) {
       series.addOrUpdate(new Second(tmpDate), getValueOrMissing(series, (Number) data.getData()));
     }
   }
