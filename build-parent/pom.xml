@@ -536,7 +536,14 @@
           </configuration>
           <executions>
             <execution>
-              <id>surefire-it</id>
+              <id>create-build-info</id>
+              <goals>
+                <goal>buildinfo</goal>
+              </goals>
+              <phase>generate-resources</phase>
+            </execution>          
+            <execution>
+              <id>default-test</id>
               <phase>integration-test</phase>
               <goals>
                 <goal>test</goal>
@@ -736,18 +743,7 @@
       <plugin>
         <groupId>org.terracotta</groupId>
         <artifactId>maven-forge-plugin</artifactId>
-        <configuration>
-          <rootPath>${basedir}/..</rootPath>
-        </configuration>
-        <executions>
-          <execution>
-            <id>create-build-info</id>
-            <goals>
-              <goal>buildinfo</goal>
-            </goals>
-            <phase>generate-resources</phase>
-          </execution>
-        </executions>
+      </plugin>
       </plugin>     
       <plugin>
         <groupId>org.codehaus.gmaven</groupId>
