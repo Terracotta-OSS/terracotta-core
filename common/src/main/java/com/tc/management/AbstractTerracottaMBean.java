@@ -12,6 +12,7 @@ import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
 
+import java.lang.reflect.Field;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -75,6 +76,9 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
 
   public void addNotificationListener(final NotificationListener listener, final NotificationFilter filter,
                                       final Object obj) {
+    // don't register listeners from foreign classloaders
+    if (!isListenerInSameClassLoader(listener)) return;
+
     notificationListeners.add(new Listener(listener, filter, obj));
   }
 
@@ -90,6 +94,9 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
 
   public void removeNotificationListener(final NotificationListener listener, final NotificationFilter filter,
                                          final Object obj) throws ListenerNotFoundException {
+    // ignore removal of listeners from foreign classloaders
+    if (!isListenerInSameClassLoader(listener)) return;
+
     boolean removed = false;
 
     for (Iterator i = notificationListeners.iterator(); i.hasNext();) {
@@ -104,6 +111,9 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
   }
 
   public void removeNotificationListener(final NotificationListener listener) throws ListenerNotFoundException {
+    // ignore removal of listeners from foreign classloaders
+    if (!isListenerInSameClassLoader(listener)) return;
+
     boolean removed = false;
 
     for (Iterator i = notificationListeners.iterator(); i.hasNext();) {
@@ -115,6 +125,40 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
     }
 
     if (!removed) { throw new ListenerNotFoundException(); }
+  }
+
+  private boolean isListenerInSameClassLoader(final NotificationListener listener) {
+    ClassLoader systemCl = Notification.class.getClassLoader();
+    ClassLoader currentCl = getClass().getClassLoader();
+
+    ClassLoader listenerCl = listener.getClass().getClassLoader();
+    if (listenerCl != systemCl && listenerCl != currentCl) {
+      if (logger.isDebugEnabled()) {
+        logger.debug("****** CLASSLOADER MISMATCH *****, NOT adding notification listener " + listener);
+      }
+      return false;
+    }
+
+    try {
+      Field[] declaredFields = listener.getClass().getDeclaredFields();
+      for (Field field : declaredFields) {
+        field.setAccessible(true);
+        Object subListener = field.get(listener);
+        ClassLoader fieldObjectCl = subListener.getClass().getClassLoader();
+
+        if (fieldObjectCl != systemCl && fieldObjectCl != currentCl) {
+          if (logger.isDebugEnabled()) {
+            logger.debug("****** CLASSLOADER MISMATCH *****, NOT adding of notification listener " + listener);
+          }
+          return false;
+        }
+      }
+    } catch (Exception e) {
+      logger.warn("****** REFLECTION ERROR *****, NOT adding notification listener " + listener, e);
+      return false;
+    }
+
+    return true;
   }
 
   public final void sendNotification(final Notification notification) {
