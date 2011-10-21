@@ -8,7 +8,6 @@ import com.tc.object.TCObjectSelfStore;
 import com.tc.object.locks.LockID;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.LocalCacheStoreEventualValue;
-import com.tc.object.servermap.localcache.LocalCacheStoreIncoherentValue;
 import com.tc.object.servermap.localcache.LocalCacheStoreStrongValue;
 import com.tc.object.servermap.localcache.MapOperationType;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
@@ -51,7 +50,7 @@ public class MockModesAdd {
   // oid -> value
   public static void addIncoherentValueToCache(ServerMapLocalCache cache, TCObjectSelfStore store, String key,
                                                MockSerializedEntry value, ObjectID mapID, MapOperationType operationType) {
-    AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreIncoherentValue(value.getObjectID(), value);
+    AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreEventualValue(value.getObjectID(), value);
     addToCache(cache, store, key, value, operationType, localStoreValue);
   }
 

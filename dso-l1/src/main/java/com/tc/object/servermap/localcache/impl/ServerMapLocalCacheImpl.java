@@ -22,8 +22,6 @@ import com.tc.object.servermap.localcache.impl.L1ServerMapLocalStoreTransactionC
 import com.tc.object.servermap.localcache.impl.LocalStoreKeySet.LocalStoreKeySetFilter;
 import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.UnlockedSharedObjectException;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.concurrent.TCConcurrentMultiMap;
 
 import java.util.Collection;
@@ -32,7 +30,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -62,16 +59,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * </ul>
  */
 public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
-  private static final TCLogger                      LOGGER                                                = TCLogging
-                                                                                                               .getLogger(ServerMapLocalCacheImpl.class);
-  private static final long                          SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS = TCPropertiesImpl
-                                                                                                               .getProperties()
-                                                                                                               .getLong(
-                                                                                                                        TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
-  private static final int                           CONCURRENCY                                           = 256;
+  private static final TCLogger                      LOGGER                       = TCLogging
+                                                                                      .getLogger(ServerMapLocalCacheImpl.class);
+  private static final int                           CONCURRENCY                  = 256;
 
-  private static final LocalStoreKeySetFilter        IGNORE_ID_FILTER                                      = new IgnoreIdsFilter();
-  private static final Object                        NULL_VALUE                                            = new Object();
+  private static final LocalStoreKeySetFilter        IGNORE_ID_FILTER             = new IgnoreIdsFilter();
+  private static final Object                        NULL_VALUE                   = new Object();
 
   private final L1ServerMapLocalCacheManager         l1LocalCacheManager;
   private volatile boolean                           localCacheEnabled;
@@ -80,8 +73,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   private final Manager                              manager;
   private final ServerMapLocalCacheRemoveCallback    removeCallback;
 
-  private final Map<ObjectID, Object>                removedObjectIDs                                      = new ConcurrentHashMap<ObjectID, Object>();
-  private final Map<ObjectID, Object>                oidsForWhichTxnAreInProgress                          = new ConcurrentHashMap<ObjectID, Object>();
+  private final Map<ObjectID, Object>                removedObjectIDs             = new ConcurrentHashMap<ObjectID, Object>();
+  private final Map<ObjectID, Object>                oidsForWhichTxnAreInProgress = new ConcurrentHashMap<ObjectID, Object>();
 
   private final ConcurrentHashMap                    pendingTransactionEntries;
   private final ReentrantReadWriteLock[]             locks;
@@ -464,44 +457,17 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
    * Returned value may be coherent or incoherent or null
    */
   public AbstractLocalCacheStoreValue getLocalValue(final Object key) {
-    final AbstractLocalCacheStoreValue value;
     ReentrantReadWriteLock lock = getLock(key);
     lock.readLock().lock();
     try {
-      value = (AbstractLocalCacheStoreValue) getMappingUnlocked(key);
+      return (AbstractLocalCacheStoreValue) getMappingUnlocked(key);
     } finally {
       lock.readLock().unlock();
     }
-    if (value != null && value.isIncoherentValue() && isIncoherentTooLong(value)) {
-      // if incoherent and been incoherent too long, remove from cache/map
-      removeFromLocalCache(key, value);
-      return null;
-    }
-    return value;
-  }
-
-  /**
-   * Returned value is always coherent or null.
-   */
-  public AbstractLocalCacheStoreValue getLocalValueCoherent(final Object key) {
-    final AbstractLocalCacheStoreValue value;
-    ReentrantReadWriteLock lock = getLock(key);
-    lock.readLock().lock();
-    try {
-      value = (AbstractLocalCacheStoreValue) getMappingUnlocked(key);
-    } finally {
-      lock.readLock().unlock();
-    }
-    if (value != null && value.isIncoherentValue()) {
-      // don't return incoherent items from here
-      removeFromLocalCache(key, value);
-      return null;
-    }
-    return value;
   }
 
   public AbstractLocalCacheStoreValue getLocalValueStrong(final Object key) {
-    final AbstractLocalCacheStoreValue value = getLocalValueCoherent(key);
+    final AbstractLocalCacheStoreValue value = getLocalValue(key);
     if (value != null && !isValidStrongValue(key, value)) {
       removeFromLocalCache(key, value);
       return null;
@@ -522,11 +488,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     } else {
       return set.contains(value.getValueObjectId());
     }
-  }
-
-  private boolean isIncoherentTooLong(AbstractLocalCacheStoreValue value) {
-    long lastCoherentTime = value.asIncoherentValue().getLastCoherentTime();
-    return TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - lastCoherentTime)) >= SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS;
   }
 
   public boolean removeEntriesForObjectId(ObjectID objectId) {

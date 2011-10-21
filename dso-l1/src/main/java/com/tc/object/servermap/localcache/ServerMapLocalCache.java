@@ -48,11 +48,6 @@ public interface ServerMapLocalCache {
 
   void addToCache(Object key, AbstractLocalCacheStoreValue localCacheValue, MapOperationType operationType);
 
-  /**
-   * Get a coherent value from the local cache. If an incoherent value is present, then return null.
-   */
-  AbstractLocalCacheStoreValue getLocalValueCoherent(Object key);
-
   AbstractLocalCacheStoreValue getLocalValueStrong(final Object key);
 
   /**

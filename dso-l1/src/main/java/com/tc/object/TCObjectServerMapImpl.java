@@ -17,7 +17,6 @@ import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.LocalCacheStoreEventualValue;
-import com.tc.object.servermap.localcache.LocalCacheStoreIncoherentValue;
 import com.tc.object.servermap.localcache.LocalCacheStoreStrongValue;
 import com.tc.object.servermap.localcache.MapOperationType;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
@@ -341,11 +340,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
   private AbstractLocalCacheStoreValue getValueUnlockedFromCache(Object key) {
     if (!isCacheInitialized()) { return null; }
-    if (invalidateOnChange) {
-      return this.cache.getLocalValueCoherent(key);
-    } else {
-      return this.cache.getLocalValue(key);
-    }
+    return this.cache.getLocalValue(key);
   }
 
   public void addStrongValueToCache(LockID lockId, Object key, Object value, ObjectID valueObjectID,
@@ -360,7 +355,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   public void addIncoherentValueToCache(Object key, Object value, ObjectID valueObjectID, MapOperationType mapOperation) {
-    final LocalCacheStoreIncoherentValue localCacheValue = new LocalCacheStoreIncoherentValue(valueObjectID, value);
+    final LocalCacheStoreEventualValue localCacheValue = new LocalCacheStoreEventualValue(valueObjectID, value);
     addToCache(key, localCacheValue, valueObjectID, mapOperation);
   }
 
