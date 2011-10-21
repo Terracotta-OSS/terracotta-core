@@ -33,7 +33,12 @@ public class L1ServerMapLocalStoreTransactionCompletionListener implements Trans
   }
 
   public void transactionComplete(TransactionID txnID) {
-    serverMapLocalCache.transactionComplete(this);
+    if (transactionCompleteOperation == TransactionCompleteOperation.UNPIN_AND_REMOVE_ENTRY) {
+      postTransactionCallback();
+    } else {
+      // add it to sink
+      serverMapLocalCache.transactionComplete(this);
+    }
   }
 
   public void postTransactionCallback() {

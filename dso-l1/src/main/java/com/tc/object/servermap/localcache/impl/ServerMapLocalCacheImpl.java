@@ -636,10 +636,11 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       if (removeEntry) {
         removeFromLocalCache(key, value);
       } else {
-        boolean isRemoved = pendingTransactionEntries.remove(key, value);
-        if (isRemoved) {
+        Object valueFetched = pendingTransactionEntries.get(key);
+        if (value.equals(valueFetched)) {
           removeMetaMapping(key, value, false);
           addToCache(key, value, MapOperationType.GET);
+          pendingTransactionEntries.remove(key, value);
         }
       }
     } finally {
