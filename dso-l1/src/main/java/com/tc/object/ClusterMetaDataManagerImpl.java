@@ -219,7 +219,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     final R response;
     try {
       synchronized (waitObject) {
-        if (!waitObject.wasResponseReceived()) {
+        while (!waitObject.wasResponseReceived()) {
           waitObject.wait(RETRIEVE_WAIT_INTERVAL);
         }
       }
