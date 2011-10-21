@@ -404,6 +404,7 @@ public class GarbageCollectHandlerTest extends TCTestCase {
 
     public void deleteObjects(DGCResultContext dgcResultContext) {
       deletedObjects.addAll(dgcResultContext.getGarbageIDs());
+      inlineGCCount.incrementAndGet();
     }
   }
 
