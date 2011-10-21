@@ -175,8 +175,11 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
                   + gcMsg);
       return;
     }
-    this.objectManager.getGarbageCollector().deleteGarbage(new DGCResultContext(gcedOids, gcMsg.getGCInfo()));
-
+    if (!this.objectManager.getGarbageCollector().isDisabled()) {
+      this.objectManager.getGarbageCollector().deleteGarbage(new DGCResultContext(gcedOids, gcMsg.getGCInfo()));
+    } else {
+      logger.info("Skipping result since the server is not yet fully synced. Result : " + gcMsg);
+    }
   }
 
   private void handleClusterObjectMessage(final NodeID nodeID, final ObjectListSyncMessage clusterMsg) {
