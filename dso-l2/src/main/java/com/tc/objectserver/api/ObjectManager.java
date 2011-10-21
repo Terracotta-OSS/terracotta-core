@@ -112,6 +112,8 @@ public interface ObjectManager extends ManagedObjectProvider, ObjectManagerMBean
    */
   public void notifyGCComplete(DGCResultContext dgcResultContext);
 
+  public void deleteObjects(DGCResultContext dgcResultContext);
+
   public void setStatsListener(ObjectManagerStatsListener listener);
 
   public void start();

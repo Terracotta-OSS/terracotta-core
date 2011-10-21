@@ -169,7 +169,6 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
-import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.dgc.impl.GCControllerImpl;
 import com.tc.objectserver.dgc.impl.GCStatisticsAgentSubSystemEventListener;
 import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
@@ -256,7 +255,6 @@ import com.tc.objectserver.tx.TransactionBatchManagerImpl;
 import com.tc.objectserver.tx.TransactionFilter;
 import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.objectserver.tx.TransactionalStagesCoordinatorImpl;
-import com.tc.objectserver.tx.TxnsInSystemCompletionListener;
 import com.tc.operatorevent.DsoOperatorEventHistoryProvider;
 import com.tc.operatorevent.TerracottaOperatorEventFactory;
 import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
@@ -777,6 +775,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       this.garbageCollectionManager = new ActiveGarbageCollectionManager(garbageCollectStage.getSink(),
                                                                          clientObjectReferenceSet);
     }
+    toInit.add(this.garbageCollectionManager);
 
     final Stage destroyableMapStage = stageManager.createStage(ServerConfigurationContext.DESTROYABLE_MAP_STAGE,
                                                                new DestroyableMapHandler(), 1, -1);
@@ -1149,7 +1148,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                           this.objectManager, this.clientStateManager,
                                                                           getGcStatsEventPublisher(),
                                                                           getStatisticsAgentSubSystem(),
-                                                                          dgcSequenceProvider, this.transactionManager);
+                                                                          dgcSequenceProvider, this.transactionManager,
+                                                                          this.garbageCollectionManager);
     gc.addListener(new GCStatisticsAgentSubSystemEventListener(getStatisticsAgentSubSystem()));
     this.objectManager.setGarbageCollector(gc);
     this.l2Management.findObjectManagementMonitorMBean().registerGCController(new GCControllerImpl(this.objectManager
@@ -1198,6 +1198,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.indexHACoordinator);
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2Coordinator);
+      this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.garbageCollectionManager);
 
       dgcSequenceProvider.registerSequecePublisher(this.l2Coordinator.getReplicatedClusterStateManager());
     } else {
@@ -1478,17 +1479,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   public void startActiveMode() {
-    this.garbageCollectionManager.startActiveMode();
     this.transactionManager.goToActiveMode();
-    if (!this.objectManager.getGarbageCollector().isPeriodicEnabled()
-        && TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_ENABLED, true)) {
-      this.transactionManager.callBackOnResentTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
-        public void onCompletion() {
-          logger.info("Performing a DGC to cleanup objects missed by inline-dgc.");
-          garbageCollectionManager.scheduleGarbageCollection(GCType.INLINE_CLEANUP_GC);
-        }
-      });
-    }
   }
 
   public void startL1Listener() throws IOException {

@@ -987,6 +987,10 @@ public class ObjectRequestManagerTest extends TestCase {
     public ManagedObject getQuietObjectByID(ObjectID id) {
       return getObjectByID(id);
     }
+
+    public void deleteObjects(final DGCResultContext dgcResultContext) {
+      //
+    }
   }
 
   private static class TestMessageChannel implements MessageChannel {

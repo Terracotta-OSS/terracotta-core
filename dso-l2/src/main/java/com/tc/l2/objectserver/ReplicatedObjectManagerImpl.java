@@ -175,13 +175,8 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
                   + gcMsg);
       return;
     }
-    final boolean deleted = this.objectManager.getGarbageCollector().deleteGarbage(new DGCResultContext(gcedOids, gcMsg
-                                                                                       .getGCInfo()));
-    if (deleted) {
-      logger.info("Removed " + gcedOids.size() + " objects from passive ObjectManager from last DGC from Active");
-    } else {
-      logger.info("Skipped removing garbage since DGC is either running or disabled. garbage : " + gcMsg);
-    }
+    this.objectManager.getGarbageCollector().deleteGarbage(new DGCResultContext(gcedOids, gcMsg.getGCInfo()));
+
   }
 
   private void handleClusterObjectMessage(final NodeID nodeID, final ObjectListSyncMessage clusterMsg) {

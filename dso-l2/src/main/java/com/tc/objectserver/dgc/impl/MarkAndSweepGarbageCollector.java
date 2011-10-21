@@ -7,6 +7,7 @@ package com.tc.objectserver.dgc.impl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
+import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.core.api.Filter;
@@ -33,6 +34,7 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
   private final ClientStateManager             stateManager;
   private final ObjectManager                  objectManager;
   private final DGCSequenceProvider            dgcSequenceProvider;
+  private final GarbageCollectionManager       garbageCollectionManager;
 
   private volatile ChangeCollector             referenceCollector         = ChangeCollector.NULL_CHANGE_COLLECTOR;
   private volatile YoungGenChangeCollector     youngGenReferenceCollector = YoungGenChangeCollector.NULL_YOUNG_CHANGE_COLLECTOR;
@@ -42,12 +44,14 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
   public MarkAndSweepGarbageCollector(final ObjectManagerConfig objectManagerConfig, final ObjectManager objectMgr,
                                       final ClientStateManager stateManager,
                                       final GarbageCollectionInfoPublisher gcPublisher,
-                                      DGCSequenceProvider dgcSequenceProvider) {
+                                      final DGCSequenceProvider dgcSequenceProvider,
+                                      final GarbageCollectionManager garbageCollectionManager) {
     this.objectManagerConfig = objectManagerConfig;
     this.objectManager = objectMgr;
     this.stateManager = stateManager;
     this.gcPublisher = gcPublisher;
     this.dgcSequenceProvider = dgcSequenceProvider;
+    this.garbageCollectionManager = garbageCollectionManager;
     addListener(new GCLoggerEventPublisher(new GCLogger(logger, objectManagerConfig.verboseGC())));
   }
 
@@ -69,14 +73,10 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
     gcAlgo.doGC();
   }
 
-  public boolean deleteGarbage(final DGCResultContext dgcResultContext) {
-    if (requestGCDeleteStart()) {
-      this.youngGenReferenceCollector.removeGarbage(dgcResultContext.getGarbageIDs());
-      this.objectManager.notifyGCComplete(dgcResultContext);
-      notifyGCComplete();
-      return true;
-    }
-    return false;
+  public void deleteGarbage(final DGCResultContext dgcResultContext) {
+    this.youngGenReferenceCollector.removeGarbage(dgcResultContext.getGarbageIDs());
+    this.objectManager.notifyGCComplete(dgcResultContext);
+    notifyGCComplete();
   }
 
   public void startMonitoringReferenceChanges() {
@@ -133,6 +133,7 @@ public class MarkAndSweepGarbageCollector extends AbstractGarbageCollector {
     }
     this.started = true;
     this.gcState.start();
+    garbageCollectionManager.scheduleInlineCleanupIfNecessary();
   }
 
   public void stop() {

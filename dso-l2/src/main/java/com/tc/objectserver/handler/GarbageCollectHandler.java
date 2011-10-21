@@ -88,7 +88,7 @@ public class GarbageCollectHandler extends AbstractEventHandler {
       }
 
       if (!objectsToDelete.isEmpty()) {
-        objectManager.notifyGCComplete(new DGCResultContext(objectsToDelete, INLINE_GC_INFO));
+        objectManager.deleteObjects(new DGCResultContext(objectsToDelete, INLINE_GC_INFO));
       }
       collector.notifyGCComplete();
       gcPublisher.fireGCCycleCompletedEvent(INLINE_GC_INFO, objectsToDelete);

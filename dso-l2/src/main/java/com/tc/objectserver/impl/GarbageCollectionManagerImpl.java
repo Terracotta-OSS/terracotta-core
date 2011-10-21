@@ -3,7 +3,11 @@
  */
 package com.tc.objectserver.impl;
 
+import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.Sink;
+import com.tc.l2.context.StateChangedEvent;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
@@ -21,8 +25,10 @@ public class GarbageCollectionManagerImpl implements GarbageCollectionManager {
     activeGCManager = new ActiveGarbageCollectionManager(garbageCollectSink, clientObjectReferenceSet);
   }
 
-  public void startActiveMode() {
-    delegate = activeGCManager;
+  public void l2StateChanged(StateChangedEvent sce) {
+    if (sce.movedToActive()) {
+      delegate = activeGCManager;
+    }
   }
 
   public void deleteObjects(SortedSet<ObjectID> objects) {
@@ -49,10 +55,17 @@ public class GarbageCollectionManagerImpl implements GarbageCollectionManager {
     delegate.scheduleGarbageCollection(type);
   }
 
+  public void initializeContext(ConfigurationContext context) {
+    // the passive version doesn't need initialization
+    activeGCManager.initializeContext(context);
+  }
+
+  public void scheduleInlineCleanupIfNecessary() {
+    delegate.scheduleInlineCleanupIfNecessary();
+  }
+
   private static class PassiveGarbageCollectionManager implements GarbageCollectionManager {
-    public void startActiveMode() {
-      //
-    }
+    private static final TCLogger logger = TCLogging.getLogger(PassiveGarbageCollectionManager.class);
 
     public void deleteObjects(SortedSet<ObjectID> objects) {
       // Passive doesn't do inline dgc.
@@ -67,15 +80,27 @@ public class GarbageCollectionManagerImpl implements GarbageCollectionManager {
     }
 
     public void scheduleGarbageCollection(GCType type, long delay) {
-      throw new AssertionError("DGC should not be scheduled on a passive.");
+      logger.info("In passive mode, not scheduling DGC.");
     }
 
     public void doGarbageCollection(GCType type) {
-      throw new AssertionError("DGC should not be run from a passive.");
+      logger.info("In passive mode, not running DGC.");
     }
 
     public void scheduleGarbageCollection(GCType type) {
-      throw new AssertionError("DGC should not be scheduled from a passive.");
+      logger.info("In passive mode, not scheduling DGC.");
+    }
+
+    public void initializeContext(ConfigurationContext context) {
+      //
+    }
+
+    public void scheduleInlineCleanupIfNecessary() {
+      logger.info("In passive mode, not scheduling inline cleanup.");
+    }
+
+    public void l2StateChanged(StateChangedEvent sce) {
+      // do nothing.
     }
   }
 }

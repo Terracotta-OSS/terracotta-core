@@ -123,7 +123,8 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                           ClientStateManager clientStateManger, GCStatsEventPublisher gcEventListener,
                                           StatisticsAgentSubSystem statsSubSystem,
                                           DGCSequenceProvider dgcSequenceProvider,
-                                          ServerTransactionManager serverTransactionManager);
+                                          ServerTransactionManager serverTransactionManager,
+                                          GarbageCollectionManager garbageCollectionManager);
 
   ServerConfigurationContext createServerConfigurationContext(StageManager stageManager, ObjectManager objMgr,
                                                               ObjectRequestManager objRequestMgr,

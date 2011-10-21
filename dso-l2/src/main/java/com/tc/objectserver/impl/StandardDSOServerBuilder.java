@@ -122,10 +122,12 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                                  final GCStatsEventPublisher gcEventListener,
                                                  final StatisticsAgentSubSystem statsAgentSubSystem,
                                                  final DGCSequenceProvider dgcSequenceProvider,
-                                                 final ServerTransactionManager serverTransactionManager) {
+                                                 final ServerTransactionManager serverTransactionManager,
+                                                 final GarbageCollectionManager garbageCollectionManager) {
     final MarkAndSweepGarbageCollector gc = new MarkAndSweepGarbageCollector(objectManagerConfig, objectMgr,
                                                                              stateManager, gcPublisher,
-                                                                             dgcSequenceProvider);
+                                                                             dgcSequenceProvider,
+                                                                             garbageCollectionManager);
     gc.addListener(gcEventListener);
     gc.addListener(new DGCOperatorEventPublisher());
     return gc;
@@ -197,8 +199,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                            managedObjectRequestSink, clientStateManager);
   }
 
-  public ServerConfigurationContext createServerConfigurationContext(
-                                                                     StageManager stageManager,
+  public ServerConfigurationContext createServerConfigurationContext(StageManager stageManager,
                                                                      ObjectManager objMgr,
                                                                      ObjectRequestManager objRequestMgr,
                                                                      ServerMapRequestManager serverTCMapRequestManager,

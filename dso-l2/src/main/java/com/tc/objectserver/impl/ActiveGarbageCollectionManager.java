@@ -5,16 +5,22 @@ package com.tc.objectserver.impl;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.Sink;
+import com.tc.l2.context.StateChangedEvent;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.context.GarbageCollectContext;
 import com.tc.objectserver.context.InlineGCContext;
+import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSetChangedListener;
+import com.tc.objectserver.tx.ServerTransactionManager;
+import com.tc.objectserver.tx.TxnsInSystemCompletionListener;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.ObjectIDSet;
@@ -41,6 +47,9 @@ public class ActiveGarbageCollectionManager implements GarbageCollectionManager 
   private long                           lastInlineGCTime       = System.nanoTime();
   private final Sink                     garbageCollectSink;
   private final ClientObjectReferenceSet clientObjectReferenceSet;
+
+  private ServerTransactionManager       transactionManager;
+  private GarbageCollector               garbageCollector;
 
   public ActiveGarbageCollectionManager(final Sink garbageCollectSink,
                                         final ClientObjectReferenceSet clientObjectReferenceSet) {
@@ -92,18 +101,26 @@ public class ActiveGarbageCollectionManager implements GarbageCollectionManager 
     }
   }
 
-  public void scheduleGarbageCollection(GCType type, long delay) {
-    garbageCollectSink.add(new GarbageCollectContext(type, delay));
+  public void scheduleGarbageCollection(final GCType type, final long delay) {
+    transactionManager.callBackOnResentTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
+      public void onCompletion() {
+        garbageCollectSink.add(new GarbageCollectContext(type, delay));
+      }
+    });
   }
 
   public void doGarbageCollection(GCType type) {
     GarbageCollectContext gcc = new GarbageCollectContext(type);
-    garbageCollectSink.add(gcc);
+    scheduleGarbageCollection(type);
     gcc.waitForCompletion();
   }
 
-  public void scheduleGarbageCollection(GCType type) {
-    garbageCollectSink.add(new GarbageCollectContext(type));
+  public void scheduleGarbageCollection(final GCType type) {
+    transactionManager.callBackOnResentTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
+      public void onCompletion() {
+        garbageCollectSink.add(new GarbageCollectContext(type));
+      }
+    });
   }
 
   private synchronized void retryDeletingReferencedObjects() {
@@ -113,7 +130,24 @@ public class ActiveGarbageCollectionManager implements GarbageCollectionManager 
     }
   }
 
-  public void startActiveMode() {
-    //
+  public void initializeContext(ConfigurationContext context) {
+    ServerConfigurationContext scc = (ServerConfigurationContext) context;
+    transactionManager = scc.getTransactionManager();
+    garbageCollector = scc.getObjectManager().getGarbageCollector();
+  }
+
+  public void scheduleInlineCleanupIfNecessary() {
+    if (!garbageCollector.isPeriodicEnabled()
+        && TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_ENABLED, true)) {
+      // This delay is here as a failsafe in case there's some aspect of startup we missed. This can be increased in
+      // order to not collide with other stuff in that case.
+      final long delay = 1000 * TCPropertiesImpl.getProperties()
+          .getLong(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_CLEANUP_DELAY_SECONDS, 0);
+      scheduleGarbageCollection(GCType.INLINE_CLEANUP_GC, delay);
+    }
+  }
+
+  public void l2StateChanged(StateChangedEvent sce) {
+    // Do nothing
   }
 }

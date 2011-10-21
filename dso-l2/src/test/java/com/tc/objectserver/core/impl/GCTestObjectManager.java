@@ -17,7 +17,6 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
-import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.impl.ManagedObjectReference;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
@@ -284,8 +283,7 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
     return getObjectByID(id);
   }
 
-  public void scheduleGarbageCollection(GCType type, long delay) {
-    throw new ImplementMe();
+  public void deleteObjects(final DGCResultContext dgcResultContext) {
+    //
   }
-
 }

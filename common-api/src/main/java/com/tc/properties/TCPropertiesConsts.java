@@ -127,6 +127,7 @@ public interface TCPropertiesConsts {
    * dgc.inline.enabled             - Enables/disable inline dgc of CDSMs.
    * dgc.inline.intervalInSeconds   - Interval in seconds at which to delete objects selected by inline dgc.
    * dgc.inline.maxObjects          - Maximum inline dgc batch size
+   * dgc.inline.cleanup.delaySeconds - Seconds to delay the start of inline dgc cleanup after a server becomes active
    * l2.data.backup.throttle.timeInMillis - time to sleep between copying of each file from the db while taking backup
    * </code>
    ********************************************************************************************************************/
@@ -159,6 +160,7 @@ public interface TCPropertiesConsts {
   public static final String L2_OBJECTMANAGER_DGC_INLINE_ENABLED                             = "l2.objectmanager.dgc.inline.enabled";
   public static final String L2_OBJECTMANAGER_DGC_INLINE_INTERVAL_SECONDS                    = "l2.objectmanager.dgc.inline.intervalInSeconds";
   public static final String L2_OBJECTMANAGER_DGC_INLINE_MAX_OBJECTS                         = "l2.objectmanager.dgc.inline.maxObjects";
+  public static final String L2_OBJECTMANAGER_DGC_INLINE_CLEANUP_DELAY_SECONDS               = "l2.objectmanager.dgc.inline.cleanup.delaySeconds";
   public static final String L2_DATA_BACKUP_THROTTLE_TIME                                    = "l2.data.backup.throttle.timeInMillis";
   public static final String L2_OBJECTMANAGER_LOADOBJECTID_MAPDB_LONGS_PERDISKENTRY          = "l2.objectmanager.loadObjectID.mapsdatabase.longsPerDiskEntry";
   public static final String L2_OBJECTMANAGER_LOADOBJECTID_MEASURE_PERF                      = "l2.objectmanager.loadObjectID.measure.performance";

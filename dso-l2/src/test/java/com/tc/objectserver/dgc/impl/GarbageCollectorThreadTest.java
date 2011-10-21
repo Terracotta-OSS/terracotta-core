@@ -107,8 +107,8 @@ public class GarbageCollectorThreadTest extends TestCase {
       //
     }
 
-    public boolean deleteGarbage(DGCResultContext resultContext) {
-      return false;
+    public void deleteGarbage(DGCResultContext resultContext) {
+      //
     }
 
     public void waitToDisableGC() {
@@ -207,6 +207,14 @@ public class GarbageCollectorThreadTest extends TestCase {
       if (GCType.YOUNG_GEN_GC.equals(type)) {
         this.youngGCCount++;
       }
+    }
+
+    public boolean isDelete() {
+      return false;
+    }
+
+    public boolean requestGCDeleteStart() {
+      return false;
     }
 
   }

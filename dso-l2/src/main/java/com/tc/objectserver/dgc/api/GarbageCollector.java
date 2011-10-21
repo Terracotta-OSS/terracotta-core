@@ -46,6 +46,8 @@ public interface GarbageCollector extends PrettyPrintable {
 
   public boolean isPaused();
 
+  public boolean isDelete();
+
   /**
    * Called by object manager. Notifies the garbage collector that it's ok to perform GC.
    */
@@ -55,6 +57,8 @@ public interface GarbageCollector extends PrettyPrintable {
    * Request to pause when the system state stabilizes
    */
   public void requestGCPause();
+
+  public boolean requestGCDeleteStart();
 
   /**
    * Called by the GC thread. Notifies the garbage collector that GC is complete.
@@ -82,7 +86,7 @@ public interface GarbageCollector extends PrettyPrintable {
 
   public void addListener(GarbageCollectorEventListener listener);
 
-  public boolean deleteGarbage(DGCResultContext resultContext);
+  public void deleteGarbage(DGCResultContext resultContext);
 
   /**
    * Whenever a new object is created, this method is called from the Object Manager. This is used for YoungGen

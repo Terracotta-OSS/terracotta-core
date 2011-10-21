@@ -289,10 +289,9 @@ public class TestGarbageCollector implements GarbageCollector {
     return false;
   }
 
-  public boolean deleteGarbage(final DGCResultContext resultContext) {
+  public void deleteGarbage(final DGCResultContext resultContext) {
     this.notifyGCComplete();
     this.objectProvider.notifyGCComplete(resultContext);
-    return true;
   }
 
   public void notifyNewObjectInitalized(final ObjectID id) {
@@ -328,6 +327,14 @@ public class TestGarbageCollector implements GarbageCollector {
   }
 
   public boolean isPeriodicEnabled() {
+    return false;
+  }
+
+  public boolean isDelete() {
+    return false;
+  }
+
+  public boolean requestGCDeleteStart() {
     return false;
   }
 }

@@ -5,6 +5,7 @@
 package com.tc.objectserver.dgc.api;
 
 import com.tc.object.ObjectID;
+import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.core.impl.GCTestObjectManager;
 import com.tc.objectserver.core.impl.GarbageCollectionID;
 import com.tc.objectserver.core.impl.TestManagedObject;
@@ -13,6 +14,7 @@ import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
 import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
 import com.tc.objectserver.dgc.impl.MarkAndSweepGarbageCollector;
 import com.tc.objectserver.impl.ObjectManagerConfig;
+import com.tc.objectserver.impl.TestGarbageCollectionManager;
 import com.tc.objectserver.l1.api.TestClientStateManager;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
 import com.tc.objectserver.persistence.inmemory.NullPersistenceTransactionProvider;
@@ -37,6 +39,7 @@ public class GCStatsEventPublisherTest extends TestCase {
   protected Set                            released;
   protected GCTestObjectManager            objectManager;
   protected PersistenceTransactionProvider transactionProvider = new NullPersistenceTransactionProvider();
+  protected GarbageCollectionManager       garbageCollectionManager;
 
   public GCStatsEventPublisherTest(String arg0) {
     super(arg0);
@@ -51,11 +54,13 @@ public class GCStatsEventPublisherTest extends TestCase {
     this.lookedUp = new HashSet<ObjectID>();
     this.released = new HashSet<ObjectID>();
     this.objectManager = new GCTestObjectManager(this.lookedUp, this.released, this.transactionProvider);
+    this.garbageCollectionManager = new TestGarbageCollectionManager();
     GarbageCollectionInfoPublisher gcPublisher = new GarbageCollectionInfoPublisherImpl();
     this.collector = new MarkAndSweepGarbageCollector(new ObjectManagerConfig(300000, true, true, true, true, 60000,
                                                                               1000), this.objectManager,
                                                       new TestClientStateManager(), gcPublisher,
-                                                      new DGCSequenceProvider(new TestMutableSequence()));
+                                                      new DGCSequenceProvider(new TestMutableSequence()),
+                                                      garbageCollectionManager);
     this.objectManager.setPublisher(gcPublisher);
     this.objectManager.setGarbageCollector(this.collector);
     this.objectManager.start();

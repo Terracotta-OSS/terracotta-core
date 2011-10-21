@@ -5,12 +5,14 @@
 package com.tc.objectserver.dgc.impl;
 
 import com.tc.object.ObjectID;
+import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.impl.GCTestObjectManager;
 import com.tc.objectserver.core.impl.TestManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.impl.ObjectManagerConfig;
+import com.tc.objectserver.impl.TestGarbageCollectionManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.api.TestClientStateManager;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
@@ -33,6 +35,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
   protected Set                            released;
   protected GCTestObjectManager            objectManager;
   protected ClientStateManager             stateManager;
+  protected GarbageCollectionManager       garbageCollectionManager;
   protected PersistenceTransactionProvider transactionProvider = new NullPersistenceTransactionProvider();
 
   private final Filter                     filter              = new Filter() {
@@ -60,10 +63,12 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     this.released = new HashSet<ObjectID>();
     this.objectManager = new GCTestObjectManager(this.lookedUp, this.released, this.transactionProvider);
     this.stateManager = new TestClientStateManager();
+    this.garbageCollectionManager = new TestGarbageCollectionManager();
     this.collector = new MarkAndSweepGarbageCollector(new ObjectManagerConfig(300000, true, true, true, true, 60000,
                                                                               1000), this.objectManager,
                                                       this.stateManager, new GarbageCollectionInfoPublisherImpl(),
-                                                      new DGCSequenceProvider(new TestMutableSequence()));
+                                                      new DGCSequenceProvider(new TestMutableSequence()),
+                                                      garbageCollectionManager);
     this.objectManager.setGarbageCollector(this.collector);
     GarbageCollectionInfoPublisher gcPublisher = new GarbageCollectionInfoPublisherImpl();
     this.objectManager.setPublisher(gcPublisher);

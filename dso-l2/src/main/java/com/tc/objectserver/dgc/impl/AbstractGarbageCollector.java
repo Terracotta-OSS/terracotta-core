@@ -67,7 +67,7 @@ public abstract class AbstractGarbageCollector implements GarbageCollector {
    * In Active server, state transitions from GC_PAUSED to GC_DELETE and in the passive server, state transitions from
    * GC_SLEEP to GC_DELETE.
    */
-  protected synchronized boolean requestGCDeleteStart() {
+  public synchronized boolean requestGCDeleteStart() {
     if (this.state == GC_SLEEP || this.state == GC_PAUSED) {
       this.state = GC_DELETE;
       return true;
@@ -90,6 +90,10 @@ public abstract class AbstractGarbageCollector implements GarbageCollector {
 
   public boolean isDisabled() {
     return GC_DISABLED == this.state;
+  }
+
+  public boolean isDelete() {
+    return GC_DELETE == this.state;
   }
 
   public void setPeriodicEnabled(final boolean periodicEnabled) {

@@ -83,8 +83,8 @@ public class NullGarbageCollector implements GarbageCollector {
     return false;
   }
 
-  public boolean deleteGarbage(DGCResultContext resultContext) {
-    return true;
+  public void deleteGarbage(DGCResultContext resultContext) {
+    //
   }
 
   public void notifyNewObjectInitalized(ObjectID id) {
@@ -116,6 +116,14 @@ public class NullGarbageCollector implements GarbageCollector {
   }
 
   public boolean isPeriodicEnabled() {
+    return false;
+  }
+
+  public boolean isDelete() {
+    return false;
+  }
+
+  public boolean requestGCDeleteStart() {
     return false;
   }
 }

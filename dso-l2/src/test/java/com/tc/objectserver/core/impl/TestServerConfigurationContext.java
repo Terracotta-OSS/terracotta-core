@@ -50,6 +50,7 @@ public class TestServerConfigurationContext implements ServerConfigurationContex
   public TransactionBatchManager        transactionBatchManager;
   public ServerGlobalTransactionManager serverGlobalTransactionManager;
   public ServerClusterMetaDataManager   clusterMetaDataManager;
+  public GarbageCollectionManager       garbageCollectionManager;
 
   public void addStage(final String name, final Stage stage) {
     stages.put(name, stage);
@@ -144,6 +145,6 @@ public class TestServerConfigurationContext implements ServerConfigurationContex
   }
 
   public GarbageCollectionManager getGarbageCollectionManager() {
-    throw new ImplementMe();
+    return garbageCollectionManager;
   }
 }

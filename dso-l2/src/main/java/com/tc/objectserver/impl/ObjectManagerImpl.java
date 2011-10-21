@@ -895,7 +895,17 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   public void notifyGCComplete(final DGCResultContext gcResult) {
-    Assert.assertFalse(this.collector.isPausingOrPaused());
+    this.lock.writeLock().lock();
+    try {
+      Assert.assertTrue(this.collector.requestGCDeleteStart());
+    } finally {
+      this.lock.writeLock().unlock();
+    }
+    deleteObjects(gcResult);
+  }
+
+  public void deleteObjects(final DGCResultContext gcResult) {
+    Assert.assertTrue(this.collector.isDelete());
     final Set<ObjectID> toDelete = gcResult.getGarbageIDs();
     removeAllObjectsByID(toDelete);
     this.objectStore.removeAllObjectsByID(gcResult);

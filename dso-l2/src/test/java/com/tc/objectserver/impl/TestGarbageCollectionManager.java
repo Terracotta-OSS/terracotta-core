@@ -3,6 +3,8 @@
  */
 package com.tc.objectserver.impl;
 
+import com.tc.async.api.ConfigurationContext;
+import com.tc.l2.context.StateChangedEvent;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
@@ -37,7 +39,15 @@ public class TestGarbageCollectionManager implements GarbageCollectionManager {
     // do nothing
   }
 
-  public void startActiveMode() {
+  public void initializeContext(ConfigurationContext context) {
+    // do nothing
+  }
+
+  public void scheduleInlineCleanupIfNecessary() {
+    // do nothing
+  }
+
+  public void l2StateChanged(StateChangedEvent sce) {
     // do nothing
   }
 }

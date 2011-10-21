@@ -37,6 +37,8 @@ import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.l1.impl.ClientStateManagerImpl;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
+import com.tc.objectserver.tx.TestServerTransactionManager;
+import com.tc.objectserver.tx.TxnsInSystemCompletionListener;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
@@ -96,7 +98,9 @@ public class GarbageCollectHandlerTest extends TCTestCase {
     Mockito.when(scc.getObjectManager()).thenReturn(objectManager);
     Mockito.when(scc.getStage(ServerConfigurationContext.GARBAGE_COLLECT_STAGE)).thenReturn(gcStage);
     Mockito.when(scc.getGarbageCollectionManager()).thenReturn(gcManager);
+    Mockito.when(scc.getTransactionManager()).thenReturn(new MyServerTransactionManager());
     handler.initialize(scc);
+    gcManager.initializeContext(scc);
 
     gcThread = new GCThread();
     gcThread.start();
@@ -397,6 +401,10 @@ public class GarbageCollectHandlerTest extends TCTestCase {
     public ManagedObject getQuietObjectByID(ObjectID id) {
       throw new ImplementMe();
     }
+
+    public void deleteObjects(DGCResultContext dgcResultContext) {
+      deletedObjects.addAll(dgcResultContext.getGarbageIDs());
+    }
   }
 
   private class TestGarbageCollector extends AbstractGarbageCollector {
@@ -428,9 +436,8 @@ public class GarbageCollectHandlerTest extends TCTestCase {
       // no-op
     }
 
-    public boolean deleteGarbage(DGCResultContext resultContext) {
+    public void deleteGarbage(DGCResultContext resultContext) {
       // no-op
-      return false;
     }
 
     public void notifyObjectCreated(ObjectID id) {
@@ -443,6 +450,13 @@ public class GarbageCollectHandlerTest extends TCTestCase {
 
     public void notifyObjectsEvicted(Collection evicted) {
       // no-op
+    }
+  }
+
+  private class MyServerTransactionManager extends TestServerTransactionManager {
+    @Override
+    public void callBackOnResentTxnsInSystemCompletion(TxnsInSystemCompletionListener l) {
+      l.onCompletion();
     }
   }
 }
