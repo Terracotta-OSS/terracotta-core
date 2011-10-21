@@ -31,6 +31,7 @@ public class TestGarbageCollector implements GarbageCollector {
   private boolean             isPausing        = false;
   private boolean             isPaused         = false;
   private boolean             isStarted        = false;
+  private boolean             isDelete         = false;
 
   private LinkedQueue         collectCalls;
   private LinkedQueue         notifyReadyToGCCalls;
@@ -331,10 +332,10 @@ public class TestGarbageCollector implements GarbageCollector {
   }
 
   public boolean isDelete() {
-    return false;
+    return isDelete;
   }
 
   public boolean requestGCDeleteStart() {
-    return false;
+    return isDelete = true;
   }
 }
