@@ -17,6 +17,7 @@ public class L1ServerMapCapacityEvictionHandler extends AbstractEventHandler {
     L1ServerMapEvictedElementsContext evictedElementsContext = (L1ServerMapEvictedElementsContext) context;
     Map evictedElements = evictedElementsContext.getEvictedElements();
     l1LocalCacheManager.evictElements(evictedElements, evictedElementsContext.getServerMapLocalCache());
+    evictedElementsContext.elementsEvicted();
   }
 
   public void initialize(L1ServerMapLocalCacheManager localCacheManager) {
