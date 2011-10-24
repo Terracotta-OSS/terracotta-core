@@ -184,6 +184,7 @@ public class GarbageCollectHandlerTest extends TCTestCase {
 
     gcManager.deleteObjects(objectIds(0, 1000));
     ThreadUtil.reallySleep(10 * 1000); // inline dgc should be blocked for a while.
+    Assert.assertEquals(0, inlineGCCount.get());
 
     // Pretend we just finished periodic DGC
     Assert.assertTrue(gc.requestGCDeleteStart());
