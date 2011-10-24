@@ -75,6 +75,18 @@ public abstract class AbstractGarbageCollector implements GarbageCollector {
     return false;
   }
 
+  /**
+   * We need to not skip from GC_PAUSED to GC_DELETE for inline dgc, that could lead to a race with periodic dgc for AA
+   * since the GC state transitions happen in another thread.
+   */
+  private synchronized boolean requestInlineGCStart() {
+    if (this.state == GC_SLEEP) {
+      this.state = GC_DELETE;
+      return true;
+    }
+    return false;
+  }
+
   public void requestGCPause() {
     this.state = GC_PAUSING;
   }
@@ -144,7 +156,7 @@ public abstract class AbstractGarbageCollector implements GarbageCollector {
     boolean isInterrupted = false;
     long lastLogTime = System.nanoTime();
     final long startTime = System.nanoTime();
-    while (!requestGCDeleteStart()) {
+    while (!requestInlineGCStart()) {
       try {
         if (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastLogTime) > WAIT_LOG_THRESHOLD) {
           logger.info("Waited " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime)

@@ -178,6 +178,21 @@ public class GarbageCollectHandlerTest extends TCTestCase {
     Assert.assertTrue("Did not finish 3 GC's in 15 seconds.", timeTaken >= 13 && timeTaken <= 17);
   }
 
+  public void testInlineWithPausedGC() throws Exception {
+    gc.requestGCPause();
+    gc.notifyReadyToGC(); // set GC to pause state
+
+    gcManager.deleteObjects(objectIds(0, 1000));
+    ThreadUtil.reallySleep(10 * 1000); // inline dgc should be blocked for a while.
+
+    // Pretend we just finished periodic DGC
+    Assert.assertTrue(gc.requestGCDeleteStart());
+    gc.notifyGCComplete();
+
+    // Wait for inline dgc to complete
+    gcThread.waitForInlineDGCCount(1);
+  }
+
   public void testBatchInlineDGC() throws Exception {
     // below the batch limit so it shouldn't schedule an immediate inline dgc
     gcManager.deleteObjects(objectIds(0, 499));
