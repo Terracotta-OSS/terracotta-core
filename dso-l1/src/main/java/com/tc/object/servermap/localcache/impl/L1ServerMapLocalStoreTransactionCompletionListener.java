@@ -4,16 +4,23 @@
 package com.tc.object.servermap.localcache.impl;
 
 import com.tc.async.api.EventContext;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.TCObjectSelf;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.object.tx.TransactionID;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * To be used only when a transaction is completed.
  */
 public class L1ServerMapLocalStoreTransactionCompletionListener implements TransactionCompleteListener, EventContext {
+  private static final AtomicInteger         listenerCount = new AtomicInteger();
+  private static final TCLogger              logger        = TCLogging
+                                                               .getLogger(L1ServerMapLocalStoreTransactionCompletionListener.class);
   private final ServerMapLocalCache          serverMapLocalCache;
   private final Object                       key;
   private final TransactionCompleteOperation transactionCompleteOperation;
@@ -29,6 +36,9 @@ public class L1ServerMapLocalStoreTransactionCompletionListener implements Trans
     Object actualValue = value.getValueObject();
     if (actualValue instanceof TCObjectSelf) {
       ((TCObjectSelf) actualValue).retain();
+    }
+    if (listenerCount.incrementAndGet() % 50 == 0 && logger.isDebugEnabled()) {
+      logger.debug("Number of active server map transation completion listeners: " + listenerCount.get());
     }
   }
 
@@ -49,6 +59,7 @@ public class L1ServerMapLocalStoreTransactionCompletionListener implements Trans
     if (actualValue instanceof TCObjectSelf) {
       ((TCObjectSelf) actualValue).release();
     }
+    listenerCount.decrementAndGet();
   }
 
   public static enum TransactionCompleteOperation {
