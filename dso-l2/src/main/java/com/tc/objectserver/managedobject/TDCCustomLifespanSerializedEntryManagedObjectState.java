@@ -50,13 +50,13 @@ public class TDCCustomLifespanSerializedEntryManagedObjectState extends TDCSeria
       if (val instanceof Integer) {
         this.customTti = ((Integer) val).intValue();
       } else {
-        logInvalidType(LAST_ACCESS_TIME_FIELD, val);
+        logInvalidType(CUSTOM_TTI_FIELD, val);
       }
     } else if (CUSTOM_TTL_FIELD.equals(field)) {
       if (val instanceof Integer) {
         this.customTtl = ((Integer) val).intValue();
       } else {
-        logInvalidType(CREATE_TIME_FIELD, val);
+        logInvalidType(CUSTOM_TTL_FIELD, val);
       }
     } else {
       super.physicalActionApply(pa);
