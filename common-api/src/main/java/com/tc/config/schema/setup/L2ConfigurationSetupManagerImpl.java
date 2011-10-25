@@ -263,7 +263,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
         if (!allServers.contains(member)) { throw new ConfigurationSetupException(
                                                                                   "Server{"
                                                                                       + member
-                                                                                      + "} is not defined but has been added as a memeber in the group "
+                                                                                      + "} is not defined but has been added as a member in the group "
                                                                                       + element.getGroupName()); }
       }
     }
