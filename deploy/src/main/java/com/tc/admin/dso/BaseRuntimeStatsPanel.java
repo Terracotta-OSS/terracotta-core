@@ -29,6 +29,8 @@ import com.tc.admin.common.FixedTimeTableXYDataset;
 import com.tc.admin.common.LinkButton;
 import com.tc.admin.common.StatusView;
 import com.tc.admin.common.SyncHTMLEditorKit;
+import com.tc.admin.common.ThinDecimalFormat;
+import com.tc.admin.common.ThinMemoryFormat;
 import com.tc.admin.common.XButton;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XLabel;
@@ -40,8 +42,6 @@ import com.tc.admin.options.RuntimeStatsOption;
 import com.tc.management.RuntimeStatisticConstants;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
-import com.tc.util.Conversion;
-import com.tc.util.Conversion.MemorySizeUnits;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -569,16 +569,15 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     }
   }
 
+  protected static ThinDecimalFormat THIN_DECIMAL_FORMAT = new ThinDecimalFormat();
+  protected static ThinMemoryFormat  THIN_MEMORY_FORMAT  = new ThinMemoryFormat();
+
   public static String convert(long value) {
-    try {
-      if (value < MemorySizeUnits.KILO.getInBytes()) {
-        return Long.toString(value);
-      } else {
-        return Conversion.memoryBytesAsSize(value);
-      }
-    } catch (Exception e) {
-      return Long.toString(value);
-    }
+    return THIN_DECIMAL_FORMAT.format(value);
+  }
+
+  public static String convertBytes(long value) {
+    return THIN_MEMORY_FORMAT.format(value);
   }
 
   private static final boolean SHOW_LAST_ON_MISSING = true;

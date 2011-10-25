@@ -321,10 +321,10 @@ public abstract class ClusterNodeRuntimeStatsPanel extends BaseRuntimeStatsPanel
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         if (memoryMax != null) {
-          onHeapMaxLabel.setText(MessageFormat.format(ONHEAP_MAX_LABEL_FORMAT, convert(memoryMax.longValue())));
+          onHeapMaxLabel.setText(MessageFormat.format(ONHEAP_MAX_LABEL_FORMAT, convertBytes(memoryMax.longValue())));
         }
         if (memoryUsed != null) {
-          onHeapUsedLabel.setText(MessageFormat.format(ONHEAP_USED_LABEL_FORMAT, convert(memoryUsed.longValue())));
+          onHeapUsedLabel.setText(MessageFormat.format(ONHEAP_USED_LABEL_FORMAT, convertBytes(memoryUsed.longValue())));
         }
         updateSeries(onHeapMaxSeries, memoryMax);
         updateSeries(onHeapUsedSeries, memoryUsed);
