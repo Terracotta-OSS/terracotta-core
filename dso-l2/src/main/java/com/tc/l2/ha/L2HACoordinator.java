@@ -137,17 +137,6 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                     final StripeIDStateManager stripeIDStateManager,
                     final ServerTransactionFactory serverTransactionFactory, DGCSequenceProvider dgcSequenceProvider) {
 
-    objectManager.getGarbageCollector().waitToDisableGC();
-    registerForStateChangeEvents(new StateChangeListener() {
-      public void l2StateChanged(StateChangedEvent sce) {
-        if (sce.getCurrentState() == StateManager.ACTIVE_COORDINATOR
-            || sce.getCurrentState() == StateManager.PASSIVE_STANDBY) {
-          logger.info("Enabling DGC since the server is now " + sce.getCurrentState());
-          objectManager.getGarbageCollector().enableGC();
-        }
-      }
-    });
-
     isCleanDB = isCleanDB(persistentStateStore);
 
     final int MAX_STAGE_SIZE = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
