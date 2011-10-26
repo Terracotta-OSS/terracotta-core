@@ -1748,6 +1748,7 @@ public class ObjectManagerTest extends TCTestCase {
             DGCResultContext dgcResultContext = new DGCResultContext(new ObjectIDSet(Collections.singleton(oid)), null);
             barrier.await(5, TimeUnit.SECONDS);
             objectManager.notifyGCComplete(dgcResultContext);
+            objectManager.getGarbageCollector().notifyGCComplete();
           }
         } catch (Exception e) {
           e.printStackTrace();
