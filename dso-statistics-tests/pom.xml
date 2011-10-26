@@ -4,15 +4,14 @@
    http://ant.apache.org/ivy/
    Apache Ivy version: 2.2.0 20100923230623
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>build-parent</artifactId>
-    <version>3.6.0-SNAPSHOT</version>
+    <version>3.7.0-SNAPSHOT</version>
     <relativePath>../build-parent</relativePath>
   </parent>
   
@@ -171,7 +170,7 @@
               <arguments>
                 <argument>-Dcom.tc.l1.modules.repositories=${localMavenRepository}</argument>
                 <argument>-cp</argument>
-                <classpath />
+                <classpath/>
                 <argument>com.tc.object.tools.BootJarTool</argument>
                 <argument>-o</argument>
                 <argument>${tc.tests.info.bootjars.normal}</argument>
