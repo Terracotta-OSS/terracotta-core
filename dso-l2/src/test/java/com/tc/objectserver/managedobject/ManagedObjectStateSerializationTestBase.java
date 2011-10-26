@@ -8,8 +8,8 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.object.TestDNAWriter;
-import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNA.DNAType;
+import com.tc.object.dna.api.DNACursor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.NullObjectInstanceMonitor;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -24,9 +24,10 @@ import com.tc.objectserver.persistence.db.PersistableCollectionFactory;
 import com.tc.objectserver.persistence.db.TCCollectionsPersistor;
 import com.tc.objectserver.persistence.db.TCCollectionsSerializerImpl;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
-import com.tc.objectserver.persistence.impl.TestPersistenceTransactionProvider;
+import com.tc.objectserver.storage.api.DBEnvironment;
+import com.tc.objectserver.storage.api.DBFactory;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
+import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.runtime.ThreadDumpUtil;
@@ -34,32 +35,34 @@ import com.tc.util.runtime.ThreadDumpUtil;
 import java.io.File;
 
 public class ManagedObjectStateSerializationTestBase extends TCTestCase {
-  private final TCLogger                     logger   = TCLogging.getTestingLogger(getClass());
-  private ObjectID                           objectID = new ObjectID(2000);
+  private final TCLogger                 logger   = TCLogging.getTestingLogger(getClass());
+  private ObjectID                       objectID = new ObjectID(2000);
 
-  private BerkeleyDBEnvironment              env;
-  private ManagedObjectPersistorImpl         managedObjectPersistor;
-  private TestPersistenceTransactionProvider ptp;
+  private DBPersistorImpl                persistor;
+  private DBEnvironment                  env;
+  private ManagedObjectPersistorImpl     managedObjectPersistor;
+  private PersistenceTransactionProvider ptp;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
 
     this.env = newDBEnvironment();
-    final CustomSerializationAdapterFactory sleepycatSerializationAdapterFactory = new CustomSerializationAdapterFactory();
-    final DBPersistorImpl persistor = new DBPersistorImpl(this.logger, this.env,
-                                                          sleepycatSerializationAdapterFactory);
+    final CustomSerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
+    this.persistor = new DBPersistorImpl(this.logger, this.env, serializationAdapterFactory);
 
-    this.ptp = new TestPersistenceTransactionProvider();
-    final PersistableCollectionFactory sleepycatCollectionFactory = new PersistableCollectionFactory(new HashMapBackingMapFactory(),
-                                                                                                     this.env.isParanoidMode());
-    final TCCollectionsPersistor sleepycatCollectionsPersistor = new TCCollectionsPersistor(this.logger, this.env
-                                                                                            .getMapsDatabase(), sleepycatCollectionFactory,
-                                                                                            new TCCollectionsSerializerImpl());
-    this.managedObjectPersistor = new ManagedObjectPersistorImpl(this.logger, sleepycatSerializationAdapterFactory, this.env,
-                                                                 new TestMutableSequence(), this.env.getRootDatabase(), this.ptp,
-                                                                 sleepycatCollectionsPersistor, this.env.isParanoidMode(),
-                                                                 new ObjectStatsRecorder());
+    this.ptp = this.env.getPersistenceTransactionProvider();
+    final PersistableCollectionFactory collectionFactory = new PersistableCollectionFactory(
+                                                                                            new HashMapBackingMapFactory(),
+                                                                                            this.env.isParanoidMode());
+    final TCCollectionsPersistor collectionsPersistor = new TCCollectionsPersistor(this.logger,
+                                                                                   this.env.getMapsDatabase(),
+                                                                                   collectionFactory,
+                                                                                   new TCCollectionsSerializerImpl());
+    this.managedObjectPersistor = new ManagedObjectPersistorImpl(this.logger, serializationAdapterFactory, this.env,
+                                                                 new TestMutableSequence(), this.env.getRootDatabase(),
+                                                                 this.ptp, collectionsPersistor,
+                                                                 this.env.isParanoidMode(), new ObjectStatsRecorder());
     final NullManagedObjectChangeListenerProvider listenerProvider = new NullManagedObjectChangeListenerProvider();
     ManagedObjectStateFactory.disableSingleton(true);
     ManagedObjectStateFactory.createInstance(listenerProvider, persistor);
@@ -70,17 +73,18 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
     this.managedObjectPersistor.snapshotMapTypeObjectIDs();
   }
 
-  private BerkeleyDBEnvironment newDBEnvironment() throws Exception {
+  private DBEnvironment newDBEnvironment() throws Exception {
     final File dbHome = new File(getTempDirectory(), getClass().getName() + "db");
     dbHome.mkdirs();
-    return new BerkeleyDBEnvironment(true, dbHome);
+    return DBFactory.getInstance().createEnvironment(true, dbHome);
   }
 
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
     try {
-      this.env.close();
+      this.managedObjectPersistor.close();
+      this.persistor.close();
     } catch (Exception e) {
       System.err.println("Closing failed, printing stack trace...");
       System.err.println(ThreadDumpUtil.getThreadDump());
