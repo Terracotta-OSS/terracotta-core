@@ -31,7 +31,7 @@
     <slf4j.version>1.6.1</slf4j.version>
     <offheap-store.version>1.0.5-SNAPSHOT</offheap-store.version>
     <terracotta-license.version>1.0.3</terracotta-license.version>
-    <derby.version>10.8-SNAPSHOT</derby.version>
+    <derby.version>10.8.2.2</derby.version>
     <tc-config.version>3.6.0-SNAPSHOT</tc-config.version>
     <sleepycat.version>4.1.10</sleepycat.version>
     <linked-child-process.version>1.0.6</linked-child-process.version>
