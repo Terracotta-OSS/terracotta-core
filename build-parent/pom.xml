@@ -32,7 +32,7 @@
     <offheap-store.version>1.0.5-SNAPSHOT</offheap-store.version>
     <terracotta-license.version>1.0.3</terracotta-license.version>
     <derby.version>10.8.2.2</derby.version>
-    <tc-config.version>3.6.0-SNAPSHOT</tc-config.version>
+    <tcconfig.version>3.6.0-SNAPSHOT</tcconfig.version>
     <sleepycat.version>4.1.10</sleepycat.version>
     <linked-child-process.version>1.0.6</linked-child-process.version>
     <gmaven-plugin.version>1.3</gmaven-plugin.version>
@@ -45,7 +45,7 @@
 
     <tc.tests.configuration.properties.file>${project.build.testOutputDirectory}/tc.tests.properties</tc.tests.configuration.properties.file>
     <tc.system.tests.properties>${project.build.testOutputDirectory}/com/tc/properties/tests.properties</tc.system.tests.properties>
-    <tc.config>-Dtc.config=tc-config.xml</tc.config>
+    <tc.config>-Dtc.config=tcconfig.xml</tc.config>
     <tc.base-dir>${project.build.directory}</tc.base-dir>
     <com.tc.l1.modules.repositories>${localMavenRepository}</com.tc.l1.modules.repositories>
     <tc.tests.configuration.transparent-tests.mode>normal</tc.tests.configuration.transparent-tests.mode>
@@ -286,17 +286,17 @@
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>tcconfig</artifactId>
-        <version>${tc-config.version}</version>
+        <version>${tcconfig.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>tc-l1-reconnect-properties</artifactId>
-        <version>${tc-config.version}</version>
+        <version>${tcconfig.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>tcstats</artifactId>
-        <version>${tc-config.version}</version>
+        <version>${tcconfig.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta.api</groupId>
