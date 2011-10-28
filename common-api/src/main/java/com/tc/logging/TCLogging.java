@@ -5,6 +5,7 @@
 package com.tc.logging;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Appender;
 import org.apache.log4j.ConsoleAppender;
@@ -70,6 +71,7 @@ public class TCLogging {
   private static final int          DEFAULT_MAX_LOG_FILE_SIZE          = 512;
   private static final String       MAX_BACKUPS_PROPERTY               = "maxBackups";
   private static final int          DEFAULT_MAX_BACKUPS                = 20;
+  private static final String       LOG4J_CUSTOM_FILENAME              = ".tc.custom.log4j.properties";
   private static final String       LOG4J_PROPERTIES_FILENAME          = ".tc.dev.log4j.properties";
 
   private static final String       CONSOLE_PATTERN                    = "%d %p - %m%n";
@@ -80,16 +82,15 @@ public class TCLogging {
   private static final String       CONSOLE_LOGGING_ONLY_PATTERN       = "[TC] %d %p - %m%n";
   public static final String        FILE_AND_JMX_PATTERN               = "%d [%t] %p %c - %m%n";
 
-  private static TCLogger           console;
-  private static TCLogger           operatorEventLogger;
-  private static Appender           consoleAppender;
+  private static final TCLogger     console;
+  private static final TCLogger     operatorEventLogger;
+  private static final Appender     consoleAppender;
+  private static final Logger[]     allLoggers;
+
   private static DelegatingAppender delegateFileAppender;
   private static DelegatingAppender delegateBufferingAppender;
   private static boolean            buffering;
-
-  private static Logger[]           allLoggers;
-
-  private static File               currentLoggingDirectory;
+  private static File               currentLoggingDirectory            = null;
   private static FileLock           currentLoggingDirectoryFileLock    = null;
   private static boolean            lockingDisabled                    = false;
 
@@ -207,6 +208,40 @@ public class TCLogging {
     }
 
     return false;
+  }
+
+  private static boolean customConfiguration() {
+    try {
+      // First one wins:
+      List<File> locations = new ArrayList<File>();
+      if (System.getenv("TC_INSTALL_DIR") != null) {
+        locations.add(new File(System.getenv("TC_INSTALL_DIR"), LOG4J_CUSTOM_FILENAME));
+      }
+      locations.add(new File(System.getProperty("user.home"), LOG4J_CUSTOM_FILENAME));
+      locations.add(new File(System.getProperty("user.dir"), LOG4J_CUSTOM_FILENAME));
+
+      for (File propFile : locations) {
+        if (propFile.isFile() && propFile.canRead()) {
+
+          Properties properties = new Properties();
+          FileInputStream fis = null;
+          try {
+            fis = new FileInputStream(propFile);
+            properties.load(fis);
+          } finally {
+            IOUtils.closeQuietly(fis);
+          }
+
+          PropertyConfigurator.configure(properties);
+          return true;
+        }
+      }
+
+      return false;
+    } catch (Exception e) {
+      reportLoggingError(e);
+      return false;
+    }
   }
 
   /**
@@ -394,46 +429,46 @@ public class TCLogging {
 
     Log4jSafeInit.init();
 
+    Logger customerLogger = Logger.getLogger(CUSTOMER_LOGGER_NAMESPACE);
+    Logger consoleLogger = Logger.getLogger(CONSOLE_LOGGER_NAME);
+
+    console = new TCLoggerImpl(CONSOLE_LOGGER_NAME);
+    consoleAppender = new TCConsoleAppender(new PatternLayout(CONSOLE_PATTERN), ConsoleAppender.SYSTEM_OUT);
+    operatorEventLogger = new TCLoggerImpl(OPERATOR_EVENT_LOGGER_NAME);
+
+    List<Logger> internalLoggers = new ArrayList<Logger>();
+    for (String nameSpace : INTERNAL_LOGGER_NAMESPACES) {
+      internalLoggers.add(Logger.getLogger(nameSpace));
+    }
+
+    /**
+     * Don't add consoleLogger to allLoggers because it's a child of customerLogger, so it shouldn't get any
+     * appenders. If you DO add consoleLogger here, you'll see duplicate messages in the log file.
+     */
+    allLoggers = createAllLoggerList(internalLoggers, customerLogger);
+
     try {
-      currentLoggingDirectory = null;
+      boolean customLogging = customConfiguration();
+      boolean isDev = customLogging ? false : developmentConfiguration();
 
-      Logger jettyLogger = Logger.getLogger("org.mortbay");
-      jettyLogger.setLevel(Level.OFF);
+      if (!customLogging) {
+        Logger jettyLogger = Logger.getLogger("org.mortbay");
+        jettyLogger.setLevel(Level.OFF);
 
-      List<Logger> internalLoggers = new ArrayList<Logger>();
-      for (String nameSpace : INTERNAL_LOGGER_NAMESPACES) {
-        internalLoggers.add(Logger.getLogger(nameSpace));
-      }
-      Logger customerLogger = Logger.getLogger(CUSTOMER_LOGGER_NAMESPACE);
-      Logger consoleLogger = Logger.getLogger(CONSOLE_LOGGER_NAME);
+        for (Logger internalLogger : internalLoggers) {
+          internalLogger.setLevel(Level.INFO);
+        }
+        customerLogger.setLevel(Level.INFO);
+        consoleLogger.setLevel(Level.INFO);
 
-      /**
-       * Don't add consoleLogger to allLoggers because it's a child of customerLogger, so it shouldn't get any
-       * appenders. If you DO add consoleLogger here, you'll see duplicate messages in the log file.
-       */
-      allLoggers = createAllLoggerList(internalLoggers, customerLogger);
-
-      console = new TCLoggerImpl(CONSOLE_LOGGER_NAME);
-
-      operatorEventLogger = new TCLoggerImpl(OPERATOR_EVENT_LOGGER_NAME);
-
-      for (Logger internalLogger : internalLoggers) {
-        internalLogger.setLevel(Level.INFO);
-      }
-      customerLogger.setLevel(Level.INFO);
-      consoleLogger.setLevel(Level.INFO);
-
-      boolean isDev = developmentConfiguration();
-
-      consoleAppender = new TCConsoleAppender(new PatternLayout(CONSOLE_PATTERN), ConsoleAppender.SYSTEM_OUT);
-
-      if (!isDev) {
-        // Only the console logger goes to the console (by default)
-        consoleLogger.addAppender(consoleAppender);
-      } else {
-        consoleAppender.setLayout(new PatternLayout(CONSOLE_PATTERN_DEVELOPMENT));
-        // For non-customer environments, send all logging to the console...
-        Logger.getRootLogger().addAppender(consoleAppender);
+        if (!isDev) {
+          // Only the console logger goes to the console (by default)
+          consoleLogger.addAppender(consoleAppender);
+        } else {
+          consoleAppender.setLayout(new PatternLayout(CONSOLE_PATTERN_DEVELOPMENT));
+          // For non-customer environments, send all logging to the console...
+          Logger.getRootLogger().addAppender(consoleAppender);
+        }
       }
 
       delegateFileAppender = new DelegatingAppender(new NullAppender());
