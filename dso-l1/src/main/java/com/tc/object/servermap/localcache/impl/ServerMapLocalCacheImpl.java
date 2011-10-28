@@ -208,12 +208,13 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     if (localCacheValue.isStrongConsistentValue()) {
       // remove lockid mapping
       LockID lockID = localCacheValue.asStrongValue().getLockId();
+      final boolean removeSuccess;
       if (localCacheValue.isLiteral()) {
-        lockIDMappings.remove(lockID, key);
+        removeSuccess = lockIDMappings.remove(lockID, key);
       } else {
-        lockIDMappings.remove(lockID, localCacheValue.getValueObjectId());
+        removeSuccess = lockIDMappings.remove(lockID, localCacheValue.getValueObjectId());
       }
-      return lockIDMappings.containsKey(lockID) ? null : lockID;
+      return (removeSuccess && !lockIDMappings.containsKey(lockID)) ? lockID : null;
     }
 
     return null;
