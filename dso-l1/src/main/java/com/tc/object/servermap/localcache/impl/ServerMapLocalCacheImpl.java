@@ -219,8 +219,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return null;
   }
 
-  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(
-                                                                                            final Object key,
+  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
                                                                                             AbstractLocalCacheStoreValue value,
                                                                                             MapOperationType mapOperation) {
     if (!mapOperation.isMutateOperation()) {
@@ -523,15 +522,17 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   private void removeRemainingMappingsForLockID(Object keyOrValueId) {
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("XXX removeRemainingMappingsForLockID key=" + key);
+    }
     if (keyOrValueId instanceof ObjectID) {
       removeEntriesForObjectId((ObjectID) keyOrValueId);
     } else if (keyOrValueId != null) {
       Object key = keyOrValueId;
       ReentrantReadWriteLock lock = getLock(key);
       lock.writeLock().lock();
-
       try {
-        // value was a literal so dont need to remote remove it
+        // value was a literal so don't need to remote remove it
         remove(key);
         // remoteRemoveObjectIfPossible((AbstractLocalCacheStoreValue) value);
       } finally {
@@ -578,8 +579,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  public void transactionComplete(
-                                  L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
+  public void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     l1LocalCacheManager.transactionComplete(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 
