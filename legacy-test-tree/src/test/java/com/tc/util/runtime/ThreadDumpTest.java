@@ -18,7 +18,7 @@ import java.util.Set;
 public class ThreadDumpTest extends TCTestCase {
 
    public ThreadDumpTest() {
-     disableAllUntil("2011-11-01");
+     disableAllUntil("3011-11-01");
    }
 
   // XXX: This test is known to fail under jrockit on the monkey. When we decide to deal with JRockit, we'll have to get
