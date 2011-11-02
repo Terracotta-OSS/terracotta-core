@@ -34,6 +34,7 @@ public class StageImpl implements Stage {
   private final ThreadGroup    group;
   private final TCLogger       logger;
   private final int            sleepMs;
+  private final boolean        pausable;
 
   /**
    * The Constructor.
@@ -64,6 +65,7 @@ public class StageImpl implements Stage {
                                          queueSize);
     this.group = group;
     this.sleepMs = TCPropertiesImpl.getProperties().getInt("seda." + name + ".sleepMs", 0);
+    this.pausable = TCPropertiesImpl.getProperties().getBoolean("seda." + name + ".pausable", false);
   }
 
   public void destroy() {
@@ -87,7 +89,8 @@ public class StageImpl implements Stage {
       } else {
         threadName = threadName + ")";
       }
-      threads[i] = new WorkerThread(threadName, this.stageQueue.getSource(i), handler, group, logger, sleepMs);
+      threads[i] = new WorkerThread(threadName, this.stageQueue.getSource(i), handler, group, logger, sleepMs,
+                                    pausable, name);
       threads[i].start();
     }
   }
@@ -110,15 +113,19 @@ public class StageImpl implements Stage {
     private volatile boolean   shutdownRequested = false;
     private final TCLogger     tcLogger;
     private final int          sleepMs;
+    private final boolean      pausable;
+    private final String       stageName;
 
     public WorkerThread(String name, Source source, EventHandler handler, ThreadGroup group, TCLogger logger,
-                        int sleepMs) {
+                        int sleepMs, boolean pausable, String stageName) {
       super(group, name);
       tcLogger = logger;
       setDaemon(true);
       this.source = source;
       this.handler = handler;
       this.sleepMs = sleepMs;
+      this.pausable = pausable;
+      this.stageName = stageName;
     }
 
     public void shutdown() {
@@ -129,16 +136,24 @@ public class StageImpl implements Stage {
       return this.shutdownRequested;
     }
 
+    private void handleStageDebugPauses() {
+      if (sleepMs > 0) {
+        ThreadUtil.reallySleep(sleepMs);
+      }
+      while (pausable && "paused".equalsIgnoreCase(System.getProperty(stageName))) {
+        tcLogger.info("Stage paused, sleeping for 1s");
+        ThreadUtil.reallySleep(1000);
+      }
+    }
+
     @Override
     public void run() {
       while (!shutdownRequested()) {
         EventContext ctxt = null;
         try {
-          if (sleepMs > 0) {
-            ThreadUtil.reallySleep(sleepMs);
-          }
           ctxt = source.poll(pollTime);
           if (ctxt != null) {
+            handleStageDebugPauses();
             if (ctxt instanceof SpecializedEventContext) {
               ((SpecializedEventContext) ctxt).execute();
             } else {
