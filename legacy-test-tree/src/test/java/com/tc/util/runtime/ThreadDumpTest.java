@@ -18,7 +18,10 @@ import java.util.Set;
 public class ThreadDumpTest extends TCTestCase {
 
    public ThreadDumpTest() {
-     disableAllUntil("3011-11-01");
+     // native tool doesn't support windows 64 bit yet
+     if (System.getProperty("sun.arch.data.model").equals("64")) {
+       disableAllUntil(new java.util.Date(Long.MAX_VALUE));
+     }
    }
 
   // XXX: This test is known to fail under jrockit on the monkey. When we decide to deal with JRockit, we'll have to get
