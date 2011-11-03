@@ -103,7 +103,6 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     cursor.addPhysicalAction(TDCSerializedEntryManagedObjectState.CREATE_TIME_FIELD, new Integer(1), false);
     cursor.addPhysicalAction(TDCSerializedEntryManagedObjectState.LAST_ACCESS_TIME_FIELD, new Integer(2), false);
     cursor.addEntireArray(new byte[] { 1, 2, 3, 4 });
-    cursor.addPhysicalAction(TDCSerializedEntryManagedObjectState.PRE_CALCULATED_SIZE_FIELD, new Integer(3), false);
 
     final ManagedObjectState state = applyValidation(className, cursor);
 
@@ -121,7 +120,6 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
                              false);
     cursor.addPhysicalAction(TDCCustomLifespanSerializedEntryManagedObjectState.CUSTOM_TTL_FIELD, Integer.valueOf(4),
                              false);
-    cursor.addPhysicalAction(TDCSerializedEntryManagedObjectState.PRE_CALCULATED_SIZE_FIELD, new Integer(5), false);
 
     final ManagedObjectState state = applyValidation(className, cursor);
 

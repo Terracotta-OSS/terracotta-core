@@ -6,7 +6,6 @@ package com.tc.object.servermap.localcache.impl;
 import com.tc.async.api.EventContext;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.TCObjectSelf;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.object.tx.TransactionCompleteListener;
@@ -33,10 +32,6 @@ public class L1ServerMapLocalStoreTransactionCompletionListener implements Trans
     this.key = key;
     this.transactionCompleteOperation = onCompleteOperation;
     this.value = value;
-    Object actualValue = value.getValueObject();
-    if (actualValue instanceof TCObjectSelf) {
-      ((TCObjectSelf) actualValue).retain();
-    }
     if (listenerCount.incrementAndGet() % 50 == 0 && logger.isDebugEnabled()) {
       logger.debug("Number of active server map transation completion listeners: " + listenerCount.get());
     }
@@ -55,10 +50,6 @@ public class L1ServerMapLocalStoreTransactionCompletionListener implements Trans
     serverMapLocalCache
         .postTransactionCallback(key, value,
                                  transactionCompleteOperation == TransactionCompleteOperation.UNPIN_AND_REMOVE_ENTRY);
-    Object actualValue = value.getValueObject();
-    if (actualValue instanceof TCObjectSelf) {
-      ((TCObjectSelf) actualValue).release();
-    }
     listenerCount.decrementAndGet();
   }
 

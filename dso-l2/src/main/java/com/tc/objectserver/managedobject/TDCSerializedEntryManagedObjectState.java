@@ -34,14 +34,12 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
 
   public static final String    CREATE_TIME_FIELD          = SERIALIZED_ENTRY + ".createTime";
   public static final String    LAST_ACCESS_TIME_FIELD     = ABSTRACT_TIMESTAMPED_VALUE + ".lastAccessedTime";
-  public static final String    PRE_CALCULATED_SIZE_FIELD  = SERIALIZED_ENTRY + ".preCalculatedSize";
 
   private final long            classID;
 
   private byte[]                value;
   private int                   createTime;
   private int                   lastAccessedTime;
-  private int                   preCalculatedSize;
 
   public TDCSerializedEntryManagedObjectState(final long classID) {
     this.classID = classID;
@@ -112,12 +110,6 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
       } else {
         logInvalidType(CREATE_TIME_FIELD, val);
       }
-    } else if (PRE_CALCULATED_SIZE_FIELD.equals(field)) {
-      if (val instanceof Integer) {
-        this.preCalculatedSize = ((Integer) val).intValue();
-      } else {
-        logInvalidType(PRE_CALCULATED_SIZE_FIELD, val);
-      }
     } else {
       logger.error("recieved data for field named [" + field + "] -- ignoring it");
     }
@@ -158,7 +150,6 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     writer.addEntireArray(this.value);
     writer.addPhysicalAction(CREATE_TIME_FIELD, Integer.valueOf(this.createTime));
     writer.addPhysicalAction(LAST_ACCESS_TIME_FIELD, Integer.valueOf(this.lastAccessedTime));
-    writer.addPhysicalAction(PRE_CALCULATED_SIZE_FIELD, Integer.valueOf(preCalculatedSize));
   }
 
   public final String getClassName() {
@@ -181,7 +172,6 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     out.writeLong(this.classID);
     out.writeInt(this.createTime);
     out.writeInt(this.lastAccessedTime);
-    out.writeInt(this.preCalculatedSize);
     if (this.value != null) {
       out.writeInt(this.value.length);
       out.write(this.value, 0, this.value.length);
@@ -199,7 +189,6 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
   protected void readFromInternal(final ObjectInput in) throws IOException {
     this.createTime = in.readInt();
     this.lastAccessedTime = in.readInt();
-    this.preCalculatedSize = in.readInt();
 
     final int length = in.readInt();
     if (length >= 0) {
@@ -216,7 +205,6 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     result = prime * result + (int) (classID ^ (classID >>> 32));
     result = prime * result + createTime;
     result = prime * result + lastAccessedTime;
-    result = prime * result + preCalculatedSize;
     result = prime * result + Arrays.hashCode(value);
     return result;
   }

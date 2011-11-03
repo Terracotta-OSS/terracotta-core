@@ -29,8 +29,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObject, TCObjectServerMap<L> {
@@ -265,8 +265,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       Object value = getValueForKeyFromServer(map, key, false);
 
       if (value != null) {
-        addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, value, objectManager
-            .lookupExistingObjectID(value), MapOperationType.GET);
+        addStrongValueToCache(this.manager.generateLockIdentifier(lockID), key, value,
+                              objectManager.lookupExistingObjectID(value), MapOperationType.GET);
       }
       return value;
     }
@@ -362,15 +362,15 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   private void addToCache(Object key, final AbstractLocalCacheStoreValue localCacheValue, ObjectID valueOid,
                           MapOperationType mapOperation) {
     Object value = localCacheValue.getValueObject();
-    if (value instanceof TCObjectSelf) {
-      ((TCObjectSelf) value).retain();
-    }
+    // if (value instanceof TCObjectSelf) {
+    // ((TCObjectSelf) value).retain();
+    // }
     try {
       boolean notifyServerForRemove = false;
       if (value instanceof TCObjectSelf) {
         if (localCacheEnabled || mapOperation.isMutateOperation()) {
-          if (!this.tcObjectSelfStore.addTCObjectSelf(serverMapLocalStore, localCacheValue, value, mapOperation
-              .isMutateOperation())) { return; }
+          if (!this.tcObjectSelfStore.addTCObjectSelf(serverMapLocalStore, localCacheValue, value,
+                                                      mapOperation.isMutateOperation())) { return; }
         } else {
           notifyServerForRemove = true;
         }
@@ -385,9 +385,9 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       }
       return;
     } finally {
-      if (value instanceof TCObjectSelf) {
-        ((TCObjectSelf) value).release();
-      }
+      // if (value instanceof TCObjectSelf) {
+      // ((TCObjectSelf) value).release();
+      // }
     }
   }
 
@@ -773,5 +773,11 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   public void setLocalCacheEnabled(boolean enabled) {
     this.localCacheEnabled = enabled;
     this.cache.setLocalCacheEnabled(enabled);
+  }
+
+  public void recalculateLocalCacheSize(Object key) {
+    if (isCacheInitialized()) {
+      this.cache.recalculateSize(key);
+    }
   }
 }

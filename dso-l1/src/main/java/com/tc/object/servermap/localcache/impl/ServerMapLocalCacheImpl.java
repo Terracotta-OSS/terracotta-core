@@ -164,6 +164,10 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                                                  "Attempt to access a shared object outside the scope of a shared lock.",
                                                                  Thread.currentThread().getName(), manager
                                                                      .getClientID()); }
+      Object actualValue = localCacheValue.getValueObject();
+      if (actualValue instanceof TCObjectSelf) {
+        ((TCObjectSelf) actualValue).markTxnInProgress();
+      }
       txn.addTransactionCompleteListener(listener);
     }
   }
@@ -220,8 +224,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return null;
   }
 
-  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(
-                                                                                            final Object key,
+  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
                                                                                             AbstractLocalCacheStoreValue value,
                                                                                             MapOperationType mapOperation) {
     if (!mapOperation.isMutateOperation()) {
@@ -579,8 +582,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  public void transactionComplete(
-                                  L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
+  public void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     l1LocalCacheManager.transactionComplete(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 
@@ -605,6 +607,13 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
           pendingTransactionEntries.remove(key, value);
         }
       }
+
+      Object actualValue = value.getValueObject();
+      if (actualValue instanceof TCObjectSelf) {
+        ((TCObjectSelf) actualValue).markTxnComplete();
+      }
+      // use localStore directly instead of calling recalculateSize(key) as already under lock
+      this.localStore.recalculateSize(key);
     } finally {
       lock.writeLock().unlock();
     }
@@ -706,5 +715,16 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   // used for tests only
   TCConcurrentMultiMap<LockID, Object> getLockdIDMappings() {
     return this.lockIDMappings;
+  }
+
+  public void recalculateSize(Object key) {
+    if (key == null) { return; }
+    ReentrantReadWriteLock rrwl = getLock(key);
+    rrwl.writeLock().lock();
+    try {
+      this.localStore.recalculateSize(key);
+    } finally {
+      rrwl.writeLock().unlock();
+    }
   }
 }

@@ -179,4 +179,8 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
     }
   }
 
+  public void recalculateSize(K key) {
+    //
+  }
+
 }

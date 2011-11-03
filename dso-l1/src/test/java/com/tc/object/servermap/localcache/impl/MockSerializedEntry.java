@@ -20,13 +20,13 @@ public class MockSerializedEntry extends TCObjectSelfImpl {
   }
 
   @Override
-  public int retain() {
-    return touchCount.incrementAndGet();
+  public void markTxnInProgress() {
+    touchCount.incrementAndGet();
   }
 
   @Override
-  public int release() {
-    return touchCount.decrementAndGet();
+  public void markTxnComplete() {
+    touchCount.decrementAndGet();
   }
 
   public MockSerializedEntry(ObjectID id, byte[] array, TCClass tcClazz, long lastAccessedTime) {

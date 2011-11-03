@@ -243,4 +243,6 @@ public interface TCObjectServerMap<L> extends TCObject {
   void destroyLocalStore();
 
   void setLocalCacheEnabled(boolean enabled);
+
+  void recalculateLocalCacheSize(Object key);
 }

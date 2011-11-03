@@ -19,7 +19,7 @@ public interface TCObjectSelf extends TCObject {
 
   public boolean isInitialized();
 
-  int retain();
+  void markTxnInProgress();
 
-  int release();
+  void markTxnComplete();
 }
