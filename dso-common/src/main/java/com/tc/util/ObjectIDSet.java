@@ -188,7 +188,7 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
   }
 
   public PrettyPrinter prettyPrint(final PrettyPrinter out) {
-    out.print(toShortString());
+    out.print(toVerboseString());
     return out;
   }
 
