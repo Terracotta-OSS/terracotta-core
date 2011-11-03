@@ -471,12 +471,19 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   public AbstractLocalCacheStoreValue getLocalValueStrong(final Object key) {
-    final AbstractLocalCacheStoreValue value = getLocalValue(key);
-    if (value != null && !isValidStrongValue(key, value)) {
-      removeFromLocalCache(key, value);
-      return null;
+    ReentrantReadWriteLock lock = getLock(key);
+
+    AbstractLocalCacheStoreValue value = null;
+    lock.readLock().lock();
+    try {
+      value = (AbstractLocalCacheStoreValue) getMappingUnlocked(key);
+      if (value == null || isValidStrongValue(key, value)) { return value; }
+    } finally {
+      lock.readLock().unlock();
     }
-    return value;
+
+    removeFromLocalCache(key, value);
+    return null;
   }
 
   private boolean isValidStrongValue(Object key, AbstractLocalCacheStoreValue value) {
