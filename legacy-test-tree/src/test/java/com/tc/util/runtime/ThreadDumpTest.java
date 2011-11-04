@@ -17,12 +17,12 @@ import java.util.Set;
 
 public class ThreadDumpTest extends TCTestCase {
 
-   public ThreadDumpTest() {
-     // native tool doesn't support windows 64 bit yet
-     if (System.getProperty("sun.arch.data.model").equals("64")) {
-       disableAllUntil(new java.util.Date(Long.MAX_VALUE));
-     }
-   }
+  public ThreadDumpTest() {
+    // native tool doesn't support windows 64 bit yet
+    if (System.getProperty("sun.arch.data.model").equals("64")) {
+      disableTest();
+    }
+  }
 
   // XXX: This test is known to fail under jrockit on the monkey. When we decide to deal with JRockit, we'll have to get
   // this thing working too. One alternative: If there is a magic jrockit specific way to get thread dumps, feel to try

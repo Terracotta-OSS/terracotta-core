@@ -5,21 +5,20 @@
 package com.tctest;
 
 import com.tc.test.MultipleServersCrashMode;
-import com.tc.test.MultipleServersSharedDataMode;
 import com.tc.test.MultipleServersPersistenceMode;
+import com.tc.test.MultipleServersSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tc.util.runtime.Os;
-
-import java.util.Date;
 
 public class CreateLotsOfGarbageGCTest extends GCAndActivePassiveTestBase implements TestConfigurator {
 
   public CreateLotsOfGarbageGCTest() {
     if (Os.isSolaris()) {
-      disableAllUntil(new Date(Long.MAX_VALUE));
+      disableTest();
     }
   }
-  
+
+  @Override
   protected Class getApplicationClass() {
     return CreateLotsOfGarbageGCTestApp.class;
   }
@@ -27,12 +26,13 @@ public class CreateLotsOfGarbageGCTest extends GCAndActivePassiveTestBase implem
   public int getGarbageCollectionInterval() {
     return 20;
   }
-  
+
   // start only 1 L1
   protected int getNodeCount() {
     return 1;
   }
 
+  @Override
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH);

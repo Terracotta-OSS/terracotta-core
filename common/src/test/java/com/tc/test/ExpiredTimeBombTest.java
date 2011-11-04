@@ -9,7 +9,7 @@ import java.util.Calendar;
 public class ExpiredTimeBombTest extends TCTestCase {
 
   public ExpiredTimeBombTest() {
-    disableAllUntil("2007-01-01");
+    timebombTest("2007-01-01");
   }
 
   /*

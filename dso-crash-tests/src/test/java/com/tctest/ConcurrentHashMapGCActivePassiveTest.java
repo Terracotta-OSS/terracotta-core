@@ -9,13 +9,11 @@ import com.tc.test.MultipleServersPersistenceMode;
 import com.tc.test.MultipleServersSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 
-import java.util.Date;
-
 public class ConcurrentHashMapGCActivePassiveTest extends GCAndActivePassiveTestBase implements TestConfigurator {
 
   public ConcurrentHashMapGCActivePassiveTest() {
     // Disabled for MNK-2545
-    disableAllUntil(new Date(Long.MAX_VALUE));
+    timebombTest("2013-01-15");
   }
 
   @Override

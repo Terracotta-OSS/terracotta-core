@@ -6,15 +6,13 @@ package com.tctest;
 
 import com.tc.util.runtime.Os;
 
-import java.util.Date;
-
 public class TransparentTHashMapTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 6;
 
   public TransparentTHashMapTest() {
     if (Os.isSolaris()) {
-      disableAllUntil(new Date(Long.MAX_VALUE));
+      disableTest();
     }
   }
 
