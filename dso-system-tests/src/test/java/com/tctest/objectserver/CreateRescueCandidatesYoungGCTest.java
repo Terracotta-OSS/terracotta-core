@@ -12,7 +12,6 @@ import com.tc.util.runtime.Os;
 import com.tctest.YoungGCTestAndActivePassiveTestBase;
 
 import java.util.ArrayList;
-import java.util.Date;
 
 public class CreateRescueCandidatesYoungGCTest extends YoungGCTestAndActivePassiveTestBase {
   private final long LOW_FREE_MEMORY    = 20 * 1024 * 1024;
@@ -23,7 +22,7 @@ public class CreateRescueCandidatesYoungGCTest extends YoungGCTestAndActivePassi
 
   public CreateRescueCandidatesYoungGCTest() {
     if (Runtime.getRuntime().availableProcessors() < 2) {
-      disableAllUntil(new Date(Long.MAX_VALUE));
+      disableTest();
     }
   }
 

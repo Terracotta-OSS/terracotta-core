@@ -15,7 +15,6 @@ import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
-import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CyclicBarrier;
 
@@ -28,9 +27,10 @@ public class ConcurrentHashMapIDHashCodeTest extends TransparentTestBase {
   private static final int NODE_COUNT = 3;
 
   public ConcurrentHashMapIDHashCodeTest() {
-    disableAllUntil(new Date(Long.MAX_VALUE));
+    timebombTest("2012-01-15");
+
     if (Vm.isIBM()) {
-      disableAllUntil(new Date(Long.MAX_VALUE));
+      disableTest();
     }
   }
 

@@ -345,7 +345,7 @@ public class TCTestCase extends TestCase {
   /**
    * Disable ALL tests until the given date. This method should be called in the constructor of your unit test
    */
-  protected final void disableAllUntil(Date theDate) {
+  private final void disableAllUntil(Date theDate) {
     Assert.eval(theDate != null);
     if (allDisabledUntil == null || allDisabledUntil.before(theDate)) {
       allDisabledUntil = theDate;
@@ -356,31 +356,8 @@ public class TCTestCase extends TestCase {
   /**
    * Disable ALL tests until the given date. This method should be called in the constructor of your unit test
    */
-  protected final void disableAllUntil(String theDate) {
-    disableAllUntil(parseDate(theDate));
-  }
-
-  /**
-   * Disable the given test method until the given date. This method should be called in the constructor of your unit
-   * test
-   */
-  protected final void disableTestUntil(String method, String date) {
-    this.disabledUntil.put(method, parseDate(date));
-  }
-
-  /**
-   * Disable ALL tests until the given date. This method should be called in the constructor of your unit test
-   */
   protected final void timebombTest(String date) {
     disableAllUntil(parseDate(date));
-  }
-
-  /**
-   * Disable the given test method until the given date. This method should be called in the constructor of your unit
-   * test
-   */
-  protected final void timebombTestMethod(String method, String date) {
-    this.disabledUntil.put(method, parseDate(date));
   }
 
   /**

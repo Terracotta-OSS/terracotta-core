@@ -6,23 +6,23 @@ package com.tctest.jdk15;
 
 import com.tctest.TransparentTestBase;
 
-import java.util.Date;
-
 public class ShadowRootTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 1;
 
   public ShadowRootTest() {
     // DEV-641
-    disableAllUntil(new Date(Long.MAX_VALUE));
+    disableTest();
   }
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     getTransparentAppConfig().setClientCount(NODE_COUNT).setIntensity(1);
     initializeTestRunner();
   }
 
+  @Override
   protected Class getApplicationClass() {
     return ShadowRootTestApp.class;
   }

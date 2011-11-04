@@ -9,8 +9,6 @@ import com.tc.util.runtime.Vm;
 import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 
-import java.util.Date;
-
 public class LinkedBlockingQueueInterruptTakeOOOTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 3;
@@ -18,10 +16,11 @@ public class LinkedBlockingQueueInterruptTakeOOOTest extends TransparentTestBase
   public LinkedBlockingQueueInterruptTakeOOOTest() {
     // MNK-527
     if (Os.isSolaris() && !Vm.isJDK16Compliant()) {
-      disableAllUntil(new Date(Long.MAX_VALUE));
+      disableTest();
     }
   }
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
@@ -32,6 +31,7 @@ public class LinkedBlockingQueueInterruptTakeOOOTest extends TransparentTestBase
     return true;
   }
 
+  @Override
   protected Class getApplicationClass() {
     return LinkedBlockingQueueInterruptTakeTestApp.class;
   }

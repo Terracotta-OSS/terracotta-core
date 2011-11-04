@@ -7,23 +7,23 @@ package com.tctest.jdk15;
 import com.tctest.ShadowVariableTestApp;
 import com.tctest.TransparentTestBase;
 
-import java.util.Date;
-
 public class ShadowVariableTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 2;
 
   public ShadowVariableTest() {
     // DEV-641
-    disableAllUntil(new Date(Long.MAX_VALUE));
+    disableTest();
   }
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     getTransparentAppConfig().setClientCount(NODE_COUNT).setIntensity(1);
     initializeTestRunner();
   }
 
+  @Override
   protected Class getApplicationClass() {
     return ShadowVariableTestApp.class;
   }
