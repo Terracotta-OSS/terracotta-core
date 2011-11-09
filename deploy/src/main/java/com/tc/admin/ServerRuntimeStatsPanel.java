@@ -237,8 +237,9 @@ public class ServerRuntimeStatsPanel extends ClusterNodeRuntimeStatsPanel {
         }
 
         if (offHeapMaxMemory != null) {
-          offHeapUsageTitle.setTitle(MessageFormat.format(offHeapUsageTitlePattern, convert(offHeapMax),
-                                                          convert(mapOffHeapUsedLong), convert(objectOffHeapUsed)));
+          offHeapUsageTitle.setTitle(MessageFormat.format(offHeapUsageTitlePattern, convertBytes(offHeapMax),
+                                                          convertBytes(mapOffHeapUsedLong),
+                                                          convertBytes(objectOffHeapUsed)));
         }
       }
     });
