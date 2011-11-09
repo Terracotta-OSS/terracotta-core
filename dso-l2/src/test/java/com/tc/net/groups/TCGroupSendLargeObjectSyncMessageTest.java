@@ -114,7 +114,7 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
     final ManagedObjectSyncContext managedObjectSyncContext = new ManagedObjectSyncContext(nodeID, rootsMap,
                                                                                            new ObjectIDSet(rootsMap
                                                                                                .values()), true, 100,
-                                                                                           10);
+                                                                                           10, 0);
     final TCByteBufferOutputStream out = new TCByteBufferOutputStream();
     ObjectIDSet oidSet = new ObjectIDSet();
     for (long i = 0; i < oidsCount; ++i) {

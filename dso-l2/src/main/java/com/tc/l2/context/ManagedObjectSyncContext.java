@@ -24,6 +24,7 @@ public class ManagedObjectSyncContext implements EventContext {
   private final Map<String, ObjectID> rootsMap;
   private final int                   totalObjectsToSync;
   private final int                   totalObjectsSynced;
+  private final long                  sessionId;
 
   private TCByteBuffer[]              dnas;
   private int                         dnaCount;
@@ -32,24 +33,27 @@ public class ManagedObjectSyncContext implements EventContext {
   private ObjectIDSet                 syncedOids    = TCCollections.EMPTY_OBJECT_ID_SET;
   private ObjectIDSet                 notSyncedOids = TCCollections.EMPTY_OBJECT_ID_SET;
 
-  public ManagedObjectSyncContext(NodeID nodeID, ObjectIDSet oids, boolean more, int totalObjectsToSync,
-                                  int totalObjectsSynced) {
+  public ManagedObjectSyncContext(final NodeID nodeID, final ObjectIDSet oids, final boolean more,
+                                  final int totalObjectsToSync, final int totalObjectsSynced, final long sessionId) {
     this.nodeID = nodeID;
     this.requestedOids = oids;
     this.more = more;
     this.totalObjectsToSync = totalObjectsToSync;
     this.totalObjectsSynced = totalObjectsSynced;
     this.rootsMap = Collections.emptyMap();
+    this.sessionId = sessionId;
   }
 
-  public ManagedObjectSyncContext(NodeID nodeID, Map<String, ObjectID> rootsMap, ObjectIDSet oids, boolean more,
-                                  int totalObjectsToSync, int totalObjectsSynced) {
+  public ManagedObjectSyncContext(final NodeID nodeID, final Map<String, ObjectID> rootsMap, final ObjectIDSet oids,
+                                  final boolean more, final int totalObjectsToSync, final int totalObjectsSynced,
+                                  final long sessionId) {
     this.nodeID = nodeID;
     this.totalObjectsToSync = totalObjectsToSync;
     this.totalObjectsSynced = totalObjectsSynced;
     this.requestedOids = oids;
     this.more = more;
     this.rootsMap = rootsMap;
+    this.sessionId = sessionId;
   }
 
   public ObjectIDSet getRequestedObjectIDs() {
@@ -66,6 +70,10 @@ public class ManagedObjectSyncContext implements EventContext {
 
   public int getTotalObjectsSynced() {
     return this.totalObjectsSynced;
+  }
+
+  public long getSessionId() {
+    return this.sessionId;
   }
 
   public void setDehydratedBytes(ObjectIDSet synced, ObjectIDSet notSynced, TCByteBuffer[] buffers, int count,
@@ -115,8 +123,8 @@ public class ManagedObjectSyncContext implements EventContext {
 
   @Override
   public String toString() {
-    return "ManagedObjectSyncContext [" + this.nodeID + " , oids = " + this.requestedOids + " ,  rootsMap = "
-           + this.rootsMap + " , more = " + this.more + "]";
+    return "ManagedObjectSyncContext [" + this.nodeID + " , sessionId = " + this.sessionId + " , oids = "
+           + this.requestedOids + " ,  rootsMap = " + this.rootsMap + " , more = " + this.more + "]";
   }
 
   public boolean updateStats() {

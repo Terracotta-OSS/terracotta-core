@@ -43,7 +43,7 @@ public class ObjectSyncMessageTest extends TestCase {
     TCByteBuffer tcbb = TCByteBufferFactory.getInstance(false, 3452);
     this.tcByteBufferArray = new TCByteBuffer[] { tcbb };
     ObjectIDSet oids = new ObjectIDSet(rootsMap.values());
-    this.managedObjectSyncContext = new ManagedObjectSyncContext(nodeID, rootsMap, oids, true, 100, 10);
+    this.managedObjectSyncContext = new ManagedObjectSyncContext(nodeID, rootsMap, oids, true, 100, 10, 0);
     this.managedObjectSyncContext
         .setDehydratedBytes(oids, TCCollections.EMPTY_OBJECT_ID_SET, new TCByteBuffer[] { tcbb }, dnaCount,
                             this.objectStringSerializer);

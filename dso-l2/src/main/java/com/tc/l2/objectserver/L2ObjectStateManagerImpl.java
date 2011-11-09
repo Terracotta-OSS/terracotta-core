@@ -38,6 +38,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
   private final ServerTransactionManager transactionManager;
   private final CopyOnWriteArrayMap      syncExecutorContextMap = new CopyOnWriteArrayMap();
   private final int                      syncMaxPendingMsgs;
+  private long                           currentSessionId       = 0;
 
   public L2ObjectStateManagerImpl(final ObjectManager objectManager, final ServerTransactionManager transactionManager) {
     this.objectManager = objectManager;
@@ -91,7 +92,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
                     + " IGNORING setExistingObjectsList : oids count = " + oids.size());
         return false;
       }
-      l2State = new L2ObjectStateImpl(nodeID, oids);
+      l2State = new L2ObjectStateImpl(nodeID, oids, this.currentSessionId++);
       this.nodes.put(nodeID, l2State);
     }
     final L2ObjectStateImpl _l2State = l2State;
@@ -205,14 +206,20 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
 
     private int                      totalObjectsToSync;
     private int                      totalObjectsSynced;
+    private final long               sessionId;
 
-    public L2ObjectStateImpl(final NodeID nodeID, final Set<ObjectID> oids) {
+    public L2ObjectStateImpl(final NodeID nodeID, final Set<ObjectID> oids, final long currentSessionId) {
       this.nodeID = nodeID;
       this.existingOids = oids;
+      this.sessionId = currentSessionId;
     }
 
     private void close(final ManagedObjectSyncContext mosc) {
-      Assert.assertTrue(mosc == this.syncingContext);
+      if (this.sessionId <= mosc.getSessionId()) {
+        logger.warn("An old request for object sync for " + this.nodeID + " is being ignored");
+        return;
+      }
+      Assert.assertTrue("expected: " + this.syncingContext + " actual: " + mosc, mosc == this.syncingContext);
       this.syncingContext = null;
       // NotSynchedOids are picked up first as its a stored set and thus prefetching that happened is not a waste.
       missingOids.addAll(mosc.getNotSynchedOids());
@@ -235,7 +242,8 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       final ObjectIDSet oids = new ObjectIDSet();
       addSomeMissingObjectIDsTo(oids, count);
       this.syncingContext = new ManagedObjectSyncContext(this.nodeID, oids, !this.missingOids.isEmpty(),
-                                                         this.totalObjectsToSync, this.totalObjectsSynced);
+                                                         this.totalObjectsToSync, this.totalObjectsSynced,
+                                                         this.sessionId);
       return this.syncingContext;
     }
 
@@ -261,7 +269,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       }
       this.syncingContext = new ManagedObjectSyncContext(this.nodeID, new HashMap(this.missingRoots), oids,
                                                          !this.missingOids.isEmpty(), this.totalObjectsToSync,
-                                                         this.totalObjectsSynced);
+                                                         this.totalObjectsSynced, this.sessionId);
       this.missingRoots.clear();
       return this.syncingContext;
     }
