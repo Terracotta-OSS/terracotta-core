@@ -219,7 +219,8 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
         logger.warn("An old request for object sync for " + this.nodeID + " is being ignored");
         return;
       }
-      Assert.assertTrue("expected: " + this.syncingContext + " actual: " + mosc, mosc == this.syncingContext);
+      if (mosc != this.syncingContext) { throw new AssertionError("expected: " + this.syncingContext + " actual: "
+                                                                  + mosc); }
       this.syncingContext = null;
       // NotSynchedOids are picked up first as its a stored set and thus prefetching that happened is not a waste.
       missingOids.addAll(mosc.getNotSynchedOids());
