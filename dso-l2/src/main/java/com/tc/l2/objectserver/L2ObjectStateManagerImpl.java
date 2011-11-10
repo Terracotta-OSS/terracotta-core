@@ -215,7 +215,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     }
 
     private void close(final ManagedObjectSyncContext mosc) {
-      if (this.sessionId <= mosc.getSessionId()) {
+      if (this.sessionId != mosc.getSessionId()) {
         logger.warn("An old request for object sync for " + this.nodeID + " is being ignored");
         return;
       }
