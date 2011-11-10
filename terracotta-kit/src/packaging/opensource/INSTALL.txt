@@ -1,4 +1,4 @@
-Terracotta 3.6.0-SNAPSHOT - Simple Scale for Enterprise Java
+Terracotta - Simple Scale for Enterprise Java
 ===================================================
 
 These simplified installation instructions are intended for quick platform 

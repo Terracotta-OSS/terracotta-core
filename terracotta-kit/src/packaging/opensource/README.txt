@@ -1,4 +1,4 @@
-Terracotta 3.6.0-SNAPSHOT - Simple Scale for Enterprise Java
+Terracotta  - Simple Scale for Enterprise Java
 ===================================================
 
 Terracotta offers powerful solutions for scaling Java applications and 

@@ -1,4 +1,4 @@
-Terracotta 3.5.0 - Simple Scale for Enterprise Java
+Terracotta - Simple Scale for Enterprise Java
 ===================================================
 
 Release Notes: http://www.terracotta.org/kit/reflector?kitID=default&pageID=ReleaseNotes
