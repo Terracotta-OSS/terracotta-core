@@ -70,9 +70,13 @@ class Util {
     
     static void processTerracottaJar(project, tcJar, targetDir) {
       def rootDir = project.properties['rootDir']
-      def dest = rootDir + "/" + targetDir + "/tc.jar"
-      ('zip -d ' + tcJar + ' build-data.txt').execute()
-      rename(tcJar.toString(), dest)
+      def destFile = rootDir + "/" + targetDir + "/tc.jar"
+
+      ant.zip(destfile: destFile) {
+        zipfileset(src: tcJar.toString(), excludes: "**/build-data.txt,**/tim-get.properties")
+      }
+      
+      ant.delete(file: tcJar.toString())
     }
     
     static void setPermission(project) {
