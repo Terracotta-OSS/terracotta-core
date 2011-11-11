@@ -5,6 +5,7 @@
 package com.tctest;
 
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.test.MultipleServersCrashMode;
 import com.tc.test.MultipleServersPersistenceMode;
 import com.tc.test.MultipleServersSharedDataMode;
@@ -42,7 +43,8 @@ public class ObjectDataRapidL2DisconnectActivePassiveTest extends ActivePassiveT
   @Override
   protected void setExtraJvmArgs(ArrayList jvmArgs) {
     super.setExtraJvmArgs(jvmArgs);
-    jvmArgs.add("-Dcom.tc.seda." + ServerConfigurationContext.OBJECTS_SYNC_SEND_STAGE + ".sleepMs=10");
+    jvmArgs.add("-Dcom.tc.seda." + ServerConfigurationContext.OBJECTS_SYNC_SEND_STAGE + ".sleepMs=100");
+    jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_OBJECTMANAGER_PASSIVE_SYNC_BATCH_SIZE + "=1");
   }
 
   @Override
@@ -64,6 +66,7 @@ public class ObjectDataRapidL2DisconnectActivePassiveTest extends ActivePassiveT
           while (true) {
             ThreadUtil.reallySleep(5 * 1000);
             manager.stopServer(1);
+            ThreadUtil.reallySleep(10);
             manager.startServer(1);
           }
 
