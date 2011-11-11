@@ -224,7 +224,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return null;
   }
 
-  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
+  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(
+                                                                                            final Object key,
                                                                                             AbstractLocalCacheStoreValue value,
                                                                                             MapOperationType mapOperation) {
     if (!mapOperation.isMutateOperation()) {
@@ -323,6 +324,17 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   public int size() {
     return this.localStore.size() + (this.pendingTransactionEntries.size() / 2);
+  }
+
+  public void evictedInServer(Object key) {
+    ReentrantReadWriteLock lock = getLock(key);
+    lock.writeLock().lock();
+
+    try {
+      removeFromInternalStore(key, null);
+    } finally {
+      lock.writeLock().unlock();
+    }
   }
 
   /**
@@ -589,7 +601,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  public void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
+  public void transactionComplete(
+                                  L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     l1LocalCacheManager.transactionComplete(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 

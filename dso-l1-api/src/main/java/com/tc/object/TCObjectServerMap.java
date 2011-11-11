@@ -185,7 +185,7 @@ public interface TCObjectServerMap<L> extends TCObject {
   /**
    * Clears local cache for the corresponding key
    */
-  public void removeFromLocalCache(Object key);
+  public void evictedInServer(Object key);
 
   /**
    * Get set of keys present in the local cache.

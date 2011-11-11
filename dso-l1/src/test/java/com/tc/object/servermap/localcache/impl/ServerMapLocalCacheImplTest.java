@@ -93,6 +93,18 @@ public class ServerMapLocalCacheImplTest extends TestCase {
                                                                                     localCacheStore);
   }
 
+  public void testDev6522() {
+    CountDownLatch latch1 = new CountDownLatch(1);
+    CountDownLatch latch2 = new CountDownLatch(1);
+    setLocalCache(latch1, latch2, 100);
+
+    MockModesAdd.addEventualValueToCache(cache, this.globalLocalCacheManager, "key1",
+                                         createMockSerializedEntry("value" + 1, 1), mapID, MapOperationType.PUT);
+    cache.evictedInServer("key1");
+    Assert.assertNotNull(cache.getLocalValue("key1"));
+    latch1.countDown();
+  }
+
   public void testMixedPut() throws Exception {
     long lockId = 100;
     long strongOid = 2 * lockId;

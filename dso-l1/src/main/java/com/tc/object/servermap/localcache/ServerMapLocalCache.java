@@ -23,6 +23,11 @@ public interface ServerMapLocalCache {
   void removeEntriesForLockId(LockID lockId);
 
   /**
+   * Lets the cache handle eviction in server
+   */
+  void evictedInServer(Object key);
+
+  /**
    * Removes a key from the Local cache
    */
   void removeFromLocalCache(Object key);
@@ -124,7 +129,8 @@ public interface ServerMapLocalCache {
 
   void postTransactionCallback(Object key, AbstractLocalCacheStoreValue value, boolean removeEntry);
 
-  void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
+  void transactionComplete(
+                           L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
 
   void recalculateSize(Object key);
 
