@@ -214,6 +214,14 @@
                       <directory>${basedir}/src/packaging/enterprise</directory>
                       <preservePath>true</preservePath>
                     </resource>
+                    <resource>
+                      <runIf>{{ "${kit.edition}" == "enterprise" }}</runIf>
+                      <directory>${rootDir}</directory>
+                      <includes>
+                        <include>LICENSE.txt</include>
+                      </includes>
+                      <clean>true</clean>
+                    </resource>                    
 
                     <!-- schema -->
                     <resource>
