@@ -12,7 +12,8 @@ public class LinkedBlockingQueueL1ReconnectCrashTest extends TransparentTestBase
   private static final int NODE_COUNT = 8;
 
   public LinkedBlockingQueueL1ReconnectCrashTest() {
-    // disableAllUntil("2011-10-30");
+    // MNK-2590
+    disableTest();
   }
 
   @Override
