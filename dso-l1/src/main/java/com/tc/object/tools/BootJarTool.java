@@ -53,10 +53,10 @@ import com.tc.injection.annotations.InjectedDsoInstance;
 import com.tc.injection.exceptions.UnsupportedInjectedDsoInstanceTypeException;
 import com.tc.io.TCByteArrayOutputStream;
 import com.tc.io.TCByteBufferInput;
+import com.tc.io.TCByteBufferInput.Mark;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCDataInput;
 import com.tc.io.TCDataOutput;
-import com.tc.io.TCByteBufferInput.Mark;
 import com.tc.lang.Recyclable;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.LogLevel;
@@ -88,13 +88,11 @@ import com.tc.object.appevent.ApplicationEvent;
 import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.applicator.ApplicatorObjectManager;
 import com.tc.object.bytecode.AAFairDistributionPolicyMarker;
-import com.tc.object.bytecode.AbstractStringBuilderAdapter;
 import com.tc.object.bytecode.AccessibleObjectAdapter;
 import com.tc.object.bytecode.AddInterfacesAdapter;
 import com.tc.object.bytecode.ArrayListAdapter;
 import com.tc.object.bytecode.AtomicIntegerAdapter;
 import com.tc.object.bytecode.AtomicLongAdapter;
-import com.tc.object.bytecode.BufferedWriterAdapter;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ChangeClassNameHierarchyAdapter;
 import com.tc.object.bytecode.ChangeClassNameRootAdapter;
@@ -102,8 +100,6 @@ import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.Clearable;
 import com.tc.object.bytecode.CloneUtil;
 import com.tc.object.bytecode.CopyOnWriteArrayListAdapter;
-import com.tc.object.bytecode.DataOutputStreamAdapter;
-import com.tc.object.bytecode.DuplicateMethodAdapter;
 import com.tc.object.bytecode.HashMapClassAdapter;
 import com.tc.object.bytecode.HashtableClassAdapter;
 import com.tc.object.bytecode.JavaLangReflectArrayAdapter;
@@ -141,8 +137,6 @@ import com.tc.object.bytecode.ReentrantLockClassAdapter;
 import com.tc.object.bytecode.ReentrantReadWriteLockClassAdapter;
 import com.tc.object.bytecode.SessionConfiguration;
 import com.tc.object.bytecode.SetRemoveMethodAdapter;
-import com.tc.object.bytecode.StringBufferAdapter;
-import com.tc.object.bytecode.StringGetCharsAdapter;
 import com.tc.object.bytecode.TCMap;
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.bytecode.TransparencyClassAdapter;
@@ -166,12 +160,12 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.dmi.DmiClassSpec;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.ProxyInstance;
 import com.tc.object.field.TCField;
@@ -233,10 +227,10 @@ import com.tc.util.HashtableKeySetWrapper;
 import com.tc.util.HashtableValuesWrapper;
 import com.tc.util.ListIteratorWrapper;
 import com.tc.util.SequenceID;
+import com.tc.util.SequenceID.SequenceIDComparator;
 import com.tc.util.SetIteratorWrapper;
 import com.tc.util.THashMapCollectionWrapper;
 import com.tc.util.UnsafeUtil;
-import com.tc.util.SequenceID.SequenceIDComparator;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.UnknownJvmVersionException;
 import com.tc.util.runtime.UnknownRuntimeVersionException;
@@ -255,8 +249,6 @@ import com.tcclient.util.MapEntrySetWrapper;
 
 import gnu.trove.TLinkable;
 
-import java.io.BufferedWriter;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -671,7 +663,6 @@ public class BootJarTool {
       addSunStandardLoaders();
       addInstrumentedAccessibleObject();
       addInstrumentedJavaLangThrowable();
-      addInstrumentedJavaLangStringBuffer();
       addInstrumentedClassLoader();
       addInstrumentedJavaLangString();
       addInstrumentedJavaNetURL();
@@ -696,12 +687,6 @@ public class BootJarTool {
 
       // user defined specs should ALWAYS be after internal specs
       loadBootJarClasses(removeAlreadyLoaded(userSpecs), true);
-
-      // classes adapted/included after the user defined specs are not portable
-      // if you want to make it portable, you will still need to declare
-      // in the <additiona-boot-jar-classes/> section of your tc-config
-      adaptClassIfNotAlreadyIncluded(BufferedWriter.class.getName(), BufferedWriterAdapter.class);
-      adaptClassIfNotAlreadyIncluded(DataOutputStream.class.getName(), DataOutputStreamAdapter.class);
     } catch (final Throwable e) {
       exit(this.bootJarHandler.getCreationErrorMessage(), e);
     }
@@ -919,13 +904,6 @@ public class BootJarTool {
 
   private final void addManagementClasses() {
     loadTerracottaClass(TerracottaMBean.class.getName());
-  }
-
-  private final boolean shouldIncludeStringBufferAndFriends() {
-    final Map userSpecs = getUserDefinedSpecs(getTCSpecs());
-    return userSpecs.containsKey("java.lang.StringBuffer") || userSpecs.containsKey("java.lang.AbstractStringBuilder")
-           || userSpecs.containsKey("java.lang.StringBuilder");
-
   }
 
   private final void addRuntimeClasses() {
@@ -1218,15 +1196,6 @@ public class BootJarTool {
     System.exit(1);
   }
 
-  private final void addInstrumentedJavaLangStringBuffer() {
-    final boolean makePortable = shouldIncludeStringBufferAndFriends();
-    if (makePortable) {
-      addPortableStringBuffer();
-    } else {
-      addNonPortableStringBuffer();
-    }
-  }
-
   private void addInstrumentedAccessibleObject() {
     final String classname = AccessibleObject.class.getName();
     byte[] bytes = getSystemBytes(classname);
@@ -1287,117 +1256,6 @@ public class BootJarTool {
     loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
   }
 
-  private final void addPortableStringBuffer() {
-    final boolean isJDK15 = Vm.isJDK15Compliant();
-    if (isJDK15) {
-      addAbstractStringBuilder();
-    }
-
-    byte[] bytes = getSystemBytes("java.lang.StringBuffer");
-
-    // 1st pass
-    ClassReader cr = new ClassReader(bytes);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    ClassVisitor cv = new StringBufferAdapter(cw, Vm.VERSION);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-    bytes = cw.toByteArray();
-
-    // 2nd pass
-    cr = new ClassReader(bytes);
-    cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    cv = new DuplicateMethodAdapter(cw, Collections.singleton("getChars(II[CI)V"));
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-    bytes = cw.toByteArray();
-
-    // 3rd pass (regular DSO instrumentation)
-    final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec("java.lang.StringBuffer");
-    spec.markPreInstrumented();
-    this.configHelper.addWriteAutolock("* java.lang.StringBuffer.*(..)");
-    bytes = doDSOTransform(spec.getClassName(), bytes);
-
-    // 4th pass (String.getChars(..) calls)
-    cr = new ClassReader(bytes);
-    cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    cv = new StringGetCharsAdapter(cw, new String[] { "^" + DuplicateMethodAdapter.UNMANAGED_PREFIX + ".*" });
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-    bytes = cw.toByteArray();
-
-    // 5th pass (fixups)
-    cr = new ClassReader(bytes);
-    cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    cv = new StringBufferAdapter.FixUp(cw, Vm.VERSION);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-    bytes = cw.toByteArray();
-
-    loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
-  }
-
-  private final void addNonPortableStringBuffer() {
-    // even if we aren't making StringBu[ild|ff]er portable, we still need to make
-    // sure it calls the fast getChars() methods on String
-
-    final boolean isJDK15 = Vm.isJDK15Compliant();
-
-    if (isJDK15) {
-      if (Vm.isIBM()) {
-        addNonPortableStringBuffer("java.lang.StringBuilder");
-      } else {
-        addNonPortableStringBuffer("java.lang.AbstractStringBuilder");
-      }
-    }
-
-    addNonPortableStringBuffer("java.lang.StringBuffer");
-  }
-
-  private void addNonPortableStringBuffer(final String className) {
-    final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(className);
-    spec.markPreInstrumented();
-
-    byte[] bytes = getSystemBytes(className);
-
-    final ClassReader cr = new ClassReader(bytes);
-    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    final ClassVisitor cv = new StringGetCharsAdapter(cw, new String[] { ".*" });
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-    bytes = cw.toByteArray();
-
-    loadClassIntoJar(className, bytes, spec.isPreInstrumented());
-  }
-
-  private final void addAbstractStringBuilder() {
-    String className;
-    if (Vm.isIBM()) {
-      className = "java.lang.StringBuilder";
-    } else {
-      className = "java.lang.AbstractStringBuilder";
-    }
-
-    byte[] classBytes = getSystemBytes(className);
-
-    ClassReader cr = new ClassReader(classBytes);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    ClassVisitor cv = new DuplicateMethodAdapter(cw, Collections.singleton("getChars(II[CI)V"));
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-    classBytes = cw.toByteArray();
-
-    final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(className);
-    spec.markPreInstrumented();
-
-    classBytes = doDSOTransform(className, classBytes);
-
-    cr = new ClassReader(classBytes);
-    cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    cv = new AbstractStringBuilderAdapter(cw, className);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-    cr = new ClassReader(cw.toByteArray());
-    cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    cv = new StringGetCharsAdapter(cw, new String[] { "^" + DuplicateMethodAdapter.UNMANAGED_PREFIX + ".*" });
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-    loadClassIntoJar(className, cw.toByteArray(), spec.isPreInstrumented());
-  }
-
   private final void addInstrumentedProxy() {
     final String className = "java.lang.reflect.Proxy";
     byte[] bytes = getSystemBytes(className);
@@ -1421,8 +1279,7 @@ public class BootJarTool {
     final ClassReader cr = new ClassReader(orig);
     final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
 
-    final ClassVisitor cv = new JavaLangStringAdapter(cw, Vm.VERSION, shouldIncludeStringBufferAndFriends(), Vm
-        .isAzul(), Vm.isIBM());
+    final ClassVisitor cv = new JavaLangStringAdapter(cw, Vm.isAzul(), Vm.isIBM());
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     loadClassIntoJar("java.lang.String", cw.toByteArray(), false);
@@ -1653,8 +1510,8 @@ public class BootJarTool {
           .getOrCreateSpec("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper");
       spec.markPreInstrumented();
       bytes = doDSOTransform(spec.getClassName(), bytes);
-      loadClassIntoJar("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper", bytes, spec
-          .isPreInstrumented());
+      loadClassIntoJar("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper", bytes,
+                       spec.isPreInstrumented());
     }
   }
 
@@ -1882,8 +1739,9 @@ public class BootJarTool {
 
     final ClassReader cr = new ClassReader(bytes);
     final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    final ClassVisitor cv = new LogicalClassSerializationAdapter.LogicalClassSerializationClassAdapter(cw, spec
-        .getClassName());
+    final ClassVisitor cv = new LogicalClassSerializationAdapter.LogicalClassSerializationClassAdapter(
+                                                                                                       cw,
+                                                                                                       spec.getClassName());
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     bytes = cw.toByteArray();
@@ -2241,24 +2099,6 @@ public class BootJarTool {
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     return cw.toByteArray();
-  }
-
-  private final void adaptClassIfNotAlreadyIncluded(final String className, final Class adapter) {
-    if (this.bootJar.classLoaded(className)) { return; }
-
-    final byte[] orig = getSystemBytes(className);
-
-    final ClassReader cr = new ClassReader(orig);
-    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-
-    try {
-      final ClassVisitor cv = (ClassVisitor) adapter.getConstructor(new Class[] { ClassVisitor.class })
-          .newInstance(new Object[] { cw });
-      cr.accept(cv, ClassReader.SKIP_FRAMES);
-      loadClassIntoJar(className, cw.toByteArray(), false);
-    } catch (final Exception e) {
-      exit("Can't instaniate class apapter using class " + adapter, e);
-    }
   }
 
   protected void announce(final String msg) {

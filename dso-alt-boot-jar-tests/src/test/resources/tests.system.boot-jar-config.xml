@@ -11,30 +11,19 @@ All rights reserved
   <system>
     <configuration-model>development</configuration-model>
   </system>
-  
+
   <application>
     <dso>
       <instrumented-classes>
       </instrumented-classes>
-    
+
       <additional-boot-jar-classes>
-        <include>java.lang.StringBuffer</include>
-        <include>java.lang.StringBuilder</include>
-
-        <include>java.io.BufferedWriter</include>
-        <include>java.io.DataOutputStream</include>
-        <include>java.io.FilterOutputStream</include>
-        <include>java.io.Writer</include>
-        <include>java.io.OutputStream</include>
-        <include>java.io.StringWriter</include>
-        <include>java.io.ByteArrayOutputStream</include>
-
         <include>java.util.Calendar</include>
         <include>java.util.TimeZone</include>
         <include>java.util.SimpleTimeZone</include>
         <include>java.util.GregorianCalendar</include>
         <include>sun.util.BuddhistCalendar</include>
-        <include>sun.util.calendar.ZoneInfo</include>       
+        <include>sun.util.calendar.ZoneInfo</include>
       </additional-boot-jar-classes>
 
       <locks>
@@ -71,7 +60,7 @@ All rights reserved
         <autolock>
           <method-expression>* java.util.Collections$SynchronizedRandomAccessList*.*(..)</method-expression>
         </autolock>
-      </locks>           
+      </locks>
     </dso>
   </application>
 
