@@ -545,11 +545,14 @@
                   <goal>execute</goal>
                 </goals>
                 <configuration>
+                  <scriptpath>
+                    <element>${basedir}/src/scripts</element>
+                  </scriptpath>                
                   <source>
-                    pluginVersion = project.version.replace("-", ".")
-                    pluginVersion += "_r" + project.properties['build.revision']
-                    pluginVersion += "_v" + new java.text.SimpleDateFormat("yyMMdd").format(new Date())
-                    project.properties.setProperty('eclipse.plugin.version', pluginVersion)
+                    import Util
+                    def revision = project.properties['build.revision']
+                    def timestamp = new java.text.SimpleDateFormat("yyMMdd").format(new Date())
+                    Util.setEclipsePluginVersion(project, revision, timestamp)
                   </source>
                 </configuration>
               </execution>

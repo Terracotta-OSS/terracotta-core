@@ -54,9 +54,7 @@ class Util {
       def bundleClasspath = new StringBuilder()
       def libs = new File(baseDir, "lib").listFiles()
       for (def file : libs) {
-        if (file.getName().endsWith(".jar")) {
-          bundleClasspath.append("lib/").append(file.getName()).append(",")
-        }
+        bundleClasspath.append("lib/").append(file.getName()).append(",")
       }
       if (bundleClasspath.length() > 0) {
         bundleClasspath.deleteCharAt(bundleClasspath.length() - 1)
@@ -84,4 +82,22 @@ class Util {
       ant.chmod(dir: rootDir, perm: "a+x",
                 includes: "**/*.sh,**/*.bat,**/*.exe,**/bin/**,**/lib/**")
     }
+    
+    static void setEclipsePluginVersion(project, revision, timestamp) {
+      // Eclipse plugin versioning: major.minor.service.qualifier
+      def m = project.version =~ /(\d+)\.(\d+)\.(\d+)(.*)/
+      if (m.matches()) {
+        def major = m[0][1]
+        def minor = m[0][2]
+        def service = m[0][3]
+        def tag = m[0][4] != null ? m[0][4] : ""
+        tag = tag.replace("-", ".")
+        def qualifier = "r" + revision + "_v" + timestamp + tag
+        def pluginVersion = major + "." + minor + "." + service + "." + qualifier
+        project.properties.setProperty('eclipse.plugin.version', pluginVersion)
+      } else {
+        throw new RuntimeException("version doesn't match Eclipse plugin pattern")
+      }
+     
+    }                    
 }
