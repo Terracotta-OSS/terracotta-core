@@ -4,12 +4,12 @@
  */
 package com.tc.bytes;
 
-import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
-
 import com.tc.util.Assert;
 import com.tc.util.State;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author teck A thin wrapper to a real java.nio.ByteBuffer instance
@@ -19,16 +19,16 @@ import java.nio.ByteBuffer;
 // This would make the TCByteBuffer interface consistent w.r.t. exceptions (whilst being blind to JDK13 vs JDK14)
 public class TCByteBufferImpl implements TCByteBuffer, BufferPool {
 
-  private static final State       INIT        = new State("INIT");
-  private static final State       CHECKED_OUT = new State("CHECKED_OUT");
-  private static final State       COMMITTED   = new State("COMMITTED");
+  private static final State        INIT        = new State("INIT");
+  private static final State        CHECKED_OUT = new State("CHECKED_OUT");
+  private static final State        COMMITTED   = new State("COMMITTED");
 
-  private final ByteBuffer         buffer;
-  private final TCByteBuffer       root;
-  private final BoundedLinkedQueue bufPool;
-  private State                    state       = INIT;
+  private final ByteBuffer          buffer;
+  private final TCByteBuffer        root;
+  private final LinkedBlockingQueue bufPool;
+  private State                     state       = INIT;
 
-  TCByteBufferImpl(int capacity, boolean direct, BoundedLinkedQueue poolQueue) {
+  TCByteBufferImpl(int capacity, boolean direct, LinkedBlockingQueue poolQueue) {
     if (direct) {
       buffer = ByteBuffer.allocateDirect(capacity);
     } else {
@@ -506,7 +506,7 @@ public class TCByteBufferImpl implements TCByteBuffer, BufferPool {
   }
 
   public void offer(TCByteBuffer buf) throws InterruptedException {
-    this.bufPool.offer(buf, 0);
+    this.bufPool.offer(buf, 0, TimeUnit.MILLISECONDS);
   }
 
   /* This is the debug version. PLEASE DONT DELETE */

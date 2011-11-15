@@ -4,8 +4,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
-
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
@@ -16,6 +14,8 @@ import com.tc.net.protocol.NullProtocolAdaptor;
 import com.tc.net.protocol.transport.HealthCheckerSocketConnect.SocketConnectStartStatus;
 import com.tc.util.Assert;
 import com.tc.util.State;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A HealthChecker Context takes care of sending and receiving probe signals, book-keeping, sending additional probes
@@ -46,7 +46,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
   private final HealthCheckerProbeMessageFactory messageFactory;
   private final TCConnectionManager              connectionManager;
   private final int                              maxProbeCountWithoutReply;
-  private final SynchronizedLong                 probeReplyNotRecievedCount = new SynchronizedLong(0);
+  private final AtomicLong                       probeReplyNotRecievedCount = new AtomicLong(0);
 
   // Context info
   private final HealthCheckerConfig              config;
@@ -62,7 +62,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
   private HealthCheckerSocketConnect             sockectConnect             = new NullHealthCheckerSocketConnectImpl();
 
   // stats
-  private final SynchronizedLong                 pingProbeSentCount         = new SynchronizedLong(0);
+  private final AtomicLong                       pingProbeSentCount         = new AtomicLong(0);
 
   public ConnectionHealthCheckerContextImpl(MessageTransportBase mtb, HealthCheckerConfig config,
                                             TCConnectionManager connMgr) {
@@ -223,8 +223,8 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
           logger.debug("Sending PING Probe to IDLE " + remoteNodeDesc);
         }
         sendProbeMessage(this.messageFactory.createPing(transport.getConnectionId(), transport.getConnection()));
-        pingProbeSentCount.increment();
-        probeReplyNotRecievedCount.increment();
+        pingProbeSentCount.incrementAndGet();
+        probeReplyNotRecievedCount.incrementAndGet();
         changeState(AWAIT_PINGREPLY);
       } else if (config.isSocketConnectOnPingFail()) {
         changeState(SOCKET_CONNECT);
@@ -271,9 +271,9 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
       sendProbeMessage(this.messageFactory.createPingReply(transport.getConnectionId(), transport.getConnection()));
     } else if (message.isPingReply()) {
       // The peer is alive
-      if (probeReplyNotRecievedCount.get() > 0) probeReplyNotRecievedCount.decrement();
+      if (probeReplyNotRecievedCount.get() > 0) probeReplyNotRecievedCount.decrementAndGet();
 
-      if (probeReplyNotRecievedCount.compareTo(0) <= 0) {
+      if (probeReplyNotRecievedCount.get() <= 0) {
         changeState(ALIVE);
       }
 

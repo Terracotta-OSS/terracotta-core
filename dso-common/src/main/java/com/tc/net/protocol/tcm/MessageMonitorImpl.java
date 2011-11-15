@@ -4,8 +4,6 @@
  */
 package com.tc.net.protocol.tcm;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
-
 import com.tc.logging.TCLogger;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
@@ -18,6 +16,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class MessageMonitorImpl implements MessageMonitor {
 
@@ -94,13 +93,13 @@ public class MessageMonitorImpl implements MessageMonitor {
   }
 
   public static class MessageCounter {
-    private final SynchronizedLong incomingCount = new SynchronizedLong(0);
-    private final SynchronizedLong incomingData  = new SynchronizedLong(0);
+    private final AtomicLong      incomingCount = new AtomicLong(0);
+    private final AtomicLong      incomingData  = new AtomicLong(0);
 
-    private final SynchronizedLong outgoingCount = new SynchronizedLong(0);
-    private final SynchronizedLong outgoingData  = new SynchronizedLong(0);
-    private final StringFormatter  formatter;
-    private final String           name;
+    private final AtomicLong      outgoingCount = new AtomicLong(0);
+    private final AtomicLong      outgoingData  = new AtomicLong(0);
+    private final StringFormatter formatter;
+    private final String          name;
 
     private MessageCounter(StringFormatter formatter, String name) {
       this.formatter = formatter;
@@ -108,13 +107,13 @@ public class MessageMonitorImpl implements MessageMonitor {
     }
 
     private synchronized void newIncomingMessage(TCMessage message) {
-      incomingCount.increment();
-      incomingData.add(message.getTotalLength());
+      incomingCount.incrementAndGet();
+      incomingData.addAndGet(message.getTotalLength());
     }
 
     private synchronized void newOutgoingMessage(TCMessage message) {
-      outgoingCount.increment();
-      outgoingData.add(message.getTotalLength());
+      outgoingCount.incrementAndGet();
+      outgoingData.addAndGet(message.getTotalLength());
     }
 
     public String toString(int nameWidth) {
@@ -124,19 +123,19 @@ public class MessageMonitorImpl implements MessageMonitor {
 
     }
 
-    public SynchronizedLong getIncomingCount() {
+    public AtomicLong getIncomingCount() {
       return incomingCount;
     }
 
-    public SynchronizedLong getIncomingData() {
+    public AtomicLong getIncomingData() {
       return incomingData;
     }
 
-    public SynchronizedLong getOutgoingCount() {
+    public AtomicLong getOutgoingCount() {
       return outgoingCount;
     }
 
-    public SynchronizedLong getOutgoingData() {
+    public AtomicLong getOutgoingData() {
       return outgoingData;
     }
 

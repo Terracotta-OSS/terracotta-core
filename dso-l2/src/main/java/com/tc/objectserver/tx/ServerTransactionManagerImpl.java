@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.tx;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 import EDU.oswego.cs.dl.util.concurrent.Latch;
 
 import com.tc.logging.TCLogger;
@@ -53,6 +52,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 

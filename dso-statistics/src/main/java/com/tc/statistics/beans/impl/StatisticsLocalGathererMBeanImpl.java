@@ -4,8 +4,6 @@
  */
 package com.tc.statistics.beans.impl;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
-
 import com.tc.config.schema.CommonL2Config;
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.object.config.schema.L2DSOConfig;
@@ -17,6 +15,8 @@ import com.tc.statistics.gatherer.exceptions.StatisticsGathererException;
 import com.tc.statistics.store.StatisticsStoreListener;
 import com.tc.statistics.store.exceptions.StatisticsStoreException;
 import com.tc.util.Assert;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.MBeanNotificationInfo;
 import javax.management.NotCompliantMBeanException;
@@ -38,11 +38,11 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
     NOTIFICATION_INFO = new MBeanNotificationInfo[] { new MBeanNotificationInfo(notifTypes, name, description) };
   }
 
-  private final SynchronizedLong              sequenceNumber;
+  private final AtomicLong                    sequenceNumber;
 
   private final StatisticsGathererSubSystem   subsystem;
-  private final CommonL2Config             config;
-  private final L2DSOConfig                dsoConfig;
+  private final CommonL2Config                config;
+  private final L2DSOConfig                   dsoConfig;
   private String                              username;
   private String                              password;
 
@@ -51,7 +51,7 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
     super(StatisticsLocalGathererMBean.class, true);
     Assert.assertNotNull("subsystem", subsystem);
     Assert.assertNotNull("config", config);
-    sequenceNumber = new SynchronizedLong(0L);
+    sequenceNumber = new AtomicLong(0L);
     this.subsystem = subsystem;
     this.config = config;
     this.dsoConfig = dsoConfig;
@@ -278,8 +278,8 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   private void createAndSendNotification(final String type, final Object data) {
-    final Notification notification = new Notification(type, StatisticsLocalGathererMBeanImpl.this, sequenceNumber
-        .increment(), System.currentTimeMillis());
+    final Notification notification = new Notification(type, StatisticsLocalGathererMBeanImpl.this,
+                                                       sequenceNumber.incrementAndGet(), System.currentTimeMillis());
     notification.setUserData(data);
     sendNotification(notification);
   }

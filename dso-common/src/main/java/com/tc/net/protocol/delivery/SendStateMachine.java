@@ -4,8 +4,6 @@
  */
 package com.tc.net.protocol.delivery;
 
-import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
-
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.TCNetworkMessage;
@@ -16,6 +14,7 @@ import com.tc.util.Util;
 
 import java.util.LinkedList;
 import java.util.ListIterator;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * State Machine handling message send for OOO
@@ -39,7 +38,7 @@ public class SendStateMachine extends AbstractStateMachine {
   private long                             sent                  = -1;
   private long                             acked                 = -1;
   private int                              outstandingCnt        = 0;
-  private BoundedLinkedQueue               sendQueue;
+  private LinkedBlockingQueue              sendQueue;
 
   public SendStateMachine(OOOProtocolMessageDelivery delivery, ReconnectConfig reconnectConfig, boolean isClient) {
     this.delivery = delivery;
@@ -47,7 +46,7 @@ public class SendStateMachine extends AbstractStateMachine {
     sendWindow = reconnectConfig.getSendWindow();
     int queueCap = reconnectConfig.getSendQueueCapacity();
     this.sendQueueCap = (queueCap == 0) ? Integer.MAX_VALUE : queueCap;
-    this.sendQueue = new BoundedLinkedQueue(this.sendQueueCap);
+    this.sendQueue = new LinkedBlockingQueue(this.sendQueueCap);
     this.isClient = isClient;
     this.debugId = (this.isClient) ? "CLIENT" : "SERVER";
   }
@@ -268,14 +267,14 @@ public class SendStateMachine extends AbstractStateMachine {
     outstandingCnt = 0;
     outstandingMsgs.clear();
 
-    BoundedLinkedQueue tmpQ = sendQueue;
-    sendQueue = new BoundedLinkedQueue(sendQueueCap);
+    LinkedBlockingQueue tmpQ = sendQueue;
+    sendQueue = new LinkedBlockingQueue(sendQueueCap);
     while (!tmpQ.isEmpty()) {
       dequeue(tmpQ);
     }
   }
 
-  private static TCNetworkMessage dequeue(BoundedLinkedQueue q) {
+  private static TCNetworkMessage dequeue(LinkedBlockingQueue q) {
     boolean interrupted = false;
     try {
       while (true) {

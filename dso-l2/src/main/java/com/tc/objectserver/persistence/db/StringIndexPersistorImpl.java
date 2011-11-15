@@ -4,8 +4,6 @@
  */
 package com.tc.objectserver.persistence.db;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
-
 import com.tc.objectserver.persistence.api.StringIndexPersistor;
 import com.tc.objectserver.persistence.db.DBPersistorImpl.DBPersistorBase;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
@@ -14,11 +12,13 @@ import com.tc.objectserver.storage.api.TCLongToStringDatabase;
 
 import gnu.trove.TLongObjectHashMap;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public final class StringIndexPersistorImpl extends DBPersistorBase implements StringIndexPersistor {
 
   private final PersistenceTransactionProvider ptp;
   private final TCLongToStringDatabase         stringIndexDatabase;
-  private final SynchronizedBoolean            initialized = new SynchronizedBoolean(false);
+  private final AtomicBoolean                  initialized = new AtomicBoolean(false);
 
   public StringIndexPersistorImpl(PersistenceTransactionProvider ptp, TCLongToStringDatabase stringIndexDatabase) {
     this.ptp = ptp;
@@ -26,7 +26,7 @@ public final class StringIndexPersistorImpl extends DBPersistorBase implements S
   }
 
   public TLongObjectHashMap loadMappingsInto(TLongObjectHashMap target) {
-    if (initialized.set(true)) throw new AssertionError("Attempt to use more than once.");
+    if (initialized.getAndSet(true)) throw new AssertionError("Attempt to use more than once.");
     PersistenceTransaction tx = ptp.newTransaction();
     return stringIndexDatabase.loadMappingsInto(target, tx);
   }

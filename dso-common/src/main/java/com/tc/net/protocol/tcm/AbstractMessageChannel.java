@@ -5,7 +5,6 @@
 package com.tc.net.protocol.tcm;
 
 import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArraySet;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.logging.TCLogger;
@@ -26,6 +25,7 @@ import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * @author teck

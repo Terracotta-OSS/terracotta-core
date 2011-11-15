@@ -4,10 +4,7 @@
  */
 package com.tc.net.core;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 import EDU.oswego.cs.dl.util.concurrent.Latch;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
@@ -47,7 +44,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The {@link TCConnection} implementation. SocketChannel read/write happens here.
@@ -68,23 +67,19 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private final LinkedList<TCNetworkMessage> writeMessages               = new LinkedList<TCNetworkMessage>();
   private final TCConnectionManagerImpl      parent;
   private final TCConnectionEventCaller      eventCaller                 = new TCConnectionEventCaller(logger);
-  private final SynchronizedLong             lastDataWriteTime           = new SynchronizedLong(
-                                                                                                System
-                                                                                                    .currentTimeMillis());
-  private final SynchronizedLong             lastDataReceiveTime         = new SynchronizedLong(
-                                                                                                System
-                                                                                                    .currentTimeMillis());
-  private final SynchronizedLong             connectTime                 = new SynchronizedLong(NO_CONNECT_TIME);
+  private final AtomicLong                   lastDataWriteTime           = new AtomicLong(System.currentTimeMillis());
+  private final AtomicLong                   lastDataReceiveTime         = new AtomicLong(System.currentTimeMillis());
+  private final AtomicLong                   connectTime                 = new AtomicLong(NO_CONNECT_TIME);
   private final List                         eventListeners              = new CopyOnWriteArrayList();
   private final TCProtocolAdaptor            protocolAdaptor;
-  private final SynchronizedBoolean          isSocketEndpoint            = new SynchronizedBoolean(false);
+  private final AtomicBoolean                isSocketEndpoint            = new AtomicBoolean(false);
   private final SetOnceFlag                  closed                      = new SetOnceFlag();
-  private final SynchronizedBoolean          connected                   = new SynchronizedBoolean(false);
+  private final AtomicBoolean                connected                   = new AtomicBoolean(false);
   private final SetOnceRef                   localSocketAddress          = new SetOnceRef();
   private final SetOnceRef                   remoteSocketAddress         = new SetOnceRef();
   private final SocketParams                 socketParams;
-  private final SynchronizedLong             totalRead                   = new SynchronizedLong(0);
-  private final SynchronizedLong             totalWrite                  = new SynchronizedLong(0);
+  private final AtomicLong                   totalRead                   = new AtomicLong(0);
+  private final AtomicLong                   totalWrite                  = new AtomicLong(0);
   private final ArrayList<WriteContext>      writeContexts               = new ArrayList<WriteContext>();
 
   private static final boolean               MSG_GROUPING_ENABLED        = TCPropertiesImpl
@@ -225,13 +220,13 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
   public int doRead(final ScatteringByteChannel sbc) {
     final int read = doReadInternal(sbc);
-    this.totalRead.add(read);
+    this.totalRead.addAndGet(read);
     return read;
   }
 
   public int doWrite(final GatheringByteChannel gbc) {
     final int written = doWriteInternal(gbc);
-    this.totalWrite.add(written);
+    this.totalWrite.addAndGet(written);
     return written;
   }
 

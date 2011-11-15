@@ -4,8 +4,6 @@
  */
 package com.tc.l2.state;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
-
 import com.tc.async.api.Sink;
 import com.tc.l2.L2DebugLogging;
 import com.tc.l2.L2DebugLogging.LogLevel;
@@ -28,6 +26,7 @@ import com.tc.util.Assert;
 import com.tc.util.State;
 
 import java.util.Iterator;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class StateManagerImpl implements StateManager {
 

@@ -4,8 +4,6 @@
  */
 package com.tc.statistics.gatherer.impl;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArraySet;
-
 import com.tc.management.JMXConnectorProxy;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.beans.StatisticsGatewayMBean;
@@ -32,6 +30,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;

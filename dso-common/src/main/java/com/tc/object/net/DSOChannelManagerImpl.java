@@ -4,8 +4,6 @@
  */
 package com.tc.object.net;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
-
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
@@ -31,6 +29,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Wraps the generic ChannelManager to hide it from the rest of the DSO world and to provide delayed visibility of

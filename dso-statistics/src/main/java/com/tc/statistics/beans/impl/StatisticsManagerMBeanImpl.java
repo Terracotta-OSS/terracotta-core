@@ -4,8 +4,6 @@
  */
 package com.tc.statistics.beans.impl;
 
-import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
-
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.AbstractTerracottaMBean;
@@ -34,18 +32,21 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.management.NotCompliantMBeanException;
 
-public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implements StatisticsManagerMBean, AgentStatisticsManager {
-  private final static TCLogger LOGGER = TCLogging.getLogger(StatisticsManagerMBeanImpl.class);
+public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implements StatisticsManagerMBean,
+    AgentStatisticsManager {
+  private final static TCLogger             LOGGER       = TCLogging.getLogger(StatisticsManagerMBeanImpl.class);
 
-  private final DSOStatisticsConfig config;
+  private final DSOStatisticsConfig         config;
   private final StatisticsRetrievalRegistry registry;
-  private final StatisticsBuffer buffer;
-  private final Map retrieverMap = new ConcurrentHashMap();
+  private final StatisticsBuffer            buffer;
+  private final Map                         retrieverMap = new ConcurrentHashMap();
 
-  public StatisticsManagerMBeanImpl(final DSOStatisticsConfig config, final StatisticsRetrievalRegistry registry, final StatisticsBuffer buffer) throws NotCompliantMBeanException {
+  public StatisticsManagerMBeanImpl(final DSOStatisticsConfig config, final StatisticsRetrievalRegistry registry,
+                                    final StatisticsBuffer buffer) throws NotCompliantMBeanException {
     super(StatisticsManagerMBean.class, false);
 
     Assert.assertNotNull("config", config);
@@ -68,7 +69,7 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
 
     Set session_ids = retrieverMap.keySet();
     for (Iterator it = session_ids.iterator(); it.hasNext();) {
-      stopCapturing((String)it.next());
+      stopCapturing((String) it.next());
     }
 
     try {
@@ -84,7 +85,7 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
 
   public String[] getSupportedStatistics() {
     Collection stats = registry.getSupportedStatistics();
-    return (String[])stats.toArray(new String[stats.size()]);
+    return (String[]) stats.toArray(new String[stats.size()]);
   }
 
   public synchronized void createSession(final String sessionId) {
@@ -109,9 +110,7 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
   public synchronized boolean enableStatistic(final String sessionId, final String name) {
     StatisticsRetriever retriever = obtainRetriever(sessionId);
     StatisticRetrievalAction action = registry.getActionInstance(name);
-    if (null == action) {
-      return false;
-    }
+    if (null == action) { return false; }
     retriever.registerAction(action);
     enableStatisticsCollection(action);
     return true;
@@ -119,9 +118,7 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
 
   public synchronized String getStatisticType(String name) {
     StatisticRetrievalAction action = registry.getActionInstance(name);
-    if (null == action) {
-      return null;
-    }
+    if (null == action) { return null; }
 
     return action.getType().toString();
   }
@@ -131,20 +128,19 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
     obtainRetriever(sessionId);
 
     StatisticRetrievalAction action = registry.getActionInstance(name);
-    if (null == action) {
-      return null;
-    }
+    if (null == action) { return null; }
 
     final Date moment = new Date();
     StatisticData[] data = action.retrieveStatisticData();
     if (data != null) {
-      for (int i = 0; i < data.length; i++) {
-        data[i].setSessionId(sessionId);
-        data[i].setMoment(moment);
+      for (StatisticData element : data) {
+        element.setSessionId(sessionId);
+        element.setMoment(moment);
         try {
-          buffer.storeStatistic(data[i]);
+          buffer.storeStatistic(element);
         } catch (StatisticsBufferException e) {
-          throw new RuntimeException("Error while storing the statistic data '" + name + "' for cluster-wide ID '" + sessionId + "'.", e);
+          throw new RuntimeException("Error while storing the statistic data '" + name + "' for cluster-wide ID '"
+                                     + sessionId + "'.", e);
         }
       }
     } else {
@@ -155,16 +151,14 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
 
   public StatisticData[] retrieveStatisticData(final String name) {
     StatisticRetrievalAction action = registry.getActionInstance(name);
-    if (null == action) {
-      return null;
-    }
+    if (null == action) { return null; }
 
     final Date moment = new Date();
     StatisticData[] data = action.retrieveStatisticData();
     if (data != null) {
-      for (int i = 0; i < data.length; i++) {
-        buffer.fillInDefaultValues(data[i]);
-        data[i].setMoment(moment);
+      for (StatisticData element : data) {
+        buffer.fillInDefaultValues(element);
+        element.setMoment(moment);
       }
     } else {
       data = StatisticData.EMPTY_ARRAY;
@@ -178,7 +172,8 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
     } catch (StatisticsBufferStartCapturingSessionNotFoundException e) {
       throw new UnknownStatisticsSessionIdException(buffer.getDefaultNodeName(), e.getSessionId(), e);
     } catch (StatisticsBufferException e) {
-      throw new RuntimeException("Error while starting the capture session with cluster-wide ID '" + sessionId + "'.", e);
+      throw new RuntimeException("Error while starting the capture session with cluster-wide ID '" + sessionId + "'.",
+                                 e);
     }
   }
 
@@ -190,7 +185,8 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
     } catch (StatisticsBufferStopCapturingSessionNotFoundException e) {
       throw new UnknownStatisticsSessionIdException(buffer.getDefaultNodeName(), e.getSessionId(), e);
     } catch (StatisticsBufferException e) {
-      throw new RuntimeException("Error while stopping the capture session with cluster-wide ID '" + sessionId + "'.", e);
+      throw new RuntimeException("Error while stopping the capture session with cluster-wide ID '" + sessionId + "'.",
+                                 e);
     }
   }
 
@@ -221,8 +217,8 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
     final List sessions = new ArrayList();
     synchronized (this) {
       for (Iterator it = retrieverMap.keySet().iterator(); it.hasNext();) {
-        String sessionId = (String)it.next();
-        StatisticsRetriever retriever = (StatisticsRetriever)retrieverMap.get(sessionId);
+        String sessionId = (String) it.next();
+        StatisticsRetriever retriever = (StatisticsRetriever) retrieverMap.get(sessionId);
         if (retriever.containsAction(action)) {
           sessions.add(sessionId);
         }
@@ -231,10 +227,16 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
     return Collections.unmodifiableList(sessions);
   }
 
-  public void injectStatisticData(final String sessionId, final StatisticData data) throws AgentStatisticsManagerException {
-    if (!retrieverMap.containsKey(sessionId)) {
-      throw new StatisticDataInjectionErrorException(sessionId, data, new UnknownStatisticsSessionIdException(buffer.getDefaultNodeName(), sessionId, null));
-    }
+  public void injectStatisticData(final String sessionId, final StatisticData data)
+      throws AgentStatisticsManagerException {
+    if (!retrieverMap.containsKey(sessionId)) { throw new StatisticDataInjectionErrorException(
+                                                                                               sessionId,
+                                                                                               data,
+                                                                                               new UnknownStatisticsSessionIdException(
+                                                                                                                                       buffer
+                                                                                                                                           .getDefaultNodeName(),
+                                                                                                                                       sessionId,
+                                                                                                                                       null)); }
 
     try {
       data.setSessionId(sessionId);
@@ -245,33 +247,29 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
   }
 
   StatisticsRetriever obtainRetriever(final String sessionId) {
-    StatisticsRetriever retriever = (StatisticsRetriever)retrieverMap.get(sessionId);
-    if (null == retriever) {
-      throw new UnknownStatisticsSessionIdException(buffer.getDefaultNodeName(), sessionId, null);
-    }
+    StatisticsRetriever retriever = (StatisticsRetriever) retrieverMap.get(sessionId);
+    if (null == retriever) { throw new UnknownStatisticsSessionIdException(buffer.getDefaultNodeName(), sessionId, null); }
     return retriever;
   }
 
   private synchronized void enableStatisticsCollection(final StatisticRetrievalAction action) {
-    if (null == action) {
-      return;
-    }
+    if (null == action) { return; }
     if (action instanceof DynamicSRA) {
-      ((DynamicSRA)action).enableStatisticCollection();
+      ((DynamicSRA) action).enableStatisticCollection();
     }
   }
 
   private synchronized void cleanUpStatisticsCollection() {
     // iterate through all actions
     for (Iterator it_sra = registry.getRegisteredActionInstances().iterator(); it_sra.hasNext();) {
-      StatisticRetrievalAction action = (StatisticRetrievalAction)it_sra.next();
+      StatisticRetrievalAction action = (StatisticRetrievalAction) it_sra.next();
 
       if (action instanceof DynamicSRA) {
         boolean disableCollection = true;
 
         // iterate through active sessions and if no session is using the action, disable the collection
         for (Iterator it_retrievers = retrieverMap.values().iterator(); it_retrievers.hasNext();) {
-          StatisticsRetriever retriever = (StatisticsRetriever)it_retrievers.next();
+          StatisticsRetriever retriever = (StatisticsRetriever) it_retrievers.next();
           if (retriever.containsAction(action)) {
             disableCollection = false;
             break;
@@ -279,7 +277,7 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
         }
 
         if (disableCollection) {
-          ((DynamicSRA)action).disableStatisticCollection();
+          ((DynamicSRA) action).disableStatisticCollection();
         }
       }
     }

@@ -4,8 +4,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
-
 import com.tc.logging.TCLogger;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
@@ -17,6 +15,7 @@ import com.tc.util.State;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * When the peer node doesn't reply for the PING probes, an extra check(on demand) is made to make sure if it is really

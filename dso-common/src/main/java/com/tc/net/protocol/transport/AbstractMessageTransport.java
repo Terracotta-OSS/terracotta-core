@@ -4,8 +4,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
-
 import com.tc.logging.ConnectionIDProvider;
 import com.tc.logging.ConnectionIdLogger;
 import com.tc.logging.TCLogger;
@@ -14,6 +12,7 @@ import com.tc.net.protocol.NetworkLayer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public abstract class AbstractMessageTransport implements MessageTransport, ConnectionIDProvider {
 

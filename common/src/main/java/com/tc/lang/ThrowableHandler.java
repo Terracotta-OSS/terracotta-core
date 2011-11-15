@@ -4,8 +4,6 @@
  */
 package com.tc.lang;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
-
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.exception.DatabaseException;
 import com.tc.exception.ExceptionHelper;
@@ -27,6 +25,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Handle throwables appropriately by printing messages to the logger, etc. Deal with nasty problems that can occur as
@@ -45,8 +44,7 @@ public class ThrowableHandler {
 
   private static final long          TIME_OUT                        = TCPropertiesImpl
                                                                          .getProperties()
-                                                                         .getLong(
-                                                                                  TCPropertiesConsts.L2_DUMP_ON_EXCEPTION_TIMEOUT) * 1000;
+                                                                         .getLong(TCPropertiesConsts.L2_DUMP_ON_EXCEPTION_TIMEOUT) * 1000;
   private boolean                    isExitScheduled                 = false;
   private boolean                    isDumpTaken                     = false;
 

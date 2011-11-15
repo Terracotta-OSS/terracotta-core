@@ -4,8 +4,6 @@
  */
 package com.tc.stats;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
-
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.AbstractTerracottaMBean;
@@ -34,6 +32,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.MBeanNotificationInfo;
 import javax.management.MBeanServer;
@@ -67,7 +66,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   private final SampledCounter                 flushRate;
   private final SampledCounter                 faultRate;
   private final Counter                        pendingTransactions;
-  private final SynchronizedLong               sequenceNumber          = new SynchronizedLong(0L);
+  private final AtomicLong                     sequenceNumber          = new AtomicLong(0L);
   private final SampledCumulativeCounter       serverMapGetSizeRequestsCounter;
   private final SampledCumulativeCounter       serverMapGetValueRequestsCounter;
   private final ClientID                       clientID;
@@ -396,7 +395,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
 
     if (haveAllTunneledBeans()) {
       stopListeningForTunneledBeans();
-      sendNotification(new Notification(TUNNELED_BEANS_REGISTERED, this, sequenceNumber.increment()));
+      sendNotification(new Notification(TUNNELED_BEANS_REGISTERED, this, sequenceNumber.incrementAndGet()));
     }
   }
 

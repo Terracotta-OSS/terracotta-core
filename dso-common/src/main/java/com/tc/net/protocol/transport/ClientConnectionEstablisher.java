@@ -4,8 +4,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
-
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.LossyTCLogger;
 import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
@@ -29,6 +27,7 @@ import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This guy establishes a connection to the server for the Client.
@@ -44,11 +43,11 @@ public class ClientConnectionEstablisher {
   private final int                       timeout;
   private final ConnectionAddressProvider connAddressProvider;
   private final TCConnectionManager       connManager;
-  private final SynchronizedBoolean       asyncReconnecting     = new SynchronizedBoolean(false);
-  private final SynchronizedBoolean       allowReconnects       = new SynchronizedBoolean(true);
+  private final AtomicBoolean             asyncReconnecting     = new AtomicBoolean(false);
+  private final AtomicBoolean             allowReconnects       = new AtomicBoolean(true);
 
   private Thread                          connectionEstablisher;
-  private final NoExceptionLinkedQueue    reconnectRequest      = new NoExceptionLinkedQueue();  // <ConnectionRequest>
+  private final NoExceptionLinkedQueue    reconnectRequest      = new NoExceptionLinkedQueue(); // <ConnectionRequest>
 
   static {
     TCLogger logger = TCLogging.getLogger(ClientConnectionEstablisher.class);

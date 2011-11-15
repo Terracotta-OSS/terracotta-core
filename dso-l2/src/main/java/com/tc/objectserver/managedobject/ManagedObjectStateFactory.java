@@ -4,8 +4,6 @@
  */
 package com.tc.objectserver.managedobject;
 
-import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
-
 import com.tc.exception.TCRuntimeException;
 import com.tc.io.serializer.api.StringIndex;
 import com.tc.object.LiteralValues;
@@ -20,6 +18,7 @@ import com.tc.util.Assert;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Creates state for managed objects

@@ -4,9 +4,6 @@
  */
 package com.tc.statistics.beans.impl;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArraySet;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
-
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.AbstractTerracottaMBean;
@@ -26,17 +23,21 @@ import java.util.List;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.MBeanNotificationInfo;
 import javax.management.NotCompliantMBeanException;
 import javax.management.Notification;
 
-public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implements StatisticsEmitterMBean, StatisticsBufferListener {
-  public final static String STATISTICS_EMITTER_DATA_TYPE = "tc.statistics.emitter.data";
+public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implements StatisticsEmitterMBean,
+    StatisticsBufferListener {
+  public final static String                  STATISTICS_EMITTER_DATA_TYPE = "tc.statistics.emitter.data";
 
   public final static MBeanNotificationInfo[] NOTIFICATION_INFO;
 
-  private final static TCLogger LOGGER = TCLogging.getLogger(StatisticsEmitterMBeanImpl.class);
+  private final static TCLogger               LOGGER                       = TCLogging
+                                                                               .getLogger(StatisticsEmitterMBeanImpl.class);
 
   static {
     final String[] notifTypes = new String[] { STATISTICS_EMITTER_DATA_TYPE };
@@ -45,20 +46,21 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
     NOTIFICATION_INFO = new MBeanNotificationInfo[] { new MBeanNotificationInfo(notifTypes, name, description) };
   }
 
-  private final SynchronizedLong sequenceNumber;
+  private final AtomicLong                    sequenceNumber;
 
-  private final DSOStatisticsConfig config;
-  private final StatisticsBuffer buffer;
-  private final Set activeSessionIds;
+  private final DSOStatisticsConfig           config;
+  private final StatisticsBuffer              buffer;
+  private final Set                           activeSessionIds;
 
-  private Timer timer = null;
-  private SendStatsTask task = null;
+  private Timer                               timer                        = null;
+  private SendStatsTask                       task                         = null;
 
-  public StatisticsEmitterMBeanImpl(final DSOStatisticsConfig config, final StatisticsBuffer buffer) throws NotCompliantMBeanException {
+  public StatisticsEmitterMBeanImpl(final DSOStatisticsConfig config, final StatisticsBuffer buffer)
+      throws NotCompliantMBeanException {
     super(StatisticsEmitterMBean.class, true, false);
     Assert.assertNotNull("config", config);
     Assert.assertNotNull("buffer", buffer);
-    sequenceNumber = new SynchronizedLong(0L);
+    sequenceNumber = new AtomicLong(0L);
     activeSessionIds = new CopyOnWriteArraySet();
     this.config = config;
     this.buffer = buffer;
@@ -68,10 +70,12 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
     this.buffer.addListener(this);
   }
 
+  @Override
   public MBeanNotificationInfo[] getNotificationInfo() {
     return NOTIFICATION_INFO;
   }
 
+  @Override
   protected synchronized void enabledStateChanged() {
     if (isEnabled()) {
       enableTimer();
@@ -81,8 +85,7 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
   }
 
   private synchronized void enableTimer() {
-    if (timer != null ||
-        task != null) {
+    if (timer != null || task != null) {
       disableTimer();
     }
 
@@ -130,13 +133,14 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
     private boolean shutdown = false;
 
     public void shutdown() {
-      synchronized(StatisticsEmitterMBeanImpl.this) {
+      synchronized (StatisticsEmitterMBeanImpl.this) {
         shutdown = true;
       }
     }
 
+    @Override
     public void run() {
-      synchronized(StatisticsEmitterMBeanImpl.this) {
+      synchronized (StatisticsEmitterMBeanImpl.this) {
         if (shutdown) {
           cancel();
           return;
@@ -144,13 +148,12 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
       }
 
       boolean has_listeners = hasListeners();
-      if (has_listeners &&
-          !activeSessionIds.isEmpty()) {
-        for (Iterator it = activeSessionIds.iterator(); it.hasNext(); ) {
+      if (has_listeners && !activeSessionIds.isEmpty()) {
+        for (Iterator it = activeSessionIds.iterator(); it.hasNext();) {
           try {
             // todo: needs to support deferring sending until the capturing session shutdown
             final List notification_data = new ArrayList();
-            buffer.consumeStatistics((String)it.next(), new StatisticsConsumer() {
+            buffer.consumeStatistics((String) it.next(), new StatisticsConsumer() {
               public long getMaximumConsumedDataCount() {
                 return config.getParamLong(DSOStatisticsConfig.KEY_EMITTER_BATCH_SIZE);
               }
@@ -169,7 +172,10 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
             });
 
             // create the notification event
-            final Notification notification = new Notification(STATISTICS_EMITTER_DATA_TYPE, StatisticsEmitterMBeanImpl.this, sequenceNumber.increment(), System.currentTimeMillis());
+            final Notification notification = new Notification(STATISTICS_EMITTER_DATA_TYPE,
+                                                               StatisticsEmitterMBeanImpl.this,
+                                                               sequenceNumber.incrementAndGet(),
+                                                               System.currentTimeMillis());
             notification.setUserData(notification_data);
             sendNotification(notification);
           } catch (StatisticsBufferException e) {

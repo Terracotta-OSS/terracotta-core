@@ -4,8 +4,6 @@
  */
 package com.tc.net.protocol.tcm;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
-
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
@@ -16,6 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * provides the sessionIDs
@@ -70,8 +69,8 @@ class ChannelManagerImpl implements ChannelManager, ChannelEventListener, Server
 
   public synchronized void closeAllChannels() {
     MessageChannelInternal[] channelsCopy = getChannels();
-    for (int i = 0; i < channelsCopy.length; i++) {
-      channelsCopy[i].close();
+    for (MessageChannelInternal element : channelsCopy) {
+      element.close();
     }
     Assert.assertEquals(0, channels.size());
   }
@@ -113,7 +112,7 @@ class ChannelManagerImpl implements ChannelManager, ChannelEventListener, Server
       notfound = (channels.remove(channel.getChannelID()) == null);
     }
     if (notfound) {
-      logger.warn("Remove non-exist channel:"+channel.getChannelID());
+      logger.warn("Remove non-exist channel:" + channel.getChannelID());
       return;
     }
     fireChannelRemovedEvent(channel);

@@ -4,13 +4,11 @@
  */
 package com.tc.management;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
-
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 
 import java.lang.reflect.Field;
 import java.util.Iterator;
@@ -18,6 +16,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.management.ListenerNotFoundException;
 import javax.management.MBeanFeatureInfo;
@@ -31,15 +30,13 @@ import javax.management.StandardMBean;
 
 public abstract class AbstractTerracottaMBean extends StandardMBean implements NotificationEmitter, TerracottaMBean {
 
-  private static final ResourceBundle            DEFAULT_BUNDLE          = getBundleForMBean(
-                                                                                             TerracottaMBean.class,
+  private static final ResourceBundle            DEFAULT_BUNDLE          = getBundleForMBean(TerracottaMBean.class,
                                                                                              TCLogging
                                                                                                  .getLogger(TerracottaMBean.class));
 
   private static final boolean                   ENABLED                 = TCPropertiesImpl
                                                                              .getProperties()
-                                                                             .getBoolean(
-                                                                                         TCPropertiesConsts.TC_MANAGEMENT_MBEANS_ENABLED);
+                                                                             .getBoolean(TCPropertiesConsts.TC_MANAGEMENT_MBEANS_ENABLED);
 
   private final TCLogger                         logger;
   private final ResourceBundle                   beanBundle;
@@ -210,6 +207,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
    * don't really need to worry about the exact type of the feature (only the name), so we should be able to get away
    * with overriding only this particular method to supply descriptions.
    */
+  @Override
   protected String getDescription(final MBeanFeatureInfo featureInfo) {
     final String name = featureInfo.getName();
     String bundleDescription = null;
@@ -239,8 +237,8 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
   private static ResourceBundle getBundleForMBean(final Class mBeanInterface, final TCLogger logger) {
     ResourceBundle bundle = null;
     try {
-      bundle = ResourceBundle.getBundle(mBeanInterface.getName(), Locale.getDefault(), AbstractTerracottaMBean.class
-          .getClassLoader());
+      bundle = ResourceBundle.getBundle(mBeanInterface.getName(), Locale.getDefault(),
+                                        AbstractTerracottaMBean.class.getClassLoader());
     } catch (MissingResourceException mre) {
       /* Caller must deal with null return value when missing */
     } catch (Throwable t) {

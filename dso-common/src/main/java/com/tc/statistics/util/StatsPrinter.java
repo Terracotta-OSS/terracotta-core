@@ -4,10 +4,6 @@
  */
 package com.tc.statistics.util;
 
-import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
-
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesConsts;
@@ -21,6 +17,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class StatsPrinter implements StatsRecorder, Runnable {
   private final static TCLogger   statsLogger  = TCLogging.getLogger(StatsPrinter.class);
@@ -172,13 +171,13 @@ public class StatsPrinter implements StatsRecorder, Runnable {
         initCounters(counters.length);
       }
       for (int i = 0; i < counters.length; i++) {
-        ((SynchronizedLong) counterList.get(i)).add(counters[i]);
+        ((AtomicLong) counterList.get(i)).addAndGet(counters[i]);
       }
     }
 
     private void initCounters(int num) {
       while (counterList.size() < num) {
-        counterList.add(new SynchronizedLong(0));
+        counterList.add(new AtomicLong(0));
       }
     }
 
@@ -186,7 +185,7 @@ public class StatsPrinter implements StatsRecorder, Runnable {
       long ret[] = new long[counterList.size()];
       int size = counterList.size();
       for (int idx = 0; idx < size; idx++) {
-        ret[idx] = ((SynchronizedLong) counterList.get(idx)).set(0);
+        ret[idx] = ((AtomicLong) counterList.get(idx)).getAndSet(0);
       }
       return ret;
     }

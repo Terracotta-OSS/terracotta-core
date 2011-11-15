@@ -4,9 +4,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
-
 import com.tc.bytes.TCByteBuffer;
 import com.tc.logging.ConnectionIDProvider;
 import com.tc.logging.TCLogger;
@@ -26,6 +23,8 @@ import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Implementation of MessaageTransport
@@ -37,13 +36,13 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   protected ConnectionID                           connectionId           = new ConnectionID(JvmIDUtil.getJvmID(),
                                                                                              ChannelID.NULL_ID.toLong());
   protected final MessageTransportStatus           status;
-  protected final SynchronizedBoolean              isOpen;
+  protected final AtomicBoolean                    isOpen;
   protected final TransportHandshakeMessageFactory messageFactory;
   private final TransportHandshakeErrorHandler     handshakeErrorHandler;
   private NetworkLayer                             receiveLayer;
 
   private final Object                             attachingNewConnection = new Object();
-  private final SynchronizedRef                    connectionCloseEvent   = new SynchronizedRef(null);
+  private final AtomicReference                    connectionCloseEvent   = new AtomicReference(null);
   private boolean                                  allowConnectionReplace = false;
   private volatile ConnectionHealthCheckerContext  healthCheckerContext   = new ConnectionHealthCheckerContextDummyImpl();
   private int                                      remoteCallbackPort     = TransportHandshakeMessage.NO_CALLBACK_PORT;
@@ -55,7 +54,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     super(logger);
     this.handshakeErrorHandler = handshakeErrorHandler;
     this.messageFactory = messageFactory;
-    this.isOpen = new SynchronizedBoolean(isOpen);
+    this.isOpen = new AtomicBoolean(isOpen);
     this.status = new MessageTransportStatus(initialState, logger);
   }
 

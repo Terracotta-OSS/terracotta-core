@@ -4,10 +4,10 @@
  */
 package com.tc.management.beans.logging;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
-
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.object.logging.InstrumentationLogger;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.MBeanNotificationInfo;
 import javax.management.NotCompliantMBeanException;
@@ -26,7 +26,7 @@ public class InstrumentationLogging extends AbstractTerracottaMBean implements I
     NOTIFICATION_INFO = new MBeanNotificationInfo[] { new MBeanNotificationInfo(notifTypes, name, description) };
   }
 
-  private final SynchronizedLong               sequenceNumber = new SynchronizedLong(0L);
+  private final AtomicLong                     sequenceNumber = new AtomicLong(0L);
 
   public InstrumentationLogging(InstrumentationLogger instrumentationLogger) throws NotCompliantMBeanException {
     super(InstrumentationLoggingMBean.class, true);
@@ -35,8 +35,8 @@ public class InstrumentationLogging extends AbstractTerracottaMBean implements I
 
   public void setClass1(boolean classInclusion) {
     instrumentationLogger.setClassInclusion(classInclusion);
-    sendNotification(new Notification(CLASS_EVENT_TYPE, this, sequenceNumber.increment(), System.currentTimeMillis(),
-                                      Boolean.toString(classInclusion)));
+    sendNotification(new Notification(CLASS_EVENT_TYPE, this, sequenceNumber.incrementAndGet(),
+                                      System.currentTimeMillis(), Boolean.toString(classInclusion)));
   }
 
   public boolean getClass1() {
@@ -45,8 +45,8 @@ public class InstrumentationLogging extends AbstractTerracottaMBean implements I
 
   public void setDistributedMethods(boolean distMethodClassInsertion) {
     instrumentationLogger.setDistMethodCallInsertion(distMethodClassInsertion);
-    sendNotification(new Notification(DISTRIBUTED_METHODS_EVENT_TYPE, this, sequenceNumber.increment(), System
-        .currentTimeMillis(), Boolean.toString(distMethodClassInsertion)));
+    sendNotification(new Notification(DISTRIBUTED_METHODS_EVENT_TYPE, this, sequenceNumber.incrementAndGet(),
+                                      System.currentTimeMillis(), Boolean.toString(distMethodClassInsertion)));
   }
 
   public boolean getDistributedMethods() {
@@ -69,8 +69,8 @@ public class InstrumentationLogging extends AbstractTerracottaMBean implements I
 
   public void setLocks(boolean lockInsertion) {
     instrumentationLogger.setLockInsertion(lockInsertion);
-    sendNotification(new Notification(LOCKS_EVENT_TYPE, this, sequenceNumber.increment(), System.currentTimeMillis(),
-                                      Boolean.toString(lockInsertion)));
+    sendNotification(new Notification(LOCKS_EVENT_TYPE, this, sequenceNumber.incrementAndGet(),
+                                      System.currentTimeMillis(), Boolean.toString(lockInsertion)));
   }
 
   public boolean getLocks() {
@@ -79,8 +79,8 @@ public class InstrumentationLogging extends AbstractTerracottaMBean implements I
 
   public void setRoots(boolean rootInsertion) {
     instrumentationLogger.setRootInsertion(rootInsertion);
-    sendNotification(new Notification(ROOTS_EVENT_TYPE, this, sequenceNumber.increment(), System.currentTimeMillis(),
-                                      Boolean.toString(rootInsertion)));
+    sendNotification(new Notification(ROOTS_EVENT_TYPE, this, sequenceNumber.incrementAndGet(),
+                                      System.currentTimeMillis(), Boolean.toString(rootInsertion)));
   }
 
   public boolean getRoots() {
@@ -89,8 +89,8 @@ public class InstrumentationLogging extends AbstractTerracottaMBean implements I
 
   public void setTransientRoot(boolean transientRootWarning) {
     instrumentationLogger.setTransientRootWarning(transientRootWarning);
-    sendNotification(new Notification(TRANSIENT_ROOT_EVENT_TYPE, this, sequenceNumber.increment(), System
-        .currentTimeMillis(), Boolean.toString(transientRootWarning)));
+    sendNotification(new Notification(TRANSIENT_ROOT_EVENT_TYPE, this, sequenceNumber.incrementAndGet(),
+                                      System.currentTimeMillis(), Boolean.toString(transientRootWarning)));
   }
 
   public boolean getTransientRoot() {
@@ -101,6 +101,7 @@ public class InstrumentationLogging extends AbstractTerracottaMBean implements I
     /**/
   }
 
+  @Override
   public MBeanNotificationInfo[] getNotificationInfo() {
     return NOTIFICATION_INFO;
   }

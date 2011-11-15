@@ -4,8 +4,6 @@
  */
 package com.tc.statistics.retrieval.impl;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
-
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesConsts;
@@ -30,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsBufferListener {
   public static final String        TIMER_NAME                    = "Statistics Retriever";
@@ -40,7 +39,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
 
   private Timer                     timer;
 
-  private final DSOStatisticsConfig    config;
+  private final DSOStatisticsConfig config;
   private final StatisticsBuffer    buffer;
   private final String              sessionId;
 
@@ -153,10 +152,10 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
       return;
     }
     if (data != null) {
-      for (int i = 0; i < data.length; i++) {
-        data[i].setSessionId(sessionId);
-        data[i].setMoment(moment);
-        bufferData(data[i]);
+      for (StatisticData element : data) {
+        element.setSessionId(sessionId);
+        element.setMoment(moment);
+        bufferData(element);
       }
     }
   }
@@ -176,8 +175,11 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
 
     timer = new Timer(TIMER_NAME, true);
     infoTask = new LogRetrievalInProcessTask();
-    timer.scheduleAtFixedRate(infoTask, 0, TCPropertiesImpl.getProperties()
-        .getInt(TCPropertiesConsts.CVT_RETRIEVER_NOTIFICATION_INTERVAL, DEFAULT_NOTIFICATION_INTERVAL) * 1000);
+    timer.scheduleAtFixedRate(infoTask,
+                              0,
+                              TCPropertiesImpl.getProperties()
+                                  .getInt(TCPropertiesConsts.CVT_RETRIEVER_NOTIFICATION_INTERVAL,
+                                          DEFAULT_NOTIFICATION_INTERVAL) * 1000);
 
     statsTask = new RetrieveStatsTask();
     timer.scheduleAtFixedRate(statsTask, 0, config.getParamLong(DSOStatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
@@ -192,7 +194,9 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
       boolean interrupted = false;
       try {
         while (!statsTask.isShutdown()
-               && (System.currentTimeMillis() - before_shutdown_wait) < shutdown_wait_expiration) { // only wait for a limited amount of time
+               && (System.currentTimeMillis() - before_shutdown_wait) < shutdown_wait_expiration) { // only wait for a
+                                                                                                    // limited amount of
+                                                                                                    // time
           try {
             this.wait(shutdown_wait_expiration); // wait for the retriever schedule interval
           } catch (InterruptedException e) {
@@ -256,6 +260,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
       return isShutdown;
     }
 
+    @Override
     public void run() {
       List action_list = (List) actionsMap.get(StatisticType.SNAPSHOT);
       Assert.assertNotNull("list of snapshot actions", action_list);
@@ -295,6 +300,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
       this.cancel();
     }
 
+    @Override
     public void run() {
       if (!shutdown) {
         LOGGER.info("Statistics retrieval in PROCESS for session ID '" + sessionId + "' on node '"

@@ -1,11 +1,12 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.management.beans.logging;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
-
 import com.tc.management.AbstractTerracottaMBean;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.MBeanNotificationInfo;
 import javax.management.NotCompliantMBeanException;
@@ -22,7 +23,7 @@ public final class TCLoggingBroadcaster extends AbstractTerracottaMBean implemen
     NOTIFICATION_INFO = new MBeanNotificationInfo[] { new MBeanNotificationInfo(notifTypes, name, description) };
   }
 
-  private final SynchronizedLong               sequenceNumber     = new SynchronizedLong(0L);
+  private final AtomicLong                     sequenceNumber     = new AtomicLong(0L);
 
   public void reset() {
     // nothing to reset
@@ -32,13 +33,14 @@ public final class TCLoggingBroadcaster extends AbstractTerracottaMBean implemen
     super(TCLoggingBroadcasterMBean.class, true);
   }
 
+  @Override
   public MBeanNotificationInfo[] getNotificationInfo() {
     return NOTIFICATION_INFO;
   }
 
   public void broadcastLogEvent(final String event) {
-    final Notification notif = new Notification(LOGGING_EVENT_TYPE, this, sequenceNumber.increment(), System
-        .currentTimeMillis(), event);
+    final Notification notif = new Notification(LOGGING_EVENT_TYPE, this, sequenceNumber.incrementAndGet(),
+                                                System.currentTimeMillis(), event);
     sendNotification(notif);
   }
 

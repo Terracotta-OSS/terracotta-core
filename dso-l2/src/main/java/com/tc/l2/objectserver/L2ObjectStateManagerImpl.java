@@ -4,8 +4,6 @@
  */
 package com.tc.l2.objectserver;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
-
 import com.tc.l2.context.ManagedObjectSyncContext;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -27,6 +25,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
 

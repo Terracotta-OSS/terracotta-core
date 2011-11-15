@@ -4,8 +4,6 @@
  */
 package com.tc.runtime;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
-
 import com.tc.exception.TCRuntimeException;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.TCLogger;
@@ -17,6 +15,7 @@ import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class TCMemoryManagerImpl implements TCMemoryManager, ReconnectionRejectedCallback {
 

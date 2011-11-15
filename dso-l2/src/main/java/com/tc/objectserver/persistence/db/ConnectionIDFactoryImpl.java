@@ -4,8 +4,6 @@
  */
 package com.tc.objectserver.persistence.db;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
-
 import com.tc.exception.TCRuntimeException;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -22,6 +20,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelManagerEventListener {
 

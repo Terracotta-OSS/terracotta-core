@@ -4,8 +4,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
-
 import com.tc.logging.TCLogger;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.IllegalReconnectException;
@@ -26,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**

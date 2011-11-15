@@ -4,8 +4,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
-
 import com.tc.exception.TCInternalError;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogging;
@@ -28,6 +26,7 @@ import com.tc.util.concurrent.TCFuture;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Client implementation of the transport network layer.
@@ -41,7 +40,7 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
   private boolean                           wasOpened                          = false;
   private TCFuture                          waitForSynAckResult;
   private final WireProtocolAdaptorFactory  wireProtocolAdaptorFactory;
-  private final SynchronizedBoolean         isOpening                          = new SynchronizedBoolean(false);
+  private final AtomicBoolean               isOpening                          = new AtomicBoolean(false);
   private final int                         callbackPort;
   private final ReconnectionRejectedHandler reconnectionRejectedHandler;
   private volatile boolean                  rejoinExpected                     = false;

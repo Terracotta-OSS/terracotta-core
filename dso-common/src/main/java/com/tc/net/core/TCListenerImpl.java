@@ -4,8 +4,6 @@
  */
 package com.tc.net.core;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArraySet;
-
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
@@ -25,6 +23,7 @@ import java.net.InetAddress;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * TCListener implementation

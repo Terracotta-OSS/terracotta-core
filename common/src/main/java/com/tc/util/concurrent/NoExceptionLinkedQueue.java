@@ -4,19 +4,19 @@
  */
 package com.tc.util.concurrent;
 
-import EDU.oswego.cs.dl.util.concurrent.Channel;
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
-
 import com.tc.util.Util;
 
-public class NoExceptionLinkedQueue implements Channel {
-  public final LinkedQueue queue = new LinkedQueue();
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
+public class NoExceptionLinkedQueue extends LinkedBlockingQueue {
+
+  @Override
   public void put(Object o) {
     boolean interrupted = false;
     while (true) {
       try {
-        queue.put(o);
+        super.put(o);
         Util.selfInterruptIfNeeded(interrupted);
         return;
       } catch (InterruptedException e) {
@@ -27,36 +27,29 @@ public class NoExceptionLinkedQueue implements Channel {
 
   public boolean offer(Object o, long l) {
     try {
-      return queue.offer(o, l);
+      return super.offer(o, l, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       return false;
     }
   }
 
-  public boolean isEmpty() {
-    return queue.isEmpty();
-  }
-
-  public Object peek() {
-    return queue.peek();
-  }
-
   public Object poll(long arg0) {
     try {
-      return queue.poll(arg0);
+      return super.poll(arg0, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       return null;
     }
   }
 
+  @Override
   public Object take() {
     boolean interrupted = false;
     try {
       while (true) {
         try {
-          return queue.take();
+          return super.take();
         } catch (InterruptedException e) {
           interrupted = true;
         }
@@ -66,22 +59,4 @@ public class NoExceptionLinkedQueue implements Channel {
     }
   }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (obj instanceof NoExceptionLinkedQueue) {
-      return queue.equals(((NoExceptionLinkedQueue) obj).queue);
-    } else {
-      return false;
-    }
-  }
-
-  @Override
-  public int hashCode() {
-    return queue.hashCode();
-  }
-
-  @Override
-  public String toString() {
-    return queue.toString();
-  }
 }

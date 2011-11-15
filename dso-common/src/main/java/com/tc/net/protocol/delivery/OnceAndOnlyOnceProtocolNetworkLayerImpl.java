@@ -4,8 +4,6 @@
  */
 package com.tc.net.protocol.delivery;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
-
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogging;
@@ -31,6 +29,7 @@ import com.tc.util.UUID;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Timer;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * NetworkLayer implementation for once and only once message delivery protocol.
@@ -44,9 +43,9 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   private MessageChannelInternal           receiveLayer;
   private MessageTransport                 sendLayer;
   private final GuaranteedDeliveryProtocol delivery;
-  private final SynchronizedBoolean        reconnectMode    = new SynchronizedBoolean(false);
-  private final SynchronizedBoolean        handshakeMode    = new SynchronizedBoolean(false);
-  private final SynchronizedBoolean        channelConnected = new SynchronizedBoolean(false);
+  private final AtomicBoolean              reconnectMode    = new AtomicBoolean(false);
+  private final AtomicBoolean              handshakeMode    = new AtomicBoolean(false);
+  private final AtomicBoolean              channelConnected = new AtomicBoolean(false);
   private boolean                          isClosed         = false;
   private final boolean                    isClient;
   private final String                     debugId;

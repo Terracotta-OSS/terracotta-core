@@ -6,8 +6,6 @@ package com.tc.statistics.store.h2;
 
 import org.apache.commons.lang.StringEscapeUtils;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArraySet;
-
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -61,6 +59,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 

@@ -4,10 +4,10 @@
  */
 package com.tc.management.beans.logging;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
-
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.object.logging.RuntimeLogger;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.MBeanNotificationInfo;
 import javax.management.NotCompliantMBeanException;
@@ -26,7 +26,7 @@ public class RuntimeLogging extends AbstractTerracottaMBean implements RuntimeLo
     NOTIFICATION_INFO = new MBeanNotificationInfo[] { new MBeanNotificationInfo(notifTypes, name, description) };
   }
 
-  private final SynchronizedLong               sequenceNumber = new SynchronizedLong(0L);
+  private final AtomicLong                     sequenceNumber = new AtomicLong(0L);
 
   public RuntimeLogging(RuntimeLogger runtimeLogger) throws NotCompliantMBeanException {
     super(RuntimeLoggingMBean.class, true);
@@ -115,14 +115,15 @@ public class RuntimeLogging extends AbstractTerracottaMBean implements RuntimeLo
   }
 
   private void sendNotification(String eventType, boolean eventValue) {
-    sendNotification(new Notification(eventType, this, sequenceNumber.increment(), System.currentTimeMillis(), Boolean
-        .toString(eventValue)));
+    sendNotification(new Notification(eventType, this, sequenceNumber.incrementAndGet(), System.currentTimeMillis(),
+                                      Boolean.toString(eventValue)));
   }
 
   public void reset() {
     /**/
   }
 
+  @Override
   public MBeanNotificationInfo[] getNotificationInfo() {
     return NOTIFICATION_INFO;
   }

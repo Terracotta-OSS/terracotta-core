@@ -4,8 +4,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
-
 import com.tc.logging.LogLevelImpl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -16,6 +14,7 @@ import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Iterator;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The Engine which does the peer health checking work. Based on the config passed, it probes the peer once in specified
