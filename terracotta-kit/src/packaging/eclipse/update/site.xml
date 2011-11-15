@@ -10,7 +10,11 @@
    <feature url="features/org.terracotta.dso_${eclipse.plugin.version}.jar" id="org.terracotta.dso" version="${eclipse.plugin.version}">
       <category name="dso"/>
    </feature>
-
+   
+   <feature url="features/org.terracotta.dso_3.6.0.r19049_v111114.jar" id="org.terracotta.dso" version="3.6.0.r19049_v111114">
+      <category name="dso"/> 
+   </feature>
+   
    <feature url="features/org.terracotta.dso_3.5.2.r18007_v20110628.jar" id="org.terracotta.dso" version="3.5.2.r18007_v20110628">
       <category name="dso"/>
    </feature>
