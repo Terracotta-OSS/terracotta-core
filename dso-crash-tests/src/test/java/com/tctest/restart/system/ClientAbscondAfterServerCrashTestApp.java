@@ -109,7 +109,7 @@ public class ClientAbscondAfterServerCrashTestApp extends AbstractTransparentApp
     // Stop one of the extra clients before the server boots-up from the crash
     try {
       System.out.println("XXX Client1 Absconds...");
-      client1.attemptShutdown();
+      client1.attemptForceShutdown();
     } catch (Exception e) {
       throw new AssertionError(e);
     }

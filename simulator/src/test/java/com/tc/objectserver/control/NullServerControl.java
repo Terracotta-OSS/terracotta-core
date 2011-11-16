@@ -11,7 +11,7 @@ public class NullServerControl implements ServerControl {
 
   private boolean isRunning;
 
-  public synchronized void attemptShutdown() throws Exception {
+  public synchronized void attemptForceShutdown() throws Exception {
     isRunning = false;
   }
 

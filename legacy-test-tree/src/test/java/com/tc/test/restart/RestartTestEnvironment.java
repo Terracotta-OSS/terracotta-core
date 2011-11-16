@@ -338,9 +338,9 @@ public class RestartTestEnvironment {
       server.mergeSTDERR();
     }
 
-    public void attemptShutdown() throws Exception {
+    public void attemptForceShutdown() throws Exception {
       assertServerOn();
-      server.attemptShutdown();
+      server.attemptForceShutdown();
     }
 
     public void shutdown() throws Exception {

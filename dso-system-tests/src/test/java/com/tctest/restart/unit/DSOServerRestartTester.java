@@ -92,7 +92,7 @@ public class DSOServerRestartTester extends TCTestCase {
     }
 
     // start the shutdown sequence.
-    if (env.getServer().isRunning()) env.getServer().attemptShutdown();
+    if (env.getServer().isRunning()) env.getServer().attemptForceShutdown();
     // XXX: Yuck.
     Thread.sleep(2000);
     // release the lock, so the server can shut down.
@@ -193,7 +193,7 @@ public class DSOServerRestartTester extends TCTestCase {
     FutureResult shutdownBlockerBarrier = new FutureResult();
     shutdownBlocker.blockShutdown(shutdownBlockerBarrier);
     System.out.println("starting server shutdown sequence...");
-    server.attemptShutdown();
+    server.attemptForceShutdown();
     System.out.println("waiting for timers to go off in server before allowing shutdown to complete...");
     ThreadUtil.reallySleep(waitTime + 1000);
     System.out.println("letting the server finish shutting down...");

@@ -310,9 +310,10 @@ public class ExtraProcessServerControl extends ServerControlBase {
   protected List<String> getMainClassArguments() {
     if (serverName != null && !serverName.equals("")) {
       return Arrays.asList(StandardConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFileLoc,
-                           StandardConfigurationSetupManagerFactory.SERVER_NAME_ARGUMENT_WORD, serverName);
+                           StandardConfigurationSetupManagerFactory.SERVER_NAME_ARGUMENT_WORD, serverName, "-force");
     } else {
-      return Arrays.asList(StandardConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFileLoc);
+      return Arrays.asList(StandardConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFileLoc,
+                           "-force");
     }
   }
 
@@ -373,8 +374,8 @@ public class ExtraProcessServerControl extends ServerControlBase {
     System.out.println(this.name + " crashed.");
   }
 
-  public void attemptShutdown() throws Exception {
-    System.out.println("Shutting down server " + this.name + "...");
+  public void attemptForceShutdown() throws Exception {
+    System.out.println("Force Shutting down server " + this.name + "...");
     LinkedJavaProcess stopper = createLinkedJavaProcess("com.tc.admin.TCStop", getMainClassArguments(), jvmArgs);
     stopper.start();
 
@@ -405,7 +406,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
 
   public void shutdown() throws Exception {
     try {
-      attemptShutdown();
+      attemptForceShutdown();
     } catch (Exception e) {
       System.err.println("Attempt to shutdown server but it might have already crashed: " + e.getMessage());
     }

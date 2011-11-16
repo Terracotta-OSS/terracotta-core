@@ -16,7 +16,7 @@ public interface ServerControl {
   /**
    * Starts the shutdown sequence, but doesn't block.
    */
-  public void attemptShutdown() throws Exception;
+  public void attemptForceShutdown() throws Exception;
 
   /**
    * Starts the shutdown sequence, blocking until isRunning() is false.

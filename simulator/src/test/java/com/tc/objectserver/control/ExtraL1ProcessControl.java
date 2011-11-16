@@ -101,7 +101,7 @@ public class ExtraL1ProcessControl extends ExtraProcessServerControl {
   }
 
   @Override
-  public void attemptShutdown() throws Exception {
+  public void attemptForceShutdown() throws Exception {
     // TODO:: comeback
     process.destroy();
   }
