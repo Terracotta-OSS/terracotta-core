@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 public class ClientObjectManagerTest extends BaseDSOTestCase {
   private ClientObjectManager     mgr;
@@ -300,7 +301,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     new Thread(lookup1).start();
     // make sure the first caller has called down into the remote object manager
     this.remoteObjectManager.retrieveRootIDCalls.take();
-    assertNull(this.remoteObjectManager.retrieveRootIDCalls.poll(0));
+    assertNull(this.remoteObjectManager.retrieveRootIDCalls.poll(0, TimeUnit.MILLISECONDS));
   }
 
   /**
@@ -321,12 +322,12 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     new Thread(lookup1).start();
     // make sure the first caller has called down into the remote object manager.
     this.remoteObjectManager.retrieveRootIDCalls.take();
-    assertNull(this.remoteObjectManager.retrieveRootIDCalls.poll(0));
+    assertNull(this.remoteObjectManager.retrieveRootIDCalls.poll(0, TimeUnit.MILLISECONDS));
 
     // now start another lookup and make sure that it doesn't call down into the remote object manager.
     new Thread(lookup2).start();
     ThreadUtil.reallySleep(5000);
-    assertNull(this.remoteObjectManager.retrieveRootIDCalls.poll(0));
+    assertNull(this.remoteObjectManager.retrieveRootIDCalls.poll(0, TimeUnit.MILLISECONDS));
 
     // allow the first lookup to proceed.
     this.remoteObjectManager.retrieveRootIDResults.put(this.objectID);
@@ -340,7 +341,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     assertEquals(lookup1, lookup2);
 
     // but, the remote object manager retrieveRootID() should only have been called the first time.
-    assertNull(this.remoteObjectManager.retrieveRootIDCalls.poll(0));
+    assertNull(this.remoteObjectManager.retrieveRootIDCalls.poll(0, TimeUnit.MILLISECONDS));
   }
 
   private TestDNA newEmptyDNA() {
@@ -351,7 +352,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
   }
 
   private void prepareObjectLookupResults(final TestDNA dna) {
-    this.remoteObjectManager.retrieveResults.put(dna);
+    this.remoteObjectManager.retrieveResults.add(dna);
   }
 
   private static final class LookupRootAgent implements Runnable {

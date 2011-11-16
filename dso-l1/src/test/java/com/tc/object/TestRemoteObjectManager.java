@@ -19,21 +19,32 @@ import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class TestRemoteObjectManager implements RemoteObjectManager {
+  private final int               SIZE                  = 10000;
 
-  public final NoExceptionLinkedQueue retrieveCalls         = new NoExceptionLinkedQueue();
-  public final NoExceptionLinkedQueue retrieveResults       = new NoExceptionLinkedQueue();
+  /**
+   * sine LinkedBlockingQueue is instrumented this is a workaround to get this test working 
+   * TODO: change back to {@link NoExceptionLinkedQueue} when instrumentation is removed
+   */
+  public final ArrayBlockingQueue retrieveCalls         = new ArrayBlockingQueue(SIZE);
+  public final ArrayBlockingQueue retrieveResults       = new ArrayBlockingQueue(SIZE);
 
-  public final NoExceptionLinkedQueue retrieveRootIDCalls   = new NoExceptionLinkedQueue();
-  public final NoExceptionLinkedQueue retrieveRootIDResults = new NoExceptionLinkedQueue();
+  public final ArrayBlockingQueue retrieveRootIDCalls   = new ArrayBlockingQueue(SIZE);
+  public final ArrayBlockingQueue retrieveRootIDResults = new ArrayBlockingQueue(SIZE);
 
-  public static final DNA             THROW_NOT_FOUND       = new ThrowNotFound();
-  public final ObjectIDSet            removedObjects        = new ObjectIDSet();
+  public static final DNA         THROW_NOT_FOUND       = new ThrowNotFound();
+  public final ObjectIDSet        removedObjects        = new ObjectIDSet();
 
   public DNA retrieve(final ObjectID id) {
-    this.retrieveCalls.put(id);
-    final DNA dna = (DNA) this.retrieveResults.take();
+    this.retrieveCalls.add(id);
+    DNA dna;
+    try {
+      dna = (DNA) this.retrieveResults.take();
+    } catch (InterruptedException e) {
+      throw new AssertionError(e);
+    }
     if (dna == THROW_NOT_FOUND) { throw new TCObjectNotFoundException("missing ID"); }
     return dna;
   }
@@ -43,8 +54,12 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
   }
 
   public ObjectID retrieveRootID(final String name) {
-    this.retrieveRootIDCalls.put(name);
-    return (ObjectID) this.retrieveRootIDResults.take();
+    this.retrieveRootIDCalls.add(name);
+    try {
+      return (ObjectID) this.retrieveRootIDResults.take();
+    } catch (InterruptedException e) {
+      throw new AssertionError(e);
+    }
   }
 
   public void removed(final ObjectID id) {
