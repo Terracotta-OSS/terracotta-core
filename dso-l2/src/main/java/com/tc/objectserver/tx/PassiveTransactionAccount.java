@@ -11,6 +11,7 @@ import com.tc.object.tx.TransactionID;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -186,8 +187,14 @@ public class PassiveTransactionAccount implements TransactionAccount {
 
   @Override
   public String toString() {
+    StringBuilder stringBuilder = new StringBuilder();
     synchronized (this.txnIDsToState) {
-      return "PassiveTransactionAccount [ " + this.nodeID + " ] = " + this.txnIDsToState;
+      stringBuilder.append("PassiveTransactionAccount [ " + this.nodeID + " ] = \n");
+      for (final Entry<ServerTransactionID, TransactionState> entry : txnIDsToState.entrySet()) {
+        stringBuilder.append("{").append(entry.getKey()).append(": ");
+        stringBuilder.append(entry.getValue()).append("}\n");
+      }
+      return stringBuilder.toString();
     }
   }
 
