@@ -6,6 +6,8 @@ package com.tc.management.lock.stats;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
+import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
+
 import com.tc.exception.TCRuntimeException;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
@@ -28,7 +30,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class LockStatElement implements TCSerializable, Serializable, LockTraceElement {
   private static final long              serialVersionUID  = 1L;
