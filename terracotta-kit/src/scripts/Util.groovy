@@ -98,6 +98,23 @@ class Util {
       } else {
         throw new RuntimeException("version doesn't match Eclipse plugin pattern")
       }
-     
-    }                    
+    }  
+
+    static void processEnterpriseGtKit(project) {
+      def rootDir = project.properties['rootDir']
+      def binDir = new File(rootDir, "bin")
+      def libDir = new File(rootDir, "lib")
+      ant.delete(verbose: "true") {
+        fileset(dir: libDir, includes: "je-*.jar")
+      }
+      ant.replace(file: new File(binDir, "start-tc-server.sh"),
+                  token: "USE_DERBYDB=false",
+                  value: "USE_DERBYDB=true",
+                  failOnNoReplacements: "true")
+      ant.replace(file: new File(binDir, "start-tc-server.bat"),
+                  token: "set USE_DERBYDB=\"false\"",
+                  value: "set USE_DERBYDB=\"true\"",
+                  failOnNoReplacements: "true")
+                  
+    }    
 }

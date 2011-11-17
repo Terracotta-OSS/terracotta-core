@@ -43,6 +43,15 @@ do
   if test "$?" = "0" ; then break; fi
 done
 
+# set to true if you want Terracotta server uses Derby DB as a store
+USE_DERBYDB=false
+
+if $USE_DERBYDB; then 
+  DERBY_DB="-Dcom.tc.l2.db.factory.name=com.tc.objectserver.storage.derby.DerbyDBFactory"
+  JAVA_OPTS="${JAVA_OPTS} ${DERBY_DB}"
+  echo "Starting Terracotta server with Derby DB"
+fi
+
 #rmi.dgc.server.gcInterval is set an year to avoid system gc in case authentication is enabled
 #users may change it accordingly
 start=true

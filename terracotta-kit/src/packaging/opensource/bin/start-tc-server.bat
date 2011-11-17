@@ -44,6 +44,16 @@ set OPTS=%SERVER_OPT% -Xms512m -Xmx512m -XX:+HeapDumpOnOutOfMemoryError
 set OPTS=%OPTS% -Dcom.sun.management.jmxremote
 set OPTS=%OPTS% -Dsun.rmi.dgc.server.gcInterval=31536000
 set OPTS=%OPTS% -Dtc.install-root=%TC_INSTALL_DIR%
+
+rem set to true if you want Terracotta server uses Derby DB as a store
+set USE_DERBYDB="false"
+
+if %USE_DERBYDB% == "true" (
+  set DERBY_DB="-Dcom.tc.l2.db.factory.name=com.tc.objectserver.storage.derby.DerbyDBFactory"
+  set OPTS=%OPTS% %DERBY_DB%
+  echo Starting Terracotta server with Derby DB
+)
+
 set JAVA_OPTS=%OPTS% %JAVA_OPTS%
 :START_TCSERVER
 %JAVA_COMMAND% %JAVA_OPTS% -cp %CLASSPATH% com.tc.server.TCServerMain %*

@@ -33,7 +33,8 @@
     <kit.name>${terracotta.artifactId}-${project.version}</kit.name>
     <rootDir>${project.build.directory}/${kit.name}</rootDir>
     <skip.schema>true</skip.schema>
-    <no.extra>false</no.extra>    
+    <no.extra>false</no.extra>
+    <gt.kit>false</gt.kit>    
     
     <terracotta.artifactId>terracotta${ee.suffix}</terracotta.artifactId>
     <terracotta.jarname>${terracotta.artifactId}-${project.version}.jar</terracotta.jarname>
@@ -157,6 +158,17 @@
         <terracotta.license>TERRACOTTA-TRIAL-LICENSE.txt</terracotta.license>
       </properties>
 	  </profile>
+    
+    <!-- ********************************************************************************** -->
+    <!--   profile to build Enterprise Terracotta -gt kit. Need to be used with 'kit' profile   -->    
+    <!-- ********************************************************************************** -->  
+    <profile>
+	    <id>gt</id>
+      <properties>
+        <gt.kit>true</gt.kit>
+        <kit.name>${terracotta.artifactId}-gt-${project.version}</kit.name>
+      </properties>
+	  </profile>    
   
     <!-- ******************************************************************* -->
     <!--   profile to exclude extra packaging of ehcache, quartz, sessions   -->    
@@ -394,6 +406,7 @@
                     
                     <!-- 1. remove build-data.txt from terracotta jar and rename it to tc.jar 
                          2. set execution permissions for scripts and library files
+                         3. apply -gt kit changes
                     -->
                     <resource>
                       <targetPath>${rootDir}/lib</targetPath>
@@ -404,6 +417,9 @@
                       <dependenciesAtM2>true</dependenciesAtM2>
                       <process>Util.processTerracottaJar(project, files.first(), "lib")
                                Util.setPermission(project)
+                               if (project.properties['gt.kit'] == "true") {
+                                 Util.processEnterpriseGtKit(project)
+                               }
                       </process>
                     </resource>                    
                   </resources>
