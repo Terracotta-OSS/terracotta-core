@@ -203,7 +203,6 @@ import com.tc.util.TCTimerService;
 import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.ToggleableReferenceManager;
-import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.LockInfoByThreadID;
 import com.tc.util.runtime.LockState;
@@ -294,8 +293,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                  final StatisticsAgentSubSystem statisticsAgentSubSystem,
                                  final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger,
                                  final ClientMode clientMode) {
-    super(threadGroup, clientMode.isExpressRejoinClient() ? QueueFactory.LINKED_BLOCKING_QUEUE
-        : QueueFactory.BOUNDED_LINKED_QUEUE);
+    super(threadGroup);
     Assert.assertNotNull(config);
     this.clientMode = clientMode;
     this.config = config;

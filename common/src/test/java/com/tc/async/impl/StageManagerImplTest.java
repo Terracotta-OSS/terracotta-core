@@ -4,8 +4,6 @@
  */
 package com.tc.async.impl;
 
-import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
-
 import com.tc.async.api.EventContext;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Stage;
@@ -53,7 +51,7 @@ public class StageManagerImplTest extends TestCase {
       stageManager = new StageManagerImpl(new TCThreadGroup(
                                                             new ThrowableHandler(TCLogging
                                                                 .getLogger(StageManagerImpl.class))),
-                                          new QueueFactory(BoundedLinkedQueue.class.getName()));
+                                          new QueueFactory());
       testEventHandler = new TestEventHandler();
     } catch (Throwable t) {
       t.printStackTrace();

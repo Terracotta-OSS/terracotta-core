@@ -4,13 +4,10 @@
  */
 package com.tc.util.concurrent;
 
-import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.util.Assert;
 import com.tc.util.runtime.Vm;
-
-import java.util.concurrent.LinkedBlockingQueue;
 
 import junit.framework.TestCase;
 
@@ -28,8 +25,8 @@ public class TCLinkedQueueJDK15Test extends TestCase {
     TCQueue linkedBlockingQueue = (new QueueFactory()).createInstance();
     Assert.assertTrue(linkedBlockingQueue instanceof TCLinkedBlockingQueue);
 
-    TCQueue boundedLinkedQueue = (new QueueFactory(BoundedLinkedQueue.class.getName())).createInstance();
-    Assert.assertTrue(boundedLinkedQueue instanceof TCBoundedLinkedQueue);
+    TCQueue boundedLinkedQueue = (new QueueFactory()).createInstance();
+    Assert.assertTrue(boundedLinkedQueue instanceof TCLinkedBlockingQueue);
   }
 
   public void testLinkedQueueCapacity() {
@@ -63,7 +60,7 @@ public class TCLinkedQueueJDK15Test extends TestCase {
     try {
       (new QueueFactory()).createInstance(-1);
       failed = false;
-    } catch (AssertionError iae) {
+    } catch (IllegalArgumentException iae) {
       // expected
     }
     if (!failed) { throw new AssertionError("Expected to throw an Exception"); }
@@ -75,7 +72,7 @@ public class TCLinkedQueueJDK15Test extends TestCase {
       System.out.println("This test is supposed to run only for JDK 1.5 and above. Exiting the test...");
       return;
     }
-    TCQueue queue = (new QueueFactory(LinkedBlockingQueue.class.getName())).createInstance(NUMBER_OF_TRANSACTIONS);
+    TCQueue queue = (new QueueFactory()).createInstance(NUMBER_OF_TRANSACTIONS);
 
     Thread producer1 = new Producer("Producer TCLinkedBlockingQueue", queue);
     long startTime = System.currentTimeMillis();
@@ -96,17 +93,17 @@ public class TCLinkedQueueJDK15Test extends TestCase {
     System.out.println("Removed " + NUMBER_OF_TRANSACTIONS + " nodes in " + timeTakenConsumer + " milliseconds");
     System.out.println("*****************************************************************************************\n");
 
-    TCQueue tcBoundedLinkedQueue = new TCBoundedLinkedQueue(NUMBER_OF_TRANSACTIONS);
+    TCQueue tcLinkedBlockingQueue = new TCLinkedBlockingQueue(NUMBER_OF_TRANSACTIONS);
     nodeId.set(0);
 
-    Thread producer2 = new Producer("Producer TCBoundedLinkedQueue", tcBoundedLinkedQueue);
+    Thread producer2 = new Producer("Producer TCLinkedBlockingQueue", tcLinkedBlockingQueue);
     startTime = System.currentTimeMillis();
     producer2.start();
     producer2.join();
     endTime = System.currentTimeMillis();
     timeTakenProducer = endTime - startTime;
 
-    Thread consumer2 = new Consumer("Consumer TCBoundedLinkedQueue", tcBoundedLinkedQueue);
+    Thread consumer2 = new Consumer("Consumer TCLinkedBlockingQueue", tcLinkedBlockingQueue);
     startTime = System.currentTimeMillis();
     consumer2.start();
     consumer2.join();
@@ -125,7 +122,7 @@ public class TCLinkedQueueJDK15Test extends TestCase {
       System.out.println("This test is supposed to run only for JDK 1.5 and above. Exiting the test...");
       return;
     }
-    TCQueue queue = (new QueueFactory(LinkedBlockingQueue.class.getName())).createInstance(NUMBER_OF_TRANSACTIONS);
+    TCQueue queue = (new QueueFactory()).createInstance(NUMBER_OF_TRANSACTIONS);
     nodeId.set(0);
 
     Thread producer1 = new Producer("Producer1", queue);
@@ -166,18 +163,18 @@ public class TCLinkedQueueJDK15Test extends TestCase {
     System.out.println("Operated on " + NUMBER_OF_TRANSACTIONS + " nodes in " + timeTaken + " milliseconds");
     System.out.println("*****************************************************************************************\n");
 
-    TCQueue boundedLinkedueue = new TCBoundedLinkedQueue(NUMBER_OF_TRANSACTIONS);
+    TCQueue linkedBlockingQueue = new TCLinkedBlockingQueue(NUMBER_OF_TRANSACTIONS);
     nodeId.set(0);
 
-    Thread producer5 = new Producer("Producer1", boundedLinkedueue);
-    Thread producer6 = new Producer("Producer2", boundedLinkedueue);
-    Thread producer7 = new Producer("Producer3", boundedLinkedueue);
-    Thread producer8 = new Producer("Producer4", boundedLinkedueue);
+    Thread producer5 = new Producer("Producer1", linkedBlockingQueue);
+    Thread producer6 = new Producer("Producer2", linkedBlockingQueue);
+    Thread producer7 = new Producer("Producer3", linkedBlockingQueue);
+    Thread producer8 = new Producer("Producer4", linkedBlockingQueue);
 
-    Thread consumer5 = new Consumer("Consumer1", boundedLinkedueue);
-    Thread consumer6 = new Consumer("Consumer2", boundedLinkedueue);
-    Thread consumer7 = new Consumer("Consumer3", boundedLinkedueue);
-    Thread consumer8 = new Consumer("Consumer4", boundedLinkedueue);
+    Thread consumer5 = new Consumer("Consumer1", linkedBlockingQueue);
+    Thread consumer6 = new Consumer("Consumer2", linkedBlockingQueue);
+    Thread consumer7 = new Consumer("Consumer3", linkedBlockingQueue);
+    Thread consumer8 = new Consumer("Consumer4", linkedBlockingQueue);
 
     startTime = System.currentTimeMillis();
     producer5.start();

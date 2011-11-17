@@ -17,13 +17,9 @@ public class SEDA {
   private final StageManager  stageManager;
   private final TCThreadGroup threadGroup;
 
-  public SEDA(TCThreadGroup threadGroup) {
-    this(threadGroup, QueueFactory.BOUNDED_LINKED_QUEUE);
-  }
-
-  public SEDA(final TCThreadGroup threadGroup, final String sedaQueueClassName) {
+  public SEDA(final TCThreadGroup threadGroup) {
     this.threadGroup = threadGroup;
-    this.stageManager = new StageManagerImpl(threadGroup, new QueueFactory(sedaQueueClassName));
+    this.stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
   }
 
   public StageManager getStageManager() {

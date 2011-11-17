@@ -66,7 +66,6 @@ import com.tc.stats.DSO;
 import com.tc.stats.api.DSOMBean;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
-import com.tc.util.concurrent.QueueFactory;
 import com.terracottatech.config.Offheap;
 
 import java.io.File;
@@ -128,7 +127,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   public TCServerImpl(final L2ConfigurationSetupManager manager, final TCThreadGroup group,
                       final ConnectionPolicy connectionPolicy) {
-    super(group, QueueFactory.LINKED_BLOCKING_QUEUE);
+    super(group);
 
     this.connectionPolicy = connectionPolicy;
     Assert.assertNotNull(manager);
