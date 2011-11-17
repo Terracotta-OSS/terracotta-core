@@ -154,7 +154,7 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
         String testObjectClassname = TestObject.class.getName();
         config.addIncludePattern(testObjectClassname);
 
-        String workerClassname = Runnable.class.getName();
+        String workerClassname = WorkerFactory.Worker.class.getName();
         config.addIncludePattern(workerClassname);
 
         // Create Roots
@@ -261,8 +261,7 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
         }
 
         private int localWorkerCount = 0;
-        private final AtomicInteger globalWorkerCount; // = new
-                                                       // SynchronizedInt(0);
+        private final AtomicInteger globalWorkerCount;
         private final String appId;
 
         public WorkerFactory(final String appId) {
