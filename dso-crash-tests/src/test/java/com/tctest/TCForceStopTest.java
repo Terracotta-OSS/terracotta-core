@@ -18,6 +18,7 @@ import com.tctest.process.ExternalDsoServer;
 import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.concurrent.TimeUnit;
 
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
@@ -28,7 +29,7 @@ public class TCForceStopTest extends BaseDSOTestCase {
   private TcConfigBuilder     configBuilder;
   private ExternalDsoServer   server_1, server_2;
   private int                 jmxPort_1, jmxPort_2;
-  private final long          SHUTDOWN_WAIT_TIME = 2 * 60 * 1000 * 1000000;
+  private final long          SHUTDOWN_WAIT_TIME = TimeUnit.NANOSECONDS.convert(120, TimeUnit.SECONDS);
 
   @Override
   protected boolean cleanTempDir() {
