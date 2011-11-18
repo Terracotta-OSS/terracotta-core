@@ -9,9 +9,7 @@ import com.tc.net.ClientID;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.ThreadID;
 import com.tc.objectserver.locks.LockHelper;
-import com.tc.util.Assert;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -39,8 +37,7 @@ public class LockTimer {
   }
 
   private void scheduleQueuedTasks() {
-    for (Iterator<TaskImpl> tasks = taskQueue.iterator(); tasks.hasNext();) {
-      TaskImpl task = tasks.next();
+    for (TaskImpl task : taskQueue) {
       long timeDelay = task.getScheduleDelay() - (System.currentTimeMillis() - task.scheduledAt());
       timeDelay = timeDelay < 0 ? 0 : timeDelay;
       timer.schedule(task, timeDelay);
@@ -48,8 +45,6 @@ public class LockTimer {
   }
 
   public TimerTask scheduleTimer(TimerCallback callback, long timeInMillis, LockTimerContext callbackObject) {
-    if (timeInMillis < 0) { throw Assert.failure("Wait time passed was negative = " + timeInMillis); }
-
     final TaskImpl rv = new TaskImpl(callback, timeInMillis, callbackObject);
 
     synchronized (this) {
@@ -91,6 +86,7 @@ public class LockTimer {
       return scheduledAt;
     }
 
+    @Override
     public void run() {
       try {
         callback.timerTimeout(callbackObject);
@@ -99,6 +95,7 @@ public class LockTimer {
       }
     }
 
+    @Override
     public boolean cancel() {
       return super.cancel();
     }

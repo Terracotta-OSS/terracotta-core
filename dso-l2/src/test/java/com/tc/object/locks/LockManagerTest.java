@@ -508,6 +508,32 @@ public class LockManagerTest extends TestCase {
     lockManager.unlock(lockid, c3, t1);
   }
 
+  public void testTryLockLONGMAXVAL() {
+    lockManager.start();
+
+    final LockID lockid = new StringLockID("1");
+
+    final ClientID c1 = new ClientID(1);
+    final ThreadID t1 = new ThreadID(1);
+
+    lockManager.tryLock(lockid, c1, t1, ServerLockLevel.WRITE, Long.MAX_VALUE);
+
+    lockManager.clearAllLocksFor(c1);
+  }
+
+  public void testTryLockNegativeVal() {
+    lockManager.start();
+
+    final LockID lockid = new StringLockID("1");
+
+    final ClientID c1 = new ClientID(1);
+    final ThreadID t1 = new ThreadID(1);
+
+    lockManager.tryLock(lockid, c1, t1, ServerLockLevel.WRITE, -100);
+
+    lockManager.clearAllLocksFor(c1);
+  }
+
   public void disableTestUpgradeDeadLock() {
     // Detect deadlock in competing upgrades
     LockID l1 = new StringLockID("L1");

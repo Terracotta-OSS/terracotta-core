@@ -21,9 +21,9 @@ import com.tc.util.runtime.ThreadIDManager;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -132,6 +132,8 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   public boolean tryLock(final LockID lock, final LockLevel level, final long timeout) throws InterruptedException {
+    if (timeout < 0) { throw new IllegalArgumentException("tryLock is passed with negative timeout, timeout=" + timeout); }
+
     waitUntilRunning();
 
     fireLockAttempted(lock);
