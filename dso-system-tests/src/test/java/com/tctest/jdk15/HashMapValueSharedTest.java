@@ -40,8 +40,8 @@ public class HashMapValueSharedTest extends GCTestBase {
 
   public static class HashMapValuedShareApp extends AbstractTransparentApp {
 
-    private static final int    NUM_OF_OBJ_PER_THREAD = 1000;
-    private final HashMap       hashmapRoot           = new HashMap();
+    private static final long   TIME_TO_RUN = 2 * 60 * 1000;
+    private final HashMap       hashmapRoot = new HashMap();
     private final CyclicBarrier barrier;
 
     public HashMapValuedShareApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
@@ -79,8 +79,10 @@ public class HashMapValueSharedTest extends GCTestBase {
         throw new AssertionError(e);
       }
 
+      long start = System.currentTimeMillis();
+      int i = 0;
       // populate with shared objects
-      for (int i = 0; i < NUM_OF_OBJ_PER_THREAD; i++) {
+      while (System.currentTimeMillis() - start < TIME_TO_RUN) {
 
         ValueObject vo = null;
         synchronized (hashmapRoot) {
@@ -106,7 +108,8 @@ public class HashMapValueSharedTest extends GCTestBase {
         }
 
         if (i % 100 == 0) System.err.println("XXX Participant: " + index + " - " + Thread.currentThread().getName()
-                                             + ": " + i);
+                                             + ": " + i + " time elapsed: " + (System.currentTimeMillis() - start));
+        i++;
 
       }
 
