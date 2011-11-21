@@ -184,8 +184,8 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
       final int last = mosc.getTotalObjectsSynced();
       final int current = last + mosc.getSynchedOids().size();
       final int totalObjectsToSync = mosc.getTotalObjectsToSync();
-      final int lastPercent = (last * 100) / totalObjectsToSync;
-      final int currentPercent = (current * 100) / totalObjectsToSync;
+      final int lastPercent = (int) ((last * 100L) / totalObjectsToSync);
+      final int currentPercent = (int) ((current * 100L) / totalObjectsToSync);
 
       if (currentPercent > lastPercent) {
         logger.info("Sent " + current + " (" + currentPercent + "%) objects out of " + mosc.getTotalObjectsToSync()
