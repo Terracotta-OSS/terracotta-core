@@ -1261,6 +1261,31 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         if (this.threadGroup.activeCount() > 0) {
           logger.warn("Timed out waiting for TC thread group threads to die - probable shutdown memory leak\n"
                       + "Live threads: " + getLiveThreads(this.threadGroup));
+
+          Runnable r = new Runnable() {
+            public void run() {
+              while (DistributedObjectClient.this.threadGroup.activeCount() > 0) {
+                for (Thread liveThread : getLiveThreads(DistributedObjectClient.this.threadGroup)) {
+                  liveThread.interrupt();
+                }
+                try {
+                  Thread.sleep(1000);
+                } catch (final InterruptedException e) {
+                  // ignore
+                }
+              }
+              try {
+                DistributedObjectClient.this.threadGroup.destroy();
+              } catch (Exception e) {
+                // the logger is closed by now so we can't even log that
+              }
+            }
+          };
+
+          Thread threadGroupCleanerThread = new Thread(this.threadGroup.getParent(), r, "TCThreadGroup last chance cleaner thread");
+          threadGroupCleanerThread.setDaemon(true);
+          threadGroupCleanerThread.start();
+          logger.warn("Spawning TCThreadGroup last chance cleaner thread");
         } else {
           logger.info("Destroying TC thread group");
           this.threadGroup.destroy();

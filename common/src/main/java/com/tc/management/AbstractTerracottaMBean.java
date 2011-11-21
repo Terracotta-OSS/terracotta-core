@@ -124,16 +124,43 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
     if (!removed) { throw new ListenerNotFoundException(); }
   }
 
+  /**
+   * In HotSpot, listener is always of class com.sun.jmx.interceptor.DefaultMBeanServerInterceptor$ListenerWrapper
+   * and that class' classloader always is the system classloader.
+   *
+   * Instances of this class contain a reference to a delegate listener which is the object registered itself in
+   * the JMX remote code and is responsible for forwarding produced notification events. That delegate listener is
+   * of class com.sun.jmx.remote.opt.internal.ArrayNotificationBuffer$BufferListener and that class' classloader
+   * always is the L1 classloader. This is pictured in the following diagram:
+   *
+   * -------------------------------------------------------------------------------------------------------
+   * listener com.sun.jmx.interceptor.DefaultMBeanServerInterceptor$ListenerWrapper
+   * |- <class> class com.sun.jmx.interceptor.DefaultMBeanServerInterceptor$ListenerWrapper
+   * |  '- <classloader> java.lang.ClassLoader <system class loader>
+   * '- listener com.sun.jmx.remote.opt.internal.ArrayNotificationBuffer$BufferListener
+   *   '- <class> class com.sun.jmx.remote.opt.internal.ArrayNotificationBuffer$BufferListener
+   *      '- <classloader> org.terracotta.express.L1Loader <L1 class loader>
+   * -------------------------------------------------------------------------------------------------------
+   *
+   * The containing listener is always registered in the VM's MBean server which keeps a strong reference to it
+   * as long as it isn't unregistered. Transitively, the contained listener is hard-referenced and keeps its
+   * L1 classloader alive as long as the containing listener hasn't been unregistered.
+   *
+   * In some situations, like when rejoin kicks in, the L1 is shut down and re-created but any listener registered
+   * on an L1 MBean by 3rd party code will keep a hard ref onto the L1 classloader, provoking a perm gen leak.
+   *
+   * This is the reason why we simply ignore the registration of NotificationListeners which are not from the same L1
+   * classloader (ie: 'foreign' classloaders). The fact that the original listener gets wrapped in another one
+   * whose classloader is the system classloader explains the extra reflection trickery.
+   */
   private boolean isListenerInSameClassLoader(final NotificationListener listener) {
-    ClassLoader systemCl = Notification.class.getClassLoader();
+    if (logger.isDebugEnabled()) {
+      logger.debug("checking notification listener " + listener + " - CL : " + listener.getClass()
+          .getClassLoader());
+    }
     ClassLoader currentCl = getClass().getClassLoader();
-
-    ClassLoader listenerCl = listener.getClass().getClassLoader();
-    if (listenerCl != systemCl && listenerCl != currentCl) {
-      if (logger.isDebugEnabled()) {
-        logger.debug("****** CLASSLOADER MISMATCH *****, NOT adding notification listener " + listener);
-      }
-      return false;
+    if (logger.isDebugEnabled()) {
+      logger.debug("current CL : " + currentCl);
     }
 
     try {
@@ -141,20 +168,28 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
       for (Field field : declaredFields) {
         field.setAccessible(true);
         Object subListener = field.get(listener);
+        if (subListener == null || !(subListener instanceof NotificationListener)) { continue; }
         ClassLoader fieldObjectCl = subListener.getClass().getClassLoader();
 
-        if (fieldObjectCl != systemCl && fieldObjectCl != currentCl) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("checking notification listener field " + subListener + " - CL : " + fieldObjectCl);
+        }
+        if (fieldObjectCl != currentCl) {
           if (logger.isDebugEnabled()) {
-            logger.debug("****** CLASSLOADER MISMATCH *****, NOT adding of notification listener " + listener);
+            logger.debug("Unauthorized classloader of listener field " + subListener + 
+                         ", NOT authorizing notification listener " + listener);
           }
           return false;
         }
       }
     } catch (Exception e) {
-      logger.warn("****** REFLECTION ERROR *****, NOT adding notification listener " + listener, e);
+      logger.warn("Reflection error, NOT authorizing notification listener " + listener, e);
       return false;
     }
 
+    if (logger.isDebugEnabled()) {
+      logger.debug("Authorized notification listener " + listener);
+    }
     return true;
   }
 
