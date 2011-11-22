@@ -65,7 +65,13 @@ public class StageImpl implements Stage {
                                          queueSize);
     this.group = group;
     this.sleepMs = TCPropertiesImpl.getProperties().getInt("seda." + name + ".sleepMs", 0);
+    if (this.sleepMs > 0) {
+      logger.warn("Sleep of " + this.sleepMs + "ms enabled for stage " + name);
+    }
     this.pausable = TCPropertiesImpl.getProperties().getBoolean("seda." + name + ".pausable", false);
+    if (this.pausable) {
+      logger.warn("Stage pausing is enabled for stage " + name);
+    }
   }
 
   public void destroy() {
