@@ -75,7 +75,7 @@ terracotta-toolkit-ee to be present in the devwork folder (as described by
 #7). 
 
 ******************************************************************************
-6. To start/stop TC server from the build (not using kit)
+6. To start/stop TC server and Dev Console from the build (not using kit)
 ******************************************************************************
 under "deploy" module, run:
 
@@ -84,6 +84,9 @@ to start:
 
 to stop:
 %> mvn exec:exec -P stop-server
+
+run dev-console:
+%> mvn exec:exec -P dev-console
 
 ******************************************************************************
 7. To include other Forge projects in the build
