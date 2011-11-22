@@ -38,7 +38,7 @@ public class TCForceStopTest extends BaseDSOTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    configBuilder = new TcConfigBuilder("/com/tc/active-passive-fail-over-test.xml");
+    configBuilder = new TcConfigBuilder("/com/tc/tc-force-stop-test.xml");
     configBuilder.randomizePorts();
 
     jmxPort_1 = configBuilder.getJmxPort(0);

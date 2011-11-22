@@ -24,6 +24,7 @@ import com.tc.async.api.StageManager;
 import com.tc.config.Directories;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.CommonL2Config;
+import com.tc.config.schema.ConfigurationModel;
 import com.tc.config.schema.HaConfigSchema;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
@@ -698,5 +699,10 @@ public class TCServerImpl extends SEDA implements TCServer {
     if (this.dsoServer != null) {
       this.dsoServer.dumpClusterState();
     }
+  }
+
+  public boolean isProduction() {
+    ConfigurationModel configurationModel = configurationSetupManager.systemConfig().configurationModel();
+    return configurationModel.equals(ConfigurationModel.PRODUCTION);
   }
 }

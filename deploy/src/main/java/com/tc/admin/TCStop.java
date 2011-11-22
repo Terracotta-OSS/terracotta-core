@@ -77,6 +77,9 @@ public class TCStop {
     boolean userNameSpecified = commandLineBuilder.hasOption('u');
     boolean passwordSpecified = commandLineBuilder.hasOption('w');
     boolean forceSpecified = commandLineBuilder.hasOption("force");
+    ArrayList tmpArgs = new ArrayList(Arrays.asList(args));
+    tmpArgs.remove("-force");
+    tmpArgs.remove("--force");
 
     String userName = null;
     String password = null;
@@ -91,12 +94,12 @@ public class TCStop {
 
     if (configSpecified || System.getProperty("tc.config") != null || configFile.exists()) {
       if (!configSpecified && System.getProperty("tc.config") == null) {
-        ArrayList tmpArgs = new ArrayList(Arrays.asList(args));
 
         tmpArgs.add("-f");
         tmpArgs.add(configFile.getAbsolutePath());
-        args = (String[]) tmpArgs.toArray(new String[tmpArgs.size()]);
       }
+
+      args = (String[]) tmpArgs.toArray(new String[tmpArgs.size()]);
 
       FatalIllegalConfigurationChangeHandler changeHandler = new FatalIllegalConfigurationChangeHandler();
       ConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(
@@ -200,7 +203,7 @@ public class TCStop {
     if (mbsc != null) {
       TCServerInfoMBean tcServerInfo = (TCServerInfoMBean) TerracottaManagement
           .findMBean(L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, mbsc);
-      if (!forceStop && tcServerInfo.isActive()) {
+      if (!forceStop && tcServerInfo.isActive() && tcServerInfo.isProduction()) {
         ServerGroupInfo currentServerGroup = getCurrentServerGroup(tcServerInfo);
         if (currentServerGroup != null) {
           boolean isPassiveStandByAvailable = false;

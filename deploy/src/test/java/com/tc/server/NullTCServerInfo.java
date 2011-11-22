@@ -248,4 +248,8 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public StatisticData getCpuLoad() {
     return null;
   }
+
+  public boolean isProduction() {
+    return false;
+  }
 }

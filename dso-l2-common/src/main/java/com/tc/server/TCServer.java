@@ -60,4 +60,6 @@ public interface TCServer {
   void dumpClusterState();
 
   void reloadConfiguration() throws ConfigurationSetupException;
+
+  boolean isProduction();
 }

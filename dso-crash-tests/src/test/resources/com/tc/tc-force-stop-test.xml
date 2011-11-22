@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+	<!--
+
+		All content copyright (c) 2003-2008 Terracotta, Inc., except as may
+		otherwise be noted in a separate copyright notice. All rights
+		reserved.
+	-->
+
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-6.xsd">
+
+	<servers>
+		<server host="localhost" name="server-1">
+			<dso-port>4210</dso-port>
+			<jmx-port>4220</jmx-port>
+			<l2-group-port>4200</l2-group-port>
+			<data>server-1-data</data>
+			<logs>server-1-logs</logs>
+			<statistics>server-1-stats</statistics>
+			<dso>
+				<persistence>
+					<mode>permanent-store</mode>
+				</persistence>
+			</dso>
+		</server>
+
+		<server host="localhost" name="server-2">
+			<dso-port>4230</dso-port>
+			<jmx-port>4240</jmx-port>
+			<l2-group-port>4250</l2-group-port>
+			<data>server-2-data</data>
+			<logs>server-2-logs</logs>
+			<statistics>server-2-stats</statistics>
+			<dso>
+				<persistence>
+					<mode>permanent-store</mode>
+				</persistence>
+			</dso>
+		</server>
+		
+		<mirror-groups>
+			<mirror-group>
+				<members>
+					<member>server-1</member>
+					<member>server-2</member>
+				</members>
+				<ha>
+					<mode>networked-active-passive</mode>
+					<networked-active-passive>
+						<election-time>5</election-time>
+					</networked-active-passive>
+				</ha>
+			</mirror-group>
+		</mirror-groups>
+
+		<update-check>
+			<enabled>true</enabled>
+		</update-check>
+
+	</servers>
+
+	<clients>
+		<logs>client-logs</logs>
+	</clients>
+	
+	<system>
+    <configuration-model>production</configuration-model>
+  </system>
+
+</tc:tc-config>

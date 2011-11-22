@@ -503,4 +503,8 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   public boolean isEnterprise() {
     return server.getClass().getSimpleName().equals("EnterpriseServerImpl");
   }
+
+  public boolean isProduction() {
+    return server.isProduction();
+  }
 }
