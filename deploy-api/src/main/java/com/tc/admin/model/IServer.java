@@ -270,4 +270,6 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
   boolean getCommitDebug();
 
   void setCommitDebug(boolean commitDebug);
+
+  boolean isProduction();
 }

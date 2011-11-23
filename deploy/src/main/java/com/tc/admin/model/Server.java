@@ -2070,4 +2070,8 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
     super.tearDown();
   }
+
+  public boolean isProduction() {
+    return serverInfoBean.isProduction();
+  }
 }
