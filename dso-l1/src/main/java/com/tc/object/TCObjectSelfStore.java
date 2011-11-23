@@ -1,5 +1,4 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.object;
 
@@ -37,4 +36,6 @@ public interface TCObjectSelfStore {
    * Handshake manager tries to get hold of all the objects present in the local caches
    */
   public void addAllObjectIDsToValidate(Invalidations invalidations);
+
+  void shutdown();
 }

@@ -29,8 +29,8 @@ import com.tc.util.concurrent.TCConcurrentMultiMap;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -39,7 +39,8 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
 
   private static final boolean                                                   PINNING_ENABLED     = TCPropertiesImpl
                                                                                                          .getProperties()
-                                                                                                         .getBoolean(TCPropertiesConsts.L1_LOCKMANAGER_PINNING_ENABLED);
+                                                                                                         .getBoolean(
+                                                                                                                     TCPropertiesConsts.L1_LOCKMANAGER_PINNING_ENABLED);
 
   /**
    * For invalidations
@@ -221,6 +222,8 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   }
 
   public synchronized void shutdown() {
+    tcObjectSelfStore.shutdown();
+
     shutdown.set(true);
 
     for (L1ServerMapLocalCacheStore store : localStores.keySet()) {
@@ -303,7 +306,8 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     }
   }
 
-  public void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
+  public void transactionComplete(
+                                  L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     txnCompleteSink.add(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 }

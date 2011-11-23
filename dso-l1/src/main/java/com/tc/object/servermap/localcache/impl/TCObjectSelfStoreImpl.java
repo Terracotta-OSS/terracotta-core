@@ -3,6 +3,7 @@
  */
 package com.tc.object.servermap.localcache.impl;
 
+import com.tc.exception.TCNotRunningException;
 import com.tc.invalidation.Invalidations;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -33,11 +34,19 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   private static final TCLogger                                logger                = TCLogging
                                                                                          .getLogger(TCObjectSelfStoreImpl.class);
 
+  private volatile boolean                                     isShutdown            = false;
+
   public TCObjectSelfStoreImpl(ConcurrentHashMap<ServerMapLocalCache, Object> localCaches) {
     this.localCaches = localCaches;
   }
 
+  private void isShutdownThenException() {
+    if (isShutdown) { throw new TCNotRunningException("TCObjectSelfStore already shutdown"); }
+  }
+
   public void removeObjectById(ObjectID oid) {
+    isShutdownThenException();
+
     tcObjectStoreLock.readLock().lock();
     try {
       if (!tcObjectSelfStoreOids.contains(oid)) { return; }
@@ -51,6 +60,8 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   }
 
   public Object getById(ObjectID oid) {
+    isShutdownThenException();
+
     long timePrev = System.currentTimeMillis();
     long startTime = timePrev;
     while (true) {
@@ -105,6 +116,8 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   }
 
   private void waitUntilNotified() {
+    isShutdownThenException();
+
     boolean isInterrupted = false;
     try {
       // since i know I am going to wait, let me wait on client lock manager instead of this condition
@@ -114,6 +127,8 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     } catch (InterruptedException e) {
       isInterrupted = true;
     } finally {
+      isShutdownThenException();
+
       if (isInterrupted) {
         Thread.currentThread().interrupt();
       }
@@ -127,12 +142,16 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   }
 
   public void initializeTCObjectSelfIfRequired(TCObjectSelf tcoSelf) {
+    isShutdownThenException();
+
     if (tcoSelf != null) {
       tcObjectSelfRemovedFromStoreCallback.initializeTCClazzIfRequired(tcoSelf);
     }
   }
 
   public void addTCObjectSelfTemp(TCObjectSelf tcObjectSelf) {
+    isShutdownThenException();
+
     tcObjectStoreLock.writeLock().lock();
     try {
       if (logger.isDebugEnabled()) {
@@ -146,6 +165,8 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
   public boolean addTCObjectSelf(L1ServerMapLocalCacheStore store, AbstractLocalCacheStoreValue localStoreValue,
                                  Object tcoself, final boolean isNew) {
+    isShutdownThenException();
+
     tcObjectStoreLock.writeLock().lock();
     try {
       if (tcoself instanceof TCObject) {
@@ -170,6 +191,8 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   }
 
   public void removeTCObjectSelfTemp(TCObjectSelf objectSelf, boolean notifyServer) {
+    isShutdownThenException();
+
     if (objectSelf == null) { return; }
 
     synchronized (tcObjectSelfRemovedFromStoreCallback) {
@@ -192,6 +215,8 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   }
 
   public void removeTCObjectSelf(AbstractLocalCacheStoreValue localStoreValue) {
+    isShutdownThenException();
+
     synchronized (tcObjectSelfRemovedFromStoreCallback) {
       tcObjectStoreLock.writeLock().lock();
 
@@ -218,6 +243,8 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   }
 
   public void addAllObjectIDsToValidate(Invalidations invalidations) {
+    isShutdownThenException();
+
     tcObjectStoreLock.writeLock().lock();
     try {
       tcObjectSelfStoreOids.addAllObjectIDsToValidate(invalidations);
@@ -227,6 +254,8 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   }
 
   public int size() {
+    isShutdownThenException();
+
     tcObjectStoreLock.readLock().lock();
     try {
       return tcObjectSelfStoreOids.size();
@@ -236,6 +265,8 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   }
 
   public void addAllObjectIDs(Set oids) {
+    isShutdownThenException();
+
     tcObjectStoreLock.readLock().lock();
     try {
       tcObjectSelfStoreOids.addAll(oids);
@@ -245,6 +276,8 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   }
 
   public boolean contains(ObjectID objectID) {
+    isShutdownThenException();
+
     tcObjectStoreLock.readLock().lock();
     try {
       return this.tcObjectSelfTempCache.containsKey(objectID) || this.tcObjectSelfStoreOids.contains(objectID);
@@ -255,6 +288,10 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
   public void initializeTCObjectSelfStore(TCObjectSelfCallback callback) {
     this.tcObjectSelfRemovedFromStoreCallback = callback;
+  }
+
+  public void shutdown() {
+    this.isShutdown = true;
   }
 
   private static class TCObjectSelfStoreObjectIDSet {
@@ -296,4 +333,5 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
       oids.addAll(nonEventualIds);
     }
   }
+
 }

@@ -76,8 +76,8 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
@@ -318,13 +318,16 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return basicLookup(pojo);
   }
 
-  public synchronized void shutdown() {
-    this.state = SHUTDOWN;
-    if (this.reaper != null) {
-      try {
-        stopThread(this.reaper);
-      } finally {
-        this.reaper = null;
+  public void shutdown() {
+    this.objectStore.shutdown();
+    synchronized (this) {
+      this.state = SHUTDOWN;
+      if (this.reaper != null) {
+        try {
+          stopThread(this.reaper);
+        } finally {
+          this.reaper = null;
+        }
       }
     }
   }
@@ -1019,8 +1022,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
         for (final Method method : entry.getValue()) {
           try {
-            executeMethod(target, method,
-                          "postCreate method (" + method.getName() + ") failed on object of " + target.getClass());
+            executeMethod(target, method, "postCreate method (" + method.getName() + ") failed on object of "
+                                          + target.getClass());
           } catch (final Throwable t) {
             if (exception == null) {
               exception = t;
@@ -1126,8 +1129,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     TCObject obj = null;
 
     if ((obj = basicLookup(pojo)) == null) {
-      obj = this.factory.getNewInstance(nextObjectID(this.txManager.getCurrentTransaction(), pojo, gid), pojo,
-                                        pojo.getClass(), true);
+      obj = this.factory.getNewInstance(nextObjectID(this.txManager.getCurrentTransaction(), pojo, gid), pojo, pojo
+          .getClass(), true);
       this.txManager.createObject(obj);
       basicAddLocal(obj, false);
       if (this.runtimeLogger.getNewManagedObjectDebug()) {
@@ -1340,6 +1343,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     ObjectStore(TCObjectSelfStore tcObjectSelfStore) {
       this.tcObjectSelfStore = tcObjectSelfStore;
       this.cache = new ConcurrentClockEvictionPolicy(this.cacheManaged);
+    }
+
+    public void shutdown() {
+      tcObjectSelfStore.shutdown();
     }
 
     public int size() {

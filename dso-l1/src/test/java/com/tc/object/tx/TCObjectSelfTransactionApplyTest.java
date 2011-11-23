@@ -239,5 +239,10 @@ public class TCObjectSelfTransactionApplyTest extends TestCase {
         throw new AssertionError(t);
       }
     }
+
+    public void shutdown() {
+      throw new ImplementMe();
+
+    }
   }
 }

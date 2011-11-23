@@ -12,9 +12,12 @@ import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.exception.ImplementMe;
+import com.tc.exception.TCNotRunningException;
 import com.tc.object.ClientConfigurationContext;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
+import com.tc.object.TCObjectSelf;
+import com.tc.object.TCObjectSelfCallback;
 import com.tc.object.context.LocksToRecallContext;
 import com.tc.object.handler.LockRecallHandler;
 import com.tc.object.locks.LockID;
@@ -22,7 +25,9 @@ import com.tc.object.locks.LocksRecallService;
 import com.tc.object.locks.LocksRecallServiceImpl;
 import com.tc.object.locks.LongLockID;
 import com.tc.object.locks.MockClientLockManager;
+import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
+import com.tc.object.servermap.localcache.LocalCacheStoreEventualValue;
 import com.tc.object.servermap.localcache.MapOperationType;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.stats.Stats;
@@ -63,6 +68,32 @@ public class L1ServerMapLocalCacheManagerImplTest extends TestCase {
     this.l1LocalCacheManagerImpl.setLockManager(clientLockManager);
   }
 
+  public void testTCNotRunning() {
+    this.l1LocalCacheManagerImpl.initializeTCObjectSelfStore(Mockito.mock(TCObjectSelfCallback.class));
+    ObjectID mapId = new ObjectID(1000);
+    ObjectID oid = new ObjectID(1001);
+    L1ServerMapLocalCacheStoreHashMap serverMapLocalStore = new L1ServerMapLocalCacheStoreHashMap();
+    this.l1LocalCacheManagerImpl.getOrCreateLocalCache(mapId, Mockito.mock(ClientObjectManager.class), null, true,
+                                                       serverMapLocalStore);
+    TCObjectSelf self = Mockito.mock(TCObjectSelf.class);
+    Mockito.when(self.getObjectID()).thenReturn(oid);
+    AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreEventualValue(oid, self);
+
+    this.l1LocalCacheManagerImpl.addTCObjectSelf(serverMapLocalStore, localStoreValue, self, true);
+    serverMapLocalStore.put(oid, "my-key");
+
+    this.l1LocalCacheManagerImpl.shutdown();
+
+    boolean expectedException = false;
+    try {
+      this.l1LocalCacheManagerImpl.getById(oid);
+    } catch (TCNotRunningException e) {
+      expectedException = true;
+    }
+
+    Assert.assertTrue(expectedException);
+  }
+
   public void testInitiateRecall() {
     LockID lockID = new LongLockID(500);
     Set<LockID> lockIDs = Collections.singleton(lockID);
@@ -96,8 +127,8 @@ public class L1ServerMapLocalCacheManagerImplTest extends TestCase {
 
     LockID lockID = new LongLockID(100);
 
-    MockModesAdd.addStrongValueToCache(localCache, l1LocalCacheManagerImpl, "key", lockID,
-                                       MockModesAdd.createMockSerializedEntry(12345), mapID, MapOperationType.GET);
+    MockModesAdd.addStrongValueToCache(localCache, l1LocalCacheManagerImpl, "key", lockID, MockModesAdd
+        .createMockSerializedEntry(12345), mapID, MapOperationType.GET);
 
     this.l1LocalCacheManagerImpl.removeEntriesForLockId(lockID);
 
