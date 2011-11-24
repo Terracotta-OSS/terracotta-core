@@ -224,8 +224,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return null;
   }
 
-  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(
-                                                                                            final Object key,
+  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
                                                                                             AbstractLocalCacheStoreValue value,
                                                                                             MapOperationType mapOperation) {
     if (!mapOperation.isMutateOperation()) {
@@ -601,8 +600,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  public void transactionComplete(
-                                  L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
+  public void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     l1LocalCacheManager.transactionComplete(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 
@@ -662,11 +660,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   public int onHeapSize() {
     int totalInMemoryCount = this.localStore.onHeapSize() + pendingTransactionEntries.size() / 2;
-    if (this.localStore.getMaxElementsInMemory() > 0) {
-      return Math.min(totalInMemoryCount, this.localStore.getMaxElementsInMemory());
-    } else {
-      return totalInMemoryCount;
-    }
+    return totalInMemoryCount < 0 ? Integer.MAX_VALUE : totalInMemoryCount;
   }
 
   public int offHeapSize() {
