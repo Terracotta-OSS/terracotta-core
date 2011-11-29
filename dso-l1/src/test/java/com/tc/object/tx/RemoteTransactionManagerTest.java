@@ -27,9 +27,9 @@ import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.ClientTransactionBatchWriter.FoldedInfo;
 import com.tc.stats.counter.Counter;
-import com.tc.stats.counter.CounterConfig;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
+import com.tc.stats.counter.SimpleCounterConfig;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.util.SequenceGenerator;
@@ -69,8 +69,8 @@ public class RemoteTransactionManagerTest extends TestCase {
         .createCounter(new SampledRateCounterConfig(1, 900, true));
     this.transactionsPerBatchCounter = (SampledRateCounter) this.counterManager
         .createCounter(new SampledRateCounterConfig(1, 900, true));
-    this.outstandingBatchCounter = this.counterManager.createCounter(new CounterConfig(0));
-    this.pendingBatchesSize = this.counterManager.createCounter(new CounterConfig(0));
+    this.outstandingBatchCounter = this.counterManager.createCounter(new SimpleCounterConfig(0));
+    this.pendingBatchesSize = this.counterManager.createCounter(new SimpleCounterConfig(0));
 
     this.manager = new RemoteTransactionManagerImpl(GroupID.NULL_ID, logger, this.batchFactory,
                                                     new TransactionIDGenerator(), new NullSessionManager(),

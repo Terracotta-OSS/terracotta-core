@@ -4,7 +4,7 @@
  */
 package com.tc.stats.counter;
 
-public class BoundedCounterConfig extends CounterConfig {
+public class BoundedCounterConfig extends SimpleCounterConfig {
 
   private final long min;
   private final long max;
@@ -23,6 +23,7 @@ public class BoundedCounterConfig extends CounterConfig {
     return max;
   }
 
+  @Override
   public Counter createCounter() {
     return new BoundedCounter(getInitialValue(), min, max);
   }

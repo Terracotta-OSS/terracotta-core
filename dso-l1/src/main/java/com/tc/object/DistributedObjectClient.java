@@ -190,9 +190,9 @@ import com.tc.statistics.retrieval.actions.SRASystemProperties;
 import com.tc.statistics.retrieval.actions.SRAVmGarbageCollector;
 import com.tc.statistics.retrieval.actions.SRAVmGarbageCollector.SRAVmGarbageCollectorType;
 import com.tc.stats.counter.Counter;
-import com.tc.stats.counter.CounterConfig;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
+import com.tc.stats.counter.SimpleCounterConfig;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
@@ -525,8 +525,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         .createCounter(sampledRateCounterConfig);
     final SampledRateCounter transactionsPerBatchCounter = (SampledRateCounter) this.counterManager
         .createCounter(sampledRateCounterConfig);
-    final Counter outstandingBatchesCounter = this.counterManager.createCounter(new CounterConfig(0));
-    final Counter pendingBatchesSize = this.counterManager.createCounter(new CounterConfig(0));
+    final Counter outstandingBatchesCounter = this.counterManager.createCounter(new SimpleCounterConfig(0));
+    final Counter pendingBatchesSize = this.counterManager.createCounter(new SimpleCounterConfig(0));
 
     this.rtxManager = this.dsoClientBuilder.createRemoteTransactionManager(this.channel.getClientIDProvider(),
                                                                            encoding, FoldingConfig
@@ -539,7 +539,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.rtxManager));
     final RemoteObjectIDBatchSequenceProvider remoteIDProvider = new RemoteObjectIDBatchSequenceProvider(this.channel
-        .getObjectIDBatchRequestMessageFactory());
+                                                                                                             .getObjectIDBatchRequestMessageFactory());
 
     // create Sequences
     final BatchSequence[] sequences = this.dsoClientBuilder.createSequences(remoteIDProvider, this.l1Properties
@@ -565,7 +565,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     final RemoteObjectManager remoteObjectManager = this.dsoClientBuilder
         .createRemoteObjectManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
-            .getLogger(RemoteObjectManager.class)), this.channel, faultCount, sessionManager);
+                                       .getLogger(RemoteObjectManager.class)), this.channel, faultCount, sessionManager);
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(remoteObjectManager));
 
     LockRecallHandler lockRecallHandler = new LockRecallHandler();
@@ -765,7 +765,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final ProductInfo pInfo = ProductInfo.getInstance();
     this.clientHandshakeManager = this.dsoClientBuilder
         .createClientHandshakeManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
-            .getLogger(ClientHandshakeManagerImpl.class)), this.channel, this.channel
+                                          .getLogger(ClientHandshakeManagerImpl.class)), this.channel, this.channel
             .getClientHandshakeMessageFactory(), pauseStage.getSink(), sessionManager, dsoCluster, pInfo.version(),
                                       Collections.unmodifiableCollection(clientHandshakeCallbacks));
     this.channel.addListener(this.clientHandshakeManager);
