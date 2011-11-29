@@ -60,8 +60,4 @@ public class L2ObjectSyncAckManagerImpl extends AbstractServerTransactionListene
   public void transactionCompleted(final ServerTransactionID stxID) {
     ackObjectSyncTxn(stxID);
   }
-
-  public void removeAckForTxn(final ServerTransactionID stxnID) {
-    txnsToAckMsgID.remove(stxnID);
-  }
 }

@@ -19,11 +19,6 @@ public interface L2ObjectSyncAckManager {
   public void addObjectSyncMessageToAck(final ServerTransactionID stxnID, final MessageID requestID);
 
   /**
-   * Remove a pending ACK
-   */
-  public void removeAckForTxn(final ServerTransactionID stxnID);
-
-  /**
    * Complete the object sync
    */
   public void objectSyncComplete();

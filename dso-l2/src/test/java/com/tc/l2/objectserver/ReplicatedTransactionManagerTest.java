@@ -268,10 +268,6 @@ public class ReplicatedTransactionManagerTest extends TestCase {
   private static class TestL2ObjectSyncAckManager implements L2ObjectSyncAckManager {
     Set<ServerTransactionID> stxnIDs = new HashSet<ServerTransactionID>();
 
-    public void removeAckForTxn(ServerTransactionID stxnID) {
-      stxnIDs.remove(stxnID);
-    }
-
     public void reset() {
       stxnIDs.clear();
     }
@@ -285,7 +281,7 @@ public class ReplicatedTransactionManagerTest extends TestCase {
     }
 
     public void ackObjectSyncTxn(ServerTransactionID stxnID) {
-      // Nothing here.
+      stxnIDs.remove(stxnID);
     }
   }
 }
