@@ -4,7 +4,9 @@
  */
 package com.tc.l2.msg;
 
+import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
+import com.tc.net.groups.MessageID;
 
 import java.util.Set;
 
@@ -17,9 +19,9 @@ public class ServerTxnAckMessageFactory {
     return msg;
   }
 
-  public static ServerSyncTxnAckMessage createServerSyncTxnAckMessage(AbstractGroupMessage request, Set serverTxnIDs) {
-    ServerSyncTxnAckMessage msg = new ServerSyncTxnAckMessage(request.messageFrom(), request.getMessageID(),
-                                                              serverTxnIDs);
+  public static ServerSyncTxnAckMessage createServerSyncTxnAckMessage(NodeID sender, MessageID requestID,
+                                                                      Set serverTxnIDs) {
+    ServerSyncTxnAckMessage msg = new ServerSyncTxnAckMessage(sender, requestID, serverTxnIDs);
     return msg;
   }
 

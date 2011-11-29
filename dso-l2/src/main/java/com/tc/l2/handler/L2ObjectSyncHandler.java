@@ -15,8 +15,8 @@ import com.tc.l2.msg.ObjectSyncCompleteMessageFactory;
 import com.tc.l2.msg.ObjectSyncMessage;
 import com.tc.l2.msg.RelayedCommitTransactionMessage;
 import com.tc.l2.msg.ServerRelayedTxnAckMessage;
-import com.tc.l2.msg.ServerSyncTxnAckMessage;
 import com.tc.l2.msg.ServerTxnAckMessageFactory;
+import com.tc.l2.objectserver.L2ObjectSyncAckManager;
 import com.tc.l2.objectserver.ReplicatedTransactionManager;
 import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.l2.state.StateSyncManager;
@@ -31,7 +31,6 @@ import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.TransactionBatchReader;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
 
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -47,9 +46,11 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
   private GroupManager                   groupManager;
 
   private final ServerTransactionFactory serverTransactionFactory;
+  private final L2ObjectSyncAckManager   objectSyncAckManager;
 
-  public L2ObjectSyncHandler(final ServerTransactionFactory factory) {
+  public L2ObjectSyncHandler(final ServerTransactionFactory factory, final L2ObjectSyncAckManager objectSyncAckManager) {
     this.serverTransactionFactory = factory;
+    this.objectSyncAckManager = objectSyncAckManager;
   }
 
   @Override
@@ -73,6 +74,7 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     final ObjectSyncCompleteMessage msg = context;
     logger.info("Received ObjectSyncComplete Msg from : " + msg.messageFrom() + " msg : " + msg);
     stateSyncManager.objectSyncComplete();
+    objectSyncAckManager.objectSyncComplete();
     ObjectSyncCompleteAckMessage ackMessage = ObjectSyncCompleteMessageFactory.createObjectSyncCompleteAckMessage(msg
         .messageFrom());
     sendObjectSyncCompleteAckMessage(ackMessage);
@@ -103,12 +105,6 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     this.sendSink.add(msg);
   }
 
-  private void ackSyncTransactions(final AbstractGroupMessage messageFrom, final Set serverTxnIDs) {
-    final ServerSyncTxnAckMessage msg = ServerTxnAckMessageFactory.createServerSyncTxnAckMessage(messageFrom,
-                                                                                                 serverTxnIDs);
-    this.sendSink.add(msg);
-  }
-
   private Set processCommitTransactionMessage(final RelayedCommitTransactionMessage commitMessage) {
     try {
       final TransactionBatchReader reader = this.batchReaderFactory.newTransactionBatchReader(commitMessage);
@@ -127,11 +123,11 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
   }
 
   private void doSyncObjectsResponse(final ObjectSyncMessage syncMsg) {
+    // The object sync message must be registered with the objectSyncAckManager prior to adding it to rTxnManager to
+    // avoid a race with completing the transaction
+    this.objectSyncAckManager.addObjectSyncMessageToAck(syncMsg.getServerTransactionID(), syncMsg.getMessageID());
     final ServerTransaction txn = this.serverTransactionFactory.createTxnFrom(syncMsg);
     this.rTxnManager.addObjectSyncTransaction(txn);
-    final HashSet serverTxnIDs = new HashSet(2);
-    serverTxnIDs.add(txn.getServerTransactionID());
-    ackSyncTransactions(syncMsg, serverTxnIDs);
   }
 
   @Override

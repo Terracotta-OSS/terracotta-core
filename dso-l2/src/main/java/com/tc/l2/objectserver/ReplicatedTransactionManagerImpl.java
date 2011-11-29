@@ -57,6 +57,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
   private PassiveTransactionManager                    delegate;
 
+  private final L2ObjectSyncAckManager                 objectSyncAckManager;
   private final PassiveUninitializedTransactionManager passiveUninitTxnMgr = new PassiveUninitializedTransactionManager();
   private final PassiveStandbyTransactionManager       passiveStdByTxnMgr  = new PassiveStandbyTransactionManager();
   private final NullPassiveTransactionManager          activeTxnMgr        = new NullPassiveTransactionManager();
@@ -67,7 +68,8 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
   public ReplicatedTransactionManagerImpl(GroupManager groupManager, OrderedSink objectsSyncSink,
                                           ServerTransactionManager transactionManager,
-                                          ServerGlobalTransactionManager gtxm, MessageRecycler recycler) {
+                                          ServerGlobalTransactionManager gtxm, MessageRecycler recycler,
+                                          L2ObjectSyncAckManager objectSyncAckManager) {
     this.groupManager = groupManager;
     this.objectsSyncSink = objectsSyncSink;
     this.transactionManager = transactionManager;
@@ -75,6 +77,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     this.recycler = recycler;
     groupManager.registerForMessages(ObjectSyncResetMessage.class, this);
     this.delegate = passiveUninitTxnMgr;
+    this.objectSyncAckManager = objectSyncAckManager;
   }
 
   public synchronized void init(Set knownObjectIDs) {
@@ -107,6 +110,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
       }
     });
     objectsSyncSink.clear();
+    objectSyncAckManager.reset();
     sendOKResponse(fromNode, osr);
   }
 
@@ -179,8 +183,9 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
       // from the other guy. So the current active is going to think that the other guy is in passive uninitialized
       // state and send those objects. This can be ignored as long as all commit transactions are replayed.
       logger
-          .warn("PassiveStandbyTransactionManager :: Ignoring ObjectSyncTxn Messages since already in PASSIVE-STANDBY"
+          .warn("PassiveStandbyTransactionManager :: Ignoring ObjectSyncTxn Messages since already in PASSIVE-STANDBY "
                 + txn);
+      objectSyncAckManager.ackObjectSyncTxn(txn.getServerTransactionID());
     }
 
     public void clearTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
@@ -268,13 +273,14 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     }
 
     public void addObjectSyncTransaction(ServerTransaction txn) {
-      Map txns = new LinkedHashMap(1);
       ServerTransaction newTxn = createCompoundTransactionFrom(txn);
       if (newTxn != null) {
-        txns.put(txn.getServerTransactionID(), newTxn);
-        addIncommingTransactions(txn.getSourceID(), txns.keySet(), txns.values());
+        addIncommingTransactions(txn.getSourceID(), Collections.singleton(txn.getServerTransactionID()),
+                                 Collections.singleton(newTxn));
       } else {
-        logger.warn("Not add Txn " + txn + " to queue since all changes are ignored");
+        logger
+            .warn("Not adding Txn " + txn.getServerTransactionID() + " to queue since all changes have been ignored.");
+        objectSyncAckManager.ackObjectSyncTxn(txn.getServerTransactionID());
       }
     }
 

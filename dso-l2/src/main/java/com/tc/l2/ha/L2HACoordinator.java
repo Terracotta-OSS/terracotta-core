@@ -38,6 +38,8 @@ import com.tc.l2.msg.ServerRelayedTxnAckMessage;
 import com.tc.l2.msg.ServerSyncTxnAckMessage;
 import com.tc.l2.objectserver.L2IndexStateManager;
 import com.tc.l2.objectserver.L2ObjectStateManager;
+import com.tc.l2.objectserver.L2ObjectSyncAckManager;
+import com.tc.l2.objectserver.L2ObjectSyncAckManagerImpl;
 import com.tc.l2.objectserver.L2PassiveSyncStateManager;
 import com.tc.l2.objectserver.ReplicatedObjectManager;
 import com.tc.l2.objectserver.ReplicatedObjectManagerImpl;
@@ -161,16 +163,22 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     zapProcessor.addZapEventListener(new OperatorEventsZapRequestListener(this.configSetupManager));
     this.groupManager.setZapNodeRequestProcessor(zapProcessor);
 
+    final Sink objectsSyncSendSink = stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_SEND_STAGE,
+                                                              new L2ObjectSyncSendHandler(objectStateManager,
+                                                                                          serverTransactionFactory), 1,
+                                                              MAX_STAGE_SIZE).getSink();
+
+    final L2ObjectSyncAckManager objectSyncAckManager = new L2ObjectSyncAckManagerImpl(objectsSyncSendSink,
+                                                                                       transactionManager);
     final Sink objectsSyncRequestSink = stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_REQUEST_STAGE,
                                                                  new L2ObjectSyncRequestHandler(this.sequenceGenerator,
                                                                                                 objectStateManager), 1,
                                                                  MAX_STAGE_SIZE).getSink();
     final Sink objectsSyncSink = stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_STAGE,
-                                                          new L2ObjectSyncHandler(serverTransactionFactory), 1,
+                                                          new L2ObjectSyncHandler(serverTransactionFactory,
+                                                                                  objectSyncAckManager), 1,
                                                           MAX_STAGE_SIZE).getSink();
-    stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_SEND_STAGE,
-                             new L2ObjectSyncSendHandler(objectStateManager, serverTransactionFactory), 1,
-                             MAX_STAGE_SIZE);
+
     stageManager.createStage(ServerConfigurationContext.TRANSACTION_RELAY_STAGE,
                              new TransactionRelayHandler(objectStateManager, this.sequenceGenerator, gtxm), 1,
                              MAX_STAGE_SIZE);
@@ -204,7 +212,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     final OrderedSink orderedIndexSyncSink = new OrderedSink(logger, indexSyncSink);
 
     this.rTxnManager = new ReplicatedTransactionManagerImpl(this.groupManager, orderedObjectsSyncSink,
-                                                            transactionManager, gtxm, recycler);
+                                                            transactionManager, gtxm, recycler, objectSyncAckManager);
 
     this.rObjectManager = new ReplicatedObjectManagerImpl(this.groupManager, this.stateManager,
                                                           this.l2PassiveSyncStateManager, this.l2ObjectStateManager,

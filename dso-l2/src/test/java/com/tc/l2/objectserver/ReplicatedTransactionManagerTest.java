@@ -9,6 +9,7 @@ import com.tc.async.impl.OrderedSink;
 import com.tc.lang.Recyclable;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
+import com.tc.net.groups.MessageID;
 import com.tc.net.groups.SingleNodeGroupManager;
 import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
@@ -20,6 +21,7 @@ import com.tc.object.gtx.GlobalTransactionIDAlreadySetException;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.StringLockID;
 import com.tc.object.msg.NullMessageRecycler;
+import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
@@ -50,6 +52,7 @@ public class ReplicatedTransactionManagerTest extends TestCase {
   SingleNodeGroupManager           grpMgr;
   TestServerTransactionManager     txnMgr;
   TestGlobalTransactionManager     gtxm;
+  TestL2ObjectSyncAckManager       objectSyncAckManager;
   ClientID                         clientID;
 
   @Override
@@ -58,11 +61,12 @@ public class ReplicatedTransactionManagerTest extends TestCase {
     this.grpMgr = new SingleNodeGroupManager();
     this.txnMgr = new TestServerTransactionManager();
     this.gtxm = new TestGlobalTransactionManager();
+    this.objectSyncAckManager = new TestL2ObjectSyncAckManager();
     this.rtm = new ReplicatedTransactionManagerImpl(this.grpMgr,
                                                     new OrderedSink(TCLogging
                                                         .getLogger(ReplicatedTransactionManagerTest.class),
                                                                     new MockSink()), this.txnMgr, this.gtxm,
-                                                    new NullMessageRecycler());
+                                                    new NullMessageRecycler(), objectSyncAckManager);
   }
 
   /**
@@ -117,7 +121,10 @@ public class ReplicatedTransactionManagerTest extends TestCase {
 
     // Now create Object Sync Txn for 4,5,6
     LinkedHashMap syncTxns = createTxns(1, 4, 3, true);
+    objectSyncAckManager.stxnIDs.addAll(syncTxns.keySet());
     this.rtm.addObjectSyncTransaction((ServerTransaction) syncTxns.values().iterator().next());
+    assertTrue(objectSyncAckManager.stxnIDs.containsAll(syncTxns.keySet()));
+    objectSyncAckManager.reset();
 
     // One Compound Transaction containing the object DNA and the delta DNA should be sent to the
     // transactionalObjectManager
@@ -135,7 +142,10 @@ public class ReplicatedTransactionManagerTest extends TestCase {
 
     // Now create Object Sync txn for 7,8,9
     syncTxns = createTxns(1, 7, 3, true);
+    objectSyncAckManager.stxnIDs.addAll(syncTxns.keySet());
     this.rtm.addObjectSyncTransaction((ServerTransaction) syncTxns.values().iterator().next());
+    assertTrue(objectSyncAckManager.stxnIDs.containsAll(syncTxns.keySet()));
+    objectSyncAckManager.reset();
 
     // One Compound Transaction containing the object DNA for 7 and object DNA and the delta DNA for 8,9 should be sent
     // to the transactionalObjectManager
@@ -158,6 +168,12 @@ public class ReplicatedTransactionManagerTest extends TestCase {
     dna = (DNA) changes.get(4);
     assertEquals(new ObjectID(9), dna.getObjectID());
     assertTrue(dna.isDelta()); // Change to that object
+
+    // Redo the object sync for objects 7,8,9. Since we already have the objects, the change should be entirely pruned.
+    syncTxns = createTxns(1, 7, 3, true);
+    objectSyncAckManager.stxnIDs.addAll(syncTxns.keySet());
+    this.rtm.addObjectSyncTransaction((ServerTransaction) syncTxns.values().iterator().next());
+    assertFalse(objectSyncAckManager.stxnIDs.containsAll(syncTxns.keySet()));
   }
 
   private GlobalTransactionID getNextLowWaterMark(Collection txns) {
@@ -249,4 +265,27 @@ public class ReplicatedTransactionManagerTest extends TestCase {
 
   }
 
+  private static class TestL2ObjectSyncAckManager implements L2ObjectSyncAckManager {
+    Set<ServerTransactionID> stxnIDs = new HashSet<ServerTransactionID>();
+
+    public void removeAckForTxn(ServerTransactionID stxnID) {
+      stxnIDs.remove(stxnID);
+    }
+
+    public void reset() {
+      stxnIDs.clear();
+    }
+
+    public void addObjectSyncMessageToAck(ServerTransactionID stxnID, MessageID requestID) {
+      stxnIDs.add(stxnID);
+    }
+
+    public void objectSyncComplete() {
+      //
+    }
+
+    public void ackObjectSyncTxn(ServerTransactionID stxnID) {
+      // Nothing here.
+    }
+  }
 }
