@@ -35,6 +35,8 @@ import com.tc.io.TCFile;
 import com.tc.io.TCFileImpl;
 import com.tc.io.TCRandomFileAccessImpl;
 import com.tc.l2.api.L2Coordinator;
+import com.tc.l2.ha.HASettingsChecker;
+import com.tc.l2.ha.HASettingsCheckerImpl;
 import com.tc.l2.ha.L2HADisabledCooridinator;
 import com.tc.l2.ha.StripeIDStateManagerImpl;
 import com.tc.l2.ha.WeightGeneratorFactory;
@@ -1107,6 +1109,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                       searchQueryRequestStage);
 
     long reconnectTimeout = l2DSOConfig.clientReconnectWindow();
+
+    HASettingsChecker haChecker = new HASettingsCheckerImpl(configSetupManager, TCPropertiesImpl.getProperties());
+    haChecker.validateHealthCheckSettingsForHighAvailability();
+
     logger.debug("Client Reconnect Window: " + reconnectTimeout + " seconds");
     reconnectTimeout *= 1000;
     final ServerClientHandshakeManager clientHandshakeManager = new ServerClientHandshakeManager(
