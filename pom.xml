@@ -31,7 +31,6 @@
     <module>dso-l1-api</module>
     <module>sigarstats</module>
     <module>dso-common</module>
-    <module>dso-common-jdk16</module>
     <module>management-api</module>
     <module>management</module>
     <module>dso-l2-common</module> 

@@ -48,11 +48,6 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
-      <artifactId>dso-common-jdk16</artifactId>
-      <version>${project.version}</version>
-    </dependency> 
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
       <artifactId>dso-l1-api</artifactId>
       <version>${project.version}</version>
     </dependency>     
