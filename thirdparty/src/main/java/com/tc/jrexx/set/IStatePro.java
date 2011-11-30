@@ -27,7 +27,7 @@ import com.tc.jrexx.set.ISet_char;
 /**
  * This interface represents a state of an automaton created via the automaton's addState method.
  * <p>Copyright: Copyright (c) 2002</p>
- * <p>Company: Büro für Softwarearchitektur   www.karneim.com</p>
+ * <p>Company: B??f??oftwarearchitektur   www.karneim.com</p>
  * @author Ralf Meyer
  * @version 1.0
  */
@@ -51,7 +51,7 @@ public interface IStatePro {
    * <br>IState.next
    *
    * <p>Copyright: Copyright (c) 2002</p>
-   * <p>Company: Büro für Softwarearchitektur   www.karneim.com</p>
+   * <p>Company: B??f??oftwarearchitektur   www.karneim.com</p>
    * @author Ralf Meyer
    * @version 1.0
    */
@@ -75,7 +75,7 @@ public interface IStatePro {
    * The class that is interested in processing a state's change event implements this interface.
    * A listener instance of that class is registered with the state using the state's addChangeListener method.
    * <p>Copyright: Copyright (c) 2002</p>
-   * <p>Company: Büro für Softwarearchitektur   www.karneim.com</p>
+   * <p>Company: B??f??oftwarearchitektur   www.karneim.com</p>
    * @author Ralf Meyer
    * @version 1.0
    */
