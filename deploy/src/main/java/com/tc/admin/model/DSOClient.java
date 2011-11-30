@@ -115,27 +115,24 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
   }
 
   protected void setupTunneledBeans() {
-    l1InfoBean = (L1InfoMBean) MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, l1InfoBeanName,
-                                                                             L1InfoMBean.class, true);
+    l1InfoBean = MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, l1InfoBeanName, L1InfoMBean.class, true);
     addMBeanNotificationListener(l1InfoBeanName, this, "L1InfoMBean");
 
-    instrumentationLoggingBean = (InstrumentationLoggingMBean) MBeanServerInvocationHandler
-        .newProxyInstance(cc.mbsc, instrumentationLoggingBeanName, InstrumentationLoggingMBean.class, true);
+    instrumentationLoggingBean = MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, instrumentationLoggingBeanName,
+                                                                               InstrumentationLoggingMBean.class, true);
     addMBeanNotificationListener(instrumentationLoggingBeanName, this, "InstrumentationLoggingMBean");
 
-    runtimeLoggingBean = (RuntimeLoggingMBean) MBeanServerInvocationHandler.newProxyInstance(cc.mbsc,
-                                                                                             runtimeLoggingObjectName,
-                                                                                             RuntimeLoggingMBean.class,
-                                                                                             true);
+    runtimeLoggingBean = MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, runtimeLoggingObjectName,
+                                                                       RuntimeLoggingMBean.class, true);
     addMBeanNotificationListener(runtimeLoggingObjectName, this, "RuntimeLoggingMBean");
 
-    runtimeOutputOptionsBean = (RuntimeOutputOptionsMBean) MBeanServerInvocationHandler
-        .newProxyInstance(cc.mbsc, runtimeOutputOptionsBeanName, RuntimeOutputOptionsMBean.class, true);
+    runtimeOutputOptionsBean = MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, runtimeOutputOptionsBeanName,
+                                                                             RuntimeOutputOptionsMBean.class, true);
     addMBeanNotificationListener(runtimeOutputOptionsBeanName, this, "RuntimeOutputOptionsMBean");
 
     if (l1DumperBeanName != null) {
-      l1DumperBean = (L1DumperMBean) MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, l1DumperBeanName,
-                                                                                   L1DumperMBean.class, true);
+      l1DumperBean = MBeanServerInvocationHandler
+          .newProxyInstance(cc.mbsc, l1DumperBeanName, L1DumperMBean.class, true);
     }
 
     fireTunneledBeansRegistered();

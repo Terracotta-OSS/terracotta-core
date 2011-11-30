@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.statistics.agent;
 
@@ -30,13 +31,13 @@ import javax.management.ObjectName;
 import javax.management.RuntimeMBeanException;
 
 public class StatisticsAgentConnection implements StatisticsManager {
-  private final static TCLogger LOGGER = TCLogging.getLogger(StatisticsAgentConnection.class);
+  private final static TCLogger  LOGGER           = TCLogging.getLogger(StatisticsAgentConnection.class);
 
-  private boolean isServerAgent = false;
-  private MBeanServerConnection serverConnection = null;
-  private StatisticsManagerMBean statManager = null;
-  private StatisticsEmitterMBean statEmitter = null;
-  private NotificationListener listener = null;
+  private final boolean          isServerAgent    = false;
+  private MBeanServerConnection  serverConnection = null;
+  private StatisticsManagerMBean statManager      = null;
+  private StatisticsEmitterMBean statEmitter      = null;
+  private NotificationListener   listener         = null;
 
   public synchronized void enable() {
     statManager.enable();
@@ -76,7 +77,7 @@ public class StatisticsAgentConnection implements StatisticsManager {
 
   private void handleMissingSessionIdException(final RuntimeMBeanException e, final String msg) {
     if (e.getCause() instanceof UnknownStatisticsSessionIdException) {
-      UnknownStatisticsSessionIdException ussie = (UnknownStatisticsSessionIdException)e.getCause();
+      UnknownStatisticsSessionIdException ussie = (UnknownStatisticsSessionIdException) e.getCause();
       String msg_full = msg + " for session '" + ussie.getSessionId() + "' on node '" + ussie.getNodeName() + "'";
       LOGGER.warn(msg_full);
     } else {
@@ -169,7 +170,8 @@ public class StatisticsAgentConnection implements StatisticsManager {
     }
   }
 
-  public void connect(final MBeanServerConnection serverConn, final NotificationListener notificationListener) throws StatisticsAgentConnectionException {
+  public void connect(final MBeanServerConnection serverConn, final NotificationListener notificationListener)
+      throws StatisticsAgentConnectionException {
     Assert.assertNotNull("serverConnection", serverConn);
     if (statManager != null) throw new StatisticsAgentConnectionAlreadyConnectedException();
 
@@ -182,37 +184,39 @@ public class StatisticsAgentConnection implements StatisticsManager {
     try {
       serverConn.addNotificationListener(emitter_name, notificationListener, null, null);
     } catch (Exception e) {
-      throw new StatisticsAgentConnectionConnectErrorException("Unexpected error while registering the notification listener for statistics emitting.", e);
+      throw new StatisticsAgentConnectionConnectErrorException(
+                                                               "Unexpected error while registering the notification listener for statistics emitting.",
+                                                               e);
     }
   }
 
-  private ObjectName setupManagerMBean(MBeanServerConnection mbeanServerConnection) throws StatisticsAgentConnectionException {
+  private ObjectName setupManagerMBean(MBeanServerConnection mbeanServerConnection)
+      throws StatisticsAgentConnectionException {
     // setup the statistics manager mbean
     try {
       ObjectName manager_name = findMBeanName(mbeanServerConnection, StatisticsMBeanNames.STATISTICS_MANAGER);
-      if (null == manager_name) {
-        throw new StatisticsAgentConnectionToNonAgentException();
-      }
+      if (null == manager_name) { throw new StatisticsAgentConnectionToNonAgentException(); }
 
-      statManager = (StatisticsManagerMBean)MBeanServerInvocationHandler
-        .newProxyInstance(mbeanServerConnection, manager_name, StatisticsManagerMBean.class, false);
+      statManager = MBeanServerInvocationHandler.newProxyInstance(mbeanServerConnection, manager_name,
+                                                                  StatisticsManagerMBean.class, false);
 
       return manager_name;
     } catch (Exception e) {
-      throw new StatisticsAgentConnectionConnectErrorException("Unexpected error while finding the manager mbean of the agent.", e);
+      throw new StatisticsAgentConnectionConnectErrorException(
+                                                               "Unexpected error while finding the manager mbean of the agent.",
+                                                               e);
     }
   }
 
-  private ObjectName setupEmitterMBean(MBeanServerConnection mbeanServerConnection) throws StatisticsAgentConnectionException {
+  private ObjectName setupEmitterMBean(MBeanServerConnection mbeanServerConnection)
+      throws StatisticsAgentConnectionException {
     // setup the statistics emitter mbean
     try {
       ObjectName emitter_name = findMBeanName(mbeanServerConnection, StatisticsMBeanNames.STATISTICS_EMITTER);
-      if (null == emitter_name) {
-        throw new StatisticsAgentConnectionToNonAgentException();
-      }
+      if (null == emitter_name) { throw new StatisticsAgentConnectionToNonAgentException(); }
 
-      statEmitter = (StatisticsEmitterMBean)MBeanServerInvocationHandler
-        .newProxyInstance(mbeanServerConnection, emitter_name, StatisticsEmitterMBean.class, false);
+      statEmitter = MBeanServerInvocationHandler.newProxyInstance(mbeanServerConnection, emitter_name,
+                                                                  StatisticsEmitterMBean.class, false);
 
       return emitter_name;
     } catch (Exception e) {
@@ -220,18 +224,19 @@ public class StatisticsAgentConnection implements StatisticsManager {
     }
   }
 
-  private ObjectName findMBeanName(MBeanServerConnection mbeanServerConnection, ObjectName baseName) throws IOException, MalformedObjectNameException {
+  private ObjectName findMBeanName(MBeanServerConnection mbeanServerConnection, ObjectName baseName)
+      throws IOException, MalformedObjectNameException {
     ObjectName manager_name = null;
 
     // try to find the statistics manager, by first using the standard name and if that doesn't yield any
     // result by doing a search that includes at least all the properties of the standard name
     Set manager_names = mbeanServerConnection.queryNames(baseName, null);
     if (manager_names.size() > 0) {
-      manager_name = (ObjectName)manager_names.iterator().next();
+      manager_name = (ObjectName) manager_names.iterator().next();
     } else {
       manager_names = mbeanServerConnection.queryNames(new ObjectName(baseName.getCanonicalName() + ",*"), null);
       if (manager_names.size() > 0) {
-        manager_name = (ObjectName)manager_names.iterator().next();
+        manager_name = (ObjectName) manager_names.iterator().next();
       }
     }
     return manager_name;
@@ -243,7 +248,9 @@ public class StatisticsAgentConnection implements StatisticsManager {
     try {
       serverConnection.removeNotificationListener(StatisticsMBeanNames.STATISTICS_EMITTER, listener);
     } catch (Exception e) {
-      throw new StatisticsAgentConnectionDisconnectErrorException("Unexpected error while removing the notification listener for statistics emitting.", e);
+      throw new StatisticsAgentConnectionDisconnectErrorException(
+                                                                  "Unexpected error while removing the notification listener for statistics emitting.",
+                                                                  e);
     } finally {
       listener = null;
       statEmitter = null;

@@ -62,15 +62,15 @@ public class JmxMaxThreadsTestApp extends AbstractTransparentApp {
       new AssertionError(e);
     }
     MBeanServerConnection mbsc = getMBeanServerConnection(jmxConnector, "localhost", jmxPort);
-    DSOMBean dsoMBean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO,
+    DSOMBean dsoMBean = MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO,
                                                                                  DSOMBean.class, false);
 
     ObjectName[] clientObjectNames = dsoMBean.getClients();
     DSOClientMBean[] clients = new DSOClientMBean[clientObjectNames.length];
     for (int i = 0; i < clients.length; i++) {
-      clients[i] = (DSOClientMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, clientObjectNames[i],
+      clients[i] = MBeanServerInvocationHandler.newProxyInstance(mbsc, clientObjectNames[i],
                                                                                   DSOClientMBean.class, false);
-      L1InfoMBean l1InfoMbean = (L1InfoMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, clients[i]
+      L1InfoMBean l1InfoMbean = MBeanServerInvocationHandler.newProxyInstance(mbsc, clients[i]
           .getL1InfoBeanName(), L1InfoMBean.class, false);
       l1InfoMbean.getConfig();
     }

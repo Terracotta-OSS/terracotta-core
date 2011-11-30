@@ -100,7 +100,7 @@ public class RemoveObjectsTestApp extends AbstractTransparentApp {
     jmxc = JMXUtils.getJMXConnector("localhost", jmxPort);
     mbsc = jmxc.getMBeanServerConnection();
     System.out.println("obtained mbeanserver connection");
-    objectMBean = (ObjectManagementMonitorMBean) MBeanServerInvocationHandler
+    objectMBean = MBeanServerInvocationHandler
         .newProxyInstance(mbsc, L2MBeanNames.OBJECT_MANAGEMENT, ObjectManagementMonitorMBean.class, false);
 
   }

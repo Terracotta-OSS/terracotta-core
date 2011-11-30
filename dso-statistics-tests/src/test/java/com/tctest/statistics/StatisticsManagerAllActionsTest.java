@@ -30,9 +30,9 @@ public class StatisticsManagerAllActionsTest extends AbstractStatisticsTranspare
     JMXConnector jmxc = JMXUtils.getJMXConnector("localhost", getAdminPort());
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
 
-    StatisticsManagerMBean stat_manager = (StatisticsManagerMBean) MBeanServerInvocationHandler
+    StatisticsManagerMBean stat_manager = MBeanServerInvocationHandler
         .newProxyInstance(mbsc, StatisticsMBeanNames.STATISTICS_MANAGER, StatisticsManagerMBean.class, false);
-    StatisticsEmitterMBean stat_emitter = (StatisticsEmitterMBean) MBeanServerInvocationHandler
+    StatisticsEmitterMBean stat_emitter = MBeanServerInvocationHandler
         .newProxyInstance(mbsc, StatisticsMBeanNames.STATISTICS_EMITTER, StatisticsEmitterMBean.class, false);
 
     List<StatisticData> data = new ArrayList<StatisticData>();

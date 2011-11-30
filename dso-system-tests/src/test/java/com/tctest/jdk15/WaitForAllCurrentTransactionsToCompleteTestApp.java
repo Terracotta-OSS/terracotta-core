@@ -109,7 +109,7 @@ public class WaitForAllCurrentTransactionsToCompleteTestApp extends AbstractTran
     } catch (IOException e) {
       throw new AssertionError(e);
     }
-    DSOMBean dsoMBean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO,
+    DSOMBean dsoMBean = MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO,
                                                                                  DSOMBean.class, false);
     Map<ObjectName, Long> map = dsoMBean.getAllPendingTransactionsCount();
 

@@ -114,7 +114,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     jmxc = JMXUtils.getJMXConnector("localhost", jmxPort);
     mbsc = jmxc.getMBeanServerConnection();
     echo("obtained mbeanserver connection");
-    statMBean = (LockStatisticsMonitorMBean) MBeanServerInvocationHandler
+    statMBean = MBeanServerInvocationHandler
         .newProxyInstance(mbsc, L2MBeanNames.LOCK_STATISTICS, LockStatisticsMonitorMBean.class, false);
   }
 

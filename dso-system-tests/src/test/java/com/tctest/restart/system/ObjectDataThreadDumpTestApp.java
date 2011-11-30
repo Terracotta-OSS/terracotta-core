@@ -163,15 +163,15 @@ public class ObjectDataThreadDumpTestApp extends AbstractTransparentApp {
     } catch (IOException e) {
       throw new AssertionError(e);
     }
-    DSOMBean dsoMBean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO,
+    DSOMBean dsoMBean = MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO,
                                                                                  DSOMBean.class, false);
     ObjectName[] clientObjectNames = dsoMBean.getClients();
     DSOClientMBean[] clients = new DSOClientMBean[clientObjectNames.length];
     L1InfoMBean[] l1InfoMbeans = new L1InfoMBean[clientObjectNames.length];
     for (int i = 0; i < clients.length; i++) {
-      clients[i] = (DSOClientMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, clientObjectNames[i],
+      clients[i] = MBeanServerInvocationHandler.newProxyInstance(mbsc, clientObjectNames[i],
                                                                                   DSOClientMBean.class, false);
-      l1InfoMbeans[i] = (L1InfoMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc,
+      l1InfoMbeans[i] = MBeanServerInvocationHandler.newProxyInstance(mbsc,
                                                                                     clients[i].getL1InfoBeanName(),
                                                                                     L1InfoMBean.class, false);
     }

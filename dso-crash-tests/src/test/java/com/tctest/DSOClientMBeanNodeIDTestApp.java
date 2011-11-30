@@ -61,8 +61,7 @@ public class DSOClientMBeanNodeIDTestApp extends AbstractTransparentApp {
       } catch (IOException e) {
         throw new AssertionError(e);
       }
-      dsoMBean = (DSOMBean) MBeanServerInvocationHandler
-          .newProxyInstance(mbsc, L2MBeanNames.DSO, DSOMBean.class, false);
+      dsoMBean = MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO, DSOMBean.class, false);
 
       DSOClientMBean[] clients = getDSOClientMBeans();
 
@@ -74,8 +73,8 @@ public class DSOClientMBeanNodeIDTestApp extends AbstractTransparentApp {
       ObjectName[] clientObjectNames = dsoMBean.getClients();
       DSOClientMBean[] clients = new DSOClientMBean[clientObjectNames.length];
       for (int i = 0; i < clients.length; i++) {
-        clients[i] = (DSOClientMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, clientObjectNames[i],
-                                                                                    DSOClientMBean.class, false);
+        clients[i] = MBeanServerInvocationHandler.newProxyInstance(mbsc, clientObjectNames[i], DSOClientMBean.class,
+                                                                   false);
       }
       return clients;
     }

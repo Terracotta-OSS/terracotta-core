@@ -737,8 +737,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   private void dumpClusterState(ServerControl control) throws Exception {
     JMXConnector jmxConnector = ActivePassiveServerManager.getJMXConnector(control.getAdminPort());
     MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-    L2DumperMBean mbean = (L2DumperMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DUMPER,
-                                                                                        L2DumperMBean.class, true);
+    L2DumperMBean mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DUMPER, L2DumperMBean.class,
+                                                                        true);
     while (true) {
       try {
         mbean.dumpClusterState();

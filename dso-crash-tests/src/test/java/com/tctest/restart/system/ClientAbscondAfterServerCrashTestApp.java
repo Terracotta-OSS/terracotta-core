@@ -151,7 +151,7 @@ public class ClientAbscondAfterServerCrashTestApp extends AbstractTransparentApp
   private DSOMBean getDSOMbean(final int jmxPort) throws MalformedURLException, IOException {
     JMXConnector jmxConnector = JMXUtils.getJMXConnector("localhost", jmxPort);
     MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-    return (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DSO, DSOMBean.class, true);
+    return MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DSO, DSOMBean.class, true);
   }
 
   public static class AbscondingClient {
@@ -168,8 +168,7 @@ public class ClientAbscondAfterServerCrashTestApp extends AbstractTransparentApp
   private void checkServerHasClients(final int clientCount, final int jmxPort) throws Exception {
     JMXConnector jmxConnector = JMXUtils.getJMXConnector("localhost", jmxPort);
     MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-    DSOMBean mbean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DSO, DSOMBean.class,
-                                                                              true);
+    DSOMBean mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DSO, DSOMBean.class, true);
     int actualClientCount = mbean.getClients().length;
     while (actualClientCount != clientCount) {
       System.out.println("XXX Expecting " + clientCount + " clients. Present connected clients " + actualClientCount

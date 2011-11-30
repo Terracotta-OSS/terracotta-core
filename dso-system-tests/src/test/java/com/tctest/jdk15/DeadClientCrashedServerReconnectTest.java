@@ -133,7 +133,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
   private int getServerHasClients(final int jmxPort) throws Exception {
     JMXConnector jmxConnector = JMXUtils.getJMXConnector("localhost", jmxPort);
     MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-    DSOMBean mbean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DSO, DSOMBean.class,
+    DSOMBean mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DSO, DSOMBean.class,
                                                                               true);
     int actualClientCount = mbean.getClients().length;
     jmxConnector.close();

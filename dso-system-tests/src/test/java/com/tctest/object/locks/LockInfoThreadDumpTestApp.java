@@ -140,17 +140,17 @@ public class LockInfoThreadDumpTestApp extends AbstractTransparentApp {
     } catch (IOException e) {
       throw new AssertionError(e);
     }
-    DSOMBean dsoMBean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO,
+    DSOMBean dsoMBean = MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO,
                                                                                  DSOMBean.class, false);
 
     ObjectName[] clientObjectNames = dsoMBean.getClients();
     DSOClientMBean[] clients = new DSOClientMBean[clientObjectNames.length];
     for (int i = 0; i < clients.length; i++) {
-      clients[i] = (DSOClientMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, clientObjectNames[i],
+      clients[i] = MBeanServerInvocationHandler.newProxyInstance(mbsc, clientObjectNames[i],
                                                                                   DSOClientMBean.class, false);
     }
 
-    return (L1InfoMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, clients[clientID].getL1InfoBeanName(),
+    return MBeanServerInvocationHandler.newProxyInstance(mbsc, clients[clientID].getL1InfoBeanName(),
                                                                        L1InfoMBean.class, false);
   }
 

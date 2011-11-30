@@ -111,7 +111,7 @@ public class ResolveTwoActiveServersTestApp extends AbstractErrorCatchingTranspa
     }
 
     MBeanServerConnection mBeanServer = jmxConnectors[1].getMBeanServerConnection();
-    TCServerInfoMBean m = (TCServerInfoMBean) MBeanServerInvocationHandler
+    TCServerInfoMBean m = MBeanServerInvocationHandler
         .newProxyInstance(mBeanServer, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, true);
     while (true) {
       if (m.isActive()) {
@@ -140,14 +140,14 @@ public class ResolveTwoActiveServersTestApp extends AbstractErrorCatchingTranspa
 
   private void ensureActiveServer(int index) throws IOException {
     MBeanServerConnection mBeanServer = jmxConnectors[index].getMBeanServerConnection();
-    TCServerInfoMBean m = (TCServerInfoMBean) MBeanServerInvocationHandler
+    TCServerInfoMBean m = MBeanServerInvocationHandler
         .newProxyInstance(mBeanServer, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, true);
     Assert.assertTrue(m.isActive());
   }
 
   private TCServerInfoMBean getJmxServer(int index) throws IOException {
     MBeanServerConnection mBeanServer = jmxConnectors[index].getMBeanServerConnection();
-    return (TCServerInfoMBean) MBeanServerInvocationHandler.newProxyInstance(mBeanServer, L2MBeanNames.TC_SERVER_INFO,
+    return MBeanServerInvocationHandler.newProxyInstance(mBeanServer, L2MBeanNames.TC_SERVER_INFO,
                                                                              TCServerInfoMBean.class, true);
   }
 

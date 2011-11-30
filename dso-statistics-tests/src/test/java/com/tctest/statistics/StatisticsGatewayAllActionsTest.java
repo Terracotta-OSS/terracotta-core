@@ -27,7 +27,7 @@ public class StatisticsGatewayAllActionsTest extends AbstractStatisticsTranspare
     JMXConnector jmxc = JMXUtils.getJMXConnector("localhost", getAdminPort());
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
 
-    StatisticsGatewayMBean stat_gateway = (StatisticsGatewayMBean) MBeanServerInvocationHandler
+    StatisticsGatewayMBean stat_gateway = MBeanServerInvocationHandler
         .newProxyInstance(mbsc, StatisticsMBeanNames.STATISTICS_GATEWAY, StatisticsGatewayMBean.class, false);
 
     waitForAllNodesToConnectToGateway(stat_gateway, StatisticsGatewayAllActionsTestApp.NODE_COUNT + 1);

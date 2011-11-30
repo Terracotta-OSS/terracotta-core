@@ -56,8 +56,8 @@ public class ServerStat {
     try {
       jmxc = CommandLineBuilder.getJMXConnector(username, password, host, port);
       mbsc = jmxc.getMBeanServerConnection();
-      infoBean = (TCServerInfoMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.TC_SERVER_INFO,
-                                                                                   TCServerInfoMBean.class, false);
+      infoBean = MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.TC_SERVER_INFO,
+                                                               TCServerInfoMBean.class, false);
       connected = true;
     } catch (Exception e) {
       String rootCauseMessage = e.getMessage() != null ? e.getMessage() : e.getCause().getMessage();

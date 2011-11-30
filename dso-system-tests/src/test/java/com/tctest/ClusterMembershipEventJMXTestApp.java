@@ -59,7 +59,7 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp {
   }
 
   private void runTest() throws Throwable {
-    TerracottaClusterMBean cluster = (TerracottaClusterMBean) MBeanServerInvocationHandler
+    TerracottaClusterMBean cluster = MBeanServerInvocationHandler
         .newProxyInstance(server, clusterBean, TerracottaClusterMBean.class, true);
     ExceptionHelperImpl helper = new ExceptionHelperImpl();
     helper.addHelper(new RuntimeExceptionHelper());

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.statistics;
 
@@ -40,11 +41,12 @@ import javax.management.MBeanServerInvocationHandler;
 
 public class AgentStatisticsManagerTest extends TCTestCase {
 
-  private AgentStatisticsManager agentManager;
-  private StatisticsManager statisticsManager;
-  private MBeanServer beanServer;
+  private AgentStatisticsManager   agentManager;
+  private StatisticsManager        statisticsManager;
+  private MBeanServer              beanServer;
   private StatisticsAgentSubSystem agentSubSystem;
 
+  @Override
   protected void setUp() throws Exception {
     agentSubSystem = new StatisticsAgentSubSystemImpl();
     agentSubSystem.setup(StatisticsSystemType.CLIENT, new StatisticsConfig() {
@@ -54,26 +56,26 @@ public class AgentStatisticsManagerTest extends TCTestCase {
         } catch (IOException e) {
           throw new RuntimeException(e);
         }
-//        return new FileConfigItem() {
-//          public File getFile() {
-//            try {
-//            } catch (IOException e) {
-//              throw new RuntimeException(e);
-//            }
-//          }
-//
-//          public Object getObject() {
-//            return null;
-//          }
-//
-//          public void addListener(ConfigItemListener changeListener) {
-//            //
-//          }
-//
-//          public void removeListener(ConfigItemListener changeListener) {
-//            //
-//          }
-//        };
+        // return new FileConfigItem() {
+        // public File getFile() {
+        // try {
+        // } catch (IOException e) {
+        // throw new RuntimeException(e);
+        // }
+        // }
+        //
+        // public Object getObject() {
+        // return null;
+        // }
+        //
+        // public void addListener(ConfigItemListener changeListener) {
+        // //
+        // }
+        //
+        // public void removeListener(ConfigItemListener changeListener) {
+        // //
+        // }
+        // };
       }
     });
     populateStatisticsRegistry(agentSubSystem.getStatisticsRetrievalRegistry());
@@ -81,8 +83,9 @@ public class AgentStatisticsManagerTest extends TCTestCase {
     beanServer = ManagementFactory.getPlatformMBeanServer();
     agentSubSystem.registerMBeans(beanServer);
 
-    statisticsManager = (StatisticsManager)MBeanServerInvocationHandler.
-      newProxyInstance(beanServer, StatisticsMBeanNames.STATISTICS_MANAGER, StatisticsManager.class, false);
+    statisticsManager = MBeanServerInvocationHandler.newProxyInstance(beanServer,
+                                                                      StatisticsMBeanNames.STATISTICS_MANAGER,
+                                                                      StatisticsManager.class, false);
     agentManager = agentSubSystem.getStatisticsManager();
 
     agentSubSystem.setDefaultAgentDifferentiator("agentDiff");
@@ -104,22 +107,22 @@ public class AgentStatisticsManagerTest extends TCTestCase {
 
     final String[] supportedStats = statisticsManager.getSupportedStatistics();
 
-    for (int i = 0; i < sessions.length; i++) {
-      statisticsManager.createSession(sessions[i]);
-      for (int j = 0; j < supportedStats.length; j++) {
-//        System.out.println("Enabling " + supportedStats[j] + " for " + sessions[i]);
-        statisticsManager.enableStatistic(sessions[i], supportedStats[j]);
+    for (String session : sessions) {
+      statisticsManager.createSession(session);
+      for (String supportedStat : supportedStats) {
+        // System.out.println("Enabling " + supportedStats[j] + " for " + sessions[i]);
+        statisticsManager.enableStatistic(session, supportedStat);
       }
     }
     System.out.println("Number of active sessions: " + sessions.length);
     System.out.println("Number of supported statistics: " + supportedStats.length);
-    for (int i = 0; i < supportedStats.length; i++) {
-      Collection activeSessions = agentManager.getActiveSessionIDsForAction(supportedStats[i]);
-      Assert.assertEquals("Number of active sessions should be same as activated", sessions.length, activeSessions.size());
+    for (String supportedStat : supportedStats) {
+      Collection activeSessions = agentManager.getActiveSessionIDsForAction(supportedStat);
+      Assert.assertEquals("Number of active sessions should be same as activated", sessions.length,
+                          activeSessions.size());
       Assert.eval("Active sessions should be same as activated.", activeSessions.containsAll(Arrays.asList(sessions)));
     }
   }
-
 
   public void testInjectStatistics() throws Exception {
 
@@ -128,8 +131,8 @@ public class AgentStatisticsManagerTest extends TCTestCase {
     String sessionId3 = UUID.getUUID().toString();
     String[] sessions = new String[] { sessionId1, sessionId2, sessionId3 };
 
-    StatisticsEmitterMBean statEmitter = (StatisticsEmitterMBean)MBeanServerInvocationHandler
-      .newProxyInstance(beanServer, StatisticsMBeanNames.STATISTICS_EMITTER, StatisticsEmitterMBean.class, false);
+    StatisticsEmitterMBean statEmitter = MBeanServerInvocationHandler
+        .newProxyInstance(beanServer, StatisticsMBeanNames.STATISTICS_EMITTER, StatisticsEmitterMBean.class, false);
 
     List<StatisticData> data = new ArrayList<StatisticData>();
     CollectingNotificationListener listener = new CollectingNotificationListener(sessions.length);
@@ -138,33 +141,30 @@ public class AgentStatisticsManagerTest extends TCTestCase {
 
     final String[] supportedStats = statisticsManager.getSupportedStatistics();
 
-    for (int i = 0; i < sessions.length; i++) {
-      statisticsManager.createSession(sessions[i]);
-      for (int j = 0; j < supportedStats.length; j++) {
-//        System.out.println("Enabling " + supportedStats[j] + " for " + sessions[i]);
-        statisticsManager.enableStatistic(sessions[i], supportedStats[j]);
+    for (String session : sessions) {
+      statisticsManager.createSession(session);
+      for (String supportedStat : supportedStats) {
+        // System.out.println("Enabling " + supportedStats[j] + " for " + sessions[i]);
+        statisticsManager.enableStatistic(session, supportedStat);
       }
     }
     System.out.println("Number of active sessions: " + sessions.length);
     System.out.println("Number of supported statistics: " + supportedStats.length);
 
-    for (int i = 0; i < sessions.length; i++) {
-      String session = sessions[i];
+    for (String session : sessions) {
       statisticsManager.startCapturing(session);
       System.out.println("Started Capture for " + session);
-      for (int j = 0; j < supportedStats.length; j++) {
-        String supportedStat = supportedStats[j];
+      for (String supportedStat : supportedStats) {
         agentManager.injectStatisticData(session, getStatisticData(supportedStat));
       }
     }
 
-    //wait for 10 secs
+    // wait for 10 secs
     Thread.sleep(10000);
 
     // stop capturing and wait for the last data
     synchronized (listener) {
-      for (int i = 0; i < sessions.length; i++) {
-        String session = sessions[i];
+      for (String session : sessions) {
         statisticsManager.stopCapturing(session);
       }
       while (!listener.getShutdown()) {
@@ -177,17 +177,19 @@ public class AgentStatisticsManagerTest extends TCTestCase {
     beanServer.removeNotificationListener(StatisticsMBeanNames.STATISTICS_EMITTER, listener);
 
     System.out.println("Sessions created: " + Arrays.asList(sessions));
-//    for (StatisticData sd : data) {
-//      System.out.println(sd.toString());
-//    }
-    int numDatas = sessions.length * (2 + supportedStats.length); //1 startup action, 1 shutdown action and supportedStats.length injected actions for each session
+    // for (StatisticData sd : data) {
+    // System.out.println(sd.toString());
+    // }
+    int numDatas = sessions.length * (2 + supportedStats.length); // 1 startup action, 1 shutdown action and
+                                                                  // supportedStats.length injected actions for each
+                                                                  // session
     Assert.assertEquals(numDatas, data.size());
 
     Map<String, Set<String>> receivedData = new HashMap<String, Set<String>>();
     for (int i = 0; i < data.size(); i++) {
       StatisticData statisticData = data.get(i);
-      if (!SRAStartupTimestamp.ACTION_NAME.equals(statisticData.getName()) &&
-          !SRAShutdownTimestamp.ACTION_NAME.equals(statisticData.getName())) {
+      if (!SRAStartupTimestamp.ACTION_NAME.equals(statisticData.getName())
+          && !SRAShutdownTimestamp.ACTION_NAME.equals(statisticData.getName())) {
         Set<String> actions = receivedData.get(statisticData.getSessionId());
         if (actions == null) {
           actions = new HashSet<String>();
@@ -197,10 +199,10 @@ public class AgentStatisticsManagerTest extends TCTestCase {
       }
     }
     // check that there's at least one data element name per supported statistic for each session
-    assertTrue("Number of unique sessions should be same as number of sessions created", receivedData.keySet()
-      .size() == sessions.length);
+    assertTrue("Number of unique sessions should be same as number of sessions created",
+               receivedData.keySet().size() == sessions.length);
     for (Set<String> actions : receivedData.values()) {
-//      System.out.println("Actions: "+ actions.toString());
+      // System.out.println("Actions: "+ actions.toString());
       Assert.assertEquals("Only enabled statistics should be collected", supportedStats.length, actions.size());
     }
   }
@@ -211,6 +213,7 @@ public class AgentStatisticsManagerTest extends TCTestCase {
     return data;
   }
 
+  @Override
   protected void tearDown() throws Exception {
     agentManager = null;
     statisticsManager = null;

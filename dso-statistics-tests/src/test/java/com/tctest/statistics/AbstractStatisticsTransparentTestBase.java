@@ -21,7 +21,7 @@ public abstract class AbstractStatisticsTransparentTestBase extends TransparentT
     final JMXConnector jmxc = JMXUtils.getJMXConnector("localhost", getAdminPort());
     final MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
 
-    final StatisticsGatewayMBean stat_gateway = (StatisticsGatewayMBean) MBeanServerInvocationHandler
+    final StatisticsGatewayMBean stat_gateway = MBeanServerInvocationHandler
         .newProxyInstance(mbsc, StatisticsMBeanNames.STATISTICS_GATEWAY, StatisticsGatewayMBean.class, false);
 
     waitForAllNodesToConnectToGateway(stat_gateway, nodeCount);

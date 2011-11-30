@@ -73,7 +73,7 @@ public class JMXHeartBeatTestApp extends AbstractTransparentApp {
       jmxc = JMXUtils.getJMXConnector("localhost", jmxPort);
       mbsc = jmxc.getMBeanServerConnection();
       echo("obtained mbeanserver connection");
-      serverMBean = (TCServerInfoMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc,
+      serverMBean = MBeanServerInvocationHandler.newProxyInstance(mbsc,
                                                                                       L2MBeanNames.TC_SERVER_INFO,
                                                                                       TCServerInfoMBean.class, false);
       String result = serverMBean.getHealthStatus();

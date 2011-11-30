@@ -81,9 +81,9 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
       }
 
       // setup the mbeans
-      statGateway = (StatisticsGatewayMBean) MBeanServerInvocationHandler
-          .newProxyInstance(mbeanServerConnection, StatisticsMBeanNames.STATISTICS_GATEWAY,
-                            StatisticsGatewayMBean.class, false);
+      statGateway = MBeanServerInvocationHandler.newProxyInstance(mbeanServerConnection,
+                                                                  StatisticsMBeanNames.STATISTICS_GATEWAY,
+                                                                  StatisticsGatewayMBean.class, false);
 
       // enable the statistics envoy
       topologyChangeHandler.setEnabled(true);
