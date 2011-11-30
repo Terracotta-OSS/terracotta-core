@@ -1109,7 +1109,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     long reconnectTimeout = l2DSOConfig.clientReconnectWindow();
 
-    HASettingsChecker haChecker = new HASettingsCheckerImpl(configSetupManager, TCPropertiesImpl.getProperties());
+    HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, TCPropertiesImpl.getProperties());
     haChecker.validateHealthCheckSettingsForHighAvailability();
 
     logger.debug("Client Reconnect Window: " + reconnectTimeout + " seconds");
