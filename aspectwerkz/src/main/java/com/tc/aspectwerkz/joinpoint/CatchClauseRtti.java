@@ -6,7 +6,7 @@ package com.tc.aspectwerkz.joinpoint;
 /**
  * Interface for the catch clause RTTI (Runtime Type Information).
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @TODO rename to HandlerRtti
  */
 public interface CatchClauseRtti extends Rtti {

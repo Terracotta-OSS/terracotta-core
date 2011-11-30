@@ -9,7 +9,7 @@ import com.tc.aspectwerkz.joinpoint.Signature;
 /**
  * Implementation for the catch clause signature.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class CatchClauseSignatureImpl implements CatchClauseSignature {
 

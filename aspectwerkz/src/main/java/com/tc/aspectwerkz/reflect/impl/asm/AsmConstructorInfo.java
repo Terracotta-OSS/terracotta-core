@@ -13,7 +13,7 @@ import com.tc.aspectwerkz.reflect.ConstructorInfo;
 /**
  * ASM implementation of the ConstructorInfo interface.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class AsmConstructorInfo extends AsmMemberInfo implements ConstructorInfo {
 

@@ -6,7 +6,7 @@ package com.tc.aspectwerkz.reflect;
 /**
  * Methods to convert Class to Java type names. Handles array types and the constructor "return" type.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author <a href="mailto:vta@medios.fi">Tibor Varga </a>
  */
 public class TypeConverter {

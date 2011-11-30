@@ -25,7 +25,7 @@ import java.util.Iterator;
 /**
  * Implementation of the ClassInfo interface for java.lang.reflect.*.
  * 
- * @author <a href="mailto:jboner@codehaus.org">Jonas Bon�r </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas Bonï¿½r </a>
  */
 public class JavaClassInfo implements ClassInfo {
   /**

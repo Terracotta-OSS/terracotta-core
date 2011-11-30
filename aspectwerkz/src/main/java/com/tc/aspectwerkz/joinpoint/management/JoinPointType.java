@@ -6,7 +6,7 @@ package com.tc.aspectwerkz.joinpoint.management;
 /**
  * Enumeration for all join point types.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public final class JoinPointType {
 

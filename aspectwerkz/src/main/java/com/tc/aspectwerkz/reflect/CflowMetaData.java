@@ -6,7 +6,7 @@ package com.tc.aspectwerkz.reflect;
 /**
  * Holds a tuple that consists of the class info and the info for a specific method.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author <a href="mailto:alex@gnilux.com">Alexandre Vasseur </a>
  */
 public class CflowMetaData {

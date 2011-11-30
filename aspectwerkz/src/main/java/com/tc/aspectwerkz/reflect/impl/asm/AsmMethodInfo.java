@@ -12,7 +12,7 @@ import com.tc.backport175.bytecode.AnnotationElement;
 /**
  * ASM implementation of the MethodInfo interface.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class AsmMethodInfo extends AsmMemberInfo implements MethodInfo {
 

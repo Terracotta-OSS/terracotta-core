@@ -40,7 +40,7 @@ import java.util.Set;
 /**
  * TODO doc
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur</a>
  */
 public class AspectWerkzAspectModel implements AspectModel, Opcodes, TransformationConstants {

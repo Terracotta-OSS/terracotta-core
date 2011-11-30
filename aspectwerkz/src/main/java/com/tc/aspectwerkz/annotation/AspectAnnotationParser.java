@@ -26,7 +26,7 @@ import java.util.List;
  * Note: we are not using reflection to loop over fields, etc, so that we do not trigger nested loading, which could be
  * potential target classes.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author <a href="mailto:alex@gnilux.com">Alexandre Vasseur </a>
  */
 public class AspectAnnotationParser {

@@ -12,7 +12,7 @@ import com.tc.aspectwerkz.exception.DefinitionException;
 /**
  * Abstract base class for the mixin container implementations.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public abstract class AbstractMixinFactory implements MixinFactory {
 

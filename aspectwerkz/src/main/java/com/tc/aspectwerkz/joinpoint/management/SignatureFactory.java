@@ -25,7 +25,7 @@ import com.tc.aspectwerkz.transform.inlining.AsmHelper;
  * <p/>
  * TODO may be worth having a cache
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author <a href="mailto:the_mindstorm@evolva.ro">Alex Popescu</a>
  */
 public final class SignatureFactory {

@@ -9,7 +9,7 @@ package com.tc.aspectwerkz.joinpoint;
  * Provides access to runtime type information (RTTI), is therefore significantly <b>slower</b>
  * than the usage of the {@link com.tc.aspectwerkz.joinpoint.StaticJoinPoint} interface.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public interface JoinPoint extends StaticJoinPoint {
 

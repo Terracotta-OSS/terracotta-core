@@ -7,7 +7,7 @@ package com.tc.aspectwerkz.transform;
 /**
  * Interface that all the weaving strategy implementations must implement.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas Bonr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂr </a>
  */
 public interface WeavingStrategy {
 

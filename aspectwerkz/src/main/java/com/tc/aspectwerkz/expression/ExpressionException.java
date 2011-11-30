@@ -9,7 +9,7 @@ import java.io.PrintWriter;
 /**
  * Thrown when error in the expression.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class ExpressionException extends RuntimeException {
   /**

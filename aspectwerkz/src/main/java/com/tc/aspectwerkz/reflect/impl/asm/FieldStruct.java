@@ -4,7 +4,7 @@
 package com.tc.aspectwerkz.reflect.impl.asm;
 
 /**
- * @author <a href="mailto:jboner@codehaus.org">Jonas Bonr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂr </a>
  */
 public class FieldStruct extends MemberStruct {
   public Object value;

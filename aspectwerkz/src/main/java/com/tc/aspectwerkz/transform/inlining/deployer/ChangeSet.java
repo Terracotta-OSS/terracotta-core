@@ -12,7 +12,7 @@ import com.tc.aspectwerkz.transform.inlining.compiler.MatchingJoinPointInfo;
 /**
  * Represents a change set of changes to be made to the class graph.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public final class ChangeSet {
   private final Set m_set = new HashSet();
@@ -38,7 +38,7 @@ public final class ChangeSet {
   /**
    * Represents a change to be made to the class graph.
    *
-   * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+   * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
    */
   public static class Element {
     private final CompilationInfo m_compilationInfo;

@@ -8,7 +8,7 @@ import java.lang.reflect.Constructor;
 /**
  * Interface for the constructor RTTI (Runtime Type Information).
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public interface ConstructorRtti extends CodeRtti {
   /**

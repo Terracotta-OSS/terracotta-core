@@ -6,7 +6,7 @@ package com.tc.aspectwerkz.joinpoint;
 /**
  * Interface for the catch clause signature.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  *         TODO rename to HandlerSignature in 2.0
  */
 public interface CatchClauseSignature extends Signature {

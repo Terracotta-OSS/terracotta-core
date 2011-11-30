@@ -13,7 +13,7 @@ import java.lang.reflect.Constructor;
 /**
  * Implementation for the constructor signature.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class ConstructorSignatureImpl implements ConstructorSignature {
   private final Class m_declaringType;

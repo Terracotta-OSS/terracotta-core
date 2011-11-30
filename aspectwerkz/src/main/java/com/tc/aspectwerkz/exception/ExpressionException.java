@@ -6,7 +6,7 @@ package com.tc.aspectwerkz.exception;
 /**
  * Thrown when error in expression AST evaluation or creation.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class ExpressionException extends RuntimeException {
   /**

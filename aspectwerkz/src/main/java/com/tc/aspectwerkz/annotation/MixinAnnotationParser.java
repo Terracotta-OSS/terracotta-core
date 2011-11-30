@@ -15,7 +15,7 @@ import com.tc.aspectwerkz.definition.SystemDefinition;
 /**
  * Extracts the mixin annotations from the class files and creates a meta-data representation of them.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class MixinAnnotationParser {
 

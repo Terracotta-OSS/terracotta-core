@@ -35,7 +35,7 @@ import com.tc.aspectwerkz.expression.ExpressionContext;
  * </pre>
  * (The reason why is that it simplifies call pointcut stack management)
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur</a>
  */
 public class MethodExecutionVisitor extends ClassAdapter implements TransformationConstants {

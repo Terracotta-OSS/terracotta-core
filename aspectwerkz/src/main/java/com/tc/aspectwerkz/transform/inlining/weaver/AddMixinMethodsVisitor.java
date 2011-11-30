@@ -32,7 +32,7 @@ import com.tc.aspectwerkz.transform.inlining.AsmHelper;
 /**
  * Adds mixin methods and fields to hold mixin instances to the target class.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class AddMixinMethodsVisitor extends ClassAdapter implements TransformationConstants {
 
@@ -388,7 +388,7 @@ public class AddMixinMethodsVisitor extends ClassAdapter implements Transformati
   /**
    * Adds initialization of static mixin fields to the beginning of the clinit method.
    *
-   * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+   * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
    */
   public class PrependToClinitMethodCodeAdapter extends MethodAdapter {
 
@@ -406,7 +406,7 @@ public class AddMixinMethodsVisitor extends ClassAdapter implements Transformati
   /**
    * Adds initialization of member mixin fields to end of the init method.
    *
-   * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+   * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
    */
   public class AppendToInitMethodCodeAdapter extends MethodAdapter {
 

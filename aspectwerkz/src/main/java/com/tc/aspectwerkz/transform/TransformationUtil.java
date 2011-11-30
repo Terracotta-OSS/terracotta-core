@@ -10,7 +10,7 @@ import com.tc.aspectwerkz.joinpoint.management.JoinPointType;
 /**
  * Utility method used by the transformers.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public final class TransformationUtil {
 

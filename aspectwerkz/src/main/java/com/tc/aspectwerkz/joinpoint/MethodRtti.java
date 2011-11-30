@@ -8,7 +8,7 @@ import java.lang.reflect.Method;
 /**
  * Interface for the method RTTI (Runtime Type Information).
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public interface MethodRtti extends CodeRtti {
   /**

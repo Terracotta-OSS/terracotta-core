@@ -6,7 +6,7 @@ package com.tc.aspectwerkz.joinpoint;
 /**
  * Holds static and reflective information about the join point (Runtime Type Information).
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public interface Rtti {
   /**

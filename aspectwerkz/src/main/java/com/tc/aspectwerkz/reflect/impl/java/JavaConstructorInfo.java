@@ -13,7 +13,7 @@ import java.lang.reflect.Constructor;
 /**
  * Implementation of the ConstructorInfo interface for java.lang.reflect.*.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class JavaConstructorInfo extends JavaMemberInfo implements ConstructorInfo {
   /**

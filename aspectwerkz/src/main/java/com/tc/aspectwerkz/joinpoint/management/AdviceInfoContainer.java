@@ -11,7 +11,7 @@ import com.tc.aspectwerkz.aspect.AdviceInfo;
 /**
  * Container for the advice infos that belongs to a specific join point.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur</a>
  */
 public class AdviceInfoContainer {

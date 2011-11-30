@@ -15,7 +15,7 @@ import java.util.Map;
  * <p/>
  * TODO refactor some with ASMClassInfoRepository but keep em separate for system runtime sake in AOPC (WLS)
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class JavaClassInfoRepository {
   /**

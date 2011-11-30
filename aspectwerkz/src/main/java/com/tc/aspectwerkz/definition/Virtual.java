@@ -4,7 +4,7 @@
 package com.tc.aspectwerkz.definition;
 
 /**
- * @author <a href="mailto:jboner@codehaus.org">Jonas Bonr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂr </a>
  */
 public class Virtual {
   public void virtual() {

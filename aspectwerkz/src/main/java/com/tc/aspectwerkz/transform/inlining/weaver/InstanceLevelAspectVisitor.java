@@ -24,7 +24,7 @@ import com.tc.aspectwerkz.transform.TransformationConstants;
 /**
  * Adds an instance level aspect management to the target class.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author <a href='mailto:the_mindstorm@evolva.ro'>Alexandru Popescu</a>
  */
 public class InstanceLevelAspectVisitor extends ClassAdapter implements TransformationConstants {
@@ -387,7 +387,7 @@ public class InstanceLevelAspectVisitor extends ClassAdapter implements Transfor
   /**
    * Adds initialization of aspect map field to end of the init method.
    *
-   * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+   * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
    */
   private class AppendToInitMethodCodeAdapter extends AfterObjectInitializationCodeAdapter {
 

@@ -9,7 +9,7 @@ package com.tc.aspectwerkz.transform.inlining.deployer;
  * Redefines all classes at all points defined by the <code>ChangeSet</code> passed to the
  * <code>redefine</code> method.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas Bonr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂr </a>
  */
 public interface Redefiner {
 

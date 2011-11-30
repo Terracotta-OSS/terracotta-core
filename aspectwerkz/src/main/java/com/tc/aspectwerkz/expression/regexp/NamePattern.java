@@ -12,7 +12,7 @@ import java.io.ObjectInputStream;
 /**
  * Implements the regular expression pattern matcher for names.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class NamePattern extends Pattern {
   /**

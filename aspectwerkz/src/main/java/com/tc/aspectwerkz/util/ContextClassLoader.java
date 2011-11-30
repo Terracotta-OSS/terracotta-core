@@ -8,7 +8,7 @@ import java.net.URL;
 /**
  * Utility methods dealing with the context class loader. Fail-over is provided to the default class loader.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public final class ContextClassLoader {
 

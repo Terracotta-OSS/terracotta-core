@@ -48,7 +48,7 @@ import java.util.List;
  * were in the bytecode (it can depends of the compiler and might not be the order of the source code - f.e. IBM
  * compiler)
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author <a href="mailto:alex@gnilux.com">Alexandre Vasseur </a>
  */
 public class AsmClassInfo implements ClassInfo {

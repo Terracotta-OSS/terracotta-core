@@ -6,7 +6,7 @@ package com.tc.aspectwerkz.joinpoint;
 /**
  * Interface for the member RTTI (Runtime Type Information).
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public interface MemberRtti extends Rtti {
 }

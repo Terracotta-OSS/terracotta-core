@@ -8,7 +8,7 @@ package com.tc.aspectwerkz.aspect.management;
  * <p/>
  * Should <b>NEVER</b> be implemented by the user, but is applied to target classes by the weaver.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas Bonr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂr </a>
  */
 public interface HasInstanceLevelAspect {
 

@@ -6,7 +6,7 @@ package com.tc.aspectwerkz.exception;
 /**
  * Thrown when no aspectwerkz definition file or class could be found.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class DefinitionNotFoundException extends RuntimeException {
   /**

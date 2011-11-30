@@ -11,7 +11,7 @@ import java.lang.ref.WeakReference;
  * enhances the base implementation by: <p/>making it serializable <p/>making it wrap an unwrap the values in a
  * <code>java.lang.ref.WeakReference</code> to avoid potential memory leaks
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class SerializableThreadLocal extends java.lang.ThreadLocal implements Serializable {
   /**

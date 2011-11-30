@@ -8,7 +8,7 @@ import com.tc.aspectwerkz.expression.ExpressionContext;
 /**
  * Holds info sufficient for picking out the join points we are interested in advising.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 final public class MatchingJoinPointInfo {
   private final Class m_joinPointClass;

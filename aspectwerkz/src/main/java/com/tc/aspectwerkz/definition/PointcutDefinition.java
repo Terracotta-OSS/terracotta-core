@@ -6,7 +6,7 @@ package com.tc.aspectwerkz.definition;
 /**
  * Holds the meta-data for the pointcuts.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class PointcutDefinition {
   /**

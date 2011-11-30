@@ -13,7 +13,7 @@ import java.lang.reflect.Field;
 /**
  * Implementation for the field signature.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class FieldSignatureImpl implements FieldSignature {
   private final Class m_declaringType;

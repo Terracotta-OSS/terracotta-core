@@ -8,7 +8,7 @@ import com.tc.aspectwerkz.expression.ast.*;
 /**
  * TODO: do we need that, there is a dump() method in jjtree API
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author Michael Nascimento
  */
 public class DumpVisitor implements ExpressionParserVisitor {

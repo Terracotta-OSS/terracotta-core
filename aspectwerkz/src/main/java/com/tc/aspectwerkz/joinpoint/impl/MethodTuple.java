@@ -8,7 +8,7 @@ import java.lang.reflect.Method;
 /**
  * Contains a pair of the original method and the wrapper method if such a method exists.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class MethodTuple /* implements Serializable */ {
   private final Method m_wrapperMethod;

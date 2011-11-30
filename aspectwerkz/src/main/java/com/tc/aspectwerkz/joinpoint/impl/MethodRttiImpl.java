@@ -12,7 +12,7 @@ import java.lang.reflect.Method;
 /**
  * Implementation for the method signature.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class MethodRttiImpl implements MethodRtti {
   private static final Object[] EMPTY_OBJECT_ARRAY = new Object[]{};

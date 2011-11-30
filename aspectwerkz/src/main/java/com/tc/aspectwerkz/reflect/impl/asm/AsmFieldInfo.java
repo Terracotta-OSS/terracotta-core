@@ -14,7 +14,7 @@ import com.tc.aspectwerkz.reflect.FieldInfo;
 /**
  * ASM implementation of the FieldInfo interface.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class AsmFieldInfo extends AsmMemberInfo implements FieldInfo {
 

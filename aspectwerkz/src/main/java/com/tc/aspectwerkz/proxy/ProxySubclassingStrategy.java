@@ -14,7 +14,7 @@ import java.util.WeakHashMap;
  * Get proxy classes from target classes and weaves in all matching aspects deployed in the class loader
  * and defined by the <code>META-INF/aop.xml</code> file.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class ProxySubclassingStrategy {
 

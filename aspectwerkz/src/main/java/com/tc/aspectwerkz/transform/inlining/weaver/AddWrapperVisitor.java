@@ -25,7 +25,7 @@ import java.lang.reflect.Modifier;
  * Adds field and method and ctor wrappers when there has been at least one joinpoint emitted.
  *
  * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur</a>
- * @author <a href="mailto:jboner@codehaus.org">Jonas Bonér </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÃ©r </a>
  */
 public class AddWrapperVisitor extends ClassAdapter implements Opcodes, TransformationConstants {
 

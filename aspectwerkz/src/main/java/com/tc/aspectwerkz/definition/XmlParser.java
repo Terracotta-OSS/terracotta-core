@@ -23,7 +23,7 @@ import javax.xml.parsers.ParserConfigurationException;
 /**
  * Parses the XML definition file using <tt>dom4j</tt>.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class XmlParser {
   /**

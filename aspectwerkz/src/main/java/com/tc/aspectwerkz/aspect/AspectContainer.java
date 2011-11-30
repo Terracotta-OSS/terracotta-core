@@ -16,7 +16,7 @@ package com.tc.aspectwerkz.aspect;
  * Note that the container will only be invoked for aspect instantiation, but not for aspect lookup (association).
  * The lookup is handled by the deployment model semantics and thus by the framework.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur</a>
  */
 public interface AspectContainer {

@@ -27,7 +27,7 @@ import com.tc.aspectwerkz.reflect.ClassInfo;
  * During compilation, different aspect model instance can be instantiated per compilation using the getInstance(..)
  * method (not returning "this").
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur</a>
  */
 public interface AspectModel {
@@ -157,7 +157,7 @@ public interface AspectModel {
   /**
    * Info about the around closure class or interface for this specific aspect model.
    *
-   * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+   * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
    */
   public static class AroundClosureClassInfo {
 

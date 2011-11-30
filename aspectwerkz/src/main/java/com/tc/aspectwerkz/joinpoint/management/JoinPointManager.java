@@ -46,7 +46,7 @@ import java.util.Set;
  * the SystemDefinitionContainer.
  *
  * @author <a href="mailto:alex@gnilux.com">Alexandre Vasseur </a>
- * @author <a href="mailto:jboner@codehaus.org">Jonas Bonr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂr </a>
  */
 public class JoinPointManager {
 

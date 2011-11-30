@@ -6,7 +6,7 @@ package com.tc.aspectwerkz.intercept;
 import com.tc.aspectwerkz.joinpoint.JoinPoint;
 
 /**
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public interface BeforeAdvice extends Advice {
 

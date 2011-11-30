@@ -13,7 +13,7 @@ import java.util.WeakHashMap;
  * The expression namespace as well as a repository for the namespaces. <p/>A namespace is usually defined by the name
  * of the class defining the expression.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public final class ExpressionNamespace {
   /**

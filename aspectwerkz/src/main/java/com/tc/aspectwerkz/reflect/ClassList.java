@@ -9,7 +9,7 @@ import java.util.Collection;
 /**
  * A list of all the possible target classes.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class ClassList implements Serializable {
   /**

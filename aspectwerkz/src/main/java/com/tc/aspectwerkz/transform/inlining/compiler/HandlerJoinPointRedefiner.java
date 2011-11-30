@@ -12,7 +12,7 @@ import com.tc.aspectwerkz.transform.inlining.AsmHelper;
  * Redefines the existing join point class and turns it into a delegation class delegating to the newly created
  * replacement join point class.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class HandlerJoinPointRedefiner extends HandlerJoinPointCompiler {
   /**

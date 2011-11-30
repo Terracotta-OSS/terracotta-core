@@ -18,7 +18,7 @@ import java.util.Set;
 /**
  * Utility method for manipulating and managing ClassInfo hierarchies.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur</a>
  */
 public class ClassInfoHelper {

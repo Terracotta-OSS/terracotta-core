@@ -8,7 +8,7 @@ import com.tc.backport175.Annotation;
 /**
  * Interface for the member signatures (method, constructor and field).
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public interface MemberSignature extends Signature {
 

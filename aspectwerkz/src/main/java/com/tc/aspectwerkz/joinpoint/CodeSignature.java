@@ -6,7 +6,7 @@ package com.tc.aspectwerkz.joinpoint;
 /**
  * Interface for the code signature (method and constructor).
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public interface CodeSignature extends MemberSignature {
   /**

@@ -11,7 +11,7 @@ import java.util.WeakHashMap;
 /**
  * A repository for the class info hierarchy. Is class loader aware.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class ClassInfoRepository {
   /**

@@ -20,7 +20,7 @@ import java.lang.reflect.Method;
  * Each Aspect qName has a generated factory (one factory per aspect qName) on which we invoke reflectively
  * the aspectOf and alike. Those are user exposed method. The weaved code does not use those.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas Bonér </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÃ©r </a>
  * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur</a>
  */
 public class Aspects {

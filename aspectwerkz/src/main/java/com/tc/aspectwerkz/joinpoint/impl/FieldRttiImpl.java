@@ -12,7 +12,7 @@ import java.lang.reflect.Field;
 /**
  * Implementation for the field signature.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas Bon�r </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas Bonï¿½r </a>
  */
 public class FieldRttiImpl implements FieldRtti {
   private final FieldSignatureImpl m_signature;

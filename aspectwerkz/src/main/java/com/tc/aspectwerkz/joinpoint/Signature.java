@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * Provides static and reflective information about the join point.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public interface Signature extends Serializable {
   /**

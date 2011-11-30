@@ -15,7 +15,7 @@ import com.tc.aspectwerkz.joinpoint.management.JoinPointType;
  * that StaticJoinPoint does not host RTTI information (caller, callee instances and args). It can be used with
  * pcd "args()", "this()" and "target()".
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public interface StaticJoinPoint {
   public static final String METHOD_EXECUTION = "METHOD_EXECUTION";

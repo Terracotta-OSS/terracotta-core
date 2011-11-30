@@ -17,7 +17,7 @@ import com.tc.aspectwerkz.intercept.AdvisableImpl;
  * proxies should use a "+" as for regular subtype matching. <p/> Pointcut to match subclassing proxies don't need to
  * use a "+" - precisely to avoid pointcut refactoring to match them.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas Bon�r </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂr </a>
  * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur</a>
  */
 public class Proxy {

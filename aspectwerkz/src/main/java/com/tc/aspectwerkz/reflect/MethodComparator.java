@@ -13,7 +13,7 @@ import java.util.Comparator;
 /**
  * Compares Methods. To be used when sorting methods.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public final class MethodComparator implements Comparator {
   /**

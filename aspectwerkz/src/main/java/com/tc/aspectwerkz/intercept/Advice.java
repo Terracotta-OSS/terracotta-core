@@ -4,7 +4,7 @@
 package com.tc.aspectwerkz.intercept;
 
 /**
- * @author <a href="mailto:jboner@codehaus.org">Jonas Bonr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂr </a>
  */
 public interface Advice {
 }

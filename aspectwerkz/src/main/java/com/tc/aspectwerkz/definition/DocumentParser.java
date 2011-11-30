@@ -43,7 +43,7 @@ import java.util.StringTokenizer;
 /**
  * Parses the XML definition using <tt>dom4j</tt>.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author <a href="mailto:alex@gnilux.com">Alexandre Vasseur </a>
  */
 public class DocumentParser {

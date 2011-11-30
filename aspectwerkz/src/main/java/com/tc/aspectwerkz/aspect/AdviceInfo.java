@@ -16,7 +16,7 @@ import java.util.Arrays;
  * Contains advice info, like indexes describing the aspect and a method (advice or introduced),
  * aspect manager etc.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author <a href="mailto:alex@gnilux.com">Alexandre Vasseur </a>
  */
 public class AdviceInfo /* implements Serializable */ {

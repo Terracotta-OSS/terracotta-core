@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Interface with common constants used in the transformation process.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public interface TransformationConstants extends Opcodes {
   public static final List EMTPTY_ARRAY_LIST = new ArrayList();

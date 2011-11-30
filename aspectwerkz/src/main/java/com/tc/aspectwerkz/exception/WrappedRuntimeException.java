@@ -9,7 +9,7 @@ import java.io.PrintWriter;
 /**
  * Wrappes the original throwable in a RuntimeException.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class WrappedRuntimeException extends RuntimeException {
   /**

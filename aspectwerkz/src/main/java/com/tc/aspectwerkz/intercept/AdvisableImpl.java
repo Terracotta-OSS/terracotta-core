@@ -25,7 +25,7 @@ import com.tc.aspectwerkz.expression.ExpressionContext;
 /**
  * Implementation of the <code>Advisable</code> mixin.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur</a>
  */
 public class AdvisableImpl implements Advisable {

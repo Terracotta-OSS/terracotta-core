@@ -13,7 +13,7 @@ import com.tc.aspectwerkz.expression.ExpressionInfo;
  * <p/>
  * Can not and should not be created by the user only given to him from the framework.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public final class DeploymentScope {
 

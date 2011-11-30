@@ -9,7 +9,7 @@ package com.tc.aspectwerkz.intercept;
  * Note: user should ensure that the target class has no user defined method named aw_addAdvice
  * and aw_removeAdvice. Other methods are made synthetic and thus will not lead to name clashes.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas Bonér </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÃ©r </a>
  */
 public interface Advisable {
 

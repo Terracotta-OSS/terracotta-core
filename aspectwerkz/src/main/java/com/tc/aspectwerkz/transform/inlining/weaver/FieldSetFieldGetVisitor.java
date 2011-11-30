@@ -32,7 +32,7 @@ import java.util.Set;
  * Instruments method SET and GET join points by replacing PUTFIELD and GETFIELD instructions with invocations
  * of the compiled join point.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class FieldSetFieldGetVisitor extends ClassAdapter implements TransformationConstants {
 
@@ -94,7 +94,7 @@ public class FieldSetFieldGetVisitor extends ClassAdapter implements Transformat
   /**
    * Replaces PUTFIELD and GETFIELD instructions with a call to the compiled JoinPoint instance.
    *
-   * @author <a href="mailto:jboner@codehaus.org">Jonas Bonér </a>
+   * @author <a href="mailto:jboner@codehaus.org">Jonas BonÃ©r </a>
    * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur</a>
    */
   public class ReplacePutFieldAndGetFieldInstructionCodeAdapter extends AfterObjectInitializationCodeAdapter {

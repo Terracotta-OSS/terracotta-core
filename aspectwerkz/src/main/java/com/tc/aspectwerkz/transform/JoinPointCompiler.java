@@ -10,7 +10,7 @@ import com.tc.aspectwerkz.transform.inlining.spi.AspectModel;
 /**
  * Generic interface for the code generation compilers used in the AspectWerkz weaver.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public interface JoinPointCompiler {
 

@@ -4,7 +4,7 @@
 package com.tc.aspectwerkz.reflect.impl.asm;
 
 /**
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class MethodStruct extends MemberStruct {
   public String[] exceptions;

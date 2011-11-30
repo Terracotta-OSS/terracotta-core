@@ -11,7 +11,7 @@ import com.tc.aspectwerkz.perx.PerObjectAspect;
  * Note: equals does not check for pointcut equality for perthis/pertarget but
  * does only checks for types
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class DeploymentModel {
 

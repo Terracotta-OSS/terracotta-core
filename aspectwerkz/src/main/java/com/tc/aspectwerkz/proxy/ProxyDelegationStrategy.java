@@ -18,7 +18,7 @@ import java.util.WeakHashMap;
  * the class loader and defined by the <code>META-INF/aop.xml</code> file.
  *
  * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur</a>
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr</a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr</a>
  */
 public class ProxyDelegationStrategy {
 

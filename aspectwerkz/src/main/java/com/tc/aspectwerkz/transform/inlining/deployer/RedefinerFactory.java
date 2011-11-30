@@ -10,7 +10,7 @@ import com.tc.aspectwerkz.util.ContextClassLoader;
 /**
  * Factory for the different redefiner implementations.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class RedefinerFactory {
   private static final String HOTSWAP_REDEFINER_CLASS_NAME =
@@ -56,7 +56,7 @@ public class RedefinerFactory {
   /**
    * Type-safe enum for the different redefiner implementations.
    *
-   * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+   * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
    */
   public static class Type {
     public static final Type HOTSWAP = new Type("HOTSWAP");

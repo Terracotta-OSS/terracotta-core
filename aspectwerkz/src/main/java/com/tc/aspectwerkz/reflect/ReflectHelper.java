@@ -17,7 +17,7 @@ import com.tc.aspectwerkz.transform.TransformationConstants;
 /**
  * Helper class with utility methods for working with the java.lang.reflect.* package.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class ReflectHelper {
 

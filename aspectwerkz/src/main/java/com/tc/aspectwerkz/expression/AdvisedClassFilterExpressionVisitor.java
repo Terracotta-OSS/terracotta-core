@@ -48,7 +48,7 @@ import com.tc.aspectwerkz.reflect.ConstructorInfo;
  * Visit() methods are returning Boolean.TRUE/FALSE or null when decision cannot be taken.
  * Using null allow composition of OR/AND with NOT in the best way.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author <a href="mailto:alex@gnilux.com">Alexandre Vasseur </a>
  * @author Michael Nascimento
  * @author <a href="mailto:the_mindstorm@evolva.ro">Alex Popescu</a>

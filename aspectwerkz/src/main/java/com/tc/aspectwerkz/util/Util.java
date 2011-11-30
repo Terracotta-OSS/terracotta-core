@@ -8,7 +8,7 @@ import com.tc.aspectwerkz.reflect.ReflectionInfo;
 /**
  * Utility methods and constants used in the AspectWerkz system.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public final class Util {
   public static final Integer INTEGER_DEFAULT_VALUE = Integer.valueOf(0);

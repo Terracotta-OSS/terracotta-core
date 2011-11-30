@@ -16,7 +16,7 @@ import java.io.ObjectInputStream;
 /**
  * Implements the regular expression pattern matcher for types.
  * 
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class TypePattern extends Pattern {
 

@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * Type-safe enum for the pointcut types.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class PointcutType implements Serializable {
   public static final PointcutType EXECUTION = new PointcutType("execution");

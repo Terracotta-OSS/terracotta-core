@@ -6,7 +6,7 @@ package com.tc.aspectwerkz.aspect;
 /**
  * Dummy class for back-compatibility reasons.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas Bonr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂr </a>
  */
 public abstract class Aspect {
 }

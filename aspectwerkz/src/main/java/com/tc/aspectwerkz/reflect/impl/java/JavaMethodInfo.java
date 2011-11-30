@@ -13,7 +13,7 @@ import java.lang.reflect.Method;
 /**
  * Implementation of the MethodInfo interface for java.lang.reflect.*.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class JavaMethodInfo extends JavaMemberInfo implements MethodInfo {
 

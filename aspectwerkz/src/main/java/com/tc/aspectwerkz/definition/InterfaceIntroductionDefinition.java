@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * Holds the meta-data for the interface introductions. <p/>This definition holds only pure interface introduction.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author <a href="mailto:alex@gnilux.com">Alexandre Vasseur </a>
  */
 public class InterfaceIntroductionDefinition {

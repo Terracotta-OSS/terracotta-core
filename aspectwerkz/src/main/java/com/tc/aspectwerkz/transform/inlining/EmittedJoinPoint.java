@@ -18,7 +18,7 @@ import com.tc.aspectwerkz.transform.InstrumentationContext;
  * Check where those are used in a map for hashcode / equals to be used.
  *
  * @author <a href="mailto:alex@gnilux.com">Alexandre Vasseur </a>
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public final class EmittedJoinPoint {
 

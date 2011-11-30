@@ -28,7 +28,7 @@ import com.tc.aspectwerkz.util.Util;
  * The expression visitor.
  * If a runtime residual is required (target => instance of check sometimes), Undeterministic matching is used.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur </a>
  * @author Michael Nascimento
  * @author <a href="mailto:the_mindstorm@evolva.ro">Alex Popescu</a>

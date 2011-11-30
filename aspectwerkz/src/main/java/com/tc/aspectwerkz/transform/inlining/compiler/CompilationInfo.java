@@ -12,7 +12,7 @@ import com.tc.aspectwerkz.reflect.ClassInfo;
 /**
  * Info needed for the compilation of the join point, holds both the initial model and the latest redefined model.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public final class CompilationInfo {
   private final Model m_initialModel;
@@ -81,7 +81,7 @@ public final class CompilationInfo {
   /**
    * Represents the information needed to compile one joinpoint at a given time
    *
-   * @author <a href="mailto:jboner@codehaus.org">Jonas Bonér </a>
+   * @author <a href="mailto:jboner@codehaus.org">Jonas BonÃ©r </a>
    */
   public final static class Model {
     private final String m_joinPointClassName;

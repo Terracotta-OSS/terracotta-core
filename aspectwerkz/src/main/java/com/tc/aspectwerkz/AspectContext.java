@@ -13,7 +13,7 @@ import java.util.Map;
 /**
  * Contains information about and for classes that has been defined as cross-cutting.
  * 
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public final class AspectContext {
   /**

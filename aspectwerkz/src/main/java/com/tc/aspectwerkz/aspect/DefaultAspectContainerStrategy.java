@@ -17,7 +17,7 @@ import java.util.Map;
  * Use container="com.tc.aspectwerkz.aspect.DefaultAspectContainerStrategy" in the aop.xml
  * The aspect must then have a no-arg constructor or a single arg constructor with param "AspectContext".
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class DefaultAspectContainerStrategy extends AbstractAspectContainer {
 

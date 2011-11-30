@@ -14,7 +14,7 @@ import java.lang.reflect.Modifier;
  * A compiler that compiles/generates a class that represents a specific join point, a class which invokes the advices
  * and the target join point statically.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur </a>
  */
 public class ConstructorExecutionJoinPointCompiler extends AbstractJoinPointCompiler {

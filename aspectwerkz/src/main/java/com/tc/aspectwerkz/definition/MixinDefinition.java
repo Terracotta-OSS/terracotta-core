@@ -25,7 +25,7 @@ import java.lang.ref.WeakReference;
 /**
  * Definition for the mixin construct.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class MixinDefinition {
 

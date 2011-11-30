@@ -22,7 +22,7 @@ import java.util.Map;
  * <p/>
  * Visibility for all methods are package private, user should only use it as a handle.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public final class DeploymentHandle {
 
@@ -108,7 +108,7 @@ public final class DeploymentHandle {
   /**
    * Holds the definition change of one advice.
    *
-   * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+   * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
    */
   static class DefinitionChangeElement {
     private final AdviceDefinition m_adviceDef;

@@ -14,7 +14,7 @@ import java.util.Map;
 /**
  * Implements an abstract regular expression pattern matcher for AspectWerkz.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas Bonr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂr </a>
  */
 public abstract class Pattern implements Serializable {
   /**

@@ -11,7 +11,7 @@ import java.lang.ref.WeakReference;
 /**
  * Implementation for the catch clause RTTI.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class CatchClauseRttiImpl implements CatchClauseRtti {
   private final CatchClauseSignatureImpl m_signature;

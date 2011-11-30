@@ -31,7 +31,7 @@ import com.tc.aspectwerkz.transform.inlining.compiler.MatchingJoinPointInfo;
  * <p/>
  * Supports annotation defined and XML defined aspects.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class Deployer {
 

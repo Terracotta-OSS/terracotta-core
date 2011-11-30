@@ -20,7 +20,7 @@ import java.util.Iterator;
  * If the class has been made advisable, we also add a ___AW_$_AW_$emittedJoinPoints fields that gets populated.
  *
  * @author <a href="mailto:alex@gnilux.com">Alexandre Vasseur </a>
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  *         TODO: for multi weaving, we could go on in adding several AW initJoinPoints_xxWeaveCount method, but then cannot be
  *         done with RW
  */
@@ -198,7 +198,7 @@ public class JoinPointInitVisitor extends ClassAdapter implements Transformation
    * Handles the method body of the AW initJoinPoints method.
    *
    * @author <a href="mailto:alex@gnilux.com">Alexandre Vasseur </a>
-   * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+   * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
    */
   public class InsertBeforeInitJoinPointsCodeAdapter extends MethodAdapter {
 

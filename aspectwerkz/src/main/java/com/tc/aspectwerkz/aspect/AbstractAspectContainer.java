@@ -23,7 +23,7 @@ import java.util.Map;
  * <p/>
  * Can be used as a base class for user defined container.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas Bonr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂr </a>
  * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur</a>
  */
 public abstract class AbstractAspectContainer implements AspectContainer {

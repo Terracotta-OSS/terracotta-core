@@ -12,7 +12,7 @@ import com.tc.asm.Type;
  * <p/>
  * In this case, CALLEE is the catched exception instance itself.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur </a>
  */
 public class HandlerJoinPointCompiler extends AbstractJoinPointCompiler {

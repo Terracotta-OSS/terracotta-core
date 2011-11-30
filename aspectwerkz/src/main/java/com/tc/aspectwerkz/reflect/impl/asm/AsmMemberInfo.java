@@ -11,7 +11,7 @@ import java.lang.ref.WeakReference;
 /**
  * ASM implementation of the MemberInfo interface.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public abstract class AsmMemberInfo implements MemberInfo {
 

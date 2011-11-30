@@ -8,7 +8,7 @@ import java.lang.reflect.Field;
 /**
  * Interface for the field RTTI (Runtime Type Information).
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public interface FieldRtti extends MemberRtti {
   /**

@@ -12,7 +12,7 @@ import java.lang.reflect.Constructor;
 /**
  * Implementation for the constructor RTTI.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class ConstructorRttiImpl implements ConstructorRtti {
   private static final Object[] EMPTY_OBJECT_ARRAY = new Object[]{};

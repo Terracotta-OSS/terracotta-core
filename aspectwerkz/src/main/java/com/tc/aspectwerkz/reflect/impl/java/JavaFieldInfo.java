@@ -15,7 +15,7 @@ import com.tc.aspectwerkz.reflect.FieldInfo;
 /**
  * Implementation of the FieldInfo interface for java.lang.reflect.*.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  */
 public class JavaFieldInfo extends JavaMemberInfo implements FieldInfo {
   /**

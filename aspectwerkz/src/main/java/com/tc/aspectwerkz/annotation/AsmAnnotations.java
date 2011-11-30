@@ -12,7 +12,7 @@ import com.tc.aspectwerkz.reflect.ConstructorInfo;
 /**
  * Helper class to extract annotations by their name from a ClassInfo structure using backport API.
  *
- * @author <a href="mailto:jboner@codehaus.org">Jonas BonŽr </a>
+ * @author <a href="mailto:jboner@codehaus.org">Jonas BonÂŽr </a>
  * @author <a href="mailto:alex@gnilux.com">Alexandre Vasseur</a>
  */
 public class AsmAnnotations {
