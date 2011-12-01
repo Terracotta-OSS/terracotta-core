@@ -15,15 +15,19 @@ import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 
 public class ObjectStringSerializerImpl implements ObjectStringSerializer {
+  private static final Charset    UTF8_CHARSET = Charset.forName("UTF-8");
 
-  private final TObjectIntHashMap stringToID = new TObjectIntHashMap();
-  private final TIntObjectHashMap idToString = new TIntObjectHashMap();
+  private final TObjectIntHashMap stringToID   = new TObjectIntHashMap();
+  private final TIntObjectHashMap idToString   = new TIntObjectHashMap();
 
-  private final TObjectIntHashMap bytesToID  = new TObjectIntHashMap();
-  private final TIntObjectHashMap idToBytes  = new TIntObjectHashMap();
+  private final TObjectIntHashMap bytesToID    = new TObjectIntHashMap();
+  private final TIntObjectHashMap idToBytes    = new TIntObjectHashMap();
+
+  private int                     bytesWritten = 0;
 
   private static class SerializeProcedure implements TObjectIntProcedure {
     private final TCDataOutput out;
@@ -162,6 +166,12 @@ public class ObjectStringSerializerImpl implements ObjectStringSerializer {
     final int newID = this.stringToID.size() + 1;
     this.stringToID.put(string, newID);
     this.idToString.put(newID, string);
+    // Writing out a string as UTF-8 (with dataOuput.writeUTF) results in a length (in a short), and the string in UTF-8
+    // see: http://docs.oracle.com/javase/6/docs/api/java/io/DataInput.html#modified-utf-8
+    bytesWritten += (Short.SIZE / 8);
+    bytesWritten += string.getBytes(UTF8_CHARSET).length;
+    bytesWritten += 2; // Some other bytes we write in TCByteBufferOutputStream.writeString()
+    bytesWritten += (Integer.SIZE / 8); // id
     return newID;
   }
 
@@ -169,7 +179,13 @@ public class ObjectStringSerializerImpl implements ObjectStringSerializer {
     int id = this.bytesToID.size() + 1;
     this.bytesToID.put(key, id);
     this.idToBytes.put(id, key.getBytes());
+    bytesWritten += key.getBytes().length;
+    bytesWritten += (Integer.SIZE / 8) * 2; // length and id
     return id;
+  }
+
+  public int getBytesWritten() {
+    return bytesWritten;
   }
 
   private static class BytesKey {

@@ -24,10 +24,14 @@ public class ObjectStringSerializerTest extends TestCase {
     ser.writeFieldName(out, "className.fieldName");
     ser.writeString(out, "timmy teck");
 
+    assertEquals(16, out.getBytesWritten());
+    assertEquals(45, ser.getBytesWritten());
+
     // cook it
     TCByteBufferOutputStream data = new TCByteBufferOutputStream();
     ser.serializeTo(data);
     data.write(out.toArray());
+    assertEquals(69, data.getBytesWritten());
 
     // read it
     TCByteBufferInputStream in = new TCByteBufferInputStream(data.toArray());
@@ -53,10 +57,15 @@ public class ObjectStringSerializerTest extends TestCase {
     byte[] bytes = new byte[] { 1, 2, 3, 4 };
     ser.writeStringBytes(out, bytes);
 
+    assertEquals(12, ser.getBytesWritten());
+    assertEquals(4, out.getBytesWritten());
+
     // cook it
     TCByteBufferOutputStream data = new TCByteBufferOutputStream();
     ser.serializeTo(data);
     data.write(out.toArray());
+
+    assertEquals(24, data.getBytesWritten());
 
     // read it
     TCByteBufferInputStream in = new TCByteBufferInputStream(data.toArray());

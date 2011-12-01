@@ -117,12 +117,13 @@ public class L2ObjectSyncRequestHandler extends AbstractEventHandler {
     final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     final TCByteBufferOutputStream out = new TCByteBufferOutputStream();
     final ObjectIDSet synced = new ObjectIDSet();
-    final ObjectIDSet notSynced = new ObjectIDSet();
-    final Iterator i = oids.iterator();
-    for (; i.hasNext() && L2_OBJECT_SYNC_MESSAGE_MAXSIZE > out.getBytesWritten();) {
+    final ObjectIDSet notSynced = new ObjectIDSet(oids);
+    final Iterator<ObjectID> i = notSynced.iterator();
+    for (; i.hasNext() && L2_OBJECT_SYNC_MESSAGE_MAXSIZE > (out.getBytesWritten() + serializer.getBytesWritten());) {
       ManagedObject m = null;
       try {
-        ObjectID oid = (ObjectID) i.next();
+        ObjectID oid = i.next();
+        i.remove();
         m = objectManager.getQuietObjectByID(oid);
         m.toDNA(out, serializer, DNAType.L2_SYNC);
         synced.add(oid);
@@ -131,9 +132,6 @@ public class L2ObjectSyncRequestHandler extends AbstractEventHandler {
           this.objectManager.releaseReadOnly(m);
         }
       }
-    }
-    while (i.hasNext()) {
-      notSynced.add((ObjectID) i.next());
     }
     mosc.setDehydratedBytes(synced, notSynced, out.toArray(), synced.size(), serializer);
     this.sendSink.add(mosc);
