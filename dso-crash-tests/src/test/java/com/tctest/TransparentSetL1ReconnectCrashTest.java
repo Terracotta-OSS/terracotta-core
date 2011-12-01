@@ -16,33 +16,38 @@ public class TransparentSetL1ReconnectCrashTest extends ActivePassiveTransparent
   private static final int EXECUTION_COUNT      = 3;
   private static final int LOOP_ITERATION_COUNT = 400;
 
+  @Override
   protected Class getApplicationClass() {
     return TransparentSetTestApp.class;
   }
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT).setApplicationInstancePerClientCount(EXECUTION_COUNT)
         .setIntensity(LOOP_ITERATION_COUNT);
     t.initializeTestRunner();
   }
-  
+
   @Override
   protected long getRestartInterval(RestartTestHelper helper) {
-    if(Os.isSolaris() || Memory.isMemoryLow()) {
+    if (Os.isSolaris()) {
       return super.getRestartInterval(helper) * 3;
     } else {
       return super.getRestartInterval(helper);
     }
   }
 
+  @Override
   protected boolean canRunCrash() {
     return true;
   }
 
+  @Override
   protected boolean enableL1Reconnect() {
     return true;
   }
 
+  @Override
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH);

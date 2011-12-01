@@ -6,19 +6,20 @@ package com.tctest.restart.system;
 
 import com.tc.test.restart.RestartTestHelper;
 import com.tc.util.runtime.Os;
-import com.tctest.Memory;
 import com.tctest.TestConfigurator;
 import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 
 public class ObjectDataL1ReconnectCrashTest extends TransparentTestBase implements TestConfigurator {
 
-  private int clientCount = 2;
+  private final int clientCount = 2;
 
+  @Override
   protected Class getApplicationClass() {
     return ObjectDataTestApp.class;
   }
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(clientCount).setIntensity(1);
     t.initializeTestRunner();
@@ -26,17 +27,19 @@ public class ObjectDataL1ReconnectCrashTest extends TransparentTestBase implemen
 
   @Override
   protected long getRestartInterval(RestartTestHelper helper) {
-    if(Os.isSolaris() || Memory.isMemoryLow()) {
+    if (Os.isSolaris()) {
       return super.getRestartInterval(helper) * 3;
     } else {
       return super.getRestartInterval(helper);
     }
   }
-  
+
+  @Override
   protected boolean canRunCrash() {
     return true;
   }
-  
+
+  @Override
   protected boolean enableL1Reconnect() {
     return true;
   }

@@ -28,7 +28,7 @@ public class TreeMapYoungGenGCActivePassiveTest extends YoungGCTestAndActivePass
 
   @Override
   protected long getRestartInterval(RestartTestHelper helper) {
-    if (Os.isSolaris() || Memory.isMemoryLow()) {
+    if (Os.isSolaris()) {
       return super.getRestartInterval(helper) * 3;
     } else {
       return super.getRestartInterval(helper);

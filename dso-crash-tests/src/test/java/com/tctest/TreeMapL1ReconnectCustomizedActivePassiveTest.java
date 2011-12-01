@@ -38,7 +38,7 @@ public class TreeMapL1ReconnectCustomizedActivePassiveTest extends ActivePassive
 
   @Override
   protected long getRestartInterval(RestartTestHelper helper) {
-    if (Os.isSolaris() || Memory.isMemoryLow()) {
+    if (Os.isSolaris()) {
       return super.getRestartInterval(helper) * 3;
     } else {
       return super.getRestartInterval(helper);

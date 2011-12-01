@@ -11,49 +11,55 @@ import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tc.test.restart.RestartTestHelper;
 import com.tc.util.runtime.Os;
 import com.tctest.ActivePassiveTransparentTestBase;
-import com.tctest.Memory;
 import com.tctest.TestConfigurator;
 import com.tctest.TransparentTestIface;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class ObjectDataSynchronousWriteL1ReconnectTest extends ActivePassiveTransparentTestBase implements TestConfigurator {
+public class ObjectDataSynchronousWriteL1ReconnectTest extends ActivePassiveTransparentTestBase implements
+    TestConfigurator {
 
-  private int clientCount = 2;
+  private final int clientCount = 2;
 
+  @Override
   protected Class getApplicationClass() {
     return ObjectDataTestApp.class;
   }
 
+  @Override
   protected Map getOptionalAttributes() {
     Map attributes = new HashMap();
     attributes.put(ObjectDataTestApp.SYNCHRONOUS_WRITE, "true");
     return attributes;
   }
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(clientCount).setIntensity(1);
     t.initializeTestRunner();
   }
-  
+
   @Override
   protected long getRestartInterval(RestartTestHelper helper) {
-    if(Os.isSolaris() || Memory.isMemoryLow()) {
+    if (Os.isSolaris()) {
       return super.getRestartInterval(helper) * 3;
     } else {
       return super.getRestartInterval(helper);
     }
   }
 
+  @Override
   protected boolean canRunCrash() {
     return true;
   }
-  
+
+  @Override
   protected boolean enableL1Reconnect() {
     return true;
   }
 
+  @Override
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH);

@@ -26,7 +26,6 @@
     
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <tim-api.version>1.3.0</tim-api.version>
-    <sigar.version>1.6.4</sigar.version>
     <jetty.version>6.1.8</jetty.version>
     <slf4j.version>1.6.1</slf4j.version>
     <offheap-store.version>1.0.5</offheap-store.version>
@@ -71,7 +70,6 @@
       -Dtc.tests.info.property-files=${tc.tests.info.property-files}
       -Dcom.tc.l1.modules.repositories=${localMavenRepository}
       -Dcom.tc.properties=${tc.system.tests.properties}
-      -Dcom.tc.sigar.enabled=true
       -Dtc.install-root.ignore-checks=true
       -Dcom.sun.management.jmxremote 
       ${surefire.additional-jvm-args}</surefire.argLine>   
@@ -297,87 +295,6 @@
         <groupId>org.terracotta.api</groupId>
         <artifactId>tim-api</artifactId>
         <version>${tim-api.version}</version>
-      </dependency>
-
-      <!-- SIGAR dependencies -->
-      <dependency>
-        <groupId>org.hyperic</groupId>
-        <artifactId>sigar</artifactId>
-        <version>${sigar.version}</version>
-        <type>jar</type>
-      </dependency>
-      <!-- linux -->
-      <dependency>
-        <groupId>org.hyperic</groupId>
-        <artifactId>libsigar-amd64-linux</artifactId>
-        <version>${sigar.version}</version>
-        <type>so</type>
-      </dependency>
-      <dependency>
-        <groupId>org.hyperic</groupId>
-        <artifactId>libsigar-x86-linux</artifactId>
-        <version>${sigar.version}</version>
-        <type>so</type>
-      </dependency>
-
-      <!-- solaris -->
-      <dependency>
-        <groupId>org.hyperic</groupId>
-        <artifactId>libsigar-amd64-solaris</artifactId>
-        <version>${sigar.version}</version>
-        <type>so</type>
-      </dependency>
-      <dependency>
-        <groupId>org.hyperic</groupId>
-        <artifactId>libsigar-sparc-solaris</artifactId>
-        <version>${sigar.version}</version>
-        <type>so</type>
-      </dependency>
-      <dependency>
-        <groupId>org.hyperic</groupId>
-        <artifactId>libsigar-sparc64-solaris</artifactId>
-        <version>${sigar.version}</version>
-        <type>so</type>
-      </dependency>      
-      <dependency>
-        <groupId>org.hyperic</groupId>
-        <artifactId>libsigar-x86-solaris</artifactId>
-        <version>${sigar.version}</version>
-        <type>so</type>
-      </dependency>
-
-      <!-- windows -->
-      <dependency>
-        <groupId>org.hyperic</groupId>
-        <artifactId>sigar-amd64-winnt</artifactId>
-        <version>${sigar.version}</version>
-        <type>dll</type>
-      </dependency>
-      <dependency>
-        <groupId>org.hyperic</groupId>
-        <artifactId>sigar-x86-winnt</artifactId>
-        <version>${sigar.version}</version>
-        <type>dll</type>
-      </dependency>
-      <dependency>
-        <groupId>org.hyperic</groupId>
-        <artifactId>sigar-x86-winnt</artifactId>
-        <version>${sigar.version}</version>
-        <type>lib</type>
-      </dependency>
-
-      <!-- mac osx -->
-      <dependency>
-        <groupId>org.hyperic</groupId>
-        <artifactId>libsigar-universal-macosx</artifactId>
-        <version>${sigar.version}</version>
-        <type>dylib</type>
-      </dependency>
-      <dependency>
-        <groupId>org.hyperic</groupId>
-        <artifactId>libsigar-universal64-macosx</artifactId>
-        <version>${sigar.version}</version>
-        <type>dylib</type>
       </dependency>
 
       <!-- tests -->

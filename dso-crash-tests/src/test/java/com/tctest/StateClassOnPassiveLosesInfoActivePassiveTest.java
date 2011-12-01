@@ -15,29 +15,33 @@ public class StateClassOnPassiveLosesInfoActivePassiveTest extends ActivePassive
 
   private static final int NODE_COUNT = 2;
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT).setIntensity(1);
     t.initializeTestRunner();
   }
 
+  @Override
   @SuppressWarnings("unchecked")
   protected Class getApplicationClass() {
     return StateClassOnPassiveLosesInfoActivePassiveTestApp.class;
   }
-  
+
   @Override
   protected long getRestartInterval(RestartTestHelper helper) {
-    if(Os.isSolaris() || Memory.isMemoryLow()) {
+    if (Os.isSolaris()) {
       return super.getRestartInterval(helper) * 3;
     } else {
       return super.getRestartInterval(helper);
     }
   }
 
+  @Override
   protected boolean canRunCrash() {
     return true;
   }
 
+  @Override
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH);

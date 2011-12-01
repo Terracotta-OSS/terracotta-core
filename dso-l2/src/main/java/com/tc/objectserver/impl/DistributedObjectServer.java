@@ -1446,9 +1446,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       registry.registerActionInstance(new SRAL2ToL1FaultRate(serverStats));
       registry.registerActionInstance(new SRAMemoryUsage());
       registry.registerActionInstance(new SRASystemProperties());
-      registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRACpu");
-      registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRANetworkActivity");
-      registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRADiskActivity");
       registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRAThreadDump");
       registry.registerActionInstance(new SRAL2TransactionCount(serverStats));
       registry.registerActionInstance(new SRAL2BroadcastCount(serverStats));

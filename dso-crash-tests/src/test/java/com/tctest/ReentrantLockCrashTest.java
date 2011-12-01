@@ -16,6 +16,7 @@ public class ReentrantLockCrashTest extends ActivePassiveTransparentTestBase {
 
   private static final int NODE_COUNT = 3;
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     TransparentAppConfig appConfig = t.getTransparentAppConfig();
     appConfig.setClientCount(NODE_COUNT);
@@ -23,23 +24,26 @@ public class ReentrantLockCrashTest extends ActivePassiveTransparentTestBase {
     appConfig.setAttribute(ReentrantLockTestApp.CRASH_TEST, "true");
   }
 
+  @Override
   protected Class getApplicationClass() {
     return ReentrantLockTestApp.class;
   }
-  
+
   @Override
   protected long getRestartInterval(RestartTestHelper helper) {
-    if(Os.isSolaris() || Memory.isMemoryLow()) {
+    if (Os.isSolaris()) {
       return super.getRestartInterval(helper) * 3;
     } else {
       return super.getRestartInterval(helper);
     }
   }
 
+  @Override
   protected boolean canRunCrash() {
     return true;
   }
 
+  @Override
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH);

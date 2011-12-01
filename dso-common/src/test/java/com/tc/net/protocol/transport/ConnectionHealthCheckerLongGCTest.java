@@ -4,18 +4,13 @@
  */
 package com.tc.net.protocol.transport;
 
-import org.hyperic.sigar.NetConnection;
-import org.hyperic.sigar.NetFlags;
-import org.hyperic.sigar.NetInfo;
-import org.hyperic.sigar.NetInterfaceConfig;
-import org.hyperic.sigar.Sigar;
-import org.hyperic.sigar.SigarException;
-
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.logging.LogLevelImpl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.Netstat;
+import com.tc.net.Netstat.SocketConnection;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
@@ -41,7 +36,6 @@ import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
 import com.tc.properties.L1ReconnectConfigImpl;
-import com.tc.statistics.retrieval.SigarUtil;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
@@ -51,6 +45,7 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
@@ -310,25 +305,17 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
   }
 
   // MNK-831
-  private int getNetInfoEstablishedConnectionsCount(int bindPort) throws SigarException {
+  private int getNetInfoEstablishedConnectionsCount(int bindPort) {
     int establishedConnections = 0;
-    SigarUtil.sigarInit();
-    Sigar s = new Sigar();
-    NetInfo info = s.getNetInfo();
-    NetInterfaceConfig config = s.getNetInterfaceConfig(null);
-    System.out.println(info.toString());
-    System.out.println(config.toString());
 
-    int flags = NetFlags.CONN_TCP | NetFlags.TCP_ESTABLISHED;
-
-    NetConnection[] connections = s.getNetConnectionList(flags);
+    List<SocketConnection> connections = Netstat.getEstablishedTcpConnections();
 
     System.out.println("XXX Established connections if any");
-    for (NetConnection connection : connections) {
+    for (SocketConnection connection : connections) {
       long port = connection.getLocalPort();
       long remotePort = connection.getRemotePort();
       // not checking bind address
-      if ((bindPort == port || bindPort == remotePort) && connection.getState() == NetFlags.TCP_ESTABLISHED) {
+      if ((bindPort == port || bindPort == remotePort)) {
         establishedConnections++;
         System.out.println("XXX " + connection);
       }
@@ -368,13 +355,9 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     HealthCheckerConfig upgradedHcConfig = new HealthCheckerConfigImpl(factor * 4000, factor * 2000, factor * 2,
                                                                        "ClientCommsHC-Test33", true);
 
-    try {
-      while (getNetInfoEstablishedConnectionsCount(serverLsnr.getBindPort()) != 2) {
-        System.out.println("XXX waiting for conn estd count to be 2");
-        ThreadUtil.reallySleep(1000);
-      }
-    } catch (SigarException se) {
-      // ignore
+    while (getNetInfoEstablishedConnectionsCount(serverLsnr.getBindPort()) != 2) {
+      System.out.println("XXX waiting for conn estd count to be 2");
+      ThreadUtil.reallySleep(1000);
     }
 
     // HC START stage:
@@ -388,13 +371,9 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     ThreadUtil.reallySleep(upgradedHcConfig.getPingIntervalMillis() * 2);
     assertEquals(0, connHC.getTotalConnsUnderMonitor());
 
-    try {
-      while (getNetInfoEstablishedConnectionsCount(serverLsnr.getBindPort()) != 0) {
-        System.out.println("XXX waiting for conn estd count to be 0");
-        ThreadUtil.reallySleep(1000);
-      }
-    } catch (SigarException se) {
-      // ignore
+    while (getNetInfoEstablishedConnectionsCount(serverLsnr.getBindPort()) != 0) {
+      System.out.println("XXX waiting for conn estd count to be 0");
+      ThreadUtil.reallySleep(1000);
     }
   }
 
@@ -437,13 +416,9 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     HealthCheckerConfig upgradedHcConfig = new HealthCheckerConfigImpl(factor * 4000, factor * 1000, factor * 2,
                                                                        "ClientCommsHC-Test33", true);
 
-    try {
-      while (getNetInfoEstablishedConnectionsCount(serverLsnr.getBindPort()) != 2) {
-        System.out.println("XXX waiting for conn estd count to be 2");
-        ThreadUtil.reallySleep(1000);
-      }
-    } catch (SigarException se) {
-      // ignore
+    while (getNetInfoEstablishedConnectionsCount(serverLsnr.getBindPort()) != 2) {
+      System.out.println("XXX waiting for conn estd count to be 2");
+      ThreadUtil.reallySleep(1000);
     }
 
     proxy.setDelay(3000);
@@ -468,13 +443,9 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
      * Client disconnected after it found socket connect timeout. After the successful reconnect there should be no
      * connection leak. DEV-1963
      */
-    try {
-      while (getNetInfoEstablishedConnectionsCount(serverLsnr.getBindPort()) != 0) {
-        System.out.println("XXX waiting for conn estd count to be 0");
-        ThreadUtil.reallySleep(1000);
-      }
-    } catch (SigarException se) {
-      // ignore
+    while (getNetInfoEstablishedConnectionsCount(serverLsnr.getBindPort()) != 0) {
+      System.out.println("XXX waiting for conn estd count to be 0");
+      ThreadUtil.reallySleep(1000);
     }
   }
 

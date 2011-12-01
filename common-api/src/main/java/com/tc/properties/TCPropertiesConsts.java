@@ -944,8 +944,6 @@ public interface TCPropertiesConsts {
   public static final String SEARCH_LUCENE_USE_RAM_DIRECTORY                                = "search.lucene.use.ram.directory";
   public static final String SEARCH_LUCENE_MAX_BUFFER                                       = "search.lucene.max.buffer";
 
-  public static final String SIGAR_ENABLED                                                  = "sigar.enabled";
-
   public static final String APP_GROUPS_DEBUG                                               = "appgroups.debug";
 
 }

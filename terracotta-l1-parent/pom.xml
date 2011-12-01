@@ -120,45 +120,5 @@
       <groupId>org.terracotta.license</groupId>
       <artifactId>terracotta-license</artifactId>
     </dependency> 
-
-    <dependency>
-      <groupId>org.hyperic</groupId>
-      <artifactId>sigar</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.hyperic</groupId>
-      <artifactId>libsigar-amd64-linux</artifactId>
-      <type>so</type>
-    </dependency>
-    <dependency>
-      <groupId>org.hyperic</groupId>
-      <artifactId>libsigar-sparc-solaris</artifactId>
-      <type>so</type>
-    </dependency>
-    <dependency>
-      <groupId>org.hyperic</groupId>
-      <artifactId>libsigar-x86-linux</artifactId>
-      <type>so</type>
-    </dependency>
-    <dependency>
-      <groupId>org.hyperic</groupId>
-      <artifactId>sigar-x86-winnt</artifactId>
-      <type>dll</type>
-    </dependency>
-    <dependency>
-      <groupId>org.hyperic</groupId>
-      <artifactId>sigar-x86-winnt</artifactId>
-      <type>lib</type>
-    </dependency>
-    <dependency>
-      <groupId>org.hyperic</groupId>
-      <artifactId>sigar-amd64-winnt</artifactId>
-      <type>dll</type>
-    </dependency>
-    <dependency>
-      <groupId>org.hyperic</groupId>
-      <artifactId>libsigar-universal-macosx</artifactId>
-      <type>dylib</type>
-    </dependency>
   </dependencies>
 </project>

@@ -376,9 +376,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
       registry.registerActionInstance(new SRAMemoryUsage());
       registry.registerActionInstance(new SRASystemProperties());
-      registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRACpu");
-      registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRANetworkActivity");
-      registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRADiskActivity");
       registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRAThreadDump");
       registry.registerActionInstance(new SRAStageQueueDepths(this.stageManager));
       registry.registerActionInstance(new SRACacheObjectsEvictRequest());
