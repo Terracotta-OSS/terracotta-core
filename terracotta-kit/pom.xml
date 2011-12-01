@@ -18,7 +18,7 @@
   <name>terracotta-kit</name>
   
   <properties>
-    <toolkit.api>1.4</toolkit.api>
+    <toolkit.api>1.5</toolkit.api>
     <toolkit.version>5.0.0-SNAPSHOT</toolkit.version>    
     <ehcache.version>2.6.0-SNAPSHOT</ehcache.version>
     <quartz.version>2.2.0-SNAPSHOT</quartz.version>
