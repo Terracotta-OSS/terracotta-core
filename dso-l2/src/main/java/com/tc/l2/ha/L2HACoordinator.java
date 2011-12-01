@@ -360,6 +360,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
       this.stateManager.startElectionIfNecessary(nodeID);
     }
     this.sequenceGenerator.clearSequenceFor(nodeID);
+    this.indexSequenceGenerator.clearSequenceFor(nodeID);
   }
 
   public void sequenceCreatedFor(final Object key) throws SequenceGeneratorException {
