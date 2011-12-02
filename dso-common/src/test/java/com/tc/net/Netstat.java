@@ -21,17 +21,21 @@ public class Netstat {
     }
   }
 
-  private static final Pattern PATTERN = Pattern
-                                           .compile("^[^\\d]*(\\d+\\.\\d+\\.\\d+\\.\\d+)[\\.\\:](\\d+)[^\\d]*(\\d+\\.\\d+\\.\\d+\\.\\d+)[\\.\\:](\\d+).*$");
+  private static final Pattern PATTERN  = Pattern
+                                            .compile("^.*?(\\d+\\.\\d+\\.\\d+\\.\\d+)[\\.\\:](\\d+)\\s+(\\d+\\.\\d+\\.\\d+\\.\\d+)[\\.\\:](\\d+).*$");
+
+  private static final Netstat INSTANCE = new Netstat();
 
   public static List<SocketConnection> getEstablishedTcpConnections() {
+    return INSTANCE.listEstablishedTcpConnections();
+  }
+
+  List<SocketConnection> listEstablishedTcpConnections() {
     List<SocketConnection> connections = new ArrayList<Netstat.SocketConnection>();
 
     try {
-      Result result = Exec.execute(new String[] { "netstat", "-n" });
-      if (result.getExitCode() != 0) { throw new RuntimeException(result.toString()); }
-
-      BufferedReader reader = new BufferedReader(new StringReader(result.getStdout()));
+      String netstat = executeNetstat();
+      BufferedReader reader = new BufferedReader(new StringReader(netstat));
       String line;
       while ((line = reader.readLine()) != null) {
         line = line.trim();
@@ -47,6 +51,8 @@ public class Netstat {
             String remoteAddr = matcher.group(3);
             int remotePort = Integer.parseInt(matcher.group(4));
             connections.add(new SocketConnection(localAddr, localPort, remoteAddr, remotePort));
+          } else {
+            System.out.println("NO MATCH: " + line);
           }
         }
       }
@@ -55,6 +61,13 @@ public class Netstat {
     }
 
     return connections;
+  }
+
+  String executeNetstat() throws Exception {
+    Result result = Exec.execute(new String[] { "netstat", "-n" });
+    if (result.getExitCode() != 0) { throw new RuntimeException(result.toString()); }
+
+    return result.getStdout();
   }
 
   public static class SocketConnection {
