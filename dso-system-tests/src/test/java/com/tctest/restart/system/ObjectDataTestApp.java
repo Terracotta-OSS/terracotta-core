@@ -20,29 +20,29 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ObjectDataTestApp extends AbstractTransparentApp {
     public static final String SYNCHRONOUS_WRITE = "synch-write";
 
-    private final int threadCount = 10;
-    private final int workSize = 1 * 50;
-    private final int testObjectDepth = 1 * 25;
+    protected final int threadCount = 10;
+    protected final int workSize = 1 * 50;
+    protected final int testObjectDepth = 1 * 25;
     // Beware when tuning down the iteration count, it might not run long enough
     // to actually do a useful crash test
     // But, high iteration counts can cause test timeouts in slow boxes :
     // MNK-941
-    private final int iterationCount = 5;
-    protected final BlockingQueue<TestObject> workQueue = new LinkedBlockingQueue<TestObject>();
+    protected final int iterationCount = 5;
+    protected final Queue<TestObject> workQueue = new LinkedList<TestObject>();
     protected final Set<TestObject> resultSet = new HashSet<TestObject>();
     private final OutputListener out;
-    private final AtomicInteger nodes = new AtomicInteger(0);
+    protected final AtomicInteger nodes = new AtomicInteger(0);
 
     public ObjectDataTestApp(final String appId, final ApplicationConfig cfg,
             final ListenerProvider listenerProvider) {
@@ -63,7 +63,7 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
             if (nodes.incrementAndGet() == 1) {
                 // if we are the first participant, we control the work queue
                 // and do the verifying
-                // System.err.println("Populating work queue...");
+                System.err.println("Populating work queue...");
                 populateWorkQueue(workSize, testObjectDepth);
                 for (int i = 0; i < iterationCount; i++) {
                     synchronized (resultSet) {
@@ -78,14 +78,15 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
                         if (i != (iterationCount - 1)) {
                             for (Iterator<TestObject> iter = resultSet
                                     .iterator(); iter.hasNext();) {
-                                workQueue.add(iter.next());
+
+                                addToQueue(iter.next());
                                 iter.remove();
                             }
                         }
                     }
                 }
                 for (int i = 0; i < wf.getGlobalWorkerCount(); i++) {
-                    workQueue.add(new TestObject("STOP"));
+                    addToQueue(new TestObject("STOP"));
                 }
             }
         } catch (Exception e) {
@@ -99,7 +100,7 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
         for (int i = 0; i < size; i++) {
             TestObject to = new TestObject("" + i);
             to.populate(depth);
-            workQueue.add(to);
+            addToQueue(to);
         }
     }
 
@@ -110,6 +111,13 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
         for (TestObject to : resultSet) {
             Assert.assertTrue(to.validate(expectedValue));
             System.out.println("Verified object " + (cnt++));
+        }
+    }
+
+    protected void addToQueue(TestObject to) {
+        synchronized (workQueue) {
+            workQueue.add(to);
+            workQueue.notifyAll();
         }
     }
 
@@ -160,7 +168,6 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
         // Create Roots
         spec.addRoot("workQueue", testClassName + ".workQueue");
         spec.addRoot("resultSet", testClassName + ".resultSet");
-        spec.addRoot("complete", testClassName + ".complete");
         spec.addRoot("nodes", testClassName + ".nodes");
 
         String workerFactoryClassname = WorkerFactory.class.getName();
@@ -182,12 +189,8 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
         addWriteAutolock(config, isSynchronousWrite,
                 populateWorkQueueExpression);
 
-        String putExpression = "* " + testClassName + ".put(..)";
-        addWriteAutolock(config, isSynchronousWrite, putExpression);
-
-        String takeExpression = "* " + testClassName + ".take(..)";
-        addWriteAutolock(config, isSynchronousWrite, takeExpression);
-
+        String addToQueueExpr = "* " + testClassName + ".addToQueue(..)";
+        addWriteAutolock(config, isSynchronousWrite, addToQueueExpr);
         // TestObject config
         String incrementExpression = "* " + testObjectClassname
                 + ".increment(..)";
@@ -227,7 +230,7 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
     }
 
     protected final class WorkerFactory {
-        private final class Worker implements Runnable {
+        public final class Worker implements Runnable {
 
             private final String name;
             private final AtomicInteger workCompletedCount = new AtomicInteger(
@@ -242,7 +245,12 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
                 Thread.currentThread().setName(name);
                 try {
                     while (true) {
-                        TestObject to = workQueue.take();
+                        TestObject to;
+                        synchronized (workQueue) {
+                            while ((to = workQueue.poll()) == null) {
+                                workQueue.wait();
+                            }
+                        }
                         if (to.getId().equals("STOP"))
                             return;
 
@@ -424,13 +432,12 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
         private int current;
 
         public synchronized Integer nextID() {
-            int rv = current++;
+            return ++current;
             // System.err.println("Issuing new id: " + rv);
-            return Integer.valueOf(rv);
         }
 
-        public synchronized Integer getCurrentID() {
-            return Integer.valueOf(current);
+        public synchronized int getCurrentID() {
+            return current;
         }
     }
 
