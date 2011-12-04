@@ -30,6 +30,23 @@ public class NetstatTest extends TestCase {
     }
 
     {
+      // linux IPv6
+      Netstat netstat = new Netstat() {
+        @Override
+        String executeNetstat() throws Exception {
+          return "tcp        0      0 ::ffff:127.0.0.1:19977      ::ffff:127.0.0.1:54047      ESTABLISHED\n";
+        }
+      };
+      List<SocketConnection> connections = netstat.listEstablishedTcpConnections();
+      assertEquals(1, connections.size());
+      SocketConnection conn = connections.iterator().next();
+      assertEquals("127.0.0.1", conn.getLocalAddr());
+      assertEquals(19977, conn.getLocalPort());
+      assertEquals("127.0.0.1", conn.getRemoteAddr());
+      assertEquals(54047, conn.getRemotePort());
+    }
+
+    {
       // windows
       Netstat netstat = new Netstat() {
         @Override

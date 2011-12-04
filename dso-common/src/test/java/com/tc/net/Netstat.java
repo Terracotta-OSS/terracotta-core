@@ -22,7 +22,7 @@ public class Netstat {
   }
 
   private static final Pattern PATTERN  = Pattern
-                                            .compile("^.*?(\\d+\\.\\d+\\.\\d+\\.\\d+)[\\.\\:](\\d+)\\s+(\\d+\\.\\d+\\.\\d+\\.\\d+)[\\.\\:](\\d+).*$");
+                                            .compile("^.*?(\\d+\\.\\d+\\.\\d+\\.\\d+)[\\.\\:](\\d+)\\s+(::ffff:)?(\\d+\\.\\d+\\.\\d+\\.\\d+)[\\.\\:](\\d+).*$");
 
   private static final Netstat INSTANCE = new Netstat();
 
@@ -48,8 +48,8 @@ public class Netstat {
           if (matcher.matches()) {
             String localAddr = matcher.group(1);
             int localPort = Integer.parseInt(matcher.group(2));
-            String remoteAddr = matcher.group(3);
-            int remotePort = Integer.parseInt(matcher.group(4));
+            String remoteAddr = matcher.group(4);
+            int remotePort = Integer.parseInt(matcher.group(5));
             connections.add(new SocketConnection(localAddr, localPort, remoteAddr, remotePort));
           } else {
             System.out.println("NO MATCH: " + line);
