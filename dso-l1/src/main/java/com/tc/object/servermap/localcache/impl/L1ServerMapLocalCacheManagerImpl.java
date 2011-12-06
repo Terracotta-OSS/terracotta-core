@@ -227,7 +227,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
 
     shutdown.set(true);
 
-    for (L1ServerMapLocalCacheStore store : localStores.keySet()) {
+    for (L1ServerMapLocalCacheStore store : localStores.keySet().toArray(new L1ServerMapLocalCacheStore[0])) {
       store.clear();
       store.dispose();
     }
