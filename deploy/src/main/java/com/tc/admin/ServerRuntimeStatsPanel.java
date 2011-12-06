@@ -29,6 +29,7 @@ import org.jfree.data.RangeType;
 import org.jfree.data.time.TimeSeries;
 
 import com.tc.admin.common.ApplicationContext;
+import com.tc.admin.common.DemoChartFactory;
 import com.tc.admin.common.FixedTimeTableXYDataset;
 import com.tc.admin.common.StatusView;
 import com.tc.admin.common.XContainer;
@@ -347,6 +348,7 @@ public class ServerRuntimeStatsPanel extends ClusterNodeRuntimeStatsPanel {
     offHeapValueAxis = (NumberAxis) plot.getRangeAxis();
     offHeapValueAxis.setAutoRangeIncludesZero(true);
     offHeapValueAxis.setRangeType(RangeType.POSITIVE);
+    offHeapValueAxis.setStandardTickUnits(DemoChartFactory.DEFAULT_MEMORY_TICKS);
     ChartPanel chartPanel = createChartPanel(chart);
     String offHeapUsageLabel = appContext.getString("server.stats.offheap.usage");
     offHeapUsageTitlePattern = offHeapUsageLabel + " (max: {0}, map: {1}, object: {2})";

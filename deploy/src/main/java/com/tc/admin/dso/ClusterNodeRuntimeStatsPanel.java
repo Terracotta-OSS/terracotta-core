@@ -137,6 +137,7 @@ public abstract class ClusterNodeRuntimeStatsPanel extends BaseRuntimeStatsPanel
     renderer.setSeriesPaint(0, Color.red);
     renderer.setSeriesPaint(1, Color.blue);
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
+    numberAxis.setStandardTickUnits(DemoChartFactory.DEFAULT_MEMORY_TICKS);
     numberAxis.setAutoRangeIncludesZero(true);
     ChartPanel memoryPanel = createChartPanel(chart);
     parent.add(memoryPanel);
@@ -193,6 +194,7 @@ public abstract class ClusterNodeRuntimeStatsPanel extends BaseRuntimeStatsPanel
       clusterNode.addPolledAttributeListener(POLLED_ATTR_CPU_LOAD, this);
     }
     cpuPanel.setBorder(BorderFactory.createTitledBorder(appContext.getString("stats.cpu.load")));
+    updateFixedRangeAxisSpace(chartsPanel);
   }
 
   protected void setupCpuUsageSeries(FixedTimeSeriesCollection cpuDataset) {
@@ -223,6 +225,7 @@ public abstract class ClusterNodeRuntimeStatsPanel extends BaseRuntimeStatsPanel
       clusterNode.addPolledAttributeListener(POLLED_ATTR_CPU_USAGE, this);
     }
     cpuPanel.setBorder(BorderFactory.createTitledBorder(appContext.getString("stats.cpu.usage")));
+    updateFixedRangeAxisSpace(chartsPanel);
   }
 
   protected class CpuLoadPanelWorker extends BasicWorker<TimeSeries> {

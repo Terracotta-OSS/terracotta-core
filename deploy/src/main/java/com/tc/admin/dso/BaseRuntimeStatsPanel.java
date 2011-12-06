@@ -9,6 +9,7 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.AxisSpace;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.NumberTickUnit;
+import org.jfree.chart.axis.TickUnitSource;
 import org.jfree.chart.plot.Plot;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
@@ -472,7 +473,11 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     RectangleInsets tickLabelInsets = numberAxis.getTickLabelInsets();
     // NumberTickUnit unit = numberAxis.getTickUnit();
     double upper = 500000000000d;
-    NumberTickUnit unit = (NumberTickUnit) DemoChartFactory.DEFAULT_INTEGER_TICKS.getCeilingTickUnit(upper);
+    TickUnitSource tus = numberAxis.getStandardTickUnits();
+    if (tus == null) {
+      tus = DemoChartFactory.DEFAULT_INTEGER_TICKS;
+    }
+    NumberTickUnit unit = (NumberTickUnit) tus.getCeilingTickUnit(upper);
 
     // look at lower and upper bounds...
     FontMetrics fm = graphics.getFontMetrics(numberAxis.getTickLabelFont());
