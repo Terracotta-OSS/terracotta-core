@@ -20,4 +20,9 @@ public class TCDatabaseException extends TCException {
   public TCDatabaseException(String message) {
     super(message);
   }
+
+  public TCDatabaseException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
 }

@@ -224,13 +224,13 @@ public class DerbyDBEnvironment implements DBEnvironment {
       Class.forName(DRIVER).newInstance();
     } catch (ClassNotFoundException cnfe) {
       String message = "Unable to load the JDBC driver " + DRIVER;
-      throw new TCDatabaseException(message);
+      throw new TCDatabaseException(message, cnfe);
     } catch (InstantiationException ie) {
       String message = "Unable to instantiate the JDBC driver " + DRIVER;
-      throw new TCDatabaseException(message);
+      throw new TCDatabaseException(message, ie);
     } catch (IllegalAccessException iae) {
       String message = "Not allowed to access the JDBC driver " + DRIVER;
-      throw new TCDatabaseException(message);
+      throw new TCDatabaseException(message, iae);
     }
 
     Properties attributesProps = new Properties();

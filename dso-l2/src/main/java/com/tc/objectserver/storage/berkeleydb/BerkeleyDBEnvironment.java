@@ -591,7 +591,7 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
                       + SLEEP_TIME_ON_STARTUP_ERROR + " ms");
           ThreadUtil.reallySleep(SLEEP_TIME_ON_STARTUP_ERROR);
         } else {
-          throw new TCDatabaseException(dbe.getMessage());
+          throw new TCDatabaseException(dbe.getMessage(), dbe);
         }
       }
     }
@@ -623,8 +623,8 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
 
   public MutableSequence getSequence(PersistenceTransactionProvider ptxp, TCLogger log, String sequenceID,
                                      int startValue) {
-    return new BerkeleyDBSequence(ptxp, log, sequenceID, startValue, (Database) databasesByName
-        .get(GLOBAL_SEQUENCE_DATABASE));
+    return new BerkeleyDBSequence(ptxp, log, sequenceID, startValue,
+                                  (Database) databasesByName.get(GLOBAL_SEQUENCE_DATABASE));
   }
 
   public PersistenceTransactionProvider getPersistenceTransactionProvider() {
