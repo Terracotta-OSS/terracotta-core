@@ -12,7 +12,17 @@ Commands to build Terracotta kits:
   mvn install -P eclipse-plugin     : build Eclipse plugin kit
   mvn install -P installer,kit      : build Installer Izpack kit
 
-3. Additional profiles:
+3. To create a patched kit
+  First, edit the src/packaging/patch/patch-def.xml file to define the contents
+  of the patch, then run:
+
+  mvn install -P kit,patch
+
+  This will create a terracotta-<VERSION>-patch<LEVEL>.tar.gz file in the target
+  directory, where <VERSION> is the version of the kit and <LEVEL> is the patch
+  level specified in the patch-def.xml file.
+
+4. Additional profiles:
 
 - "no-extra": skip packaging of ehcache, quartz, sessions, toolkit-runtime
 - "tarball":  create a tar ball package

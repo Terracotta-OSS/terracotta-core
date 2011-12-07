@@ -530,6 +530,52 @@
       </build>
     </profile>
 
+    <!-- *********************************************** -->
+    <!--   profile to make a patch tarball from the kit  -->    
+    <!-- *********************************************** -->     
+    <profile>
+      <id>patch</id>
+      <properties>
+        <patch.def.file>src/packaging/patch/patch-def.xml</patch.def.file>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.gmaven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+            <version>${gmaven-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>create-patch-tarball</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+                <configuration>         
+                  <source>
+                    File kitDir = new File("${rootDir}")
+                    File patchDefFile = new File("${patch.def.file}")
+                    def patchDef = new XmlSlurper().parse(patchDefFile)
+                    def patchLevel = patchDef.level.text()
+                    def patchName = "${kit.name}-patch${patchLevel}"
+                    def patchFiles = patchDef.files.collect { it.text() }
+
+                    ant.tar(destfile: "${project.build.directory}/${patchName}.tar.gz", longfile: "gnu", compression: "gzip") {
+                      patchFiles.each { file ->
+                        tarfileset(dir: "${kitDir}") {
+                          include(name: file)
+                        }
+                      }
+                    } 
+                  </source>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>            
+        </plugins>
+      </build>
+    </profile>
+
     <!-- *********************************** -->
     <!-- profile to build eclipse plugin kit -->    
     <!-- *********************************** -->

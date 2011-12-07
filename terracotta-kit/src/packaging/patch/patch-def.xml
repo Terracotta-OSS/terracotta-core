@@ -1,0 +1,17 @@
+
+<patch>
+  <!--
+    Patch level identifier.  May be any arbitrary string, but for official
+    patches should be a positive integer in increasing sequence.
+  -->
+  <level>1</level>
+
+  <!--
+    List of files to include in the patch tar.  File paths listed here are
+    relative to the kit root directory.
+  -->
+  <files>
+    <file>lib/tc.jar</file>
+  </files>
+</patch>
+
