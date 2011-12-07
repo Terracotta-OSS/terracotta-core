@@ -865,8 +865,8 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
    */
   private static class NIOWorkaroundsTemp {
     /**
-     * Workaround for select() throwing IOException("Bad file number") in Solaris running on x86 arch. Couldn't find a
-     * exact bug reported on this.
+     * Workaround for select() throwing IOException("Bad file number") in Solaris
+     * Sun bug 6994017 looks related -- http://wesunsolve.net/bugid/id/6994017
      */
     private static boolean solarisSelectWorkaround(IOException ioe) {
       if (Os.isSolaris()) {
