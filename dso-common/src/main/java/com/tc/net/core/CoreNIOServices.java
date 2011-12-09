@@ -876,10 +876,6 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       return false;
     }
 
-    private static String getOsArch() {
-      return System.getProperty("os.arch", "unknown");
-    }
-
   }
 
 }
