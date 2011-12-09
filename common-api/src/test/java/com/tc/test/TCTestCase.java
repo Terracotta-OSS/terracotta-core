@@ -40,8 +40,10 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -56,34 +58,41 @@ import junit.framework.TestCase;
  */
 public class TCTestCase extends TestCase {
 
-  private static final long                DEFAULT_TIMEOUT_THRESHOLD = 60000;
+  private static final String              TEST_EXECUTION_MODE        = "tc.tests.configuration.mode";
 
-  private final SynchronizedRef            beforeTimeoutException    = new SynchronizedRef(null);
+  private static final String              TEST_CATEGORIES_PROPERTIES = "/TestCategories.properties";
+
+  private static final long                DEFAULT_TIMEOUT_THRESHOLD  = 60000;
+
+  private final SynchronizedRef            beforeTimeoutException     = new SynchronizedRef(null);
 
   private DataDirectoryHelper              dataDirectoryHelper;
   private TempDirectoryHelper              tempDirectoryHelper;
 
   private Date                             allDisabledUntil;
-  private final Map                        disabledUntil             = new Hashtable();
+  private final Map                        disabledUntil              = new Hashtable();
 
   // This stuff is static since Junit new()'s up an instance of the test case for each test method,
   // and the timeout covers the entire test case (ie. all methods). It wouldn't be very effective to start
   // the timer for each test method given this
-  private static final Timer               timeoutTimer              = new Timer("Timeout Thread", true);
-  private static final SynchronizedBoolean timeoutTaskAdded          = new SynchronizedBoolean(false);
+  private static final Timer               timeoutTimer               = new Timer("Timeout Thread", true);
+  private static final SynchronizedBoolean timeoutTaskAdded           = new SynchronizedBoolean(false);
 
-  private static boolean                   printedProcess            = false;
+  private static boolean                   printedProcess             = false;
 
   // If you want to customize this, you have to do it in the constructor of your test case (setUp() is too late)
-  private long                             timeoutThreshold          = DEFAULT_TIMEOUT_THRESHOLD;
+  private long                             timeoutThreshold           = DEFAULT_TIMEOUT_THRESHOLD;
 
   // controls for thread dumping.
-  private boolean                          dumpThreadsOnTimeout      = true;
-  private int                              numThreadDumps            = 3;
-  private long                             dumpInterval              = 500;
+  private boolean                          dumpThreadsOnTimeout       = true;
+  private int                              numThreadDumps             = 3;
+  private long                             dumpInterval               = 500;
 
   // a way to ensure that system clock moves forward...
-  private long                             previousSystemMillis      = 0;
+  private long                             previousSystemMillis       = 0;
+
+  private ExecutionMode                    executionMode;
+  private final Map<String, TestCategory>  testCategories             = new HashMap();
 
   public TCTestCase() {
     super();
@@ -96,7 +105,37 @@ public class TCTestCase extends TestCase {
   }
 
   private void init() {
+    determineExecutionMode();
+    loadTestCategories();
     TCLogging.disableLocking();
+  }
+
+  private void determineExecutionMode() {
+    String mode = System.getProperty(TEST_EXECUTION_MODE);
+    executionMode = ExecutionMode.fromString(mode);
+    if (executionMode == null) {
+      if (mode != null) {
+        Banner.warnBanner("Invalid value for " + TEST_EXECUTION_MODE + ": " + mode);
+      }
+      executionMode = ExecutionMode.DEVELOPMENT;
+    }
+    if (executionMode != ExecutionMode.DEVELOPMENT) {
+      Banner.infoBanner("Running tests in " + executionMode + " mode.");
+    }
+  }
+
+  private void loadTestCategories() {
+    Properties testCategoryProperties = new Properties();
+    try {
+      testCategoryProperties.load(this.getClass().getResourceAsStream(TEST_CATEGORIES_PROPERTIES));
+    } catch (Exception e) {
+      Banner.warnBanner("Could not load " + TEST_CATEGORIES_PROPERTIES + " - All tests will default to UNCATEGORIZED.");
+      return;
+    }
+    for (String key : testCategoryProperties.stringPropertyNames()) {
+      String categoryString = testCategoryProperties.getProperty(key).toUpperCase();
+      testCategories.put(key, TestCategory.fromString(categoryString));
+    }
   }
 
   // called by timer thread (ie. NOT the main thread of test case)
@@ -169,6 +208,8 @@ public class TCTestCase extends TestCase {
         throw new Exception("Timebomb has expired on " + allDisabledUntil);
       }
     }
+
+    if (!shouldTestRunInCurrentExecutionMode()) { return; }
 
     final String testMethod = getName();
     System.out.println("**** Test case: " + testMethod + " ****");
@@ -365,6 +406,49 @@ public class TCTestCase extends TestCase {
    */
   protected final void disableTest() {
     disableAllUntil(new Date(Long.MAX_VALUE));
+  }
+
+  protected final ExecutionMode executionMode() {
+    if (executionMode == null) { return ExecutionMode.DEVELOPMENT; }
+    return executionMode;
+  }
+
+  /**
+   * Returns the TestCategory for the current test. This method never returns null. If the test does not have a
+   * category, TestCategory.UNCATEGORIZED is returned.
+   */
+  protected final TestCategory testCategory() {
+    TestCategory result = testCategories.get(this.getClass().getName());
+    if (result == null) {
+      result = TestCategory.UNCATEGORIZED;
+    }
+    return result;
+  }
+
+  protected final boolean shouldTestRunInCurrentExecutionMode() {
+    switch (executionMode()) {
+      case DEVELOPMENT:
+        return true;
+      case QUARANTINE:
+        if (testCategory() == TestCategory.PRODUCTION) {
+          Banner
+              .infoBanner(this.getClass().getName() + " is in production, skipping because this is a quarantine run.");
+          return false;
+        }
+        return true;
+      case PRODUCTION:
+        if (testCategory() == TestCategory.QUARANTINED) {
+          Banner
+              .infoBanner(this.getClass().getName() + " is in quarantine, skipping because this is a production run.");
+          return false;
+        } else if (testCategory() == TestCategory.TRIAGED || testCategory() == TestCategory.UNCATEGORIZED) {
+          Banner.infoBanner(this.getClass().getName() + " is triaged, skipping because this is a production run.");
+          return false;
+        }
+        return true;
+      default:
+        return true;
+    }
   }
 
   protected final void assertSameOrdered(Object one, Object two) {
