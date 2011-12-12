@@ -59,7 +59,7 @@ import junit.framework.TestCase;
  */
 public class TCTestCase extends TestCase {
 
-  private static final String              TEST_CATEGORIES_URL_PROPERTY = "com.tc.tests.configuration.catagories.url";
+  private static final String              TEST_CATEGORIES_URL_PROPERTY = "tc.tests.configuration.catagories.url";
 
   private static final String              TEST_EXECUTION_MODE_PROPERTY = "tc.tests.configuration.mode";
 
