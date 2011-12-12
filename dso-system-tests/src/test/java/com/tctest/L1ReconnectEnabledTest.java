@@ -29,6 +29,7 @@ public class L1ReconnectEnabledTest extends TransparentTestBase {
   private int              port;
   private File             configFile;
   private int              jmxPort;
+  private int              groupPort;
 
   @Override
   protected Class getApplicationClass() {
@@ -64,7 +65,7 @@ public class L1ReconnectEnabledTest extends TransparentTestBase {
     PortChooser pc = new PortChooser();
     port = pc.chooseRandomPort();
     jmxPort = pc.chooseRandomPort();
-    int groupPort = pc.chooseRandomPort();
+    groupPort = pc.chooseRandomPort();
     configFile = getTempFile("tc-config.xml");
     writeConfigFile();
 
@@ -77,7 +78,7 @@ public class L1ReconnectEnabledTest extends TransparentTestBase {
 
   private synchronized void writeConfigFile() {
     try {
-      TerracottaConfigBuilder builder = createConfig(port, jmxPort);
+      TerracottaConfigBuilder builder = createConfig(port, jmxPort, groupPort);
       FileOutputStream out = new FileOutputStream(configFile);
       IOUtils.copy(new StringInputStream(builder.toString()), out);
       out.close();
@@ -86,7 +87,7 @@ public class L1ReconnectEnabledTest extends TransparentTestBase {
     }
   }
 
-  public static TerracottaConfigBuilder createConfig(int port, int adminPort) {
+  public static TerracottaConfigBuilder createConfig(int port, int adminPort, int groupPort) {
     String testClassName = L1ReconnectEnabledTestApp.class.getName();
     String testClassSuperName = AbstractTransparentApp.class.getName();
 
@@ -94,6 +95,7 @@ public class L1ReconnectEnabledTest extends TransparentTestBase {
 
     out.getServers().getL2s()[0].setDSOPort(port);
     out.getServers().getL2s()[0].setJMXPort(adminPort);
+    out.getServers().getL2s()[0].setL2GroupPort(groupPort);
     out.getServers().getL2s()[0].setPersistenceMode(L2ConfigBuilder.PERSISTENCE_MODE_PERMANENT_STORE);
 
     InstrumentedClassConfigBuilder instrumented1 = new InstrumentedClassConfigBuilderImpl();
@@ -102,9 +104,8 @@ public class L1ReconnectEnabledTest extends TransparentTestBase {
     InstrumentedClassConfigBuilder instrumented2 = new InstrumentedClassConfigBuilderImpl();
     instrumented2.setClassExpression(testClassSuperName + "*");
 
-    out.getApplication().getDSO().setInstrumentedClasses(
-                                                         new InstrumentedClassConfigBuilder[] { instrumented1,
-                                                             instrumented2 });
+    out.getApplication().getDSO()
+        .setInstrumentedClasses(new InstrumentedClassConfigBuilder[] { instrumented1, instrumented2 });
 
     return out;
   }
