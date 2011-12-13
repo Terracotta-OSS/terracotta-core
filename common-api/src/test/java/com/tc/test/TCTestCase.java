@@ -154,6 +154,7 @@ public class TCTestCase extends TestCase {
 
     try {
       testCategorization = new TestCategorization(categoriesUrl);
+      Banner.infoBanner("Loaded test categories from " + categoriesUrl);
     } catch (IOException e) {
       Banner.warnBanner("Could not load test categories from " + categoriesUrl
                         + " - all tests will default to UNCATEGORIZED.");
@@ -445,23 +446,24 @@ public class TCTestCase extends TestCase {
   }
 
   protected final boolean shouldTestRunInCurrentExecutionMode() {
-    switch (executionMode()) {
+    final ExecutionMode currentMode = executionMode();
+    final String skipMessage = this.getClass().getName() + " is in " + testCategory() + ", skipping because this is a "
+                               + currentMode + " run.";
+    switch (currentMode) {
       case DEVELOPMENT:
         return true;
       case QUARANTINE:
         if (testCategory() == TestCategory.PRODUCTION) {
-          Banner
-              .infoBanner(this.getClass().getName() + " is in production, skipping because this is a quarantine run.");
+          Banner.infoBanner(skipMessage);
           return false;
         }
         return true;
       case PRODUCTION:
         if (testCategory() == TestCategory.QUARANTINED) {
-          Banner
-              .infoBanner(this.getClass().getName() + " is in quarantine, skipping because this is a production run.");
+          Banner.infoBanner(skipMessage);
           return false;
         } else if (testCategory() == TestCategory.TRIAGED || testCategory() == TestCategory.UNCATEGORIZED) {
-          Banner.infoBanner(this.getClass().getName() + " is triaged, skipping because this is a production run.");
+          Banner.infoBanner(skipMessage);
           return false;
         }
         return true;
