@@ -668,7 +668,11 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   public boolean containsKeyOnHeap(Object key) {
-    return this.localStore.containsKeyOnHeap(key);
+    boolean containsKey = pendingTransactionEntries.containsKey(key);
+    if (!containsKey) {
+      containsKey = this.localStore.containsKeyOnHeap(key);
+    }
+    return containsKey;
   }
 
   public boolean containsKeyOffHeap(Object key) {
