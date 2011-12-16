@@ -32,31 +32,29 @@ public class ActivePassiveServerCrasher implements Runnable {
         serverManger.storeErrors(e1);
       }
 
-      synchronized (testState) {
-        if (testState.isRunning() && (maxCrashCount - crashCount) > 0 && serverManger.getErrors().isEmpty() && !done) {
-          try {
-            debugPrintln("***** ActivePassiveServerCrasher:  about to crash server  threadID=["
-                         + Thread.currentThread().getName() + "]");
-            serverManger.crashServer();
+      if (testState.isRunning() && (maxCrashCount - crashCount) > 0 && serverManger.getErrors().isEmpty() && !done) {
+        try {
+          debugPrintln("***** ActivePassiveServerCrasher:  about to crash server  threadID=["
+                       + Thread.currentThread().getName() + "]");
+          serverManger.crashServer();
 
-            debugPrintln("***** ActivePassiveServerCrasher:  about to restart crashed server threadID=["
-                         + Thread.currentThread().getName() + "]");
-            serverManger.restartLastCrashedServer();
+          debugPrintln("***** ActivePassiveServerCrasher:  about to restart crashed server threadID=["
+                       + Thread.currentThread().getName() + "]");
+          serverManger.restartLastCrashedServer();
 
-            crashCount++;
-          } catch (Exception e) {
-            debugPrintln("***** ActivePassiveServerCrasher:  error occured while crashing/restarting server  threadID=["
-                         + Thread.currentThread().getName() + "]");
+          crashCount++;
+        } catch (Exception e) {
+          debugPrintln("***** ActivePassiveServerCrasher:  error occured while crashing/restarting server  threadID=["
+                       + Thread.currentThread().getName() + "]");
 
-            e.printStackTrace();
+          e.printStackTrace();
 
-            serverManger.storeErrors(e);
-          }
-        } else {
-          debugPrintln("***** ActivePassiveServerCrasher is done: testStateRunning[" + testState.isRunning()
-                       + "] errors[" + serverManger.getErrors().size() + "] crashCount[" + crashCount + "]");
-          break;
+          serverManger.storeErrors(e);
         }
+      } else {
+        debugPrintln("***** ActivePassiveServerCrasher is done: testStateRunning[" + testState.isRunning()
+                     + "] errors[" + serverManger.getErrors().size() + "] crashCount[" + crashCount + "]");
+        break;
       }
     }
   }

@@ -573,15 +573,13 @@ public class ActivePassiveServerManager extends MultipleServerManager {
 
   @Override
   public void stopAllServers() throws Exception {
-    synchronized (testState) {
-      debugPrintln("***** setting TestState to STOPPING");
-      testState.setTestState(TestState.STOPPING);
+    debugPrintln("***** setting TestState to STOPPING");
+    testState.setTestState(TestState.STOPPING);
 
-      closeJMXConnectors();
+    closeJMXConnectors();
 
-      for (int i = 0; i < serverCount; i++) {
-        stopServer(i);
-      }
+    for (int i = 0; i < serverCount; i++) {
+      stopServer(i);
     }
   }
 
