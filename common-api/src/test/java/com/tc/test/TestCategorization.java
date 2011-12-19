@@ -8,6 +8,7 @@ import org.terracotta.license.util.IOUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -67,7 +68,9 @@ public class TestCategorization {
   }
 
   private void loadFromProperties(Properties properties) {
-    for (String key : properties.stringPropertyNames()) {
+    Enumeration<?> e = properties.propertyNames();
+    while (e.hasMoreElements()) {
+      String key = (String) e.nextElement();
       String categoryString = properties.getProperty(key).toUpperCase();
       testCategoryMap.put(key, TestCategory.fromString(categoryString));
     }
