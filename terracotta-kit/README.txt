@@ -9,7 +9,6 @@ Commands to build Terracotta kits:
   mvn install -P kit                : build OS kit
   mvn install -P enterprise,kit     : build EE kit
   mvn install -P enterprise,gt,kit  : build EE -gt kit
-  mvn install -P eclipse-plugin     : build Eclipse plugin kit
   mvn install -P installer,kit      : build Installer Izpack kit
 
 3. To create a patched kit
