@@ -35,13 +35,13 @@ public class ThreadDumpUtilJdk16 extends ThreadDumpUtil {
 
         final StackTraceElement[] stea = threadInfo.getStackTrace();
         final MonitorInfo[] monitorInfos = threadInfo.getLockedMonitors();
-        for (int j = 0; j < stea.length; j++) {
+        for (StackTraceElement element : stea) {
           sb.append("\tat ");
-          sb.append(stea[j].toString());
+          sb.append(element.toString());
           sb.append('\n');
           for (final MonitorInfo monitorInfo : monitorInfos) {
             final StackTraceElement lockedFrame = monitorInfo.getLockedStackFrame();
-            if (lockedFrame != null && lockedFrame.equals(stea[j])) {
+            if (lockedFrame != null && lockedFrame.equals(element)) {
               sb.append("\t- locked <0x");
               sb.append(Integer.toHexString(monitorInfo.getIdentityHashCode()));
               sb.append("> (a ");
@@ -58,7 +58,7 @@ public class ThreadDumpUtilJdk16 extends ThreadDumpUtil {
         sb.append('\n');
       }
     } catch (final Exception e) {
-      e.printStackTrace();
+      logger.error("Cannot take thread dumps - " + e.getMessage(), e);
       sb.append(e.toString());
     }
     return sb.toString();

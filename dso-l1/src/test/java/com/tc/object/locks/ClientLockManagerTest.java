@@ -36,7 +36,6 @@ import com.tc.util.runtime.LockState;
 import com.tc.util.runtime.ThreadIDManager;
 import com.tc.util.runtime.ThreadIDManagerImpl;
 import com.tc.util.runtime.ThreadIDMap;
-import com.tc.util.runtime.ThreadIDMapJdk15;
 import com.tc.util.runtime.ThreadIDMapUtil;
 
 import java.util.ArrayList;
@@ -1003,11 +1002,11 @@ public class ClientLockManagerTest extends TCTestCase {
     String threadDump = l1info.takeThreadDump(System.currentTimeMillis());
 
     if (threadDump.indexOf("require JRE-1.5 or greater") < 0) {
-      Assert.eval("The text \"LOCKED : [StringLockID(Locky2)]\" should be present in the thread dump", threadDump
-          .indexOf("LOCKED : [StringLockID(Locky2)]") >= 0);
+      Assert.eval("The text \"LOCKED : [StringLockID(Locky2)]\" should be present in the thread dump",
+                  threadDump.indexOf("LOCKED : [StringLockID(Locky2)]") >= 0);
 
-      Assert.eval("The text \"LOCKED : [StringLockID(Locky3)]\" should be present in the thread dump", threadDump
-          .indexOf("LOCKED : [StringLockID(Locky3)]") >= 0);
+      Assert.eval("The text \"LOCKED : [StringLockID(Locky3)]\" should be present in the thread dump",
+                  threadDump.indexOf("LOCKED : [StringLockID(Locky3)]") >= 0);
 
       Assert.eval("The text \"WAITING TO LOCK: [StringLockID(Locky0)]\" should be present in the thread dump",
                   threadDump.indexOf("WAITING TO LOCK: [StringLockID(Locky0)]") >= 0);
@@ -1090,54 +1089,6 @@ public class ClientLockManagerTest extends TCTestCase {
     t1.start();
     t1.join();
     assertTrue(success[1]);
-  }
-
-  /**
-   * CDV-1262: dead threads should not remain in the ThreadIDMap.
-   */
-  public void testThreadIDMapCleanup() throws Exception {
-    final ThreadIDMapJdk15 threadIDMap = (ThreadIDMapJdk15) ThreadIDMapUtil.getInstance();
-    final int numThreads = 10000;
-    int originalSize = threadIDMap.getSize();
-    int size = makeLotsOfThreads(numThreads);
-    assertTrue(size == originalSize + numThreads);
-    ThreadUtil.reallySleep(200);
-    System.gc();
-    assertTrue(threadIDMap.getSize() < size);
-  }
-
-  /**
-   * Start and stop a bunch of threads. Keep all the thread references around till the routine is exited.
-   * 
-   * @return the size of the ThreadIDMap when all the threads are still ref'd.
-   */
-  private int makeLotsOfThreads(final int numThreads) throws Exception {
-    final ThreadIDMapJdk15 threadIDMap = (ThreadIDMapJdk15) ThreadIDMapUtil.getInstance();
-    final SessionManager session = new TestSessionManager();
-    final TestRemoteLockManager remote = new TestRemoteLockManager(sessionManager);
-    final ClientLockManager clientLockManager = new ClientLockManagerImpl(
-                                                                          new NullTCLogger(),
-                                                                          session,
-                                                                          remote,
-                                                                          new ThreadIDManagerImpl(threadIDMap),
-                                                                          new NullClientLockManagerConfig(),
-                                                                          ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER);
-    remote.setClientLockManager(clientLockManager);
-
-    final LockID lid0 = new StringLockID("Locky0");
-    Thread threads[] = new Thread[numThreads];
-    for (int i = 0; i < numThreads; ++i) {
-      threads[i] = new Thread() {
-        @Override
-        public void run() {
-          clientLockManager.lock(lid0, LockLevel.WRITE);
-          clientLockManager.unlock(lid0, LockLevel.WRITE);
-        }
-      };
-      threads[i].start();
-      threads[i].join();
-    }
-    return threadIDMap.getSize();
   }
 
   public void testBasicUnlock() throws Exception {

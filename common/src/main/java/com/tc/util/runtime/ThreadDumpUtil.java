@@ -7,14 +7,12 @@ package com.tc.util.runtime;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.locks.ThreadID;
-import com.tc.util.Assert;
 import com.tc.util.Conversion;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -27,32 +25,6 @@ public class ThreadDumpUtil {
   protected static final TCLogger       logger                  = TCLogging.getLogger(ThreadDumpUtil.class);
   protected static final ThreadMXBean   threadMXBean            = ManagementFactory.getThreadMXBean();
   protected static volatile ThreadGroup rootThreadGroup;
-
-  private static Class                  threadDumpUtilJdk15Type;
-  private static Class                  threadDumpUtilJdk16Type;
-
-  static {
-    if (Vm.isJDK15Compliant()) {
-      try {
-        threadDumpUtilJdk15Type = Class.forName("com.tc.util.runtime.ThreadDumpUtilJdk15");
-      } catch (ClassNotFoundException cnfe) {
-        logger.warn("Unable to load com.tc.util.runtime.ThreadDumpUtilJdk15", cnfe);
-        threadDumpUtilJdk15Type = null;
-      }
-
-      if (Vm.isJDK16Compliant()) {
-        try {
-          threadDumpUtilJdk16Type = Class.forName("com.tc.util.runtime.ThreadDumpUtilJdk16");
-        } catch (ClassNotFoundException cnfe) {
-          logger.warn("Unable to load com.tc.util.runtime.ThreadDumpUtilJdk16", cnfe);
-          threadDumpUtilJdk16Type = null;
-        }
-      }
-    } else {
-      // Thread dumps require JRE-1.5 or greater
-      logger.error("Thread dumps require JRE-1.5 or greater");
-    }
-  }
 
   public static byte[] getCompressedThreadDump() {
     return getCompressedThreadDump(new NullLockInfoByThreadIDImpl(), new NullThreadIDMapImpl());
@@ -96,41 +68,7 @@ public class ThreadDumpUtil {
   }
 
   public static String getThreadDump(LockInfoByThreadID lockInfo, ThreadIDMap threadIDMap) {
-    final Exception exception;
-    try {
-      if (!Vm.isJDK15Compliant()) { return "Thread dumps require JRE-1.5 or greater"; }
-      Method method = null;
-      if (Vm.isJDK15()) {
-        if (threadDumpUtilJdk15Type != null) {
-          method = getThreadDumpMethod(threadDumpUtilJdk15Type, lockInfo);
-        } else {
-          return "ThreadDump Classes not available";
-        }
-
-      } else if (Vm.isJDK16Compliant()) {
-        if (threadDumpUtilJdk16Type != null) {
-          method = getThreadDumpMethod(threadDumpUtilJdk16Type, lockInfo);
-        } else if (threadDumpUtilJdk15Type != null) {
-          method = getThreadDumpMethod(threadDumpUtilJdk15Type, lockInfo);
-        } else {
-          return "ThreadDump Classes not available";
-        }
-      } else {
-        return "Thread dumps require JRE-1.5 or greater";
-      }
-      return (String) method.invoke(null, new Object[] { lockInfo, threadIDMap });
-    } catch (Exception e) {
-      logger.error("Cannot take thread dumps - " + e.getMessage(), e);
-      exception = e;
-    }
-    return "Cannot take thread dumps " + exception.getMessage();
-  }
-
-  private static Method getThreadDumpMethod(Class jdkType, LockInfoByThreadID lockInfo) throws Exception {
-    Method method = null;
-    Assert.assertNotNull(lockInfo);
-    method = jdkType.getMethod("getThreadDump", new Class[] { LockInfoByThreadID.class, ThreadIDMap.class });
-    return method;
+    return ThreadDumpUtilJdk16.getThreadDump(lockInfo, threadIDMap);
   }
 
   public static String getLockList(LockInfoByThreadID lockInfo, ThreadID tcThreadID) {
