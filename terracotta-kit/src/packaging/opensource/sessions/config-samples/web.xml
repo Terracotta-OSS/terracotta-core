@@ -21,14 +21,8 @@ version="2.4">
     <!-- jetty 6.1.x -->
     <filter-class>org.terracotta.session.TerracottaJetty61xSessionFilter</filter-class>
 
-    <!-- Weblogic 9.x -->
-    <!-- <filter-class>org.terracotta.session.TerracottaWeblogic9xSessionFilter</filter-class> -->
-
     <!-- Weblogic 10.x -->
     <!-- <filter-class>org.terracotta.session.TerracottaWeblogic10xSessionFilter</filter-class> -->
-
-    <!-- Websphere 6.1.x -->
-    <!-- <filter-class>org.terracotta.session.TerracottaWebsphere61xSessionFilter</filter-class> -->
 
     <!-- Websphere 7.0.x -->
     <!-- <filter-class>org.terracotta.session.TerracottaWebsphere70xSessionFilter</filter-class> -->

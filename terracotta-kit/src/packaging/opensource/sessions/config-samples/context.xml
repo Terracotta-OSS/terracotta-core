@@ -15,8 +15,13 @@
 -->
 
 <Context>
-  <Valve className="org.terracotta.session.TerracottaTomcat60xSessionValve" tcConfigUrl="localhost:9510"/>
+  <Valve className="org.terracotta.session.TerracottaTomcat70xSessionValve" tcConfigUrl="localhost:9510"/>
 </Context>
+
+<!-- tomcat 6.0.x -->
+<!-- <Context> -->
+<!--  <Valve className="org.terracotta.session.TerracottaTomcat60xSessionValve" tcConfigUrl="localhost:9510"/> -->
+<!-- </Context> -->
 
 <!-- tomcat 5.5.x -->
 <!-- <Context> -->
