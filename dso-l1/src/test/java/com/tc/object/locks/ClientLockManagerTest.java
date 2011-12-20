@@ -36,7 +36,7 @@ import com.tc.util.runtime.LockState;
 import com.tc.util.runtime.ThreadIDManager;
 import com.tc.util.runtime.ThreadIDManagerImpl;
 import com.tc.util.runtime.ThreadIDMap;
-import com.tc.util.runtime.ThreadIDMapUtil;
+import com.tc.util.runtime.ThreadIDMapImpl;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -887,7 +887,7 @@ public class ClientLockManagerTest extends TCTestCase {
 
   public void testAllLockInfoInThreadDump() throws Exception {
 
-    final ThreadIDMap threadIDMap = ThreadIDMapUtil.getInstance();
+    final ThreadIDMap threadIDMap = new ThreadIDMapImpl();
     final SessionManager session = new TestSessionManager();
     final TestRemoteLockManager remote = new TestRemoteLockManager(sessionManager);
     final ClientLockManager clientLockManager = new ClientLockManagerImpl(
@@ -1039,7 +1039,7 @@ public class ClientLockManagerTest extends TCTestCase {
    */
   public void testOverriddenThreadId() throws Exception {
 
-    final ThreadIDMap threadIDMap = ThreadIDMapUtil.getInstance();
+    final ThreadIDMap threadIDMap = new ThreadIDMapImpl();
     final SessionManager session = new TestSessionManager();
     final TestRemoteLockManager remote = new TestRemoteLockManager(sessionManager);
     final ClientLockManager clientLockManager = new ClientLockManagerImpl(

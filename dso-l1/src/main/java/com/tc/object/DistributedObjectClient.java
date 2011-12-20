@@ -209,7 +209,7 @@ import com.tc.util.runtime.LockState;
 import com.tc.util.runtime.ThreadIDManager;
 import com.tc.util.runtime.ThreadIDManagerImpl;
 import com.tc.util.runtime.ThreadIDMap;
-import com.tc.util.runtime.ThreadIDMapUtil;
+import com.tc.util.runtime.ThreadIDMapImpl;
 import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.BatchSequenceReceiver;
 import com.tc.util.sequence.Sequence;
@@ -303,7 +303,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.dsoCluster = dsoCluster;
     this.threadGroup = threadGroup;
     this.statisticsAgentSubSystem = statisticsAgentSubSystem;
-    this.threadIDMap = ThreadIDMapUtil.getInstance();
+    this.threadIDMap = new ThreadIDMapImpl();
     this.runtimeLogger = runtimeLogger;
     this.dsoClientBuilder = createClientBuilder();
   }
