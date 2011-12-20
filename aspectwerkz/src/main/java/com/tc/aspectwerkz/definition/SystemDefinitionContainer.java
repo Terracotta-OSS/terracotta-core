@@ -78,7 +78,7 @@ public class SystemDefinitionContainer {
    * The default name for the definition file.
    */
   public static final String DEFAULT_DEFINITION_FILE_NAME = "aspectwerkz.xml";
-  
+
   /**
    * An internal flag to disable registration of the -Daspectwerkz.definition.file definition in the System class
    * loader. This is used only in offline mode, where these definitions are registered programmatically at the
@@ -93,6 +93,7 @@ public class SystemDefinitionContainer {
    *
    * @param loader the class loader to register
    */
+  @SuppressWarnings("deprecation")
   private static void registerClassLoader(final ClassLoader loader) {
     synchronized (s_classLoaderSystemDefinitions) {
       if (s_classLoaderSystemDefinitions.containsKey(loader)) {
@@ -131,7 +132,7 @@ public class SystemDefinitionContainer {
           definitions.addAll(getDefaultDefinition(loader));
           locationOfDefinitions.add(new File(URL_JVM_OPTION_SYSTEM).toURL());
         }
-        
+
         // causes dead lock on WLS when invoking getResource(..) - https://jira.terracotta.lan/jira/browse/LKC-2548
         // code is not needed since we never use an aop.xml file anyway
 //        if (loader.getResource(WEB_WEB_INF_XML_FILE) != null) {
@@ -418,6 +419,7 @@ public class SystemDefinitionContainer {
    * @param loader
    * @return the default defintion
    */
+  @SuppressWarnings("deprecation")
   public static Set getDefaultDefinition(final ClassLoader loader) {
     if (DEFINITION_FILE != null) {
       File file = new File(DEFINITION_FILE);

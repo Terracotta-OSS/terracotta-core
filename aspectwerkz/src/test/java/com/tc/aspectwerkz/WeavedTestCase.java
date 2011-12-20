@@ -65,6 +65,7 @@ public class WeavedTestCase extends TestCase {
     /**
      * Build weavin classloader with system class path and ext. classloader as parent
      */
+    @SuppressWarnings("deprecation")
     public WeaverTestRunner() {
       try {
         String path = System.getProperty("java.class.path");
