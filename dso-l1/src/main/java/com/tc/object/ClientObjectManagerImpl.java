@@ -583,12 +583,12 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
             this.runtimeLogger.updateFaultStats(dna.getTypeName());
           }
         } catch (final Throwable t) {
-          // remove the object creating in progress from the list.
-          lookupDone(id, createInProgressSet);
-          this.remoteObjectManager.removed(id);
           if (!quiet) {
             logger.warn("Exception retrieving object " + id, t);
           }
+          // remove the object creating in progress from the list.
+          lookupDone(id, createInProgressSet);
+          this.remoteObjectManager.removed(id);
           if (t instanceof ClassNotFoundException) { throw (ClassNotFoundException) t; }
           if (t instanceof RuntimeException) { throw (RuntimeException) t; }
           throw new RuntimeException(t);
