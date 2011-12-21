@@ -312,6 +312,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     client3.open();
 
     ThreadUtil.reallySleep(2000);
+
     assertTrue(client1.isConnected());
     assertTrue(client2.isConnected());
     assertTrue(client3.isConnected());
@@ -351,6 +352,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     }
 
     // case 3: connecting three more clients through server ports
+
     ClientMessageChannel client4 = createClientMsgCh(serverPort);
     ClientMessageChannel client5 = createClientMsgCh(serverPort);
     ClientMessageChannel client6 = createClientMsgCh(serverPort);
@@ -359,7 +361,8 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     client5.open();
     client6.open();
 
-    ThreadUtil.reallySleep(2000);
+    ThreadUtil.reallySleep(5000);
+
     assertTrue(client4.isConnected());
     assertTrue(client5.isConnected());
     assertTrue(client6.isConnected());
@@ -370,10 +373,10 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
     // case 4: closing all connections from server side
     System.out.println("XXX closing all client connections");
-    commsMgr.getConnectionManager().closeAllConnections(1000);
+    commsMgr.getConnectionManager().closeAllConnections(5000);
 
     // all clients should reconnect and should be distributed fairly among the worker comms.
-    ThreadUtil.reallySleep(5000);
+    ThreadUtil.reallySleep(10000);
 
     // After connection close and reconnects, the weight balance depends on when comms get the close connection events
     System.out.println("XXX waiting for all clients reconnect");
