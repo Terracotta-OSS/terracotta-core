@@ -48,8 +48,7 @@ public class NullObjectStringSerializer implements ObjectStringSerializer {
     return bytes;
   }
 
-  @Override
-  public int getBytesWritten() {
+  public int getApproximateBytesWritten() {
     return 0;
   }
 }

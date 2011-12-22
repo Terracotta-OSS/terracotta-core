@@ -24,5 +24,5 @@ public interface ObjectStringSerializer extends TCSerializable {
 
   byte[] readStringBytes(TCDataInput input) throws IOException;
 
-  int getBytesWritten();
+  int getApproximateBytesWritten();
 }

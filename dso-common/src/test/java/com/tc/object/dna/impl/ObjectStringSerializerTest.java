@@ -25,7 +25,7 @@ public class ObjectStringSerializerTest extends TestCase {
     ser.writeString(out, "timmy teck");
 
     assertEquals(16, out.getBytesWritten());
-    assertEquals(45, ser.getBytesWritten());
+    assertEquals(51, ser.getApproximateBytesWritten());
 
     // cook it
     TCByteBufferOutputStream data = new TCByteBufferOutputStream();
@@ -57,7 +57,7 @@ public class ObjectStringSerializerTest extends TestCase {
     byte[] bytes = new byte[] { 1, 2, 3, 4 };
     ser.writeStringBytes(out, bytes);
 
-    assertEquals(12, ser.getBytesWritten());
+    assertEquals(12, ser.getApproximateBytesWritten());
     assertEquals(4, out.getBytesWritten());
 
     // cook it

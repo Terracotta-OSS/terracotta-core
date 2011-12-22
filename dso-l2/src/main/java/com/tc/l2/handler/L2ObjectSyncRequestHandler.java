@@ -119,7 +119,7 @@ public class L2ObjectSyncRequestHandler extends AbstractEventHandler {
     final ObjectIDSet synced = new ObjectIDSet();
     final ObjectIDSet notSynced = new ObjectIDSet(oids);
     final Iterator<ObjectID> i = notSynced.iterator();
-    for (; i.hasNext() && L2_OBJECT_SYNC_MESSAGE_MAXSIZE > (out.getBytesWritten() + serializer.getBytesWritten());) {
+    for (; i.hasNext() && L2_OBJECT_SYNC_MESSAGE_MAXSIZE > (out.getBytesWritten() + serializer.getApproximateBytesWritten());) {
       ManagedObject m = null;
       try {
         ObjectID oid = i.next();
