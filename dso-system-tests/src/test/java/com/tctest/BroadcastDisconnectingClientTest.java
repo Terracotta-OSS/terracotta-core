@@ -46,8 +46,7 @@ public class BroadcastDisconnectingClientTest extends ServerCrashingTestBase {
   private static final Class internalClientClass    = BroadcastDisconnectingClientApp.class;
 
   public BroadcastDisconnectingClientTest() {
-    super(INTERNAL_CLIENT_COUNT);
-    // disableAllUntil(new Date(Long.MAX_VALUE));
+    super(INTERNAL_CLIENT_COUNT, new String[] { "-Xmx512m", "-Xms512m" });
   }
 
   @Override
