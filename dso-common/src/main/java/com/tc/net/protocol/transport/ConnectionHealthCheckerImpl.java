@@ -8,6 +8,7 @@ import com.tc.logging.LogLevelImpl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -174,11 +175,14 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
         while (connectionIterator.hasNext()) {
           MessageTransportBase mtb = (MessageTransportBase) connectionIterator.next();
 
-          if (!mtb.isConnected() && mtb.getConnection() != null) {
-            logger.info("[" + mtb.getConnection().getRemoteAddress().getCanonicalStringForm()
-                        + "] is not connected. Health Monitoring for this node is now disabled.");
-            connectionIterator.remove();
-            continue;
+          if (!mtb.isConnected()) {
+            TCConnection conn = mtb.getConnection();
+            if (conn != null) {
+              logger.info("[" + conn.getRemoteAddress().getCanonicalStringForm()
+                          + "] is not connected. Health Monitoring for this node is now disabled.");
+              connectionIterator.remove();
+              continue;
+            }
           }
 
           ConnectionHealthCheckerContext connContext = mtb.getHealthCheckerContext();
