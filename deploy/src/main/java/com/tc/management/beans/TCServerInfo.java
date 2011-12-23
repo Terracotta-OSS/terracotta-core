@@ -81,28 +81,6 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     stateChangeNotificationInfo = new StateChangeNotificationInfo();
     manager = TCRuntime.getJVMMemoryManager();
 
-    try {
-      Class sraCpuLoadType = Class.forName("com.tc.statistics.retrieval.actions.SRACpuLoad");
-      if (sraCpuLoadType != null) {
-        cpuLoadSRA = (StatisticRetrievalAction) sraCpuLoadType.newInstance();
-      }
-      Class sraCpuUsageType = Class.forName("com.tc.statistics.retrieval.actions.SRACpuCombined");
-      if (sraCpuUsageType != null) {
-        cpuUsageSRA = (StatisticRetrievalAction) sraCpuUsageType.newInstance();
-      }
-    } catch (LinkageError e) {
-      /**
-       * it's ok not output any errors or warnings here since when the CVT is initialized, it will notify about the
-       * incapacity of leading Sigar-based SRAs.
-       */
-    } catch (ClassNotFoundException e) {
-      // Ignored just like linkage error.
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-
     this.objectStatsRecorder = objectStatsRecorder;
   }
 

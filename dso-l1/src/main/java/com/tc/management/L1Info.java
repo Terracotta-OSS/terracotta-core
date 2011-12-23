@@ -64,23 +64,6 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     this.client = client;
     this.lockInfoDumpHandler = client;
     this.nextSequenceNumber = 1;
-    try {
-      Class sraCpuLoadType = Class.forName("com.tc.statistics.retrieval.actions.SRACpuLoad");
-      if (sraCpuLoadType != null) {
-        cpuLoadSRA = (StatisticRetrievalAction) sraCpuLoadType.newInstance();
-      }
-      Class sraCpuUsageType = Class.forName("com.tc.statistics.retrieval.actions.SRACpuCombined");
-      if (sraCpuUsageType != null) {
-        this.cpuUsageSRA = (StatisticRetrievalAction) sraCpuUsageType.newInstance();
-      }
-    } catch (LinkageError e) {
-      /**
-       * it's ok not output any errors or warnings here since when the CVT is initialized, it will notify about the
-       * incapacity of leading Sigar-based SRAs.
-       */
-    } catch (Exception e) {
-      /**/
-    }
   }
 
   @Override
