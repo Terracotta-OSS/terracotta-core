@@ -180,9 +180,11 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
             if (conn != null) {
               logger.info("[" + conn.getRemoteAddress().getCanonicalStringForm()
                           + "] is not connected. Health Monitoring for this node is now disabled.");
-              connectionIterator.remove();
-              continue;
+            } else {
+              logger.warn("Health Checker could not detect Message Transport Base Connection");
             }
+            connectionIterator.remove();
+            continue;
           }
 
           ConnectionHealthCheckerContext connContext = mtb.getHealthCheckerContext();
