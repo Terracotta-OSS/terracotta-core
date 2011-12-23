@@ -174,7 +174,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
         while (connectionIterator.hasNext()) {
           MessageTransportBase mtb = (MessageTransportBase) connectionIterator.next();
 
-          if (!mtb.isConnected()) {
+          if (!mtb.isConnected() && mtb.getConnection() != null) {
             logger.info("[" + mtb.getConnection().getRemoteAddress().getCanonicalStringForm()
                         + "] is not connected. Health Monitoring for this node is now disabled.");
             connectionIterator.remove();
