@@ -49,8 +49,7 @@ rem set to true if you want Terracotta server uses Derby DB as a store
 set USE_DERBYDB="false"
 
 if %USE_DERBYDB% == "true" (
-  set DERBY_DB="-Dcom.tc.l2.db.factory.name=com.tc.objectserver.storage.derby.DerbyDBFactory"
-  set OPTS=%OPTS% %DERBY_DB%
+  set OPTS=%OPTS% -Dcom.tc.l2.db.factory.name=com.tc.objectserver.storage.derby.DerbyDBFactory
   echo Starting Terracotta server with Derby DB
 )
 
