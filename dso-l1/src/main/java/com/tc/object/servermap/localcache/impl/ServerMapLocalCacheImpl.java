@@ -224,7 +224,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return null;
   }
 
-  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
+  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(
+                                                                                            final Object key,
                                                                                             AbstractLocalCacheStoreValue value,
                                                                                             MapOperationType mapOperation) {
     if (!mapOperation.isMutateOperation()) {
@@ -275,16 +276,18 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   }
 
   public void clearInline() {
+    Set<LockID> lockIDs = null;
     grabAllLocks();
     try {
-      removeAllKeysWithInlineLockRecall(this.localStore.getKeys(), true);
-      removeAllKeysWithInlineLockRecall(this.pendingTransactionEntries.keySet(), false);
+      lockIDs = removeAllKeysWithInlineLockRecall(this.localStore.getKeys(), true);
+      lockIDs.addAll(removeAllKeysWithInlineLockRecall(this.pendingTransactionEntries.keySet(), false));
     } finally {
       realeseAllLocks();
     }
+    recallLocksInline(lockIDs);
   }
 
-  private void removeAllKeysWithInlineLockRecall(Collection keySet, boolean removeFromInternalStore) {
+  private Set<LockID> removeAllKeysWithInlineLockRecall(Collection keySet, boolean removeFromInternalStore) {
     Set<LockID> lockIDs = new HashSet<LockID>();
     for (Object key : keySet) {
       if (!isMetaInfoMapping(key)) {
@@ -298,7 +301,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         }
       }
     }
-    recallLocksInline(lockIDs);
+    return lockIDs;
   }
 
   private void removeAllKeys(Collection keySet) {
@@ -600,7 +603,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  public void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
+  public void transactionComplete(
+                                  L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     l1LocalCacheManager.transactionComplete(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 
