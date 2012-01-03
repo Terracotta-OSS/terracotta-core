@@ -95,7 +95,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       this.nodes.put(nodeID, l2State);
     }
     final L2ObjectStateImpl _l2State = l2State;
-    this.transactionManager.callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
+    this.transactionManager.callBackOnResentTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
       public void onCompletion() {
         _l2State.moveToReadyToSyncState();
       }
