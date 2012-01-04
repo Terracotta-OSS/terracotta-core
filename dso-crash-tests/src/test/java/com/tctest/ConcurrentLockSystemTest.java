@@ -19,7 +19,7 @@ public class ConcurrentLockSystemTest extends TransparentTestBase {
   @Override
   protected void customizeRestartTestHelper(RestartTestHelper helper) {
     super.customizeRestartTestHelper(helper);
-    helper.getServerCrasherConfig().setRestartInterval(60 * 1000);
+    helper.getServerCrasherConfig().setRestartInterval(90 * 1000);
   }
 
   @Override
@@ -37,6 +37,7 @@ public class ConcurrentLockSystemTest extends TransparentTestBase {
   protected void setupConfig(TestConfigurationSetupManagerFactory configFactory) {
     configFactory.setGCVerbose(true);
     configFactory.setGCIntervalInSec(10);
+    configFactory.l2DSOConfig().getDso().setClientReconnectWindow(45);
   }
 
   @Override
