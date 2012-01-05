@@ -3,42 +3,24 @@
  */
 package com.tc.objectserver.storage.api;
 
-import org.apache.commons.io.FileUtils;
-
-import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.objectserver.persistence.db.BatchedTransactionImpl;
 import com.tc.objectserver.persistence.db.TCCollectionsSerializerImpl;
-import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Random;
 
-public class TCMapsDatabaseCursorTest extends TCTestCase {
-  private final Random                   random = new Random();
-  private File                           dbHome;
-  private DBEnvironment                  dbenv;
-  private PersistenceTransactionProvider ptp;
-
-  private TCMapsDatabase                 database;
+public class TCMapsDatabaseCursorTest extends AbstractDatabaseTest {
+  private final Random   random = new Random();
+  private TCMapsDatabase database;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    File dataPath = getTempDirectory();
-
-    dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
-    dbHome.mkdir();
-
-    dbenv = DBFactory.getInstance().createEnvironment(true, dbHome);
-    dbenv.open();
-
-    ptp = dbenv.getPersistenceTransactionProvider();
-    database = dbenv.getMapsDatabase();
+    database = getDbenv().getMapsDatabase();
   }
 
   public void testBasicCursor() throws Exception {
@@ -51,14 +33,14 @@ public class TCMapsDatabaseCursorTest extends TCTestCase {
     byte[] key2 = getRandomlyFilledByteArray(objectId2);
     byte[] value2 = getRandomlyFilledByteArray(objectId2);
 
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = newTransaction();
     database.insert(tx, objectId1, key1, value1, serializer);
     database.insert(tx, objectId2, key2, value2, serializer);
     tx.commit();
 
-    Assert.assertEquals(2, database.count(ptp.newTransaction()));
+    Assert.assertEquals(2, database.count(newTransaction()));
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     HashMap<byte[], byte[]> map = new HashMap<byte[], byte[]>();
     database.loadMap(tx, objectId1, map, serializer);
     tx.commit();
@@ -83,14 +65,14 @@ public class TCMapsDatabaseCursorTest extends TCTestCase {
     byte[] key2 = getRandomlyFilledByteArray(objectId2);
     byte[] value2 = getRandomlyFilledByteArray(objectId2);
 
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = newTransaction();
     database.insert(tx, objectId1, key1, value1, serializer);
     database.insert(tx, objectId2, key2, value2, serializer);
     tx.commit();
 
-    Assert.assertEquals(2, database.count(ptp.newTransaction()));
+    Assert.assertEquals(2, database.count(newTransaction()));
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     HashMap<byte[], byte[]> map = new HashMap<byte[], byte[]>();
     database.loadMap(tx, objectId1, map, serializer);
     for (Entry<byte[], byte[]> entry : map.entrySet()) {
@@ -99,16 +81,16 @@ public class TCMapsDatabaseCursorTest extends TCTestCase {
     }
     tx.commit();
 
-    tx = ptp.newTransaction();
-    BatchedTransactionImpl bt = new BatchedTransactionImpl(ptp, 1);
+    tx = newTransaction();
+    BatchedTransactionImpl bt = new BatchedTransactionImpl(getPtp(), 1);
     bt.startBatchedTransaction();
     database.deleteCollectionBatched(objectId1, bt);
     long countDeleted = bt.completeBatchedTransaction();
 
-    Assert.assertEquals(1, database.count(ptp.newTransaction()));
+    Assert.assertEquals(1, database.count(newTransaction()));
     Assert.assertEquals(1, countDeleted);
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     map = new HashMap<byte[], byte[]>();
     database.loadMap(tx, objectId2, map, serializer);
     for (Entry<byte[], byte[]> entry : map.entrySet()) {
@@ -127,16 +109,5 @@ public class TCMapsDatabaseCursorTest extends TCTestCase {
       array[i] = temp[i];
     }
     return array;
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-    try {
-      dbenv.close();
-      FileUtils.cleanDirectory(dbHome);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
   }
 }

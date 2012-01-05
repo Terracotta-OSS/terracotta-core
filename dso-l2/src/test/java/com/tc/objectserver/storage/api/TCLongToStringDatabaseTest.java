@@ -3,37 +3,18 @@
  */
 package com.tc.objectserver.storage.api;
 
-import org.apache.commons.io.FileUtils;
-
-import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
-import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 
 import gnu.trove.TLongObjectHashMap;
 
-import java.io.File;
-
-public class TCLongToStringDatabaseTest extends TCTestCase {
-  private File                           dbHome;
-  private DBEnvironment                  dbenv;
-  private PersistenceTransactionProvider ptp;
-
-  private TCLongToStringDatabase         database;
+public class TCLongToStringDatabaseTest extends AbstractDatabaseTest {
+  private TCLongToStringDatabase database;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    File dataPath = getTempDirectory();
-
-    dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
-    dbHome.mkdir();
-
-    dbenv = DBFactory.getInstance().createEnvironment(true, dbHome);
-    dbenv.open();
-
-    ptp = dbenv.getPersistenceTransactionProvider();
-    database = dbenv.getStringIndexDatabase();
+    database = getDbenv().getStringIndexDatabase();
   }
 
   public void testPutGetAll() {
@@ -45,7 +26,7 @@ public class TCLongToStringDatabaseTest extends TCTestCase {
     }
 
     for (int i = 0; i < keys.length; i++) {
-      PersistenceTransaction tx = ptp.newTransaction();
+      PersistenceTransaction tx = newTransaction();
       Status status = database.insert(keys[i], values[i], tx);
       tx.commit();
 
@@ -53,7 +34,7 @@ public class TCLongToStringDatabaseTest extends TCTestCase {
     }
 
     TLongObjectHashMap map = new TLongObjectHashMap();
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = newTransaction();
     map = database.loadMappingsInto(map, tx);
 
     Assert.assertEquals(keys.length, map.size());
@@ -61,17 +42,6 @@ public class TCLongToStringDatabaseTest extends TCTestCase {
     for (int i = 0; i < keys.length; i++) {
       String str = (String) map.get(keys[i]);
       Assert.assertEquals(values[i], str);
-    }
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-    try {
-      dbenv.close();
-      FileUtils.cleanDirectory(dbHome);
-    } catch (Exception e) {
-      e.printStackTrace();
     }
   }
 }

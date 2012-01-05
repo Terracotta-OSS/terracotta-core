@@ -3,18 +3,12 @@
  */
 package com.tc.objectserver.storage.api;
 
-import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.objectserver.persistence.db.TCCollectionsSerializer;
 import com.tc.objectserver.persistence.db.TCCollectionsSerializerImpl;
-import com.tc.test.TCTestCase;
 
-import java.io.File;
 import java.util.concurrent.CyclicBarrier;
 
-public class TCMapsClearDeadlockTest extends TCTestCase {
-  private File                                 dbHome;
-  private DBEnvironment                        dbenv;
-  private PersistenceTransactionProvider       ptp;
+public class TCMapsClearDeadlockTest extends AbstractDatabaseTest {
   private TCMapsDatabase                       database;
   private final CyclicBarrier                  barrier                        = new CyclicBarrier(2);
   private static final TCCollectionsSerializer serializer                     = new TCCollectionsSerializerImpl();
@@ -24,20 +18,11 @@ public class TCMapsClearDeadlockTest extends TCTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    final File dataPath = getTempDirectory();
-
-    this.dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
-    this.dbHome.mkdir();
-
-    this.dbenv = DBFactory.getInstance().createEnvironment(true, this.dbHome);
-    this.dbenv.open();
-
-    this.ptp = this.dbenv.getPersistenceTransactionProvider();
-    this.database = this.dbenv.getMapsDatabase();
+    this.database = getDbenv().getMapsDatabase();
   }
 
   public void testMapClearDeadlock() throws Exception {
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = newTransaction();
     database.insert(tx, 1, "123", "abc", serializer);
     database.insert(tx, 1, "321", "abc", serializer);
     database.insert(tx, 2, "123", "abc", serializer);
@@ -62,7 +47,7 @@ public class TCMapsClearDeadlockTest extends TCTestCase {
     @Override
     public void run() {
       try {
-        PersistenceTransaction tx = ptp.newTransaction();
+        PersistenceTransaction tx = newTransaction();
         barrier.await();
         database.deleteCollection(this.mapId, tx);
         barrier.await();

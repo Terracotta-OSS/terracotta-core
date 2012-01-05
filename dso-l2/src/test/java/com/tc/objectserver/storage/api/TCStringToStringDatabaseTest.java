@@ -3,47 +3,28 @@
  */
 package com.tc.objectserver.storage.api;
 
-import org.apache.commons.io.FileUtils;
-
-import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
-import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 
-import java.io.File;
-
-public class TCStringToStringDatabaseTest extends TCTestCase {
-  private File                           dbHome;
-  private DBEnvironment                  dbenv;
-  private PersistenceTransactionProvider ptp;
-
-  private TCStringToStringDatabase       database;
+public class TCStringToStringDatabaseTest extends AbstractDatabaseTest {
+  private TCStringToStringDatabase database;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    File dataPath = getTempDirectory();
-
-    dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
-    dbHome.mkdir();
-
-    dbenv = DBFactory.getInstance().createEnvironment(true, dbHome);
-    dbenv.open();
-
-    ptp = dbenv.getPersistenceTransactionProvider();
-    database = dbenv.getClusterStateStoreDatabase();
+    database = getDbenv().getClusterStateStoreDatabase();
   }
 
   public void testGetPut() {
     String key = "String-key";
     String value = "String-value";
 
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = newTransaction();
     Status status = database.put(key, value, tx);
     tx.commit();
     Assert.assertEquals(Status.SUCCESS, status);
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     TCDatabaseEntry<String, String> entry = new TCDatabaseEntry<String, String>();
     status = database.get(entry.setKey(key), tx);
     tx.commit();
@@ -56,12 +37,12 @@ public class TCStringToStringDatabaseTest extends TCTestCase {
     String key = "String-key";
     String value = "String-value";
 
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = newTransaction();
     Status status = database.put(key, value, tx);
     tx.commit();
     Assert.assertEquals(Status.SUCCESS, status);
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     TCDatabaseEntry<String, String> entry = new TCDatabaseEntry<String, String>();
     status = database.get(entry.setKey(key), tx);
     tx.commit();
@@ -69,25 +50,14 @@ public class TCStringToStringDatabaseTest extends TCTestCase {
     Assert.assertEquals(Status.SUCCESS, status);
     Assert.assertEquals(value, entry.getValue());
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     status = database.delete(key, tx);
     tx.commit();
     Assert.assertEquals(Status.SUCCESS, status);
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     status = database.delete(key, tx);
     tx.commit();
     Assert.assertEquals(Status.NOT_FOUND, status);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-    try {
-      dbenv.close();
-      FileUtils.cleanDirectory(dbHome);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
   }
 }

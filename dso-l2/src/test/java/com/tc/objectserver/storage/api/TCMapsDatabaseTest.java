@@ -3,18 +3,13 @@
  */
 package com.tc.objectserver.storage.api;
 
-import org.apache.commons.io.FileUtils;
-
-import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.objectserver.persistence.db.DBException;
 import com.tc.objectserver.persistence.db.TCCollectionsSerializer;
 import com.tc.objectserver.persistence.db.TCCollectionsSerializerImpl;
 import com.tc.objectserver.storage.berkeleydb.BerkeleyDBTCMapsDatabase;
-import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
 
-import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -25,28 +20,16 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
-public class TCMapsDatabaseTest extends TCTestCase {
+public class TCMapsDatabaseTest extends AbstractDatabaseTest {
   private static final TCCollectionsSerializer serializer = new TCCollectionsSerializerImpl();
   private final Random                         random     = new Random();
-  private File                                 dbHome;
-  private DBEnvironment                        dbenv;
-  private PersistenceTransactionProvider       ptp;
 
   private TCMapsDatabase                       database;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    final File dataPath = getTempDirectory();
-
-    this.dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
-    this.dbHome.mkdir();
-
-    this.dbenv = DBFactory.getInstance().createEnvironment(true, this.dbHome);
-    this.dbenv.open();
-
-    this.ptp = this.dbenv.getPersistenceTransactionProvider();
-    this.database = this.dbenv.getMapsDatabase();
+    this.database = getDbenv().getMapsDatabase();
   }
 
   public void testBigPutDelete() throws Exception {
@@ -63,13 +46,13 @@ public class TCMapsDatabaseTest extends TCTestCase {
     byte[] key = getRandomlyFilledByteArray(objectId, size);
     byte[] value = getRandomlyFilledByteArray(objectId, size);
 
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = newTransaction();
     int written = database.insert(tx, objectId, key, value, serializer);
     tx.commit();
 
     Assert.assertTrue(written > 0);
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     HashMap<byte[], byte[]> map = new HashMap<byte[], byte[]>();
     database.loadMap(tx, objectId, map, serializer);
     int count = 0;
@@ -82,13 +65,13 @@ public class TCMapsDatabaseTest extends TCTestCase {
 
     Assert.assertEquals(1, count);
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     written = database.delete(tx, objectId, key, serializer);
     tx.commit();
 
     Assert.assertTrue(written > 0);
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     Assert.assertEquals(0, database.count(tx));
     tx.commit();
   }
@@ -105,7 +88,7 @@ public class TCMapsDatabaseTest extends TCTestCase {
     long mapId = 1;
 
     Map<String, String> reference = new HashMap<String, String>();
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = newTransaction();
     for (int i = 0; i < 10; i++) {
       String key = getRandomString(mapId, size);
       String value = getRandomString(mapId, size);
@@ -115,7 +98,7 @@ public class TCMapsDatabaseTest extends TCTestCase {
     tx.commit();
 
     Map<String, String> actual = new HashMap<String, String>();
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     database.loadMap(tx, mapId, actual, serializer);
     tx.commit();
 
@@ -127,11 +110,11 @@ public class TCMapsDatabaseTest extends TCTestCase {
     String key = getRandomString(mapId, 64000);
     String value = getRandomString(mapId, 64000);
 
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = newTransaction();
     database.insert(tx, mapId, key, value, serializer);
     tx.commit();
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     try {
       database.insert(tx, mapId, key, value, serializer);
       // BDB doesn't detect duplicate inserts, both update and insert just map to put, so we don't fail in the case of
@@ -155,7 +138,7 @@ public class TCMapsDatabaseTest extends TCTestCase {
     long mapId = 1;
 
     Map<String, String> reference = new HashMap<String, String>();
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = newTransaction();
     for (int i = 0; i < 10; i++) {
       String key = getRandomString(mapId, size);
       String value = getRandomString(mapId, size);
@@ -164,7 +147,7 @@ public class TCMapsDatabaseTest extends TCTestCase {
     }
     tx.commit();
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     for (String referenceKey : reference.keySet()) {
       String newValue = getRandomString(mapId, size);
       reference.put(referenceKey, newValue);
@@ -173,7 +156,7 @@ public class TCMapsDatabaseTest extends TCTestCase {
     tx.commit();
 
     Map<String, String> actual = new HashMap<String, String>();
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     database.loadMap(tx, mapId, actual, serializer);
     tx.commit();
 
@@ -198,24 +181,24 @@ public class TCMapsDatabaseTest extends TCTestCase {
     byte[] key2 = getRandomlyFilledByteArray(objectId2, size);
     byte[] value2 = getRandomlyFilledByteArray(objectId2, size);
 
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = newTransaction();
     database.insert(tx, objectId1, key1, value1, serializer);
     database.insert(tx, objectId2, key2, value2, serializer);
     tx.commit();
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     Assert.assertEquals(2, database.count(tx));
     tx.commit();
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     database.deleteCollection(objectId1, tx);
     tx.commit();
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     Assert.assertEquals(1, database.count(tx));
     tx.commit();
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     HashMap<byte[], byte[]> map = new HashMap<byte[], byte[]>();
     database.loadMap(tx, objectId2, map, serializer);
     int count = 0;
@@ -244,16 +227,16 @@ public class TCMapsDatabaseTest extends TCTestCase {
     String key = getRandomString(objectId1, size);
     String value = getRandomString(objectId1, size);
 
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = newTransaction();
     database.insert(tx, objectId1, key, value, serializer);
     database.insert(tx, objectId2, key, value, serializer);
     tx.commit();
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     database.delete(tx, objectId1, key, serializer);
     tx.commit();
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     Assert.assertEquals(1, database.count(tx));
     tx.commit();
   }
@@ -274,13 +257,13 @@ public class TCMapsDatabaseTest extends TCTestCase {
     referenceMap.put(new String(frontPadKey(new byte[] { 1, 27, 124 }, 20000)), getRandomString(1, 200));
     referenceMap.put(new String(frontPadKey(new byte[] { 0, 58, 124 }, 20000)), getRandomString(1, 200));
 
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = newTransaction();
     for (Entry<String, String> entry : referenceMap.entrySet()) {
       database.insert(tx, 1, entry.getKey().getBytes(), entry.getValue(), serializer);
     }
     tx.commit();
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     Map<byte[], String> actualMap = new HashMap<byte[], String>();
     database.loadMap(tx, 1, actualMap, serializer);
     assertEquals(11, actualMap.size());
@@ -291,7 +274,7 @@ public class TCMapsDatabaseTest extends TCTestCase {
       assertEquals(referenceMap.get(new String(entry.getKey())), entry.getValue());
     }
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     for (String key : referenceMap.keySet()) {
       String updatedValue = getRandomString(1, 200);
       referenceMap.put(key, updatedValue);
@@ -300,7 +283,7 @@ public class TCMapsDatabaseTest extends TCTestCase {
     assertEquals(11, database.count(tx));
     tx.commit();
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     Map<byte[], String> updatedActualMap = new HashMap<byte[], String>();
     database.loadMap(tx, 1, updatedActualMap, serializer);
     assertEquals(11, updatedActualMap.size());
@@ -315,11 +298,11 @@ public class TCMapsDatabaseTest extends TCTestCase {
     for (String key : keys) {
       count--;
       Map<byte[], String> emptyingMap = new HashMap<byte[], String>();
-      tx = ptp.newTransaction();
+      tx = newTransaction();
       database.delete(tx, 1, key.getBytes(), serializer);
       tx.commit();
 
-      tx = ptp.newTransaction();
+      tx = newTransaction();
       database.loadMap(tx, 1, emptyingMap, serializer);
       assertEquals(count, database.count(tx));
       tx.commit();
@@ -333,20 +316,20 @@ public class TCMapsDatabaseTest extends TCTestCase {
     for (int i = 15990; i < 15995; i++) {
       referenceMap.put(getRandomString(1, i), getRandomString(1, 100));
     }
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = newTransaction();
     for (Entry<String, String> entry : referenceMap.entrySet()) {
       database.insert(tx, mapId, entry.getKey(), entry.getValue(), serializer);
     }
     tx.commit();
 
     Map<String, String> actualMap = new HashMap<String, String>();
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     database.loadMap(tx, mapId, actualMap, serializer);
     tx.commit();
 
     assertEquals(referenceMap, actualMap);
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     for (String key : referenceMap.keySet()) {
       String newValue = getRandomString(mapId, 200);
       referenceMap.put(key, newValue);
@@ -354,7 +337,7 @@ public class TCMapsDatabaseTest extends TCTestCase {
     }
     tx.commit();
 
-    tx = ptp.newTransaction();
+    tx = newTransaction();
     actualMap.clear();
     database.loadMap(tx, mapId, actualMap, serializer);
     tx.commit();
@@ -365,12 +348,12 @@ public class TCMapsDatabaseTest extends TCTestCase {
     while (refernceKeyIterator.hasNext()) {
       String key = refernceKeyIterator.next();
       refernceKeyIterator.remove();
-      tx = ptp.newTransaction();
+      tx = newTransaction();
       database.delete(tx, mapId, key, serializer);
       tx.commit();
 
       actualMap.clear();
-      tx = ptp.newTransaction();
+      tx = newTransaction();
       database.loadMap(tx, mapId, actualMap, serializer);
       tx.commit();
 
@@ -401,16 +384,5 @@ public class TCMapsDatabaseTest extends TCTestCase {
 
   private String getRandomString(final long objectId, int arraySize) throws UnsupportedEncodingException {
     return new String(getRandomlyFilledByteArray(objectId, arraySize), "US-ASCII");
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-    try {
-      this.dbenv.close();
-      FileUtils.cleanDirectory(this.dbHome);
-    } catch (final Exception e) {
-      e.printStackTrace();
-    }
   }
 }
