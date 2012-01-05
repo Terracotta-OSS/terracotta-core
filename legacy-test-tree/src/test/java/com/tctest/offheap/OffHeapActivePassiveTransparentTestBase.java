@@ -23,6 +23,8 @@ public abstract class OffHeapActivePassiveTransparentTestBase extends ActivePass
     jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_OFFHEAP_MAP_CACHE_MAX_PAGE_SIZE + "=10k");
     jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_OFFHEAP_MAP_CACHE_MIN_PAGE_SIZE + "=10k");
     jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_OFFHEAP_MAP_CACHE_TABLESIZE + "=1k");
+
+    jvmArgs.add("-Dcom.tc.l2.tccom.workerthreads=8");
   }
 
   protected String getJVMArgsMaxDirectMemorySize() {
@@ -34,10 +36,8 @@ public abstract class OffHeapActivePassiveTransparentTestBase extends ActivePass
   }
 
   @Override
-  protected boolean useExternalProcess() {
-    // we are not running AP servers as external process as AP servers get intialized
-    // at setUpActivePassiveServers() will not be called if external servers are enabled.
-    return false;
+  protected boolean canRun() {
+    return isMultipleServerTest();
   }
 
   @Override
