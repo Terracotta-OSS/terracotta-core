@@ -88,7 +88,7 @@ public class NewObjectMemoryManagerRaceTest extends ServerCrashingTestBase {
     private static final LinkedList queue    = new LinkedList();
     private static boolean          end      = false;
 
-    private static final int        BATCH    = 5000;
+    private static final int        BATCH    = 3000;
     private static int              putCount = 0;
 
     static Collection take() {
