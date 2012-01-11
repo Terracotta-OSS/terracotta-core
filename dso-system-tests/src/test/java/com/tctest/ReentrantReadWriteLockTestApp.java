@@ -14,6 +14,7 @@ import com.tc.object.util.ReadOnlyException;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.CallableWaiter;
 import com.tc.util.runtime.Vm;
 import com.tctest.runner.AbstractTransparentApp;
 
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -987,6 +989,12 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       writeLock.lock();
       barrier2.await();
       Thread.sleep(4000);
+      CallableWaiter.waitOnCallable(new Callable<Boolean>() {
+
+        public Boolean call() throws Exception {
+          return lock.getQueueLength() == 2;
+        }
+      });
       Assert.assertEquals(2, lock.getQueueLength());
       Assert.assertTrue(lock.isWriteLocked());
       Assert.assertTrue(lock.isWriteLockedByCurrentThread());
