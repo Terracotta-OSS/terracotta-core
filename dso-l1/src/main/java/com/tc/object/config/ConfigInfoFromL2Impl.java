@@ -260,12 +260,7 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
       try {
         URL url = new URL("http", ci.getHostname(), ci.getPort(), httpPathExtension);
         logger.info("Trying to get " + message + " from " + url);
-        try {
-          return url.openStream();
-        } catch (NullPointerException e) {
-          logger.warn("NullPointerException on getting config stream - retrying", e);
-          return url.openStream();
-        }
+        return url.openStream();
       } catch (IOException e) {
         if (i < connections.length - 1) {
           logger.warn("Can't connect to [" + ci + "]. Will retry next server.");
