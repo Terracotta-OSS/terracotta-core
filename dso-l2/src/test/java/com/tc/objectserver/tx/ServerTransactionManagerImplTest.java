@@ -94,7 +94,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
   private void newTransactionManager() {
     this.transactionManager = new ServerTransactionManagerImpl(this.gtxm, this.transactionStore, this.lockManager,
                                                                this.clientStateManager, this.objectManager,
-                                                               new NullTransactionalObjectManager(), this.action,
+                                                               new TestTransactionalObjectManager(), this.action,
                                                                this.transactionRateCounter, this.channelStats,
                                                                new ServerTransactionManagerConfig(),
                                                                new ObjectStatsRecorder(), new NullMetaDataManager(),
@@ -468,7 +468,6 @@ public class ServerTransactionManagerImplTest extends TestCase {
     txns.add(tx4);
     txnIDs.add(new ServerTransactionID(cid1, tid4));
     this.transactionManager.incomingTransactions(cid1, txnIDs, txns, false);
-    this.transactionManager.processMetaData(txns);
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid4, cid2);
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid4, cid3);
     this.transactionManager.shutdownNode(cid1);
@@ -563,9 +562,6 @@ public class ServerTransactionManagerImplTest extends TestCase {
     if (!skipIncoming) {
       this.transactionManager.incomingTransactions(cid1, getServerTransactionIDs(txns), txns, false);
     }
-
-    // Process metadata
-    this.transactionManager.processMetaData(txns);
 
     for (ServerTransaction tx : txns) {
       // apply stage
@@ -683,5 +679,12 @@ public class ServerTransactionManagerImplTest extends TestCase {
       this.clientID = null;
     }
 
+  }
+
+  private class TestTransactionalObjectManager extends NullTransactionalObjectManager {
+    @Override
+    public void addTransactions(Collection<ServerTransaction> txns) {
+      transactionManager.processMetaData(txns);
+    }
   }
 }
