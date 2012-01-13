@@ -62,6 +62,10 @@ public class EphemeralPorts {
       return lower;
     }
 
+    public boolean isInRange(int num) {
+      return num >= lower && num <= upper;
+    }
+
     @Override
     public String toString() {
       return lower + " " + upper;
