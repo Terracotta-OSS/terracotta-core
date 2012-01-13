@@ -468,6 +468,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     txns.add(tx4);
     txnIDs.add(new ServerTransactionID(cid1, tid4));
     this.transactionManager.incomingTransactions(cid1, txnIDs, txns, false);
+    this.transactionManager.processMetaData(txns);
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid4, cid2);
     this.transactionManager.addWaitingForAcknowledgement(cid1, tid4, cid3);
     this.transactionManager.shutdownNode(cid1);
@@ -556,16 +557,17 @@ public class ServerTransactionManagerImplTest extends TestCase {
     doStages(cid1, txns, true);
   }
 
-  private void doStages(ClientID cid1, Set txns, boolean skipIncoming) {
+  private void doStages(ClientID cid1, Set<ServerTransaction> txns, boolean skipIncoming) {
 
     // process stage
     if (!skipIncoming) {
       this.transactionManager.incomingTransactions(cid1, getServerTransactionIDs(txns), txns, false);
     }
 
-    for (Iterator iter = txns.iterator(); iter.hasNext();) {
-      ServerTransaction tx = (ServerTransaction) iter.next();
+    // Process metadata
+    this.transactionManager.processMetaData(txns);
 
+    for (ServerTransaction tx : txns) {
       // apply stage
       this.transactionManager.apply(tx, Collections.EMPTY_MAP, new ApplyTransactionInfo(), this.imo);
 
