@@ -429,7 +429,8 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
   }
 
-  public void incomingTransactions(final NodeID source, final Set txnIDs, final Collection txns, final boolean relayed) {
+  public void incomingTransactions(final NodeID source, final Set txnIDs, final Collection<ServerTransaction> txns,
+                                   final boolean relayed) {
     final boolean active = isActive();
     final TransactionAccount ci = getOrCreateTransactionAccount(source);
     ci.incomingTransactions(txnIDs);
@@ -437,11 +438,10 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     if (isActive()) {
       this.totalNumOfActiveTransactions.addAndGet(txnIDs.size());
     }
-    for (final Iterator i = txns.iterator(); i.hasNext();) {
-      final ServerTransaction txn = (ServerTransaction) i.next();
+    for (ServerTransaction txn : txns) {
       final ServerTransactionID stxnID = txn.getServerTransactionID();
       final TransactionID txnID = stxnID.getClientTransactionID();
-      processMetaData(txn);
+
       if (active && !relayed) {
         ci.relayTransactionComplete(txnID);
       } else if (!active) {
@@ -453,9 +453,11 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     this.resentTxnSequencer.addTransactions(txns);
   }
 
-  private void processMetaData(ServerTransaction txn) {
-    if (this.metaDataManager.processMetaDatas(txn, txn.getMetaDataReaders())) {
-      this.processingMetaDataCompleted(txn.getSourceID(), txn.getTransactionID());
+  public void processMetaData(Collection<ServerTransaction> txns) {
+    for (ServerTransaction txn : txns) {
+      if (metaDataManager.processMetaDatas(txn, txn.getMetaDataReaders())) {
+        processingMetaDataCompleted(txn.getSourceID(), txn.getTransactionID());
+      }
     }
   }
 

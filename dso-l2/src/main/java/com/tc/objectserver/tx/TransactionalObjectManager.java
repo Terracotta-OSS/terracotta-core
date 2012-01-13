@@ -12,7 +12,7 @@ import java.util.Collection;
 
 public interface TransactionalObjectManager {
 
-  public void addTransactions(Collection txns);
+  public void addTransactions(Collection<ServerTransaction> txns);
 
   public void lookupObjectsForTransactions();
 
