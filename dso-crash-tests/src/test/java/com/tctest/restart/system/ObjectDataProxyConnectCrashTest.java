@@ -4,7 +4,7 @@
  */
 package com.tctest.restart.system;
 
-import com.tc.test.proxyconnect.ProxyConnectManager;
+import com.tc.test.proxy.ProxyConnectManager;
 import com.tc.test.restart.RestartTestHelper;
 import com.tc.util.runtime.Os;
 import com.tctest.TestConfigurator;

@@ -8,9 +8,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.tools.ant.filters.StringInputStream;
 
 import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
-import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
-import com.tc.config.schema.test.L2ConfigBuilder;
-import com.tc.config.schema.test.TerracottaConfigBuilder;
+import com.tc.config.test.schema.InstrumentedClassConfigBuilderImpl;
+import com.tc.config.test.schema.L2ConfigBuilder;
+import com.tc.config.test.schema.TerracottaConfigBuilder;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tctest.ClusterEventsOperationsTestApp;
@@ -89,9 +89,8 @@ public class ClusterEventsOperationsTest extends TransparentTestBase {
     InstrumentedClassConfigBuilder instrumented3 = new InstrumentedClassConfigBuilderImpl();
     instrumented3.setClassExpression(testEventsListenerClass);
 
-    out.getApplication().getDSO().setInstrumentedClasses(
-                                                         new InstrumentedClassConfigBuilder[] { instrumented1,
-                                                             instrumented2, instrumented3 });
+    out.getApplication().getDSO()
+        .setInstrumentedClasses(new InstrumentedClassConfigBuilder[] { instrumented1, instrumented2, instrumented3 });
 
     return out;
   }

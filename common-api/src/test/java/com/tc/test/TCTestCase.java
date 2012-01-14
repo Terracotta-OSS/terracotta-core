@@ -59,43 +59,43 @@ import junit.framework.TestCase;
  */
 public class TCTestCase extends TestCase {
 
-  private static final String              TEST_CATEGORIES_URL_PROPERTY = "tc.tests.configuration.catagories.url";
+  private static final String                TEST_CATEGORIES_URL_PROPERTY = "tc.tests.configuration.catagories.url";
 
-  private static final String              TEST_EXECUTION_MODE_PROPERTY = "tc.tests.configuration.mode";
+  private static final String                TEST_EXECUTION_MODE_PROPERTY = "tc.tests.configuration.mode";
 
-  private static final String              TEST_CATEGORIES_PROPERTIES   = "/TestCategories.properties";
+  private static final String                TEST_CATEGORIES_PROPERTIES   = "/TestCategories.properties";
 
-  private static final long                DEFAULT_TIMEOUT_THRESHOLD    = 60000;
+  private static final long                  DEFAULT_TIMEOUT_THRESHOLD    = 60000;
 
-  private final SynchronizedRef            beforeTimeoutException       = new SynchronizedRef(null);
+  private final SynchronizedRef              beforeTimeoutException       = new SynchronizedRef(null);
 
-  private DataDirectoryHelper              dataDirectoryHelper;
-  private TempDirectoryHelper              tempDirectoryHelper;
+  private DataDirectoryHelper                dataDirectoryHelper;
+  private TempDirectoryHelper                tempDirectoryHelper;
 
-  private Date                             allDisabledUntil;
-  private final Map                        disabledUntil                = new Hashtable();
+  protected Date                             allDisabledUntil;
+  private final Map                          disabledUntil                = new Hashtable();
 
   // This stuff is static since Junit new()'s up an instance of the test case for each test method,
   // and the timeout covers the entire test case (ie. all methods). It wouldn't be very effective to start
   // the timer for each test method given this
-  private static final Timer               timeoutTimer                 = new Timer("Timeout Thread", true);
-  private static final SynchronizedBoolean timeoutTaskAdded             = new SynchronizedBoolean(false);
+  private static final Timer                 timeoutTimer                 = new Timer("Timeout Thread", true);
+  protected static final SynchronizedBoolean timeoutTaskAdded             = new SynchronizedBoolean(false);
 
-  private static boolean                   printedProcess               = false;
+  private static boolean                     printedProcess               = false;
 
   // If you want to customize this, you have to do it in the constructor of your test case (setUp() is too late)
-  private long                             timeoutThreshold             = DEFAULT_TIMEOUT_THRESHOLD;
+  private long                               timeoutThreshold             = DEFAULT_TIMEOUT_THRESHOLD;
 
   // controls for thread dumping.
-  private boolean                          dumpThreadsOnTimeout         = true;
-  private int                              numThreadDumps               = 3;
-  private long                             dumpInterval                 = 500;
+  private boolean                            dumpThreadsOnTimeout         = true;
+  private int                                numThreadDumps               = 3;
+  private long                               dumpInterval                 = 500;
 
   // a way to ensure that system clock moves forward...
-  private long                             previousSystemMillis         = 0;
+  private long                               previousSystemMillis         = 0;
 
-  private ExecutionMode                    executionMode;
-  private TestCategorization               testCategorization;
+  private ExecutionMode                      executionMode;
+  private TestCategorization                 testCategorization;
 
   public TCTestCase() {
     super();
@@ -284,7 +284,7 @@ public class TCTestCase extends TestCase {
     return;
   }
 
-  private void printOutCurrentJavaProcesses() {
+  protected void printOutCurrentJavaProcesses() {
     if (printedProcess) return;
     printedProcess = true;
     PrintWriter out = null;

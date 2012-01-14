@@ -5,7 +5,7 @@
 package com.tc.test;
 
 import com.tc.exception.ImplementMe;
-import com.tc.test.proxyconnect.ProxyConnectManager;
+import com.tc.test.proxy.ProxyConnectManager;
 
 import java.util.List;
 

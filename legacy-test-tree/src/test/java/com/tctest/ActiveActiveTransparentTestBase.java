@@ -9,7 +9,7 @@ import org.apache.xmlbeans.XmlException;
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.config.schema.defaults.SchemaDefaultValueProvider;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.test.DSOApplicationConfigBuilderImpl;
+import com.tc.config.test.schema.DSOApplicationConfigBuilderImpl;
 import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.test.MultipleServersConfigCreator;
 import com.tc.test.TestConfigObject;

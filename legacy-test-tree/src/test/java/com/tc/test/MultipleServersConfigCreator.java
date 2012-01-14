@@ -8,15 +8,15 @@ import org.apache.commons.io.FileUtils;
 
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
-import com.tc.config.schema.test.ApplicationConfigBuilder;
-import com.tc.config.schema.test.GroupConfigBuilder;
-import com.tc.config.schema.test.GroupsConfigBuilder;
-import com.tc.config.schema.test.HaConfigBuilder;
-import com.tc.config.schema.test.L2ConfigBuilder;
-import com.tc.config.schema.test.L2SConfigBuilder;
-import com.tc.config.schema.test.MembersConfigBuilder;
-import com.tc.config.schema.test.SystemConfigBuilder;
-import com.tc.config.schema.test.TerracottaConfigBuilder;
+import com.tc.config.test.schema.ApplicationConfigBuilder;
+import com.tc.config.test.schema.GroupConfigBuilder;
+import com.tc.config.test.schema.GroupsConfigBuilder;
+import com.tc.config.test.schema.HaConfigBuilder;
+import com.tc.config.test.schema.L2ConfigBuilder;
+import com.tc.config.test.schema.L2SConfigBuilder;
+import com.tc.config.test.schema.MembersConfigBuilder;
+import com.tc.config.test.schema.SystemConfigBuilder;
+import com.tc.config.test.schema.TerracottaConfigBuilder;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 

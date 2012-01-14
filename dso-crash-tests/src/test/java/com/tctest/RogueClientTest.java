@@ -19,11 +19,11 @@ import com.tc.config.schema.builder.RootConfigBuilder;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
-import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
-import com.tc.config.schema.test.L2ConfigBuilder;
-import com.tc.config.schema.test.LockConfigBuilderImpl;
-import com.tc.config.schema.test.RootConfigBuilderImpl;
-import com.tc.config.schema.test.TerracottaConfigBuilder;
+import com.tc.config.test.schema.InstrumentedClassConfigBuilderImpl;
+import com.tc.config.test.schema.L2ConfigBuilder;
+import com.tc.config.test.schema.LockConfigBuilderImpl;
+import com.tc.config.test.schema.RootConfigBuilderImpl;
+import com.tc.config.test.schema.TerracottaConfigBuilder;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
@@ -65,9 +65,9 @@ public class RogueClientTest extends TransparentTestBase {
     configFile = getTempFile("tc-config.xml");
     writeConfigFile();
     TestConfigurationSetupManagerFactory factory = new TestConfigurationSetupManagerFactory(
-                                                                                                  TestConfigurationSetupManagerFactory.MODE_CENTRALIZED_CONFIG,
-                                                                                                  null,
-                                                                                                  new FatalIllegalConfigurationChangeHandler());
+                                                                                            TestConfigurationSetupManagerFactory.MODE_CENTRALIZED_CONFIG,
+                                                                                            null,
+                                                                                            new FatalIllegalConfigurationChangeHandler());
 
     L1ConfigurationSetupManager manager = factory.getL1TVSConfigurationSetupManager();
     setUpControlledServer(factory, new StandardDSOClientConfigHelperImpl(manager), port, adminPort, groupPort,
@@ -109,9 +109,9 @@ public class RogueClientTest extends TransparentTestBase {
     InstrumentedClassConfigBuilder instrumented5 = new InstrumentedClassConfigBuilderImpl();
     instrumented5.setClassExpression(CyclicBarrier.class.getName() + "*");
 
-    out.getApplication().getDSO()
-        .setInstrumentedClasses(
-                                new InstrumentedClassConfigBuilder[] { instrumented1, instrumented2, instrumented3,
+    out.getApplication()
+        .getDSO()
+        .setInstrumentedClasses(new InstrumentedClassConfigBuilder[] { instrumented1, instrumented2, instrumented3,
                                     instrumented4, instrumented5 });
 
     LockConfigBuilder lock1 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
@@ -144,9 +144,8 @@ public class RogueClientTest extends TransparentTestBase {
                                                                    "finished");
     RootConfigBuilder lbq = new RootConfigBuilderImpl(RogueClientTestApp.class, "lbqueue", "lbqueue");
     RootConfigBuilder nodeId = new RootConfigBuilderImpl(RogueClientTestApp.class, "nodeId", "nodeId");
-    out.getApplication().getDSO().setRoots(
-                                           new RootConfigBuilder[] { barrier, finished, l1ClientBarrier,
-                                               l1Clientfinished, lbq, nodeId });
+    out.getApplication().getDSO()
+        .setRoots(new RootConfigBuilder[] { barrier, finished, l1ClientBarrier, l1Clientfinished, lbq, nodeId });
 
     return out;
   }

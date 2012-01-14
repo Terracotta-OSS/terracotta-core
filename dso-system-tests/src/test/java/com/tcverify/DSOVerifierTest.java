@@ -9,14 +9,14 @@ import org.apache.commons.io.output.TeeOutputStream;
 import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
 import com.tc.config.schema.builder.LockConfigBuilder;
 import com.tc.config.schema.builder.RootConfigBuilder;
+import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
-import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
-import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
-import com.tc.config.schema.test.L2ConfigBuilder;
-import com.tc.config.schema.test.LockConfigBuilderImpl;
-import com.tc.config.schema.test.RootConfigBuilderImpl;
-import com.tc.config.schema.test.TerracottaConfigBuilder;
+import com.tc.config.test.schema.InstrumentedClassConfigBuilderImpl;
+import com.tc.config.test.schema.L2ConfigBuilder;
+import com.tc.config.test.schema.LockConfigBuilderImpl;
+import com.tc.config.test.schema.RootConfigBuilderImpl;
+import com.tc.config.test.schema.TerracottaConfigBuilder;
 import com.tc.lcp.LinkedJavaProcess;
 import com.tc.process.StreamCopier;
 import com.tc.properties.TCPropertiesConsts;
@@ -66,8 +66,8 @@ public class DSOVerifierTest extends TCTestCase {
     StandardConfigurationSetupManagerFactory config;
     config = new StandardConfigurationSetupManagerFactory(new String[] {
         StandardConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, configFile.getAbsolutePath() },
-                                                             StandardConfigurationSetupManagerFactory.ConfigMode.L2,
-                                                             new FatalIllegalConfigurationChangeHandler());
+                                                          StandardConfigurationSetupManagerFactory.ConfigMode.L2,
+                                                          new FatalIllegalConfigurationChangeHandler());
 
     server = new TCServerImpl(config.createL2TVSConfigurationSetupManager(null));
     server.start();

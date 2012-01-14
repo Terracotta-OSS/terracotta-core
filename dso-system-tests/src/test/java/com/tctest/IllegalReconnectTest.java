@@ -8,7 +8,7 @@ import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
-import com.tc.test.proxyconnect.ProxyConnectManager;
+import com.tc.test.proxy.ProxyConnectManager;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 import com.tctest.runner.TransparentAppConfig;
@@ -17,32 +17,39 @@ public class IllegalReconnectTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 1;
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     getProxyConnectManager().close();
     super.tearDown();
   }
 
+  @Override
   protected Class getApplicationClass() {
     return App.class;
   }
 
+  @Override
   protected boolean canRunL1ProxyConnect() {
     return true;
   }
 
+  @Override
   protected boolean enableL1Reconnect() {
     return false;
   }
 
+  @Override
   protected boolean canSkipL1ReconnectCheck() {
     return true;
   }
 
+  @Override
   protected boolean enableManualProxyConnectControl() {
     return true;
   }
@@ -57,6 +64,7 @@ public class IllegalReconnectTest extends TransparentTestBase {
       this.proxyMgr = (ProxyConnectManager) cfg.getAttributeObject(TransparentAppConfig.PROXY_CONNECT_MGR);
     }
 
+    @Override
     protected void runTest() throws Throwable {
       proxyMgr.closeClientConnections();
       ThreadUtil.reallySleep(10000);

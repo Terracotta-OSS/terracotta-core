@@ -6,7 +6,7 @@ package com.tc.test.restart;
 
 import com.tc.exception.TCRuntimeException;
 import com.tc.objectserver.control.ServerControl;
-import com.tc.test.proxyconnect.ProxyConnectManager;
+import com.tc.test.proxy.ProxyConnectManager;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.TestState;
 

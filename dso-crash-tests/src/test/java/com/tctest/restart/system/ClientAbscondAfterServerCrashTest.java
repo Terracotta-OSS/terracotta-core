@@ -6,8 +6,8 @@ package com.tctest.restart.system;
 
 import org.apache.commons.io.FileUtils;
 
-import com.tc.config.schema.test.L2ConfigBuilder;
-import com.tc.config.schema.test.TerracottaConfigBuilder;
+import com.tc.config.test.schema.L2ConfigBuilder;
+import com.tc.config.test.schema.TerracottaConfigBuilder;
 import com.tc.util.PortChooser;
 import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;

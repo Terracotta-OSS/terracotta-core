@@ -6,9 +6,9 @@ package com.tctest.jdk15;
 
 import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
 import com.tc.config.schema.builder.RootConfigBuilder;
-import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
-import com.tc.config.schema.test.RootConfigBuilderImpl;
-import com.tc.config.schema.test.TerracottaConfigBuilder;
+import com.tc.config.test.schema.InstrumentedClassConfigBuilderImpl;
+import com.tc.config.test.schema.RootConfigBuilderImpl;
+import com.tc.config.test.schema.TerracottaConfigBuilder;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -34,10 +34,12 @@ public class RecalledLockNeverRecalledTest extends ServerCrashingTestBase {
     super(NODE_COUNT);
   }
 
+  @Override
   protected Class getApplicationClass() {
     return RecalledLockNeverRecalledTestApp.class;
   }
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     getTransparentAppConfig().setClientCount(NODE_COUNT).setIntensity(1);
@@ -46,6 +48,7 @@ public class RecalledLockNeverRecalledTest extends ServerCrashingTestBase {
     TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L1_LOCKMANAGER_TIMEOUT_INTERVAL, "5000");
   }
 
+  @Override
   protected void createConfig(TerracottaConfigBuilder cb) {
     String testClassName = RecalledLockNeverRecalledTestApp.class.getName();
     String clientClassName = EmptyClient.class.getName();
@@ -64,15 +67,14 @@ public class RecalledLockNeverRecalledTest extends ServerCrashingTestBase {
     InstrumentedClassConfigBuilder instrumented2 = new InstrumentedClassConfigBuilderImpl();
     instrumented2.setClassExpression(clientClassName + "*");
 
-    cb.getApplication().getDSO().setInstrumentedClasses(
-                                                        new InstrumentedClassConfigBuilder[] { instrumented1,
-                                                            instrumented2 });
+    cb.getApplication().getDSO()
+        .setInstrumentedClasses(new InstrumentedClassConfigBuilder[] { instrumented1, instrumented2 });
   }
 
   public static class RecalledLockNeverRecalledTestApp extends ServerCrashingAppBase {
 
-    private ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private final CyclicBarrier    barrier;
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final CyclicBarrier          barrier;
 
     public RecalledLockNeverRecalledTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
       super(appId, cfg, listenerProvider);
@@ -81,6 +83,7 @@ public class RecalledLockNeverRecalledTest extends ServerCrashingTestBase {
       barrier = new CyclicBarrier(getParticipantCount());
     }
 
+    @Override
     protected void runTest() throws Throwable {
       long gcTime = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L1_LOCKMANAGER_TIMEOUT_INTERVAL);
       Assert.assertEquals(5000, gcTime);

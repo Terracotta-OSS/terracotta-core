@@ -10,11 +10,11 @@ import org.apache.tools.ant.filters.StringInputStream;
 import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
 import com.tc.config.schema.builder.LockConfigBuilder;
 import com.tc.config.schema.builder.RootConfigBuilder;
-import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
-import com.tc.config.schema.test.L2ConfigBuilder;
-import com.tc.config.schema.test.LockConfigBuilderImpl;
-import com.tc.config.schema.test.RootConfigBuilderImpl;
-import com.tc.config.schema.test.TerracottaConfigBuilder;
+import com.tc.config.test.schema.InstrumentedClassConfigBuilderImpl;
+import com.tc.config.test.schema.L2ConfigBuilder;
+import com.tc.config.test.schema.LockConfigBuilderImpl;
+import com.tc.config.test.schema.RootConfigBuilderImpl;
+import com.tc.config.test.schema.TerracottaConfigBuilder;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tctest.ClusterEventsL1Client;
@@ -96,9 +96,10 @@ public class ClusterMetaDataAfterNodeLeftTest extends TransparentTestBase {
     InstrumentedClassConfigBuilder instrumented4 = new InstrumentedClassConfigBuilderImpl();
     instrumented4.setClassExpression(testStateClass);
 
-    out.getApplication().getDSO().setInstrumentedClasses(
-                                                         new InstrumentedClassConfigBuilder[] { instrumented1,
-                                                             instrumented2, instrumented3, instrumented4 });
+    out.getApplication()
+        .getDSO()
+        .setInstrumentedClasses(new InstrumentedClassConfigBuilder[] { instrumented1, instrumented2, instrumented3,
+                                    instrumented4 });
 
     RootConfigBuilder root = new RootConfigBuilderImpl();
     root.setFieldName(testStateClass + ".listeners");
