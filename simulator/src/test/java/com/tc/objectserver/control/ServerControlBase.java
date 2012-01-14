@@ -6,12 +6,17 @@ package com.tc.objectserver.control;
 
 import com.tc.exception.TCNotRunningException;
 import com.tc.management.beans.L2DumperMBean;
+import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.stats.api.DSOMBean;
+import com.tc.util.CallableWaiter;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.concurrent.Callable;
 
 public abstract class ServerControlBase implements ServerControl {
+  private static final int           SERVER_STARTUP_TIMEOUT        = 5 * 60 * 1000;
+  private static final int           SERVER_STARTUP_CHECK_INTERVAL = 15 * 1000;
 
   private final int                  adminPort;
   private final String               host;
@@ -67,5 +72,19 @@ public abstract class ServerControlBase implements ServerControl {
   public DSOMBean getDSOMBean() throws Exception {
     if (!isRunning()) { throw new TCNotRunningException("Server is not up."); }
     return serverMBeanRetriever.getDSOMBean();
+  }
+
+  public TCServerInfoMBean getTCServerInfoMBean() throws Exception {
+    if (!isRunning()) { throw new TCNotRunningException("Server is not up."); }
+    return serverMBeanRetriever.getTCServerInfoMBean();
+  }
+
+  public void waitUntilL2IsActiveOrPassive() throws Exception {
+    CallableWaiter.waitOnCallable(new Callable<Boolean>() {
+      public Boolean call() throws Exception {
+        TCServerInfoMBean tcServerInfo = getTCServerInfoMBean();
+        return tcServerInfo.isActive() || tcServerInfo.isPassiveStandby();
+      }
+    }, SERVER_STARTUP_TIMEOUT, SERVER_STARTUP_CHECK_INTERVAL);
   }
 }

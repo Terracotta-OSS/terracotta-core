@@ -5,29 +5,30 @@
 package com.tc.objectserver.control;
 
 import com.tc.management.beans.L2DumperMBean;
+import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.stats.api.DSOMBean;
 
 public class NullServerControl implements ServerControl {
 
   private boolean isRunning;
 
-  public synchronized void attemptForceShutdown() throws Exception {
+  public synchronized void attemptForceShutdown() {
     isRunning = false;
   }
 
-  public synchronized void shutdown() throws Exception {
+  public synchronized void shutdown() {
     isRunning = false;
   }
 
-  public synchronized void crash() throws Exception {
+  public synchronized void crash() {
     isRunning = false;
   }
 
-  public synchronized void start() throws Exception {
+  public synchronized void start() {
     this.isRunning = true;
   }
 
-  public void startWithoutWait() throws Exception {
+  public void startWithoutWait() {
     this.isRunning = true;
   }
 
@@ -59,15 +60,23 @@ public class NullServerControl implements ServerControl {
     return 0;
   }
 
-  public int waitFor() throws Exception {
+  public int waitFor() {
     return 1;
   }
 
-  public DSOMBean getDSOMBean() throws Exception {
+  public DSOMBean getDSOMBean() {
     return null;
   }
 
-  public L2DumperMBean getL2DumperMBean() throws Exception {
+  public L2DumperMBean getL2DumperMBean() {
     return null;
+  }
+
+  public TCServerInfoMBean getTCServerInfoMBean() {
+    return null;
+  }
+
+  public void waitUntilL2IsActiveOrPassive() {
+    //
   }
 }

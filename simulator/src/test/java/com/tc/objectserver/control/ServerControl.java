@@ -5,6 +5,7 @@
 package com.tc.objectserver.control;
 
 import com.tc.management.beans.L2DumperMBean;
+import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.stats.api.DSOMBean;
 
 public interface ServerControl {
@@ -58,4 +59,7 @@ public interface ServerControl {
 
   public L2DumperMBean getL2DumperMBean() throws Exception;
 
+  public TCServerInfoMBean getTCServerInfoMBean() throws Exception;
+
+  public void waitUntilL2IsActiveOrPassive() throws Exception;
 }

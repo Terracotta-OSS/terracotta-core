@@ -10,6 +10,8 @@ import com.tc.test.proxyconnect.ProxyConnectManager;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.TestState;
 
+import java.util.Date;
+
 public class ServerCrasher implements Runnable {
   private final ServerControl       server;
   private final Thread              myThread         = new Thread(this, "ServerCrasher");
@@ -46,7 +48,8 @@ public class ServerCrasher implements Runnable {
   }
 
   private void crashServer() throws Exception {
-    System.err.println("Crashing server...");
+    System.err.println("Crashing server at " + new Date());
+    server.waitUntilL2IsActiveOrPassive();
     if (proxyConnectMode) {
       proxyMgr.stopProxyTest();
       proxyMgr.proxyDown();

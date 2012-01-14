@@ -15,6 +15,7 @@ import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2DumperMBean;
+import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.objectserver.control.ExtraProcessServerControl.DebugParams;
@@ -397,6 +398,16 @@ public class RestartTestEnvironment {
     public L2DumperMBean getL2DumperMBean() throws Exception {
       assertServerNotNull();
       return server.getL2DumperMBean();
+    }
+
+    public TCServerInfoMBean getTCServerInfoMBean() throws Exception {
+      assertServerNotNull();
+      return server.getTCServerInfoMBean();
+    }
+
+    public void waitUntilL2IsActiveOrPassive() throws Exception {
+      assertServerNotNull();
+      server.waitUntilL2IsActiveOrPassive();
     }
   }
 }
