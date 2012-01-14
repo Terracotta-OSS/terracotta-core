@@ -4,6 +4,8 @@
  */
 package com.tc.objectserver.tx;
 
+import org.mockito.Mockito;
+
 import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
@@ -18,6 +20,7 @@ import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.CommitTransactionContext;
 import com.tc.objectserver.context.LookupEventContext;
 import com.tc.objectserver.context.RecallObjectsContext;
+import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.core.impl.TestManagedObject;
 import com.tc.objectserver.gtx.TestGlobalTransactionManager;
@@ -53,6 +56,9 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     this.gtxMgr = new TestGlobalTransactionManager();
     this.txObjectManager = new TransactionalObjectManagerImpl(this.objectManager, this.sequencer, this.gtxMgr,
                                                               this.coordinator);
+    ServerConfigurationContext scc = Mockito.mock(ServerConfigurationContext.class);
+    Mockito.when(scc.getTransactionManager()).thenReturn(new TestServerTransactionManager());
+    this.txObjectManager.initializeContext(scc);
   }
 
   // This test is added to reproduce a failure. More test are needed for TransactionalObjectManager

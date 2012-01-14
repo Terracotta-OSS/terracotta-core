@@ -50,6 +50,7 @@ import com.tc.objectserver.context.ManagedObjectFlushingContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.context.RecallObjectsContext;
 import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.core.impl.TestManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
@@ -85,6 +86,7 @@ import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionImpl;
 import com.tc.objectserver.tx.ServerTransactionSequencerImpl;
+import com.tc.objectserver.tx.TestServerTransactionManager;
 import com.tc.objectserver.tx.TestTransactionalStageCoordinator;
 import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -223,6 +225,9 @@ public class ObjectManagerTest extends TCTestCase {
     this.gtxMgr = new TestGlobalTransactionManager();
     this.txObjectManager = new TransactionalObjectManagerImpl(this.objectManager, sequencer, this.gtxMgr,
                                                               this.coordinator);
+    ServerConfigurationContext scc = Mockito.mock(ServerConfigurationContext.class);
+    Mockito.when(scc.getTransactionManager()).thenReturn(new TestServerTransactionManager());
+    this.txObjectManager.initializeContext(scc);
     this.objectManager.setTransactionalObjectManager(this.txObjectManager);
   }
 
