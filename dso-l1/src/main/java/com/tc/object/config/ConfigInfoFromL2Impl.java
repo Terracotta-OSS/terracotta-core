@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PushbackInputStream;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -256,23 +255,18 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
    * Open an InputStream via http servlet from one of L2s.
    */
   public InputStream getPropertiesFromL2Stream(final String message, final String httpPathExtension) {
-    URLConnection connection = null;
-    InputStream propFromL2Stream = null;
-    URL theURL = null;
     for (int i = 0; i < connections.length; i++) {
       ConnectionInfo ci = connections[i];
       try {
-        theURL = new URL("http", ci.getHostname(), ci.getPort(), httpPathExtension);
-        String text = "Trying to get " + message + " from " + theURL.toString();
-        logger.info(text);
-        connection = theURL.openConnection();
-        propFromL2Stream = connection.getInputStream();
-        if (propFromL2Stream != null) return propFromL2Stream;
+        URL url = new URL("http", ci.getHostname(), ci.getPort(), httpPathExtension);
+        logger.info("Trying to get " + message + " from " + url);
+        return url.openStream();
       } catch (IOException e) {
-        String text = "Can't connect to [" + ci + "].";
-        boolean tryAgain = (i < connections.length - 1);
-        if (tryAgain) text += " Will retry next server.";
-        logger.warn(text);
+        if (i < connections.length - 1) {
+          logger.warn("Can't connect to [" + ci + "]. Will retry next server.");
+        } else {
+          logger.warn("Can't connect to [" + ci + "].");
+        }
       }
     }
     return null;

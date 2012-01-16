@@ -4,6 +4,7 @@
 package com.tc.logging;
 
 import org.apache.log4j.Appender;
+import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Layout;
 import org.apache.log4j.spi.ErrorHandler;
 import org.apache.log4j.spi.Filter;
@@ -24,6 +25,40 @@ public class DelegatingAppender implements Appender {
     return this.delegate;
   }
 
+  private void closeDelegate() {
+    final Appender prev;
+    synchronized (this) {
+      prev = delegate;
+      delegate = new AppenderSkeleton() {
+        public boolean requiresLayout() {
+          return false;
+        }
+
+        public void close() {
+          //
+        }
+
+        @Override
+        protected void append(LoggingEvent loggingevent) {
+          //
+        }
+
+        @Override
+        public void doAppend(LoggingEvent event) {
+          //
+        }
+
+        @Override
+        public void finalize() {
+          // don't want super impl
+        }
+
+      };
+    }
+
+    prev.close();
+  }
+
   public synchronized Appender setDelegate(Appender delegate) {
     Assert.assertNotNull(delegate);
     Appender out = this.delegate;
@@ -40,7 +75,7 @@ public class DelegatingAppender implements Appender {
   }
 
   public void close() {
-    delegate().close();
+    closeDelegate();
   }
 
   public void doAppend(LoggingEvent arg0) {

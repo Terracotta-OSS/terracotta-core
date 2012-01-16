@@ -12,7 +12,7 @@ import java.util.Collection;
 
 public class NullTransactionalObjectManager implements TransactionalObjectManager {
 
-  public void addTransactions(Collection txns) {
+  public void addTransactions(Collection<ServerTransaction> txns) {
     // Nop
   }
 

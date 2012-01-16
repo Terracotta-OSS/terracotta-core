@@ -94,7 +94,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
   private void newTransactionManager() {
     this.transactionManager = new ServerTransactionManagerImpl(this.gtxm, this.transactionStore, this.lockManager,
                                                                this.clientStateManager, this.objectManager,
-                                                               new NullTransactionalObjectManager(), this.action,
+                                                               new TestTransactionalObjectManager(), this.action,
                                                                this.transactionRateCounter, this.channelStats,
                                                                new ServerTransactionManagerConfig(),
                                                                new ObjectStatsRecorder(), new NullMetaDataManager(),
@@ -556,16 +556,14 @@ public class ServerTransactionManagerImplTest extends TestCase {
     doStages(cid1, txns, true);
   }
 
-  private void doStages(ClientID cid1, Set txns, boolean skipIncoming) {
+  private void doStages(ClientID cid1, Set<ServerTransaction> txns, boolean skipIncoming) {
 
     // process stage
     if (!skipIncoming) {
       this.transactionManager.incomingTransactions(cid1, getServerTransactionIDs(txns), txns, false);
     }
 
-    for (Iterator iter = txns.iterator(); iter.hasNext();) {
-      ServerTransaction tx = (ServerTransaction) iter.next();
-
+    for (ServerTransaction tx : txns) {
       // apply stage
       this.transactionManager.apply(tx, Collections.EMPTY_MAP, new ApplyTransactionInfo(), this.imo);
 
@@ -681,5 +679,12 @@ public class ServerTransactionManagerImplTest extends TestCase {
       this.clientID = null;
     }
 
+  }
+
+  private class TestTransactionalObjectManager extends NullTransactionalObjectManager {
+    @Override
+    public void addTransactions(Collection<ServerTransaction> txns) {
+      transactionManager.processMetaData(txns);
+    }
   }
 }

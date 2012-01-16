@@ -248,6 +248,9 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     tcObjectStoreLock.writeLock().lock();
     try {
       tcObjectSelfStoreOids.addAllObjectIDsToValidate(invalidations);
+      for (ObjectID id : tcObjectSelfTempCache.keySet()) {
+        invalidations.add(ObjectID.NULL_ID, id);
+      }
     } finally {
       tcObjectStoreLock.writeLock().unlock();
     }
@@ -270,6 +273,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     tcObjectStoreLock.readLock().lock();
     try {
       tcObjectSelfStoreOids.addAll(oids);
+      oids.addAll(tcObjectSelfTempCache.keySet());
     } finally {
       tcObjectStoreLock.readLock().unlock();
     }

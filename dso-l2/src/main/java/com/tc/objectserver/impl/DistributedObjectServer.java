@@ -935,6 +935,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final ServerTransactionSequencerImpl serverTransactionSequencerImpl = new ServerTransactionSequencerImpl();
     this.txnObjectManager = new TransactionalObjectManagerImpl(this.objectManager, serverTransactionSequencerImpl,
                                                                gtxm, txnStageCoordinator);
+    toInit.add(txnObjectManager);
 
     final CallbackDumpAdapter txnObjMgrDumpAdapter = new CallbackDumpAdapter(this.txnObjectManager);
     this.dumpHandler.registerForDump(txnObjMgrDumpAdapter);

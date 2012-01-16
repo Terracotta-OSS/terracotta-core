@@ -95,7 +95,7 @@ public interface ServerTransactionManager {
 
   public void callBackOnResentTxnsInSystemCompletion(TxnsInSystemCompletionListener l);
 
-  public void incomingTransactions(NodeID nodeID, Set txnIDs, Collection txns, boolean relayed);
+  public void incomingTransactions(NodeID nodeID, Set txnIDs, Collection<ServerTransaction> txns, boolean relayed);
 
   public void transactionsRelayed(NodeID node, Set serverTxnIDs);
 
@@ -111,4 +111,5 @@ public interface ServerTransactionManager {
 
   public long getTotalNumOfActiveTransactions();
 
+  public void processMetaData(Collection<ServerTransaction> txns);
 }

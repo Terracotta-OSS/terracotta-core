@@ -5,8 +5,8 @@ package com.tc.l2.state;
 
 import com.tc.net.NodeID;
 
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Object and Index Sync states for a L2. Active maintains the sync states for all the passives it tries to sync to.
@@ -14,15 +14,17 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class StateSyncManagerImpl implements StateSyncManager {
 
-  protected final Map<NodeID, SyncValue> syncMessagesProcessedMap = new ConcurrentHashMap<NodeID, SyncValue>();
+  private final ConcurrentMap<NodeID, SyncValue> syncMessagesProcessedMap = new ConcurrentHashMap<NodeID, SyncValue>();
 
   public void objectSyncComplete(NodeID nodeID) {
-    SyncValue value = syncMessagesProcessedMap.get(nodeID);
-    if (value == null) {
-      value = createSyncValue();
-      syncMessagesProcessedMap.put(nodeID, value);
-    }
+    SyncValue value = getOrCreateSyncValue(nodeID);
     value.objectSyncCompleteMessageAcked();
+  }
+
+  protected SyncValue getOrCreateSyncValue(NodeID nodeID) {
+    SyncValue value = createSyncValue();
+    SyncValue old = syncMessagesProcessedMap.putIfAbsent(nodeID, value);
+    return old == null ? value : old;
   }
 
   public void indexSyncComplete(NodeID nodeID) {

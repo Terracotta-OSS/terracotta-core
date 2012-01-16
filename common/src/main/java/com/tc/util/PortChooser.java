@@ -79,6 +79,7 @@ public final class PortChooser {
   }
 
   private boolean canBind(int portNum) {
+    if (exclude.isInRange(portNum)) { return false; }
     ServerSocket ss = null;
     boolean isFree = false;
     try {
@@ -115,7 +116,7 @@ public final class PortChooser {
   private static int getNonEphemeralPort() {
     while (true) {
       int p = random.nextInt(MAX - 1024) + 1024;
-      if (p < exclude.getLower() || p > exclude.getUpper()) { return p; }
+      if (!exclude.isInRange(p)) { return p; }
     }
   }
 

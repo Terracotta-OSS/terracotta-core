@@ -4,11 +4,16 @@
  */
 package com.tc.test.restart;
 
+import org.terracotta.test.util.WaitUtil;
+
 import com.tc.exception.TCRuntimeException;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.test.proxy.ProxyConnectManager;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.TestState;
+
+import java.util.Date;
+import java.util.concurrent.Callable;
 
 public class ServerCrasher implements Runnable {
   private final ServerControl       server;
@@ -46,7 +51,15 @@ public class ServerCrasher implements Runnable {
   }
 
   private void crashServer() throws Exception {
-    System.err.println("Crashing server...");
+    System.err.println("Crashing server at " + new Date());
+    WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
+
+      @Override
+      public Boolean call() throws Exception {
+        return server.isRunning();
+      }
+    });
+
     if (proxyConnectMode) {
       proxyMgr.stopProxyTest();
       proxyMgr.proxyDown();
