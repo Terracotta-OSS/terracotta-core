@@ -27,7 +27,8 @@ public class ConcurrentHashMapIDHashCodeTest extends TransparentTestBase {
   private static final int NODE_COUNT = 3;
 
   public ConcurrentHashMapIDHashCodeTest() {
-    timebombTest("2012-01-15");
+    // Disabling test per MNK-2964
+    disableTest();
 
     if (Vm.isIBM()) {
       disableTest();
