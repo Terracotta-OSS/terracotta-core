@@ -131,10 +131,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.terracotta</groupId>
+      <groupId>org.terracotta.test</groupId>
       <artifactId>test-framework</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
+      <type>test-jar</type>
     </dependency>    
     <dependency>
       <groupId>org.mockito</groupId>
