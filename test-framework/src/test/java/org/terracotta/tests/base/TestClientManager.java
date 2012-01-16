@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import javax.management.remote.jmxmp.JMXMPConnector;
 
+import org.apache.commons.lang.StringUtils;
 import org.terracotta.test.util.TestBaseUtil;
 
 import com.tc.admin.common.MBeanServerInvocationProxy;
@@ -16,6 +17,7 @@ import com.tc.process.Exec;
 import com.tc.process.Exec.Result;
 import com.tc.test.config.model.TestConfig;
 import com.tc.text.Banner;
+import com.tc.timapi.Version;
 import com.tc.util.runtime.Vm;
 
 public class TestClientManager {
@@ -23,7 +25,7 @@ public class TestClientManager {
   public static String           CLIENT_ARGS   = "client.args";
 
   private volatile int           clientIndex   = 1;
-  private Runner[]               runners;
+  private final Runner[]         runners;
   private final File             tempDir;
   private final AbstractTestBase testBase;
   private final TestConfig       testConfig;
@@ -148,7 +150,10 @@ public class TestClientManager {
     String abstractClientBase = TestBaseUtil.jarFor(AbstractClientBase.class);
     String jmxp = TestBaseUtil.jarFor(JMXMPConnector.class);
     String log4j = TestBaseUtil.jarFor(org.apache.log4j.LogManager.class);
-    classPath = testBase.makeClasspath(classPath, mbsp, test, junit, linkedChild, abstractClientBase, jmxp, log4j);
+    String stringUtils = TestBaseUtil.jarFor(StringUtils.class);
+    String timApi = TestBaseUtil.jarFor(Version.class);
+    classPath = testBase.makeClasspath(classPath, mbsp, test, junit, linkedChild, abstractClientBase, jmxp, log4j,
+                                       stringUtils, timApi);
     return classPath;
   }
 
