@@ -24,7 +24,7 @@ public class PrimitiveArrayTest extends TransparentTestBase implements TestConfi
     if (Os.isSolaris()) {
       return super.getRestartInterval(helper) * 3;
     } else {
-      return super.getRestartInterval(helper);
+      return super.getRestartInterval(helper) * 2;
     }
   }
 
