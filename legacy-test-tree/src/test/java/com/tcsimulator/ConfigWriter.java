@@ -1,14 +1,15 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tcsimulator;
 
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
-import com.tc.config.schema.test.ConfigBuilderFactoryImpl;
-import com.tc.config.schema.test.L1ConfigBuilder;
-import com.tc.config.schema.test.L2ConfigBuilder;
-import com.tc.config.schema.test.SystemConfigBuilder;
-import com.tc.config.schema.test.TerracottaConfigBuilder;
+import com.tc.config.test.schema.ConfigBuilderFactoryImpl;
+import com.tc.config.test.schema.L1ConfigBuilder;
+import com.tc.config.test.schema.L2ConfigBuilder;
+import com.tc.config.test.schema.SystemConfigBuilder;
+import com.tc.config.test.schema.TerracottaConfigBuilder;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOApplicationConfig;
 import com.tc.object.config.DSOApplicationConfigImpl;
@@ -74,9 +75,10 @@ public final class ConfigWriter {
 
     DSOApplicationConfig cfg = new DSOApplicationConfigImpl(new ConfigBuilderFactoryImpl());
 
-    // NOTE: am I missing something? Why would you instrument/autolock everything then visit each app config to dicide what to instrument
-    //cfg.addWriteAutolock("* *..*.*(..)");
-    //cfg.addIncludePattern("*..*");
+    // NOTE: am I missing something? Why would you instrument/autolock everything then visit each app config to dicide
+    // what to instrument
+    // cfg.addWriteAutolock("* *..*.*(..)");
+    // cfg.addIncludePattern("*..*");
 
     ConfigVisitor configVisitor = new ConfigVisitor();
     for (Iterator i = classesToVisit.iterator(); i.hasNext();) {

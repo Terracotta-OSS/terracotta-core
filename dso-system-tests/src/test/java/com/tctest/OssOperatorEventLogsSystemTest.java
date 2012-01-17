@@ -11,10 +11,10 @@ import com.tc.object.BaseDSOTestCase;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEventFactory;
 import com.tc.test.JMXUtils;
+import com.tc.test.process.ExternalDsoServer;
 import com.tc.util.Assert;
 import com.tc.util.TcConfigBuilder;
 import com.tc.util.concurrent.ThreadUtil;
-import com.tctest.process.ExternalDsoServer;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;

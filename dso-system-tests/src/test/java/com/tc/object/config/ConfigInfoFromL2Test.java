@@ -18,13 +18,13 @@ import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.TopologyReloadStatus;
-import com.tc.config.schema.test.GroupConfigBuilder;
-import com.tc.config.schema.test.GroupsConfigBuilder;
-import com.tc.config.schema.test.HaConfigBuilder;
-import com.tc.config.schema.test.L2ConfigBuilder;
-import com.tc.config.schema.test.L2SConfigBuilder;
-import com.tc.config.schema.test.MembersConfigBuilder;
-import com.tc.config.schema.test.TerracottaConfigBuilder;
+import com.tc.config.test.schema.GroupConfigBuilder;
+import com.tc.config.test.schema.GroupsConfigBuilder;
+import com.tc.config.test.schema.HaConfigBuilder;
+import com.tc.config.test.schema.L2ConfigBuilder;
+import com.tc.config.test.schema.L2SConfigBuilder;
+import com.tc.config.test.schema.MembersConfigBuilder;
+import com.tc.config.test.schema.TerracottaConfigBuilder;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
@@ -49,8 +49,10 @@ import java.util.Map;
 
 public class ConfigInfoFromL2Test extends BaseDSOTestCase {
   private static int                    STRIPE_COUNT    = 16;
-  protected final TCThreadGroup         group           = new TCThreadGroup(new ThrowableHandler(TCLogging
-                                                            .getLogger(DistributedObjectServer.class)));
+  protected final TCThreadGroup         group           = new TCThreadGroup(
+                                                                            new ThrowableHandler(
+                                                                                                 TCLogging
+                                                                                                     .getLogger(DistributedObjectServer.class)));
 
   private TCServer                      tcserver;
   private final TerracottaConfigBuilder tcConfigBuilder = createConfig();

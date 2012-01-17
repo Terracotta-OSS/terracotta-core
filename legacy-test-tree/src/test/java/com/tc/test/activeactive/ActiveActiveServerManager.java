@@ -16,7 +16,7 @@ import com.tc.test.MultipleServersCrashMode;
 import com.tc.test.activepassive.ActivePassiveCrashMode;
 import com.tc.test.activepassive.ActivePassiveServerManager;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
-import com.tc.test.proxyconnect.ProxyConnectManager;
+import com.tc.test.proxy.ProxyConnectManager;
 import com.tc.util.PortChooser;
 import com.terracottatech.config.Servers;
 
@@ -145,9 +145,11 @@ public class ActiveActiveServerManager extends MultipleServerManager {
     // Create the groups by getting the server names from the ActivePassiveServerManager
     GroupData[] groups = new GroupData[activePassiveServerManagers.length];
     for (int i = 0; i < groups.length; i++) {
-      groups[i] = new GroupData(activePassiveServerManagers[i].getGroupName(), activePassiveServerManagers[i]
-          .getDsoPorts(), activePassiveServerManagers[i].getJmxPorts(), activePassiveServerManagers[i]
-          .getL2GroupPorts(), activePassiveServerManagers[i].getServerNames());
+      groups[i] = new GroupData(activePassiveServerManagers[i].getGroupName(),
+                                activePassiveServerManagers[i].getDsoPorts(),
+                                activePassiveServerManagers[i].getJmxPorts(),
+                                activePassiveServerManagers[i].getL2GroupPorts(),
+                                activePassiveServerManagers[i].getServerNames());
     }
     return groups;
   }

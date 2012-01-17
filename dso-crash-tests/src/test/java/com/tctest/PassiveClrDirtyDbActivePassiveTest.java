@@ -5,7 +5,7 @@
 package com.tctest;
 
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
-import com.tc.config.schema.test.ConfigBuilderFactoryImpl;
+import com.tc.config.test.schema.ConfigBuilderFactoryImpl;
 import com.tc.lcp.LinkedJavaProcess;
 import com.tc.object.config.DSOApplicationConfig;
 import com.tc.object.config.DSOApplicationConfigImpl;

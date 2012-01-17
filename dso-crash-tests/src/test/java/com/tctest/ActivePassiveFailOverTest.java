@@ -9,11 +9,11 @@ import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.test.JMXUtils;
+import com.tc.test.process.ExternalDsoClient;
+import com.tc.test.process.ExternalDsoServer;
 import com.tc.util.Assert;
 import com.tc.util.TcConfigBuilder;
 import com.tc.util.concurrent.ThreadUtil;
-import com.tctest.process.ExternalDsoClient;
-import com.tctest.process.ExternalDsoServer;
 
 import java.io.File;
 import java.io.IOException;

@@ -6,10 +6,10 @@ package com.tctest;
 import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
 import com.tc.config.schema.builder.LockConfigBuilder;
 import com.tc.config.schema.builder.RootConfigBuilder;
-import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
-import com.tc.config.schema.test.LockConfigBuilderImpl;
-import com.tc.config.schema.test.RootConfigBuilderImpl;
-import com.tc.config.schema.test.TerracottaConfigBuilder;
+import com.tc.config.test.schema.InstrumentedClassConfigBuilderImpl;
+import com.tc.config.test.schema.LockConfigBuilderImpl;
+import com.tc.config.test.schema.RootConfigBuilderImpl;
+import com.tc.config.test.schema.TerracottaConfigBuilder;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -134,9 +134,8 @@ public class DEV3688App extends AbstractTransparentApp {
       InstrumentedClassConfigBuilder instrumented3 = new InstrumentedClassConfigBuilderImpl();
       instrumented3.setClassExpression(DEV3688App.IntNumber.class.getName());
 
-      cb.getApplication().getDSO().setInstrumentedClasses(
-                                                          new InstrumentedClassConfigBuilder[] { instrumented1,
-                                                              instrumented2, instrumented3 });
+      cb.getApplication().getDSO()
+          .setInstrumentedClasses(new InstrumentedClassConfigBuilder[] { instrumented1, instrumented2, instrumented3 });
 
       LockConfigBuilder lock1 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
       lock1.setLockLevel(LockConfigBuilder.LEVEL_WRITE);

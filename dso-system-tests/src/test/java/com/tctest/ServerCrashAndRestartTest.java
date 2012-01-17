@@ -10,11 +10,11 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
 import com.tc.config.schema.builder.LockConfigBuilder;
 import com.tc.config.schema.builder.RootConfigBuilder;
-import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
-import com.tc.config.schema.test.L2ConfigBuilder;
-import com.tc.config.schema.test.LockConfigBuilderImpl;
-import com.tc.config.schema.test.RootConfigBuilderImpl;
-import com.tc.config.schema.test.TerracottaConfigBuilder;
+import com.tc.config.test.schema.InstrumentedClassConfigBuilderImpl;
+import com.tc.config.test.schema.L2ConfigBuilder;
+import com.tc.config.test.schema.LockConfigBuilderImpl;
+import com.tc.config.test.schema.RootConfigBuilderImpl;
+import com.tc.config.test.schema.TerracottaConfigBuilder;
 
 public class ServerCrashAndRestartTest extends ServerCrashingTestBase {
 
@@ -24,10 +24,12 @@ public class ServerCrashAndRestartTest extends ServerCrashingTestBase {
     super(NODE_COUNT);
   }
 
+  @Override
   protected Class getApplicationClass() {
     return ServerCrashAndRestartTestApp.class;
   }
 
+  @Override
   protected void createConfig(TerracottaConfigBuilder cb) {
     // persistent mode
     cb.getServers().getL2s()[0].setPersistenceMode(L2ConfigBuilder.PERSISTENCE_MODE_PERMANENT_STORE);
@@ -47,7 +49,7 @@ public class ServerCrashAndRestartTest extends ServerCrashingTestBase {
         new InstrumentedClassConfigBuilderImpl(getApplicationClass()) };
 
     cb.getApplication().getDSO().setInstrumentedClasses(instrClasses);
-    
+
     // roots
     RootConfigBuilder[] roots = new RootConfigBuilder[] { new RootConfigBuilderImpl(getApplicationClass(), "barrier") };
     cb.getApplication().getDSO().setRoots(roots);

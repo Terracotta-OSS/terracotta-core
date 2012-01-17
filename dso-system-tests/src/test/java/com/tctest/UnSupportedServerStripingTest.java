@@ -4,9 +4,9 @@
 package com.tctest;
 
 import com.tc.object.BaseDSOTestCase;
+import com.tc.test.process.ExternalDsoServer;
 import com.tc.util.Grep;
 import com.tc.util.TcConfigBuilder;
-import com.tctest.process.ExternalDsoServer;
 
 import java.io.File;
 import java.util.List;

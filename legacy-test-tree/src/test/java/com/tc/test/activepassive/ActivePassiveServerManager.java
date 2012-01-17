@@ -21,8 +21,8 @@ import com.tc.test.MultipleServersConfigCreator;
 import com.tc.test.MultipleServersCrashMode;
 import com.tc.test.MultipleServersPersistenceMode;
 import com.tc.test.MultipleServersTestSetupManager;
-import com.tc.test.proxyconnect.ProxyConnectManager;
-import com.tc.test.proxyconnect.ProxyConnectManagerImpl;
+import com.tc.test.proxy.ProxyConnectManager;
+import com.tc.test.proxy.ProxyConnectManagerImpl;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.TestState;
@@ -166,9 +166,7 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     if (isProxyL2GroupPorts) {
       proxyL2Managers = new ProxyConnectManager[this.serverCount];
       for (int i = 0; i < this.serverCount; ++i) {
-        proxyL2Managers[i] = new ProxyConnectManagerImpl();
-        proxyL2Managers[i].setDsoPort(l2GroupPorts[i]);
-        proxyL2Managers[i].setProxyPort(proxyL2GroupPorts[i]);
+        proxyL2Managers[i] = new ProxyConnectManagerImpl(l2GroupPorts[i], proxyL2GroupPorts[i]);
         proxyL2Managers[i].setupProxy();
       }
     }

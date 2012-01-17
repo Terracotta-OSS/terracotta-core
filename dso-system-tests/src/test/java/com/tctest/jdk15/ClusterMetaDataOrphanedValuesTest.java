@@ -10,20 +10,20 @@ import org.apache.tools.ant.filters.StringInputStream;
 import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
 import com.tc.config.schema.builder.LockConfigBuilder;
 import com.tc.config.schema.builder.RootConfigBuilder;
-import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
-import com.tc.config.schema.test.L2ConfigBuilder;
-import com.tc.config.schema.test.LockConfigBuilderImpl;
-import com.tc.config.schema.test.RootConfigBuilderImpl;
-import com.tc.config.schema.test.TerracottaConfigBuilder;
+import com.tc.config.test.schema.InstrumentedClassConfigBuilderImpl;
+import com.tc.config.test.schema.L2ConfigBuilder;
+import com.tc.config.test.schema.LockConfigBuilderImpl;
+import com.tc.config.test.schema.RootConfigBuilderImpl;
+import com.tc.config.test.schema.TerracottaConfigBuilder;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tctest.ClusterMetaDataOrphanedValuesTestApp;
-import com.tctest.TransparentTestBase;
-import com.tctest.TransparentTestIface;
 import com.tctest.ClusterMetaDataTestApp.AbstractMojo;
 import com.tctest.ClusterMetaDataTestApp.MyMojo;
 import com.tctest.ClusterMetaDataTestApp.SomePojo;
 import com.tctest.ClusterMetaDataTestApp.YourMojo;
+import com.tctest.TransparentTestBase;
+import com.tctest.TransparentTestIface;
 import com.tctest.runner.AbstractTransparentApp;
 import com.tctest.runner.TransparentAppConfig;
 
@@ -105,10 +105,10 @@ public class ClusterMetaDataOrphanedValuesTest extends TransparentTestBase {
     InstrumentedClassConfigBuilder instrumented6 = new InstrumentedClassConfigBuilderImpl();
     instrumented6.setClassExpression(MyMojo.class.getName() + "*");
 
-    out.getApplication().getDSO().setInstrumentedClasses(
-                                                         new InstrumentedClassConfigBuilder[] { instrumented1,
-                                                             instrumented2, instrumented3, instrumented4,
-                                                             instrumented5, instrumented6 });
+    out.getApplication()
+        .getDSO()
+        .setInstrumentedClasses(new InstrumentedClassConfigBuilder[] { instrumented1, instrumented2, instrumented3,
+                                    instrumented4, instrumented5, instrumented6 });
 
     RootConfigBuilder map = new RootConfigBuilderImpl(ClusterMetaDataOrphanedValuesTestApp.L1Client.class, "map", "map");
     out.getApplication().getDSO().setRoots(new RootConfigBuilder[] { map });

@@ -20,7 +20,7 @@ import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.object.session.NullSessionManager;
 import com.tc.test.TCTestCase;
-import com.tc.test.proxyconnect.ProxyConnectManagerImpl;
+import com.tc.test.proxy.ProxyConnectManagerImpl;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.ThreadUtil;

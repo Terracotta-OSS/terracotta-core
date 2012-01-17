@@ -7,11 +7,11 @@ package com.tctest;
 import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
 import com.tc.config.schema.builder.LockConfigBuilder;
 import com.tc.config.schema.builder.RootConfigBuilder;
-import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
-import com.tc.config.schema.test.L2ConfigBuilder;
-import com.tc.config.schema.test.LockConfigBuilderImpl;
-import com.tc.config.schema.test.RootConfigBuilderImpl;
-import com.tc.config.schema.test.TerracottaConfigBuilder;
+import com.tc.config.test.schema.InstrumentedClassConfigBuilderImpl;
+import com.tc.config.test.schema.L2ConfigBuilder;
+import com.tc.config.test.schema.LockConfigBuilderImpl;
+import com.tc.config.test.schema.RootConfigBuilderImpl;
+import com.tc.config.test.schema.TerracottaConfigBuilder;
 import com.tctest.MutateDGCValidateTestApp.WorkOnList;
 
 public class MutateDGCValidateTest extends ServerCrashingTestBase {
@@ -26,9 +26,10 @@ public class MutateDGCValidateTest extends ServerCrashingTestBase {
     return MutateDGCValidateTestApp.class;
   }
 
+  @Override
   protected void createConfig(TerracottaConfigBuilder out) {
     out.getServers().getL2s()[0].setPersistenceMode(L2ConfigBuilder.PERSISTENCE_MODE_PERMANENT_STORE);
-    
+
     String testClassName = MutateDGCValidateTestApp.class.getName();
     String clientClassName = WorkOnList.class.getName();
 
@@ -45,8 +46,8 @@ public class MutateDGCValidateTest extends ServerCrashingTestBase {
     RootConfigBuilder root = new RootConfigBuilderImpl();
     root.setFieldName(testClassName + ".rootList");
     root.setRootName("rootList");
-    
-    out.getApplication().getDSO().setRoots(new RootConfigBuilder[] { root});
+
+    out.getApplication().getDSO().setRoots(new RootConfigBuilder[] { root });
 
     InstrumentedClassConfigBuilder instrumented1 = new InstrumentedClassConfigBuilderImpl();
     instrumented1.setClassExpression(testClassName + "*");
@@ -54,8 +55,7 @@ public class MutateDGCValidateTest extends ServerCrashingTestBase {
     InstrumentedClassConfigBuilder instrumented2 = new InstrumentedClassConfigBuilderImpl();
     instrumented2.setClassExpression(clientClassName + "*");
 
-    out.getApplication().getDSO().setInstrumentedClasses(
-                                                        new InstrumentedClassConfigBuilder[] { instrumented1,
-                                                            instrumented2 });
+    out.getApplication().getDSO()
+        .setInstrumentedClasses(new InstrumentedClassConfigBuilder[] { instrumented1, instrumented2 });
   }
 }

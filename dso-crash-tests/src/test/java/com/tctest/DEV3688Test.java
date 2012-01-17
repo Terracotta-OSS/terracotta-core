@@ -4,10 +4,10 @@
  */
 package com.tctest;
 
-import com.tc.config.schema.test.GroupConfigBuilder;
-import com.tc.config.schema.test.GroupsConfigBuilder;
-import com.tc.config.schema.test.MembersConfigBuilder;
-import com.tc.config.schema.test.TerracottaConfigBuilder;
+import com.tc.config.test.schema.GroupConfigBuilder;
+import com.tc.config.test.schema.GroupsConfigBuilder;
+import com.tc.config.test.schema.MembersConfigBuilder;
+import com.tc.config.test.schema.TerracottaConfigBuilder;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ErrorContext;
 import com.tc.test.MultipleServersCrashMode;

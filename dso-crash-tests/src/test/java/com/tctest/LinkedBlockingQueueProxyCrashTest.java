@@ -4,7 +4,7 @@
  */
 package com.tctest;
 
-import com.tc.test.proxyconnect.ProxyConnectManager;
+import com.tc.test.proxy.ProxyConnectManager;
 
 public class LinkedBlockingQueueProxyCrashTest extends TransparentTestBase {
 
