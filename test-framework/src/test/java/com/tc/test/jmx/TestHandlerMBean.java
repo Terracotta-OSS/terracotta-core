@@ -15,7 +15,7 @@ public interface TestHandlerMBean {
 	public void crashActiveServer(int groupIndex) throws Exception;
 
 	/**
-	 * Restarts the last server which crashed in a particular mirror group <br>
+	 * Restarts the server which crashed in a particular mirror group <br>
 	 * Note that responsibility of maintaining the serverIndex for the server
 	 * which crashed last for the mirror group comes to the user
 	 * 
