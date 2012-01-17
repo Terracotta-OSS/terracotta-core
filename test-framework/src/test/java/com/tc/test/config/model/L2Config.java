@@ -1,105 +1,179 @@
 package com.tc.test.config.model;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
+/**
+ * The config for each L2 <br>
+ * Default: <br>
+ * dgc enabled: false <br>
+ * dgc interval : 3600 sec <br>
+ * off heap enabled : false <br>
+ * max off heap data size: 128M <br>
+ * persistence : temporary swap <br>
+ * client reconnect window : 120 secs
+ * 
+ * @author rsingh
+ * 
+ */
 public class L2Config {
 
-  private boolean           dgcEnabled            = false;
-  private int               dgcIntervalInSec      = 3600;
-  private boolean           offHeapEnabled        = false;
-  private PersistenceMode   persistenceMode       = PersistenceMode.TEMPORARY_SWAP_ONLY;
-  private int               clientReconnectWindow = 120;
-  private int               maxOffHeapDataSize    = 128;
-  private ArrayList<String> extraServerJvmArgs;
-  private boolean           isProxyL2groupPorts   = false;
-  private boolean           isProxyDsoPorts       = false;
-  private final Map<String, String> configBuilderPropertyMap;
+	private boolean dgcEnabled = false;
+	private int dgcIntervalInSec = 3600;
+	private boolean offHeapEnabled = false;
+	private PersistenceMode persistenceMode = PersistenceMode.TEMPORARY_SWAP_ONLY;
+	private int clientReconnectWindow = 120;
+	private int maxOffHeapDataSize = 128;
+	private ArrayList<String> extraServerJvmArgs;
+	private boolean isProxyL2groupPorts = false;
+	private boolean isProxyDsoPorts = false;
 
-  public L2Config() {
-    extraServerJvmArgs = new ArrayList<String>();
-    configBuilderPropertyMap = new HashMap<String, String>();
-  }
+	/**
+	 * Creates a l2 config with these defaults <br>
+	 * dgc enabled: false <br>
+	 * dgc interval : 3600 sec <br>
+	 * off heap enabled : false <br>
+	 * max off heap data size: 128M <br>
+	 * persistence : temporary swap <br>
+	 * client reconnect window : 120 secs
+	 */
+	public L2Config() {
+		extraServerJvmArgs = new ArrayList<String>();
+	}
 
-  public boolean isDgcEnabled() {
-    return dgcEnabled;
-  }
+	/**
+	 * Is DGC enabled
+	 * @return true if dgc is enabled
+	 */
+	public boolean isDgcEnabled() {
+		return dgcEnabled;
+	}
 
-  public void setDgcEnabled(boolean dgcEnabled) {
-    this.dgcEnabled = dgcEnabled;
-  }
+	/**
+	 * enable/disable dgc
+	 * @param dgcEnabled true if dgc to be enabled. false otherwise
+	 */
+	public void setDgcEnabled(boolean dgcEnabled) {
+		this.dgcEnabled = dgcEnabled;
+	}
 
-  public int getDgcIntervalInSec() {
-    return dgcIntervalInSec;
-  }
+	/**
+	 * @return dgc interveal in seconds
+	 */
+	public int getDgcIntervalInSec() {
+		return dgcIntervalInSec;
+	}
 
-  public void setDgcIntervalInSec(int dgcIntervalInSec) {
-    this.dgcIntervalInSec = dgcIntervalInSec;
-  }
+	/**
+	 * sets the dgc interval in seconds
+	 */
+	public void setDgcIntervalInSec(int dgcIntervalInSec) {
+		this.dgcIntervalInSec = dgcIntervalInSec;
+	}
 
-  public boolean isOffHeapEnabled() {
-    return offHeapEnabled;
-  }
+	/**
+	 * Is off heap enabled
+	 * @return : true if off heap is enabled
+	 */
+	public boolean isOffHeapEnabled() {
+		return offHeapEnabled;
+	}
 
-  public void setOffHeapEnabled(boolean offHeapEnabled) {
-    this.offHeapEnabled = offHeapEnabled;
-  }
+	/**
+	 * Enabled/Disable off heap
+	 * @param offHeapEnabled : true if the off heap is to be enabled, false otherwise
+	 */
+	public void setOffHeapEnabled(boolean offHeapEnabled) {
+		this.offHeapEnabled = offHeapEnabled;
+	}
 
-  public PersistenceMode getPersistenceMode() {
-    return persistenceMode;
-  }
+	/**
+	 * Persistence mode for the L2
+	 */
+	public PersistenceMode getPersistenceMode() {
+		return persistenceMode;
+	}
 
-  public void setPersistenceMode(PersistenceMode persistenceMode) {
-    this.persistenceMode = persistenceMode;
-  }
+	/**
+	 * Sets the persistence mode for each L2
+	 * @param persistenceMode persistence Mode 
+	 */
+	public void setPersistenceMode(PersistenceMode persistenceMode) {
+		this.persistenceMode = persistenceMode;
+	}
 
-  public int getClientReconnectWindow() {
-    return clientReconnectWindow;
-  }
+	/**
+	 * client reconnect window in secs
+	 */
+	public int getClientReconnectWindow() {
+		return clientReconnectWindow;
+	}
 
-  public void setClientReconnectWindow(int clientReconnectWindow) {
-    this.clientReconnectWindow = clientReconnectWindow;
-  }
+	/**
+	 * sets client reconnect window in seconds
+	 */
+	public void setClientReconnectWindow(int clientReconnectWindow) {
+		this.clientReconnectWindow = clientReconnectWindow;
+	}
 
-  public int getMaxOffHeapDataSize() {
-    return maxOffHeapDataSize;
-  }
+	/**
+	 * max off heap data size in MBs
+	 * @return
+	 */
+	public int getMaxOffHeapDataSize() {
+		return maxOffHeapDataSize;
+	}
 
-  public void setMaxOffHeapDataSize(int maxOffHeapDataSize) {
-    this.maxOffHeapDataSize = maxOffHeapDataSize;
-  }
+	/**
+	 * Sets max off heap data size
+	 * @param maxOffHeapDataSize offheap data size in MB
+	 */
+	public void setMaxOffHeapDataSize(int maxOffHeapDataSize) {
+		this.maxOffHeapDataSize = maxOffHeapDataSize;
+	}
 
-  public ArrayList<String> getExtraServerJvmArgs() {
-    return extraServerJvmArgs;
-  }
+	/**
+	 * @return List of jvm arguments for each server
+	 */
+	public ArrayList<String> getExtraServerJvmArgs() {
+		return extraServerJvmArgs;
+	}
+	
+	/**
+	 * Adds a jvm argumnet for each server
+	 * @param arg jvm argument
+	 */
+	public void addExtraServerJvmArg(String arg) {
+		extraServerJvmArgs.add(arg);
+	}
 
-  public void addExtraServerJvmArg(String arg) {
-    extraServerJvmArgs.add(arg);
-  }
+	/**
+	 * @return true if proxy is enabled between two mirror groups communication
+	 */
+	public boolean isProxyL2groupPorts() {
+		return isProxyL2groupPorts;
+	}
+	
+	/**
+	 * Enable/Disable l2 group proxy between two mirror groups
+	 * @param isProxyL2groupPorts
+	 */
+	public void setProxyL2groupPorts(boolean isProxyL2groupPorts) {
+		this.isProxyL2groupPorts = isProxyL2groupPorts;
+	}
 
-  public boolean isProxyL2groupPorts() {
-    return isProxyL2groupPorts;
-  }
+	/**
+	 * is L2 started with a proxy port in bertween the server and client
+	 * @return
+	 */
+	public boolean isProxyDsoPorts() {
+		return isProxyDsoPorts;
+	}
 
-  public void setProxyL2groupPorts(boolean isProxyL2groupPorts) {
-    this.isProxyL2groupPorts = isProxyL2groupPorts;
-  }
-
-  public boolean isProxyDsoPorts() {
-    return isProxyDsoPorts;
-  }
-
-  public void setProxyDsoPorts(boolean isProxyDsoPorts) {
-    this.isProxyDsoPorts = isProxyDsoPorts;
-  }
-
-  public Map<String, String> getConfigBuilderPropertyMap() {
-    return configBuilderPropertyMap;
-  }
-
-  public void addConfigBuilderProperty(String key, String value) {
-    this.configBuilderPropertyMap.put(key, value);
-  }
-
+	/**
+	 * Enable/Disable l2 proxy for dso port
+	 * @param isProxyDsoPorts
+	 */
+	public void setProxyDsoPorts(boolean isProxyDsoPorts) {
+		this.isProxyDsoPorts = isProxyDsoPorts;
+	}
 }

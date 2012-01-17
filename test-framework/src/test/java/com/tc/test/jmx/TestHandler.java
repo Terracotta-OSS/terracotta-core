@@ -61,24 +61,16 @@ public class TestHandler implements TestHandlerMBean {
   @Override
   public void crashAllPassiveServers(int groupIndex) throws Exception {
     testServerManager.crashAllPassive(groupIndex);
-
-  }
-
-  @Override
-  public void crashServer(int groupIndex, int serverIndex) throws Exception {
-    testServerManager.crashServer(groupIndex, serverIndex);
   }
 
   @Override
   public boolean isActivePresent(int groupIndex) throws Exception {
     return testServerManager.isActivePresent(groupIndex);
-
   }
 
   @Override
   public boolean isPassiveStandBy(int groupIndex) throws Exception {
     return testServerManager.isPassiveStandBy(groupIndex);
-
   }
 
   @Override
