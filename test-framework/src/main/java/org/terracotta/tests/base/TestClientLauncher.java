@@ -20,15 +20,20 @@ public class TestClientLauncher {
 			String[][] clientArgs = new String[1][];
 			clientArgs[0] = Arrays.copyOfRange(args, 1, args.length);
 			Constructor<Runnable> constructor;
-				constructor = (Constructor<Runnable>) clientClass
-						.getConstructor(String[].class);
+			constructor = (Constructor<Runnable>) clientClass
+					.getConstructor(String[].class);
 			Runnable newInstance = constructor.newInstance(clientArgs);
 			newInstance.run();
 		} catch (NoSuchMethodException e) {
-			System.out.println("Class "+clientClassName+"should have one constructor having argument and array of String( String[]) . ");
+			System.out
+					.println("Class "
+							+ clientClassName
+							+ "should have one constructor having argument and array of String( String[]) . ");
 			e.printStackTrace();
-		}catch (Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
+			throw new AssertionError("Exception while launching test client : "
+					+ e.getMessage());
 		}
 
 	}
