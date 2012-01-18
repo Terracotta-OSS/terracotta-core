@@ -1,23 +1,15 @@
 package org.terracotta.tests.base;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ClassUtils;
 import org.junit.After;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.terracotta.test.util.TestBaseUtil;
 
 import com.tc.exception.ImplementMe;
+import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.jmx.TestHandler;
@@ -29,16 +21,23 @@ import com.tc.test.setup.TestJMXServerManager;
 import com.tc.test.setup.TestServerManager;
 import com.tc.util.PortChooser;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 @RunWith(value = TcTestRunner.class)
-public abstract class AbstractTestBase extends TerracottaTestCase {
-  protected static final String SEP     = File.pathSeparator;
+public abstract class AbstractTestBase extends TCTestCase {
+  protected static final String SEP = File.pathSeparator;
   private final TestConfig      testConfig;
   private final File            tcConfigFile;
   protected TestServerManager   testServerManager;
   protected final File          tempDir;
   protected File                javaHome;
   private TestClientManager     clientRunner;
-  private volatile boolean      runTest = false;
   private TestJMXServerManager  jmxServerManager;
   private Thread                duringRunningClusterThread;
 
@@ -62,24 +61,27 @@ public abstract class AbstractTestBase extends TerracottaTestCase {
     return Arrays.asList(testConfigs);
   }
 
+  @Override
   @Before
   public void setUp() throws Exception {
-    runTest = preRun();
-    Assume.assumeTrue(runTest);
-    try {
-      System.out.println("*************** Starting Test with Test Profile : " + testConfig.getConfigName()
-                         + " **************************");
-      setJavaHome();
-      testServerManager = new TestServerManager(this.testConfig, this.tempDir, this.tcConfigFile, this.javaHome);
-      clientRunner = new TestClientManager(tempDir, this, this.testConfig);
-      startServers();
-      TestHandlerMBean testHandlerMBean = new TestHandler(testServerManager, testConfig);
-      jmxServerManager = new TestJMXServerManager(new PortChooser().chooseRandomPort(), testHandlerMBean);
-      jmxServerManager.startJMXServer();
-      executeDuringRunningCluster();
-    } catch (Throwable e) {
-      e.printStackTrace();
-      throw new AssertionError(e);
+    tcTestCaseSetup();
+
+    if (testWillRun) {
+      try {
+        System.out.println("*************** Starting Test with Test Profile : " + testConfig.getConfigName()
+                           + " **************************");
+        setJavaHome();
+        testServerManager = new TestServerManager(this.testConfig, this.tempDir, this.tcConfigFile, this.javaHome);
+        clientRunner = new TestClientManager(tempDir, this, this.testConfig);
+        startServers();
+        TestHandlerMBean testHandlerMBean = new TestHandler(testServerManager, testConfig);
+        jmxServerManager = new TestJMXServerManager(new PortChooser().chooseRandomPort(), testHandlerMBean);
+        jmxServerManager.startJMXServer();
+        executeDuringRunningCluster();
+      } catch (Throwable e) {
+        e.printStackTrace();
+        throw new AssertionError(e);
+      }
     }
   }
 
@@ -100,9 +102,19 @@ public abstract class AbstractTestBase extends TerracottaTestCase {
     return TestConfigObject.getInstance();
   }
 
+  @Override
   @Test
   public void runTest() throws Throwable {
-    clientRunner.runClients();
+    if (!testWillRun) return;
+
+    Throwable testException = null;
+    try {
+      clientRunner.runClients();
+    } catch (Throwable t) {
+      testException = t;
+    }
+
+    tcTestCaseTearDown(testException);
   }
 
   public int getTestControlMbeanPort() {
@@ -176,9 +188,10 @@ public abstract class AbstractTestBase extends TerracottaTestCase {
     return TestBaseUtil.getTerracottaURL(getGroupsData());
   }
 
+  @Override
   @After
   public void tearDown() throws Exception {
-    if (runTest) {
+    if (testWillRun) {
       System.out.println("Waiting for During Cluster running thread to finish");
       duringRunningClusterThread.join();
       this.testServerManager.stopAllServers();
@@ -194,10 +207,12 @@ public abstract class AbstractTestBase extends TerracottaTestCase {
     return tempDirectory;
   }
 
+  @Override
   protected File getTempFile(String fileName) throws IOException {
     return new File(getTempDirectory(), fileName);
   }
 
+  @Override
   protected boolean cleanTempDir() {
     return false;
   }

@@ -42,8 +42,6 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.Hashtable;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -73,7 +71,6 @@ public class TCTestCase extends TestCase {
   private TempDirectoryHelper                tempDirectoryHelper;
 
   protected Date                             allDisabledUntil;
-  private final Map                          disabledUntil                = new Hashtable();
 
   // This stuff is static since Junit new()'s up an instance of the test case for each test method,
   // and the timeout covers the entire test case (ie. all methods). It wouldn't be very effective to start
@@ -96,6 +93,8 @@ public class TCTestCase extends TestCase {
 
   private ExecutionMode                      executionMode;
   private TestCategorization                 testCategorization;
+
+  protected volatile boolean                 testWillRun                  = false;
 
   public TCTestCase() {
     super();
@@ -211,8 +210,7 @@ public class TCTestCase extends TestCase {
     return isContainerTest() ^ isConfiguredToRunWithAppServer();
   }
 
-  @Override
-  public void runBare() throws Throwable {
+  protected void tcTestCaseSetup() throws Exception {
     printOutCurrentJavaProcesses();
     if (allDisabledUntil != null) {
       if (new Date().before(this.allDisabledUntil)) {
@@ -235,16 +233,6 @@ public class TCTestCase extends TestCase {
 
     if (!shouldTestRunInCurrentExecutionMode()) { return; }
 
-    final String testMethod = getName();
-    System.out.println("**** Test case: " + testMethod + " ****");
-    System.out.println();
-    if (isTestDisabled(testMethod)) {
-      System.out.println("NOTE: Test method " + testMethod + "() is disabled until "
-                         + this.disabledUntil.get(testMethod));
-      System.out.flush();
-      return;
-    }
-
     if (shouldBeSkipped()) {
       Banner
           .warnBanner("Test "
@@ -260,6 +248,15 @@ public class TCTestCase extends TestCase {
       scheduleTimeoutTask();
     }
 
+    // this should be the last thing happening indicating this test case will actually execute
+    testWillRun = true;
+  }
+
+  @Override
+  public void runBare() throws Throwable {
+    tcTestCaseSetup();
+    if (!testWillRun) return;
+
     Throwable testException = null;
     try {
       super.runBare();
@@ -267,6 +264,10 @@ public class TCTestCase extends TestCase {
       testException = t;
     }
 
+    tcTestCaseTearDown(testException);
+  }
+
+  protected void tcTestCaseTearDown(Throwable testException) throws Throwable {
     Throwable exceptionInTimeoutCallback = (Throwable) beforeTimeoutException.get();
 
     // favor the "real" exception to make test fail. If there was a exception in the timeout callback,
@@ -608,11 +609,6 @@ public class TCTestCase extends TestCase {
 
   protected final boolean isAllDisabled() {
     return this.allDisabledUntil != null && new Date().before(this.allDisabledUntil);
-  }
-
-  private boolean isTestDisabled(String testMethod) {
-    Date until = (Date) disabledUntil.get(testMethod);
-    return until != null && new Date().before(until);
   }
 
   protected void checkComparator(Object smaller, Object bigger, Object equalToBigger, Comparator c) {
