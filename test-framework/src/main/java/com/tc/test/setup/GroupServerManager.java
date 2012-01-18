@@ -1,22 +1,5 @@
 package com.tc.test.setup;
 
-import java.io.File;
-import java.io.IOException;
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-
-import javax.management.MBeanServerConnection;
-import javax.management.MBeanServerInvocationHandler;
-import javax.management.remote.JMXConnector;
-import javax.sql.rowset.spi.SyncResolver;
-
-import junit.framework.Assert;
-
 import org.terracotta.test.util.JMXUtils;
 import org.terracotta.test.util.TestBaseUtil;
 
@@ -35,10 +18,26 @@ import com.tc.test.proxy.ProxyConnectManager;
 import com.tc.test.proxy.ProxyConnectManagerImpl;
 import com.tc.util.concurrent.ThreadUtil;
 
+import java.io.File;
+import java.io.IOException;
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+
+import javax.management.MBeanServerConnection;
+import javax.management.MBeanServerInvocationHandler;
+import javax.management.remote.JMXConnector;
+
+import junit.framework.Assert;
+
 public class GroupServerManager {
 
   private static final boolean      DEBUG            = Boolean.getBoolean("test.framework.debug");
-  private final GroupsData           groupData;
+  private final GroupsData          groupData;
   private final ServerControl[]     serverControl;
   private final TestConfig          testConfig;
   private static final String       HOST             = "localhost";
@@ -175,8 +174,8 @@ public class GroupServerManager {
 
   private int expectedRunningServerCount() {
     int running = 0;
-    for (int i = 0; i < expectedServerRunning.length; i++) {
-      if (expectedServerRunning[i]) {
+    for (boolean element : expectedServerRunning) {
+      if (element) {
         running++;
       }
     }
