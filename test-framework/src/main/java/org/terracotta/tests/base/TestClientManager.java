@@ -40,7 +40,7 @@ public class TestClientManager {
 
   protected void runClients() throws Throwable {
     int index = 0;
-    for (Class<?> c : getClientClasses()) {
+    for (Class<? extends Runnable> c : getClientClasses()) {
       if (!isParallelClients()) {
         runClient(c);
       } else {
@@ -55,16 +55,16 @@ public class TestClientManager {
     }
   }
 
-  protected void runClient(Class<?> client) throws Throwable {
+  protected void runClient(Class<? extends Runnable> client) throws Throwable {
     runClient(client, true);
   }
 
-  protected void runClient(Class<?> client, boolean withStandaloneJar) throws Throwable {
+  protected void runClient(Class<? extends Runnable> client, boolean withStandaloneJar) throws Throwable {
     List<String> emptyList = Collections.emptyList();
     runClient(client, withStandaloneJar, client.getSimpleName(), emptyList);
   }
 
-  protected void runClient(Class client, boolean withStandaloneJar, String clientName, List<String> extraClientArgs)
+  protected void runClient(Class<? extends Runnable> client, boolean withStandaloneJar, String clientName, List<String> extraClientArgs)
       throws Throwable {
 
     ArrayList<String> jvmArgs = new ArrayList<String>();
@@ -82,6 +82,7 @@ public class TestClientManager {
     jvmArgs.add("-Dcom.tc.productkey.path=" + licenseKey.getAbsolutePath());
 
     List<String> arguments = new ArrayList<String>();
+    arguments.add(client.getName());
     arguments.add(Integer.toString(testBase.getTestControlMbeanPort()));
     arguments.addAll(extraClientArgs);
 
@@ -113,7 +114,7 @@ public class TestClientManager {
     File verboseGcOutputFile = new File(workDir, "verboseGC.log");
     setupVerboseGC(jvmArgs, verboseGcOutputFile);
 
-    LinkedJavaProcess clientProcess = new LinkedJavaProcess(client.getName(), arguments, jvmArgs);
+    LinkedJavaProcess clientProcess = new LinkedJavaProcess(TestClientLauncher.class.getName(), arguments, jvmArgs);
     String classPath = testBase.createClassPath(client, withStandaloneJar);
     classPath = testBase.makeClasspath(classPath, testBase.getTestDependencies());
     classPath = addRequiredJarsToClasspath(client, classPath);
@@ -213,7 +214,7 @@ public class TestClientManager {
     return this.testConfig.getClientConfig().isParallelClients();
   }
 
-  private Class<?>[] getClientClasses() {
+  private Class<? extends Runnable>[] getClientClasses() {
     return this.testConfig.getClientConfig().getClientClasses();
   }
 
