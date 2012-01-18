@@ -72,7 +72,8 @@ public class TestCategorization {
     while (e.hasMoreElements()) {
       String key = (String) e.nextElement();
       String categoryString = properties.getProperty(key).toUpperCase();
-      testCategoryMap.put(key, TestCategory.fromString(categoryString));
+
+      testCategoryMap.put(key, Enum.valueOf(TestCategory.class, categoryString.trim().toUpperCase()));
     }
   }
 }

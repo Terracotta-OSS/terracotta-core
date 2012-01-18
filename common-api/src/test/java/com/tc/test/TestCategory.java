@@ -38,11 +38,4 @@ public enum TestCategory {
     }
   }
 
-  public static TestCategory fromString(String name) {
-    if (name == null) {
-      name = "";
-    }
-    name = name.trim().toUpperCase();
-    return stringToCategory.get(name);
-  }
 }
