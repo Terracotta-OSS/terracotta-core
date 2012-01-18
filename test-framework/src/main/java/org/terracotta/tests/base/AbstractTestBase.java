@@ -103,7 +103,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   }
 
   @Override
-  @Test
+  @Test(timeout = 15 * 60 * 1000)
   public void runTest() throws Throwable {
     if (!testWillRun) return;
 
