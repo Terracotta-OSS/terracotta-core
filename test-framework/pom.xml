@@ -7,50 +7,47 @@
     <version>3.7.0-SNAPSHOT</version>
     <relativePath>../build-parent</relativePath>
   </parent>
-  
+
   <groupId>org.terracotta.test</groupId>
   <artifactId>test-framework</artifactId>
   <packaging>jar</packaging>
   <name>test-framework</name>
 
-  
+
   <dependencies>
-  	<dependency>
-  		<groupId>org.terracotta</groupId>
-  		<artifactId>native-tool</artifactId>
-  		<type>jar</type>
-  		<scope>compile</scope>
-  	</dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>native-tool</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>common-api</artifactId>
       <version>${project.version}</version>
-      <scope>test</scope>
-	<type>test-jar</type>
+      <type>test-jar</type>
+      <scope>provided</scope>
     </dependency>  
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>deploy</artifactId>
       <version>${project.version}</version>
-      <scope>test</scope>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>common</artifactId>
       <version>${project.version}</version>
-      <scope>test</scope>
-	<type>test-jar</type>
+      <type>test-jar</type>
+      <scope>provided</scope>
     </dependency>      	
     <dependency>
-    	<groupId>junit</groupId>
-    	<artifactId>junit</artifactId>
-    	<type>jar</type>
-    	<scope>compile</scope>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
-    	<groupId>org.terracotta</groupId>
-    	<artifactId>linked-child-process</artifactId>
+      <groupId>org.terracotta</groupId>
+      <artifactId>linked-child-process</artifactId>
     </dependency>
   </dependencies>
-  
+
 </project>

@@ -16,7 +16,7 @@ public class TcPropertiesBuilder extends BaseConfigBuilder{
     setProperty("property", tcProps);
   }
 
-  public TcPropertyBuilder[] getTcProperties() {
+  public TcPropertyBuilder[] getTcProertiess() {
     return tcProps;
   }
   
