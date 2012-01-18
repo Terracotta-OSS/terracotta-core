@@ -13,6 +13,7 @@ import java.util.concurrent.ThreadFactory;
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.remote.JMXConnector;
+import javax.sql.rowset.spi.SyncResolver;
 
 import junit.framework.Assert;
 
@@ -504,7 +505,7 @@ public class GroupServerManager {
     debugPrintln("***** lastCrashedIndex[" + lastCrashedIndex + "] ");
   }
 
-  public void crashRandomServer() throws Exception {
+  public synchronized void crashRandomServer() throws Exception {
 
     if (activeIndex < 0) { throw new AssertionError("Active index was not set."); }
     if (random == null) { throw new AssertionError("Random number generator was not set."); }
@@ -516,7 +517,7 @@ public class GroupServerManager {
     crashServer(crashIndex);
   }
 
-  public void crashServer(int crashIndex) throws Exception {
+  public synchronized void crashServer(int crashIndex) throws Exception {
     verifyIndex(crashIndex);
     if (crashIndex == activeIndex) {
       crashActive();
@@ -656,11 +657,11 @@ public class GroupServerManager {
 
   }
 
-  public boolean isActivePresent() {
+  public synchronized boolean isActivePresent() {
     return activeIndex < 0 ? false : true;
   }
 
-  public boolean isPassiveStandBy() {
+  public synchronized boolean isPassiveStandBy() {
 
     System.out.println("Searching for appropriate passive server(s)... ");
     for (int i = 0; i < groupData.getServerCount(); i++) {
