@@ -105,23 +105,23 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
         }
 
       }
+
+      for (Iterator i = dmis.iterator(); i.hasNext();) {
+        DmiDescriptor dd = (DmiDescriptor) i.next();
+
+        // NOTE: This prepare call must happen before handing off the DMI to the stage, and more
+        // importantly before sending ACK below
+        DistributedMethodCall dmc = this.dmiManager.extract(dd);
+        if (dmc != null) {
+          this.dmiSink.add(new DmiEventContext(dmc));
+        }
+      }
     }
 
     Collection notifies = btm.addNotifiesTo(new LinkedList());
     for (Iterator i = notifies.iterator(); i.hasNext();) {
       ClientServerExchangeLockContext lc = (ClientServerExchangeLockContext) i.next();
       this.lockManager.notified(lc.getLockID(), lc.getThreadID());
-    }
-
-    for (Iterator i = dmis.iterator(); i.hasNext();) {
-      DmiDescriptor dd = (DmiDescriptor) i.next();
-
-      // NOTE: This prepare call must happen before handing off the DMI to the stage, and more
-      // importantly before sending ACK below
-      DistributedMethodCall dmc = this.dmiManager.extract(dd);
-      if (dmc != null) {
-        this.dmiSink.add(new DmiEventContext(dmc));
-      }
     }
 
     // XXX:: This is a potential race condition here 'coz after we decide to send an ACK
