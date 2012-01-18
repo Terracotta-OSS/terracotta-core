@@ -379,8 +379,6 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.CACHE_NAME_FIELDNAME, "cash name", false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.LOCAL_CACHE_ENABLED_FIELDNAME,
                              Boolean.valueOf(true), false);
-    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.DELETE_VALUE_ON_REMOVE,
-                             Boolean.valueOf(true), false);
 
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2001), new ObjectID(2003) });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2002), new ObjectID(2004) });
