@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 @RunWith(value = TcTestRunner.class)
 public abstract class AbstractTestBase extends TCTestCase {
@@ -104,12 +105,13 @@ public abstract class AbstractTestBase extends TCTestCase {
 
   @Override
   @Test(timeout = 15 * 60 * 1000)
-  public void runTest() throws Throwable {
+  final public void runTest() throws Throwable {
     if (!testWillRun) return;
 
     Throwable testException = null;
     try {
-      clientRunner.runClients();
+      startClients();
+      postClientVerification();
     } catch (Throwable t) {
       testException = t;
     }
@@ -156,6 +158,13 @@ public abstract class AbstractTestBase extends TCTestCase {
   }
 
   protected void preStart(File workDir) {
+    //
+  }
+
+  /**
+   * Override this method if there is a need to do some verification when the clients are done
+   */
+  protected void postClientVerification() {
     //
   }
 
@@ -222,12 +231,32 @@ public abstract class AbstractTestBase extends TCTestCase {
     testServerManager.dumpClusterState(getThreadDumpCount(), getThreadDumpInterval());
   }
 
-  protected void runClient(Class client, boolean withStandaloneJar) throws Throwable {
-    clientRunner.runClient(client, withStandaloneJar);
+  protected void startClients() throws Throwable {
+    int index = 0;
+    Runner[] runners = testConfig.getClientConfig().isParallelClients() ? new Runner[testConfig.getClientConfig()
+        .getClientClasses().length] : new Runner[] {};
+    for (Class<? extends Runnable> c : testConfig.getClientConfig().getClientClasses()) {
+      if (!testConfig.getClientConfig().isParallelClients()) {
+        runClient(c);
+      } else {
+        Runner runner = new Runner(c);
+        runners[index++] = runner;
+        runner.start();
+      }
+    }
+
+    for (Runner runner : runners) {
+      runner.finish();
+    }
   }
 
   protected void runClient(Class client) throws Throwable {
-    clientRunner.runClient(client);
+    runClient(client, true);
+  }
+
+  protected void runClient(Class client, boolean withStandaloneJar) throws Throwable {
+    List<String> emptyList = Collections.emptyList();
+    runClient(client, withStandaloneJar, client.getSimpleName(), emptyList);
   }
 
   protected void runClient(Class client, boolean withStandaloneJar, String clientName, List<String> extraClientArgs)
@@ -267,6 +296,31 @@ public abstract class AbstractTestBase extends TCTestCase {
     });
     duringRunningClusterThread.setName(getClass().getName() + " duringRunningCluster");
     duringRunningClusterThread.start();
+  }
+
+  protected class Runner extends Thread {
+
+    private final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
+    private final Class                      clientClass;
+
+    public Runner(Class clientClass) {
+      this.clientClass = clientClass;
+    }
+
+    @Override
+    public void run() {
+      try {
+        runClient(clientClass);
+      } catch (Throwable t) {
+        error.set(t);
+      }
+    }
+
+    public void finish() throws Throwable {
+      join();
+      Throwable t = error.get();
+      if (t != null) throw t;
+    }
   }
 
 }

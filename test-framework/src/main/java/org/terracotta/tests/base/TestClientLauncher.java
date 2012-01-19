@@ -24,8 +24,9 @@ public class TestClientLauncher {
       newInstance.run();
     } catch (NoSuchMethodException e) {
       System.out.println("Class " + clientClassName
-                         + "should have one constructor having argument and array of String( String[]) . ");
+                         + " should have one constructor having argument and array of String( String[]) . ");
       e.printStackTrace();
+      throw new AssertionError("Exception while launching test client : " + e.getMessage());
     } catch (Exception e) {
       e.printStackTrace();
       throw new AssertionError("Exception while launching test client : " + e.getMessage());

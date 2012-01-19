@@ -1,13 +1,5 @@
 package org.terracotta.tests.base;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
-
-import javax.management.remote.jmxmp.JMXMPConnector;
-
 import org.apache.commons.lang.StringUtils;
 import org.terracotta.test.util.TestBaseUtil;
 
@@ -20,52 +12,29 @@ import com.tc.text.Banner;
 import com.tc.timapi.Version;
 import com.tc.util.runtime.Vm;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.management.remote.jmxmp.JMXMPConnector;
+
 public class TestClientManager {
   private static final boolean   DEBUG_CLIENTS = Boolean.getBoolean("standalone.client.debug");
   public static String           CLIENT_ARGS   = "client.args";
 
   private volatile int           clientIndex   = 1;
-  private final Runner[]         runners;
   private final File             tempDir;
   private final AbstractTestBase testBase;
   private final TestConfig       testConfig;
 
   public TestClientManager(final File tempDir, final AbstractTestBase testBase, final TestConfig testConfig) {
     this.testConfig = testConfig;
-    this.runners = testConfig.getClientConfig().isParallelClients() ? new Runner[getClientClasses().length]
-        : new Runner[] {};
     this.tempDir = tempDir;
     this.testBase = testBase;
   }
 
-  protected void runClients() throws Throwable {
-    int index = 0;
-    for (Class<? extends Runnable> c : getClientClasses()) {
-      if (!isParallelClients()) {
-        runClient(c);
-      } else {
-        Runner runner = new Runner(c);
-        runners[index++] = runner;
-        runner.start();
-      }
-    }
-
-    for (Runner runner : runners) {
-      runner.finish();
-    }
-  }
-
-  protected void runClient(Class<? extends Runnable> client) throws Throwable {
-    runClient(client, true);
-  }
-
-  protected void runClient(Class<? extends Runnable> client, boolean withStandaloneJar) throws Throwable {
-    List<String> emptyList = Collections.emptyList();
-    runClient(client, withStandaloneJar, client.getSimpleName(), emptyList);
-  }
-
-  protected void runClient(Class<? extends Runnable> client, boolean withStandaloneJar, String clientName, List<String> extraClientArgs)
-      throws Throwable {
+  protected void runClient(Class<? extends Runnable> client, boolean withStandaloneJar, String clientName,
+                           List<String> extraClientArgs) throws Throwable {
 
     ArrayList<String> jvmArgs = new ArrayList<String>();
     if (DEBUG_CLIENTS) {
@@ -171,51 +140,6 @@ public class TestClientManager {
       jvmArgs.add("-XX:+PrintGCTimeStamps");
       jvmArgs.add("-XX:+PrintGCDetails");
     }
-  }
-
-  protected class Runner extends Thread {
-
-    private final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
-    private final Class                      clientClass;
-    private final String                     clientName;
-    private final List<String>               extraClientArgs;
-
-    public Runner(Class clientClass) {
-      this(clientClass, clientClass.getSimpleName());
-    }
-
-    public Runner(Class clientClass, String clientName) {
-      this.clientClass = clientClass;
-      this.clientName = clientName;
-      this.extraClientArgs = new ArrayList<String>();
-    }
-
-    @Override
-    public void run() {
-      try {
-        runClient(clientClass, true, clientName, extraClientArgs);
-      } catch (Throwable t) {
-        error.set(t);
-      }
-    }
-
-    public void finish() throws Throwable {
-      join();
-      Throwable t = error.get();
-      if (t != null) throw t;
-    }
-
-    public void addClientArg(String arg) {
-      extraClientArgs.add(arg);
-    }
-  }
-
-  private boolean isParallelClients() {
-    return this.testConfig.getClientConfig().isParallelClients();
-  }
-
-  private Class<? extends Runnable>[] getClientClasses() {
-    return this.testConfig.getClientConfig().getClientClasses();
   }
 
 }
