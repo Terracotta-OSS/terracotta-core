@@ -49,11 +49,11 @@ public class TestClientManager {
 
     File licenseKey = new File("test-classes/terracotta-license.key");
     jvmArgs.add("-Dcom.tc.productkey.path=" + licenseKey.getAbsolutePath());
+    jvmArgs.addAll(extraClientArgs);
 
     List<String> arguments = new ArrayList<String>();
     arguments.add(client.getName());
     arguments.add(Integer.toString(testBase.getTestControlMbeanPort()));
-    arguments.addAll(extraClientArgs);
 
     // do this last
     configureClientExtraJVMArgs(jvmArgs);
