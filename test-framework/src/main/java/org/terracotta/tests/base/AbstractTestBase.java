@@ -32,7 +32,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @RunWith(value = TcTestRunner.class)
 public abstract class AbstractTestBase extends TCTestCase {
-  protected static final String SEP = File.pathSeparator;
+  private static final String   SINGLE_SERVER_CONFIG = "single-server-config";
+  protected static final String SEP                  = File.pathSeparator;
   private final TestConfig      testConfig;
   private final File            tcConfigFile;
   protected TestServerManager   testServerManager;
@@ -54,9 +55,13 @@ public abstract class AbstractTestBase extends TCTestCase {
     }
   }
 
+  /**
+   * Returns the list of testconfigs the test has to run with Overwrite this method to run the same test with multiple
+   * configs
+   */
   @Configs
   public static List<TestConfig> getTestConfigs() {
-    TestConfig testConfig = new TestConfig("SingleServerConfig");
+    TestConfig testConfig = new TestConfig(SINGLE_SERVER_CONFIG);
     testConfig.getGroupConfig().setMemberCount(1);
     TestConfig[] testConfigs = new TestConfig[] { testConfig };
     return Arrays.asList(testConfigs);
@@ -212,6 +217,9 @@ public abstract class AbstractTestBase extends TCTestCase {
 
   @Override
   protected File getTempDirectory() throws IOException {
+    // this is a hack but there is no direct way to know whether a test is going to be run with single config
+    if (testConfig.getConfigName().equals(SINGLE_SERVER_CONFIG)) { return super.getTempDirectory(); }
+
     File tempDirectory = new File(super.getTempDirectory(), testConfig.getConfigName());
     return tempDirectory;
   }
