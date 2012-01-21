@@ -1,14 +1,14 @@
 package com.tc.test.setup;
 
+import com.tc.config.test.schema.ConfigHelper;
+import com.tc.test.config.model.TestConfig;
+import com.tc.util.PortChooser;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.Assert;
-
-import com.tc.config.test.schema.ConfigHelper;
-import com.tc.test.config.model.TestConfig;
-import com.tc.util.PortChooser;
 
 public class TestServerManager {
   private final TestConfig           testConfig;
@@ -87,7 +87,7 @@ public class TestServerManager {
   public void crashActiveServer(int groupIndex) throws Exception {
     groups[groupIndex].crashActive();
   }
-  
+
   public void crashActiveAndWaitForPassiveToTakeOver(int groupIndex) throws Exception {
     groups[groupIndex].crashActiveAndWaitForPassiveToTakeOver();
   }

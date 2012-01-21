@@ -1,13 +1,13 @@
 package com.tc.test.jmx;
 
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-
 import org.terracotta.test.util.TestBaseUtil;
 
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.setup.GroupsData;
 import com.tc.test.setup.TestServerManager;
+
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 
 public class TestHandler implements TestHandlerMBean {
   public static final ObjectName  TEST_SERVER_CONTROL_MBEAN;
@@ -23,7 +23,7 @@ public class TestHandler implements TestHandlerMBean {
   }
 
   private final TestServerManager testServerManager;
-  private final TestConfig testConfig;
+  private final TestConfig        testConfig;
 
   public TestHandler(TestServerManager manager, TestConfig testConfig) {
     this.testServerManager = manager;
@@ -38,7 +38,7 @@ public class TestHandler implements TestHandlerMBean {
   public void crashActiveServer(int groupIndex) throws Exception {
     testServerManager.crashActiveServer(groupIndex);
   }
-  
+
   @Override
   public void crashActiveAndWaitForPassiveToTakeOver(int groupIndex) throws Exception {
     testServerManager.crashActiveAndWaitForPassiveToTakeOver(groupIndex);
@@ -48,7 +48,7 @@ public class TestHandler implements TestHandlerMBean {
   public void restartCrashedServer(int groupIndex, int serverIndex) throws Exception {
     testServerManager.restartCrashedServer(groupIndex, serverIndex);
   }
-  
+
   public void reastartLastCrashedServer(final int groupIndex) throws Exception {
     testServerManager.restartLastCrashedServer(groupIndex);
   }
@@ -82,12 +82,12 @@ public class TestHandler implements TestHandlerMBean {
   public GroupsData[] getGroupsData() {
     return testServerManager.getGroupsData();
   }
-  
+
   @Override
   public String getTerracottaUrl() {
     return TestBaseUtil.getTerracottaURL(getGroupsData());
   }
-  
+
   @Override
   public int getParticipantCount() {
     return this.testConfig.getClientConfig().getClientClasses().length;
