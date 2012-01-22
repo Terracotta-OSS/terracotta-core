@@ -20,66 +20,66 @@ import java.util.Vector;
 import javax.servlet.http.HttpServletRequest;
 
 public class DummyCart implements java.io.Serializable {
-	private static final long serialVersionUID = -6839762562623352329L;
-	Vector<String> v = new Vector<String>();
-	String submit = null;
-	String item = null;
+  private static final long serialVersionUID = -6839762562623352329L;
+  Vector<String> v = new Vector<String>();
+  String submit = null;
+  String item = null;
 
-	private void addItem(String name) {
-		v.addElement(name);
-	}
+  private void addItem(String name) {
+    v.addElement(name);
+  }
 
-	private void removeItem(String name) {
-		v.removeElement(name);
-	}
+  private void removeItem(String name) {
+    v.removeElement(name);
+  }
 
-	public void setItem(String name) {
-		item = name;
-	}
+  public void setItem(String name) {
+    item = name;
+  }
 
-	public void setSubmit(String s) {
-		submit = s;
-	}
+  public void setSubmit(String s) {
+    submit = s;
+  }
 
-	public String[] getItems() {
-		String[] s = new String[v.size()];
-		v.copyInto(s);
-		return s;
-	}
+  public String[] getItems() {
+    String[] s = new String[v.size()];
+    v.copyInto(s);
+    return s;
+  }
 
-	public void processRequest(HttpServletRequest request) {
-		// null value for submit - user hit enter instead of clicking on
-		// "add" or "remove"
-		if (submit != null && item != null) {
-			if (submit.equals("add")) {
-				addItem(item);
-			} else if (submit.equals("remove")) {
-				removeItem(item);
-			}
-		}
+  public void processRequest(HttpServletRequest request) {
+    // null value for submit - user hit enter instead of clicking on
+    // "add" or "remove"
+    if (submit != null && item != null) {
+      if (submit.equals("add")) {
+        addItem(item);
+      } else if (submit.equals("remove")) {
+        removeItem(item);
+      }
+    }
 
-		// reset at the end of the request
-		reset();
-	}
+    // reset at the end of the request
+    reset();
+  }
 
-	// reset
-	private void reset() {
-		submit = null;
-		item = null;
-	}
+  // reset
+  private void reset() {
+    submit = null;
+    item = null;
+  }
 
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		boolean startedSeps = false;
-		for (String item : getItems()) {
-			if (startedSeps) {
-				sb.append(", ");
-			} else {
-				startedSeps = true;
-			}
-			sb.append(item);
-		}
-		return sb.toString();
-	}
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    boolean startedSeps = false;
+    for (String item : getItems()) {
+      if (startedSeps) {
+        sb.append(", ");
+      } else {
+        startedSeps = true;
+      }
+      sb.append(item);
+    }
+    return sb.toString();
+  }
 }

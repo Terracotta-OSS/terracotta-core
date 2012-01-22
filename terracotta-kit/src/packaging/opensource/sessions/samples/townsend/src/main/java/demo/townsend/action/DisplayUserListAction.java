@@ -26,30 +26,30 @@ import demo.townsend.service.DataKeeper;
  * displayUserListForm) is populated with this data.
  */
 public class DisplayUserListAction extends Action {
-	@Override
-	public ActionForward execute(ActionMapping mapping, ActionForm form,
-			HttpServletRequest request, HttpServletResponse response)
-			throws Exception {
+  @Override
+  public ActionForward execute(ActionMapping mapping, ActionForm form,
+      HttpServletRequest request, HttpServletResponse response)
+      throws Exception {
 
-		HttpSession session = request.getSession();
-		if (session == null) {
-			ActionMessages errors = new ActionMessages();
-			errors.add(ActionMessages.GLOBAL_MESSAGE, new ActionMessage(
-					"error.expired.session"));
-			saveErrors(request, errors);
-			return mapping.findForward(Constants.NO_SESSION);
-		}
-		DataKeeper dkeeper = (DataKeeper) session
-				.getAttribute(Constants.DATA_KEY);
-		if (dkeeper == null) {
-			dkeeper = new DataKeeper();
-		}
+    HttpSession session = request.getSession();
+    if (session == null) {
+      ActionMessages errors = new ActionMessages();
+      errors.add(ActionMessages.GLOBAL_MESSAGE, new ActionMessage(
+          "error.expired.session"));
+      saveErrors(request, errors);
+      return mapping.findForward(Constants.NO_SESSION);
+    }
+    DataKeeper dkeeper = (DataKeeper) session
+        .getAttribute(Constants.DATA_KEY);
+    if (dkeeper == null) {
+      dkeeper = new DataKeeper();
+    }
 
-		((DynaActionForm) form).set("recentList", dkeeper.getList());
-		((DynaActionForm) form).set("listLength", Integer.toString(dkeeper
-				.getListSize()));
-		((DynaActionForm) form).set("currentProduct", dkeeper.getCurrent());
+    ((DynaActionForm) form).set("recentList", dkeeper.getList());
+    ((DynaActionForm) form).set("listLength", Integer.toString(dkeeper
+        .getListSize()));
+    ((DynaActionForm) form).set("currentProduct", dkeeper.getCurrent());
 
-		return mapping.findForward(Constants.SUCCESS_KEY);
-	}
+    return mapping.findForward(Constants.SUCCESS_KEY);
+  }
 }

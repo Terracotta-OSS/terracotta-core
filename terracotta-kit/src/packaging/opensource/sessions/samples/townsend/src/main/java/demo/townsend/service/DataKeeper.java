@@ -14,55 +14,55 @@ import java.util.List;
  * modifications to the user's list are made by calling DataKeeper's methods.
  */
 public class DataKeeper implements java.io.Serializable {
-	private static final long serialVersionUID = 5262292781659376986L;
-	private final int MAX_NUM = 5;
-	private final ArrayList<Product> userList;
+  private static final long serialVersionUID = 5262292781659376986L;
+  private final int MAX_NUM = 5;
+  private final ArrayList<Product> userList;
 
-	public DataKeeper() {
-		userList = new ArrayList<Product>();
-	}
+  public DataKeeper() {
+    userList = new ArrayList<Product>();
+  }
 
-	public void addListItem(Product newProd) {
-		for (Iterator<Product> iter = userList.iterator(); iter.hasNext();) {
-			if (iter.next().getId().equals(newProd.getId())) {
-				iter.remove();
-			}
-		}
+  public void addListItem(Product newProd) {
+    for (Iterator<Product> iter = userList.iterator(); iter.hasNext();) {
+      if (iter.next().getId().equals(newProd.getId())) {
+        iter.remove();
+      }
+    }
 
-		userList.add(0, newProd);
+    userList.add(0, newProd);
 
-		if (userList.size() > MAX_NUM) {
-			userList.remove(MAX_NUM);
-		}
-	}
+    if (userList.size() > MAX_NUM) {
+      userList.remove(MAX_NUM);
+    }
+  }
 
-	public int getListSize() {
-		return userList.size();
-	}
+  public int getListSize() {
+    return userList.size();
+  }
 
-	public List<Product> getList() {
-		return userList;
-	}
+  public List<Product> getList() {
+    return userList;
+  }
 
-	public Product getCurrent() {
-		if (getListSize() > 0) {
-			return userList.get(0);
-		}
-		return null;
-	}
+  public Product getCurrent() {
+    if (getListSize() > 0) {
+      return userList.get(0);
+    }
+    return null;
+  }
 
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		boolean startedSeps = false;
-		for (Iterator<Product> iter = getList().iterator(); iter.hasNext();) {
-			if (startedSeps) {
-				sb.append(", ");
-			} else {
-				startedSeps = true;
-			}
-			sb.append(iter.next().toString());
-		}
-		return sb.toString();
-	}
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    boolean startedSeps = false;
+    for (Iterator<Product> iter = getList().iterator(); iter.hasNext();) {
+      if (startedSeps) {
+        sb.append(", ");
+      } else {
+        startedSeps = true;
+      }
+      sb.append(iter.next().toString());
+    }
+    return sb.toString();
+  }
 }

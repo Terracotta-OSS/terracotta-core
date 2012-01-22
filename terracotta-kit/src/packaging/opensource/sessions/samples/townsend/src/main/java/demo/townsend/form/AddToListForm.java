@@ -19,7 +19,7 @@ import org.apache.struts.action.ActionMessages;
  * from the display page.
  */
 public class AddToListForm extends ActionForm {
-	
+  
   //private Product product;
   private String id;
   
@@ -29,12 +29,12 @@ public class AddToListForm extends ActionForm {
   }
 
   public ActionErrors validate(ActionMapping mapping, HttpServletRequest req ){
-	  
-	  ActionErrors errors = new ActionErrors();
+    
+    ActionErrors errors = new ActionErrors();
 
     if(id == null) {
       errors.add(ActionMessages.GLOBAL_MESSAGE, 
-    		  new ActionMessage("global.error.addtolist.requiredfield", "product" ));
+          new ActionMessage("global.error.addtolist.requiredfield", "product" ));
     }
     return errors;
   }

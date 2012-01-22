@@ -17,38 +17,38 @@ import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
 public final class Main extends JFrame {
-	private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-	public Main() {
-		super("Shared Editor");
+  public Main() {
+    super("Shared Editor");
 
-		ObjectManager objmgr = new ObjectManager();
-		Renderer renderer = new Renderer();
-		Dispatcher dispatcher = new Dispatcher(objmgr, renderer);
-		Dashboard controller = new Dashboard(dispatcher);
-		Container content = getContentPane();
-		JPanel display = new JPanel();
+    ObjectManager objmgr = new ObjectManager();
+    Renderer renderer = new Renderer();
+    Dispatcher dispatcher = new Dispatcher(objmgr, renderer);
+    Dashboard controller = new Dashboard(dispatcher);
+    Container content = getContentPane();
+    JPanel display = new JPanel();
 
-		display.setLayout(new BorderLayout(5, 5));
-		display.add(renderer, BorderLayout.CENTER);
-		content.add(display, BorderLayout.CENTER);
-		content.add(controller, BorderLayout.EAST);
-		renderer.setPreferredSize(new Dimension(600, 50));
+    display.setLayout(new BorderLayout(5, 5));
+    display.add(renderer, BorderLayout.CENTER);
+    content.add(display, BorderLayout.CENTER);
+    content.add(controller, BorderLayout.EAST);
+    renderer.setPreferredSize(new Dimension(600, 50));
 
-		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-		setDefaultLookAndFeelDecorated(true);
+    setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+    setDefaultLookAndFeelDecorated(true);
 
-		pack();
+    pack();
 
-		setResizable(false);
-		setVisible(true);
-	}
+    setResizable(false);
+    setVisible(true);
+  }
 
-	public static void main(String[] args) {
-		javax.swing.SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				new Main();
-			}
-		});
-	}
+  public static void main(String[] args) {
+    javax.swing.SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        new Main();
+      }
+    });
+  }
 }

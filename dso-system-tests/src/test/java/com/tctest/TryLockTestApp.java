@@ -179,7 +179,7 @@ public class TryLockTestApp extends AbstractTransparentApp {
 
   public static class MockQueue {
     private transient final String  name;
-    private transient Thread  		processingThread;
+    private transient Thread      processingThread;
 
     private MockCoordinator   coordinator;
     private boolean           cancelled = false;

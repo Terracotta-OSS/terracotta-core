@@ -45,8 +45,8 @@ public class AddToListForm extends ActionForm {
     errorMsg = null;
     
     if (newListItem == null ||
-	(newListItem = newListItem.trim()) == null ||
-	 newListItem.equals("")) {
+  (newListItem = newListItem.trim()) == null ||
+   newListItem.equals("")) {
       newListItem = null;
       errorMsg = "Error: A new list item is required for \"Add\" operation";
     }

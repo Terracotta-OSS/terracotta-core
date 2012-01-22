@@ -32,39 +32,39 @@ import demo.townsend.service.ProductCatalog;
  * the HttpSession object.
  */
 public class AddToListAction extends Action {
-	@Override
-	public ActionForward execute(ActionMapping mapping, ActionForm form,
-			HttpServletRequest request, HttpServletResponse response)
-			throws Exception {
+  @Override
+  public ActionForward execute(ActionMapping mapping, ActionForm form,
+      HttpServletRequest request, HttpServletResponse response)
+      throws Exception {
 
-		String newProdId = ((AddToListForm) form).getId();
-		Product newProd = null;
-		List<Product> catalog = new ProductCatalog().getCatalog();
-		for (Iterator<Product> iter = catalog.iterator(); iter.hasNext();) {
-			Product p = iter.next();
-			if (p.getId().equals(newProdId)) {
-				newProd = p;
-			}
-		}
+    String newProdId = ((AddToListForm) form).getId();
+    Product newProd = null;
+    List<Product> catalog = new ProductCatalog().getCatalog();
+    for (Iterator<Product> iter = catalog.iterator(); iter.hasNext();) {
+      Product p = iter.next();
+      if (p.getId().equals(newProdId)) {
+        newProd = p;
+      }
+    }
 
-		HttpSession session = request.getSession();
-		if (session == null) {
-			ActionMessages errors = new ActionMessages();
-			errors.add(ActionMessages.GLOBAL_MESSAGE, new ActionMessage(
-					"error.expired.session"));
-			saveErrors(request, errors);
-			return mapping.findForward(Constants.NO_SESSION);
-		}
-		DataKeeper dkeeper = (DataKeeper) session
-				.getAttribute(Constants.DATA_KEY);
-		if (dkeeper == null) {
-			dkeeper = new DataKeeper();
-		}
+    HttpSession session = request.getSession();
+    if (session == null) {
+      ActionMessages errors = new ActionMessages();
+      errors.add(ActionMessages.GLOBAL_MESSAGE, new ActionMessage(
+          "error.expired.session"));
+      saveErrors(request, errors);
+      return mapping.findForward(Constants.NO_SESSION);
+    }
+    DataKeeper dkeeper = (DataKeeper) session
+        .getAttribute(Constants.DATA_KEY);
+    if (dkeeper == null) {
+      dkeeper = new DataKeeper();
+    }
 
-		dkeeper.addListItem(newProd);
+    dkeeper.addListItem(newProd);
 
-		session.setAttribute(Constants.DATA_KEY, dkeeper);
+    session.setAttribute(Constants.DATA_KEY, dkeeper);
 
-		return mapping.findForward(Constants.SUCCESS_KEY);
-	}
+    return mapping.findForward(Constants.SUCCESS_KEY);
+  }
 }
