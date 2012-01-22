@@ -41,6 +41,7 @@
     <skip.testjar>false</skip.testjar>
     <listName>checkshort.txt</listName>
     <localMavenRepository>${user.home}/.m2/repository</localMavenRepository>
+    <checkstyle-suppressions-file>${basedir}/../checkstyle/suppressions.xml</checkstyle-suppressions-file>
 
     <tc.tests.configuration.properties.file>${project.build.testOutputDirectory}/tc.tests.properties</tc.tests.configuration.properties.file>
     <tc.system.tests.properties>${project.build.testOutputDirectory}/com/tc/properties/tests.properties</tc.system.tests.properties>

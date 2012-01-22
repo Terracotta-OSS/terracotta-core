@@ -23,7 +23,7 @@
 package com.tc.jrexx.regex;
 
 final class Terminal_EOF {
-	static final Terminal_EOF INSTANCE = new Terminal_EOF();
+  static final Terminal_EOF INSTANCE = new Terminal_EOF();
     private Terminal_EOF() {}
 
 }

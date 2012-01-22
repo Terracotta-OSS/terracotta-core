@@ -23,8 +23,8 @@
 package com.tc.jrexx.regex;
 
 final class Terminal_AndOp {
-	static final Terminal_AndOp INSTANCE = new Terminal_AndOp();
-	private Terminal_AndOp() {};
+  static final Terminal_AndOp INSTANCE = new Terminal_AndOp();
+  private Terminal_AndOp() {};
 
     public String toString() {
       return "&";

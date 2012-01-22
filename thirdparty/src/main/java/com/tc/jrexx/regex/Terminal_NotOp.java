@@ -23,8 +23,8 @@
 package com.tc.jrexx.regex;
 
 final class Terminal_NotOp {
-	static final Terminal_NotOp INSTANCE = new Terminal_NotOp();
-	private Terminal_NotOp() {};
+  static final Terminal_NotOp INSTANCE = new Terminal_NotOp();
+  private Terminal_NotOp() {};
 
   public String toString() {
     return "!";
