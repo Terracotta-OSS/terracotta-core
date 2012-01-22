@@ -4,5 +4,5 @@
 package com.tc.object.locks;
 
 public interface WaitListener {
-	public void handleWaitEvent();
+  public void handleWaitEvent();
 }

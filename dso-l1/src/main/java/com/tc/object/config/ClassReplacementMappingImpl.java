@@ -52,7 +52,7 @@ public class ClassReplacementMappingImpl implements ClassReplacementMapping {
         return r;
       }
 
-	  // XXX: should we run all the tests to see if one than one "accepts" it?
+    // XXX: should we run all the tests to see if one than one "accepts" it?
       if (test.accepts(originalClassName, loader)) { return r; }
     }
 

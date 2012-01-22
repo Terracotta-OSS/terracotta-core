@@ -87,7 +87,7 @@ public class DSOUnsafeAdapter extends ClassAdapter implements Opcodes, ClassAdap
 
   private void addCheckedManagedConditionCode(MethodVisitor mv, Type[] params, int objParamIndex, int offsetParamIndex, Label nonSharedLabel,
                                               Label sharedLabel) {
-	Label checkPortableFieldLabel = new Label();
+  Label checkPortableFieldLabel = new Label();
     mv.visitVarInsn(params[objParamIndex].getOpcode(ILOAD), objParamIndex + 1);
     mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "isManaged", "(Ljava/lang/Object;)Z");
     mv.visitJumpInsn(IFEQ, nonSharedLabel);
