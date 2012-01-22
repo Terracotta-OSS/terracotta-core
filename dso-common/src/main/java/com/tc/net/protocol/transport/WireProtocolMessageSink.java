@@ -1,5 +1,5 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.net.protocol.transport;
 
@@ -18,10 +18,10 @@ public interface WireProtocolMessageSink {
    */
   public void putMessage(WireProtocolMessage message) throws WireProtocolException;
 
-  //	/**
-  //	 * Inject the given wire protocol messages. Implementations are free to queue the messages (and return)
-  //	 * or act on them directly in the context of the current thread
-  //	 *
+  //  /**
+  //   * Inject the given wire protocol messages. Implementations are free to queue the messages (and return)
+  //   * or act on them directly in the context of the current thread
+  //   *
   //   * @param messages The message instances to put
   //   */
   //  public void putMessages(TCWireProtocolMessage[] messages);
