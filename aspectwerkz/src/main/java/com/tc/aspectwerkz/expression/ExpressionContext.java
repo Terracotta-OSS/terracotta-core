@@ -1,5 +1,5 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.aspectwerkz.expression;
 
@@ -261,47 +261,47 @@ public class ExpressionContext {
   }
 
   public String getDebugString() {
-		StringBuffer buffer = new StringBuffer();
-		buffer.append("[ExpressionContext:");
-		buffer.append(" INFO_NOT_AVAILABLE: ");
-		buffer.append(INFO_NOT_AVAILABLE);
-		buffer.append(" METHOD_INFO: ");
-		buffer.append(METHOD_INFO);
-		buffer.append(" CONSTRUCTOR_INFO: ");
-		buffer.append(CONSTRUCTOR_INFO);
-		buffer.append(" FIELD_INFO: ");
-		buffer.append(FIELD_INFO);
-		buffer.append(" CLASS_INFO: ");
-		buffer.append(CLASS_INFO);
-		buffer.append(" STATIC_INFO: ");
-		buffer.append(STATIC_INFO);
-		buffer.append(" m_reflectionInfoType: ");
-		buffer.append(m_reflectionInfoType);
-		buffer.append(" m_pointcutType: ");
-		buffer.append(m_pointcutType);
-		buffer.append(" m_matchingReflectionInfo: ");
-		buffer.append(m_matchingReflectionInfo);
-		buffer.append(" m_withinReflectionInfo: ");
-		buffer.append(m_withinReflectionInfo);
-		buffer.append(" m_inCflowSubAST: ");
-		buffer.append(m_inCflowSubAST);
-		buffer.append(" m_cflowEvaluation: ");
-		buffer.append(m_cflowEvaluation);
-		buffer.append(" m_hasBeenVisitingCflow: ");
-		buffer.append(m_hasBeenVisitingCflow);
-		buffer.append(" m_currentTargetArgsIndex: ");
-		buffer.append(m_currentTargetArgsIndex);
-		buffer.append(" m_exprIndexToTargetIndex: ");
-		buffer.append(m_exprIndexToTargetIndex);
-		buffer.append(" m_thisBoundedName: ");
-		buffer.append(m_thisBoundedName);
-		buffer.append(" m_targetBoundedName: ");
-		buffer.append(m_targetBoundedName);
-		buffer.append(" m_targetWithRuntimeCheck: ");
-		buffer.append(m_targetWithRuntimeCheck);
-		buffer.append("]");
-		return buffer.toString();
-	}
+    StringBuffer buffer = new StringBuffer();
+    buffer.append("[ExpressionContext:");
+    buffer.append(" INFO_NOT_AVAILABLE: ");
+    buffer.append(INFO_NOT_AVAILABLE);
+    buffer.append(" METHOD_INFO: ");
+    buffer.append(METHOD_INFO);
+    buffer.append(" CONSTRUCTOR_INFO: ");
+    buffer.append(CONSTRUCTOR_INFO);
+    buffer.append(" FIELD_INFO: ");
+    buffer.append(FIELD_INFO);
+    buffer.append(" CLASS_INFO: ");
+    buffer.append(CLASS_INFO);
+    buffer.append(" STATIC_INFO: ");
+    buffer.append(STATIC_INFO);
+    buffer.append(" m_reflectionInfoType: ");
+    buffer.append(m_reflectionInfoType);
+    buffer.append(" m_pointcutType: ");
+    buffer.append(m_pointcutType);
+    buffer.append(" m_matchingReflectionInfo: ");
+    buffer.append(m_matchingReflectionInfo);
+    buffer.append(" m_withinReflectionInfo: ");
+    buffer.append(m_withinReflectionInfo);
+    buffer.append(" m_inCflowSubAST: ");
+    buffer.append(m_inCflowSubAST);
+    buffer.append(" m_cflowEvaluation: ");
+    buffer.append(m_cflowEvaluation);
+    buffer.append(" m_hasBeenVisitingCflow: ");
+    buffer.append(m_hasBeenVisitingCflow);
+    buffer.append(" m_currentTargetArgsIndex: ");
+    buffer.append(m_currentTargetArgsIndex);
+    buffer.append(" m_exprIndexToTargetIndex: ");
+    buffer.append(m_exprIndexToTargetIndex);
+    buffer.append(" m_thisBoundedName: ");
+    buffer.append(m_thisBoundedName);
+    buffer.append(" m_targetBoundedName: ");
+    buffer.append(m_targetBoundedName);
+    buffer.append(" m_targetWithRuntimeCheck: ");
+    buffer.append(m_targetWithRuntimeCheck);
+    buffer.append("]");
+    return buffer.toString();
+  }
 
 
 }

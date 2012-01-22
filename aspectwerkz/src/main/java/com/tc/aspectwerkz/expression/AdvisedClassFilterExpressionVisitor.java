@@ -1,5 +1,5 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.aspectwerkz.expression;
 
@@ -304,7 +304,7 @@ public class AdvisedClassFilterExpressionVisitor extends ExpressionVisitor imple
 //        if(null == data) {
 //            return null;
 //        } else if( !(data instanceof ClassInfo) ) {
-//        	return Boolean.FALSE;
+//          return Boolean.FALSE;
 //        }
 //
 //        ClassInfo classInfo = (ClassInfo) data;

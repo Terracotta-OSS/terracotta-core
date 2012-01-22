@@ -1,5 +1,5 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.aspectwerkz.expression;
 
@@ -449,7 +449,7 @@ public class ExpressionVisitor implements ExpressionParserVisitor {
         return Boolean.FALSE;
       }
 
-//        	return new Boolean(node.getTypePattern().matchType(classInfo));
+//          return new Boolean(node.getTypePattern().matchType(classInfo));
     }
 
     return Boolean.FALSE;
