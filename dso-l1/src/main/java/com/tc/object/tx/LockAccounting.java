@@ -137,21 +137,23 @@ public class LockAccounting {
   public void waitAllCurrentTxnCompleted() {
     TxnRemovedListener listener;
     Latch latch = new Latch();
+    Set currentTxnSet = null;
     synchronized (this) {
-      Set currentTxnSet = new HashSet(tx2Locks.keySet());
+      currentTxnSet = new HashSet(tx2Locks.keySet());
       listener = new TxnRemovedListener(currentTxnSet, latch);
       listeners.add(listener);
-      if (logger.isDebugEnabled()) {
-        for (Object o : currentTxnSet) {
-          logger.info(o);
-        }
-      }
     }
 
     try {
       // DEV-6271: During rejoin, the client could be shut down. In that case we need to get
       // out of this wait and throw a TCNotRunningException for upper layers to handle
       do {
+        // mnk-3221, enabling debug logging for what all txn are pending
+        if (logger.isDebugEnabled()) {
+          for (Object o : currentTxnSet) {
+            logger.info(o);
+          }
+        }
         if (shutdown) { throw new TCNotRunningException(); }
       } while (!latch.attempt(WAIT_FOR_TRANSACTIONS_INTERVAL));
     } catch (InterruptedException e) {
