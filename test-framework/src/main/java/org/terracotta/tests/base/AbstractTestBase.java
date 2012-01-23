@@ -9,6 +9,8 @@ import org.junit.runner.RunWith;
 import org.terracotta.test.util.TestBaseUtil;
 
 import com.tc.exception.ImplementMe;
+import com.tc.l2.L2DebugLogging.LogLevel;
+import com.tc.logging.TCLogging;
 import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;
 import com.tc.test.config.model.TestConfig;
@@ -22,26 +24,32 @@ import com.tc.test.setup.TestServerManager;
 import com.tc.util.PortChooser;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
 
 @RunWith(value = TcTestRunner.class)
 public abstract class AbstractTestBase extends TCTestCase {
-  private static final String   SINGLE_SERVER_CONFIG = "single-server-config";
-  protected static final String SEP                  = File.pathSeparator;
-  private final TestConfig      testConfig;
-  private final File            tcConfigFile;
-  protected TestServerManager   testServerManager;
-  protected final File          tempDir;
-  protected File                javaHome;
-  private TestClientManager     clientRunner;
-  private TestJMXServerManager  jmxServerManager;
-  private Thread                duringRunningClusterThread;
+  private static final String         SINGLE_SERVER_CONFIG = "single-server-config";
+  protected static final String       SEP                  = File.pathSeparator;
+  private final TestConfig            testConfig;
+  private final File                  tcConfigFile;
+  protected TestServerManager         testServerManager;
+  protected final File                tempDir;
+  protected File                      javaHome;
+  private TestClientManager           clientRunner;
+  private TestJMXServerManager        jmxServerManager;
+  private Thread                      duringRunningClusterThread;
+  private final Map<String, LogLevel> tcLoggingConfigs     = new HashMap<String, LogLevel>();
 
   public AbstractTestBase(TestConfig testConfig) {
     this.testConfig = testConfig;
@@ -187,7 +195,34 @@ public abstract class AbstractTestBase extends TCTestCase {
       cp += SEP + extra;
     }
 
+    Map<String, LogLevel> loggingConfigs = configureTCLogging(tcLoggingConfigs);
+    if (loggingConfigs.size() > 0) {
+      cp += SEP + getTCLoggingFilePath(loggingConfigs);
+    }
     return cp;
+  }
+
+  private String getTCLoggingFilePath(Map<String, LogLevel> loggingConfigs) {
+    File log4jPropFile = null;
+    String path = "";
+    BufferedWriter writer = null;
+    try {
+      log4jPropFile = new File(getTempDirectory(), TCLogging.LOG4J_PROPERTIES_FILENAME);
+      writer = new BufferedWriter(new FileWriter(log4jPropFile));
+      for (Entry<String, LogLevel> entry : loggingConfigs.entrySet()) {
+        writer.write(entry.getKey() + "=" + entry.getValue().name());
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    } finally {
+      try {
+        writer.close();
+        path = log4jPropFile.getCanonicalPath();
+      } catch (IOException e1) {
+        e1.printStackTrace();
+      }
+    }
+    return path;
   }
 
   protected String addToClasspath(String cp, String path) {
@@ -196,6 +231,10 @@ public abstract class AbstractTestBase extends TCTestCase {
 
   protected List<String> getExtraJars() {
     return Collections.emptyList();
+  }
+
+  protected Map<String, LogLevel> configureTCLogging(Map<String, LogLevel> loggingConfigs) {
+    return tcLoggingConfigs;
   }
 
   protected String getTerracottaURL() {

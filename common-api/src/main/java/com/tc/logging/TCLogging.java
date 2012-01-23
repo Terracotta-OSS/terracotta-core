@@ -71,7 +71,7 @@ public class TCLogging {
   private static final String       MAX_BACKUPS_PROPERTY               = "maxBackups";
   private static final int          DEFAULT_MAX_BACKUPS                = 20;
   private static final String       LOG4J_CUSTOM_FILENAME              = ".tc.custom.log4j.properties";
-  private static final String       LOG4J_PROPERTIES_FILENAME          = ".tc.dev.log4j.properties";
+  public static final String        LOG4J_PROPERTIES_FILENAME          = ".tc.dev.log4j.properties";
 
   private static final String       CONSOLE_PATTERN                    = "%d %p - %m%n";
   public static final String        DUMP_PATTERN                       = "[dump] %m%n";
@@ -185,15 +185,21 @@ public class TCLogging {
           new File(System.getProperty("user.dir"), LOG4J_PROPERTIES_FILENAME) };
 
       boolean devLog4JPropsFilePresent = false;
-      for (int pos = 0; pos < devLoggingLocations.length; ++pos) {
-        File propFile = devLoggingLocations[pos];
-        if (propFile.isFile() && propFile.canRead()) {
-          devLog4JPropsFilePresent = true;
-          InputStream in = new FileInputStream(propFile);
-          try {
-            devLoggingProperties.load(in);
-          } finally {
-            in.close();
+      InputStream stream = ClassLoader.getSystemClassLoader().getResourceAsStream(LOG4J_PROPERTIES_FILENAME);
+      if (stream != null) {
+        devLog4JPropsFilePresent = true;
+        devLoggingProperties.load(stream);
+      } else {
+        for (int pos = 0; pos < devLoggingLocations.length; ++pos) {
+          File propFile = devLoggingLocations[pos];
+          if (propFile.isFile() && propFile.canRead()) {
+            devLog4JPropsFilePresent = true;
+            InputStream in = new FileInputStream(propFile);
+            try {
+              devLoggingProperties.load(in);
+            } finally {
+              in.close();
+            }
           }
         }
       }
@@ -441,8 +447,8 @@ public class TCLogging {
     }
 
     /**
-     * Don't add consoleLogger to allLoggers because it's a child of customerLogger, so it shouldn't get any
-     * appenders. If you DO add consoleLogger here, you'll see duplicate messages in the log file.
+     * Don't add consoleLogger to allLoggers because it's a child of customerLogger, so it shouldn't get any appenders.
+     * If you DO add consoleLogger here, you'll see duplicate messages in the log file.
      */
     allLoggers = createAllLoggerList(internalLoggers, customerLogger);
 
