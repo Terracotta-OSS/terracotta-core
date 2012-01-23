@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.terracotta.test.util.TestBaseUtil;
 
+import com.sun.management.OperatingSystemMXBean;
 import com.tc.exception.ImplementMe;
 import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.logging.TCLogging;
@@ -29,6 +30,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,6 +38,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
+
+import javax.management.MBeanServerConnection;
 
 @RunWith(value = TcTestRunner.class)
 public abstract class AbstractTestBase extends TCTestCase {
@@ -371,4 +375,23 @@ public abstract class AbstractTestBase extends TCTestCase {
     }
   }
 
+  /**
+   * Disables the test if the tota physical memory on the machine is lower that the specified value
+   * 
+   * @param physicalMemory memory in gigs below which the test should not run on the machine
+   */
+  protected void disableIfMemoryLowerThan(int physicalMemory) {
+    try {
+      long gb = 1024 * 1024 * 1024;
+      MBeanServerConnection mbsc = ManagementFactory.getPlatformMBeanServer();
+      OperatingSystemMXBean osMBean = ManagementFactory
+          .newPlatformMXBeanProxy(mbsc, ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME, OperatingSystemMXBean.class);
+      if (osMBean.getTotalPhysicalMemorySize() < physicalMemory * gb) {
+        disableTest();
+      }
+    } catch (Exception e) {
+      throw new AssertionError(e);
+    }
+
+  }
 }
