@@ -188,7 +188,11 @@ public class TCLogging {
       InputStream stream = ClassLoader.getSystemClassLoader().getResourceAsStream(LOG4J_PROPERTIES_FILENAME);
       if (stream != null) {
         devLog4JPropsFilePresent = true;
-        devLoggingProperties.load(stream);
+        try {
+          devLoggingProperties.load(stream);
+        } finally {
+          stream.close();
+        }
       } else {
         for (int pos = 0; pos < devLoggingLocations.length; ++pos) {
           File propFile = devLoggingLocations[pos];

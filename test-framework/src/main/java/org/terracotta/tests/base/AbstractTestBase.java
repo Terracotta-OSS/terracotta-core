@@ -49,6 +49,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   private TestClientManager           clientRunner;
   private TestJMXServerManager        jmxServerManager;
   private Thread                      duringRunningClusterThread;
+  private static final String         log4jPrefix          = "log4j.logger.";
   private final Map<String, LogLevel> tcLoggingConfigs     = new HashMap<String, LogLevel>();
 
   public AbstractTestBase(TestConfig testConfig) {
@@ -210,16 +211,16 @@ public abstract class AbstractTestBase extends TCTestCase {
       log4jPropFile = new File(getTempDirectory(), TCLogging.LOG4J_PROPERTIES_FILENAME);
       writer = new BufferedWriter(new FileWriter(log4jPropFile));
       for (Entry<String, LogLevel> entry : loggingConfigs.entrySet()) {
-        writer.write(entry.getKey() + "=" + entry.getValue().name());
+        writer.write(log4jPrefix + entry.getKey() + "=" + entry.getValue().name());
       }
     } catch (IOException e) {
-      e.printStackTrace();
+      throw new IllegalStateException(e.getMessage());
     } finally {
       try {
         writer.close();
         path = log4jPropFile.getCanonicalPath();
       } catch (IOException e1) {
-        e1.printStackTrace();
+        throw new IllegalStateException(e1.getMessage());
       }
     }
     return path;
