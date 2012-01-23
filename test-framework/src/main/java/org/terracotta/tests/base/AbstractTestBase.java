@@ -8,7 +8,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.terracotta.test.util.TestBaseUtil;
 
-import com.sun.management.OperatingSystemMXBean;
 import com.tc.exception.ImplementMe;
 import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.logging.TCLogging;
@@ -380,12 +379,14 @@ public abstract class AbstractTestBase extends TCTestCase {
    * 
    * @param physicalMemory memory in gigs below which the test should not run on the machine
    */
+  @SuppressWarnings("restriction")
   protected void disableIfMemoryLowerThan(int physicalMemory) {
     try {
       long gb = 1024 * 1024 * 1024;
       MBeanServerConnection mbsc = ManagementFactory.getPlatformMBeanServer();
-      OperatingSystemMXBean osMBean = ManagementFactory
-          .newPlatformMXBeanProxy(mbsc, ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME, OperatingSystemMXBean.class);
+      com.sun.management.OperatingSystemMXBean osMBean = ManagementFactory
+          .newPlatformMXBeanProxy(mbsc, ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME,
+                                  com.sun.management.OperatingSystemMXBean.class);
       if (osMBean.getTotalPhysicalMemorySize() < physicalMemory * gb) {
         disableTest();
       }
