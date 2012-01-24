@@ -33,8 +33,16 @@ public class TestClientManager {
     this.testBase = testBase;
   }
 
+  /**
+   * Starts a new client
+   * 
+   * @param client : the class which is to be started as client
+   * @param withStandaloneJar : do we need to start the client with standalone jar
+   * @param clientName name of : the client to be started
+   * @param extraClientMainArgs : List of arguments with which the client will start
+   */
   protected void runClient(Class<? extends Runnable> client, boolean withStandaloneJar, String clientName,
-                           List<String> extraClientArgs) throws Throwable {
+                           List<String> extraClientMainArgs) throws Throwable {
 
     ArrayList<String> jvmArgs = new ArrayList<String>();
     if (DEBUG_CLIENTS) {
@@ -42,24 +50,25 @@ public class TestClientManager {
       jvmArgs.add("-agentlib:jdwp=transport=dt_socket,suspend=y,server=y,address=" + debugPort);
       Banner.infoBanner("waiting for debugger to attach on port " + debugPort);
     }
-    String clientArgs = System.getProperty(CLIENT_ARGS);
-    if (clientArgs != null) {
-      extraClientArgs.add(clientArgs);
-    }
 
     File licenseKey = new File("test-classes/terracotta-license.key");
     jvmArgs.add("-Dcom.tc.productkey.path=" + licenseKey.getAbsolutePath());
-    jvmArgs.addAll(extraClientArgs);
-
-    List<String> arguments = new ArrayList<String>();
-    arguments.add(client.getName());
-    arguments.add(Integer.toString(testBase.getTestControlMbeanPort()));
 
     // do this last
     configureClientExtraJVMArgs(jvmArgs);
 
     // removed duplicate args and use the one added in the last in case of multiple entries
     TestBaseUtil.removeDuplicateJvmArgs(jvmArgs);
+
+    String clientArgs = System.getProperty(CLIENT_ARGS);
+    if (clientArgs != null) {
+      extraClientMainArgs.add(clientArgs);
+    }
+
+    List<String> clientMainArgs = new ArrayList<String>();
+    clientMainArgs.add(client.getName());
+    clientMainArgs.add(Integer.toString(testBase.getTestControlMbeanPort()));
+    clientMainArgs.addAll(extraClientMainArgs);
 
     String workDirPath = tempDir + File.separator + clientName;
     File workDir;
@@ -83,16 +92,16 @@ public class TestClientManager {
     File verboseGcOutputFile = new File(workDir, "verboseGC.log");
     setupVerboseGC(jvmArgs, verboseGcOutputFile);
 
-    LinkedJavaProcess clientProcess = new LinkedJavaProcess(TestClientLauncher.class.getName(), arguments, jvmArgs);
+    LinkedJavaProcess clientProcess = new LinkedJavaProcess(TestClientLauncher.class.getName(), clientMainArgs, jvmArgs);
     String classPath = testBase.createClassPath(client, withStandaloneJar);
     classPath = testBase.makeClasspath(classPath, testBase.getTestDependencies());
     classPath = addRequiredJarsToClasspath(client, classPath);
     classPath = addExtraJarsToClassPath(classPath);
     clientProcess.setClasspath(classPath);
 
-    // System.err.println("Starting client with jvmArgs: " + jvmArgs);
-    // System.err.println("LinkedJavaProcess arguments: " + arguments);
-    // System.err.println("LinkedJavaProcess classpath: " + classPath);
+    System.err.println("\nStarting client with jvmArgs: " + jvmArgs);
+    System.err.println("\nLinkedJavaProcess main method arguments: " + clientMainArgs);
+    System.err.println("\nLinkedJavaProcess classpath: " + classPath + "\n");
 
     clientProcess.setDirectory(workDir);
 
