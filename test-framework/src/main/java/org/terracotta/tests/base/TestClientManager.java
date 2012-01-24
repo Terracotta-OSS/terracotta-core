@@ -90,9 +90,9 @@ public class TestClientManager {
     classPath = addExtraJarsToClassPath(classPath);
     clientProcess.setClasspath(classPath);
 
-    System.err.println("Starting client with jvmArgs: " + jvmArgs);
-    System.err.println("LinkedJavaProcess arguments: " + arguments);
-    System.err.println("LinkedJavaProcess classpath: " + classPath);
+    // System.err.println("Starting client with jvmArgs: " + jvmArgs);
+    // System.err.println("LinkedJavaProcess arguments: " + arguments);
+    // System.err.println("LinkedJavaProcess classpath: " + classPath);
 
     clientProcess.setDirectory(workDir);
 
