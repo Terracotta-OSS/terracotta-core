@@ -27,7 +27,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jetty.version>6.1.8</jetty.version>
     <slf4j.version>1.6.1</slf4j.version>
-    <offheap-store.version>1.0.5</offheap-store.version>
+    <offheap-store.version>1.0.6</offheap-store.version>
     <terracotta-license.version>1.0.3</terracotta-license.version>
     <derby.version>10.8.2.2</derby.version>
     <tcconfig.version>3.7.0-SNAPSHOT</tcconfig.version>
