@@ -6,4 +6,8 @@
 
 <suppressions>
   <suppress checks="Header" files=".java" />
+  
+  <!-- allow hardcoded toolkit classnames in these files -->
+  <suppress id="forbidden-toolkit-classes" files="TCClassFactory.java" />
+  <suppress id="forbidden-toolkit-classes" files="ManagedObjectStateFactory.java" />  
 </suppressions>
