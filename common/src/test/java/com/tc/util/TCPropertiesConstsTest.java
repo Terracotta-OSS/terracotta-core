@@ -61,6 +61,7 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.L2_DERBYDB_DERBY_SYSTEM_DURABILITY);
     exemptedProperties.add(TCPropertiesConsts.L2_DERBYDB_LOG_DEVICE);
     exemptedProperties.add(TCPropertiesConsts.DERBY_STREAM_ERROR_METHOD);
+    exemptedProperties.add(TCPropertiesConsts.SEARCH_USE_COMMIT_THREAD);
   }
 
   private void loadDefaults(String propFile) {
