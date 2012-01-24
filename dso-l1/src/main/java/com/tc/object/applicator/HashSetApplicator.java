@@ -5,9 +5,10 @@
 package com.tc.object.applicator;
 
 import com.tc.logging.TCLogger;
+import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
-import com.tc.object.TCObjectExternal;
+import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
@@ -30,8 +31,8 @@ public class HashSetApplicator extends BaseApplicator {
     super(encoding, logger);
   }
 
-  public void hydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNA dna, Object pojo)
-      throws IOException, ClassNotFoundException {
+  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object pojo) throws IOException,
+      ClassNotFoundException {
     Set set = (Set) pojo;
     DNACursor cursor = dna.getCursor();
 
@@ -43,7 +44,7 @@ public class HashSetApplicator extends BaseApplicator {
     }
   }
 
-  protected void apply(ApplicatorObjectManager objectManager, Set set, int method, Object[] params)
+  protected void apply(ClientObjectManager objectManager, Set set, int method, Object[] params)
       throws ClassNotFoundException {
     switch (method) {
       case SerializationUtil.ADD:
@@ -66,7 +67,7 @@ public class HashSetApplicator extends BaseApplicator {
     }
   }
 
-  private List getObjectParams(ApplicatorObjectManager objectManager, Object[] params) throws ClassNotFoundException {
+  private List getObjectParams(ClientObjectManager objectManager, Object[] params) throws ClassNotFoundException {
     List retParams = new ArrayList(params.length);
 
     for (Object param : params) {
@@ -75,7 +76,7 @@ public class HashSetApplicator extends BaseApplicator {
     return retParams;
   }
 
-  public void dehydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNAWriter writer, Object pojo) {
+  public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
     Set set = (Set) pojo;
     for (Iterator i = set.iterator(); i.hasNext();) {
       Object value = i.next();
@@ -104,7 +105,7 @@ public class HashSetApplicator extends BaseApplicator {
     return addTo;
   }
 
-  public Object getNewInstance(ApplicatorObjectManager objectManager, DNA dna) {
+  public Object getNewInstance(ClientObjectManager objectManager, DNA dna) {
     throw new UnsupportedOperationException();
   }
 

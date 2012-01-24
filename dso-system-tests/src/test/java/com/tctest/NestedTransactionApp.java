@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -10,10 +11,9 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tctest.builtin.ArrayList;
 import com.tctest.runner.AbstractTransparentApp;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 public class NestedTransactionApp extends AbstractTransparentApp {
@@ -24,16 +24,16 @@ public class NestedTransactionApp extends AbstractTransparentApp {
   private final static int    ACTIONS                 = 20;
   public final static int     NODE_COUNT              = 3;
 
-  private int                 myCount;
-  private int                 totalCount;
+  private final int           myCount;
+  private final int           totalCount;
 
   private final List          list1;
-  private List                list2                   = new ArrayList();
-  private List                list3                   = new ArrayList();
+  private final List          list2                   = new ArrayList();
+  private final List          list3                   = new ArrayList();
 
   public NestedTransactionApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
-    this.list1 = new LinkedList();
+    this.list1 = new ArrayList();
     this.myCount = ACTIONS;
     this.totalCount = ACTIONS * NODE_COUNT;
   }

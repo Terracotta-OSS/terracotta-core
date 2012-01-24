@@ -22,6 +22,7 @@ public class ServerCrashAndRestartL1ReconnectTest extends ServerCrashingTestBase
 
   public ServerCrashAndRestartL1ReconnectTest() {
     super(NODE_COUNT);
+    timebombTestForRewrite();
   }
 
   @Override

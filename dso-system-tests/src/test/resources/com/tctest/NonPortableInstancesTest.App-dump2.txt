@@ -4,33 +4,33 @@ Dumping object graph of non-portable instance of type com.tctest.NonPortableInst
      Thread nullThread1 = null
      Thread nullThread2 = null
      com.tctest.NonPortableInstancesTest$Ref ref = (id 1)
-       Object ref = (LinkedHashMap, id 2)
+       Object ref = (com.tctest.builtin.HashMap, id 2)
          [entry 0]
-           key = "ref"
-           value = (com.tctest.NonPortableInstancesTest$Ref, id 3)
-             Object ref = (com.tctest.NonPortableInstancesTest$Ref, id 4)
-!!             Object ref = (com.tctest.NonPortableInstancesTest$NotPortable, id 5)
-                 Map m = (LinkedHashMap, id 6)
-                   [entry 0]
-                     key = "ref"
-                     value = (com.tctest.NonPortableInstancesTest$Ref, id 7)
-                       Object ref = (com.tctest.NonPortableInstancesTest$Ref, id 8)
-!!                       Object ref = (ref id 5)
-                   [entry 1]
-                     key = "array"
-                     value = (Object[][], id 9)
-                       [0] = (Object[], id 10)
-                         [0] = null
-                       [1] = (Object[], id 11)
-                         [0] = (com.tctest.NonPortableInstancesTest$Ref, id 12)
-                           Object ref = (ref id 6)
-!!               Thread t = (java.lang.Thread) (never portable)
-         [entry 1]
            key = "array"
-           value = (Object[][], id 13)
-             [0] = (Object[], id 14)
+           value = (Object[][], id 3)
+             [0] = (Object[], id 4)
                [0] = null
-             [1] = (Object[], id 15)
-               [0] = (com.tctest.NonPortableInstancesTest$Ref, id 16)
+             [1] = (Object[], id 5)
+               [0] = (com.tctest.NonPortableInstancesTest$Ref, id 6)
                  Object ref = (ref id 2)
+         [entry 1]
+           key = "ref"
+           value = (com.tctest.NonPortableInstancesTest$Ref, id 7)
+             Object ref = (com.tctest.NonPortableInstancesTest$Ref, id 8)
+!!             Object ref = (com.tctest.NonPortableInstancesTest$NotPortable, id 9)
+                 Map m = (com.tctest.builtin.HashMap, id 10)
+                   [entry 0]
+                     key = "array"
+                     value = (Object[][], id 11)
+                       [0] = (Object[], id 12)
+                         [0] = null
+                       [1] = (Object[], id 13)
+                         [0] = (com.tctest.NonPortableInstancesTest$Ref, id 14)
+                           Object ref = (ref id 10)
+                   [entry 1]
+                     key = "ref"
+                     value = (com.tctest.NonPortableInstancesTest$Ref, id 15)
+                       Object ref = (com.tctest.NonPortableInstancesTest$Ref, id 16)
+!!                       Object ref = (ref id 9)
+!!               Thread t = (java.lang.Thread)
 !!   java.net.ServerSocket ss = (java.net.ServerSocket) (transient)

@@ -15,15 +15,13 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tctest.builtin.HashMap;
+import com.tctest.builtin.HashSet;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -650,11 +648,6 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
 
     Set expectEntries = expect.entrySet();
     Set actualEntries = actual.entrySet();
-    if (actual instanceof LinkedHashMap) {
-      for (Iterator iExpect = expectEntries.iterator(), iActual = actualEntries.iterator(); iExpect.hasNext();) {
-        Assert.assertEquals(iExpect.next(), iActual.next());
-      }
-    }
 
     for (Iterator i = expectEntries.iterator(); i.hasNext();) {
       Entry entry = (Entry) i.next();
@@ -669,12 +662,6 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
 
   private void assertSetsEqual(Set expectElements, Set actual) {
     Assert.assertEquals(expectElements.size(), actual.size());
-
-    if (actual instanceof LinkedHashSet) {
-      for (Iterator iExpect = expectElements.iterator(), iActual = actual.iterator(); iExpect.hasNext();) {
-        Assert.assertEquals(iExpect.next(), iActual.next());
-      }
-    }
 
     Assert.assertTrue(expectElements.containsAll(actual));
     Assert.assertTrue(actual.containsAll(expectElements));

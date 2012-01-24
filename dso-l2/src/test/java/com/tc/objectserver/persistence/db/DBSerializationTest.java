@@ -29,20 +29,21 @@ import com.tc.test.TCTestCase;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Random;
 import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 /**
  * XXX: This test needs to test more of the persistor interface.
  */
 public class DBSerializationTest extends TCTestCase {
+
+  static {
+    ManagedObjectStateFactory.enableLegacyTypes();
+  }
+
   private DBPersistorImpl                persistor;
   private PersistenceTransactionProvider ptp;
   private BerkeleyDBEnvironment          env;
@@ -117,10 +118,6 @@ public class DBSerializationTest extends TCTestCase {
     this.mop.saveObject(ptx, mo);
     this.mos.add(mo);
 
-    mo = newLogicalDateObject(newObjectID());
-    this.mop.saveObject(ptx, mo);
-    this.mos.add(mo);
-
     ptx.commit();
 
     System.err.println("String index before: " + this.stringIndex);
@@ -166,25 +163,9 @@ public class DBSerializationTest extends TCTestCase {
           loaded.apply(newLogicalArrayDNA(true), new TransactionID(++this.transactionSequence),
                        new ApplyTransactionInfo(), this.imo, false);
           break;
-        case ManagedObjectState.LINKED_HASHMAP_TYPE:
-          loaded.apply(newLogicalLinkedHashMapDNA(true), new TransactionID(++this.transactionSequence),
-                       new ApplyTransactionInfo(), this.imo, false);
-          break;
-        case ManagedObjectState.DATE_TYPE:
-          loaded.apply(newLogicalDateDNA(true), new TransactionID(++this.transactionSequence),
-                       new ApplyTransactionInfo(), this.imo, false);
-          break;
         case ManagedObjectState.LITERAL_TYPE:
           loaded.apply(newLiteralDNA(true), new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(),
                        this.imo, false);
-          break;
-        case ManagedObjectState.TREE_MAP_TYPE:
-          loaded.apply(newLogicalTreeMapDNA(true), new TransactionID(++this.transactionSequence),
-                       new ApplyTransactionInfo(), this.imo, false);
-          break;
-        case ManagedObjectState.TREE_SET_TYPE:
-          loaded.apply(newLogicalTreeSetDNA(true), new TransactionID(++this.transactionSequence),
-                       new ApplyTransactionInfo(), this.imo, false);
           break;
       }
 
@@ -202,49 +183,10 @@ public class DBSerializationTest extends TCTestCase {
       case 3:
         return newLogicalLiteralObject(oid);
       case 4:
-        return newLogicalLinkedHashMapObject(oid);
-      case 5:
         return newLogicalListObject(oid);
-      case 6:
-        return newLogicalSetObject(oid);
-      case 7:
-        return newLogicalTreeSetObject(oid);
-      case 8:
-        return newLogicalTreeMapObject(oid);
       default:
-        return newLogicalDateObject(oid);
+        return newLogicalSetObject(oid);
     }
-  }
-
-  private ManagedObject newLogicalTreeMapObject(final ObjectID oid) {
-    return newLogicalObject(oid, newLogicalTreeMapDNA(false));
-  }
-
-  private TestDNA newLogicalTreeMapDNA(final boolean delta) {
-    final TestDNACursor cursor = new TestDNACursor();
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Short.valueOf((short) 10), "good bad and ugly" });
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Boolean.valueOf(true), "mapped" });
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Boolean.valueOf(true), "Remapped" });
-    final TestDNA dna = new TestDNA(cursor, TreeMap.class.getName());
-    dna.version = this.version++;
-    dna.isDelta = delta;
-    return dna;
-  }
-
-  private ManagedObject newLogicalTreeSetObject(final ObjectID oid) {
-    return newLogicalObject(oid, newLogicalTreeSetDNA(false));
-  }
-
-  private TestDNA newLogicalTreeSetDNA(final boolean delta) {
-    final TestDNACursor cursor = new TestDNACursor();
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new Integer(10343) });
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { "Hello" });
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(25) });
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { newLong() });
-    final TestDNA dna = new TestDNA(cursor, TreeSet.class.getName());
-    dna.version = this.version++;
-    dna.isDelta = delta;
-    return dna;
   }
 
   private ManagedObject newLogicalSetObject(final ObjectID oid) {
@@ -274,23 +216,6 @@ public class DBSerializationTest extends TCTestCase {
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(25) });
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { newLong() });
     final TestDNA dna = new TestDNA(cursor, ArrayList.class.getName());
-    dna.version = this.version++;
-    dna.isDelta = delta;
-    return dna;
-  }
-
-  private ManagedObject newLogicalLinkedHashMapObject(final ObjectID oid) {
-    return newLogicalObject(oid, newLogicalLinkedHashMapDNA(false));
-  }
-
-  private TestDNA newLogicalLinkedHashMapDNA(final boolean delta) {
-    final TestDNACursor cursor = new TestDNACursor();
-    cursor.addPhysicalAction("java.util.LinkedHashMap.accessOrder", Boolean.TRUE, true);
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(10), "King Kong" });
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(20), "Mad Max" });
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(25), "Mummy Returns" });
-    cursor.addLogicalAction(SerializationUtil.GET, new Object[] { Integer.valueOf(20) });
-    final TestDNA dna = new TestDNA(cursor, LinkedHashMap.class.getName());
     dna.version = this.version++;
     dna.isDelta = delta;
     return dna;
@@ -328,10 +253,6 @@ public class DBSerializationTest extends TCTestCase {
 
   private Long newLong() {
     return Long.valueOf(this.r.nextLong());
-  }
-
-  private ManagedObject newLogicalDateObject(final ObjectID objectID) {
-    return newLogicalObject(objectID, newLogicalDateDNA(false));
   }
 
   private ManagedObject newLogicalObject(final ObjectID objectID, final TestDNA dna) {
@@ -379,15 +300,6 @@ public class DBSerializationTest extends TCTestCase {
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(20), "Mad Max" });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(25), "Mummy Returns" });
     final TestDNA dna = new TestDNA(cursor, HashMap.class.getName());
-    dna.version = this.version++;
-    dna.isDelta = delta;
-    return dna;
-  }
-
-  private TestDNA newLogicalDateDNA(final boolean delta) {
-    final TestDNACursor cursor = new TestDNACursor();
-    cursor.addLogicalAction(SerializationUtil.SET_TIME, new Object[] { new Long(100233434L) });
-    final TestDNA dna = new TestDNA(cursor, Date.class.getName());
     dna.version = this.version++;
     dna.isDelta = delta;
     return dna;

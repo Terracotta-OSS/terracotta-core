@@ -36,6 +36,10 @@ public class ClusterMetaDataPrefetchTest extends TransparentTestBase {
   private File configFile;
   private int  adminPort;
 
+  public ClusterMetaDataPrefetchTest() {
+    timebombTestForRewrite();
+  }
+
   @Override
   public void doSetUp(final TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(ClusterMetaDataPrefetchTestApp.NODE_COUNT);

@@ -184,15 +184,14 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     final DNACursor cursor = dna.getCursor();
 
     if (this.state == null) {
-      setState(getStateFactory().createState(this.id, dna.getParentObjectID(), dna.getTypeName(),
-                                             dna.getDefiningLoaderDescription(), cursor));
+      setState(getStateFactory().createState(this.id, dna.getParentObjectID(), dna.getTypeName(), cursor));
     }
     try {
       try {
         this.state.apply(this.id, cursor, applyInfo);
       } catch (final ClassNotCompatableException cnce) {
         // reinitialize state object and try again
-        reinitializeState(dna.getParentObjectID(), getClassname(), getLoaderDescription(), cursor, this.state);
+        reinitializeState(dna.getParentObjectID(), getClassname(), cursor, this.state);
         this.state.apply(this.id, cursor, applyInfo);
       }
     } catch (final IOException e) {
@@ -217,10 +216,10 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     return this.version == UNINITIALIZED_VERSION;
   }
 
-  private void reinitializeState(final ObjectID pid, final String className, final String loaderDesc,
-                                 final DNACursor cursor, final ManagedObjectState oldState) {
+  private void reinitializeState(final ObjectID pid, final String className, final DNACursor cursor,
+                                 final ManagedObjectState oldState) {
     this.state = null;
-    setState(getStateFactory().recreateState(this.id, pid, className, loaderDesc, cursor, oldState));
+    setState(getStateFactory().recreateState(this.id, pid, className, cursor, oldState));
   }
 
   private ManagedObjectStateFactory getStateFactory() {
@@ -236,7 +235,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
    */
   public void toDNA(final TCByteBufferOutputStream out, final ObjectStringSerializer serializer, final DNAType type) {
     final DNAWriter writer = new ObjectDNAWriterImpl(out, this.id, getClassname(), serializer, DNA_STORAGE_ENCODING,
-                                                     getLoaderDescription(), this.version, false);
+                                                     this.version, false);
     this.state.dehydrate(this.id, writer, type);
     writer.markSectionEnd();
     writer.finalizeHeader();
@@ -274,10 +273,6 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
    */
   public String getClassname() {
     return this.state == null ? "UNKNOWN" : this.state.getClassName();
-  }
-
-  public String getLoaderDescription() {
-    return this.state == null ? "UNKNOWN" : this.state.getLoaderDescription();
   }
 
   public ManagedObjectReference getReference() {

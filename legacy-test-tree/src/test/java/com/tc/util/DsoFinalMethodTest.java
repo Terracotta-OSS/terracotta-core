@@ -157,14 +157,6 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
       return true;
     }
 
-    public boolean overridesHashCode(final Object obj) {
-      throw new ImplementMe();
-    }
-
-    public boolean overridesHashCode(final Class clazz) {
-      throw new ImplementMe();
-    }
-
   }
 
 }

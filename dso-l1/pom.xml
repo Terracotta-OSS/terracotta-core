@@ -38,11 +38,6 @@
     </dependency>    
     <dependency>
       <groupId>org.terracotta.internal</groupId>
-      <artifactId>common-api</artifactId>
-      <version>${project.version}</version>
-    </dependency>    
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
       <artifactId>dso-common</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -72,18 +67,6 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.api</groupId>
-      <artifactId>tim-api</artifactId>
-    </dependency>     
-    
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>common-api</artifactId>
-      <version>${project.version}</version>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>common</artifactId>
       <version>${project.version}</version>
@@ -110,36 +93,5 @@
       <scope>test</scope>
     </dependency>    
   </dependencies>
-  
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>1.2</version>
-        <inherited>false</inherited>
-        <executions>
-          <execution>
-            <id>create-bootjar</id>
-            <phase>process-test-resources</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <executable>${java.home}/bin/java</executable>
-              <arguments>
-                <argument>-Dcom.tc.l1.modules.repositories=${localMavenRepository}</argument>
-                <argument>-cp</argument>
-                <classpath/>
-                <argument>com.tc.object.tools.BootJarTool</argument>
-                <argument>-o</argument>
-                <argument>${tc.tests.info.bootjars.normal}</argument>
-              </arguments>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
   
 </project>

@@ -7,7 +7,6 @@ package com.tc.object.config;
 import com.tc.object.bytecode.ByteCodeUtil;
 
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.Set;
 
 public class TransparencyCodeSpecImpl implements TransparencyCodeSpec {
@@ -19,10 +18,6 @@ public class TransparencyCodeSpecImpl implements TransparencyCodeSpec {
   private boolean          waitNotifyInstrumentationReq;
   private boolean          monitorInstrumentationReq;
   private boolean          forceUncheckedFieldAccess                 = false;
-
-  static {
-    MONITOR_INSTRUMENTATION_REQ_LOGICAL_CLASS.add(Hashtable.class.getName());
-  }
 
   public static TransparencyCodeSpec getDefaultPhysicalCodeSpec() {
     TransparencyCodeSpec defaultPhysicalCodeSpec = new TransparencyCodeSpecImpl();

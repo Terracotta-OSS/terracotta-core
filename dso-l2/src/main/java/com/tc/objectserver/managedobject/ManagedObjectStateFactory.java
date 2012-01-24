@@ -42,38 +42,10 @@ public class ManagedObjectStateFactory {
   private final PersistentCollectionFactory         persistentCollectionFactory;
 
   static {
-    classNameToStateMap.put(java.util.IdentityHashMap.class.getName(), Byte.valueOf(ManagedObjectState.MAP_TYPE));
-    classNameToStateMap.put(java.util.Hashtable.class.getName(), Byte.valueOf(ManagedObjectState.PARTIAL_MAP_TYPE));
-    classNameToStateMap.put(java.util.Properties.class.getName(), Byte.valueOf(ManagedObjectState.PARTIAL_MAP_TYPE));
-    classNameToStateMap.put(gnu.trove.THashMap.class.getName(), Byte.valueOf(ManagedObjectState.MAP_TYPE));
-    classNameToStateMap.put(java.util.HashMap.class.getName(), Byte.valueOf(ManagedObjectState.PARTIAL_MAP_TYPE));
-    classNameToStateMap.put(java.util.Collections.EMPTY_MAP.getClass().getName(),
-                            Byte.valueOf(ManagedObjectState.MAP_TYPE));
-    classNameToStateMap.put(java.util.LinkedHashMap.class.getName(),
-                            Byte.valueOf(ManagedObjectState.LINKED_HASHMAP_TYPE));
-    classNameToStateMap.put(java.util.TreeMap.class.getName(), Byte.valueOf(ManagedObjectState.TREE_MAP_TYPE));
-    classNameToStateMap.put(gnu.trove.THashSet.class.getName(), Byte.valueOf(ManagedObjectState.SET_TYPE));
-    classNameToStateMap.put(java.util.HashSet.class.getName(), Byte.valueOf(ManagedObjectState.SET_TYPE));
-    classNameToStateMap.put(java.util.LinkedHashSet.class.getName(),
-                            Byte.valueOf(ManagedObjectState.LINKED_HASHSET_TYPE));
-    classNameToStateMap.put(java.util.Collections.EMPTY_SET.getClass().getName(),
-                            Byte.valueOf(ManagedObjectState.SET_TYPE));
-    classNameToStateMap.put(java.util.TreeSet.class.getName(), Byte.valueOf(ManagedObjectState.TREE_SET_TYPE));
-    classNameToStateMap.put(java.util.LinkedList.class.getName(), Byte.valueOf(ManagedObjectState.LINKED_LIST_TYPE));
-    classNameToStateMap.put(java.util.ArrayList.class.getName(), Byte.valueOf(ManagedObjectState.LIST_TYPE));
-    classNameToStateMap.put(java.util.Vector.class.getName(), Byte.valueOf(ManagedObjectState.LIST_TYPE));
-    classNameToStateMap.put(java.util.Stack.class.getName(), Byte.valueOf(ManagedObjectState.LIST_TYPE));
-    classNameToStateMap.put(java.util.Collections.EMPTY_LIST.getClass().getName(),
-                            Byte.valueOf(ManagedObjectState.LIST_TYPE));
-    classNameToStateMap.put(java.util.Date.class.getName(), Byte.valueOf(ManagedObjectState.DATE_TYPE));
-    classNameToStateMap.put(java.sql.Date.class.getName(), Byte.valueOf(ManagedObjectState.DATE_TYPE));
-    classNameToStateMap.put(java.sql.Time.class.getName(), Byte.valueOf(ManagedObjectState.DATE_TYPE));
-    classNameToStateMap.put(java.sql.Timestamp.class.getName(), Byte.valueOf(ManagedObjectState.DATE_TYPE));
-    classNameToStateMap.put(java.net.URL.class.getName(), Byte.valueOf(ManagedObjectState.URL_TYPE));
-    classNameToStateMap.put(java.util.concurrent.LinkedBlockingQueue.class.getName(),
-                            Byte.valueOf(ManagedObjectState.QUEUE_TYPE));
-    classNameToStateMap.put(java.util.concurrent.ConcurrentHashMap.class.getName(),
-                            Byte.valueOf(ManagedObjectState.CONCURRENT_HASHMAP_TYPE));
+    // XXX: remove these when possible!
+    classNameToStateMap.put("com.tctest.builtin.HashMap", Byte.valueOf(ManagedObjectState.MAP_TYPE));
+    classNameToStateMap.put("com.tctest.builtin.ArrayList", Byte.valueOf(ManagedObjectState.LIST_TYPE));
+
     // XXX: Support for CDM, CDSM in terracotta-toolkit
     classNameToStateMap.put("com.terracotta.toolkit.collections.ConcurrentDistributedMapDso",
                             Byte.valueOf(ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE));
@@ -84,13 +56,13 @@ public class ManagedObjectStateFactory {
                             Byte.valueOf(ManagedObjectState.TDC_SERIALIZED_ENTRY));
     classNameToStateMap.put(TDCCustomLifespanSerializedEntryManagedObjectState.CUSTOM_SERIALIZED_ENTRY,
                             Byte.valueOf(ManagedObjectState.TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY));
-    classNameToStateMap.put(java.util.concurrent.CopyOnWriteArrayList.class.getName(),
-                            Byte.valueOf(ManagedObjectState.LIST_TYPE));
     // XXX: Support for terracotta toolkit
     classNameToStateMap.put("org.terracotta.async.ProcessingBucketItems", Byte.valueOf(ManagedObjectState.LIST_TYPE));
     classNameToStateMap.put("org.terracotta.collections.ConcurrentBlockingQueue",
                             Byte.valueOf(ManagedObjectState.QUEUE_TYPE));
     classNameToStateMap.put("org.terracotta.collections.TerracottaList", Byte.valueOf(ManagedObjectState.LIST_TYPE));
+    classNameToStateMap.put("org.terracotta.collections.quartz.DistributedSortedSet$Storage",
+                            Byte.valueOf(ManagedObjectState.SET_TYPE));
   }
 
   private ManagedObjectStateFactory(final ManagedObjectChangeListenerProvider listenerProvider,
@@ -123,6 +95,14 @@ public class ManagedObjectStateFactory {
     disableAssertions = b;
   }
 
+  // for tests like ObjectMangerTest and ManagedObjectStateSerializationTest
+  public static void enableLegacyTypes() {
+    // XXX: remove when possible
+    classNameToStateMap.put("java.util.HashMap", Byte.valueOf(ManagedObjectState.MAP_TYPE));
+    classNameToStateMap.put("java.util.ArrayList", Byte.valueOf(ManagedObjectState.LIST_TYPE));
+    classNameToStateMap.put("java.util.HashSet", Byte.valueOf(ManagedObjectState.SET_TYPE));
+  }
+
   // This is provided only for testing
   public static synchronized void setInstance(final ManagedObjectStateFactory factory) {
     Assert.assertNotNull(factory);
@@ -147,15 +127,15 @@ public class ManagedObjectStateFactory {
   }
 
   public ManagedObjectState createState(final ObjectID oid, final ObjectID parentID, final String className,
-                                        final String loaderDesc, final DNACursor cursor) {
+                                        final DNACursor cursor) {
     final byte type = getStateObjectTypeFor(className);
 
     if (type == ManagedObjectState.LITERAL_TYPE) { return new LiteralTypesManagedObjectState(); }
 
-    final long classID = getClassID(className, loaderDesc);
+    final long classID = getClassID(className);
 
     if (type == ManagedObjectState.PHYSICAL_TYPE) { return this.physicalMOFactory.create(classID, oid, parentID,
-                                                                                         className, loaderDesc, cursor); }
+                                                                                         className, cursor); }
     switch (type) {
       case ManagedObjectState.ARRAY_TYPE:
         return new ArrayManagedObjectState(classID);
@@ -163,29 +143,12 @@ public class ManagedObjectStateFactory {
         return new MapManagedObjectState(classID, this.persistentCollectionFactory.createPersistentMap(oid));
       case ManagedObjectState.PARTIAL_MAP_TYPE:
         return new PartialMapManagedObjectState(classID, this.persistentCollectionFactory.createPersistentMap(oid));
-      case ManagedObjectState.LINKED_HASHMAP_TYPE:
-        return new LinkedHashMapManagedObjectState(classID);
-      case ManagedObjectState.TREE_MAP_TYPE:
-        return new TreeMapManagedObjectState(classID, this.persistentCollectionFactory.createPersistentMap(oid));
-      case ManagedObjectState.LINKED_HASHSET_TYPE:
-        return new LinkedHashSetManagedObjectState(classID);
       case ManagedObjectState.SET_TYPE:
         return new SetManagedObjectState(classID, this.persistentCollectionFactory.createPersistentSet(oid));
-      case ManagedObjectState.TREE_SET_TYPE:
-        return new TreeSetManagedObjectState(classID, this.persistentCollectionFactory.createPersistentSet(oid));
       case ManagedObjectState.LIST_TYPE:
         return new ListManagedObjectState(classID);
-      case ManagedObjectState.LINKED_LIST_TYPE:
-        return new LinkedListManagedObjectState(classID);
       case ManagedObjectState.QUEUE_TYPE:
         return new QueueManagedObjectState(classID);
-      case ManagedObjectState.DATE_TYPE:
-        return new DateManagedObjectState(classID);
-      case ManagedObjectState.CONCURRENT_HASHMAP_TYPE:
-        return new ConcurrentHashMapManagedObjectState(classID,
-                                                       this.persistentCollectionFactory.createPersistentMap(oid));
-      case ManagedObjectState.URL_TYPE:
-        return new URLManagedObjectState(classID);
       case ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE:
         return new ConcurrentDistributedMapManagedObjectState(classID,
                                                               this.persistentCollectionFactory.createPersistentMap(oid));
@@ -202,32 +165,12 @@ public class ManagedObjectStateFactory {
     throw new AssertionError("Type : " + type + " is unknown !");
   }
 
-  private long getClassID(final String className, final String loaderDesc) {
-    return getStringIndex().getOrCreateIndexFor(loaderDesc + Namespace.getClassNameAndLoaderSeparator() + className);
+  private long getClassID(final String className) {
+    return getStringIndex().getOrCreateIndexFor(className);
   }
 
   public String getClassName(final long classID) {
-    String s = null;
-    try {
-      final String separator = Namespace.getClassNameAndLoaderSeparator();
-      s = getStringIndex().getStringFor(classID);
-      return s.substring(s.indexOf(separator) + separator.length());
-    } catch (final Exception ex) {
-      throw new AssertionError("loaderDesc://:ClassName string for classId  " + classID + " not in the right format : "
-                               + s);
-    }
-  }
-
-  public String getLoaderDescription(final long classID) {
-    String s = null;
-    try {
-      final String separator = Namespace.getClassNameAndLoaderSeparator();
-      s = getStringIndex().getStringFor(classID);
-      return s.substring(0, s.indexOf(separator));
-    } catch (final Exception ex) {
-      throw new AssertionError("loaderDesc://:ClassName string for classId  " + classID + " not in the right format : "
-                               + s);
-    }
+    return getStringIndex().getStringFor(classID);
   }
 
   private byte getStateObjectTypeFor(String className) {
@@ -261,32 +204,16 @@ public class ManagedObjectStateFactory {
           return MapManagedObjectState.readFrom(in);
         case ManagedObjectState.PARTIAL_MAP_TYPE:
           return PartialMapManagedObjectState.readFrom(in);
-        case ManagedObjectState.LINKED_HASHMAP_TYPE:
-          return LinkedHashMapManagedObjectState.readFrom(in);
         case ManagedObjectState.ARRAY_TYPE:
           return ArrayManagedObjectState.readFrom(in);
-        case ManagedObjectState.DATE_TYPE:
-          return DateManagedObjectState.readFrom(in);
         case ManagedObjectState.LITERAL_TYPE:
           return LiteralTypesManagedObjectState.readFrom(in);
         case ManagedObjectState.LIST_TYPE:
           return ListManagedObjectState.readFrom(in);
-        case ManagedObjectState.LINKED_LIST_TYPE:
-          return LinkedListManagedObjectState.readFrom(in);
         case ManagedObjectState.SET_TYPE:
           return SetManagedObjectState.readFrom(in);
-        case ManagedObjectState.TREE_SET_TYPE:
-          return TreeSetManagedObjectState.readFrom(in);
-        case ManagedObjectState.TREE_MAP_TYPE:
-          return TreeMapManagedObjectState.readFrom(in);
-        case ManagedObjectState.CONCURRENT_HASHMAP_TYPE:
-          return ConcurrentHashMapManagedObjectState.readFrom(in);
         case ManagedObjectState.QUEUE_TYPE:
           return QueueManagedObjectState.readFrom(in);
-        case ManagedObjectState.URL_TYPE:
-          return URLManagedObjectState.readFrom(in);
-        case ManagedObjectState.LINKED_HASHSET_TYPE:
-          return LinkedHashSetManagedObjectState.readFrom(in);
         case ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE:
           return ConcurrentDistributedMapManagedObjectState.readFrom(in);
         case ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE:
@@ -307,11 +234,9 @@ public class ManagedObjectStateFactory {
   }
 
   public ManagedObjectState recreateState(final ObjectID id, final ObjectID pid, final String className,
-                                          final String loaderDesc, final DNACursor cursor,
-                                          final ManagedObjectState oldState) {
+                                          final DNACursor cursor, final ManagedObjectState oldState) {
     Assert.assertEquals(ManagedObjectState.PHYSICAL_TYPE, oldState.getType());
-    final long classID = getClassID(className, loaderDesc);
-    return this.physicalMOFactory.recreate(classID, pid, className, loaderDesc, cursor,
-                                           (PhysicalManagedObjectState) oldState);
+    final long classID = getClassID(className);
+    return this.physicalMOFactory.recreate(classID, pid, className, cursor, (PhysicalManagedObjectState) oldState);
   }
 }

@@ -109,7 +109,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -163,6 +162,7 @@ public class ObjectManagerTest extends TCTestCase {
     this.managed = new HashMap();
     this.config = new TestObjectManagerConfig();
     this.clientStateManager = new ClientStateManagerImpl(TCLogging.getLogger(ClientStateManager.class));
+    ManagedObjectStateFactory.enableLegacyTypes();
     ManagedObjectStateFactory.disableSingleton(true);
     ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), new InMemoryPersistor());
     this.newObjectCounter = new SampledCounterImpl(new SampledCounterConfig(1, 1, true, 0L));
@@ -584,35 +584,6 @@ public class ObjectManagerTest extends TCTestCase {
     assertEquals("here", facade.getFieldValue("2"));
   }
 
-  public void testDateFacades() throws NoSuchObjectException {
-    initObjectManager();
-
-    final ObjectID dateID = new ObjectID(1);
-
-    final ObjectIDSet ids = new ObjectIDSet();
-    ids.add(dateID);
-    this.objectManager.createNewObjects(ids);
-    final TestResultsContext responseContext = new TestResultsContext(ids, ids);
-    final Map<ObjectID, ManagedObject> lookedUpObjects = responseContext.objects;
-
-    this.objectManager.lookupObjectsFor(null, responseContext);
-    assertEquals(ids.size(), lookedUpObjects.size());
-
-    final ManagedObject dateManagedObject = lookedUpObjects.get(dateID);
-
-    final ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
-    dateManagedObject.apply(new TestDateDNA("java.util.Date", dateID), new TransactionID(1),
-                            new ApplyTransactionInfo(), imo, false);
-
-    this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, lookedUpObjects.values());
-
-    ManagedObjectFacade facade;
-
-    facade = this.objectManager.lookupFacade(dateID, 1);
-    validateDateFacade(facade);
-
-  }
-
   public void testLiteralFacades() throws NoSuchObjectException {
     initObjectManager();
 
@@ -659,12 +630,10 @@ public class ObjectManagerTest extends TCTestCase {
     initObjectManager();
 
     final ObjectID mapID = new ObjectID(1);
-    final ObjectID listID = new ObjectID(2);
     final ObjectID setID = new ObjectID(3);
 
     final ObjectIDSet ids = new ObjectIDSet();
     ids.add(mapID);
-    ids.add(listID);
     ids.add(setID);
 
     this.objectManager.createNewObjects(ids);
@@ -674,7 +643,6 @@ public class ObjectManagerTest extends TCTestCase {
     this.objectManager.lookupObjectsFor(null, responseContext);
     assertEquals(ids.size(), lookedUpObjects.size());
 
-    final ManagedObject list = lookedUpObjects.get(listID);
     final ManagedObject set = lookedUpObjects.get(setID);
     final ManagedObject map = lookedUpObjects.get(mapID);
 
@@ -682,8 +650,6 @@ public class ObjectManagerTest extends TCTestCase {
     map.apply(new TestMapDNA(mapID), new TransactionID(1), new ApplyTransactionInfo(), imo, false);
     set.apply(new TestListSetDNA("java.util.HashSet", setID), new TransactionID(1), new ApplyTransactionInfo(), imo,
               false);
-    list.apply(new TestListSetDNA("java.util.LinkedList", listID), new TransactionID(1), new ApplyTransactionInfo(),
-               imo, false);
 
     this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, lookedUpObjects.values());
 
@@ -706,33 +672,6 @@ public class ObjectManagerTest extends TCTestCase {
     validateSetFacade(facade, 1, 3);
     facade = this.objectManager.lookupFacade(setID, 0);
     validateSetFacade(facade, 0, 3);
-
-    facade = this.objectManager.lookupFacade(listID, -1);
-    validateListFacade(facade, 3, 3);
-    facade = this.objectManager.lookupFacade(listID, 5);
-    validateListFacade(facade, 3, 3);
-    facade = this.objectManager.lookupFacade(listID, 1);
-    validateListFacade(facade, 1, 3);
-    facade = this.objectManager.lookupFacade(listID, 0);
-    validateListFacade(facade, 0, 3);
-
-  }
-
-  private void validateListFacade(final ManagedObjectFacade listFacade, final int facadeSize, final int totalSize) {
-    assertFalse(listFacade.isArray());
-    assertFalse(listFacade.isMap());
-    assertFalse(listFacade.isSet());
-    assertTrue(listFacade.isList());
-    assertEquals("java.util.LinkedList", listFacade.getClassName());
-    assertEquals(facadeSize, listFacade.getFacadeSize());
-    assertEquals(totalSize, listFacade.getTrueObjectSize());
-
-    for (int i = 0; i < facadeSize; i++) {
-      final String fName = String.valueOf(i);
-      final Object value = listFacade.getFieldValue(fName);
-      assertTrue(value instanceof String);
-      assertEquals("item" + (i + 1), value);
-    }
   }
 
   private void validateSetFacade(final ManagedObjectFacade setFacade, final int facadeSize, final int totalSize) {
@@ -787,18 +726,6 @@ public class ObjectManagerTest extends TCTestCase {
     for (final String key : actual.keySet()) {
       assertEquals(expect.get(key), actual.get(key));
     }
-  }
-
-  private void validateDateFacade(final ManagedObjectFacade dateFacade) {
-    assertFalse(dateFacade.isArray());
-    assertFalse(dateFacade.isMap());
-    assertFalse(dateFacade.isSet());
-    assertFalse(dateFacade.isList());
-    assertEquals("java.util.Date", dateFacade.getClassName());
-
-    final Object value = dateFacade.getFieldValue("date");
-
-    assertTrue(value instanceof Date);
   }
 
   private BerkeleyDBEnvironment newDBEnvironment(final boolean paranoid) throws Exception {
@@ -1874,10 +1801,6 @@ public class ObjectManagerTest extends TCTestCase {
       return 3;
     }
 
-    public String getDefiningLoaderDescription() {
-      return "";
-    }
-
     public String getTypeName() {
       return "[Ljava/lang/String;";
     }
@@ -1957,10 +1880,6 @@ public class ObjectManagerTest extends TCTestCase {
 
     public int getArraySize() {
       return -1;
-    }
-
-    public String getDefiningLoaderDescription() {
-      return "";
     }
 
     public String getTypeName() {
@@ -2050,10 +1969,6 @@ public class ObjectManagerTest extends TCTestCase {
       return -1;
     }
 
-    public String getDefiningLoaderDescription() {
-      return "";
-    }
-
     public String getTypeName() {
       return "java.util.HashMap";
     }
@@ -2137,10 +2052,6 @@ public class ObjectManagerTest extends TCTestCase {
 
     public int getArraySize() {
       return -1;
-    }
-
-    public String getDefiningLoaderDescription() {
-      return "";
     }
 
     public String getTypeName() {
@@ -2272,10 +2183,6 @@ public class ObjectManagerTest extends TCTestCase {
       return false;
     }
 
-    public String getDefiningLoaderDescription() {
-      return "System";
-    }
-
     public int getArraySize() {
       return -1;
     }
@@ -2370,10 +2277,6 @@ public class ObjectManagerTest extends TCTestCase {
 
     public boolean hasLength() {
       return false;
-    }
-
-    public String getDefiningLoaderDescription() {
-      return "";
     }
 
     public int getArraySize() {

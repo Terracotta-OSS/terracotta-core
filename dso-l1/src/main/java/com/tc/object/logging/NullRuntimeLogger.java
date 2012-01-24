@@ -5,7 +5,6 @@
 package com.tc.object.logging;
 
 import com.tc.object.TCObject;
-import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.tx.TimerSpec;
@@ -153,10 +152,6 @@ public class NullRuntimeLogger implements RuntimeLogger {
   }
 
   public void updateFaultStats(String type) {
-    /**/
-  }
-
-  public void namedLoaderRegistered(NamedClassLoader loader, String name, String appGroup, NamedClassLoader previous) {
     /**/
   }
 

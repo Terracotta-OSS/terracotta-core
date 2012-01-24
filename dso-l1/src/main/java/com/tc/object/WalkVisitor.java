@@ -366,7 +366,6 @@ public class WalkVisitor implements Visitor, WalkTest {
     if (obj == null) { return false; }
     LiteralValues i = LiteralValues.valueFor(obj);
     return i != LiteralValues.OBJECT && i != LiteralValues.ARRAY && i != LiteralValues.JAVA_LANG_CLASS
-           && i != LiteralValues.JAVA_LANG_CLASS_HOLDER && i != LiteralValues.JAVA_LANG_CLASSLOADER
-           && i != LiteralValues.JAVA_LANG_CLASSLOADER_HOLDER;
+           && i != LiteralValues.JAVA_LANG_CLASS_HOLDER;
   }
 }

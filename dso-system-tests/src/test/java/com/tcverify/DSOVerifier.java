@@ -6,9 +6,9 @@ package com.tcverify;
 
 import com.tc.util.Assert;
 import com.tc.verify.VerificationException;
+import com.tctest.builtin.HashMap;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 /**

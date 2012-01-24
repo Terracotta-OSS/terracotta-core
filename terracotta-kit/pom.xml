@@ -50,7 +50,7 @@
     <ehcache-core.tcschema.url>http://svn.terracotta.org/svn/ehcache/trunk/core/src/main/config/ehcache-terracotta.xml</ehcache-core.tcschema.url>
     <quartz-kit.url>http://download.terracotta.org/quartz/quartz-${quartz.version}.tar.gz</quartz-kit.url>
     
-    <maven-copy-plugin.version>0.2.3.3</maven-copy-plugin.version>
+    <maven-copy-plugin.version>0.2.3.6</maven-copy-plugin.version>
     <gmaven-plugin.version>1.3</gmaven-plugin.version>
   </properties>
 
@@ -255,7 +255,7 @@
                       <targetPath>${rootDir}/lib</targetPath>
                       <dependency>
                         <excludeScope>provided</excludeScope>
-                        <excludeArtifactIds>${terracotta.artifactId},build-data,thirdparty-api,dso-cluster-api,stax-api,native-tool,ant,mockito-all,ant-launcher,junit,linked-child-process
+                        <excludeArtifactIds>${terracotta.artifactId},build-data,stax-api,native-tool,ant,mockito-all,ant-launcher,junit,linked-child-process
                         </excludeArtifactIds>
                       </dependency>
                       <dependenciesAtM2>true</dependenciesAtM2>
@@ -271,7 +271,6 @@
                       </dependency>
                       <zipEntries>
                         <zipEntry>build-data.txt</zipEntry>
-                        <zipEntry>tim-get.properties</zipEntry>
                       </zipEntries>
                       <unpack>true</unpack>              
                     </resource>

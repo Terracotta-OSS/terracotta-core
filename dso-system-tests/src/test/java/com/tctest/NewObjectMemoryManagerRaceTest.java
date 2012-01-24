@@ -13,27 +13,23 @@ import com.tc.config.test.schema.InstrumentedClassConfigBuilderImpl;
 import com.tc.config.test.schema.LockConfigBuilderImpl;
 import com.tc.config.test.schema.RootConfigBuilderImpl;
 import com.tc.config.test.schema.TerracottaConfigBuilder;
-import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
-import com.tc.object.loaders.IsolationClassLoader;
-import com.tc.object.loaders.NamedClassLoader;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.text.Banner;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tctest.builtin.ArrayList;
 
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 public class NewObjectMemoryManagerRaceTest extends ServerCrashingTestBase {
@@ -42,6 +38,7 @@ public class NewObjectMemoryManagerRaceTest extends ServerCrashingTestBase {
 
   public NewObjectMemoryManagerRaceTest() {
     super(1); // only need 1 node
+    timebombTestForRewrite();
   }
 
   @Override
@@ -85,17 +82,17 @@ public class NewObjectMemoryManagerRaceTest extends ServerCrashingTestBase {
 
   private static class Shared {
     // roots
-    private static final LinkedList queue    = new LinkedList();
-    private static boolean          end      = false;
+    private static final List queue    = new ArrayList();
+    private static boolean    end      = false;
 
-    private static final int        BATCH    = 3000;
-    private static int              putCount = 0;
+    private static final int  BATCH    = 3000;
+    private static int        putCount = 0;
 
     static Collection take() {
-      Collection rv = new ArrayList();
+      Collection rv = new java.util.ArrayList();
       synchronized (queue) {
         while (!queue.isEmpty()) {
-          rv.add(queue.removeFirst());
+          rv.add(queue.remove(0));
         }
       }
       return rv;
@@ -114,7 +111,7 @@ public class NewObjectMemoryManagerRaceTest extends ServerCrashingTestBase {
 
       synchronized (queue) {
         for (int i = 0; i < BATCH; i++) {
-          queue.addLast(new Foo());
+          queue.add(new Foo());
           putCount++;
         }
       }
@@ -185,7 +182,7 @@ public class NewObjectMemoryManagerRaceTest extends ServerCrashingTestBase {
         FileUtils.forceMkdir(workingDir);
 
         // spawn the new node with very aggressive L1 cache settings
-        List jvmArgs = new ArrayList();
+        List jvmArgs = new java.util.ArrayList();
         jvmArgs.add("-Dcom.tc.l1.cachemanager.logging.enabled=true");
         jvmArgs.add("-Dcom.tc.l1.cachemanager.leastCount=1");
         jvmArgs.add("-Dcom.tc.l1.cachemanager.percentageToEvict=99");
@@ -317,12 +314,7 @@ public class NewObjectMemoryManagerRaceTest extends ServerCrashingTestBase {
   public static class External implements Runnable {
     public static void main(String[] args) throws Exception {
       try {
-        // Need to pretend like we are sharing classes from a loader named the same as
-        // the test framework's IsolationClassLaoder
         Loader loader = Loader.create();
-        ((NamedClassLoader) loader).__tc_setClassLoaderName(IsolationClassLoader.loaderName());
-        ClassProcessorHelper.registerGlobalLoader((NamedClassLoader) loader, null);
-
         Thread.currentThread().setContextClassLoader(loader);
         Runnable r = (Runnable) loader.loadClass(External.class.getName()).newInstance();
         r.run();

@@ -4,7 +4,6 @@
 package com.tc.objectserver.core.api;
 
 import com.tc.object.ObjectID;
-// import com.tc.object.TCObject;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAException;
@@ -18,8 +17,7 @@ public class TestDNA implements DNA {
   public long      version;
   public String    typeName       = "SomeClassName";
   public ObjectID  parentObjectID = ObjectID.NULL_ID;
-  public boolean  isDelta;
-  public String    loaderDesc     = "system.loader";
+  public boolean   isDelta;
 
   public TestDNA(DNACursor cursor) {
     this.cursor = cursor;
@@ -64,10 +62,6 @@ public class TestDNA implements DNA {
     return 0;
   }
 
-  public String getDefiningLoaderDescription() {
-    return loaderDesc;
-  }
-
   public ObjectID getParentObjectID() throws DNAException {
     return parentObjectID;
   }
@@ -93,6 +87,7 @@ public class TestDNA implements DNA {
     return isDelta;
   }
 
+  @Override
   public String toString() {
     return "TestDNA(" + objectID + ", version = " + version + ")";
   }

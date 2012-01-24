@@ -18,13 +18,12 @@ import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.ClusterMetaDataTestApp.MyMojo;
 import com.tctest.ClusterMetaDataTestApp.SomePojo;
 import com.tctest.ClusterMetaDataTestApp.YourMojo;
+import com.tctest.builtin.HashMap;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.File;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -125,7 +124,7 @@ public class ClusterMetaDataOrphanedValuesTestApp extends AbstractTransparentApp
     File workingDir = new File(configFile.getParentFile(), "client-0");
     FileUtils.forceMkdir(workingDir);
 
-    List jvmArgs = new ArrayList();
+    List jvmArgs = new java.util.ArrayList();
     addTestTcPropertiesFile(jvmArgs);
     ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, L1Client.class,
                                                              configFile.getAbsolutePath(), Collections.EMPTY_LIST,

@@ -7,14 +7,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
-  
+
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>build-parent</artifactId>
     <version>3.7.0-SNAPSHOT</version>
     <relativePath>../build-parent</relativePath>
   </parent>
-  
+
   <groupId>org.terracotta.test</groupId>
   <artifactId>dso-statistics-tests</artifactId>
   <packaging>jar</packaging>
@@ -25,22 +25,22 @@
     <skip.deploy>true</skip.deploy>
     <skip.findbugs>true</skip.findbugs>
     <tc.tests.info.junit-test-timeout-inseconds>1800</tc.tests.info.junit-test-timeout-inseconds>
-    <tc.bootclasspath>-Xbootclasspath/p:${tc.tests.info.bootjars.normal}</tc.bootclasspath>    
+    <tc.bootclasspath>-Xbootclasspath/p:${tc.tests.info.bootjars.normal}</tc.bootclasspath>
   </properties>
-  
+
   <dependencies>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
-      <artifactId>common-api</artifactId>
+      <artifactId>common</artifactId>
       <version>${project.version}</version>
       <scope>compile</scope>
-    </dependency>   
+    </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>deploy</artifactId>
       <version>${project.version}</version>
       <scope>compile</scope>
-    </dependency>  
+    </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>dso-l1</artifactId>
@@ -75,10 +75,10 @@
       <artifactId>commons-codec</artifactId>
       <scope>test</scope>
     </dependency>
-  
+
     <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>common-api</artifactId>
+      <groupId>org.terracotta.test</groupId>
+      <artifactId>dso-system-tests</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
@@ -89,7 +89,7 @@
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
-    </dependency>    
+    </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>dso-common</artifactId>
@@ -131,7 +131,7 @@
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
-    </dependency>    
+    </dependency>
     <dependency>
       <groupId>org.terracotta.test</groupId>
       <artifactId>legacy-test-tree</artifactId>
@@ -180,6 +180,6 @@
         </executions>
       </plugin>
     </plugins>
-  </build>  
-  
+  </build>
+
 </project>

@@ -37,11 +37,6 @@
     </dependency>    
     <dependency>
       <groupId>org.terracotta.internal</groupId>
-      <artifactId>common-api</artifactId>
-      <version>${project.version}</version>
-    </dependency>    
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
       <artifactId>dso-common</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -69,18 +64,6 @@
       <groupId>org.terracotta.internal</groupId>
       <artifactId>thirdparty</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.api</groupId>
-      <artifactId>tim-api</artifactId>
-    </dependency>     
-    
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>common-api</artifactId>
-      <version>${project.version}</version>
-      <type>test-jar</type>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>

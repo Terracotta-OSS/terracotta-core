@@ -55,16 +55,14 @@ public class ServerTransactionFactory {
   }
 
   public ServerTransaction createServerMapEvictionTransactionFor(final NodeID localNodeID, final ObjectID oid,
-                                                                 final String className, final String loaderDesc,
-                                                                 final Map candidates,
+                                                                 final String className, final Map candidates,
                                                                  final ObjectStringSerializer serializer,
                                                                  final String cacheName) {
     return new ServerTransactionImpl(TxnBatchID.NULL_BATCH_ID, getNextTransactionID(), SequenceID.NULL_ID,
                                      NULL_LOCK_ID, localNodeID,
                                      Collections.singletonList(createServerMapEvictionDNAFor(oid, className,
-                                                                                             loaderDesc, candidates,
-                                                                                             cacheName)), serializer,
-                                     Collections.EMPTY_MAP, TxnType.NORMAL, Collections.EMPTY_LIST,
+                                                                                             candidates, cacheName)),
+                                     serializer, Collections.EMPTY_MAP, TxnType.NORMAL, Collections.EMPTY_LIST,
                                      NULL_DMI_DESCRIPTOR,
                                      new MetaDataReader[] { createEvictionMetaDataFor(oid, cacheName, candidates) }, 1,
                                      EMPTY_HIGH_WATER_MARK);
@@ -74,9 +72,9 @@ public class ServerTransactionFactory {
     return new ServerMapEvictionMetaDataReader(oid, cacheName, candidates);
   }
 
-  private DNA createServerMapEvictionDNAFor(final ObjectID oid, final String className, final String loaderDesc,
-                                            final Map candidates, String cacheName) {
-    return new ServerMapEvictionDNA(oid, className, loaderDesc, candidates, cacheName);
+  private DNA createServerMapEvictionDNAFor(final ObjectID oid, final String className, final Map candidates,
+                                            String cacheName) {
+    return new ServerMapEvictionDNA(oid, className, candidates, cacheName);
   }
 
 }

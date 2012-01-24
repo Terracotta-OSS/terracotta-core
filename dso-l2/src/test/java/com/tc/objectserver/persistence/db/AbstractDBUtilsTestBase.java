@@ -231,7 +231,6 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
     public String    typeName;
     public ObjectID  parentObjectID = ObjectID.NULL_ID;
     public boolean   isDelta;
-    public String    loaderDesc     = "system.loader";
 
     public AbstractSampleDNA1(final String typeName, final DNACursor cursor, final long version, final boolean isDelta) {
       this.typeName = typeName;
@@ -258,10 +257,6 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
 
     public int getArraySize() {
       return 0;
-    }
-
-    public String getDefiningLoaderDescription() {
-      return this.loaderDesc;
     }
 
     public ObjectID getParentObjectID() throws DNAException {

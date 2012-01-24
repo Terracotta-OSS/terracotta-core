@@ -17,7 +17,4 @@ public interface Portability {
 
   public boolean isPortableInstance(Object obj);
 
-  public boolean overridesHashCode(Object obj);
-
-  public boolean overridesHashCode(Class clazz);
 }

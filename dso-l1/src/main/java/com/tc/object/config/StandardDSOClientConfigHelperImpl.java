@@ -4,12 +4,10 @@
  */
 package com.tc.object.config;
 
-import org.knopflerfish.framework.BundleClassLoader;
 import org.osgi.framework.Bundle;
 import org.terracotta.groupConfigForL1.ServerGroup;
 import org.terracotta.groupConfigForL1.ServerGroupsDocument.ServerGroups;
 import org.terracotta.groupConfigForL1.ServerInfo;
-import org.terracotta.license.LicenseException;
 
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
@@ -19,42 +17,35 @@ import com.tc.aspectwerkz.expression.ExpressionVisitor;
 import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
-import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.backport175.bytecode.AnnotationElement.Annotation;
+import com.tc.bundles.Module;
+import com.tc.bundles.Modules;
 import com.tc.config.schema.CommonL1Config;
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.injection.DsoClusterInjectionInstrumentation;
 import com.tc.injection.InjectionInstrumentation;
 import com.tc.injection.InjectionInstrumentationRegistry;
 import com.tc.injection.exceptions.UnsupportedInjectedDsoInstanceTypeException;
-import com.tc.jam.transform.ReflectClassBuilderAdapter;
-import com.tc.license.LicenseManager;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.object.LiteralValues;
 import com.tc.object.Portability;
 import com.tc.object.PortabilityImpl;
-import com.tc.object.SerializationUtil;
-import com.tc.object.bytecode.AQSSubclassStrongReferenceAdapter;
-import com.tc.object.bytecode.AbstractListMethodCreator;
+import com.tc.object.applicator.HashMapApplicator;
+import com.tc.object.applicator.ListApplicator;
+import com.tc.object.bytecode.AddInterfacesAdapter;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ClassAdapterBase;
 import com.tc.object.bytecode.ClassAdapterFactory;
-import com.tc.object.bytecode.JavaUtilConcurrentLocksAQSAdapter;
-import com.tc.object.bytecode.OverridesHashCodeAdapter;
+import com.tc.object.bytecode.DelegateMethodAdapter;
+import com.tc.object.bytecode.NotClearable;
 import com.tc.object.bytecode.SafeSerialVersionUIDAdder;
-import com.tc.object.bytecode.SessionConfiguration;
-import com.tc.object.bytecode.THashMapAdapter;
 import com.tc.object.bytecode.TransparencyClassAdapter;
-import com.tc.object.bytecode.TreeMapAdapter;
 import com.tc.object.bytecode.aspectwerkz.ExpressionHelper;
-import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
-import com.tc.object.config.schema.DSOApplicationConfig;
 import com.tc.object.config.schema.DSOInstrumentationLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeOutputOptions;
@@ -70,13 +61,9 @@ import com.tc.properties.ReconnectConfig;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
 import com.tc.util.ClassUtils.ClassSpec;
-import com.tc.util.ProductInfo;
 import com.tc.util.UUID;
 import com.tc.util.runtime.Vm;
-import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.L1ReconnectPropertiesDocument;
-import com.terracottatech.config.Module;
-import com.terracottatech.config.Modules;
 
 import java.io.File;
 import java.io.IOException;
@@ -88,39 +75,31 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfigHelper, DSOClientConfigHelper {
-
-  private static final String                                CGLIB_PATTERN                      = "$$EnhancerByCGLIB$$";
+public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper {
 
   private static final TCLogger                              logger                             = CustomerLogging
                                                                                                     .getDSOGenericLogger();
-  private static final TCLogger                              consoleLogger                      = CustomerLogging
-                                                                                                    .getConsoleLogger();
+
   private static final InstrumentationDescriptor             DEFAULT_INSTRUMENTATION_DESCRIPTOR = new NullInstrumentationDescriptor();
 
   private final DSOClientConfigHelperLogger                  helperLogger;
   private final L1ConfigurationSetupManager                  configSetupManager;
   private final UUID                                         id;
-  private final Map                                          classLoaderNameToAppGroup          = new ConcurrentHashMap();
-  private final Map                                          webAppNameToAppGroup               = new ConcurrentHashMap();
+
   private final List                                         locks                              = new CopyOnWriteArrayList();
   private final List                                         roots                              = new CopyOnWriteArrayList();
   private final Set                                          transients                         = Collections
                                                                                                     .synchronizedSet(new HashSet());
   private final Map<String, String>                          injectedFields                     = new ConcurrentHashMap<String, String>();
-  private final Map<String, SessionConfiguration>            webApplications                    = Collections
-                                                                                                    .synchronizedMap(new HashMap());
   private final CompoundExpressionMatcher                    permanentExcludesMatcher;
   private final CompoundExpressionMatcher                    nonportablesMatcher;
   private final List                                         autoLockExcludes                   = new CopyOnWriteArrayList();
@@ -128,9 +107,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   private final ExpressionHelper                             expressionHelper;
   private final Map                                          adaptableCache                     = Collections
                                                                                                     .synchronizedMap(new HashMap());
-  private final Set<TimCapability>                           timCapabilities                    = Collections
-                                                                                                    .synchronizedSet(EnumSet
-                                                                                                        .noneOf(TimCapability.class));
 
   /**
    * A list of InstrumentationDescriptor representing include/exclude patterns
@@ -159,16 +135,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   // ====================================================================================================================
 
   private final Map<String, Collection<ClassAdapterFactory>> customAdapters                     = new HashMap<String, Collection<ClassAdapterFactory>>();
-  private final ClassReplacementMapping                      classReplacements                  = new ClassReplacementMappingImpl();
-  private final Map<String, Resource>                        classResources                     = new ConcurrentHashMap<String, Resource>();
   private final Map                                          aspectModules                      = new ConcurrentHashMap();
-  private final boolean                                      supportSharingThroughReflection;
   private final Portability                                  portability;
   private int                                                faultCount                         = -1;
-  private final Collection<ModuleSpec>                       moduleSpecs                        = Collections
-                                                                                                    .synchronizedList(new ArrayList<ModuleSpec>());
-  private MBeanSpec[]                                        mbeanSpecs                         = null;
-  private SRASpec[]                                          sraSpecs                           = null;
   private final Set<String>                                  tunneledMBeanDomains               = Collections
                                                                                                     .synchronizedSet(new HashSet<String>());
   private final ModulesContext                               modulesContext                     = new ModulesContext();
@@ -200,8 +169,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     helperLogger = new DSOClientConfigHelperLogger(logger);
     // this.classInfoFactory = new ClassInfoFactory();
     this.expressionHelper = new ExpressionHelper();
-    modulesContext.setModules(configSetupManager.commonL1Config().modules() != null ? configSetupManager
-        .commonL1Config().modules() : Modules.Factory.newInstance());
+    modulesContext.setModules(new Modules());
 
     permanentExcludesMatcher = new CompoundExpressionMatcher();
 
@@ -221,42 +189,20 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     nonportablesMatcher = new CompoundExpressionMatcher();
 
-    DSOApplicationConfig appConfig = configSetupManager
-        .dsoApplicationConfigFor(ConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME);
-
-    supportSharingThroughReflection = appConfig.supportSharingThroughReflection();
     try {
       doPreInstrumentedAutoconfig();
       doAutoconfig();
-      doLegacyDefaultModuleConfig();
     } catch (Exception e) {
       throw new ConfigurationSetupException(e.getLocalizedMessage(), e);
     }
 
-    ConfigLoader loader = new ConfigLoader(this, logger);
-    loader.loadDsoConfig((DsoApplication) appConfig.getBean());
-
-    logger.debug("web-applications: " + this.webApplications);
     logger.debug("roots: " + this.roots);
     logger.debug("locks: " + this.locks);
     logger.debug("distributed-methods: " + this.distributedMethods);
-
-    rewriteHashtableAutoLockSpecIfNecessary();
-  }
-
-  private void doLegacyDefaultModuleConfig() {
-    new ExcludesConfiguration(this).apply();
-    new GUIModelsConfiguration(this).apply();
-    new Jdk15PreInstrumentedConfiguration(this).apply();
-    new StandardConfiguration(this).apply();
   }
 
   public String rawConfigText() {
     return configSetupManager.rawConfigText();
-  }
-
-  public boolean reflectionEnabled() {
-    return this.supportSharingThroughReflection;
   }
 
   public Portability getPortability() {
@@ -312,6 +258,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     clearAdaptableCache();
   }
 
+  public void addIncludePattern(String expression, boolean honorTransient, String methodToCallOnLoad) {
+    addIncludePattern(expression, honorTransient, methodToCallOnLoad, false);
+  }
+
   public void addIncludePattern(String expression, boolean honorTransient, String methodToCallOnLoad,
                                 boolean honorVolatile) {
     IncludeOnLoad onLoad = new IncludeOnLoad(IncludeOnLoad.METHOD, methodToCallOnLoad);
@@ -364,241 +314,30 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   private void doPreInstrumentedAutoconfig() {
-    TransparencyClassSpec spec = null;
-
-    spec = getOrCreateSpec("java.util.TreeMap", "com.tc.object.applicator.TreeMapApplicator");
-    spec.setUseNonDefaultConstructor(true);
-    spec.addMethodAdapter(SerializationUtil.PUT_SIGNATURE, new TreeMapAdapter.PutAdapter());
-    spec.addMethodAdapter("deleteEntry(Ljava/util/TreeMap$Entry;)V", new TreeMapAdapter.DeleteEntryAdapter());
-    spec.addAlwaysLogSpec(SerializationUtil.CLEAR_SIGNATURE);
-    spec.addEntrySetWrapperSpec(SerializationUtil.ENTRY_SET_SIGNATURE);
-
-    spec = getOrCreateSpec("java.util.HashMap", "com.tc.object.applicator.PartialHashMapApplicator");
-
-    spec = getOrCreateSpec("java.util.LinkedHashMap", "com.tc.object.applicator.LinkedHashMapApplicator");
-    spec.setUseNonDefaultConstructor(true);
-
-    spec = getOrCreateSpec("java.util.Hashtable", "com.tc.object.applicator.PartialHashMapApplicator");
-
-    /**
-     * spec.addSupportMethodCreator(new HashtableMethodCreator());
-     * spec.addHashtablePutLogSpec(SerializationUtil.PUT_SIGNATURE);
-     * spec.addHashtableRemoveLogSpec(SerializationUtil.REMOVE_KEY_SIGNATURE);
-     * spec.addHashtableClearLogSpec(SerializationUtil.CLEAR_SIGNATURE);
-     * spec.addMethodAdapter("entrySet()Ljava/util/Set;", new HashtableAdapter.EntrySetAdapter());
-     * spec.addMethodAdapter("keySet()Ljava/util/Set;", new HashtableAdapter.KeySetAdapter());
-     * spec.addMethodAdapter("values()Ljava/util/Collection;", new HashtableAdapter.ValuesAdapter());
-     */
-
-    /**
-     * addWriteAutolock("synchronized * java.util.Hashtable.*(..)"); addReadAutolock(new String[] { "synchronized *
-     * java.util.Hashtable.get(..)", "synchronized * java.util.Hashtable.hashCode(..)", "synchronized *
-     * java.util.Hashtable.contains*(..)", "synchronized * java.util.Hashtable.elements(..)", "synchronized *
-     * java.util.Hashtable.equals(..)", "synchronized * java.util.Hashtable.isEmpty(..)", "synchronized *
-     * java.util.Hashtable.keys(..)", "synchronized * java.util.Hashtable.size(..)", "synchronized *
-     * java.util.Hashtable.toString(..)" });
-     */
-    spec = getOrCreateSpec("java.util.Properties", "com.tc.object.applicator.PartialHashMapApplicator");
-    addWriteAutolock("synchronized * java.util.Properties.*(..)");
-
-    spec = getOrCreateSpec("com.tcclient.util.MapEntrySetWrapper$EntryWrapper");
-
-    spec = getOrCreateSpec("java.util.IdentityHashMap", "com.tc.object.applicator.HashMapApplicator");
-    spec.addAlwaysLogSpec(SerializationUtil.PUT_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.REMOVE_KEY_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.CLEAR_SIGNATURE);
-
-    spec = getOrCreateSpec("java.util.BitSet");
-    spec.setHonorTransient(false);
-
-    if (Vm.isJDK15Compliant()) {
-      spec = getOrCreateSpec("java.util.EnumMap");
-      spec.setHonorTransient(false);
-      spec = getOrCreateSpec("java.util.EnumSet");
-      if (!Vm.isIBM() || !Vm.isJDK16Compliant()) {
-        spec = getOrCreateSpec("java.util.RegularEnumSet");
-        spec = getOrCreateSpec("java.util.RegularEnumSet$EnumSetIterator");
-      }
-    }
-
-    spec = getOrCreateSpec("java.util.Collections");
-    spec = getOrCreateSpec("java.util.Collections$EmptyList");
-    spec = getOrCreateSpec("java.util.Collections$EmptyMap");
-    spec = getOrCreateSpec("java.util.Collections$EmptySet");
-
-    spec = getOrCreateSpec("java.util.Collections$UnmodifiableCollection");
-    spec.setHonorTransient(true);
-    spec = getOrCreateSpec("java.util.Collections$UnmodifiableCollection$1");
-    spec = getOrCreateSpec("java.util.Collections$1");
-    spec.setHonorJDKSubVersionSpecific(true);
-    spec = getOrCreateSpec("java.util.Collections$2");
-    spec.setHonorJDKSubVersionSpecific(true);
-    spec = getOrCreateSpec("java.util.Collections$UnmodifiableList$1");
-    spec.setHonorJDKSubVersionSpecific(true);
-    spec = getOrCreateSpec("java.util.Collections$UnmodifiableList");
-    spec.setHonorTransient(true);
-    spec = getOrCreateSpec("java.util.Collections$UnmodifiableMap");
-    spec.setHonorTransient(true);
-    spec = getOrCreateSpec("java.util.Collections$UnmodifiableMap$UnmodifiableEntrySet");
-    spec = getOrCreateSpec("java.util.Collections$UnmodifiableMap$UnmodifiableEntrySet$1");
-    spec = getOrCreateSpec("java.util.Collections$UnmodifiableRandomAccessList");
-    spec.setHonorTransient(true);
-    spec = getOrCreateSpec("java.util.Collections$UnmodifiableSet");
-    spec.setHonorTransient(true);
-    spec = getOrCreateSpec("java.util.Collections$UnmodifiableSortedMap");
-    spec.setHonorTransient(true);
-    spec = getOrCreateSpec("java.util.Collections$UnmodifiableSortedSet");
-    spec.setHonorTransient(true);
-
-    spec = getOrCreateSpec("java.util.Collections$SingletonSet");
-    spec.setHonorTransient(true);
-    spec = getOrCreateSpec("java.util.Collections$SingletonList");
-    spec.setHonorTransient(true);
-    spec = getOrCreateSpec("java.util.Collections$SingletonMap");
-    spec.setHonorTransient(true);
-
-    spec = getOrCreateSpec("java.util.Collections$SynchronizedSet");
-    // autoLockAllMethods(spec, ConfigLockLevel.WRITE);
-    spec.setHonorTransient(true);
-    spec = getOrCreateSpec("java.util.Collections$SynchronizedCollection");
-    // autoLockAllMethods(spec, ConfigLockLevel.WRITE);
-    spec.setHonorTransient(true);
-    spec = getOrCreateSpec("java.util.Collections$SynchronizedList");
-    // autoLockAllMethods(spec, ConfigLockLevel.WRITE);
-    spec.setHonorTransient(true);
-    spec = getOrCreateSpec("java.util.Collections$SynchronizedSortedMap");
-    // autoLockAllMethods(spec, ConfigLockLevel.WRITE);
-    spec.setHonorTransient(true);
-    spec = getOrCreateSpec("java.util.Collections$SynchronizedSortedSet");
-    // autoLockAllMethods(spec, ConfigLockLevel.WRITE);
-    spec.setHonorTransient(true);
-    spec = getOrCreateSpec("java.util.Collections$SynchronizedMap");
-    // autoLockAllMethods(spec, ConfigLockLevel.WRITE);
-    spec.setHonorTransient(true);
-    spec = getOrCreateSpec("java.util.Collections$SynchronizedRandomAccessList");
-    // autoLockAllMethods(spec, ConfigLockLevel.WRITE);
-    spec.setHonorTransient(true);
-
-    addJavaUtilCollectionPreInstrumentedSpec();
-
-    spec = getOrCreateSpec("com.tcclient.util.SortedViewSetWrapper");
-    spec.setHonorTransient(true);
-
-    // These classes are not PORTABLE by themselves, but logical classes subclasses them.
-    // We dont want them to get tc fields, TransparentAccess interfaces etc. but we do want them
-    // to be instrumented for Array manipulations, clone(), wait(), notify() calls etc.
-    spec = getOrCreateSpec("java.util.AbstractCollection");
-    spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
-    spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
-    spec = getOrCreateSpec("java.util.AbstractList");
-    spec.setHonorTransient(true);
-    spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
-    spec.addSupportMethodCreator(new AbstractListMethodCreator());
-    spec = getOrCreateSpec("java.util.AbstractSet");
-    spec = getOrCreateSpec("java.util.AbstractSequentialList");
-    spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
-    spec = getOrCreateSpec("java.util.Dictionary");
-    spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
-
-    // AbstractMap is special because it actually has some fields so it needs to be instrumented and not just ADAPTABLE
-    spec = getOrCreateSpec("java.util.AbstractMap");
-    spec.setHonorTransient(true);
-
-    // spec = getOrCreateSpec("java.lang.Number");
-    // This hack is needed to make Number work in all platforms. Without this hack, if you add Number in bootjar, the
-    // JVM crashes.
-    // spec.generateNonStaticTCFields(false);
-
-    // =================================================================
-
-    spec = getOrCreateSpec("com.tcclient.object.DistributedMethodCall");
-
-    spec = getOrCreateSpec("java.util.Date", "com.tc.object.applicator.DateApplicator");
-    spec.addAlwaysLogSpec(SerializationUtil.SET_TIME_SIGNATURE);
-    spec.addDateMethodLogSpec(SerializationUtil.SET_YEAR_SIGNATURE);
-    spec.addDateMethodLogSpec(SerializationUtil.SET_MONTH_SIGNATURE);
-    spec.addDateMethodLogSpec(SerializationUtil.SET_DATE_SIGNATURE);
-    spec.addDateMethodLogSpec(SerializationUtil.SET_HOURS_SIGNATURE);
-    spec.addDateMethodLogSpec(SerializationUtil.SET_MINUTES_SIGNATURE);
-    spec.addDateMethodLogSpec(SerializationUtil.SET_SECONDS_SIGNATURE);
-
-    spec = getOrCreateSpec("java.sql.Date", "com.tc.object.applicator.DateApplicator");
-    spec = getOrCreateSpec("java.sql.Time", "com.tc.object.applicator.DateApplicator");
-    spec = getOrCreateSpec("java.sql.Timestamp", "com.tc.object.applicator.DateApplicator");
-    spec.addDateMethodLogSpec(SerializationUtil.SET_TIME_SIGNATURE, MethodSpec.TIMESTAMP_SET_TIME_METHOD_WRAPPER_LOG);
-    spec.addAlwaysLogSpec(SerializationUtil.SET_NANOS_SIGNATURE);
-
-    spec = getOrCreateSpec("java.net.URL", "com.tc.object.applicator.URLApplicator");
-    spec.setHonorTransient(true);
-    spec.addAlwaysLogSpec(SerializationUtil.URL_SET_SIGNATURE);
-
-    spec = getOrCreateSpec("java.util.Calendar");
-    spec = getOrCreateSpec("java.util.GregorianCalendar");
-    spec.setHonorTransient(true);
-
-    // addJDK15PreInstrumentedSpec();
-    // This section of spec are specified in the BootJarTool also
-    // They are placed again so that the honorTransient
-    // flag will be honored during runtime.
-    // SECTION BEGINS
-    if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() > 4) {
-      addJavaUtilConcurrentHashMapSpec(); // should be in jdk15-preinst-config bundle
-      addLogicalAdaptedLinkedBlockingQueueSpec(); // should be in jdk15-preinst-config bundle
-    }
-    // SECTION ENDS
-
+    getOrCreateSpec("com.tcclient.object.DistributedMethodCall");
     markAllSpecsPreInstrumented();
   }
 
   private void doAutoconfig() throws Exception {
     TransparencyClassSpec spec;
 
-    addJDK15InstrumentedSpec();
-
     spec = getOrCreateSpec("java.lang.Object");
     spec.setCallConstructorOnLoad(true);
-
-    // Autolocking FastHashMap.
-    // addIncludePattern("org.apache.commons.collections.FastHashMap*", true);
-    // addWriteAutolock("* org.apache.commons.collections.FastHashMap*.*(..)");
-    // addReadAutolock(new String[] { "* org.apache.commons.collections.FastHashMap.clone(..)",
-    // "* org.apache.commons.collections.FastHashMap*.contains*(..)",
-    // "* org.apache.commons.collections.FastHashMap.equals(..)",
-    // "* org.apache.commons.collections.FastHashMap.get(..)",
-    // "* org.apache.commons.collections.FastHashMap*.hashCode(..)",
-    // "* org.apache.commons.collections.FastHashMap*.isEmpty(..)",
-    // "* org.apache.commons.collections.FastHashMap*.size(..)" });
-
-    spec = getOrCreateSpec("gnu.trove.TObjectHash");
-    spec.addTObjectHashRemoveAtLogSpec(SerializationUtil.TROVE_REMOVE_AT_SIGNATURE);
-
-    spec = getOrCreateSpec("gnu.trove.THashMap", "com.tc.object.applicator.HashMapApplicator");
-    spec.addTHashMapPutLogSpec(SerializationUtil.PUT_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.CLEAR_SIGNATURE);
-    spec.addEntrySetWrapperSpec(SerializationUtil.ENTRY_SET_SIGNATURE);
-    spec.addKeySetWrapperSpec(SerializationUtil.KEY_SET_SIGNATURE);
-    spec.addValuesWrapperSpec(SerializationUtil.VALUES_SIGNATURE);
-    spec.addMethodAdapter(SerializationUtil.TRANSFORM_VALUES_SIGNATURE, new THashMapAdapter.TransformValuesAdapter());
-
-    spec = getOrCreateSpec("gnu.trove.THashSet", "com.tc.object.applicator.HashSetApplicator");
-    spec.addIfTrueLogSpec(SerializationUtil.ADD_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.CLEAR_SIGNATURE);
-    spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
-
-    spec = getOrCreateSpec("gnu.trove.ToObjectArrayProcedure");
-    spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
 
     spec = getOrCreateSpec("javax.servlet.GenericServlet");
     spec.setHonorTransient(true);
     spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
 
-    // TODO for the Event Swing sample only
-    LockDefinition ld = new LockDefinitionImpl("setTextArea", ConfigLockLevel.WRITE);
-    ld.commit();
-    addLock("* test.event.*.setTextArea(..)", ld);
-
-    // hard code junk for Axis2 problem (CDV-525)
-    addCustomAdapter("org.codehaus.jam.internal.reflect.ReflectClassBuilder", new ReflectClassBuilderAdapter());
+    // XXX: Configuration for "built-in" clustered data types
+    // These should be deleted when system tests are moved up from core to toolkit
+    addIncludePattern("com.tctest.builtin.AtomicInteger");
+    addIncludePattern("com.tctest.builtin.AtomicReference");
+    addIncludePattern("com.tctest.builtin.Lock");
+    addIncludePattern("com.tctest.builtin.CyclicBarrier");
+    addIncludePattern("com.tctest.builtin.HashSet");
+    addIncludePattern("com.tctest.builtin.ConcurrentHashMap");
+    getOrCreateSpec("com.tctest.builtin.HashMap", HashMapApplicator.class.getName());
+    getOrCreateSpec("com.tctest.builtin.ArrayList", ListApplicator.class.getName());
 
     if (hasBootJar) {
       // pre-load specs from boot jar
@@ -666,141 +405,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     addCustomAdapter(classInfo.getName(), instrumentation.getClassAdapterFactoryForFieldInjection(fi));
   }
 
-  private void addJDK15InstrumentedSpec() {
-    if (Vm.isJDK15Compliant()) {
-
-      TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock");
-      spec.markPreInstrumented();
-      spec.setPreCreateMethod("validateInUnLockState");
-      spec.setCallConstructorOnLoad(true);
-      spec.setHonorTransient(true);
-
-      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$DsoLock");
-      spec.setHonorTransient(true);
-
-      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$ReadLock");
-      spec.markPreInstrumented();
-      spec.setPreCreateMethod("validateInUnLockState");
-      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$WriteLock");
-      spec.setPreCreateMethod("validateInUnLockState");
-      spec.markPreInstrumented();
-
-      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$Sync");
-      spec.setHonorTransient(true);
-      spec.setCustomClassAdapter(new AQSSubclassStrongReferenceAdapter());
-      spec.markPreInstrumented();
-
-      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$FairSync");
-      spec.setCallConstructorOnLoad(true);
-      spec.markPreInstrumented();
-
-      spec = getOrCreateSpec("com.tcclient.util.concurrent.locks.ConditionObject");
-      spec.disableWaitNotifyCodeSpec("signal()V");
-      spec.disableWaitNotifyCodeSpec("signalAll()V");
-      spec.setHonorTransient(true);
-      spec.setCallConstructorOnLoad(true);
-
-      spec = getOrCreateSpec("com.tcclient.util.concurrent.locks.ConditionObject$SyncCondition");
-      spec.setCallConstructorOnLoad(true);
-
-      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantLock$Sync");
-      spec.setHonorTransient(true);
-      spec.setCustomClassAdapter(new AQSSubclassStrongReferenceAdapter());
-      spec.markPreInstrumented();
-
-      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantLock$FairSync");
-      spec.setCallConstructorOnLoad(true);
-      spec.markPreInstrumented();
-
-      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantLock");
-      spec.setPreCreateMethod("validateInUnLockState");
-      spec.setCallConstructorOnLoad(true);
-      spec.markPreInstrumented();
-
-      spec = getOrCreateSpec("java.util.concurrent.CopyOnWriteArrayList", "com.tc.object.applicator.ListApplicator");
-      spec.setCallConstructorOnLoad(true);
-      spec.markPreInstrumented();
-
-      spec = getOrCreateSpec("java.util.concurrent.CopyOnWriteArraySet");
-      spec.setCallConstructorOnLoad(true);
-      spec.markPreInstrumented();
-
-      addAbstractSynchronizerSpec();
-    }
-  }
-
-  private void addAbstractSynchronizerSpec() {
-    TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.locks.AbstractQueuedSynchronizer");
-    spec.setHonorTransient(true);
-    spec.addTransient("state");
-    spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
-    spec.setCustomClassAdapter(new JavaUtilConcurrentLocksAQSAdapter());
-    spec.markPreInstrumented();
-
-    if (Vm.isJDK16Compliant()) {
-      spec = getOrCreateSpec("java.util.concurrent.locks.AbstractOwnableSynchronizer");
-      spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
-      spec.markPreInstrumented();
-    }
-  }
-
-  private void addJavaUtilCollectionPreInstrumentedSpec() {
-    // The details of the instrumentation spec is specified in BootJarTool.
-    getOrCreateSpec("java.util.HashSet", "com.tc.object.applicator.HashSetApplicator");
-
-    getOrCreateSpec("java.util.LinkedHashSet", "com.tc.object.applicator.HashSetApplicator");
-
-    getOrCreateSpec("java.util.TreeSet", "com.tc.object.applicator.TreeSetApplicator");
-
-    getOrCreateSpec("java.util.LinkedList", "com.tc.object.applicator.ListApplicator");
-
-    getOrCreateSpec("java.util.Stack", "com.tc.object.applicator.ListApplicator");
-
-    getOrCreateSpec("java.util.Vector", "com.tc.object.applicator.ListApplicator");
-    // addWriteAutolock("synchronized * java.util.Vector.*(..)");
-    // addReadAutolock(new String[] { "synchronized * java.util.Vector.capacity(..)",
-    // "synchronized * java.util.Vector.clone(..)", "synchronized * java.util.Vector.containsAll(..)",
-    // "synchronized * java.util.Vector.elementAt(..)", "synchronized * java.util.Vector.equals(..)",
-    // "synchronized * java.util.Vector.firstElement(..)", "synchronized * java.util.Vector.get(..)",
-    // "synchronized * java.util.Vector.hashCode(..)", "synchronized * java.util.Vector.indexOf(..)",
-    // "synchronized * java.util.Vector.isEmpty(..)", "synchronized * java.util.Vector.lastElement(..)",
-    // "synchronized * java.util.Vector.lastIndexOf(..)", "synchronized * java.util.Vector.size(..)",
-    // "synchronized * java.util.Vector.subList(..)", "synchronized * java.util.Vector.toString(..)", });
-
-    getOrCreateSpec("java.util.ArrayList", "com.tc.object.applicator.ListApplicator");
-  }
-
-  private void addJavaUtilConcurrentHashMapSpec() {
-    TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.ConcurrentHashMap",
-                                                 "com.tc.object.applicator.ConcurrentHashMapApplicator");
-    spec.setHonorTransient(true);
-    spec.setPostCreateMethod("__tc_rehash");
-    // The "segments" array is itself not a shared object and doesn't need array instrumentation
-    TransparencyCodeSpec defaultCodeSpec = TransparencyCodeSpecImpl.getDefaultLogicalCodeSpec();
-    defaultCodeSpec.setArrayOperatorInstrumentationReq(false);
-    spec.setDefaultCodeSpec(defaultCodeSpec);
-
-    spec = getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$Segment");
-    // The "table" array is itself not a shared object and doesn't need array instrumentation
-    defaultCodeSpec = TransparencyCodeSpecImpl.getDefaultPhysicalCodeSpec();
-    defaultCodeSpec.setArrayOperatorInstrumentationReq(false);
-    defaultCodeSpec.setForceRawFieldAccess(); // field reads of HashEntry instances do not need to be instrumented
-    spec.setDefaultCodeSpec(defaultCodeSpec);
-    spec.setCallConstructorOnLoad(true);
-    spec.setHonorTransient(true);
-
-    if (Vm.isJDK16Compliant()) {
-      spec = getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$WriteThroughEntry");
-      spec = getOrCreateSpec("java.util.AbstractMap$SimpleEntry");
-    }
-  }
-
-  private void addLogicalAdaptedLinkedBlockingQueueSpec() {
-    getOrCreateSpec("java.util.AbstractQueue").setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
-    getOrCreateSpec("java.util.concurrent.LinkedBlockingQueue",
-                    "com.tc.object.applicator.LinkedBlockingQueueApplicator");
-  }
-
   public void addCustomAdapter(final String name, final ClassAdapterFactory factory) {
     synchronized (customAdapters) {
       Collection<ClassAdapterFactory> adapters = customAdapters.get(name);
@@ -825,56 +429,12 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public Collection<ClassAdapterFactory> getAfterDSOAdapters(ClassInfo classInfo) {
-    TransparencyClassSpecInternal spec = getSpec(classInfo.getName());
+    TransparencyClassSpec spec = getSpec(classInfo.getName());
     if (spec == null) {
       return Collections.EMPTY_LIST;
     } else {
       return spec.getAfterDSOClassAdapters();
     }
-  }
-
-  public void addClassReplacement(final String originalClassName, final String replacementClassName,
-                                  final URL replacementResource, final ClassReplacementTest test) {
-    this.classReplacements.addMapping(originalClassName, replacementClassName, replacementResource, test);
-  }
-
-  public void addClassReplacement(final String originalClassName, final String replacementClassName,
-                                  final URL replacementResource) {
-    addClassReplacement(originalClassName, replacementClassName, replacementResource, null);
-  }
-
-  public ClassReplacementMapping getClassReplacementMapping() {
-    return classReplacements;
-  }
-
-  public void addClassResource(final String className, final URL resource, final boolean targetSystemLoaderOnly) {
-    Resource prev = this.classResources.put(className, new Resource(resource, targetSystemLoaderOnly));
-    // CDV-1053: don't call URL.equals() which can block
-    if ((prev != null) && (!prev.getResource().toString().equals(resource.toString()))) {
-      // we want to know if modules more than one module is trying to export the same class
-      throw new AssertionError("Attempting to replace mapping for " + className + ", from " + prev + " to " + resource);
-    }
-  }
-
-  public URL getClassResource(final String className, final ClassLoader loader,
-                              final boolean hideSystemLoaderOnlyResources) {
-    // don't allow export to a TIM loader. Use Import-Package instead
-    if (loader instanceof BundleClassLoader) return null;
-
-    Resource res = this.classResources.get(className);
-    if (res == null) return null;
-
-    if (!res.isTargetSystemLoaderOnly()) {
-      return res.getResource();
-    } else {
-      if (!hideSystemLoaderOnlyResources) {
-        if (ClassLoader.getSystemClassLoader() == loader) { return res.getResource(); }
-        if (System.getProperty("java.system.class.loader") != null
-            && ClassLoader.getSystemClassLoader().getParent() == loader) { return res.getResource(); }
-      }
-    }
-
-    return null;
   }
 
   private void markAllSpecsPreInstrumented() {
@@ -1046,81 +606,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return (String[]) missingRoots.toArray(new String[0]);
   }
 
-  private void rewriteHashtableAutoLockSpecIfNecessary() {
-    // addReadAutolock(new String[] { "synchronized * java.util.Hashtable.get(..)",
-    // "synchronized * java.util.Hashtable.hashCode(..)", "synchronized * java.util.Hashtable.contains*(..)",
-    // "synchronized * java.util.Hashtable.elements(..)", "synchronized * java.util.Hashtable.equals(..)",
-    // "synchronized * java.util.Hashtable.isEmpty(..)", "synchronized * java.util.Hashtable.keys(..)",
-    // "synchronized * java.util.Hashtable.size(..)", "synchronized * java.util.Hashtable.toString(..)" });
-
-    String className = "java.util.Hashtable";
-    ClassInfo classInfo = AsmClassInfo.getClassInfo(className, getClass().getClassLoader());
-
-    String patterns = "get(Ljava/lang/Object;)Ljava/lang/Object;|" + //
-                      "hashCode()I|" + //
-                      "clone()Ljava/lang/Object;|" + //
-                      "contains(Ljava/lang/Object;)Z|" + //
-                      "containsKey(Ljava/lang/Object;)Z|" + //
-                      "elements()Ljava/util/Enumeration;|" + //
-                      "equals(Ljava/lang/Object;)Z|" + //
-                      "isEmpty()Z|" + //
-                      "keys()Ljava/util/Enumeration;|" + //
-                      "size()I|" + //
-                      "toString()Ljava/lang/String;";
-
-    rewriteHashtableAutoLockSpecIfNecessaryInternal(classInfo, className, patterns);
-
-    className = "java.util.HashtableTC";
-    String realClassName = "java.util.Hashtable";
-    classInfo = AsmClassInfo.getClassInfo(className, getClass().getClassLoader());
-    patterns = "lookUpAndStoreIfNecessary(Ljava/util/Map$Entry;)Ljava/lang/Object;|" + //
-               "storeValueIfValid(Ljava/util/Map$Entry;Ljava/lang/Object;)V|" + //
-               "getEntry(Ljava/lang/Object;)Ljava/util/Map$Entry;|";
-    rewriteHashtableAutoLockSpecIfNecessaryInternal(classInfo, realClassName, patterns);
-
-    className = "java.util.HashtableTC$EntriesIterator";
-    realClassName = "java.util.Hashtable$EntriesIterator";
-    classInfo = AsmClassInfo.getClassInfo(className, getClass().getClassLoader());
-    patterns = "hasNext()Z|" + //
-               "nextEntry()Ljava/util/Map$Entry;";
-    rewriteHashtableAutoLockSpecIfNecessaryInternal(classInfo, realClassName, patterns);
-
-    className = "java.util.HashtableTC$EntrySetWrapper";
-    realClassName = "java.util.Hashtable$EntrySetWrapper";
-    classInfo = AsmClassInfo.getClassInfo(className, getClass().getClassLoader());
-    patterns = "contains(Ljava/lang/Object;)Z";
-    rewriteHashtableAutoLockSpecIfNecessaryInternal(classInfo, realClassName, patterns);
-
-    className = "java.util.HashtableTC$EntryWrapper";
-    realClassName = "java.util.Hashtable$EntryWrapper";
-    classInfo = AsmClassInfo.getClassInfo(className, getClass().getClassLoader());
-    patterns = "equals(Ljava/lang/Object;)Z|" + //
-               "getKey()Ljava/lang/Object;|" + //
-               "getValue()Ljava/lang/Object;|" + //
-               "getValueFaultBreadth()Ljava/lang/Object;|" + //
-               "hashCode()I|";
-    rewriteHashtableAutoLockSpecIfNecessaryInternal(classInfo, realClassName, patterns);
-  }
-
-  private void rewriteHashtableAutoLockSpecIfNecessaryInternal(final ClassInfo classInfo, final String className,
-                                                               final String patterns) {
-    MemberInfo[] methods = classInfo.getMethods();
-    for (MemberInfo methodInfo : methods) {
-      if (patterns.indexOf(methodInfo.getName() + methodInfo.getSignature()) > -1) {
-        for (Iterator i = locks.iterator(); i.hasNext();) {
-          Lock lock = (Lock) i.next();
-          if (matches(lock, methodInfo)) {
-            LockDefinition ld = lock.getLockDefinition();
-            if (ld.isAutolock() && ld.getLockLevel() != ConfigLockLevel.READ) {
-              addReadAutolock("* " + className + "." + methodInfo.getName() + "(..)");
-            }
-            break;
-          }
-        }
-      }
-    }
-  }
-
   public LockDefinition[] lockDefinitionsFor(final MemberInfo memberInfo) {
     final boolean isAutoLocksExcluded = matchesAutoLockExcludes(memberInfo);
     boolean foundMatchingAutoLock = false;
@@ -1228,14 +713,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       return cacheIsAdaptable(fullClassName, false);
     }
 
-    if (fullClassName.indexOf(CGLIB_PATTERN) >= 0) {
-      if (!isCapabilityEnabled(TimCapability.CGLIB)) {
-        logger.error("Refusing to instrument CGLIB generated proxy type " + fullClassName
-                     + " (CGLIB integration module not enabled)");
-        return cacheIsAdaptable(fullClassName, false);
-      }
-    }
-
     String outerClassname = outerClassnameWithoutInner(fullClassName);
     if (isLogical(outerClassname)) {
       // We make inner classes of logical classes not instrumented while logical
@@ -1252,22 +729,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     InstrumentationDescriptor desc = getInstrumentationDescriptorFor(classInfo);
     return cacheIsAdaptable(fullClassName, desc.isInclude());
-  }
-
-  public void validateSessionConfig() {
-    if (this.webApplications.size() > 0 && !isCapabilityEnabled(TimCapability.SESSIONS)) {
-      consoleLogger
-          .warn("One or more web applications are listed in the Terracotta configuration file, but no container TIMs have been loaded.\n"
-                + "See http://www.terracotta.org/tim-warning for more information. ");
-    }
-  }
-
-  private boolean isCapabilityEnabled(final TimCapability cap) {
-    return timCapabilities.contains(cap);
-  }
-
-  public void enableCapability(final TimCapability cap) {
-    timCapabilities.add(cap);
   }
 
   private boolean isTCPatternMatchingHack(final ClassInfo classInfo) {
@@ -1371,40 +832,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return getInstrumentationDescriptorFor(classInfo).getOnLoadMethodIfDefined();
   }
 
-  public Class getTCPeerClass(Class clazz) {
-    if (moduleSpecs != null) {
-      for (ModuleSpec moduleSpec : moduleSpecs) {
-        Class klass = moduleSpec.getPeerClass(clazz);
-        if (klass != null) { return klass; }
-      }
-    }
-    return clazz;
-  }
-
-  public String getAppGroup(String loaderName, String appName) {
-    // treat empty strings as null
-    if (loaderName != null && loaderName.length() == 0) {
-      loaderName = null;
-    }
-    if (appName != null && appName.length() == 0) {
-      appName = null;
-    }
-    if (loaderName == null && appName == null) { return null; }
-    String nclAppGroup = (loaderName == null) ? null : (String) classLoaderNameToAppGroup.get(loaderName);
-    String waAppGroup = (appName == null) ? null : (String) webAppNameToAppGroup.get(appName);
-    if (nclAppGroup == null) { return waAppGroup; }
-    if (waAppGroup != null && !nclAppGroup.equals(waAppGroup)) {
-      logger.error("App-group configuration conflict: web-application " + appName + " is declared to be in app-group "
-                   + waAppGroup + " but its classloader is " + loaderName + " which is declared to be in app-group "
-                   + nclAppGroup);
-    }
-    return nclAppGroup;
-  }
-
-  private boolean matchesWildCard(final String regex, final String input) {
-    return input.matches(regex.replaceAll("\\*", "\\.\\*"));
-  }
-
   public TransparencyClassAdapter createDsoClassAdapterFor(final ClassVisitor writer, final ClassInfo classInfo,
                                                            final InstrumentationLogger lgr, final ClassLoader caller,
                                                            final boolean forcePortable, final boolean honorTransient) {
@@ -1451,7 +878,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       }
     }
 
-    return new SafeSerialVersionUIDAdder(new OverridesHashCodeAdapter(cv));
+    return new SafeSerialVersionUIDAdder(cv);
   }
 
   private TransparencyClassSpec basicGetOrCreateSpec(final String className, final String applicator,
@@ -1494,16 +921,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return spec != null && spec.isLogical();
   }
 
-  // TODO: Need to optimize this by identifying the module to query instead of querying all the modules.
-  public boolean isPortableModuleClass(final Class clazz) {
-    if (moduleSpecs != null) {
-      for (ModuleSpec moduleSpec : moduleSpecs) {
-        if (moduleSpec.isPortableClass(clazz)) { return true; }
-      }
-    }
-    return false;
-  }
-
   public Class getChangeApplicator(final Class clazz) {
     ChangeApplicatorSpec applicatorSpec = null;
     TransparencyClassSpec spec = getSpec(clazz.getName());
@@ -1511,17 +928,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       applicatorSpec = spec.getChangeApplicatorSpec();
     }
 
-    if (applicatorSpec == null) {
-      if (moduleSpecs != null) {
-        for (ModuleSpec moduleSpec : moduleSpecs) {
-          if (moduleSpec.getChangeApplicatorSpec() != null) {
-            Class applicatorClass = moduleSpec.getChangeApplicatorSpec().getChangeApplicator(clazz);
-            if (applicatorClass != null) { return applicatorClass; }
-          }
-        }
-      }
-      return null;
-    }
+    if (applicatorSpec == null) { return null; }
     return applicatorSpec.getChangeApplicator(clazz);
   }
 
@@ -1531,32 +938,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     if (LiteralValues.isLiteral(className)) { return true; }
     TransparencyClassSpec spec = getSpec(className);
     if (spec != null) { return spec.isUseNonDefaultConstructor(); }
-    if (moduleSpecs != null) {
-      for (ModuleSpec moduleSpec : moduleSpecs) {
-        if (moduleSpec.isUseNonDefaultConstructor(clazz)) { return true; }
-      }
-    }
     return false;
-  }
-
-  public void addModuleSpec(final ModuleSpec moduleSpec) {
-    this.moduleSpecs.add(moduleSpec);
-  }
-
-  public void setMBeanSpecs(final MBeanSpec[] mbeanSpecs) {
-    this.mbeanSpecs = mbeanSpecs;
-  }
-
-  public MBeanSpec[] getMBeanSpecs() {
-    return this.mbeanSpecs;
-  }
-
-  public void setSRASpecs(final SRASpec[] sraSpecs) {
-    this.sraSpecs = sraSpecs;
-  }
-
-  public SRASpec[] getSRASpecs() {
-    return this.sraSpecs;
   }
 
   public boolean addTunneledMBeanDomain(final String tunneledMBeanDomain) {
@@ -1587,14 +969,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     userDefinedBootSpecs.remove(className);
   }
 
-  public TransparencyClassSpecInternal getSpec(String className) {
+  public TransparencyClassSpec getSpec(String className) {
     synchronized (specLock) {
       // NOTE: This method doesn't create a spec for you. If you want that use getOrCreateSpec()
       className = className.replace('/', '.');
-      TransparencyClassSpecInternal rv = (TransparencyClassSpecInternal) classSpecs.get(className);
+      TransparencyClassSpec rv = (TransparencyClassSpec) classSpecs.get(className);
 
       if (rv == null) {
-        rv = (TransparencyClassSpecInternal) userDefinedBootSpecs.get(className);
+        rv = (TransparencyClassSpec) userDefinedBootSpecs.get(className);
       } else {
         // shouldn't have a spec in both of the spec collections
         Assert.assertNull(userDefinedBootSpecs.get(className));
@@ -1618,7 +1000,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         if (!classSpec.isForeign() && (userDefinedBootSpecs.get(cname) != null)) continue;
         if (classSpec.isPreInstrumented()) {
           preInstrumentedCount++;
-          if (!(preinstClasses.contains(classSpec.getClassName()) || classSpec.isHonorJDKSubVersionSpecific())) {
+          if (!(preinstClasses.contains(classSpec.getClassName()))) {
             missingClasses.add(classSpec.getClassName());
           }
         }
@@ -1674,6 +1056,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public void addDistributedMethodCall(final DistributedMethodSpec dms) {
     this.distributedMethods.add(dms);
+  }
+
+  @Override
+  public void addDistributedMethod(String expression) {
+    addDistributedMethodCall(new DistributedMethodSpec(expression, false));
   }
 
   public DistributedMethodSpec getDmiSpec(final MemberInfo memberInfo) {
@@ -1744,28 +1131,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return spec.getLogicalExtendingClassName();
   }
 
-  public void addToAppGroup(final String appGroup, final String[] namedClassloaders, final String[] webAppNames) {
-    if (namedClassloaders != null) {
-      for (String namedClassloader : namedClassloaders) {
-        String oldGroup = (String) classLoaderNameToAppGroup.put(namedClassloader, appGroup);
-        if (oldGroup != null) {
-          logger
-              .error("Configuration error: named-classloader \"" + namedClassloader + "\" was declared in app-group \""
-                     + oldGroup + "\" and also in app-group \"" + appGroup + "\"");
-        }
-      }
-    }
-    if (webAppNames != null) {
-      for (String webAppName : webAppNames) {
-        String oldGroup = (String) webAppNameToAppGroup.put(webAppName, appGroup);
-        if (oldGroup != null) {
-          logger.error("Configuration error: web-application \"" + webAppName + "\" was declared in app-group \""
-                       + oldGroup + "\" and also in app-group \"" + appGroup + "\"");
-        }
-      }
-    }
-  }
-
   public void addUserDefinedBootSpec(final String className, final TransparencyClassSpec spec) {
     synchronized (specLock) {
       userDefinedBootSpecs.put(className, spec);
@@ -1777,16 +1142,15 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public void addModule(final String artifactId, final String version) {
-    Module newModule = modulesContext.modules.addNewModule();
-    newModule.setName(artifactId);
+    Module newModule = new Module();
+    newModule.setArtifactId(artifactId);
     newModule.setVersion(version);
+    modulesContext.modules.addModule(newModule);
   }
 
   public void addModule(final String groupId, final String artifactId, final String version) {
-    Module newModule = modulesContext.modules.addNewModule();
-    newModule.setGroupId(groupId);
-    newModule.setName(artifactId);
-    newModule.setVersion(version);
+    Module newModule = new Module(groupId, artifactId, version);
+    modulesContext.modules.addModule(newModule);
   }
 
   public Modules getModulesForInitialization() {
@@ -1816,46 +1180,13 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       } else {
         // this could happen only in test
         if (modulesInitialized) {
-          return Modules.Factory.newInstance();
+          return new Modules();
         } else {
           modulesInitialized = true;
           return this.modules;
         }
       }
     }
-  }
-
-  public void addWebApplication(final String pattern, final SessionConfiguration config) {
-    this.webApplications.put(pattern, config);
-  }
-
-  public SessionConfiguration getSessionConfiguration(String name) {
-    if (ProductInfo.getInstance().isEnterprise()) {
-      try {
-        LicenseManager.verifySessionCapability();
-      } catch (LicenseException e) {
-        logger.error(e);
-        System.exit(1);
-      }
-    }
-
-    name = ClassProcessorHelper.computeAppName(name);
-
-    for (Entry<String, SessionConfiguration> entry : webApplications.entrySet()) {
-      String pattern = entry.getKey();
-      if (matchesWildCard(pattern, name)) {
-        SessionConfiguration config = entry.getValue();
-        logger.info("Clustered HTTP sessions IS enabled for [" + name + "]. matched [" + pattern + "] " + config);
-        return config;
-      }
-    }
-
-    // log this for custom mode only
-    if (hasBootJar) {
-      logger.info("Clustered HTTP sessions is NOT enabled for [" + name + "]");
-    }
-
-    return null;
   }
 
   public void validateGroupInfo() throws ConfigurationSetupException {
@@ -2005,28 +1336,15 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  private static class Resource {
+  @Override
+  public void addDelegateMethodAdapter(String type, String delegateType, String delegateField) {
+    addCustomAdapter(type, new DelegateMethodAdapter(delegateType, delegateField));
+  }
 
-    private final URL     resource;
-    private final boolean targetSystemLoaderOnly;
-
-    Resource(final URL resource, final boolean targetSystemLoaderOnly) {
-      this.resource = resource;
-      this.targetSystemLoaderOnly = targetSystemLoaderOnly;
-    }
-
-    URL getResource() {
-      return resource;
-    }
-
-    boolean isTargetSystemLoaderOnly() {
-      return targetSystemLoaderOnly;
-    }
-
-    @Override
-    public String toString() {
-      return resource.toExternalForm();
-    }
+  @Override
+  public void addNotClearableAdapter(String type) {
+    String iface = NotClearable.class.getName().replace('.', '/');
+    addCustomAdapter(type, new AddInterfacesAdapter(new String[] { iface }));
   }
 
   public L1ConfigurationSetupManager reloadServersConfiguration() throws ConfigurationSetupException {

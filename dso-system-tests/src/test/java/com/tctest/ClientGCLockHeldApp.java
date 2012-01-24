@@ -4,21 +4,18 @@
  */
 package com.tctest;
 
-import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
-
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
-import com.tc.object.config.spec.CyclicBarrierSpec;
-import com.tc.object.config.spec.SynchronizedIntSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tctest.builtin.ArrayList;
+import com.tctest.builtin.AtomicInteger;
+import com.tctest.builtin.CyclicBarrier;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -42,14 +39,12 @@ public class ClientGCLockHeldApp extends AbstractTransparentApp {
     spec.addRoot("barrier", "barrier");
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);
-    new SynchronizedIntSpec().visit(visitor, config);
-    new CyclicBarrierSpec().visit(visitor, config);
   }
 
   public void run() {
     setCyclicBarrier();
     try {
-      barrier.barrier();
+      barrier.await();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -62,12 +57,12 @@ public class ClientGCLockHeldApp extends AbstractTransparentApp {
 
     while (stopwatch.getElapsedTime() < (1000 * 60 * MINUTES_TEST_RUN)) {
 
-      SynchronizedInt counter = new SynchronizedInt(0);
+      AtomicInteger counter = new AtomicInteger(0);
       synchronized (lockList) {
         lockList.add(counter);
       }
 
-      counter.increment();
+      counter.incrementAndGet();
 
       synchronized (lockList) {
         lockList.remove(counter);

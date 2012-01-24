@@ -9,12 +9,10 @@ import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.ApplicatorDNAEncodingImpl;
 import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
-import com.tc.object.SerializationUtil;
 import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.DNAWriterImpl;
@@ -25,50 +23,6 @@ import com.tc.object.loaders.ClassProvider;
 import junit.framework.TestCase;
 
 public class TCChangeBufferTest extends TestCase {
-
-  public void testLogicalClassIgnoresPhysicalChanges() throws Exception {
-    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
-    final ClassProvider classProvider = new MockClassProvider();
-    final DNAEncodingInternal encoding = new ApplicatorDNAEncodingImpl(classProvider);
-    final MockTCObject mockTCObject = new MockTCObject(new ObjectID(1), this, false, true);
-    final TCChangeBuffer buffer = new TCChangeBufferImpl(mockTCObject);
-
-    // physical updates should be ignored
-    buffer.fieldChanged("classname", "fieldname", new ObjectID(12), -1);
-    buffer.fieldChanged("classname", "fieldname", new Long(3), -1);
-
-    buffer.logicalInvoke(SerializationUtil.PUT, new Object[] { new ObjectID(1), new ObjectID(2) });
-
-    final TCByteBufferOutputStream output = new TCByteBufferOutputStream();
-
-    final DNAWriter writer = new DNAWriterImpl(output, mockTCObject.getObjectID(), mockTCObject.getTCClass().getName(),
-                                               serializer, encoding, mockTCObject.getTCClass()
-                                                   .getDefiningLoaderDescription().toDelimitedString(), false);
-
-    buffer.writeTo(writer);
-    writer.markSectionEnd();
-    writer.finalizeHeader();
-    output.close();
-
-    final DNAImpl dna = new DNAImpl(serializer, true);
-    dna.deserializeFrom(new TCByteBufferInputStream(output.toArray()));
-
-    int count = 0;
-    final DNACursor cursor = dna.getCursor();
-    while (cursor.next(encoding)) {
-      count++;
-      final LogicalAction action = dna.getLogicalAction();
-
-      if (action.getMethod() == SerializationUtil.PUT) {
-        assertEquals(new ObjectID(1), action.getParameters()[0]);
-        assertEquals(new ObjectID(2), action.getParameters()[1]);
-      } else {
-        fail("method was " + action.getMethod());
-      }
-    }
-
-    assertEquals(1, count);
-  }
 
   public void testLastPhysicalChangeWins() throws Exception {
     final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
@@ -83,8 +37,7 @@ public class TCChangeBufferTest extends TestCase {
 
     final TCByteBufferOutputStream output = new TCByteBufferOutputStream();
     final DNAWriter writer = new DNAWriterImpl(output, mockTCObject.getObjectID(), mockTCObject.getTCClass().getName(),
-                                               serializer, encoding, mockTCObject.getTCClass()
-                                                   .getDefiningLoaderDescription().toDelimitedString(), false);
+                                               serializer, encoding, false);
 
     buffer.writeTo(writer);
     writer.markSectionEnd();
@@ -124,8 +77,7 @@ public class TCChangeBufferTest extends TestCase {
     final TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
     final DNAWriter writer = new DNAWriterImpl(output, mockTCObject.getObjectID(), mockTCObject.getTCClass().getName(),
-                                               serializer, encoding, mockTCObject.getTCClass()
-                                                   .getDefiningLoaderDescription().toDelimitedString(), false);
+                                               serializer, encoding, false);
 
     buffer.writeTo(writer);
     writer.markSectionEnd();
@@ -150,5 +102,4 @@ public class TCChangeBufferTest extends TestCase {
 
     assertEquals(1, count);
   }
-
 }

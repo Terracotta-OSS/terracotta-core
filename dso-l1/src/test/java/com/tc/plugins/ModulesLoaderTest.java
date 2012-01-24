@@ -4,28 +4,27 @@
  */
 package com.tc.plugins;
 
+import org.apache.commons.io.FileUtils;
 import org.osgi.framework.BundleException;
 
 import com.tc.bundles.EmbeddedOSGiRuntime;
+import com.tc.bundles.Modules;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.util.Assert;
-import com.terracottatech.config.Modules;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.jar.Attributes;
-import java.util.jar.JarEntry;
+import java.util.jar.Attributes.Name;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import java.util.jar.Attributes.Name;
 
 public class ModulesLoaderTest extends BaseDSOTestCase {
 
@@ -61,7 +60,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
     try {
       Modules modules = configHelper.getModulesForInitialization();
       EmbeddedOSGiRuntime osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, null, modules.getModuleArray(), false);
+      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModules(), false);
       Assert.fail("Should get exception on missing bundle");
 
     } catch (BundleException e) {
@@ -86,7 +85,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
     // instead to the java temp dir and mark to delete on exit
     File tempDir = this.getTempDirectory();
     File generatedJar1 = createBundle(tempDir, badGroupId, badArtifactId, badVersion, badSymbolicName,
-                                      badSymbolicVersion, null, null);
+                                      badSymbolicVersion, null);
     generatedJar1.deleteOnExit();
 
     EmbeddedOSGiRuntime osgiRuntime = null;
@@ -101,7 +100,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
       try {
         Modules modules = configHelper.getModulesForInitialization();
         osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-        ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, null, modules.getModuleArray(), false);
+        ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModules(), false);
         Assert.fail("Should get exception on invalid bundle");
 
       } catch (BundleException e) {
@@ -116,8 +115,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
   }
 
   private File createBundle(File repositoryRootDir, String groupId, String artifactId, String version,
-                            String bundleName, String bundleVersion, String requiredBundles, String tcXml)
-      throws IOException {
+                            String bundleName, String bundleVersion, String requiredBundles) throws IOException {
     File groupLocation = new File(repositoryRootDir, groupId.replace('.', File.separatorChar));
     File nameLocation = new File(groupLocation, artifactId);
     File versionLocation = new File(nameLocation, version);
@@ -131,12 +129,12 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
       manifestAttributes.put("RequireBundle", requiredBundles);
     }
 
-    createBundleWithManifest(bundleFile.getAbsolutePath(), manifestAttributes, tcXml);
+    createBundleWithManifest(bundleFile.getAbsolutePath(), manifestAttributes);
 
     return bundleFile;
   }
 
-  private void createBundleWithManifest(String jarLocation, Map manifestProps, String tcXml) throws IOException {
+  private void createBundleWithManifest(String jarLocation, Map manifestProps) throws IOException {
     Manifest manifest = new Manifest();
     Attributes attributes = manifest.getMainAttributes();
     Iterator attrIter = manifestProps.entrySet().iterator();
@@ -148,17 +146,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
 
     FileOutputStream fstream = new FileOutputStream(jarLocation);
     JarOutputStream stream = new JarOutputStream(fstream, manifest);
-    try {
-      if (tcXml != null) {
-        stream.putNextEntry(new JarEntry("terracotta.xml"));
-        OutputStreamWriter writer = new OutputStreamWriter(stream, "utf-8");
-        writer.write(tcXml);
-        writer.flush();
-        stream.closeEntry();
-      }
-    } finally {
-      stream.close();
-    }
+    stream.close();
   }
 
   /**
@@ -175,49 +163,9 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
       configHelper.addRepository(repo);
       Modules modules = configHelper.getModulesForInitialization();
       osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, null, modules.getModuleArray(), false);
+      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModules(), false);
     } finally {
       shutdownAndCleanUpJars(osgiRuntime, null);
-    }
-  }
-
-  /**
-   * CDV-553 - when a module with a bad terracotta.xml is loaded, throw an error and identify the module
-   */
-  public void testBadModuleXmlThrowsError() throws Exception {
-    String badGroupId = "org.terracotta.modules";
-    String badArtifactId = "badxml";
-    String badVersion = "1.0.0";
-    String badSymbolicName = badGroupId + "." + badArtifactId;
-
-    // Create bundle jar based on these attributes
-    File tempDir = getTempDirectory();
-    File generatedJar1 = createBundle(tempDir, badGroupId, badArtifactId, badVersion, badSymbolicName, badVersion,
-                                      null, TC_CONFIG_MISSING_FIRST_CHAR);
-
-    EmbeddedOSGiRuntime osgiRuntime = null;
-    try {
-      DSOClientConfigHelper configHelper = configHelper();
-
-      // Add temp dir to list of repository locations to pick up bundle above
-      configHelper.addRepository(tempDir.getAbsolutePath());
-      configHelper.addModule(badArtifactId, badVersion);
-      ClassProvider classProvider = new MockClassProvider();
-
-      try {
-        Modules modules = configHelper.getModulesForInitialization();
-        osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-        ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, null, modules.getModuleArray(), false);
-        Assert.fail("Should get exception on invalid bundle");
-
-      } catch (BundleException e) {
-        checkErrorMessageContainsText(e, badGroupId);
-        checkErrorMessageContainsText(e, badArtifactId);
-        checkErrorMessageContainsText(e, badVersion);
-      }
-
-    } finally {
-      shutdownAndCleanUpJars(osgiRuntime, new File[] { generatedJar1 });
     }
   }
 
@@ -235,9 +183,9 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
     repo2.mkdir();
 
     File generatedJar1 = createBundle(repo1, multipleRepoGroupId, multipleRepoArtifactId, multRepoVersion,
-                                      multRepoSymbolicName, multRepoVersion, null, TC_OK_CONFIG);
+                                      multRepoSymbolicName, multRepoVersion, null);
     File generatedJar2 = createBundle(repo2, multipleRepoGroupId, multipleRepoArtifactId, multRepoVersion,
-                                      multRepoSymbolicName, multRepoVersion, null, TC_OK_CONFIG);
+                                      multRepoSymbolicName, multRepoVersion, null);
 
     EmbeddedOSGiRuntime osgiRuntime = null;
     try {
@@ -251,88 +199,10 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
 
       Modules modules = configHelper.getModulesForInitialization();
       osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, null, modules.getModuleArray(), false);
+      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModules(), false);
 
     } finally {
       shutdownAndCleanUpJars(osgiRuntime, new File[] { generatedJar1, generatedJar2 });
-    }
-  }
-
-  /**
-   * Test catch and throw of ConfigSetupException due to root with no field or expression
-   * 
-   * @throws Exception
-   */
-  public void testBadModuleConfig_rootNoField() throws Exception {
-    String badGroupId = "org.terracotta.modules";
-    String badArtifactId = "badconfig";
-    String badVersion = "1.0.0";
-    String badSymbolicName = badGroupId + "." + badArtifactId; // Create bundle jar based on these attributes
-    File tempDir = getTempDirectory();
-    File generatedJar1 = createBundle(tempDir, badGroupId, badArtifactId, badVersion, badSymbolicName, badVersion,
-                                      null, TC_CONFIG_NO_ROOT_FIELD_OR_EXPR);
-    EmbeddedOSGiRuntime osgiRuntime = null;
-    try {
-      DSOClientConfigHelper configHelper = configHelper();
-      // Add temp dir to list of repository locations to pick up
-      // bundle above
-      configHelper.addRepository(tempDir.getAbsolutePath());
-      configHelper.addModule(badArtifactId, badVersion);
-      ClassProvider classProvider = new MockClassProvider();
-      try {
-        Modules modules = configHelper.getModulesForInitialization();
-        osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-        ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, null, modules.getModuleArray(), false);
-        Assert.fail("Should get exception on invalid config");
-      } catch (BundleException e) {
-        checkErrorMessageContainsText(e, badGroupId);
-        checkErrorMessageContainsText(e, badArtifactId);
-        checkErrorMessageContainsText(e, badVersion);
-        checkErrorMessageContainsText(e, "no_expr"); // check root name is in message
-      } catch (Exception e) {
-        e.printStackTrace();
-        throw e;
-      }
-    } finally {
-      shutdownAndCleanUpJars(osgiRuntime, new File[] { generatedJar1 });
-    }
-  }
-
-  /**
-   * <pre>
-   * Test config fragment with good XML syntax but invalid schema 
-   * See DEV-2205 INT-516 DEV-1238
-   * </pre>
-   * 
-   * @author hhuynh
-   */
-  public void testConfigWithInvalidSchema() throws Exception {
-    String badGroupId = "org.terracotta.modules";
-    String badArtifactId = "badconfig";
-    String badVersion = "1.0.0";
-    String badSymbolicName = badGroupId + "." + badArtifactId; // Create bundle jar based on these attributes
-    File tempDir = getTempDirectory();
-    File generatedJar1 = createBundle(tempDir, badGroupId, badArtifactId, badVersion, badSymbolicName, badVersion,
-                                      null, TC_CONFIG_WITH_INVALID_SCHEMA);
-    EmbeddedOSGiRuntime osgiRuntime = null;
-    try {
-      DSOClientConfigHelper configHelper = configHelper();
-      // Add temp dir to list of repository locations to pick up
-      // bundle above
-      configHelper.addRepository(tempDir.getAbsolutePath());
-      configHelper.addModule(badArtifactId, badVersion);
-      ClassProvider classProvider = new MockClassProvider();
-      try {
-        Modules modules = configHelper.getModulesForInitialization();
-        osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-        ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, null, modules.getModuleArray(), false);
-        Assert.fail("Should get exception on invalid config");
-      } catch (BundleException e) {
-        checkErrorMessageContainsText(e.getCause(),
-                                      "string value '__ehcache_lock__CacheManager.init' does not match pattern for java-identifier");
-      }
-    } finally {
-      shutdownAndCleanUpJars(osgiRuntime, new File[] { generatedJar1 });
     }
   }
 
@@ -347,7 +217,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
 
     // Create bundle jar based on these attributes
     File tempDir = getTempDirectory();
-    File generatedJar1 = createBundle(tempDir, groupId, artifactId, version, symbolicName, version, null, TC_OK_CONFIG);
+    File generatedJar1 = createBundle(tempDir, groupId, artifactId, version, symbolicName, version, null);
 
     EmbeddedOSGiRuntime osgiRuntime = null;
     try {
@@ -360,7 +230,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
 
       Modules modules = configHelper.getModulesForInitialization();
       osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, null, modules.getModuleArray(), false);
+      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModules(), false);
 
       // should find and load the module without error
 
@@ -377,7 +247,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
 
     // Create bundle jar based on these attributes
     File repo = new File(getTempDirectory(), "repowithdots");
-    repo.mkdir();
+    ensureDir(repo);
 
     // create a couples of .svn dirs
     File dotSvnDir = new File(repo, ".svn");
@@ -393,7 +263,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
     dotSvnDir = new File(repo, "org/terracotta/modules/somemodule/1.0.0/.svn");
     Assert.assertTrue(dotSvnDir.mkdirs());
 
-    File generatedJar1 = createBundle(repo, groupId, artifactId, version, symbolicName, version, null, TC_OK_CONFIG);
+    File generatedJar1 = createBundle(repo, groupId, artifactId, version, symbolicName, version, null);
 
     EmbeddedOSGiRuntime osgiRuntime = null;
     try {
@@ -405,44 +275,17 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
 
       Modules modules = configHelper.getModulesForInitialization();
       osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, null, modules.getModuleArray(), false);
-
+      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModules(), false);
     } finally {
       shutdownAndCleanUpJars(osgiRuntime, new File[] { generatedJar1 });
     }
   }
 
-  private static final String TC_CONFIG_NO_ROOT_FIELD_OR_EXPR = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
-                                                                + "<xml-fragment>" + "<roots>"
-                                                                + "<root><root-name>no_expr</root-name></root>"
-                                                                + "</roots>" + "</xml-fragment>";
-
-  private static final String TC_CONFIG_MISSING_FIRST_CHAR    = "?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
-                                                                + "<xml-fragment>" + "</xml-fragment>";
-
-  private static final String TC_OK_CONFIG                    = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
-                                                                + "<xml-fragment>\n"
-                                                                + "<roots>\n"
-                                                                + "<root>\n"
-                                                                + "<root-name>no_expr</root-name>\n"
-                                                                + "<field-name>org.foo.bar.SomeClass.someField</field-name>\n"
-                                                                + "</root>\n" + "</roots>\n" + "</xml-fragment>\n";
-
-  private static final String TC_CONFIG_WITH_INVALID_SCHEMA   = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
-                                                                + "<xml-fragment>\n"
-                                                                + "<roots>\n"
-                                                                + "<root>\n"
-                                                                + "<root-name>no_expr</root-name>\n"
-                                                                + "<field-name>org.foo.bar.SomeClass.someField</field-name>\n"
-                                                                + "</root>\n"
-                                                                + "</roots>\n"
-                                                                + "<locks>\n"
-                                                                + "<named-lock>\n"
-                                                                + "<lock-name>__ehcache_lock__CacheManager.init</lock-name>\n"
-                                                                + "<method-expression>* net.sf.ehcache.CacheManager.init(..)</method-expression>\n"
-                                                                + "<lock-level>write</lock-level>\n"
-                                                                + "</named-lock>\n" + "</locks>\n"
-                                                                + "</xml-fragment>\n";
+  private void ensureDir(File dir) throws IOException {
+    if (dir.exists()) FileUtils.deleteDirectory(dir);
+    dir.mkdirs();
+    Assert.assertTrue(dir.isDirectory());
+  }
 
   private void shutdownAndCleanUpJars(EmbeddedOSGiRuntime osgiRuntime, File[] jars) {
     // Shutdown and wait for open jar references to get cleaned up
@@ -456,8 +299,8 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
     }
 
     if (jars != null) {
-      for (int i = 0; i < jars.length; i++) {
-        jars[i].delete();
+      for (File jar : jars) {
+        jar.delete();
       }
     }
   }

@@ -220,7 +220,7 @@
               <includeGroupIds>org.terracotta.internal,org.terracotta.test</includeGroupIds>
               <classifier>tests</classifier>
               <includes>**/*.class</includes>
-              <excludes>tim-get.properties,**/**TestApp*.class,**/**Test$*class</excludes>
+              <excludes>**/**TestApp*.class,**/**Test$*class</excludes>
               <outputDirectory>${project.build.outputDirectory}</outputDirectory>
             </configuration>
           </execution>
@@ -234,7 +234,7 @@
               <overwrite>false</overwrite>
               <includeGroupIds>org.terracotta.internal,org.terracotta.test</includeGroupIds>
               <classifier>test-sources</classifier>
-              <excludes>tim-get.properties,**/**TestApp.java</excludes>
+              <excludes>**/**TestApp.java</excludes>
               <outputDirectory>${project.build.directory}/sources</outputDirectory>
             </configuration>
           </execution>

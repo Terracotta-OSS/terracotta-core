@@ -10,7 +10,7 @@ import com.tc.text.PrettyPrintable;
 
 import java.util.Collection;
 
-public interface ClientLockManager extends TerracottaLockingInternal, ClientHandshakeCallback, PrettyPrintable {
+public interface ClientLockManager extends TerracottaLocking, ClientHandshakeCallback, PrettyPrintable {
   /**
    * Called by a Terracotta thread to notify the given thread waiting on the lock.
    */

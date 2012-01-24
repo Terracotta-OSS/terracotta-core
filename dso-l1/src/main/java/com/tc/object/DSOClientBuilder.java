@@ -25,7 +25,6 @@ import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.DSOMBeanConfig;
-import com.tc.object.config.MBeanSpec;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
@@ -157,8 +156,7 @@ public interface DSOClientBuilder {
 
   L1Management createL1Management(TunnelingEventHandler teh, StatisticsAgentSubSystem statisticsAgentSubSystem,
                                   RuntimeLogger runtimeLogger, InstrumentationLogger instrumentationLogger,
-                                  String rawConfigText, DistributedObjectClient distributedObjectClient,
-                                  MBeanSpec[] mBeanSpecs);
+                                  String rawConfigText, DistributedObjectClient distributedObjectClient);
 
   void registerForOperatorEvents(L1Management management);
 

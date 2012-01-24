@@ -17,9 +17,7 @@ import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
-import com.terracottatech.config.AdditionalBootJarClasses;
 import com.terracottatech.config.Client;
-import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Server;
 
 import java.io.IOException;
@@ -54,7 +52,7 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
 
   private TestConfigurationSetupManagerFactory configFactory;
   private L1ConfigurationSetupManager          l1ConfigManager;
-  private DSOClientConfigHelper                   configHelper;
+  private DSOClientConfigHelper                configHelper;
 
   protected synchronized final void setUp(TestConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper)
       throws Exception {
@@ -63,8 +61,7 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
     this.configHelper = helper;
   }
 
-  protected synchronized final TestConfigurationSetupManagerFactory configFactory()
-      throws ConfigurationSetupException {
+  protected synchronized final TestConfigurationSetupManagerFactory configFactory() throws ConfigurationSetupException {
     if (this.configFactory == null) this.configFactory = createDistributedConfigFactory();
     return this.configFactory;
   }
@@ -72,28 +69,14 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
   protected synchronized final TestConfigurationSetupManagerFactory createDistributedConfigFactory()
       throws ConfigurationSetupException {
     TestConfigurationSetupManagerFactory out;
-    out = new TestConfigurationSetupManagerFactory(TestConfigurationSetupManagerFactory.MODE_DISTRIBUTED_CONFIG,
-                                                      null, new TestFailingIllegalConfigChangeHandler());
+    out = new TestConfigurationSetupManagerFactory(TestConfigurationSetupManagerFactory.MODE_DISTRIBUTED_CONFIG, null,
+                                                   new TestFailingIllegalConfigChangeHandler());
 
     prepareFactory(out);
     return out;
   }
 
-  private synchronized void prepareFactory(TestConfigurationSetupManagerFactory out)
-      throws ConfigurationSetupException {
-    // We add a root to make sure there's at least *some* application config. Otherwise, the config system will wait for
-    // it on system startup.
-    /*
-     * Roots roots = Roots.Factory.newInstance(); Root dummyRoot = roots.addNewRoot();
-     * dummyRoot.setFieldName("com.dummy.whatever.Bar.x");
-     */
-
-    AdditionalBootJarClasses classes = AdditionalBootJarClasses.Factory.newInstance();
-    classes.setIncludeArray(new String[] { "com.dummy.whatever.Bar" });
-
-    DsoApplication dsoApplication = (DsoApplication) out.dsoApplicationConfig().getBean();
-    dsoApplication.setAdditionalBootJarClasses(classes);
-
+  private synchronized void prepareFactory(TestConfigurationSetupManagerFactory out) throws ConfigurationSetupException {
     setupConfigLogDataStatisticsPaths(out);
 
     out.activateConfigurationChange();
@@ -127,8 +110,7 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
     return this.l1ConfigManager;
   }
 
-  protected synchronized final L1ConfigurationSetupManager createL1ConfigManager()
-      throws ConfigurationSetupException {
+  protected synchronized final L1ConfigurationSetupManager createL1ConfigManager() throws ConfigurationSetupException {
     return configFactory().getL1TVSConfigurationSetupManager();
   }
 

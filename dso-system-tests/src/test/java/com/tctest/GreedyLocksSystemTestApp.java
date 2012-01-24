@@ -1,33 +1,32 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
-
-import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
-import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
-import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tctest.builtin.ArrayList;
+import com.tctest.builtin.CyclicBarrier;
 import com.tctest.runner.AbstractTransparentApp;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BrokenBarrierException;
 
 public class GreedyLocksSystemTestApp extends AbstractTransparentApp {
 
-  public static final int NODE_COUNT      = 3;
-  public static final int EXECUTION_COUNT = 2;
-  public static final int ITERATION_COUNT = 1;
+  public static final int     NODE_COUNT      = 3;
+  public static final int     EXECUTION_COUNT = 2;
+  public static final int     ITERATION_COUNT = 1;
 
-  private List          locks   = new ArrayList();
-  private CyclicBarrier barrier = new CyclicBarrier(NODE_COUNT * EXECUTION_COUNT);
-  private String        name;
-  private static int    id      = 0;
-  private static int    count   = 5;
+  private final List          locks           = new ArrayList();
+  private final CyclicBarrier barrier         = new CyclicBarrier(NODE_COUNT * EXECUTION_COUNT);
+  private String              name;
+  private static int          id              = 0;
+  private static int          count           = 5;
 
   public GreedyLocksSystemTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -57,7 +56,6 @@ public class GreedyLocksSystemTestApp extends AbstractTransparentApp {
     config.addWriteAutolock(waitNotifyMethodExpression);
     spec.addRoot("locks", "locks");
     spec.addRoot("barrier", "barrier");
-    new CyclicBarrierSpec().visit(visitor, config);
   }
 
   public void run() {
@@ -66,10 +64,10 @@ public class GreedyLocksSystemTestApp extends AbstractTransparentApp {
     setID();
 
     try {
-      barrier.barrier();
-    } catch (BrokenBarrierException e) {
-      e.printStackTrace();
+      barrier.await();
     } catch (InterruptedException e) {
+      e.printStackTrace();
+    } catch (BrokenBarrierException e) {
       e.printStackTrace();
     }
 
@@ -113,6 +111,7 @@ public class GreedyLocksSystemTestApp extends AbstractTransparentApp {
     System.out.println(toString() + string);
   }
 
+  @Override
   public String toString() {
     return "Client(" + id + ")::" + name + "::";
   }
@@ -130,13 +129,13 @@ public class GreedyLocksSystemTestApp extends AbstractTransparentApp {
 
   private static class LockObject {
 
-    private List locks;
-    private int  lockID;
+    private final List locks;
+    private final int  lockID;
 
-    int          writeCount    = 0;
-    int          waitCount     = 0;
-    int          timeoutCount  = 0;
-    int          notifiedCount = 0;
+    int                writeCount    = 0;
+    int                waitCount     = 0;
+    int                timeoutCount  = 0;
+    int                notifiedCount = 0;
 
     LockObject(List list, int id) {
       this.locks = list;
@@ -207,6 +206,7 @@ public class GreedyLocksSystemTestApp extends AbstractTransparentApp {
       return lockID;
     }
 
+    @Override
     public String toString() {
       return "LockObject(" + getID() + ")";
     }

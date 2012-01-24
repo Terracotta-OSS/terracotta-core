@@ -185,7 +185,6 @@ public class DNAImplTest extends TestCase {
 
     if (!isDelta) {
       assertEquals(type, this.dna.getTypeName());
-      assertEquals("loader description", this.dna.getDefiningLoaderDescription());
     }
 
     // verify meta data
@@ -307,7 +306,7 @@ public class DNAImplTest extends TestCase {
   protected DNAWriterInternal createDNAWriter(final TCByteBufferOutputStream out, final ObjectID id, final String type,
                                               final ObjectStringSerializer serializer,
                                               final DNAEncodingInternal encoding, final boolean isDelta) {
-    return new DNAWriterImpl(out, id, type, serializer, encoding, "loader description", isDelta);
+    return new DNAWriterImpl(out, id, type, serializer, encoding, isDelta);
   }
 
   private void compareAction(final LogicalAction expect, final LogicalAction actual) {

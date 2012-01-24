@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.test.schema;
 
@@ -39,9 +40,9 @@ public class TerracottaConfigBuilder extends BaseConfigBuilder {
     return (L1ConfigBuilder) getRawProperty("clients");
   }
 
-//  public void setServers(String value) {
-//    setProperty("servers", value);
-//  }
+  // public void setServers(String value) {
+  // setProperty("servers", value);
+  // }
 
   public void setServers(L2SConfigBuilder value) {
     setProperty("servers", value);
@@ -59,8 +60,8 @@ public class TerracottaConfigBuilder extends BaseConfigBuilder {
   public void setApplication(ApplicationConfigBuilder value) {
     setProperty("application", value);
   }
-  
-  public void setTcProperties(TcPropertiesBuilder value){
+
+  public void setTcProperties(TcPropertiesBuilder value) {
     setProperty("tc-properties", value);
   }
 
@@ -69,8 +70,10 @@ public class TerracottaConfigBuilder extends BaseConfigBuilder {
     return (ApplicationConfigBuilder) getRawProperty("application");
   }
 
-  public static final String[] ALL_PROPERTIES = new String[] { "system", "clients", "servers", "application" , "tc-properties"};
+  public static final String[] ALL_PROPERTIES = new String[] { "system", "clients", "servers", "application",
+      "tc-properties"                        };
 
+  @Override
   public String toString() {
     return "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n\n"
            + "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">\n" + elements(ALL_PROPERTIES)
@@ -80,11 +83,9 @@ public class TerracottaConfigBuilder extends BaseConfigBuilder {
   public static TerracottaConfigBuilder newMinimalInstance() {
     SystemConfigBuilder system = SystemConfigBuilder.newMinimalInstance();
     L2SConfigBuilder l2s = L2SConfigBuilder.newMinimalInstance();
-    ApplicationConfigBuilder app = ApplicationConfigBuilder.newMinimalInstance();
     TerracottaConfigBuilder out = new TerracottaConfigBuilder();
     out.setSystem(system);
     out.setServers(l2s);
-    out.setApplication(app);
     return out;
   }
 

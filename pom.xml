@@ -23,29 +23,25 @@
   <modules>
     <module>build-parent</module>
     <module>build-data</module>
-    <module>common-api</module>
     <module>common</module>
     <module>thirdparty</module>
     <module>aspectwerkz</module>
     <module>dso-statistics-api</module>
     <module>dso-l1-api</module>
     <module>dso-common</module>
-    <module>management-api</module>
     <module>management</module>
     <module>dso-l2-common</module> 
-    <module>deploy-api</module>
     <module>dso-statistics</module>
     <module>dso-l1</module>
     <module>dso-l2</module>
     <module>deploy</module>
     <module>simulator</module>
-    <module>tim-get-tool</module>
+    <module>dso-cluster-api</module>
     
     <module>legacy-test-tree</module>
     <module>dso-system-tests</module>
     <module>dso-crash-tests</module>
     <module>dso-statistics-tests</module>
-    <module>dso-alt-boot-jar-tests</module>
     
     <module>terracotta-parent</module>
     <module>terracotta</module>

@@ -32,6 +32,10 @@ import java.util.TreeSet;
 
 public class DBCollectionsTest extends TCTestCase {
 
+  static {
+    ManagedObjectStateFactory.enableLegacyTypes();
+  }
+
   private DBPersistorImpl                persistor;
   private PersistenceTransactionProvider ptp;
   private BerkeleyDBEnvironment          env;
@@ -81,7 +85,7 @@ public class DBCollectionsTest extends TCTestCase {
     ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), this.persistor);
     final ObjectID id = new ObjectID(1);
     final MapManagedObjectState state1 = (MapManagedObjectState) ManagedObjectStateFactory.getInstance()
-        .createState(id, ObjectID.NULL_ID, "java.util.HashMap", "System.loader", new TestDNACursor());
+        .createState(id, ObjectID.NULL_ID, "java.util.HashMap", new TestDNACursor());
     final TCPersistableMap sMap = (TCPersistableMap) state1.getPersistentCollection();
     addToMap(sMap);
     final Map localMap = new HashMap();
@@ -95,7 +99,7 @@ public class DBCollectionsTest extends TCTestCase {
 
     tx = this.ptp.newTransaction();
     final MapManagedObjectState state2 = (MapManagedObjectState) ManagedObjectStateFactory.getInstance()
-        .createState(new ObjectID(2), ObjectID.NULL_ID, "java.util.HashMap", "System.loader", new TestDNACursor());
+        .createState(new ObjectID(2), ObjectID.NULL_ID, "java.util.HashMap", new TestDNACursor());
     TCPersistableMap sMap2 = (TCPersistableMap) state2.getPersistentCollection();
     tx.commit();
     equals(new HashMap(), sMap2);
@@ -189,7 +193,7 @@ public class DBCollectionsTest extends TCTestCase {
     final HashMap map1 = new HashMap();
 
     final MapManagedObjectState state2 = (MapManagedObjectState) ManagedObjectStateFactory.getInstance()
-        .createState(new ObjectID(2), ObjectID.NULL_ID, "java.util.HashMap", "System.loader", new TestDNACursor());
+        .createState(new ObjectID(2), ObjectID.NULL_ID, "java.util.HashMap", new TestDNACursor());
     TCPersistableMap map2 = (TCPersistableMap) state2.getPersistentCollection();
 
     String key = "K1";

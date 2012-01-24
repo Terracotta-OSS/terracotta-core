@@ -8,7 +8,6 @@ import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.object.TCObject;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.locks.DsoLiteralLockID;
 import com.tc.object.locks.DsoLockID;
 import com.tc.object.locks.LockID;
@@ -295,18 +294,6 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
   private static String baseToString(Object obj) {
     if (obj == null) { return null; }
     return obj.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(obj));
-  }
-
-  public void namedLoaderRegistered(NamedClassLoader loader, String name, String appGroup, NamedClassLoader previous) {
-    StringBuffer message = new StringBuffer("loader of type [");
-    message.append(loader.getClass().getName()).append("] with name [").append(name);
-    if (appGroup != null) {
-      message.append("] in app group [").append(appGroup);
-    }
-    message.append("] registered (replaced: ").append(previous != null).append(")");
-
-    appendCall(message);
-    logger.info(message);
   }
 
   public void shutdown() {

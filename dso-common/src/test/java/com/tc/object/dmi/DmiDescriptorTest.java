@@ -18,7 +18,7 @@ public class DmiDescriptorTest extends TestCase {
   final ObjectID       receiverId = new ObjectID(567);
   final ObjectID       dmiCallId  = new ObjectID(789);
   final boolean        faultRec   = true;
-  final DmiClassSpec[] classSpecs = new DmiClassSpec[] { new DmiClassSpec("loaderDesc", "className") };
+  final DmiClassSpec[] classSpecs = new DmiClassSpec[] { new DmiClassSpec("className") };
 
   public void testSerialization() throws IOException {
 

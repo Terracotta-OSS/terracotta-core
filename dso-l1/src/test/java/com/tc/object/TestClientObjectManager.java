@@ -11,7 +11,6 @@ import com.tc.object.appevent.ApplicationEvent;
 import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.dna.api.DNA;
-import com.tc.object.loaders.LoaderDescription;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.util.Assert;
@@ -140,7 +139,7 @@ public class TestClientObjectManager implements ClientObjectManager {
     return this.txManager;
   }
 
-  public Class getClassFor(final String className, final LoaderDescription loaderDesc) {
+  public Class getClassFor(final String className) {
     throw new ImplementMe();
   }
 

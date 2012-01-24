@@ -19,6 +19,7 @@ public class MutateDGCValidateTest extends ServerCrashingTestBase {
 
   public MutateDGCValidateTest() {
     super(NODE_COUNT);
+    timebombTestForRewrite();
   }
 
   @Override

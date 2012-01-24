@@ -11,9 +11,9 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tctest.builtin.HashMap;
 import com.tctest.runner.AbstractTransparentApp;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**

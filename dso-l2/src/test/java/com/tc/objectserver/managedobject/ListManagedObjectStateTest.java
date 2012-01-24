@@ -14,6 +14,10 @@ import com.tc.util.Assert;
 
 public class ListManagedObjectStateTest extends AbstractTestManagedObjectState {
 
+  static {
+    ManagedObjectStateFactory.enableLegacyTypes();
+  }
+
   // override due to difference on dehydrate
   @Override
   protected void basicDehydrate(final TestDNACursor cursor, final int objCount, final ManagedObjectState state) {

@@ -11,7 +11,6 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.spec.CountDownSpec;
-import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.control.Control;
 import com.tc.simulator.control.TCBrokenBarrierException;
 import com.tc.simulator.listener.MutationCompletionListener;
@@ -28,7 +27,7 @@ public class ControlImpl implements Control, MutationCompletionListener {
   private final Control        testWideControl;
   private final boolean        crashActiveServerAfterMutate;
 
-  private CountDown            mutationCompleteCount;
+  private final CountDown      mutationCompleteCount;
   private long                 executionTimeout;
 
   public ControlImpl(int mutatorCount) {
@@ -92,11 +91,10 @@ public class ControlImpl implements Control, MutationCompletionListener {
     config.addIncludePattern(classname);
     config.addWriteAutolock("* " + classname + ".*(..)");
 
-    new CyclicBarrierSpec().visit(visitor, config);
     new CountDownSpec().visit(visitor, config);
-
   }
 
+  @Override
   public String toString() {
     return getClass().getName() + "[ mutatorCount=" + mutatorCount + ", completeParties=" + completeParties
            + ", startBarrier=" + startBarrier + ", countdown=" + countdown + ", mutationCompleteCount="
@@ -104,7 +102,7 @@ public class ControlImpl implements Control, MutationCompletionListener {
            + crashActiveServerAfterMutate + "]";
   }
 
-  public void waitForStart() throws InterruptedException, TCBrokenBarrierException{
+  public void waitForStart() throws InterruptedException, TCBrokenBarrierException {
     try {
       try {
         this.startBarrier.barrier();

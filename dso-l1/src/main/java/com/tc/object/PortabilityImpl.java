@@ -21,14 +21,12 @@ import java.util.Map;
 
 public class PortabilityImpl implements Portability {
 
-  private static final Class[]                EMPTY_CLASS_ARRAY      = new Class[] {};
   private static final Class                  OBJECT_CLASS           = Object.class;
   private static final NonInstrumentedClasses nonInstrumentedClasses = new NonInstrumentedClasses();
 
   // Don't use java.util.concurrent.ConcurrentHashMap here (at least not without reading DEV-2798)
   private final Map<Class, Boolean>           portableCache          = new ConcurrentReaderHashMap();
   private final Map<Class, Boolean>           physicalCache          = new ConcurrentReaderHashMap();
-  private final Map<Class, Boolean>           hashcodeCache          = new ConcurrentReaderHashMap();
 
   private final DSOClientConfigHelper         config;
 
@@ -126,8 +124,7 @@ public class PortabilityImpl implements Portability {
 
     boolean bool = LiteralValues.isLiteral(clazzName) || config.isLogical(clazzName) || clazz.isArray()
                    || Proxy.isProxyClass(clazz) || ClassUtils.isDsoEnum(clazz) || isClassPhysicallyInstrumented(clazz)
-                   || isInstrumentationNotNeeded(clazzName) || ClassUtils.isPortableReflectionClass(clazz)
-                   || config.isPortableModuleClass(clazz);
+                   || isInstrumentationNotNeeded(clazzName) || ClassUtils.isPortableReflectionClass(clazz);
     portableCache.put(clazz, Boolean.valueOf(bool));
     return bool;
   }
@@ -159,41 +156,6 @@ public class PortabilityImpl implements Portability {
   public boolean isPortableInstance(Object obj) {
     if (obj == null) return true;
     return isPortableClass(obj.getClass());
-  }
-
-  public boolean overridesHashCode(Object obj) {
-    if (obj == null) { throw new NullPointerException(); }
-    return overridesHashCode(obj.getClass());
-  }
-
-  public boolean overridesHashCode(final Class clazz) {
-    Boolean overridesHashCode = hashcodeCache.get(clazz);
-    if (overridesHashCode != null) { return overridesHashCode.booleanValue(); }
-
-    boolean rv = false;
-
-    Class c = clazz;
-
-    // Enums do technically override hashCode() but the reason they do it is to
-    // guarantee identity hash codes (so for our purposes it should not claim to override)
-    if (!ClassUtils.isDsoEnum(clazz)) {
-      while (c != OBJECT_CLASS) {
-        try {
-          c.getDeclaredMethod("hashCode", EMPTY_CLASS_ARRAY);
-          rv = true;
-          break;
-        } catch (SecurityException e) {
-          throw new AssertionError(e);
-        } catch (NoSuchMethodException e) {
-          //
-        }
-
-        c = c.getSuperclass();
-      }
-    }
-
-    hashcodeCache.put(clazz, Boolean.valueOf(rv));
-    return rv;
   }
 
 }

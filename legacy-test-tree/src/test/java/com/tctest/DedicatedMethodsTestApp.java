@@ -12,7 +12,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CyclicBarrier;
 
 public abstract class DedicatedMethodsTestApp extends AbstractTransparentApp {
 
@@ -24,7 +23,7 @@ public abstract class DedicatedMethodsTestApp extends AbstractTransparentApp {
     super(appId, config, listenerProvider);
   }
 
-  protected abstract CyclicBarrier getBarrierForNodeCoordination();
+  protected abstract BuiltinBarrier getBarrierForNodeCoordination();
 
   public void run() {
     try {

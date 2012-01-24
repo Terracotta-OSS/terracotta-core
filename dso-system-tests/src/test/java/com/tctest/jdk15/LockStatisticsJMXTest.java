@@ -30,6 +30,10 @@ public class LockStatisticsJMXTest extends TransparentTestBase {
   private File             configFile;
   private int              adminPort;
 
+  public LockStatisticsJMXTest() {
+    timebombTestForRewrite();
+  }
+
   @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);

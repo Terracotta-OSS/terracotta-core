@@ -12,7 +12,6 @@ import com.tc.object.compression.StringCompressionUtil;
 import com.tc.object.dna.impl.BaseDNAEncodingImpl;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.util.Assert;
-import com.tc.util.StringTCUtil;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -60,8 +59,6 @@ public class ApplicatorDNAEncodingImpl extends BaseDNAEncodingImpl {
 
   @Override
   protected Object readCompressedString(final TCDataInput input) throws IOException {
-    final boolean isInterned = input.readBoolean();
-
     final int uncompressedByteLength = input.readInt();
     final byte[] data = readByteArray(input);
 
@@ -78,14 +75,7 @@ public class ApplicatorDNAEncodingImpl extends BaseDNAEncodingImpl {
                   + stringLength + ", hash code : " + stringHash);
     }
 
-    if (isInterned) {
-      if (STRING_COMPRESSION_LOGGING_ENABLED) {
-        logger.info("Interning string.");
-      }
-      return StringTCUtil.intern(s);
-    } else {
-      return s;
-    }
+    return s;
   }
 
   private String constructCompressedString(final char[] compressedChars, final int stringLength, final int stringHash) {

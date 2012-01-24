@@ -7,11 +7,11 @@ package com.tc.object;
 import com.tc.lang.TCThreadGroup;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.dna.api.DNA;
-import com.tc.util.UnsafeUtil;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 
 /**
@@ -95,7 +95,9 @@ public class TCObjectFactoryImpl implements TCObjectFactory {
       if (parent != null) {
         while (type != null) {
           if (type.getParentField() != null) {
-            UnsafeUtil.setField(rv, type.getParentField(), parent);
+            Field f = type.getParentField();
+            f.setAccessible(true);
+            f.set(rv, parent);
           }
           type = type.getSuperclass();
         }

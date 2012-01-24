@@ -48,7 +48,6 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
   private ObjectID                         parentID;
   private String                           typeName;
   private int                              arrayLength;
-  private String                           loaderDesc;
   private long                             version;
   private int                              dnaLength;
   private int                              metaDataOffset;
@@ -287,7 +286,6 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
 
     if (!this.isDelta) {
       this.typeName = this.serializer.readString(this.input);
-      this.loaderDesc = this.serializer.readString(this.input);
     }
 
     if (Conversion.getFlag(flags, DNA.HAS_VERSION)) {
@@ -315,10 +313,6 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
     }
 
     return this;
-  }
-
-  public String getDefiningLoaderDescription() {
-    return this.loaderDesc;
   }
 
   public int getActionCount() {

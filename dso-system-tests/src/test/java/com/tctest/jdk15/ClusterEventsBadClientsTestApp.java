@@ -18,9 +18,8 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tctest.builtin.AtomicReference;
 import com.tctest.runner.AbstractTransparentApp;
-
-import java.util.concurrent.atomic.AtomicReference;
 
 public class ClusterEventsBadClientsTestApp extends AbstractTransparentApp {
 
@@ -54,7 +53,6 @@ public class ClusterEventsBadClientsTestApp extends AbstractTransparentApp {
     while (i-- > 0) {
       basicSetTesting();
       compareAndSetTesting();
-      weakCompareAndSetTesting();
       getAndSetTesting();
       System.out.println("XXX Iteration " + i + " done. sleeping for 30s");
       ThreadUtil.reallySleep(45 * 1000);
@@ -85,24 +83,6 @@ public class ClusterEventsBadClientsTestApp extends AbstractTransparentApp {
     int index = barrier.barrier();
     if (index == 0) {
       boolean set = root.compareAndSet(TRUE, FALSE);
-      if (!set) { throw new AssertionError("not set"); }
-    }
-
-    barrier.barrier();
-
-    Assert.assertEquals(FALSE, root.get());
-
-    barrier.barrier();
-  }
-
-  private void weakCompareAndSetTesting() throws Exception {
-    initialize();
-
-    int index = barrier.barrier();
-    if (index == 0) {
-      // per the javadoc this can fail spuriously. The implementations I've seen have no difference in compareAndSet()
-      // and weakCompareAndSet(), but if this starts failing it is worth taking a second look
-      boolean set = root.weakCompareAndSet(TRUE, FALSE);
       if (!set) { throw new AssertionError("not set"); }
     }
 

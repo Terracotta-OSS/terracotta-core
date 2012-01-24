@@ -6,7 +6,6 @@ package com.tc.object;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.field.TCField;
-import com.tc.object.loaders.LoaderDescription;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -23,77 +22,77 @@ import java.util.List;
  * implement Serializable.
  * <p>
  * TODO: Add support for using a serialized instance of classes with no nullary constructor to rehydrate into. <br>
- *
+ * 
  * @author Orion Letizi
  */
 public interface TCClass {
 
   /**
    * Get the class this TCClass is a peer for
-   *
+   * 
    * @return Peer class, never null
    */
   public Class getPeerClass();
 
   /**
    * Determine whether this class has a BeanShell script to execute on class load
-   *
+   * 
    * @return True if has script
    */
   public boolean hasOnLoadExecuteScript();
 
   /**
    * Determine whether this class has a method to execute on class load
-   *
+   * 
    * @return True if has load method
    */
   public boolean hasOnLoadMethod();
 
   /**
    * Determine whether this class has a injection to execute on class load
-   *
+   * 
    * @return True if has injection on load
    */
   public boolean hasOnLoadInjection();
 
   /**
    * Get name of method to execute on load
-   *
+   * 
    * @return Method name
    */
   public String getOnLoadMethod();
 
   /**
    * Get script to execute on load
-   *
+   * 
    * @return Execute script
    */
   public String getOnLoadExecuteScript();
 
   /**
    * If the class is an inner class, get the field referring to the parent "this object.
-   *
+   * 
    * @return The field referring to the parent this
    */
   public Field getParentField();
 
   /**
    * If the class is an inner class, get the name of the field referring to the parent "this" object.
-   *
+   * 
    * @return The field name referring to the parent this
    */
   public String getParentFieldName();
 
   /**
    * Get all portable fields in the class
-   *
+   * 
    * @return Fields, never null
    */
   public TCField[] getPortableFields();
 
   /**
    * Traverse a graph of objects to find the portable ones
-   *
+   * 
    * @param pojo The object to walk
    * @param addTo The traversed references collected so far
    * @return The addTo collection
@@ -102,7 +101,7 @@ public interface TCClass {
 
   /**
    * Get constructor for the class
-   *
+   * 
    * @return The constructor
    * @throws NoSuchMethodException If there is no constructor
    * @throws SecurityException If the constructor cannot be accessed in the current security model
@@ -151,7 +150,7 @@ public interface TCClass {
 
   /**
    * Construct a new instance from a DNA strand using a non-default constructor
-   *
+   * 
    * @param dna The DNA with the data to use
    * @return The new instance
    * @throws IOException Reading DNA
@@ -161,7 +160,7 @@ public interface TCClass {
 
   /**
    * Get TCField for this class
-   *
+   * 
    * @param name Field name
    * @return TCField
    */
@@ -174,7 +173,7 @@ public interface TCClass {
 
   /**
    * Reconstitute object from DNA
-   *
+   * 
    * @param tcObject The object manager
    * @param dna The DNA to read
    * @param pojo The new instance of the pojo to reconstitute (will be modified)
@@ -185,7 +184,7 @@ public interface TCClass {
 
   /**
    * Write an object to DNA
-   *
+   * 
    * @param tcObject The object manager
    * @param writer The writer to write to
    * @param pojo The instance to write
@@ -193,26 +192,13 @@ public interface TCClass {
   public void dehydrate(TCObject tcObject, DNAWriter writer, Object pojo);
 
   /**
-   * @return Descriptor of defining classloader
-   */
-  public LoaderDescription getDefiningLoaderDescription();
-
-  /**
    * Create a new TCObject
-   *
+   * 
    * @param id The object identifier
    * @param peer The object
    * @param isNew true whether this TCObject is for a newly shared pojo peer
    */
   public TCObject createTCObject(ObjectID id, Object peer, boolean isNew);
-
-  /**
-   * Get a field name by offset into an index of fields
-   *
-   * @param fieldOffset The index
-   * @return The fully-qualified field name at that index
-   */
-  public String getFieldNameByOffset(long fieldOffset);
 
   /**
    * @return True if this class uses a proxy class
@@ -221,14 +207,14 @@ public interface TCClass {
 
   /**
    * Returns special generated name for classes extending logical classes
-   *
+   * 
    * @return Special generated logical extending class name or just the normal class name if not extending logical
    */
   public String getExtendingClassName();
 
   /**
    * Returns true if the field represented by the offset is a portable field, i.e., not static and not dso transient
-   *
+   * 
    * @param fieldOffset The index
    * @return true if the field is portable and false otherwise
    */

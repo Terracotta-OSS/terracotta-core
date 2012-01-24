@@ -47,7 +47,6 @@ public class ManagedObjectTest extends TCTestCase {
 
     assertEquals(1, mo.getObjectReferences().size());
     assertEquals(dna.typeName, mo.getClassname());
-    assertEquals(dna.loaderDesc, mo.getLoaderDescription());
   }
 
   public void testIsNewToDB() throws Exception {

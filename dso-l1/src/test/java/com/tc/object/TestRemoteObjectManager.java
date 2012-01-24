@@ -25,7 +25,7 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
   private final int               SIZE                  = 10000;
 
   /**
-   * sine LinkedBlockingQueue is instrumented this is a workaround to get this test working 
+   * sine LinkedBlockingQueue is instrumented this is a workaround to get this test working
    * TODO: change back to {@link NoExceptionLinkedQueue} when instrumentation is removed
    */
   public final ArrayBlockingQueue retrieveCalls         = new ArrayBlockingQueue(SIZE);
@@ -94,10 +94,6 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
     }
 
     public DNACursor getCursor() {
-      throw new ImplementMe();
-    }
-
-    public String getDefiningLoaderDescription() {
       throw new ImplementMe();
     }
 

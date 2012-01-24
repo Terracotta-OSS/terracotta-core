@@ -15,10 +15,9 @@ public class UTF8ByteCompressedDataHolder extends UTF8ByteDataHolder {
   /**
    * For a possibly interned, compressed string
    */
-  public UTF8ByteCompressedDataHolder(byte[] b, boolean interned, int uncompressedLength, int originalStringLength,
-                                      int originalStringHash) {
+  public UTF8ByteCompressedDataHolder(byte[] b, int uncompressedLength, int originalStringLength, int originalStringHash) {
 
-    super(b, interned);
+    super(b);
     this.uncompressedLength = uncompressedLength;
     this.originalStringLength = originalStringLength;
     this.originalStringHash = originalStringHash;
@@ -28,19 +27,21 @@ public class UTF8ByteCompressedDataHolder extends UTF8ByteDataHolder {
     return BaseDNAEncodingImpl.inflateCompressedString(getBytes(), uncompressedLength);
   }
 
+  @Override
   public String asString() {
     return inflate();
   }
 
+  @Override
   public int hashCode() {
     return computeHashCode(21);
   }
-  
+
+  @Override
   public boolean equals(Object obj) {
     if (obj instanceof UTF8ByteCompressedDataHolder) {
       UTF8ByteCompressedDataHolder other = (UTF8ByteCompressedDataHolder) obj;
-      return ((uncompressedLength == other.uncompressedLength) 
-          && (Arrays.equals(getBytes(), other.getBytes())));
+      return ((uncompressedLength == other.uncompressedLength) && (Arrays.equals(getBytes(), other.getBytes())));
     }
     return false;
   }

@@ -499,10 +499,6 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
       return null;
     }
 
-    public String getLoaderDescription() {
-      return null;
-    }
-
     public Set getObjectReferences() {
       return null;
     }

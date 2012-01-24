@@ -9,14 +9,13 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tctest.builtin.ConcurrentHashMap;
+import com.tctest.builtin.Lock;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class CompetingLockAndTryLockTestApp extends AbstractTransparentApp {
 
@@ -50,7 +49,7 @@ public class CompetingLockAndTryLockTestApp extends AbstractTransparentApp {
     public void run() {
       try {
         for (int i = 0; i < 100; i++) {
-          locks.put(i, new ReentrantLock());
+          locks.put(i, new Lock());
           System.err.println("Constructed Lock " + i);
           barrier.await(); // 1
           barrier.await(); // 2
@@ -69,12 +68,12 @@ public class CompetingLockAndTryLockTestApp extends AbstractTransparentApp {
         for (int i = 0; i < 100; i++) {
           barrier.await(); // 1
           final Lock l = locks.get(i);
-          l.lock();
+          l.writeLock();
           try {
             System.err.println("Locked " + i);
             barrier.await(); // 2
           } finally {
-            l.unlock();
+            l.writeUnlock();
             System.err.println("Unlocked " + i);
           }
         }
@@ -92,9 +91,9 @@ public class CompetingLockAndTryLockTestApp extends AbstractTransparentApp {
         for (int i = 0; i < 100; i++) {
           barrier.await(); // 1
           final Lock l = locks.get(i);
-          if (l.tryLock()) {
+          if (l.tryWriteLock()) {
             System.err.println("Try Locked " + i);
-            l.unlock();
+            l.writeUnlock();
             System.err.println("Try Unlocked " + i);
           } else {
             System.err.println("Failed Try Lock " + i);

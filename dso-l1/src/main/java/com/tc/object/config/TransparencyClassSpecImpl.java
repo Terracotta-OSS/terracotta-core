@@ -11,7 +11,6 @@ import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.aspectwerkz.reflect.MethodInfo;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ClassAdapterFactory;
-import com.tc.object.bytecode.DateMethodAdapter;
 import com.tc.object.bytecode.DistributedMethodCallAdapter;
 import com.tc.object.bytecode.LogicalMethodAdapter;
 import com.tc.object.bytecode.MethodAdapter;
@@ -32,39 +31,38 @@ import java.util.Set;
 /**
  * Describe the Custom adaption of a class
  */
-public class TransparencyClassSpecImpl implements TransparencyClassSpecInternal {
+public class TransparencyClassSpecImpl implements TransparencyClassSpec {
 
-  private static final String                     HONOR_TRANSIENT_KEY        = "honor-transient";
-  private static final String                     HONOR_VOLATILE_KEY         = "honor-volatile";
-  private static final String                     IGNORE_REWRITE_KEY         = "ignore_rewrite";
+  private static final String                     HONOR_TRANSIENT_KEY       = "honor-transient";
+  private static final String                     HONOR_VOLATILE_KEY        = "honor-volatile";
+  private static final String                     IGNORE_REWRITE_KEY        = "ignore_rewrite";
 
   private final DSOClientConfigHelper             configuration;
   private final String                            className;
-  private final List<MethodCreator>               supportMethodCreators      = new LinkedList<MethodCreator>();
-  private final Map<String, MethodAdapter>        methodAdapters             = new HashMap<String, MethodAdapter>();
-  private final List<ClassAdapterFactory>         customClassAdapters        = new ArrayList<ClassAdapterFactory>();
-  private final List<ClassAdapterFactory>         afterDsoClassAdapters      = new ArrayList<ClassAdapterFactory>();
-  private final Map<String, Boolean>              flags                      = new HashMap<String, Boolean>();
-  private final Map<String, TransparencyCodeSpec> codeSpecs                  = new HashMap<String, TransparencyCodeSpec>();
-  private final Set<String>                       nonInstrumentedMethods     = Collections
-                                                                                 .synchronizedSet(new HashSet<String>());
+  private final List<MethodCreator>               supportMethodCreators     = new LinkedList<MethodCreator>();
+  private final Map<String, MethodAdapter>        methodAdapters            = new HashMap<String, MethodAdapter>();
+  private final List<ClassAdapterFactory>         customClassAdapters       = new ArrayList<ClassAdapterFactory>();
+  private final List<ClassAdapterFactory>         afterDsoClassAdapters     = new ArrayList<ClassAdapterFactory>();
+  private final Map<String, Boolean>              flags                     = new HashMap<String, Boolean>();
+  private final Map<String, TransparencyCodeSpec> codeSpecs                 = new HashMap<String, TransparencyCodeSpec>();
+  private final Set<String>                       nonInstrumentedMethods    = Collections
+                                                                                .synchronizedSet(new HashSet<String>());
   private String                                  changeApplicatorClassName;
   private ChangeApplicatorSpec                    changeApplicatorSpec;
   private boolean                                 isLogical;
   private boolean                                 onLoadInjection;
-  private final IncludeOnLoad                     onLoad                     = new IncludeOnLoad();
+  private final IncludeOnLoad                     onLoad                    = new IncludeOnLoad();
   private boolean                                 preInstrumented;
   private boolean                                 foreign;
 
-  private boolean                                 useNonDefaultConstructor   = false;
-  private boolean                                 honorJDKSubVersionSpecific = false;
+  private boolean                                 useNonDefaultConstructor  = false;
 
-  private byte                                    instrumentationAction      = NOT_SET;
+  private byte                                    instrumentationAction     = NOT_SET;
 
-  private String                                  postCreateMethod           = null;
-  private String                                  preCreateMethod            = null;
-  private String                                  logicalExtendingClassName  = null;
-  private TransparencyCodeSpec                    defaultCodeSpec            = null;
+  private String                                  postCreateMethod          = null;
+  private String                                  preCreateMethod           = null;
+  private String                                  logicalExtendingClassName = null;
+  private TransparencyCodeSpec                    defaultCodeSpec           = null;
 
   public TransparencyClassSpecImpl(final String className, final DSOClientConfigHelper configuration,
                                    final String changeApplicatorClassName) {
@@ -310,58 +308,6 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpecInternal 
     methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.ALWAYS_LOG));
   }
 
-  public void addIfTrueLogSpec(final String name) {
-    methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.IF_TRUE_LOG));
-  }
-
-  public void addSetIteratorWrapperSpec(final String name) {
-    methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.SET_ITERATOR_WRAPPER_LOG));
-  }
-
-  public void addViewSetWrapperSpec(final String name) {
-    methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.SORTED_SET_VIEW_WRAPPER_LOG));
-  }
-
-  public void addEntrySetWrapperSpec(final String name) {
-    methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.ENTRY_SET_WRAPPER_LOG));
-  }
-
-  public void addKeySetWrapperSpec(final String name) {
-    methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.KEY_SET_WRAPPER_LOG));
-  }
-
-  public void addValuesWrapperSpec(final String name) {
-    methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.VALUES_WRAPPER_LOG));
-  }
-
-  public void addHashMapPutLogSpec(final String name) {
-    methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.HASHMAP_PUT_LOG));
-  }
-
-  public void addHashtablePutLogSpec(final String name) {
-    methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.HASHTABLE_PUT_LOG));
-  }
-
-  public void addTHashMapPutLogSpec(final String name) {
-    methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.THASHMAP_PUT_LOG));
-  }
-
-  public void addTObjectHashRemoveAtLogSpec(final String name) {
-    methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.TOBJECTHASH_REMOVE_AT_LOG));
-  }
-
-  public void addHashtableClearLogSpec(final String name) {
-    methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.HASHTABLE_CLEAR_LOG));
-  }
-
-  public void addHashtableRemoveLogSpec(final String name) {
-    methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.HASHTABLE_REMOVE_LOG));
-  }
-
-  public void addHashMapRemoveLogSpec(final String name) {
-    methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.HASHMAP_REMOVE_LOG));
-  }
-
   public void addArrayCopyMethodCodeSpec(final String name) {
     TransparencyCodeSpec codeSpec = new TransparencyCodeSpecImpl();
     codeSpec.setArraycopyInstrumentationReq(true);
@@ -373,14 +319,6 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpecInternal 
     TransparencyCodeSpec codeSpec = TransparencyCodeSpecImpl.getDefaultPhysicalCodeSpec();
     codeSpec.setWaitNotifyInstrumentationReq(false);
     codeSpecs.put(name, codeSpec);
-  }
-
-  public void addDateMethodLogSpec(final String name) {
-    methodAdapters.put(name, new DateMethodAdapter(name, MethodSpec.DATE_ADD_SET_TIME_WRAPPER_LOG));
-  }
-
-  public void addDateMethodLogSpec(final String name, final int methodSpec) {
-    methodAdapters.put(name, new DateMethodAdapter(name, methodSpec));
   }
 
   public void addMethodCodeSpec(final String name, final TransparencyCodeSpec codeSpec) {
@@ -490,14 +428,6 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpecInternal 
 
   public byte getInstrumentationAction() {
     return this.instrumentationAction;
-  }
-
-  public boolean isHonorJDKSubVersionSpecific() {
-    return honorJDKSubVersionSpecific;
-  }
-
-  public void setHonorJDKSubVersionSpecific(final boolean honorJDKSubVersionSpecific) {
-    this.honorJDKSubVersionSpecific = honorJDKSubVersionSpecific;
   }
 
   public String getPreCreateMethod() {

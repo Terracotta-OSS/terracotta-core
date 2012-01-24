@@ -40,14 +40,12 @@ public class DNAWriterImpl implements DNAWriterInternal {
   private int                            metaDataOffset = UNINITIALIZED;
 
   public DNAWriterImpl(TCByteBufferOutputStream output, ObjectID id, String className,
-                       ObjectStringSerializer serializer, DNAEncodingInternal encoding, String loaderDesc,
-                       boolean isDelta) {
-    this(output, id, className, serializer, encoding, loaderDesc, DNA.NULL_VERSION, isDelta);
+                       ObjectStringSerializer serializer, DNAEncodingInternal encoding, boolean isDelta) {
+    this(output, id, className, serializer, encoding, DNA.NULL_VERSION, isDelta);
   }
 
   protected DNAWriterImpl(TCByteBufferOutputStream output, ObjectID id, String className,
-                          ObjectStringSerializer serializer, DNAEncodingInternal encoding, String loaderDesc,
-                          long version, boolean isDelta) {
+                          ObjectStringSerializer serializer, DNAEncodingInternal encoding, long version, boolean isDelta) {
     this.output = output;
     this.encoding = encoding;
     this.serializer = serializer;
@@ -61,7 +59,6 @@ public class DNAWriterImpl implements DNAWriterInternal {
 
     if (!isDelta) {
       serializer.writeString(output, className);
-      serializer.writeString(output, loaderDesc);
     }
 
     flags = Conversion.setFlag(flags, DNA.IS_DELTA, isDelta);
@@ -115,13 +112,6 @@ public class DNAWriterImpl implements DNAWriterInternal {
     output.writeByte(BaseDNAEncodingImpl.SUB_ARRAY_ACTION_TYPE);
     output.writeInt(start);
     encoding.encodeArray(array, output, length);
-  }
-
-  public void addClassLoaderAction(String classLoaderFieldName, ClassLoader value) {
-    actionCount++;
-    output.writeByte(BaseDNAEncodingImpl.PHYSICAL_ACTION_TYPE);
-    serializer.writeFieldName(output, classLoaderFieldName);
-    encoding.encodeClassLoader(value, output);
   }
 
   /**
@@ -320,10 +310,6 @@ public class DNAWriterImpl implements DNAWriterInternal {
 
     public void addArrayElementAction(int index, Object value) {
       parent.addArrayElementAction(index, value);
-    }
-
-    public void addClassLoaderAction(String classLoaderFieldName, ClassLoader value) {
-      parent.addClassLoaderAction(classLoaderFieldName, value);
     }
 
     public void addEntireArray(Object value) {

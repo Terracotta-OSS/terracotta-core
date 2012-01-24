@@ -7,7 +7,6 @@ package com.tc.bundles;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
-import com.terracottatech.config.Module;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -17,12 +16,10 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class ToolkitModuleTest extends TCTestCase {
-  private final String apiVersion;
   private final String tcVersion;
 
   public ToolkitModuleTest() {
     ProductInfo info = ProductInfo.getInstance();
-    apiVersion = info.timApiVersion();
     tcVersion = info.version();
   }
 
@@ -34,14 +31,14 @@ public class ToolkitModuleTest extends TCTestCase {
     makeJar(tempDir, null, "tim-B", "1.0.0",
             "org.terracotta.toolkit.terracotta-toolkit-2.0;bundle-version:=[1.0.0,1.0.0]");
 
-    Resolver resolver = new Resolver(new String[] { tempDir.getAbsolutePath() }, false, tcVersion, apiVersion);
+    Resolver resolver = new Resolver(new String[] { tempDir.getAbsolutePath() }, false, tcVersion);
 
-    Module A = Module.Factory.newInstance();
-    A.setName("tim-A");
+    Module A = new Module();
+    A.setArtifactId("tim-A");
     A.setVersion("1.0.0");
 
-    Module B = Module.Factory.newInstance();
-    B.setName("tim-B");
+    Module B = new Module();
+    B.setArtifactId("tim-B");
     B.setVersion("1.0.0");
 
     resolver.resolve(A);
@@ -64,10 +61,10 @@ public class ToolkitModuleTest extends TCTestCase {
             "org.terracotta.toolkit.terracotta-toolkit-1.2;bundle-version:=[1.0.0,1.0.0]");
     makeJar(tempDir, "org.terracotta.toolkit", "terracotta-toolkit-1.1", "1.0.0", null);
 
-    Resolver resolver = new Resolver(new String[] { tempDir.getAbsolutePath() }, false, tcVersion, apiVersion/* , repos */);
+    Resolver resolver = new Resolver(new String[] { tempDir.getAbsolutePath() }, false, tcVersion /* , repos */);
 
-    Module A = Module.Factory.newInstance();
-    A.setName("tim-A");
+    Module A = new Module();
+    A.setArtifactId("tim-A");
     A.setVersion("1.0.0");
 
     resolver.resolve(A);
@@ -80,8 +77,8 @@ public class ToolkitModuleTest extends TCTestCase {
     assertEquals(1, tookitVersion.getMajor());
     assertEquals(1, tookitVersion.getMinor());
 
-    Module B = Module.Factory.newInstance();
-    B.setName("tim-B");
+    Module B = new Module();
+    B.setArtifactId("tim-B");
     B.setVersion("1.0.0");
     try {
       resolver.resolve(B);
@@ -99,11 +96,11 @@ public class ToolkitModuleTest extends TCTestCase {
     makeJar(tempDir, null, "tim-A", "1.0.0",
             "org.terracotta.toolkit.terracotta-toolkit-1.5;bundle-version:=[1.0.0,1.0.0]");
 
-    Resolver resolver = new Resolver(new String[] { tempDir.getAbsolutePath() }, false, tcVersion, apiVersion/* , repos */);
+    Resolver resolver = new Resolver(new String[] { tempDir.getAbsolutePath() }, false, tcVersion /* , repos */);
 
-    Module tk = Module.Factory.newInstance();
+    Module tk = new Module();
     tk.setGroupId("org.terracotta.toolkit");
-    tk.setName("terracotta-toolkit-1.1");
+    tk.setArtifactId("terracotta-toolkit-1.1");
     tk.setVersion("1.0.0");
 
     resolver.resolve(tk);
@@ -114,8 +111,8 @@ public class ToolkitModuleTest extends TCTestCase {
     assertEquals(1, tookitVersion.getMajor());
     assertEquals(1, tookitVersion.getMinor());
 
-    Module A = Module.Factory.newInstance();
-    A.setName("tim-A");
+    Module A = new Module();
+    A.setArtifactId("tim-A");
     A.setVersion("1.0.0");
     try {
       resolver.resolve(A);
@@ -134,14 +131,14 @@ public class ToolkitModuleTest extends TCTestCase {
     makeJar(tempDir, null, "tim-B", "1.0.0",
             "org.terracotta.toolkit.terracotta-toolkit-1.40;bundle-version:=[1.0.0,1.0.0]");
 
-    Resolver resolver = new Resolver(new String[] { tempDir.getAbsolutePath() }, false, tcVersion, apiVersion);
+    Resolver resolver = new Resolver(new String[] { tempDir.getAbsolutePath() }, false, tcVersion);
 
-    Module A = Module.Factory.newInstance();
-    A.setName("tim-A");
+    Module A = new Module();
+    A.setArtifactId("tim-A");
     A.setVersion("1.0.0");
 
-    Module B = Module.Factory.newInstance();
-    B.setName("tim-B");
+    Module B = new Module();
+    B.setArtifactId("tim-B");
     B.setVersion("1.0.0");
 
     resolver.resolve(A);

@@ -21,13 +21,6 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
-      <artifactId>common-api</artifactId>
-      <version>${project.version}</version>
-      <type>test-jar</type>
-      <scope>provided</scope>
-    </dependency>  
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
       <artifactId>deploy</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>

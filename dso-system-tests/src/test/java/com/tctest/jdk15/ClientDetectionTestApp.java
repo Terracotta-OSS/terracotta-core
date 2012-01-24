@@ -19,6 +19,7 @@ import com.tc.stats.api.DSOMBean;
 import com.tc.test.JMXUtils;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tctest.builtin.CyclicBarrier;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.io.File;
@@ -27,7 +28,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CyclicBarrier;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
@@ -101,8 +101,8 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
     ObjectName[] clientObjectNames = dsoMBean.getClients();
     DSOClientMBean[] clients = new DSOClientMBean[clientObjectNames.length];
     for (int i = 0; i < clients.length; i++) {
-      clients[i] = MBeanServerInvocationHandler.newProxyInstance(mbsc, clientObjectNames[i],
-                                                                                  DSOClientMBean.class, false);
+      clients[i] = MBeanServerInvocationHandler.newProxyInstance(mbsc, clientObjectNames[i], DSOClientMBean.class,
+                                                                 false);
     }
     return clients;
   }

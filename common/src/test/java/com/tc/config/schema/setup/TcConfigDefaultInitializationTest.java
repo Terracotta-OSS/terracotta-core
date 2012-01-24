@@ -7,36 +7,23 @@ import org.apache.xmlbeans.XmlObject;
 
 import com.tc.config.schema.SystemConfigObject;
 import com.tc.config.schema.defaults.SchemaDefaultValueProvider;
-import com.tc.object.config.schema.DSOApplicationConfigObject;
 import com.tc.object.config.schema.L1DSOConfigObject;
 import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
-import com.terracottatech.config.AdditionalBootJarClasses;
-import com.terracottatech.config.AppGroups;
 import com.terracottatech.config.Authentication;
-import com.terracottatech.config.DistributedMethods;
 import com.terracottatech.config.HttpAuthentication;
-import com.terracottatech.config.InjectedInstances;
-import com.terracottatech.config.InstrumentedClasses;
 import com.terracottatech.config.License;
-import com.terracottatech.config.Locks;
-import com.terracottatech.config.Modules;
 import com.terracottatech.config.Offheap;
-import com.terracottatech.config.Roots;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 import com.terracottatech.config.TcProperties;
-import com.terracottatech.config.TransientFields;
-import com.terracottatech.config.WebApplications;
 
 import java.io.File;
 import java.lang.reflect.Method;
 
 public class TcConfigDefaultInitializationTest extends TCTestCase {
-  private static Class[] exemptedElements = { License.class, Modules.class, TcProperties.class, Locks.class,
-      Roots.class, DistributedMethods.class, InstrumentedClasses.class, TransientFields.class,
-      AdditionalBootJarClasses.class, WebApplications.class, InjectedInstances.class, AppGroups.class,
-      Authentication.class, HttpAuthentication.class, Offheap.class };
+  private static Class[] exemptedElements = { License.class, TcProperties.class, Authentication.class,
+      HttpAuthentication.class, Offheap.class };
   private TcConfig       config;
 
   @Override
@@ -46,7 +33,6 @@ public class TcConfigDefaultInitializationTest extends TCTestCase {
     L2DSOConfigObject.initializeServers(this.config, new SchemaDefaultValueProvider(), new File("tmp"));
     SystemConfigObject.initializeSystem(this.config, defaultValueProvider);
     L1DSOConfigObject.initializeClients(this.config, defaultValueProvider);
-    DSOApplicationConfigObject.initializeApplication(this.config, defaultValueProvider);
     config.getServers().getMirrorGroups().getMirrorGroupArray(0).setGroupName("test-group");
   }
 

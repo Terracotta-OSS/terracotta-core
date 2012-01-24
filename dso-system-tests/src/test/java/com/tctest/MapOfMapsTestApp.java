@@ -4,35 +4,28 @@
  */
 package com.tctest;
 
-import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
-import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
-
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
-import com.tc.object.config.spec.CyclicBarrierSpec;
-import com.tc.object.config.spec.SynchronizedIntSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tc.util.StringUtil;
 import com.tc.util.runtime.Os;
+import com.tctest.builtin.ArrayList;
+import com.tctest.builtin.AtomicInteger;
+import com.tctest.builtin.CyclicBarrier;
+import com.tctest.builtin.HashMap;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TreeMap;
+import java.util.concurrent.BrokenBarrierException;
 
 public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
 
@@ -43,7 +36,7 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
   public static final String OFFHEAP      = "offheap";
 
   final Map                  root         = new HashMap();
-  final SynchronizedInt      uid          = new SynchronizedInt(0);
+  final AtomicInteger        uid          = new AtomicInteger(0);
   CyclicBarrier              barrier;
 
   public MapOfMapsTestApp(final String appId, final ApplicationConfig cfg, final ListenerProvider listenerProvider) {
@@ -73,14 +66,12 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
     config.addWriteAutolock(methodExpression);
     methodExpression = "* " + testClass + ".populateMyRoot(..)";
     config.addWriteAutolock(methodExpression);
-    new SynchronizedIntSpec().visit(visitor, config);
-    new CyclicBarrierSpec().visit(visitor, config);
   }
 
   @Override
-  public void runTest() throws BrokenBarrierException, InterruptedException {
+  public void runTest() throws InterruptedException, BrokenBarrierException {
     setCyclicBarrier();
-    final int myid = this.uid.increment();
+    final int myid = this.uid.incrementAndGet();
     if (myid == 1) {
       // Writer
       runCreateMaps();
@@ -90,11 +81,11 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
     }
   }
 
-  private void runReadMaps() throws BrokenBarrierException, InterruptedException {
+  private void runReadMaps() throws InterruptedException, BrokenBarrierException {
     int count = 0;
     final int mapCountNo = calculateMapCount(DEPTH_COUNT, BREATH_COUNT);
     while (count++ < LOOP_COUNT) {
-      this.barrier.barrier();
+      this.barrier.await();
       log("Readers : Loop Count : " + count);
       final Map myRoot = read(String.valueOf(count), this.root);
       final int mapCount = countMaps(myRoot);
@@ -126,14 +117,14 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
     return count;
   }
 
-  private void runCreateMaps() throws BrokenBarrierException, InterruptedException {
+  private void runCreateMaps() throws InterruptedException, BrokenBarrierException {
     int count = 0;
     while (count++ < LOOP_COUNT) {
       log("Writer : Loop Count : " + count);
       final Map myRoot = new HashMap();
       add2Root(String.valueOf(count), myRoot);
       populateMyRoot(myRoot, DEPTH_COUNT, BREATH_COUNT);
-      this.barrier.barrier();
+      this.barrier.await();
     }
   }
 
@@ -182,24 +173,8 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
     return child;
   }
 
-  /**
-   * HashMap, Hashtable and LinkedHashMap supports partial collection and IdentityHashMap and TreeMap doesnt support it.
-   * So both should be tested
-   */
   private Map getChild(final Map m) {
-    if (m instanceof HashMap) {
-      return getPopulatedMap(new Hashtable());
-    } else if (m instanceof Hashtable) {
-      return getPopulatedMap(new LinkedHashMap());
-    } else if (m instanceof LinkedHashMap) {
-      return getPopulatedMap(new IdentityHashMap());
-    } else if (m instanceof IdentityHashMap) {
-      return getPopulatedMap(new TreeMap());
-    } else if (m instanceof TreeMap) {
-      return getPopulatedMap(new HashMap());
-    } else {
-      throw new AssertionError("Should never get here");
-    }
+    return getPopulatedMap(new HashMap());
   }
 
   private Map getPopulatedMap(final Map m) {

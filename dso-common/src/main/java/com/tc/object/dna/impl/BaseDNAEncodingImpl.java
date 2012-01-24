@@ -16,7 +16,6 @@ import com.tc.object.loaders.ClassProvider;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
-import com.tc.util.StringTCUtil;
 
 import gnu.trove.TObjectIntHashMap;
 
@@ -24,9 +23,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.Currency;
 import java.util.zip.InflaterInputStream;
 
 /**
@@ -73,14 +69,10 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
   protected static final byte                 TYPE_ID_ARRAY                        = 14;
   protected static final byte                 TYPE_ID_JAVA_LANG_CLASS              = 15;
   protected static final byte                 TYPE_ID_JAVA_LANG_CLASS_HOLDER       = 16;
-  protected static final byte                 TYPE_ID_BIG_INTEGER                  = 17;
-  protected static final byte                 TYPE_ID_STACK_TRACE_ELEMENT          = 18;
-  protected static final byte                 TYPE_ID_BIG_DECIMAL                  = 19;
   protected static final byte                 TYPE_ID_JAVA_LANG_CLASSLOADER        = 20;
   protected static final byte                 TYPE_ID_JAVA_LANG_CLASSLOADER_HOLDER = 21;
   protected static final byte                 TYPE_ID_ENUM                         = 22;
   protected static final byte                 TYPE_ID_ENUM_HOLDER                  = 23;
-  protected static final byte                 TYPE_ID_CURRENCY                     = 24;
   protected static final byte                 TYPE_ID_STRING_COMPRESSED            = 25;
   // protected static final byte TYPE_ID_URL = 26;
 
@@ -104,15 +96,6 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
     this.classProvider = classProvider;
   }
 
-  public void encodeClassLoader(final ClassLoader value, final TCDataOutput output) {
-    encodeClassLoader(value, output, NULL_SERIALIZER);
-  }
-
-  public void encodeClassLoader(final ClassLoader value, final TCDataOutput output, ObjectStringSerializer serializer) {
-    output.writeByte(TYPE_ID_JAVA_LANG_CLASSLOADER);
-    writeString(this.classProvider.getLoaderDescriptionFor(value).toDelimitedString(), output, serializer);
-  }
-
   public void encode(Object value, final TCDataOutput output) {
     encode(value, output, NULL_SERIALIZER);
   }
@@ -127,33 +110,20 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
     final LiteralValues type = LiteralValues.valueFor(value);
 
     switch (type) {
-      case CURRENCY:
-        output.writeByte(TYPE_ID_CURRENCY);
-        writeString(((Currency) value).getCurrencyCode(), output, serializer);
-        break;
       case ENUM:
         output.writeByte(TYPE_ID_ENUM);
         final Class enumClass = ((Enum) value).getDeclaringClass();
         writeString(enumClass.getName(), output, serializer);
-        writeString(this.classProvider.getLoaderDescriptionFor(enumClass).toDelimitedString(), output, serializer);
         writeString(((Enum) value).name(), output, serializer);
         break;
       case ENUM_HOLDER:
         output.writeByte(TYPE_ID_ENUM_HOLDER);
         writeEnumInstance((EnumInstance) value, output, serializer);
         break;
-      case JAVA_LANG_CLASSLOADER:
-        encodeClassLoader((ClassLoader) value, output);
-        break;
-      case JAVA_LANG_CLASSLOADER_HOLDER:
-        output.writeByte(TYPE_ID_JAVA_LANG_CLASSLOADER_HOLDER);
-        writeClassLoaderInstance((ClassLoaderInstance) value, output, serializer);
-        break;
       case JAVA_LANG_CLASS:
         output.writeByte(TYPE_ID_JAVA_LANG_CLASS);
         final Class c = (Class) value;
         writeString(c.getName(), output, serializer);
-        writeString(this.classProvider.getLoaderDescriptionFor(c).toDelimitedString(), output, serializer);
         break;
       case JAVA_LANG_CLASS_HOLDER:
         output.writeByte(TYPE_ID_JAVA_LANG_CLASS_HOLDER);
@@ -193,43 +163,25 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
         break;
       case STRING:
         final String s = (String) value;
-        boolean stringInterned = false;
-
-        if (StringTCUtil.isInterned(s)) {
-          stringInterned = true;
-        }
 
         if (STRING_COMPRESSION_ENABLED && s.length() >= STRING_COMPRESSION_MIN_SIZE) {
           output.writeByte(TYPE_ID_STRING_COMPRESSED);
-          output.writeBoolean(stringInterned);
           writeCompressedString(s, output);
         } else {
           output.writeByte(TYPE_ID_STRING);
-          output.writeBoolean(stringInterned);
           writeString(s, output, serializer);
         }
         break;
       case STRING_BYTES:
         final UTF8ByteDataHolder utfBytes = (UTF8ByteDataHolder) value;
-        boolean stringbytesInterned = false;
-        if (utfBytes.isInterned()) {
-          stringbytesInterned = true;
-        }
 
         output.writeByte(TYPE_ID_STRING_BYTES);
-        output.writeBoolean(stringbytesInterned);
         serializer.writeStringBytes(output, utfBytes.getBytes());
         break;
       case STRING_BYTES_COMPRESSED:
         final UTF8ByteCompressedDataHolder utfCompressedBytes = (UTF8ByteCompressedDataHolder) value;
-        boolean interned = false;
-
-        if (utfCompressedBytes.isInterned()) {
-          interned = true;
-        }
 
         output.writeByte(TYPE_ID_STRING_COMPRESSED);
-        output.writeBoolean(interned);
         output.writeInt(utfCompressedBytes.getUncompressedStringLength());
         writeByteArray(utfCompressedBytes.getBytes(), output);
         output.writeInt(utfCompressedBytes.getStringLength());
@@ -240,33 +192,9 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
         output.writeByte(TYPE_ID_REFERENCE);
         output.writeLong(((ObjectID) value).toLong());
         break;
-      case STACK_TRACE_ELEMENT:
-        output.writeByte(TYPE_ID_STACK_TRACE_ELEMENT);
-        final StackTraceElement ste = (StackTraceElement) value;
-        writeStackTraceElement(ste, output);
-        break;
-      case BIG_INTEGER:
-        output.writeByte(TYPE_ID_BIG_INTEGER);
-        writeByteArray(((BigInteger) value).toByteArray(), output);
-        break;
-      case BIG_DECIMAL:
-        output.writeByte(TYPE_ID_BIG_DECIMAL);
-        writeByteArray(((BigDecimal) value).toString().getBytes(), output);
-        break;
       case ARRAY:
         encodeArray(value, output);
         break;
-      // case LiteralValues.URL:
-      // {
-      // URL url = (URL)value;
-      // output.writeByte(TYPE_ID_URL);
-      // output.writeString(url.getProtocol());
-      // output.writeString(url.getHost());
-      // output.writeInt(url.getPort());
-      // output.writeString(url.getFile());
-      // output.writeString(url.getRef());
-      // }
-      // break;
       default:
         throw Assert.failure("Illegal type (" + type + "):" + value);
     }
@@ -274,28 +202,14 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
     // unreachable
   }
 
-  private void writeStackTraceElement(final StackTraceElement ste, final TCDataOutput output) {
-    output.writeString(ste.getClassName());
-    output.writeString(ste.getMethodName());
-    output.writeString(ste.getFileName());
-    output.writeInt(ste.getLineNumber());
-  }
-
   private void writeEnumInstance(final EnumInstance value, final TCDataOutput output, ObjectStringSerializer serializer) {
     writeStringBytes(value.getClassInstance().getName().getBytes(), output, serializer);
-    writeStringBytes(value.getClassInstance().getLoaderDef().getBytes(), output, serializer);
     writeStringBytes(((UTF8ByteDataHolder) value.getEnumName()).getBytes(), output, serializer);
-  }
-
-  private void writeClassLoaderInstance(final ClassLoaderInstance value, final TCDataOutput output,
-                                        ObjectStringSerializer serializer) {
-    writeStringBytes(value.getLoaderDef().getBytes(), output, serializer);
   }
 
   private void writeClassInstance(final ClassInstance value, final TCDataOutput output,
                                   ObjectStringSerializer serializer) {
     writeStringBytes(value.getName().getBytes(), output, serializer);
-    writeStringBytes(value.getLoaderDef().getBytes(), output, serializer);
   }
 
   private void writeString(final String string, final TCDataOutput output, final ObjectStringSerializer serializer) {
@@ -367,16 +281,10 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
     final byte type = input.readByte();
 
     switch (type) {
-      case TYPE_ID_CURRENCY:
-        return readCurrency(input, type, serializer);
       case TYPE_ID_ENUM:
         return readEnum(input, type, serializer);
       case TYPE_ID_ENUM_HOLDER:
         return readEnum(input, type, serializer);
-      case TYPE_ID_JAVA_LANG_CLASSLOADER:
-        return readClassLoader(input, type, serializer);
-      case TYPE_ID_JAVA_LANG_CLASSLOADER_HOLDER:
-        return readClassLoader(input, type, serializer);
       case TYPE_ID_JAVA_LANG_CLASS:
         return readClass(input, type, serializer);
       case TYPE_ID_JAVA_LANG_CLASS_HOLDER:
@@ -407,27 +315,6 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
         return new ObjectID(input.readLong());
       case TYPE_ID_ARRAY:
         return decodeArray(input);
-      case TYPE_ID_STACK_TRACE_ELEMENT:
-        return readStackTraceElement(input);
-      case TYPE_ID_BIG_INTEGER:
-        final byte[] b1 = readByteArray(input);
-        return new BigInteger(b1);
-      case TYPE_ID_BIG_DECIMAL:
-        // char[] chars = readCharArray(input); // Unfortunately this is 1.5 specific
-        final byte[] b2 = readByteArray(input);
-        return new BigDecimal(new String(b2));
-        // case TYPE_ID_URL:
-        // {
-        // String protocol = input.readString();
-        // String host = input.readString();
-        // int port = input.readInt();
-        // String file = input.readString();
-        // String ref = input.readString();
-        // if (ref != null) {
-        // file = file+"#"+ref;
-        // }
-        // return new URL(protocol, host, port, file);
-        // }
       default:
         throw Assert.failure("Illegal type (" + type + ")");
     }
@@ -446,14 +333,6 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
   // }
   // return array;
   // }
-
-  private Object readStackTraceElement(final TCDataInput input) throws IOException {
-    final String className = input.readString();
-    final String methodName = input.readString();
-    final String fileName = input.readString();
-    final int lineNumber = input.readInt();
-    return new StackTraceElement(className, methodName, fileName, lineNumber);
-  }
 
   public void encodeArray(final Object value, final TCDataOutput output) {
     encodeArray(value, output, value == null ? -1 : Array.getLength(value));
@@ -702,25 +581,17 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
     return rv;
   }
 
-  private Object readCurrency(final TCDataInput input, final byte type, ObjectStringSerializer serializer)
-      throws IOException {
-    final byte[] data = readStringBytes(input, serializer);
-    final String currencyCode = new String(data, "UTF-8");
-    return Currency.getInstance(currencyCode);
-  }
-
   private Object readEnum(final TCDataInput input, final byte type, ObjectStringSerializer serializer)
       throws IOException, ClassNotFoundException {
     final UTF8ByteDataHolder name = new UTF8ByteDataHolder(readStringBytes(input, serializer));
-    final UTF8ByteDataHolder def = new UTF8ByteDataHolder(readStringBytes(input, serializer));
     final byte[] data = readStringBytes(input, serializer);
 
     if (useStringEnumRead(type)) {
-      final Class enumType = new ClassInstance(name, def).asClass(this.classProvider);
+      final Class enumType = new ClassInstance(name).asClass(this.classProvider);
       final String enumName = new String(data, "UTF-8");
       return Enum.valueOf(enumType, enumName);
     } else {
-      final ClassInstance clazzInstance = new ClassInstance(name, def);
+      final ClassInstance clazzInstance = new ClassInstance(name);
       final UTF8ByteDataHolder enumName = new UTF8ByteDataHolder(data);
       return new EnumInstance(clazzInstance, enumName);
     }
@@ -728,47 +599,29 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
 
   protected abstract boolean useStringEnumRead(byte type);
 
-  private Object readClassLoader(final TCDataInput input, final byte type, ObjectStringSerializer serializer)
-      throws IOException {
-    final UTF8ByteDataHolder def = new UTF8ByteDataHolder(readStringBytes(input, serializer));
-
-    if (useClassProvider(type, TYPE_ID_JAVA_LANG_CLASSLOADER)) {
-      return new ClassLoaderInstance(def).asClassLoader(this.classProvider);
-    } else {
-      return new ClassLoaderInstance(def);
-    }
-  }
-
   protected abstract boolean useClassProvider(byte type, byte typeToCheck);
 
   private Object readClass(final TCDataInput input, final byte type, ObjectStringSerializer serializer)
       throws IOException, ClassNotFoundException {
     final UTF8ByteDataHolder name = new UTF8ByteDataHolder(readStringBytes(input, serializer));
-    final UTF8ByteDataHolder def = new UTF8ByteDataHolder(readStringBytes(input, serializer));
 
     if (useClassProvider(type, TYPE_ID_JAVA_LANG_CLASS)) {
-      return new ClassInstance(name, def).asClass(this.classProvider);
+      return new ClassInstance(name).asClass(this.classProvider);
     } else {
-      return new ClassInstance(name, def);
+      return new ClassInstance(name);
     }
   }
 
   private Object readString(final TCDataInput input, final byte type, ObjectStringSerializer serializer)
       throws IOException {
-    final boolean isInterned = input.readBoolean();
     final byte[] data = readStringBytes(input, serializer);
     if (useUTF8String(type)) {
       // special case the empty string to save memory
       if (data.length == 0) { return ""; }
 
-      if (isInterned) {
-        final String temp = new String(data, "UTF-8");
-        return temp.intern();
-      } else {
-        return new String(data, "UTF-8");
-      }
+      return new String(data, "UTF-8");
     } else {
-      return new UTF8ByteDataHolder(data, isInterned);
+      return new UTF8ByteDataHolder(data);
     }
   }
 
@@ -779,14 +632,13 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
   protected abstract boolean useUTF8String(byte type);
 
   protected Object readCompressedString(final TCDataInput input) throws IOException {
-    final boolean isInterned = input.readBoolean();
     final int stringUncompressedByteLength = input.readInt();
     final byte[] data = readByteArray(input);
 
     final int stringLength = input.readInt();
     final int stringHash = input.readInt();
 
-    return new UTF8ByteCompressedDataHolder(data, isInterned, stringUncompressedByteLength, stringLength, stringHash);
+    return new UTF8ByteCompressedDataHolder(data, stringUncompressedByteLength, stringLength, stringHash);
   }
 
   public static String inflateCompressedString(final byte[] data, int length) {

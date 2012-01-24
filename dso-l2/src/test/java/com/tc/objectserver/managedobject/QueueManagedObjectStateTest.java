@@ -13,7 +13,7 @@ import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.util.Assert;
 
 public class QueueManagedObjectStateTest extends AbstractTestManagedObjectState {
-  String            className            = "java.util.concurrent.LinkedBlockingQueue";
+  String            className            = "org.terracotta.collections.ConcurrentBlockingQueue";
   String            TAKE_LOCK_FIELD_NAME = "takeLock";
   String            PUT_LOCK_FIELD_NAME  = "putLock";
   String            CAPACITY_FIELD_NAME  = "capacity";

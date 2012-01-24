@@ -22,7 +22,6 @@ import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.impl.DNAWriterImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
-import com.tc.object.loaders.LoaderDescription;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockIDSerializer;
 import com.tc.object.locks.Notify;
@@ -547,11 +546,8 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
         DNAWriter writer = (DNAWriter) this.writers.get(oid);
         if (writer == null) {
           final TCClass tcc = tco.getTCClass();
-          // TODO: move LoaderDescription into DNA
-          final LoaderDescription ld = tcc.getDefiningLoaderDescription();
-          final String desc = ld.toDelimitedString();
           writer = new DNAWriterImpl(this.output, oid, tcc.getExtendingClassName(), this.serializer, this.encoding,
-                                     desc, !isNew);
+                                     !isNew);
 
           this.writers.put(oid, writer);
         } else {

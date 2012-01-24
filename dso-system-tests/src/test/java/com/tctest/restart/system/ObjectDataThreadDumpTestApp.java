@@ -16,7 +16,6 @@ import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
-import com.tc.object.config.spec.SynchronizedIntSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.simulator.listener.OutputListener;
@@ -25,6 +24,7 @@ import com.tc.stats.api.DSOMBean;
 import com.tc.test.JMXUtils;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tctest.builtin.AtomicInteger;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.IOException;
@@ -55,9 +55,9 @@ public class ObjectDataThreadDumpTestApp extends AbstractTransparentApp {
   private final int               iterationCount    = 5;
   private final List              workQueue         = new ArrayList();
   private final Collection        resultSet         = new HashSet();
-  private final SynchronizedInt   complete          = new SynchronizedInt(0);
+  private final AtomicInteger     complete          = new AtomicInteger(0);
   private final OutputListener    out;
-  private final SynchronizedInt   nodes             = new SynchronizedInt(0);
+  private final AtomicInteger     nodes             = new AtomicInteger(0);
   private final ApplicationConfig appConfig;
   private final CyclicBarrier     barrier;
 
@@ -82,7 +82,7 @@ public class ObjectDataThreadDumpTestApp extends AbstractTransparentApp {
       int index = barrier.await();
       if (index == 0) testThreadDump();
 
-      if (nodes.increment() == 1) {
+      if (nodes.incrementAndGet() == 1) {
         // if we are the first participant, we control the work queue and do the verifying
         // System.err.println("Populating work queue...");
         populateWorkQueue(workSize, testObjectDepth, workQueue);
@@ -163,17 +163,15 @@ public class ObjectDataThreadDumpTestApp extends AbstractTransparentApp {
     } catch (IOException e) {
       throw new AssertionError(e);
     }
-    DSOMBean dsoMBean = MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO,
-                                                                                 DSOMBean.class, false);
+    DSOMBean dsoMBean = MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO, DSOMBean.class, false);
     ObjectName[] clientObjectNames = dsoMBean.getClients();
     DSOClientMBean[] clients = new DSOClientMBean[clientObjectNames.length];
     L1InfoMBean[] l1InfoMbeans = new L1InfoMBean[clientObjectNames.length];
     for (int i = 0; i < clients.length; i++) {
-      clients[i] = MBeanServerInvocationHandler.newProxyInstance(mbsc, clientObjectNames[i],
-                                                                                  DSOClientMBean.class, false);
-      l1InfoMbeans[i] = MBeanServerInvocationHandler.newProxyInstance(mbsc,
-                                                                                    clients[i].getL1InfoBeanName(),
-                                                                                    L1InfoMBean.class, false);
+      clients[i] = MBeanServerInvocationHandler.newProxyInstance(mbsc, clientObjectNames[i], DSOClientMBean.class,
+                                                                 false);
+      l1InfoMbeans[i] = MBeanServerInvocationHandler.newProxyInstance(mbsc, clients[i].getL1InfoBeanName(),
+                                                                      L1InfoMBean.class, false);
     }
     return l1InfoMbeans;
   }
@@ -289,8 +287,6 @@ public class ObjectDataThreadDumpTestApp extends AbstractTransparentApp {
     String workerRunExpression = "* " + workerClassname + ".run(..)";
     addWriteAutolock(config, isSynchronousWrite, workerRunExpression);
 
-    new SynchronizedIntSpec().visit(visitor, config);
-
     // IDProvider config
     String nextIDExpression = "* " + idProviderClassname + ".nextID(..)";
     addWriteAutolock(config, isSynchronousWrite, nextIDExpression);
@@ -311,11 +307,11 @@ public class ObjectDataThreadDumpTestApp extends AbstractTransparentApp {
     private final List            workQueue;
     private final Collection      results;
     private final Collection      localWorkers     = new HashSet();
-    private final SynchronizedInt complete;
+    private final AtomicInteger   complete;
     private final String          appId;
 
     public WorkerFactory(final String appId, final List workQueue, final Collection results,
-                         final SynchronizedInt complete) {
+                         final AtomicInteger complete) {
       this.appId = appId;
       this.workQueue = workQueue;
       this.results = results;
@@ -340,13 +336,13 @@ public class ObjectDataThreadDumpTestApp extends AbstractTransparentApp {
 
   protected static final class Worker implements Runnable {
 
-    private final String          name;
-    private final List            workQueue;
-    private final Collection      results;
-    private final SynchronizedInt workCompletedCount = new SynchronizedInt(0);
-    private final SynchronizedInt objectChangeCount  = new SynchronizedInt(0);
+    private final String        name;
+    private final List          workQueue;
+    private final Collection    results;
+    private final AtomicInteger workCompletedCount = new AtomicInteger(0);
+    private final AtomicInteger objectChangeCount  = new AtomicInteger(0);
 
-    public Worker(final String name, final List workQueue, final Collection results, final SynchronizedInt complete) {
+    public Worker(final String name, final List workQueue, final Collection results, final AtomicInteger complete) {
       this.name = name;
       this.workQueue = workQueue;
       this.results = results;
@@ -366,12 +362,12 @@ public class ObjectDataThreadDumpTestApp extends AbstractTransparentApp {
           } else {
             throw new RuntimeException("Unexpected task: " + o);
           }
-          objectChangeCount.add(to.increment());
+          objectChangeCount.addAndGet(to.increment());
           synchronized (results) {
             results.add(to);
             results.notifyAll();
           }
-          workCompletedCount.increment();
+          workCompletedCount.incrementAndGet();
         }
       } catch (Exception e) {
         throw new TCRuntimeException(e);

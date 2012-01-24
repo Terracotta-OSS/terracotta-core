@@ -8,7 +8,6 @@ import org.apache.commons.io.FileUtils;
 
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
-import com.tc.config.test.schema.ApplicationConfigBuilder;
 import com.tc.config.test.schema.GroupConfigBuilder;
 import com.tc.config.test.schema.GroupsConfigBuilder;
 import com.tc.config.test.schema.HaConfigBuilder;
@@ -192,13 +191,9 @@ public class MultipleServersConfigCreator {
     }
     l2sConfigbuilder.setGroups(groupsConfigBuilder);
 
-    ApplicationConfigBuilder app = ApplicationConfigBuilder.newMinimalInstance();
-    app.setDSO(dsoApplicationBuilder);
-
     TerracottaConfigBuilder configBuilder = new TerracottaConfigBuilder();
     configBuilder.setSystem(system);
     configBuilder.setServers(l2sConfigbuilder);
-    configBuilder.setApplication(app);
 
     String configAsString = configBuilder.toString();
     System.err.println("Writing config to file:" + configFile.getAbsolutePath() + configAsString);

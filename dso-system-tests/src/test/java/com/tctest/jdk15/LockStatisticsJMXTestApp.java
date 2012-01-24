@@ -24,11 +24,11 @@ import com.tc.test.JMXUtils;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
+import com.tctest.builtin.CyclicBarrier;
+import com.tctest.builtin.Lock;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.Collection;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.locks.ReentrantLock;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
@@ -114,8 +114,8 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     jmxc = JMXUtils.getJMXConnector("localhost", jmxPort);
     mbsc = jmxc.getMBeanServerConnection();
     echo("obtained mbeanserver connection");
-    statMBean = MBeanServerInvocationHandler
-        .newProxyInstance(mbsc, L2MBeanNames.LOCK_STATISTICS, LockStatisticsMonitorMBean.class, false);
+    statMBean = MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.LOCK_STATISTICS,
+                                                              LockStatisticsMonitorMBean.class, false);
   }
 
   private void disconnect() throws Exception {
@@ -177,7 +177,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
       Thread.sleep(2000);
       TestClass tc = (TestClass) sharedRoot;
       LockID lock = ManagerUtil.getManager().generateLockIdentifier(tc.getTryLock());
-      verifyClientStat(lock, ReentrantLock.class.getName(), 1, traceDepth);
+      verifyClientStat(lock, Lock.class.getName(), 1, traceDepth);
       disconnect();
     } else {
       TestClass tc = (TestClass) sharedRoot;
@@ -403,7 +403,8 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     assertStackTracesDepth(ls.children(), traceDepth);
   }
 
-  private void verifyClientStat(LockID lock, String lockType, int numOfClientsStackTraces, int traceDepth) throws InterruptedException {
+  private void verifyClientStat(LockID lock, String lockType, int numOfClientsStackTraces, int traceDepth)
+      throws InterruptedException {
     LockSpec ls = getLockSpecFor(lock);
     // Assert.assertEquals(lockType, ls.getObjectType());
     Assert.assertEquals(numOfClientsStackTraces, ls.children().size());
@@ -433,7 +434,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
   }
 
   private static class TestClass {
-    private final ReentrantLock rLock = new ReentrantLock();
+    private final Lock rLock = new Lock();
 
     public synchronized void syncMethod(long time) {
       try {
@@ -462,14 +463,14 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     }
 
     public void tryLockBlock(long time) {
-      boolean isLocked = rLock.tryLock();
+      boolean isLocked = rLock.tryWriteLock();
       if (isLocked) {
         try {
           Thread.sleep(time);
         } catch (InterruptedException e) {
           throw new AssertionError(e);
         } finally {
-          rLock.unlock();
+          rLock.writeUnlock();
         }
       }
     }

@@ -37,7 +37,7 @@ public class ObjectDNAImplTest extends DNAImplTest {
   protected DNAWriterInternal createDNAWriter(TCByteBufferOutputStream out, ObjectID id, String type,
                                               ObjectStringSerializer serializer, DNAEncodingInternal encoding,
                                               boolean isDelta) {
-    return new ObjectDNAWriterImpl(out, id, type, serializer, encoding, "loader description", version, isDelta);
+    return new ObjectDNAWriterImpl(out, id, type, serializer, encoding, version, isDelta);
   }
 
 }

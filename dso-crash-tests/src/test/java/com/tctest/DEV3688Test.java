@@ -45,7 +45,7 @@ public class DEV3688Test extends ActivePassiveTransparentTestBase {
   private static final int NODE_COUNT = 1;
 
   public DEV3688Test() {
-    // disableAllUntil(new Date(Long.MAX_VALUE));
+    timebombTestForRewrite();
   }
 
   @Override

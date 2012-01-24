@@ -10,12 +10,12 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tctest.builtin.ConcurrentHashMap;
+import com.tctest.builtin.HashSet;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PrePostCreateMethodTest extends TransparentTestBase {
@@ -138,9 +138,11 @@ public class PrePostCreateMethodTest extends TransparentTestBase {
 
       spec = config.getOrCreateSpec(PostCreate.class.getName());
       spec.setPostCreateMethod("postCreate");
+      spec.setHonorTransient(true);
 
       spec = config.getOrCreateSpec(PreCreate.class.getName());
       spec.setPreCreateMethod("preCreate");
+      spec.setHonorTransient(true);
 
       spec = config.getOrCreateSpec(SubclassWithPostCreate.class.getName());
       spec.setPostCreateMethod("subclassPostCreate");
@@ -154,7 +156,7 @@ public class PrePostCreateMethodTest extends TransparentTestBase {
   }
 
   private static class PostCreate {
-    private final RuntimeException exception;
+    private final transient RuntimeException exception;
 
     public PostCreate() {
       this(null);
@@ -194,7 +196,7 @@ public class PrePostCreateMethodTest extends TransparentTestBase {
   }
 
   private static class PreCreate {
-    private final RuntimeException re;
+    private final transient RuntimeException re;
 
     public PreCreate(RuntimeException re) {
       this.re = re;

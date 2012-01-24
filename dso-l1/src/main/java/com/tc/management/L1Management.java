@@ -22,7 +22,6 @@ import com.tc.management.exposed.TerracottaCluster;
 import com.tc.management.remote.protocol.ProtocolProvider;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.management.remote.protocol.terracotta.TunnelingMessageConnectionServer;
-import com.tc.object.config.MBeanSpec;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.statistics.StatisticsAgentSubSystem;
@@ -62,8 +61,6 @@ public class L1Management extends TerracottaManagement {
 
   private final StatisticsAgentSubSystem statisticsAgentSubSystem;
 
-  private final MBeanSpec[]              mbeanSpecs;
-
   private final L1Dumper                 l1DumpBean;
 
   private JMXConnectorServer             connServer;
@@ -73,13 +70,12 @@ public class L1Management extends TerracottaManagement {
   public L1Management(final TunnelingEventHandler tunnelingHandler,
                       final StatisticsAgentSubSystem statisticsAgentSubSystem, final RuntimeLogger runtimeLogger,
                       final InstrumentationLogger instrumentationLogger, final String rawConfigText,
-                      final TCClient client, final MBeanSpec[] mbeanSpecs) {
+                      final TCClient client) {
     super();
 
     started = new SetOnceFlag();
     this.tunnelingHandler = tunnelingHandler;
     this.statisticsAgentSubSystem = statisticsAgentSubSystem;
-    this.mbeanSpecs = mbeanSpecs;
 
     try {
       l1DumpBean = new L1Dumper(client);
@@ -253,13 +249,6 @@ public class L1Management extends TerracottaManagement {
     registerMBean(instrumentationLoggingBean, L1MBeanNames.INSTRUMENTATION_LOGGING_PUBLIC);
     registerMBean(runtimeOutputOptionsBean, L1MBeanNames.RUNTIME_OUTPUT_OPTIONS_PUBLIC);
     registerMBean(runtimeLoggingBean, L1MBeanNames.RUNTIME_LOGGING_PUBLIC);
-    if (mbeanSpecs != null) {
-      for (MBeanSpec spec : mbeanSpecs) {
-        for (Map.Entry<ObjectName, Object> bean : spec.getMBeans().entrySet()) {
-          registerMBean(bean.getValue(), bean.getKey());
-        }
-      }
-    }
   }
 
   protected void registerMBean(Object bean, ObjectName name) throws InstanceAlreadyExistsException,

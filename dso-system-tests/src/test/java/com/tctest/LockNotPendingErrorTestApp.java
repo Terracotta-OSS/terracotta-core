@@ -9,16 +9,15 @@ import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
-import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tctest.builtin.CyclicBarrier;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CyclicBarrier;
 
 public class LockNotPendingErrorTestApp extends AbstractErrorCatchingTransparentApp {
 
@@ -35,7 +34,6 @@ public class LockNotPendingErrorTestApp extends AbstractErrorCatchingTransparent
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     spec.addRoot("nodeBarrier", "nodeBarrier");
     spec.addRoot("appThreadBarrier", "appThreadBarrier");
-    new CyclicBarrierSpec().visit(visitor, config);
   }
 
   public static void debug(String msg) {
@@ -173,13 +171,13 @@ public class LockNotPendingErrorTestApp extends AbstractErrorCatchingTransparent
     }
 
     public void commitWriteLock() {
-      ManagerUtil.commitLock(lockId, lockType);      
+      ManagerUtil.commitLock(lockId, lockType);
     }
-    
+
     public void commitReadLock() {
       ManagerUtil.commitLock(lockId, Manager.LOCK_TYPE_READ);
     }
-    
+
     public boolean tryWriteLock() {
       return ManagerUtil.tryBeginLock(lockId, lockType);
     }

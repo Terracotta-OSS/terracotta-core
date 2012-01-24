@@ -7,15 +7,13 @@ package com.tc.objectserver.managedobject;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LiteralAction;
-import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.impl.ClassInstance;
-import com.tc.object.dna.impl.ClassLoaderInstance;
 import com.tc.object.dna.impl.EnumInstance;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
-import com.tc.object.loaders.Namespace;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
 import com.tc.text.PrettyPrintable;
@@ -104,7 +102,7 @@ public class LiteralTypesManagedObjectState extends AbstractManagedObjectState i
   /**
    * This method returns whether this ManagedObjectState can have references or not.
    * @ return true : The Managed object represented by this state object will never have any reference to other objects.
-   *         false : The Managed object represented by this state object can have references to other objects. 
+   * false : The Managed object represented by this state object can have references to other objects.
    */
   @Override
   public boolean hasNoReferences() {
@@ -128,17 +126,11 @@ public class LiteralTypesManagedObjectState extends AbstractManagedObjectState i
 
     if (this.reference instanceof ClassInstance) {
       return "java.lang.Class";
-    } else if (this.reference instanceof ClassLoaderInstance) {
-      return "java.lang.ClassLoader";
     } else if (this.reference instanceof UTF8ByteDataHolder) {
       return "java.lang.String";
     } else if (this.reference instanceof EnumInstance) { return "java.lang.Enum"; }
 
     return this.reference.getClass().getName();
-  }
-
-  public String getLoaderDescription() {
-    return Namespace.getStandardBootstrapLoaderName();
   }
 
 }

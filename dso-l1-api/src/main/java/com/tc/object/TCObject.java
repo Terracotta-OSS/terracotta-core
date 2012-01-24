@@ -14,7 +14,7 @@ import java.lang.ref.WeakReference;
  * Terracotta class attached to each shared instance Object. The TCObject may be a simple object value or may have
  * TCFields representing internal field values.
  */
-public interface TCObject extends Cacheable, TCObjectExternal {
+public interface TCObject extends Cacheable {
   /** Indicates null object identifier */
   public static final Long NULL_OBJECT_ID = Long.valueOf(-1);
 
@@ -268,24 +268,6 @@ public interface TCObject extends Cacheable, TCObjectExternal {
   public boolean isNew();
 
   /**
-   * Set a field value change by offset
-   * 
-   * @param classname Class name
-   * @param fieldOffset The offset into this object's fields
-   * @param newValue New object value
-   * @param index The index if this peer object is an array
-   */
-  public void objectFieldChangedByOffset(String classname, long fieldOffset, Object newValue, int index);
-
-  /**
-   * Get field name from field offset
-   * 
-   * @param fieldOffset The offset for the field
-   * @return Field name
-   */
-  public String getFieldNameByOffset(long fieldOffset);
-
-  /**
    * Invoke logical method
    * 
    * @param method Method indicator, as defined in {@link com.tc.object.SerializationUtil}
@@ -305,14 +287,6 @@ public interface TCObject extends Cacheable, TCObjectExternal {
   public boolean autoLockingDisabled();
 
   /**
-   * Returns true if the field represented by the offset is a portable field, i.e., not static and not dso transient
-   * 
-   * @param fieldOffset The index
-   * @return true if the field is portable and false otherwise
-   */
-  public boolean isFieldPortableByOffset(long fieldOffset);
-
-  /**
    * Get or create the toggleable strong reference for this shared object. The returned object can be used to ensure the
    * peer object is strongly reachable and thus cannot be flushed by the memory manager
    */
@@ -328,5 +302,13 @@ public interface TCObject extends Cacheable, TCObjectExternal {
    * Dehydate the entire state of the peer object to the given writer
    */
   public void dehydrate(DNAWriter writer);
+
+  String getFieldNameByOffset(long fieldOffset);
+
+  void clearAccessed();
+
+  void objectFieldChangedByOffset(String classname, long fieldOffset, Object newValue, int index);
+
+  boolean recentlyAccessed();
 
 }

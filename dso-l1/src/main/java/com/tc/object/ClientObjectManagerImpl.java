@@ -32,7 +32,6 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.idprovider.api.ObjectIDProvider;
 import com.tc.object.loaders.ClassProvider;
-import com.tc.object.loaders.LoaderDescription;
 import com.tc.object.loaders.Namespace;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.msg.ClientHandshakeMessage;
@@ -76,8 +75,8 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
@@ -183,8 +182,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     isManaged(new Object());
   }
 
-  public Class getClassFor(final String className, final LoaderDescription desc) throws ClassNotFoundException {
-    return this.classProvider.getClassFor(className, desc);
+  public Class getClassFor(final String className) throws ClassNotFoundException {
+    return this.classProvider.getClassFor(className);
   }
 
   public synchronized boolean isLocal(final ObjectID objectID) {
@@ -561,9 +560,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
           final DNA dna = noDepth ? this.remoteObjectManager.retrieve(id, NO_DEPTH)
               : (parentContext == null ? this.remoteObjectManager.retrieve(id) : this.remoteObjectManager
                   .retrieveWithParentContext(id, parentContext));
-          // TODO: make DNA.getDefiningLoaderDescription() return LoaderDescription
-          final LoaderDescription desc = LoaderDescription.fromString(dna.getDefiningLoaderDescription());
-          Class clazz = this.classProvider.getClassFor(Namespace.parseClassNameIfNecessary(dna.getTypeName()), desc);
+          Class clazz = this.classProvider.getClassFor(Namespace.parseClassNameIfNecessary(dna.getTypeName()));
           TCClass tcClazz = clazzFactory.getOrCreate(clazz, this);
           Object pojo = createNewPojoObject(tcClazz, dna);
           obj = this.factory.getNewInstance(id, pojo, clazz, false);
@@ -1022,8 +1019,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
         for (final Method method : entry.getValue()) {
           try {
-            executeMethod(target, method, "postCreate method (" + method.getName() + ") failed on object of "
-                                          + target.getClass());
+            executeMethod(target, method,
+                          "postCreate method (" + method.getName() + ") failed on object of " + target.getClass());
           } catch (final Throwable t) {
             if (exception == null) {
               exception = t;
@@ -1129,8 +1126,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     TCObject obj = null;
 
     if ((obj = basicLookup(pojo)) == null) {
-      obj = this.factory.getNewInstance(nextObjectID(this.txManager.getCurrentTransaction(), pojo, gid), pojo, pojo
-          .getClass(), true);
+      obj = this.factory.getNewInstance(nextObjectID(this.txManager.getCurrentTransaction(), pojo, gid), pojo,
+                                        pojo.getClass(), true);
       this.txManager.createObject(obj);
       basicAddLocal(obj, false);
       if (this.runtimeLogger.getNewManagedObjectDebug()) {

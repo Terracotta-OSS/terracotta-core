@@ -117,9 +117,6 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
       rewriteArraycopy();
     } else if (classname.equals("java/lang/Object")) {
       handleJavaLangObjectMethodCall(opcode, classname, theMethodName, desc);
-    } else if (classname.equals("java/lang/String") && "intern".equals(theMethodName)) {
-      super.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", ByteCodeUtil.TC_METHOD_PREFIX + "intern",
-                            "()Ljava/lang/String;");
     } else {
       super.visitMethodInsn(opcode, classname, theMethodName, desc);
     }
@@ -167,7 +164,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
    * <pre>
    * Object refToBeCloned;
    * Object rv;
-   * TCObjectExternal tco = ManagerUtil.lookupExistingOrNull(refToBeCloned)
+   * TCObject tco = ManagerUtil.lookupExistingOrNull(refToBeCloned)
    * if (tco != null) {
    *   synchronized (tco.getResolveLock()) {
    *     tco.resolveAllReferences();
@@ -200,20 +197,19 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
       super.visitTryCatchBlock(l2, l3, l2, null);
       super.visitVarInsn(ALOAD, refToBeCloned);
       super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "lookupExistingOrNull",
-                            "(Ljava/lang/Object;)Lcom/tc/object/TCObjectExternal;");
+                            "(Ljava/lang/Object;)Lcom/tc/object/TCObject;");
       super.visitVarInsn(ASTORE, ref2);
       super.visitVarInsn(ALOAD, ref2);
       Label l8 = new Label();
       super.visitJumpInsn(IFNULL, l8);
       super.visitVarInsn(ALOAD, ref2);
-      super
-          .visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObjectExternal", "getResolveLock", "()Ljava/lang/Object;");
+      super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "getResolveLock", "()Ljava/lang/Object;");
       super.visitInsn(DUP);
       super.visitVarInsn(ASTORE, ref3);
       super.visitInsn(MONITORENTER);
       super.visitLabel(l0);
       super.visitVarInsn(ALOAD, ref2);
-      super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObjectExternal", "resolveAllReferences", "()V");
+      super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "resolveAllReferences", "()V");
       super.visitVarInsn(ALOAD, refToBeCloned);
       super.visitVarInsn(ALOAD, refToBeCloned);
       super.visitMethodInsn(opcode, classname, theMethodName, desc);
@@ -402,14 +398,13 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
           // ..., array, index
           super.visitInsn(DUP2); // ..., array, index, array, index
           super.visitInsn(POP); // ..., array, index, array
-          callArrayManagerMethod("getObject", "(Ljava/lang/Object;)Lcom/tc/object/TCObjectExternal;"); // ..., array,
-                                                                                                       // index,
+          callArrayManagerMethod("getObject", "(Ljava/lang/Object;)Lcom/tc/object/TCObject;"); // ..., array,
+                                                                                               // index,
           // tcobj
           super.visitInsn(DUP); // ..., array, index, tcobj, tcobj
           super.visitJumpInsn(IFNULL, notManaged); // ..., array, index, tcobj
           super.visitInsn(DUP); // ..., array, index, tcobj, tcobj
-          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObjectExternal", "getResolveLock",
-                                "()Ljava/lang/Object;"); // ...,
+          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "getResolveLock", "()Ljava/lang/Object;"); // ...,
           // array,
           // index,
           // tcobj,
@@ -422,7 +417,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
           super.visitLabel(lockedStart); // ..., array, index, tcobj
           super.visitInsn(DUP2); // ..., array, index, tcobj, index, tcobj
           super.visitInsn(SWAP); // ..., array, index, tcobj, tcobj, index
-          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObjectExternal", "resolveArrayReference", "(I)V"); // ...,
+          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "resolveArrayReference", "(I)V"); // ...,
           // array,
           // index,
           // tcobj

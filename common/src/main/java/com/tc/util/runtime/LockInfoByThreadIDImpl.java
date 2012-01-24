@@ -6,14 +6,14 @@ package com.tc.util.runtime;
 import com.tc.object.locks.ThreadID;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class LockInfoByThreadIDImpl implements LockInfoByThreadID {
 
-  Map heldLocks    = new HashMap();
-  Map waitOnLocks  = new HashMap();
-  Map pendingLocks = new HashMap();
+  Map heldLocks    = new LinkedHashMap();
+  Map waitOnLocks  = new LinkedHashMap();
+  Map pendingLocks = new LinkedHashMap();
 
   public ArrayList getHeldLocks(ThreadID threadID) {
     return lockList((ArrayList) heldLocks.get(threadID));

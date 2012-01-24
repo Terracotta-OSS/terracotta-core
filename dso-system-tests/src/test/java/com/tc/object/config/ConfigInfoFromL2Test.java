@@ -31,7 +31,6 @@ import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
 import com.tc.object.BaseDSOTestCase;
-import com.tc.object.config.schema.DSOApplicationConfig;
 import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
@@ -240,10 +239,6 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
 
     public String describeSources() {
       return this.l2Config.describeSources();
-    }
-
-    public DSOApplicationConfig dsoApplicationConfigFor(String applicationName) {
-      return this.l2Config.dsoApplicationConfigFor(applicationName);
     }
 
     public L2DSOConfig dsoL2Config() {

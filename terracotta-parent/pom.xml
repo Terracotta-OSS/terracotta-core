@@ -23,20 +23,6 @@
       <artifactId>tcconfig</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.api</groupId>
-      <artifactId>tim-api</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>org.terracotta.api</groupId>
-          <artifactId>thirdparty-api</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.terracotta.api</groupId>
-          <artifactId>dso-cluster-api</artifactId>
-        </exclusion>        
-      </exclusions>
-    </dependency>
-    <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>tc-l1-reconnect-properties</artifactId>
     </dependency>
@@ -87,10 +73,6 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>jmxremote_optional-tc</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.code.guice</groupId>
-      <artifactId>guice</artifactId>
     </dependency>
     <dependency>
       <groupId>org.beanshell</groupId>

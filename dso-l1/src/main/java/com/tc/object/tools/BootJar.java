@@ -6,13 +6,9 @@ package com.tc.object.tools;
 
 import org.apache.commons.io.IOUtils;
 
-import com.tc.asm.ClassReader;
-import com.tc.asm.ClassVisitor;
-import com.tc.asm.ClassWriter;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.NotInBootJar;
-import com.tc.object.bytecode.OverridesHashCodeAdapter;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
@@ -178,22 +174,9 @@ public class BootJar {
       throw new AssertionError("Invalid class for boot jar: " + className);
     }
 
-    // Add OverridesHashCode interface (if appropriate) to any class going into the boot jar
-    // NOTE: We might need to move this logic out of this class at some point, but at the moment I don't know any
-    // exception to wanting this transform for classes in the boot jar
-    data = addOverrideHashCodeInterface(data);
-
     String cn = classNameToFileName(className);
     JarEntry jarEntry = new JarEntry(cn);
     basicLoadClassIntoJar(jarEntry, data, isPreinstrumented, isForeign);
-  }
-
-  private byte[] addOverrideHashCodeInterface(byte[] data) {
-    ClassReader reader = new ClassReader(data);
-    ClassWriter cw = new ClassWriter(0);
-    ClassVisitor cv = new OverridesHashCodeAdapter(cw);
-    reader.accept(cv, ClassReader.SKIP_FRAMES);
-    return cw.toByteArray();
   }
 
   private void assertWrite() {

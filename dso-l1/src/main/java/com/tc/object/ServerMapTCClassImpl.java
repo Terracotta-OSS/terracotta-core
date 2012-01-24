@@ -5,7 +5,6 @@ package com.tc.object;
 
 import com.tc.object.bytecode.Manager;
 import com.tc.object.field.TCFieldFactory;
-import com.tc.object.loaders.LoaderDescription;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 
 public class ServerMapTCClassImpl extends TCClassImpl implements TCClass {
@@ -17,14 +16,13 @@ public class ServerMapTCClassImpl extends TCClassImpl implements TCClass {
   ServerMapTCClassImpl(final Manager manager, final L1ServerMapLocalCacheManager globalLocalCacheManager,
                        final RemoteServerMapManager remoteServerMapManager, final TCFieldFactory factory,
                        final TCClassFactory clazzFactory, final ClientObjectManager objectManager, final Class peer,
-                       final Class logicalSuperClass, final LoaderDescription loaderDesc,
-                       final String logicalExtendingClassName, final boolean isLogical,
+                       final Class logicalSuperClass, final String logicalExtendingClassName, final boolean isLogical,
                        final boolean isCallConstructor, final boolean onLoadInjection, final String onLoadScript,
                        final String onLoadMethod, final boolean useNonDefaultConstructor,
                        final boolean useResolveLockWhileClearing, final String postCreateMethod,
                        final String preCreateMethod) {
-    super(factory, clazzFactory, objectManager, peer, logicalSuperClass, loaderDesc, logicalExtendingClassName,
-          isLogical, isCallConstructor, onLoadInjection, onLoadScript, onLoadMethod, useNonDefaultConstructor,
+    super(factory, clazzFactory, objectManager, peer, logicalSuperClass, logicalExtendingClassName, isLogical,
+          isCallConstructor, onLoadInjection, onLoadScript, onLoadMethod, useNonDefaultConstructor,
           useResolveLockWhileClearing, postCreateMethod, preCreateMethod);
     this.globalLocalCacheManager = globalLocalCacheManager;
     this.remoteServerMapManager = remoteServerMapManager;

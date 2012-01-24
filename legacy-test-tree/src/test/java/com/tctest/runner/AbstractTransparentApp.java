@@ -7,18 +7,14 @@ package com.tctest.runner;
 import com.tc.logging.LogLevel;
 import com.tc.logging.TCLogging;
 import com.tc.object.config.ConfigVisitor;
-import com.tc.object.config.DSOApplicationConfig;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.Application;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.app.ErrorContext;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.test.JMXUtils;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
 
 import javax.management.remote.JMXConnector;
@@ -30,13 +26,8 @@ public abstract class AbstractTransparentApp implements Application {
   private final TransparentAppCoordinator coordinator;
   private final int                       intensity;
   private final ListenerProvider          listenerProvider;
-  private final Set                       appIds        = new HashSet();
 
   public AbstractTransparentApp(String appId, ApplicationConfig config, ListenerProvider listenerProvider) {
-    synchronized (appIds) {
-      if (!appIds.add(appId)) { throw new AssertionError("You've created me with the same global ID as someone else: "
-                                                         + appId); }
-    }
     this.listenerProvider = listenerProvider;
     this.intensity = config.getIntensity();
     this.coordinator = new TransparentAppCoordinator(appId, config.getGlobalParticipantCount());
@@ -61,14 +52,6 @@ public abstract class AbstractTransparentApp implements Application {
     return coordinator.getGlobalId();
   }
 
-  protected void moveToStage(int stage) {
-    coordinator.moveToStage(stage);
-  }
-
-  protected void moveToStageAndWait(int stage) {
-    coordinator.moveToStageAndWait(stage);
-  }
-
   protected void notifyError(String msg) {
     listenerProvider.getResultsListener().notifyError(new ErrorContext(msg, new Error()));
   }
@@ -81,23 +64,14 @@ public abstract class AbstractTransparentApp implements Application {
     listenerProvider.getResultsListener().notifyError(new ErrorContext(t));
   }
 
-  public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    config.addIncludePattern(AbstractTransparentApp.class.getName());
-    config.addRoot("AbstractTransparentAppAppIds", AbstractTransparentApp.class.getName() + ".appIds");
-    config.addWriteAutolock("* " + AbstractTransparentApp.class.getName() + ".*(..)");
-
-    TransparencyClassSpec spec = config.getOrCreateSpec(TransparentAppCoordinator.class.getName());
-    spec.addRoot("participants", "participants");
-    config.addWriteAutolock("* " + TransparentAppCoordinator.class.getName() + ".*(..)");
+  public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config, Map optionalAttributes) {
+    visitL1DSOConfig(visitor, config);
   }
 
-  public static void visitDSOApplicationConfig(ConfigVisitor visitor, DSOApplicationConfig config) {
+  public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     config.addIncludePattern(AbstractTransparentApp.class.getName());
-    config.addRoot("AbstractTransparentAppAppIds", AbstractTransparentApp.class.getName() + ".appIds");
-    config.addWriteAutolock("* " + AbstractTransparentApp.class.getName() + ".*(..)");
-
     config.addIncludePattern(TransparentAppCoordinator.class.getName());
-    config.addRoot("participants", TransparentAppCoordinator.class.getName() + ".participants");
+    config.addWriteAutolock("* " + AbstractTransparentApp.class.getName() + ".*(..)");
     config.addWriteAutolock("* " + TransparentAppCoordinator.class.getName() + ".*(..)");
   }
 

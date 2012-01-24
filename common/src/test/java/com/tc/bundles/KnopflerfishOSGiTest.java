@@ -12,7 +12,6 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.ProductInfo;
-import com.terracottatech.config.Module;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,12 +55,10 @@ public class KnopflerfishOSGiTest extends TCTestCase {
       String name = jar.getName().replaceAll("-" + version + ".jar", "");
 
       String[] repos = { defaultRepo.getAbsolutePath() };
-      Resolver resolver = new Resolver(repos, ProductInfo.getInstance().version(), ProductInfo.getInstance()
-          .timApiVersion());
-      Module module = Module.Factory.newInstance();
-      module.setName(name);
+      Resolver resolver = new Resolver(repos, ProductInfo.getInstance().version());
+      Module module = new Module();
+      module.setArtifactId(name);
       module.setVersion(version);
-      module.setGroupId("org.terracotta.modules");
       File file = FileUtils.toFile(resolver.resolve(module));
       assertEquals(file.getAbsolutePath().endsWith(name + "-" + version + ".jar"), true);
 

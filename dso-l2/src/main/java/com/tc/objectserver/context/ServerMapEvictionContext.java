@@ -17,12 +17,10 @@ public class ServerMapEvictionContext implements EventContext {
   private final Map      samples;
   private final int      overshoot;
   private final String   className;
-  private final String   loaderDesc;
   private final String   cacheName;
 
   public ServerMapEvictionContext(final ObjectID oid, final int targetMaxTotalCount, final int tti, final int ttl,
-                                  final Map samples, final int overshoot, final String className,
-                                  final String loaderDesc, final String cacheName) {
+                                  final Map samples, final int overshoot, final String className, final String cacheName) {
     this.oid = oid;
     this.targetMaxTotalCount = targetMaxTotalCount;
     this.tti = tti;
@@ -30,7 +28,6 @@ public class ServerMapEvictionContext implements EventContext {
     this.samples = samples;
     this.overshoot = overshoot;
     this.className = className;
-    this.loaderDesc = loaderDesc;
     this.cacheName = cacheName;
   }
 
@@ -60,10 +57,6 @@ public class ServerMapEvictionContext implements EventContext {
 
   public String getClassName() {
     return this.className;
-  }
-
-  public String getLoaderDescription() {
-    return this.loaderDesc;
   }
 
   public String getCacheName() {

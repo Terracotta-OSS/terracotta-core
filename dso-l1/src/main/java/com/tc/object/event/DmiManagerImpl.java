@@ -13,7 +13,6 @@ import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiClassSpec;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.loaders.ClassProvider;
-import com.tc.object.loaders.LoaderDescription;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.StringLockID;
 import com.tc.object.logging.RuntimeLogger;
@@ -62,8 +61,8 @@ public class DmiManagerImpl implements DmiManager {
     final String paramDesc = method.substring(method.indexOf('('));
     final DistributedMethodCall dmc = new DistributedMethodCall(receiver, params, methodName, paramDesc);
     if (runtimeLogger.getDistributedMethodDebug()) runtimeLogger.distributedMethodCall(receiver.getClass().getName(),
-                                                                                       dmc.getMethodName(), dmc
-                                                                                           .getParameterDesc());
+                                                                                       dmc.getMethodName(),
+                                                                                       dmc.getParameterDesc());
     objMgr.getTransactionManager().begin(lock, LockLevel.CONCURRENT);
     try {
       final ObjectID receiverId = objMgr.lookupOrCreate(receiver).getObjectID();
@@ -93,8 +92,8 @@ public class DmiManagerImpl implements DmiManager {
       // FIXME: debug code
       e.printStackTrace();
       // FIXME: end debug code
-      runtimeLogger.distributedMethodCallError(dmc.getReceiver().getClass().getName(), dmc.getMethodName(), dmc
-          .getParameterDesc(), e);
+      runtimeLogger.distributedMethodCallError(dmc.getReceiver().getClass().getName(), dmc.getMethodName(),
+                                               dmc.getParameterDesc(), e);
       if (logger.isDebugEnabled()) logger.debug("Ignoring distributed method call", e);
     } finally {
       feedBack.remove();
@@ -164,7 +163,7 @@ public class DmiManagerImpl implements DmiManager {
       throws ClassNotFoundException {
     Assert.pre(classSpecs != null);
     for (DmiClassSpec s : classSpecs) {
-      classProvider.getClassFor(s.getClassName(), LoaderDescription.fromString(s.getClassLoaderDesc()));
+      classProvider.getClassFor(s.getClassName());
     }
   }
 
@@ -186,9 +185,8 @@ public class DmiManagerImpl implements DmiManager {
   private static Object getClassSpec(ClassProvider classProvider, Object obj) {
     Assert.pre(classProvider != null);
     Assert.pre(obj != null);
-    final String classLoader = classProvider.getLoaderDescriptionFor(obj.getClass()).toDelimitedString();
     final String className = obj.getClass().getName();
-    return new DmiClassSpec(classLoader, className);
+    return new DmiClassSpec(className);
   }
 
   public DistributedMethodCall extract(DmiDescriptor dd) {

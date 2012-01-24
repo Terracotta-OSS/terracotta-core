@@ -54,7 +54,7 @@ public class DSOVerifierTest extends TCTestCase {
   }
 
   public DSOVerifierTest() {
-    // disableAllUntil("2007-09-11");
+    timebombTest("2012-01-30");
   }
 
   @Override

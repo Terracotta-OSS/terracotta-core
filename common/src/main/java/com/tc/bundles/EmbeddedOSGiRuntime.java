@@ -8,9 +8,6 @@ import org.osgi.framework.BundleException;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 
-import com.terracottatech.config.Module;
-import com.terracottatech.config.Modules;
-
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
@@ -55,9 +52,7 @@ public interface EmbeddedOSGiRuntime {
     public static EmbeddedOSGiRuntime createOSGiRuntime(final Modules modules, Collection<Repository> addlRepos)
         throws BundleException, Exception {
       List repoList = new ArrayList();
-      int repoCount = modules.sizeOfRepositoryArray();
-      for (int i = 0; i < repoCount; i++) {
-        final String location = modules.getRepositoryArray(i);
+      for (String location : modules.getRepositories()) {
         final File file = Resolver.resolveRepositoryLocation(location);
         if (file != null) repoList.add(file.toURI().toURL());
       }

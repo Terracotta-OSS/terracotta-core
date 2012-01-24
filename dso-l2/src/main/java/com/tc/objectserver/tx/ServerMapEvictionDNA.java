@@ -23,14 +23,11 @@ public final class ServerMapEvictionDNA implements DNAInternal {
   private final ObjectID oid;
   private final Map      evictionCandidates;
   private final String   className;
-  private final String   loaderDesc;
   private final String   cacheName;
 
-  public ServerMapEvictionDNA(final ObjectID oid, final String className, final String loaderDesc,
-                              final Map candidates, String cacheName) {
+  public ServerMapEvictionDNA(final ObjectID oid, final String className, final Map candidates, String cacheName) {
     this.oid = oid;
     this.className = className;
-    this.loaderDesc = loaderDesc;
     this.evictionCandidates = candidates;
     this.cacheName = cacheName;
   }
@@ -41,10 +38,6 @@ public final class ServerMapEvictionDNA implements DNAInternal {
 
   public DNACursor getCursor() {
     return new ServerMapEvictionDNACursor(this.evictionCandidates);
-  }
-
-  public String getDefiningLoaderDescription() {
-    return this.loaderDesc;
   }
 
   public ObjectID getObjectID() throws DNAException {

@@ -1012,7 +1012,7 @@ public class ClientLockManagerTest extends TCTestCase {
                   threadDump.indexOf("WAITING TO LOCK: [StringLockID(Locky0)]") >= 0);
 
       Assert
-          .eval(threadDump.indexOf("LOCKED : [StringLockID(Locky0), StringLockID(Locky0), StringLockID(Locky1)]") >= 0);
+          .eval(threadDump.indexOf("LOCKED : [StringLockID(Locky1), StringLockID(Locky0), StringLockID(Locky0)]") >= 0);
     }
 
     clientLockManager.unlock(lid0, LockLevel.WRITE);

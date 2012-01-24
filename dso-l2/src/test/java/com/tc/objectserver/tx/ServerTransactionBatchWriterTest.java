@@ -67,13 +67,11 @@ public class ServerTransactionBatchWriterTest extends TestCase {
   public void testBasicServerEvictionTxn() throws Exception {
     final ObjectID oid = new ObjectID(55455);
     final String className = "com.tc.state.ConcurrentDistributedServerMap";
-    final String loaderDesc = "System.loader";
     final Map candidates = getCandidatesToEvict();
     final ServerTransactionFactory factory = new ServerTransactionFactory();
     final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     final ServerTransaction txn = factory.createServerMapEvictionTransactionFor(sourceNodeID, oid, className,
-                                                                                loaderDesc, candidates, serializer,
-                                                                                "foo");
+                                                                                candidates, serializer, "foo");
     final ServerTransactionBatchWriter txnWriter = new ServerTransactionBatchWriter(TxnBatchID.NULL_BATCH_ID,
                                                                                     serializer);
     final TCByteBuffer[] buffer = txnWriter.writeTransactionBatch(Collections.singletonList(txn));
@@ -94,7 +92,6 @@ public class ServerTransactionBatchWriterTest extends TestCase {
     final ObjectID oid = new ObjectID(55455);
     final NodeID nodeID = new ServerID("localhost", new byte[] { 5, 6, 4, 3 });
     final String className = "com.tc.state.ConcurrentDistributedServerMap";
-    final String loaderDesc = "System.loader";
     final Map candidates = getCandidatesToEvict();
 
     final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
@@ -109,8 +106,7 @@ public class ServerTransactionBatchWriterTest extends TestCase {
     // server map eviction txn
     final ServerTransactionFactory factory = new ServerTransactionFactory();
     final ServerTransaction serverMapEvictionTxn = factory.createServerMapEvictionTransactionFor(nodeID, oid,
-                                                                                                 className, loaderDesc,
-                                                                                                 candidates,
+                                                                                                 className, candidates,
                                                                                                  serializer, "foo");
     serverTransactions.add(serverMapEvictionTxn);
 
@@ -254,7 +250,7 @@ public class ServerTransactionBatchWriterTest extends TestCase {
     final TCByteBufferOutputStream out = new TCByteBufferOutputStream();
     final ObjectStringSerializer objectStringSerializer = new ObjectStringSerializerImpl();
     final DNAWriter dnaWriter = new DNAWriterImpl(out, objectID, this.getClass().getName(), objectStringSerializer,
-                                                  new SerializerDNAEncodingImpl(), "Robo Rajini Class Loader", isDelta);
+                                                  new SerializerDNAEncodingImpl(), isDelta);
 
     final PhysicalAction action1 = new PhysicalAction("manoj.field1", Integer.valueOf(1), false);
     final LogicalAction action2 = new LogicalAction(12, new Object[] { "K1", "V1" });

@@ -30,8 +30,6 @@ public class ManagedObjectStateTest extends TestCase {
   }
 
   public void testPhysicalManagedObjectClassId() throws Exception {
-    final String loaderDesc = "System.loader";
-
     ManagedObjectStateFactory.disableSingleton(true);
     ManagedObjectStateFactory.createInstance(this.listenerProvider, new InMemoryPersistor());
 
@@ -45,7 +43,6 @@ public class ManagedObjectStateTest extends TestCase {
     types.put("field7", Short.valueOf((short) 606));
     types.put("field8", Double.valueOf(98.76d));
     types.put("field9", Float.valueOf(8.8f));
-    types.put("field10", new StackTraceElement("classname", "methodname", "filename", 123));
 
     final TestDNACursor cursor = new TestDNACursor();
     for (final Iterator i = types.entrySet().iterator(); i.hasNext();) {
@@ -60,13 +57,12 @@ public class ManagedObjectStateTest extends TestCase {
     for (int i = 0; i < numOfGeneratedClasses; i++) {
       final String className = "com.xxx.SomeClassName" + i;
       final PhysicalManagedObjectState state = (PhysicalManagedObjectState) ManagedObjectStateFactory.getInstance()
-          .createState(new ObjectID(1), ObjectID.NULL_ID, className, loaderDesc, cursor);
+          .createState(new ObjectID(1), ObjectID.NULL_ID, className, cursor);
       state.apply(this.objectID, cursor, new ApplyTransactionInfo());
 
       final int classId = state.getClassId();
       assertTrue(classId != 0);
       assertEquals(state.getClassName(), className);
-      assertEquals(state.getLoaderDescription(), loaderDesc);
 
       classNameToClassId.put(className, new Integer(classId));
       assertNull(classIdToClassName.get(new Integer(classId)));
@@ -76,7 +72,7 @@ public class ManagedObjectStateTest extends TestCase {
     for (int i = 0; i < numOfGeneratedClasses; i++) {
       final String className = "com.xxx.SomeClassName" + i;
       final PhysicalManagedObjectState state = (PhysicalManagedObjectState) ManagedObjectStateFactory.getInstance()
-          .createState(new ObjectID(1), ObjectID.NULL_ID, className, loaderDesc, cursor);
+          .createState(new ObjectID(1), ObjectID.NULL_ID, className, cursor);
       state.apply(this.objectID, cursor, new ApplyTransactionInfo());
 
       final int classId = state.getClassId();
@@ -91,8 +87,6 @@ public class ManagedObjectStateTest extends TestCase {
   }
 
   public void testPhysicalManagedObjectState() throws Exception {
-    final String loaderDesc = "System.loader";
-
     ManagedObjectStateFactory.disableSingleton(true);
     ManagedObjectStateFactory.createInstance(this.listenerProvider, new InMemoryPersistor());
 
@@ -106,7 +100,6 @@ public class ManagedObjectStateTest extends TestCase {
     types.put("field7", Short.valueOf((short) 606));
     types.put("field8", Double.valueOf(98.76d));
     types.put("field9", Float.valueOf(8.8f));
-    types.put("field10", new StackTraceElement("classname", "methodname", "filename", 123));
 
     TestDNACursor cursor = new TestDNACursor();
     for (final Iterator i = types.entrySet().iterator(); i.hasNext();) {
@@ -115,12 +108,11 @@ public class ManagedObjectStateTest extends TestCase {
     }
 
     final PhysicalManagedObjectState state = (PhysicalManagedObjectState) ManagedObjectStateFactory.getInstance()
-        .createState(new ObjectID(1), ObjectID.NULL_ID, "com.xxx.SomeClassName", loaderDesc, cursor);
+        .createState(new ObjectID(1), ObjectID.NULL_ID, "com.xxx.SomeClassName", cursor);
     state.apply(this.objectID, cursor, new ApplyTransactionInfo());
 
     assertTrue(state.getClassId() != 0);
     assertEquals(state.getClassName(), "com.xxx.SomeClassName");
-    assertEquals(state.getLoaderDescription(), loaderDesc);
 
     Collection references = state.getObjectReferences();
     assertEquals(1, references.size());
@@ -162,8 +154,6 @@ public class ManagedObjectStateTest extends TestCase {
   }
 
   public void testPhysicalMOStateClassInCompatibility() throws Exception {
-    final String loaderDesc = "System.loader";
-
     final InMemoryPersistor persistor = new InMemoryPersistor();
     ManagedObjectStateFactory.disableSingleton(true);
     ManagedObjectStateFactory.createInstance(this.listenerProvider, persistor);
@@ -174,12 +164,11 @@ public class ManagedObjectStateTest extends TestCase {
     cursor.addPhysicalAction("field3", new String("neoistheone"), true);
 
     final PhysicalManagedObjectState state = (PhysicalManagedObjectState) ManagedObjectStateFactory.getInstance()
-        .createState(this.objectID, ObjectID.NULL_ID, "com.xxx.SomeClassName", loaderDesc, cursor);
+        .createState(this.objectID, ObjectID.NULL_ID, "com.xxx.SomeClassName", cursor);
     state.apply(this.objectID, cursor, new ApplyTransactionInfo());
 
     assertTrue(state.getClassId() != 0);
     assertEquals(state.getClassName(), "com.xxx.SomeClassName");
-    assertEquals(state.getLoaderDescription(), loaderDesc);
 
     Collection references = state.getObjectReferences();
     assertEquals(1, references.size());
@@ -209,12 +198,11 @@ public class ManagedObjectStateTest extends TestCase {
 
     // recreate the state object
     final PhysicalManagedObjectState state1 = (PhysicalManagedObjectState) ManagedObjectStateFactory.getInstance()
-        .recreateState(this.objectID, ObjectID.NULL_ID, "com.xxx.SomeClassName", loaderDesc, cursor, state);
+        .recreateState(this.objectID, ObjectID.NULL_ID, "com.xxx.SomeClassName", cursor, state);
     state1.apply(this.objectID, cursor, new ApplyTransactionInfo());
 
     assertTrue(state1.getClassId() != state.getClassId());
     assertEquals(state1.getClassName(), "com.xxx.SomeClassName");
-    assertEquals(state1.getLoaderDescription(), loaderDesc);
 
     references = state1.getObjectReferences();
     assertEquals(2, references.size());
@@ -245,14 +233,13 @@ public class ManagedObjectStateTest extends TestCase {
 
     // recreate the state object, even though we pass old state object, it should extend latest state object
     final PhysicalManagedObjectState state2 = (PhysicalManagedObjectState) ManagedObjectStateFactory.getInstance()
-        .recreateState(this.objectID, ObjectID.NULL_ID, "com.xxx.SomeClassName", loaderDesc, cursor2, state);
+        .recreateState(this.objectID, ObjectID.NULL_ID, "com.xxx.SomeClassName", cursor2, state);
     state2.apply(this.objectID, cursor2, new ApplyTransactionInfo());
     cursor.reset();
     state2.apply(this.objectID, cursor, new ApplyTransactionInfo());
 
     assertTrue(state1.getClassId() != state2.getClassId());
     assertEquals(state2.getClassName(), "com.xxx.SomeClassName");
-    assertEquals(state2.getLoaderDescription(), loaderDesc);
 
     values = state2.addValues(new HashMap());
     assertEquals(new ObjectID(2), values.get("field1"));
@@ -290,7 +277,7 @@ public class ManagedObjectStateTest extends TestCase {
     cursor.addPhysicalAction("field3", String.valueOf("neoistheone"), true);
 
     PhysicalManagedObjectState state3 = (PhysicalManagedObjectState) ManagedObjectStateFactory.getInstance()
-        .createState(this.objectID, ObjectID.NULL_ID, "com.xxx.SomeClassName", loaderDesc, cursor);
+        .createState(this.objectID, ObjectID.NULL_ID, "com.xxx.SomeClassName", cursor);
     state3.apply(this.objectID, cursor, new ApplyTransactionInfo());
     assertEquals(state2.getClass().getName(), state3.getClass().getName());
 
@@ -300,7 +287,7 @@ public class ManagedObjectStateTest extends TestCase {
     state3 = (PhysicalManagedObjectState) ManagedObjectStateFactory.getInstance().createState(this.objectID,
                                                                                               ObjectID.NULL_ID,
                                                                                               "com.xxx.SomeClassName",
-                                                                                              loaderDesc, cursor);
+                                                                                              cursor);
     state3.apply(this.objectID, cursor, new ApplyTransactionInfo());
     assertEquals(state2.getClass().getName(), state3.getClass().getName());
 
@@ -318,12 +305,6 @@ public class ManagedObjectStateTest extends TestCase {
 
     final LiteralTypesManagedObjectState literalTypesManagedObjectState = new LiteralTypesManagedObjectState();
     assertTrue(literalTypesManagedObjectState.hasNoReferences());
-
-    final DateManagedObjectState dateManagedObjectState = new DateManagedObjectState(1);
-    assertTrue(dateManagedObjectState.hasNoReferences());
-
-    final URLManagedObjectState urlManagedObjectState = new URLManagedObjectState(1);
-    assertTrue(urlManagedObjectState.hasNoReferences());
 
     final TDCSerializedEntryManagedObjectState tcHibernateSerializedEntryManagedObjectState = new TDCSerializedEntryManagedObjectState(
                                                                                                                                        1);

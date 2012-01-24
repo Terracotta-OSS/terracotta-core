@@ -26,6 +26,11 @@ import java.util.ArrayList;
 import java.util.Map;
 
 public class TempSwapDBPersistorCursorDeleteTest extends TCTestCase {
+
+  static {
+    ManagedObjectStateFactory.enableLegacyTypes();
+  }
+
   public void testBasic() throws Exception {
     TCLogger logger = TCLogging.getLogger(getClass());
     BerkeleyDBEnvironment dbEnv = newDBEnvironment(false);
@@ -37,7 +42,7 @@ public class TempSwapDBPersistorCursorDeleteTest extends TCTestCase {
 
     final ObjectID id = new ObjectID(0);
     final MapManagedObjectState state = (MapManagedObjectState) ManagedObjectStateFactory.getInstance()
-        .createState(id, ObjectID.NULL_ID, "java.util.HashMap", "System.loader", new TestDNACursor());
+        .createState(id, ObjectID.NULL_ID, "java.util.HashMap", new TestDNACursor());
     final ManagedObject mo = new TestPersistentStateManagedObject(id, new ArrayList<ObjectID>(),
                                                                   ManagedObjectState.MAP_TYPE, state);
     persistor.getManagedObjectPersistor().addNewObject(mo);

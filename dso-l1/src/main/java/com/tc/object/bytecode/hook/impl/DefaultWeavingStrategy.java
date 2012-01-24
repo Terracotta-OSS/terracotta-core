@@ -15,7 +15,6 @@ import com.tc.aspectwerkz.expression.ExpressionContext;
 import com.tc.aspectwerkz.expression.PointcutType;
 import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.ClassInfoHelper;
-import com.tc.aspectwerkz.reflect.MethodInfo;
 import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.aspectwerkz.transform.InstrumentationContext;
 import com.tc.aspectwerkz.transform.WeavingStrategy;
@@ -40,21 +39,14 @@ import com.tc.exception.TCLogicalSubclassNotPortableException;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ClassAdapterFactory;
-import com.tc.object.bytecode.ClassLoaderSubclassAdapter;
-import com.tc.object.bytecode.RenameClassesAdapter;
 import com.tc.object.bytecode.SafeSerialVersionUIDAdder;
-import com.tc.object.config.ClassReplacementMapping;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.Replacement;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.util.AdaptedClassDumper;
 import com.tc.util.InitialClassDumper;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -183,61 +175,13 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       // has AW aspects?
       final boolean isAdvisable = isAdvisable(classInfo, definitions);
 
-      // classloader subclass that overrides loadClass(String)
-      final boolean needsClassLoaderInstrumentation = needsClassLoaderInstrumentation(classInfo);
-
-      if (!isAdvisable && !isDsoAdaptable && !hasCustomAdapters && !needsClassLoaderInstrumentation) {
+      if (!isAdvisable && !isDsoAdaptable && !hasCustomAdapters) {
         context.setCurrentBytecode(context.getInitialBytecode());
         return;
       }
 
       if (m_instrumentationLogger.getClassInclusion()) {
         m_instrumentationLogger.classIncluded(className);
-      }
-
-      if (needsClassLoaderInstrumentation) {
-        final ClassReader clReader = new ClassReader(context.getCurrentBytecode());
-        final ClassWriter clWriter = new ClassWriter(clReader, ClassWriter.COMPUTE_MAXS);
-        ClassVisitor clVisitor = new ClassLoaderSubclassAdapter(clWriter);
-        clReader.accept(clVisitor, ClassReader.SKIP_FRAMES);
-        context.setCurrentBytecode(clWriter.toByteArray());
-      }
-
-      // handle replacement classes
-      ClassReplacementMapping mapping = m_configHelper.getClassReplacementMapping();
-      final Replacement replacement = mapping.getReplacement(className, loader);
-      if (replacement != null) {
-        String replacementClassName = replacement.getReplacementClassName();
-
-        // check if there's a replacement class
-        if (replacementClassName != null && !replacementClassName.equals(className)) {
-          // obtain the resource of the replacement class
-          URL replacementResource = replacement.getReplacementResource();
-          if (replacementResource == null) { throw new ClassNotFoundException("No resource found for class: "
-                                                                              + replacementClassName); }
-
-          // obtain the bytes of the replacement class
-          InputStream is = replacementResource.openStream();
-          try {
-            byte[] replacementBytes = ByteCodeUtil.getBytesForInputstream(is);
-
-            // perform the rename transformation so that it can be used instead of the original class
-            ClassReader cr = new ClassReader(replacementBytes);
-            ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-            ClassVisitor cv = new RenameClassesAdapter(cw, mapping);
-            cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-            context.setCurrentBytecode(cw.toByteArray());
-
-            // update the classInfo
-            classInfo = AsmClassInfo.newClassInfo(className, context.getCurrentBytecode(), loader);
-
-          } catch (IOException e) {
-            throw new ClassNotFoundException("Error reading bytes for " + replacementResource, e);
-          } finally {
-            is.close();
-          }
-        }
       }
 
       // ------------------------------------------------
@@ -431,22 +375,6 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       t.printStackTrace();
       throw new WrappedRuntimeException(t);
     }
-  }
-
-  private boolean needsClassLoaderInstrumentation(final ClassInfo classInfo) {
-    if (m_configHelper.isNeverAdaptable(classInfo)) { return false; }
-
-    for (ClassInfo c = classInfo; c != null; c = c.getSuperclass()) {
-      if ("java.lang.ClassLoader".equals(c.getName())) {
-        // found ClassLoader in the hierarchy of subclasses, now check for a definition of loadClass in this class
-        for (MethodInfo m : classInfo.getMethods()) {
-          if ("loadClass".equals(m.getName()) && "(Ljava/lang/String;)Ljava/lang/Class;".equals(m.getSignature())) { return true; }
-        }
-        return false;
-
-      }
-    }
-    return false;
   }
 
   public static boolean isAdvisable(final ClassInfo classInfo, final Set definitions) {

@@ -95,7 +95,7 @@ public class VersionizedDNAWrapperTest extends TestCase {
   protected DNAWriter createDNAWriter(final TCByteBufferOutputStream out, final ObjectID id, final String type,
                                       final ObjectStringSerializer serializer, final DNAEncodingInternal encoding,
                                       final String string) {
-    return new DNAWriterImpl(out, id, type, serializer, encoding, "loader description", false);
+    return new DNAWriterImpl(out, id, type, serializer, encoding, false);
   }
 
   private void compareAction(final LogicalAction expect, final LogicalAction actual) {

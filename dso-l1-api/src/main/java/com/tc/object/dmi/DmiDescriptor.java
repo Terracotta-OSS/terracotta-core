@@ -79,6 +79,7 @@ public class DmiDescriptor implements TCSerializable, EventContext {
     return faultReceiver;
   }
 
+  @Override
   public String toString() {
     return "DmiDescriptor{receiverId=" + receiverId + ", dmiCallId=" + dmiCallId + ", ClassSpecs="
            + DmiClassSpec.toString(classSpecs) + "}";
@@ -97,9 +98,8 @@ public class DmiDescriptor implements TCSerializable, EventContext {
     final int size = in.readInt();
     classSpecs = new DmiClassSpec[size];
     for (int i = 0; i < classSpecs.length; i++) {
-      final String classLoaderDesc = in.readString();
       final String className = in.readString();
-      classSpecs[i] = new DmiClassSpec(classLoaderDesc, className);
+      classSpecs[i] = new DmiClassSpec(className);
     }
     return this;
   }
@@ -114,9 +114,8 @@ public class DmiDescriptor implements TCSerializable, EventContext {
     out.writeLong(dmiCallId.toLong());
     out.writeBoolean(faultReceiver);
     out.writeInt(classSpecs.length);
-    for (int i = 0; i < classSpecs.length; i++) {
-      out.writeString(classSpecs[i].getClassLoaderDesc());
-      out.writeString(classSpecs[i].getClassName());
+    for (DmiClassSpec classSpec : classSpecs) {
+      out.writeString(classSpec.getClassName());
     }
   }
 }

@@ -9,7 +9,6 @@ import com.tc.process.Exec;
 import com.tc.process.Exec.Result;
 import com.tc.test.config.model.TestConfig;
 import com.tc.text.Banner;
-import com.tc.timapi.Version;
 import com.tc.util.runtime.Vm;
 
 import java.io.File;
@@ -130,9 +129,8 @@ public class TestClientManager {
     String jmxp = TestBaseUtil.jarFor(JMXMPConnector.class);
     String log4j = TestBaseUtil.jarFor(org.apache.log4j.LogManager.class);
     String stringUtils = TestBaseUtil.jarFor(StringUtils.class);
-    String timApi = TestBaseUtil.jarFor(Version.class);
     classPath = testBase.makeClasspath(classPath, mbsp, test, junit, linkedChild, abstractClientBase, jmxp, log4j,
-                                       stringUtils, timApi);
+                                       stringUtils);
     return classPath;
   }
 

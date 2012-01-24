@@ -6,10 +6,10 @@ package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
-import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.mgmt.FacadeUtil;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
@@ -26,8 +26,8 @@ import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * state for maps
@@ -59,8 +59,6 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
                              final Object[] params) {
     switch (method) {
       case SerializationUtil.PUT:
-
-        mapPreProcess(params);
         final Object key = getKey(params);
         final Object value = getValue(params);
         Object old = this.references.put(key, value);
@@ -112,20 +110,11 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
   }
 
   protected Object getKey(final Object[] params) {
-    // Hack hack big hack for trove maps which replace the key on set as opposed to HashMaps which do not.
-    return params.length == 3 ? params[1] : params[0];
+    return params[0];
   }
 
   protected Object getValue(final Object[] params) {
-    // Hack hack big hack for trove maps which replace the key on set as opposed to HashMaps which do not.
-    return params.length == 3 ? params[2] : params[1];
-  }
-
-  private void mapPreProcess(final Object[] params) {
-    // Hack hack big hack for trove maps which replace the key on set as opposed to HashMaps which do not.
-    if (params.length == 3) {
-      this.references.remove(params[0]);
-    }
+    return params[1];
   }
 
   public void dehydrate(final ObjectID objectID, final DNAWriter writer, final DNAType type) {

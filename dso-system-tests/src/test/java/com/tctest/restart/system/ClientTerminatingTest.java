@@ -22,6 +22,7 @@ public class ClientTerminatingTest extends ServerCrashingTestBase {
 
   public ClientTerminatingTest() {
     super(NODE_COUNT);
+    timebombTestForRewrite();
   }
 
   protected void setSynchronousWrite() {

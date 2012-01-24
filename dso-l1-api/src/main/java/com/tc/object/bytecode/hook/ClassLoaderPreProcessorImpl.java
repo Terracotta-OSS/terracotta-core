@@ -12,9 +12,6 @@ import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.asm.Type;
-import com.tc.asm.commons.AdviceAdapter;
-import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
-import com.tc.util.runtime.Vm;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -64,105 +61,13 @@ public class ClassLoaderPreProcessorImpl {
     try {
       ClassReader cr = new ClassReader(classLoaderBytecode);
       ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-      ClassVisitor cv = Vm.isIBM() ? (ClassVisitor) new IBMClassLoaderAdapter(cw) : new ClassLoaderVisitor(cw);
+      ClassVisitor cv = new ClassLoaderVisitor(cw);
       cr.accept(cv, ClassReader.SKIP_FRAMES);
       return cw.toByteArray();
     } catch (Exception e) {
       System.err.println("failed to patch ClassLoader:");
       e.printStackTrace();
       return classLoaderBytecode;
-    }
-  }
-
-  static class IBMClassLoaderAdapter extends ClassAdapter implements Opcodes {
-
-    private String className;
-
-    public IBMClassLoaderAdapter(ClassVisitor cv) {
-      super(cv);
-    }
-
-    @Override
-    public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-      super.visit(version, access, name, signature, superName, interfaces);
-      this.className = name;
-    }
-
-    @Override
-    public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-      MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
-      if (CLASSLOADER_CLASS_NAME.equals(className) && "loadClass".equals(name)
-          && "(Ljava/lang/String;)Ljava/lang/Class;".equals(desc)) {
-        return new LoadClassAdapter(mv, access, name, desc);
-
-      } else if (CLASSLOADER_CLASS_NAME.equals(className) && "getResource".equals(name)
-                 && "(Ljava/lang/String;)Ljava/net/URL;".equals(desc)) { return new GetResourceVisitor(mv); }
-
-      return new MethodAdapter(mv) {
-        @Override
-        public void visitMethodInsn(int opcode, String owner, String mname, String mdesc) {
-          if (CLASSLOADER_CLASS_NAME.equals(owner) && "defineClassImpl".equals(mname)) {
-            mname = "__tc_defineClassImpl";
-          }
-          super.visitMethodInsn(opcode, owner, mname, mdesc);
-        }
-      };
-    }
-
-    @Override
-    public void visitEnd() {
-      Label postDefine = new Label();
-
-      MethodVisitor mv = super.visitMethod(ACC_PRIVATE | ACC_SYNTHETIC, "__tc_defineClassImpl",
-                                           "(Ljava/lang/String;[BIILjava/lang/Object;)Ljava/lang/Class;", null, null);
-      mv.visitCode();
-      mv.visitVarInsn(ALOAD, 0);
-      mv.visitVarInsn(ALOAD, 1);
-      mv.visitVarInsn(ALOAD, 2);
-      mv.visitVarInsn(ILOAD, 3);
-      mv.visitVarInsn(ILOAD, 4);
-      mv.visitVarInsn(ALOAD, 5);
-      mv.visitTypeInsn(CHECKCAST, "java/security/ProtectionDomain");
-      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper", "defineClass0Pre",
-                         "(Ljava/lang/ClassLoader;Ljava/lang/String;[BIILjava/security/ProtectionDomain;)[B");
-
-      mv.visitVarInsn(ASTORE, 6); // byte[] b = CPH.defineClass0Pre(..);
-      // If instrumented use the new array, otherwise pass straight through
-      Label notInstrumented = new Label();
-      mv.visitVarInsn(ALOAD, 2); // if (b != original) {
-      mv.visitVarInsn(ALOAD, 6);
-      mv.visitJumpInsn(IF_ACMPEQ, notInstrumented);
-      mv.visitVarInsn(ALOAD, 0);
-      mv.visitVarInsn(ALOAD, 1);
-      mv.visitVarInsn(ALOAD, 6);
-      mv.visitInsn(ICONST_0);
-      mv.visitVarInsn(ALOAD, 6); // b.length
-      mv.visitInsn(ARRAYLENGTH);
-      mv.visitVarInsn(ALOAD, 5);
-      mv.visitMethodInsn(INVOKESPECIAL, "java/lang/ClassLoader", "defineClassImpl",
-                         "(Ljava/lang/String;[BIILjava/lang/Object;)Ljava/lang/Class;");
-      mv.visitJumpInsn(Opcodes.GOTO, postDefine);
-      mv.visitLabel(notInstrumented); // } else {
-      mv.visitVarInsn(ALOAD, 0);
-      mv.visitVarInsn(ALOAD, 1);
-      mv.visitVarInsn(ALOAD, 2);
-      mv.visitVarInsn(ILOAD, 3);
-      mv.visitVarInsn(ILOAD, 4);
-      mv.visitVarInsn(ALOAD, 5);
-      mv.visitMethodInsn(INVOKESPECIAL, "java/lang/ClassLoader", "defineClassImpl",
-                         "(Ljava/lang/String;[BIILjava/lang/Object;)Ljava/lang/Class;");
-      mv.visitLabel(postDefine);
-      mv.visitVarInsn(ASTORE, 7);
-      mv.visitVarInsn(ALOAD, 7);
-      mv.visitVarInsn(ALOAD, 0);
-      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper", "defineClass0Post",
-                         "(Ljava/lang/Class;Ljava/lang/ClassLoader;)V");
-      mv.visitVarInsn(ALOAD, 7);
-      mv.visitInsn(ARETURN);
-      mv.visitMaxs(0, 0);
-      mv.visitEnd();
-
-      super.visitEnd();
     }
   }
 
@@ -189,13 +94,7 @@ public class ClassLoaderPreProcessorImpl {
         getClassLoadingLockExists = true;
       }
 
-      if (CLASSLOADER_CLASS_NAME.equals(className) && "(Ljava/lang/String;)Ljava/lang/Class;".equals(desc)
-          && "loadClass".equals(name)) {
-        return new LoadClassAdapter(mv, access, name, desc);
-      } else if (CLASSLOADER_CLASS_NAME.equals(className) && "getResource".equals(name)
-                 && "(Ljava/lang/String;)Ljava/net/URL;".equals(desc)) {
-        return new GetResourceVisitor(mv);
-      } else if ("initSystemClassLoader".equals(name)) {
+      if ("initSystemClassLoader".equals(name)) {
         return new SclSetAdapter(mv);
       } else {
         return new ProcessingVisitor(mv, access, desc);
@@ -283,142 +182,6 @@ public class ClassLoaderPreProcessorImpl {
                               "systemLoaderInitialized", "()V");
         super.visitLabel(l);
       }
-    }
-  }
-
-  void food(Class c, ClassLoader cl) {
-    ClassProcessorHelper.defineClass0Post(c, cl);
-  }
-
-  /**
-   * Adding hook for loading tc classes. Uses a primitive state machine to insert new code after first line attribute
-   * (if exists) in order to help with debugging and line-based breakpoints.
-   */
-  public static class GetResourceVisitor extends MethodAdapter implements Opcodes {
-    private boolean isInstrumented = false;
-
-    public GetResourceVisitor(MethodVisitor mv) {
-      super(mv);
-    }
-
-    @Override
-    public void visitLineNumber(int line, Label start) {
-      super.visitLineNumber(line, start);
-      if (!isInstrumented) instrument();
-    }
-
-    @Override
-    public void visitVarInsn(int opcode, int var) {
-      if (!isInstrumented) instrument();
-      super.visitVarInsn(opcode, var);
-    }
-
-    private void instrument() {
-      Label l = new Label();
-
-      mv.visitVarInsn(ALOAD, 1);
-      mv.visitVarInsn(ALOAD, 0);
-      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper", "getTCResource",
-                         "(Ljava/lang/String;Ljava/lang/ClassLoader;)Ljava/net/URL;");
-      mv.visitVarInsn(ASTORE, 2);
-
-      mv.visitVarInsn(ALOAD, 2);
-      mv.visitJumpInsn(IFNULL, l);
-
-      mv.visitVarInsn(ALOAD, 2);
-      mv.visitInsn(ARETURN);
-
-      mv.visitLabel(l);
-
-      this.isInstrumented = true;
-    }
-
-  }
-
-  /**
-   * Adding hook into ClassLoader.loadClass[Internal]() method to load tc classes. This instrumentation code is mirrored
-   * by the export code in IsolationClassLoader. If you change this in any functionally significant way please update
-   * the IsolationClassLoader too otherwise we may see strange test failures.
-   */
-  public static class LoadClassAdapter extends AdviceAdapter {
-
-    public LoadClassAdapter(MethodVisitor mv, int access, String name, String desc) {
-      super(mv, access, name, desc);
-    }
-
-    @Override
-    protected void onMethodEnter() {
-      Label foundClass = new Label();
-      Label noExport = new Label();
-
-      Label lockStart = new Label();
-      Label lockEnd = new Label();
-      Label lockEndEx = new Label();
-      Label lockEndExEnd = new Label();
-      mv.visitTryCatchBlock(lockStart, lockEnd, lockEndEx, null);
-      mv.visitTryCatchBlock(lockEndEx, lockEndExEnd, lockEndEx, null);
-
-      final int thisSlot = 0;
-      final int classnameSlot = 1;
-      final int classbytesSlot = 2;
-      final int loadedclassSlot = 3;
-      final int lockSlot = 4;
-
-      mv.visitVarInsn(ALOAD, classnameSlot);
-      mv.visitVarInsn(ALOAD, thisSlot);
-      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper",
-                         "loadClassInternalHook", "(Ljava/lang/String;Ljava/lang/ClassLoader;)[B");
-      mv.visitVarInsn(ASTORE, classbytesSlot);
-
-      mv.visitVarInsn(ALOAD, classbytesSlot);
-      mv.visitJumpInsn(IFNULL, noExport);
-
-      mv.visitVarInsn(ALOAD, thisSlot);
-      mv.visitVarInsn(ALOAD, classnameSlot);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/ClassLoader", "__tc_getClassLoadingLock",
-                         "(Ljava/lang/String;)Ljava/lang/Object;");
-      mv.visitVarInsn(ASTORE, lockSlot);
-
-      // synchronized start
-      mv.visitVarInsn(ALOAD, lockSlot);
-      mv.visitInsn(MONITORENTER);
-      mv.visitLabel(lockStart);
-
-      mv.visitVarInsn(ALOAD, thisSlot);
-      mv.visitVarInsn(ALOAD, classnameSlot);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/ClassLoader", "findLoadedClass",
-                         "(Ljava/lang/String;)Ljava/lang/Class;");
-      mv.visitVarInsn(ASTORE, loadedclassSlot);
-
-      mv.visitVarInsn(ALOAD, loadedclassSlot);
-      mv.visitJumpInsn(IFNONNULL, foundClass);
-
-      mv.visitVarInsn(ALOAD, thisSlot);
-      mv.visitVarInsn(ALOAD, classnameSlot);
-      mv.visitVarInsn(ALOAD, classbytesSlot);
-      mv.visitInsn(ICONST_0);
-      mv.visitVarInsn(ALOAD, classbytesSlot);
-      mv.visitInsn(ARRAYLENGTH);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/ClassLoader", "defineClass",
-                         "(Ljava/lang/String;[BII)Ljava/lang/Class;");
-      mv.visitVarInsn(ASTORE, loadedclassSlot);
-
-      mv.visitLabel(foundClass);
-
-      // synchronized end
-      mv.visitVarInsn(ALOAD, lockSlot);
-      mv.visitInsn(MONITOREXIT);
-      mv.visitLabel(lockEnd);
-      mv.visitVarInsn(ALOAD, loadedclassSlot);
-      mv.visitInsn(ARETURN);
-
-      mv.visitLabel(lockEndEx);
-      mv.visitVarInsn(ALOAD, lockSlot);
-      mv.visitInsn(MONITOREXIT);
-      mv.visitLabel(lockEndExEnd);
-      mv.visitInsn(ATHROW);
-
-      mv.visitLabel(noExport);
     }
   }
 

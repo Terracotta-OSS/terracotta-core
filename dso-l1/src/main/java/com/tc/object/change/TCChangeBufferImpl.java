@@ -4,8 +4,6 @@
  */
 package com.tc.object.change;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
 import com.tc.object.change.event.ArrayElementChangeEvent;
@@ -31,8 +29,6 @@ import java.util.Map;
  * @author orion
  */
 public class TCChangeBufferImpl implements TCChangeBuffer {
-  private static final TCLogger                  logger     = TCLogging.getLogger(TCChangeBuffer.class);
-
   private final SetOnceFlag                      dnaCreated = new SetOnceFlag();
   private final TCObject                         tcObject;
 
@@ -129,13 +125,9 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
       arrayEvents.put(key, new ArrayElementChangeEvent(index, newValue));
     } else {
       if (logicalEvents != null) {
-        // ignore physical updates to classes that are logically managed (This happens for things like THash which is a
-        // superclass of THashMap)
-        if (logger.isDebugEnabled()) {
-          logger.debug("Ignoring physical field change for " + classname + "." + fieldname + " since "
-                       + tcObject.getTCClass().getName() + " is logically managed");
-        }
-        return;
+        // this shouldn't happen
+        throw new AssertionError("Physical field change for " + classname + "." + fieldname + " on "
+                                 + tcObject.getTCClass().getName() + " which is logically managed");
       }
 
       // XXX: only fully qualify fieldnames when necessary (ie. when a variable name is shadowed)

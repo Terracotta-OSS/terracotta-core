@@ -75,9 +75,6 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
       case OBJECT: {
         return "(" + value.getClass().getName() + ")";
       }
-      case JAVA_LANG_CLASSLOADER: {
-        return "Classloader (" + value.getClass().getName() + ")";
-      }
       case STRING: {
         return "\"" + value + "\"";
       }

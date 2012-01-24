@@ -36,6 +36,10 @@ public class ClusterMetaDataOrphanedValuesTest extends TransparentTestBase {
   private File configFile;
   private int  adminPort;
 
+  public ClusterMetaDataOrphanedValuesTest() {
+    timebombTestForRewrite();
+  }
+
   @Override
   public void doSetUp(final TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(ClusterMetaDataOrphanedValuesTestApp.NODE_COUNT);

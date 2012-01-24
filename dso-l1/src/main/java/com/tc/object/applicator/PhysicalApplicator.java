@@ -5,9 +5,10 @@
 package com.tc.object.applicator;
 
 import com.tc.logging.TCLogging;
+import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.TCClass;
-import com.tc.object.TCObjectExternal;
+import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.dna.api.DNA;
@@ -61,8 +62,8 @@ public class PhysicalApplicator extends BaseApplicator {
     return addTo;
   }
 
-  public void hydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNA dna, Object po)
-      throws IOException, ClassNotFoundException {
+  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
+      ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
     String fieldName;
     Object fieldValue;
@@ -76,7 +77,7 @@ public class PhysicalApplicator extends BaseApplicator {
     }
   }
 
-  public void dehydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNAWriter writer, Object pojo) {
+  public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
     if (!objectManager.isPortableInstance(pojo)) { return; }
 
     TCClass tcc = clazz;
@@ -137,7 +138,7 @@ public class PhysicalApplicator extends BaseApplicator {
 
   }
 
-  public Object getNewInstance(ApplicatorObjectManager objectManager, DNA dna) {
+  public Object getNewInstance(ClientObjectManager objectManager, DNA dna) {
     throw new UnsupportedOperationException();
   }
 

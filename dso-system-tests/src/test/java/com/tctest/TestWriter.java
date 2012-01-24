@@ -5,8 +5,8 @@
 package com.tctest;
 
 import com.tc.util.concurrent.ThreadUtil;
+import com.tctest.builtin.HashMap;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 

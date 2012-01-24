@@ -117,10 +117,6 @@ public class TCObjectSelfTransactionApplyTest extends TestCase {
       return null;
     }
 
-    public String getDefiningLoaderDescription() {
-      return null;
-    }
-
     public ObjectID getObjectID() throws DNAException {
       return oid;
     }

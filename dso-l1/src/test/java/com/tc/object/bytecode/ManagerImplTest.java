@@ -17,7 +17,6 @@ import com.tc.object.TCObjectSelf;
 import com.tc.object.appevent.ApplicationEvent;
 import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.dna.api.DNA;
-import com.tc.object.loaders.LoaderDescription;
 import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.locks.LockID;
@@ -203,7 +202,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
 
   private static class ObjMgr implements ClientObjectManager {
 
-    public Class getClassFor(final String className, final LoaderDescription loaderDesc) {
+    public Class getClassFor(final String className) {
       throw new ImplementMe();
     }
 

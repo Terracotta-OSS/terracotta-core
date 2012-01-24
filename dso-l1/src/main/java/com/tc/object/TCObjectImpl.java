@@ -345,8 +345,7 @@ public abstract class TCObjectImpl implements TCObject {
 
   public void objectFieldChangedByOffset(final String classname, final long fieldOffset, final Object newValue,
                                          final int index) {
-    final String fieldname = this.tcClazz.getFieldNameByOffset(fieldOffset);
-    objectFieldChanged(classname, fieldname, newValue, index);
+    throw new AssertionError();
   }
 
   public boolean isFieldPortableByOffset(final long fieldOffset) {
@@ -354,7 +353,7 @@ public abstract class TCObjectImpl implements TCObject {
   }
 
   public String getFieldNameByOffset(final long fieldOffset) {
-    return this.tcClazz.getFieldNameByOffset(fieldOffset);
+    throw new AssertionError();
   }
 
   public void booleanFieldChanged(final String classname, final String fieldname, final boolean newValue,

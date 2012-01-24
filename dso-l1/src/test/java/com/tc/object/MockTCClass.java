@@ -8,7 +8,6 @@ import com.tc.exception.ImplementMe;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.field.TCField;
-import com.tc.object.loaders.LoaderDescription;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -77,10 +76,6 @@ public class MockTCClass implements TCClass {
     return name + ".this$0";
   }
 
-  public LoaderDescription getDefiningLoaderDescription() {
-    return new LoaderDescription(null, "mock");
-  }
-
   public boolean isNonStaticInner() {
     throw new ImplementMe();
   }
@@ -116,10 +111,6 @@ public class MockTCClass implements TCClass {
 
   public Class getPeerClass() {
     return getClass();
-  }
-
-  public String getFieldNameByOffset(final long fieldOffset) {
-    throw new ImplementMe();
   }
 
   public ClientObjectManager getObjectManager() {

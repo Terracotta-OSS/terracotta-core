@@ -287,10 +287,6 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
       throw new UnsupportedOperationException();
     }
 
-    public String getLoaderDescription() {
-      throw new UnsupportedOperationException();
-    }
-
     public Set getObjectReferences() {
       throw new UnsupportedOperationException();
     }

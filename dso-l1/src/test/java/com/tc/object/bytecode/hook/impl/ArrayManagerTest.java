@@ -377,10 +377,6 @@ public class ArrayManagerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public boolean isFieldPortableByOffset(final long fieldOffset) {
-      throw new ImplementMe();
-    }
-
     public ToggleableStrongReference getOrCreateToggleRef() {
       throw new ImplementMe();
     }

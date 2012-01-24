@@ -33,7 +33,6 @@ import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.ConnectionInfoConfig;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.DSOMBeanConfig;
-import com.tc.object.config.MBeanSpec;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.field.TCFieldFactory;
@@ -267,10 +266,9 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                          final StatisticsAgentSubSystem statisticsAgentSubSystem,
                                          final RuntimeLogger runtimeLogger,
                                          final InstrumentationLogger instrumentationLogger, final String rawConfigText,
-                                         final DistributedObjectClient distributedObjectClient,
-                                         final MBeanSpec[] mBeanSpecs) {
+                                         final DistributedObjectClient distributedObjectClient) {
     return new L1Management(teh, statisticsAgentSubSystem, runtimeLogger, instrumentationLogger, rawConfigText,
-                            distributedObjectClient, mBeanSpecs);
+                            distributedObjectClient);
   }
 
   public void registerForOperatorEvents(final L1Management management) {

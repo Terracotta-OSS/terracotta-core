@@ -89,8 +89,7 @@ public class ServerTransactionBatchWriter {
   private void writeDNA(final TCByteBufferOutputStream out, final DNAInternal dna) throws IOException,
       ClassNotFoundException {
     final DNAWriterInternal dnaWriter = new DNAWriterImpl(out, dna.getObjectID(), dna.getTypeName(), this.serializer,
-                                                          DNA_STORAGE_ENCODING, dna.getDefiningLoaderDescription(),
-                                                          dna.isDelta());
+                                                          DNA_STORAGE_ENCODING, dna.isDelta());
     writeParentObjectID(dnaWriter, dna.getParentObjectID());
     // It is assumed that if this DNA is shared/accessed by multiple threads (simultaneously or other wise) that the DNA
     // is thread safe and the DNA gives out multiple iteratable cursors or the cursor is resettable

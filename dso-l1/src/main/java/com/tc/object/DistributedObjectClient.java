@@ -71,7 +71,6 @@ import com.tc.object.cache.CacheConfigImpl;
 import com.tc.object.cache.CacheManager;
 import com.tc.object.config.ConnectionInfoConfig;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.SRASpec;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.event.DmiManager;
@@ -171,7 +170,6 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.TCMemoryManagerImpl;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.runtime.logging.MemoryOperatorEventListener;
-import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemCallback;
 import com.tc.statistics.StatisticsSystemType;
@@ -219,7 +217,6 @@ import com.tcclient.cluster.DsoClusterInternal;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -387,19 +384,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
       registry.registerActionInstance(new SRAL1PendingBatchesSize(this.pendingBatchesSize));
       registry.registerActionInstance(new SRAL1TransactionCount(this.txCounter));
       registry.registerActionInstance(new SRAVmGarbageCollector(SRAVmGarbageCollectorType.L1_VM_GARBAGE_COLLECTOR));
-
-      // register the SRAs from TIMs
-      final SRASpec[] sraSpecs = DistributedObjectClient.this.config.getSRASpecs();
-      if (sraSpecs != null) {
-        for (final SRASpec spec : sraSpecs) {
-          final Collection<StatisticRetrievalAction> sras = spec.getSRAs();
-          if (sras != null && sras.size() > 0) {
-            for (final StatisticRetrievalAction sra : sras) {
-              registry.registerActionInstance(sra);
-            }
-          }
-        }
-      }
     }
   }
 
@@ -656,8 +640,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.l1Management = this.dsoClientBuilder.createL1Management(teh, this.statisticsAgentSubSystem,
                                                                  this.runtimeLogger,
                                                                  this.manager.getInstrumentationLogger(),
-                                                                 this.config.rawConfigText(), this,
-                                                                 this.config.getMBeanSpecs());
+                                                                 this.config.rawConfigText(), this);
     this.l1Management.start(this.createDedicatedMBeanServer);
 
     // register the terracotta operator event logger

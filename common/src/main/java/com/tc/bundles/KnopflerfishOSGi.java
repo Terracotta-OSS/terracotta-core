@@ -17,7 +17,6 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
-import com.terracottatech.config.Module;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -52,8 +51,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     this.repositories = bundleRepositories;
 
     final ProductInfo info = ProductInfo.getInstance();
-    resolver = new Resolver(ResolverUtils.urlsToStrings(repositories), true, info.mavenArtifactsVersion(),
-                            info.timApiVersion(), addlRepos);
+    resolver = new Resolver(ResolverUtils.urlsToStrings(repositories), true, info.mavenArtifactsVersion(), addlRepos);
 
     System.setProperty("org.knopflerfish.osgi.registerserviceurlhandler", "false");
     framework = new Framework(null);

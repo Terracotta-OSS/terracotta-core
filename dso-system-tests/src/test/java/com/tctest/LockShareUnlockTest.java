@@ -30,6 +30,10 @@ public class LockShareUnlockTest extends TransparentTestBase {
   private int              jmxPort;
   private int              groupPort;
 
+  public LockShareUnlockTest() {
+    timebombTestForRewrite();
+  }
+
   @Override
   protected Class getApplicationClass() {
     return LockShareUnlockTestApp.class;

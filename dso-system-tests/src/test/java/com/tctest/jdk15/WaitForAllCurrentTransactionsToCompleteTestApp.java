@@ -17,12 +17,14 @@ import com.tc.stats.api.DSOMBean;
 import com.tc.test.JMXUtils;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tctest.builtin.ArrayList;
+import com.tctest.builtin.CyclicBarrier;
+import com.tctest.builtin.Lock;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
@@ -33,20 +35,20 @@ import javax.management.remote.JMXConnector;
  * Exercise ManagerUtil.waitForAllCurrentTransactionsToComplete() to see if screw up anything
  */
 public class WaitForAllCurrentTransactionsToCompleteTestApp extends AbstractTransparentApp {
-  private static final TCLogger     logger              = TCLogging
-                                                            .getLogger("com.tc.WaitForAllCurrentTransactionsToComplete");
-  private static final int          DEFAULT_NUM_OF_PUT  = 1234;
-  private static final int          DEFAULT_NUM_OF_LOOP = 5;
-  public static final String        JMX_PORT            = "jmx-port";
+  private static final TCLogger   logger              = TCLogging
+                                                          .getLogger("com.tc.WaitForAllCurrentTransactionsToComplete");
+  private static final int        DEFAULT_NUM_OF_PUT  = 1234;
+  private static final int        DEFAULT_NUM_OF_LOOP = 5;
+  public static final String      JMX_PORT            = "jmx-port";
 
-  private static final int          CAPACITY            = 2000;
+  private static final int        CAPACITY            = 2000;
 
-  private final LinkedBlockingQueue queue               = new LinkedBlockingQueue(CAPACITY);
-  private final ApplicationConfig   appConfig;
-  private final CyclicBarrier       barrier;
+  private final Queue             queue               = new Queue(CAPACITY);
+  private final ApplicationConfig appConfig;
+  private final CyclicBarrier     barrier;
 
-  private final int                 numOfPut;
-  private final int                 numOfLoop;
+  private final int               numOfPut;
+  private final int               numOfLoop;
 
   public WaitForAllCurrentTransactionsToCompleteTestApp(String appId, ApplicationConfig cfg,
                                                         ListenerProvider listenerProvider) {
@@ -109,8 +111,7 @@ public class WaitForAllCurrentTransactionsToCompleteTestApp extends AbstractTran
     } catch (IOException e) {
       throw new AssertionError(e);
     }
-    DSOMBean dsoMBean = MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO,
-                                                                                 DSOMBean.class, false);
+    DSOMBean dsoMBean = MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO, DSOMBean.class, false);
     Map<ObjectName, Long> map = dsoMBean.getAllPendingTransactionsCount();
 
     long l = -1;
@@ -171,4 +172,52 @@ public class WaitForAllCurrentTransactionsToCompleteTestApp extends AbstractTran
       return this.i;
     }
   }
+
+  private static class Queue {
+
+    private final List list = new ArrayList();
+    private final Lock lock = new Lock();
+    private final int  capacity;
+
+    public Queue(int capacity) {
+      this.capacity = capacity;
+    }
+
+    public Object take() throws InterruptedException {
+      lock.writeLock();
+      try {
+        while (list.size() == 0) {
+          lock.doWait();
+        }
+        Object rv = list.remove(0);
+        lock.doNotifyAll();
+        return rv;
+      } finally {
+        lock.writeUnlock();
+      }
+    }
+
+    public void put(Object o) throws InterruptedException {
+      lock.writeLock();
+      try {
+        while (list.size() == capacity) {
+          lock.doWait();
+        }
+        list.add(o);
+        lock.doNotifyAll();
+      } finally {
+        lock.writeUnlock();
+      }
+    }
+
+    public int size() {
+      lock.readLock();
+      try {
+        return list.size();
+      } finally {
+        lock.readUnlock();
+      }
+    }
+  }
+
 }

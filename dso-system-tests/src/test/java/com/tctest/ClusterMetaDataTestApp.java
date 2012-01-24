@@ -18,18 +18,17 @@ import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tcclient.cluster.DsoClusterInternal;
 import com.tcclient.cluster.DsoNode;
+import com.tctest.builtin.ConcurrentHashMap;
+import com.tctest.builtin.CyclicBarrier;
+import com.tctest.builtin.HashMap;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CyclicBarrier;
 
 public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
 
@@ -194,7 +193,7 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
    */
   void testGetNodesWithKeys() throws Exception {
     DsoClusterInternal dsoClusterInternal = (DsoClusterInternal) cluster;
-    final Map<?, Set<DsoNode>> result1 = dsoClusterInternal.getNodesWithKeys(null, new HashSet());
+    final Map<?, Set<DsoNode>> result1 = dsoClusterInternal.getNodesWithKeys(null, new java.util.HashSet());
     Assert.assertNotNull(result1);
     Assert.assertEquals(0, result1.size());
 
@@ -211,7 +210,7 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
 
     barrier.await();
 
-    HashSet<String> keys = new HashSet<String>();
+    Set<String> keys = new java.util.HashSet<String>();
     keys.add("TESTING");
     keys.add("NOT HERE!");
     final Map<String, Set<DsoNode>> result2 = dsoClusterInternal.getNodesWithKeys(map, keys);
@@ -390,8 +389,8 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
 
     if (0 == nodeId) {
       checkGetNodesWithObjectsResult(cluster.getNodesWithObjects(pojo.getYourMojo(), null, pojo.getMyMojo()));
-      checkGetNodesWithObjectsResult(cluster.getNodesWithObjects(Arrays.asList(pojo.getYourMojo(), null, pojo
-          .getMyMojo())));
+      checkGetNodesWithObjectsResult(cluster.getNodesWithObjects(Arrays.asList(pojo.getYourMojo(), null,
+                                                                               pojo.getMyMojo())));
     }
 
     barrier.await();
@@ -673,7 +672,7 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
   }
 
   @Override
-  protected CyclicBarrier getBarrierForNodeCoordination() {
+  protected BuiltinBarrier getBarrierForNodeCoordination() {
     return barrier;
   }
 

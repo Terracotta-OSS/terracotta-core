@@ -210,7 +210,6 @@ class InstrumentationSpec {
       this.instrumentationAction = TransparencyClassSpec.ADAPTABLE;
     } else if (spec.isLogical() || spec.ignoreChecks()) {
       // Logically managed classes need not have all super classes instrumented.
-      // currently THashMap and THashSet are not in boot jar and are instrumented during runtime.
       this.instrumentationAction = TransparencyClassSpec.PORTABLE;
     } else if (superClassChecks(portability)) {
       this.instrumentationAction = TransparencyClassSpec.ADAPTABLE;

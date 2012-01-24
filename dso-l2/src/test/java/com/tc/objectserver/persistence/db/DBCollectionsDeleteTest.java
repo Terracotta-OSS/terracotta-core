@@ -28,6 +28,10 @@ import java.util.TreeSet;
 
 public class DBCollectionsDeleteTest extends TCTestCase {
 
+  static {
+    ManagedObjectStateFactory.enableLegacyTypes();
+  }
+
   private DBPersistorImpl                persistor;
   private PersistenceTransactionProvider ptp;
   private DBEnvironment                  env;
@@ -81,7 +85,7 @@ public class DBCollectionsDeleteTest extends TCTestCase {
     for (int i = 0; i < 10; i++) {
       final ObjectID id = new ObjectID(i);
       final MapManagedObjectState state = (MapManagedObjectState) ManagedObjectStateFactory.getInstance()
-          .createState(id, ObjectID.NULL_ID, "java.util.HashMap", "System.loader", new TestDNACursor());
+          .createState(id, ObjectID.NULL_ID, "java.util.HashMap", new TestDNACursor());
       final TCPersistableMap sMap = (TCPersistableMap) state.getPersistentCollection();
       int entries = 0;
       if (i == 0) {

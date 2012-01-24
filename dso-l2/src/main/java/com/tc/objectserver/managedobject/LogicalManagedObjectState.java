@@ -74,10 +74,6 @@ public abstract class LogicalManagedObjectState extends AbstractManagedObjectSta
     return getStateFactory().getClassName(this.classID);
   }
 
-  public final String getLoaderDescription() {
-    return getStateFactory().getLoaderDescription(this.classID);
-  }
-
   @Override
   protected final boolean basicEquals(final AbstractManagedObjectState o) {
     final LogicalManagedObjectState lmo = ((LogicalManagedObjectState) o);

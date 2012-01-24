@@ -156,10 +156,6 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     return getStateFactory().getClassName(this.classID);
   }
 
-  public final String getLoaderDescription() {
-    return getStateFactory().getLoaderDescription(this.classID);
-  }
-
   public Set getObjectReferences() {
     return Collections.EMPTY_SET;
   }

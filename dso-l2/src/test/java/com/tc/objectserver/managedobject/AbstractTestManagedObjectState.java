@@ -24,7 +24,6 @@ import java.util.Map;
 import junit.framework.TestCase;
 
 public abstract class AbstractTestManagedObjectState extends TestCase {
-  protected static final String                 loaderDesc = "System.loader";
   protected ObjectID                            objectID;
   protected ManagedObjectChangeListenerProvider listenerProvider;
 
@@ -53,7 +52,7 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
   protected ManagedObjectState createManagedObjectState(final String className, final TestDNACursor cursor,
                                                         final ObjectID parentID) throws Exception {
     final ManagedObjectState state = ManagedObjectStateFactory.getInstance().createState(new ObjectID(1), parentID,
-                                                                                         className, loaderDesc, cursor);
+                                                                                         className, cursor);
     return state;
   }
 

@@ -36,8 +36,7 @@ import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.event.DmiManager;
 import com.tc.object.loaders.ClassProvider;
-import com.tc.object.loaders.NamedClassLoader;
-import com.tc.object.loaders.StandardClassProvider;
+import com.tc.object.loaders.SingleLoaderClassProvider;
 import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.DsoLockID;
 import com.tc.object.locks.LockID;
@@ -89,7 +88,7 @@ import java.util.concurrent.CountDownLatch;
 
 import javax.management.MBeanServer;
 
-public class ManagerImpl implements ManagerInternal {
+public class ManagerImpl implements Manager {
   private static final TCLogger                    logger              = TCLogging.getLogger(Manager.class);
   private final SetOnceFlag                        clientStarted       = new SetOnceFlag();
   private final SetOnceFlag                        clientStopped       = new SetOnceFlag();
@@ -138,8 +137,8 @@ public class ManagerImpl implements ManagerInternal {
                      final ClientTransactionManager txManager, final ClientLockManager lockManager,
                      final RemoteSearchRequestManager searchRequestManager, final DSOClientConfigHelper config,
                      final PreparedComponentsFromL2Connection connectionComponents,
-                     final boolean shutdownActionRequired, final RuntimeLogger runtimeLogger,
-                     final ClassProvider classProvider, final boolean isExpressRejoinMode) {
+                     final boolean shutdownActionRequired, final RuntimeLogger runtimeLogger, final ClassLoader loader,
+                     final boolean isExpressRejoinMode) {
     this.objectManager = objectManager;
     this.portability = config.getPortability();
     this.txManager = txManager;
@@ -159,41 +158,14 @@ public class ManagerImpl implements ManagerInternal {
       this.shutdownAction = null;
     }
     this.runtimeLogger = runtimeLogger == null ? new RuntimeLoggerImpl(config) : runtimeLogger;
-    this.classProvider = classProvider == null ? new StandardClassProvider(this.runtimeLogger) : classProvider;
-    if (config.hasBootJar()) {
-      registerStandardLoaders();
-    }
+    this.classProvider = new SingleLoaderClassProvider(loader == null ? getClass().getClassLoader() : loader);
+
     this.lockIdFactory = new LockIdFactory(this);
     this.clientMode = isExpressRejoinMode ? ClientMode.EXPRESS_REJOIN_MODE : ClientMode.DSO_MODE;
   }
 
-  private void registerStandardLoaders() {
-    final ClassLoader loader1 = ClassLoader.getSystemClassLoader();
-    final ClassLoader loader2 = loader1.getParent();
-    final ClassLoader loader3 = loader2.getParent();
-
-    final ClassLoader sunSystemLoader;
-    final ClassLoader extSystemLoader;
-
-    if (loader3 != null) { // user is using alternate system loader
-      sunSystemLoader = loader2;
-      extSystemLoader = loader3;
-    } else {
-      sunSystemLoader = loader1;
-      extSystemLoader = loader2;
-    }
-
-    registerNamedLoader((NamedClassLoader) sunSystemLoader, null);
-    registerNamedLoader((NamedClassLoader) extSystemLoader, null);
-  }
-
   public void init() {
     init(false, null);
-  }
-
-  public void initForTests() {
-    // The method that takes a latch is what we should use in tests now to avoid DMI issues
-    throw new UnsupportedOperationException();
   }
 
   public void initForTests(CountDownLatch latch) {
@@ -523,25 +495,6 @@ public class ManagerImpl implements ManagerInternal {
     }
   }
 
-  public int calculateDsoHashCode(final Object obj) {
-    if (obj == null) { throw new NullPointerException(); }
-
-    if (LiteralValues.isLiteralInstance(obj)) {
-      // isLiteralInstance() returns false for array types, so we don't need recursion here.
-      return LiteralValues.calculateDsoHashCode(obj);
-    }
-    if (overridesHashCode(obj)) { return obj.hashCode(); }
-
-    // obj does not have a stable hashCode(); only if it is already a shared object will we use it's OID as the hashCode
-    final TCObject tcobject = lookupExistingOrNull(obj);
-    if (tcobject != null) { return tcobject.getObjectID().hashCode(); }
-
-    throw new IllegalArgumentException(
-                                       "A cluster-wide stable hash code could not be calculated for the supplied object of type ["
-                                           + obj.getClass()
-                                           + "]. A cluster-wide stable hash code can only be calculated for instances that are already clustered, or for instances of types that override hashCode() with an implementation based purely on non cluster-transient state.");
-  }
-
   public boolean isLiteralInstance(final Object obj) {
     return LiteralValues.isLiteralInstance(obj);
   }
@@ -706,18 +659,7 @@ public class ManagerImpl implements ManagerInternal {
   }
 
   public boolean isFieldPortableByOffset(final Object pojo, final long fieldOffset) {
-    final TCObject tcObj = lookupExistingOrNull(pojo);
-    return tcObj != null && tcObj.isFieldPortableByOffset(fieldOffset);
-  }
-
-  public boolean overridesHashCode(final Object obj) {
-    return this.portability.overridesHashCode(obj);
-  }
-
-  public void registerNamedLoader(final NamedClassLoader loader, final String webAppName) {
-    final String loaderName = loader.__tc_getClassLoaderName();
-    final String appGroup = this.config.getAppGroup(loaderName, webAppName);
-    this.classProvider.registerNamedLoader(loader, appGroup);
+    throw new AssertionError();
   }
 
   public ClassProvider getClassProvider() {
@@ -742,10 +684,6 @@ public class ManagerImpl implements ManagerInternal {
 
   public void registerStatisticRetrievalAction(StatisticRetrievalAction sra) {
     this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry().registerActionInstance(sra);
-  }
-
-  public SessionConfiguration getSessionConfiguration(String appName) {
-    return config.getSessionConfiguration(appName);
   }
 
   private static class FakeManageableObject implements Manageable {

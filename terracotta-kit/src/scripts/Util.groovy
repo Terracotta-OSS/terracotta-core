@@ -71,7 +71,7 @@ class Util {
       def destFile = rootDir + "/" + targetDir + "/tc.jar"
 
       ant.zip(destfile: destFile) {
-        zipfileset(src: tcJar.toString(), excludes: "**/build-data.txt,**/tim-get.properties")
+        zipfileset(src: tcJar.toString(), excludes: "**/build-data.txt")
       }
       
       ant.delete(file: tcJar.toString())

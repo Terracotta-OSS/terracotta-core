@@ -19,9 +19,7 @@ import com.tc.admin.common.XTree;
 import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IServer;
 import com.tc.admin.model.IServerGroup;
-import com.tc.object.LiteralValues;
 import com.tc.stats.api.DSOClassInfo;
-import com.terracottatech.config.InstrumentedClasses;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
@@ -52,11 +50,9 @@ public class ClassesPanel extends XContainer {
   private final XContainer            messagePanel;
   private XLabel                      messageLabel;
 
-  private static final String         REFRESH           = "Refresh";
+  private static final String         REFRESH    = "Refresh";
 
-  private static final String[]       IGNORE_CLASS_LIST = { "com.tcclient", "java." };
-
-  private static final DSOClassInfo[] EMPTY_INFO        = {};
+  private static final DSOClassInfo[] EMPTY_INFO = {};
 
   static {
     xmlOpts = new XmlOptions();
@@ -248,27 +244,9 @@ public class ClassesPanel extends XContainer {
       }
       map.put(className, className);
     }
-    InstrumentedClasses instrumentedClasses = InstrumentedClasses.Factory.newInstance();
-    Iterator<String> iter = map.keySet().iterator();
-    while (iter.hasNext()) {
-      String className = iter.next();
-      if (ignoreClass(className)) {
-        continue;
-      }
-      instrumentedClasses.addNewInclude().setClassExpression(className);
-    }
     TcConfigDocument configDoc = TcConfigDocument.Factory.newInstance();
     TcConfig config = configDoc.addNewTcConfig();
-    config.addNewApplication().addNewDso().setInstrumentedClasses(instrumentedClasses);
     configText.setText(config.xmlText(xmlOpts));
-  }
-
-  private boolean ignoreClass(String className) {
-    if (LiteralValues.isLiteral(className)) { return true; }
-    for (String pattern : IGNORE_CLASS_LIST) {
-      if (className.startsWith(pattern)) { return true; }
-    }
-    return false;
   }
 
   public class RefreshAction extends XAbstractAction {

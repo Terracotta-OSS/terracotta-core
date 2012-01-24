@@ -14,6 +14,7 @@ import com.tc.process.StreamCollector;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Util;
+import com.tctest.builtin.HashMap;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.ByteArrayInputStream;
@@ -30,7 +31,6 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 
 public class SerialVersionUIDTestApp extends AbstractTransparentApp {
@@ -130,8 +130,7 @@ public class SerialVersionUIDTestApp extends AbstractTransparentApp {
 
   private static Field getSerialUIDField(Object obj) {
     Field[] fields = obj.getClass().getDeclaredFields();
-    for (int i = 0; i < fields.length; i++) {
-      Field f = fields[i];
+    for (Field f : fields) {
       if ("serialVersionUID".equals(f.getName())) { return f; }
     }
     return null;

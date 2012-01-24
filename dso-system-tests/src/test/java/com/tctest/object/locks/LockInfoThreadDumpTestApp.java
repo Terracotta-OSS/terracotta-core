@@ -17,11 +17,11 @@ import com.tc.stats.api.DSOMBean;
 import com.tc.test.JMXUtils;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tctest.builtin.CyclicBarrier;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
-import java.util.concurrent.CyclicBarrier;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
@@ -140,18 +140,17 @@ public class LockInfoThreadDumpTestApp extends AbstractTransparentApp {
     } catch (IOException e) {
       throw new AssertionError(e);
     }
-    DSOMBean dsoMBean = MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO,
-                                                                                 DSOMBean.class, false);
+    DSOMBean dsoMBean = MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO, DSOMBean.class, false);
 
     ObjectName[] clientObjectNames = dsoMBean.getClients();
     DSOClientMBean[] clients = new DSOClientMBean[clientObjectNames.length];
     for (int i = 0; i < clients.length; i++) {
-      clients[i] = MBeanServerInvocationHandler.newProxyInstance(mbsc, clientObjectNames[i],
-                                                                                  DSOClientMBean.class, false);
+      clients[i] = MBeanServerInvocationHandler.newProxyInstance(mbsc, clientObjectNames[i], DSOClientMBean.class,
+                                                                 false);
     }
 
     return MBeanServerInvocationHandler.newProxyInstance(mbsc, clients[clientID].getL1InfoBeanName(),
-                                                                       L1InfoMBean.class, false);
+                                                         L1InfoMBean.class, false);
   }
 
   class LockInfoDeadLockAction extends Thread {

@@ -10,7 +10,6 @@ import org.osgi.framework.BundleException;
 import com.tc.bundles.exception.MissingDefaultRepositoryException;
 import com.tc.test.TCTestCase;
 import com.tc.util.ProductInfo;
-import com.terracottatech.config.Module;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +28,6 @@ public class ResolverTest extends TCTestCase {
   private static boolean       PASS             = true;
   private static boolean       FAIL             = false;
 
-  private final String         apiVersion;
   private final String         tcVersion;
   private final String         testRepo;
 
@@ -42,7 +40,6 @@ public class ResolverTest extends TCTestCase {
       throw new RuntimeException(e);
     }
     ProductInfo info = ProductInfo.getInstance();
-    apiVersion = info.timApiVersion();
     tcVersion = info.mavenArtifactsVersion();
   }
 
@@ -246,7 +243,7 @@ public class ResolverTest extends TCTestCase {
 
   private void resolveBundle(String[] repos, BundleSpec spec, boolean expected) throws IOException {
     try {
-      Resolver resolver = new Resolver(repos, false, tcVersion, apiVersion);
+      Resolver resolver = new Resolver(repos, false, tcVersion);
       URL location = resolver.resolveBundle(spec);
       File file = FileUtils.toFile(location);
 
@@ -273,11 +270,8 @@ public class ResolverTest extends TCTestCase {
 
   private File resolve(String[] repos, String groupId, String name, String version, boolean expected) {
     try {
-      Resolver resolver = new Resolver(repos, false, tcVersion, apiVersion);
-      Module module = Module.Factory.newInstance();
-      module.setName(name);
-      module.setVersion(version);
-      module.setGroupId(groupId);
+      Resolver resolver = new Resolver(repos, false, tcVersion);
+      Module module = new Module(groupId, name, version);
       File file = FileUtils.toFile(resolver.resolve(module));
       if (version != null) {
         assertEquals(expected, file.getAbsolutePath().endsWith(name + "-" + version + ".jar"));

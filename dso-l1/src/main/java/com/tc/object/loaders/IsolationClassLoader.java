@@ -11,8 +11,8 @@ import com.tc.asm.ClassVisitor;
 import com.tc.asm.ClassWriter;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.RemoteSearchRequestManager;
+import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerImpl;
-import com.tc.object.bytecode.ManagerInternal;
 import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.bytecode.hook.impl.DSOContextImpl;
@@ -36,10 +36,10 @@ import java.util.concurrent.CountDownLatch;
  * DSO Class loader for internal testing. The main purpose of this loader is to force test classes to be be defined
  * specifically in this loader (and consequently within an isolated DSO context)
  */
-public class IsolationClassLoader extends URLClassLoader implements NamedClassLoader {
+public class IsolationClassLoader extends URLClassLoader {
   private static final ClassLoader    SYSTEM_LOADER = ClassLoader.getSystemClassLoader();
 
-  private final ManagerInternal       manager;
+  private final Manager               manager;
   private final DSOClientConfigHelper config;
   private final Map                   onLoadErrors;
   private final Map                   adapters      = new HashMap();
@@ -81,15 +81,12 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
     return ((URLClassLoader) SYSTEM_LOADER).getURLs();
   }
 
-  private ManagerInternal createManager(boolean startClient, ClientObjectManager objectManager,
-                                        ClientTransactionManager txManager, ClientLockManager lockManager,
-                                        RemoteSearchRequestManager searchRequestManager,
-                                        DSOClientConfigHelper theConfig,
-                                        PreparedComponentsFromL2Connection connectionComponents) {
-    ManagerInternal rv = new ManagerImpl(startClient, objectManager, txManager, lockManager, searchRequestManager,
-                                         theConfig, connectionComponents, false, null, null, false);
-    rv.registerNamedLoader(this, null);
-    return rv;
+  private Manager createManager(boolean startClient, ClientObjectManager objectManager,
+                                ClientTransactionManager txManager, ClientLockManager lockManager,
+                                RemoteSearchRequestManager searchRequestManager, DSOClientConfigHelper theConfig,
+                                PreparedComponentsFromL2Connection connectionComponents) {
+    return new ManagerImpl(startClient, objectManager, txManager, lockManager, searchRequestManager, theConfig,
+                           connectionComponents, false, null, this, false);
   }
 
   public void stop() {
@@ -102,20 +99,6 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
 
     Class c = findLoadedClass(name);
     if (c != null) { return c; }
-
-    // This is a coded Java version of the instrumentation done by the LoadClassAdapter.
-    // We have to do this because we cannot automatically instrument the IsolationClassLoader.
-    byte[] classBytes = ClassProcessorHelper.loadClassInternalHook(name, this);
-    if (classBytes != null) {
-      synchronized (this) {
-        c = findLoadedClass(name);
-        if (c != null) {
-          return c;
-        } else {
-          return defineClass(name, classBytes, 0, classBytes.length);
-        }
-      }
-    }
 
     // "com.tc." classes are delegated to the system loader so that test classes can catch the same exception types as
     // the DSO runtime (which is in the system loader). "org.apache.commons.logging" classes are also delegated so that
@@ -174,18 +157,6 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
       ClassNotFoundException rv = new ClassNotFoundException(t);
       throw rv;
     }
-  }
-
-  public String __tc_getClassLoaderName() {
-    return loaderName();
-  }
-
-  public static String loaderName() {
-    return Namespace.getIsolationLoaderName();
-  }
-
-  public void __tc_setClassLoaderName(String name) {
-    throw new AssertionError();
   }
 
   /**

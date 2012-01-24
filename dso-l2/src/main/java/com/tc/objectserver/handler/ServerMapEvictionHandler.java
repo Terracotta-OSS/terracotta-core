@@ -22,7 +22,7 @@ public class ServerMapEvictionHandler extends AbstractEventHandler implements Ev
     final ServerMapEvictionContext smec = (ServerMapEvictionContext) context;
     this.serverMapEvictor.evict(smec.getOid(), smec.getRandomSamples(), smec.getTargetMaxTotalCount(),
                                 smec.getTTISeconds(), smec.getTTLSeconds(), smec.getOvershoot(), smec.getClassName(),
-                                smec.getLoaderDescription(), smec.getCacheName());
+                                smec.getCacheName());
   }
 
 }

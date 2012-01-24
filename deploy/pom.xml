@@ -27,9 +27,9 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
-      <artifactId>deploy-api</artifactId>
+      <artifactId>dso-l2-common</artifactId>
       <version>${project.version}</version>
-    </dependency>  
+    </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>dso-l1</artifactId>
@@ -43,9 +43,7 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>tcstats</artifactId>
-    </dependency>
-        
-    
+    </dependency>           
     <dependency>
       <groupId>org.mortbay.jetty</groupId>
       <artifactId>jetty</artifactId>
@@ -95,14 +93,6 @@
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
       <scope>compile</scope>
-    </dependency>
-  
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>common-api</artifactId>
-      <version>${project.version}</version>
-      <type>test-jar</type>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>

@@ -12,16 +12,14 @@ public class ClassSpec {
   private static final String PHYSICAL_MO_STATE_CLASS_NAME = PhysicalManagedObjectState.class.getName();
 
   private final String        className;
-  private final String        loaderDesc;
   private final String        classIdentifier;
   private boolean             generateParentIdStorage;
   private int                 classID                      = Integer.MIN_VALUE;
   private String              generatedClassName;
   private String              superClassName               = PHYSICAL_MO_STATE_CLASS_NAME;
 
-  public ClassSpec(String className, String loaderDesc, long strIdx) {
+  public ClassSpec(String className, long strIdx) {
     this.className = className;
-    this.loaderDesc = loaderDesc;
     this.classIdentifier = "com.tc.state.idx" + strIdx + "." + className;
   }
 
@@ -37,10 +35,6 @@ public class ClassSpec {
 
   public String getClassName() {
     return className;
-  }
-
-  public String getLoaderDesc() {
-    return loaderDesc;
   }
 
   public String getClassIdentifier() {

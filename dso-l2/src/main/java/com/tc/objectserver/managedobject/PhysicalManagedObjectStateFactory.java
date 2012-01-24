@@ -109,8 +109,8 @@ public class PhysicalManagedObjectStateFactory {
   }
 
   public PhysicalManagedObjectState create(long strIdx, ObjectID oid, ObjectID parentID, String className,
-                                           String loaderDesc, DNACursor cursor) {
-    ClassSpec cs = new ClassSpec(className, loaderDesc, strIdx);
+                                           DNACursor cursor) {
+    ClassSpec cs = new ClassSpec(className, strIdx);
     cs.setGenerateParentIdStorage(!parentID.isNull());
 
     String classIdentifier = cs.getClassIdentifier();
@@ -137,9 +137,9 @@ public class PhysicalManagedObjectStateFactory {
     return createNewObject(className, parentID);
   }
 
-  public PhysicalManagedObjectState recreate(long classID, ObjectID pid, String className, String loaderDesc,
-                                             DNACursor cursor, PhysicalManagedObjectState oldState) {
-    ClassSpec cs = new ClassSpec(className, loaderDesc, classID);
+  public PhysicalManagedObjectState recreate(long classID, ObjectID pid, String className, DNACursor cursor,
+                                             PhysicalManagedObjectState oldState) {
+    ClassSpec cs = new ClassSpec(className, classID);
     String classIdentifier = cs.getClassIdentifier();
     String generatedClassName = knownClasses.get(classIdentifier);
     Assert.assertNotNull(generatedClassName);

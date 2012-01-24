@@ -18,11 +18,6 @@ import org.osgi.framework.BundleException;
 import com.tc.asm.ClassReader;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.ClassWriter;
-import com.tc.asm.MethodVisitor;
-import com.tc.asm.commons.SerialVersionUIDAdder;
-import com.tc.asm.tree.ClassNode;
-import com.tc.asm.tree.InnerClassNode;
-import com.tc.asm.tree.MethodNode;
 import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
@@ -63,6 +58,7 @@ import com.tc.logging.LogLevel;
 import com.tc.logging.NullTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.management.TerracottaMBean;
+import com.tc.management.TunneledDomainUpdater;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.NIOWorkarounds;
@@ -73,10 +69,8 @@ import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.Portability;
 import com.tc.object.PortabilityImpl;
-import com.tc.object.SerializationUtil;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
-import com.tc.object.TCObjectExternal;
 import com.tc.object.TCObjectSelf;
 import com.tc.object.TCObjectSelfCallback;
 import com.tc.object.TCObjectSelfCompilationHelper;
@@ -86,62 +80,18 @@ import com.tc.object.TCObjectServerMap;
 import com.tc.object.TraversedReferences;
 import com.tc.object.appevent.ApplicationEvent;
 import com.tc.object.appevent.ApplicationEventContext;
-import com.tc.object.applicator.ApplicatorObjectManager;
 import com.tc.object.bytecode.AAFairDistributionPolicyMarker;
-import com.tc.object.bytecode.AccessibleObjectAdapter;
-import com.tc.object.bytecode.AddInterfacesAdapter;
-import com.tc.object.bytecode.ArrayListAdapter;
-import com.tc.object.bytecode.AtomicIntegerAdapter;
-import com.tc.object.bytecode.AtomicLongAdapter;
-import com.tc.object.bytecode.ByteCodeUtil;
-import com.tc.object.bytecode.ChangeClassNameHierarchyAdapter;
-import com.tc.object.bytecode.ChangeClassNameRootAdapter;
-import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.Clearable;
 import com.tc.object.bytecode.CloneUtil;
-import com.tc.object.bytecode.CopyOnWriteArrayListAdapter;
-import com.tc.object.bytecode.HashMapClassAdapter;
-import com.tc.object.bytecode.HashtableClassAdapter;
-import com.tc.object.bytecode.JavaLangReflectArrayAdapter;
-import com.tc.object.bytecode.JavaLangReflectFieldAdapter;
-import com.tc.object.bytecode.JavaLangReflectProxyClassAdapter;
-import com.tc.object.bytecode.JavaLangStringAdapter;
-import com.tc.object.bytecode.JavaLangStringTC;
-import com.tc.object.bytecode.JavaLangThrowableDebugClassAdapter;
-import com.tc.object.bytecode.JavaNetURLAdapter;
-import com.tc.object.bytecode.JavaUtilConcurrentCyclicBarrierClassAdapter;
-import com.tc.object.bytecode.JavaUtilConcurrentHashMapAdapter;
-import com.tc.object.bytecode.JavaUtilConcurrentHashMapEntryIteratorAdapter;
-import com.tc.object.bytecode.JavaUtilConcurrentHashMapHashEntryAdapter;
-import com.tc.object.bytecode.JavaUtilConcurrentHashMapSegmentAdapter;
-import com.tc.object.bytecode.JavaUtilConcurrentHashMapValueIteratorAdapter;
-import com.tc.object.bytecode.JavaUtilConcurrentHashMapWriteThroughEntryAdapter;
-import com.tc.object.bytecode.JavaUtilConcurrentLinkedBlockingQueueClassAdapter;
-import com.tc.object.bytecode.JavaUtilConcurrentLinkedBlockingQueueIteratorClassAdapter;
-import com.tc.object.bytecode.JavaUtilConcurrentLinkedBlockingQueueNodeClassAdapter;
-import com.tc.object.bytecode.JavaUtilTreeMapAdapter;
-import com.tc.object.bytecode.LinkedHashMapClassAdapter;
-import com.tc.object.bytecode.LinkedListAdapter;
-import com.tc.object.bytecode.LogicalClassSerializationAdapter;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.Manager;
-import com.tc.object.bytecode.ManagerInternal;
 import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.bytecode.ManagerUtilInternal;
 import com.tc.object.bytecode.NotClearable;
 import com.tc.object.bytecode.NullManager;
-import com.tc.object.bytecode.NullManagerInternal;
 import com.tc.object.bytecode.NullTCObject;
-import com.tc.object.bytecode.OverridesHashCode;
-import com.tc.object.bytecode.ReentrantLockClassAdapter;
-import com.tc.object.bytecode.ReentrantReadWriteLockClassAdapter;
-import com.tc.object.bytecode.SessionConfiguration;
-import com.tc.object.bytecode.SetRemoveMethodAdapter;
 import com.tc.object.bytecode.TCMap;
 import com.tc.object.bytecode.TCServerMap;
-import com.tc.object.bytecode.TransparencyClassAdapter;
 import com.tc.object.bytecode.TransparentAccess;
-import com.tc.object.bytecode.VectorAdapter;
 import com.tc.object.bytecode.hook.ClassLoaderPreProcessorImpl;
 import com.tc.object.bytecode.hook.ClassPostProcessor;
 import com.tc.object.bytecode.hook.ClassPreProcessor;
@@ -149,12 +99,12 @@ import com.tc.object.bytecode.hook.ClassProcessor;
 import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelperJDK15;
-import com.tc.object.bytecode.hook.impl.JavaLangArrayHelpers;
 import com.tc.object.bytecode.hook.impl.Util;
 import com.tc.object.cache.Cacheable;
 import com.tc.object.compression.CompressedData;
 import com.tc.object.compression.StringCompressionUtil;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.ModuleConfiguration;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.dmi.DmiClassSpec;
@@ -169,14 +119,9 @@ import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.ProxyInstance;
 import com.tc.object.field.TCField;
-import com.tc.object.ibm.SystemInitializationAdapter;
 import com.tc.object.loaders.BytecodeProvider;
 import com.tc.object.loaders.ClassProvider;
-import com.tc.object.loaders.LoaderDescription;
-import com.tc.object.loaders.NamedClassLoader;
-import com.tc.object.loaders.NamedLoaderAdapter;
 import com.tc.object.loaders.Namespace;
-import com.tc.object.loaders.StandardClassLoaderAdapter;
 import com.tc.object.locks.LongLockID;
 import com.tc.object.locks.Notify;
 import com.tc.object.locks.ThreadID;
@@ -202,7 +147,6 @@ import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.object.tx.UnlockedSharedObjectException;
-import com.tc.object.util.OverrideCheck;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.plugins.ModulesLoader;
@@ -221,16 +165,8 @@ import com.tc.text.Banner;
 import com.tc.util.AbstractIdentifier;
 import com.tc.util.Assert;
 import com.tc.util.DebugUtil;
-import com.tc.util.EnumerationWrapper;
-import com.tc.util.FieldUtils;
-import com.tc.util.HashtableKeySetWrapper;
-import com.tc.util.HashtableValuesWrapper;
-import com.tc.util.ListIteratorWrapper;
 import com.tc.util.SequenceID;
 import com.tc.util.SequenceID.SequenceIDComparator;
-import com.tc.util.SetIteratorWrapper;
-import com.tc.util.THashMapCollectionWrapper;
-import com.tc.util.UnsafeUtil;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.UnknownJvmVersionException;
 import com.tc.util.runtime.UnknownRuntimeVersionException;
@@ -244,8 +180,6 @@ import com.tcclient.cluster.DsoNodeImpl;
 import com.tcclient.cluster.DsoNodeInternal;
 import com.tcclient.cluster.DsoNodeMetaData;
 import com.tcclient.cluster.OutOfBandDsoClusterListener;
-import com.tcclient.util.HashtableEntrySetWrapper;
-import com.tcclient.util.MapEntrySetWrapper;
 
 import gnu.trove.TLinkable;
 
@@ -253,7 +187,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.AccessibleObject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -267,7 +200,6 @@ import java.util.Set;
  * Tool for creating the DSO boot jar
  */
 public class BootJarTool {
-  public static final String          TC_DEBUG_THROWABLE_CONSTRUCTION  = "tc.debug.throwable.construction";
 
   private static final String         EXCESS_CLASSES                   = "excess";
   private static final String         MISSING_CLASSES                  = "missing";
@@ -326,7 +258,7 @@ public class BootJarTool {
 
     // load the modules
     try {
-      ModulesLoader.initModules(this.configHelper, null, null, true);
+      ModulesLoader.initModules(this.configHelper, null, true);
     } catch (final BundleException e) {
       exit("Error during module initialization.", e);
     }
@@ -344,20 +276,6 @@ public class BootJarTool {
   public BootJarTool(final DSOClientConfigHelper configuration, final File outputFile, final ClassLoader systemProvider)
       throws Exception {
     this(configuration, outputFile, systemProvider, false);
-  }
-
-  private final void addJdk15SpecificPreInstrumentedClasses() {
-    if (Vm.isJDK15Compliant()) {
-      final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec("java.math.MathContext");
-      spec.markPreInstrumented();
-
-      addInstrumentedJavaUtilConcurrentLocks();
-
-      addInstrumentedJavaUtilConcurrentLinkedBlockingQueue();
-      addInstrumentedJavaUtilConcurrentHashMap();
-      addInstrumentedJavaUtilConcurrentCyclicBarrier();
-      addInstrumentedJavaUtilConcurrentFutureTask();
-    }
   }
 
   /**
@@ -513,21 +431,8 @@ public class BootJarTool {
     try {
       this.bootJar = this.bootJarHandler.getBootJar();
 
-      addInstrumentedHashMap();
-      addInstrumentedHashtable();
-      addInstrumentedJavaUtilCollection();
-      addReflectionInstrumentation();
-
-      addJdk15SpecificPreInstrumentedClasses();
-
       loadTerracottaClass(DebugUtil.class.getName());
       loadTerracottaClass(TCMap.class.getName());
-      if (Vm.isJDK15Compliant()) {
-        loadTerracottaClass("com.tc.util.concurrent.locks.TCLock");
-      }
-      if (Vm.isJDK16Compliant()) {
-        loadTerracottaClass("com.tc.util.concurrent.locks.CopyOnWriteArrayListLock");
-      }
       loadTerracottaClass(com.tc.util.Stack.class.getName());
       loadTerracottaClass(TCObjectNotSharableException.class.getName());
       loadTerracottaClass(TCObjectNotFoundException.class.getName());
@@ -537,23 +442,10 @@ public class BootJarTool {
       loadTerracottaClass(TerracottaOperatorEvent.EventType.class.getName());
       loadTerracottaClass(TerracottaOperatorEvent.EventSubsystem.class.getName());
 
-      loadTerracottaClass(THashMapCollectionWrapper.class.getName());
-      loadTerracottaClass(THashMapCollectionWrapper.class.getName() + "$IteratorWrapper");
-      loadTerracottaClass(ListIteratorWrapper.class.getName());
-      loadTerracottaClass(MapEntrySetWrapper.class.getName());
-      loadTerracottaClass(MapEntrySetWrapper.class.getName() + "$IteratorWrapper");
-      loadTerracottaClass(HashtableEntrySetWrapper.class.getName());
-      loadTerracottaClass(HashtableEntrySetWrapper.class.getName() + "$HashtableIteratorWrapper");
-      loadTerracottaClass(HashtableKeySetWrapper.class.getName());
-      loadTerracottaClass(HashtableKeySetWrapper.class.getName() + "$IteratorWrapper");
-      loadTerracottaClass(HashtableValuesWrapper.class.getName());
-      loadTerracottaClass(HashtableValuesWrapper.class.getName() + "$IteratorWrapper");
-      loadTerracottaClass(SetIteratorWrapper.class.getName());
-      loadTerracottaClass(EnumerationWrapper.class.getName());
-      loadTerracottaClass(NamedClassLoader.class.getName());
       loadTerracottaClass(TransparentAccess.class.getName());
       loadTerracottaClass(BytecodeProvider.class.getName());
 
+      loadTerracottaClass(ModuleConfiguration.class.getName());
       loadTerracottaClass(Manageable.class.getName());
       loadTerracottaClass(AAFairDistributionPolicyMarker.class.getName());
       loadTerracottaClass(Clearable.class.getName());
@@ -562,23 +454,17 @@ public class BootJarTool {
       loadTerracottaClass(IndexQueryResult.class.getName());
       loadTerracottaClass(SearchQueryResults.class.getName());
       loadTerracottaClass(ExpirableEntry.class.getName());
-      loadTerracottaClass(OverridesHashCode.class.getName());
       loadTerracottaClass(Manager.class.getName());
-      loadTerracottaClass(ManagerInternal.class.getName());
+      loadTerracottaClass(TunneledDomainUpdater.class.getName());
       loadTerracottaClass(InstrumentationLogger.class.getName());
       loadTerracottaClass(NullInstrumentationLogger.class.getName());
       loadTerracottaClass(NullManager.class.getName());
-      loadTerracottaClass(NullManagerInternal.class.getName());
       loadTerracottaClass(NullTCLogger.class.getName());
       loadTerracottaClass(ManagerUtil.class.getName());
-      loadTerracottaClass(ManagerUtilInternal.class.getName());
-      loadTerracottaClass(SessionConfiguration.class.getName());
-      loadTerracottaClass(ManagerUtil.class.getName() + "$GlobalManagerHolder");
       loadTerracottaClass(TCObject.class.getName());
       loadTerracottaClassesReachableFromTCObject();
       loadTerracottaClassesForTCObjectSelf();
       loadTerracottaClass(TCObjectServerMap.class.getName());
-      loadTerracottaClass(TCObjectExternal.class.getName());
       loadTerracottaClass(CloneUtil.class.getName());
       loadTerracottaClass(ToggleableStrongReference.class.getName());
       loadTerracottaClass(TCClass.class.getName());
@@ -606,8 +492,6 @@ public class BootJarTool {
       loadTerracottaClass(DSOContext.class.getName());
       loadTerracottaClass(ClassProvider.class.getName());
       loadTerracottaClass(TCRuntimeException.class.getName());
-      loadTerracottaClass(FieldUtils.class.getName());
-      loadTerracottaClass(UnsafeUtil.class.getName());
       loadTerracottaClass(TCNotSupportedMethodException.class.getName());
       loadTerracottaClass(ExceptionWrapper.class.getName());
       loadTerracottaClass(ExceptionWrapperImpl.class.getName());
@@ -615,8 +499,6 @@ public class BootJarTool {
       loadTerracottaClass(Util.class.getName());
       loadTerracottaClass(NIOWorkarounds.class.getName());
       loadTerracottaClass(TCProperties.class.getName());
-      loadTerracottaClass(OverrideCheck.class.getName());
-      loadTerracottaClass(JavaLangStringTC.class.getName());
       loadTerracottaClass(StringCompressionUtil.class.getName());
       loadTerracottaClass(CompressedData.class.getName());
       loadTerracottaClass(TCByteArrayOutputStream.class.getName());
@@ -624,7 +506,6 @@ public class BootJarTool {
 
       loadTerracottaClass("com.tc.object.bytecode.hook.impl.ArrayManager");
       loadTerracottaClass(ProxyInstance.class.getName());
-      loadTerracottaClass(JavaLangArrayHelpers.class.getName());
 
       loadTerracottaClass(Vm.class.getName());
       loadTerracottaClass(VmVersion.class.getName());
@@ -640,14 +521,11 @@ public class BootJarTool {
       loadTerracottaClass(com.tc.object.locks.LockLevel.class.getName());
       loadTerracottaClass(com.tc.object.locks.LockLevel.class.getName() + "$1");
       loadTerracottaClass(com.tc.object.locks.TerracottaLocking.class.getName());
-      loadTerracottaClass(com.tc.object.locks.TerracottaLockingInternal.class.getName());
       loadTerracottaClass(com.tc.io.TCSerializable.class.getName());
 
       addManagementClasses();
 
       addRuntimeClasses();
-
-      addLiterals();
 
       // local cache store classes
       loadTerracottaClass(LocalCacheStoreFullException.class.getName());
@@ -660,15 +538,7 @@ public class BootJarTool {
 
       loadTerracottaClass(L1ServerMapLocalCacheStoreListener.class.getName());
 
-      addSunStandardLoaders();
-      addInstrumentedAccessibleObject();
-      addInstrumentedJavaLangThrowable();
       addInstrumentedClassLoader();
-      addInstrumentedJavaLangString();
-      addInstrumentedJavaNetURL();
-      addInstrumentedProxy();
-      addTreeMap();
-      addObjectStreamClass();
 
       addClusterEventsAndMetaDataClasses();
       loadTerracottaClass(StatisticRetrievalAction.class.getName());
@@ -676,8 +546,6 @@ public class BootJarTool {
       loadTerracottaClass(StatisticData.class.getName());
       loadTerracottaClass(StatisticDataCSVParser.class.getName());
       loadTerracottaClass(LazilyInitializedSRA.class.getName());
-
-      addIBMSpecific();
 
       final Map internalSpecs = getTCSpecs();
       loadBootJarClasses(removeAlreadyLoaded(massageSpecs(internalSpecs, true)));
@@ -716,7 +584,6 @@ public class BootJarTool {
     // loadTerracottaClass(AbstractIdentifier.class.getName());
     loadTerracottaClass(ApplicationEvent.class.getName());
     loadTerracottaClass(ApplicationEventContext.class.getName());
-    loadTerracottaClass(ApplicatorObjectManager.class.getName());
     loadTerracottaClass(BufferPool.class.getName());
     // loadTerracottaClass(Cacheable.class.getName());
     loadTerracottaClass(ChannelID.class.getName());
@@ -735,7 +602,6 @@ public class BootJarTool {
     loadTerracottaClass(DmiDescriptor.class.getName());
     loadTerracottaClass(EventContext.class.getName());
     loadTerracottaClass(GroupID.class.getName());
-    loadTerracottaClass(LoaderDescription.class.getName());
     // loadTerracottaClass(LockID.class.getName());
     // loadTerracottaClass(LockIDType.class.getName());
     // loadTerracottaClass(LockLevel.class.getName());
@@ -762,7 +628,6 @@ public class BootJarTool {
     // loadTerracottaClass(TCField.class.getName());
     // loadTerracottaClass(TCNonPortableObjectError.class.getName());
     // loadTerracottaClass(TCObject.class.getName());
-    // loadTerracottaClass(TCObjectExternal.class.getName());
     // loadTerracottaClass(TCRuntimeException.class.getName());
     // loadTerracottaClass(TCSerializable.class.getName());
     // loadTerracottaClass(TLinkable.class.getName());
@@ -811,61 +676,6 @@ public class BootJarTool {
     loadTerracottaClass(UnsupportedInjectedDsoInstanceTypeException.class.getName());
   }
 
-  private void addObjectStreamClass() {
-    final String jClassNameDots = "java.io.ObjectStreamClass";
-    final String tcClassNameDots = "java.io.ObjectStreamClassTC";
-
-    final byte[] tcData = getSystemBytes(tcClassNameDots);
-    final ClassReader tcCR = new ClassReader(tcData);
-    final ClassNode tcCN = new ClassNode();
-    tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-
-    byte[] jData = getSystemBytes(jClassNameDots);
-
-    final ClassReader jCR = new ClassReader(jData);
-    final ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
-
-    final Map instrumentedContext = new HashMap();
-    final ClassVisitor cv = new FixedMergeTCToJavaClassAdapter(cw, null, jClassNameDots, tcClassNameDots, tcCN,
-                                                               instrumentedContext);
-    jCR.accept(cv, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-    jData = cw.toByteArray();
-    loadClassIntoJar(jClassNameDots, jData, true);
-  }
-
-  private void addLiterals() {
-    this.bootJar.loadClassIntoJar("java.lang.Boolean", getSystemBytes("java.lang.Boolean"), false);
-    this.bootJar.loadClassIntoJar("java.lang.Byte", getSystemBytes("java.lang.Byte"), false);
-    this.bootJar.loadClassIntoJar("java.lang.Character", getSystemBytes("java.lang.Character"), false);
-    this.bootJar.loadClassIntoJar("java.lang.Double", getSystemBytes("java.lang.Double"), false);
-    this.bootJar.loadClassIntoJar("java.lang.Float", getSystemBytes("java.lang.Float"), false);
-    this.bootJar.loadClassIntoJar("java.lang.Integer", getSystemBytes("java.lang.Integer"), false);
-    this.bootJar.loadClassIntoJar("java.lang.Long", getSystemBytes("java.lang.Long"), false);
-    this.bootJar.loadClassIntoJar("java.lang.Short", getSystemBytes("java.lang.Short"), false);
-
-    this.bootJar.loadClassIntoJar("java.math.BigInteger", getSystemBytes("java.math.BigInteger"), false);
-    this.bootJar.loadClassIntoJar("java.math.BigDecimal", getSystemBytes("java.math.BigDecimal"), false);
-
-    this.bootJar.loadClassIntoJar("java.lang.StackTraceElement", getSystemBytes("java.lang.StackTraceElement"), false);
-  }
-
-  private void addIBMSpecific() {
-    if (Vm.isIBM()) {
-      // Yes, the class name is misspelled
-      adaptAndLoad("com.ibm.misc.SystemIntialization", new SystemInitializationAdapter());
-
-      addIbmInstrumentedAtomicInteger();
-      addIbmInstrumentedAtomicLong();
-    }
-  }
-
-  private void addReflectionInstrumentation() {
-    if (this.configHelper.reflectionEnabled()) {
-      adaptAndLoad("java.lang.reflect.Field", new JavaLangReflectFieldAdapter());
-      adaptAndLoad("java.lang.reflect.Array", new JavaLangReflectArrayAdapter());
-    }
-  }
-
   private final Map getAllSpecs() {
     final Map map = new HashMap();
     final TransparencyClassSpec[] allSpecs = this.configHelper.getAllSpecs();
@@ -888,28 +698,11 @@ public class BootJarTool {
     this.bootJar.loadClassIntoJar(className, data, isPreinstrumented, isForeign);
   }
 
-  private void adaptAndLoad(final String name, final ClassAdapterFactory factory) {
-    byte[] bytes = getSystemBytes(name);
-
-    final ClassReader cr = new ClassReader(bytes);
-    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-
-    final ClassVisitor cv = factory.create(cw, null);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-    bytes = cw.toByteArray();
-
-    loadClassIntoJar(name, bytes, false);
-  }
-
   private final void addManagementClasses() {
     loadTerracottaClass(TerracottaMBean.class.getName());
   }
 
   private final void addRuntimeClasses() {
-    loadTerracottaClass("com.tc.object.applicator.TCURL");
-    loadTerracottaClass("com.tc.object.bytecode.TCMapEntry");
-
     // DEV-116; Some of these probably should'nt be in the boot jar
     loadTerracottaClass("com.tc.exception.ImplementMe");
     loadTerracottaClass("com.tc.exception.TCClassNotFoundException");
@@ -920,23 +713,6 @@ public class BootJarTool {
 
     // this class needed for ibm-jdk-15 branch
     loadTerracottaClass("com.tc.object.bytecode.ClassAdapterFactory");
-  }
-
-  private final void addTreeMap() {
-    final String className = "java.util.TreeMap";
-    final byte[] orig = getSystemBytes(className);
-
-    final TransparencyClassSpec spec = this.configHelper.getSpec(className);
-
-    final byte[] transformed = doDSOTransform(className, orig);
-
-    final ClassReader cr = new ClassReader(transformed);
-    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-
-    final ClassVisitor cv = new JavaUtilTreeMapAdapter(cw);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-    loadClassIntoJar(className, cw.toByteArray(), spec.isPreInstrumented());
   }
 
   private final void issueWarningsAndErrors() {
@@ -989,8 +765,6 @@ public class BootJarTool {
 
       final Class topClass = getBootstrapClass(spec.getClassName());
       if (topClass == null) {
-        if (tcSpecs && !spec.isHonorJDKSubVersionSpecific()) { throw new AssertionError("Class not found: "
-                                                                                        + spec.getClassName()); }
         if (!tcSpecs) {
           this.nonExistingClasses.add(spec.getClassName());
         }
@@ -1196,897 +970,12 @@ public class BootJarTool {
     System.exit(1);
   }
 
-  private void addInstrumentedAccessibleObject() {
-    final String classname = AccessibleObject.class.getName();
-    byte[] bytes = getSystemBytes(classname);
-
-    // instrument the state changing methods in AccessibleObject
-    final ClassReader cr = new ClassReader(bytes);
-    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    final ClassVisitor cv = new AccessibleObjectAdapter(cw);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-    bytes = cw.toByteArray();
-
-    // regular DSO instrumentation
-    final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(classname);
-    spec.markPreInstrumented();
-
-    loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
-  }
-
-  private void addIbmInstrumentedAtomicInteger() {
-    Vm.assertIsIbm();
-    if (!Vm.isJDK15Compliant()) { return; }
-
-    final String classname = "java.util.concurrent.atomic.AtomicInteger";
-    byte[] bytes = getSystemBytes(classname);
-
-    // instrument the state changing methods in AtomicInteger
-    final ClassReader cr = new ClassReader(bytes);
-    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    final ClassVisitor cv = new AtomicIntegerAdapter(cw);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-    bytes = cw.toByteArray();
-
-    // regular DSO instrumentation
-    final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(classname);
-    spec.markPreInstrumented();
-
-    loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
-  }
-
-  private void addIbmInstrumentedAtomicLong() {
-    Vm.assertIsIbm();
-    if (!Vm.isJDK15Compliant()) { return; }
-
-    final String classname = "java.util.concurrent.atomic.AtomicLong";
-    byte[] bytes = getSystemBytes(classname);
-
-    // instrument the state changing methods in AtomicLong
-    final ClassReader cr = new ClassReader(bytes);
-    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    final ClassVisitor cv = new AtomicLongAdapter(cw);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-    bytes = cw.toByteArray();
-
-    // regular DSO instrumentation
-    final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(classname);
-    spec.markPreInstrumented();
-
-    loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
-  }
-
-  private final void addInstrumentedProxy() {
-    final String className = "java.lang.reflect.Proxy";
-    byte[] bytes = getSystemBytes(className);
-
-    final ClassReader cr = new ClassReader(bytes);
-    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-
-    final ClassVisitor cv = new JavaLangReflectProxyClassAdapter(cw);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-    bytes = cw.toByteArray();
-
-    final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(className);
-    bytes = doDSOTransform(spec.getClassName(), bytes);
-    loadClassIntoJar(className, bytes, true);
-  }
-
-  private final void addInstrumentedJavaLangString() {
-    final byte[] orig = getSystemBytes("java.lang.String");
-
-    final ClassReader cr = new ClassReader(orig);
-    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-
-    final ClassVisitor cv = new JavaLangStringAdapter(cw, Vm.isAzul(), Vm.isIBM());
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-    loadClassIntoJar("java.lang.String", cw.toByteArray(), false);
-  }
-
-  private final void addInstrumentedJavaNetURL() {
-    final String className = "java.net.URL";
-    byte[] bytes = getSystemBytes(className);
-
-    final ClassReader cr = new ClassReader(bytes);
-    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-
-    final ClassVisitor cv = new JavaNetURLAdapter(cw);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-    final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(className,
-                                                                         "com.tc.object.applicator.URLApplicator");
-    spec.markPreInstrumented();
-    spec.setHonorTransient(true);
-    spec.addAlwaysLogSpec(SerializationUtil.URL_SET_SIGNATURE);
-    // note that there's another set method, that is actually never referenced
-    // from URLStreamHandler, so it's not accessible from classes that extend
-    // URLStreamHandler, so I'm not supporting it here
-
-    bytes = doDSOTransform(className, cw.toByteArray());
-
-    loadClassIntoJar(className, bytes, spec.isPreInstrumented());
-  }
-
-  private final void addSunStandardLoaders() {
-    byte[] orig = getSystemBytes("sun.misc.Launcher$AppClassLoader");
-
-    ClassReader cr = new ClassReader(orig);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    ClassVisitor cv = new StandardClassLoaderAdapter(cw, Namespace.getStandardSystemLoaderName(),
-                                                     SYSTEM_CLASSLOADER_NAME_PROPERTY);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-    final byte[] tcData = getSystemBytes("sun.misc.AppClassLoaderTC");
-    final ClassReader tcCR = new ClassReader(tcData);
-    final ClassNode tcCN = new ClassNode();
-    tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-
-    cr = new ClassReader(cw.toByteArray());
-    cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    cv = new FixedMergeTCToJavaClassAdapter(cw, null, "sun.misc.Launcher$AppClassLoader", "sun.misc.AppClassLoaderTC",
-                                            tcCN, new HashMap(), ByteCodeUtil.TC_METHOD_PREFIX, false);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-    loadClassIntoJar("sun.misc.Launcher$AppClassLoader", cw.toByteArray(), false);
-
-    orig = getSystemBytes("sun.misc.Launcher$ExtClassLoader");
-    cr = new ClassReader(orig);
-    cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    cv = new StandardClassLoaderAdapter(cw, Namespace.getStandardExtensionsLoaderName(), EXT_CLASSLOADER_NAME_PROPERTY);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-    loadClassIntoJar("sun.misc.Launcher$ExtClassLoader", cw.toByteArray(), false);
-  }
-
-  private final void addInstrumentedJavaLangThrowable() {
-    final String className = "java.lang.Throwable";
-    byte[] bytes = getSystemBytes(className);
-
-    if (System.getProperty(TC_DEBUG_THROWABLE_CONSTRUCTION) != null) {
-      final ClassReader cr = new ClassReader(bytes);
-      final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-      final ClassVisitor cv = new JavaLangThrowableDebugClassAdapter(cw);
-      cr.accept(cv, ClassReader.SKIP_FRAMES);
-      bytes = cw.toByteArray();
-    }
-
-    final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(className);
-    spec.markPreInstrumented();
-    spec.setHonorTransient(true);
-
-    final byte[] instrumented = doDSOTransform(className, bytes);
-
-    loadClassIntoJar(className, instrumented, spec.isPreInstrumented());
-  }
-
-  /**
-   * This instrumentation is temporary to add debug statements to the CyclicBarrier class.
-   */
-  private final void addInstrumentedJavaUtilConcurrentCyclicBarrier() {
-    if (!Vm.isJDK15Compliant()) { return; }
-
-    byte[] bytes = getSystemBytes("java.util.concurrent.CyclicBarrier");
-
-    final ClassReader cr = new ClassReader(bytes);
-    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    final ClassVisitor cv = new JavaUtilConcurrentCyclicBarrierClassAdapter(cw);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-    bytes = cw.toByteArray();
-
-    final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec("java.util.concurrent.CyclicBarrier");
-    bytes = doDSOTransform(spec.getClassName(), bytes);
-    loadClassIntoJar("java.util.concurrent.CyclicBarrier", bytes, true);
-  }
-
-  private final void addInstrumentedJavaUtilConcurrentHashMap() {
-    if (Vm.isJDK17Compliant()) {
-      // DEV-6105
-      Banner.warnBanner("Not including instrumented ConcurrentHashMap in boot jar");
-      return;
-    }
-
-    if (!Vm.isJDK15Compliant()) { return; }
-
-    loadTerracottaClass("com.tcclient.util.ConcurrentHashMapEntrySetWrapper");
-    loadTerracottaClass("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$IteratorWrapper");
-    loadTerracottaClass("com.tcclient.util.ConcurrentHashMapKeySetWrapper");
-    loadTerracottaClass("com.tcclient.util.ConcurrentHashMapKeySetWrapper$IteratorWrapper");
-
-    // java.util.concurrent.ConcurrentHashMap
-    {
-      final String jClassNameDots = "java.util.concurrent.ConcurrentHashMap";
-      final String tcClassNameDots = "java.util.concurrent.ConcurrentHashMapTC";
-
-      final byte[] tcData = getSystemBytes(tcClassNameDots);
-      final ClassReader tcCR = new ClassReader(tcData);
-      final ClassNode tcCN = new ClassNode();
-      tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-
-      byte[] jData = getSystemBytes(jClassNameDots);
-      ClassReader jCR = new ClassReader(jData);
-      ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
-      final ClassVisitor cv1 = new JavaUtilConcurrentHashMapAdapter(cw);
-
-      jCR.accept(cv1, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-      jData = cw.toByteArray();
-
-      jCR = new ClassReader(jData);
-      cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
-
-      final ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, this.systemLoader);
-      final TransparencyClassAdapter dsoAdapter = this.configHelper
-          .createDsoClassAdapterFor(cw, jClassInfo, this.instrumentationLogger, getClass().getClassLoader(), true, true);
-      final Map instrumentedContext = new HashMap();
-      final ClassVisitor cv = new SerialVersionUIDAdder(new FixedMergeTCToJavaClassAdapter(cw, dsoAdapter,
-                                                                                           jClassNameDots,
-                                                                                           tcClassNameDots, tcCN,
-                                                                                           instrumentedContext));
-      jCR.accept(cv, ClassReader.SKIP_FRAMES);
-      jData = cw.toByteArray();
-      jData = doDSOTransform(jClassNameDots, jData);
-      loadClassIntoJar(jClassNameDots, jData, true);
-    }
-
-    // java.util.concurrent.ConcurrentHashMap$HashEntry
-    {
-      byte[] bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$HashEntry");
-      final ClassReader cr = new ClassReader(bytes);
-      final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-      final ClassVisitor cv = new JavaUtilConcurrentHashMapHashEntryAdapter(cw);
-      cr.accept(cv, ClassReader.SKIP_FRAMES);
-      bytes = cw.toByteArray();
-      loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$HashEntry", bytes, false);
-    }
-
-    // java.util.concurrent.ConcurrentHashMap$Segment
-    {
-      byte[] bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$Segment");
-      final ClassReader cr = new ClassReader(bytes);
-      final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-      final ClassVisitor cv = new JavaUtilConcurrentHashMapSegmentAdapter(cw);
-      cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-      bytes = cw.toByteArray();
-
-      final TransparencyClassSpec spec = this.configHelper
-          .getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$Segment");
-      bytes = doDSOTransform(spec.getClassName(), bytes);
-      bytes = addNotClearableInterface(bytes);
-      loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$Segment", bytes, spec.isPreInstrumented());
-    }
-
-    // java.util.concurrent.ConcurrentHashMap$ValueIterator
-    {
-      byte[] bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$ValueIterator");
-      final ClassReader cr = new ClassReader(bytes);
-      final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-      final ClassVisitor cv = new JavaUtilConcurrentHashMapValueIteratorAdapter(cw);
-      cr.accept(cv, ClassReader.SKIP_FRAMES);
-      bytes = cw.toByteArray();
-      loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$ValueIterator", bytes, false);
-    }
-
-    // java.util.concurrent.ConcurrentHashMap$EntryIterator
-    {
-      byte[] bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$EntryIterator");
-      final ClassReader cr = new ClassReader(bytes);
-      final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-      final ClassVisitor cv = new JavaUtilConcurrentHashMapEntryIteratorAdapter(cw);
-      cr.accept(cv, ClassReader.SKIP_FRAMES);
-      bytes = cw.toByteArray();
-      loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$EntryIterator", bytes, false);
-    }
-
-    if (Vm.isJDK16Compliant()) {
-      // java.util.concurrent.ConcurrentHashMap$EntryIterator
-      byte[] bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$WriteThroughEntry");
-      final ClassReader cr = new ClassReader(bytes);
-      final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-      final ClassVisitor cv = new JavaUtilConcurrentHashMapWriteThroughEntryAdapter(cw);
-      cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-      bytes = cw.toByteArray();
-
-      TransparencyClassSpec spec = this.configHelper
-          .getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$WriteThroughEntry");
-      spec.setHonorTransient(true);
-      spec.markPreInstrumented();
-      bytes = doDSOTransform(spec.getClassName(), bytes);
-      loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$WriteThroughEntry", bytes, spec.isPreInstrumented());
-
-      // java.util.AbstractMap$SimpleEntry
-      bytes = getTerracottaBytes("java.util.AbstractMap$SimpleEntry");
-      spec = this.configHelper.getOrCreateSpec("java.util.AbstractMap$SimpleEntry");
-      bytes = doDSOTransform(spec.getClassName(), bytes);
-      loadClassIntoJar("java.util.AbstractMap$SimpleEntry", bytes, spec.isPreInstrumented());
-    }
-
-    // com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper
-    {
-      byte[] bytes = getTerracottaBytes("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper");
-      final TransparencyClassSpec spec = this.configHelper
-          .getOrCreateSpec("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper");
-      spec.markPreInstrumented();
-      bytes = doDSOTransform(spec.getClassName(), bytes);
-      loadClassIntoJar("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper", bytes,
-                       spec.isPreInstrumented());
-    }
-  }
-
-  private byte[] addNotClearableInterface(final byte[] bytes) {
-    final ClassReader cr = new ClassReader(bytes);
-    final ClassWriter cw = new ClassWriter(cr, 0);
-    cr.accept(new AddInterfacesAdapter(cw, new String[] { NotClearable.class.getName().replace('.', '/') }),
-              ClassReader.SKIP_FRAMES);
-    return cw.toByteArray();
-  }
-
-  private final void addInstrumentedJavaUtilConcurrentLinkedBlockingQueue() {
-    if (!Vm.isJDK15Compliant()) { return; }
-
-    { // Instrumentation for Itr inner class
-      byte[] bytes = getSystemBytes("java.util.concurrent.LinkedBlockingQueue$Itr");
-
-      final ClassReader cr = new ClassReader(bytes);
-      final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-      final ClassVisitor cv = new JavaUtilConcurrentLinkedBlockingQueueIteratorClassAdapter(cw);
-      cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-      bytes = cw.toByteArray();
-      loadClassIntoJar("java.util.concurrent.LinkedBlockingQueue$Itr", bytes, true);
-    }
-
-    { // Instrumentation for Node inner class
-      byte[] bytes = getSystemBytes("java.util.concurrent.LinkedBlockingQueue$Node");
-
-      final ClassReader cr = new ClassReader(bytes);
-      final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-      final ClassVisitor cv = new JavaUtilConcurrentLinkedBlockingQueueNodeClassAdapter(cw);
-      cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-      bytes = cw.toByteArray();
-      loadClassIntoJar("java.util.concurrent.LinkedBlockingQueue$Node", bytes, true);
-    }
-
-    { // Instrumentation for LinkedBlockingQueue class
-      final String jClassNameDots = "java.util.concurrent.LinkedBlockingQueue";
-      final String tcClassNameDots = "java.util.concurrent.LinkedBlockingQueueTC";
-
-      final byte[] tcData = getSystemBytes(tcClassNameDots);
-      final ClassReader tcCR = new ClassReader(tcData);
-      final ClassNode tcCN = new ClassNode();
-      tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-
-      byte[] jData = getSystemBytes(jClassNameDots);
-      final ClassReader jCR = new ClassReader(jData);
-      final ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
-
-      final ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, this.systemLoader);
-      final TransparencyClassAdapter dsoAdapter = this.configHelper
-          .createDsoClassAdapterFor(cw, jClassInfo, this.instrumentationLogger, getClass().getClassLoader(), true, true);
-      final Map instrumentedContext = new HashMap();
-      final ClassVisitor cv = new SerialVersionUIDAdder(
-                                                        new JavaUtilConcurrentLinkedBlockingQueueClassAdapter(
-                                                                                                              new FixedMergeTCToJavaClassAdapter(
-                                                                                                                                                 cw,
-                                                                                                                                                 dsoAdapter,
-                                                                                                                                                 jClassNameDots,
-                                                                                                                                                 tcClassNameDots,
-                                                                                                                                                 tcCN,
-                                                                                                                                                 instrumentedContext)));
-      jCR.accept(cv, ClassReader.SKIP_FRAMES);
-      jData = cw.toByteArray();
-
-      final TransparencyClassSpec spec = this.configHelper
-          .getOrCreateSpec(jClassNameDots, "com.tc.object.applicator.LinkedBlockingQueueApplicator");
-      spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
-      spec.markPreInstrumented();
-      jData = doDSOTransform(spec.getClassName(), jData);
-      loadClassIntoJar(spec.getClassName(), jData, true);
-    }
-  }
-
-  private final void addInstrumentedJavaUtilConcurrentFutureTask() {
-
-    if (!Vm.isJDK15Compliant()) { return; }
-    final Map instrumentedContext = new HashMap();
-
-    TransparencyClassSpec spec = this.configHelper.getOrCreateSpec("java.util.concurrent.FutureTask");
-    spec.setHonorTransient(true);
-    spec.setCallConstructorOnLoad(true);
-    spec.markPreInstrumented();
-    changeClassName("java.util.concurrent.FutureTaskTC", "java.util.concurrent.FutureTaskTC",
-                    "java.util.concurrent.FutureTask", instrumentedContext, true);
-
-    this.configHelper.addWriteAutolock("* java.util.concurrent.FutureTask$Sync.*(..)");
-
-    spec = this.configHelper.getOrCreateSpec("java.util.concurrent.FutureTask$Sync");
-    spec.setHonorTransient(true);
-    spec.markPreInstrumented();
-    spec.addDistributedMethodCall("managedInnerCancel", "()V", true);
-    changeClassName("java.util.concurrent.FutureTaskTC$Sync", "java.util.concurrent.FutureTaskTC",
-                    "java.util.concurrent.FutureTask", instrumentedContext, true);
-  }
-
-  private final void addInstrumentedJavaUtilCollection() {
-    TransparencyClassSpec spec = this.configHelper.getOrCreateSpec("java.util.HashSet",
-                                                                   "com.tc.object.applicator.HashSetApplicator");
-    spec.addIfTrueLogSpec(SerializationUtil.ADD_SIGNATURE);
-    spec.addMethodAdapter(SerializationUtil.REMOVE_SIGNATURE, new SetRemoveMethodAdapter("java/util/HashSet",
-                                                                                         "java/util/HashMap", "map",
-                                                                                         "java/util/HashMap"));
-    spec.addAlwaysLogSpec(SerializationUtil.CLEAR_SIGNATURE);
-    spec.addSetIteratorWrapperSpec(SerializationUtil.ITERATOR_SIGNATURE);
-    addSerializationInstrumentedCode(spec);
-
-    spec = this.configHelper.getOrCreateSpec("java.util.LinkedHashSet", "com.tc.object.applicator.HashSetApplicator");
-    addSerializationInstrumentedCode(spec);
-
-    spec = this.configHelper.getOrCreateSpec("java.util.TreeSet", "com.tc.object.applicator.TreeSetApplicator");
-    spec.addIfTrueLogSpec(SerializationUtil.ADD_SIGNATURE);
-    spec.addMethodAdapter(SerializationUtil.REMOVE_SIGNATURE,
-                          new SetRemoveMethodAdapter("java/util/TreeSet", "java/util/TreeMap", "m", Vm
-                              .getMajorVersion() >= 6 ? "java/util/NavigableMap" : "java/util/SortedMap"));
-
-    spec.addAlwaysLogSpec(SerializationUtil.CLEAR_SIGNATURE);
-    spec.addSetIteratorWrapperSpec(SerializationUtil.ITERATOR_SIGNATURE);
-    spec.addViewSetWrapperSpec(SerializationUtil.SUBSET_SIGNATURE);
-    spec.addViewSetWrapperSpec(SerializationUtil.HEADSET_SIGNATURE);
-    spec.addViewSetWrapperSpec(SerializationUtil.TAILSET_SIGNATURE);
-    addSerializationInstrumentedCode(spec);
-
-    spec = this.configHelper.getOrCreateSpec("java.util.LinkedList", "com.tc.object.applicator.ListApplicator");
-    spec.addAlwaysLogSpec(SerializationUtil.ADD_AT_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.ADD_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.ADD_ALL_AT_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.ADD_FIRST_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.ADD_LAST_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.SET_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.CLEAR_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.REMOVE_FIRST_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.REMOVE_LAST_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.REMOVE_AT_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.REMOVE_RANGE_SIGNATURE);
-    spec.addMethodAdapter("listIterator(I)Ljava/util/ListIterator;", new LinkedListAdapter.ListIteratorAdapter());
-    spec.addMethodAdapter(SerializationUtil.REMOVE_SIGNATURE, new LinkedListAdapter.RemoveAdapter());
-    spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
-    spec.addSupportMethodCreator(new LinkedListAdapter.RemoveMethodCreator());
-    addSerializationInstrumentedCode(spec);
-
-    spec = this.configHelper.getOrCreateSpec("java.util.Vector", "com.tc.object.applicator.ListApplicator");
-    spec.addAlwaysLogSpec(SerializationUtil.INSERT_ELEMENT_AT_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.ADD_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.ADD_ALL_AT_SIGNATURE);
-    // the Vector.addAll(Collection) implementation in the IBM JDK simply delegates
-    // to Vector.addAllAt(int, Collection), if addAll is instrumented as well, the
-    // vector elements are added twice to the collection
-    if (!Vm.isIBM()) {
-      spec.addAlwaysLogSpec(SerializationUtil.ADD_ALL_SIGNATURE);
-    }
-    spec.addAlwaysLogSpec(SerializationUtil.ADD_ELEMENT_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.REMOVE_ALL_ELEMENTS_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.REMOVE_ELEMENT_AT_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.REMOVE_AT_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.REMOVE_RANGE_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.SET_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.SET_ELEMENT_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.TRIM_TO_SIZE_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.SET_SIZE_SIGNATURE);
-    spec.addMethodAdapter(SerializationUtil.ELEMENTS_SIGNATURE, new VectorAdapter.ElementsAdapter());
-    spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
-    spec.addArrayCopyMethodCodeSpec(SerializationUtil.COPY_INTO_SIGNATURE);
-    addSerializationInstrumentedCode(spec);
-
-    spec = this.configHelper.getOrCreateSpec("java.util.Stack", "com.tc.object.applicator.ListApplicator");
-    spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
-    addSerializationInstrumentedCode(spec);
-
-    spec = this.configHelper.getOrCreateSpec("java.util.ArrayList", "com.tc.object.applicator.ListApplicator");
-    spec.addAlwaysLogSpec(SerializationUtil.ADD_AT_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.ADD_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.ADD_ALL_AT_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.ADD_ALL_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.REMOVE_AT_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.REMOVE_RANGE_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.SET_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.CLEAR_SIGNATURE);
-    if (Vm.isJDK15Compliant()) {
-      spec.addMethodAdapter(SerializationUtil.REMOVE_SIGNATURE, new ArrayListAdapter.RemoveAdaptor());
-      spec.addSupportMethodCreator(new ArrayListAdapter.FastRemoveMethodCreator());
-    }
-    spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
-    addSerializationInstrumentedCode(spec);
-
-    spec = this.configHelper.getOrCreateSpec("java.util.concurrent.CopyOnWriteArrayList",
-                                             "com.tc.object.applicator.ListApplicator");
-    spec.addMethodAdapter(SerializationUtil.ADD_SIGNATURE, new CopyOnWriteArrayListAdapter.AddAdaptor());
-    spec.addMethodAdapter(SerializationUtil.ADD_AT_SIGNATURE, new CopyOnWriteArrayListAdapter.AddAtAdaptor());
-    spec.addMethodAdapter(SerializationUtil.ADD_ALL_SIGNATURE, new CopyOnWriteArrayListAdapter.AddAllAdaptor());
-    spec.addMethodAdapter(SerializationUtil.ADD_ALL_AT_SIGNATURE, new CopyOnWriteArrayListAdapter.AddAllAtAdaptor());
-    spec.addMethodAdapter(CopyOnWriteArrayListAdapter.CONSTRUCTOR1_SIGNATURE,
-                          new CopyOnWriteArrayListAdapter.Jdk16LockAdaptor());
-    spec.addMethodAdapter(CopyOnWriteArrayListAdapter.CONSTRUCTOR2_SIGNATURE,
-                          new CopyOnWriteArrayListAdapter.Jdk16LockAdaptor());
-    spec.addMethodAdapter(CopyOnWriteArrayListAdapter.CONSTRUCTOR3_SIGNATURE,
-                          new CopyOnWriteArrayListAdapter.Jdk16LockAdaptor());
-    spec.addMethodAdapter(SerializationUtil.ADD_IF_ABSENT_SIGNATURE,
-                          new CopyOnWriteArrayListAdapter.AddIfAbsentAdaptor());
-    spec.addMethodAdapter(SerializationUtil.ADD_ALL_ABSENT_SIGNATURE,
-                          new CopyOnWriteArrayListAdapter.AddAllAbsentAdaptor());
-    spec.addMethodAdapter(SerializationUtil.REMOVE_SIGNATURE, new CopyOnWriteArrayListAdapter.RemoveAdaptor());
-    spec.addMethodAdapter(SerializationUtil.REMOVE_ALL_SIGNATURE, new CopyOnWriteArrayListAdapter.RemoveAllAdaptor());
-    spec.addMethodAdapter(SerializationUtil.RETAIN_ALL_SIGNATURE, new CopyOnWriteArrayListAdapter.RetainAllAdaptor());
-    spec.addMethodAdapter(SerializationUtil.REMOVE_AT_SIGNATURE, new CopyOnWriteArrayListAdapter.RemoveAtAdaptor());
-    spec.addMethodAdapter(SerializationUtil.REMOVE_RANGE_SIGNATURE,
-                          new CopyOnWriteArrayListAdapter.RemoveRangeAdaptor());
-    spec.addMethodAdapter(SerializationUtil.SET_SIGNATURE, new CopyOnWriteArrayListAdapter.SetAdaptor());
-    spec.addMethodAdapter(SerializationUtil.CLEAR_SIGNATURE, new CopyOnWriteArrayListAdapter.ClearAdaptor());
-    spec.addMethodAdapter(CopyOnWriteArrayListAdapter.RESET_LOCK_SIGNATURE,
-                          new CopyOnWriteArrayListAdapter.ResetLockAdaptor());
-    spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
-    addSerializationInstrumentedCode(spec);
-
-    spec = this.configHelper.getOrCreateSpec("java.util.concurrent.CopyOnWriteArraySet");
-    addSerializationInstrumentedCode(spec);
-  }
-
-  private final void addSerializationInstrumentedCode(final TransparencyClassSpec spec) {
-    byte[] bytes = getSystemBytes(spec.getClassName());
-    spec.markPreInstrumented();
-    bytes = doDSOTransform(spec.getClassName(), bytes);
-
-    final ClassReader cr = new ClassReader(bytes);
-    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    final ClassVisitor cv = new LogicalClassSerializationAdapter.LogicalClassSerializationClassAdapter(
-                                                                                                       cw,
-                                                                                                       spec.getClassName());
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-    bytes = cw.toByteArray();
-    loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
-  }
-
-  private final void addInstrumentedHashtable() {
-    final String jMapClassNameDots = "java.util.Hashtable";
-    final String tcMapClassNameDots = "java.util.HashtableTC";
-    final Map instrumentedContext = new HashMap();
-    mergeClass(tcMapClassNameDots, jMapClassNameDots, instrumentedContext, HashtableClassAdapter.getMethods(), null);
-  }
-
-  private final void addInstrumentedLinkedHashMap(final Map instrumentedContext) {
-    final String jMapClassNameDots = "java.util.LinkedHashMap";
-    final String tcMapClassNameDots = "java.util.LinkedHashMapTC";
-
-    mergeClass(tcMapClassNameDots, jMapClassNameDots, instrumentedContext, null,
-               new ClassAdapterFactory[] { LinkedHashMapClassAdapter.FACTORY });
-  }
-
-  private void addInstrumentedReentrantReadWriteLock() {
-    final String methodPrefix = "__RWL" + ByteCodeUtil.TC_METHOD_PREFIX;
-
-    final String jClassNameDots = "java.util.concurrent.locks.ReentrantReadWriteLock";
-    final String tcClassNameDots = "java.util.concurrent.locks.ReentrantReadWriteLockTC";
-    Map instrumentedContext = new HashMap();
-    mergeReentrantReadWriteLock(tcClassNameDots, jClassNameDots, instrumentedContext, methodPrefix);
-
-    String jInnerClassNameDots;
-    String tcInnerClassNameDots;
-
-    jInnerClassNameDots = "java.util.concurrent.locks.ReentrantReadWriteLock$ReadLock";
-    tcInnerClassNameDots = "java.util.concurrent.locks.ReentrantReadWriteLockTC$ReadLock";
-    instrumentedContext = new HashMap();
-    mergeReadWriteLockInnerClass(tcInnerClassNameDots, jInnerClassNameDots, tcClassNameDots, jClassNameDots,
-                                 "ReadLock", "ReadLock", instrumentedContext, methodPrefix);
-
-    jInnerClassNameDots = "java.util.concurrent.locks.ReentrantReadWriteLock$WriteLock";
-    tcInnerClassNameDots = "java.util.concurrent.locks.ReentrantReadWriteLockTC$WriteLock";
-    instrumentedContext = new HashMap();
-    mergeReadWriteLockInnerClass(tcInnerClassNameDots, jInnerClassNameDots, tcClassNameDots, jClassNameDots,
-                                 "WriteLock", "WriteLock", instrumentedContext, methodPrefix);
-
-  }
-
-  private void mergeReadWriteLockInnerClass(final String tcInnerClassNameDots, final String jInnerClassNameDots,
-                                            final String tcClassNameDots, final String jClassNameDots,
-                                            final String srcInnerClassName, final String targetInnerClassName,
-                                            final Map instrumentedContext, final String methodPrefix) {
-    final String tcInnerClassNameSlashes = tcInnerClassNameDots
-        .replace(ChangeClassNameHierarchyAdapter.DOT_DELIMITER, ChangeClassNameHierarchyAdapter.SLASH_DELIMITER);
-    final byte[] tcData = getSystemBytes(tcInnerClassNameDots);
-    final ClassReader tcCR = new ClassReader(tcData);
-    final ClassNode tcCN = new ClassNode();
-    tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-
-    byte[] jData = getSystemBytes(jInnerClassNameDots);
-
-    // jData = doDSOTransform(jInnerClassNameDots, jData);
-
-    final ClassReader jCR = new ClassReader(jData);
-    final ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
-
-    final ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jInnerClassNameDots, this.systemLoader);
-    final TransparencyClassAdapter dsoAdapter = this.configHelper.createDsoClassAdapterFor(cw, jClassInfo,
-                                                                                           this.instrumentationLogger,
-                                                                                           getClass().getClassLoader(),
-                                                                                           true, false);
-    final ClassVisitor cv = new SerialVersionUIDAdder(new FixedMergeTCToJavaClassAdapter(cw, dsoAdapter,
-                                                                                         jInnerClassNameDots,
-                                                                                         tcInnerClassNameDots, tcCN,
-                                                                                         instrumentedContext,
-                                                                                         methodPrefix, false));
-    jCR.accept(cv, ClassReader.SKIP_FRAMES);
-    jData = cw.toByteArray();
-
-    jData = changeClassNameAndGetBytes(jData, tcInnerClassNameSlashes, tcClassNameDots, jClassNameDots,
-                                       srcInnerClassName, targetInnerClassName, instrumentedContext);
-
-    jData = doDSOTransform(jInnerClassNameDots, jData);
-    loadClassIntoJar(jInnerClassNameDots, jData, true);
-  }
-
-  private void mergeReentrantReadWriteLock(final String tcClassNameDots, final String jClassNameDots,
-                                           final Map instrumentedContext, final String methodPrefix) {
-    final byte[] tcData = getSystemBytes(tcClassNameDots);
-    final ClassReader tcCR = new ClassReader(tcData);
-    final ClassNode tcCN = new ClassNode();
-    tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-
-    byte[] jData = getSystemBytes(jClassNameDots);
-
-    // jData = doDSOTransform(jClassNameDots, jData);
-
-    ClassReader jCR = new ClassReader(jData);
-    ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
-    final ClassVisitor cv1 = new ReentrantReadWriteLockClassAdapter(cw);
-
-    jCR.accept(cv1, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-    jData = cw.toByteArray();
-
-    jCR = new ClassReader(jData);
-    cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
-
-    final ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, this.systemLoader);
-    final TransparencyClassAdapter dsoAdapter = this.configHelper.createDsoClassAdapterFor(cw, jClassInfo,
-                                                                                           this.instrumentationLogger,
-                                                                                           getClass().getClassLoader(),
-                                                                                           true, true);
-    final ClassVisitor cv = new SerialVersionUIDAdder(new FixedMergeTCToJavaClassAdapter(cw, dsoAdapter,
-                                                                                         jClassNameDots,
-                                                                                         tcClassNameDots, tcCN,
-                                                                                         instrumentedContext,
-                                                                                         methodPrefix, true));
-    jCR.accept(cv, ClassReader.SKIP_FRAMES);
-    jData = cw.toByteArray();
-    jData = doDSOTransform(jClassNameDots, jData);
-    loadClassIntoJar(jClassNameDots, jData, true);
-
-    final String innerClassName = "java/util/concurrent/locks/ReentrantReadWriteLockTC$DsoLock";
-    changeClassNameAndGetBytes(innerClassName, tcClassNameDots, jClassNameDots, instrumentedContext);
-    changeClassName(innerClassName, tcClassNameDots, jClassNameDots, instrumentedContext, true);
-  }
-
-  private void addInstrumentedHashMap() {
-    final Map instrumentedContext = new HashMap();
-    mergeClass(HashMapClassAdapter.TC_MAP_CLASSNAME_DOTS, HashMapClassAdapter.J_MAP_CLASSNAME_DOTS,
-               instrumentedContext, null, new ClassAdapterFactory[] { HashMapClassAdapter.FACTORY });
-
-    addInstrumentedLinkedHashMap(instrumentedContext);
-  }
-
-  private final void mergeClass(final String tcClassNameDots, final String jClassNameDots,
-                                final Map instrumentedContext, final MethodNode[] replacedMethods,
-                                final ClassAdapterFactory[] addlAdapters) {
-    final byte[] tcData = getSystemBytes(tcClassNameDots);
-
-    final ClassReader tcCR = new ClassReader(tcData);
-    final ClassNode tcCN = new ClassNode() {
-      @Override
-      public MethodVisitor visitMethod(final int maccess, final String mname, final String mdesc,
-                                       final String msignature, final String[] mexceptions) {
-        if (replacedMethods != null) {
-          for (final MethodNode replacedMethod : replacedMethods) {
-            if (mname.equals(replacedMethod.name) && mdesc.equals(replacedMethod.desc)) {
-              this.methods.add(replacedMethod);
-              return null;
-            }
-          }
-        }
-        return super.visitMethod(maccess, mname, mdesc, msignature, mexceptions);
-      }
-    };
-    tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-
-    byte[] jData = getSystemBytes(jClassNameDots);
-
-    if (addlAdapters != null) {
-      for (final ClassAdapterFactory addlAdapter : addlAdapters) {
-        final ClassReader cr = new ClassReader(jData);
-        final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-
-        final ClassVisitor cv = addlAdapter.create(cw, null);
-        cr.accept(cv, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-        jData = cw.toByteArray();
-      }
-    }
-
-    final ClassReader jCR = new ClassReader(jData);
-    final ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
-    final ClassNode jCN = new ClassNode();
-    jCR.accept(jCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-
-    final ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, this.systemLoader);
-    final TransparencyClassAdapter dsoAdapter = this.configHelper.createDsoClassAdapterFor(cw, jClassInfo,
-                                                                                           this.instrumentationLogger,
-                                                                                           getClass().getClassLoader(),
-                                                                                           true, false);
-    final ClassVisitor cv = new SerialVersionUIDAdder(new FixedMergeTCToJavaClassAdapter(cw, dsoAdapter,
-                                                                                         jClassNameDots,
-                                                                                         tcClassNameDots, tcCN,
-                                                                                         instrumentedContext));
-    jCR.accept(cv, ClassReader.SKIP_FRAMES);
-    loadClassIntoJar(jClassNameDots, cw.toByteArray(), true);
-
-    final List innerClasses = tcCN.innerClasses;
-    // load ClassInfo for all inner classes
-    for (final Iterator i = innerClasses.iterator(); i.hasNext();) {
-      final InnerClassNode innerClass = (InnerClassNode) i.next();
-
-      if (innerClass.outerName.equals(tcClassNameDots.replace(ChangeClassNameHierarchyAdapter.DOT_DELIMITER,
-                                                              ChangeClassNameHierarchyAdapter.SLASH_DELIMITER))) {
-        changeClassNameAndGetBytes(innerClass.name, tcClassNameDots, jClassNameDots, instrumentedContext);
-      }
-    }
-    // transform and add inner classes to the boot jar
-    for (final Iterator i = innerClasses.iterator(); i.hasNext();) {
-      final InnerClassNode innerClass = (InnerClassNode) i.next();
-      if (innerClass.outerName.equals(tcClassNameDots.replace(ChangeClassNameHierarchyAdapter.DOT_DELIMITER,
-                                                              ChangeClassNameHierarchyAdapter.SLASH_DELIMITER))) {
-        changeClassName(innerClass.name, tcClassNameDots, jClassNameDots, instrumentedContext,
-                        mergedInnerClassesNeedInstrumentation(jClassNameDots));
-      }
-    }
-  }
-
-  private boolean mergedInnerClassesNeedInstrumentation(final String classNameDots) {
-    return classNameDots.equals("java.util.Hashtable");
-  }
-
-  private void changeClassName(final String fullClassNameDots, final String classNameDotsToBeChanged,
-                               final String classNameDotsReplaced, final Map instrumentedContext,
-                               final boolean doDSOTransform) {
-    byte[] data = changeClassNameAndGetBytes(fullClassNameDots, classNameDotsToBeChanged, classNameDotsReplaced,
-                                             instrumentedContext);
-
-    final String replacedClassName = ChangeClassNameRootAdapter.replaceClassName(fullClassNameDots,
-                                                                                 classNameDotsToBeChanged,
-                                                                                 classNameDotsReplaced, null, null);
-
-    if (doDSOTransform) {
-      data = doDSOTransform(replacedClassName, data);
-    }
-
-    loadClassIntoJar(replacedClassName, data, true);
-  }
-
-  private final byte[] changeClassNameAndGetBytes(final String fullClassNameDots,
-                                                  final String classNameDotsToBeChanged,
-                                                  final String classNameDotsReplaced, final Map instrumentedContext) {
-    return changeClassNameAndGetBytes(fullClassNameDots, classNameDotsToBeChanged, classNameDotsReplaced, null, null,
-                                      instrumentedContext);
-  }
-
-  private final byte[] changeClassNameAndGetBytes(final String fullClassNameDots,
-                                                  final String classNameDotsToBeChanged,
-                                                  final String classNameDotsReplaced, final String srcInnerClassName,
-                                                  final String targetInnerClassName, final Map instrumentedContext) {
-    return changeClassNameAndGetBytes(getSystemBytes(fullClassNameDots), fullClassNameDots, classNameDotsToBeChanged,
-                                      classNameDotsReplaced, srcInnerClassName, targetInnerClassName,
-                                      instrumentedContext);
-  }
-
-  private final byte[] changeClassNameAndGetBytes(byte[] data, final String fullClassNameDots,
-                                                  final String classNameDotsToBeChanged,
-                                                  final String classNameDotsReplaced, final String srcInnerClassName,
-                                                  final String targetInnerClassName, final Map instrumentedContext) {
-    final ClassReader cr = new ClassReader(data);
-    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    final ClassVisitor cv = new ChangeClassNameRootAdapter(cw, fullClassNameDots, classNameDotsToBeChanged,
-                                                           classNameDotsReplaced, srcInnerClassName,
-                                                           targetInnerClassName, instrumentedContext, null);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-    data = cw.toByteArray();
-
-    AsmClassInfo.getClassInfo(classNameDotsReplaced, data, this.systemLoader);
-
-    return data;
-  }
-
-  private void addInstrumentedJavaUtilConcurrentLocks() {
-    if (!Vm.isJDK15Compliant()) { return; }
-    addInstrumentedReentrantReadWriteLock();
-    addInstrumentedReentrantLock();
-    addInstrumentedConditionObject();
-  }
-
-  private void addInstrumentedConditionObject() {
-    String classNameDots = "com.tcclient.util.concurrent.locks.ConditionObject";
-    byte[] bytes = getSystemBytes(classNameDots);
-    TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(classNameDots);
-    spec.disableWaitNotifyCodeSpec("signal()V");
-    spec.disableWaitNotifyCodeSpec("signalAll()V");
-    spec.setHonorTransient(true);
-    spec.markPreInstrumented();
-    bytes = doDSOTransform(classNameDots, bytes);
-    loadClassIntoJar(classNameDots, bytes, spec.isPreInstrumented());
-    this.configHelper.removeSpec(classNameDots);
-
-    classNameDots = "com.tcclient.util.concurrent.locks.ConditionObject$SyncCondition";
-    bytes = getSystemBytes(classNameDots);
-    spec = this.configHelper.getOrCreateSpec(classNameDots);
-    spec.markPreInstrumented();
-    bytes = doDSOTransform(classNameDots, bytes);
-    loadClassIntoJar(classNameDots, bytes, spec.isPreInstrumented());
-    this.configHelper.removeSpec(classNameDots);
-
-  }
-
-  private void addInstrumentedReentrantLock() {
-    final String jClassNameDots = "java.util.concurrent.locks.ReentrantLock";
-    final String tcClassNameDots = "java.util.concurrent.locks.ReentrantLockTC";
-    final Map instrumentedContext = new HashMap();
-    mergeReentrantLock(tcClassNameDots, jClassNameDots, instrumentedContext);
-  }
-
-  private void mergeReentrantLock(final String tcClassNameDots, final String jClassNameDots,
-                                  final Map instrumentedContext) {
-    final String methodPrefix = "__RL" + ByteCodeUtil.TC_METHOD_PREFIX;
-
-    final byte[] tcData = getSystemBytes(tcClassNameDots);
-    final ClassReader tcCR = new ClassReader(tcData);
-    final ClassNode tcCN = new ClassNode();
-    tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-
-    byte[] jData = getSystemBytes(jClassNameDots);
-    ClassReader jCR = new ClassReader(jData);
-    ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
-    final ClassVisitor cv1 = new ReentrantLockClassAdapter(cw);
-
-    jCR.accept(cv1, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-    jData = cw.toByteArray();
-
-    jCR = new ClassReader(jData);
-    cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
-
-    final ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, this.systemLoader);
-    final TransparencyClassAdapter dsoAdapter = this.configHelper.createDsoClassAdapterFor(cw, jClassInfo,
-                                                                                           this.instrumentationLogger,
-                                                                                           getClass().getClassLoader(),
-                                                                                           true, true);
-    final ClassVisitor cv = new SerialVersionUIDAdder(new FixedMergeTCToJavaClassAdapter(cw, dsoAdapter,
-                                                                                         jClassNameDots,
-                                                                                         tcClassNameDots, tcCN,
-                                                                                         instrumentedContext,
-                                                                                         methodPrefix, true));
-    jCR.accept(cv, ClassReader.SKIP_FRAMES);
-    jData = cw.toByteArray();
-    jData = doDSOTransform(jClassNameDots, jData);
-    loadClassIntoJar(jClassNameDots, jData, true);
-  }
-
   private final void addInstrumentedClassLoader() {
     // patch the java.lang.ClassLoader
     final ClassLoaderPreProcessorImpl adapter = new ClassLoaderPreProcessorImpl();
     final byte[] patched = adapter.preProcess(getSystemBytes("java.lang.ClassLoader"));
 
-    final ClassReader cr = new ClassReader(patched);
-    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    final ClassVisitor cv = new NamedLoaderAdapter().create(cw, null);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-    loadClassIntoJar("java.lang.ClassLoader", cw.toByteArray(), false);
+    loadClassIntoJar("java.lang.ClassLoader", patched, false);
   }
 
   protected final byte[] doDSOTransform(final String name, final byte[] data) {

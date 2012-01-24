@@ -6,8 +6,6 @@ package com.tctest;
 
 import org.apache.commons.io.FileUtils;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
-
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterEvent;
 import com.tc.cluster.DsoClusterListener;
@@ -17,7 +15,6 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
-import com.tc.object.config.spec.SynchronizedIntSpec;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -26,6 +23,7 @@ import com.tc.stats.api.DSOMBean;
 import com.tc.test.JMXUtils;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tctest.builtin.AtomicInteger;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.File;
@@ -49,7 +47,7 @@ public class RogueClientTestApp extends AbstractTransparentApp {
   private final CyclicBarrier                      barrier          = new CyclicBarrier(TOTAL_L1_PROCESS);
   private final CyclicBarrier                      finished         = new CyclicBarrier(TOTAL_L1_PROCESS - 2);
   private static final LinkedBlockingQueue<MyNode> lbqueue          = new LinkedBlockingQueue<MyNode>();
-  private static final SynchronizedInt             nodeId           = new SynchronizedInt(0);
+  private static final AtomicInteger               nodeId           = new AtomicInteger(0);
 
   public static final String                       CONFIG_FILE      = "config-file";
   public static final String                       PORT_NUMBER      = "port-number";
@@ -80,8 +78,6 @@ public class RogueClientTestApp extends AbstractTransparentApp {
     String testClass = RogueClientTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     config.addIncludePattern(testClass + "$*", false, false, true);
-
-    new SynchronizedIntSpec().visit(visitor, config);
 
     spec.addRoot("barrier", "barrier");
     spec.addRoot("finished", "finished");
@@ -210,7 +206,7 @@ public class RogueClientTestApp extends AbstractTransparentApp {
     }
 
     private synchronized static int getNextNodeID() {
-      return nodeId.increment();
+      return nodeId.incrementAndGet();
     }
 
     private synchronized static int getCurrentNodeID() {

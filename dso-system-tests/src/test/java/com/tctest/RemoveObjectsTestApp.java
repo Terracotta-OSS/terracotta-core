@@ -14,13 +14,13 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.test.JMXUtils;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tctest.builtin.ConcurrentHashMap;
+import com.tctest.builtin.CyclicBarrier;
+import com.tctest.builtin.HashMap;
+import com.tctest.builtin.Lock;
 import com.tctest.runner.AbstractTransparentApp;
 
-import java.util.HashMap;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
+import java.util.Map;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
@@ -30,16 +30,15 @@ import junit.framework.Assert;
 
 public class RemoveObjectsTestApp extends AbstractTransparentApp {
 
-  private final long                          TEST_DURATION = 5 * 60 * 1000;
-  private final CyclicBarrier                 barrier;
-  private static final ReentrantReadWriteLock myLock        = new ReentrantReadWriteLock();
-  private static final WriteLock              writeLock     = myLock.writeLock();
-  private final ConcurrentHashMap             sharedRoot    = new ConcurrentHashMap();
+  private final long                   TEST_DURATION = 5 * 60 * 1000;
+  private final CyclicBarrier          barrier;
+  private static final Lock            myLock        = new Lock();
+  private final ConcurrentHashMap      sharedRoot    = new ConcurrentHashMap();
 
-  private MBeanServerConnection               mbsc          = null;
-  private JMXConnector                        jmxc;
-  private ObjectManagementMonitorMBean        objectMBean;
-  private final ApplicationConfig             config;
+  private MBeanServerConnection        mbsc          = null;
+  private JMXConnector                 jmxc;
+  private ObjectManagementMonitorMBean objectMBean;
+  private final ApplicationConfig      config;
 
   public RemoveObjectsTestApp(final String appId, final ApplicationConfig cfg, final ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -71,15 +70,15 @@ public class RemoveObjectsTestApp extends AbstractTransparentApp {
       } else {
         long starttime = System.currentTimeMillis();
         while ((starttime + TEST_DURATION) > System.currentTimeMillis()) {
-          HashMap streamData = new HashMap();
+          Map streamData = new HashMap();
           for (int n = 0; n < 10000; n++) {
             String key = String.valueOf(n);
             String value = new String("Value for key " + n);
             streamData.put(key, value);
           }
-          writeLock.lock();
+          myLock.writeLock();
           sharedRoot.put("Data-DEV3462", streamData);
-          writeLock.unlock();
+          myLock.writeUnlock();
           System.out.println("Sleeping ");
           try {
             System.gc();
@@ -100,8 +99,8 @@ public class RemoveObjectsTestApp extends AbstractTransparentApp {
     jmxc = JMXUtils.getJMXConnector("localhost", jmxPort);
     mbsc = jmxc.getMBeanServerConnection();
     System.out.println("obtained mbeanserver connection");
-    objectMBean = MBeanServerInvocationHandler
-        .newProxyInstance(mbsc, L2MBeanNames.OBJECT_MANAGEMENT, ObjectManagementMonitorMBean.class, false);
+    objectMBean = MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.OBJECT_MANAGEMENT,
+                                                                ObjectManagementMonitorMBean.class, false);
 
   }
 
@@ -113,7 +112,6 @@ public class RemoveObjectsTestApp extends AbstractTransparentApp {
     config.addWriteAutolock(methodExpression);
     spec.addRoot("sharedRoot", "sharedRoot");
     spec.addRoot("myLock", "myLock");
-    spec.addRoot("rwLock", "rwLock");
     spec.addRoot("barrier", "barrier");
   }
 }

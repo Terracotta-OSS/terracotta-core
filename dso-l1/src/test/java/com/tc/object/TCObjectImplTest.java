@@ -10,7 +10,6 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.field.TCField;
 import com.tc.object.field.TCFieldFactory;
-import com.tc.object.loaders.LoaderDescription;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -176,10 +175,6 @@ public class TCObjectImplTest extends BaseDSOTestCase {
 
     public TraversedReferences getPortableObjects(final Object pojo, final TraversedReferences addTo) {
       return addTo;
-    }
-
-    public LoaderDescription getDefiningLoaderDescription() {
-      throw new ImplementMe();
     }
 
     public boolean isNonStaticInner() {

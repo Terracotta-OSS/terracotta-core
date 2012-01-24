@@ -7,20 +7,20 @@ package com.tc.objectserver.managedobject;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TestDNACursor;
-import com.tc.object.dna.impl.ClassLoaderInstance;
-import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.objectserver.core.api.ManagedObjectState;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class ManagedObjectStateSerializationTest extends ManagedObjectStateSerializationTestBase {
+
+  static {
+    ManagedObjectStateFactory.enableLegacyTypes();
+  }
 
   public void testCheckIfMissingAnyManagedObjectType() throws Exception {
     final Field[] fields = ManagedObjectState.class.getDeclaredFields();
@@ -33,15 +33,9 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
           case ManagedObjectState.PHYSICAL_TYPE:
             testPhysical();
             break;
-          case ManagedObjectState.DATE_TYPE:
-            testDate();
-            break;
           case ManagedObjectState.MAP_TYPE:
           case ManagedObjectState.PARTIAL_MAP_TYPE:
             // Map type is tested in another test.
-            break;
-          case ManagedObjectState.LINKED_HASHMAP_TYPE:
-            testLinkedHashMap();
             break;
           case ManagedObjectState.ARRAY_TYPE:
             testArray();
@@ -52,29 +46,11 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
           case ManagedObjectState.LIST_TYPE:
             testList();
             break;
-          case ManagedObjectState.LINKED_LIST_TYPE:
-            testLinkedList();
-            break;
-          case ManagedObjectState.LINKED_HASHSET_TYPE:
-            testLinkedHashSet();
-            break;
           case ManagedObjectState.SET_TYPE:
             testSet();
             break;
-          case ManagedObjectState.TREE_SET_TYPE:
-            testTreeSet();
-            break;
-          case ManagedObjectState.TREE_MAP_TYPE:
-            testTreeMap();
-            break;
           case ManagedObjectState.QUEUE_TYPE:
             testLinkedBlockingQueue();
-            break;
-          case ManagedObjectState.CONCURRENT_HASHMAP_TYPE:
-            testConcurrentHashMap();
-            break;
-          case ManagedObjectState.URL_TYPE:
-            testURL();
             break;
           case ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE:
             testConcurrentDistributedMap();
@@ -126,28 +102,6 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     serializationValidation(state, cursor, ManagedObjectState.TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY);
   }
 
-  public void testProxy() throws Exception {
-    final String CLASSLOADER_FIELD_NAME = "java.lang.reflect.Proxy.loader";
-    final String INTERFACES_FIELD_NAME = "java.lang.reflect.Proxy.interfaces";
-    final String INVOCATION_HANDLER_FIELD_NAME = "java.lang.reflect.Proxy.h";
-
-    final MyInvocationHandler handler = new MyInvocationHandler();
-    final Proxy myProxy = (Proxy) Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class[] {
-        MyProxyInf1.class, MyProxyInf2.class }, handler);
-    final String className = myProxy.getClass().getName();
-
-    final TestDNACursor cursor = new TestDNACursor();
-
-    cursor.addPhysicalAction(CLASSLOADER_FIELD_NAME, new ClassLoaderInstance(new UTF8ByteDataHolder("loader desc")),
-                             true);
-    cursor.addPhysicalAction(INTERFACES_FIELD_NAME, myProxy.getClass().getInterfaces(), true);
-    cursor.addPhysicalAction(INVOCATION_HANDLER_FIELD_NAME, new ObjectID(2002), true);
-
-    final ManagedObjectState state = applyValidation(className, cursor);
-
-    serializationValidation(state, cursor, ManagedObjectState.PHYSICAL_TYPE);
-  }
-
   public void testPhysical() throws Exception {
     final String className = "com.tc.objectserver.managedobject.ManagedObjectStateSerializationTest";
     final TestDNACursor cursor = new TestDNACursor();
@@ -159,35 +113,6 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     final ManagedObjectState state = applyValidation(className, cursor);
 
     serializationValidation(state, cursor, ManagedObjectState.PHYSICAL_TYPE);
-  }
-
-  public void testDate() throws Exception {
-    final String className = "java.util.Date";
-
-    final TestDNACursor cursor = new TestDNACursor();
-
-    cursor.addLogicalAction(SerializationUtil.SET_TIME, new Long[] { Long.valueOf(System.currentTimeMillis()) });
-    cursor.addLogicalAction(SerializationUtil.SET_NANOS, new Integer[] { Integer.valueOf(0) });
-
-    final ManagedObjectState state = applyValidation(className, cursor);
-
-    serializationValidation(state, cursor, ManagedObjectState.DATE_TYPE);
-  }
-
-  public void testLinkedHashMap() throws Exception {
-    final String className = "java.util.LinkedHashMap";
-    final String ACCESS_ORDER_FIELDNAME = "java.util.LinkedHashMap.accessOrder";
-
-    final TestDNACursor cursor = new TestDNACursor();
-
-    cursor.addPhysicalAction(ACCESS_ORDER_FIELDNAME, Boolean.FALSE, false);
-
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2002), new ObjectID(2003) });
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2004), new ObjectID(2005) });
-
-    final ManagedObjectState state = applyValidation(className, cursor);
-
-    serializationValidation(state, cursor, ManagedObjectState.LINKED_HASHMAP_TYPE);
   }
 
   public void testArray() throws Exception {
@@ -224,18 +149,6 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     serializationValidation(state, cursor, ManagedObjectState.LIST_TYPE);
   }
 
-  public void testLinkedList() throws Exception {
-    final String className = "java.util.LinkedList";
-    final TestDNACursor cursor = new TestDNACursor();
-
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2002) });
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2003) });
-
-    final ManagedObjectState state = applyValidation(className, cursor);
-
-    serializationValidation(state, cursor, ManagedObjectState.LINKED_LIST_TYPE);
-  }
-
   public void testSet() throws Exception {
     final String className = "java.util.HashSet";
     final TestDNACursor cursor = new TestDNACursor();
@@ -248,52 +161,8 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     serializationValidation(state, cursor, ManagedObjectState.SET_TYPE);
   }
 
-  public void testLinkedHashSet() throws Exception {
-    final String className = "java.util.LinkedHashSet";
-    final TestDNACursor cursor = new TestDNACursor();
-
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2002) });
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2003) });
-
-    final ManagedObjectState state = applyValidation(className, cursor);
-
-    serializationValidation(state, cursor, ManagedObjectState.LINKED_HASHSET_TYPE);
-  }
-
-  public void testTreeSet() throws Exception {
-    final String className = "java.util.TreeSet";
-    final String COMPARATOR_FIELDNAME = "java.util.TreeMap.comparator";
-
-    final TestDNACursor cursor = new TestDNACursor();
-
-    cursor.addPhysicalAction(COMPARATOR_FIELDNAME, new ObjectID(2001), true);
-
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2002) });
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2003) });
-
-    final ManagedObjectState state = applyValidation(className, cursor);
-
-    serializationValidation(state, cursor, ManagedObjectState.TREE_SET_TYPE);
-  }
-
-  public void testTreeMap() throws Exception {
-    final String className = "java.util.TreeMap";
-    final String COMPARATOR_FIELDNAME = "java.util.TreeMap.comparator";
-
-    final TestDNACursor cursor = new TestDNACursor();
-
-    cursor.addPhysicalAction(COMPARATOR_FIELDNAME, new ObjectID(2001), true);
-
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2002), new ObjectID(2003) });
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2004), new ObjectID(2005) });
-
-    final ManagedObjectState state = applyValidation(className, cursor);
-
-    serializationValidation(state, cursor, ManagedObjectState.TREE_MAP_TYPE);
-  }
-
   public void testLinkedBlockingQueue() throws Exception {
-    final String className = "java.util.concurrent.LinkedBlockingQueue";
+    final String className = "org.terracotta.collections.ConcurrentBlockingQueue";
     final String TAKE_LOCK_FIELD_NAME = "takeLock";
     final String PUT_LOCK_FIELD_NAME = "putLock";
     final String CAPACITY_FIELD_NAME = "capacity";
@@ -310,36 +179,6 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     final ManagedObjectState state = applyValidation(className, cursor);
 
     serializationValidation(state, cursor, ManagedObjectState.QUEUE_TYPE);
-  }
-
-  public void testConcurrentHashMap() throws Exception {
-    final String className = ConcurrentHashMap.class.getName();
-    final TestDNACursor cursor = new TestDNACursor();
-
-    cursor.addPhysicalAction(ConcurrentHashMapManagedObjectState.SEGMENT_MASK_FIELD_NAME, Integer.valueOf(10), false);
-    cursor.addPhysicalAction(ConcurrentHashMapManagedObjectState.SEGMENT_SHIFT_FIELD_NAME, Integer.valueOf(20), false);
-    final ObjectID[] segments = new ObjectID[] { new ObjectID(2001), new ObjectID(2002) };
-    cursor.addArrayAction(segments);
-
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2002), new ObjectID(2003) });
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2004), new ObjectID(2005) });
-
-    final ManagedObjectState state = applyValidation(className, cursor);
-
-    serializationValidation(state, cursor, ManagedObjectState.CONCURRENT_HASHMAP_TYPE);
-  }
-
-  public void testURL() throws Exception {
-    final String className = "java.net.URL";
-
-    final TestDNACursor cursor = new TestDNACursor();
-
-    cursor.addLogicalAction(SerializationUtil.URL_SET, new Object[] { "http", "terracotta.org", new Integer(8080),
-        "auth", "user:pass", "/test", "par1=val1", "ref" });
-
-    final ManagedObjectState state = applyValidation(className, cursor);
-
-    serializationValidation(state, cursor, ManagedObjectState.URL_TYPE);
   }
 
   // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
@@ -386,6 +225,40 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     final ManagedObjectState state = applyValidation(className, cursor);
 
     serializationValidation(state, cursor, ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE);
+  }
+
+  public void testEnum() throws Exception {
+    final String className = "java.lang.Enum";
+    final State state = State.RUN;
+    final TestDNACursor cursor = new TestDNACursor();
+
+    cursor.addLiteralAction(state);
+    final ManagedObjectState managedObjectState = applyValidation(className, cursor);
+    serializationValidation(managedObjectState, cursor, ManagedObjectState.LITERAL_TYPE);
+  }
+
+  public interface EnumIntf {
+    public int getStateNum();
+
+    public void setStateNum(int stateNum);
+  }
+
+  public enum State implements EnumIntf {
+    START(0), RUN(1), STOP(2);
+
+    private int stateNum;
+
+    State(final int stateNum) {
+      this.stateNum = stateNum;
+    }
+
+    public int getStateNum() {
+      return this.stateNum;
+    }
+
+    public void setStateNum(final int stateNum) {
+      this.stateNum = stateNum;
+    }
   }
 
   public interface MyProxyInf1 {

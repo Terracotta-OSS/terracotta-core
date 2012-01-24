@@ -6,8 +6,6 @@ package com.tctest;
 
 import org.apache.commons.io.FileUtils;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
-
 import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
 import com.tc.config.schema.builder.LockConfigBuilder;
 import com.tc.config.schema.builder.RootConfigBuilder;
@@ -18,15 +16,14 @@ import com.tc.config.test.schema.TerracottaConfigBuilder;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
-import com.tc.object.config.spec.SynchronizedIntSpec;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tctest.builtin.ArrayList;
 
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -47,6 +44,7 @@ public class BroadcastDisconnectingClientTest extends ServerCrashingTestBase {
 
   public BroadcastDisconnectingClientTest() {
     super(INTERNAL_CLIENT_COUNT, new String[] { "-Xmx512m", "-Xms512m" });
+    timebombTestForRewrite();
   }
 
   @Override
@@ -63,18 +61,16 @@ public class BroadcastDisconnectingClientTest extends ServerCrashingTestBase {
   protected void createConfig(TerracottaConfigBuilder cb) {
 
     InstrumentedClassConfigBuilder[] instrClasses = new InstrumentedClassConfigBuilder[] {
-        new InstrumentedClassConfigBuilderImpl(SynchronizedInt.class),
         new InstrumentedClassConfigBuilderImpl(internalClientClass),
         new InstrumentedClassConfigBuilderImpl(externalClientClass) };
     cb.getApplication().getDSO().setInstrumentedClasses(instrClasses);
 
     RootConfigBuilder[] roots = new RootConfigBuilder[] {
         new RootConfigBuilderImpl(internalClientClass, "arrayList", "arrayList"),
-        new RootConfigBuilderImpl(externalClientClass, "arrayList", "arrayList"), };
+        new RootConfigBuilderImpl(externalClientClass, "arrayList", "arrayList") };
     cb.getApplication().getDSO().setRoots(roots);
 
     LockConfigBuilder[] locks = new LockConfigBuilder[] {
-        new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK, SynchronizedInt.class, LockConfigBuilder.LEVEL_WRITE),
         new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK, internalClientClass, LockConfigBuilder.LEVEL_WRITE),
         new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK, externalClientClass, LockConfigBuilder.LEVEL_WRITE) };
     cb.getApplication().getDSO().setLocks(locks);
@@ -103,8 +99,6 @@ public class BroadcastDisconnectingClientTest extends ServerCrashingTestBase {
       spec2.addRoot("arrayList", "arrayList");
       methodExpression = "* " + externalClientName + "*.*(..)";
       config.addWriteAutolock(methodExpression);
-
-      new SynchronizedIntSpec().visit(visitor, config);
     }
 
     @Override
@@ -113,7 +107,7 @@ public class BroadcastDisconnectingClientTest extends ServerCrashingTestBase {
       boolean first;
       synchronized (arrayList) {
         if (arrayList.size() == 0) {
-          arrayList.add(new ArrayList(0));
+          arrayList.add(new ArrayList());
           first = true;
         } else {
           first = false;

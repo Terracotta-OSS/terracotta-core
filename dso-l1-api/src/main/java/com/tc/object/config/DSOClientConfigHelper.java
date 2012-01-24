@@ -11,12 +11,12 @@ import com.tc.asm.ClassWriter;
 import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
+import com.tc.bundles.Modules;
 import com.tc.config.schema.CommonL1Config;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.object.Portability;
 import com.tc.object.bytecode.ClassAdapterFactory;
-import com.tc.object.bytecode.SessionConfiguration;
 import com.tc.object.bytecode.TransparencyClassAdapter;
 import com.tc.object.config.schema.DSOInstrumentationLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeLoggingOptions;
@@ -24,7 +24,6 @@ import com.tc.object.config.schema.DSORuntimeOutputOptions;
 import com.tc.object.config.schema.InstrumentedClass;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.properties.ReconnectConfig;
-import com.terracottatech.config.Modules;
 
 import java.io.File;
 import java.net.URL;
@@ -37,7 +36,17 @@ import java.util.Map;
  * extends DSOApplicationConfig which is a much simpler interface suitable for manipulating the config from the
  * perspective of generating a configuration file.
  */
-public interface DSOClientConfigHelper extends DSOApplicationConfig, DSOMBeanConfig {
+public interface DSOClientConfigHelper extends DSOApplicationConfig, DSOMBeanConfig, ModuleConfiguration {
+  void addRoot(String rootName, String rootFieldName);
+
+  void addPermanentExcludePattern(String pattern);
+
+  void addNonportablePattern(String pattern);
+
+  void addIncludePattern(String expression, boolean honorTransient, String methodToCallOnLoad, boolean honorVolatile);
+
+  URL getBundleURL(Bundle bundle);
+
   boolean hasBootJar();
 
   String[] processArguments();
@@ -55,8 +64,6 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig, DSOMBeanCon
   DSOInstrumentationLoggingOptions getInstrumentationLoggingOptions();
 
   void verifyBootJarContents(File bjf) throws IncompleteBootJarException, UnverifiedBootJarException;
-
-  void validateSessionConfig();
 
   TransparencyClassSpec[] getAllSpecs();
 
@@ -76,18 +83,6 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig, DSOMBeanCon
 
   // String getChangeApplicatorClassNameFor(String className);
   Class getChangeApplicator(Class clazz);
-
-  boolean isPortableModuleClass(Class clazz);
-
-  void addModuleSpec(ModuleSpec moduleSpec);
-
-  void setMBeanSpecs(MBeanSpec[] mbeanSpecs);
-
-  MBeanSpec[] getMBeanSpecs();
-
-  void setSRASpecs(SRASpec[] sraSpecs);
-
-  SRASpec[] getSRASpecs();
 
   boolean addTunneledMBeanDomain(String tunneledMBeanDomain);
 
@@ -123,30 +118,6 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig, DSOMBeanCon
   DistributedMethodSpec getDmiSpec(MemberInfo memberInfo);
 
   TransparencyClassSpec getSpec(String className);
-
-  /**
-   * Examine the app-groups part of the config to determine an appGroup name given the specified loader description. If
-   * the loader name is specified, &lt;named-classloader&gt; elements will be searched for a match; if a web app name is
-   * specified, &lt;web-application&gt; elements will be searched; if both are specified, both will be searched, but if
-   * a conflict is found an exception will be thrown.
-   * 
-   * @param classLoaderName a full classloader name, such as "Tomcat.Catalina:localhost:/events", or null to ignore
-   *        &lt;named-classloader&gt; elements in the config.
-   * @param appName a web application name, such as "events", or null to ignore &lt;web-application&gt; elements in the
-   *        config.
-   * @return an app-group name, or null if no match was found
-   * @throws com.tc.config.schema.setup.ConfigurationSetupException if a conflict was detected
-   */
-  String getAppGroup(String classLoaderName, String appName);
-
-  /**
-   * Add entries to an app-group. All the specified named classloaders and all the specified web application names will
-   * be added to the app group.
-   * 
-   * @param namedClassloaders an array of names of NamedClassLoader, or null if none are being added
-   * @param webAppNames an array of names of web-applications, or null if none are being added.
-   */
-  void addToAppGroup(String appGroup, String[] namedClassloaders, String[] webAppNames);
 
   DSORuntimeLoggingOptions runtimeLoggingOptions();
 
@@ -260,24 +231,15 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig, DSOMBeanCon
    */
   void addModule(String groupId, String artifactId, String version);
 
-  // HACK: is also in IStandardDSOClientConfigHelper
   /**
    * If an adapter with the same name was already present, this new one will not be added, and the operation will simply
    * return as a no-op.
    */
   void addCustomAdapter(String name, ClassAdapterFactory adapterFactory);
 
-  Class getTCPeerClass(Class clazz);
-
-  ClassReplacementMapping getClassReplacementMapping();
-
-  URL getClassResource(String className, ClassLoader loader, boolean hideSystemResources);
-
   boolean hasCustomAdapters(ClassInfo classInfo);
 
   Collection<ClassAdapterFactory> getCustomAdapters(ClassInfo classInfo);
-
-  boolean reflectionEnabled();
 
   public ReconnectConfig getL1ReconnectProperties() throws ConfigurationSetupException;
 
@@ -293,12 +255,6 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig, DSOMBeanCon
   boolean addClassConfigBasedAdapters(ClassInfo classInfo);
 
   void recordBundleURLs(Map<Bundle, URL> bundleURLs);
-
-  URL getBundleURL(Bundle bundle);
-
-  SessionConfiguration getSessionConfiguration(String appName);
-
-  void addWebApplication(String pattern, SessionConfiguration config);
 
   L1ConfigurationSetupManager reloadServersConfiguration() throws ConfigurationSetupException;
 

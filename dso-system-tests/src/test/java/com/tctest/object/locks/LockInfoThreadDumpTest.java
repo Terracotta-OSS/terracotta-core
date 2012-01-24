@@ -36,6 +36,10 @@ public class LockInfoThreadDumpTest extends TransparentTestBase {
   private int              adminPort;
   private File             configFile;
 
+  public LockInfoThreadDumpTest() {
+    timebombTestForRewrite();
+  }
+
   @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);

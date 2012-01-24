@@ -30,7 +30,7 @@ public class ClientDetectionTest extends TransparentTestBase {
   private int              adminPort;
 
   public ClientDetectionTest() {
-    // disableAllUntil("2007-09-01");
+    timebombTestForRewrite();
   }
 
   @Override
