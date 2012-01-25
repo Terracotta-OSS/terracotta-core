@@ -1,5 +1,13 @@
 package org.terracotta.test.util;
 
+import org.apache.commons.io.IOUtils;
+
+import com.tc.config.test.schema.ConfigHelper;
+import com.tc.test.setup.GroupsData;
+import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.runtime.Os;
+import com.tc.util.runtime.Vm;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -9,23 +17,16 @@ import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.commons.io.IOUtils;
-
-import com.tc.config.test.schema.ConfigHelper;
-import com.tc.test.setup.GroupsData;
-import com.tc.util.concurrent.ThreadUtil;
-import com.tc.util.runtime.Os;
-
 public class TestBaseUtil {
 
-  public static void removeDuplicateJvmArgs(ArrayList<String> jvmArgs) {
+  public static void removeDuplicateJvmArgs(List<String> jvmArgs) {
     Map<String, String> argsMap = new HashMap<String, String>();
     Set<String> argSet = new HashSet<String>();
     for (String arg : jvmArgs) {
@@ -119,6 +120,17 @@ public class TestBaseUtil {
       }
     }
     throw new AssertionError("returning null for " + c.getName());
+  }
+
+  public static void setupVerboseGC(List<String> jvmArgs, File verboseGcOutputFile) {
+    if (Vm.isJRockit()) {
+      jvmArgs.add("-Xverbose:gcpause,gcreport");
+      jvmArgs.add("-Xverboselog:" + verboseGcOutputFile.getAbsolutePath());
+    } else {
+      jvmArgs.add("-Xloggc:" + verboseGcOutputFile.getAbsolutePath());
+      jvmArgs.add("-XX:+PrintGCTimeStamps");
+      jvmArgs.add("-XX:+PrintGCDetails");
+    }
   }
 
 }

@@ -4,22 +4,6 @@
  */
 package com.tc.objectserver.control;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.OutputStream;
-import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.management.MBeanServerConnection;
-import javax.management.remote.JMXConnector;
-
 import org.apache.commons.lang.ArrayUtils;
 import org.terracotta.test.util.JMXUtils;
 
@@ -36,6 +20,22 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TestConfigObject;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.Vm;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.OutputStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import javax.management.MBeanServerConnection;
+import javax.management.remote.JMXConnector;
 
 public class ExtraProcessServerControl extends ServerControlBase {
   private static final String  DEFAULT_MIN_HEAP   = "-Xms128m";
@@ -310,10 +310,9 @@ public class ExtraProcessServerControl extends ServerControlBase {
   protected List<String> getMainClassArguments() {
     if (serverName != null && !serverName.equals("")) {
       return Arrays.asList(StandardConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFileLoc,
-                           StandardConfigurationSetupManagerFactory.SERVER_NAME_ARGUMENT_WORD, serverName, "-force");
+                           StandardConfigurationSetupManagerFactory.SERVER_NAME_ARGUMENT_WORD, serverName);
     } else {
-      return Arrays.asList(StandardConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFileLoc,
-                           "-force");
+      return Arrays.asList(StandardConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFileLoc);
     }
   }
 
@@ -376,7 +375,10 @@ public class ExtraProcessServerControl extends ServerControlBase {
 
   public void attemptForceShutdown() throws Exception {
     System.out.println("Force Shutting down server " + this.name + "...");
-    LinkedJavaProcess stopper = createLinkedJavaProcess("com.tc.admin.TCStop", getMainClassArguments(), jvmArgs);
+    List<String> mainClassArguments = new ArrayList<String>();
+    mainClassArguments.addAll(getMainClassArguments());
+    mainClassArguments.add("-force");
+    LinkedJavaProcess stopper = createLinkedJavaProcess("com.tc.admin.TCStop", mainClassArguments, jvmArgs);
     stopper.start();
 
     ByteArrayOutputStream stopperLog = null;

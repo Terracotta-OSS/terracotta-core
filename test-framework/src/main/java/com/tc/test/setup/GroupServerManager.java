@@ -121,16 +121,18 @@ public class GroupServerManager {
         perServerJvmArgs = testConfig.getL2Config().getExtraServerJvmArgs();
       }
 
-      TestBaseUtil.removeDuplicateJvmArgs(perServerJvmArgs);
       serverControl[i] = getServerControl(groupData.getDsoPort(i), groupData.getJmxPort(i),
                                           groupData.getServerNames()[i], perServerJvmArgs);
       expectedServerRunning[i] = false;
     }
   }
 
-  private ServerControl getServerControl(int dsoPort, int jmxPort, String serverName, List aJvmArgs) {
+  private ServerControl getServerControl(int dsoPort, int jmxPort, String serverName, List<String> aJvmArgs) {
     File workingDir = new File(this.tempDir, serverName);
     workingDir.mkdirs();
+    File verboseGcOutputFile = new File(workingDir, "verboseGC.log");
+    TestBaseUtil.setupVerboseGC(aJvmArgs, verboseGcOutputFile);
+    TestBaseUtil.removeDuplicateJvmArgs(aJvmArgs);
     return new ExtraProcessServerControl(HOST, dsoPort, jmxPort, tcConfigFile.getAbsolutePath(), true, serverName,
                                          aJvmArgs, javaHome, true, workingDir);
   }

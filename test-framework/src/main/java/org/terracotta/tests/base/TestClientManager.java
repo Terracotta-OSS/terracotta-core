@@ -9,7 +9,6 @@ import com.tc.process.Exec;
 import com.tc.process.Exec.Result;
 import com.tc.test.config.model.TestConfig;
 import com.tc.text.Banner;
-import com.tc.util.runtime.Vm;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -89,7 +88,7 @@ public class TestClientManager {
     System.out.println("XXX working directory: " + workDir.getAbsolutePath());
 
     File verboseGcOutputFile = new File(workDir, "verboseGC.log");
-    setupVerboseGC(jvmArgs, verboseGcOutputFile);
+    TestBaseUtil.setupVerboseGC(jvmArgs, verboseGcOutputFile);
 
     LinkedJavaProcess clientProcess = new LinkedJavaProcess(TestClientLauncher.class.getName(), clientMainArgs, jvmArgs);
     String classPath = testBase.createClassPath(client, withStandaloneJar);
@@ -136,17 +135,6 @@ public class TestClientManager {
 
   private void configureClientExtraJVMArgs(List<String> jvmArgs) {
     jvmArgs.addAll(testConfig.getClientConfig().getExtraClientJvmArgs());
-  }
-
-  private void setupVerboseGC(List<String> jvmArgs, File verboseGcOutputFile) {
-    if (Vm.isJRockit()) {
-      jvmArgs.add("-Xverbose:gcpause,gcreport");
-      jvmArgs.add("-Xverboselog:" + verboseGcOutputFile.getAbsolutePath());
-    } else {
-      jvmArgs.add("-Xloggc:" + verboseGcOutputFile.getAbsolutePath());
-      jvmArgs.add("-XX:+PrintGCTimeStamps");
-      jvmArgs.add("-XX:+PrintGCDetails");
-    }
   }
 
 }
