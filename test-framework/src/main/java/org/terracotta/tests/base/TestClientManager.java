@@ -17,7 +17,16 @@ import java.util.List;
 import javax.management.remote.jmxmp.JMXMPConnector;
 
 public class TestClientManager {
+  /**
+   * If set to true allows debugging of java applications
+   */
   private static final boolean   DEBUG_CLIENTS = Boolean.getBoolean("standalone.client.debug");
+
+  /**
+   * arguments to be passed to the clients. e.g mvn -Psystem-tests integration-test -Dtest=MyTest
+   * -DclientJVMArgs="-DsomeProp=value1 -DsomeProp2=value2" In the spawned clients, these will be passed as JVMArgs
+   * System.getProperty("someProp"); => will return value1 System.getProperty("someProp2"); => will return value2
+   */
   public static String           CLIENT_ARGS   = "clientJVMArgs";
 
   private volatile int           clientIndex   = 1;
