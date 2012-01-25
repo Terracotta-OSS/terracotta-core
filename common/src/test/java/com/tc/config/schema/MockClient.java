@@ -18,6 +18,7 @@ import org.xml.sax.ext.LexicalHandler;
 import com.tc.exception.ImplementMe;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.DsoClientData;
+import com.terracottatech.config.Modules;
 import com.terracottatech.config.Path;
 
 import java.io.File;
@@ -305,5 +306,32 @@ public class MockClient implements Client {
 
   public void xsetStatistics(Path arg0) {
     throw new ImplementMe();
+  }
+
+  @Override
+  public Modules getModules() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public boolean isSetModules() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void setModules(Modules modules) {
+    throw new ImplementMe();
+
+  }
+
+  @Override
+  public Modules addNewModules() {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void unsetModules() {
+    throw new ImplementMe();
+
   }
 }
