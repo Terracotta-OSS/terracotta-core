@@ -20,7 +20,6 @@ public abstract class AbstractClientBase implements Runnable {
   private final TestHandlerMBean testControlMBean;
 
   public AbstractClientBase(String args[]) {
-    System.out.println("XXXXXXX args: " + args);
     int index = 0;
     final int testControlMbeanPort = Integer.parseInt(args[index++]);
 
