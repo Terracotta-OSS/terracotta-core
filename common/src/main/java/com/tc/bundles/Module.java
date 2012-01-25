@@ -10,6 +10,7 @@ public class Module {
   private String             version;
 
   public Module() {
+    //
   }
 
   public Module(String groupId, String artifactId, String version) {

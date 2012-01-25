@@ -1,18 +1,18 @@
 package com.tc.config.test.schema;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import junit.framework.Assert;
-
 import org.apache.commons.io.IOUtils;
 
 import com.tc.test.config.model.L2Config;
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.setup.GroupsData;
 import com.tc.util.PortChooser;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import junit.framework.Assert;
 
 public class ConfigHelper {
   public static final String  HOST        = "localhost";
@@ -25,7 +25,7 @@ public class ConfigHelper {
   private final int           numOfServersPerGroup;
   private final File          tcConfigFile;
   private final File          temmDir;
-  private final GroupsData[]   groupData;
+  private final GroupsData[]  groupData;
 
   public ConfigHelper(final PortChooser portChooser, final TestConfig testConfig, final File tcConfigFile, File tempDir) {
     this.portChooser = portChooser;
@@ -177,7 +177,7 @@ public class ConfigHelper {
       }
 
       groupData[groupIndex] = new GroupsData(groupName, dsoPorts, jmxPorts, l2GroupPorts, serverNames, proxyDsoPorts,
-                                            proxyL2GroupPorts, dataDirectoryPath);
+                                             proxyL2GroupPorts, dataDirectoryPath);
     }
   }
 

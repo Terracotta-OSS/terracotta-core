@@ -136,10 +136,18 @@ public abstract class AbstractTestBase extends TCTestCase {
     tcTestCaseTearDown(testException);
   }
 
+  /**
+   * @return the port number on which the TestHandler Mbean can be connected
+   */
   public int getTestControlMbeanPort() {
     return this.jmxServerManager.getJmxServerPort();
   }
 
+  /**
+   * returns the testConfig with which this test is running
+   * 
+   * @return : the test config with which the test is running
+   */
   protected TestConfig getTestConfig() {
     return this.testConfig;
   }
