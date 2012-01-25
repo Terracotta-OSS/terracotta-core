@@ -27,7 +27,7 @@ public class TestClientManager {
    * -DclientJVMArgs="-DsomeProp=value1 -DsomeProp2=value2" In the spawned clients, these will be passed as JVMArgs
    * System.getProperty("someProp"); => will return value1 System.getProperty("someProp2"); => will return value2
    */
-  public static String           CLIENT_ARGS   = "clientJVMArgs";
+  public static final String     CLIENT_ARGS   = "clientJVMArgs";
 
   private volatile int           clientIndex   = 1;
   private final File             tempDir;
