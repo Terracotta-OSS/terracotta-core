@@ -18,7 +18,7 @@ import javax.management.remote.jmxmp.JMXMPConnector;
 
 public class TestClientManager {
   private static final boolean   DEBUG_CLIENTS = Boolean.getBoolean("standalone.client.debug");
-  public static String           CLIENT_ARGS   = "client.args";
+  public static String           CLIENT_ARGS   = "clientJVMArgs";
 
   private volatile int           clientIndex   = 1;
   private final File             tempDir;
