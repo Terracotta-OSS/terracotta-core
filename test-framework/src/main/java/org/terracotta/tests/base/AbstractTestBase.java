@@ -82,7 +82,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   @Override
   @Before
   public void setUp() throws Exception {
-    tcTestCaseSetup();
+    tcTestCaseSetup(true);
 
     if (testWillRun) {
       try {
