@@ -12,6 +12,14 @@ public class HashSet<E> implements Set<E> {
 
   private final Map<E, Boolean> map = new HashMap<E, Boolean>();
 
+  public HashSet() {
+    //
+  }
+
+  public HashSet(Collection<? extends E> c) {
+    addAll(c);
+  }
+
   @Override
   public int size() {
     return map.size();
@@ -64,7 +72,13 @@ public class HashSet<E> implements Set<E> {
 
   @Override
   public boolean addAll(Collection<? extends E> c) {
-    throw new UnsupportedOperationException();
+    boolean rv = false;
+    for (E o : c) {
+      if (add(o)) {
+        rv = true;
+      }
+    }
+    return rv;
   }
 
   @Override
