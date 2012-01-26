@@ -462,7 +462,7 @@ public class GroupServerManager {
     lastCrashedIndex = activeIndex;
     resetActiveIndex();
     debugPrintln("***** lastCrashedIndex[" + lastCrashedIndex + "] ");
-    if (expectedRunningServerCount() > 0) {
+    if (expectedRunningServerCount() > 0 && testConfig.getCrashConfig().shouldCleanDbOnCrash()) {
       cleanupServerDB(lastCrashedIndex);
     }
   }
@@ -499,7 +499,7 @@ public class GroupServerManager {
     debugPrintln("***** Done sleeping after crashing passive server ");
 
     lastCrashedIndex = passiveToCrash;
-    if (groupData.getServerCount() > 1) {
+    if (groupData.getServerCount() > 1 && testConfig.getCrashConfig().shouldCleanDbOnCrash()) {
       cleanupServerDB(lastCrashedIndex);
     }
     debugPrintln("***** lastCrashedIndex[" + lastCrashedIndex + "] ");
