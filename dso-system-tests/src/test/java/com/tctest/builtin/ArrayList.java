@@ -104,7 +104,13 @@ public class ArrayList<E> implements List<E> {
   }
 
   public boolean addAll(Collection<? extends E> c) {
-    throw new UnsupportedOperationException();
+    boolean rv = false;
+    for (E o : c) {
+      if (add(o)) {
+        rv = true;
+      }
+    }
+    return rv;
   }
 
   public boolean addAll(int index, Collection<? extends E> c) {
