@@ -89,9 +89,6 @@ to start:
 to stop:
 %> mvn exec:exec -P stop-server
 
-run dev-console:
-%> mvn exec:exec -P dev-console
-
 ******************************************************************************
 7. To include other Forge projects in the build
 ******************************************************************************

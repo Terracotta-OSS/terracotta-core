@@ -4,8 +4,6 @@
 package com.tc.object.appevent;
 
 import com.tc.object.ClientIDProvider;
-import com.tc.object.tx.UnlockedSharedObjectException;
-import com.tc.object.util.ReadOnlyException;
 
 /**
  * A factory for creating the proper {@link NonPortableEventContext}
@@ -73,58 +71,5 @@ public class NonPortableEventContextFactory {
                                                                                Object[] params, int index) {
     return new NonPortableLogicalInvokeContext(pojo, Thread.currentThread().getName(), getJVMId(), methodName, params,
                                                index);
-  }
-
-  /**
-   * Create a context for when there is an attempt to access a shared object outside the scope of a shared lock.
-   * 
-   * @param pojo The object being accessed
-   * @param classname The class of the object
-   * @param fieldname The field of the object being accessed
-   * @param ex The exception thrown
-   * @return The context
-   */
-  public UnlockedSharedObjectEventContext createUnlockedSharedObjectEventContext(Object pojo, String classname,
-                                                                                 String fieldname,
-                                                                                 UnlockedSharedObjectException ex) {
-    return new UnlockedSharedObjectEventContext(pojo, classname, fieldname, Thread.currentThread().getName(),
-                                                getJVMId(), ex);
-  }
-
-  /**
-   * Create a context for when there is an attempt to access a shared object outside the scope of a shared lock.
-   * 
-   * @param pojo The object being accessed
-   * @param ex The exception thrown
-   * @return The context
-   */
-  public UnlockedSharedObjectEventContext createUnlockedSharedObjectEventContext(Object pojo,
-                                                                                 UnlockedSharedObjectException ex) {
-    return new UnlockedSharedObjectEventContext(pojo, Thread.currentThread().getName(), getJVMId(), ex);
-  }
-
-  /**
-   * Create a context for when a transaction with read-only access is attempting to modify a shared object.
-   * 
-   * @param pojo The object being accessed
-   * @param ex The exception that occurred
-   * @return The context
-   */
-  public ReadOnlyObjectEventContext createReadOnlyObjectEventContext(Object pojo, ReadOnlyException ex) {
-    return new ReadOnlyObjectEventContext(pojo, Thread.currentThread().getName(), getJVMId(), ex);
-  }
-
-  /**
-   * Create a context for when a transaction with read-only access is attempting to modify a shared object.
-   * 
-   * @param pojo The object being accessed
-   * @param classname The class of the pojo
-   * @param fieldname The field name of the object
-   * @param ex The exception that occurred
-   * @return The context
-   */
-  public ReadOnlyObjectEventContext createReadOnlyObjectEventContext(Object pojo, String classname, String fieldname,
-                                                                     ReadOnlyException ex) {
-    return new ReadOnlyObjectEventContext(pojo, classname, fieldname, Thread.currentThread().getName(), getJVMId(), ex);
   }
 }

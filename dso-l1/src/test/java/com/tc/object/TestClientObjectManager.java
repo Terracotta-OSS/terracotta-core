@@ -7,8 +7,6 @@ package com.tc.object;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.net.GroupID;
-import com.tc.object.appevent.ApplicationEvent;
-import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.tx.ClientTransactionManager;
@@ -190,14 +188,6 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   public Object createOrReplaceRoot(final String rootName, final Object r) {
-    throw new ImplementMe();
-  }
-
-  public void storeObjectHierarchy(final Object pojo, final ApplicationEventContext context) {
-    throw new ImplementMe();
-  }
-
-  public void sendApplicationEvent(final Object pojo, final ApplicationEvent event) {
     throw new ImplementMe();
   }
 

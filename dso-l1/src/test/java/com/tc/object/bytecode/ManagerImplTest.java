@@ -14,8 +14,6 @@ import com.tc.object.ObjectID;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectSelf;
-import com.tc.object.appevent.ApplicationEvent;
-import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.ClientServerExchangeLockContext;
@@ -318,14 +316,6 @@ public class ManagerImplTest extends BaseDSOTestCase {
     }
 
     public Object createOrReplaceRoot(final String rootName, final Object root) {
-      throw new ImplementMe();
-    }
-
-    public void storeObjectHierarchy(final Object pojo, final ApplicationEventContext context) {
-      throw new ImplementMe();
-    }
-
-    public void sendApplicationEvent(final Object pojo, final ApplicationEvent event) {
       throw new ImplementMe();
     }
 

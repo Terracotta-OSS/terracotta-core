@@ -125,7 +125,6 @@ import com.tc.object.msg.GetAllSizeServerMapResponseMessageImpl;
 import com.tc.object.msg.GetValueServerMapRequestMessageImpl;
 import com.tc.object.msg.GetValueServerMapResponseMessageImpl;
 import com.tc.object.msg.InvalidateObjectsMessage;
-import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessageImpl;
 import com.tc.object.msg.KeysForOrphanedValuesResponseMessageImpl;
 import com.tc.object.msg.LockRequestMessage;
@@ -154,7 +153,6 @@ import com.tc.object.net.DSOChannelManagerImpl;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManager;
-import com.tc.objectserver.DSOApplicationEvents;
 import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
@@ -188,7 +186,6 @@ import com.tc.objectserver.handler.GarbageCollectHandler;
 import com.tc.objectserver.handler.GarbageDisposeHandler;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
 import com.tc.objectserver.handler.InvalidateObjectsHandler;
-import com.tc.objectserver.handler.JMXEventsHandler;
 import com.tc.objectserver.handler.ManagedObjectFaultHandler;
 import com.tc.objectserver.handler.ManagedObjectFlushHandler;
 import com.tc.objectserver.handler.ManagedObjectRequestHandler;
@@ -709,14 +706,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                new TransportHandshakeErrorNullHandler(),
                                                                getMessageTypeClassMappings(), Collections.EMPTY_MAP);
 
-    final DSOApplicationEvents appEvents;
-    try {
-      appEvents = new DSOApplicationEvents();
-    } catch (final NotCompliantMBeanException ncmbe) {
-      throw new TCRuntimeException("Unable to construct the " + DSOApplicationEvents.class.getName()
-                                   + " MBean; this is a programming error. Please go fix that class.", ncmbe);
-    }
-
     this.clientStateManager = new ClientStateManagerImpl(TCLogging.getLogger(ClientStateManager.class));
     final ClientObjectReferenceSet clientObjectReferenceSet = new ClientObjectReferenceSet(this.clientStateManager);
 
@@ -1081,9 +1070,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage txnLwmStage = stageManager.createStage(ServerConfigurationContext.TRANSACTION_LOWWATERMARK_STAGE,
                                                        new TransactionLowWaterMarkHandler(gtxm), 1, maxStageSize);
 
-    final Stage jmxEventsStage = stageManager.createStage(ServerConfigurationContext.JMX_EVENTS_STAGE,
-                                                          new JMXEventsHandler(appEvents), 1, maxStageSize);
-
     final Stage jmxRemoteConnectStage = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_CONNECT_STAGE,
                                                                  new ClientConnectEventHandler(this.statisticsGateway),
                                                                  1, maxStageSize);
@@ -1104,7 +1090,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                 new ServerClusterMetaDataHandler(), 1, maxStageSize);
 
     initRouteMessages(messageRouter, processTx, rootRequest, requestLock, objectRequestStage, oidRequest,
-                      transactionAck, clientHandshake, txnLwmStage, jmxEventsStage, jmxRemoteTunnelStage,
+                      transactionAck, clientHandshake, txnLwmStage, jmxRemoteTunnelStage,
                       clientLockStatisticsRespondStage, clusterMetaDataStage, serverMapRequestStage,
                       searchQueryRequestStage);
 
@@ -1239,7 +1225,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.managementContext = new ServerManagementContext(this.transactionManager, this.objectRequestManager,
                                                          (LockManagerMBean) this.lockManager,
                                                          (DSOChannelManagerMBean) channelManager, serverStats,
-                                                         channelStats, instanceMonitor, appEvents, indexHACoordinator,
+                                                         channelStats, instanceMonitor, indexHACoordinator,
                                                          connectionPolicy);
     if (this.l2Properties.getBoolean("beanshell.enabled")) {
       startBeanShell(this.l2Properties.getInt("beanshell.port"));
@@ -1296,9 +1282,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   protected void initRouteMessages(TCMessageRouter messageRouter, final Stage processTx, final Stage rootRequest,
                                    final Stage requestLock, final Stage objectRequestStage, final Stage oidRequest,
                                    final Stage transactionAck, final Stage clientHandshake, final Stage txnLwmStage,
-                                   final Stage jmxEventsStage, final Stage jmxRemoteTunnelStage,
-                                   final Stage clientLockStatisticsRespondStage, final Stage clusterMetaDataStage,
-                                   final Stage serverMapRequestStage, final Stage searchQueryRequestStage) {
+                                   final Stage jmxRemoteTunnelStage, final Stage clientLockStatisticsRespondStage,
+                                   final Stage clusterMetaDataStage, final Stage serverMapRequestStage,
+                                   final Stage searchQueryRequestStage) {
     final Sink hydrateSink = this.hydrateStage.getSink();
     messageRouter.routeMessageType(TCMessageType.COMMIT_TRANSACTION_MESSAGE, processTx.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.LOCK_REQUEST_MESSAGE, requestLock.getSink(), hydrateSink);
@@ -1309,7 +1295,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     messageRouter
         .routeMessageType(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE, transactionAck.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, clientHandshake.getSink(), hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.JMX_MESSAGE, jmxEventsStage.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, jmxRemoteTunnelStage.getSink(),
                                    hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLIENT_JMX_READY_MESSAGE, jmxRemoteTunnelStage.getSink(), hydrateSink);
@@ -1363,7 +1348,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     messageTypeClassMapping.put(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);
     messageTypeClassMapping
         .put(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE, ClientHandshakeRefusedMessageImpl.class);
-    messageTypeClassMapping.put(TCMessageType.JMX_MESSAGE, JMXMessage.class);
     messageTypeClassMapping.put(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, JmxRemoteTunnelMessage.class);
     messageTypeClassMapping.put(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, ClusterMembershipMessage.class);
     messageTypeClassMapping.put(TCMessageType.CLIENT_JMX_READY_MESSAGE, L1JmxReady.class);

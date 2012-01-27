@@ -6,8 +6,6 @@ package com.tc.object;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.net.GroupID;
-import com.tc.object.appevent.ApplicationEvent;
-import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.util.ToggleableStrongReference;
@@ -293,25 +291,6 @@ public interface ClientObjectManager extends TCObjectSelfCallback {
    * @param root New root value
    */
   public Object createOrReplaceRoot(String rootName, Object root);
-
-  // // The following are in support of the Eclipse ApplicationEventDialog and the Session Configurator.
-
-  /**
-   * Store the pojo object hierarchy in the context's tree model.
-   * 
-   * @param pojo The object
-   * @param context The event context
-   */
-  void storeObjectHierarchy(Object pojo, ApplicationEventContext context);
-
-  /**
-   * Send an ApplicationEvent occurring on pojo to the server via JMX. The handling of concrete event types occurs in
-   * com.tc.objectserver.DSOApplicationEvents.
-   * 
-   * @param pojo The object
-   * @param event The event
-   */
-  void sendApplicationEvent(Object pojo, ApplicationEvent event);
 
   /**
    * Clone logicalPojo and then apply the specified logical operation, returning the clone.

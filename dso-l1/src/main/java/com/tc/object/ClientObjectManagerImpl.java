@@ -15,12 +15,9 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
-import com.tc.object.appevent.ApplicationEvent;
-import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.appevent.NonPortableEventContext;
 import com.tc.object.appevent.NonPortableEventContextFactory;
 import com.tc.object.appevent.NonPortableFieldSetContext;
-import com.tc.object.appevent.NonPortableObjectEvent;
 import com.tc.object.appevent.NonPortableRootContext;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.hook.impl.ArrayManager;
@@ -35,8 +32,6 @@ import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.Namespace;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.msg.ClientHandshakeMessage;
-import com.tc.object.msg.JMXMessage;
-import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.util.ToggleableStrongReference;
@@ -127,11 +122,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private final NonPortableEventContextFactory  appEventContextFactory;
 
   private final Portability                     portability;
-  private final DSOClientMessageChannel         channel;
   private final ToggleableReferenceManager      referenceManager;
   private final ReferenceQueue                  referenceQueue               = new ReferenceQueue();
-
-  private final boolean                         sendErrors                   = System.getProperty("project.name") != null;
 
   private final Map                             objectLatchStateMap          = new HashMap();
   private final ThreadLocal                     localLookupContext           = new VicariousThreadLocal() {
@@ -149,7 +141,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
                                  final RuntimeLogger runtimeLogger, final ClientIDProvider provider,
                                  final ClassProvider classProvider, final TCClassFactory classFactory,
                                  final TCObjectFactory objectFactory, final Portability portability,
-                                 final DSOClientMessageChannel channel,
                                  final ToggleableReferenceManager referenceManager, TCObjectSelfStore tcObjectSelfStore) {
     this.objectStore = new ObjectStore(tcObjectSelfStore);
     this.remoteObjectManager = remoteObjectManager;
@@ -157,7 +148,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     this.idProvider = idProvider;
     this.runtimeLogger = runtimeLogger;
     this.portability = portability;
-    this.channel = channel;
     this.referenceManager = referenceManager;
     this.logger = new ClientIDLogger(provider, TCLogging.getLogger(ClientObjectManager.class));
     this.classProvider = classProvider;
@@ -725,9 +715,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
         reason.addDetail(NonPortableFieldSetContext.FIELD_NAME_LABEL, fullyQualifiedFieldname);
       }
       dumpObjectHierarchy(context.getPojo(), context);
-      if (this.sendErrors) {
-        storeObjectHierarchy(context.getPojo(), context);
-      }
+
       throwNonPortableException(context.getPojo(), reason, context,
                                 "Attempt to share an instance of a non-portable class referenced by a portable class.");
     }
@@ -739,9 +727,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     if (reason != null) {
       final NonPortableRootContext context = this.appEventContextFactory.createNonPortableRootContext(rootName, root);
       dumpObjectHierarchy(root, context);
-      if (this.sendErrors) {
-        storeObjectHierarchy(root, context);
-      }
+
       throwNonPortableException(root, reason, context,
                                 "Attempt to share an instance of a non-portable class by assigning it to a root.");
     }
@@ -754,9 +740,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       final NonPortableFieldSetContext context = this.appEventContextFactory
           .createNonPortableFieldSetContext(pojo, fieldName, fieldValue);
       dumpObjectHierarchy(fieldValue, context);
-      if (this.sendErrors) {
-        storeObjectHierarchy(pojo, context);
-      }
+
       throwNonPortableException(pojo, reason, context,
                                 "Attempt to set the field of a shared object to an instance of a non-portable class.");
     }
@@ -807,9 +791,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       final NonPortableEventContext context = this.appEventContextFactory
           .createNonPortableLogicalInvokeContext(pojo, methodName, params, index);
       dumpObjectHierarchy(params[index], context);
-      if (this.sendErrors) {
-        storeObjectHierarchy(cloneAndInvokeLogicalOperation(pojo, methodName, params), context);
-      }
+
       throwNonPortableException(pojo, reason, context,
                                 "Attempt to share an instance of a non-portable class by"
                                     + " passing it as an argument to a method of a logically-managed class.");
@@ -822,11 +804,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     // XXX: The message should probably be part of the context
     reason.setMessage(message);
     context.addDetailsTo(reason);
-
-    // Send this event to L2
-    final JMXMessage jmxMsg = this.channel.getJMXMessage();
-    jmxMsg.setJMXObject(new NonPortableObjectEvent(context, reason));
-    jmxMsg.send();
 
     final StringWriter formattedReason = new StringWriter();
     final PrintWriter out = new PrintWriter(formattedReason);
@@ -1053,24 +1030,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
                                                                         this.clientConfiguration, root);
       final ObjectGraphWalker walker = new ObjectGraphWalker(root, visitor, visitor);
       walker.walk();
-    }
-  }
-
-  public void sendApplicationEvent(final Object pojo, final ApplicationEvent event) {
-    final JMXMessage jmxMsg = this.channel.getJMXMessage();
-    storeObjectHierarchy(pojo, event.getApplicationEventContext());
-    jmxMsg.setJMXObject(event);
-    jmxMsg.send();
-  }
-
-  public void storeObjectHierarchy(final Object root, final ApplicationEventContext context) {
-    try {
-      final WalkVisitor wv = new WalkVisitor(this, this.clientConfiguration, context);
-      final ObjectGraphWalker walker = new ObjectGraphWalker(root, wv, wv);
-      walker.walk();
-      context.setTreeModel(wv.getTreeModel());
-    } catch (final Throwable t) {
-      t.printStackTrace();
     }
   }
 

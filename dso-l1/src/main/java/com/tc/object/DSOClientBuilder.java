@@ -114,7 +114,7 @@ public interface DSOClientBuilder {
                                               final RuntimeLogger rtLogger, final ClientIDProvider clientIDProvider,
                                               final ClassProvider classProviderLocal,
                                               final TCClassFactory classFactory, final TCObjectFactory objectFactory,
-                                              final Portability portability, final DSOClientMessageChannel dsoChannel,
+                                              final Portability portability,
                                               final ToggleableReferenceManager toggleRefMgr,
                                               TCObjectSelfStore tcObjectSelfStore);
 

@@ -47,7 +47,6 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public final static String HYDRATE_MESSAGE_SINK                               = "hydrate_message_stage";
   public static final String REQUEST_BATCH_GLOBAL_TRANSACTION_ID_SEQUENCE_STAGE = "request_batch_global_transaction_id_sequence_stage";
   public static final String COMMIT_CHANGES_STAGE                               = "commit_changes_stage";
-  public static final String JMX_EVENTS_STAGE                                   = "jmx_events_stage";
   public static final String MANAGED_OBJECT_FAULT_STAGE                         = "managed_object_fault_stage";
   public static final String MANAGED_OBJECT_FLUSH_STAGE                         = "managed_object_flush_stage";
   public static final String JMXREMOTE_TUNNEL_STAGE                             = "jmxremote_tunnel_stage";

@@ -101,7 +101,7 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
                                        final TCClassFactory classFactory, final TCObjectFactory objectFactory,
                                        final TCObjectSelfStore tcObjectSelfStore) {
       super(remoteObjectManager, clientConfiguration, idProvider, runtimeLogger, provider, classProvider, classFactory,
-            objectFactory, new TestPortability(), null, null, tcObjectSelfStore);
+            objectFactory, new TestPortability(), null, tcObjectSelfStore);
     }
 
     @Override
