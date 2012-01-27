@@ -1,0 +1,45 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!-- - - - - - - - - - - - - -->
+<!--  Terracotta             -->
+<!--  PlatformIntro.html  -->
+<!-- - - - - - - - - - - - - -->
+<html>
+<head>
+<title>Terracotta Developer Console</title>
+<style>
+   body { color:#666666; font-family: sans-serif; margin: 10px 10px }
+   h1 { text-align: right; margin: 0px 0px 20px 0px }
+   a { color:#8B4513; font-weight: bold; text-decoration: underline }
+   a:hover { color:red; text-decoration: none }
+   img.topic { margin-right: 0px}
+   div.main { margin: 10px 0px 0px 30px }
+   div.description { margin: 0px 0px 0px 20px }
+   div.footer { text-align: center; font-size: 95%; margin-top: 15px }
+   </style>
+</head>
+<body>
+
+<h1><img src="/com/tc/welcome/tc-logo.png"><br>Terracotta Developer Console: Platform</h1>
+
+<p>Contains detailed information about the underlying <strong>Distributed Shared Objects</strong> platform, used as the basis for the Express Ehcache, Quartz, and Sessions clustering product suites. Browse the Clustered Heap of shared objects and access Diagnostics that can be critical to understanding the operation of your cluster.
+
+<table cellpadding=10>
+   <tr>
+      <td valign=top><a href="ClusteredHeapNode"><img border=0 src="/com/tc/admin/icons/database.png" class=topic></a></td>
+      <td><a href="ClusteredHeapNode">Clustered heap</a>
+         <div class=description>
+         Contains tools for monitoring shared objects in the clustered heap. The clustered heap is the memory shared with Terracotta across JVMs. Shared object graphs are found in the clustered heap.
+         </div>
+      </td></tr>
+   <tr>
+      <td valign=top><a href="DiagnosticsNode"><img border=0 src="/com/tc/admin/icons/magnifier.png" class=topic></a></td>
+      <td><a href="DiagnosticsNode">Diagnostics</a>
+         <div class=description>
+         Contains lock analysis, cluster-wide thread dump, and statistics gathering tools to diagnose problems and recognize and interpret trends.
+         </div>
+      </td></tr>
+</table>
+
+<div class=footer>Copyright &copy; Terracotta, Inc.</div>
+</body>
+</html>
