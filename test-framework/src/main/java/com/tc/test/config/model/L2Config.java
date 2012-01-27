@@ -221,7 +221,7 @@ public class L2Config {
    * 
    * @param maxHeap maximum heap size
    */
-  public void setMmaxHeap(int maxHeap) {
+  public void setMaxHeap(int maxHeap) {
     this.maxHeap = maxHeap;
   }
 }
