@@ -132,6 +132,8 @@ public class GroupServerManager {
     workingDir.mkdirs();
     File verboseGcOutputFile = new File(workingDir, "verboseGC.log");
     TestBaseUtil.setupVerboseGC(aJvmArgs, verboseGcOutputFile);
+    TestBaseUtil
+        .setHeapSizeArgs(aJvmArgs, testConfig.getL2Config().getMinHeap(), testConfig.getL2Config().getMaxHeap());
     TestBaseUtil.removeDuplicateJvmArgs(aJvmArgs);
     return new ExtraProcessServerControl(HOST, dsoPort, jmxPort, tcConfigFile.getAbsolutePath(), true, serverName,
                                          aJvmArgs, javaHome, true, workingDir);

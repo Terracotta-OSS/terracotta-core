@@ -19,6 +19,7 @@ import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -133,4 +134,16 @@ public class TestBaseUtil {
     }
   }
 
+  public static void setHeapSizeArgs(List<String> jvmArgs, int minHeap, int maxHeap) {
+    Iterator<String> i = jvmArgs.iterator();
+    while (i.hasNext()) {
+      String arg = i.next();
+      if (arg.startsWith("-Xmx") || arg.startsWith("-Xms")) {
+        System.err.println("Ignoring '" + arg + "'. Heap size should be set through L2Config.");
+        i.remove();
+      }
+    }
+    jvmArgs.add("-Xms" + minHeap + "m");
+    jvmArgs.add("-Xmx" + maxHeap + "m");
+  }
 }
