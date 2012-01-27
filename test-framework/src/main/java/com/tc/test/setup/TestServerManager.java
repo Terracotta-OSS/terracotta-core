@@ -1,6 +1,8 @@
 package com.tc.test.setup;
 
 import com.tc.config.test.schema.ConfigHelper;
+import com.tc.stats.api.DGCMBean;
+import com.tc.stats.api.DSOMBean;
 import com.tc.test.config.model.TestConfig;
 import com.tc.util.PortChooser;
 
@@ -180,4 +182,19 @@ public class TestServerManager {
     return groupsData;
   }
 
+  public List<DGCMBean> getAllLocalDGCMbeans() {
+    List<DGCMBean> dgcMbeans = new ArrayList<DGCMBean>();
+    for (GroupServerManager groupServerManager : groups) {
+      dgcMbeans.addAll(groupServerManager.connectAllLocalDGCMBeans());
+    }
+    return dgcMbeans;
+  }
+
+  public List<DSOMBean> getAllDSOMbeans() {
+    List<DSOMBean> dsoMbeans = new ArrayList<DSOMBean>();
+    for (GroupServerManager groupServerManager : groups) {
+      dsoMbeans.addAll(groupServerManager.connectAllDsoMBeans());
+    }
+    return dsoMbeans;
+  }
 }

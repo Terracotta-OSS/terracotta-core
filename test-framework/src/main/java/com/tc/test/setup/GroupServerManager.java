@@ -380,18 +380,28 @@ public class GroupServerManager {
     }
   }
 
-  public List<DSOMBean> connectAllDsoMBeans() throws IOException {
+  public List<DSOMBean> connectAllDsoMBeans() {
     List<DSOMBean> mbeans = new ArrayList<DSOMBean>();
     for (int i = 0; i < serverControl.length; i++) {
-      mbeans.add(getDsoMBean(i));
+      try {
+        mbeans.add(getDsoMBean(i));
+      } catch (IOException e) {
+        System.out.println("XXXXXXX could not connect to server[" + serverControl[i].getDsoPort() + "], jmxPort:"
+                           + serverControl[i].getAdminPort());
+      }
     }
     return mbeans;
   }
 
-  public List<DGCMBean> connectAllLocalDGCMBeans() throws IOException {
+  public List<DGCMBean> connectAllLocalDGCMBeans() {
     List<DGCMBean> mbeans = new ArrayList<DGCMBean>();
     for (int i = 0; i < serverControl.length; i++) {
-      mbeans.add(getLocalDGCMBean(i));
+      try {
+        mbeans.add(getLocalDGCMBean(i));
+      } catch (IOException e) {
+        System.out.println("XXXXXXX could not connect to server[" + serverControl[i].getDsoPort() + "], jmxPort:"
+                           + serverControl[i].getAdminPort());
+      }
     }
     return mbeans;
   }
