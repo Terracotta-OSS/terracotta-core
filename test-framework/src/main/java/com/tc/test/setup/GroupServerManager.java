@@ -127,16 +127,16 @@ public class GroupServerManager {
     }
   }
 
-  private ServerControl getServerControl(int dsoPort, int jmxPort, String serverName, List<String> aJvmArgs) {
+  private ServerControl getServerControl(int dsoPort, int jmxPort, String serverName, List<String> jvmArgs) {
     File workingDir = new File(this.tempDir, serverName);
     workingDir.mkdirs();
     File verboseGcOutputFile = new File(workingDir, "verboseGC.log");
-    TestBaseUtil.setupVerboseGC(aJvmArgs, verboseGcOutputFile);
+    TestBaseUtil.setupVerboseGC(jvmArgs, verboseGcOutputFile);
     TestBaseUtil
-        .setHeapSizeArgs(aJvmArgs, testConfig.getL2Config().getMinHeap(), testConfig.getL2Config().getMaxHeap());
-    TestBaseUtil.removeDuplicateJvmArgs(aJvmArgs);
+        .setHeapSizeArgs(jvmArgs, testConfig.getL2Config().getMinHeap(), testConfig.getL2Config().getMaxHeap());
+    TestBaseUtil.removeDuplicateJvmArgs(jvmArgs);
     return new ExtraProcessServerControl(HOST, dsoPort, jmxPort, tcConfigFile.getAbsolutePath(), true, serverName,
-                                         aJvmArgs, javaHome, true, workingDir);
+                                         jvmArgs, javaHome, true, workingDir);
   }
 
   public void startAllServers() throws Exception {
