@@ -3,6 +3,9 @@ package org.terracotta.test.util;
 import org.apache.commons.io.IOUtils;
 
 import com.tc.config.test.schema.ConfigHelper;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.test.config.model.PersistenceMode;
+import com.tc.test.config.model.TestConfig;
 import com.tc.test.setup.GroupsData;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
@@ -146,4 +149,20 @@ public class TestBaseUtil {
     jvmArgs.add("-Xms" + minHeap + "m");
     jvmArgs.add("-Xmx" + maxHeap + "m");
   }
+
+  public static void configureOffHeap(TestConfig testConfig, int maxDirectMemory, int offHeapDataSize) {
+    testConfig.getL2Config().addExtraServerJvmArg("-XX:MaxDirectMemorySize=" + maxDirectMemory + "m");
+    testConfig.getL2Config().setMaxOffHeapDataSize(offHeapDataSize);
+    testConfig.getL2Config().setPersistenceMode(PersistenceMode.PERMANENT_STORE);
+
+    testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_SKIP_JVMARG_CHECK, "true");
+    testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_INITIAL_DATASIZE, "1m");
+    testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_TABLESIZE, "1");
+    testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_CONCURRENCY, "16");
+
+    testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_MAP_CACHE_MAX_PAGE_SIZE, "10k");
+    testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_MAP_CACHE_MIN_PAGE_SIZE, "10k");
+    testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_MAP_CACHE_TABLESIZE, "1");
+  }
+
 }
