@@ -45,7 +45,7 @@ public final class TCMessageType {
   public static final int           TYPE_CONFIG_PUSH_MESSAGE                          = 31;
   public static final int           TYPE_OVERRIDE_APPLICATION_CONFIG_MESSAGE          = 32;
   public static final int           TYPE_LOCK_RECALL_MESSAGE                          = 33;
-  // public static final int TYPE_JMX_MESSAGE = 34;
+  public static final int           TYPE_JMX_MESSAGE                                  = 34;
   public static final int           TYPE_LOCK_QUERY_RESPONSE_MESSAGE                  = 35;
   public static final int           TYPE_JMXREMOTE_MESSAGE_CONNECTION_MESSAGE         = 36;
   public static final int           TYPE_MEMORY_DATA_STORE_REQUEST_MESSAGE            = 37;
@@ -106,6 +106,7 @@ public final class TCMessageType {
   public static final TCMessageType BATCH_TRANSACTION_ACK_MESSAGE                     = new TCMessageType();
   public static final TCMessageType CONFIG_PUSH_MESSAGE                               = new TCMessageType();
   public static final TCMessageType OVERRIDE_APPLICATION_CONFIG_MESSAGE               = new TCMessageType();
+  public static final TCMessageType JMX_MESSAGE                                       = new TCMessageType();
   public static final TCMessageType JMXREMOTE_MESSAGE_CONNECTION_MESSAGE              = new TCMessageType();
   public static final TCMessageType MEMORY_DATA_STORE_REQUEST_MESSAGE                 = new TCMessageType();
   public static final TCMessageType MEMORY_DATA_STORE_RESPONSE_MESSAGE                = new TCMessageType();

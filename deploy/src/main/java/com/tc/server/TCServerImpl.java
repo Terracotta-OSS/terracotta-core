@@ -620,6 +620,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     ServerConfigurationContext configContext = this.dsoServer.getContext();
     MBeanServer mBeanServer = this.dsoServer.getMBeanServer();
     registerDSOMBeans(mgmtContext, configContext, mBeanServer);
+    mBeanServer.registerMBean(mgmtContext.getDSOAppEventsMBean(), L2MBeanNames.DSO_APP_EVENTS);
     StatisticsLocalGathererMBeanImpl local_gatherer = new StatisticsLocalGathererMBeanImpl(
                                                                                            this.statisticsGathererSubSystem,
                                                                                            this.configurationSetupManager

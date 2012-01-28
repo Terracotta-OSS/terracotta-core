@@ -78,6 +78,8 @@ import com.tc.object.TCObjectSelfImpl;
 import com.tc.object.TCObjectSelfStore;
 import com.tc.object.TCObjectServerMap;
 import com.tc.object.TraversedReferences;
+import com.tc.object.appevent.ApplicationEvent;
+import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.bytecode.AAFairDistributionPolicyMarker;
 import com.tc.object.bytecode.Clearable;
 import com.tc.object.bytecode.CloneUtil;
@@ -580,6 +582,8 @@ public class BootJarTool {
     // commented ones are those which are already added elsewhere
 
     // loadTerracottaClass(AbstractIdentifier.class.getName());
+    loadTerracottaClass(ApplicationEvent.class.getName());
+    loadTerracottaClass(ApplicationEventContext.class.getName());
     loadTerracottaClass(BufferPool.class.getName());
     // loadTerracottaClass(Cacheable.class.getName());
     loadTerracottaClass(ChannelID.class.getName());

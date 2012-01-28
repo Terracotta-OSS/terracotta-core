@@ -3,6 +3,7 @@
  */
 package com.tc.object.appevent;
 
+import javax.swing.tree.DefaultTreeModel;
 
 /**
  * Abstract event context, common stuff for subclasses
@@ -15,6 +16,7 @@ public abstract class AbstractApplicationEventContext implements ApplicationEven
   private final String           threadName;
   private final String           clientId;
   private final String           targetClassName;
+  private DefaultTreeModel       treeModel;
 
   private String                 projectName;                            // optional: client Eclipse
 
@@ -22,7 +24,6 @@ public abstract class AbstractApplicationEventContext implements ApplicationEven
 
   /**
    * Construct new context
-   * 
    * @param pojo Object of interest
    * @param threadName Thread name
    * @param clientId JVM client identifier
@@ -61,8 +62,21 @@ public abstract class AbstractApplicationEventContext implements ApplicationEven
   }
 
   /**
+   * @param treeModel Set model representing object hierarchy
+   */
+  public void setTreeModel(DefaultTreeModel treeModel) {
+    this.treeModel = treeModel;
+  }
+
+  /**
+   * @return Model representing object hierarchy
+   */
+  public DefaultTreeModel getTreeModel() {
+    return treeModel;
+  }
+
+  /**
    * Set Eclipse project name
-   * 
    * @param name
    */
   public void setProjectName(String name) {

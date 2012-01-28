@@ -5,18 +5,22 @@
 package com.tc.admin.common;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.NotificationEmitter;
 import javax.management.ObjectName;
+import javax.swing.SwingUtilities;
 
 /*
- * This should be used to get any MBean proxies
+ * This should be used to get any MBean proxies used by a Swing client so we can get a report about JMX calls being
+ * invoked on the Swing event loop. That report is off by default.
  */
 
 public class MBeanServerInvocationProxy extends MBeanServerInvocationHandler {
+  private static final boolean reportViolators = false;
 
   public MBeanServerInvocationProxy(MBeanServerConnection connection, ObjectName objectName) {
     super(connection, objectName);
@@ -35,4 +39,11 @@ public class MBeanServerInvocationProxy extends MBeanServerInvocationHandler {
     return interfaceClass.cast(proxy);
   }
 
+  @Override
+  public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    if (reportViolators && SwingUtilities.isEventDispatchThread()) {
+      new Exception("MBean invoked in Swing event dispatch thread").printStackTrace();
+    }
+    return super.invoke(proxy, method, args);
+  }
 }

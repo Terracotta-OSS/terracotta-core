@@ -16,6 +16,11 @@ import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectSelf;
 import com.tc.object.TCObjectSelfStore;
+import com.tc.object.appevent.NonPortableEventContextFactory;
+import com.tc.object.appevent.ReadOnlyObjectEvent;
+import com.tc.object.appevent.ReadOnlyObjectEventContext;
+import com.tc.object.appevent.UnlockedSharedObjectEvent;
+import com.tc.object.appevent.UnlockedSharedObjectEventContext;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAException;
@@ -45,30 +50,32 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class ClientTransactionManagerImpl implements ClientTransactionManager, PrettyPrintable {
-  private static final TCLogger          logger      = TCLogging.getLogger(ClientTransactionManagerImpl.class);
+  private static final TCLogger                logger      = TCLogging.getLogger(ClientTransactionManagerImpl.class);
 
-  private final ThreadLocal              transaction = new VicariousThreadLocal() {
-                                                       @Override
-                                                       protected Object initialValue() {
-                                                         return new ThreadTransactionContext();
-                                                       }
-                                                     };
+  private final ThreadLocal                    transaction = new VicariousThreadLocal() {
+                                                             @Override
+                                                             protected Object initialValue() {
+                                                               return new ThreadTransactionContext();
+                                                             }
+                                                           };
 
   // We need to remove initialValue() here because read auto locking now calls Manager.isDsoMonitored() which will
   // checks if isTransactionLogging is disabled. If it runs in the context of class loading, it will try to load
   // the class ThreadTransactionContext and thus throws a LinkageError.
-  private final ThreadLocal              txnLogging  = new VicariousThreadLocal();
+  private final ThreadLocal                    txnLogging  = new VicariousThreadLocal();
 
-  private final ClientTransactionFactory txFactory;
-  private final RemoteTransactionManager remoteTxManager;
-  private final ClientObjectManager      objectManager;
-  private final ClientLockManager        lockManager;
+  private final ClientTransactionFactory       txFactory;
+  private final RemoteTransactionManager       remoteTxManager;
+  private final ClientObjectManager            objectManager;
+  private final ClientLockManager              lockManager;
+  private final NonPortableEventContextFactory appEventContextFactory;
 
-  private final ClientIDProvider         cidProvider;
+  private final ClientIDProvider               cidProvider;
 
-  private final SampledCounter           txCounter;
+  private final SampledCounter                 txCounter;
 
-  private final TCObjectSelfStore        tcObjectSelfStore;
+  private final boolean                        sendErrors  = System.getProperty("project.name") != null;
+  private final TCObjectSelfStore              tcObjectSelfStore;
 
   public ClientTransactionManagerImpl(final ClientIDProvider cidProvider, final ClientObjectManager objectManager,
                                       final ClientTransactionFactory txFactory, final ClientLockManager lockManager,
@@ -82,6 +89,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     this.objectManager = objectManager;
     this.objectManager.setTransactionManager(this);
     this.txCounter = txCounter;
+    this.appEventContextFactory = new NonPortableEventContextFactory(cidProvider);
     this.tcObjectSelfStore = store;
   }
 
@@ -532,8 +540,19 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   private RuntimeException checkAndReportUnlockedSharedObjectException(final UnlockedSharedObjectException usoe,
                                                                        final String details, final Object context) {
     if (this.lockManager.isLockedByCurrentThread(LockLevel.READ)) {
-      return makeReadOnlyException(details);
+      final ReadOnlyException roe = makeReadOnlyException(details);
+      if (this.sendErrors) {
+        final ReadOnlyObjectEventContext eventContext = this.appEventContextFactory
+            .createReadOnlyObjectEventContext(context, roe);
+        this.objectManager.sendApplicationEvent(context, new ReadOnlyObjectEvent(eventContext));
+      }
+      return roe;
     } else {
+      if (this.sendErrors) {
+        final UnlockedSharedObjectEventContext eventContext = this.appEventContextFactory
+            .createUnlockedSharedObjectEventContext(context, usoe);
+        this.objectManager.sendApplicationEvent(context, new UnlockedSharedObjectEvent(eventContext));
+      }
       return usoe;
     }
   }
@@ -542,8 +561,19 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
                                                                        final String details, final Object context,
                                                                        final String classname, final String fieldname) {
     if (this.lockManager.isLockedByCurrentThread(LockLevel.READ)) {
-      return makeReadOnlyException(details);
+      final ReadOnlyException roe = makeReadOnlyException(details);
+      if (this.sendErrors) {
+        final ReadOnlyObjectEventContext eventContext = this.appEventContextFactory
+            .createReadOnlyObjectEventContext(context, classname, fieldname, roe);
+        this.objectManager.sendApplicationEvent(context, new ReadOnlyObjectEvent(eventContext));
+      }
+      return roe;
     } else {
+      if (this.sendErrors) {
+        final UnlockedSharedObjectEventContext eventContext = this.appEventContextFactory
+            .createUnlockedSharedObjectEventContext(context, classname, fieldname, usoe);
+        this.objectManager.sendApplicationEvent(context, new UnlockedSharedObjectEvent(eventContext));
+      }
       return usoe;
     }
   }
@@ -553,8 +583,21 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
                                                                        final String methodName,
                                                                        final Object[] parameters) {
     if (this.lockManager.isLockedByCurrentThread(LockLevel.READ)) {
-      return makeReadOnlyException(details);
+      final ReadOnlyException roe = makeReadOnlyException(details);
+      if (this.sendErrors) {
+        final ReadOnlyObjectEventContext eventContext = this.appEventContextFactory
+            .createReadOnlyObjectEventContext(context, roe);
+        context = this.objectManager.cloneAndInvokeLogicalOperation(context, methodName, parameters);
+        this.objectManager.sendApplicationEvent(context, new ReadOnlyObjectEvent(eventContext));
+      }
+      return roe;
     } else {
+      if (this.sendErrors) {
+        final UnlockedSharedObjectEventContext eventContext = this.appEventContextFactory
+            .createUnlockedSharedObjectEventContext(context, usoe);
+        context = this.objectManager.cloneAndInvokeLogicalOperation(context, methodName, parameters);
+        this.objectManager.sendApplicationEvent(context, new UnlockedSharedObjectEvent(eventContext));
+      }
       return usoe;
     }
   }

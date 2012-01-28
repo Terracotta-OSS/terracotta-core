@@ -20,6 +20,7 @@ import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessageFactory;
+import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.msg.NodeMetaDataMessageFactory;
@@ -100,6 +101,10 @@ public class MockChannel implements DSOClientMessageChannel {
   }
 
   public void open() {
+    throw new ImplementMe();
+  }
+
+  public JMXMessage getJMXMessage() {
     throw new ImplementMe();
   }
 

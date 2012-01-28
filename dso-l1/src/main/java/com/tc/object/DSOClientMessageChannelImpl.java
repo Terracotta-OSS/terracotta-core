@@ -21,6 +21,7 @@ import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessageFactory;
+import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessage;
@@ -156,6 +157,10 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
 
   public ObjectIDBatchRequestMessage newObjectIDBatchRequestMessage() {
     return (ObjectIDBatchRequestMessage) this.channel.createMessage(TCMessageType.OBJECT_ID_BATCH_REQUEST_MESSAGE);
+  }
+
+  public JMXMessage getJMXMessage() {
+    return (JMXMessage) this.channel.createMessage(TCMessageType.JMX_MESSAGE);
   }
 
   public CompletedTransactionLowWaterMarkMessage newCompletedTransactionLowWaterMarkMessage(final NodeID remoteID) {
