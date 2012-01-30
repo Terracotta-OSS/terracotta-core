@@ -50,7 +50,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   protected final File                tempDir;
   protected File                      javaHome;
   private TestClientManager           clientRunner;
-  private TestJMXServerManager        jmxServerManager;
+  protected TestJMXServerManager      jmxServerManager;
   private Thread                      duringRunningClusterThread;
   private static final String         log4jPrefix          = "log4j.logger.";
   private final Map<String, LogLevel> tcLoggingConfigs     = new HashMap<String, LogLevel>();
@@ -402,5 +402,9 @@ public abstract class AbstractTestBase extends TCTestCase {
       throw new AssertionError(e);
     }
 
+  }
+
+  public File getTcConfigFile() {
+    return tcConfigFile;
   }
 }
