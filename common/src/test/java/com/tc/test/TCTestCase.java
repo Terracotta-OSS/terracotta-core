@@ -435,7 +435,7 @@ public class TCTestCase extends TestCase {
   }
 
   protected final void timebombTestForRewrite() {
-    timebombTest("2012-01-30");
+    timebombTest("2012-02-01");
   }
 
   /**
