@@ -35,11 +35,10 @@ public class ConfigHelper {
     groupData = new GroupsData[numOfGroups];
     this.tcConfigFile = tcConfigFile;
     this.temmDir = tempDir;
-    setServerPorts();
-    writeConfigFile();
+    setRandomServerPorts();
   }
 
-  private synchronized void writeConfigFile() {
+  public synchronized void writeConfigFile() {
     try {
       TerracottaConfigBuilder builder = createConfig();
       FileOutputStream out = new FileOutputStream(tcConfigFile);
@@ -145,7 +144,7 @@ public class ConfigHelper {
 
   }
 
-  private void setServerPorts() {
+  private void setRandomServerPorts() {
     for (int groupIndex = 0; groupIndex < numOfGroups; groupIndex++) {
       String groupName = getGroupName(groupIndex);
       int[] dsoPorts = new int[numOfServersPerGroup];
@@ -186,30 +185,28 @@ public class ConfigHelper {
   }
 
   public int getDsoPort(final int groupIndex, final int serverIndex) {
-    Assert.assertTrue("groupIndex: " + groupIndex + " numOfGroups: " + this.numOfGroups,
-                      groupIndex >= 0 && groupIndex < this.numOfGroups);
-    Assert.assertTrue("serverIndex: " + serverIndex + " serverIndex: " + this.numOfServersPerGroup,
-                      serverIndex >= 0 && serverIndex < this.numOfServersPerGroup);
+    validateIndexes(groupIndex, serverIndex);
 
     return groupData[groupIndex].getDsoPort(serverIndex);
 
   }
 
-  public int getJmxPort(final int groupIndex, final int serverIndex) {
+  private void validateIndexes(final int groupIndex, final int serverIndex) {
     Assert.assertTrue("groupIndex: " + groupIndex + " numOfGroups: " + this.numOfGroups,
                       groupIndex >= 0 && groupIndex < this.numOfGroups);
     Assert.assertTrue("serverIndex: " + serverIndex + " serverIndex: " + this.numOfServersPerGroup,
                       serverIndex >= 0 && serverIndex < this.numOfServersPerGroup);
+  }
+
+  public int getJmxPort(final int groupIndex, final int serverIndex) {
+    validateIndexes(groupIndex, serverIndex);
 
     return groupData[groupIndex].getJmxPort(serverIndex);
 
   }
 
   public int getL2GroupPort(final int groupIndex, final int serverIndex) {
-    Assert.assertTrue("groupIndex: " + groupIndex + " numOfGroups: " + this.numOfGroups,
-                      groupIndex >= 0 && groupIndex < this.numOfGroups);
-    Assert.assertTrue("serverIndex: " + serverIndex + " serverIndex: " + this.numOfServersPerGroup,
-                      serverIndex >= 0 && serverIndex < this.numOfServersPerGroup);
+    validateIndexes(groupIndex, serverIndex);
 
     return groupData[groupIndex].getL2GroupPort(serverIndex);
 
@@ -241,6 +238,40 @@ public class ConfigHelper {
 
   private String getStatisticsDirectoryPath(int groupIndex, int serverIndex) {
     return new File(temmDir, getServerName(groupIndex, serverIndex) + File.separator + "statistics").getAbsolutePath();
+  }
+
+  /**
+   * Used to override the ports choosen by the test framework.
+   */
+  public void setServerPorts(final int groupIndex, final int[] jmxPorts, final int[] dsoPorts, final int[] l2GroupPorts) {
+    Assert.assertTrue("groupIndex: " + groupIndex + " numOfGroups: " + this.numOfGroups,
+                      groupIndex >= 0 && groupIndex < this.numOfGroups);
+
+    String groupName = getGroupName(groupIndex);
+    String[] serverNames = new String[numOfServersPerGroup];
+    String[] dataDirectoryPath = new String[numOfServersPerGroup];
+    int[] proxyL2GroupPorts = null;
+    int[] proxyDsoPorts = null;
+    for (int serverIndex = 0; serverIndex < numOfServersPerGroup; serverIndex++) {
+      serverNames[serverIndex] = getServerName(groupIndex, serverIndex);
+      dataDirectoryPath[serverIndex] = getDataDirectoryPath(groupIndex, serverIndex);
+    }
+    if (isProxyDsoPort()) {
+      proxyDsoPorts = new int[numOfServersPerGroup];
+      for (int serverIndex = 0; serverIndex < numOfServersPerGroup; serverIndex++) {
+        proxyDsoPorts[serverIndex] = portChooser.chooseRandomPort();
+      }
+    }
+    if (isProxyL2GroupPort()) {
+      proxyL2GroupPorts = new int[numOfServersPerGroup];
+      for (int serverIndex = 0; serverIndex < numOfServersPerGroup; serverIndex++) {
+        proxyL2GroupPorts[serverIndex] = portChooser.chooseRandomPort();
+      }
+    }
+
+    groupData[groupIndex] = new GroupsData(groupName, dsoPorts, jmxPorts, l2GroupPorts, serverNames, proxyDsoPorts,
+                                           proxyL2GroupPorts, dataDirectoryPath);
+
   }
 
 }

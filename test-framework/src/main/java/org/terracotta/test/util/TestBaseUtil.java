@@ -151,6 +151,7 @@ public class TestBaseUtil {
   }
 
   public static void configureOffHeap(TestConfig testConfig, int maxDirectMemory, int offHeapDataSize) {
+    testConfig.getL2Config().setOffHeapEnabled(true);
     testConfig.getL2Config().addExtraServerJvmArg("-XX:MaxDirectMemorySize=" + maxDirectMemory + "m");
     testConfig.getL2Config().setMaxOffHeapDataSize(offHeapDataSize);
     testConfig.getL2Config().setPersistenceMode(PersistenceMode.PERMANENT_STORE);

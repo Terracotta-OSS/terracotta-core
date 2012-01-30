@@ -383,7 +383,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   }
 
   /**
-   * Disables the test if the tota physical memory on the machine is lower that the specified value
+   * Disables the test if the total physical memory on the machine is lower that the specified value
    * 
    * @param physicalMemory memory in gigs below which the test should not run on the machine
    */

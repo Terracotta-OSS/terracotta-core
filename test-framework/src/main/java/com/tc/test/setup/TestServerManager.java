@@ -24,6 +24,7 @@ public class TestServerManager {
     portChooser = new PortChooser();
 
     this.configHelper = new ConfigHelper(portChooser, testConfig, tcConfigFile, tempDir);
+    this.configHelper.writeConfigFile();
 
     final int numOfGroups = testConfig.getNumOfGroups();
     this.groups = new GroupServerManager[numOfGroups];
