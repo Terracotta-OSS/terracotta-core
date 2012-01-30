@@ -54,7 +54,7 @@ public class DSOVerifierTest extends TCTestCase {
   }
 
   public DSOVerifierTest() {
-    timebombTest("2012-01-30");
+    timebombTestForRewrite();
   }
 
   @Override
