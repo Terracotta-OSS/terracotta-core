@@ -36,7 +36,6 @@ public abstract class AbstractClientBase implements Runnable {
 
   protected void pass() {
     System.err.println("[PASS: " + getClass().getName() + "]");
-    System.exit(0);
   }
 
   public TestHandlerMBean getTestControlMbean() {
