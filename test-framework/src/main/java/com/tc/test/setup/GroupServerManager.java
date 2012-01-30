@@ -86,7 +86,10 @@ public class GroupServerManager {
       System.out.println("trying to setUp Proxy");
       for (int i = 0; i < groupData.getServerCount(); ++i) {
         proxyL2Managers[i] = new ProxyConnectManagerImpl(groupData.getL2GroupPort(i), groupData.getProxyL2GroupPort(i));
+        proxyL2Managers[i].setProxyWaitTime(this.testConfig.getL2Config().getProxyWaitTime());
+        proxyL2Managers[i].setProxyDownTime(this.testConfig.getL2Config().getProxyDownTime());
         proxyL2Managers[i].setupProxy();
+
       }
     }
     System.out.println("********");
@@ -132,8 +135,7 @@ public class GroupServerManager {
     workingDir.mkdirs();
     File verboseGcOutputFile = new File(workingDir, "verboseGC.log");
     TestBaseUtil.setupVerboseGC(jvmArgs, verboseGcOutputFile);
-    TestBaseUtil
-        .setHeapSizeArgs(jvmArgs, testConfig.getL2Config().getMinHeap(), testConfig.getL2Config().getMaxHeap());
+    TestBaseUtil.setHeapSizeArgs(jvmArgs, testConfig.getL2Config().getMinHeap(), testConfig.getL2Config().getMaxHeap());
     TestBaseUtil.removeDuplicateJvmArgs(jvmArgs);
     return new ExtraProcessServerControl(HOST, dsoPort, jmxPort, tcConfigFile.getAbsolutePath(), true, serverName,
                                          jvmArgs, javaHome, true, workingDir);

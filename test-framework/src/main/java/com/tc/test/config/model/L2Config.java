@@ -27,6 +27,8 @@ public class L2Config {
   private boolean                 isProxyDsoPorts       = false;
   private int                     minHeap               = 256;
   private int                     maxHeap               = 256;
+  private int                     proxyWaitTime         = 20 * 1000;
+  private int                     proxyDownTime         = 100;
 
   /**
    * Creates a l2 config with these defaults <br>
@@ -224,4 +226,21 @@ public class L2Config {
   public void setMaxHeap(int maxHeap) {
     this.maxHeap = maxHeap;
   }
+
+  public int getProxyWaitTime() {
+    return proxyWaitTime;
+  }
+
+  public int getProxyDownTime() {
+    return proxyDownTime;
+  }
+
+  public void setProxyWaitTime(int proxyWaitTime) {
+    this.proxyWaitTime = proxyWaitTime;
+  }
+
+  public void setProxyDownTime(int proxyDownTime) {
+    this.proxyDownTime = proxyDownTime;
+  }
+
 }
