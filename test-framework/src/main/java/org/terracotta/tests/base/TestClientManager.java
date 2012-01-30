@@ -165,7 +165,7 @@ public class TestClientManager {
     jvmArgs.addAll(testConfig.getClientConfig().getExtraClientJvmArgs());
   }
 
-  public synchronized void stopAllClients() {
+  private synchronized void stopAllClients() {
     if (stopped.attemptSet()) {
       for (LinkedJavaProcess client : runningClients) {
         client.destroy();
