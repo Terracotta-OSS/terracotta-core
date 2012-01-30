@@ -166,4 +166,22 @@ public class TestBaseUtil {
     testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_MAP_CACHE_TABLESIZE, "1");
   }
 
+  public static void enableL2Reconnect(TestConfig testConfig) {
+    testConfig.getGroupConfig().setMemberCount(2);
+    testConfig.addTcProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
+
+    // for windows, it takes 10 seconds to restart proxy port
+    if (Os.isWindows()) {
+      testConfig.addTcProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT, "" + 20000);
+    }
+  }
+
+  public static void enableL1Reconnect(TestConfig testConfig) {
+    testConfig.addTcProperty(TCPropertiesConsts.L2_L1RECONNECT_ENABLED, "true");
+    if (Os.isLinux() || Os.isSolaris()) {
+      // default 5000 ms seems to small occasionally in few linux machines
+      testConfig.addTcProperty(TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS, "10000");
+    }
+  }
+
 }
