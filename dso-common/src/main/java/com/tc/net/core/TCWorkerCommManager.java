@@ -4,14 +4,16 @@
 package com.tc.net.core;
 
 import com.tc.logging.LossyTCLogger;
+import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The whole intention of this class is to manage the workerThreads for each Listener
@@ -30,7 +32,7 @@ public class TCWorkerCommManager {
   private final SetOnceFlag       started            = new SetOnceFlag();
   private final SetOnceFlag       stopped            = new SetOnceFlag();
 
-  private int                     nextWorkerCommId   = 0;
+  private final AtomicInteger     nextWorkerCommId   = new AtomicInteger();
 
   TCWorkerCommManager(String name, int workerCommCount, SocketParams socketParams) {
     if (workerCommCount <= 0) { throw new IllegalArgumentException("invalid worker count: " + workerCommCount); }
@@ -42,14 +44,14 @@ public class TCWorkerCommManager {
     }
   }
 
-  public synchronized CoreNIOServices getNextWorkerComm() {
-    CoreNIOServices[] leastWeightWorkerComms = getLeastWeightWorkerComms(this.workerCommThreads);
+  public CoreNIOServices getNextWorkerComm() {
+    List<CoreNIOServices> leastWeightWorkerComms = getLeastWeightWorkerComms();
     CoreNIOServices rv;
-    Assert.eval(leastWeightWorkerComms.length >= 1);
-    if (leastWeightWorkerComms.length == 1) {
-      rv = leastWeightWorkerComms[0];
+    Assert.eval(leastWeightWorkerComms.size() >= 1);
+    if (leastWeightWorkerComms.size() == 1) {
+      rv = leastWeightWorkerComms.get(0);
     } else {
-      rv = leastWeightWorkerComms[this.nextWorkerCommId++ % leastWeightWorkerComms.length];
+      rv = leastWeightWorkerComms.get(nextWorkerCommId.getAndIncrement() % leastWeightWorkerComms.size());
     }
 
     String message = "Selecting " + rv + "  from " + Arrays.asList(this.workerCommThreads);
@@ -62,10 +64,10 @@ public class TCWorkerCommManager {
     return rv;
   }
 
-  private CoreNIOServices[] getLeastWeightWorkerComms(CoreNIOServices[] workerComms) {
-    ArrayList<CoreNIOServices> selectedWorkerComms = new ArrayList<CoreNIOServices>();
+  private List<CoreNIOServices> getLeastWeightWorkerComms() {
+    List<CoreNIOServices> selectedWorkerComms = new ArrayList<CoreNIOServices>();
     int leastValue = Integer.MAX_VALUE;
-    for (CoreNIOServices workerComm : workerComms) {
+    for (CoreNIOServices workerComm : workerCommThreads) {
       int presentValue = workerComm.getWeight();
       if (presentValue < leastValue) {
         selectedWorkerComms.clear();
@@ -75,8 +77,7 @@ public class TCWorkerCommManager {
         selectedWorkerComms.add(workerComm);
       }
     }
-
-    return selectedWorkerComms.toArray(new CoreNIOServices[selectedWorkerComms.size()]);
+    return selectedWorkerComms;
   }
 
   public synchronized void start() {
@@ -99,19 +100,19 @@ public class TCWorkerCommManager {
     }
   }
 
-  protected synchronized CoreNIOServices getWorkerComm(int workerCommId) {
+  protected CoreNIOServices getWorkerComm(int workerCommId) {
     return this.workerCommThreads[workerCommId];
   }
 
-  protected synchronized int getWeightForWorkerComm(int workerCommId) {
+  protected int getWeightForWorkerComm(int workerCommId) {
     return this.workerCommThreads[workerCommId].getWeight();
   }
 
-  protected synchronized long getTotalBytesReadByWorkerComm(int workerCommId) {
+  protected long getTotalBytesReadByWorkerComm(int workerCommId) {
     return this.workerCommThreads[workerCommId].getTotalBytesRead();
   }
 
-  protected synchronized long getTotalBytesWrittenByWorkerComm(int workerCommId) {
+  protected long getTotalBytesWrittenByWorkerComm(int workerCommId) {
     return this.workerCommThreads[workerCommId].getTotalBytesWritten();
   }
 
