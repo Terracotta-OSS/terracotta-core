@@ -55,8 +55,8 @@ public class ConfigHelper {
   public synchronized void writeConfigFile() {
     try {
       TerracottaConfigBuilder builder = createConfig();
-      System.out.println("******** Writing tc-config file");
-      System.out.println(builder.toString());
+      // System.out.println("******** Writing tc-config file");
+      // System.out.println(builder.toString());
       FileOutputStream out = new FileOutputStream(tcConfigFile);
       IOUtils.write(builder.toString(), out);
       out.close();
