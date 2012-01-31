@@ -167,7 +167,7 @@ public class TestBaseUtil {
   }
 
   public static void enableL2Reconnect(TestConfig testConfig) {
-    testConfig.getGroupConfig().setMemberCount(2);
+
     testConfig.addTcProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
 
     // for windows, it takes 10 seconds to restart proxy port
