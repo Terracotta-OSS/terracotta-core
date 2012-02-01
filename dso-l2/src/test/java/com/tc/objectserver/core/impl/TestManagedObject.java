@@ -157,7 +157,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
 
   boolean referenced = false;
 
-  public boolean markReference() {
+  public synchronized boolean markReference() {
     if (!this.referenced) {
       this.referenced = true;
       return true;
@@ -165,7 +165,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return false;
   }
 
-  public boolean unmarkReference() {
+  public synchronized boolean unmarkReference() {
     if (this.referenced) {
       this.referenced = false;
       return true;
@@ -173,7 +173,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return false;
   }
 
-  public boolean isReferenced() {
+  public synchronized boolean isReferenced() {
     return this.referenced;
   }
 
