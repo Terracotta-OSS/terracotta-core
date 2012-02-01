@@ -52,9 +52,9 @@ public class SetDbClean extends BaseUtility {
     Status status = db.get(entry, tx);
 
     if (!Status.SUCCESS.equals(status)) {
-      log("Failed to read state!");
+      log("Failed to read state! status=" + status);
       tx.commit();
-      env.close();
+      getPersistor(1).close();
       return;
     }
     tx.commit();
@@ -62,7 +62,7 @@ public class SetDbClean extends BaseUtility {
     String stateStr = entry.getValue();
     if (stateStr == null) {
       log("Failed to set DB clean for empty state");
-      env.close();
+      getPersistor(1).close();
       return;
     }
 
@@ -74,7 +74,7 @@ public class SetDbClean extends BaseUtility {
       case C:
         if (!StateManager.PASSIVE_STANDBY.equals(state)) {
           log("Failed to set DB clean for " + state);
-          env.close();
+          getPersistor(1).close();
           return;
         }
         tx = ptp.newTransaction();

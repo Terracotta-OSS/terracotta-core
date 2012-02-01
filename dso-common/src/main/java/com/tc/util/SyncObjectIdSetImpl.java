@@ -123,6 +123,12 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
     }
   }
 
+  public void waitUntilFinishedPopulating() {
+    synchronized (this.lock) {
+      waitWhileBlocked();
+    }
+  }
+
   private void waitWhileBlocked() {
     boolean interrupted = false;
     try {

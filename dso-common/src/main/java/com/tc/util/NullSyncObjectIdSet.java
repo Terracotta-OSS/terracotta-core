@@ -61,4 +61,8 @@ public class NullSyncObjectIdSet extends AbstractSet implements SyncObjectIdSet 
   public int addAndGetSize(ObjectID obj) {
     return 0;
   }
+
+  public void waitUntilFinishedPopulating() {
+    //
+  }
 }
