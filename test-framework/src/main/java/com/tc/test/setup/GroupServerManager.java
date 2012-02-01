@@ -706,4 +706,11 @@ public class GroupServerManager {
   public void stopCrasher() {
     this.serverCrasher.stop();
   }
+
+  public void stopDsoProxy() {
+    for (ProxyConnectManager proxy : this.proxyL1Managers) {
+      proxy.closeClientConnections();
+    }
+
+  }
 }

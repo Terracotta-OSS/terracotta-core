@@ -198,4 +198,14 @@ public class TestServerManager {
     }
     return dsoMbeans;
   }
+
+  /**
+   * This will close the connections between the servers of the group and the client
+   * 
+   * @param groupIndex the group index for which the client connections is to be closed
+   */
+  public void closeClientConnections(int groupIndex) {
+    Assert.assertTrue(groupIndex >= 0 && groupIndex < groups.length);
+    this.groups[groupIndex].stopDsoProxy();
+  }
 }
