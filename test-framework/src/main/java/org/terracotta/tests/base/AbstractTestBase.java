@@ -407,4 +407,9 @@ public abstract class AbstractTestBase extends TCTestCase {
   public File getTcConfigFile() {
     return tcConfigFile;
   }
+
+  protected void stopClient(final int index) {
+    this.clientRunner.stopClient(index);
+  }
+
 }

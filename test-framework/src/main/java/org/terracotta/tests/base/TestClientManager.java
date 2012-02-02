@@ -18,6 +18,8 @@ import java.util.List;
 
 import javax.management.remote.jmxmp.JMXMPConnector;
 
+import junit.framework.Assert;
+
 public class TestClientManager {
   /**
    * If set to true allows debugging of java applications
@@ -171,6 +173,12 @@ public class TestClientManager {
         client.destroy();
       }
     }
+  }
+
+  synchronized void stopClient(final int index) {
+    Assert.assertTrue("index: " + index + " no of running clients: " + this.runningClients.size(),
+                      index < this.runningClients.size());
+    this.runningClients.get(index).destroy();
   }
 
 }
