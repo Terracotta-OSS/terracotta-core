@@ -10,7 +10,7 @@ import java.util.ArrayList;
  * off heap enabled : false <br>
  * max off heap data size: 128M <br>
  * persistence : temporary swap <br>
- * client reconnect window : 120 secs
+ * client reconnect window : 25 secs
  * 
  * @author rsingh
  */
@@ -20,7 +20,7 @@ public class L2Config {
   private int                     dgcIntervalInSec      = 3600;
   private boolean                 offHeapEnabled        = false;
   private PersistenceMode         persistenceMode       = PersistenceMode.TEMPORARY_SWAP_ONLY;
-  private int                     clientReconnectWindow = 120;
+  private int                     clientReconnectWindow = 25;
   private int                     maxOffHeapDataSize    = 128;
   private final ArrayList<String> extraServerJvmArgs;
   private boolean                 isProxyL2groupPorts   = false;
