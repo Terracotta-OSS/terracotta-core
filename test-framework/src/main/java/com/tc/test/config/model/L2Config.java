@@ -20,7 +20,7 @@ public class L2Config {
   private int                     dgcIntervalInSec      = 3600;
   private boolean                 offHeapEnabled        = false;
   private PersistenceMode         persistenceMode       = PersistenceMode.TEMPORARY_SWAP_ONLY;
-  private int                     clientReconnectWindow = 25;
+  private int                     clientReconnectWindow = 15;
   private int                     maxOffHeapDataSize    = 128;
   private final ArrayList<String> extraServerJvmArgs;
   private boolean                 isProxyL2groupPorts   = false;

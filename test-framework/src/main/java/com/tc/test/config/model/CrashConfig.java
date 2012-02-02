@@ -6,7 +6,7 @@ package com.tc.test.config.model;
  * @author rsingh
  */
 public class CrashConfig {
-  private long            serverCrashWaitTimeInSec = 45;
+  private long            serverCrashWaitTimeInSec = 25;
   private int             maxCrashCount            = Integer.MAX_VALUE;
   private ServerCrashMode crashMode                = ServerCrashMode.NO_CRASH;
   private boolean         shouldCleanDbOnCrash     = true;
