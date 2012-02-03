@@ -61,8 +61,6 @@ public class TestConfigObject {
   private static final String     LINKED_CHILD_PROCESS_CLASSPATH   = DYNAMIC_PROPERTIES_PREFIX
                                                                      + "linked-child-process-classpath";
 
-  private static final String     BOOT_JAR_NORMAL                  = DYNAMIC_PROPERTIES_PREFIX + "bootjars.normal";
-
   private static final String     AVAILABLE_VARIANTS_PREFIX        = DYNAMIC_PROPERTIES_PREFIX + "variants.available.";
   private static final String     VARIANT_LIBRARIES_PREFIX         = DYNAMIC_PROPERTIES_PREFIX + "libraries.variants.";
   private static final String     SELECTED_VARIANT_PREFIX          = DYNAMIC_PROPERTIES_PREFIX + "variants.selected.";
@@ -378,13 +376,6 @@ public class TestConfigObject {
     return installDir;
   }
 
-  public String normalBootJar() {
-    String out = this.properties.getProperty(BOOT_JAR_NORMAL);
-    Assert.assertNotBlank(out);
-    assertFileExists(out);
-    return out;
-  }
-
   public String extraClassPathForAppServer() {
     return extraClassPathForAppServer;
   }
@@ -412,11 +403,6 @@ public class TestConfigObject {
       Assert.assertTrue("Path element is non-existent: " + pathElement, new File(pathElement).exists());
 
     }
-  }
-
-  private void assertFileExists(String out) {
-    File file = new File(out);
-    Assert.assertTrue("not a file: " + out, file.isFile());
   }
 
   public boolean isSpringTest() {

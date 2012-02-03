@@ -4,17 +4,16 @@
  */
 package com.tc.objectserver.control;
 
+import org.apache.commons.io.IOUtils;
+
+import com.tc.lcp.LinkedJavaProcess;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.Collections;
 import java.util.List;
 
 import junit.framework.Assert;
-
-import org.apache.commons.io.IOUtils;
-
-import com.tc.lcp.LinkedJavaProcess;
-import com.tc.test.TestConfigObject;
 
 public class ExtraL1ProcessControl extends ExtraProcessServerControl {
 
@@ -56,10 +55,7 @@ public class ExtraL1ProcessControl extends ExtraProcessServerControl {
 
   private void setJVMArgs() {
     try {
-      String bootclasspath = "-Xbootclasspath/p:" + TestConfigObject.getInstance().normalBootJar();
-      System.err.println("Bootclasspath:" + bootclasspath);
       this.jvmArgs.add("-Dtc.classpath=" + createTcClassPath());
-      this.jvmArgs.add(bootclasspath);
       this.jvmArgs.add("-Dtc.config=" + super.configFileLoc);
     } catch (Exception e) {
       e.printStackTrace();

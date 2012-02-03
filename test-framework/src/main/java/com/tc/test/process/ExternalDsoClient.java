@@ -4,6 +4,13 @@
  */
 package com.tc.test.process;
 
+import org.apache.commons.io.IOUtils;
+
+import com.tc.lcp.LinkedJavaProcess;
+import com.tc.process.StreamCopier;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -12,14 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.Assert;
-
-import org.apache.commons.io.IOUtils;
-
-import com.tc.lcp.LinkedJavaProcess;
-import com.tc.process.StreamCopier;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
-import com.tc.test.TestConfigObject;
 
 /**
  * This class will start a DSO client out of process
@@ -59,7 +58,7 @@ public class ExternalDsoClient {
       vmargs.add("-D" + propertyKey + "=" + productKeyPath);
     }
   }
-  
+
   private File saveToFile(InputStream configInput) throws IOException {
     File config = new File(workingDir, CLIENT_CONFIG_FILENAME);
     FileOutputStream out = new FileOutputStream(config);
@@ -86,7 +85,7 @@ public class ExternalDsoClient {
   }
 
   private LinkedJavaProcess createLinkedJavaProcess() {
-    LinkedJavaProcess p = new LinkedJavaProcess(clientClass.getName(),  args);
+    LinkedJavaProcess p = new LinkedJavaProcess(clientClass.getName(), args);
     p.setDirectory(workingDir);
     return p;
   }
@@ -129,6 +128,7 @@ public class ExternalDsoClient {
     return configFile;
   }
 
+  @Override
   public String toString() {
     return "DSO client " + (clientName != null ? clientName : clientClass.getName());
   }
@@ -151,9 +151,7 @@ public class ExternalDsoClient {
 
   private void prepareTCJvmArgs() {
     try {
-      String bootclasspath = "-Xbootclasspath/p:" + TestConfigObject.getInstance().normalBootJar();
       this.jvmArgs.add("-Dtc.classpath=" + createTcClassPath());
-      this.jvmArgs.add(bootclasspath);
       this.jvmArgs.add("-Dtc.config=" + configFile);
       addProductKeyIfExists(jvmArgs);
     } catch (Exception e) {
