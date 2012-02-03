@@ -22,7 +22,6 @@
 
   <properties>
     <group>crash,active-passive</group>
-    <tc.tests.configuration.transparent-tests.mode>crash</tc.tests.configuration.transparent-tests.mode>
     <skip.deploy>true</skip.deploy>
     <skip.findbugs>true</skip.findbugs>
     <tc.bootclasspath>-Xbootclasspath/p:${tc.tests.info.bootjars.normal}</tc.bootclasspath>
@@ -193,21 +192,6 @@
     </dependency>   
   </dependencies>
   
-  <profiles>
-    <profile>
-      <id>active-passive</id>
-      <properties>
-        <tc.tests.configuration.transparent-tests.mode>active-passive</tc.tests.configuration.transparent-tests.mode>
-      </properties>
-    </profile>
-    <profile>
-      <id>normal</id>
-      <properties>
-        <tc.tests.configuration.transparent-tests.mode>normal</tc.tests.configuration.transparent-tests.mode>
-      </properties>
-    </profile>     
-  </profiles>
-
   <build>
     <plugins>
       <plugin>

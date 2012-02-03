@@ -47,7 +47,6 @@
     <tc.config>-Dtc.config=tc-config.xml</tc.config>
     <tc.base-dir>${project.build.directory}</tc.base-dir>
     <com.tc.l1.modules.repositories>${localMavenRepository}</com.tc.l1.modules.repositories>
-    <tc.tests.configuration.transparent-tests.mode>normal</tc.tests.configuration.transparent-tests.mode>
     <tc.tests.info.bootjars.normal>${basedir}/../target/dso-boot.jar</tc.tests.info.bootjars.normal>
     <tc.tests.info.property-files>${tc.tests.configuration.properties.file}</tc.tests.info.property-files>
     <tc.tests.info.temp-root>${project.build.directory}/temp</tc.tests.info.temp-root>

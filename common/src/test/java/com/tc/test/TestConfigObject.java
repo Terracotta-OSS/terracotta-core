@@ -84,9 +84,6 @@ public class TestConfigObject {
 
   private static final String     APP_SERVER_SPECIFICATION         = STATIC_PROPERTIES_PREFIX + "appserver";
 
-  private static final String     TRANSPARENT_TESTS_MODE           = STATIC_PROPERTIES_PREFIX
-                                                                     + "transparent-tests.mode";
-
   private static final String     SYSTEM_PROPERTIES_RESOURCE_NAME  = "/test-system-properties.properties";
 
   private static final String     L2_STARTUP_PREFIX                = DYNAMIC_PROPERTIES_PREFIX + "l2.startup.";
@@ -407,16 +404,7 @@ public class TestConfigObject {
     return Integer.parseInt(getProperty(JUNIT_TEST_TIMEOUT_INSECONDS, "900"));
   }
 
-  public static final String TRANSPARENT_TESTS_MODE_NORMAL         = "normal";
-  public static final String TRANSPARENT_TESTS_MODE_CRASH          = "crash";
-  public static final String TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE = "active-passive";
-  public static final String TRANSPARENT_TESTS_MODE_ACTIVE_ACTIVE  = "active-active";
-
-  private static File        baseDir;
-
-  public String transparentTestsMode() {
-    return getProperty(TRANSPARENT_TESTS_MODE, TRANSPARENT_TESTS_MODE_NORMAL);
-  }
+  private static File baseDir;
 
   private void assertValidClasspath(String out) {
     String[] pathElements = out.split(File.pathSeparator);
