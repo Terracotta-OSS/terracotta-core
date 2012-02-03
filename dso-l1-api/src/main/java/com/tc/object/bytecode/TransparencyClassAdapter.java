@@ -54,10 +54,21 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
 
   @Override
   protected void basicVisit(final int version, final int access, final String name, final String signature,
-                            final String superClassName, final String[] interfaces) {
+                            final String superClassName, String[] interfaces) {
 
     try {
       logger.debug("ADAPTING CLASS: " + name);
+
+      // convert "mirror" toolkit interfaces
+      if (interfaces != null) {
+        for (String iface : interfaces) {
+          if (iface.startsWith("org/terracotta/bytecode/")) {
+            String coreIface = iface.replace("org/terracotta/bytecode/", "com/tc/object/bytecode/");
+            interfaces = ByteCodeUtil.replaceInterface(interfaces, iface, coreIface);
+          }
+        }
+      }
+
       super.basicVisit(version, access, name, signature, superClassName, interfaces);
 
       if (!supportMethodsCreated) {

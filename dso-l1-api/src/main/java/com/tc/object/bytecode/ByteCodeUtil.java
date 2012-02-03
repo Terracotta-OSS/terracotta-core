@@ -90,6 +90,18 @@ public class ByteCodeUtil implements Opcodes {
     return (String[]) newList.toArray(new String[newList.size()]);
   }
 
+  public static String[] replaceInterface(String[] interfaces, String toReplace, String replacement) {
+    List newList = new ArrayList();
+    for (String iface : interfaces) {
+      if (toReplace.equals(iface)) {
+        iface = replacement;
+      }
+      newList.add(iface);
+    }
+
+    return (String[]) newList.toArray(new String[] {});
+  }
+
   /**
    * Check whether the type is a primitve
    * 
@@ -706,4 +718,5 @@ public class ByteCodeUtil implements Opcodes {
 
     throw new AssertionError("Cannot determine constant 0 of type: " + type.getDescriptor());
   }
+
 }
