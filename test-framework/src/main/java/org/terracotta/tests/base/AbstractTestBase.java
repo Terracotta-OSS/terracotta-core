@@ -22,6 +22,7 @@ import com.tc.test.setup.GroupsData;
 import com.tc.test.setup.TestJMXServerManager;
 import com.tc.test.setup.TestServerManager;
 import com.tc.util.PortChooser;
+import com.tc.util.runtime.Vm;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -64,6 +65,9 @@ public abstract class AbstractTestBase extends TCTestCase {
       tcConfigFile = getTempFile("tc-config.xml");
     } catch (Exception e) {
       throw new RuntimeException(e);
+    }
+    if (Vm.isJRockit()) {
+      testConfig.getClientConfig().addExtraClientJvmArg("-XXfullSystemGC");
     }
   }
 
