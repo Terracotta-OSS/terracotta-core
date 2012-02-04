@@ -338,21 +338,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     addIncludePattern("com.tctest.builtin.ConcurrentHashMap");
     getOrCreateSpec("com.tctest.builtin.HashMap", HashMapApplicator.class.getName());
     getOrCreateSpec("com.tctest.builtin.ArrayList", ListApplicator.class.getName());
-
-    if (hasBootJar) {
-      // pre-load specs from boot jar
-      BootJar bootJar = null;
-      try {
-        bootJar = BootJar.getDefaultBootJarForReading();
-        Set allPreInstrumentedClasses = bootJar.getAllPreInstrumentedClasses();
-        // Create specs for any instrumented classes in the boot jar (such thay they can be shared)
-        for (Iterator i = allPreInstrumentedClasses.iterator(); i.hasNext();) {
-          getOrCreateSpec((String) i.next());
-        }
-      } finally {
-        BootJar.closeQuietly(bootJar);
-      }
-    }
   }
 
   public boolean addClassConfigBasedAdapters(final ClassInfo classInfo) {
@@ -1021,19 +1006,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
    * necessary referenced classes are also present in the boot jar
    */
   public void verifyBootJarContents(final File bjf) throws UnverifiedBootJarException {
-    logger.debug("Verifying boot jar contents...");
-    try {
-      BootJar bootJar = (bjf == null) ? BootJar.getDefaultBootJarForReading() : BootJar.getBootJarForReading(bjf);
-      scanForMissingClassesDeclaredInConfig(bootJar);
-    } catch (BootJarException bjex) {
-      throw new UnverifiedBootJarException(
-                                           "BootJarException occurred while attempting to verify the contents of the boot jar.",
-                                           bjex);
-    } catch (IOException ioex) {
-      throw new UnverifiedBootJarException(
-                                           "IOException occurred while attempting to verify the contents of the boot jar.",
-                                           ioex);
-    }
+    //
   }
 
   private TransparencyClassSpec[] getAllSpecs(final boolean includeBootJarSpecs) {
