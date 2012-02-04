@@ -19,6 +19,7 @@ import com.tc.object.DistributedObjectClient;
 import com.tc.object.MockRemoteSearchRequestManager;
 import com.tc.object.TestClientObjectManager;
 import com.tc.object.bytecode.ManagerImpl;
+import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.bytecode.hook.impl.DSOContextImpl;
@@ -40,6 +41,11 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class DsoNodeGetIpAndHostNameTest extends BaseDSOTestCase {
+
+  static {
+    ManagerUtil.enable();
+  }
+
   /**
    * Test for DsoNodeImpl. To make sure getIp() and getHostanme() working fine when connected to L2 or disconnected.
    */
