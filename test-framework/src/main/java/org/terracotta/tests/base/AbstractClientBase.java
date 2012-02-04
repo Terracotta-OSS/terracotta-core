@@ -19,6 +19,8 @@ public abstract class AbstractClientBase implements Runnable {
 
   private final TestHandlerMBean testControlMBean;
 
+  abstract protected void doTest() throws Throwable;
+
   public AbstractClientBase(String args[]) {
     int index = 0;
     final int testControlMbeanPort = Integer.parseInt(args[index++]);
@@ -31,6 +33,22 @@ public abstract class AbstractClientBase implements Runnable {
     } catch (Exception e) {
       System.out.println("****** Exception while connecting to TestMBean Port[" + testControlMbeanPort + "]");
       throw new RuntimeException(e);
+    }
+  }
+
+  public final void run() {
+    try {
+      doTest();
+      pass();
+      System.exit(0);
+    } catch (Throwable t) {
+      t.printStackTrace();
+      try {
+        getTestControlMbean().dumpClusterState();
+      } catch (Exception e) {
+        new Exception("Unabled to dump cluster state.", e).printStackTrace();
+      }
+      System.exit(1);
     }
   }
 
