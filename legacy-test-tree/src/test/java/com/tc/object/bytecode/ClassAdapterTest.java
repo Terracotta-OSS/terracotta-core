@@ -61,6 +61,10 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
   private final String                   targetClassName  = ClassAdapterTestTarget.class.getName();        // "com.tctest.ClassAdapterTestTarget";
   private ClassLoader                    origThreadContextClassLoader;
 
+  public ClassAdapterTest() {
+    disableTest();
+  }
+
   @Override
   protected void setUp() throws Exception {
     System.getProperties().remove(ClassAdapterTestTarget.KEY);
