@@ -54,8 +54,6 @@ import com.tc.object.config.schema.IncludeOnLoad;
 import com.tc.object.config.schema.IncludedInstrumentedClass;
 import com.tc.object.config.schema.InstrumentedClass;
 import com.tc.object.logging.InstrumentationLogger;
-import com.tc.object.tools.BootJar;
-import com.tc.object.tools.BootJarException;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
 import com.tc.util.Assert;
@@ -66,7 +64,6 @@ import com.tc.util.runtime.Vm;
 import com.terracottatech.config.L1ReconnectPropertiesDocument;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.net.InetAddress;
 import java.net.URL;
@@ -971,41 +968,11 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     }
   }
 
-  private void scanForMissingClassesDeclaredInConfig(final BootJar bootJar) throws BootJarException, IOException {
-    int preInstrumentedCount = 0;
-    Set preinstClasses = bootJar.getAllPreInstrumentedClasses();
-    int bootJarPopulation = preinstClasses.size();
-    List<String> missingClasses = new ArrayList<String>();
-
-    synchronized (specLock) {
-      TransparencyClassSpec[] allSpecs = getAllSpecs(true);
-      for (TransparencyClassSpec classSpec : allSpecs) {
-        Assert.assertNotNull(classSpec);
-        String cname = classSpec.getClassName().replace('/', '.');
-        if (!classSpec.isForeign() && (userDefinedBootSpecs.get(cname) != null)) continue;
-        if (classSpec.isPreInstrumented()) {
-          preInstrumentedCount++;
-          if (!(preinstClasses.contains(classSpec.getClassName()))) {
-            missingClasses.add(classSpec.getClassName());
-          }
-        }
-      }
-    }
-
-    if (missingClasses.size() > 0) {
-      logger.error("Number of classes in the DSO boot jar:" + bootJarPopulation);
-      logger.error("Number of classes expected to be in the DSO boot jar:" + preInstrumentedCount);
-      logger.error("Missing classes: " + missingClasses);
-      throw new IncompleteBootJarException("Incomplete DSO boot jar; " + missingClasses.size()
-                                           + " pre-instrumented class(es) found missing");
-    }
-  }
-
   /**
    * This method will: - check the contents of the boot-jar against tc-config.xml - check that all that all the
    * necessary referenced classes are also present in the boot jar
    */
-  public void verifyBootJarContents(final File bjf) throws UnverifiedBootJarException {
+  public void verifyBootJarContents(final File bjf) {
     //
   }
 
