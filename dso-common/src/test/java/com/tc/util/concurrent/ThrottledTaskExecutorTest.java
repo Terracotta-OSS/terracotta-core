@@ -73,8 +73,8 @@ public class ThrottledTaskExecutorTest extends TCTestCase {
     AppVerifierTask verifier = new AppVerifierTask(taskExecutor, maxTasksToRunParallel, totalTasksToRun);
     new Thread(verifier).start();
 
-    while (finishedCounter.get() < totalTasksToRun) {
-      synchronized (lock) {
+    synchronized (lock) {
+      while (finishedCounter.get() < totalTasksToRun) {
         try {
           lock.wait();
         } catch (InterruptedException e) {
