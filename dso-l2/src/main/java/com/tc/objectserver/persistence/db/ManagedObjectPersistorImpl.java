@@ -550,6 +550,9 @@ public final class ManagedObjectPersistorImpl extends DBPersistorBase implements
   }
 
   public void close() {
+    this.extantObjectIDs.waitUntilFinishedPopulating();
+    this.extantMapTypeOidSet.waitUntilFinishedPopulating();
+    this.extantEvictableOidSet.waitUntilFinishedPopulating();
     this.objectIDManager.close();
   }
 }

@@ -21,4 +21,6 @@ public interface SyncObjectIdSet extends Set, PrettyPrintable {
    * @return size if object was successfully added, else return -1.
    */
   public int addAndGetSize(ObjectID obj);
+
+  public void waitUntilFinishedPopulating();
 }

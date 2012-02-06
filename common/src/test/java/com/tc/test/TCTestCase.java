@@ -76,6 +76,7 @@ public class TCTestCase extends TestCase {
   // and the timeout covers the entire test case (ie. all methods). It wouldn't be very effective to start
   // the timer for each test method given this
   private static final Timer                 timeoutTimer                 = new Timer("Timeout Thread", true);
+  private static TimerTask                   timerTask;
   protected static final SynchronizedBoolean timeoutTaskAdded             = new SynchronizedBoolean(false);
 
   private static boolean                     printedProcess               = false;
@@ -210,7 +211,7 @@ public class TCTestCase extends TestCase {
     return isContainerTest() ^ isConfiguredToRunWithAppServer();
   }
 
-  protected void tcTestCaseSetup() throws Exception {
+  protected void tcTestCaseSetup(boolean shouldStartNewTimer) throws Exception {
     printOutCurrentJavaProcesses();
     if (allDisabledUntil != null) {
       if (new Date().before(this.allDisabledUntil)) {
@@ -244,7 +245,7 @@ public class TCTestCase extends TestCase {
     // don't move this stuff to runTest(), you want the timeout timer to catch hangs in setUp() too.
     // Yes it means you can't customize the timeout threshold in setUp() -- take a deep breath and
     // set your value in the constructor of your test case instead of setUp()
-    if (timeoutTaskAdded.commit(false, true)) {
+    if (shouldStartNewTimer || timeoutTaskAdded.commit(false, true)) {
       scheduleTimeoutTask();
     }
 
@@ -254,7 +255,7 @@ public class TCTestCase extends TestCase {
 
   @Override
   public void runBare() throws Throwable {
-    tcTestCaseSetup();
+    tcTestCaseSetup(false);
     if (!testWillRun) return;
 
     Throwable testException = null;
@@ -320,12 +321,19 @@ public class TCTestCase extends TestCase {
 
     System.err.println("Timeout task is scheduled to run in " + millisToMinutes(delay) + " minutes");
 
-    timeoutTimer.schedule(new TimerTask() {
+    // cancel the old task
+    if (timerTask != null) {
+      timerTask.cancel();
+    }
+
+    timerTask = new TimerTask() {
+
       @Override
       public void run() {
         timeoutCallback(delay);
       }
-    }, delay);
+    };
+    timeoutTimer.schedule(timerTask, delay);
   }
 
   public static void dumpHeap(File destDir) {
@@ -427,7 +435,7 @@ public class TCTestCase extends TestCase {
   }
 
   protected final void timebombTestForRewrite() {
-    timebombTest("2012-01-30");
+    timebombTest("2012-02-10");
   }
 
   /**

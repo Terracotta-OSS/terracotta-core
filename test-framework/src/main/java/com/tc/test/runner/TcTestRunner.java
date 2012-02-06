@@ -1,14 +1,5 @@
 package com.tc.test.runner;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.junit.runner.Runner;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
@@ -20,6 +11,18 @@ import org.junit.runners.model.TestClass;
 
 import com.tc.test.config.model.TestConfig;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 /**
  * <p>
  * This Class is similar to Parameterized Test with Improvements in logging and simplification in method signature for
@@ -27,6 +30,13 @@ import com.tc.test.config.model.TestConfig;
  * </p>
  */
 public class TcTestRunner extends Suite {
+
+  /**
+   * System Property to run only one configuration in the test. Usage : mvn -verfy -Dconfig=abc -Dtest=name will run
+   * test with abc config only.
+   */
+  public static final String CONFIG_TO_RUN = "config";
+
   /**
    * Annotation for a method which provides parameters to be injected into the test class constructor by
    * <code>Parameterized</code>
@@ -102,7 +112,28 @@ public class TcTestRunner extends Suite {
 
   @SuppressWarnings("unchecked")
   private List<TestConfig> getParametersList(TestClass klass) throws Throwable {
-    return (List<TestConfig>) getParametersMethod(klass).invokeExplosively(null);
+    List<TestConfig> configs = (List<TestConfig>) getParametersMethod(klass).invokeExplosively(null);
+    checkDuplicateConfigs(configs);
+    String configToRun = System.getProperty(CONFIG_TO_RUN);
+    if (configToRun == null) { return configs; }
+    for (TestConfig testConfig : configs) {
+      if (testConfig.getConfigName().equals(configToRun)) {
+        TestConfig[] testConfigs = new TestConfig[] { testConfig };
+        return Arrays.asList(testConfigs);
+      }
+    }
+    // Unable to find configuration with matching name
+    throw new AssertionError("*********No configuration with name [" + configToRun + "] found *********");
+  }
+
+  private void checkDuplicateConfigs(List<TestConfig> configs) {
+    Set<String> configNames = new HashSet<String>();
+    for (TestConfig testConfig : configs) {
+      if (!configNames.add(testConfig.getConfigName())) {
+
+      throw new AssertionError("*********More than One configuration with name [" + testConfig.getConfigName()
+                               + "] found *********"); }
+    }
   }
 
   private FrameworkMethod getParametersMethod(TestClass testClass) throws Exception {

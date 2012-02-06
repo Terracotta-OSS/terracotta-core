@@ -3,6 +3,9 @@ package org.terracotta.test.util;
 import org.apache.commons.io.IOUtils;
 
 import com.tc.config.test.schema.ConfigHelper;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.test.config.model.PersistenceMode;
+import com.tc.test.config.model.TestConfig;
 import com.tc.test.setup.GroupsData;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
@@ -19,6 +22,7 @@ import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -130,6 +134,53 @@ public class TestBaseUtil {
       jvmArgs.add("-Xloggc:" + verboseGcOutputFile.getAbsolutePath());
       jvmArgs.add("-XX:+PrintGCTimeStamps");
       jvmArgs.add("-XX:+PrintGCDetails");
+    }
+  }
+
+  public static void setHeapSizeArgs(List<String> jvmArgs, int minHeap, int maxHeap) {
+    Iterator<String> i = jvmArgs.iterator();
+    while (i.hasNext()) {
+      String arg = i.next();
+      if (arg.startsWith("-Xmx") || arg.startsWith("-Xms")) {
+        System.err.println("Ignoring '" + arg + "'. Heap size should be set through L2Config.");
+        i.remove();
+      }
+    }
+    jvmArgs.add("-Xms" + minHeap + "m");
+    jvmArgs.add("-Xmx" + maxHeap + "m");
+  }
+
+  public static void configureOffHeap(TestConfig testConfig, int maxDirectMemory, int offHeapDataSize) {
+    testConfig.getL2Config().setOffHeapEnabled(true);
+    testConfig.getL2Config().addExtraServerJvmArg("-XX:MaxDirectMemorySize=" + maxDirectMemory + "m");
+    testConfig.getL2Config().setMaxOffHeapDataSize(offHeapDataSize);
+    testConfig.getL2Config().setPersistenceMode(PersistenceMode.PERMANENT_STORE);
+
+    testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_SKIP_JVMARG_CHECK, "true");
+    testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_INITIAL_DATASIZE, "1m");
+    testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_TABLESIZE, "1");
+    testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_CONCURRENCY, "16");
+
+    testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_MAP_CACHE_MAX_PAGE_SIZE, "10k");
+    testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_MAP_CACHE_MIN_PAGE_SIZE, "10k");
+    testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_MAP_CACHE_TABLESIZE, "1");
+  }
+
+  public static void enableL2Reconnect(TestConfig testConfig) {
+
+    testConfig.addTcProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
+
+    // for windows, it takes 10 seconds to restart proxy port
+    if (Os.isWindows()) {
+      testConfig.addTcProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT, "" + 20000);
+    }
+  }
+
+  public static void enableL1Reconnect(TestConfig testConfig) {
+    testConfig.addTcProperty(TCPropertiesConsts.L2_L1RECONNECT_ENABLED, "true");
+    if (Os.isLinux() || Os.isSolaris()) {
+      // default 5000 ms seems to small occasionally in few linux machines
+      testConfig.addTcProperty(TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS, "10000");
     }
   }
 

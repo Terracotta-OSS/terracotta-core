@@ -142,17 +142,22 @@ public class LockAccounting {
       currentTxnSet = new HashSet(tx2Locks.keySet());
       listener = new TxnRemovedListener(currentTxnSet, latch);
       listeners.add(listener);
+      // mnk-3221, enabling debug logging for what all txn are pending
+      if (logger.isDebugEnabled()) {
+        logger.info("mnk-3221 printing currentTxnSet " + currentTxnSet.size());
+        for (Object o : currentTxnSet) {
+          logger.info(o);
+        }
+      }
     }
 
     try {
       // DEV-6271: During rejoin, the client could be shut down. In that case we need to get
       // out of this wait and throw a TCNotRunningException for upper layers to handle
       do {
-        // mnk-3221, enabling debug logging for what all txn are pending
+        // mnk-3221 printing currentTxnSet size
         if (logger.isDebugEnabled()) {
-          for (Object o : currentTxnSet) {
-            logger.info(o);
-          }
+          logger.info("mnk-3221 currentTxnSet size " + currentTxnSet.size());
         }
         if (shutdown) { throw new TCNotRunningException(); }
       } while (!latch.attempt(WAIT_FOR_TRANSACTIONS_INTERVAL));
@@ -199,6 +204,10 @@ public class LockAccounting {
 
     void txnRemoved(TransactionIDWrapper txnID) {
       this.txnSet.remove(txnID);
+      // mnk-3221, enabling debug logging for what txn got removed
+      if (logger.isDebugEnabled()) {
+        logger.info("mnk-3221 removed size " + txnSet.size() + " " + txnID);
+      }
       if (txnSet.size() == 0) allTxnCompleted();
     }
 

@@ -1,6 +1,8 @@
 package com.tc.test.setup;
 
 import com.tc.config.test.schema.ConfigHelper;
+import com.tc.stats.api.DGCMBean;
+import com.tc.stats.api.DSOMBean;
 import com.tc.test.config.model.TestConfig;
 import com.tc.util.PortChooser;
 
@@ -22,6 +24,7 @@ public class TestServerManager {
     portChooser = new PortChooser();
 
     this.configHelper = new ConfigHelper(portChooser, testConfig, tcConfigFile, tempDir);
+    this.configHelper.writeConfigFile();
 
     final int numOfGroups = testConfig.getNumOfGroups();
     this.groups = new GroupServerManager[numOfGroups];
@@ -180,4 +183,29 @@ public class TestServerManager {
     return groupsData;
   }
 
+  public List<DGCMBean> getAllLocalDGCMbeans() {
+    List<DGCMBean> dgcMbeans = new ArrayList<DGCMBean>();
+    for (GroupServerManager groupServerManager : groups) {
+      dgcMbeans.addAll(groupServerManager.connectAllLocalDGCMBeans());
+    }
+    return dgcMbeans;
+  }
+
+  public List<DSOMBean> getAllDSOMbeans() {
+    List<DSOMBean> dsoMbeans = new ArrayList<DSOMBean>();
+    for (GroupServerManager groupServerManager : groups) {
+      dsoMbeans.addAll(groupServerManager.connectAllDsoMBeans());
+    }
+    return dsoMbeans;
+  }
+
+  /**
+   * This will close the connections between the servers of the group and the client
+   * 
+   * @param groupIndex the group index for which the client connections is to be closed
+   */
+  public void closeClientConnections(int groupIndex) {
+    Assert.assertTrue(groupIndex >= 0 && groupIndex < groups.length);
+    this.groups[groupIndex].stopDsoProxy();
+  }
 }

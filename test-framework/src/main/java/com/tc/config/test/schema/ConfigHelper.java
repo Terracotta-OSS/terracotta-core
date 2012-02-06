@@ -36,12 +36,27 @@ public class ConfigHelper {
     this.tcConfigFile = tcConfigFile;
     this.temmDir = tempDir;
     setServerPorts();
-    writeConfigFile();
   }
 
-  private synchronized void writeConfigFile() {
+  /**
+   * If the test Wants manually specify ports or any other parameters in group data. This constructor can be used to
+   * pass group data.
+   */
+  public ConfigHelper(GroupsData[] groupData, final TestConfig testConfig, final File tcConfigFile, File tempDir) {
+    this.groupData = groupData;
+    this.testConfig = testConfig;
+    numOfGroups = testConfig.getNumOfGroups();
+    numOfServersPerGroup = testConfig.getGroupConfig().getMemberCount();
+    this.tcConfigFile = tcConfigFile;
+    this.temmDir = tempDir;
+    portChooser = new PortChooser();
+  }
+
+  public synchronized void writeConfigFile() {
     try {
       TerracottaConfigBuilder builder = createConfig();
+      // System.out.println("******** Writing tc-config file");
+      // System.out.println(builder.toString());
       FileOutputStream out = new FileOutputStream(tcConfigFile);
       IOUtils.write(builder.toString(), out);
       out.close();
@@ -160,8 +175,9 @@ public class ConfigHelper {
         jmxPorts[serverIndex] = portNum;
         dsoPorts[serverIndex] = portNum + 1;
         l2GroupPorts[serverIndex] = portNum + 2;
-        serverNames[serverIndex] = getServerName(groupIndex, serverIndex);
-        dataDirectoryPath[serverIndex] = getDataDirectoryPath(groupIndex, serverIndex);
+        String serverName = SERVER_NAME + (groupIndex * numOfServersPerGroup + serverIndex);
+        serverNames[serverIndex] = serverName;
+        dataDirectoryPath[serverIndex] = new File(temmDir, serverName + File.separator + "data").getAbsolutePath();
       }
       if (isProxyDsoPort()) {
         proxyDsoPorts = new int[numOfServersPerGroup];
@@ -186,30 +202,28 @@ public class ConfigHelper {
   }
 
   public int getDsoPort(final int groupIndex, final int serverIndex) {
-    Assert.assertTrue("groupIndex: " + groupIndex + " numOfGroups: " + this.numOfGroups,
-                      groupIndex >= 0 && groupIndex < this.numOfGroups);
-    Assert.assertTrue("serverIndex: " + serverIndex + " serverIndex: " + this.numOfServersPerGroup,
-                      serverIndex >= 0 && serverIndex < this.numOfServersPerGroup);
+    validateIndexes(groupIndex, serverIndex);
 
     return groupData[groupIndex].getDsoPort(serverIndex);
 
   }
 
-  public int getJmxPort(final int groupIndex, final int serverIndex) {
+  private void validateIndexes(final int groupIndex, final int serverIndex) {
     Assert.assertTrue("groupIndex: " + groupIndex + " numOfGroups: " + this.numOfGroups,
                       groupIndex >= 0 && groupIndex < this.numOfGroups);
     Assert.assertTrue("serverIndex: " + serverIndex + " serverIndex: " + this.numOfServersPerGroup,
                       serverIndex >= 0 && serverIndex < this.numOfServersPerGroup);
+  }
+
+  public int getJmxPort(final int groupIndex, final int serverIndex) {
+    validateIndexes(groupIndex, serverIndex);
 
     return groupData[groupIndex].getJmxPort(serverIndex);
 
   }
 
   public int getL2GroupPort(final int groupIndex, final int serverIndex) {
-    Assert.assertTrue("groupIndex: " + groupIndex + " numOfGroups: " + this.numOfGroups,
-                      groupIndex >= 0 && groupIndex < this.numOfGroups);
-    Assert.assertTrue("serverIndex: " + serverIndex + " serverIndex: " + this.numOfServersPerGroup,
-                      serverIndex >= 0 && serverIndex < this.numOfServersPerGroup);
+    validateIndexes(groupIndex, serverIndex);
 
     return groupData[groupIndex].getL2GroupPort(serverIndex);
 
@@ -220,7 +234,7 @@ public class ConfigHelper {
   }
 
   public String getServerName(final int groupIndex, final int serverIndex) {
-    return SERVER_NAME + (groupIndex * numOfServersPerGroup + serverIndex);
+    return groupData[groupIndex].getServerNames()[serverIndex];
   }
 
   public GroupsData getGroupData(final int groupIndex) {
@@ -236,7 +250,7 @@ public class ConfigHelper {
   }
 
   private String getDataDirectoryPath(final int groupIndex, final int serverIndex) {
-    return new File(temmDir, getServerName(groupIndex, serverIndex) + File.separator + "data").getAbsolutePath();
+    return groupData[groupIndex].getDataDirectoryPath(serverIndex);
   }
 
   private String getStatisticsDirectoryPath(int groupIndex, int serverIndex) {

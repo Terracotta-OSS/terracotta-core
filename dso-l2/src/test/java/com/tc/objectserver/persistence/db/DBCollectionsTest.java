@@ -13,9 +13,10 @@ import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.MapManagedObjectState;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
 import com.tc.objectserver.persistence.api.PersistentCollectionFactory;
+import com.tc.objectserver.storage.api.DBEnvironment;
+import com.tc.objectserver.storage.api.DBFactory;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
-import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 
@@ -34,11 +35,12 @@ public class DBCollectionsTest extends TCTestCase {
 
   static {
     ManagedObjectStateFactory.enableLegacyTypes();
+    ManagedObjectStateFactory.disableSingleton(true);
   }
 
   private DBPersistorImpl                persistor;
   private PersistenceTransactionProvider ptp;
-  private BerkeleyDBEnvironment          env;
+  private DBEnvironment                  env;
   private PersistentCollectionFactory    collectionsFactory;
   private TCCollectionsPersistor         collectionsPersistor;
   private static int                     dbHomeCounter = 0;
@@ -52,11 +54,12 @@ public class DBCollectionsTest extends TCTestCase {
     final File dbHome = newDBHome();
     final TCLogger logger = TCLogging.getLogger(getClass());
     final CustomSerializationAdapterFactory saf = new CustomSerializationAdapterFactory();
-    env = new BerkeleyDBEnvironment(true, dbHome);
+    env = DBFactory.getInstance().createEnvironment(false, dbHome);
     persistor = new DBPersistorImpl(logger, env, saf);
     ptp = persistor.getPersistenceTransactionProvider();
     collectionsFactory = persistor.getPersistentCollectionFactory();
     collectionsPersistor = persistor.getCollectionsPersistor();
+    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), this.persistor);
   }
 
   // XXX:: Check SleepycatSerializationTest if you want know why its done like this or ask Orion.
@@ -76,13 +79,13 @@ public class DBCollectionsTest extends TCTestCase {
 
   @Override
   public void tearDown() throws Exception {
+    this.persistor.close();
     this.persistor = null;
     this.ptp = null;
     this.env = null;
   }
 
-  public void testSleepycatPersistableMap() throws Exception {
-    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), this.persistor);
+  public void testPersistableMap() throws Exception {
     final ObjectID id = new ObjectID(1);
     final MapManagedObjectState state1 = (MapManagedObjectState) ManagedObjectStateFactory.getInstance()
         .createState(id, ObjectID.NULL_ID, "java.util.HashMap", new TestDNACursor());
@@ -97,31 +100,23 @@ public class DBCollectionsTest extends TCTestCase {
     tx.commit();
     equals(localMap, sMap);
 
-    tx = this.ptp.newTransaction();
     final MapManagedObjectState state2 = (MapManagedObjectState) ManagedObjectStateFactory.getInstance()
         .createState(new ObjectID(2), ObjectID.NULL_ID, "java.util.HashMap", new TestDNACursor());
     TCPersistableMap sMap2 = (TCPersistableMap) state2.getPersistentCollection();
-    tx.commit();
     equals(new HashMap(), sMap2);
 
-    tx = this.ptp.newTransaction();
     sMap2 = (TCPersistableMap) state1.getPersistentCollection();
-    tx.commit();
     equals(localMap, sMap2);
 
     System.err.println(" Adding more maps ....");
     addMoreMaps(state1);
 
     System.err.println(" Loading map again ....");
-    tx = this.ptp.newTransaction();
     sMap2 = (TCPersistableMap) state1.getPersistentCollection();
-    tx.commit();
     equals(localMap, sMap2);
 
     System.err.println(" Loading different map ....");
-    tx = this.ptp.newTransaction();
     final TCPersistableMap sMap3 = (TCPersistableMap) state1.getPersistentCollection();
-    tx.commit();
     equals(localMap, sMap3);
 
     addToMap(sMap, 2);
@@ -133,9 +128,7 @@ public class DBCollectionsTest extends TCTestCase {
     tx.commit();
     equals(localMap, sMap);
 
-    tx = this.ptp.newTransaction();
     sMap2 = (TCPersistableMap) state1.getPersistentCollection();
-    tx.commit();
     equals(localMap, sMap2);
 
     addAndRemoveFromMap(sMap);
@@ -147,9 +140,7 @@ public class DBCollectionsTest extends TCTestCase {
     tx.commit();
     equals(localMap, sMap);
 
-    tx = this.ptp.newTransaction();
     sMap2 = (TCPersistableMap) state1.getPersistentCollection();
-    tx.commit();
     equals(localMap, sMap2);
 
     addRemoveClearFromMap(sMap);
@@ -161,31 +152,20 @@ public class DBCollectionsTest extends TCTestCase {
     tx.commit();
     equals(localMap, sMap);
 
-    tx = this.ptp.newTransaction();
     sMap2 = (TCPersistableMap) state1.getPersistentCollection();
-    tx.commit();
     equals(localMap, sMap2);
 
-    tx = this.ptp.newTransaction();
     SortedSet<ObjectID> idsToDelete = new TreeSet<ObjectID>();
     idsToDelete.add(id);
     Assert.assertEquals(40, this.collectionsPersistor.deleteAllCollections(ptp, idsToDelete, idsToDelete));
-    tx.commit();
 
-    tx = this.ptp.newTransaction();
     sMap2 = (TCPersistableMap) state1.getPersistentCollection();
     sMap2.clear();
-    tx.commit();
 
-    tx = this.ptp.newTransaction();
     sMap2 = (TCPersistableMap) state1.getPersistentCollection();
-    tx.commit();
     equals(new HashMap(), sMap2);
 
-    tx = this.ptp.newTransaction();
     Assert.assertEquals(0, this.collectionsPersistor.deleteAllCollections(ptp, idsToDelete, idsToDelete));
-    tx.commit();
-
   }
 
   public void testTCPersistableMapSize() {

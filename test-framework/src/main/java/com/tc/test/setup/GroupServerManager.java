@@ -86,7 +86,10 @@ public class GroupServerManager {
       System.out.println("trying to setUp Proxy");
       for (int i = 0; i < groupData.getServerCount(); ++i) {
         proxyL2Managers[i] = new ProxyConnectManagerImpl(groupData.getL2GroupPort(i), groupData.getProxyL2GroupPort(i));
+        proxyL2Managers[i].setProxyWaitTime(this.testConfig.getL2Config().getProxyWaitTime());
+        proxyL2Managers[i].setProxyDownTime(this.testConfig.getL2Config().getProxyDownTime());
         proxyL2Managers[i].setupProxy();
+
       }
     }
     System.out.println("********");
@@ -127,14 +130,15 @@ public class GroupServerManager {
     }
   }
 
-  private ServerControl getServerControl(int dsoPort, int jmxPort, String serverName, List<String> aJvmArgs) {
+  private ServerControl getServerControl(int dsoPort, int jmxPort, String serverName, List<String> jvmArgs) {
     File workingDir = new File(this.tempDir, serverName);
     workingDir.mkdirs();
     File verboseGcOutputFile = new File(workingDir, "verboseGC.log");
-    TestBaseUtil.setupVerboseGC(aJvmArgs, verboseGcOutputFile);
-    TestBaseUtil.removeDuplicateJvmArgs(aJvmArgs);
+    TestBaseUtil.setupVerboseGC(jvmArgs, verboseGcOutputFile);
+    TestBaseUtil.setHeapSizeArgs(jvmArgs, testConfig.getL2Config().getMinHeap(), testConfig.getL2Config().getMaxHeap());
+    TestBaseUtil.removeDuplicateJvmArgs(jvmArgs);
     return new ExtraProcessServerControl(HOST, dsoPort, jmxPort, tcConfigFile.getAbsolutePath(), true, serverName,
-                                         aJvmArgs, javaHome, true, workingDir);
+                                         jvmArgs, javaHome, true, workingDir);
   }
 
   public void startAllServers() throws Exception {
@@ -380,18 +384,28 @@ public class GroupServerManager {
     }
   }
 
-  public List<DSOMBean> connectAllDsoMBeans() throws IOException {
+  public List<DSOMBean> connectAllDsoMBeans() {
     List<DSOMBean> mbeans = new ArrayList<DSOMBean>();
     for (int i = 0; i < serverControl.length; i++) {
-      mbeans.add(getDsoMBean(i));
+      try {
+        mbeans.add(getDsoMBean(i));
+      } catch (IOException e) {
+        System.out.println("XXXXXXX could not connect to server[" + serverControl[i].getDsoPort() + "], jmxPort:"
+                           + serverControl[i].getAdminPort());
+      }
     }
     return mbeans;
   }
 
-  public List<DGCMBean> connectAllLocalDGCMBeans() throws IOException {
+  public List<DGCMBean> connectAllLocalDGCMBeans() {
     List<DGCMBean> mbeans = new ArrayList<DGCMBean>();
     for (int i = 0; i < serverControl.length; i++) {
-      mbeans.add(getLocalDGCMBean(i));
+      try {
+        mbeans.add(getLocalDGCMBean(i));
+      } catch (IOException e) {
+        System.out.println("XXXXXXX could not connect to server[" + serverControl[i].getDsoPort() + "], jmxPort:"
+                           + serverControl[i].getAdminPort());
+      }
     }
     return mbeans;
   }
@@ -462,7 +476,7 @@ public class GroupServerManager {
     lastCrashedIndex = activeIndex;
     resetActiveIndex();
     debugPrintln("***** lastCrashedIndex[" + lastCrashedIndex + "] ");
-    if (expectedRunningServerCount() > 0) {
+    if (expectedRunningServerCount() > 0 && testConfig.getCrashConfig().shouldCleanDbOnCrash()) {
       cleanupServerDB(lastCrashedIndex);
     }
   }
@@ -499,7 +513,7 @@ public class GroupServerManager {
     debugPrintln("***** Done sleeping after crashing passive server ");
 
     lastCrashedIndex = passiveToCrash;
-    if (groupData.getServerCount() > 1) {
+    if (groupData.getServerCount() > 1 && testConfig.getCrashConfig().shouldCleanDbOnCrash()) {
       cleanupServerDB(lastCrashedIndex);
     }
     debugPrintln("***** lastCrashedIndex[" + lastCrashedIndex + "] ");
@@ -691,5 +705,12 @@ public class GroupServerManager {
 
   public void stopCrasher() {
     this.serverCrasher.stop();
+  }
+
+  public void stopDsoProxy() {
+    for (ProxyConnectManager proxy : this.proxyL1Managers) {
+      proxy.closeClientConnections();
+    }
+
   }
 }

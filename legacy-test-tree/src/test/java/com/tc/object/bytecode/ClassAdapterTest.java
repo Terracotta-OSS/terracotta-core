@@ -20,8 +20,8 @@ import com.tc.object.locks.DsoLiteralLockID;
 import com.tc.object.locks.DsoLockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.MockClientLockManager;
-import com.tc.object.locks.StringLockID;
 import com.tc.object.locks.MockClientLockManager.Begin;
+import com.tc.object.locks.StringLockID;
 import com.tc.object.tx.MockTransactionManager;
 import com.tctest.ClassAdapterTestTarget;
 import com.tctest.ClassAdapterTestTargetBase;
@@ -43,19 +43,29 @@ import javax.swing.DefaultListModel;
  * Test to see if an adapted class has all of the adaptations we expect.
  */
 public class ClassAdapterTest extends ClassAdapterTestBase {
-  private static final Class[]    WITH_ARGS_PARAMS = new Class[] { Integer.TYPE, String.class };
-  private static final Object[]   WITH_ARGS_ARGS   = new Object[] { new Integer(1), "test string" };
 
-  private DSOClientConfigHelper   config;
-  private LockDefinition          lockDefinition;
-  private IsolationClassLoader    classLoader;
-  private TestClientObjectManager testClientObjectManager;
-  private MockTransactionManager  testTransactionManager;
+  static {
+    ManagerUtil.enable();
+  }
+
+  private static final Class[]           WITH_ARGS_PARAMS = new Class[] { Integer.TYPE, String.class };
+  private static final Object[]          WITH_ARGS_ARGS   = new Object[] { new Integer(1), "test string" };
+
+  private DSOClientConfigHelper          config;
+  private LockDefinition                 lockDefinition;
+  private IsolationClassLoader           classLoader;
+  private TestClientObjectManager        testClientObjectManager;
+  private MockTransactionManager         testTransactionManager;
   private MockRemoteSearchRequestManager testRemoteSearchRequestManager;
-  private MockClientLockManager   testLockManager;
-  private String                  targetClassName  = ClassAdapterTestTarget.class.getName();        // "com.tctest.ClassAdapterTestTarget";
-  private ClassLoader             origThreadContextClassLoader;
+  private MockClientLockManager          testLockManager;
+  private final String                   targetClassName  = ClassAdapterTestTarget.class.getName();        // "com.tctest.ClassAdapterTestTarget";
+  private ClassLoader                    origThreadContextClassLoader;
 
+  public ClassAdapterTest() {
+    disableTest();
+  }
+
+  @Override
   protected void setUp() throws Exception {
     System.getProperties().remove(ClassAdapterTestTarget.KEY);
     initializeConfig();
@@ -63,7 +73,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     this.testTransactionManager = new MockTransactionManager();
     this.testLockManager = new MockClientLockManager();
     this.testRemoteSearchRequestManager = new MockRemoteSearchRequestManager();
-    
+
     initClassLoader();
     this.origThreadContextClassLoader = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(this.classLoader);
@@ -84,7 +94,8 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     testClientObjectManager.setIsManaged(false);
 
     try {
-      this.classLoader = new IsolationClassLoader(config, testClientObjectManager, testTransactionManager, testLockManager, testRemoteSearchRequestManager);
+      this.classLoader = new IsolationClassLoader(config, testClientObjectManager, testTransactionManager,
+                                                  testLockManager, testRemoteSearchRequestManager);
       this.classLoader.init();
     } finally {
       testClientObjectManager.setIsManaged(isManaged);
@@ -97,6 +108,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     m.invoke(null, new Object[] { testClientObjectManager });
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
     this.config = null;
@@ -1354,13 +1366,14 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     Object result = m.invoke(o, new Object[0]);
     assertEquals("some return value & text added by first, second and third class adapter", result);
   }
-  
+
   static class CustomClassAdapter1 extends ClassAdapter {
     public static final ClassAdapterFactory FACTORY = new ClassAdapterFactory() {
-      public ClassAdapter create(ClassVisitor classvisitor, ClassLoader classloader) {
-        return new CustomClassAdapter1(classvisitor);
-      }
-    };
+                                                      public ClassAdapter create(ClassVisitor classvisitor,
+                                                                                 ClassLoader classloader) {
+                                                        return new CustomClassAdapter1(classvisitor);
+                                                      }
+                                                    };
 
     public CustomClassAdapter1(ClassVisitor visitor) {
       super(visitor);
@@ -1374,7 +1387,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
         return super.visitMethod(access, name, desc, signature, exceptions);
       }
     }
-    
+
     static class CustomMethodAdapter1 extends com.tc.asm.MethodAdapter implements Opcodes {
       public CustomMethodAdapter1(MethodVisitor mv) {
         super(mv);
@@ -1389,13 +1402,14 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
       }
     }
   }
-  
+
   static class CustomClassAdapter2 extends ClassAdapter {
     public static final ClassAdapterFactory FACTORY = new ClassAdapterFactory() {
-      public ClassAdapter create(ClassVisitor classvisitor, ClassLoader classloader) {
-        return new CustomClassAdapter2(classvisitor);
-      }
-    };
+                                                      public ClassAdapter create(ClassVisitor classvisitor,
+                                                                                 ClassLoader classloader) {
+                                                        return new CustomClassAdapter2(classvisitor);
+                                                      }
+                                                    };
 
     public CustomClassAdapter2(ClassVisitor visitor) {
       super(visitor);
@@ -1409,7 +1423,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
         return super.visitMethod(access, name, desc, signature, exceptions);
       }
     }
-    
+
     static class CustomMethodAdapter2 extends com.tc.asm.MethodAdapter implements Opcodes {
       public CustomMethodAdapter2(MethodVisitor mv) {
         super(mv);
@@ -1424,13 +1438,14 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
       }
     }
   }
-  
+
   static class CustomClassAdapter3 extends ClassAdapter {
     public static final ClassAdapterFactory FACTORY = new ClassAdapterFactory() {
-      public ClassAdapter create(ClassVisitor classvisitor, ClassLoader classloader) {
-        return new CustomClassAdapter3(classvisitor);
-      }
-    };
+                                                      public ClassAdapter create(ClassVisitor classvisitor,
+                                                                                 ClassLoader classloader) {
+                                                        return new CustomClassAdapter3(classvisitor);
+                                                      }
+                                                    };
 
     public CustomClassAdapter3(ClassVisitor visitor) {
       super(visitor);
@@ -1444,7 +1459,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
         return super.visitMethod(access, name, desc, signature, exceptions);
       }
     }
-    
+
     static class CustomMethodAdapter3 extends com.tc.asm.MethodAdapter implements Opcodes {
       public CustomMethodAdapter3(MethodVisitor mv) {
         super(mv);
@@ -1558,8 +1573,8 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
   }
 
   private void assertAutolockConditionsPostInvocation(int expectedTransactionCount) {
-    assertTrue("Transaction count " + getLockCount() + " should be greater than or equal to"
-               + " expected autolocks: " + expectedTransactionCount, getLockCount() >= expectedTransactionCount);
+    assertTrue("Transaction count " + getLockCount() + " should be greater than or equal to" + " expected autolocks: "
+               + expectedTransactionCount, getLockCount() >= expectedTransactionCount);
     assertAutolockCount(expectedTransactionCount);
     assertLockCount(expectedTransactionCount);
     assertNoAutolockLiteral();
@@ -1570,9 +1585,9 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
   }
 
   private void assertNamedLockConditionsPostInvocation(int expectedTransactionCount, LockDefinition[] lockDefs) {
-    for (int i = 0; i < lockDefs.length; i++) {
-      assertTrue(checkForLockName(lockDefs[i].getLockName(), lockDefs[i].getLockLevelAsInt()));
-      assertTrue(checkForLock(lockDefs[i]));
+    for (LockDefinition lockDef : lockDefs) {
+      assertTrue(checkForLockName(lockDef.getLockName(), lockDef.getLockLevelAsInt()));
+      assertTrue(checkForLock(lockDef));
     }
     assertLockCount(expectedTransactionCount);
   }
@@ -1678,7 +1693,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
       return (lock.lock instanceof DsoLiteralLockID);
     } else {
       return (new StringLockID("^" + lockName)).equals(lock.lock);
-    }    
+    }
   }
 
   /**

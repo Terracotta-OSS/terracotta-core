@@ -61,8 +61,6 @@ public class TestConfigObject {
   private static final String     LINKED_CHILD_PROCESS_CLASSPATH   = DYNAMIC_PROPERTIES_PREFIX
                                                                      + "linked-child-process-classpath";
 
-  private static final String     BOOT_JAR_NORMAL                  = DYNAMIC_PROPERTIES_PREFIX + "bootjars.normal";
-
   private static final String     AVAILABLE_VARIANTS_PREFIX        = DYNAMIC_PROPERTIES_PREFIX + "variants.available.";
   private static final String     VARIANT_LIBRARIES_PREFIX         = DYNAMIC_PROPERTIES_PREFIX + "libraries.variants.";
   private static final String     SELECTED_VARIANT_PREFIX          = DYNAMIC_PROPERTIES_PREFIX + "variants.selected.";
@@ -83,9 +81,6 @@ public class TestConfigObject {
                                                                      + "appserver.minor-version";
 
   private static final String     APP_SERVER_SPECIFICATION         = STATIC_PROPERTIES_PREFIX + "appserver";
-
-  private static final String     TRANSPARENT_TESTS_MODE           = STATIC_PROPERTIES_PREFIX
-                                                                     + "transparent-tests.mode";
 
   private static final String     SYSTEM_PROPERTIES_RESOURCE_NAME  = "/test-system-properties.properties";
 
@@ -381,13 +376,6 @@ public class TestConfigObject {
     return installDir;
   }
 
-  public String normalBootJar() {
-    String out = this.properties.getProperty(BOOT_JAR_NORMAL);
-    Assert.assertNotBlank(out);
-    assertFileExists(out);
-    return out;
-  }
-
   public String extraClassPathForAppServer() {
     return extraClassPathForAppServer;
   }
@@ -407,16 +395,7 @@ public class TestConfigObject {
     return Integer.parseInt(getProperty(JUNIT_TEST_TIMEOUT_INSECONDS, "900"));
   }
 
-  public static final String TRANSPARENT_TESTS_MODE_NORMAL         = "normal";
-  public static final String TRANSPARENT_TESTS_MODE_CRASH          = "crash";
-  public static final String TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE = "active-passive";
-  public static final String TRANSPARENT_TESTS_MODE_ACTIVE_ACTIVE  = "active-active";
-
-  private static File        baseDir;
-
-  public String transparentTestsMode() {
-    return getProperty(TRANSPARENT_TESTS_MODE, TRANSPARENT_TESTS_MODE_NORMAL);
-  }
+  private static File baseDir;
 
   private void assertValidClasspath(String out) {
     String[] pathElements = out.split(File.pathSeparator);
@@ -424,11 +403,6 @@ public class TestConfigObject {
       Assert.assertTrue("Path element is non-existent: " + pathElement, new File(pathElement).exists());
 
     }
-  }
-
-  private void assertFileExists(String out) {
-    File file = new File(out);
-    Assert.assertTrue("not a file: " + out, file.isFile());
   }
 
   public boolean isSpringTest() {

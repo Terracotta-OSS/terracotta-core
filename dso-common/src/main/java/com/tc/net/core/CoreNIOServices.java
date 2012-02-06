@@ -196,12 +196,10 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     if (workerCommMgr == null) { return; }
 
     readerComm.unregister(channel);
-    synchronized (managedConnectionsMap) {
-      final CoreNIOServices workerComm = workerCommMgr.getNextWorkerComm();
-      connection.setCommWorker(workerComm);
-      workerComm.addConnection(connection, addWeightBy);
-      workerComm.requestReadWriteInterest(connection, channel);
-    }
+    final CoreNIOServices workerComm = workerCommMgr.getNextWorkerComm();
+    connection.setCommWorker(workerComm);
+    workerComm.addConnection(connection, addWeightBy);
+    workerComm.requestReadWriteInterest(connection, channel);
   }
 
   private void addConnection(TCConnectionImpl connection, int initialWeight) {
@@ -868,8 +866,8 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
    */
   private static class NIOWorkaroundsTemp {
     /**
-     * Workaround for select() throwing IOException("Bad file number") in Solaris
-     * Sun bug 6994017 looks related -- http://wesunsolve.net/bugid/id/6994017
+     * Workaround for select() throwing IOException("Bad file number") in Solaris Sun bug 6994017 looks related --
+     * http://wesunsolve.net/bugid/id/6994017
      */
     private static boolean solarisSelectWorkaround(IOException ioe) {
       if (Os.isSolaris()) {

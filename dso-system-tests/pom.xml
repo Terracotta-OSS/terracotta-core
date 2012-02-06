@@ -25,7 +25,6 @@
     <skip.deploy>true</skip.deploy>
     <skip.findbugs>true</skip.findbugs>
     <tc.tests.info.junit-test-timeout-inseconds>1800</tc.tests.info.junit-test-timeout-inseconds>
-    <tc.bootclasspath>-Xbootclasspath/p:${tc.tests.info.bootjars.normal}</tc.bootclasspath>
   </properties>
   
   <dependencies>
@@ -149,36 +148,5 @@
       <scope>test</scope>
     </dependency>   
   </dependencies>
-   
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>1.2</version>
-        <inherited>false</inherited>
-        <executions>
-          <execution>
-            <id>create-bootjar</id>
-            <phase>process-test-resources</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <executable>${java.home}/bin/java</executable>
-              <arguments>
-                <argument>-Dcom.tc.l1.modules.repositories=${localMavenRepository}</argument>
-                <argument>-cp</argument>
-                <classpath/>
-                <argument>com.tc.object.tools.BootJarTool</argument>
-                <argument>-o</argument>
-                <argument>${tc.tests.info.bootjars.normal}</argument>
-              </arguments>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>  
    
 </project>

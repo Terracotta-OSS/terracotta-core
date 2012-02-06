@@ -10,22 +10,25 @@ import java.util.ArrayList;
  * off heap enabled : false <br>
  * max off heap data size: 128M <br>
  * persistence : temporary swap <br>
- * client reconnect window : 120 secs
+ * client reconnect window : 25 secs
  * 
  * @author rsingh
- * 
  */
 public class L2Config {
 
-  private boolean dgcEnabled = false;
-  private int dgcIntervalInSec = 3600;
-  private boolean offHeapEnabled = false;
-  private PersistenceMode persistenceMode = PersistenceMode.TEMPORARY_SWAP_ONLY;
-  private int clientReconnectWindow = 120;
-  private int maxOffHeapDataSize = 128;
-  private ArrayList<String> extraServerJvmArgs;
-  private boolean isProxyL2groupPorts = false;
-  private boolean isProxyDsoPorts = false;
+  private boolean                 dgcEnabled            = false;
+  private int                     dgcIntervalInSec      = 3600;
+  private boolean                 offHeapEnabled        = false;
+  private PersistenceMode         persistenceMode       = PersistenceMode.TEMPORARY_SWAP_ONLY;
+  private int                     clientReconnectWindow = 15;
+  private int                     maxOffHeapDataSize    = 128;
+  private final ArrayList<String> extraServerJvmArgs;
+  private boolean                 isProxyL2groupPorts   = false;
+  private boolean                 isProxyDsoPorts       = false;
+  private int                     minHeap               = 256;
+  private int                     maxHeap               = 256;
+  private int                     proxyWaitTime         = 20 * 1000;
+  private int                     proxyDownTime         = 100;
 
   /**
    * Creates a l2 config with these defaults <br>
@@ -42,6 +45,7 @@ public class L2Config {
 
   /**
    * Is DGC enabled
+   * 
    * @return true if dgc is enabled
    */
   public boolean isDgcEnabled() {
@@ -50,6 +54,7 @@ public class L2Config {
 
   /**
    * enable/disable dgc
+   * 
    * @param dgcEnabled true if dgc to be enabled. false otherwise
    */
   public void setDgcEnabled(boolean dgcEnabled) {
@@ -72,6 +77,7 @@ public class L2Config {
 
   /**
    * Is off heap enabled
+   * 
    * @return : true if off heap is enabled
    */
   public boolean isOffHeapEnabled() {
@@ -80,6 +86,7 @@ public class L2Config {
 
   /**
    * Enabled/Disable off heap
+   * 
    * @param offHeapEnabled : true if the off heap is to be enabled, false otherwise
    */
   public void setOffHeapEnabled(boolean offHeapEnabled) {
@@ -95,7 +102,8 @@ public class L2Config {
 
   /**
    * Sets the persistence mode for each L2
-   * @param persistenceMode persistence Mode 
+   * 
+   * @param persistenceMode persistence Mode
    */
   public void setPersistenceMode(PersistenceMode persistenceMode) {
     this.persistenceMode = persistenceMode;
@@ -117,6 +125,7 @@ public class L2Config {
 
   /**
    * max off heap data size in MBs
+   * 
    * @return
    */
   public int getMaxOffHeapDataSize() {
@@ -125,6 +134,7 @@ public class L2Config {
 
   /**
    * Sets max off heap data size
+   * 
    * @param maxOffHeapDataSize offheap data size in MB
    */
   public void setMaxOffHeapDataSize(int maxOffHeapDataSize) {
@@ -137,9 +147,10 @@ public class L2Config {
   public ArrayList<String> getExtraServerJvmArgs() {
     return extraServerJvmArgs;
   }
-  
+
   /**
    * Adds a jvm argumnet for each server
+   * 
    * @param arg jvm argument
    */
   public void addExtraServerJvmArg(String arg) {
@@ -152,9 +163,10 @@ public class L2Config {
   public boolean isProxyL2groupPorts() {
     return isProxyL2groupPorts;
   }
-  
+
   /**
    * Enable/Disable l2 group proxy between two mirror groups
+   * 
    * @param isProxyL2groupPorts
    */
   public void setProxyL2groupPorts(boolean isProxyL2groupPorts) {
@@ -163,6 +175,7 @@ public class L2Config {
 
   /**
    * is L2 started with a proxy port in bertween the server and client
+   * 
    * @return
    */
   public boolean isProxyDsoPorts() {
@@ -171,9 +184,63 @@ public class L2Config {
 
   /**
    * Enable/Disable l2 proxy for dso port
+   * 
    * @param isProxyDsoPorts
    */
   public void setProxyDsoPorts(boolean isProxyDsoPorts) {
     this.isProxyDsoPorts = isProxyDsoPorts;
   }
+
+  /**
+   * Get the -Xms size to pass to L2s
+   * 
+   * @return Minimum heap size
+   */
+  public int getMinHeap() {
+    return minHeap;
+  }
+
+  /**
+   * Set the min heap size
+   * 
+   * @param minHeap minimum heap size
+   */
+  public void setMinHeap(int minHeap) {
+    this.minHeap = minHeap;
+  }
+
+  /**
+   * Get the -Xmx size to pass to L2s
+   * 
+   * @return Maximum heap size
+   */
+  public int getMaxHeap() {
+    return maxHeap;
+  }
+
+  /**
+   * Set the max heap size
+   * 
+   * @param maxHeap maximum heap size
+   */
+  public void setMaxHeap(int maxHeap) {
+    this.maxHeap = maxHeap;
+  }
+
+  public int getProxyWaitTime() {
+    return proxyWaitTime;
+  }
+
+  public int getProxyDownTime() {
+    return proxyDownTime;
+  }
+
+  public void setProxyWaitTime(int proxyWaitTime) {
+    this.proxyWaitTime = proxyWaitTime;
+  }
+
+  public void setProxyDownTime(int proxyDownTime) {
+    this.proxyDownTime = proxyDownTime;
+  }
+
 }

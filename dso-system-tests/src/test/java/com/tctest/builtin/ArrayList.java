@@ -23,6 +23,10 @@ public class ArrayList<E> implements List<E> {
     data = new java.util.ArrayList<E>(size);
   }
 
+  public ArrayList(List<E> l) {
+    data = new java.util.ArrayList(l);
+  }
+
   public int size() {
     return data.size();
   }
@@ -100,7 +104,13 @@ public class ArrayList<E> implements List<E> {
   }
 
   public boolean addAll(Collection<? extends E> c) {
-    throw new UnsupportedOperationException();
+    boolean rv = false;
+    for (E o : c) {
+      if (add(o)) {
+        rv = true;
+      }
+    }
+    return rv;
   }
 
   public boolean addAll(int index, Collection<? extends E> c) {
@@ -130,7 +140,9 @@ public class ArrayList<E> implements List<E> {
   }
 
   public void add(int index, E element) {
-    throw new UnsupportedOperationException();
+    ManagerUtil.checkWriteAccess(this);
+    ManagerUtil.logicalInvoke(this, SerializationUtil.ADD_AT_SIGNATURE, new Object[] { index, element });
+    data.add(index, element);
   }
 
   public int indexOf(Object o) {

@@ -47,20 +47,18 @@
     <tc.config>-Dtc.config=tc-config.xml</tc.config>
     <tc.base-dir>${project.build.directory}</tc.base-dir>
     <com.tc.l1.modules.repositories>${localMavenRepository}</com.tc.l1.modules.repositories>
-    <tc.tests.configuration.transparent-tests.mode>normal</tc.tests.configuration.transparent-tests.mode>
     <tc.tests.info.bootjars.normal>${basedir}/../target/dso-boot.jar</tc.tests.info.bootjars.normal>
     <tc.tests.info.property-files>${tc.tests.configuration.properties.file}</tc.tests.info.property-files>
     <tc.tests.info.temp-root>${project.build.directory}/temp</tc.tests.info.temp-root>
     <tc.tests.info.linked-child-process-classpath>${localMavenRepository}/org/terracotta/linked-child-process/${linked-child-process.version}/linked-child-process-${linked-child-process.version}.jar</tc.tests.info.linked-child-process-classpath>
     <tc.tests.info.junit-test-timeout-inseconds>1800</tc.tests.info.junit-test-timeout-inseconds>
     <tc.tests.info.l2.startup.mode>internal</tc.tests.info.l2.startup.mode>
-    <tc.bootclasspath/>
     <surefire.min-memory>64m</surefire.min-memory>
     <surefire.max-memory>512m</surefire.max-memory>
     <surefire.additional-jvm-args/>
     <should_skip_tests>true</should_skip_tests>
     <surefire.jvm.mode>-server</surefire.jvm.mode>
-    <surefire.argLine>${surefire.jvm.mode} ${tc.bootclasspath}
+    <surefire.argLine>${surefire.jvm.mode}
       -Xms${surefire.min-memory}
       -Xmx${surefire.max-memory}
       -XX:+HeapDumpOnOutOfMemoryError

@@ -22,6 +22,7 @@ import com.tc.test.setup.GroupsData;
 import com.tc.test.setup.TestJMXServerManager;
 import com.tc.test.setup.TestServerManager;
 import com.tc.util.PortChooser;
+import com.tc.util.runtime.Vm;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -50,7 +51,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   protected final File                tempDir;
   protected File                      javaHome;
   private TestClientManager           clientRunner;
-  private TestJMXServerManager        jmxServerManager;
+  protected TestJMXServerManager      jmxServerManager;
   private Thread                      duringRunningClusterThread;
   private static final String         log4jPrefix          = "log4j.logger.";
   private final Map<String, LogLevel> tcLoggingConfigs     = new HashMap<String, LogLevel>();
@@ -64,6 +65,9 @@ public abstract class AbstractTestBase extends TCTestCase {
       tcConfigFile = getTempFile("tc-config.xml");
     } catch (Exception e) {
       throw new RuntimeException(e);
+    }
+    if (Vm.isJRockit()) {
+      testConfig.getClientConfig().addExtraClientJvmArg("-XXfullSystemGC");
     }
   }
 
@@ -82,7 +86,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   @Override
   @Before
   public void setUp() throws Exception {
-    tcTestCaseSetup();
+    tcTestCaseSetup(true);
 
     if (testWillRun) {
       try {
@@ -383,7 +387,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   }
 
   /**
-   * Disables the test if the tota physical memory on the machine is lower that the specified value
+   * Disables the test if the total physical memory on the machine is lower that the specified value
    * 
    * @param physicalMemory memory in gigs below which the test should not run on the machine
    */
@@ -403,4 +407,13 @@ public abstract class AbstractTestBase extends TCTestCase {
     }
 
   }
+
+  public File getTcConfigFile() {
+    return tcConfigFile;
+  }
+
+  protected void stopClient(final int index) {
+    this.clientRunner.stopClient(index);
+  }
+
 }

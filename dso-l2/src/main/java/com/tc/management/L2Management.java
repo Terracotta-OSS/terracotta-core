@@ -4,6 +4,9 @@
  */
 package com.tc.management;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+
 import com.sun.jmx.remote.generic.DefaultConfig;
 import com.sun.jmx.remote.generic.ServerSynchroMessageConnection;
 import com.sun.jmx.remote.generic.SynchroCallback;
@@ -14,7 +17,6 @@ import com.tc.async.api.Sink;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.CustomerLogging;
-import com.tc.logging.JDKLogging;
 import com.tc.logging.JMXLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -39,7 +41,6 @@ import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
@@ -72,6 +73,13 @@ public class L2Management extends TerracottaManagement {
   protected final InetAddress                 bindAddress;
   private final Sink                          remoteEventsSink;
 
+  static {
+    // LKC-2990 and LKC-3171: Remove the JMX generic optional logging
+    Logger.getLogger("javax.management.remote.generic").setLevel(Level.OFF);
+    // DEV-1304: ClientCommunicatorAdmin uses a different logger
+    Logger.getLogger("javax.management.remote.misc").setLevel(Level.OFF);
+  }
+
   public L2Management(TCServerInfoMBean tcServerInfo, LockStatisticsMonitorMBean lockStatistics,
                       StatisticsAgentSubSystem statisticsAgentSubSystem, StatisticsGatewayMBeanImpl statisticsGateway,
                       L2ConfigurationSetupManager configurationSetupManager, TCDumper tcDumper, InetAddress bindAddr,
@@ -94,12 +102,6 @@ public class L2Management extends TerracottaManagement {
                                    "Unable to construct one of the L2 MBeans: this is a programming error in one of those beans",
                                    ncmbe);
     }
-
-    // LKC-2990 and LKC-3171: Remove the JMX generic optional logging
-    JDKLogging.setLevel("javax.management.remote.generic", Level.OFF);
-
-    // DEV-1304: ClientCommunicatorAdmin uses a different logger
-    JDKLogging.setLevel("javax.management.remote.misc", Level.OFF);
 
     final List jmxServers = MBeanServerFactory.findMBeanServer(null);
     if (jmxServers != null && !jmxServers.isEmpty()) {

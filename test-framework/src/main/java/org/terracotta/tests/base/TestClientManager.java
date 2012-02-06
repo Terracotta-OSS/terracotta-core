@@ -7,8 +7,10 @@ import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.lcp.LinkedJavaProcess;
 import com.tc.process.Exec;
 import com.tc.process.Exec.Result;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.test.config.model.TestConfig;
 import com.tc.text.Banner;
+import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -16,23 +18,27 @@ import java.util.List;
 
 import javax.management.remote.jmxmp.JMXMPConnector;
 
+import junit.framework.Assert;
+
 public class TestClientManager {
   /**
    * If set to true allows debugging of java applications
    */
-  private static final boolean   DEBUG_CLIENTS = Boolean.getBoolean("standalone.client.debug");
+  private static final boolean          DEBUG_CLIENTS  = Boolean.getBoolean("standalone.client.debug");
 
   /**
    * arguments to be passed to the clients. e.g mvn -Psystem-tests integration-test -Dtest=MyTest
    * -DclientJVMArgs="-DsomeProp=value1 -DsomeProp2=value2" In the spawned clients, these will be passed as JVMArgs
    * System.getProperty("someProp"); => will return value1 System.getProperty("someProp2"); => will return value2
    */
-  public static String           CLIENT_ARGS   = "clientJVMArgs";
+  public static final String            CLIENT_ARGS    = "clientJVMArgs";
 
-  private volatile int           clientIndex   = 1;
-  private final File             tempDir;
-  private final AbstractTestBase testBase;
-  private final TestConfig       testConfig;
+  private volatile int                  clientIndex    = 1;
+  private final File                    tempDir;
+  private final AbstractTestBase        testBase;
+  private final TestConfig              testConfig;
+  private final SetOnceFlag             stopped        = new SetOnceFlag();
+  private final List<LinkedJavaProcess> runningClients = new ArrayList<LinkedJavaProcess>();
 
   public TestClientManager(final File tempDir, final AbstractTestBase testBase, final TestConfig testConfig) {
     this.testConfig = testConfig;
@@ -50,7 +56,9 @@ public class TestClientManager {
    */
   protected void runClient(Class<? extends Runnable> client, boolean withStandaloneJar, String clientName,
                            List<String> extraClientMainArgs) throws Throwable {
-
+    synchronized (TestClientManager.class) {
+      if (stopped.isSet()) { return; }
+    }
     ArrayList<String> jvmArgs = new ArrayList<String>();
     if (DEBUG_CLIENTS) {
       int debugPort = 9000 + (clientIndex++);
@@ -58,8 +66,8 @@ public class TestClientManager {
       Banner.infoBanner("waiting for debugger to attach on port " + debugPort);
     }
 
-    File licenseKey = new File("test-classes/terracotta-license.key");
-    jvmArgs.add("-Dcom.tc.productkey.path=" + licenseKey.getAbsolutePath());
+    File licenseKey = new File("test-classes" + File.separator + "terracotta-license.key");
+    jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.PRODUCTKEY_PATH + "=" + licenseKey.getAbsolutePath());
 
     // do this last
     configureClientExtraJVMArgs(jvmArgs);
@@ -113,11 +121,24 @@ public class TestClientManager {
     clientProcess.setDirectory(workDir);
 
     testBase.preStart(workDir);
+    synchronized (TestClientManager.class) {
+      if (stopped.isSet()) { return; }
+      runningClients.add(clientProcess);
+      clientProcess.start();
+    }
 
-    clientProcess.start();
     Result result = Exec.execute(clientProcess, clientProcess.getCommand(), output.getAbsolutePath(), null, workDir);
-
-    testBase.evaluateClientOutput(client.getName(), result.getExitCode(), output);
+    synchronized (TestClientManager.class) {
+      if (stopped.isSet()) { return; }
+      runningClients.remove(clientProcess);
+      try {
+        testBase.evaluateClientOutput(client.getName(), result.getExitCode(), output);
+      } catch (Throwable t) {
+        System.out.println("*************Got excpetion in One of the Clients Killing other clients");
+        stopAllClients();
+        throw new AssertionError(t);
+      }
+    }
   }
 
   private String addExtraJarsToClassPath(String classPath) {
@@ -144,6 +165,20 @@ public class TestClientManager {
 
   private void configureClientExtraJVMArgs(List<String> jvmArgs) {
     jvmArgs.addAll(testConfig.getClientConfig().getExtraClientJvmArgs());
+  }
+
+  private synchronized void stopAllClients() {
+    if (stopped.attemptSet()) {
+      for (LinkedJavaProcess client : runningClients) {
+        client.destroy();
+      }
+    }
+  }
+
+  synchronized void stopClient(final int index) {
+    Assert.assertTrue("index: " + index + " no of running clients: " + this.runningClients.size(),
+                      index < this.runningClients.size());
+    this.runningClients.get(index).destroy();
   }
 
 }
