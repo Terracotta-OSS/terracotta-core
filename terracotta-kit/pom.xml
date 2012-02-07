@@ -336,8 +336,8 @@
                     <resource>
                       <runIf>{{ "${no.extra}" != "true" }}</runIf>
                       <targetPath>${rootDir}/ehcache/licenses</targetPath>
-                      <file>${ehcache-core.tclicense.url}</file-->
-                    </resource>            
+                      <file>${ehcache-core.tclicense.url}</file>
+                    </resource-->            
                     
                     <!-- ehcache terracotta -->
                     <resource>
