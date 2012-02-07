@@ -3,6 +3,8 @@
  */
 package com.tc.properties;
 
+import org.apache.commons.io.IOUtils;
+
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.properties.TCPropertyStore;
@@ -203,13 +205,17 @@ public class TCPropertiesImpl implements TCProperties {
   }
 
   private void loadDefaults(String propFile) {
-    InputStream in = TCPropertiesImpl.class.getResourceAsStream(propFile);
-    if (in == null) { throw new AssertionError("TC Property file " + propFile + " not Found"); }
+    URL url = TCPropertiesImpl.class.getResource(propFile);
+    if (url == null) { throw new AssertionError("TC Property file " + propFile + " not Found"); }
+    InputStream in = null;
     try {
+      in = url.openStream();
       logger.info("Loading default properties from " + propFile);
       props.load(in);
     } catch (IOException e) {
       throw new AssertionError(e);
+    } finally {
+      IOUtils.closeQuietly(in);
     }
   }
 

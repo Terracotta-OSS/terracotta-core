@@ -56,13 +56,6 @@
       <artifactId>tcstats</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>simulator</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
     
     <dependency>
       <groupId>org.mortbay.jetty</groupId>
@@ -146,13 +139,6 @@
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>dso-l2</artifactId>
-      <version>${project.version}</version>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>simulator</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>

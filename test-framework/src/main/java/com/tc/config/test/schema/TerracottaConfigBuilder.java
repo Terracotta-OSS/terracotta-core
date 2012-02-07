@@ -53,21 +53,8 @@ public class TerracottaConfigBuilder extends BaseConfigBuilder {
     return (L2SConfigBuilder) getRawProperty("servers");
   }
 
-  public void setApplication(String value) {
-    setProperty("application", value);
-  }
-
-  public void setApplication(ApplicationConfigBuilder value) {
-    setProperty("application", value);
-  }
-
   public void setTcProperties(TcPropertiesBuilder value) {
     setProperty("tc-properties", value);
-  }
-
-  public ApplicationConfigBuilder getApplication() {
-    if (!isSet("application")) setApplication(ApplicationConfigBuilder.newMinimalInstance());
-    return (ApplicationConfigBuilder) getRawProperty("application");
   }
 
   public static final String[] ALL_PROPERTIES = new String[] { "system", "clients", "servers", "application",

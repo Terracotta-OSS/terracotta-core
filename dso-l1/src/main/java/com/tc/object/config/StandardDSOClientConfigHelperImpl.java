@@ -21,7 +21,6 @@ import com.tc.backport175.bytecode.AnnotationElement.Annotation;
 import com.tc.bundles.Module;
 import com.tc.bundles.Modules;
 import com.tc.config.schema.CommonL1Config;
-import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.injection.DsoClusterInjectionInstrumentation;
@@ -63,7 +62,6 @@ import com.tc.util.UUID;
 import com.tc.util.runtime.Vm;
 import com.terracottatech.config.L1ReconnectPropertiesDocument;
 
-import java.io.File;
 import java.lang.reflect.Modifier;
 import java.net.InetAddress;
 import java.net.URL;
@@ -140,26 +138,19 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
   private final ModulesContext                               modulesContext                     = new ModulesContext();
   private ReconnectConfig                                    l1ReconnectConfig                  = null;
   private final InjectionInstrumentationRegistry             injectionRegistry                  = new InjectionInstrumentationRegistry();
-  private final boolean                                      hasBootJar;
   private final Map<Bundle, URL>                             bundleURLs                         = new ConcurrentHashMap<Bundle, URL>();
-
-  public StandardDSOClientConfigHelperImpl(final L1ConfigurationSetupManager configSetupManager)
-      throws ConfigurationSetupException {
-    this(configSetupManager, true);
-  }
 
   public StandardDSOClientConfigHelperImpl(final boolean initializedModulesOnlyOnce,
                                            final L1ConfigurationSetupManager configSetupManager)
       throws ConfigurationSetupException {
-    this(configSetupManager, true);
+    this(configSetupManager);
     if (initializedModulesOnlyOnce) {
       modulesContext.initializedModulesOnlyOnce();
     }
   }
 
-  public StandardDSOClientConfigHelperImpl(final L1ConfigurationSetupManager configSetupManager,
-                                           final boolean hasBootJar) throws ConfigurationSetupException {
-    this.hasBootJar = hasBootJar;
+  public StandardDSOClientConfigHelperImpl(final L1ConfigurationSetupManager configSetupManager)
+      throws ConfigurationSetupException {
     this.portability = new PortabilityImpl(this);
     this.configSetupManager = configSetupManager;
     this.id = UUID.getUUID();
@@ -968,14 +959,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     }
   }
 
-  /**
-   * This method will: - check the contents of the boot-jar against tc-config.xml - check that all that all the
-   * necessary referenced classes are also present in the boot jar
-   */
-  public void verifyBootJarContents(final File bjf) {
-    //
-  }
-
   private TransparencyClassSpec[] getAllSpecs(final boolean includeBootJarSpecs) {
     List rv = null;
     synchronized (specLock) {
@@ -1044,10 +1027,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
   @Override
   public String toString() {
     return "<StandardDSOClientConfigHelperImpl: " + configSetupManager + ">";
-  }
-
-  public void writeTo(final DSOApplicationConfigBuilder appConfigBuilder) {
-    throw new UnsupportedOperationException();
   }
 
   public void addAspectModule(final String classNamePrefix, final String moduleName) {
@@ -1250,10 +1229,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     // If this condition ever needs to be true for any other classes besides ConcurrentHashMap, this setting should be
     // move into the TransparencyClassSpec (as opposed to growing the list of classes here)
     return !clazz.getName().equals("java.util.concurrent.ConcurrentHashMap");
-  }
-
-  public boolean hasBootJar() {
-    return this.hasBootJar;
   }
 
   public void recordBundleURLs(final Map<Bundle, URL> toAdd) {

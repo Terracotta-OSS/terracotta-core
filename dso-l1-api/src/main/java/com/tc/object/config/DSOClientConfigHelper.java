@@ -25,7 +25,6 @@ import com.tc.object.config.schema.InstrumentedClass;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.properties.ReconnectConfig;
 
-import java.io.File;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Iterator;
@@ -36,7 +35,7 @@ import java.util.Map;
  * extends DSOApplicationConfig which is a much simpler interface suitable for manipulating the config from the
  * perspective of generating a configuration file.
  */
-public interface DSOClientConfigHelper extends DSOApplicationConfig, DSOMBeanConfig, ModuleConfiguration {
+public interface DSOClientConfigHelper extends DSOMBeanConfig, ModuleConfiguration {
   void addRoot(String rootName, String rootFieldName);
 
   void addPermanentExcludePattern(String pattern);
@@ -46,8 +45,6 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig, DSOMBeanCon
   void addIncludePattern(String expression, boolean honorTransient, String methodToCallOnLoad, boolean honorVolatile);
 
   URL getBundleURL(Bundle bundle);
-
-  boolean hasBootJar();
 
   String[] processArguments();
 
@@ -62,8 +59,6 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig, DSOMBeanCon
   boolean isLogical(String theClass);
 
   DSOInstrumentationLoggingOptions getInstrumentationLoggingOptions();
-
-  void verifyBootJarContents(File bjf) throws IncompleteBootJarException, UnverifiedBootJarException;
 
   TransparencyClassSpec[] getAllSpecs();
 

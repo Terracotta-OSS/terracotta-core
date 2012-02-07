@@ -30,12 +30,9 @@ import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.ModuleConfiguration;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
-import com.tc.object.config.UnverifiedBootJarException;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.RuntimeLoggerImpl;
-import com.tc.object.tools.BootJar;
-import com.tc.object.tools.BootJarException;
 import com.tc.plugins.ModulesLoader;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
@@ -57,27 +54,14 @@ import java.util.Map;
 
 public class DSOContextImpl implements DSOContext {
 
-  private static final TCLogger       logger                 = TCLogging.getLogger(DSOContextImpl.class);
-  private static final TCLogger       consoleLogger          = CustomerLogging.getConsoleLogger();
+  private static final TCLogger       logger        = TCLogging.getLogger(DSOContextImpl.class);
+  private static final TCLogger       consoleLogger = CustomerLogging.getConsoleLogger();
 
   private final DSOClientConfigHelper configHelper;
   private final Manager               manager;
   private final InstrumentationLogger instrumentationLogger;
   private final WeavingStrategy       weavingStrategy;
 
-  private final static String         UNVERIFIED_BOOTJAR_MSG = "\n********************************************************************************\n"
-                                                               + "There is a mismatch between the expected Terracotta boot JAR file and the\n"
-                                                               + "existing Terracotta boot JAR file. Recreate the boot JAR file using the\n"
-                                                               + "following command from the Terracotta home directory:\n"
-                                                               + "\n"
-                                                               + "platform/bin/make-boot-jar.sh -f <path/to/Terracotta/configuration/file>\n"
-                                                               + "\n"
-                                                               + "or\n"
-                                                               + "\n"
-                                                               + "platform/bin\\make-boot-jar.bat -f <path\\to\\Terracotta\\configuration\\file>\n"
-                                                               + "\n"
-                                                               + "Enter the make-boot-jar command with the -h switch for help.\n"
-                                                               + "********************************************************************************\n";
   private final EmbeddedOSGiRuntime   osgiRuntime;
   private final boolean               expressRejoinClient;
 
@@ -105,20 +89,14 @@ public class DSOContextImpl implements DSOContext {
   }
 
   public static DSOContext createStandaloneContext(String configSpec, ClassLoader loader,
-                                                   Map<String, URL> virtualTimJars, URL bootJarURL,
-                                                   boolean expressRejoinClient) throws ConfigurationSetupException {
+                                                   Map<String, URL> virtualTimJars, boolean expressRejoinClient)
+      throws ConfigurationSetupException {
     // XXX: refactor this method to not duplicate createContext() so much
 
     // load license via normal methods before attempt to load it from application resource
     if (LicenseManager.getLicense() == null) {
       String licenseLocation = LICENSE_KEY_FILENAME;
       LicenseManager.loadLicenseFromStream(loader.getResourceAsStream(licenseLocation), "resource " + licenseLocation);
-    }
-
-    try {
-      BootJar.verifyTCVersion(bootJarURL);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
     }
 
     StandardConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(
@@ -136,9 +114,7 @@ public class DSOContextImpl implements DSOContext {
       throw new ConfigurationSetupException(e.getLocalizedMessage(), e);
     }
 
-    boolean HAS_BOOT_JAR = false;
-
-    DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(config, HAS_BOOT_JAR);
+    DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(config);
     RuntimeLoggerImpl runtimeLogger = new RuntimeLoggerImpl(configHelper);
 
     Manager manager = new ManagerImpl(true, null, null, null, null, configHelper, l2Connection, true, runtimeLogger,
@@ -185,7 +161,6 @@ public class DSOContextImpl implements DSOContext {
 
     try {
       osgiRuntime = ModulesLoader.initModules(configHelper, classProvider, false, repos);
-      validateBootJar();
     } catch (Exception e) {
       consoleLogger.fatal(e.getMessage());
       logger.fatal(e);
@@ -197,20 +172,6 @@ public class DSOContextImpl implements DSOContext {
   private void resolveClasses() {
     // This fixes a class circularity error in JavaClassInfoRepository
     JavaClassInfo.getClassInfo(getClass());
-  }
-
-  private void validateBootJar() throws BootJarException {
-    if (!configHelper.hasBootJar()) { return; }
-
-    try {
-      configHelper.verifyBootJarContents(null);
-    } catch (final UnverifiedBootJarException e) {
-      StringBuilder msg = new StringBuilder(UNVERIFIED_BOOTJAR_MSG);
-      msg.append(e.getMessage() + " ");
-      msg.append("Unable to verify the contents of the boot jar; ");
-      msg.append("Please check the client logs for more information.");
-      throw new BootJarException(msg.toString(), e);
-    }
   }
 
   public Manager getManager() {
