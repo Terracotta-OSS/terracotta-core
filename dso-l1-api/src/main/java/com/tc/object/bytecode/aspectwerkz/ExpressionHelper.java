@@ -3,22 +3,22 @@
  */
 package com.tc.object.bytecode.aspectwerkz;
 
-import com.tc.aspectwerkz.expression.ExpressionVisitor;
-import com.tc.aspectwerkz.expression.ExpressionInfo;
 import com.tc.aspectwerkz.expression.ExpressionContext;
+import com.tc.aspectwerkz.expression.ExpressionInfo;
+import com.tc.aspectwerkz.expression.ExpressionVisitor;
 import com.tc.aspectwerkz.expression.PointcutType;
-import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.aspectwerkz.reflect.ClassInfo;
+import com.tc.aspectwerkz.reflect.MemberInfo;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Helper class for dealing with Aspectwerkz expressions
  */
 public class ExpressionHelper {
 
-  private final Map expressionInfoCache = new HashMap();
+  private final ConcurrentMap<String, ExpressionInfo> expressionInfoCache = new ConcurrentHashMap<String, ExpressionInfo>();
 
   public ExpressionVisitor[] createExpressionVisitors(String[] expressions) {
     ExpressionVisitor[] rv = null;
@@ -42,27 +42,33 @@ public class ExpressionHelper {
   }
 
   /**
-   * Creates and returns ExpressionInfo from the given expression. <p/>Since the expression namespace doesn't appear to
-   * be used, this is probably the version of this method you're looking for.
+   * Creates and returns ExpressionInfo from the given expression.
+   * <p/>
+   * Since the expression namespace doesn't appear to be used, this is probably the version of this method you're
+   * looking for.
    */
   public ExpressionInfo createExpressionInfo(String expression) {
     return createExpressionInfo(expression, "__tc_default");
   }
 
   /**
-   * Creates and returns ExpressionInfo object from the given expression and namespace. <p/>I'm not sure what namespace
-   * is for. As far as I can tell from examining the aspectwerkz code, it's not actually used.
+   * Creates and returns ExpressionInfo object from the given expression and namespace.
+   * <p/>
+   * I'm not sure what namespace is for. As far as I can tell from examining the aspectwerkz code, it's not actually
+   * used.
    */
   public ExpressionInfo createExpressionInfo(String expression, String namespace) {
-    ExpressionInfo info;
-    synchronized (expressionInfoCache) {
-      info = (ExpressionInfo) expressionInfoCache.get(expression);
-      if (info == null) {
-        info = new ExpressionInfo(expression, namespace);
-        expressionInfoCache.put(expression, info);
+    ExpressionInfo info = expressionInfoCache.get(expression);
+    if (info == null) {
+      info = new ExpressionInfo(expression, namespace);
+      ExpressionInfo tmp = expressionInfoCache.putIfAbsent(expression, info);
+      if (tmp != null) {
+        info = tmp;
       }
     }
+
     return info;
+
   }
 
   /**
@@ -74,7 +80,7 @@ public class ExpressionHelper {
       rv = new String[0];
     } else {
       rv = new String[expressions.length];
-      for (int i=0; i<expressions.length; i++) {
+      for (int i = 0; i < expressions.length; i++) {
         rv[i] = expressionPattern2WithinExpression(expressions[i]);
       }
     }
@@ -103,7 +109,7 @@ public class ExpressionHelper {
   }
 
   /**
-   * Creates an execution expression context for testing to see of a method matches the execution of a 
+   * Creates an execution expression context for testing to see of a method matches the execution of a
    * certain method expression
    */
   public ExpressionContext createExecutionExpressionContext(MemberInfo methodInfo) {
