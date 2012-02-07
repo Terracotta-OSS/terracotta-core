@@ -174,25 +174,22 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
         while (connectionIterator.hasNext()) {
           MessageTransportBase mtb = (MessageTransportBase) connectionIterator.next();
 
-          if (!mtb.isConnected()) {
-            TCConnection conn = mtb.getConnection();
-            if (conn != null) {
-              logger.info("[" + conn.getRemoteAddress().getCanonicalStringForm()
-                          + "] is not connected. Health Monitoring for this node is now disabled.");
-            } else {
-              logger.warn("Health Checker could not detect Message Transport Base Connection");
-            }
+          TCConnection conn = mtb.getConnection();
+          if (conn == null || !mtb.isConnected()) {
+            logger.info("[" + conn == null ? null
+                : conn.getRemoteAddress().getCanonicalStringForm()
+                  + "] is not connected. Health Monitoring for this node is now disabled.");
             connectionIterator.remove();
             continue;
           }
 
           ConnectionHealthCheckerContext connContext = mtb.getHealthCheckerContext();
-          if ((mtb.getConnection().getIdleReceiveTime() >= this.pingIdleTime)) {
+          if ((conn.getIdleReceiveTime() >= this.pingIdleTime)) {
 
             if (!connContext.probeIfAlive()) {
               // Connection is dead. Disconnect the transport.
               logger.error("Declared connection dead " + mtb.getConnectionId() + " idle time "
-                           + mtb.getConnection().getIdleReceiveTime() + "ms");
+                           + conn.getIdleReceiveTime() + "ms");
               mtb.disconnect();
               connectionIterator.remove();
             }
