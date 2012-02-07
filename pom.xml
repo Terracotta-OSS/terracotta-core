@@ -109,60 +109,33 @@
       </modules>
     </profile>  
     
-    <!-- activate by default if 'terracotta-ehcache' module exists. 
+    <!-- activate by default if 'ehcache' module exists. 
          You have to check out this module manually under 'community/devwork' -->
     <profile>
-      <id>terracotta-ehcache</id>
+      <id>ehcache</id>
       <activation>
         <file>
-          <exists>devwork/terracotta-ehcache</exists>
+          <exists>devwork/ehcache</exists>
         </file>
       </activation>      
       <modules>
-        <module>devwork/terracotta-ehcache</module>
+        <module>devwork/ehcache</module>
       </modules>
     </profile>
-    <!-- activate by default if 'terracotta-ehcache-ee' module exists. 
+    <!-- activate by default if 'ehcache-ee' module exists. 
          You have to check out this module manually under 'community/devwork' -->
     <profile>
-      <id>terracotta-ehcache-ee</id>
+      <id>ehcache-ee</id>
       <activation>
         <file>
-          <exists>devwork/terracotta-ehcache-ee</exists>
+          <exists>devwork/ehcache-ee</exists>
         </file>
       </activation>      
       <modules>
-        <module>devwork/terracotta-ehcache-ee</module>
+        <module>devwork/ehcache-ee</module>
       </modules>
     </profile>
 
-    <!-- activate by default if 'tim-ehcache' module exists. 
-         You have to check out this module manually under 'community/devwork' -->
-    <profile>
-      <id>tim-ehcache</id>
-      <activation>
-        <file>
-          <exists>devwork/tim-ehcache</exists>
-        </file>
-      </activation>      
-      <modules>
-        <module>devwork/tim-ehcache</module>
-      </modules>
-    </profile>
-    <!-- activate by default if 'tim-ehcache-ee' module exists. 
-         You have to check out this module manually under 'community/devwork' -->
-    <profile>
-      <id>tim-ehcache-ee</id>
-      <activation>
-        <file>
-          <exists>devwork/tim-ehcache-ee</exists>
-        </file>
-      </activation>      
-      <modules>
-        <module>devwork/tim-ehcache-ee</module>
-      </modules>
-    </profile>      
-    
     <!-- activate by default if 'terracotta-quartz' module exists. 
          You have to check out this module manually under 'community/devwork' -->
     <profile>
@@ -217,30 +190,6 @@
       </modules>
     </profile>         
     
-    <profile>
-      <id>ehcache-core</id>
-      <activation>
-        <file>
-          <exists>devwork/ehcache-core</exists>
-        </file>
-      </activation>      
-      <modules>
-        <module>devwork/ehcache-core</module>
-      </modules>
-    </profile>  
-
-    <profile>
-      <id>ehcache-core-ee</id>
-      <activation>
-        <file>
-          <exists>devwork/ehcache-core-ee</exists>
-        </file>
-      </activation>      
-      <modules>
-        <module>devwork/ehcache-core-ee</module>
-      </modules>
-    </profile>  
-
     <profile>
       <id>quartz</id>
       <activation>
