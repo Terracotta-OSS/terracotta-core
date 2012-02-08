@@ -31,6 +31,7 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
   private final int             timeoutInterval;
   private final String          remoteNodeDesc;
   private final List            listeners                     = new CopyOnWriteArrayList();
+  private final Object          lock                          = new Object();
   private State                 currentState;
   private short                 socketConnectNoReplyWaitCount = 0;
 
@@ -86,7 +87,7 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
   }
 
   public void addSocketConnectEventListener(HealthCheckerSocketConnectEventListener socketConnectListener) {
-    synchronized (listeners) {
+    synchronized (lock) {
       if (listeners.contains(socketConnectListener)) { throw new AssertionError(
                                                                                 "Attempt to add same socket connect event listener moere than once: "
                                                                                     + socketConnectListener); }
@@ -95,7 +96,7 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
   }
 
   public void removeSocketConnectEventListener(HealthCheckerSocketConnectEventListener socketConnectListener) {
-    synchronized (listeners) {
+    synchronized (lock) {
       if (!listeners.contains(socketConnectListener)) { throw new AssertionError(
                                                                                  "Attempt to remove non registered socket connect event listener"); }
       listeners.remove(socketConnectListener);

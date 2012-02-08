@@ -24,6 +24,7 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
 
   protected final ConnectionIdLogger logger;
   private final List                 listeners             = new CopyOnWriteArrayList();
+  private final Object               lock                  = new Object();
 
   public AbstractMessageTransport(TCLogger logger) {
     this.logger = new ConnectionIdLogger(this, logger);
@@ -45,7 +46,7 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
   }
 
   public void addTransportListener(MessageTransportListener listener) {
-    synchronized (listeners) {
+    synchronized (lock) {
       if (listeners.contains(listener)) throw new AssertionError("Attempt to add the same listener more than once: "
                                                                  + listener);
       listeners.add(listener);
@@ -53,7 +54,7 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
   }
 
   public final void removeTransportListeners() {
-    synchronized (listeners) {
+    synchronized (lock) {
       this.listeners.clear();
     }
   }
