@@ -4,8 +4,10 @@
 package org.terracotta.test.util;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 public class WaitUtil {
+  private static final long MAX_WAIT_SECONDS = 250;
 
   public static void waitUntilCallableReturnsTrue(Callable<Boolean> callable) throws Exception {
     waitUntil(callable, true, 1000);
@@ -16,6 +18,7 @@ public class WaitUtil {
   }
 
   public static void waitUntil(Callable<Boolean> callable, boolean until, long delayInMillis) throws Exception {
+    long start = System.nanoTime();
     while (true) {
       boolean rv = callable.call();
       debug("Waiting until callable returns: " + until + ", returned: " + rv);
@@ -23,6 +26,9 @@ public class WaitUtil {
         break;
       }
       Thread.sleep(delayInMillis);
+      if (TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - start) > MAX_WAIT_SECONDS) { throw new AssertionError(
+                                                                                                                   "Max wait time over! Callable never returned: "
+                                                                                                                       + until); }
     }
   }
 
