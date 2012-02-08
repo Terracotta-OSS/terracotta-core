@@ -7,7 +7,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 public class WaitUtil {
-  private static final long MAX_WAIT_SECONDS = 250;
+  private static final long MAX_WAIT_SECONDS = 300;
 
   public static void waitUntilCallableReturnsTrue(Callable<Boolean> callable) throws Exception {
     waitUntil(callable, true, 1000);
