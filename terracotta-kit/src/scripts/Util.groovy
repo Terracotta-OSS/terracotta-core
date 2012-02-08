@@ -7,14 +7,13 @@ class Util {
     }
     
     static void processEhcacheDistribution(project) {
+      def ehcacheArtifactId = project.properties['ehcache.artifactId']
       def ehcacheVersion = project.properties['ehcache.version']
       def kitEdition = project.properties['kit.edition']
       def rootDir = project.properties['rootDir']
       
-      def rootEhcacheFolder = "/ehcache-core-" + ehcacheVersion
-      if (kitEdition == 'enterprise') {
-        rootEhcacheFolder = "/ehcache-core-ee-" + ehcacheVersion
-      }
+      def prefix =  kitEdition == 'enterprise' ? "/ehcache-ee-" : "/ehcache-"
+      def rootEhcacheFolder = prefix + ehcacheVersion
   
       def currentName =  rootDir + rootEhcacheFolder
       def newName = rootDir  + "/ehcache"
