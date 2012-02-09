@@ -24,6 +24,7 @@ import com.tc.util.concurrent.TCExceptionResultException;
 import com.tc.util.concurrent.TCFuture;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -123,7 +124,7 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
    * Do not trigger reconnection
    */
   private void cleanConnectionWithoutNotifyListeners() {
-    List tl = this.getTransportListeners();
+    List tl = new ArrayList(this.getTransportListeners());
     this.removeTransportListeners();
     clearConnection();
     this.addTransportListeners(tl);
