@@ -100,11 +100,9 @@ have them all compile in one go. To be able to do that, svn checkout those
 projects under "community/devwork". List of projects currently recognize are:
 
 - terracotta-toolkit(-ee)
-- terracotta-ehcache(-ee)
 - terracotta-quartz(-ee)
-- tim-ehcache(-ee)
 - tim-quartz(-ee)
-- ehcache-core(-ee)
+- ehcache(-ee)
 - quartz
 
 Let say you have terracotta-toolkit-ee under devwork. This step will compile
