@@ -8,7 +8,7 @@ import com.tc.logging.ConnectionIdLogger;
 import com.tc.logging.TCLogger;
 import com.tc.net.protocol.NetworkLayer;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -23,8 +23,7 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
   private static final int           RECONNECTION_REJECTED = 6;
 
   protected final ConnectionIdLogger logger;
-  private final List                 listeners             = new CopyOnWriteArrayList();
-  private final Object               lock                  = new Object();
+  private final CopyOnWriteArrayList listeners             = new CopyOnWriteArrayList();
 
   public AbstractMessageTransport(TCLogger logger) {
     this.logger = new ConnectionIdLogger(this, logger);
@@ -42,21 +41,17 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
   }
 
   protected List getTransportListeners() {
-    return new ArrayList(listeners);
+    return Collections.unmodifiableList(listeners);
   }
 
   public void addTransportListener(MessageTransportListener listener) {
-    synchronized (lock) {
-      if (listeners.contains(listener)) throw new AssertionError("Attempt to add the same listener more than once: "
-                                                                 + listener);
-      listeners.add(listener);
-    }
+    if (!listeners.addIfAbsent(listener)) { throw new AssertionError(
+                                                                     "Attempt to add the same listener more than once: "
+                                                                         + listener); }
   }
 
   public final void removeTransportListeners() {
-    synchronized (lock) {
-      this.listeners.clear();
-    }
+    this.listeners.clear();
   }
 
   protected final void fireTransportConnectAttemptEvent() {

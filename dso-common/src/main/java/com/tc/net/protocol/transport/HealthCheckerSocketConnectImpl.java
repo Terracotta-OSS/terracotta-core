@@ -13,7 +13,6 @@ import com.tc.util.State;
 
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -25,20 +24,19 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnect {
 
-  private final TCSocketAddress peerNodeAddr;
-  private final TCConnection    conn;
-  private final TCLogger        logger;
-  private final int             timeoutInterval;
-  private final String          remoteNodeDesc;
-  private final List            listeners                     = new CopyOnWriteArrayList();
-  private final Object          lock                          = new Object();
-  private State                 currentState;
-  private short                 socketConnectNoReplyWaitCount = 0;
+  private final TCSocketAddress      peerNodeAddr;
+  private final TCConnection         conn;
+  private final TCLogger             logger;
+  private final int                  timeoutInterval;
+  private final String               remoteNodeDesc;
+  private final CopyOnWriteArrayList listeners                     = new CopyOnWriteArrayList();
+  private State                      currentState;
+  private short                      socketConnectNoReplyWaitCount = 0;
 
   // Socket Connect probes
-  private static final State    SOCKETCONNECT_IDLE            = new State("SOCKETCONNECT_IDLE");
-  private static final State    SOCKETCONNECT_IN_PROGRESS     = new State("SOCKETCONNECT_IN_PROGRESS");
-  private static final State    SOCKETCONNECT_FAIL            = new State("SOCKETCONNECT_FAIL");
+  private static final State         SOCKETCONNECT_IDLE            = new State("SOCKETCONNECT_IDLE");
+  private static final State         SOCKETCONNECT_IN_PROGRESS     = new State("SOCKETCONNECT_IN_PROGRESS");
+  private static final State         SOCKETCONNECT_FAIL            = new State("SOCKETCONNECT_FAIL");
 
   public HealthCheckerSocketConnectImpl(TCSocketAddress peerNode, TCConnection conn, String remoteNodeDesc,
                                         TCLogger logger, int timeoutInterval) {
@@ -87,20 +85,14 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
   }
 
   public void addSocketConnectEventListener(HealthCheckerSocketConnectEventListener socketConnectListener) {
-    synchronized (lock) {
-      if (listeners.contains(socketConnectListener)) { throw new AssertionError(
-                                                                                "Attempt to add same socket connect event listener moere than once: "
-                                                                                    + socketConnectListener); }
-      listeners.add(socketConnectListener);
-    }
+    if (!listeners.addIfAbsent(socketConnectListener)) { throw new AssertionError(
+                                                                                  "Attempt to add same socket connect event listener moere than once: "
+                                                                                      + socketConnectListener); }
   }
 
   public void removeSocketConnectEventListener(HealthCheckerSocketConnectEventListener socketConnectListener) {
-    synchronized (lock) {
-      if (!listeners.contains(socketConnectListener)) { throw new AssertionError(
-                                                                                 "Attempt to remove non registered socket connect event listener"); }
-      listeners.remove(socketConnectListener);
-    }
+    if (!listeners.remove(socketConnectListener)) { throw new AssertionError(
+                                                                             "Attempt to remove non registered socket connect event listener"); }
   }
 
   /*
