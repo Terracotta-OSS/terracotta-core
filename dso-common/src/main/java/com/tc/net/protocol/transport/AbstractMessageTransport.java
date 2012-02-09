@@ -40,6 +40,9 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
     }
   }
 
+  /**
+   * Returns an Unmodifiable view of the transport listeners.
+   */
   protected List getTransportListeners() {
     return Collections.unmodifiableList(listeners);
   }
