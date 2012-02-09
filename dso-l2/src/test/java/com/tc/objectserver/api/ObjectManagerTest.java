@@ -13,6 +13,7 @@ import com.tc.async.impl.MockSink;
 import com.tc.exception.ImplementMe;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
+import com.tc.logging.LogLevelImpl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
@@ -126,6 +127,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author steve
  */
 public class ObjectManagerTest extends TCTestCase {
+  static {
+    TCLogging.getLogger(ObjectManager.class).setLevel(LogLevelImpl.DEBUG);
+  }
 
   private Map                                managed;
   private ObjectManagerImpl                  objectManager;
