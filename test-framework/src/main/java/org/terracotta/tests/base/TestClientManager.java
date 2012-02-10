@@ -8,6 +8,7 @@ import com.tc.lcp.LinkedJavaProcess;
 import com.tc.process.Exec;
 import com.tc.process.Exec.Result;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.test.TestConfigObject;
 import com.tc.test.config.model.TestConfig;
 import com.tc.text.Banner;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -108,6 +109,7 @@ public class TestClientManager {
     TestBaseUtil.setupVerboseGC(jvmArgs, verboseGcOutputFile);
 
     LinkedJavaProcess clientProcess = new LinkedJavaProcess(TestClientLauncher.class.getName(), clientMainArgs, jvmArgs);
+    clientProcess.setMaxRuntime(TestConfigObject.getInstance().getJunitTimeoutInSeconds());
     String classPath = testBase.createClassPath(client, withStandaloneJar);
     classPath = testBase.makeClasspath(classPath, testBase.getTestDependencies());
     classPath = addRequiredJarsToClasspath(client, classPath);
