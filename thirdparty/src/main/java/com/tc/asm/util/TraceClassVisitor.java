@@ -41,6 +41,7 @@ import com.tc.asm.FieldVisitor;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.asm.signature.SignatureReader;
+import com.tc.util.FindbugsSuppressWarnings;
 
 /**
  * A {@link ClassVisitor} that prints a disassembled view of the classes it
@@ -49,7 +50,7 @@ import com.tc.asm.signature.SignatureReader;
  * visitor chain to trace the class that is visited at a given point in this
  * chain. This may be uselful for debugging purposes. <p> The trace printed when
  * visiting the <tt>Hello</tt> class is the following: <p> <blockquote>
- * 
+ *
  * <pre>
  * // class version 49.0 (49)
  * // access flags 0x21
@@ -75,9 +76,9 @@ import com.tc.asm.signature.SignatureReader;
  *     MAXLOCALS = 1
  * }
  * </pre>
- * 
+ *
  * </blockquote> where <tt>Hello</tt> is defined by: <p> <blockquote>
- * 
+ *
  * <pre>
  * public class Hello {
  *
@@ -86,9 +87,9 @@ import com.tc.asm.signature.SignatureReader;
  *     }
  * }
  * </pre>
- * 
+ *
  * </blockquote>
- * 
+ *
  * @author Eric Bruneton
  * @author Eugene Kuleshov
  */
@@ -111,12 +112,13 @@ public class TraceClassVisitor extends TraceAbstractVisitor implements
      * Prints a disassembled view of the given class to the standard output. <p>
      * Usage: TraceClassVisitor [-debug] &lt;fully qualified class name or class
      * file name &gt;
-     * 
+     *
      * @param args the command line arguments.
-     * 
+     *
      * @throws Exception if the class cannot be found, or if an IO exception
      *         occurs.
      */
+    @FindbugsSuppressWarnings("DM_DEFAULT_ENCODING")
     public static void main(final String[] args) throws Exception {
         int i = 0;
         int flags = ClassReader.SKIP_DEBUG;
@@ -153,7 +155,7 @@ public class TraceClassVisitor extends TraceAbstractVisitor implements
 
     /**
      * Constructs a new {@link TraceClassVisitor}.
-     * 
+     *
      * @param pw the print writer to be used to print the class.
      */
     public TraceClassVisitor(final PrintWriter pw) {
@@ -162,7 +164,7 @@ public class TraceClassVisitor extends TraceAbstractVisitor implements
 
     /**
      * Constructs a new {@link TraceClassVisitor}.
-     * 
+     *
      * @param cv the {@link ClassVisitor} to which this visitor delegates calls.
      *        May be <tt>null</tt>.
      * @param pw the print writer to be used to print the class.
@@ -483,7 +485,7 @@ public class TraceClassVisitor extends TraceAbstractVisitor implements
     /**
      * Appends a string representation of the given access modifiers to {@link
      * #buf buf}.
-     * 
+     *
      * @param access some access modifiers.
      */
     private void appendAccess(final int access) {
