@@ -33,8 +33,6 @@ import com.tc.net.core.ConnectionInfo;
 import com.tc.object.LiteralValues;
 import com.tc.object.Portability;
 import com.tc.object.PortabilityImpl;
-import com.tc.object.applicator.HashMapApplicator;
-import com.tc.object.applicator.ListApplicator;
 import com.tc.object.bytecode.AddInterfacesAdapter;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ClassAdapterBase;
@@ -311,17 +309,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
 
     spec = getOrCreateSpec("java.lang.Object");
     spec.setCallConstructorOnLoad(true);
-
-    // XXX: Configuration for "built-in" clustered data types
-    // These should be deleted when system tests are moved up from core to toolkit
-    addIncludePattern("com.tctest.builtin.AtomicInteger");
-    addIncludePattern("com.tctest.builtin.AtomicReference");
-    addIncludePattern("com.tctest.builtin.Lock");
-    addIncludePattern("com.tctest.builtin.CyclicBarrier");
-    addIncludePattern("com.tctest.builtin.HashSet");
-    addIncludePattern("com.tctest.builtin.ConcurrentHashMap");
-    getOrCreateSpec("com.tctest.builtin.HashMap", HashMapApplicator.class.getName());
-    getOrCreateSpec("com.tctest.builtin.ArrayList", ListApplicator.class.getName());
   }
 
   public boolean addClassConfigBasedAdapters(final ClassInfo classInfo) {
