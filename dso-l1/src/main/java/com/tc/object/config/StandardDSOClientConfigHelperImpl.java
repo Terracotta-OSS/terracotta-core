@@ -312,10 +312,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     spec = getOrCreateSpec("java.lang.Object");
     spec.setCallConstructorOnLoad(true);
 
-    spec = getOrCreateSpec("javax.servlet.GenericServlet");
-    spec.setHonorTransient(true);
-    spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
-
     // XXX: Configuration for "built-in" clustered data types
     // These should be deleted when system tests are moved up from core to toolkit
     addIncludePattern("com.tctest.builtin.AtomicInteger");
