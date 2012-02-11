@@ -67,8 +67,10 @@ public class TestClientManager {
       Banner.infoBanner("waiting for debugger to attach on port " + debugPort);
     }
 
-    File licenseKey = new File("test-classes" + File.separator + "terracotta-license.key");
-    jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.PRODUCTKEY_PATH + "=" + licenseKey.getAbsolutePath());
+    if (testConfig.getClientConfig().shouldResolveLicense()) {
+      File licenseKey = new File("test-classes" + File.separator + "terracotta-license.key");
+      jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.PRODUCTKEY_PATH + "=" + licenseKey.getAbsolutePath());
+    }
 
     // do this last
     configureClientExtraJVMArgs(jvmArgs);

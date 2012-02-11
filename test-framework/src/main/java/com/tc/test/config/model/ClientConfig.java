@@ -1,9 +1,9 @@
 package com.tc.test.config.model;
 
+import org.terracotta.tests.base.AbstractClientBase;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import org.terracotta.tests.base.AbstractClientBase;
 
 /**
  * Configuration for each client <br>
@@ -11,12 +11,12 @@ import org.terracotta.tests.base.AbstractClientBase;
  * run client parrallely : true <br>
  * 
  * @author rsingh
- * 
  */
 public class ClientConfig {
-  private boolean parallelClients = true;
-  private final List<String> extraClientJvmArgs;
+  private boolean                               parallelClients      = true;
+  private final List<String>                    extraClientJvmArgs;
   private Class<? extends AbstractClientBase>[] classes;
+  private boolean                               shouldResolveLicense = true;
 
   public ClientConfig() {
     extraClientJvmArgs = new ArrayList<String>();
@@ -30,7 +30,8 @@ public class ClientConfig {
   }
 
   /**
-   * Adds a jvm argument for each client 
+   * Adds a jvm argument for each client
+   * 
    * @param extraClientJvmArg : jvm arg to be added for each client
    */
   public void addExtraClientJvmArg(String extraClientJvmArg) {
@@ -39,6 +40,7 @@ public class ClientConfig {
 
   /**
    * Sets the client classes for the test
+   * 
    * @param classes an array of client classes to be run
    */
   public void setClientClasses(Class<? extends AbstractClientBase>[] classes) {
@@ -46,7 +48,8 @@ public class ClientConfig {
   }
 
   /**
-   * Sets the classes for the test 
+   * Sets the classes for the test
+   * 
    * @param clientClass the client class to be instantiated
    * @param count number of client class to be instantiated
    */
@@ -65,8 +68,9 @@ public class ClientConfig {
   }
 
   /**
-   * Enable/Disable running of clients parallely 
-   * @param parallelClients 
+   * Enable/Disable running of clients parallely
+   * 
+   * @param parallelClients
    */
   public void setParallelClients(boolean parallelClients) {
     this.parallelClients = parallelClients;
@@ -77,6 +81,20 @@ public class ClientConfig {
    */
   public boolean isParallelClients() {
     return parallelClients;
+  }
+
+  /**
+   * @param shouldResolveLicense : enable/disable test framework to resolve license to start the client with
+   */
+  public void setShouldResolveLicense(boolean shouldResolveLicense) {
+    this.shouldResolveLicense = shouldResolveLicense;
+  }
+
+  /**
+   * @return true if test framework is supposed to resolve license for the client
+   */
+  public boolean shouldResolveLicense() {
+    return shouldResolveLicense;
   }
 
 }
