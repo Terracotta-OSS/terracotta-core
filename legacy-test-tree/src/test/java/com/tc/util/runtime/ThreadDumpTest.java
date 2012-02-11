@@ -18,10 +18,7 @@ import java.util.Set;
 public class ThreadDumpTest extends TCTestCase {
 
   public ThreadDumpTest() {
-    // native tool doesn't support windows 64 bit yet
-    if (System.getProperty("sun.arch.data.model").equals("64")) {
-      disableTest();
-    }
+    //
   }
 
   // XXX: This test is known to fail under jrockit on the monkey. When we decide to deal with JRockit, we'll have to get
@@ -36,6 +33,7 @@ public class ThreadDumpTest extends TCTestCase {
     args.add("-D" + TestConfigObject.PROPERTY_FILE_LIST_PROPERTY_NAME + "="
              + System.getProperty(TestConfigObject.PROPERTY_FILE_LIST_PROPERTY_NAME));
     if (Vm.isIBM()) {
+      args.add("-Xdump:console");
       args.add("-Xdump:java:file=-");
     }
     process.addAllJvmArgs(args);
@@ -61,15 +59,16 @@ public class ThreadDumpTest extends TCTestCase {
     System.out.println("**** STDOUT BEGIN ****\n" + stdout + "\n**** STDOUT END ****");
     System.out.println("**** STDERR BEGIN ****\n" + stderr + "\n**** STDERR END ****");
 
-    assertTrue(stderr.toLowerCase().indexOf("full thread dump") >= 0
-               || stdout.toLowerCase().indexOf("full thread dump") >= 0);
+    String expect = Vm.isIBM() ? "^^^^^^^^ console dump ^^^^^^^^" : "full thread dump";
+
+    assertTrue(stderr.toLowerCase().indexOf(expect) >= 0 || stdout.toLowerCase().indexOf(expect) >= 0);
   }
 
-  public void testPidMechanismsAreSame() {
-    int jniPID = GetPid.getInstance().getPid();
-    int fallback = ThreadDump.getPIDUsingFallback().getPid();
-    assertEquals(jniPID, fallback);
-  }
+  // public void testPidMechanismsAreSame() {
+  // int jniPID = GetPid.getInstance().getPid();
+  // int fallback = ThreadDump.getPIDUsingFallback().getPid();
+  // assertEquals(jniPID, fallback);
+  // }
 
   public void testFindAllJavaPIDs() {
     Set<PID> allPIDs = ThreadDump.findAllJavaPIDs();
