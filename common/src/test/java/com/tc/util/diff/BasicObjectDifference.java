@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util.diff;
 
@@ -19,26 +20,30 @@ public class BasicObjectDifference extends Difference {
   public BasicObjectDifference(DifferenceContext where, Object a, Object b) {
     super(where);
 
-    Assert
-        .eval((a != null && b != null && ((a instanceof Differenceable) && (b instanceof Differenceable) && (!a
-            .getClass().equals(b))))
-              || (a == null) || (b == null) || ((!(a instanceof Differenceable)) || (!(b instanceof Differenceable))));
+    Assert.eval((a != null && b != null && ((a instanceof Differenceable) && (b instanceof Differenceable) && (!a
+        .getClass().equals(b))))
+                || (a == null)
+                || (b == null)
+                || ((!(a instanceof Differenceable)) || (!(b instanceof Differenceable))));
 
     Assert.eval(!(a == null && b == null));
-    Assert.eval((a == null) || (b == null) || (! a.getClass().equals(b.getClass())) || (!(a.equals(b))));
+    Assert.eval((a == null) || (b == null) || (!a.getClass().equals(b.getClass())) || (!(a.equals(b))));
 
     this.a = a;
     this.b = b;
   }
 
+  @Override
   public Object a() {
     return this.a;
   }
 
+  @Override
   public Object b() {
     return this.b;
   }
 
+  @Override
   public String toString() {
     return where() + ": object fields differ: " + describe(a) + " vs. " + describe(b);
   }
@@ -47,6 +52,16 @@ public class BasicObjectDifference extends Difference {
     return where().describe(o);
   }
 
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((a == null) ? 0 : a.hashCode());
+    result = prime * result + ((b == null) ? 0 : b.hashCode());
+    return result;
+  }
+
+  @Override
   public boolean equals(Object that) {
     if (!(that instanceof BasicObjectDifference)) return false;
 
