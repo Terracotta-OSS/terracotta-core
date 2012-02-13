@@ -40,6 +40,7 @@ public class ClientServerLockManagerTest extends TestCase {
     sessionManager = new TestSessionManager();
     TestSink sink = new TestSink();
     glue = new ClientServerLockManagerGlue(sessionManager, sink, new NonGreedyLockPolicyFactory());
+    glue.startEventNotifier();
     threadManager = new ManualThreadIDManager();
     clientLockManager = new ClientLockManagerImpl(new NullTCLogger(), sessionManager, glue, threadManager,
                                                   new NullClientLockManagerConfig(),
@@ -316,7 +317,7 @@ public class ClientServerLockManagerTest extends TestCase {
 
     StringBuffer buffer = writer.getBuffer();
     System.out.println(buffer);
-    
+
     System.out.println("Thread dump ------- ");
     System.out.println(ThreadDumpUtil.getThreadDump());
   }

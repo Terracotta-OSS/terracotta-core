@@ -45,18 +45,20 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
   protected final SessionProvider sessionProvider;
 
   public ClientServerLockManagerGlue(SessionProvider sessionProvider, TestSink sink, LockFactory factory) {
-    this(sessionProvider, sink, "ClientServerLockManagerGlue", factory);
-  }
-
-  protected ClientServerLockManagerGlue(SessionProvider sessionProvider, TestSink sink, String threadName,
-                                        LockFactory factory) {
     super();
     this.sessionProvider = sessionProvider;
     this.sink = sink;
+    this.factory = factory;
+  }
+
+  public void startEventNotifier() {
+    startEventNotifier("ClientServerLockManagerGlue");
+  }
+
+  protected void startEventNotifier(String threadName) {
     eventNotifier = new Thread(this, threadName);
     eventNotifier.setDaemon(true);
     eventNotifier.start();
-    this.factory = factory;
   }
 
   public void lock(LockID lockID, ThreadID threadID, ServerLockLevel level) {
@@ -114,8 +116,8 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
       if (ec instanceof LockResponseContext) {
         LockResponseContext lrc = (LockResponseContext) ec;
         if (lrc.isLockAward()) {
-          clientLockManager.award(GroupID.NULL_ID, sessionProvider.getSessionID(lrc.getNodeID()), lrc.getLockID(), lrc
-              .getThreadID(), lrc.getLockLevel());
+          clientLockManager.award(GroupID.NULL_ID, sessionProvider.getSessionID(lrc.getNodeID()), lrc.getLockID(),
+                                  lrc.getThreadID(), lrc.getLockLevel());
         }
       }
       // ToDO :: implment WaitContext etc..

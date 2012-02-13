@@ -20,7 +20,12 @@ public class ClientServerLockStatManagerGlue extends ClientServerLockManagerGlue
   private L2LockStatsManager    serverLockStatManager;
 
   public ClientServerLockStatManagerGlue(SessionProvider sessionProvider, TestSink sink, LockFactory factory) {
-    super(sessionProvider, sink, "ClientServerLockStatManagerGlue", factory);
+    super(sessionProvider, sink, factory);
+  }
+
+  @Override
+  public void startEventNotifier() {
+    startEventNotifier("ClientServerLockStatManagerGlue");
   }
 
   public void set(ClientLockManagerImpl clmgr, LockManagerImpl slmgr, ClientLockStatManager clientLockStatManager,
@@ -30,6 +35,7 @@ public class ClientServerLockStatManagerGlue extends ClientServerLockManagerGlue
     this.serverLockStatManager = serverLockStatManager;
   }
 
+  @Override
   public void run() {
     while (!stop) {
       EventContext ec = null;
@@ -41,8 +47,8 @@ public class ClientServerLockStatManagerGlue extends ClientServerLockManagerGlue
       if (ec instanceof LockResponseContext) {
         LockResponseContext lrc = (LockResponseContext) ec;
         if (lrc.isLockAward()) {
-          clientLockManager.award(lrc.getNodeID(), sessionProvider.getSessionID(lrc.getNodeID()), lrc.getLockID(), lrc
-              .getThreadID(), lrc.getLockLevel());
+          clientLockManager.award(lrc.getNodeID(), sessionProvider.getSessionID(lrc.getNodeID()), lrc.getLockID(),
+                                  lrc.getThreadID(), lrc.getLockLevel());
         }
       } else if (ec instanceof LockStatisticsMessage) {
         LockStatisticsMessage lsm = (LockStatisticsMessage) ec;
