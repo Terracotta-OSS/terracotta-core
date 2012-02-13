@@ -7,7 +7,6 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.test.config.model.PersistenceMode;
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.setup.GroupsData;
-import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.Vm;
 
@@ -62,27 +61,6 @@ public class TestBaseUtil {
     }
 
     return tcUrl.substring(0, tcUrl.lastIndexOf(","));
-  }
-
-  public static void cleanDirectory(File directory) {
-    int count = 0;
-    while (true) {
-      count++;
-      try {
-        cleanDirectory(directory);
-        break;
-      } catch (Exception e) {
-        System.err.println("Unable to clean up the directory - " + directory + "; Exception: " + e);
-      }
-
-      if (count > 10) {
-        System.err.println("Skipping clean up for directory - " + directory);
-        break;
-      }
-
-      ThreadUtil.reallySleep(2000);
-    }
-
   }
 
   public static String getFileContents(File f) throws IOException {
