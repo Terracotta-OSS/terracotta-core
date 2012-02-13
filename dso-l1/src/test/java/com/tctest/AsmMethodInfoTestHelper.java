@@ -15,15 +15,11 @@ import java.util.Map;
 public class AsmMethodInfoTestHelper {
   AsmMethodInfoTestHelper(int countStart) {
     this.count = countStart;
-    try {
-      myRoot = new HashMap();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    myRoot = new HashMap();
   }
 
-  private static Map myRoot; // = new HashMap();
-  private long       count;
+  private final Map myRoot; // = new HashMap();
+  private long      count;
 
   public long test4(int i, Object foo) {
     synchronized (myRoot) {
