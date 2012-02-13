@@ -84,7 +84,11 @@ public abstract class AbstractTCDatabaseTester {
   protected long nextExistentObjectId() {
     long created = objectsCreated.get();
     long deleted = objectsDeleted.get();
-    return mixLong(deleted + Math.abs(random.nextLong()) % (created - deleted));
+    long randomLong = random.nextLong();
+    while (randomLong == Long.MIN_VALUE) {
+      randomLong = random.nextLong();
+    }
+    return mixLong(deleted + Math.abs(randomLong) % (created - deleted));
   }
 
   protected long nextNewObjectId() {
