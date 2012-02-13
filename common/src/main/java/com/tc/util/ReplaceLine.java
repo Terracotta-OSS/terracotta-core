@@ -27,6 +27,7 @@ public final class ReplaceLine {
    * 
    * @return true if all tokens found matches
    */
+  @FindbugsSuppressWarnings("DM_DEFAULT_ENCODING")
   public static void parseFile(ReplaceLine.Token[] tokens, File file) throws FileNotFoundException, IOException {
     Arrays.sort(tokens, new Comparator() {
       public int compare(Object o1, Object o2) {
