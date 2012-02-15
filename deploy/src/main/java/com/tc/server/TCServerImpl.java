@@ -7,6 +7,7 @@ package com.tc.server;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.mortbay.jetty.Server;
+import org.mortbay.jetty.handler.ContextHandlerCollection;
 import org.mortbay.jetty.security.Constraint;
 import org.mortbay.jetty.security.ConstraintMapping;
 import org.mortbay.jetty.security.HashUserRealm;
@@ -15,7 +16,9 @@ import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.DefaultServlet;
 import org.mortbay.jetty.servlet.ServletHandler;
 import org.mortbay.jetty.servlet.ServletHolder;
+import org.mortbay.jetty.webapp.WebAppContext;
 
+import com.sun.jersey.spi.container.servlet.ServletContainer;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
@@ -71,6 +74,7 @@ import com.terracottatech.config.Offheap;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -502,6 +506,7 @@ public class TCServerImpl extends SEDA implements TCServer {
       throws Exception {
     this.httpServer = new Server();
     this.httpServer.addConnector(tcConnector);
+    ContextHandlerCollection contextHandlerCollection = new ContextHandlerCollection();
 
     Context context = new Context(null, "/", Context.NO_SESSIONS | Context.SECURITY);
 
@@ -590,7 +595,42 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
 
     context.setServletHandler(servletHandler);
-    this.httpServer.addHandler(context);
+    contextHandlerCollection.addHandler(context);
+
+    if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.MANAGEMENT_REST_ENABLED, true)) {
+      // register console webapp
+      if (tcInstallDir != null) {
+        File consoleDir = new File(tcInstallDir, "console");
+
+        String[] files = consoleDir.list(new FilenameFilter() {
+          @Override
+          public boolean accept(File dir, String name) {
+            return name.endsWith(".war");
+          }
+        });
+
+        if (files != null && files.length > 0) {
+          String warFile = files[0];
+          logger.info("deploying console web UI from archive " + warFile);
+          WebAppContext consoleContext = new WebAppContext(consoleDir.getPath() + File.separator + warFile, "/console");
+          contextHandlerCollection.addHandler(consoleContext);
+        } else {
+          logger.info("could not find console web UI archive");
+        }
+      } else {
+        logger.info("TC install dir not set, cannot find console web UI archive");
+      }
+
+      // register REST webapp
+      Context restContext = new Context(null, "/tc-management-api", Context.SESSIONS | Context.SECURITY);
+      ServletHolder servletHolder = new ServletHolder(ServletContainer.class);
+      servletHolder.setInitParameter("com.sun.jersey.config.property.packages", "net.sf.ehcache.management");
+      servletHolder.setInitParameter("com.sun.jersey.api.json.POJOMappingFeature", "true");
+      restContext.addServlet(servletHolder, "/*");
+      contextHandlerCollection.addHandler(restContext);
+    }
+
+    this.httpServer.addHandler(contextHandlerCollection);
 
     try {
       this.httpServer.start();

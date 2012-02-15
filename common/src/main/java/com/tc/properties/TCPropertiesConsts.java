@@ -901,6 +901,15 @@ public interface TCPropertiesConsts {
   public static final String L2_OPERATOR_EVENTS_STORE                                       = "l2.operator.events.store";
   public static final String TC_TIME_SYNC_THRESHOLD                                         = "tc.time.sync.threshold";
 
+
+  /*********************************************************************************************************************
+   * <code>
+   * REST management Settings
+   *  management.rest.enabled       -   Enable or disable the management REST facilities
+   * </code>
+   ********************************************************************************************************************/
+  public static final String MANAGEMENT_REST_ENABLED                                        = "management.rest.enabled";
+
   /*********************************************************************************************************************
    * <code>
    * Section :  L1 Shutdown Settings

@@ -26,6 +26,11 @@
     
   <dependencies>
     <dependency>
+      <groupId>com.terracotta</groupId>
+      <artifactId>management-ehcache-impl</artifactId>
+      <version>${management.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>dso-l2-common</artifactId>
       <version>${project.version}</version>
