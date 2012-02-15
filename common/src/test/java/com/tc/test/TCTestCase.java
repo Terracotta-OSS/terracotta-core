@@ -434,10 +434,6 @@ public class TCTestCase extends TestCase {
     disableAllUntil(parseDate(date));
   }
 
-  protected final void timebombTestForRewrite() {
-    timebombTest("2012-02-16");
-  }
-
   /**
    * Disable all tests indefinitely
    */
