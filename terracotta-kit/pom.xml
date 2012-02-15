@@ -24,7 +24,6 @@
     <quartz.version>2.2.0-SNAPSHOT</quartz.version>
     <terracotta-session.version>1.3.0-SNAPSHOT</terracotta-session.version>
     <quartz-terracotta.version>2.3.0-SNAPSHOT</quartz-terracotta.version>
-    <management.version>1.0.0-SNAPSHOT</management.version>
 
     <skip.deploy>true</skip.deploy>
     <skip.testjar>true</skip.testjar>
