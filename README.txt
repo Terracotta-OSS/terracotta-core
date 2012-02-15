@@ -100,10 +100,8 @@ have them all compile in one go. To be able to do that, svn checkout those
 projects under "community/devwork". List of projects currently recognize are:
 
 - terracotta-toolkit(-ee)
-- terracotta-quartz(-ee)
-- tim-quartz(-ee)
 - ehcache(-ee)
-- quartz
+- quartz(-ee)
 
 Let say you have terracotta-toolkit-ee under devwork. This step will compile
 core, terracotta-toolkit and terracotta-toolkit-ee all in one command:

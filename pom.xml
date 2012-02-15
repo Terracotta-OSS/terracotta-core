@@ -134,61 +134,7 @@
       <modules>
         <module>devwork/ehcache-ee</module>
       </modules>
-    </profile>
-
-    <!-- activate by default if 'terracotta-quartz' module exists. 
-         You have to check out this module manually under 'community/devwork' -->
-    <profile>
-      <id>terracotta-quartz</id>
-      <activation>
-        <file>
-          <exists>devwork/terracotta-quartz</exists>
-        </file>
-      </activation>      
-      <modules>
-        <module>devwork/terracotta-quartz</module>
-      </modules>
-    </profile>
-    <!-- activate by default if 'terracotta-quartz-ee' module exists. 
-         You have to check out this module manually under 'community/devwork' -->
-    <profile>
-      <id>terracotta-quartz-ee</id>
-      <activation>
-        <file>
-          <exists>devwork/terracotta-quartz-ee</exists>
-        </file>
-      </activation>      
-      <modules>
-        <module>devwork/terracotta-quartz-ee</module>
-      </modules>
-    </profile>
-
-    <!-- activate by default if 'tim-quartz' module exists. 
-         You have to check out this module manually under 'community/devwork' -->
-    <profile>
-      <id>tim-quartz</id>
-      <activation>
-        <file>
-          <exists>devwork/tim-quartz</exists>
-        </file>
-      </activation>      
-      <modules>
-        <module>devwork/tim-quartz</module>
-      </modules>
-    </profile>
-    <!-- activate by default if 'tim-quartz-ee' module exists. 
-         You have to check out this module manually under 'community/devwork' -->
-    <profile>
-      <id>tim-quartz-ee</id>
-      <activation>
-        <file>
-          <exists>devwork/tim-quartz-ee</exists>
-        </file>
-      </activation>      
-      <modules>
-        <module>devwork/tim-quartz-ee</module>
-      </modules>
-    </profile>         
+    </profile>        
     
     <profile>
       <id>quartz</id>
@@ -199,6 +145,18 @@
       </activation>      
       <modules>
         <module>devwork/quartz</module>
+      </modules>
+    </profile>     
+    
+    <profile>
+      <id>quartz-ee</id>
+      <activation>
+        <file>
+          <exists>devwork/quartz-ee</exists>
+        </file>
+      </activation>      
+      <modules>
+        <module>devwork/quartz-ee</module>
       </modules>
     </profile>     
   </profiles>
