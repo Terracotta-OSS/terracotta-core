@@ -176,9 +176,8 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
 
           TCConnection conn = mtb.getConnection();
           if (conn == null || !mtb.isConnected()) {
-            logger.info("[" + conn == null ? null
-                : conn.getRemoteAddress().getCanonicalStringForm()
-                  + "] is not connected. Health Monitoring for this node is now disabled.");
+            logger.info("[" + (conn == null ? null : conn.getRemoteAddress().getCanonicalStringForm())
+                        + "] is not connected. Health Monitoring for this node is now disabled.");
             connectionIterator.remove();
             continue;
           }
