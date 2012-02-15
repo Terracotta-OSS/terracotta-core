@@ -24,12 +24,6 @@
   <dependencies>
     <!-- compile deps are added to the manifest's Class-Path entry -->
     <dependency>
-      <groupId>com.terracotta</groupId>
-      <artifactId>management-ehcache-impl</artifactId>
-      <version>${management.version}</version>
-    </dependency>
-
-    <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>deploy</artifactId>
       <version>${project.version}</version>
