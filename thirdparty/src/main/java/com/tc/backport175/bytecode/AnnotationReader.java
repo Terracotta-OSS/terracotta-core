@@ -211,8 +211,11 @@ public class AnnotationReader {
 
         if (reader == null) {
             reader = new AnnotationReader(classKey);
+
+            // construct this weak ref outside the synch to avoid deadlock (MNK-3413)
+            WeakReference toAdd = new WeakReference(reader);
             synchronized(READERS) {
-                READERS.put(classKey, new WeakReference(reader));//reader strong refs its own key in the weakhahsmap..
+                READERS.put(classKey, toAdd);//reader strong refs its own key in the weakhashmap..
             }
         }
         return reader;
