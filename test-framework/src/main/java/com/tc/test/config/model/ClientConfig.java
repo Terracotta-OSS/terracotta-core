@@ -17,6 +17,8 @@ public class ClientConfig {
   private final List<String>                    extraClientJvmArgs;
   private Class<? extends AbstractClientBase>[] classes;
   private boolean                               shouldResolveLicense = true;
+  private int                                   minHeap              = 64;
+  private int                                   maxHeap              = 128;
 
   public ClientConfig() {
     extraClientJvmArgs = new ArrayList<String>();
@@ -95,6 +97,42 @@ public class ClientConfig {
    */
   public boolean shouldResolveLicense() {
     return shouldResolveLicense;
+  }
+
+  /**
+   * Get the -Xms size to pass to client
+   * 
+   * @return Minimum heap size
+   */
+  public int getMinHeap() {
+    return minHeap;
+  }
+
+  /**
+   * Set the min heap size
+   * 
+   * @param minHeap minimum heap size
+   */
+  public void setMinHeap(int minHeap) {
+    this.minHeap = minHeap;
+  }
+
+  /**
+   * Get the -Xmx size to pass to Client
+   * 
+   * @return Maximum heap size
+   */
+  public int getMaxHeap() {
+    return maxHeap;
+  }
+
+  /**
+   * Set the max heap size
+   * 
+   * @param maxHeap maximum heap size
+   */
+  public void setMaxHeap(int maxHeap) {
+    this.maxHeap = maxHeap;
   }
 
 }

@@ -77,6 +77,8 @@ public class TestClientManager {
 
     // removed duplicate args and use the one added in the last in case of multiple entries
     TestBaseUtil.removeDuplicateJvmArgs(jvmArgs);
+    TestBaseUtil.setHeapSizeArgs(jvmArgs, testConfig.getClientConfig().getMinHeap(), testConfig.getClientConfig()
+        .getMaxHeap());
 
     String clientArgs = System.getProperty(CLIENT_ARGS);
     if (clientArgs != null) {
