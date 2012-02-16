@@ -249,7 +249,7 @@ public class ConfigHelper {
     return testConfig.getL2Config().isProxyDsoPorts();
   }
 
-  private String getDataDirectoryPath(final int groupIndex, final int serverIndex) {
+  protected String getDataDirectoryPath(final int groupIndex, final int serverIndex) {
     return groupData[groupIndex].getDataDirectoryPath(serverIndex);
   }
 
