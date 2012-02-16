@@ -268,7 +268,7 @@
 
                     <!-- console -->
                     <resource>
-                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
+                      <runIf>{{ "${no.extra}" != "true" &amp;&amp; "${kit.edition}" == "enterprise" }}</runIf>
                       <targetPath>${rootDir}/console</targetPath>
                       <dependency>
                         <groupId>com.terracotta</groupId>
