@@ -22,7 +22,6 @@ import com.tc.object.locks.LockLevel;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.text.Banner;
 import com.tc.util.Assert;
 
 import java.lang.reflect.Modifier;
@@ -87,8 +86,6 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
 
   private void handleInstrumentationException(final Throwable e) {
     logger.fatal(e);
-    logger.fatal("Calling System.exit(1)");
-    System.exit(1);
   }
 
   private boolean isRoot(final int access, final String fieldName) {
@@ -463,11 +460,6 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
 
     e.printStackTrace(System.err);
     System.err.flush();
-    String msg = "Error detected -- Calling System.exit(1)";
-    Banner.errorBanner(msg);
-
-    logger.fatal(msg);
-    System.exit(1);
   }
 
   private void callRenamedMethod(final int callingMethodModifier, final String name, final String desc,
