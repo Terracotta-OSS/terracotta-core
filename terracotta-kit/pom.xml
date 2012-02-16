@@ -21,9 +21,8 @@
     <toolkit.api>1.5</toolkit.api>
     <toolkit.version>5.0.0-SNAPSHOT</toolkit.version>
     <ehcache.version>2.6.0-SNAPSHOT</ehcache.version>
-    <quartz.version>2.2.0-SNAPSHOT</quartz.version>
+    <quartz.version>3.0.0-SNAPSHOT</quartz.version>
     <terracotta-session.version>1.3.0-SNAPSHOT</terracotta-session.version>
-    <quartz-terracotta.version>2.3.0-SNAPSHOT</quartz-terracotta.version>
 
     <skip.deploy>true</skip.deploy>
     <skip.testjar>true</skip.testjar>
@@ -38,13 +37,11 @@
 
     <terracotta.artifactId>terracotta${ee.suffix}</terracotta.artifactId>
     <terracotta.jarname>${terracotta.artifactId}-${project.version}.jar</terracotta.jarname>
-    <toolkit.artifactId>terracotta-toolkit-${toolkit.api}-runtime${ee.suffix}</toolkit.artifactId>
-    <quartz-terracotta.artifactId>quartz-terracotta${ee.suffix}</quartz-terracotta.artifactId>    
+    <toolkit.artifactId>terracotta-toolkit-${toolkit.api}-runtime${ee.suffix}</toolkit.artifactId> 
     <ehcache.artifactId>ehcache-kit</ehcache.artifactId>
-    <ehcache-terracotta.artifactId>ehcache-terracotta${ee.suffix}</ehcache-terracotta.artifactId>
+    <quartz.artifactId>quartz-kit</quartz.artifactId>
 
     <terracotta.license>LICENSE.txt</terracotta.license>
-    <quartz-kit.url>http://download.terracotta.org/quartz/quartz-${quartz.version}.tar.gz</quartz-kit.url>
 
     <maven-copy-plugin.version>0.2.3.6</maven-copy-plugin.version>
     <gmaven-plugin.version>1.3</gmaven-plugin.version>
@@ -99,9 +96,11 @@
 
     <!-- quartz -->
     <dependency>
-      <groupId>org.terracotta.quartz</groupId>
-      <artifactId>${quartz-terracotta.artifactId}</artifactId>
-      <version>${quartz-terracotta.version}</version>
+      <groupId>org.quartz-scheduler</groupId>
+      <artifactId>${quartz.artifactId}</artifactId>
+      <version>${quartz.version}</version>
+      <classifier>distribution</classifier>
+      <type>tar.gz</type>      
       <scope>provided</scope>
     </dependency>
 
@@ -124,6 +123,7 @@
         <kit.edition>enterprise</kit.edition>
         <ee.suffix>-ee</ee.suffix>
         <ehcache.artifactId>ehcache-ee-kit</ehcache.artifactId>
+        <quartz.artifactId>quartz-ee-kit</quartz.artifactId>
         <terracotta.license>TERRACOTTA-TRIAL-LICENSE.txt</terracotta.license>
       </properties>
     </profile>
@@ -301,6 +301,29 @@
                       <cleanEmptyDirectories>true</cleanEmptyDirectories>
                       <failIfNotFound>false</failIfNotFound>
                     </resource>
+                    
+                    <!-- quartz -->
+                    <resource>
+                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
+                      <targetPath>${rootDir}</targetPath>
+                      <dependency>
+                        <groupId>org.quartz-scheduler</groupId>
+                        <artifactId>${quartz.artifactId}</artifactId>
+                        <classifier>distribution</classifier>
+                        <type>tar.gz</type>
+                      </dependency>
+                      <dependenciesAtM2>true</dependenciesAtM2>
+                      <unpack>true</unpack>
+                      <process>Util.processQuartzDistribution(project)</process>              
+                    </resource>
+                    <resource>
+                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
+                      <directory>${rootDir}/quartz</directory>
+                      <include>**/licenses/**</include>
+                      <clean>true</clean>
+                      <cleanEmptyDirectories>true</cleanEmptyDirectories>
+                      <failIfNotFound>false</failIfNotFound>
+                    </resource>                    
 
                     <!-- session express -->
                     <resource>
@@ -309,24 +332,6 @@
                       <dependency>
                         <groupId>org.terracotta.session</groupId>
                         <artifactId>terracotta-session</artifactId>
-                      </dependency>
-                      <dependenciesAtM2>true</dependenciesAtM2>
-                    </resource>
-
-                    <!-- quartz -->
-                    <resource>
-                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
-                      <targetPath>${rootDir}</targetPath>
-                      <file>${quartz-kit.url}</file>
-                      <unpack>true</unpack>
-                      <process>Util.processQuartzDistribution(project)</process>
-                    </resource>
-                    <resource>
-                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
-                      <targetPath>${rootDir}/quartz</targetPath>
-                      <dependency>
-                        <groupId>org.terracotta.quartz</groupId>
-                        <artifactId>${quartz-terracotta.artifactId}</artifactId>
                       </dependency>
                       <dependenciesAtM2>true</dependenciesAtM2>
                     </resource>
