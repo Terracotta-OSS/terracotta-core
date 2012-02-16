@@ -914,9 +914,11 @@ public interface TCPropertiesConsts {
    * <code>
    * Section :  L1 Shutdown Settings
    * l1.shutdown.threadgroup.gracetime - time allowed for termination of all threads in the TC thread group (in milliseconds).
+   * l1.shutdown.force.finalization    - call System.runFinalization() at the end of the L1 shutdown procedure.
    * </code>
    ********************************************************************************************************************/
   public static final String L1_SHUTDOWN_THREADGROUP_GRACETIME                              = "l1.shutdown.threadgroup.gracetime";
+  public static final String L1_SHUTDOWN_FORCE_FINALIZATION                                 = "l1.shutdown.force.finalization";
 
   /*********************************************************************************************************************
    * <code>
