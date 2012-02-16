@@ -22,7 +22,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerImpl;
-import com.tc.object.bytecode.hook.ClassLoaderPreProcessorImpl;
 import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.ModuleConfiguration;
@@ -179,7 +178,6 @@ public class DSOContextImpl implements DSOContext {
    * offset.
    * 
    * @return new byte array if the class is instrumented and same input byte array if not.
-   * @see ClassLoaderPreProcessorImpl
    */
   public byte[] preProcess(String name, byte[] data, int offset, int length, ClassLoader caller) {
     InstrumentationContext context = new InstrumentationContext(name, data, caller);

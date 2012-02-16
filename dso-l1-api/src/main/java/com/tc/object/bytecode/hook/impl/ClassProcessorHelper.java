@@ -7,7 +7,6 @@ package com.tc.object.bytecode.hook.impl;
 import com.tc.net.NIOWorkarounds;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.bytecode.hook.ClassLoaderPreProcessorImpl;
 import com.tc.object.bytecode.hook.ClassPostProcessor;
 import com.tc.object.bytecode.hook.ClassPreProcessor;
 import com.tc.object.bytecode.hook.DSOContext;
@@ -278,7 +277,6 @@ public class ClassProcessorHelper {
    * @param len Length of class data
    * @param pd Protection domain for class
    * @return Modified class array
-   * @see ClassLoaderPreProcessorImpl
    */
   public static byte[] defineClass0Pre(ClassLoader caller, String name, byte[] b, int off, int len, ProtectionDomain pd) {
     if (skipClass(caller)) { return b; }
