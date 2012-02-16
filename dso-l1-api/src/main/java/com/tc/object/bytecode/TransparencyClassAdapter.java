@@ -86,6 +86,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
 
   private void handleInstrumentationException(final Throwable e) {
     logger.fatal(e);
+    throw new RuntimeException(e);
   }
 
   private boolean isRoot(final int access, final String fieldName) {
@@ -134,7 +135,6 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
         generateGettersSetters(access, name, desc, Modifier.isStatic(access), wasOriginallyFinal);
       }
     } catch (RuntimeException e) {
-      e.printStackTrace();
       handleInstrumentationException(e);
     } catch (Error e) {
       handleInstrumentationException(e);
@@ -460,6 +460,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
 
     e.printStackTrace(System.err);
     System.err.flush();
+
+    throw e;
   }
 
   private void callRenamedMethod(final int callingMethodModifier, final String name, final String desc,
