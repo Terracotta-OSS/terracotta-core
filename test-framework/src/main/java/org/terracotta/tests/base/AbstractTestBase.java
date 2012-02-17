@@ -4,6 +4,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ClassUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.terracotta.test.util.TestBaseUtil;
 
@@ -124,6 +125,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   }
 
   @Override
+  @Test
   final public void runTest() throws Throwable {
     if (!testWillRun) return;
 
