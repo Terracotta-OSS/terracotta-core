@@ -613,6 +613,7 @@ public class TCServerImpl extends SEDA implements TCServer {
           String warFile = files[0];
           logger.info("deploying console web UI from archive " + warFile);
           WebAppContext consoleContext = new WebAppContext(consoleDir.getPath() + File.separator + warFile, "/console");
+          consoleContext.setSessionHandler(null);
           contextHandlerCollection.addHandler(consoleContext);
         } else {
           logger.info("could not find console web UI archive");
@@ -622,7 +623,7 @@ public class TCServerImpl extends SEDA implements TCServer {
       }
 
       // register REST webapp
-      Context restContext = new Context(null, "/tc-management-api", Context.SESSIONS | Context.SECURITY);
+      Context restContext = new Context(null, "/tc-management-api", Context.NO_SESSIONS | Context.SECURITY);
       ServletHolder servletHolder = new ServletHolder(ServletContainer.class);
       servletHolder.setInitParameter("com.sun.jersey.config.property.packages", "net.sf.ehcache.management");
       servletHolder.setInitParameter("com.sun.jersey.api.json.POJOMappingFeature", "true");
