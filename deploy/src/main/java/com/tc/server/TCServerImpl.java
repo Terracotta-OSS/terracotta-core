@@ -612,8 +612,9 @@ public class TCServerImpl extends SEDA implements TCServer {
         if (files != null && files.length > 0) {
           String warFile = files[0];
           logger.info("deploying console web UI from archive " + warFile);
-          WebAppContext consoleContext = new WebAppContext(consoleDir.getPath() + File.separator + warFile, "/console");
-          //consoleContext.setSessionHandler(null);
+          WebAppContext consoleContext = new WebAppContext(new SecurityHandler(), null, null, null);
+          consoleContext.setContextPath("/console");
+          consoleContext.setWar(consoleDir.getPath() + File.separator + warFile);
           contextHandlerCollection.addHandler(consoleContext);
         } else {
           logger.info("could not find console web UI archive");
