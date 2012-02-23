@@ -4,8 +4,6 @@
  */
 package com.tc.object;
 
-import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
-
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -18,15 +16,15 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PortabilityImpl implements Portability {
 
   private static final Class                  OBJECT_CLASS           = Object.class;
   private static final NonInstrumentedClasses nonInstrumentedClasses = new NonInstrumentedClasses();
 
-  // Don't use java.util.concurrent.ConcurrentHashMap here (at least not without reading DEV-2798)
-  private final Map<Class, Boolean>           portableCache          = new ConcurrentReaderHashMap();
-  private final Map<Class, Boolean>           physicalCache          = new ConcurrentReaderHashMap();
+  private final Map<Class, Boolean>           portableCache          = new ConcurrentHashMap();
+  private final Map<Class, Boolean>           physicalCache          = new ConcurrentHashMap();
 
   private final DSOClientConfigHelper         config;
 
