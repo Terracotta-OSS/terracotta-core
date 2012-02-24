@@ -42,8 +42,8 @@ public abstract class AbstractClassDumper {
         }
 
         File dir = new File(sb.toString());
-        if (!dir.exists()) {
-          dir.mkdirs();
+        if (!dir.exists() && !dir.mkdirs()) {
+          throw new IOException("Couldn't create directory");
         }
 
         File outFile = new File(adaptedRoot, name);
