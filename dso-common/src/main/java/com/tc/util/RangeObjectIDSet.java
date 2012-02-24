@@ -61,6 +61,11 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
     }
   }
 
+  /**
+   * ignore find bug warning for non thread safe increment of a volatile variable The volatile varibale is being used
+   * only for validation of no concurrent modification while iterating the set
+   */
+  @FindbugsSuppressWarnings("VO_VOLATILE_INCREMENT")
   @Override
   public boolean contains(final ObjectID id) {
     final long lid = id.toLong();
@@ -87,6 +92,11 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
     return true;
   }
 
+  /**
+   * ignore find bug warning for non thread safe increment of a volatile variable The volatile varibale is being used
+   * only for validation of no concurrent modification while iterating the set
+   */
+  @FindbugsSuppressWarnings("VO_VOLATILE_INCREMENT")
   /**
    * Optimized addAll method if the other collection is a RangeObjectIDSet too. <br>
    * XXX: Use iterator for both the range sets as they give sorted sets. find() is costlier. XXX: More optimizations can
@@ -142,6 +152,11 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
     return true;
   }
 
+  /**
+   * ignore find bug warning for non thread safe increment of a volatile variable The volatile varibale is being used
+   * only for validation of no concurrent modification while iterating the set
+   */
+  @FindbugsSuppressWarnings("VO_VOLATILE_INCREMENT")
   @Override
   public boolean add(final ObjectID id) {
     final long lid = id.toLong();
@@ -343,6 +358,13 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
           return 0;
         }
       }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (!(obj instanceof Range)) return false;
+      Range r = (Range) obj;
+      return (this.start == r.start) && (this.end == r.end);
     }
 
     public void swapPayload(final Node<Comparable> other) {
