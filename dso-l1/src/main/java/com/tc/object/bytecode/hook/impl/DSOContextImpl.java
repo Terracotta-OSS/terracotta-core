@@ -5,6 +5,12 @@
 package com.tc.object.bytecode.hook.impl;
 
 import org.apache.commons.io.CopyUtils;
+import org.apache.log4j.Hierarchy;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.spi.RootLogger;
+import org.apache.log4j.varia.NullAppender;
+
 
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.aspectwerkz.transform.InstrumentationContext;
@@ -162,6 +168,12 @@ public class DSOContextImpl implements DSOContext {
   private void resolveClasses() {
     // This fixes a class circularity error in JavaClassInfoRepository
     JavaClassInfo.getClassInfo(getClass());
+
+    // This is to help a deadlock in log4j (see MNK-3461)
+    Logger l = new RootLogger(Level.ALL);
+    Hierarchy h = new Hierarchy(l);
+    l.addAppender(new NullAppender());
+    l.debug(h.toString(), new Throwable());
   }
 
   public Manager getManager() {
