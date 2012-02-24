@@ -153,14 +153,15 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
   public boolean retainAll(Collection<?> collection) {
     boolean success = false;
     for (int index = 0; index < concurrency; index++) {
-      locks[index].writeLock().lock();
+      final Lock lock = locks[index].writeLock();
+      lock.lock();
 
       try {
         if (!objectIdSets[index].retainAll(collection)) {
           success = true;
         }
       } finally {
-        locks[index].writeLock().unlock();
+        lock.unlock();
       }
     }
 
