@@ -12,15 +12,15 @@ import java.util.Date;
 public final class EnvStats {
 
   public static final String filename = "tc-envstats.txt";
-    
+
   public static void writeReport(File directory) throws IOException, IllegalArgumentException {
     if (!directory.isDirectory()) throw new IllegalArgumentException(directory + " is not a directory");
     FileOutputStream out = new FileOutputStream(directory + File.separator + filename);
-    out.write(report().getBytes());
+    out.write(report().getBytes("UTF-8"));
     out.flush();
     out.close();
   }
-  
+
   public static String report() {
     StringBuffer sb = new StringBuffer();
     sb.append("***** Terracotta System Environment Report *****\n\n");
