@@ -6,20 +6,16 @@ package com.tc.object.net;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ServerMapRequestType;
-import com.tc.stats.StatsConfig;
-import com.tc.stats.counter.BoundedCounterConfig;
 import com.tc.stats.counter.Counter;
-import com.tc.stats.counter.sampled.SampledCounterConfig;
-import com.tc.stats.counter.sampled.SampledCumulativeCounterConfig;
 
 public interface ChannelStats {
 
-  public static final String        OBJECT_REQUEST_RATE           = "objectRequestRate";
-  public static final String        OBJECT_FLUSH_RATE             = "objectFlushRate";
-  public static final String        TXN_RATE                      = "transactionRate";
-  public static final String        PENDING_TRANSACTIONS          = "pendingTransactions";
-  public static final String        SERVER_MAP_GET_VALUE_REQUESTS = "serverMapGetValueRequests";
-  public static final String        SERVER_MAP_GET_SIZE_REQUESTS  = "serverMapGetSizeRequests";
+  public static final String OBJECT_REQUEST_RATE           = "objectRequestRate";
+  public static final String OBJECT_FLUSH_RATE             = "objectFlushRate";
+  public static final String TXN_RATE                      = "transactionRate";
+  public static final String PENDING_TRANSACTIONS          = "pendingTransactions";
+  public static final String SERVER_MAP_GET_VALUE_REQUESTS = "serverMapGetValueRequests";
+  public static final String SERVER_MAP_GET_SIZE_REQUESTS  = "serverMapGetSizeRequests";
 
   public Counter getCounter(MessageChannel channel, String name);
 
@@ -32,6 +28,6 @@ public interface ChannelStats {
   public void notifyTransactionBroadcastedTo(NodeID nodeID);
 
   public void notifyTransactionAckedFrom(NodeID nodeID);
-  
+
   public void notifyServerMapRequest(ServerMapRequestType type, MessageChannel channel, int numRequests);
 }
