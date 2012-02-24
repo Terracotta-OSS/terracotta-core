@@ -328,6 +328,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
           this.reaper = null;
         }
       }
+      notifyAll();
     }
   }
 

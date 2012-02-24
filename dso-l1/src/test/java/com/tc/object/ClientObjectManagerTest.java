@@ -10,6 +10,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
 import com.tc.async.impl.MockSink;
 import com.tc.exception.ImplementMe;
+import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
 import com.tc.object.TestClassFactory.MockTCClass;
@@ -22,6 +23,7 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.field.TCField;
+import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.idprovider.api.ObjectIDProvider;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.locks.TestLocksRecallService;
@@ -40,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ClientObjectManagerTest extends BaseDSOTestCase {
   private ClientObjectManager     mgr;
@@ -81,6 +84,43 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
                                            new PortabilityImpl(this.clientConfiguration), null, null,
                                            this.tcObjectSelfStore);
     this.mgr.setTransactionManager(new MockTransactionManager());
+  }
+
+  public void testShutdownWhilePaused() throws Exception {
+
+    // We don't use the node or disconnected count for ClientObjectManager
+    System.out.println("Pausing the ClientObjectManager");
+    ((ClientHandshakeCallback) mgr).pause(null, 0);
+
+    final AtomicBoolean pass = new AtomicBoolean(false);
+    Thread waiter = new Thread(new Runnable() {
+      public void run() {
+        try {
+          System.out.println("Running a root replace to waitUntilRunning");
+          mgr.replaceRootIDIfNecessary("foo", objectID);
+          Assert.fail("Root replacement finished successfully");
+        } catch (TCNotRunningException e) {
+          System.out.println("Got the expected TCNotRunningException");
+          pass.set(true);
+        }
+      }
+    });
+    System.out.println("Starting the root replacer.");
+    waiter.setDaemon(true);
+    waiter.start();
+
+    System.out.println("Waiting until root replacer is blocked in the WAITING state");
+    while (waiter.getState() != Thread.State.WAITING) {
+      ThreadUtil.reallySleep(1000);
+    }
+
+    System.out.println("Shutting down the ClientObjectManager");
+    mgr.shutdown();
+
+    System.out.println("Waiting to join the root replacer thread.");
+    waiter.join(10 * 1000);
+
+    Assert.assertTrue("Root replacement did not throw a TCNotRUnningException!", pass.get());
   }
 
   public void testObjectNotFoundConcurrentLookup() throws Exception {
