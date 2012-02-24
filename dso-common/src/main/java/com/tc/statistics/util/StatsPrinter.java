@@ -20,7 +20,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class StatsPrinter implements StatsRecorder, Runnable {
+public final class StatsPrinter implements StatsRecorder, Runnable {
+  private static final Aggregator aggregator   = new Aggregator();
+
   private final static TCLogger   statsLogger  = TCLogging.getLogger(StatsPrinter.class);
   private final long              timeInterval;
   private final ConcurrentHashMap statsRecords = new ConcurrentHashMap();
@@ -29,9 +31,7 @@ public class StatsPrinter implements StatsRecorder, Runnable {
   private volatile int            keyMaxSize   = 0;
   private boolean                 printHeader;
   private final boolean           printTotal;
-  private boolean                 finished     = false;
-
-  private static Aggregator       aggregator;
+  private volatile boolean        finished     = false;
 
   public StatsPrinter(String name, long timeInterval, MessageFormat header, MessageFormat formatLine, boolean printTotal) {
     this.printTotal = printTotal;
@@ -50,21 +50,14 @@ public class StatsPrinter implements StatsRecorder, Runnable {
     this.header = header.format(new Long[] { Long.valueOf(Aggregator.timeInterval) });
     this.formatLine = formatLine;
 
-    getAggregator().addStatsPrinter(this);
+    aggregator.addStatsPrinter(this);
   }
 
-  private Aggregator getAggregator() {
-    if (aggregator == null) {
-      aggregator = new Aggregator();
-    }
-    return aggregator;
-  }
-
-  public synchronized void finish() {
+  public void finish() {
     this.finished = true;
   }
 
-  private synchronized boolean isFinished() {
+  private boolean isFinished() {
     return finished;
   }
 
@@ -76,13 +69,12 @@ public class StatsPrinter implements StatsRecorder, Runnable {
   private StatsRecord get(String key) {
     StatsRecord r = (StatsRecord) statsRecords.get(key);
     if (r == null) {
-      synchronized (this) {
-        r = (StatsRecord) statsRecords.get(key);
-        if (r == null) {
-          statsRecords.put(key, (r = new StatsRecord(key)));
-          updateKeyMaxSize(key.length());
-        }
+      r = new StatsRecord(key);
+      StatsRecord old = (StatsRecord) statsRecords.putIfAbsent(key, r);
+      if (old != null) {
+        r = old;
       }
+      updateKeyMaxSize(key.length());
     }
     return r;
   }
