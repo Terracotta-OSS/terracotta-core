@@ -21,14 +21,6 @@ public interface ChannelStats {
   public static final String        SERVER_MAP_GET_VALUE_REQUESTS = "serverMapGetValueRequests";
   public static final String        SERVER_MAP_GET_SIZE_REQUESTS  = "serverMapGetSizeRequests";
 
-  public static final StatsConfig[] STATS_CONFIG                  = new StatsConfig[] {
-      new StatsConfig(OBJECT_REQUEST_RATE, new SampledCounterConfig(1, 300, true, 0L)),
-      new StatsConfig(OBJECT_FLUSH_RATE, new SampledCounterConfig(1, 300, true, 0L)),
-      new StatsConfig(TXN_RATE, new SampledCounterConfig(1, 300, true, 0L)),
-      new StatsConfig(PENDING_TRANSACTIONS, new BoundedCounterConfig(0L, 0L, Long.MAX_VALUE)),
-      new StatsConfig(SERVER_MAP_GET_SIZE_REQUESTS, new SampledCumulativeCounterConfig(1, 300, true, 0L)),
-      new StatsConfig(SERVER_MAP_GET_VALUE_REQUESTS, new SampledCumulativeCounterConfig(1, 300, true, 0L)) };
-
   public Counter getCounter(MessageChannel channel, String name);
 
   public void notifyTransaction(NodeID nodeID, int numTxns);
