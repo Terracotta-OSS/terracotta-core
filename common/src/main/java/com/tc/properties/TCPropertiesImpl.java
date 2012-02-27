@@ -98,12 +98,14 @@ public class TCPropertiesImpl implements TCProperties {
   private void processSystemProperties() {
     // find and record all tc properties set via system properties
 
-    for (Object element : System.getProperties().entrySet()) {
-      Map.Entry entry = (Entry) element;
-      String key = (String) entry.getKey();
+    // NOT using System.getProperties().entrySet() since that might throw ConcurrentModificationException
+    for (String key : System.getProperties().stringPropertyNames()) {
       if (key.startsWith(SYSTEM_PROP_PREFIX)) {
-        localTcProperties.setProperty(key.substring(SYSTEM_PROP_PREFIX.length()), (String) entry.getValue());
-        props.setProperty(key.substring(SYSTEM_PROP_PREFIX.length()), (String) entry.getValue());
+        String value = System.getProperty(key);
+        if (value != null) {
+          localTcProperties.setProperty(key.substring(SYSTEM_PROP_PREFIX.length()), value);
+          props.setProperty(key.substring(SYSTEM_PROP_PREFIX.length()), value);
+        }
       }
     }
   }
