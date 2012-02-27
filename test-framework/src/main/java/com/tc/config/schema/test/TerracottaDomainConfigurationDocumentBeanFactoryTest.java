@@ -1,9 +1,8 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.test;
-
-import java.io.ByteArrayInputStream;
 
 import org.apache.xmlbeans.XmlException;
 
@@ -13,6 +12,8 @@ import com.tc.config.test.schema.TerracottaConfigBuilder;
 import com.tc.test.TCTestCase;
 import com.terracottatech.config.TcConfigDocument;
 
+import java.io.ByteArrayInputStream;
+
 /**
  * Unit test for {@link TerracottaDomainConfigurationDocumentBeanFactory}.
  */
@@ -20,6 +21,7 @@ public class TerracottaDomainConfigurationDocumentBeanFactoryTest extends TCTest
 
   private TerracottaDomainConfigurationDocumentBeanFactory factory;
 
+  @Override
   public void setUp() throws Exception {
     this.factory = new TerracottaDomainConfigurationDocumentBeanFactory();
   }
@@ -27,7 +29,7 @@ public class TerracottaDomainConfigurationDocumentBeanFactoryTest extends TCTest
   public void testNormal() throws Exception {
     TerracottaConfigBuilder builder = TerracottaConfigBuilder.newMinimalInstance();
     builder.getClient().setLogs("foobar");
-    byte[] xml = builder.toString().getBytes();
+    byte[] xml = builder.toString().getBytes("UTF-8");
     ByteArrayInputStream stream = new ByteArrayInputStream(xml);
 
     BeanWithErrors beanWithErrors = this.factory.createBean(stream, "from test");
@@ -38,7 +40,7 @@ public class TerracottaDomainConfigurationDocumentBeanFactoryTest extends TCTest
   public void testXmlMisparse() throws Exception {
     TerracottaConfigBuilder builder = TerracottaConfigBuilder.newMinimalInstance();
     builder.getClient().setLogs("foo <funk>"); // an unclosed tag; the builder intentionally doesn't escape text
-    byte[] xml = builder.toString().getBytes();
+    byte[] xml = builder.toString().getBytes("UTF-8");
     ByteArrayInputStream stream = new ByteArrayInputStream(xml);
 
     try {
@@ -53,7 +55,7 @@ public class TerracottaDomainConfigurationDocumentBeanFactoryTest extends TCTest
     TerracottaConfigBuilder builder = TerracottaConfigBuilder.newMinimalInstance();
     builder.getSystem().setLicenseType("funkiness"); // invalid enumeration value
     builder.getSystem().setLicenseLocation("foo");
-    byte[] xml = builder.toString().getBytes();
+    byte[] xml = builder.toString().getBytes("UTF-8");
     ByteArrayInputStream stream = new ByteArrayInputStream(xml);
 
     BeanWithErrors beanWithErrors = this.factory.createBean(stream, "from test");
