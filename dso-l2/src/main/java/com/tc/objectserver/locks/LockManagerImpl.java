@@ -82,6 +82,8 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
   }
 
   public void unlock(LockID lid, ClientID cid, ThreadID tid) {
+    // This needs to be queueable since it maybe possible for an unpause race on the client side
+    // to cause an unlock message to reach the server prior to the lock manager starting up. (see steps in wait()).
     if (!queueIfNecessary(lid, cid, tid, ServerLockLevel.WRITE, RequestType.UNLOCK)) { return; }
 
     // Lock might be removed from the lock store in the call to the unlock
