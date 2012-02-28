@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.control;
 
-
 public class NullServerControl implements ServerControl {
 
   private boolean isRunning;
@@ -61,4 +60,7 @@ public class NullServerControl implements ServerControl {
     return 1;
   }
 
+  public void waitUntilL2IsActiveOrPassive() throws Exception {
+    //
+  }
 }
