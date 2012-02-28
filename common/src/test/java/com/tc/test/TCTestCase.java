@@ -57,15 +57,15 @@ import junit.framework.TestCase;
  */
 public class TCTestCase extends TestCase {
 
-  private static final String                TEST_CATEGORIES_URL_PROPERTY = "tc.tests.configuration.catagories.url";
+  private static final String                TEST_CATEGORIES_URL_PROPERTY  = "tc.tests.configuration.catagories.url";
+  private static final String                TEST_CATEGORIES_FILE_PROPERTY = "tc.tests.configuration.catagories.file";
+  private static final String                TEST_EXECUTION_MODE_PROPERTY  = "tc.tests.configuration.mode";
 
-  private static final String                TEST_EXECUTION_MODE_PROPERTY = "tc.tests.configuration.mode";
+  private static final String                TEST_CATEGORIES_PROPERTIES    = "/TestCategories.properties";
 
-  private static final String                TEST_CATEGORIES_PROPERTIES   = "/TestCategories.properties";
+  private static final long                  DEFAULT_TIMEOUT_THRESHOLD     = 60000;
 
-  private static final long                  DEFAULT_TIMEOUT_THRESHOLD    = 60000;
-
-  private final SynchronizedRef              beforeTimeoutException       = new SynchronizedRef(null);
+  private final SynchronizedRef              beforeTimeoutException        = new SynchronizedRef(null);
 
   private DataDirectoryHelper                dataDirectoryHelper;
   private TempDirectoryHelper                tempDirectoryHelper;
@@ -75,27 +75,27 @@ public class TCTestCase extends TestCase {
   // This stuff is static since Junit new()'s up an instance of the test case for each test method,
   // and the timeout covers the entire test case (ie. all methods). It wouldn't be very effective to start
   // the timer for each test method given this
-  private static final Timer                 timeoutTimer                 = new Timer("Timeout Thread", true);
+  private static final Timer                 timeoutTimer                  = new Timer("Timeout Thread", true);
   private static TimerTask                   timerTask;
-  protected static final SynchronizedBoolean timeoutTaskAdded             = new SynchronizedBoolean(false);
+  protected static final SynchronizedBoolean timeoutTaskAdded              = new SynchronizedBoolean(false);
 
-  private static boolean                     printedProcess               = false;
+  private static boolean                     printedProcess                = false;
 
   // If you want to customize this, you have to do it in the constructor of your test case (setUp() is too late)
-  private long                               timeoutThreshold             = DEFAULT_TIMEOUT_THRESHOLD;
+  private long                               timeoutThreshold              = DEFAULT_TIMEOUT_THRESHOLD;
 
   // controls for thread dumping.
-  private boolean                            dumpThreadsOnTimeout         = true;
-  private int                                numThreadDumps               = 3;
-  private long                               dumpInterval                 = 500;
+  private boolean                            dumpThreadsOnTimeout          = true;
+  private int                                numThreadDumps                = 3;
+  private long                               dumpInterval                  = 500;
 
   // a way to ensure that system clock moves forward...
-  private long                               previousSystemMillis         = 0;
+  private long                               previousSystemMillis          = 0;
 
   private ExecutionMode                      executionMode;
   private TestCategorization                 testCategorization;
 
-  protected volatile boolean                 testWillRun                  = false;
+  protected volatile boolean                 testWillRun                   = false;
 
   public TCTestCase() {
     super();
@@ -132,6 +132,7 @@ public class TCTestCase extends TestCase {
     testCategorization = new TestCategorization(new Properties());
 
     String categoriesUrlProperty = System.getProperty(TEST_CATEGORIES_URL_PROPERTY);
+    String categoriesFileProperty = System.getProperty(TEST_CATEGORIES_FILE_PROPERTY);
     URL categoriesUrl = null;
 
     if (categoriesUrlProperty != null) {
@@ -141,7 +142,16 @@ public class TCTestCase extends TestCase {
         Banner.errorBanner("The URL specified by the " + TEST_CATEGORIES_URL_PROPERTY + " property is malformed.");
         return;
       }
+    } else if (categoriesFileProperty != null) {
+      File categoriesFile = new File(categoriesFileProperty);
+      try {
+        categoriesUrl = categoriesFile.toURI().toURL();
+      } catch (MalformedURLException e) {
+        Banner.errorBanner("The file specified by the " + TEST_CATEGORIES_URL_PROPERTY + " property is malformed.");
+        return;
+      }
     } else {
+
       // If no test categories URL is provided as a system property, default to using
       // a test categories file in the root of the tests JAR.
       categoriesUrl = this.getClass().getResource(TEST_CATEGORIES_PROPERTIES);
