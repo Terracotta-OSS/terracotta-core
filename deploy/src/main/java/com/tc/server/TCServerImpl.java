@@ -16,7 +16,6 @@ import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.DefaultServlet;
 import org.mortbay.jetty.servlet.ServletHandler;
 import org.mortbay.jetty.servlet.ServletHolder;
-import org.mortbay.jetty.servlet.SessionHandler;
 import org.mortbay.jetty.webapp.WebAppContext;
 
 import com.sun.jersey.spi.container.servlet.ServletContainer;
@@ -63,7 +62,7 @@ import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.server.util.NoSessionManager;
+import com.tc.server.util.TcHashSessionIdManager;
 import com.tc.servlets.L1ReconnectPropertiesServlet;
 import com.tc.statistics.StatisticsGathererSubSystem;
 import com.tc.statistics.beans.StatisticsMBeanNames;
@@ -614,8 +613,7 @@ public class TCServerImpl extends SEDA implements TCServer {
         if (files != null && files.length > 0) {
           String warFile = files[0];
           logger.info("deploying console web UI from archive " + warFile);
-          WebAppContext consoleContext = new WebAppContext(new SecurityHandler()
-              , new SessionHandler(new NoSessionManager()), null, null);
+          WebAppContext consoleContext = new WebAppContext();
           consoleContext.setContextPath("/console");
           consoleContext.setWar(consoleDir.getPath() + File.separator + warFile);
           contextHandlerCollection.addHandler(consoleContext);
@@ -636,6 +634,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
 
     this.httpServer.addHandler(contextHandlerCollection);
+    this.httpServer.setSessionIdManager(new TcHashSessionIdManager());
 
     try {
       this.httpServer.start();
