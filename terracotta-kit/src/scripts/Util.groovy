@@ -2,8 +2,11 @@
 class Util {
     static final def ant = new AntBuilder()
     
-    static boolean rename(String oldFile, String newFile) {
-      return new File(oldFile).renameTo(new File(newFile))  
+    static void rename(String oldFile, String newFile) {
+      boolean success = new File(oldFile).renameTo(new File(newFile))
+      if (!success) {
+        throw new RuntimeException("Failed to rename '" + oldFile + "' to '" + newFile + "'")
+      } 
     }
     
     static void processEhcacheDistribution(project) {
