@@ -156,7 +156,7 @@ public abstract class AbstractTestBase extends TCTestCase {
     return this.testConfig;
   }
 
-  protected abstract String createClassPath(Class client, boolean withStandaloneJar) throws IOException;
+  protected abstract String createClassPath(Class client) throws IOException;
 
   protected String getEhcacheTerracotta() {
     throw new ImplementMe(
@@ -314,17 +314,12 @@ public abstract class AbstractTestBase extends TCTestCase {
   }
 
   protected void runClient(Class client) throws Throwable {
-    runClient(client, true);
-  }
-
-  protected void runClient(Class client, boolean withStandaloneJar) throws Throwable {
     List<String> emptyList = Collections.emptyList();
-    runClient(client, withStandaloneJar, client.getSimpleName(), emptyList);
+    runClient(client, client.getSimpleName(), emptyList);
   }
 
-  protected void runClient(Class client, boolean withStandaloneJar, String clientName, List<String> extraClientArgs)
-      throws Throwable {
-    clientRunner.runClient(client, withStandaloneJar, clientName, extraClientArgs);
+  protected void runClient(Class client, String clientName, List<String> extraClientArgs) throws Throwable {
+    clientRunner.runClient(client, clientName, extraClientArgs);
   }
 
   public GroupsData getGroupData(final int groupIndex) {

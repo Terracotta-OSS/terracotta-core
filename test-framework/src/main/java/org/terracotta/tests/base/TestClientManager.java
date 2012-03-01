@@ -51,12 +51,11 @@ public class TestClientManager {
    * Starts a new client
    * 
    * @param client : the class which is to be started as client
-   * @param withStandaloneJar : do we need to start the client with standalone jar
    * @param clientName name of : the client to be started
    * @param extraClientMainArgs : List of arguments with which the client will start
    */
-  protected void runClient(Class<? extends Runnable> client, boolean withStandaloneJar, String clientName,
-                           List<String> extraClientMainArgs) throws Throwable {
+  protected void runClient(Class<? extends Runnable> client, String clientName, List<String> extraClientMainArgs)
+      throws Throwable {
     synchronized (TestClientManager.class) {
       if (stopped.isSet()) { return; }
     }
@@ -114,7 +113,7 @@ public class TestClientManager {
 
     LinkedJavaProcess clientProcess = new LinkedJavaProcess(TestClientLauncher.class.getName(), clientMainArgs, jvmArgs);
     clientProcess.setMaxRuntime(TestConfigObject.getInstance().getJunitTimeoutInSeconds());
-    String classPath = testBase.createClassPath(client, withStandaloneJar);
+    String classPath = testBase.createClassPath(client);
     classPath = testBase.makeClasspath(classPath, testBase.getTestDependencies());
     classPath = addRequiredJarsToClasspath(client, classPath);
     classPath = addExtraJarsToClassPath(classPath);
