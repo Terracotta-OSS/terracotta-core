@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServlet;
@@ -41,10 +42,10 @@ public class GroupInfoServlet extends HttpServlet {
     serverGroupsDocument = ServerGroupsDocument.Factory.newInstance();
     createServerNameToDsoPortAndHostname();
     ServerGroups serverGroups = serverGroupsDocument.addNewServerGroups();
-    ActiveServerGroupConfig[] activeServerGroupConfigs = configSetupManager.activeServerGroupsConfig()
-        .getActiveServerGroupArray();
-    for (int i = 0; i < activeServerGroupConfigs.length; i++) {
-      addServerGroup(serverGroups, activeServerGroupConfigs[i]);
+    List<ActiveServerGroupConfig> activeServerGroupConfigs = configSetupManager.activeServerGroupsConfig()
+        .getActiveServerGroups();
+    for (ActiveServerGroupConfig activeServerGroupConfig : activeServerGroupConfigs) {
+      addServerGroup(serverGroups, activeServerGroupConfig);
     }
   }
 

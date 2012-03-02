@@ -79,6 +79,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -158,23 +159,23 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
   }
 
-  private static OrderedGroupIDs createOrderedGroupIds(ActiveServerGroupConfig[] groupArray) {
-    GroupID[] gids = new GroupID[groupArray.length];
-    for (int i = 0; i < groupArray.length; i++) {
-      gids[i] = groupArray[i].getGroupId();
+  private static OrderedGroupIDs createOrderedGroupIds(List<ActiveServerGroupConfig> groups) {
+    GroupID[] gids = new GroupID[groups.size()];
+    for (int i = 0; i < groups.size(); i++) {
+      gids[i] = groups.get(i).getGroupId();
     }
     return new OrderedGroupIDs(gids);
   }
 
   public ServerGroupInfo[] serverGroups() {
     L2Info[] l2Infos = infoForAllL2s();
-    ActiveServerGroupConfig[] groupArray = this.configurationSetupManager.activeServerGroupsConfig()
-        .getActiveServerGroupArray();
-    OrderedGroupIDs orderedGroupsIds = createOrderedGroupIds(groupArray);
+    List<ActiveServerGroupConfig> groups = this.configurationSetupManager.activeServerGroupsConfig()
+        .getActiveServerGroups();
+    OrderedGroupIDs orderedGroupsIds = createOrderedGroupIds(groups);
     GroupID coordinatorId = orderedGroupsIds.getActiveCoordinatorGroup();
-    ServerGroupInfo[] result = new ServerGroupInfo[groupArray.length];
-    for (int i = 0; i < groupArray.length; i++) {
-      ActiveServerGroupConfig groupInfo = groupArray[i];
+    ServerGroupInfo[] result = new ServerGroupInfo[groups.size()];
+    for (int i = 0; i < groups.size(); i++) {
+      ActiveServerGroupConfig groupInfo = groups.get(i);
       GroupID groupId = groupInfo.getGroupId();
       List<L2Info> memberList = new ArrayList<L2Info>();
       for (L2Info l2Info : l2Infos) {

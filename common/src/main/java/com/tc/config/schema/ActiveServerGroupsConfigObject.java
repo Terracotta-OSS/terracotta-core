@@ -18,9 +18,12 @@ import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.MirrorGroups;
 import com.terracottatech.config.Servers;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 public class ActiveServerGroupsConfigObject extends BaseConfigObject implements ActiveServerGroupsConfig {
-  private final ActiveServerGroupConfig[] groupConfigArray;
-  private final int                       activeServerGroupCount;
+  private final List<ActiveServerGroupConfig> groupConfigs;
 
   public ActiveServerGroupsConfigObject(ConfigContext context, L2ConfigurationSetupManagerImpl setupManager)
       throws ConfigurationSetupException {
@@ -36,28 +39,29 @@ public class ActiveServerGroupsConfigObject extends BaseConfigObject implements 
     if (groupArray == null || groupArray.length == 0) { throw new AssertionError(
                                                                                  "ActiveServerGroup array is null!  This should never happen since we make sure default is used."); }
 
-    this.activeServerGroupCount = groupArray.length;
-
     ActiveServerGroupConfigObject[] tempGroupConfigArray = new ActiveServerGroupConfigObject[groupArray.length];
 
     for (int i = 0; i < tempGroupConfigArray.length; i++) {
       tempGroupConfigArray[i] = new ActiveServerGroupConfigObject(createContext(setupManager, groupArray[i]),
                                                                   setupManager);
     }
-    this.groupConfigArray = ActiveCoordinatorHelper.generateGroupInfo(tempGroupConfigArray);
+    final ActiveServerGroupConfig[] activeServerGroupConfigObjects = ActiveCoordinatorHelper.generateGroupInfo(tempGroupConfigArray);
+    this.groupConfigs = Collections.unmodifiableList(Arrays.asList(activeServerGroupConfigObjects));
   }
 
   public int getActiveServerGroupCount() {
-    return this.activeServerGroupCount;
+    return this.groupConfigs.size();
   }
 
-  public ActiveServerGroupConfig[] getActiveServerGroupArray() {
-    return groupConfigArray;
+  public List<ActiveServerGroupConfig> getActiveServerGroups() {
+    return groupConfigs;
   }
 
   public ActiveServerGroupConfig getActiveServerGroupForL2(String name) {
-    for (int groupCount = 0; groupCount < activeServerGroupCount; groupCount++) {
-      if (groupConfigArray[groupCount].isMember(name)) { return groupConfigArray[groupCount]; }
+    for (ActiveServerGroupConfig activeServerGroupConfig : groupConfigs) {
+      if(activeServerGroupConfig.isMember(name)) {
+        return activeServerGroupConfig;
+      }
     }
     return null;
   }

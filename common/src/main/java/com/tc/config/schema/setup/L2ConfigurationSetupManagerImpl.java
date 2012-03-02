@@ -59,9 +59,11 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -229,17 +231,17 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
   private void validateGroups() throws ConfigurationSetupException {
     Server[] serverArray = ((Servers) serversBeanRepository().bean()).getServerArray();
-    ActiveServerGroupConfig[] groupArray = this.activeServerGroupsConfig.getActiveServerGroupArray();
+    List<ActiveServerGroupConfig> groups = this.activeServerGroupsConfig.getActiveServerGroups();
     Set<String> serverPorts = new HashSet<String>();
 
-    validateGroupNames(groupArray);
+    validateGroupNames(groups);
 
     for (Server element : serverArray) {
       verifyServerPortUsed(serverPorts, element);
       String serverName = element.getName();
       boolean found = false;
       int gid = -1;
-      for (ActiveServerGroupConfig element2 : groupArray) {
+      for (ActiveServerGroupConfig element2 : groups) {
         if (element2.isMember(serverName)) {
           if (found) { throw new ConfigurationSetupException("Server{" + serverName
                                                              + "} is part of more than 1 mirror-group:  groups{" + gid
@@ -256,7 +258,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
       allServers.add(server.getName());
     }
 
-    for (ActiveServerGroupConfig element : groupArray) {
+    for (ActiveServerGroupConfig element : groups) {
       for (String member : element.getMembers().getMemberArray()) {
         if (!allServers.contains(member)) { throw new ConfigurationSetupException(
                                                                                   "Server{"
@@ -267,16 +269,16 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     }
   }
 
-  private void validateGroupNames(ActiveServerGroupConfig[] groupArray) throws ConfigurationSetupException {
-    HashSet list = new HashSet();
-    for (ActiveServerGroupConfig element : groupArray) {
+  private void validateGroupNames(Collection<ActiveServerGroupConfig> groups) throws ConfigurationSetupException {
+    HashSet<String> groupNames = new HashSet<String>();
+    for (ActiveServerGroupConfig element : groups) {
       String grpName = element.getGroupName();
       if (grpName != null) {
-        if (list.contains(grpName)) { throw new ConfigurationSetupException(
+        if (groupNames.contains(grpName)) { throw new ConfigurationSetupException(
                                                                             "Group Name {"
                                                                                 + grpName
                                                                                 + "} is part of more than 1 mirror-group groups"); }
-        list.add(grpName);
+        groupNames.add(grpName);
       }
     }
   }
@@ -513,10 +515,10 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
   private void validateDSOClusterPersistenceMode() throws ConfigurationSetupException {
     validatePersistenceModeInGroups();
-    ActiveServerGroupConfig[] groupArray = this.activeServerGroupsConfig.getActiveServerGroupArray();
+    List<ActiveServerGroupConfig> groups = this.activeServerGroupsConfig.getActiveServerGroups();
 
     Map<String, Boolean> serversToMode = new HashMap<String, Boolean>();
-    for (ActiveServerGroupConfig element : groupArray) {
+    for (ActiveServerGroupConfig element : groups) {
       boolean isNwAP = element.getHaHolder().isNetworkedActivePassive();
       String[] members = element.getMembers().getMemberArray();
       for (String member : members) {
@@ -563,7 +565,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   }
 
   private void validatePersistenceModeInGroups() throws ConfigurationSetupException {
-    ActiveServerGroupConfig[] groupArray = this.activeServerGroupsConfig.getActiveServerGroupArray();
+    List<ActiveServerGroupConfig> groupArray = this.activeServerGroupsConfig.getActiveServerGroups();
 
     for (ActiveServerGroupConfig group : groupArray) {
       String[] members = group.getMembers().getMemberArray();
@@ -590,7 +592,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   public void validateHaConfiguration() throws ConfigurationSetupException {
     int networkedHa = 0;
     int diskbasedHa = 0;
-    ActiveServerGroupConfig[] asgcArray = activeServerGroupsConfig.getActiveServerGroupArray();
+    List<ActiveServerGroupConfig> asgcArray = activeServerGroupsConfig.getActiveServerGroups();
     for (ActiveServerGroupConfig asgc : asgcArray) {
       if (asgc.getHaHolder().isNetworkedActivePassive()) {
         ++networkedHa;
