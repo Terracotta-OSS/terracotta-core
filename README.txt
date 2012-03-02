@@ -68,7 +68,7 @@ You can also just initiate a kit build from the community folder. This will
 also take the projects in the devwork folder into account. Simply run this
 from the community folder:
 
-%> mvn install -DskipTests -Pkit,enterprise,os -am -pl terracotta-kit
+%> mvn install -DskipTests -Pkit,enterprise,os,dist -am -pl terracotta-kit
 
 Note that for any dso-l1 changes, you will a need minimum of 
 terracotta-toolkit-ee to be present in the devwork folder (as described by 
