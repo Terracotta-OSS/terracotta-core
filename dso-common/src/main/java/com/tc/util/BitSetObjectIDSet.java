@@ -434,6 +434,11 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
       return (this.start == o.start) && (this.nextLongs == o.nextLongs);
     }
 
+    @Override
+    public int hashCode() {
+      return (int) (this.start * 31 + nextLongs);
+    }
+
     public void swapPayload(final Node<BitSet> other) {
       if (other instanceof BitSet) {
         final BitSet r = (BitSet) other;
