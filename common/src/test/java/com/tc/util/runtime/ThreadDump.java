@@ -6,7 +6,6 @@ package com.tc.util.runtime;
 
 import com.tc.process.Exec;
 import com.tc.process.Exec.Result;
-import com.tc.process.StreamCollector;
 import com.tc.test.TestConfigObject;
 import com.tc.text.Banner;
 import com.tc.util.concurrent.ThreadUtil;
@@ -22,6 +21,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ThreadDump {
+
+  private static final long TIMEOUT = 30000L;
 
   public static void main(String args[]) {
     dumpThreadsOnce();
@@ -144,7 +145,7 @@ public class ThreadDump {
     String jrcmd = getProgram("jrcmd.exe");
 
     try {
-      Result result = Exec.execute(new String[] { jrcmd, String.valueOf(pid.getPid()), "print_threads" });
+      Result result = Exec.execute(new String[] { jrcmd, String.valueOf(pid.getPid()), "print_threads" }, TIMEOUT);
       System.err.println(result.getStdout() + result.getStderr());
     } catch (Exception e) {
       e.printStackTrace();
@@ -155,7 +156,7 @@ public class ThreadDump {
     String jstack = getProgram("jstack.exe");
 
     try {
-      Result result = Exec.execute(new String[] { jstack, "-l", String.valueOf(pid.getPid()) });
+      Result result = Exec.execute(new String[] { jstack, "-l", String.valueOf(pid.getPid()) }, TIMEOUT);
       System.err.println(result.getStdout() + result.getStderr());
     } catch (Exception e) {
       e.printStackTrace();
@@ -181,21 +182,11 @@ public class ThreadDump {
 
       cmd[cmd.length - 1] = String.valueOf(pid.getPid());
 
-      Process p = Runtime.getRuntime().exec(cmd);
-      p.getOutputStream().close();
-      StreamCollector err = new StreamCollector(p.getErrorStream());
-      StreamCollector out = new StreamCollector(p.getInputStream());
-      err.start();
-      out.start();
+      Result result = Exec.execute(cmd, TIMEOUT);
 
-      p.waitFor();
-
-      err.join();
-      out.join();
-
-      System.err.print(err.toString());
+      System.err.print(result.getStderr());
       System.err.flush();
-      System.out.print(out.toString());
+      System.out.print(result.getStdout());
       System.out.flush();
     } catch (Exception e) {
       e.printStackTrace();
@@ -218,7 +209,7 @@ public class ThreadDump {
       // XXX: We could support better filtering on solaris eventually using either /usr/ucb/ps and/or pargs
       // XXX: For now though we end up thread dumping all VMs (like we did before)
       String cmdArg = Os.isSolaris() ? "comm" : "command";
-      result = Exec.execute(new String[] { "/bin/ps", "-eo", "pid,user," + cmdArg });
+      result = Exec.execute(new String[] { "/bin/ps", "-eo", "pid,user," + cmdArg }, TIMEOUT);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -272,7 +263,7 @@ public class ThreadDump {
     Result result;
     try {
       result = Exec.execute(new String[] { "wmic", "process", "where", "name like 'java.exe'", "get",
-          "ProcessID,Commandline", "/format:list" });
+          "ProcessID,Commandline", "/format:list" }, TIMEOUT);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
