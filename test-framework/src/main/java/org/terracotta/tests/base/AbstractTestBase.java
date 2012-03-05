@@ -8,7 +8,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.terracotta.test.util.TestBaseUtil;
 
-import com.tc.exception.ImplementMe;
 import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.logging.TCLogging;
 import com.tc.test.TCTestCase;
@@ -157,11 +156,6 @@ public abstract class AbstractTestBase extends TCTestCase {
   }
 
   protected abstract String createClassPath(Class client) throws IOException;
-
-  protected String getEhcacheTerracotta() {
-    throw new ImplementMe(
-                          "The sub class needs to define this method if it needs to add ehcache terracotta jar in the classpath");
-  }
 
   protected void evaluateClientOutput(String clientName, int exitCode, File output) throws Throwable {
     if ((exitCode != 0)) { throw new AssertionError("Client " + clientName + " exited with exit code: " + exitCode); }
