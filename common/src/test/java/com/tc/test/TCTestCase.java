@@ -152,6 +152,9 @@ public class TCTestCase extends TestCase {
         Banner.warnBanner("The URL specified by the " + TEST_CATEGORIES_URL_PROPERTY + " property does not exist: "
                           + categoriesUrl);
         return;
+      } catch (Exception e) {
+        Banner.errorBanner(e.getMessage());
+        return;
       }
     } else if (categoriesFileProperty != null) {
       File categoriesFile = new File(categoriesFileProperty);
@@ -162,6 +165,9 @@ public class TCTestCase extends TestCase {
         Banner.warnBanner("The file specified by the " + TEST_CATEGORIES_FILE_PROPERTY + " property does not exist: "
                           + categoriesFile);
         return;
+      } catch (Exception e) {
+        Banner.errorBanner(e.getMessage());
+        return;
       }
     } else {
       categoriesSource = TEST_CATEGORIES_PROPERTIES;
@@ -169,6 +175,8 @@ public class TCTestCase extends TestCase {
       // a test categories file in the root of the tests JAR.
       inputStream = this.getClass().getResourceAsStream(TEST_CATEGORIES_PROPERTIES);
     }
+
+    if (inputStream == null) { return; }
 
     try {
       testCategorization = new TestCategorization(inputStream);
