@@ -27,8 +27,11 @@ import com.tc.util.runtime.Vm;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
@@ -131,43 +134,48 @@ public class TCTestCase extends TestCase {
     // Set to default "empty" instance in case we can't load the properties file.
     testCategorization = new TestCategorization(new Properties());
 
-    String categoriesUrlProperty = System.getProperty(TEST_CATEGORIES_URL_PROPERTY);
-    String categoriesFileProperty = System.getProperty(TEST_CATEGORIES_FILE_PROPERTY);
-    URL categoriesUrl = null;
+    final String categoriesUrlProperty = System.getProperty(TEST_CATEGORIES_URL_PROPERTY);
+    final String categoriesFileProperty = System.getProperty(TEST_CATEGORIES_FILE_PROPERTY);
+    InputStream inputStream = null;
+    String categoriesSource = null;
 
     if (categoriesUrlProperty != null) {
+      URL categoriesUrl = null;
       try {
         categoriesUrl = new URL(categoriesUrlProperty);
+        categoriesSource = categoriesUrl.toString();
+        inputStream = categoriesUrl.openStream();
       } catch (MalformedURLException e) {
         Banner.errorBanner("The URL specified by the " + TEST_CATEGORIES_URL_PROPERTY + " property is malformed.");
+        return;
+      } catch (IOException e) {
+        Banner.warnBanner("The URL specified by the " + TEST_CATEGORIES_URL_PROPERTY + " property does not exist: "
+                          + categoriesUrl);
         return;
       }
     } else if (categoriesFileProperty != null) {
       File categoriesFile = new File(categoriesFileProperty);
+      categoriesSource = categoriesFile.toString();
       try {
-        categoriesUrl = categoriesFile.toURI().toURL();
-      } catch (MalformedURLException e) {
-        Banner.errorBanner("The file specified by the " + TEST_CATEGORIES_URL_PROPERTY + " property is malformed.");
+        inputStream = new FileInputStream(categoriesFile);
+      } catch (FileNotFoundException e) {
+        Banner.warnBanner("The file specified by the " + TEST_CATEGORIES_FILE_PROPERTY + " property does not exist: "
+                          + categoriesFile);
         return;
       }
     } else {
-
+      categoriesSource = TEST_CATEGORIES_PROPERTIES;
       // If no test categories URL is provided as a system property, default to using
       // a test categories file in the root of the tests JAR.
-      categoriesUrl = this.getClass().getResource(TEST_CATEGORIES_PROPERTIES);
-      if (categoriesUrl == null) {
-        Banner.warnBanner("Could not load test categories from " + TEST_CATEGORIES_PROPERTIES
-                          + " - all tests will default to UNCATEGORIZED.");
-        return;
-      }
+      inputStream = this.getClass().getResourceAsStream(TEST_CATEGORIES_PROPERTIES);
     }
 
     try {
-      testCategorization = new TestCategorization(categoriesUrl);
-      Banner.infoBanner("Loaded test categories from " + categoriesUrl);
+      testCategorization = new TestCategorization(inputStream);
+      Banner.infoBanner("Loaded test categories from " + categoriesSource);
     } catch (IOException e) {
-      Banner.warnBanner("Could not load test categories from " + categoriesUrl
-                        + " - all tests will default to UNCATEGORIZED.");
+      Banner.warnBanner("Could not load test categories from " + categoriesSource
+                        + " - all tests will default to UNCATEGORIZED. (" + e.getMessage() + ")");
       return;
     }
   }

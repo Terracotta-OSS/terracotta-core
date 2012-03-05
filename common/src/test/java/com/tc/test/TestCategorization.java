@@ -5,6 +5,8 @@ package com.tc.test;
 
 import org.terracotta.license.util.IOUtils;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -25,6 +27,17 @@ public class TestCategorization {
   }
 
   /**
+   * Populates the test categorization mappint with data loaded from the given file. The resource referred to by the
+   * file should be in standard Java properties format, with property names and values as described in
+   * {@link #TestCategorization(Properties)}
+   * 
+   * @throws IOException if the properties cannot be read from the given file.
+   */
+  public TestCategorization(File file) throws IOException {
+    loadFromInputStream(new FileInputStream(file));
+  }
+
+  /**
    * Populates the test categorization mapping with data loaded from the given URL. The resource referred to by the URL
    * should be in standard Java properties format, with property names and values as described in
    * {@link #TestCategorization(Properties)}
@@ -32,15 +45,16 @@ public class TestCategorization {
    * @throws IOException if the properties cannot be read from the given URL.
    */
   public TestCategorization(URL url) throws IOException {
-    Properties properties = new Properties();
-    InputStream inputStream = null;
-    try {
-      inputStream = url.openStream();
-      properties.load(inputStream);
-      this.loadFromProperties(properties);
-    } finally {
-      IOUtils.closeQuietly(inputStream);
-    }
+    loadFromInputStream(url.openStream());
+  }
+
+  /**
+   * Populates the test categorization mapping with data loaded from the given input stream. The data referred to by the
+   * input stream should be in standard Java properties format, with property names and values as described in
+   * {@link #TestCategorization(Properties)}
+   */
+  public TestCategorization(InputStream inputStream) throws IOException {
+    loadFromInputStream(inputStream);
   }
 
   /**
@@ -65,6 +79,16 @@ public class TestCategorization {
    */
   public TestCategory getTestCategory(Class testClass) {
     return getTestCategory(testClass.getName());
+  }
+
+  private void loadFromInputStream(InputStream inputStream) throws IOException {
+    Properties properties = new Properties();
+    try {
+      properties.load(inputStream);
+      loadFromProperties(properties);
+    } finally {
+      IOUtils.closeQuietly(inputStream);
+    }
   }
 
   private void loadFromProperties(Properties properties) {
