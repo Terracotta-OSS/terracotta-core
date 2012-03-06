@@ -60,8 +60,8 @@ import junit.framework.TestCase;
  */
 public class TCTestCase extends TestCase {
 
-  private static final String                TEST_CATEGORIES_URL_PROPERTY  = "tc.tests.configuration.catagories.url";
-  private static final String                TEST_CATEGORIES_FILE_PROPERTY = "tc.tests.configuration.catagories.file";
+  private static final String                TEST_CATEGORIES_URL_PROPERTY  = "tc.tests.configuration.categories.url";
+  private static final String                TEST_CATEGORIES_FILE_PROPERTY = "tc.tests.configuration.categories.file";
   private static final String                TEST_EXECUTION_MODE_PROPERTY  = "tc.tests.configuration.mode";
 
   private static final String                TEST_CATEGORIES_PROPERTIES    = "/TestCategories.properties";
