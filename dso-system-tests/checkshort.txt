@@ -1,5 +1,1 @@
 # testname one per line
-
-GenericMapTest
-AtomicIntegerTest
-DSOVerifierTest
