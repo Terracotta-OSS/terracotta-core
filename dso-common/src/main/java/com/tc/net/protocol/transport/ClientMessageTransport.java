@@ -146,7 +146,9 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
    * Returns true if the MessageTransport was ever in an open state.
    */
   public boolean wasOpened() {
-    return this.wasOpened;
+    synchronized (isOpen) {
+      return this.wasOpened;
+    }
   }
 
   public boolean isNotOpen() {
@@ -311,7 +313,7 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
   void reconnect(TCConnection connection) throws Exception {
 
     // don't do reconnect if open is still going on
-    if (!this.wasOpened) {
+    if (!wasOpened()) {
       this.logger.warn("Transport was opened already. Skip reconnect " + connection);
       return;
     }
