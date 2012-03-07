@@ -46,7 +46,6 @@
     <module>terracotta</module>
     <module>terracotta-l1-parent</module>
     <module>terracotta-l1</module>
-    <module>terracotta-test-api</module>
     <module>test-framework</module>        
   </modules>
   
