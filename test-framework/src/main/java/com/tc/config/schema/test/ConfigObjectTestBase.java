@@ -4,8 +4,6 @@
  */
 package com.tc.config.schema.test;
 
-import java.io.ByteArrayInputStream;
-
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlObject;
 
@@ -23,6 +21,8 @@ import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
+
+import java.io.ByteArrayInputStream;
 
 /**
  * A base class for all tests of real config objects. Tests derived from this aren't true unit tests, because they use a
@@ -80,7 +80,7 @@ public abstract class ConfigObjectTestBase extends TCTestCase {
 
   public void setConfig() throws Exception {
     TcConfigDocument bean = (TcConfigDocument) new TerracottaDomainConfigurationDocumentBeanFactory()
-        .createBean(new ByteArrayInputStream(this.builder.toString().getBytes()), "for test").bean();
+        .createBean(new ByteArrayInputStream(this.builder.toString().getBytes("UTF-8")), "for test").bean();
     this.repository.setBean(getBeanFromTcConfig(bean.getTcConfig()), "from test config builder");
   }
 

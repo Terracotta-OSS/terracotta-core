@@ -7,6 +7,7 @@
  *******************************************************************************************/
 package com.tc.backport175.bytecode;
 
+import com.google.common.collect.MapMaker;
 import com.tc.asm.AnnotationVisitor;
 import com.tc.asm.ClassReader;
 import com.tc.asm.FieldVisitor;
@@ -18,7 +19,6 @@ import com.tc.backport175.bytecode.spi.BytecodeProvider;
 import com.tc.backport175.proxy.ProxyFactory;
 
 import java.io.IOException;
-import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -27,7 +27,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.WeakHashMap;
 
 /**
  * Reads Java 5 {@link java.lang.annotation.RetentionPolicy.RUNTIME} and
@@ -49,13 +48,9 @@ public class AnnotationReader {
             new AnnotationElement.Annotation[0];
     private static final String INIT_METHOD_NAME = "<init>";
 
-    private static final Map CLASS_SPECIFIC_BYTECODE_PROVIDER = new WeakHashMap();
     private static volatile BytecodeProvider            BYTECODE_PROVIDER                = new DefaultBytecodeProvider();
 
-  /**
-   * Key is ClassKey, value is WeakReference of AnnotationReader
-   */
-    private static final Map READERS = new WeakHashMap();
+    private static final Map<ClassKey, AnnotationReader> READERS = new MapMaker().weakKeys().makeMap();
 
     private final ClassKey m_classKey;
 
@@ -104,33 +99,6 @@ public class AnnotationReader {
     }
 
     /**
-     * Sets the bytecode provider.
-     * <p/>
-     * If a custom provider is not set then a default impl will be used (which reads the bytecode from disk).
-     *
-     * @param klass
-     * @param bytecodeProvider
-     */
-    public static void setBytecodeProviderFor(final Class klass, final BytecodeProvider bytecodeProvider) {
-        setBytecodeProviderFor(klass.getName(), klass.getClassLoader(), bytecodeProvider);
-    }
-
-    /**
-     * Sets the bytecode provider.
-     * <p/>
-     * If a custom provider is not set then a default impl will be used (which reads the bytecode from disk).
-     *
-     * @param className
-     * @param loader
-     * @param bytecodeProvider
-     */
-    public static void setBytecodeProviderFor(final String className,
-                                              final ClassLoader loader,
-                                              final BytecodeProvider bytecodeProvider) {
-        CLASS_SPECIFIC_BYTECODE_PROVIDER.put(new ClassKey(className, loader), bytecodeProvider);
-    }
-
-    /**
      * Returns the bytecode provider.
      *
      * @param klass
@@ -148,13 +116,7 @@ public class AnnotationReader {
      * @return the bytecode provider
      */
     public static BytecodeProvider getBytecodeProviderFor(final String className, final ClassLoader loader) {
-        BytecodeProvider bytecodeProvider = (BytecodeProvider) CLASS_SPECIFIC_BYTECODE_PROVIDER.get(
-                new ClassKey(className, loader)
-        );
-        if (bytecodeProvider == null) {
-            return BYTECODE_PROVIDER;
-        }
-        return bytecodeProvider;
+        return BYTECODE_PROVIDER;
     }
 
     /**
@@ -202,19 +164,14 @@ public class AnnotationReader {
      * @return the annotation reader
      */
     public static AnnotationReader getReaderFor(final ClassKey classKey) {
-        final Reference ref;
-        synchronized(READERS) {
-           ref = (Reference) READERS.get(classKey);
-        }
-
-        AnnotationReader reader = (AnnotationReader) (ref == null ? null : ref.get());
+        AnnotationReader reader;
+        reader = READERS.get(classKey);
 
         if (reader == null) {
             reader = new AnnotationReader(classKey);
-            synchronized(READERS) {
-                READERS.put(classKey, new WeakReference(reader));//reader strong refs its own key in the weakhahsmap..
-            }
+            READERS.put(classKey, reader);
         }
+
         return reader;
     }
 
@@ -255,13 +212,10 @@ public class AnnotationReader {
      * This method calls <code>parse</code> and is therefore all the is needed to invoke to get a fully updated reader.
      */
     public static void refreshAll() {
-      Object[] readers;
-      synchronized (READERS) {
-        readers = READERS.values().toArray();
-      }
+      Object[] readers = READERS.values().toArray();
 
       for (int i = 0; i < readers.length; i++) {
-        AnnotationReader reader = (AnnotationReader) ((Reference) readers[i]).get();
+        AnnotationReader reader = (AnnotationReader)readers[i];
         if (reader != null) {
           synchronized (reader) {
             reader.refresh();

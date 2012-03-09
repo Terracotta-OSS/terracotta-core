@@ -22,11 +22,11 @@ import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.db.FastObjectIDManagerImpl.StoppedFlag;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
+import com.tc.objectserver.storage.api.DBEnvironment;
+import com.tc.objectserver.storage.api.DBFactory;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.storage.api.TCMapsDatabase;
-import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
-import com.tc.objectserver.storage.berkeleydb.BerkeleyDBPersistenceTransactionProvider;
 import com.tc.test.TCTestCase;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SyncObjectIdSet;
@@ -50,47 +50,38 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
   private ManagedObjectPersistorImpl        managedObjectPersistor;
   private PersistentManagedObjectStore      objectStore;
   private PersistenceTransactionProvider    persistenceTransactionProvider;
-  private TestSleepycatCollectionsPersistor testSleepycatCollectionsPersistor;
-  private BerkeleyDBEnvironment             env;
+  private TestCollectionsPersistor testCollectionsPersistor;
+  private DBEnvironment                     env;
   private FastObjectIDManagerImpl           oidManager;
 
   // Passing across tests
   private static HashSet<ManagedObject>     globalAllObjects;
   private static HashSet<ManagedObject>     globalEvictableObjects;
 
-  public ManagedObjectPersistorEvictableTest() {
-    //
+  private void cleanup() throws Exception {
+    managedObjectPersistor.close();
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  private void init() throws Exception {
     final boolean paranoid = true;
     this.env = newDBEnvironment(paranoid);
     this.env.open();
-    this.persistenceTransactionProvider = new BerkeleyDBPersistenceTransactionProvider(this.env.getEnvironment());
-    final PersistableCollectionFactory sleepycatCollectionFactory = new PersistableCollectionFactory(
+    this.persistenceTransactionProvider = env.getPersistenceTransactionProvider();
+    final PersistableCollectionFactory collectionFactory = new PersistableCollectionFactory(
                                                                                                      new HashMapBackingMapFactory(),
                                                                                                      this.env
                                                                                                          .isParanoidMode());
-    this.testSleepycatCollectionsPersistor = new TestSleepycatCollectionsPersistor(logger, this.env.getMapsDatabase(),
-                                                                                   sleepycatCollectionFactory,
+    this.testCollectionsPersistor = new TestCollectionsPersistor(logger, this.env.getMapsDatabase(),
+                                                                                   collectionFactory,
                                                                                    new TCCollectionsSerializerImpl());
     this.managedObjectPersistor = new ManagedObjectPersistorImpl(logger, new CustomSerializationAdapterFactory(),
                                                                  this.env, new TestMutableSequence(),
                                                                  this.env.getRootDatabase(),
                                                                  this.persistenceTransactionProvider,
-                                                                 this.testSleepycatCollectionsPersistor,
+                                                                 this.testCollectionsPersistor,
                                                                  this.env.isParanoidMode(), new ObjectStatsRecorder());
     this.objectStore = new PersistentManagedObjectStore(this.managedObjectPersistor, new MockSink());
     this.oidManager = (FastObjectIDManagerImpl) this.managedObjectPersistor.getOibjectIDManager();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    this.oidManager.stopCheckpointRunner();
-    this.env.close();
-    super.tearDown();
   }
 
   @Override
@@ -98,13 +89,13 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
     return false;
   }
 
-  private BerkeleyDBEnvironment newDBEnvironment(final boolean paranoid) throws Exception {
+  private DBEnvironment newDBEnvironment(final boolean paranoid) throws Exception {
     final File dbHome = new File(getTempDirectory(), getClass().getName() + "db");
     dbHome.mkdir();
     assertTrue(dbHome.exists());
     assertTrue(dbHome.isDirectory());
     System.out.println("DB Home: " + dbHome);
-    return new BerkeleyDBEnvironment(paranoid, dbHome);
+    return DBFactory.getInstance().createEnvironment(paranoid, dbHome);
   }
 
   private HashSet<ManagedObject> createPhyscalObjects(final int num) {
@@ -209,7 +200,15 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
     this.objectStore.getAllMapTypeObjectIDs();
   }
 
-  public void testEvictableObjectsStep1() throws Exception {
+  public void testEvictableObjects() throws Exception {
+    step1();
+    step2();
+    step3();
+    step4();
+  }
+
+  private void step1() throws Exception {
+    init();
     waitForBackgroupTasks();
 
     // publish CDSM data
@@ -236,7 +235,7 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
       ++count;
     }
 
-    this.testSleepycatCollectionsPersistor.setCounter(0);
+    this.testCollectionsPersistor.setCounter(0);
     ptx = this.persistenceTransactionProvider.newTransaction();
     try {
       this.managedObjectPersistor.deleteAllObjects(toDelete);
@@ -244,7 +243,7 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
     } finally {
       ptx.commit();
     }
-    assertEquals(toDelete.size(), this.testSleepycatCollectionsPersistor.getCounter());
+    assertEquals(toDelete.size(), this.testCollectionsPersistor.getCounter());
 
     // consume delete-logs to disk store
     runCheckpointToCompressedStorage();
@@ -257,9 +256,11 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
 
     // save for next test
     globalAllObjects = objects;
+    cleanup();
   }
 
-  public void testEvictableObjectsStep2() throws Exception {
+  private void step2() throws Exception {
+    init();
     waitForBackgroupTasks();
 
     final HashSet<ManagedObject> objects = globalAllObjects;
@@ -294,10 +295,11 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
 
     evictableSet = this.managedObjectPersistor.snapshotEvictableObjectIDs();
     verifyObjectIDSet(evictableSet, globalEvictableObjects);
-
+    cleanup();
   }
 
-  public void testEvictableObjectsStep3() throws Exception {
+  private void step3() throws Exception {
+    init();
     waitForBackgroupTasks();
 
     final HashSet<ManagedObject> objects = globalAllObjects;
@@ -324,10 +326,11 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
       ptx.commit();
     }
     // assertEquals(toDelete.size(), this.testSleepycatCollectionsPersistor.getCounter());
-
+    cleanup();
   }
 
-  public void testEvictableObjectsStep4() throws Exception {
+  private void step4() throws Exception {
+    init();
     waitForBackgroupTasks();
 
     final Collection objects = getAllObjectIDs();
@@ -335,16 +338,17 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
 
     final Collection evictableSet = getAllEvictableObjectIDs();
     assertEquals(0, evictableSet.size());
+    cleanup();
   }
 
   private void runCheckpointToCompressedStorage() {
     this.oidManager.flushToCompressedStorage(new StoppedFlag(), Integer.MAX_VALUE);
   }
 
-  private static class TestSleepycatCollectionsPersistor extends TCCollectionsPersistor {
+  private static class TestCollectionsPersistor extends TCCollectionsPersistor {
     private int counter;
 
-    public TestSleepycatCollectionsPersistor(final TCLogger logger, final TCMapsDatabase mapsDatabase,
+    public TestCollectionsPersistor(final TCLogger logger, final TCMapsDatabase mapsDatabase,
                                              final PersistableCollectionFactory sleepycatCollectionFactory,
                                              final TCCollectionsSerializer serializer) {
       super(logger, mapsDatabase, sleepycatCollectionFactory, serializer);

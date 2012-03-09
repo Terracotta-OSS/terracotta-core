@@ -699,9 +699,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
             makeUnBlocked(id);
 
           } else {
-            // This is possible if the cache manager is evicting this *unreachable* object or the admin console is
-            // looking up this object or with eventual consistency another node is looking up/faulting this object.
-            logger.warn("Reference : " + ref + " is referenced by someone. So waiting to remove !");
+            if (logger.isDebugEnabled()) {
+              // This is possible if the cache manager is evicting this *unreachable* object or the admin console is
+              // looking up this object or with eventual consistency another node is looking up/faulting this object.
+              logger.debug("Reference : " + ref + " is referenced by someone. So waiting to remove !");
+            }
             if (referenced == null) {
               referenced = new ObjectIDSet();
             }

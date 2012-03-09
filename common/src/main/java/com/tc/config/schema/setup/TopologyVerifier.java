@@ -112,7 +112,7 @@ public class TopologyVerifier {
   }
 
   private String getPreviousGroupName(String member) {
-    for (ActiveServerGroupConfig groupInfo : oldGroupsInfo.getActiveServerGroupArray()) {
+    for (ActiveServerGroupConfig groupInfo : oldGroupsInfo.getActiveServerGroups()) {
       if (groupInfo.isMember(member)) { return groupInfo.getGroupName(); }
     }
     return null;
@@ -127,7 +127,7 @@ public class TopologyVerifier {
     }
 
     Set<String> oldGroupNames = new HashSet<String>();
-    for (ActiveServerGroupConfig oldGroupInfo : this.oldGroupsInfo.getActiveServerGroupArray()) {
+    for (ActiveServerGroupConfig oldGroupInfo : this.oldGroupsInfo.getActiveServerGroups()) {
       oldGroupNames.add(oldGroupInfo.getGroupName());
     }
 

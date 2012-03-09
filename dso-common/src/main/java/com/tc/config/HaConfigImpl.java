@@ -18,6 +18,7 @@ import com.tc.util.Assert;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class HaConfigImpl implements HaConfig {
@@ -41,7 +42,7 @@ public class HaConfigImpl implements HaConfig {
     this.groups = new ServerGroup[groupCount];
     this.groupIDs = new GroupID[groupCount];
     for (int i = 0; i < groupCount; i++) {
-      this.groups[i] = new ServerGroup(groupsConfig.getActiveServerGroupArray()[i]);
+      this.groups[i] = new ServerGroup(groupsConfig.getActiveServerGroups().get(i));
       this.groupIDs[i] = groups[i].getGroupId();
     }
 
@@ -83,12 +84,12 @@ public class HaConfigImpl implements HaConfig {
 
     ReloadConfigChangeContext context = new ReloadConfigChangeContext();
 
-    ActiveServerGroupConfig[] asgcArray = asgsc.getActiveServerGroupArray();
+    List<ActiveServerGroupConfig> asgcArray = asgsc.getActiveServerGroups();
     for (int i = 0; i < grpCount; i++) {
-      GroupID gid = asgcArray[i].getGroupId();
+      GroupID gid = asgcArray.get(i).getGroupId();
       for (int j = 0; j < grpCount; j++) {
         if (groups[i].getGroupId().equals(gid)) {
-          ReloadConfigChangeContext tempContext = groups[i].reloadGroup(this.configSetupManager, asgcArray[i]);
+          ReloadConfigChangeContext tempContext = groups[i].reloadGroup(this.configSetupManager, asgcArray.get(i));
           context.update(tempContext);
 
           nodeStore.updateServerNames(tempContext, gid);
@@ -142,9 +143,8 @@ public class HaConfigImpl implements HaConfig {
 
   private Set<Node> makeAllNodes() {
     Set allClusterNodes = new HashSet();
-    ActiveServerGroupConfig[] asgcs = this.configSetupManager.activeServerGroupsConfig().getActiveServerGroupArray();
-    for (int j = 0; j < asgcs.length; ++j) {
-      ActiveServerGroupConfig asgc = asgcs[j];
+    List<ActiveServerGroupConfig> asgcs = this.configSetupManager.activeServerGroupsConfig().getActiveServerGroups();
+    for (ActiveServerGroupConfig asgc : asgcs) {
       Assert.assertNotNull(asgc);
       String[] l2Names = asgc.getMembers().getMemberArray();
       for (String l2Name : l2Names) {

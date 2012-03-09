@@ -14,6 +14,7 @@ import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.util.List;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -26,8 +27,8 @@ public class GroupIDMapServlet extends HttpServlet {
   protected synchronized void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     L2ConfigurationSetupManager configSetupManager = (L2ConfigurationSetupManager) getServletContext()
         .getAttribute(GROUPID_MAP_ATTRIBUTE);
-    ActiveServerGroupConfig[] activeServerGroupConfigs = configSetupManager.activeServerGroupsConfig()
-        .getActiveServerGroupArray();
+    List<ActiveServerGroupConfig> activeServerGroupConfigs = configSetupManager.activeServerGroupsConfig()
+        .getActiveServerGroups();
     GroupnameIdMapDocument groupnameIdMapDocument = GroupnameIdMapDocument.Factory.newInstance();
     GroupnameIdMap groupnameIdMap = groupnameIdMapDocument.addNewGroupnameIdMap();
     for (ActiveServerGroupConfig group : activeServerGroupConfigs) {

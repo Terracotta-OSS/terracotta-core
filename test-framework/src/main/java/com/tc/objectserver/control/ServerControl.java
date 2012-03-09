@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.control;
 
-
 public interface ServerControl {
 
   public void mergeSTDOUT();
@@ -52,4 +51,8 @@ public interface ServerControl {
 
   public int getAdminPort();
 
+  /**
+   * Wait until the L2 is started (either ACTIVE or fully synced PASSIVE-STANDBY)
+   */
+  public void waitUntilL2IsActiveOrPassive() throws Exception;
 }

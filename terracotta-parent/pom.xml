@@ -19,6 +19,11 @@
         dependencyManagement section of the parent POM.
     -->
     <dependency>
+      <groupId>com.terracotta</groupId>
+      <artifactId>management-ehcache-impl</artifactId>
+      <version>${management.version}</version>
+    </dependency>    
+    <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>tcconfig</artifactId>
     </dependency>
@@ -134,10 +139,6 @@
       <groupId>jfree</groupId>
       <artifactId>jfreechart</artifactId>
     </dependency>
-    <dependency>
-      <groupId>jfree</groupId>
-      <artifactId>jcommon</artifactId>
-    </dependency>    
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>

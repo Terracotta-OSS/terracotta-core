@@ -24,8 +24,8 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
       final BitSetObjectIDSet other = (BitSetObjectIDSet) c;
       // fast way to clone
       this.size = other.size();
-      for (final Iterator i = other.ranges.iterator(); i.hasNext();) {
-        this.ranges.add((BitSet) ((BitSet) i.next()).clone());
+      for (final Iterator<BitSet> i = other.ranges.iterator(); i.hasNext();) {
+        this.ranges.add(new BitSet(i.next()));
       }
       return;
     } else {
@@ -53,7 +53,7 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
           currentMine = (BitSet) myRanges.next();
         } else {
           // No ranges in this set, just clone and add and return
-          cloneAndAddAll(otherRanges);
+          copyAndAddAll(otherRanges);
           break;
         }
       }
@@ -71,20 +71,20 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
         toAdd.add(nextOther);
         if (currentMine.start < nextOther.start && !myRanges.hasNext()) {
           // No more ranges in this set, copy the rest directly saving a copy
-          cloneAndAddAll(otherRanges);
+          copyAndAddAll(otherRanges);
         }
       }
     }
-    cloneAndAddAll(toAdd.iterator());
+    copyAndAddAll(toAdd.iterator());
     return (oldSize < this.size);
   }
 
-  private void cloneAndAddAll(final Iterator i) {
+  private void copyAndAddAll(final Iterator<BitSet> i) {
     for (; i.hasNext();) {
-      final BitSet cloned = (BitSet) ((BitSet) i.next()).clone();
-      this.size += cloned.size();
-      boolean added = this.ranges.add(cloned);
-      if (!added) { throw new AssertionError("cloned : " + cloned + " is not added to this set : " + this); }
+      final BitSet copied = new BitSet(i.next());
+      this.size += copied.size();
+      boolean added = this.ranges.add(copied);
+      if (!added) { throw new AssertionError("cloned : " + copied + " is not added to this set : " + this); }
     }
   }
 
@@ -93,6 +93,11 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
   }
 
   @Override
+  /**
+   * ignore find bug warning for non thread safe increment of a volatile variable
+   * The volatile varibale is being used only for validation of no concurrent modification while iterating the set
+   */
+  @FindbugsSuppressWarnings("VO_VOLATILE_INCREMENT")
   public boolean add(final ObjectID id) {
     final long lid = id.toLong();
 
@@ -127,6 +132,11 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
     return isAdded;
   }
 
+  /**
+   * ignore find bug warning for non thread safe increment of a volatile variable The volatile varibale is being used
+   * only for validation of no concurrent modification while iterating the set
+   */
+  @FindbugsSuppressWarnings("VO_VOLATILE_INCREMENT")
   @Override
   public boolean remove(final ObjectID id) {
     final long lid = id.toLong();
@@ -292,6 +302,11 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
       }
     }
 
+    /**
+     * ignore find bug warning for non thread safe increment of a volatile variable The volatile varibale is being used
+     * only for validation of no concurrent modification while iterating the set
+     */
+    @FindbugsSuppressWarnings("VO_VOLATILE_INCREMENT")
     public void remove() {
       if (this.lastReturned == null) { throw new IllegalStateException(); }
       if (this.expectedModCount != BitSetObjectIDSet.this.modCount) { throw new ConcurrentModificationException(); }
@@ -335,7 +350,7 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
   /**
    * Ranges store the elements stored in the tree. The range is inclusive.
    */
-  public static class BitSet extends AbstractTreeNode<BitSet> implements Cloneable, Comparable<BitSet> {
+  public static final class BitSet extends AbstractTreeNode<BitSet> implements Comparable<BitSet> {
     private long            start;
     private long            nextLongs  = 0;
     public static final int RANGE_SIZE = 64;
@@ -343,6 +358,10 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
     public BitSet(final long start, final long nextRanges) {
       this.start = start;
       this.nextLongs = nextRanges;
+    }
+
+    public BitSet(BitSet copyThis) {
+      this(copyThis.start, copyThis.nextLongs);
     }
 
     public void addAll(final BitSet other) {
@@ -390,11 +409,10 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
       return false;
     }
 
-    @Override
-    public Object clone() {
-      return new BitSet(this.start, this.nextLongs);
-    }
-
+    /**
+     * while comparing we only care about start since that tells us the starting point of the sets of integer in this
+     * bit set
+     */
     public int compareTo(final BitSet o) {
       final BitSet other = o;
       if (this.start < other.start) {
@@ -404,6 +422,21 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
       } else {
         return 1;
       }
+    }
+
+    /**
+     * this returns true if start and nextLongs both are equal, Note that compareTo does not hold the same contract
+     */
+    @Override
+    public boolean equals(Object obj) {
+      if (!(obj instanceof BitSet)) return false;
+      BitSet o = (BitSet) obj;
+      return (this.start == o.start) && (this.nextLongs == o.nextLongs);
+    }
+
+    @Override
+    public int hashCode() {
+      return (int) (this.start * 31 + nextLongs);
     }
 
     public void swapPayload(final Node<BitSet> other) {

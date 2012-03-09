@@ -27,8 +27,11 @@ import com.tc.util.runtime.Vm;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
@@ -57,15 +60,15 @@ import junit.framework.TestCase;
  */
 public class TCTestCase extends TestCase {
 
-  private static final String                TEST_CATEGORIES_URL_PROPERTY = "tc.tests.configuration.catagories.url";
+  private static final String                TEST_CATEGORIES_URL_PROPERTY  = "tc.tests.configuration.categories.url";
+  private static final String                TEST_CATEGORIES_FILE_PROPERTY = "tc.tests.configuration.categories.file";
+  private static final String                TEST_EXECUTION_MODE_PROPERTY  = "tc.tests.configuration.mode";
 
-  private static final String                TEST_EXECUTION_MODE_PROPERTY = "tc.tests.configuration.mode";
+  private static final String                TEST_CATEGORIES_PROPERTIES    = "/TestCategories.properties";
 
-  private static final String                TEST_CATEGORIES_PROPERTIES   = "/TestCategories.properties";
+  private static final long                  DEFAULT_TIMEOUT_THRESHOLD     = 60000;
 
-  private static final long                  DEFAULT_TIMEOUT_THRESHOLD    = 60000;
-
-  private final SynchronizedRef              beforeTimeoutException       = new SynchronizedRef(null);
+  private final SynchronizedRef              beforeTimeoutException        = new SynchronizedRef(null);
 
   private DataDirectoryHelper                dataDirectoryHelper;
   private TempDirectoryHelper                tempDirectoryHelper;
@@ -75,27 +78,27 @@ public class TCTestCase extends TestCase {
   // This stuff is static since Junit new()'s up an instance of the test case for each test method,
   // and the timeout covers the entire test case (ie. all methods). It wouldn't be very effective to start
   // the timer for each test method given this
-  private static final Timer                 timeoutTimer                 = new Timer("Timeout Thread", true);
+  private static final Timer                 timeoutTimer                  = new Timer("Timeout Thread", true);
   private static TimerTask                   timerTask;
-  protected static final SynchronizedBoolean timeoutTaskAdded             = new SynchronizedBoolean(false);
+  protected static final SynchronizedBoolean timeoutTaskAdded              = new SynchronizedBoolean(false);
 
-  private static boolean                     printedProcess               = false;
+  private static boolean                     printedProcess                = false;
 
   // If you want to customize this, you have to do it in the constructor of your test case (setUp() is too late)
-  private long                               timeoutThreshold             = DEFAULT_TIMEOUT_THRESHOLD;
+  private long                               timeoutThreshold              = DEFAULT_TIMEOUT_THRESHOLD;
 
   // controls for thread dumping.
-  private boolean                            dumpThreadsOnTimeout         = true;
-  private int                                numThreadDumps               = 3;
-  private long                               dumpInterval                 = 500;
+  private boolean                            dumpThreadsOnTimeout          = true;
+  private int                                numThreadDumps                = 3;
+  private long                               dumpInterval                  = 500;
 
   // a way to ensure that system clock moves forward...
-  private long                               previousSystemMillis         = 0;
+  private long                               previousSystemMillis          = 0;
 
   private ExecutionMode                      executionMode;
   private TestCategorization                 testCategorization;
 
-  protected volatile boolean                 testWillRun                  = false;
+  protected volatile boolean                 testWillRun                   = false;
 
   public TCTestCase() {
     super();
@@ -131,33 +134,56 @@ public class TCTestCase extends TestCase {
     // Set to default "empty" instance in case we can't load the properties file.
     testCategorization = new TestCategorization(new Properties());
 
-    String categoriesUrlProperty = System.getProperty(TEST_CATEGORIES_URL_PROPERTY);
-    URL categoriesUrl = null;
+    final String categoriesUrlProperty = System.getProperty(TEST_CATEGORIES_URL_PROPERTY);
+    final String categoriesFileProperty = System.getProperty(TEST_CATEGORIES_FILE_PROPERTY);
+    InputStream inputStream = null;
+    String categoriesSource = null;
 
     if (categoriesUrlProperty != null) {
+      URL categoriesUrl = null;
       try {
         categoriesUrl = new URL(categoriesUrlProperty);
+        categoriesSource = categoriesUrl.toString();
+        inputStream = categoriesUrl.openStream();
       } catch (MalformedURLException e) {
         Banner.errorBanner("The URL specified by the " + TEST_CATEGORIES_URL_PROPERTY + " property is malformed.");
         return;
-      }
-    } else {
-      // If no test categories URL is provided as a system property, default to using
-      // a test categories file in the root of the tests JAR.
-      categoriesUrl = this.getClass().getResource(TEST_CATEGORIES_PROPERTIES);
-      if (categoriesUrl == null) {
-        Banner.warnBanner("Could not load test categories from " + TEST_CATEGORIES_PROPERTIES
-                          + " - all tests will default to UNCATEGORIZED.");
+      } catch (IOException e) {
+        Banner.warnBanner("The URL specified by the " + TEST_CATEGORIES_URL_PROPERTY + " property does not exist: "
+                          + categoriesUrl);
+        return;
+      } catch (Exception e) {
+        Banner.errorBanner(e.getMessage());
         return;
       }
+    } else if (categoriesFileProperty != null) {
+      File categoriesFile = new File(categoriesFileProperty);
+      categoriesSource = categoriesFile.toString();
+      try {
+        inputStream = new FileInputStream(categoriesFile);
+      } catch (FileNotFoundException e) {
+        Banner.warnBanner("The file specified by the " + TEST_CATEGORIES_FILE_PROPERTY + " property does not exist: "
+                          + categoriesFile);
+        return;
+      } catch (Exception e) {
+        Banner.errorBanner(e.getMessage());
+        return;
+      }
+    } else {
+      categoriesSource = TEST_CATEGORIES_PROPERTIES;
+      // If no test categories URL is provided as a system property, default to using
+      // a test categories file in the root of the tests JAR.
+      inputStream = this.getClass().getResourceAsStream(TEST_CATEGORIES_PROPERTIES);
     }
 
+    if (inputStream == null) { return; }
+
     try {
-      testCategorization = new TestCategorization(categoriesUrl);
-      Banner.infoBanner("Loaded test categories from " + categoriesUrl);
+      testCategorization = new TestCategorization(inputStream);
+      Banner.infoBanner("Loaded test categories from " + categoriesSource);
     } catch (IOException e) {
-      Banner.warnBanner("Could not load test categories from " + categoriesUrl
-                        + " - all tests will default to UNCATEGORIZED.");
+      Banner.warnBanner("Could not load test categories from " + categoriesSource
+                        + " - all tests will default to UNCATEGORIZED. (" + e.getMessage() + ")");
       return;
     }
   }
@@ -211,7 +237,7 @@ public class TCTestCase extends TestCase {
     return isContainerTest() ^ isConfiguredToRunWithAppServer();
   }
 
-  protected void tcTestCaseSetup(boolean shouldStartNewTimer) throws Exception {
+  protected void tcTestCaseSetup() throws Exception {
     printOutCurrentJavaProcesses();
     if (allDisabledUntil != null) {
       if (new Date().before(this.allDisabledUntil)) {
@@ -245,7 +271,7 @@ public class TCTestCase extends TestCase {
     // don't move this stuff to runTest(), you want the timeout timer to catch hangs in setUp() too.
     // Yes it means you can't customize the timeout threshold in setUp() -- take a deep breath and
     // set your value in the constructor of your test case instead of setUp()
-    if (shouldStartNewTimer || timeoutTaskAdded.commit(false, true)) {
+    if (timeoutTaskAdded.commit(false, true)) {
       scheduleTimeoutTask();
     }
 
@@ -255,7 +281,7 @@ public class TCTestCase extends TestCase {
 
   @Override
   public void runBare() throws Throwable {
-    tcTestCaseSetup(false);
+    tcTestCaseSetup();
     if (!testWillRun) return;
 
     Throwable testException = null;
@@ -300,7 +326,7 @@ public class TCTestCase extends TestCase {
     }
   }
 
-  public void scheduleTimeoutTask() {
+  public synchronized void scheduleTimeoutTask() {
     // enforce some sanity
     final int MINIMUM = 30;
     long junitTimeout = this.getTimeoutValueInSeconds();
@@ -432,10 +458,6 @@ public class TCTestCase extends TestCase {
    */
   protected final void timebombTest(String date) {
     disableAllUntil(parseDate(date));
-  }
-
-  protected final void timebombTestForRewrite() {
-    timebombTest("2012-02-10");
   }
 
   /**

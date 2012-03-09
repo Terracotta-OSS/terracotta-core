@@ -5,6 +5,7 @@ package com.tc.process;
 
 import org.apache.commons.io.IOUtils;
 
+import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
 
 import java.io.ByteArrayInputStream;
@@ -14,8 +15,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Exec {
+
+  public static final long NO_TIMEOUT = -1;
 
   public static String getJavaExecutable() {
     String javaHome = System.getProperty("java.home");
@@ -37,6 +41,10 @@ public class Exec {
     return execute(cmd, null, null, null);
   }
 
+  public static Result execute(String cmd[], long timeout) throws Exception {
+    return execute(cmd, null, null, null, timeout);
+  }
+
   public static Result execute(String cmd[], String outputLog) throws Exception {
     return execute(cmd, outputLog, null, null);
   }
@@ -46,12 +54,36 @@ public class Exec {
   }
 
   public static Result execute(String cmd[], String outputLog, byte[] input, File workingDir) throws Exception {
+    return execute(cmd, outputLog, input, workingDir, NO_TIMEOUT);
+  }
+
+  public static Result execute(String cmd[], String outputLog, byte[] input, File workingDir, long timeout)
+      throws Exception {
     Process process = Runtime.getRuntime().exec(cmd, null, workingDir);
-    return execute(process, cmd, outputLog, input, workingDir);
+    return execute(process, cmd, outputLog, input, workingDir, timeout);
   }
 
   public static Result execute(Process process, String cmd[], String outputLog, byte[] input, File workingDir)
       throws Exception {
+    return execute(process, cmd, outputLog, input, workingDir, NO_TIMEOUT);
+  }
+
+  public static Result execute(final Process process, String cmd[], String outputLog, byte[] input, File workingDir,
+                               final long timeout) throws Exception {
+    final AtomicBoolean processFinished = new AtomicBoolean();
+    if (timeout > 0) {
+      Thread timeoutThread = new Thread() {
+        @Override
+        public void run() {
+          ThreadUtil.reallySleep(timeout);
+          if (!processFinished.get()) {
+            process.destroy();
+          }
+        }
+      };
+      timeoutThread.start();
+    }
+
     Thread inputThread = new InputPumper(input == null ? new byte[] {} : input, process.getOutputStream());
 
     StreamCollector stderr = null;
@@ -80,6 +112,7 @@ public class Exec {
       inputThread.start();
 
       final int exitCode = process.waitFor();
+      processFinished.set(true);
 
       inputThread.join();
 

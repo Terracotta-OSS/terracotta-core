@@ -7,14 +7,25 @@ import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ServerMapRequestType;
 import com.tc.stats.StatsConfig;
+import com.tc.stats.counter.BoundedCounterConfig;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.CounterManager;
+import com.tc.stats.counter.sampled.SampledCounterConfig;
+import com.tc.stats.counter.sampled.SampledCumulativeCounterConfig;
 
 /**
  * A helper class to make accessing channel specific stats objects a little easier. This class is sorta yucky and
  * definitely will need to evolve
  */
 public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventListener {
+
+  private static final StatsConfig[] STATS_CONFIG = new StatsConfig[] {
+      new StatsConfig(OBJECT_REQUEST_RATE, new SampledCounterConfig(1, 300, true, 0L)),
+      new StatsConfig(OBJECT_FLUSH_RATE, new SampledCounterConfig(1, 300, true, 0L)),
+      new StatsConfig(TXN_RATE, new SampledCounterConfig(1, 300, true, 0L)),
+      new StatsConfig(PENDING_TRANSACTIONS, new BoundedCounterConfig(0L, 0L, Long.MAX_VALUE)),
+      new StatsConfig(SERVER_MAP_GET_SIZE_REQUESTS, new SampledCumulativeCounterConfig(1, 300, true, 0L)),
+      new StatsConfig(SERVER_MAP_GET_VALUE_REQUESTS, new SampledCumulativeCounterConfig(1, 300, true, 0L)) };
 
   private final CounterManager    counterManager;
   private final DSOChannelManager channelManager;

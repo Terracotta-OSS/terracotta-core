@@ -68,7 +68,7 @@ You can also just initiate a kit build from the community folder. This will
 also take the projects in the devwork folder into account. Simply run this
 from the community folder:
 
-%> mvn install -DskipTests -Pkit,enterprise,os -am -pl terracotta-kit
+%> mvn install -DskipTests -Pkit,enterprise,os,dist -am -pl terracotta-kit
 
 Note that for any dso-l1 changes, you will a need minimum of 
 terracotta-toolkit-ee to be present in the devwork folder (as described by 
@@ -100,12 +100,8 @@ have them all compile in one go. To be able to do that, svn checkout those
 projects under "community/devwork". List of projects currently recognize are:
 
 - terracotta-toolkit(-ee)
-- terracotta-ehcache(-ee)
-- terracotta-quartz(-ee)
-- tim-ehcache(-ee)
-- tim-quartz(-ee)
-- ehcache-core(-ee)
-- quartz
+- ehcache(-ee)
+- quartz(-ee)
 
 Let say you have terracotta-toolkit-ee under devwork. This step will compile
 core, terracotta-toolkit and terracotta-toolkit-ee all in one command:

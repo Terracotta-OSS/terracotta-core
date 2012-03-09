@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util.diff;
 
@@ -36,7 +37,7 @@ public class DifferenceContext {
 
   public DifferenceContext(Stringifier stringifier) {
     Assert.assertNotNull(stringifier);
-    
+
     this.previous = null;
     this.thisContext = "";
     this.differences = new LinkedList();
@@ -65,7 +66,7 @@ public class DifferenceContext {
   Stringifier stringifier() {
     return this.stringifier;
   }
-  
+
   String describe(Object o) {
     return this.stringifier.toString(o);
   }
@@ -91,11 +92,21 @@ public class DifferenceContext {
     return this.differences.size();
   }
 
+  @Override
   public String toString() {
     if (this.previous != null) return this.previous.toString() + "/" + this.thisContext;
     else return this.thisContext;
   }
 
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((differences == null) ? 0 : differences.hashCode());
+    return result;
+  }
+
+  @Override
   public boolean equals(Object that) {
     if (!this.rawEquals(that)) return false;
 

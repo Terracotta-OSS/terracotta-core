@@ -5,7 +5,6 @@
 package com.tc.util.runtime;
 
 import com.tc.process.Exec;
-import com.tc.process.StreamCollector;
 import com.tc.process.Exec.Result;
 import com.tc.test.TestConfigObject;
 import com.tc.text.Banner;
@@ -22,6 +21,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ThreadDump {
+
+  private static final long TIMEOUT = 30000L;
 
   public static void main(String args[]) {
     dumpThreadsOnce();
@@ -47,16 +48,16 @@ public class ThreadDump {
   }
 
   static PID getPID() {
-    try {
-      return new PID(GetPid.getInstance().getPid(), "not available");
-    } catch (Exception e) {
-      e.printStackTrace();
+    return getPIDUsingFallback();
 
-      // Use fallback mechanism
-      return getPIDUsingFallback();
-    }
-
-    // unreachable
+    // try {
+    // return new PID(GetPid.getInstance().getPid(), "not available");
+    // } catch (Exception e) {
+    // e.printStackTrace();
+    //
+    // // Use fallback mechanism
+    // return getPIDUsingFallback();
+    // }
   }
 
   static PID getPIDUsingFallback() {
@@ -118,7 +119,19 @@ public class ThreadDump {
   }
 
   private static void doWindowsDump(PID pid) {
-    doSignal(new String[] {}, pid);
+    if (Vm.dataModel() == 64) {
+      // SendSignal.exe doesn't work for 64 bit windows
+      // Display thread dump of PID on the console of this process
+      if (Vm.isHotSpot() || Vm.isOpenJdk()) {
+        doJstack(pid);
+      } else if (Vm.isJRockit()) {
+        doJrcmd(pid);
+      } else {
+        Banner.warnBanner("No support for this VM");
+      }
+    } else {
+      doSignal(new String[] {}, pid);
+    }
   }
 
   // private static void doIbmDump() throws ClassNotFoundException, SecurityException, NoSuchMethodException,
@@ -127,6 +140,37 @@ public class ThreadDump {
   // final Method ibmDumpMethod = ibmDumpClass.getDeclaredMethod("JavaDump", new Class[] {});
   // ibmDumpMethod.invoke(null, new Object[] {});
   // }
+
+  private static void doJrcmd(PID pid) {
+    String jrcmd = getProgram("jrcmd.exe");
+
+    try {
+      Result result = Exec.execute(new String[] { jrcmd, String.valueOf(pid.getPid()), "print_threads" }, TIMEOUT);
+      System.err.println(result.getStdout() + result.getStderr());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  private static void doJstack(PID pid) {
+    String jstack = getProgram("jstack.exe");
+
+    try {
+      Result result = Exec.execute(new String[] { jstack, "-l", String.valueOf(pid.getPid()) }, TIMEOUT);
+      System.err.println(result.getStdout() + result.getStderr());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  private static String getProgram(String prog) {
+    File javaHome = new File(System.getProperty("java.home"));
+    if (javaHome.getName().equals("jre")) {
+      javaHome = javaHome.getParentFile();
+    }
+
+    return new File(new File(javaHome, "bin"), prog).getAbsolutePath();
+  }
 
   private static void doSignal(String[] args, PID pid) {
     File program = SignalProgram.PROGRAM;
@@ -138,21 +182,11 @@ public class ThreadDump {
 
       cmd[cmd.length - 1] = String.valueOf(pid.getPid());
 
-      Process p = Runtime.getRuntime().exec(cmd);
-      p.getOutputStream().close();
-      StreamCollector err = new StreamCollector(p.getErrorStream());
-      StreamCollector out = new StreamCollector(p.getInputStream());
-      err.start();
-      out.start();
+      Result result = Exec.execute(cmd, TIMEOUT);
 
-      p.waitFor();
-
-      err.join();
-      out.join();
-
-      System.err.print(err.toString());
+      System.err.print(result.getStderr());
       System.err.flush();
-      System.out.print(out.toString());
+      System.out.print(result.getStdout());
       System.out.flush();
     } catch (Exception e) {
       e.printStackTrace();
@@ -175,7 +209,7 @@ public class ThreadDump {
       // XXX: We could support better filtering on solaris eventually using either /usr/ucb/ps and/or pargs
       // XXX: For now though we end up thread dumping all VMs (like we did before)
       String cmdArg = Os.isSolaris() ? "comm" : "command";
-      result = Exec.execute(new String[] { "/bin/ps", "-eo", "pid,user," + cmdArg });
+      result = Exec.execute(new String[] { "/bin/ps", "-eo", "pid,user," + cmdArg }, TIMEOUT);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -226,45 +260,58 @@ public class ThreadDump {
   private static Set<PID> windowsFindAllJavaPIDs() {
     Set<PID> pids = new HashSet<PID>();
 
-    String pvExe = new File(TestConfigObject.getInstance().executableSearchPath(), "pv.exe").getAbsolutePath();
-
     Result result;
     try {
-      result = Exec.execute(new String[] { pvExe, "-l", "-q", "java.exe" });
+      result = Exec.execute(new String[] { "wmic", "process", "where", "name like 'java.exe'", "get",
+          "ProcessID,Commandline", "/format:list" }, TIMEOUT);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
 
     try {
-      Pattern pattern = Pattern.compile("^(\\S+)\\s+(\\d+)\\s+(.*)$");
+      String output = result.getStdout() + result.getStderr();
+      BufferedReader reader = new BufferedReader(new StringReader(output));
 
-      String stdout = result.getStdout();
-      if (!stdout.contains("No matching processes found")) {
-        BufferedReader reader = new BufferedReader(new StringReader(stdout));
+      String line;
+      while ((line = reader.readLine()) != null) {
+        if (!line.startsWith("CommandLine=")) {
+          continue;
+        }
 
-        String line;
-        while ((line = reader.readLine()) != null) {
+        final String cmd = line.replaceFirst(Pattern.quote("CommandLine="), "");
 
-          Matcher matcher = pattern.matcher(line);
+        if (skip(cmd)) {
+          continue;
+        }
 
-          if (!matcher.matches()) {
-            System.err.println("\nNON-MATCH: [" + line + "]\n");
+        // process should be included, find the PID line
+        String pidLine;
+        while (true) {
+          pidLine = reader.readLine();
+          if (pidLine == null) {
+            Banner.warnBanner("Unexpected EOF looking for PID");
+            return pids;
+          }
+          if (pidLine.trim().length() == 0) {
             continue;
           }
 
-          String pid = matcher.group(2);
-          String cmd = matcher.group(3);
-
-          if (skip(cmd)) {
+          if (pidLine.startsWith("ProcessId=")) {
+            break;
+          } else {
+            Banner.warnBanner("Unexpected line looking for PID: " + pidLine);
             continue;
-          }
-
-          boolean added = pids.add(new PID(Integer.parseInt(pid), line));
-          if (!added) {
-            Banner.warnBanner("Found duplicate PID? " + line);
           }
         }
+
+        String pid = pidLine.replaceFirst(Pattern.quote("ProcessId="), "");
+
+        boolean added = pids.add(new PID(Integer.parseInt(pid), cmd));
+        if (!added) {
+          Banner.warnBanner("Found duplicate PID? " + pidLine);
+        }
       }
+
     } catch (Exception e) {
       throw new RuntimeException(result.toString(), e);
     }
@@ -277,7 +324,8 @@ public class ThreadDump {
     return cmd.contains("-jar slave.jar") || cmd.contains("hudson.maven.agent.Main")
            || cmd.contains("cruisecontrol-launcher.jar ")
            || (cmd.contains(" org.jruby.Main ") && cmd.contains("build-tc.rb"))
-           || (cmd.contains(" org.codehaus.classworlds.Launcher ") && cmd.contains("-Dmaven.home="));
+           || (cmd.contains(" org.codehaus.classworlds.Launcher ") && cmd.contains("-Dmaven.home="))
+           || (cmd.contains(" org.codehaus.plexus.classworlds.launcher.Launcher ") && cmd.contains("-Dmaven.home="));
   }
 
   static class PID {

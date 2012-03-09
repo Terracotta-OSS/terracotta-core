@@ -13,10 +13,7 @@ import com.tc.aspectwerkz.transform.WeavingStrategy;
 import com.tc.aspectwerkz.transform.inlining.AsmHelper;
 import com.tc.aspectwerkz.transform.inlining.EmittedJoinPoint;
 import com.tc.aspectwerkz.transform.inlining.ProxyWeavingStrategy;
-import com.tc.backport175.bytecode.AnnotationReader;
-import com.tc.backport175.bytecode.spi.BytecodeProvider;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,11 +46,11 @@ public class ProxyCompilerHelper {
 
     // register the bytecode provider
     // TODO AV - could be optimized ?(f.e. recompile everytime instead of creating many provider)
-    AnnotationReader.setBytecodeProviderFor(proxyClassName, loader, new BytecodeProvider() {
-      public byte[] getBytecode(final String className, final ClassLoader l) throws ClassNotFoundException, IOException {
-        return bytes;
-      }
-    });
+//    AnnotationReader.setBytecodeProviderFor(proxyClassName, loader, new BytecodeProvider() {
+//      public byte[] getBytecode(final String className, final ClassLoader l) throws ClassNotFoundException, IOException {
+//        return bytes;
+//      }
+//    });
 
 //    final Set definitions = new HashSet();
 //    definitions.add(definition);

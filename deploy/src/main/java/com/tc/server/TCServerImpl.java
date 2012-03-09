@@ -7,6 +7,7 @@ package com.tc.server;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.mortbay.jetty.Server;
+import org.mortbay.jetty.handler.ContextHandlerCollection;
 import org.mortbay.jetty.security.Constraint;
 import org.mortbay.jetty.security.ConstraintMapping;
 import org.mortbay.jetty.security.HashUserRealm;
@@ -15,7 +16,9 @@ import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.DefaultServlet;
 import org.mortbay.jetty.servlet.ServletHandler;
 import org.mortbay.jetty.servlet.ServletHolder;
+import org.mortbay.jetty.webapp.WebAppContext;
 
+import com.sun.jersey.spi.container.servlet.ServletContainer;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
@@ -59,6 +62,7 @@ import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.server.util.TcHashSessionIdManager;
 import com.tc.servlets.L1ReconnectPropertiesServlet;
 import com.tc.statistics.StatisticsGathererSubSystem;
 import com.tc.statistics.beans.StatisticsMBeanNames;
@@ -71,6 +75,7 @@ import com.terracottatech.config.Offheap;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -153,23 +158,23 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
   }
 
-  private static OrderedGroupIDs createOrderedGroupIds(ActiveServerGroupConfig[] groupArray) {
-    GroupID[] gids = new GroupID[groupArray.length];
-    for (int i = 0; i < groupArray.length; i++) {
-      gids[i] = groupArray[i].getGroupId();
+  private static OrderedGroupIDs createOrderedGroupIds(List<ActiveServerGroupConfig> groups) {
+    GroupID[] gids = new GroupID[groups.size()];
+    for (int i = 0; i < groups.size(); i++) {
+      gids[i] = groups.get(i).getGroupId();
     }
     return new OrderedGroupIDs(gids);
   }
 
   public ServerGroupInfo[] serverGroups() {
     L2Info[] l2Infos = infoForAllL2s();
-    ActiveServerGroupConfig[] groupArray = this.configurationSetupManager.activeServerGroupsConfig()
-        .getActiveServerGroupArray();
-    OrderedGroupIDs orderedGroupsIds = createOrderedGroupIds(groupArray);
+    List<ActiveServerGroupConfig> groups = this.configurationSetupManager.activeServerGroupsConfig()
+        .getActiveServerGroups();
+    OrderedGroupIDs orderedGroupsIds = createOrderedGroupIds(groups);
     GroupID coordinatorId = orderedGroupsIds.getActiveCoordinatorGroup();
-    ServerGroupInfo[] result = new ServerGroupInfo[groupArray.length];
-    for (int i = 0; i < groupArray.length; i++) {
-      ActiveServerGroupConfig groupInfo = groupArray[i];
+    ServerGroupInfo[] result = new ServerGroupInfo[groups.size()];
+    for (int i = 0; i < groups.size(); i++) {
+      ActiveServerGroupConfig groupInfo = groups.get(i);
       GroupID groupId = groupInfo.getGroupId();
       List<L2Info> memberList = new ArrayList<L2Info>();
       for (L2Info l2Info : l2Infos) {
@@ -502,6 +507,7 @@ public class TCServerImpl extends SEDA implements TCServer {
       throws Exception {
     this.httpServer = new Server();
     this.httpServer.addConnector(tcConnector);
+    ContextHandlerCollection contextHandlerCollection = new ContextHandlerCollection();
 
     Context context = new Context(null, "/", Context.NO_SESSIONS | Context.SECURITY);
 
@@ -590,7 +596,45 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
 
     context.setServletHandler(servletHandler);
-    this.httpServer.addHandler(context);
+    contextHandlerCollection.addHandler(context);
+
+    if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.MANAGEMENT_REST_ENABLED, true)) {
+      // register console webapp
+      if (tcInstallDir != null) {
+        File consoleDir = new File(tcInstallDir, "console");
+
+        String[] files = consoleDir.list(new FilenameFilter() {
+          @Override
+          public boolean accept(File dir, String name) {
+            return name.endsWith(".war");
+          }
+        });
+
+        if (files != null && files.length > 0) {
+          String warFile = files[0];
+          logger.info("deploying console web UI from archive " + warFile);
+          WebAppContext consoleContext = new WebAppContext();
+          consoleContext.setContextPath("/console");
+          consoleContext.setWar(consoleDir.getPath() + File.separator + warFile);
+          contextHandlerCollection.addHandler(consoleContext);
+        } else {
+          logger.info("could not find console web UI archive");
+        }
+      } else {
+        logger.info("TC install dir not set, cannot find console web UI archive");
+      }
+
+      // register REST webapp
+      Context restContext = new Context(null, "/tc-management-api", Context.NO_SESSIONS | Context.SECURITY);
+      ServletHolder servletHolder = new ServletHolder(ServletContainer.class);
+      servletHolder.setInitParameter("com.sun.jersey.config.property.packages", "net.sf.ehcache.management");
+      servletHolder.setInitParameter("com.sun.jersey.api.json.POJOMappingFeature", "true");
+      restContext.addServlet(servletHolder, "/*");
+      contextHandlerCollection.addHandler(restContext);
+    }
+
+    this.httpServer.addHandler(contextHandlerCollection);
+    this.httpServer.setSessionIdManager(new TcHashSessionIdManager());
 
     try {
       this.httpServer.start();

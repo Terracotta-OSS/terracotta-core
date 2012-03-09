@@ -42,10 +42,6 @@ public class ManagedObjectStateFactory {
   private final PersistentCollectionFactory         persistentCollectionFactory;
 
   static {
-    // XXX: remove these when possible!
-    classNameToStateMap.put("com.tctest.builtin.HashMap", Byte.valueOf(ManagedObjectState.MAP_TYPE));
-    classNameToStateMap.put("com.tctest.builtin.ArrayList", Byte.valueOf(ManagedObjectState.LIST_TYPE));
-
     // XXX: Support for CDM, CDSM in terracotta-toolkit
     classNameToStateMap.put("com.terracotta.toolkit.collections.ConcurrentDistributedMapDso",
                             Byte.valueOf(ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE));

@@ -313,8 +313,8 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     for (SocketConnection connection : connections) {
       long port = connection.getLocalPort();
       long remotePort = connection.getRemotePort();
-      // not checking bind address
-      if ((bindPort == port || bindPort == remotePort)) {
+      if ((bindPort == port || bindPort == remotePort) && connection.getLocalAddr().isLoopbackAddress()
+          && connection.getRemoteAddr().isLoopbackAddress()) {
         establishedConnections++;
         System.out.println("XXX " + connection);
       }

@@ -8,6 +8,7 @@ import com.tc.lcp.LinkedJavaProcess;
 import com.tc.process.Exec;
 import com.tc.process.Exec.Result;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.test.TestConfigObject;
 import com.tc.test.config.model.TestConfig;
 import com.tc.text.Banner;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -50,12 +51,11 @@ public class TestClientManager {
    * Starts a new client
    * 
    * @param client : the class which is to be started as client
-   * @param withStandaloneJar : do we need to start the client with standalone jar
    * @param clientName name of : the client to be started
    * @param extraClientMainArgs : List of arguments with which the client will start
    */
-  protected void runClient(Class<? extends Runnable> client, boolean withStandaloneJar, String clientName,
-                           List<String> extraClientMainArgs) throws Throwable {
+  protected void runClient(Class<? extends Runnable> client, String clientName, List<String> extraClientMainArgs)
+      throws Throwable {
     synchronized (TestClientManager.class) {
       if (stopped.isSet()) { return; }
     }
@@ -66,14 +66,18 @@ public class TestClientManager {
       Banner.infoBanner("waiting for debugger to attach on port " + debugPort);
     }
 
-    File licenseKey = new File("test-classes" + File.separator + "terracotta-license.key");
-    jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.PRODUCTKEY_PATH + "=" + licenseKey.getAbsolutePath());
+    if (testConfig.getClientConfig().shouldResolveLicense()) {
+      File licenseKey = new File("test-classes" + File.separator + "terracotta-license.key");
+      jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.PRODUCTKEY_PATH + "=" + licenseKey.getAbsolutePath());
+    }
 
     // do this last
     configureClientExtraJVMArgs(jvmArgs);
 
     // removed duplicate args and use the one added in the last in case of multiple entries
     TestBaseUtil.removeDuplicateJvmArgs(jvmArgs);
+    TestBaseUtil.setHeapSizeArgs(jvmArgs, testConfig.getClientConfig().getMinHeap(), testConfig.getClientConfig()
+        .getMaxHeap());
 
     String clientArgs = System.getProperty(CLIENT_ARGS);
     if (clientArgs != null) {
@@ -108,7 +112,8 @@ public class TestClientManager {
     TestBaseUtil.setupVerboseGC(jvmArgs, verboseGcOutputFile);
 
     LinkedJavaProcess clientProcess = new LinkedJavaProcess(TestClientLauncher.class.getName(), clientMainArgs, jvmArgs);
-    String classPath = testBase.createClassPath(client, withStandaloneJar);
+    clientProcess.setMaxRuntime(TestConfigObject.getInstance().getJunitTimeoutInSeconds());
+    String classPath = testBase.createClassPath(client);
     classPath = testBase.makeClasspath(classPath, testBase.getTestDependencies());
     classPath = addRequiredJarsToClasspath(client, classPath);
     classPath = addExtraJarsToClassPath(classPath);

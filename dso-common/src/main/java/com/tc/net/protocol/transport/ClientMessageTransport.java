@@ -24,6 +24,7 @@ import com.tc.util.concurrent.TCExceptionResultException;
 import com.tc.util.concurrent.TCFuture;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -123,7 +124,7 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
    * Do not trigger reconnection
    */
   private void cleanConnectionWithoutNotifyListeners() {
-    List tl = this.getTransportListeners();
+    List tl = new ArrayList(this.getTransportListeners());
     this.removeTransportListeners();
     clearConnection();
     this.addTransportListeners(tl);
@@ -145,7 +146,9 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
    * Returns true if the MessageTransport was ever in an open state.
    */
   public boolean wasOpened() {
-    return this.wasOpened;
+    synchronized (isOpen) {
+      return this.wasOpened;
+    }
   }
 
   public boolean isNotOpen() {
@@ -310,7 +313,7 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
   void reconnect(TCConnection connection) throws Exception {
 
     // don't do reconnect if open is still going on
-    if (!this.wasOpened) {
+    if (!wasOpened()) {
       this.logger.warn("Transport was opened already. Skip reconnect " + connection);
       return;
     }

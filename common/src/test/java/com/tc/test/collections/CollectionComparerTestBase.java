@@ -22,7 +22,7 @@ import java.util.Set;
  */
 public class CollectionComparerTestBase extends TCTestCase {
 
-  protected static boolean CASE_INSENSITIVE = false;
+  protected boolean CASE_INSENSITIVE = false;
 
   protected static class MyObj {
     public final String value;
@@ -31,10 +31,12 @@ public class CollectionComparerTestBase extends TCTestCase {
       this.value = value;
     }
 
+    @Override
     public String toString() {
       return "X" + this.value + "Y";
     }
 
+    @Override
     public int hashCode() {
       return new HashCodeBuilder().append(this.value).toHashCode();
     }
@@ -50,7 +52,7 @@ public class CollectionComparerTestBase extends TCTestCase {
     }
   }
 
-  private static class MyComparator implements EqualityComparator {
+  private class MyComparator implements EqualityComparator {
     public boolean isEquals(Object one, Object two) {
       if ((one == null) != (two == null)) return false;
       if (one == null) return true;
@@ -72,6 +74,7 @@ public class CollectionComparerTestBase extends TCTestCase {
   protected EqualityComparator                equalityComparator;
   protected CollectionComparer                comparer;
 
+  @Override
   public void setUp() throws Exception {
     this.describer = new MyStringifier();
     this.equalityComparator = new MyComparator();
@@ -88,13 +91,13 @@ public class CollectionComparerTestBase extends TCTestCase {
   }
 
   public void testSingleEquals() throws Exception {
-    checkMismatches(NO_MISMATCHES, this.comparer.getMismatches(new Object[] { new MyObj("foo") },
-                                                               new Object[] { new MyObj("foo") }));
+    checkMismatches(NO_MISMATCHES,
+                    this.comparer.getMismatches(new Object[] { new MyObj("foo") }, new Object[] { new MyObj("foo") }));
   }
 
   public void testDifferentCollectionTypes() throws Exception {
-    checkMismatches(NO_MISMATCHES, this.comparer.getMismatches(new Object[] { new MyObj("foo") },
-                                                               new Object[] { new MyObj("foo") }));
+    checkMismatches(NO_MISMATCHES,
+                    this.comparer.getMismatches(new Object[] { new MyObj("foo") }, new Object[] { new MyObj("foo") }));
     checkMismatches(NO_MISMATCHES, this.comparer.getMismatches(new Object[] { new MyObj("foo") },
                                                                iterator(new Object[] { new MyObj("foo") })));
     checkMismatches(NO_MISMATCHES, this.comparer.getMismatches(new Object[] { new MyObj("foo") },
@@ -112,16 +115,14 @@ public class CollectionComparerTestBase extends TCTestCase {
   public void testSingleDoesNotEqualNothing() throws Exception {
     MyObj missingObj = new MyObj("foo");
 
-    checkMismatches(
-                    new CollectionMismatch[] { new MissingObjectCollectionMismatch(missingObj, true, 0, this.describer) },
+    checkMismatches(new CollectionMismatch[] { new MissingObjectCollectionMismatch(missingObj, true, 0, this.describer) },
                     this.comparer.getMismatches(new Object[] { missingObj }, new Object[0]));
   }
 
   public void testNothingDoesNotEqualSingle() throws Exception {
     MyObj missingObj = new MyObj("foo");
 
-    checkMismatches(
-                    new CollectionMismatch[] { new MissingObjectCollectionMismatch(missingObj, false, 0, this.describer) },
+    checkMismatches(new CollectionMismatch[] { new MissingObjectCollectionMismatch(missingObj, false, 0, this.describer) },
                     this.comparer.getMismatches(new Object[0], new Object[] { missingObj }));
   }
 

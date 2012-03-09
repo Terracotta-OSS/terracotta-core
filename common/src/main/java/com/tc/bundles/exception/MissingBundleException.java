@@ -14,10 +14,6 @@ import com.tc.bundles.ResolverUtils;
 import com.tc.util.Assert;
 import com.tc.util.runtime.Os;
 
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URL;
 import java.util.List;
 
@@ -132,31 +128,25 @@ public class MissingBundleException extends BundleException implements BundleExc
   }
 
   private String dependencyStackAsString() {
-    ByteArrayOutputStream bas = new ByteArrayOutputStream();
-    BufferedOutputStream buf = new BufferedOutputStream(bas);
-    printDependencyStack(dependencyStack, 0, 4, buf);
-    return bas.toString();
+    StringBuilder sb = new StringBuilder();
+    printDependencyStack(dependencyStack, 0, 4, sb);
+    return sb.toString();
   }
 
-  private static void printDependencyStack(DependencyStack dependencies, int depth, int indent, OutputStream out) {
-    try {
-      for (Object entry : dependencies) {
-        if (entry instanceof DependencyStack) {
-          printDependencyStack((DependencyStack) entry, depth + 1, indent, out);
-          continue;
-        }
-        if (depth == 0) {
-          out.write((INDENT + INDENT + entry.toString() + "\n").getBytes());
-          continue;
-        }
-        out.write((INDENT + INDENT).getBytes());
-        for (int j = 0; j < (depth - 1) * indent; j++)
-          out.write(" ".getBytes());
-        out.write(("+- " + entry.toString() + "\n").getBytes());
+  private static void printDependencyStack(DependencyStack dependencies, int depth, int indent, StringBuilder sb) {
+    for (Object entry : dependencies) {
+      if (entry instanceof DependencyStack) {
+        printDependencyStack((DependencyStack) entry, depth + 1, indent, sb);
+        continue;
       }
-      out.flush();
-    } catch (IOException e) {
-      throw new RuntimeException(e.getMessage());
+      if (depth == 0) {
+        sb.append(INDENT + INDENT + entry.toString() + "\n");
+        continue;
+      }
+      sb.append(INDENT + INDENT);
+      for (int j = 0; j < (depth - 1) * indent; j++)
+        sb.append(" ");
+      sb.append("+- " + entry.toString() + "\n");
     }
   }
 

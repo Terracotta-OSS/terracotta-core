@@ -574,8 +574,8 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     }
   }
 
-  protected static ThinDecimalFormat THIN_DECIMAL_FORMAT = new ThinDecimalFormat();
-  protected static ThinMemoryFormat  THIN_MEMORY_FORMAT  = new ThinMemoryFormat();
+  protected static final ThinDecimalFormat THIN_DECIMAL_FORMAT = new ThinDecimalFormat();
+  protected static final ThinMemoryFormat  THIN_MEMORY_FORMAT  = new ThinMemoryFormat();
 
   public static String convert(long value) {
     return THIN_DECIMAL_FORMAT.format(value);

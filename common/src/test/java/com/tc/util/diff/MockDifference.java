@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util.diff;
 
@@ -24,18 +25,31 @@ public class MockDifference extends Difference {
     this(where, new Object(), new Object());
   }
 
+  @Override
   public Object a() {
     return this.a;
   }
 
+  @Override
   public Object b() {
     return this.b;
   }
 
+  @Override
   public String toString() {
     return "<MockDifference: " + a() + ", " + b() + ">";
   }
 
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((a == null) ? 0 : a.hashCode());
+    result = prime * result + ((b == null) ? 0 : b.hashCode());
+    return result;
+  }
+
+  @Override
   public boolean equals(Object that) {
     if (!(that instanceof MockDifference)) return false;
 

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util.diff;
 
@@ -80,19 +81,32 @@ public class PrimitiveDifference extends Difference {
     this.b = new Double(b);
   }
 
+  @Override
   public Object a() {
     return this.a;
   }
 
+  @Override
   public Object b() {
     return this.b;
   }
 
+  @Override
   public String toString() {
     return where() + ": primitive fields of type " + ClassUtils.getShortClassName(this.a.getClass()) + " differ: "
            + this.a + " vs. " + this.b;
   }
 
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((a == null) ? 0 : a.hashCode());
+    result = prime * result + ((b == null) ? 0 : b.hashCode());
+    return result;
+  }
+
+  @Override
   public boolean equals(Object that) {
     if (!(that instanceof PrimitiveDifference)) return false;
 

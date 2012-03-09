@@ -16,15 +16,14 @@
   <artifactId>terracotta-kit</artifactId>
   <packaging>pom</packaging>
   <name>terracotta-kit</name>
-  
+
   <properties>
     <toolkit.api>1.5</toolkit.api>
-    <toolkit.version>5.0.0-SNAPSHOT</toolkit.version>    
+    <toolkit.version>5.0.0-SNAPSHOT</toolkit.version>
     <ehcache.version>2.6.0-SNAPSHOT</ehcache.version>
-    <quartz.version>2.2.0-SNAPSHOT</quartz.version>
+    <quartz.version>3.0.0-SNAPSHOT</quartz.version>
     <terracotta-session.version>1.3.0-SNAPSHOT</terracotta-session.version>
-    <quartz-terracotta.version>2.3.0-SNAPSHOT</quartz-terracotta.version>
-    
+
     <skip.deploy>true</skip.deploy>
     <skip.testjar>true</skip.testjar>
     <kit.edition>opensource</kit.edition>
@@ -35,23 +34,14 @@
     <skip.schema>true</skip.schema>
     <no.extra>false</no.extra>
     <gt.kit>false</gt.kit>    
-    
+
     <terracotta.artifactId>terracotta${ee.suffix}</terracotta.artifactId>
     <terracotta.jarname>${terracotta.artifactId}-${project.version}.jar</terracotta.jarname>
-    <toolkit.artifactId>terracotta-toolkit-${toolkit.api}-runtime${ee.suffix}</toolkit.artifactId>
-    <quartz-terracotta.artifactId>quartz-terracotta${ee.suffix}</quartz-terracotta.artifactId>    
-    <ehcache-core.artifactId>ehcache-core</ehcache-core.artifactId>
-    <ehcache-terracotta.artifactId>ehcache-terracotta${ee.suffix}</ehcache-terracotta.artifactId>
-    
+    <toolkit.artifactId>terracotta-toolkit-${toolkit.api}-runtime${ee.suffix}</toolkit.artifactId> 
+    <ehcache.artifactId>ehcache-kit</ehcache.artifactId>
+    <quartz.artifactId>quartz-kit</quartz.artifactId>
+
     <terracotta.license>LICENSE.txt</terracotta.license>
-    <ehcache-core.readme.url>http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/README.html</ehcache-core.readme.url>
-    <ehcache-core.quickstart.url>http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/QUICK-START.html</ehcache-core.quickstart.url>    
-    <ehcache-core.tclicense.url>http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/EHCACHE-TERRACOTTA-LICENSE.txt</ehcache-core.tclicense.url>
-    <ehcache-core.tcschema.url>http://svn.terracotta.org/svn/ehcache/trunk/core/src/main/config/ehcache-terracotta.xml</ehcache-core.tcschema.url>
-    <quartz-kit.url>http://download.terracotta.org/quartz/quartz-${quartz.version}.tar.gz</quartz-kit.url>
-    
-    <maven-copy-plugin.version>0.2.3.6</maven-copy-plugin.version>
-    <gmaven-plugin.version>1.3</gmaven-plugin.version>
   </properties>
 
   <dependencies>
@@ -60,7 +50,7 @@
       <artifactId>${terracotta.artifactId}</artifactId>
       <version>${project.version}</version>
     </dependency>
-    
+
     <!-- for packaging purpose -->
     <dependency>
       <groupId>org.terracotta.internal</groupId>
@@ -75,7 +65,7 @@
       <version>${toolkit.version}</version>
       <scope>provided</scope>
     </dependency>       
-    
+
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>tcconfig</artifactId>
@@ -84,53 +74,33 @@
       <type>zip</type>
       <scope>provided</scope>
     </dependency>
-    
+
     <!-- ehcache -->
     <dependency>
       <groupId>net.sf.ehcache</groupId>
-      <artifactId>${ehcache-core.artifactId}</artifactId>
+      <artifactId>${ehcache.artifactId}</artifactId>
       <version>${ehcache.version}</version>
       <classifier>distribution</classifier>
       <type>tar.gz</type>
       <scope>provided</scope>
-	  <exclusions>
+      <exclusions>
         <exclusion>
-		  <groupId>com.sun</groupId>
-		  <artifactId>tools</artifactId>
-	    </exclusion>
-	  </exclusions>
+          <groupId>com.sun</groupId>
+          <artifactId>tools</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>     
-    <dependency>
-      <groupId>net.sf.ehcache</groupId>
-      <artifactId>${ehcache-terracotta.artifactId}</artifactId>
-      <version>${ehcache.version}</version>
-      <scope>provided</scope>
-    </dependency>    
-    <dependency>
-      <groupId>org.terracotta.samples.ehcache</groupId>
-      <artifactId>colorcache</artifactId>
-      <version>${project.version}</version>
-      <classifier>distribution</classifier>
-      <type>tar.gz</type>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.samples.ehcache.hibernate</groupId>
-      <artifactId>events</artifactId>
-      <version>${project.version}</version>
-      <classifier>distribution</classifier>
-      <type>tar.gz</type>
-      <scope>provided</scope>
-    </dependency>
 
     <!-- quartz -->
     <dependency>
-      <groupId>org.terracotta.quartz</groupId>
-      <artifactId>${quartz-terracotta.artifactId}</artifactId>
-      <version>${quartz-terracotta.version}</version>
+      <groupId>org.quartz-scheduler</groupId>
+      <artifactId>${quartz.artifactId}</artifactId>
+      <version>${quartz.version}</version>
+      <classifier>distribution</classifier>
+      <type>tar.gz</type>      
       <scope>provided</scope>
     </dependency>
-    
+
     <!-- express session -->
     <dependency>
       <groupId>org.terracotta.session</groupId>
@@ -139,47 +109,43 @@
       <scope>provided</scope>
     </dependency>
   </dependencies>
-      
-  <build>
-    <plugins>   
-    </plugins>
-  </build>
-      
+
   <profiles>
     <!-- ********************************************************************************** -->
     <!--   profile to build Enterprise Terracotta kit. Need to be used with 'kit' profile   -->    
     <!-- ********************************************************************************** -->  
     <profile>
-	    <id>enterprise</id>
+      <id>enterprise</id>
       <properties>
         <kit.edition>enterprise</kit.edition>
         <ee.suffix>-ee</ee.suffix>
-        <ehcache-core.artifactId>ehcache-core-ee-kit</ehcache-core.artifactId>
+        <ehcache.artifactId>ehcache-ee-kit</ehcache.artifactId>
+        <quartz.artifactId>quartz-ee-kit</quartz.artifactId>
         <terracotta.license>TERRACOTTA-TRIAL-LICENSE.txt</terracotta.license>
       </properties>
-	  </profile>
-    
+    </profile>
+
     <!-- ********************************************************************************** -->
     <!--   profile to build Enterprise Terracotta -gt kit. Need to be used with 'kit' profile   -->    
     <!-- ********************************************************************************** -->  
     <profile>
-	    <id>gt</id>
+      <id>gt</id>
       <properties>
         <gt.kit>true</gt.kit>
         <kit.name>${terracotta.artifactId}-gt-${project.version}</kit.name>
       </properties>
-	  </profile>    
-  
+    </profile>    
+
     <!-- ******************************************************************* -->
     <!--   profile to exclude extra packaging of ehcache, quartz, sessions   -->    
     <!-- ******************************************************************* -->     
     <profile>
-	    <id>no-extra</id>
+      <id>no-extra</id>
       <properties>
         <no.extra>true</no.extra>
       </properties>
-	  </profile>    
-    
+    </profile>    
+
     <!-- ********************************************** -->
     <!--   profile to build opensource Terracotta kit   -->    
     <!-- ********************************************** -->    
@@ -249,7 +215,7 @@
                       <preservePath>true</preservePath>
                       <dependenciesAtM2>true</dependenciesAtM2>
                     </resource>            
-                    
+
                     <!-- populate lib folder -->
                     <resource>
                       <targetPath>${rootDir}/lib</targetPath>
@@ -260,8 +226,8 @@
                       </dependency>
                       <dependenciesAtM2>true</dependenciesAtM2>
                     </resource>
-                    
-                    
+
+
                     <!-- build data -->
                     <resource>
                       <targetPath>${rootDir}/lib/resources</targetPath>
@@ -274,7 +240,7 @@
                       </zipEntries>
                       <unpack>true</unpack>              
                     </resource>
-                    
+
                     <!-- tookit -->
                     <resource>
                       <runIf>{{ "${no.extra}" != "true" }}</runIf>
@@ -296,14 +262,27 @@
                       <unpack>true</unpack>
                       <dependenciesAtM2>true</dependenciesAtM2>
                     </resource>            
-                    
-                    <!-- ehcache-core -->
+
+                    <!-- console -->
+                    <resource>
+                      <runIf>{{ "${no.extra}" != "true" &amp;&amp; "${kit.edition}" == "enterprise" }}</runIf>
+                      <targetPath>${rootDir}/console</targetPath>
+                      <dependency>
+                        <groupId>com.terracotta</groupId>
+                        <artifactId>management-client-war</artifactId>
+                        <version>${management.version}</version>
+                        <type>war</type>
+                      </dependency>
+                      <dependenciesAtM2>true</dependenciesAtM2>
+                    </resource>
+
+                    <!-- ehcache -->
                     <resource>
                       <runIf>{{ "${no.extra}" != "true" }}</runIf>
                       <targetPath>${rootDir}</targetPath>
                       <dependency>
                         <groupId>net.sf.ehcache</groupId>
-                        <artifactId>${ehcache-core.artifactId}</artifactId>
+                        <artifactId>${ehcache.artifactId}</artifactId>
                         <classifier>distribution</classifier>
                         <type>tar.gz</type>
                       </dependency>
@@ -314,66 +293,35 @@
                     <resource>
                       <runIf>{{ "${no.extra}" != "true" }}</runIf>
                       <directory>${rootDir}/ehcache</directory>
-                      <include>**/SLF4J-LICENSE.txt,**/TERRACOTTA-TRIAL-LICENSE.txt,**/SUBSCRIPTION-AGREEMENT.pdf</include>
+                      <include>**/licenses/**</include>
                       <clean>true</clean>
+                      <cleanEmptyDirectories>true</cleanEmptyDirectories>
+                      <failIfNotFound>false</failIfNotFound>
                     </resource>
-                    <resource>
-                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
-                      <targetPath>${rootDir}/ehcache</targetPath>
-                      <file>${ehcache-core.readme.url}</file>
-                    </resource>
-                    <resource>
-                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
-                      <targetPath>${rootDir}/ehcache</targetPath>
-                      <file>${ehcache-core.quickstart.url}</file>
-                    </resource>
-                    <resource>
-                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
-                      <targetPath>${rootDir}/ehcache</targetPath>
-                      <file>${ehcache-core.tcschema.url}</file>
-                      <destFileName>ehcache.xml</destFileName>
-                    </resource>
-                    <resource>
-                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
-                      <targetPath>${rootDir}/ehcache/licenses</targetPath>
-                      <file>${ehcache-core.tclicense.url}</file>
-                    </resource>            
                     
-                    <!-- ehcache terracotta -->
+                    <!-- quartz -->
                     <resource>
                       <runIf>{{ "${no.extra}" != "true" }}</runIf>
-                      <targetPath>${rootDir}/ehcache/lib</targetPath>
-                      <dependencies>
-                        <dependency>
-                          <groupId>net.sf.ehcache</groupId>
-                          <artifactId>${ehcache-terracotta.artifactId}</artifactId>
-                        </dependency>
-                      </dependencies>
+                      <targetPath>${rootDir}</targetPath>
+                      <dependency>
+                        <groupId>org.quartz-scheduler</groupId>
+                        <artifactId>${quartz.artifactId}</artifactId>
+                        <classifier>distribution</classifier>
+                        <type>tar.gz</type>
+                      </dependency>
                       <dependenciesAtM2>true</dependenciesAtM2>
-                    </resource>
-                    
-                    <!-- ehcache samples-->
-                    <resource>
-                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
-                      <targetPath>${rootDir}/ehcache/samples</targetPath>
-                      <dependencies>
-                        <dependency>
-                          <groupId>org.terracotta.samples.ehcache</groupId>
-                          <artifactId>colorcache</artifactId>
-                          <classifier>distribution</classifier>
-                          <type>tar.gz</type>
-                        </dependency>
-                        <dependency>
-                          <groupId>org.terracotta.samples.ehcache.hibernate</groupId>
-                          <artifactId>events</artifactId>
-                          <classifier>distribution</classifier>
-                          <type>tar.gz</type>
-                        </dependency>
-                      </dependencies>
                       <unpack>true</unpack>
-                      <dependenciesAtM2>true</dependenciesAtM2>
-                    </resource>             
-                    
+                      <process>Util.processQuartzDistribution(project)</process>              
+                    </resource>
+                    <resource>
+                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
+                      <directory>${rootDir}/quartz</directory>
+                      <include>**/licenses/**</include>
+                      <clean>true</clean>
+                      <cleanEmptyDirectories>true</cleanEmptyDirectories>
+                      <failIfNotFound>false</failIfNotFound>
+                    </resource>                    
+
                     <!-- session express -->
                     <resource>
                       <runIf>{{ "${no.extra}" != "true" }}</runIf>
@@ -384,25 +332,7 @@
                       </dependency>
                       <dependenciesAtM2>true</dependenciesAtM2>
                     </resource>
-                    
-                    <!-- quartz -->
-                    <resource>
-                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
-                      <targetPath>${rootDir}</targetPath>
-                      <file>${quartz-kit.url}</file>
-                      <unpack>true</unpack>
-                      <process>Util.processQuartzDistribution(project)</process>
-                    </resource>
-                    <resource>
-                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
-                      <targetPath>${rootDir}/quartz</targetPath>
-                      <dependency>
-                        <groupId>org.terracotta.quartz</groupId>
-                        <artifactId>${quartz-terracotta.artifactId}</artifactId>
-                      </dependency>
-                      <dependenciesAtM2>true</dependenciesAtM2>
-                    </resource>
-                    
+
                     <!-- 1. remove build-data.txt from terracotta jar and rename it to tc.jar 
                          2. set execution permissions for scripts and library files
                          3. apply -gt kit changes
@@ -429,7 +359,7 @@
         </plugins>
       </build>
     </profile>
-    
+
     <!-- *********************************************** -->
     <!--   profile to make Izpack installer of the kit   -->    
     <!-- *********************************************** -->     
@@ -475,12 +405,12 @@
                       <include>*.*</include>
                       <filtering>false</filtering>
                     </resource>
-                      <resource>
-                        <targetPath>${izpack.output.directory}</targetPath>
-                        <directory>${izpack.src.directory}/resources/${kit.edition}</directory>
-                        <include>*.*</include>
-                        <filtering>false</filtering>
-                      </resource>
+                    <resource>
+                      <targetPath>${izpack.output.directory}</targetPath>
+                      <directory>${izpack.src.directory}/resources/${kit.edition}</directory>
+                      <include>*.*</include>
+                      <filtering>false</filtering>
+                    </resource>
                   </resources>
                 </configuration>
               </execution>
@@ -514,9 +444,9 @@
             </executions>
             <dependencies>
               <dependency>
-                  <groupId>org.apache.ant</groupId>
-                  <artifactId>ant</artifactId>
-                  <version>1.8.2</version>
+                <groupId>org.apache.ant</groupId>
+                <artifactId>ant</artifactId>
+                <version>1.8.2</version>
               </dependency>
               <dependency>
                 <groupId>org.terracotta</groupId>
@@ -566,48 +496,48 @@
                         }
                       }
                     } 
-                  </source>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>            
-        </plugins>
-      </build>
-    </profile>
+                </source>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>            
+      </plugins>
+    </build>
+  </profile>
 
-    <!-- *************************************** -->
-    <!--   profile to make tar ball of the kit   -->    
-    <!-- *************************************** -->     
-    <profile>
-	    <id>tarball</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.codehaus.gmaven</groupId>
-            <artifactId>gmaven-plugin</artifactId>
-            <version>${gmaven-plugin.version}</version>
-            <executions>
-              <execution>
-                <id>create-tarball</id>
-                <phase>package</phase>
-                <goals>
-                  <goal>execute</goal>
-                </goals>
-                <configuration>         
-                  <source>
+  <!-- *************************************** -->
+  <!--   profile to make tar ball of the kit   -->    
+  <!-- *************************************** -->     
+  <profile>
+    <id>tarball</id>
+    <build>
+      <plugins>
+        <plugin>
+          <groupId>org.codehaus.gmaven</groupId>
+          <artifactId>gmaven-plugin</artifactId>
+          <version>${gmaven-plugin.version}</version>
+          <executions>
+            <execution>
+              <id>create-tarball</id>
+              <phase>package</phase>
+              <goals>
+                <goal>execute</goal>
+              </goals>
+              <configuration>         
+                <source>
                     def srcdir = new File(project.basedir, "target/${kit.name}") 
                     ant.tar(destfile: "${srcdir}.tar.gz", longfile: "gnu", compression: "gzip") {
                       tarfileset(dir: "${srcdir}", prefix: "${kit.name}", excludes: "**/.placeholder,**/bin/**,**/lib/**,**/*.sh,**/*.bat")
                       tarfileset(dir: "${srcdir}", prefix: "${kit.name}", includes: "**/bin/**,**/lib/**,**/*.sh,**/*.bat", filemode: "755")
                     } 
-                  </source>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>            
-        </plugins>
-      </build>
-	  </profile>    
-  </profiles>
-  
+                </source>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>            
+      </plugins>
+    </build>
+  </profile>    
+</profiles>
+
 </project>

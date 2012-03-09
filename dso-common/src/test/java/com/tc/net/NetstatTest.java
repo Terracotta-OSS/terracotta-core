@@ -23,9 +23,9 @@ public class NetstatTest extends TestCase {
       List<SocketConnection> connections = netstat.listEstablishedTcpConnections();
       assertEquals(1, connections.size());
       SocketConnection conn = connections.iterator().next();
-      assertEquals("10.2.0.108", conn.getLocalAddr());
+      assertEquals("10.2.0.108", conn.getLocalAddr().getHostAddress());
       assertEquals(52464, conn.getLocalPort());
-      assertEquals("76.14.32.185", conn.getRemoteAddr());
+      assertEquals("76.14.32.185", conn.getRemoteAddr().getHostAddress());
       assertEquals(22, conn.getRemotePort());
     }
 
@@ -40,9 +40,9 @@ public class NetstatTest extends TestCase {
       List<SocketConnection> connections = netstat.listEstablishedTcpConnections();
       assertEquals(1, connections.size());
       SocketConnection conn = connections.iterator().next();
-      assertEquals("127.0.0.1", conn.getLocalAddr());
+      assertEquals("127.0.0.1", conn.getLocalAddr().getHostAddress());
       assertEquals(19977, conn.getLocalPort());
-      assertEquals("127.0.0.1", conn.getRemoteAddr());
+      assertEquals("127.0.0.1", conn.getRemoteAddr().getHostAddress());
       assertEquals(54047, conn.getRemotePort());
     }
 
@@ -57,9 +57,9 @@ public class NetstatTest extends TestCase {
       List<SocketConnection> connections = netstat.listEstablishedTcpConnections();
       assertEquals(1, connections.size());
       SocketConnection conn = connections.iterator().next();
-      assertEquals("10.2.0.107", conn.getLocalAddr());
+      assertEquals("10.2.0.107", conn.getLocalAddr().getHostAddress());
       assertEquals(53628, conn.getLocalPort());
-      assertEquals("10.2.0.108", conn.getRemoteAddr());
+      assertEquals("10.2.0.108", conn.getRemoteAddr().getHostAddress());
       assertEquals(445, conn.getRemotePort());
     }
 
@@ -74,9 +74,9 @@ public class NetstatTest extends TestCase {
       List<SocketConnection> connections = netstat.listEstablishedTcpConnections();
       assertEquals(1, connections.size());
       SocketConnection conn = connections.iterator().next();
-      assertEquals("192.168.1.10", conn.getLocalAddr());
+      assertEquals("192.168.1.10", conn.getLocalAddr().getHostAddress());
       assertEquals(22, conn.getLocalPort());
-      assertEquals("12.116.106.202", conn.getRemoteAddr());
+      assertEquals("12.116.106.202", conn.getRemoteAddr().getHostAddress());
       assertEquals(50590, conn.getRemotePort());
     }
 
@@ -91,9 +91,9 @@ public class NetstatTest extends TestCase {
       List<SocketConnection> connections = netstat.listEstablishedTcpConnections();
       assertEquals(1, connections.size());
       SocketConnection conn = connections.iterator().next();
-      assertEquals("127.0.0.1", conn.getLocalAddr());
+      assertEquals("127.0.0.1", conn.getLocalAddr().getHostAddress());
       assertEquals(39969, conn.getLocalPort());
-      assertEquals("127.0.0.1", conn.getRemoteAddr());
+      assertEquals("127.0.0.1", conn.getRemoteAddr().getHostAddress());
       assertEquals(4624, conn.getRemotePort());
     }
 

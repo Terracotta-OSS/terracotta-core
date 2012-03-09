@@ -4,9 +4,13 @@
  */
 package com.tc.object.bytecode.hook.impl;
 
-import static org.terracotta.license.LicenseConstants.LICENSE_KEY_FILENAME;
-
 import org.apache.commons.io.CopyUtils;
+import org.apache.log4j.Hierarchy;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
+import org.apache.log4j.WriterAppender;
+import org.apache.log4j.spi.RootLogger;
 
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.aspectwerkz.transform.InstrumentationContext;
@@ -19,23 +23,18 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
-import com.tc.license.LicenseManager;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerImpl;
-import com.tc.object.bytecode.hook.ClassLoaderPreProcessorImpl;
 import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.ModuleConfiguration;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
-import com.tc.object.config.UnverifiedBootJarException;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.RuntimeLoggerImpl;
-import com.tc.object.tools.BootJar;
-import com.tc.object.tools.BootJarException;
 import com.tc.plugins.ModulesLoader;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
@@ -45,6 +44,7 @@ import com.terracottatech.config.ConfigurationModel;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -57,27 +57,14 @@ import java.util.Map;
 
 public class DSOContextImpl implements DSOContext {
 
-  private static final TCLogger       logger                 = TCLogging.getLogger(DSOContextImpl.class);
-  private static final TCLogger       consoleLogger          = CustomerLogging.getConsoleLogger();
+  private static final TCLogger       logger        = TCLogging.getLogger(DSOContextImpl.class);
+  private static final TCLogger       consoleLogger = CustomerLogging.getConsoleLogger();
 
   private final DSOClientConfigHelper configHelper;
   private final Manager               manager;
   private final InstrumentationLogger instrumentationLogger;
   private final WeavingStrategy       weavingStrategy;
 
-  private final static String         UNVERIFIED_BOOTJAR_MSG = "\n********************************************************************************\n"
-                                                               + "There is a mismatch between the expected Terracotta boot JAR file and the\n"
-                                                               + "existing Terracotta boot JAR file. Recreate the boot JAR file using the\n"
-                                                               + "following command from the Terracotta home directory:\n"
-                                                               + "\n"
-                                                               + "platform/bin/make-boot-jar.sh -f <path/to/Terracotta/configuration/file>\n"
-                                                               + "\n"
-                                                               + "or\n"
-                                                               + "\n"
-                                                               + "platform/bin\\make-boot-jar.bat -f <path\\to\\Terracotta\\configuration\\file>\n"
-                                                               + "\n"
-                                                               + "Enter the make-boot-jar command with the -h switch for help.\n"
-                                                               + "********************************************************************************\n";
   private final EmbeddedOSGiRuntime   osgiRuntime;
   private final boolean               expressRejoinClient;
 
@@ -105,21 +92,9 @@ public class DSOContextImpl implements DSOContext {
   }
 
   public static DSOContext createStandaloneContext(String configSpec, ClassLoader loader,
-                                                   Map<String, URL> virtualTimJars, URL bootJarURL,
-                                                   boolean expressRejoinClient) throws ConfigurationSetupException {
+                                                   Map<String, URL> virtualTimJars, boolean expressRejoinClient)
+      throws ConfigurationSetupException {
     // XXX: refactor this method to not duplicate createContext() so much
-
-    // load license via normal methods before attempt to load it from application resource
-    if (LicenseManager.getLicense() == null) {
-      String licenseLocation = LICENSE_KEY_FILENAME;
-      LicenseManager.loadLicenseFromStream(loader.getResourceAsStream(licenseLocation), "resource " + licenseLocation);
-    }
-
-    try {
-      BootJar.verifyTCVersion(bootJarURL);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
 
     StandardConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(
                                                                                                     (String[]) null,
@@ -136,9 +111,7 @@ public class DSOContextImpl implements DSOContext {
       throw new ConfigurationSetupException(e.getLocalizedMessage(), e);
     }
 
-    boolean HAS_BOOT_JAR = false;
-
-    DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(config, HAS_BOOT_JAR);
+    DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(config);
     RuntimeLoggerImpl runtimeLogger = new RuntimeLoggerImpl(configHelper);
 
     Manager manager = new ManagerImpl(true, null, null, null, null, configHelper, l2Connection, true, runtimeLogger,
@@ -185,7 +158,6 @@ public class DSOContextImpl implements DSOContext {
 
     try {
       osgiRuntime = ModulesLoader.initModules(configHelper, classProvider, false, repos);
-      validateBootJar();
     } catch (Exception e) {
       consoleLogger.fatal(e.getMessage());
       logger.fatal(e);
@@ -197,20 +169,17 @@ public class DSOContextImpl implements DSOContext {
   private void resolveClasses() {
     // This fixes a class circularity error in JavaClassInfoRepository
     JavaClassInfo.getClassInfo(getClass());
-  }
 
-  private void validateBootJar() throws BootJarException {
-    if (!configHelper.hasBootJar()) { return; }
-
-    try {
-      configHelper.verifyBootJarContents(null);
-    } catch (final UnverifiedBootJarException e) {
-      StringBuilder msg = new StringBuilder(UNVERIFIED_BOOTJAR_MSG);
-      msg.append(e.getMessage() + " ");
-      msg.append("Unable to verify the contents of the boot jar; ");
-      msg.append("Please check the client logs for more information.");
-      throw new BootJarException(msg.toString(), e);
-    }
+    // This is to help a deadlock in log4j (see MNK-3461)
+    Logger l = new RootLogger(Level.ALL);
+    Hierarchy h = new Hierarchy(l);
+    l.addAppender(new WriterAppender(new SimpleLayout(), new OutputStream() {
+      @Override
+      public void write(int b) {
+        //
+      }
+    }));
+    l.debug(h.toString(), new Throwable());
   }
 
   public Manager getManager() {
@@ -227,7 +196,6 @@ public class DSOContextImpl implements DSOContext {
    * offset.
    * 
    * @return new byte array if the class is instrumented and same input byte array if not.
-   * @see ClassLoaderPreProcessorImpl
    */
   public byte[] preProcess(String name, byte[] data, int offset, int length, ClassLoader caller) {
     InstrumentationContext context = new InstrumentationContext(name, data, caller);

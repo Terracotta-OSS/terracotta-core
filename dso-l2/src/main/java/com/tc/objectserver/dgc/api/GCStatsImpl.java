@@ -11,24 +11,24 @@ import java.io.Serializable;
 import java.text.SimpleDateFormat;
 
 public class GCStatsImpl implements GCStats, Serializable {
-  private static final long             serialVersionUID      = -4177683133067698672L;
-  private static final SimpleDateFormat printFormat           = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss z");
+  private static final long      serialVersionUID      = -4177683133067698672L;
+  private final SimpleDateFormat printFormat           = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss z");
 
-  private static final long             NOT_INITIALIZED       = -1L;
-  private static final String           YOUNG_GENERATION      = "Young";
-  private static final String           FULL_GENERATION       = "Full";
-  private final int                     number;
-  private final long                    startTime;
-  private long                          elapsedTime           = NOT_INITIALIZED;
-  private long                          beginObjectCount      = NOT_INITIALIZED;
-  private long                          endObjectCount        = NOT_INITIALIZED;
-  private long                          candidateGarbageCount = NOT_INITIALIZED;
-  private long                          actualGarbageCount    = NOT_INITIALIZED;
-  private long                          markStageTime         = NOT_INITIALIZED;
-  private long                          pausedStageTime       = NOT_INITIALIZED;
-  private long                          deleteStageTime       = NOT_INITIALIZED;
-  private State                         state                 = GCStats.GC_START;
-  private final boolean                 fullGC;
+  private static final long      NOT_INITIALIZED       = -1L;
+  private static final String    YOUNG_GENERATION      = "Young";
+  private static final String    FULL_GENERATION       = "Full";
+  private final int              number;
+  private final long             startTime;
+  private long                   elapsedTime           = NOT_INITIALIZED;
+  private long                   beginObjectCount      = NOT_INITIALIZED;
+  private long                   endObjectCount        = NOT_INITIALIZED;
+  private long                   candidateGarbageCount = NOT_INITIALIZED;
+  private long                   actualGarbageCount    = NOT_INITIALIZED;
+  private long                   markStageTime         = NOT_INITIALIZED;
+  private long                   pausedStageTime       = NOT_INITIALIZED;
+  private long                   deleteStageTime       = NOT_INITIALIZED;
+  private State                  state                 = GCStats.GC_START;
+  private final boolean          fullGC;
 
   public GCStatsImpl(int number, boolean fullGC, long startTime) {
     this.number = number;

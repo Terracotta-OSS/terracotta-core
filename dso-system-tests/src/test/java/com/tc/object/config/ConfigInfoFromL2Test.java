@@ -44,6 +44,7 @@ import com.tc.util.PortChooser;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 
 public class ConfigInfoFromL2Test extends BaseDSOTestCase {
@@ -172,8 +173,8 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
       this.config = config;
     }
 
-    public ActiveServerGroupConfig[] getActiveServerGroupArray() {
-      return this.config.getActiveServerGroupArray();
+    public List<ActiveServerGroupConfig> getActiveServerGroups() {
+      return this.config.getActiveServerGroups();
     }
 
     /*

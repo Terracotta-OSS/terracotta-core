@@ -386,10 +386,8 @@ public class TCPProxy {
     theProxy.start();
 
     if (daemonMode) {
-      final Object o = new Object();
-      synchronized (o) {
-        o.wait();
-      }
+      //block this thread - we don't want to terminate
+      Thread.currentThread().join();
     } else {
       try {
         BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));

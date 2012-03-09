@@ -8,6 +8,7 @@ import com.tc.process.Exec.Result;
 
 import java.io.BufferedReader;
 import java.io.StringReader;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -50,7 +51,9 @@ public class Netstat {
             int localPort = Integer.parseInt(matcher.group(2));
             String remoteAddr = matcher.group(4);
             int remotePort = Integer.parseInt(matcher.group(5));
-            connections.add(new SocketConnection(localAddr, localPort, remoteAddr, remotePort));
+
+            connections.add(new SocketConnection(InetAddress.getByName(localAddr), localPort, InetAddress
+                .getByName(remoteAddr), remotePort));
           } else {
             System.out.println("NO MATCH: " + line);
           }
@@ -71,19 +74,19 @@ public class Netstat {
   }
 
   public static class SocketConnection {
-    private final String localAddr;
-    private final int    localPort;
-    private final String remoteAddr;
-    private final int    remotePort;
+    private final InetAddress localAddr;
+    private final int         localPort;
+    private final InetAddress remoteAddr;
+    private final int         remotePort;
 
-    public SocketConnection(String localAddr, int localPort, String remoteAddr, int remotePort) {
+    public SocketConnection(InetAddress localAddr, int localPort, InetAddress remoteAddr, int remotePort) {
       this.localAddr = localAddr;
       this.localPort = localPort;
       this.remoteAddr = remoteAddr;
       this.remotePort = remotePort;
     }
 
-    public String getLocalAddr() {
+    public InetAddress getLocalAddr() {
       return localAddr;
     }
 
@@ -91,7 +94,7 @@ public class Netstat {
       return localPort;
     }
 
-    public String getRemoteAddr() {
+    public InetAddress getRemoteAddr() {
       return remoteAddr;
     }
 

@@ -172,6 +172,14 @@ public class GroupServerManager {
     System.out.println("*** Server started [" + serverControl[index].getDsoPort() + "]");
   }
 
+  public synchronized void startServerNoWait(int index) throws Exception {
+    verifyIndex(index);
+    System.out.println("*** Starting server [" + serverControl[index].getDsoPort() + "] expecting a crash. ");
+    serverControl[index].startWithoutWait();
+    expectedServerRunning[index] = false;
+    System.out.println("*** Server started [" + serverControl[index].getDsoPort() + "]");
+  }
+
   private void verifyIndex(int serverIndex) {
     Assert.assertTrue("serverIndex " + serverIndex + " no. of servers per Group: " + groupData.getServerCount(),
                       serverIndex < groupData.getServerCount() && serverIndex >= 0);

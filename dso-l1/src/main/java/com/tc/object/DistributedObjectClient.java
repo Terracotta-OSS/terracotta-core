@@ -1276,6 +1276,9 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     } catch (final Throwable t) {
       Logger.getAnonymousLogger().log(Level.WARNING, "Error shutting down TC logging system", t);
     }
+
+    if (TCPropertiesImpl.getProperties()
+        .getBoolean(TCPropertiesConsts.L1_SHUTDOWN_FORCE_FINALIZATION)) System.runFinalization();
   }
 
   private static List<Thread> getLiveThreads(final ThreadGroup group) {

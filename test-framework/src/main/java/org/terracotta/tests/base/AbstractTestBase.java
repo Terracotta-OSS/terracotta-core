@@ -8,7 +8,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.terracotta.test.util.TestBaseUtil;
 
-import com.tc.exception.ImplementMe;
 import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.logging.TCLogging;
 import com.tc.test.TCTestCase;
@@ -86,7 +85,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   @Override
   @Before
   public void setUp() throws Exception {
-    tcTestCaseSetup(true);
+    tcTestCaseSetup();
 
     if (testWillRun) {
       try {
@@ -125,7 +124,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   }
 
   @Override
-  @Test(timeout = 15 * 60 * 1000)
+  @Test
   final public void runTest() throws Throwable {
     if (!testWillRun) return;
 
@@ -156,12 +155,7 @@ public abstract class AbstractTestBase extends TCTestCase {
     return this.testConfig;
   }
 
-  protected abstract String createClassPath(Class client, boolean withStandaloneJar) throws IOException;
-
-  protected String getEhcacheTerracotta() {
-    throw new ImplementMe(
-                          "The sub class needs to define this method if it needs to add ehcache terracotta jar in the classpath");
-  }
+  protected abstract String createClassPath(Class client) throws IOException;
 
   protected void evaluateClientOutput(String clientName, int exitCode, File output) throws Throwable {
     if ((exitCode != 0)) { throw new AssertionError("Client " + clientName + " exited with exit code: " + exitCode); }
@@ -314,17 +308,12 @@ public abstract class AbstractTestBase extends TCTestCase {
   }
 
   protected void runClient(Class client) throws Throwable {
-    runClient(client, true);
-  }
-
-  protected void runClient(Class client, boolean withStandaloneJar) throws Throwable {
     List<String> emptyList = Collections.emptyList();
-    runClient(client, withStandaloneJar, client.getSimpleName(), emptyList);
+    runClient(client, client.getSimpleName(), emptyList);
   }
 
-  protected void runClient(Class client, boolean withStandaloneJar, String clientName, List<String> extraClientArgs)
-      throws Throwable {
-    clientRunner.runClient(client, withStandaloneJar, clientName, extraClientArgs);
+  protected void runClient(Class client, String clientName, List<String> extraClientArgs) throws Throwable {
+    clientRunner.runClient(client, clientName, extraClientArgs);
   }
 
   public GroupsData getGroupData(final int groupIndex) {

@@ -22,7 +22,6 @@ import com.tc.object.locks.LockLevel;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.text.Banner;
 import com.tc.util.Assert;
 
 import java.lang.reflect.Modifier;
@@ -87,8 +86,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
 
   private void handleInstrumentationException(final Throwable e) {
     logger.fatal(e);
-    logger.fatal("Calling System.exit(1)");
-    System.exit(1);
+    throw new RuntimeException(e);
   }
 
   private boolean isRoot(final int access, final String fieldName) {
@@ -137,7 +135,6 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
         generateGettersSetters(access, name, desc, Modifier.isStatic(access), wasOriginallyFinal);
       }
     } catch (RuntimeException e) {
-      e.printStackTrace();
       handleInstrumentationException(e);
     } catch (Error e) {
       handleInstrumentationException(e);
@@ -463,11 +460,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
 
     e.printStackTrace(System.err);
     System.err.flush();
-    String msg = "Error detected -- Calling System.exit(1)";
-    Banner.errorBanner(msg);
 
-    logger.fatal(msg);
-    System.exit(1);
+    throw e;
   }
 
   private void callRenamedMethod(final int callingMethodModifier, final String name, final String desc,

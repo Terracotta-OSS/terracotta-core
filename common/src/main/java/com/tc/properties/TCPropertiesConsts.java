@@ -901,13 +901,24 @@ public interface TCPropertiesConsts {
   public static final String L2_OPERATOR_EVENTS_STORE                                       = "l2.operator.events.store";
   public static final String TC_TIME_SYNC_THRESHOLD                                         = "tc.time.sync.threshold";
 
+
+  /*********************************************************************************************************************
+   * <code>
+   * REST management Settings
+   *  management.rest.enabled       -   Enable or disable the management REST facilities
+   * </code>
+   ********************************************************************************************************************/
+  public static final String MANAGEMENT_REST_ENABLED                                        = "management.rest.enabled";
+
   /*********************************************************************************************************************
    * <code>
    * Section :  L1 Shutdown Settings
    * l1.shutdown.threadgroup.gracetime - time allowed for termination of all threads in the TC thread group (in milliseconds).
+   * l1.shutdown.force.finalization    - call System.runFinalization() at the end of the L1 shutdown procedure.
    * </code>
    ********************************************************************************************************************/
   public static final String L1_SHUTDOWN_THREADGROUP_GRACETIME                              = "l1.shutdown.threadgroup.gracetime";
+  public static final String L1_SHUTDOWN_FORCE_FINALIZATION                                 = "l1.shutdown.force.finalization";
 
   /*********************************************************************************************************************
    * <code>

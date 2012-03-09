@@ -3,8 +3,10 @@
  */
 package com.tc.config.schema;
 
+import java.util.List;
+
 public interface ActiveServerGroupsConfig extends Config {
-  ActiveServerGroupConfig[] getActiveServerGroupArray();
+  List<ActiveServerGroupConfig> getActiveServerGroups();
 
   ActiveServerGroupConfig getActiveServerGroupForL2(String l2Name);
 

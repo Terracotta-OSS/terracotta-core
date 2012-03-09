@@ -135,10 +135,12 @@ public class TestGarbageCollector implements GarbageCollector {
     return this.isPaused;
   }
 
-  public void notifyReadyToGC() {
+  public synchronized void notifyReadyToGC() {
     try {
-      this.isPaused = true;
-      this.notifyReadyToGCCalls.put(new Object());
+      if (isPausing) {
+        this.isPaused = true;
+        this.notifyReadyToGCCalls.put(new Object());
+      }
     } catch (final InterruptedException e) {
       throw new AssertionError(e);
     }
@@ -194,7 +196,7 @@ public class TestGarbageCollector implements GarbageCollector {
     return this.blockUntilReadyToGCCalls.peek() != null;
   }
 
-  public void notifyGCComplete() {
+  public synchronized void notifyGCComplete() {
     try {
       this.isPausing = false;
       this.isPaused = false;
@@ -222,7 +224,7 @@ public class TestGarbageCollector implements GarbageCollector {
     }
   }
 
-  public void requestGCPause() {
+  public synchronized void requestGCPause() {
     try {
       this.isPausing = true;
       this.isPaused = false;
@@ -307,7 +309,7 @@ public class TestGarbageCollector implements GarbageCollector {
     // NOP
   }
 
-  public boolean requestGCStart() {
+  public synchronized boolean requestGCStart() {
     if (!this.isStarted) {
       this.isStarted = true;
       return true;

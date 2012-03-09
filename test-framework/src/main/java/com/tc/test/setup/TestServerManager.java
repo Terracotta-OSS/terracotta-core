@@ -75,6 +75,15 @@ public class TestServerManager {
 
   }
 
+  public void startServerNoWait(final int groupIndex, final int serverIndex) throws Exception {
+    Assert.assertTrue("groupIndex" + groupIndex + " no. of groups: " + groups.length, groupIndex < groups.length);
+    Assert.assertTrue("serverIndex" + serverIndex + " no. of servers per Group: "
+                      + groups[groupIndex].getGroupData().getServerCount(), serverIndex < groups[groupIndex]
+        .getGroupData().getServerCount());
+
+    groups[groupIndex].startServerNoWait(serverIndex);
+  }
+
   public void stopAllServers() throws Exception {
     debugPrintln("***** stoppig server crashers");
     int grpCount = testConfig.getNumOfGroups();

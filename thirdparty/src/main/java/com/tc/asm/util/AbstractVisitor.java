@@ -34,12 +34,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.tc.asm.Attribute;
+import com.tc.util.FindbugsSuppressWarnings;
 
 /**
  * An abstract visitor.
- * 
+ *
  * @author Eric Bruneton
  */
+@FindbugsSuppressWarnings("MS_MUTABLE_ARRAY")
 public abstract class AbstractVisitor {
 
     /**
@@ -122,7 +124,7 @@ public abstract class AbstractVisitor {
 
     /**
      * Returns the text constructed by this visitor.
-     * 
+     *
      * @return the text constructed by this visitor.
      */
     public List getText() {
@@ -131,16 +133,16 @@ public abstract class AbstractVisitor {
 
     /**
      * Prints the text constructed by this visitor.
-     * 
+     *
      * @param pw the print writer to be used.
      */
     public void print(final PrintWriter pw) {
         printList(pw, text);
     }
-    
+
     /**
      * Appends a quoted string to a given buffer.
-     * 
+     *
      * @param buf the buffer where the string must be added.
      * @param s the string to be added.
      */
@@ -175,7 +177,7 @@ public abstract class AbstractVisitor {
 
     /**
      * Prints the given string tree.
-     * 
+     *
      * @param pw the writer to be used to print the tree.
      * @param l a string tree, i.e., a string list that can contain other string
      *        lists, and so on recursively.
@@ -193,7 +195,7 @@ public abstract class AbstractVisitor {
 
     /**
      * Returns the default {@link ASMifiable} prototypes.
-     * 
+     *
      * @return the default {@link ASMifiable} prototypes.
      */
     public static Attribute[] getDefaultAttributes() {

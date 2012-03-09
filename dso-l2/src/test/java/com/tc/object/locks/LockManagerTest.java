@@ -25,6 +25,7 @@ import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -532,6 +533,21 @@ public class LockManagerTest extends TestCase {
     lockManager.tryLock(lockid, c1, t1, ServerLockLevel.WRITE, -100);
 
     lockManager.clearAllLocksFor(c1);
+  }
+
+  public void testQueuedUnlock() throws Exception {
+    final LockID lid = new LongLockID(1);
+    final ClientID cid = new ClientID(0);
+    final ThreadID tid = new ThreadID(1);
+
+    lockManager.reestablishState(cid, Arrays.asList(new ClientServerExchangeLockContext(lid, cid, tid,
+                                                                                        State.GREEDY_HOLDER_WRITE)));
+    lockManager.unlock(lid, cid, tid);
+    lockManager.start();
+
+    lockManager.lock(lid, new ClientID(1), tid, ServerLockLevel.WRITE);
+    Assert.assertFalse(lockManager.hasPending(lid));
+    lockManager.unlock(lid, new ClientID(1), tid);
   }
 
   public void disableTestUpgradeDeadLock() {

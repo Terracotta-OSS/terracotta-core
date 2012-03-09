@@ -5,6 +5,7 @@ package com.tc.util;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 
 /**
  * A little utility class that will write class files to disk.
@@ -41,8 +42,8 @@ public abstract class AbstractClassDumper {
         }
 
         File dir = new File(sb.toString());
-        if (!dir.exists()) {
-          dir.mkdirs();
+        if (!dir.exists() && !dir.mkdirs()) {
+          throw new IOException("Couldn't create directory");
         }
 
         File outFile = new File(adaptedRoot, name);
