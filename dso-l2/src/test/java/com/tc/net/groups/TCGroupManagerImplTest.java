@@ -218,19 +218,19 @@ public class TCGroupManagerImplTest extends TCTestCase {
     int proc1OutGoingZapMsg = 0, proc1IncomingZapMsg = 0;
     int proc2OutGoingZapMsg = 0, proc2IncomingZapMsg = 0;
 
-    while (proc1.outgoing.poll(1000) != null) {
+    while (proc1.outgoing.poll(5000) != null) {
       proc1OutGoingZapMsg++;
     }
 
-    while (proc1.incoming.poll(1000) != null) {
+    while (proc1.incoming.poll(5000) != null) {
       proc1IncomingZapMsg++;
     }
 
-    while (proc2.outgoing.poll(1000) != null) {
+    while (proc2.outgoing.poll(5000) != null) {
       proc2OutGoingZapMsg++;
     }
 
-    while (proc2.incoming.poll(1000) != null) {
+    while (proc2.incoming.poll(5000) != null) {
       proc2IncomingZapMsg++;
     }
 
