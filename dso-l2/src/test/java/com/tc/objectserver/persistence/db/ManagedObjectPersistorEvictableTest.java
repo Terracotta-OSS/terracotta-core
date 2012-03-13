@@ -17,6 +17,7 @@ import com.tc.objectserver.core.impl.TestManagedObject;
 import com.tc.objectserver.impl.PersistentManagedObjectStore;
 import com.tc.objectserver.managedobject.AbstractManagedObjectState;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
+import com.tc.objectserver.managedobject.ManagedObjectStateStaticConfig;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
@@ -107,7 +108,7 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
   }
 
   private HashSet<ManagedObject> createCDSMObjects(final int num) {
-    return createRandomObjects(num, ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE);
+    return createRandomObjects(num, ManagedObjectStateStaticConfig.SERVER_MAP.getStateObjectType());
   }
 
   private HashSet<ManagedObject> createRandomObjects(final int num, final byte stateType) {

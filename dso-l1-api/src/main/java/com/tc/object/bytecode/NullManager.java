@@ -5,9 +5,11 @@
 package com.tc.object.bytecode;
 
 import com.tc.cluster.DsoCluster;
+import com.tc.exception.ImplementMe;
 import com.tc.logging.NullTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.management.TunneledDomainUpdater;
+import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.loaders.ClassProvider;
@@ -24,6 +26,7 @@ import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.tc.statistics.StatisticRetrievalAction;
+import com.tc.toolkit.object.serialization.SerializationStrategy;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -346,6 +349,52 @@ public class NullManager implements Manager {
 
   public void stopImmediate() {
     //
+  }
+
+  @Override
+  public Object lookupOrCreateRoot(String name, Object object, GroupID gid) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public GroupID[] getGroupIDs() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Object lookupRoot(String name, GroupID gid) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public TCObject lookupOrCreate(Object obj, GroupID gid) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void lockIDWait(LockID lock, long timeout) {
+    throw new UnsupportedOperationException();
+
+  }
+
+  @Override
+  public void lockIDNotifyAll(LockID lock) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void lockIDNotify(LockID lock) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void registerSerializationStrategy(SerializationStrategy strategy) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public SerializationStrategy getSerializationStrategy() {
+    throw new UnsupportedOperationException();
   }
 
 }

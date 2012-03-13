@@ -23,6 +23,7 @@ import com.tc.license.LicenseManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.TunneledDomainUpdater;
+import com.tc.net.GroupID;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ClientShutdownManager;
 import com.tc.object.DistributedObjectClient;
@@ -69,6 +70,7 @@ import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.text.ConsoleParagraphFormatter;
 import com.tc.text.StringFormatter;
+import com.tc.toolkit.object.serialization.SerializationStrategy;
 import com.tc.util.Assert;
 import com.tc.util.FindbugsSuppressWarnings;
 import com.tc.util.Util;
@@ -115,6 +117,9 @@ public class ManagerImpl implements Manager {
   private DmiManager                               methodCallManager;
 
   private final SerializationUtil                  serializer          = new SerializationUtil();
+  // Used by toolkit objects
+  private volatile SerializationStrategy           serializationStrategy;
+
   private final MethodDisplayNames                 methodDisplay       = new MethodDisplayNames(this.serializer);
 
   private static final boolean                     QUERY_WAIT_FOR_TXNS = TCPropertiesImpl
@@ -376,6 +381,24 @@ public class ManagerImpl implements Manager {
     return lookupOrCreateRoot(name, object, false);
   }
 
+  public Object lookupOrCreateRoot(final String name, final Object object, GroupID gid) {
+    try {
+      return this.objectManager.lookupOrCreateRoot(name, object, gid);
+    } catch (final Throwable t) {
+      Util.printLogAndRethrowError(t, logger);
+      throw new AssertionError();
+    }
+  }
+
+  public Object lookupRoot(final String name, GroupID gid) {
+    try {
+      return this.objectManager.lookupRoot(name, gid);
+    } catch (final Throwable t) {
+      Util.printLogAndRethrowError(t, logger);
+      throw new AssertionError();
+    }
+  }
+
   public Object lookupOrCreateRootNoDepth(final String name, final Object obj) {
     return lookupOrCreateRoot(name, obj, true);
   }
@@ -435,6 +458,15 @@ public class ManagerImpl implements Manager {
     }
 
     return this.objectManager.lookupOrCreate(obj);
+  }
+
+  public TCObject lookupOrCreate(final Object obj, GroupID gid) {
+    if (obj instanceof Manageable) {
+      TCObject tco = ((Manageable) obj).__tc_managed();
+      if (tco != null) { return tco; }
+    }
+
+    return this.objectManager.lookupOrCreate(obj, gid);
   }
 
   public TCObject lookupExistingOrNull(final Object pojo) {
@@ -958,4 +990,46 @@ public class ManagerImpl implements Manager {
     TerracottaOperatorEvent opEvent = new TerracottaOperatorEventImpl(eventLevel, eventSubsystem, eventMessage, "");
     TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(opEvent);
   }
+
+  @Override
+  public GroupID[] getGroupIDs() {
+    return this.dso.getGroupIDs();
+  }
+
+  public void lockIDWait(final LockID lock, final long timeout) throws InterruptedException {
+    try {
+      this.txManager.commit(lock, LockLevel.WRITE);
+    } catch (final UnlockedSharedObjectException e) {
+      throw new IllegalMonitorStateException();
+    }
+    try {
+      this.lockManager.wait(lock, null, timeout);
+    } finally {
+      // XXX this is questionable
+      this.txManager.begin(lock, LockLevel.WRITE);
+    }
+  }
+
+  public void lockIDNotifyAll(final LockID lock) {
+    this.txManager.notify(this.lockManager.notifyAll(lock, null));
+  }
+
+  public void lockIDNotify(final LockID lock) {
+    this.txManager.notify(this.lockManager.notify(lock, null));
+  }
+
+  @Override
+  public void registerSerializationStrategy(SerializationStrategy strategy) {
+    if (serializationStrategy == null) {
+      this.serializationStrategy = strategy;
+    }
+  }
+
+  @Override
+  public SerializationStrategy getSerializationStrategy() {
+    if (this.serializationStrategy == null) { throw new IllegalStateException(
+                                                                              "SerializationStrategy is not initialized"); }
+    return this.serializationStrategy;
+  }
+
 }

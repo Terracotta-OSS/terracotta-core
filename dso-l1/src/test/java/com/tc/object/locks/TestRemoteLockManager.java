@@ -140,7 +140,7 @@ public class TestRemoteLockManager implements RemoteLockManager {
     return;
   }
 
-  public synchronized void flush(LockID lockID, ServerLockLevel level) {
+  public synchronized void flush(LockID lockID, boolean noLocksLeftOnClient) {
     flushCount++;
   }
 
@@ -152,7 +152,7 @@ public class TestRemoteLockManager implements RemoteLockManager {
     return flushCount;
   }
 
-  public boolean asyncFlush(LockID lockID, LockFlushCallback callback, ServerLockLevel level) {
+  public boolean asyncFlush(LockID lockID, LockFlushCallback callback, boolean noLocksLeftOnClient) {
     return true;
   }
 
@@ -223,7 +223,7 @@ public class TestRemoteLockManager implements RemoteLockManager {
   }
 
   public void waitForServerToReceiveTxnsForThisLock(LockID lock) {
-    flush(lock, ServerLockLevel.WRITE);
+    flush(lock, true);
   }
 
   public void shutdown() {

@@ -234,4 +234,15 @@ public class TestClientObjectManager implements ClientObjectManager {
     throw new ImplementMe();
 
   }
+
+  @Override
+  public Object lookupOrCreateRoot(String name, Object obj, GroupID gid) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public Object lookupRoot(String name, GroupID groupID) {
+    throw new ImplementMe();
+  }
+
 }

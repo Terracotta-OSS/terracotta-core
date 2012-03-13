@@ -359,5 +359,15 @@ public class ManagerImplTest extends BaseDSOTestCase {
 
     }
 
+    @Override
+    public Object lookupOrCreateRoot(String name, Object obj, GroupID gid) {
+      throw new ImplementMe();
+    }
+
+    @Override
+    public Object lookupRoot(String name, GroupID groupID) {
+      throw new ImplementMe();
+    }
+
   }
 }

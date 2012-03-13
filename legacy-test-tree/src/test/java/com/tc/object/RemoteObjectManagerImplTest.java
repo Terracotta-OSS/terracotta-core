@@ -491,7 +491,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
 
         public void run() {
           log("Starting .. " + rootID);
-          RetrieverThreads.this.manager.retrieveRootID(rootID);
+          RetrieverThreads.this.manager.retrieveRootID(rootID, new GroupID(0));
           log("Retrieved  rootID.. " + rootID);
           synchronized (RetrieverThreads.this.inProgress) {
             if (!RetrieverThreads.this.inProgress.remove(Thread.currentThread())) { throw new RuntimeException(

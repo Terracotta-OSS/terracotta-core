@@ -4,12 +4,14 @@
  */
 package com.tcclient.cluster;
 
+import java.io.Serializable;
+
 /**
  * Describes a node in the Terracotta DSO cluster.
  *
  * @since 3.0.0
  */
-public interface DsoNode {
+public interface DsoNode extends Serializable {
 
   /**
    * Returns the unique string identifier that corresponds to the node.

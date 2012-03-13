@@ -6,6 +6,7 @@ package com.tc.util;
 
 import com.tc.async.impl.MockSink;
 import com.tc.exception.ImplementMe;
+import com.tc.net.GroupID;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.ClientIDProvider;
@@ -113,7 +114,7 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
   private static class MockRemoteObjectManagerImpl extends TestRemoteObjectManager {
 
     @Override
-    public ObjectID retrieveRootID(final String name) {
+    public ObjectID retrieveRootID(final String name, GroupID gid) {
       throw new AssertionError("retrieveRootID should not be called.");
     }
   }

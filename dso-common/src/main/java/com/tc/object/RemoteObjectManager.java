@@ -24,7 +24,7 @@ public interface RemoteObjectManager extends ClientHandshakeCallback, PrettyPrin
 
   public DNA retrieveWithParentContext(ObjectID id, ObjectID parentContext);
 
-  public ObjectID retrieveRootID(String name);
+  public ObjectID retrieveRootID(String name, GroupID gid);
 
   public void addRoot(String name, ObjectID id, NodeID nodeID);
 

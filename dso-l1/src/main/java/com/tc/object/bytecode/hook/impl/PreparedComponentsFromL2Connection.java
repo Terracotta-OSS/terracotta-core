@@ -15,6 +15,7 @@ import com.tc.object.config.ConnectionInfoConfig;
 import com.tc.util.Assert;
 
 import java.util.Map;
+import java.util.TreeSet;
 
 /**
  * Contains components created during L2-connection time, in {@link DSOContextImpl}, that are needed by the
@@ -86,6 +87,12 @@ public class PreparedComponentsFromL2Connection {
   public boolean isActiveActive() {
     ConnectionInfoConfig[] groups = createConnectionInfoConfigItemByGroup();
     return (groups.length > 1);
+  }
+
+  public GroupID[] getGroupIDs() {
+    TreeSet<GroupID> sortedGids = new TreeSet<GroupID>(this.groupnameIDMap.values());
+    GroupID[] gidArray = new GroupID[sortedGids.size()];
+    return sortedGids.toArray(gidArray);
   }
 
 }

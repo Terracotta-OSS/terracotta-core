@@ -372,7 +372,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     return rmom;
   }
 
-  public synchronized ObjectID retrieveRootID(final String name) {
+  public synchronized ObjectID retrieveRootID(final String name, GroupID gid) {
 
     waitUntilRunning();
     if (!this.rootRequests.containsKey(name)) {

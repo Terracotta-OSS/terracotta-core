@@ -8,6 +8,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TestDNACursor;
 import com.tc.objectserver.core.api.ManagedObjectState;
+import com.tc.objectserver.managedobject.ManagedObjectStateStaticConfig.ToolkitTypeNames;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
@@ -52,12 +53,6 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
           case ManagedObjectState.QUEUE_TYPE:
             testLinkedBlockingQueue();
             break;
-          case ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE:
-            testConcurrentDistributedMap();
-            break;
-          case ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE:
-            testConcurrentDistributedServerMap();
-            break;
           case ManagedObjectState.TDC_SERIALIZED_ENTRY:
             testTcHibernateSerializedEntry();
             break;
@@ -65,15 +60,14 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
             testTcHibernateCustomSerializedEntry();
             break;
           default:
-            throw new AssertionError("Type " + type
-                                     + " does not have a test case in ManagedObjectStateSerializationTest.");
+            testConcurrentDistributedServerMap();
         }
       }
     }
   }
 
   public void testTcHibernateSerializedEntry() throws Exception {
-    final String className = TDCSerializedEntryManagedObjectState.SERIALIZED_ENTRY;
+    final String className = ToolkitTypeNames.SERIALIZED_ENTRY_TYPE;
     final TestDNACursor cursor = new TestDNACursor();
 
     cursor.addPhysicalAction(TDCSerializedEntryManagedObjectState.CREATE_TIME_FIELD, new Integer(1), false);
@@ -86,7 +80,7 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
   }
 
   public void testTcHibernateCustomSerializedEntry() throws Exception {
-    final String className = TDCCustomLifespanSerializedEntryManagedObjectState.CUSTOM_SERIALIZED_ENTRY;
+    final String className = ManagedObjectStateStaticConfig.CUSTOM_LIFESPAN_SERIALIZED_ENTRY.getClientClassName();
     final TestDNACursor cursor = new TestDNACursor();
 
     cursor.addPhysicalAction(TDCSerializedEntryManagedObjectState.CREATE_TIME_FIELD, Integer.valueOf(1), false);
@@ -181,39 +175,19 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     serializationValidation(state, cursor, ManagedObjectState.QUEUE_TYPE);
   }
 
-  // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
-  public void testConcurrentDistributedMap() throws Exception {
-    final String className = "com.terracotta.toolkit.collections.ConcurrentDistributedMapDso";
-    final TestDNACursor cursor = new TestDNACursor();
-
-    cursor.addPhysicalAction(ConcurrentDistributedMapManagedObjectState.DSO_LOCK_TYPE_FIELDNAME, Integer.valueOf(42),
-                             false);
-    cursor.addPhysicalAction(ConcurrentDistributedMapManagedObjectState.LOCK_STRATEGY_FIELDNAME, new ObjectID(1, 12),
-                             true);
-
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2001), new ObjectID(2003) });
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2002), new ObjectID(2004) });
-
-    final ManagedObjectState state = applyValidation(className, cursor);
-
-    serializationValidation(state, cursor, ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE);
-  }
-
   public void testConcurrentDistributedServerMap() throws Exception {
     final String className = "com.terracotta.toolkit.collections.ConcurrentDistributedServerMapDso";
     final TestDNACursor cursor = new TestDNACursor();
 
-    cursor
-        .addPhysicalAction(ConcurrentDistributedMapManagedObjectState.DSO_LOCK_TYPE_FIELDNAME, new Integer(42), false);
-    cursor.addPhysicalAction(ConcurrentDistributedMapManagedObjectState.LOCK_STRATEGY_FIELDNAME, new ObjectID(1, 12),
-                             true);
+    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.LOCK_TYPE_FIELDNAME, new Integer(42),
+                             false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.MAX_TTI_SECONDS_FIELDNAME,
                              Integer.valueOf(0), false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.MAX_TTL_SECONDS_FIELDNAME,
                              Integer.valueOf(0), false);
-    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.TARGET_MAX_TOTAL_COUNT_FIELDNAME,
+    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.MAX_COUNT_IN_CLUSTER_FIELDNAME,
                              Integer.valueOf(0), false);
-    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.INVALIDATE_ON_CHANGE,
+    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.INVALIDATE_ON_CHANGE_FIELDNAME,
                              Boolean.valueOf(false), false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.CACHE_NAME_FIELDNAME, "cash name", false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.LOCAL_CACHE_ENABLED_FIELDNAME,
@@ -224,7 +198,7 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
 
     final ManagedObjectState state = applyValidation(className, cursor);
 
-    serializationValidation(state, cursor, ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE);
+    serializationValidation(state, cursor, ManagedObjectStateStaticConfig.SERVER_MAP.getStateObjectType());
   }
 
   public void testEnum() throws Exception {

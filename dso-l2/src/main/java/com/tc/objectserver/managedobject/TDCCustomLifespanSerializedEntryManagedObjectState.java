@@ -15,10 +15,8 @@ import java.util.Map;
 
 public class TDCCustomLifespanSerializedEntryManagedObjectState extends TDCSerializedEntryManagedObjectState {
 
-  public static final String CUSTOM_SERIALIZED_ENTRY = "org.terracotta.cache.serialization.CustomLifespanSerializedEntry";
-
-  public static final String CUSTOM_TTI_FIELD        = CUSTOM_SERIALIZED_ENTRY + ".customTti";
-  public static final String CUSTOM_TTL_FIELD        = CUSTOM_SERIALIZED_ENTRY + ".customTtl";
+  public static final String CUSTOM_TTI_FIELD = "customTti";
+  public static final String CUSTOM_TTL_FIELD = "customTtl";
 
   private int                customTti;
   private int                customTtl;

@@ -8,6 +8,7 @@ package com.tc.object.bytecode;
 
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
+import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.hook.impl.ArrayManager;
@@ -21,6 +22,7 @@ import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.tc.statistics.StatisticRetrievalAction;
+import com.tc.toolkit.object.serialization.SerializationStrategy;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -150,6 +152,20 @@ public class ManagerUtil {
    */
   public static Object lookupOrCreateRoot(final String name, final Object object) {
     return getManager().lookupOrCreateRoot(name, object);
+  }
+
+  /**
+   * Look up or create a new root object in the particular group id
+   */
+  public static Object lookupOrCreateRoot(final String name, final Object object, GroupID gid) {
+    return getManager().lookupOrCreateRoot(name, object, gid);
+  }
+
+  /**
+   * Look up or create a new root object in the particular group id
+   */
+  public static Object lookupRoot(final String name, GroupID gid) {
+    return getManager().lookupRoot(name, gid);
   }
 
   /**
@@ -428,6 +444,16 @@ public class ManagerUtil {
    */
   public static TCObject lookupOrCreate(final Object obj) {
     return getManager().lookupOrCreate(obj);
+  }
+
+  /**
+   * Find or create new TCObject
+   * 
+   * @param obj The object instance
+   * @return The TCObject
+   */
+  public static TCObject lookupOrCreate(final Object obj, GroupID gid) {
+    return getManager().lookupOrCreate(obj, gid);
   }
 
   /**
@@ -1239,4 +1265,40 @@ public class ManagerUtil {
     getManager().fireOperatorEvent(coreOperatorEventLevel, coreEventSubsytem, eventMessage);
   }
 
+  public static GroupID[] getGroupIDs() {
+    return getManager().getGroupIDs();
+  }
+
+  public static void lockIDWait(final Object lockID, long timeoutMillis) throws InterruptedException {
+    Manager mgr = getManager();
+    LockID lock = mgr.generateLockIdentifier(lockID);
+    mgr.lockIDWait(lock, timeoutMillis);
+  }
+
+  public static void lockIDNotifyAll(final Object lockID) {
+    Manager mgr = getManager();
+    LockID lock = mgr.generateLockIdentifier(lockID);
+    mgr.lockIDNotifyAll(lock);
+  }
+
+  public static void lockIDNotify(final Object lockID) {
+    Manager mgr = getManager();
+    LockID lock = mgr.generateLockIdentifier(lockID);
+    mgr.lockIDNotify(lock);
+  }
+
+  public static void registerBeforeShutdownHook(Runnable r) {
+    Manager mgr = getManager();
+    mgr.registerBeforeShutdownHook(r);
+  }
+
+  public static void registerSerializationStrategy(SerializationStrategy strategy) {
+    Manager mgr = getManager();
+    mgr.registerSerializationStrategy(strategy);
+  }
+
+  public static SerializationStrategy getSerializationStrategy() {
+    Manager mgr = getManager();
+    return mgr.getSerializationStrategy();
+  }
 }

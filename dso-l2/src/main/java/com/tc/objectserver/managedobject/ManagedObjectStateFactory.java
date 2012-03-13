@@ -11,6 +11,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.loaders.Namespace;
 import com.tc.objectserver.core.api.ManagedObjectState;
+import com.tc.objectserver.managedobject.ManagedObjectStateStaticConfig.Factory;
 import com.tc.objectserver.persistence.api.PersistentCollectionFactory;
 import com.tc.objectserver.persistence.api.Persistor;
 import com.tc.util.Assert;
@@ -42,21 +43,7 @@ public class ManagedObjectStateFactory {
   private final PersistentCollectionFactory         persistentCollectionFactory;
 
   static {
-    // XXX: Support for CDM, CDSM in terracotta-toolkit
-    classNameToStateMap.put("com.terracotta.toolkit.collections.ConcurrentDistributedMapDso",
-                            Byte.valueOf(ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE));
-    classNameToStateMap.put("com.terracotta.toolkit.collections.ConcurrentDistributedServerMapDso",
-                            Byte.valueOf(ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE));
-    // XXX: Support for Ehcache entry type
-    classNameToStateMap.put(TDCSerializedEntryManagedObjectState.SERIALIZED_ENTRY,
-                            Byte.valueOf(ManagedObjectState.TDC_SERIALIZED_ENTRY));
-    classNameToStateMap.put(TDCCustomLifespanSerializedEntryManagedObjectState.CUSTOM_SERIALIZED_ENTRY,
-                            Byte.valueOf(ManagedObjectState.TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY));
     // XXX: Support for terracotta toolkit
-    classNameToStateMap.put("org.terracotta.async.ProcessingBucketItems", Byte.valueOf(ManagedObjectState.LIST_TYPE));
-    classNameToStateMap.put("org.terracotta.collections.ConcurrentBlockingQueue",
-                            Byte.valueOf(ManagedObjectState.QUEUE_TYPE));
-    classNameToStateMap.put("org.terracotta.collections.TerracottaList", Byte.valueOf(ManagedObjectState.LIST_TYPE));
     classNameToStateMap.put("org.terracotta.collections.quartz.DistributedSortedSet$Storage",
                             Byte.valueOf(ManagedObjectState.SET_TYPE));
   }
@@ -130,8 +117,10 @@ public class ManagedObjectStateFactory {
 
     final long classID = getClassID(className);
 
-    if (type == ManagedObjectState.PHYSICAL_TYPE) { return this.physicalMOFactory.create(classID, oid, parentID,
-                                                                                         className, cursor); }
+    if (type == ManagedObjectState.PHYSICAL_TYPE) { throw new AssertionError();
+    // physical objects no longer supported
+    // return this.physicalMOFactory.create(classID, oid, parentID, className, cursor);
+    }
     switch (type) {
       case ManagedObjectState.ARRAY_TYPE:
         return new ArrayManagedObjectState(classID);
@@ -145,18 +134,10 @@ public class ManagedObjectStateFactory {
         return new ListManagedObjectState(classID);
       case ManagedObjectState.QUEUE_TYPE:
         return new QueueManagedObjectState(classID);
-      case ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE:
-        return new ConcurrentDistributedMapManagedObjectState(classID,
-                                                              this.persistentCollectionFactory.createPersistentMap(oid));
-      case ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE:
-        return new ConcurrentDistributedServerMapManagedObjectState(classID,
-                                                                    this.persistentCollectionFactory
-                                                                        .createPersistentMap(oid));
-      case ManagedObjectState.TDC_SERIALIZED_ENTRY:
-        return new TDCSerializedEntryManagedObjectState(classID);
-      case ManagedObjectState.TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY:
-        return new TDCCustomLifespanSerializedEntryManagedObjectState(classID);
     }
+    ManagedObjectStateStaticConfig config = ManagedObjectStateStaticConfig.getConfigForClientClassName(className);
+    if (config != null) { return config.getFactory().newInstance(oid, classID, persistentCollectionFactory); }
+
     // Unreachable
     throw new AssertionError("Type : " + type + " is unknown !");
   }
@@ -183,7 +164,13 @@ public class ManagedObjectStateFactory {
     final Byte type = (Byte) classNameToStateMap.get(className);
     if (type != null) { return type.byteValue(); }
     if (LiteralValues.isLiteral(className)) { return ManagedObjectState.LITERAL_TYPE; }
-    return ManagedObjectState.PHYSICAL_TYPE;
+
+    ManagedObjectStateStaticConfig config = ManagedObjectStateStaticConfig.getConfigForClientClassName(className);
+    if (config != null) { return config.getStateObjectType(); }
+
+    throw new AssertionError("This server doesn't recognize types of '" + className + "'");
+    // physical types no more supported
+    // return ManagedObjectState.PHYSICAL_TYPE;
   }
 
   public PhysicalManagedObjectState createPhysicalState(final ObjectID parentID, final int classId)
@@ -210,17 +197,14 @@ public class ManagedObjectStateFactory {
           return SetManagedObjectState.readFrom(in);
         case ManagedObjectState.QUEUE_TYPE:
           return QueueManagedObjectState.readFrom(in);
-        case ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE:
-          return ConcurrentDistributedMapManagedObjectState.readFrom(in);
-        case ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE:
-          return ConcurrentDistributedServerMapManagedObjectState.readFrom(in);
-        case ManagedObjectState.TDC_SERIALIZED_ENTRY:
-          return TDCSerializedEntryManagedObjectState.readFrom(in);
-        case ManagedObjectState.TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY:
-          return TDCCustomLifespanSerializedEntryManagedObjectState.readFrom(in);
-        default:
-          throw new AssertionError("Unknown type : " + type + " : Dont know how to deserialize this type !");
       }
+
+      Factory factory = ManagedObjectStateStaticConfig.Factory.getFactoryForType(type);
+      if (factory != null) { return factory.readFrom(in); }
+
+      // Unreachable!
+      throw new AssertionError("Unknown type : " + type + " : Dont know how to deserialize this type !");
+
     } catch (final IOException e) {
       e.printStackTrace();
       throw new TCRuntimeException(e);

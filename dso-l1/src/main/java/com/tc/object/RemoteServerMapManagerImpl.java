@@ -10,7 +10,6 @@ import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.locks.LockID;
-import com.tc.object.locks.ServerLockLevel;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.GetAllKeysServerMapRequestMessage;
 import com.tc.object.msg.GetAllSizeServerMapRequestMessage;
@@ -575,13 +574,10 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   /**
    * Flush all local entries corresponding for the lock that is about to be flushed
    */
-  public void preTransactionFlush(LockID lockID, ServerLockLevel level) {
+  public void preTransactionFlush(LockID lockID) {
     // NOTE: if this impl changes, check RemoteServerMapManagerGroupImpl
     if (lockID == null) { throw new AssertionError("ID cannot be null"); }
-    if (level == ServerLockLevel.WRITE) {
-      this.globalLocalCacheManager.removeEntriesForLockId(lockID);
-      // TODO: remove all TCObjectSelf from here
-    }
+    this.globalLocalCacheManager.removeEntriesForLockId(lockID);
   }
 
 }

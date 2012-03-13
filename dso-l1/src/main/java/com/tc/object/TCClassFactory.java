@@ -8,7 +8,8 @@ import com.tc.object.applicator.ChangeApplicator;
 
 public interface TCClassFactory {
 
-  public static final String CDSM_DSO_CLASSNAME = "com.terracotta.toolkit.collections.ConcurrentDistributedServerMapDso";
+  public static final String CDSM_DSO_CLASSNAME   = "com.terracotta.toolkit.collections.ConcurrentDistributedServerMapDso";
+  public static final String SERVER_MAP_CLASSNAME = "com.terracotta.toolkit.collections.ServerMap";
 
   public TCClass getOrCreate(Class clazz, ClientObjectManager objectManager);
 

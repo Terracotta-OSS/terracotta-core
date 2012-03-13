@@ -25,8 +25,8 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
   private final int               SIZE                  = 10000;
 
   /**
-   * sine LinkedBlockingQueue is instrumented this is a workaround to get this test working
-   * TODO: change back to {@link NoExceptionLinkedQueue} when instrumentation is removed
+   * sine LinkedBlockingQueue is instrumented this is a workaround to get this test working TODO: change back to
+   * {@link NoExceptionLinkedQueue} when instrumentation is removed
    */
   public final ArrayBlockingQueue retrieveCalls         = new ArrayBlockingQueue(SIZE);
   public final ArrayBlockingQueue retrieveResults       = new ArrayBlockingQueue(SIZE);
@@ -53,7 +53,7 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
     return retrieve(id);
   }
 
-  public ObjectID retrieveRootID(final String name) {
+  public ObjectID retrieveRootID(final String name, GroupID gid) {
     this.retrieveRootIDCalls.add(name);
     try {
       return (ObjectID) this.retrieveRootIDResults.take();

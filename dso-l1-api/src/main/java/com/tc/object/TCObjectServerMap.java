@@ -61,7 +61,7 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param value Object in the mapping
    * @return true if operation changed the clustered state
    */
-  public boolean doLogicalPutIfAbsentUnlocked(final TCServerMap map, final Object key, final Object value);
+  public Object doLogicalPutIfAbsentUnlocked(final TCServerMap map, final Object key, final Object value);
 
   /**
    * Does a logic replace. The cached item is not associated to a lock.

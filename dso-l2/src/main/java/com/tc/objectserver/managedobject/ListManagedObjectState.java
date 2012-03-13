@@ -94,6 +94,7 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
       }
         break;
       case SerializationUtil.CLEAR:
+      case SerializationUtil.DESTROY:
         references.clear();
         break;
       case SerializationUtil.SET_ELEMENT:

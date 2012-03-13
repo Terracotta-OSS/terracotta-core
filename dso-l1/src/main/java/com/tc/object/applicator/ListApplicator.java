@@ -64,7 +64,7 @@ public class ListApplicator extends BaseApplicator {
     }
   }
 
-  private void apply(List list, int method, Object[] params) {
+  protected void apply(List list, int method, Object[] params) {
     final int size = list.size();
     switch (method) {
       case SerializationUtil.ADD:
