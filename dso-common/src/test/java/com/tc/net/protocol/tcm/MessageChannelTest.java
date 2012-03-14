@@ -24,6 +24,7 @@ import com.tc.util.Assert;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.runtime.Os;
 
 import gnu.trove.TLongHashSet;
 
@@ -62,9 +63,12 @@ public class MessageChannelTest extends TCTestCase {
 
   private int                  port          = 0;
 
-  // public MessageChannelTest() {
-  // disableAllUntil("2006-02-15");
-  // }
+  // Disabled until MNK-3330
+  public MessageChannelTest() {
+    if (Os.isWindows()) {
+      disableTest();
+    }
+  }
 
   protected void setUp(int maxReconnectTries) throws Exception {
     setUp(maxReconnectTries, false);
