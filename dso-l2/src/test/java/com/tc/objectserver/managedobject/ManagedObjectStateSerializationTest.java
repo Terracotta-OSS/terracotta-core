@@ -31,9 +31,6 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
       if (Modifier.isStatic(fieldModifier) && Modifier.isFinal(fieldModifier)) {
         final Byte type = (Byte) field.get(null);
         switch (type.byteValue()) {
-          case ManagedObjectState.PHYSICAL_TYPE:
-            testPhysical();
-            break;
           case ManagedObjectState.MAP_TYPE:
           case ManagedObjectState.PARTIAL_MAP_TYPE:
             // Map type is tested in another test.
@@ -49,9 +46,6 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
             break;
           case ManagedObjectState.SET_TYPE:
             testSet();
-            break;
-          case ManagedObjectState.QUEUE_TYPE:
-            testLinkedBlockingQueue();
             break;
           case ManagedObjectState.TDC_SERIALIZED_ENTRY:
             testTcHibernateSerializedEntry();
@@ -94,19 +88,6 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     final ManagedObjectState state = applyValidation(className, cursor);
 
     serializationValidation(state, cursor, ManagedObjectState.TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY);
-  }
-
-  public void testPhysical() throws Exception {
-    final String className = "com.tc.objectserver.managedobject.ManagedObjectStateSerializationTest";
-    final TestDNACursor cursor = new TestDNACursor();
-
-    cursor.addPhysicalAction("field1", new ObjectID(2002), true);
-    cursor.addPhysicalAction("field2", new ObjectID(2003), true);
-    cursor.addPhysicalAction("field3", Integer.valueOf(33), false);
-
-    final ManagedObjectState state = applyValidation(className, cursor);
-
-    serializationValidation(state, cursor, ManagedObjectState.PHYSICAL_TYPE);
   }
 
   public void testArray() throws Exception {
@@ -155,28 +136,8 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     serializationValidation(state, cursor, ManagedObjectState.SET_TYPE);
   }
 
-  public void testLinkedBlockingQueue() throws Exception {
-    final String className = "org.terracotta.collections.ConcurrentBlockingQueue";
-    final String TAKE_LOCK_FIELD_NAME = "takeLock";
-    final String PUT_LOCK_FIELD_NAME = "putLock";
-    final String CAPACITY_FIELD_NAME = "capacity";
-
-    final TestDNACursor cursor = new TestDNACursor();
-
-    cursor.addPhysicalAction(TAKE_LOCK_FIELD_NAME, new ObjectID(2001), true);
-    cursor.addPhysicalAction(PUT_LOCK_FIELD_NAME, new ObjectID(2002), true);
-    cursor.addPhysicalAction(CAPACITY_FIELD_NAME, Integer.valueOf(100), false);
-
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2003) });
-    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2004) });
-
-    final ManagedObjectState state = applyValidation(className, cursor);
-
-    serializationValidation(state, cursor, ManagedObjectState.QUEUE_TYPE);
-  }
-
   public void testConcurrentDistributedServerMap() throws Exception {
-    final String className = "com.terracotta.toolkit.collections.ConcurrentDistributedServerMapDso";
+    final String className = ManagedObjectStateStaticConfig.ToolkitTypeNames.SERVER_MAP_TYPE;
     final TestDNACursor cursor = new TestDNACursor();
 
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.LOCK_TYPE_FIELDNAME, new Integer(42),
