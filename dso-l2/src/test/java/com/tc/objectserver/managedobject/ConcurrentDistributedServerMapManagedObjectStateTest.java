@@ -14,13 +14,12 @@ import com.tc.util.Assert;
 
 public class ConcurrentDistributedServerMapManagedObjectStateTest extends AbstractTestManagedObjectState {
 
-  public static final String CDSM_DSO_CLASSNAME = "com.terracotta.toolkit.collections.ConcurrentDistributedServerMapDso";
-
   public void testDehydration() throws Exception {
 
     final TestDNACursor cursor = createDNACursor();
 
-    final ManagedObjectState state = createManagedObjectState(CDSM_DSO_CLASSNAME, cursor);
+    final ManagedObjectState state = createManagedObjectState(ManagedObjectStateStaticConfig.ToolkitTypeNames.SERVER_MAP_TYPE,
+                                                              cursor);
     state.apply(new ObjectID(1), cursor, new ApplyTransactionInfo());
 
     TestDNAWriter dnaWriter = new TestDNAWriter();
@@ -28,16 +27,17 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
     Assert.assertEquals(cursor.getActionCount(), dnaWriter.getActionCount());
 
     final TestDNACursor cursor2 = dnaWriter.getDNACursor();
-    final ManagedObjectState state2 = createManagedObjectState(CDSM_DSO_CLASSNAME, cursor2);
+    final ManagedObjectState state2 = createManagedObjectState(ManagedObjectStateStaticConfig.ToolkitTypeNames.SERVER_MAP_TYPE,
+                                                               cursor2);
     state2.apply(new ObjectID(1), cursor2, new ApplyTransactionInfo());
     assertEquals(state, state2);
 
     dnaWriter = new TestDNAWriter();
     state.dehydrate(new ObjectID(1), dnaWriter, DNAType.L1_FAULT); // Only dehydrate the fields
-    Assert.assertEquals(8, dnaWriter.getActionCount()); // only the physical fields are dehydrated
+    Assert.assertEquals(7, dnaWriter.getActionCount()); // only the physical fields are dehydrated
 
     final TestDNACursor cursor3 = dnaWriter.getDNACursor();
-    final ConcurrentDistributedServerMapManagedObjectState state3 = (ConcurrentDistributedServerMapManagedObjectState) createManagedObjectState(CDSM_DSO_CLASSNAME,
+    final ConcurrentDistributedServerMapManagedObjectState state3 = (ConcurrentDistributedServerMapManagedObjectState) createManagedObjectState(ManagedObjectStateStaticConfig.ToolkitTypeNames.SERVER_MAP_TYPE,
                                                                                                                                                 cursor3);
     state3.apply(new ObjectID(1), cursor3, new ApplyTransactionInfo());
     assertTrue(state3.references.isEmpty());
@@ -45,20 +45,21 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
   }
 
   private TestDNACursor createDNACursor() {
+
     final TestDNACursor cursor = new TestDNACursor();
+    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.CACHE_NAME_FIELDNAME, "bob", false);
+    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.INVALIDATE_ON_CHANGE_FIELDNAME,
+                             Boolean.valueOf(false), false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.LOCK_TYPE_FIELDNAME, new Integer(1),
                              false);
+    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.LOCAL_CACHE_ENABLED_FIELDNAME,
+                             Boolean.valueOf(true), false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.MAX_TTI_SECONDS_FIELDNAME,
                              Integer.valueOf(0), false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.MAX_TTL_SECONDS_FIELDNAME,
                              Integer.valueOf(0), false);
     cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.MAX_COUNT_IN_CLUSTER_FIELDNAME,
                              Integer.valueOf(0), false);
-    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.INVALIDATE_ON_CHANGE_FIELDNAME,
-                             Boolean.valueOf(false), false);
-    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.CACHE_NAME_FIELDNAME, "bob", false);
-    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.LOCAL_CACHE_ENABLED_FIELDNAME,
-                             Boolean.valueOf(true), false);
 
     for (int i = 0; i < 500; i++) {
       cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { "key-" + i, new ObjectID(1000 + i) });

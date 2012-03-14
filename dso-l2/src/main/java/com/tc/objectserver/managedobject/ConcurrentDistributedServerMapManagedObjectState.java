@@ -100,6 +100,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   public void dehydrate(final ObjectID objectID, final DNAWriter writer, final DNAType type) {
     if (type == DNAType.L2_SYNC) {
       // Write entire state info
+      dehydrateFields(objectID, writer);
       super.dehydrate(objectID, writer, type);
     } else if (type == DNAType.L1_FAULT) {
       // Don't fault the references
