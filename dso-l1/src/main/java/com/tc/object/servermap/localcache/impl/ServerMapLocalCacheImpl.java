@@ -6,6 +6,7 @@ package com.tc.object.servermap.localcache.impl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ClientObjectManager;
+import com.tc.object.LocalCacheAddCallBack;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObjectSelf;
 import com.tc.object.bytecode.Manager;
@@ -224,8 +225,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return null;
   }
 
-  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(
-                                                                                            final Object key,
+  private L1ServerMapLocalStoreTransactionCompletionListener getTransactionCompleteListener(final Object key,
                                                                                             AbstractLocalCacheStoreValue value,
                                                                                             MapOperationType mapOperation) {
     if (!mapOperation.isMutateOperation()) {
@@ -603,8 +603,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
-  public void transactionComplete(
-                                  L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
+  public void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     l1LocalCacheManager.transactionComplete(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 
@@ -697,6 +696,10 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       }
     } else {
       old = (AbstractLocalCacheStoreValue) this.localStore.put(key, value);
+      Object serializeEntry = value.getValueObject();
+      if (serializeEntry instanceof LocalCacheAddCallBack) {
+        ((LocalCacheAddCallBack) serializeEntry).addedToLocalCache();
+      }
       cleanupOldMetaMapping(key, value, old, true);
     }
     return old;
