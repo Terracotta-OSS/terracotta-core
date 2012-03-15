@@ -92,4 +92,9 @@ public class TestHandler implements TestHandlerMBean {
   public int getParticipantCount() {
     return this.testConfig.getClientConfig().getClientClasses().length;
   }
+
+  @Override
+  public void startServer(int groupIndex, int serverIndex) throws Exception {
+    testServerManager.startServer(groupIndex, serverIndex);
+  }
 }

@@ -103,4 +103,11 @@ public interface TestHandlerMBean {
    */
   public int getParticipantCount();
 
+  /**
+   * Starts the given server.
+   * 
+   * @param groupIndex group that the server belongs to
+   * @param serverIndex the server in the group to start
+   */
+  public void startServer(int groupIndex, int serverIndex) throws Exception;
 }
