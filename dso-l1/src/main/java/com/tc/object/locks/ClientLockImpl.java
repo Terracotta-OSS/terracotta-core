@@ -410,8 +410,10 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   }
 
   private synchronized void addPendingAcquires(final LockWaiter waiter) {
-    for (final PendingLockHold reacquire : waiter.getReacquires()) {
-      addLast(reacquire);
+    Stack<PendingLockHold> reacquires = waiter.getReacquires();
+    java.util.ListIterator<PendingLockHold> it = reacquires.listIterator(reacquires.size());
+    while (it.hasPrevious()) {
+      addLast(it.previous());
     }
   }
 

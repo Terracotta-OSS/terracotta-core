@@ -609,6 +609,52 @@ public class ClientLockTest extends TestCase {
     }
   }
 
+  public void testNestedWaitNotifyIsNotifiable() {
+    final ClientLock lock = getFreshClientLock();
+
+    try {
+      checkLockQueryMethods(lock, 0, 0);
+      lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
+      lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
+      checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE), hold(new ThreadID(1), LockLevel.WRITE));
+      new Thread() {
+        @Override
+        public void run() {
+          try {
+            Thread.sleep(2000);
+          } catch (InterruptedException e) {
+            // ignore
+          }
+          lock.notified(new ThreadID(1));
+          checkLockQueryMethods(lock, 2, 0);
+          try {
+            Thread.sleep(2000);
+          } catch (InterruptedException e) {
+            // ignore
+          }
+          try {
+            lock.award(new AssertingRemoteLockManager(lock), new ThreadID(1), ServerLockLevel.WRITE);
+          } catch (GarbageLockException e) {
+            Assert.failure("Unexpected Exception ", e);
+          }
+        }
+      }.start();
+
+      lock.wait(new AssertingRemoteLockManager(lock, RemoteOperation.WAIT, RemoteOperation.FLUSH), NULL_WAIT_LISTENER,
+                new ThreadID(1), null);
+      checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE), hold(new ThreadID(1), LockLevel.WRITE));
+      lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1),
+                  LockLevel.WRITE);
+      lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1),
+                  LockLevel.WRITE);
+      checkLockQueryMethods(lock, 0, 0);
+    } catch (GarbageLockException e) {
+      Assert.failure("Unexpected Exception ", e);
+    } catch (InterruptedException e) {
+      Assert.failure("Unexpected Exception ", e);
+    }
+  }
+
   public void testGreedyWaitNotifyIsNotifiable() {
     final ClientLock lock = getFreshClientLock();
 
