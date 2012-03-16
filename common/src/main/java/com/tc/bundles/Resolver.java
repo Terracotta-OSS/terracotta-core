@@ -140,7 +140,7 @@ public class Resolver {
     return null;
   }
 
-  private void injectDefaultRepositories() throws MissingDefaultRepositoryException {
+  private void injectDefaultRepositories() {
     final TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor(TC_PROPERTIES_SECTION);
     final String reposProp = props != null ? props.getProperty("repositories", true) : null;
     if (reposProp == null) return;
