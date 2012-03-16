@@ -8,7 +8,7 @@ import org.apache.commons.io.CopyUtils;
 import org.apache.log4j.Hierarchy;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
+import org.apache.log4j.PatternLayout;
 import org.apache.log4j.WriterAppender;
 import org.apache.log4j.spi.RootLogger;
 
@@ -170,10 +170,10 @@ public class DSOContextImpl implements DSOContext {
     // This fixes a class circularity error in JavaClassInfoRepository
     JavaClassInfo.getClassInfo(getClass());
 
-    // This is to help a deadlock in log4j (see MNK-3461)
+    // This is to help a deadlock in log4j (see MNK-3461, MNK-3512)
     Logger l = new RootLogger(Level.ALL);
     Hierarchy h = new Hierarchy(l);
-    l.addAppender(new WriterAppender(new SimpleLayout(), new OutputStream() {
+    l.addAppender(new WriterAppender(new PatternLayout(TCLogging.FILE_AND_JMX_PATTERN), new OutputStream() {
       @Override
       public void write(int b) {
         //
