@@ -366,26 +366,6 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : L1 Integration Modules
-   * Description : This section contains the defaults for the L1 integration modules
-   * repositories                 - Comma-separated list of additional module repositories URL's; if the tc.install-root system property is set, a default
-   *                                repository of (tc.install-root)/modules will be injected default - comma-separated list of integration modules that are
-   *                                implicitly loaded by the L1 in the form specified by the Required-Bundles OSGI
-   * default                      - Comma-separated list of integration modules that are implicitly
-   *                                loaded by the L1 in the form specified by the Required-Bundles
-   *                                OSGI manifest header
-   * manifest header additional   - List of additional integration modules to be started, in the form specified by the OSGI Required-Bundles manifest header
-   * tc-version-check             - Off|warn|enforce|strict
-   * </code>
-   ********************************************************************************************************************/
-  public static final String L1_MODULES_REPOSITORIES                                        = "l1.modules.repositories";
-  public static final String L1_MODULES_DEFAULT                                             = "l1.modules.default";
-  public static final String L1_MODULES_ADDITIONAL                                          = "l1.modules.additional";
-  public static final String L1_MODULES_TC_VERSION_CHECK                                    = "l1.modules.tc-version-check";
-  public static final String L1_MODULES_TOOLKIT_SEARCH_RANGE                                = "l1.modules.toolkitSearchRange";
-
-  /*********************************************************************************************************************
-   * <code>
    * Section : L1 Cache Manager Properties
    * Description : This section contains the defaults for the cache manager for the L1
    * enabled             : Enable/disable L2's cache manager
@@ -900,7 +880,6 @@ public interface TCPropertiesConsts {
   public static final String DEV_CONSOLE_MAX_OPERATOR_EVENTS                                = "dev.console.max.operator.events";
   public static final String L2_OPERATOR_EVENTS_STORE                                       = "l2.operator.events.store";
   public static final String TC_TIME_SYNC_THRESHOLD                                         = "tc.time.sync.threshold";
-
 
   /*********************************************************************************************************************
    * <code>
