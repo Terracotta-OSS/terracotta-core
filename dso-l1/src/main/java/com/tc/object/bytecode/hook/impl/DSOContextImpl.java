@@ -120,9 +120,15 @@ public class DSOContextImpl implements DSOContext {
   }
 
   private void startToolkitConfigurator() throws Exception {
-    Class toolkitConfiguratorClass = Class.forName("com.terracotta.toolkit.ToolkitConfigurator");
+    Class toolkitConfiguratorClass = null;
+    try {
+      toolkitConfiguratorClass = Class.forName("com.terracotta.toolkit.EnterpriseToolkitConfigurator");
+    } catch (ClassNotFoundException e) {
+      toolkitConfiguratorClass = Class.forName("com.terracotta.toolkit.ToolkitConfigurator");
+    }
+
     Object toolkitConfigurator = toolkitConfiguratorClass.newInstance();
-    Method start = toolkitConfiguratorClass.getDeclaredMethod("start", DSOClientConfigHelper.class);
+    Method start = toolkitConfiguratorClass.getMethod("start", DSOClientConfigHelper.class);
     start.invoke(toolkitConfigurator, configHelper);
   }
 
