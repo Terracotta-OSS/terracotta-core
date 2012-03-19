@@ -20,7 +20,7 @@ class RootsHolder {
     this.groupIds = groupIds;
   }
 
-  public void addRoot(String name, ObjectID oid) {
+  public synchronized void addRoot(String name, ObjectID oid) {
     GroupID gid = new GroupID(oid.getGroupID());
     Map<String, ObjectID> roots = groupToRoots.get(gid);
     if (roots == null) {
@@ -31,7 +31,7 @@ class RootsHolder {
     roots.put(name, oid);
   }
 
-  public boolean markRootLookupInProgress(String name, GroupID gid) {
+  public synchronized boolean markRootLookupInProgress(String name, GroupID gid) {
     Set<String> rootLookupInProgress = groupToRootLookupInProgress.get(gid);
     if (rootLookupInProgress == null) {
       rootLookupInProgress = new HashSet<String>();
@@ -41,7 +41,7 @@ class RootsHolder {
     return rootLookupInProgress.add(name);
   }
 
-  public boolean unmarkRootLookupInProgress(String name, GroupID gid) {
+  public synchronized boolean unmarkRootLookupInProgress(String name, GroupID gid) {
     Set<String> rootLookupInProgress = groupToRootLookupInProgress.get(gid);
     if (rootLookupInProgress == null) { return false; }
 
@@ -52,27 +52,27 @@ class RootsHolder {
     return isRemoved;
   }
 
-  public boolean isLookupInProgress(String name, GroupID gid) {
+  public synchronized boolean isLookupInProgress(String name, GroupID gid) {
     Set<String> rootLookupInProgress = groupToRootLookupInProgress.get(gid);
     if (rootLookupInProgress == null) { return false; }
 
     return rootLookupInProgress.contains(name);
   }
 
-  public ObjectID getRootIDForName(String name, GroupID gid) {
+  public synchronized ObjectID getRootIDForName(String name, GroupID gid) {
     Map<String, ObjectID> roots = groupToRoots.get(gid);
     if (roots == null) { return null; }
 
     return roots.get(name);
   }
 
-  public GroupID getGroupIDForRoot(String name) {
+  public synchronized GroupID getGroupIDForRoot(String name) {
     int hashCode = name.hashCode();
     int index = Math.abs(hashCode % groupIds.length);
     return groupIds[index];
   }
 
-  public int size() {
+  public synchronized int size() {
     int size = 0;
     for (Map.Entry<GroupID, Map<String, ObjectID>> entry : groupToRoots.entrySet()) {
       size += entry.getValue().size();

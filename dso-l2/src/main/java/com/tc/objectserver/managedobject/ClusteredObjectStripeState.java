@@ -11,6 +11,7 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
 import com.tc.util.ObjectIDSet;
@@ -78,7 +79,13 @@ public class ClusteredObjectStripeState extends AbstractManagedObjectState {
       case SerializationUtil.PUT:
         final Object key = params[0];
         final Object value = params[1];
-        configMap.put((String) key, value);
+        String keyAsString;
+        if (key instanceof UTF8ByteDataHolder) {
+          keyAsString = ((UTF8ByteDataHolder) key).asString();
+        } else {
+          keyAsString = (String) key;
+        }
+        configMap.put(keyAsString, value);
         break;
       default:
         throw new AssertionError("Gor unhandled logical action: objectId: " + objectID + ", method: " + method

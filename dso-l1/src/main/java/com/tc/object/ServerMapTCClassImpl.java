@@ -31,12 +31,10 @@ public class ServerMapTCClassImpl extends TCClassImpl implements TCClass {
 
   @Override
   public TCObject createTCObject(final ObjectID id, final Object pojo, final boolean isNew) {
-    if (pojo != null
-        && !(pojo.getClass().getName().equals(TCClassFactory.CDSM_DSO_CLASSNAME) || pojo.getClass().getName()
-            .equals(TCClassFactory.SERVER_MAP_CLASSNAME))) {
+    if (pojo != null && !(pojo.getClass().getName().equals(TCClassFactory.SERVER_MAP_CLASSNAME))) {
       // bad formatter
-      throw new AssertionError("This class should be used only for " + TCClassFactory.CDSM_DSO_CLASSNAME + " or "
-                               + TCClassFactory.SERVER_MAP_CLASSNAME + " but pojo : " + pojo.getClass().getName());
+      throw new AssertionError("This class should be used only for " + TCClassFactory.SERVER_MAP_CLASSNAME
+                               + " but pojo : " + pojo.getClass().getName());
     }
     return new TCObjectServerMapImpl(this.manager, getObjectManager(), this.remoteServerMapManager, id, pojo, this,
                                      isNew, this.globalLocalCacheManager);

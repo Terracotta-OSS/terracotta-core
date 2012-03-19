@@ -67,7 +67,7 @@ public class TCClassFactoryImpl implements TCClassFactory {
   protected TCClass createTCClass(final Class clazz, final ClientObjectManager objectManager, final String className,
                                   final ClassInfo classInfo) {
     TCClass rv;
-    if (className.equals(TCClassFactory.CDSM_DSO_CLASSNAME) || className.equals(TCClassFactory.SERVER_MAP_CLASSNAME)) {
+    if (className.equals(TCClassFactory.SERVER_MAP_CLASSNAME)) {
       rv = new ServerMapTCClassImpl(this.manager, this.globalLocalCacheManager, this.remoteServerMapManager,
                                     this.fieldFactory, this, objectManager, clazz,
                                     getLogicalSuperClassWithDefaultConstructor(clazz),
