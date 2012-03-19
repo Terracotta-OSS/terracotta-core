@@ -15,15 +15,11 @@ import org.apache.log4j.spi.RootLogger;
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.aspectwerkz.transform.InstrumentationContext;
 import com.tc.aspectwerkz.transform.WeavingStrategy;
-import com.tc.bundles.EmbeddedOSGiRuntime;
-import com.tc.bundles.Repository;
-import com.tc.bundles.VirtualTimRepository;
 import com.tc.config.schema.L2ConfigForL1.L2Data;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
-import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.bytecode.Manager;
@@ -35,7 +31,6 @@ import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.RuntimeLoggerImpl;
-import com.tc.plugins.ModulesLoader;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.Util;
@@ -45,27 +40,22 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.security.ProtectionDomain;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
 
 public class DSOContextImpl implements DSOContext {
 
-  private static final TCLogger       logger        = TCLogging.getLogger(DSOContextImpl.class);
-  private static final TCLogger       consoleLogger = CustomerLogging.getConsoleLogger();
+  private static final TCLogger       logger = TCLogging.getLogger(DSOContextImpl.class);
 
   private final DSOClientConfigHelper configHelper;
   private final Manager               manager;
   private final InstrumentationLogger instrumentationLogger;
   private final WeavingStrategy       weavingStrategy;
 
-  private final EmbeddedOSGiRuntime   osgiRuntime;
   private final boolean               expressRejoinClient;
 
   public static DSOContext createContext(String configSpec) throws ConfigurationSetupException {
@@ -91,8 +81,7 @@ public class DSOContextImpl implements DSOContext {
     return context;
   }
 
-  public static DSOContext createStandaloneContext(String configSpec, ClassLoader loader,
-                                                   Map<String, URL> virtualTimJars, boolean expressRejoinClient)
+  public static DSOContext createStandaloneContext(String configSpec, ClassLoader loader, boolean expressRejoinClient)
       throws ConfigurationSetupException {
     // XXX: refactor this method to not duplicate createContext() so much
 
@@ -117,35 +106,37 @@ public class DSOContextImpl implements DSOContext {
     Manager manager = new ManagerImpl(true, null, null, null, null, configHelper, l2Connection, true, runtimeLogger,
                                       loader, expressRejoinClient);
 
-    Collection<Repository> repos = new ArrayList<Repository>();
-    repos.add(new VirtualTimRepository(virtualTimJars));
-    DSOContextImpl context = createContext(configHelper, manager, repos, expressRejoinClient);
+    DSOContextImpl context = createContext(configHelper, manager, expressRejoinClient);
+
     try {
-      context.installBundles(virtualTimJars.values());
+      context.startToolkitConfigurator();
     } catch (Exception e) {
       throw new ConfigurationSetupException(e.getLocalizedMessage(), e);
     }
+
     manager.init();
 
     return context;
   }
 
-  private void installBundles(Collection<URL> bundleURLs) throws Exception {
-    ModulesLoader.installAndStartBundles(osgiRuntime, configHelper, manager.getClassProvider(), false,
-                                         bundleURLs.toArray(new URL[] {}));
+  private void startToolkitConfigurator() throws Exception {
+    Class toolkitConfiguratorClass = Class.forName("com.terracotta.toolkit.ToolkitConfigurator");
+    Object toolkitConfigurator = toolkitConfiguratorClass.newInstance();
+    Method start = toolkitConfiguratorClass.getDeclaredMethod("start", DSOClientConfigHelper.class);
+    start.invoke(toolkitConfigurator, configHelper);
   }
 
   public static DSOContext createContext(DSOClientConfigHelper configHelper, Manager manager) {
-    return createContext(configHelper, manager, Collections.EMPTY_LIST, false);
+    return createContext(configHelper, manager, false);
   }
 
   private static DSOContextImpl createContext(DSOClientConfigHelper configHelper, Manager manager,
-                                              Collection<Repository> repos, boolean expressRejoinClient) {
-    return new DSOContextImpl(configHelper, manager.getClassProvider(), manager, repos, expressRejoinClient);
+                                              boolean expressRejoinClient) {
+    return new DSOContextImpl(configHelper, manager.getClassProvider(), manager, expressRejoinClient);
   }
 
   private DSOContextImpl(DSOClientConfigHelper configHelper, ClassProvider classProvider, Manager manager,
-                         Collection<Repository> repos, boolean expressRejoinClient) {
+                         boolean expressRejoinClient) {
     Assert.assertNotNull(configHelper);
 
     resolveClasses();
@@ -155,15 +146,6 @@ public class DSOContextImpl implements DSOContext {
     this.manager = manager;
     this.instrumentationLogger = manager.getInstrumentationLogger();
     this.weavingStrategy = new DefaultWeavingStrategy(configHelper, instrumentationLogger);
-
-    try {
-      osgiRuntime = ModulesLoader.initModules(configHelper, classProvider, false, repos);
-    } catch (Exception e) {
-      consoleLogger.fatal(e.getMessage());
-      logger.fatal(e);
-      System.exit(1);
-      throw new AssertionError("Will not run");
-    }
   }
 
   private void resolveClasses() {
@@ -279,7 +261,6 @@ public class DSOContextImpl implements DSOContext {
   }
 
   public void shutdown() {
-    osgiRuntime.shutdown();
     if (expressRejoinClient) {
       manager.stopImmediate();
     } else {

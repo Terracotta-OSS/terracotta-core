@@ -92,10 +92,6 @@
       <artifactId>xmlbeans-jsr173-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>knopflerfish-tc</groupId>
-      <artifactId>knopflerfish-tc</artifactId>
-    </dependency>
-    <dependency>
       <groupId>concurrent</groupId>
       <artifactId>concurrent</artifactId>
     </dependency>
