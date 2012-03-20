@@ -769,18 +769,8 @@
       </snapshots>
     </repository>
     <repository>
-      <id>oracle</id>
-      <url>http://download.oracle.com/maven/</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-    <repository>
       <id>jboss</id>
-      <url>http://repository.jboss.com/maven2</url>
+      <url>https://repository.jboss.org/nexus/content/repositories/public</url>
       <releases>
         <enabled>true</enabled>
       </releases>
@@ -789,36 +779,24 @@
       </snapshots>
     </repository>
     <repository>
-      <id>evgeny-goldin</id>
-      <url>http://evgeny-goldin.org/artifactory/repo</url>
+      <id>oracle</id>
+      <url>http://download.oracle.com/maven</url>
       <releases>
         <enabled>true</enabled>
       </releases>
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
-    </repository>    
+    </repository>      
   </repositories>
   <pluginRepositories>
     <pluginRepository>
       <id>terracotta-snapshots</id>
       <url>http://www.terracotta.org/download/reflector/snapshots</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
     </pluginRepository>
     <pluginRepository>
       <id>terracotta-releases</id>
       <url>http://www.terracotta.org/download/reflector/releases</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
     </pluginRepository>
     <pluginRepository>
       <id>evgeny-goldin</id>
