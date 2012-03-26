@@ -135,8 +135,12 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
       for (Object o : candidates.entrySet()) {
         Entry e = (Entry) o;
 
-        // XXX: assumes key/value types of String/ObjectID!
-        new AbstractNVPair.StringNVPair("", ((UTF8ByteDataHolder) e.getKey()).asString()).serializeTo(out, serializer);
+        // XXX: assumes key/value types of (Literal or UTF8ByteDataHolder)/ObjectID!
+        Object key = e.getKey();
+        if (key instanceof UTF8ByteDataHolder) {
+          key = ((UTF8ByteDataHolder) key).asString();
+        }
+        AbstractNVPair.createNVPair("", key).serializeTo(out, serializer);
         new AbstractNVPair.ObjectIdNVPair("", (ObjectID) e.getValue()).serializeTo(out, serializer);
       }
     }
@@ -193,8 +197,12 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
               throw new AssertionError(count);
           }
         } else if ((count % 2) == 0) {
-          // XXX: assumes String key!
-          return AbstractNVPair.createNVPair("", ((UTF8ByteDataHolder) next.getKey()).asString());
+          // XXX: assumes Literal key!
+          Object key = next.getKey();
+          if (key instanceof UTF8ByteDataHolder) {
+            key = ((UTF8ByteDataHolder) key).asString();
+          }
+          return AbstractNVPair.createNVPair("", key);
         } else {
           // XXX: assumes ObjectID value!
           NVPair nv = new AbstractNVPair.ObjectIdNVPair("", (ObjectID) next.getValue());
