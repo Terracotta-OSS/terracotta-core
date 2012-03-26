@@ -122,6 +122,7 @@ import java.util.TimerTask;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author steve
@@ -157,7 +158,7 @@ public class ObjectManagerTest extends TCTestCase {
    */
   public ObjectManagerTest(final String arg0) {
     super(arg0);
-    disableTest();
+    // disableTest();
   }
 
   @Override
@@ -709,7 +710,7 @@ public class ObjectManagerTest extends TCTestCase {
     assertTrue(mapFacade.isMap());
     assertFalse(mapFacade.isSet());
     assertFalse(mapFacade.isList());
-    assertEquals("java.util.HashMap", mapFacade.getClassName());
+    assertEquals("com.terracotta.toolkit.roots.impl.ToolkitTypeRootImpl", mapFacade.getClassName());
     assertEquals(facadeSize, mapFacade.getFacadeSize());
     assertEquals(totalSize, mapFacade.getTrueObjectSize());
 
@@ -816,25 +817,26 @@ public class ObjectManagerTest extends TCTestCase {
     ManagedObject lookedUpViaLookupObjectsForCreateIfNecessary = lookedUpObjects.get(id);
 
     final String fieldName = "myField";
-    final List<Integer> countSlot = new ArrayList<Integer>(1);
-    countSlot.add(1);
-    final List<ObjectID> fieldValueSlot = new ArrayList<ObjectID>(1);
-    fieldValueSlot.add(new ObjectID(100));
+    final ObjectID valueOid = new ObjectID(100);
+    final AtomicReference<ObjectID> oidHoler = new AtomicReference<ObjectID>(valueOid);
 
     final DNACursor cursor = new DNACursor() {
+      boolean hasNext = true;
+
       public LogicalAction getLogicalAction() {
-        return null;
+        return new LogicalAction(SerializationUtil.PUT, new Object[] { fieldName, oidHoler.get() });
       }
 
       public PhysicalAction getPhysicalAction() {
-        return new PhysicalAction(fieldName, fieldValueSlot.get(0), true);
+        return null;
       }
 
       public boolean next() {
-        int count = countSlot.get(0).intValue();
-        count--;
-        countSlot.set(0, count);
-        return count >= 0;
+        if (hasNext) {
+          hasNext = false;
+          return true;
+        }
+        return false;
       }
 
       public boolean next(final DNAEncoding encoding) {
@@ -850,7 +852,7 @@ public class ObjectManagerTest extends TCTestCase {
       }
 
       public void reset() throws UnsupportedOperationException {
-        countSlot.set(0, 1);
+        hasNext = true;
       }
     };
 
@@ -878,9 +880,10 @@ public class ObjectManagerTest extends TCTestCase {
 
     this.objectManager.lookupObjectsFor(key, responseContext);
     lookedUpViaLookupObjectsForCreateIfNecessary = lookedUpObjects.get(id);
-    countSlot.set(0, 1);
     final ObjectID newReferenceID = new ObjectID(9324);
-    fieldValueSlot.set(0, newReferenceID);
+    oidHoler.set(newReferenceID);
+    cursor.reset();
+
     dna = new TestDNA(cursor);
     dna.version = 10;
     dna.isDelta = true;
@@ -952,99 +955,6 @@ public class ObjectManagerTest extends TCTestCase {
     this.objectManager.releaseAndCommit(this.NULL_TRANSACTION, mo);
     ThreadUtil.reallySleep(1000);
     assertTrue(gotIt[0]);
-  }
-
-  public void testPhysicalObjectFacade() throws Exception {
-    testPhysicalObjectFacade(false);
-    testPhysicalObjectFacade(true);
-  }
-
-  private void testPhysicalObjectFacade(final boolean paranoid) throws Exception {
-    final BerkeleyDBEnvironment dbEnv = newDBEnvironment(paranoid);
-    final SerializationAdapterFactory saf = newCustomSerializationAdapterFactory();
-    final Persistor persistor = newPersistor(dbEnv, saf);
-    final PersistenceTransactionProvider ptp = persistor.getPersistenceTransactionProvider();
-    final PersistentManagedObjectStore persistantMOStore = new PersistentManagedObjectStore(
-                                                                                            persistor
-                                                                                                .getManagedObjectPersistor(),
-                                                                                            new MockSink());
-    this.objectStore = persistantMOStore;
-    this.config.paranoid = paranoid;
-    initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))), new NullCache(),
-                      this.objectStore);
-
-    final ObjectIDSet oids = new ObjectIDSet();
-    oids.add(new ObjectID(1));
-
-    this.objectManager.createNewObjects(oids);
-    final TestResultsContext context = new TestResultsContext(oids, oids);
-    this.objectManager.lookupObjectsFor(null, context);
-    context.waitTillComplete();
-    final ManagedObject mo = (context.objects).get(new ObjectID(1));
-    assertTrue(mo.isNew());
-    final ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
-    mo.apply(new TestPhysicalDNA(new ObjectID(1)), new TransactionID(1), new ApplyTransactionInfo(), imo, false);
-
-    final PersistenceTransaction tx = ptp.newTransaction();
-    this.objectManager.releaseAndCommit(tx, mo);
-    if (!paranoid) {
-      // Object manager doesn't commit if in non-paranoid mode.
-      tx.commit();
-    }
-
-    ManagedObjectFacade facade;
-    try {
-      facade = this.objectManager.lookupFacade(new ObjectID(1), -1);
-    } catch (final NoSuchObjectException e1) {
-      fail(e1.getMessage());
-      return;
-    }
-
-    final String[] fieldNames = facade.getFields();
-    assertEquals(6, fieldNames.length);
-    // NOTE: the order of the object fields should be alphabetic
-    assertTrue(Arrays.asList(fieldNames).toString(),
-               Arrays.equals(fieldNames, new String[] { "access$0", "this$0", "intField", "objField", "stringField",
-                   "zzzField" }));
-    assertEquals("TestPhysicalDNA.class.name", facade.getClassName());
-    assertEquals("Integer", facade.getFieldType("intField"));
-    assertEquals("ObjectID", facade.getFieldType("objField"));
-    assertEquals("Byte", facade.getFieldType("zzzField"));
-    assertEquals("String", facade.getFieldType("stringField"));
-    assertEquals(42, facade.getFieldValue("intField"));
-    assertEquals((byte) 1, facade.getFieldValue("zzzField"));
-    assertEquals(new ObjectID(696969), facade.getFieldValue("objField"));
-    assertEquals("yo yo yo", facade.getFieldValue("stringField"));
-    assertEquals(new ObjectID(1), facade.getObjectId());
-    assertTrue(facade.isPrimitive("intField"));
-    assertTrue(facade.isPrimitive("zzzField"));
-    assertTrue(facade.isPrimitive("stringField"));
-    assertFalse(facade.isPrimitive("objField"));
-
-    try {
-      facade.getFieldType("does not exist");
-      fail();
-    } catch (final IllegalArgumentException iae) {
-      // expected
-    }
-
-    try {
-      facade.getFieldValue("does not exist");
-      fail();
-    } catch (final IllegalArgumentException iae) {
-      // expected
-    }
-
-    try {
-      facade.isPrimitive("does not exist");
-      fail();
-    } catch (final IllegalArgumentException iae) {
-      // expected
-    }
-
-    close(persistor, persistantMOStore);
-    // XXX: change the object again, make sure the facade is "stable" (ie.
-    // doesn't change)
   }
 
   public void testObjectManagerAsync() {
@@ -1366,7 +1276,10 @@ public class ObjectManagerTest extends TCTestCase {
      */
     final Map<ObjectID, DNA> changes = new HashMap<ObjectID, DNA>();
 
-    changes.put(new ObjectID(1), new TestPhysicalDNA(new ObjectID(1)));
+    final String fieldName = "whatsup";
+    final AtomicReference atomicReference = new AtomicReference(new ObjectID(500));
+
+    changes.put(new ObjectID(1), new TestServerMapDNA(new ObjectID(1), fieldName, atomicReference));
 
     final ServerTransaction stxn1 = new ServerTransactionImpl(new TxnBatchID(1), new TransactionID(1),
                                                               new SequenceID(1), new LockID[0], new ClientID(2),
@@ -1417,7 +1330,10 @@ public class ObjectManagerTest extends TCTestCase {
      * STEP 2: Dont check back Object 1 yet, make another transaction with yet another object
      */
     changes.clear();
-    changes.put(new ObjectID(2), new TestPhysicalDNA(new ObjectID(2)));
+
+    final String fieldName2 = "whatsup2";
+    final AtomicReference atomicReference2 = new AtomicReference(new ObjectID(501));
+    changes.put(new ObjectID(2), new TestServerMapDNA(new ObjectID(2), fieldName2, atomicReference2));
 
     final ServerTransaction stxn2 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2),
                                                               new SequenceID(1), new LockID[0], new ClientID(2),
@@ -1449,9 +1365,13 @@ public class ObjectManagerTest extends TCTestCase {
      * STEP 3: Create a txn with Objects 1,2 and a new object 3
      */
     changes.clear();
-    changes.put(new ObjectID(1), new TestPhysicalDNA(new ObjectID(1), true));
-    changes.put(new ObjectID(2), new TestPhysicalDNA(new ObjectID(2), true));
-    changes.put(new ObjectID(3), new TestPhysicalDNA(new ObjectID(3)));
+
+    final String fieldName3 = "whatsup3";
+    final AtomicReference atomicReference3 = new AtomicReference(new ObjectID(505));
+
+    changes.put(new ObjectID(1), new TestServerMapDNA(new ObjectID(1), true, fieldName3, atomicReference3));
+    changes.put(new ObjectID(2), new TestServerMapDNA(new ObjectID(2), true, fieldName3, atomicReference3));
+    changes.put(new ObjectID(3), new TestServerMapDNA(new ObjectID(3), fieldName3, atomicReference3));
 
     final ServerTransaction stxn3 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2),
                                                               new SequenceID(1), new LockID[0], new ClientID(2),
@@ -1975,7 +1895,7 @@ public class ObjectManagerTest extends TCTestCase {
     }
 
     public String getTypeName() {
-      return "java.util.HashMap";
+      return "com.terracotta.toolkit.roots.impl.ToolkitTypeRootImpl";
     }
 
     public ObjectID getObjectID() throws DNAException {
@@ -2164,108 +2084,6 @@ public class ObjectManagerTest extends TCTestCase {
 
     public boolean updateStats() {
       return this.updateStats;
-    }
-  }
-
-  private static class TestPhysicalDNA implements DNA {
-    private final ObjectID id;
-    private final boolean  isDelta;
-
-    TestPhysicalDNA(final ObjectID id) {
-      this(id, false);
-    }
-
-    public TestPhysicalDNA(final ObjectID id, final boolean isDelta) {
-      this.isDelta = isDelta;
-      this.id = id;
-    }
-
-    public long getVersion() {
-      return 0;
-    }
-
-    public boolean hasLength() {
-      return false;
-    }
-
-    public int getArraySize() {
-      return -1;
-    }
-
-    public String getTypeName() {
-      return "TestPhysicalDNA.class.name";
-    }
-
-    public ObjectID getObjectID() throws DNAException {
-      return this.id;
-    }
-
-    public ObjectID getParentObjectID() throws DNAException {
-      return new ObjectID(25);
-    }
-
-    public DNACursor getCursor() {
-      return new DNACursor() {
-
-        int count = 0;
-
-        public boolean next() {
-          this.count++;
-          return this.count < 7;
-        }
-
-        public LogicalAction getLogicalAction() {
-          return null;
-        }
-
-        public Object getAction() {
-          throw new ImplementMe();
-        }
-
-        public PhysicalAction getPhysicalAction() {
-          switch (this.count) {
-            case 1: {
-              return new PhysicalAction("intField", 42, false);
-            }
-            case 2: {
-              return new PhysicalAction("zzzField", (byte) 1, false);
-            }
-            case 3: {
-              return new PhysicalAction("objField", new ObjectID(696969), true);
-            }
-            case 4: {
-              return new PhysicalAction("this$0", new ObjectID(25), true);
-            }
-            case 5: {
-              return new PhysicalAction("access$0", new Float(2.4), false);
-            }
-            case 6: {
-              return new PhysicalAction("stringField", new UTF8ByteDataHolder("yo yo yo"), false);
-            }
-            default: {
-              throw new RuntimeException();
-            }
-          }
-
-        }
-
-        public boolean next(final DNAEncoding encoding) {
-          throw new ImplementMe();
-        }
-
-        public int getActionCount() {
-          return 6;
-        }
-
-        public void reset() throws UnsupportedOperationException {
-          this.count = 0;
-        }
-
-      };
-    }
-
-    public boolean isDelta() {
-      return this.isDelta;
     }
   }
 
@@ -2518,5 +2336,114 @@ public class ObjectManagerTest extends TCTestCase {
 
     void postProcess();
 
+  }
+
+  private static final class TestServerMapDNA implements DNA {
+    private final ObjectID                  id;
+    private final boolean                   isDelta;
+    private final String                    fieldName;
+    private final AtomicReference<ObjectID> oidHolder;
+
+    public TestServerMapDNA(final ObjectID id, String fieldName, AtomicReference<ObjectID> oidHolder) {
+      this(id, false, fieldName, oidHolder);
+    }
+
+    public TestServerMapDNA(final ObjectID id, final boolean isDelta, String fieldName,
+                            AtomicReference<ObjectID> oidHolder) {
+      this.isDelta = isDelta;
+      this.id = id;
+      this.fieldName = fieldName;
+      this.oidHolder = oidHolder;
+    }
+
+    @Override
+    public long getVersion() {
+      return 0;
+    }
+
+    @Override
+    public boolean hasLength() {
+      return false;
+    }
+
+    @Override
+    public int getArraySize() {
+      return -1;
+    }
+
+    @Override
+    public boolean isDelta() {
+      return isDelta;
+    }
+
+    @Override
+    public String getTypeName() {
+      return "com.terracotta.toolkit.roots.impl.ToolkitTypeRootImpl";
+    }
+
+    @Override
+    public ObjectID getObjectID() throws DNAException {
+      return this.id;
+    }
+
+    @Override
+    public ObjectID getParentObjectID() throws DNAException {
+      return ObjectID.NULL_ID;
+    }
+
+    @Override
+    public DNACursor getCursor() {
+      if (fieldName == null) { return new TestMapCursor(); }
+      return new TestMapCursor(fieldName, oidHolder);
+    }
+
+  }
+
+  private static final class TestMapCursor implements DNACursor {
+    private final String                    fieldName;
+    private final AtomicReference<ObjectID> oidHolder;
+    private volatile boolean                hasNext = true;
+
+    public TestMapCursor() {
+      this(null, null);
+      hasNext = false;
+    }
+
+    public TestMapCursor(String fieldName, AtomicReference<ObjectID> oidHolder) {
+      this.fieldName = fieldName;
+      this.oidHolder = oidHolder;
+    }
+
+    public LogicalAction getLogicalAction() {
+      return new LogicalAction(SerializationUtil.PUT, new Object[] { fieldName, oidHolder.get() });
+    }
+
+    public PhysicalAction getPhysicalAction() {
+      return null;
+    }
+
+    public boolean next() {
+      if (hasNext) {
+        hasNext = false;
+        return true;
+      }
+      return false;
+    }
+
+    public boolean next(final DNAEncoding encoding) {
+      throw new ImplementMe();
+    }
+
+    public Object getAction() {
+      throw new ImplementMe();
+    }
+
+    public int getActionCount() {
+      return 1;
+    }
+
+    public void reset() throws UnsupportedOperationException {
+      hasNext = true;
+    }
   }
 }
