@@ -180,6 +180,8 @@ public class StageImpl implements Stage {
                             + ctxt);
             }
             return;
+          } else {
+            throw new TCRuntimeException("Uncaught exception in stage", e);
           }
         } finally {
           // Aggressively null out the reference before going around the loop again. If you don't do this, the reference

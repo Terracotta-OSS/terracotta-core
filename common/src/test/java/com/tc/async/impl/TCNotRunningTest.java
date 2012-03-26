@@ -63,12 +63,22 @@ public class TCNotRunningTest extends TestCase {
 
   }
 
+  public void testOtherException() {
+    debug("Testing other exception");
+    testHandler.state = HandlerState.OTHER_EXCEPTION;
+    Stage stage = stageManager.createStage("some-stage-3", testHandler, 1, 10);
+    stage.start(new ConfigurationContextImpl(null));
+    stage.getSink().add(new TestEventContext());
+    testHandler.waitUntilHandledEventCount(1);
+    junit.framework.Assert.assertTrue("Exit should be called", callbackOnExitHandler.exitCalled);
+  }
+
   private static void debug(String msg) {
     System.out.println(msg);
   }
 
   private static enum HandlerState {
-    DIRECT_EXCEPTION, WRAPPED_EXCEPTION;
+    DIRECT_EXCEPTION, WRAPPED_EXCEPTION, OTHER_EXCEPTION;
   }
 
   private static class TestHandler extends AbstractEventHandler {
@@ -84,6 +94,8 @@ public class TCNotRunningTest extends TestCase {
             throw new TCNotRunningException("Direct exception");
           case WRAPPED_EXCEPTION:
             throw new RuntimeException(new TCNotRunningException("Direct exception"));
+          case OTHER_EXCEPTION:
+            throw new RuntimeException("Some other exception");
         }
       } finally {
         handledEventCount.incrementAndGet();
