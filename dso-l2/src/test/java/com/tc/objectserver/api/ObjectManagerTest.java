@@ -157,6 +157,7 @@ public class ObjectManagerTest extends TCTestCase {
    */
   public ObjectManagerTest(final String arg0) {
     super(arg0);
+    disableTest();
   }
 
   @Override
