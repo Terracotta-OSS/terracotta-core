@@ -11,6 +11,7 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
+import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.concurrent.QueueFactory;
 
@@ -30,7 +31,7 @@ public class TCNotRunningTest extends TestCase {
     super.setUp();
     debug("In setup");
     try {
-      ThrowableHandler throwableHandler = new ThrowableHandler(TCLogging.getLogger(StageManagerImpl.class));
+      ThrowableHandler throwableHandler = new NonExitingThrowableHandler(TCLogging.getLogger(StageManagerImpl.class));
       stageManager = new StageManagerImpl(new TCThreadGroup(throwableHandler), new QueueFactory());
       callbackOnExitHandler = new TestCallbackOnExitHandler();
       throwableHandler.addCallbackOnExitDefaultHandler(callbackOnExitHandler);
@@ -135,5 +136,18 @@ public class TCNotRunningTest extends TestCase {
       debug("Callback on exit called");
       exitCalled = true;
     }
+  }
+
+  private static class NonExitingThrowableHandler extends ThrowableHandler {
+
+    public NonExitingThrowableHandler(TCLogger logger) {
+      super(logger);
+    }
+
+    @Override
+    protected synchronized void exit(int status) {
+      debug("EXIT CALLED - not exiting for tests");
+    }
+
   }
 }
