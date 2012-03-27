@@ -237,9 +237,9 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>com.goldin.plugins</groupId>
-        <artifactId>maven-copy-plugin</artifactId>
-        <version>${maven-copy-plugin.version}</version>
+        <groupId>com.github.goldin</groupId>
+        <artifactId>copy-maven-plugin</artifactId>
+        <version>${copy-maven-plugin.version}</version>
         <executions>
           <execution>
             <id>create-source-archive</id>

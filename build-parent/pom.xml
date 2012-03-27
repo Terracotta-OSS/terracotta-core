@@ -35,7 +35,7 @@
     <sleepycat.version>4.1.17</sleepycat.version>
     <linked-child-process.version>1.0.6</linked-child-process.version>
     <gmaven-plugin.version>1.3</gmaven-plugin.version>
-    <maven-copy-plugin.version>0.2.3.8-beta-5</maven-copy-plugin.version>
+    <copy-maven-plugin.version>0.2.3.8</copy-maven-plugin.version>
     <surefire.version>2.10</surefire.version>
     <maven-forge-plugin.version>1.0.5-SNAPSHOT</maven-forge-plugin.version>
     <skip.deploy>false</skip.deploy>
@@ -799,14 +799,14 @@
       <url>http://www.terracotta.org/download/reflector/releases</url>
     </pluginRepository>
     <pluginRepository>
-      <id>evgeny-goldin</id>
-      <url>http://evgeny-goldin.org/artifactory/repo</url>
+      <id>evgenyg.artifactoryonline.com</id>
+      <url>http://evgenyg.artifactoryonline.com/evgenyg/repo/</url>
       <releases>
         <enabled>true</enabled>
       </releases>
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
-    </pluginRepository>     
+    </pluginRepository>    
   </pluginRepositories>
 </project>
