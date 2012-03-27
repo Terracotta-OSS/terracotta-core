@@ -19,7 +19,7 @@ import java.lang.ref.WeakReference;
 /**
  * Classes that are merged with this class should NOT have any common names for methods, members etc with this class
  */
-public class TCObjectSelfImpl extends TCObjectSelfCompilationHelper implements TCObjectSelf {
+public class TCObjectSelfImpl implements TCObjectSelf {
 
   private volatile transient ObjectID oid;
   private volatile transient TCClass  tcClazz;
