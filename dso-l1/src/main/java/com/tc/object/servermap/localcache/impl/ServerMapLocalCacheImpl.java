@@ -6,6 +6,7 @@ package com.tc.object.servermap.localcache.impl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ClientObjectManager;
+import com.tc.object.LocalCacheAddCallBack;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObjectSelf;
 import com.tc.object.bytecode.Manager;
@@ -696,6 +697,10 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       }
     } else {
       old = (AbstractLocalCacheStoreValue) this.localStore.put(key, value);
+      Object serializeEntry = value.getValueObject();
+      if (serializeEntry instanceof LocalCacheAddCallBack) {
+        ((LocalCacheAddCallBack) serializeEntry).addedToLocalCache();
+      }
       cleanupOldMetaMapping(key, value, old, true);
     }
     return old;

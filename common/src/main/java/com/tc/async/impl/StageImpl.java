@@ -168,17 +168,21 @@ public class StageImpl implements Stage {
         } catch (InterruptedException ie) {
           if (shutdownRequested()) { return; }
           throw new TCRuntimeException(ie);
-        } catch (TCNotRunningException ie) {
-          if (shutdownRequested()) {
-            return;
-          } else {
-            tcLogger.info("Ignoring " + TCNotRunningException.class.getSimpleName() + " while handling context: "
-                          + ctxt);
-          }
-          return;
         } catch (EventHandlerException ie) {
           if (shutdownRequested()) return;
           throw new TCRuntimeException(ie);
+        } catch (Exception e) {
+          if (isTCNotRunningException(e)) {
+            if (shutdownRequested()) {
+              return;
+            } else {
+              tcLogger.info("Ignoring " + TCNotRunningException.class.getSimpleName() + " while handling context: "
+                            + ctxt);
+            }
+            return;
+          } else {
+            throw new TCRuntimeException("Uncaught exception in stage", e);
+          }
         } finally {
           // Aggressively null out the reference before going around the loop again. If you don't do this, the reference
           // to the context will exist until another context comes in. This can potentially keep many objects in memory
@@ -187,6 +191,15 @@ public class StageImpl implements Stage {
         }
       }
     }
+  }
+
+  private static boolean isTCNotRunningException(Throwable e) {
+    Throwable rootCause = null;
+    while (e != null) {
+      rootCause = e;
+      e = e.getCause();
+    }
+    return rootCause instanceof TCNotRunningException;
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {

@@ -62,11 +62,6 @@ Apache Ivy version: 2.2.0 20100923230623
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>knopflerfish-tc</groupId>
-      <artifactId>knopflerfish-tc</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
       <groupId>commons-httpclient</groupId>
       <artifactId>commons-httpclient</artifactId>
       <scope>compile</scope>

@@ -3,15 +3,12 @@
  */
 package com.tc.object.config;
 
-import org.osgi.framework.Bundle;
-
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.ClassWriter;
 import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
-import com.tc.bundles.Modules;
 import com.tc.config.schema.CommonL1Config;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
@@ -25,7 +22,6 @@ import com.tc.object.config.schema.InstrumentedClass;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.properties.ReconnectConfig;
 
-import java.net.URL;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -43,8 +39,6 @@ public interface DSOClientConfigHelper extends DSOMBeanConfig, ModuleConfigurati
   void addNonportablePattern(String pattern);
 
   void addIncludePattern(String expression, boolean honorTransient, String methodToCallOnLoad, boolean honorVolatile);
-
-  URL getBundleURL(Bundle bundle);
 
   String[] processArguments();
 
@@ -204,28 +198,6 @@ public interface DSOClientConfigHelper extends DSOMBeanConfig, ModuleConfigurati
 
   void addInstrumentationDescriptor(InstrumentedClass classDesc);
 
-  Modules getModulesForInitialization();
-
-  void addRepository(String location);
-
-  /**
-   * Add module dependency with no groupId, indicating the groupId should be assumed to be the default:
-   * "org.terracotta.modules".
-   * 
-   * @artifactId Such as tim-foobar
-   * @version Such as 1.0.0-SNAPSHOT
-   */
-  void addModule(String artifactId, String version);
-
-  /**
-   * Add module dependency
-   * 
-   * @groupId Such as org.terracotta.modules
-   * @artifactId Such as tim-foobar
-   * @version Such as 1.0.0-SNAPSHOT
-   */
-  void addModule(String groupId, String artifactId, String version);
-
   /**
    * If an adapter with the same name was already present, this new one will not be added, and the operation will simply
    * return as a no-op.
@@ -248,8 +220,6 @@ public interface DSOClientConfigHelper extends DSOMBeanConfig, ModuleConfigurati
    * @return {@code true} when custom adapters were added; or {@code false} otherwise
    */
   boolean addClassConfigBasedAdapters(ClassInfo classInfo);
-
-  void recordBundleURLs(Map<Bundle, URL> bundleURLs);
 
   L1ConfigurationSetupManager reloadServersConfiguration() throws ConfigurationSetupException;
 

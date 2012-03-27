@@ -35,7 +35,7 @@
     <sleepycat.version>4.1.17</sleepycat.version>
     <linked-child-process.version>1.0.6</linked-child-process.version>
     <gmaven-plugin.version>1.3</gmaven-plugin.version>
-    <maven-copy-plugin.version>0.2.3.8-beta-5</maven-copy-plugin.version>
+    <copy-maven-plugin.version>0.2.3.8</copy-maven-plugin.version>
     <surefire.version>2.10</surefire.version>
     <maven-forge-plugin.version>1.0.5-SNAPSHOT</maven-forge-plugin.version>
     <skip.deploy>false</skip.deploy>
@@ -146,11 +146,6 @@
         <groupId>org.apache.xmlbeans</groupId>
         <artifactId>xmlbeans-jsr173-api</artifactId>
         <version>1.0</version>
-      </dependency>
-      <dependency>
-        <groupId>knopflerfish-tc</groupId>
-        <artifactId>knopflerfish-tc</artifactId>
-        <version>2.0.1-20100819</version>
       </dependency>
       <dependency>
         <groupId>org.mortbay.jetty</groupId>
@@ -774,18 +769,8 @@
       </snapshots>
     </repository>
     <repository>
-      <id>oracle</id>
-      <url>http://download.oracle.com/maven/</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-    <repository>
       <id>jboss</id>
-      <url>http://repository.jboss.com/maven2</url>
+      <url>https://repository.jboss.org/nexus/content/repositories/public</url>
       <releases>
         <enabled>true</enabled>
       </releases>
@@ -794,46 +779,34 @@
       </snapshots>
     </repository>
     <repository>
-      <id>evgeny-goldin</id>
-      <url>http://evgeny-goldin.org/artifactory/repo</url>
+      <id>oracle</id>
+      <url>http://download.oracle.com/maven</url>
       <releases>
         <enabled>true</enabled>
       </releases>
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
-    </repository>    
+    </repository>      
   </repositories>
   <pluginRepositories>
     <pluginRepository>
       <id>terracotta-snapshots</id>
       <url>http://www.terracotta.org/download/reflector/snapshots</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
     </pluginRepository>
     <pluginRepository>
       <id>terracotta-releases</id>
       <url>http://www.terracotta.org/download/reflector/releases</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
     </pluginRepository>
     <pluginRepository>
-      <id>evgeny-goldin</id>
-      <url>http://evgeny-goldin.org/artifactory/repo</url>
+      <id>evgenyg.artifactoryonline.com</id>
+      <url>http://evgenyg.artifactoryonline.com/evgenyg/repo/</url>
       <releases>
         <enabled>true</enabled>
       </releases>
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
-    </pluginRepository>     
+    </pluginRepository>    
   </pluginRepositories>
 </project>

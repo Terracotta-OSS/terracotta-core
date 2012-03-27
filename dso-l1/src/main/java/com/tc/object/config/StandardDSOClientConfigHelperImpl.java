@@ -4,7 +4,6 @@
  */
 package com.tc.object.config;
 
-import org.osgi.framework.Bundle;
 import org.terracotta.groupConfigForL1.ServerGroup;
 import org.terracotta.groupConfigForL1.ServerGroupsDocument.ServerGroups;
 import org.terracotta.groupConfigForL1.ServerInfo;
@@ -18,8 +17,6 @@ import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.backport175.bytecode.AnnotationElement.Annotation;
-import com.tc.bundles.Module;
-import com.tc.bundles.Modules;
 import com.tc.config.schema.CommonL1Config;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
@@ -62,7 +59,6 @@ import com.terracottatech.config.L1ReconnectPropertiesDocument;
 
 import java.lang.reflect.Modifier;
 import java.net.InetAddress;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -133,18 +129,13 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
   private int                                                faultCount                         = -1;
   private final Set<String>                                  tunneledMBeanDomains               = Collections
                                                                                                     .synchronizedSet(new HashSet<String>());
-  private final ModulesContext                               modulesContext                     = new ModulesContext();
   private ReconnectConfig                                    l1ReconnectConfig                  = null;
   private final InjectionInstrumentationRegistry             injectionRegistry                  = new InjectionInstrumentationRegistry();
-  private final Map<Bundle, URL>                             bundleURLs                         = new ConcurrentHashMap<Bundle, URL>();
 
   public StandardDSOClientConfigHelperImpl(final boolean initializedModulesOnlyOnce,
                                            final L1ConfigurationSetupManager configSetupManager)
       throws ConfigurationSetupException {
     this(configSetupManager);
-    if (initializedModulesOnlyOnce) {
-      modulesContext.initializedModulesOnlyOnce();
-    }
   }
 
   public StandardDSOClientConfigHelperImpl(final L1ConfigurationSetupManager configSetupManager)
@@ -155,7 +146,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     helperLogger = new DSOClientConfigHelperLogger(logger);
     // this.classInfoFactory = new ClassInfoFactory();
     this.expressionHelper = new ExpressionHelper();
-    modulesContext.setModules(new Modules());
 
     permanentExcludesMatcher = new CompoundExpressionMatcher();
 
@@ -1039,58 +1029,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     }
   }
 
-  public void addRepository(final String location) {
-    modulesContext.modules.addRepository(location);
-  }
-
-  public void addModule(final String artifactId, final String version) {
-    Module newModule = new Module();
-    newModule.setArtifactId(artifactId);
-    newModule.setVersion(version);
-    modulesContext.modules.addModule(newModule);
-  }
-
-  public void addModule(final String groupId, final String artifactId, final String version) {
-    Module newModule = new Module(groupId, artifactId, version);
-    modulesContext.modules.addModule(newModule);
-  }
-
-  public Modules getModulesForInitialization() {
-    return modulesContext.getModulesForInitialization();
-  }
-
-  private static class ModulesContext {
-
-    private boolean alwaysInitializedModules = true; // set to false only when in test
-    private boolean modulesInitialized       = false; // set to true only when in test
-
-    private Modules modules;
-
-    // This is used only in test
-    // XXX: Remove anything test related from production code
-    void initializedModulesOnlyOnce() {
-      this.alwaysInitializedModules = false;
-    }
-
-    void setModules(final Modules modules) {
-      this.modules = modules;
-    }
-
-    Modules getModulesForInitialization() {
-      if (alwaysInitializedModules) {
-        return this.modules;
-      } else {
-        // this could happen only in test
-        if (modulesInitialized) {
-          return new Modules();
-        } else {
-          modulesInitialized = true;
-          return this.modules;
-        }
-      }
-    }
-  }
-
   public void validateGroupInfo() throws ConfigurationSetupException {
     PreparedComponentsFromL2Connection connectionComponents = new PreparedComponentsFromL2Connection(configSetupManager);
     ServerGroups serverGroupsFromL2 = new ConfigInfoFromL2Impl(configSetupManager).getServerGroupsFromL2()
@@ -1212,14 +1150,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     // If this condition ever needs to be true for any other classes besides ConcurrentHashMap, this setting should be
     // move into the TransparencyClassSpec (as opposed to growing the list of classes here)
     return !clazz.getName().equals("java.util.concurrent.ConcurrentHashMap");
-  }
-
-  public void recordBundleURLs(final Map<Bundle, URL> toAdd) {
-    this.bundleURLs.putAll(toAdd);
-  }
-
-  public URL getBundleURL(final Bundle bundle) {
-    return this.bundleURLs.get(bundle);
   }
 
   public UUID getUUID() {

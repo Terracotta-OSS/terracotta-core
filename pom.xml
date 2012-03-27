@@ -7,7 +7,7 @@
     <groupId>org.terracotta.forge</groupId>
     <artifactId>forge-parent</artifactId>
     <version>3.0-SNAPSHOT</version>
-    <relativePath/>
+    <relativePath></relativePath>
   </parent>
   
   <groupId>org.terracotta</groupId>
@@ -159,4 +159,26 @@
       </modules>
     </profile>     
   </profiles>
+  
+  <repositories>
+    <repository>
+      <id>terracotta-snapshots</id>
+      <url>http://www.terracotta.org/download/reflector/snapshots</url>
+    </repository>
+    <repository>
+      <id>terracotta-releases</id>
+      <url>http://www.terracotta.org/download/reflector/releases</url>
+    </repository>
+  </repositories>
+  
+  <pluginRepositories>
+    <pluginRepository>
+      <id>terracotta-snapshots</id>
+      <url>http://www.terracotta.org/download/reflector/snapshots</url>
+    </pluginRepository>
+    <pluginRepository>
+      <id>terracotta-releases</id>
+      <url>http://www.terracotta.org/download/reflector/releases</url>
+    </pluginRepository>   
+  </pluginRepositories>  
 </project>

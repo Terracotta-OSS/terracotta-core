@@ -10,7 +10,6 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.osgi.framework.Version;
 
 import com.tc.admin.common.AboutDialog;
 import com.tc.admin.common.BrowserLauncher;
@@ -1195,9 +1194,9 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
   }
 
   private static class VersionMap implements Comparable {
-    final File    versionDir;
-    final Version version;
-    final String  qualifier;
+    final File   versionDir;
+    final String version;
+    final String qualifier;
 
     VersionMap(File versionDir) {
       this.versionDir = versionDir;
@@ -1209,7 +1208,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       } else {
         qualifier = null;
       }
-      this.version = new Version(name);
+      this.version = name;
     }
 
     public int compareTo(Object o) {
