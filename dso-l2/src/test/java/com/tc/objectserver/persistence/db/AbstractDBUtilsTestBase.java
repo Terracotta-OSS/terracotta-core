@@ -94,7 +94,7 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
 
     // add another one
     final ObjectID oid = newObjectID();
-    final ManagedObject mo = newLogicalMapObject(oid);
+    final ManagedObject mo = newLogicalObject(oid, newLogicalMapDNA(false, true, 101));
     assertTrue(mo.isDirty());
     this.mos.add(mo);
     mop.addNewObject(mo);
@@ -203,7 +203,7 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
   }
 
   private ManagedObject newLogicalMapObject(final ObjectID oid) {
-    return newLogicalObject(oid, newLogicalMapDNA(false));
+    return newLogicalObject(oid, newLogicalMapDNA(false, false, -1));
   }
 
   private ManagedObject newLogicalObject(final ObjectID objectID, final TestDNA dna) {
@@ -213,11 +213,17 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
     return rv;
   }
 
-  private TestDNA newLogicalMapDNA(final boolean delta) {
+  private TestDNA newLogicalMapDNA(final boolean delta, boolean addOids, int numberOfOids) {
     final TestDNACursor cursor = new TestDNACursor();
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(10), "King Kong" });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(20), "Mad Max" });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(25), "Mummy Returns" });
+
+    if (addOids) {
+      for (int i = 0; i < numberOfOids; i++) {
+        cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { "notExists" + i, newObjectID() });
+      }
+    }
     final TestDNA dna = new TestDNA(cursor, "com.terracotta.toolkit.roots.impl.ToolkitTypeRootImpl");
     dna.version = this.version++;
     dna.isDelta = delta;
