@@ -39,7 +39,6 @@ public class ClusteredObjectStripeState extends AbstractManagedObjectState {
   @Override
   protected boolean basicEquals(final AbstractManagedObjectState obj) {
     if (this == obj) return true;
-    if (!super.equals(obj)) return false;
     if (getClass() != obj.getClass()) return false;
     ClusteredObjectStripeState other = (ClusteredObjectStripeState) obj;
     if (classID != other.classID) return false;
