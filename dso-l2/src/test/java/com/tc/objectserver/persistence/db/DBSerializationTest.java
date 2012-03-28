@@ -114,10 +114,6 @@ public class DBSerializationTest extends TCTestCase {
     }
     this.mop.saveAllObjects(ptx, this.mos);
 
-    ManagedObject mo = newPhysicalObject(newObjectID());
-    this.mop.saveObject(ptx, mo);
-    this.mos.add(mo);
-
     ptx.commit();
 
     System.err.println("String index before: " + this.stringIndex);
@@ -142,10 +138,6 @@ public class DBSerializationTest extends TCTestCase {
 
       final byte type = loaded.getManagedObjectState().getType();
       switch (type) {
-        case ManagedObjectState.PHYSICAL_TYPE:
-          loaded.apply(newPhysicalDNA(true), new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(),
-                       this.imo, false);
-          break;
         case ManagedObjectState.MAP_TYPE:
         case ManagedObjectState.PARTIAL_MAP_TYPE:
           loaded.apply(newLogicalMapDNA(true), new TransactionID(++this.transactionSequence),
@@ -175,14 +167,12 @@ public class DBSerializationTest extends TCTestCase {
   private ManagedObject newManagedObject(final ObjectID oid, final int i) {
     switch (i % 10) {
       case 0:
-        return newPhysicalObject(oid);
-      case 1:
         return newLogicalMapObject(oid);
-      case 2:
+      case 1:
         return newLogicalArrayObject(oid);
-      case 3:
+      case 2:
         return newLogicalLiteralObject(oid);
-      case 4:
+      case 3:
         return newLogicalListObject(oid);
       default:
         return newLogicalSetObject(oid);
@@ -274,24 +264,6 @@ public class DBSerializationTest extends TCTestCase {
 
   private ObjectID newObjectID() {
     return new ObjectID(++this.objectIDSequence);
-  }
-
-  private ManagedObject newPhysicalObject(final ObjectID objectID) {
-    final ManagedObjectImpl rv = new ManagedObjectImpl(objectID);
-    final TestDNA dna = newPhysicalDNA(false);
-    assertTrue(rv.isNew());
-    rv.apply(dna, new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(), this.imo, false);
-    return rv;
-  }
-
-  private TestDNA newPhysicalDNA(final boolean delta) {
-    final TestDNACursor cursor = new TestDNACursor();
-    cursor.addPhysicalAction("stringField", "Foo", true);
-    cursor.addPhysicalAction("referenceField", newObjectID(), true);
-    final TestDNA dna = new TestDNA(cursor);
-    dna.version = this.version++;
-    dna.isDelta = delta;
-    return dna;
   }
 
   private TestDNA newLogicalMapDNA(final boolean delta) {
