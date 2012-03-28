@@ -19,6 +19,7 @@ public class ClientConfig {
   private boolean                               shouldResolveLicense = true;
   private int                                   minHeap              = 64;
   private int                                   maxHeap              = 128;
+  private final BytemanConfig                   bytemanConfig        = new BytemanConfig();
 
   public ClientConfig() {
     extraClientJvmArgs = new ArrayList<String>();
@@ -135,4 +136,7 @@ public class ClientConfig {
     this.maxHeap = maxHeap;
   }
 
+  public BytemanConfig getBytemanConfig() {
+    return bytemanConfig;
+  }
 }

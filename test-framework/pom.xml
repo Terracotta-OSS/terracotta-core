@@ -14,6 +14,7 @@
   <name>test-framework</name>
   
   <properties>
+    <byteman.version>2.0.1</byteman.version>
     <skip.testjar>true</skip.testjar>
   </properties>
 
@@ -161,6 +162,11 @@
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.jboss.byteman</groupId>
+        <artifactId>byteman</artifactId>
+        <version>${byteman.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>

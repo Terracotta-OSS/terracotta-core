@@ -29,6 +29,7 @@ public class L2Config {
   private int                     maxHeap               = 256;
   private int                     proxyWaitTime         = 20 * 1000;
   private int                     proxyDownTime         = 100;
+  private final BytemanConfig     bytemanConfig         = new BytemanConfig();
 
   /**
    * Creates a l2 config with these defaults <br>
@@ -243,4 +244,7 @@ public class L2Config {
     this.proxyDownTime = proxyDownTime;
   }
 
+  public BytemanConfig getBytemanConfig() {
+    return bytemanConfig;
+  }
 }
