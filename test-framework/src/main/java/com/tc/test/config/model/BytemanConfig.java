@@ -44,8 +44,9 @@ public class BytemanConfig {
    * Note: This is a noop if a script is not configured.
    * 
    * @param jvmArgs the list to add the byteman configuration to
+   * @param tempDirectory a temporary folder to store the byteman script in.
    */
-  public void addTo(List<String> jvmArgs) {
+  public void addTo(List<String> jvmArgs, File tempDirectory) {
     if (getScript() == null) { return; }
 
     try {
@@ -54,7 +55,7 @@ public class BytemanConfig {
       builder.append(TestBaseUtil.jarFor(org.jboss.byteman.agent.Main.class));
 
       builder.append("=script:");
-      builder.append(makeScript().getAbsolutePath());
+      builder.append(makeScript(tempDirectory).getAbsolutePath());
 
       jvmArgs.add(builder.toString());
     } catch (IOException e) {
@@ -62,9 +63,9 @@ public class BytemanConfig {
     }
   }
 
-  private File makeScript() throws IOException {
+  private File makeScript(File tempDirectory) throws IOException {
     InputStream is = BytemanConfig.class.getResourceAsStream(getScript());
-    File scriptFile = File.createTempFile("script", "btm");
+    File scriptFile = File.createTempFile("script", ".btm", tempDirectory);
     FileOutputStream fos = new FileOutputStream(scriptFile);
     try {
       IOUtils.copy(is, fos);
@@ -72,7 +73,6 @@ public class BytemanConfig {
       is.close();
       fos.close();
     }
-    scriptFile.deleteOnExit();
     return scriptFile;
   }
 }

@@ -78,7 +78,7 @@ public class TestClientManager {
     TestBaseUtil.removeDuplicateJvmArgs(jvmArgs);
     TestBaseUtil.setHeapSizeArgs(jvmArgs, testConfig.getClientConfig().getMinHeap(), testConfig.getClientConfig()
         .getMaxHeap());
-    testConfig.getClientConfig().getBytemanConfig().addTo(jvmArgs);
+    testConfig.getClientConfig().getBytemanConfig().addTo(jvmArgs, tempDir);
 
     String clientArgs = System.getProperty(CLIENT_ARGS);
     if (clientArgs != null) {
