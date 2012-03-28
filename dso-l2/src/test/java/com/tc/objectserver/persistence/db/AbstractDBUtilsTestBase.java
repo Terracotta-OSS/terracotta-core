@@ -92,6 +92,14 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
     }
     mop.saveAllObjects(ptx, this.mos);
 
+    // add another one
+    final ObjectID oid = newObjectID();
+    final ManagedObject mo = newLogicalMapObject(oid);
+    assertTrue(mo.isDirty());
+    this.mos.add(mo);
+    mop.addNewObject(mo);
+    mop.saveObject(ptx, mo);
+
     ptx.commit();
 
     assertEquals(rootID, mop.loadRootID(rootOne));
