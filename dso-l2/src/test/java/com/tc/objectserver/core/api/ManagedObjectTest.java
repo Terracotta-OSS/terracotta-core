@@ -5,6 +5,7 @@
 package com.tc.objectserver.core.api;
 
 import com.tc.object.ObjectID;
+import com.tc.object.SerializationUtil;
 import com.tc.object.TestDNACursor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
@@ -32,9 +33,10 @@ public class ManagedObjectTest extends TCTestCase {
     assertTrue(mo.isNew());
 
     final TestDNACursor cursor = new TestDNACursor();
-    cursor.addPhysicalAction("field1", new ObjectID(1), true);
-    cursor.addPhysicalAction("field2", Boolean.valueOf(true), true);
-    cursor.addPhysicalAction("field3", Character.valueOf('c'), true);
+    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(10), "King Kong" });
+    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(20), "Mad Max" });
+    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(25), "Mummy Returns" });
+    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(100), new ObjectID(10000) });
     final TestDNA dna = new TestDNA(cursor);
 
     Map instances = instanceMonitor.getInstanceCounts();
@@ -85,7 +87,7 @@ public class ManagedObjectTest extends TCTestCase {
     final ManagedObjectImpl mo = new ManagedObjectImpl(objectID);
 
     final TestDNACursor cursor = new TestDNACursor();
-    cursor.addPhysicalAction("field1", new ObjectID(1), true);
+    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(10), "King Kong" });
     TestDNA dna = new TestDNA(cursor);
     dna.version = 10;
 
