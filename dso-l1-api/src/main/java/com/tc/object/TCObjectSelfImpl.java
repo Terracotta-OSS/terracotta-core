@@ -93,16 +93,22 @@ public class TCObjectSelfImpl extends TCObjectSelfCompilationHelper implements T
   }
 
   public void intFieldChanged(String classname, String fieldname, int newValue, int index) {
-    objectFieldChanged(classname, fieldname, Integer.valueOf(newValue), index);
+    throw new UnsupportedOperationException();
+    // objectFieldChanged(classname, fieldname, Integer.valueOf(newValue), index);
   }
 
   public void objectFieldChanged(String classname, String fieldname, Object newValue, int index) {
-    try {
-      tcClazz.getObjectManager().getTransactionManager().fieldChanged(this, classname, fieldname, newValue, index);
-    } catch (final Throwable t) {
-      // TODO::Revisit
-      throw new RuntimeException(t);
-    }
+    // try {
+    // tcClazz.getObjectManager().getTransactionManager().fieldChanged(this, classname, fieldname, newValue, index);
+    // } catch (final Throwable t) {
+    // // TODO::Revisit
+    // throw new RuntimeException(t);
+    // }
+    throw new UnsupportedOperationException();
+  }
+
+  public void logicalInvoke(int method, String methodName, Object[] parameters) {
+    tcClazz.getObjectManager().getTransactionManager().logicalInvoke(this, method, methodName, parameters);
   }
 
   public Object getPeerObject() {
@@ -204,10 +210,6 @@ public class TCObjectSelfImpl extends TCObjectSelfCompilationHelper implements T
 
   public void literalValueChanged(Object arg0, Object arg1) {
     // No literal value to change
-    throw new UnsupportedOperationException();
-  }
-
-  public void logicalInvoke(int arg0, String arg1, Object[] arg2) {
     throw new UnsupportedOperationException();
   }
 

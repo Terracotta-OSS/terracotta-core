@@ -6,11 +6,14 @@ package com.tc.objectserver.managedobject;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
+import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
@@ -76,18 +79,47 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
   public void apply(final ObjectID objectID, final DNACursor cursor, final ApplyTransactionInfo includeIDs)
       throws IOException {
     while (cursor.next()) {
-      final PhysicalAction pa = cursor.getPhysicalAction();
-      if (pa.isEntireArray()) {
-        final Object array = pa.getObject();
-        if (array instanceof byte[]) {
-          this.value = (byte[]) array;
+      Object action = cursor.getAction();
+      if (action instanceof PhysicalAction) {
+        final PhysicalAction pa = (PhysicalAction) action;
+        if (pa.isEntireArray()) {
+          final Object array = pa.getObject();
+          if (array instanceof byte[]) {
+            this.value = (byte[]) array;
+          } else {
+            final String type = safeTypeName(array);
+            logger.error("received array of type " + type + " -- ignoring it");
+          }
         } else {
-          final String type = safeTypeName(array);
-          logger.error("received array of type " + type + " -- ignoring it");
+          physicalActionApply(pa);
         }
       } else {
-        physicalActionApply(pa);
+        final LogicalAction la = (LogicalAction) action;
+        switch (la.getMethod()) {
+          case SerializationUtil.FIELD_CHANGED:
+            Object[] parameters = la.getParameters();
+            String fieldName = getString(parameters[0]);
+            if (LAST_ACCESS_TIME_FIELD.equals(fieldName)) {
+              this.lastAccessedTime = (Integer) parameters[1];
+            } else {
+              throw new AssertionError("Got unsupported logical change for field: " + fieldName + ", parameters: "
+                                       + parameters);
+            }
+            break;
+          default:
+            throw new AssertionError("Unknown logical action - " + la);
+        }
       }
+    }
+  }
+
+  private String getString(Object param) {
+    if (param instanceof UTF8ByteDataHolder) {
+      return ((UTF8ByteDataHolder) param).asString();
+    } else if (param instanceof String) {
+      return (String) param;
+    } else {
+      throw new AssertionError("Not a string value: " + safeTypeName(param) + " - " + param);
     }
   }
 
