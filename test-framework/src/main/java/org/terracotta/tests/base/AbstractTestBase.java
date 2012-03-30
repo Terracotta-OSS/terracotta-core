@@ -68,6 +68,7 @@ public abstract class AbstractTestBase extends TCTestCase {
     if (Vm.isJRockit()) {
       testConfig.getClientConfig().addExtraClientJvmArg("-XXfullSystemGC");
     }
+    testConfig.getClientConfig().addExtraClientJvmArg("-XX:+HeapDumpOnOutOfMemoryError");
   }
 
   /**
