@@ -20,7 +20,7 @@ public enum ManagedObjectStateStaticConfig {
   /**
    * Toolkit type root - reuses map managed object state
    */
-  TOOLKIT_TYPE_ROOT(ToolkitTypeNames.TOOLKIT_TYPE_ROOT_IMPL, Factory.MAP_TYPE_FACTORY),
+  TOOLKIT_TYPE_ROOT(ToolkitTypeNames.TOOLKIT_TYPE_ROOT_IMPL, Factory.TOOLKIT_TYPE_ROOT_TYPE_FACTORY),
   /**
    * Toolkit clusteredList type - reuses list object state
    */
@@ -95,6 +95,24 @@ public enum ManagedObjectStateStaticConfig {
   }
 
   public static enum Factory {
+    TOOLKIT_TYPE_ROOT_TYPE_FACTORY() {
+      @Override
+      public byte getStateObjectType() {
+        return ManagedObjectState.TOOLKIT_TYPE_ROOT_TYPE;
+      }
+
+      @Override
+      public ManagedObjectState readFrom(ObjectInput objectInput) throws IOException {
+        return ToolkitTypeRootManagedObjectState.readFrom(objectInput);
+      }
+
+      @Override
+      public ManagedObjectState newInstance(ObjectID oid, long classId,
+                                            PersistentCollectionFactory persistentCollectionFactory) {
+        return new ToolkitTypeRootManagedObjectState(classId, persistentCollectionFactory.createPersistentMap(oid));
+      }
+
+    },
     MAP_TYPE_FACTORY() {
 
       @Override
