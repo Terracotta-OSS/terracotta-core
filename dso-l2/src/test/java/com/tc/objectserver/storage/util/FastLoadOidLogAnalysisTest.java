@@ -12,11 +12,6 @@ import java.io.File;
 import java.util.List;
 
 public class FastLoadOidLogAnalysisTest extends AbstractDBUtilsTestBase {
-
-  public FastLoadOidLogAnalysisTest() {
-    disableTest();
-  }
-
   public void testFastLoadOidLogAnalysis() throws Exception {
 
     File databaseDir = new File(getTempDirectory().toString() + File.separator + "db-data");

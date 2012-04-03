@@ -18,6 +18,7 @@ public class PersistentCollectionsUtil {
       case ManagedObjectState.MAP_TYPE:
       case ManagedObjectState.PARTIAL_MAP_TYPE:
       case ManagedObjectState.SET_TYPE:
+      case ManagedObjectState.TOOLKIT_TYPE_ROOT_TYPE:
         return true;
       default:
         return false;
@@ -38,6 +39,7 @@ public class PersistentCollectionsUtil {
     switch (type) {
       case ManagedObjectState.MAP_TYPE:
       case ManagedObjectState.PARTIAL_MAP_TYPE:
+      case ManagedObjectState.TOOLKIT_TYPE_ROOT_TYPE:
         return (PersistableCollection) collectionFactory.createPersistentMap(id);
       case ManagedObjectState.SET_TYPE:
         return (PersistableCollection) collectionFactory.createPersistentSet(id);

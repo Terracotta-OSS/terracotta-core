@@ -11,10 +11,6 @@ import java.io.File;
 
 public class DBDiffTest extends AbstractDBUtilsTestBase {
 
-  public DBDiffTest() {
-    disableTest();
-  }
-
   public void testSleepycatTCDBDiff() throws Exception {
 
     File databaseDir1 = new File(getTempDirectory().toString() + File.separator + "db-data-1");

@@ -12,11 +12,6 @@ import java.io.File;
 import java.io.OutputStreamWriter;
 
 public class DBUsageTest extends AbstractDBUtilsTestBase {
-
-  public DBUsageTest() {
-    disableTest();
-  }
-
   public void testSleepycatDBUsageTest() throws Exception {
 
     File databaseDir = new File(getTempDirectory().toString() + File.separator + "db-data-test1");

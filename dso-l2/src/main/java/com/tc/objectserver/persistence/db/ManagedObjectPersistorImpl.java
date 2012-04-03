@@ -308,7 +308,7 @@ public final class ManagedObjectPersistorImpl extends DBPersistorBase implements
       try {
         this.collectionsPersistor.loadCollectionsToManagedState(tx, mo.getID(), state);
       } catch (final Exception e) {
-        throw new TCDatabaseException(e.getMessage());
+        throw new TCDatabaseException(e);
       }
     }
   }
