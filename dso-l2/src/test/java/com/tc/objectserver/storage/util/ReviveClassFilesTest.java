@@ -19,6 +19,10 @@ import java.util.Arrays;
 
 public class ReviveClassFilesTest extends AbstractDBUtilsTestBase {
 
+  public ReviveClassFilesTest() {
+    disableTest();
+  }
+
   public void testReviveFileClass() throws Exception {
 
     File databaseDir = new File(getTempDirectory().toString() + File.separator + "db-data");
@@ -40,8 +44,7 @@ public class ReviveClassFilesTest extends AbstractDBUtilsTestBase {
     PhysicalStateClassLoader loader = new PhysicalStateClassLoader();
 
     File[] filesList = classOutputDir.listFiles();
-    for (int i = 0; i < filesList.length; i++) {
-      File file = filesList[i];
+    for (File file : filesList) {
       FileInputStream fis = new FileInputStream(file);
       byte[] b = IOUtils.toByteArray(fis);
       System.out.println("file: " + file.getName());
@@ -49,7 +52,7 @@ public class ReviveClassFilesTest extends AbstractDBUtilsTestBase {
       System.out.println("genClassName: " + genClassName);
       try {
         Class clazz = loader.defineClassFromBytes(genClassName, 0, b, 0, b.length);
-        if(clazz == null) {
+        if (clazz == null) {
           fail("could not load class");
         }
       } catch (Exception e) {

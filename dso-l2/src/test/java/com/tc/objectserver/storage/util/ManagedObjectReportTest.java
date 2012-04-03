@@ -14,6 +14,10 @@ import java.io.File;
 
 public class ManagedObjectReportTest extends AbstractDBUtilsTestBase {
 
+  public ManagedObjectReportTest() {
+    disableTest();
+  }
+
   public void testManagedObjectReport() throws Exception {
 
     File databaseDir = new File(getTempDirectory().toString() + File.separator + "db-data");
