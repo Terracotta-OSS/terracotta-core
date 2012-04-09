@@ -23,6 +23,7 @@ import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.metadata.NVPair;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
+import com.tc.properties.NullTCProperties;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.tc.statistics.StatisticRetrievalAction;
@@ -156,7 +157,7 @@ public class NullManager implements Manager {
   }
 
   public TCProperties getTCProperties() {
-    throw new UnsupportedOperationException();
+    return NullTCProperties.INSTANCE;
   }
 
   public boolean isDsoMonitored(Object obj) {
