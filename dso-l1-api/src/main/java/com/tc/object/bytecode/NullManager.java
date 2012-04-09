@@ -185,7 +185,7 @@ public class NullManager implements Manager {
   }
 
   public DsoCluster getDsoCluster() {
-    throw new UnsupportedOperationException();
+    return null;
   }
 
   public MBeanServer getMBeanServer() {
