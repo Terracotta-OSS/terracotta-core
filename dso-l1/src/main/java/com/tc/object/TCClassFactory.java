@@ -8,7 +8,7 @@ import com.tc.object.applicator.ChangeApplicator;
 
 public interface TCClassFactory {
 
-  public static final String SERVER_MAP_CLASSNAME = "com.terracotta.toolkit.collections.ServerMap";
+  public static final String SERVER_MAP_CLASSNAME = "com.terracotta.toolkit.collections.map.ServerMap";
 
   public TCClass getOrCreate(Class clazz, ClientObjectManager objectManager);
 

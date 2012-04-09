@@ -324,7 +324,7 @@ public enum ManagedObjectStateStaticConfig {
     public final static String SERIALIZED_CLUSTERED_OBJECT_IMPL      = defineConstant("com.terracotta.toolkit.object.serialization.SerializedClusterObjectImpl");
     public final static String SERIALIZER_MAP_IMPL                   = defineConstant("com.terracotta.toolkit.object.serialization.SerializerMapImpl");
     public final static String CLUSTERED_OBJECT_STRIPE_IMPL          = defineConstant("com.terracotta.toolkit.object.ClusteredObjectStripeImpl");
-    public final static String SERVER_MAP_TYPE                       = defineConstant("com.terracotta.toolkit.collections.ServerMap");
+    public final static String SERVER_MAP_TYPE                       = defineConstant("com.terracotta.toolkit.collections.map.ServerMap");
     public final static String CLUSTERED_NOTIFIER_TYPE               = defineConstant("com.terracotta.toolkit.events.ClusteredNotifierImpl");
     public final static String SERIALIZED_ENTRY_TYPE                 = defineConstant("com.terracotta.toolkit.object.serialization.SerializedEntry");
     public final static String CUSTOM_LIFESPAN_SERIALIZED_ENTRY_TYPE = defineConstant("com.terracotta.toolkit.object.serialization.CustomLifespanSerializedEntry");
