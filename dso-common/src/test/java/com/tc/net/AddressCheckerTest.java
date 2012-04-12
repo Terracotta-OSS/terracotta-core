@@ -16,7 +16,7 @@ public class AddressCheckerTest extends TestCase {
     assertTrue(ac.isLegalBindAddress(InetAddress.getByName("0.0.0.0")));
     assertTrue(ac.isLegalBindAddress(InetAddress.getLocalHost()));
 
-    assertFalse(ac.isLegalBindAddress(InetAddress.getByName("www.sun.com")));
+    assertFalse(ac.isLegalBindAddress(InetAddress.getByName("137.254.16.113")));
   }
 
 }
