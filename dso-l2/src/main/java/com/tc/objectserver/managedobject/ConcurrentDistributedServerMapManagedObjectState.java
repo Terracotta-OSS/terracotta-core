@@ -48,6 +48,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   public static final String    MAX_TTI_SECONDS_FIELDNAME      = "maxTTISeconds";
   public static final String    MAX_TTL_SECONDS_FIELDNAME      = "maxTTLSeconds";
   public static final String    MAX_COUNT_IN_CLUSTER_FIELDNAME = "maxCountInCluster";
+  public static final String    COMPRESSION_ENABLED_FIELDNAME  = "compressionEnabled";
+  public static final String    COPY_ON_READ_ENABLED_FIELDNAME = "copyOnReadEnabled";
 
   protected int                 dsoLockType;
 
@@ -70,6 +72,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   private int            targetMaxTotalCount;
   private String         cacheName;
   private boolean        localCacheEnabled;
+  private boolean        compressionEnabled;
+  private boolean        copyOnReadEnabled;
 
   protected ConcurrentDistributedServerMapManagedObjectState(final ObjectInput in) throws IOException {
     super(in);
@@ -80,6 +84,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     this.invalidateOnChange = in.readBoolean();
     this.cacheName = in.readUTF();
     this.localCacheEnabled = in.readBoolean();
+    this.compressionEnabled = in.readBoolean();
+    this.copyOnReadEnabled = in.readBoolean();
   }
 
   protected ConcurrentDistributedServerMapManagedObjectState(final long classId, final Map map) {
@@ -116,6 +122,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     writer.addPhysicalAction(INVALIDATE_ON_CHANGE_FIELDNAME, Boolean.valueOf(this.invalidateOnChange));
     writer.addPhysicalAction(CACHE_NAME_FIELDNAME, cacheName);
     writer.addPhysicalAction(LOCAL_CACHE_ENABLED_FIELDNAME, localCacheEnabled);
+    writer.addPhysicalAction(COMPRESSION_ENABLED_FIELDNAME, compressionEnabled);
+    writer.addPhysicalAction(COPY_ON_READ_ENABLED_FIELDNAME, copyOnReadEnabled);
   }
 
   @Override
@@ -149,6 +157,10 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
           this.cacheName = name;
         } else if (fieldName.equals(LOCAL_CACHE_ENABLED_FIELDNAME)) {
           this.localCacheEnabled = (Boolean) physicalAction.getObject();
+        } else if (COMPRESSION_ENABLED_FIELDNAME.equals(physicalAction.getFieldName())) {
+          this.compressionEnabled = (Boolean) physicalAction.getObject();
+        } else if (COPY_ON_READ_ENABLED_FIELDNAME.equals(physicalAction.getFieldName())) {
+          this.copyOnReadEnabled = (Boolean) physicalAction.getObject();
         } else {
           throw new AssertionError("unexpected field name: " + fieldName);
         }
@@ -282,6 +294,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     out.writeBoolean(this.invalidateOnChange);
     out.writeUTF(this.cacheName);
     out.writeBoolean(localCacheEnabled);
+    out.writeBoolean(compressionEnabled);
+    out.writeBoolean(copyOnReadEnabled);
   }
 
   public Object getValueForKey(final Object portableKey) {
@@ -294,7 +308,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     final ConcurrentDistributedServerMapManagedObjectState mmo = (ConcurrentDistributedServerMapManagedObjectState) o;
     return super.basicEquals(o) && this.dsoLockType == mmo.dsoLockType && this.maxTTISeconds == mmo.maxTTISeconds
            && this.maxTTLSeconds == mmo.maxTTLSeconds && this.invalidateOnChange == mmo.invalidateOnChange
-           && this.targetMaxTotalCount == mmo.targetMaxTotalCount && this.localCacheEnabled == mmo.localCacheEnabled;
+           && this.targetMaxTotalCount == mmo.targetMaxTotalCount && this.localCacheEnabled == mmo.localCacheEnabled
+           && this.compressionEnabled == mmo.compressionEnabled && this.copyOnReadEnabled == mmo.copyOnReadEnabled;
   }
 
   static MapManagedObjectState readFrom(final ObjectInput in) throws IOException {
@@ -381,6 +396,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     result = prime * result + maxTTISeconds;
     result = prime * result + maxTTLSeconds;
     result = prime * result + targetMaxTotalCount;
+    result = prime * result + (compressionEnabled ? 1231 : 1237);
+    result = prime * result + (copyOnReadEnabled ? 1231 : 1237);
     return result;
   }
 

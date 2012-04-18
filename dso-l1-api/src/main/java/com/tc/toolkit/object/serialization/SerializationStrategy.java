@@ -15,7 +15,7 @@ public interface SerializationStrategy<T extends Serializable> {
    * @return serialized form
    * @throws IOException if serialization fails
    */
-  public byte[] serialize(T serializable) throws IOException;
+  public byte[] serialize(T serializable, boolean compress) throws IOException;
 
   /**
    * Deserialize the serialized value returning a new representation.
@@ -25,7 +25,7 @@ public interface SerializationStrategy<T extends Serializable> {
    * @throws IOException if deserialization fails
    * @throws ClassNotFoundException if a required class is not found
    */
-  public T deserialize(byte[] fromBytes) throws IOException, ClassNotFoundException;
+  public T deserialize(byte[] fromBytes, boolean compress) throws IOException, ClassNotFoundException;
 
   /**
    * Convert the given key into a portable {@code String} form.
