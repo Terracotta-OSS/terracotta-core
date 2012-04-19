@@ -29,8 +29,14 @@ public class NullIndexManager implements IndexManager {
     //
   }
 
-  public void upsert(String indexName, Object key, Object value, List<NVPair> attributes, boolean onlyIfAbsent,
-                     ObjectID segmentOid, MetaDataProcessingContext metaDataContext) {
+  public void update(String indexName, Object key, Object value, List<NVPair> attributes, ObjectID segmentOid,
+                     MetaDataProcessingContext metaDataContex) {
+    //
+  }
+
+  @Override
+  public void insert(String indexName, Object key, Object value, List<NVPair> attributes, ObjectID segmentOid,
+                     MetaDataProcessingContext metaDataContext) {
     //
   }
 
@@ -68,7 +74,7 @@ public class NullIndexManager implements IndexManager {
     return new String[] {};
   }
 
-  public InputStream getIndexFile(String cacheName, String fileName) {
+  public InputStream getIndexFile(String cacheName, String indexId, String fileName) {
     throw new AssertionError();
   }
 }

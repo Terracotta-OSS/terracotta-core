@@ -13,4 +13,5 @@ public interface IndexFile {
 
   public long length();
 
+  String getIndexId(); // striped idx id, as in <lucene_dir>/<cache_name>/<index_id>/[lucene index files...]
 }

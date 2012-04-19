@@ -128,7 +128,9 @@ public class IndexQueryResultImpl implements IndexQueryResult, Comparable {
 
   @Override
   public String toString() {
-    return "SearchQueryResultImpl [attributes=" + attributes + ", key=" + key + "]";
+    return new StringBuilder(256).append("<").append(getClass().getSimpleName()).append(": key=").append(key)
+        .append(" value=").append(valueOID).append(" attributes=").append(attributes).append(" sortAttributes=")
+        .append(sortAttributes).append(">").toString();
   }
 
 }

@@ -4,8 +4,6 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.async.api.ConfigurationContext;
-import com.tc.async.api.PostInit;
 import com.tc.handler.CallbackDumpAdapter;
 import com.tc.handler.CallbackDumpHandler;
 import com.tc.logging.TCLogger;
@@ -20,7 +18,6 @@ import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.context.RecallObjectsContext;
 import com.tc.objectserver.context.TransactionLookupContext;
 import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.properties.TCPropertiesConsts;
@@ -49,7 +46,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * This class keeps track of locally checked out objects for applies and maintain the objects to txnid mapping in the
  * server. It wraps calls going to object manager from lookup, apply, commit stages
  */
-public class TransactionalObjectManagerImpl implements TransactionalObjectManager, PrettyPrintable, PostInit {
+public class TransactionalObjectManagerImpl implements TransactionalObjectManager, PrettyPrintable {
 
   private static final TCLogger                                       logger                  = TCLogging
                                                                                                   .getLogger(TransactionalObjectManagerImpl.class);
@@ -74,8 +71,6 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
   private final TransactionalStageCoordinator                         txnStageCoordinator;
 
-  private ServerTransactionManager                                    txnManager;
-
   public TransactionalObjectManagerImpl(ObjectManager objectManager, ServerTransactionSequencer sequencer,
                                         ServerGlobalTransactionManager gtxm,
                                         TransactionalStageCoordinator txnStageCoordinator) {
@@ -85,19 +80,12 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     this.txnStageCoordinator = txnStageCoordinator;
   }
 
-  @Override
-  public void initializeContext(ConfigurationContext context) {
-    ServerConfigurationContext scc = (ServerConfigurationContext) context;
-    txnManager = scc.getTransactionManager();
-  }
-
   // ProcessTransactionHandler Method
   public void addTransactions(Collection<ServerTransaction> txns) {
     try {
       Collection<TransactionLookupContext> txnLookupContexts = createAndPreFetchObjectsFor(txns);
       this.sequencer.addTransactionLookupContexts(txnLookupContexts);
       this.txnStageCoordinator.initiateLookup();
-      this.txnManager.processMetaData(txns);
     } catch (Throwable t) {
       logger.error(t);
       dumpOnError(txns);

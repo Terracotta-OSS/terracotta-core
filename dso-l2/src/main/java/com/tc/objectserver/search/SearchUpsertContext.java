@@ -19,15 +19,15 @@ public class SearchUpsertContext extends BaseSearchEventContext {
   private final List<NVPair> attributes;
   private final Object       cacheKey;
   private final Object       cacheValue;
-  private final boolean      putIfAbsent;
+  private final boolean      isInsert;
 
   public SearchUpsertContext(ObjectID segmentOid, String name, Object cacheKey, Object cacheValue,
-                             List<NVPair> attributes, MetaDataProcessingContext metaDataContext, boolean putIfAbsent) {
+                             List<NVPair> attributes, MetaDataProcessingContext metaDataContext, final boolean isInsert) {
     super(segmentOid, name, metaDataContext);
     this.cacheKey = cacheKey;
     this.cacheValue = cacheValue;
     this.attributes = attributes;
-    this.putIfAbsent = putIfAbsent;
+    this.isInsert = isInsert;
   }
 
   /**
@@ -51,8 +51,8 @@ public class SearchUpsertContext extends BaseSearchEventContext {
     return attributes;
   }
 
-  public boolean isPutIfAbsent() {
-    return putIfAbsent;
+  public boolean isInsert() {
+    return isInsert;
   }
 
 }

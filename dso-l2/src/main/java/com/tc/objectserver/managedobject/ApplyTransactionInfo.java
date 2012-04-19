@@ -23,21 +23,24 @@ public class ApplyTransactionInfo {
   private final Set<ObjectID>       parents;
   private final ServerTransactionID stxnID;
   private final boolean             isActiveTxn;
-  private Set<ObjectID>             ignoreBroadcasts = Collections.EMPTY_SET;
-  private Set<ObjectID>             initiateEviction = Collections.EMPTY_SET;
-  private SortedSet<ObjectID>       deleteObjects    = TCCollections.EMPTY_SORTED_SET;
-  private Invalidations             invalidate       = null;
+  private Set<ObjectID>             ignoreBroadcasts   = Collections.EMPTY_SET;
+  private Set<ObjectID>             initiateEviction   = Collections.EMPTY_SET;
+  private SortedSet<ObjectID>       deleteObjects      = TCCollections.EMPTY_SORTED_SET;
+  private Invalidations             invalidate         = null;
+  private final boolean             isSearchEnabled;
+  private final ObjectIDSet         keyPresentForValue = new ObjectIDSet();
 
   // For tests
   public ApplyTransactionInfo() {
-    this(true, ServerTransactionID.NULL_ID);
+    this(true, ServerTransactionID.NULL_ID, false);
   }
 
-  public ApplyTransactionInfo(final boolean isActiveTxn, final ServerTransactionID stxnID) {
+  public ApplyTransactionInfo(final boolean isActiveTxn, final ServerTransactionID stxnID, final boolean isSearchEnabled) {
     this.isActiveTxn = isActiveTxn;
     this.stxnID = stxnID;
     this.parents = new ObjectIDSet();
     this.nodes = new HashMap<ObjectID, Node>();
+    this.isSearchEnabled = isSearchEnabled;
   }
 
   public void addBackReference(final ObjectID child, final ObjectID parent) {
@@ -167,5 +170,17 @@ public class ApplyTransactionInfo {
 
   public ServerTransactionID getServerTransactionID() {
     return stxnID;
+  }
+
+  public boolean isKeyPresentForValue(ObjectID value) {
+    return this.keyPresentForValue.contains(value);
+  }
+
+  public void addKeyPresentForValue(ObjectID val) {
+    this.keyPresentForValue.add(val);
+  }
+
+  public boolean isSearchEnabled() {
+    return isSearchEnabled;
   }
 }

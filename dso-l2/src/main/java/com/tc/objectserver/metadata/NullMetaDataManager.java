@@ -3,13 +3,14 @@
  */
 package com.tc.objectserver.metadata;
 
-import com.tc.object.dna.api.MetaDataReader;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionManager;
 
 public class NullMetaDataManager implements MetaDataManager {
 
-  public boolean processMetaDatas(ServerTransaction txn, MetaDataReader[] readers) {
+  @Override
+  public boolean processMetaData(ServerTransaction txn, ApplyTransactionInfo applyInfo) {
     return true;
   }
 

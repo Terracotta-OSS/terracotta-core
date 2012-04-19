@@ -22,6 +22,17 @@ public class Count extends AbstractAggregator {
     count++;
   }
 
+  /**
+   * Increment count by given number.
+   * 
+   * @param delta how much to increment by
+   * @throws IllegalArgumentException if delta is negative
+   */
+  public void increment(int delta) throws IllegalArgumentException {
+    if (delta < 0) throw new IllegalArgumentException("argument must not be negative");
+    count += delta;
+  }
+
   public void accept(Aggregator incoming) throws IllegalArgumentException {
     if (incoming instanceof Count) {
       count += ((Count) incoming).count;

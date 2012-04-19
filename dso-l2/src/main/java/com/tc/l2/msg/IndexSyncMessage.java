@@ -16,6 +16,7 @@ public class IndexSyncMessage extends AbstractGroupMessage implements OrderedEve
   public static final int INDEX_SYNC_TYPE = 0;
 
   private String          cacheName;
+  private String          indexId;
   private String          fileName;
   private int             length;
   private byte[]          data;
@@ -32,9 +33,10 @@ public class IndexSyncMessage extends AbstractGroupMessage implements OrderedEve
     super(type);
   }
 
-  public void initialize(final String cName, final String fName, final byte[] fileData, long sID, boolean tcFile,
-                         boolean last) {
+  public void initialize(final String cName, String idxId, final String fName, final byte[] fileData, long sID,
+                         boolean tcFile, boolean last) {
     this.cacheName = cName;
+    indexId = idxId;
     this.fileName = fName;
     this.length = fileData.length;
     this.data = fileData;
@@ -47,6 +49,7 @@ public class IndexSyncMessage extends AbstractGroupMessage implements OrderedEve
   protected void basicDeserializeFrom(final TCByteBufferInput in) throws IOException {
     Assert.assertEquals(INDEX_SYNC_TYPE, getType());
     this.cacheName = in.readString();
+    this.indexId = in.readString();
     this.length = in.readInt();
     this.fileName = in.readString();
     this.sequenceID = in.readLong();
@@ -60,6 +63,7 @@ public class IndexSyncMessage extends AbstractGroupMessage implements OrderedEve
   protected void basicSerializeTo(final TCByteBufferOutput out) {
     Assert.assertEquals(INDEX_SYNC_TYPE, getType());
     out.writeString(this.cacheName);
+    out.writeString(this.indexId);
     out.writeInt(this.length);
     out.writeString(this.fileName);
     out.writeLong(this.sequenceID);
@@ -70,6 +74,10 @@ public class IndexSyncMessage extends AbstractGroupMessage implements OrderedEve
 
   public String getCacheName() {
     return this.cacheName;
+  }
+
+  public String getIndexId() {
+    return this.indexId;
   }
 
   public String getFileName() {

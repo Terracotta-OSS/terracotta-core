@@ -304,7 +304,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     tcEventLogger.registerEventCallback(new TerracottaOperatorEventCallbackLogger());
   }
 
-  public DBEnvironment createDBEnvironment(final boolean persistent, final File dbhome, final L2DSOConfig l2DSOCofig,
+  public DBEnvironment createDBEnvironment(final boolean persistent, final File dbhome, final L2DSOConfig l2DSOConfig,
                                            final DumpHandlerStore dumpHandlerStore, final StageManager stageManager,
                                            final SampledCounter l2FaultFromDisk,
                                            final SampledCounter l2FaultFromOffheap,

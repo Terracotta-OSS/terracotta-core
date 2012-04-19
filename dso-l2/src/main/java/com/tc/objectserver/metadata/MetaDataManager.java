@@ -3,7 +3,7 @@
  */
 package com.tc.objectserver.metadata;
 
-import com.tc.object.dna.api.MetaDataReader;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionManager;
 
@@ -18,10 +18,10 @@ public interface MetaDataManager {
    * Process metadata.
    * 
    * @param ServerTransaction transaction associated with metadata reader.
-   * @param MetaDataReader metadata reader associated with a DNA.
+   * @param ApplyTransactionInfo applyinfo associated with the txn.
    * @return boolean if all meta data processing is complete
    */
-  public boolean processMetaDatas(ServerTransaction txn, MetaDataReader[] readers);
+  public boolean processMetaData(ServerTransaction txn, ApplyTransactionInfo applyInfo);
 
   public void setTransactionManager(ServerTransactionManager transactionManager);
 

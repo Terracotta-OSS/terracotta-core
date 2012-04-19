@@ -51,10 +51,14 @@ public interface ServerTransaction extends GlobalTransaction {
   public Collection getNotifies();
 
   public DmiDescriptor[] getDmiDescriptors();
-  
+
   public MetaDataReader[] getMetaDataReaders();
 
   public boolean isActiveTxn();
+
+  public boolean isResent();
+
+  public void markResent();
 
   /**
    * Number of actual client/application transactions that this server transaction contains. Txn folding on the client
@@ -64,4 +68,6 @@ public interface ServerTransaction extends GlobalTransaction {
 
   // Used in active-active
   public long[] getHighWaterMarks();
+
+  public boolean isSearchEnabled();
 }

@@ -19,6 +19,7 @@ import com.tc.object.tx.TxnType;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
+import com.tc.util.concurrent.SetOnceFlag;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -47,6 +48,8 @@ public class ServerTransactionImpl implements ServerTransaction {
   private final TxnBatchID             batchID;
   private final int                    numApplicationTxn;
   private final long[]                 highWaterMarks;
+
+  private final SetOnceFlag            isResent = new SetOnceFlag();
 
   private GlobalTransactionID          globalTxnID;
 
@@ -185,7 +188,20 @@ public class ServerTransactionImpl implements ServerTransaction {
     return true;
   }
 
+  public boolean isResent() {
+    return isResent.isSet();
+  }
+
+  public void markResent() {
+    isResent.set();
+  }
+
   public long[] getHighWaterMarks() {
     return this.highWaterMarks;
+  }
+
+  @Override
+  public boolean isSearchEnabled() {
+    return getMetaDataReaders().length > 0;
   }
 }
