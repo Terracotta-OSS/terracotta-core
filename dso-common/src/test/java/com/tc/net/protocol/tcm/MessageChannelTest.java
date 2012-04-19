@@ -25,6 +25,7 @@ import com.tc.util.SequenceGenerator;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
+import com.tc.util.runtime.Vm;
 
 import gnu.trove.TLongHashSet;
 
@@ -65,8 +66,8 @@ public class MessageChannelTest extends TCTestCase {
 
   // Disabled until MNK-3330
   public MessageChannelTest() {
-    if (Os.isWindows()) {
-      disableTest();
+    if (Os.isWindows() && Vm.isJDK17()) {
+      timebombTest("2012-06-20");
     }
   }
 
