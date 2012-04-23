@@ -8,7 +8,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>terracotta-parent</artifactId>
-    <version>3.7.0-SNAPSHOT</version>
+    <version>3.8.0-SNAPSHOT</version>
     <relativePath>../terracotta-parent</relativePath>
   </parent>
 
@@ -19,8 +19,8 @@
 
   <properties>
     <toolkit.api>1.5</toolkit.api>
-    <toolkit.version>5.0.0-SNAPSHOT</toolkit.version>
-    <ehcache.version>2.6.0-SNAPSHOT</ehcache.version>
+    <toolkit.version>6.0.0-SNAPSHOT</toolkit.version>
+    <ehcache.version>2.7.0-SNAPSHOT</ehcache.version>
     <quartz.version>3.0.0-SNAPSHOT</quartz.version>
     <terracotta-session.version>3.0.0-SNAPSHOT</terracotta-session.version>
 
@@ -490,7 +490,7 @@
                     def patchFiles = patchDef.files.collect { it.text() }
 
                     ant.tar(destfile: "${project.build.directory}/${patchName}.tar.gz", longfile: "gnu", compression: "gzip") {
-                      patchFiles.each { file ->
+                      patchFiles.each { file -&gt;
                         tarfileset(dir: "${kitDir}") {
                           include(name: file)
                         }
