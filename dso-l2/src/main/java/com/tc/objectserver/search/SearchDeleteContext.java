@@ -13,9 +13,9 @@ import com.tc.objectserver.metadata.MetaDataProcessingContext;
  */
 public class SearchDeleteContext extends BaseSearchEventContext {
 
-  private final Object cacheKey;
+  private final String cacheKey;
 
-  public SearchDeleteContext(ObjectID segmentOid, String name, Object cacheKey,
+  public SearchDeleteContext(ObjectID segmentOid, String name, String cacheKey,
                              MetaDataProcessingContext metaDataContext) {
     super(segmentOid, name, metaDataContext);
     this.cacheKey = cacheKey;
@@ -24,7 +24,7 @@ public class SearchDeleteContext extends BaseSearchEventContext {
   /**
    * key of cache entry.
    */
-  public Object getCacheKey() {
+  public String getCacheKey() {
     return cacheKey;
   }
 

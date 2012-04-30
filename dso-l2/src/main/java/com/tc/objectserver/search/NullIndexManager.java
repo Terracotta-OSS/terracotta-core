@@ -4,8 +4,12 @@
 package com.tc.objectserver.search;
 
 import com.tc.object.ObjectID;
-import com.tc.object.metadata.NVPair;
 import com.tc.objectserver.metadata.MetaDataProcessingContext;
+import com.terracottatech.search.IndexFile;
+import com.terracottatech.search.NVPair;
+import com.terracottatech.search.SearchResult;
+import com.terracottatech.search.SyncSnapshot;
+import com.terracottatech.search.ValueID;
 
 import java.io.InputStream;
 import java.util.Collections;
@@ -25,17 +29,17 @@ public class NullIndexManager implements IndexManager {
     //
   }
 
-  public void remove(String indexName, Object key, ObjectID segmentOid, MetaDataProcessingContext metaDataContext) {
+  public void remove(String indexName, String key, ObjectID segmentOid, MetaDataProcessingContext metaDataContext) {
     //
   }
 
-  public void update(String indexName, Object key, Object value, List<NVPair> attributes, ObjectID segmentOid,
+  public void update(String indexName, String key, ValueID value, List<NVPair> attributes, ObjectID segmentOid,
                      MetaDataProcessingContext metaDataContex) {
     //
   }
 
   @Override
-  public void insert(String indexName, Object key, Object value, List<NVPair> attributes, ObjectID segmentOid,
+  public void insert(String indexName, String key, ValueID value, List<NVPair> attributes, ObjectID segmentOid,
                      MetaDataProcessingContext metaDataContext) {
     //
   }
@@ -56,12 +60,12 @@ public class NullIndexManager implements IndexManager {
     };
   }
 
-  public void removeIfValueEqual(String indexName, Map<Object, Object> toRemove, ObjectID segmentOid,
+  public void removeIfValueEqual(String indexName, Map<String, ValueID> toRemove, ObjectID segmentOid,
                                  MetaDataProcessingContext metaDataContext) {
     //
   }
 
-  public void replace(String indexName, Object key, Object value, Object previousValue, List<NVPair> attributes,
+  public void replace(String indexName, String key, ValueID value, ValueID previousValue, List<NVPair> attributes,
                       ObjectID segmentOid, MetaDataProcessingContext metaDataContext) {
     //
   }

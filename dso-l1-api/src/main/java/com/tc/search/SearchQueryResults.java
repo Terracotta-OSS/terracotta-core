@@ -3,6 +3,8 @@
  */
 package com.tc.search;
 
+import com.terracottatech.search.IndexQueryResult;
+
 import java.util.List;
 
 public interface SearchQueryResults {

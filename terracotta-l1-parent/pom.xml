@@ -107,5 +107,9 @@
       <groupId>org.terracotta.license</groupId>
       <artifactId>terracotta-license</artifactId>
     </dependency> 
+    <dependency>
+      <groupId>com.terracottatech</groupId>
+      <artifactId>search</artifactId>
+    </dependency> 
   </dependencies>
 </project>

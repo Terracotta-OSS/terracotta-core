@@ -8,7 +8,7 @@ import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.SearchRequestID;
-import com.tc.object.metadata.NVPair;
+import com.terracottatech.search.NVPair;
 
 import java.util.List;
 import java.util.Set;

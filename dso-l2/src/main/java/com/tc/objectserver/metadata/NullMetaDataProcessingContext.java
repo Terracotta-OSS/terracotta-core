@@ -3,9 +3,15 @@
  */
 package com.tc.objectserver.metadata;
 
-public class NullMetaDataProcessingContext implements MetaDataProcessingContext {
 
-  public void metaDataProcessed() {
+public class NullMetaDataProcessingContext extends MetaDataProcessingContext {
+
+  public NullMetaDataProcessingContext() {
+    super(null, null);
+  }
+
+  @Override
+  public void processed() {
     // no-op
   }
 

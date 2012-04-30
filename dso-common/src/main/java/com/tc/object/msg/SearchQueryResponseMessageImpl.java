@@ -13,35 +13,36 @@ import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.SearchRequestID;
 import com.tc.object.session.SessionID;
-import com.tc.search.IndexQueryResult;
-import com.tc.search.aggregator.AbstractAggregator;
-import com.tc.search.aggregator.Aggregator;
+import com.terracottatech.search.IndexQueryResult;
+import com.terracottatech.search.aggregator.AbstractAggregator;
+import com.terracottatech.search.aggregator.Aggregator;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 
- * 
+ *
+ *
  */
 public class SearchQueryResponseMessageImpl extends DSOMessageBase implements SearchQueryResponseMessage {
+  private static final IndexQueryResultSerializer INDEX_QUERY_RESULT_SERIALIZER = new IndexQueryResultSerializer();
 
-  private final static byte      SEARCH_REQUEST_ID       = 0;
-  private final static byte      GROUP_ID_FROM           = 1;
-  private final static byte      RESULTS_SIZE            = 2;
-  private final static byte      AGGREGATOR_RESULTS_SIZE = 3;
-  private final static byte      ERROR_MESSAGE           = 4;
-  private final static byte      IS_ERROR                = 5;
-  private final static byte      ANY_CRITERIA_MATCHED    = 6;
+  private final static byte                       SEARCH_REQUEST_ID             = 0;
+  private final static byte                       GROUP_ID_FROM                 = 1;
+  private final static byte                       RESULTS_SIZE                  = 2;
+  private final static byte                       AGGREGATOR_RESULTS_SIZE       = 3;
+  private final static byte                       ERROR_MESSAGE                 = 4;
+  private final static byte                       IS_ERROR                      = 5;
+  private final static byte                       ANY_CRITERIA_MATCHED          = 6;
 
-  private SearchRequestID        requestID;
-  private GroupID                groupIDFrom;
-  private List<IndexQueryResult> results;
-  private List<Aggregator>       aggregators;
-  private String                 errorMessage;
-  private boolean                isError;
-  private boolean                anyCriteriaMatched;
+  private SearchRequestID                         requestID;
+  private GroupID                                 groupIDFrom;
+  private List<IndexQueryResult>                  results;
+  private List<Aggregator>                        aggregators;
+  private String                                  errorMessage;
+  private boolean                                 isError;
+  private boolean                                 anyCriteriaMatched;
 
   public SearchQueryResponseMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                         MessageChannel channel, TCMessageType type) {
@@ -131,7 +132,7 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
       putNVPair(RESULTS_SIZE, this.results.size());
 
       for (IndexQueryResult result : this.results) {
-        result.serializeTo(outStream);
+        INDEX_QUERY_RESULT_SERIALIZER.serialize(result, outStream);
       }
     }
 
@@ -139,7 +140,11 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
       putNVPair(AGGREGATOR_RESULTS_SIZE, this.aggregators.size());
 
       for (Aggregator result : this.aggregators) {
-        result.serializeTo(outStream);
+        try {
+          result.serializeTo(outStream);
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
       }
     }
 
@@ -168,8 +173,7 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
         int size = getIntValue();
         this.results = new ArrayList(size);
         while (size-- > 0) {
-          IndexQueryResult result = new IndexQueryResultImpl();
-          result.deserializeFrom(input);
+          IndexQueryResult result = INDEX_QUERY_RESULT_SERIALIZER.deserializeFrom(input);
           this.results.add(result);
         }
         return true;

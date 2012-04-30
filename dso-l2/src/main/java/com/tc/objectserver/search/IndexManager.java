@@ -4,8 +4,12 @@
 package com.tc.objectserver.search;
 
 import com.tc.object.ObjectID;
-import com.tc.object.metadata.NVPair;
 import com.tc.objectserver.metadata.MetaDataProcessingContext;
+import com.terracottatech.search.IndexException;
+import com.terracottatech.search.NVPair;
+import com.terracottatech.search.SearchResult;
+import com.terracottatech.search.SyncSnapshot;
+import com.terracottatech.search.ValueID;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,21 +19,21 @@ import java.util.Set;
 
 public interface IndexManager {
 
-  void removeIfValueEqual(String indexName, Map<Object, Object> toRemove, ObjectID segmentOid,
+  void removeIfValueEqual(String indexName, Map<String, ValueID> toRemove, ObjectID segmentOid,
                           MetaDataProcessingContext metaDataContext) throws IndexException;
 
-  void remove(String indexName, Object key, ObjectID segmentOid, MetaDataProcessingContext metaDataContext)
+  void remove(String indexName, String key, ObjectID segmentOid, MetaDataProcessingContext metaDataContext)
       throws IndexException;
 
-  void update(String indexName, Object key, Object value, List<NVPair> attributes, ObjectID segmentOid,
+  void update(String indexName, String key, ValueID value, List<NVPair> attributes, ObjectID segmentOid,
               MetaDataProcessingContext metaDataContext) throws IndexException;
 
-  void insert(String cacheName, Object cacheKey, Object cacheValue, List<NVPair> attributes, ObjectID segmentOid,
-              MetaDataProcessingContext metaDataProcessingContext) throws IndexException;
+  void insert(String cacheName, String key, ValueID cacheValue, List<NVPair> attributes, ObjectID segmentOid,
+              MetaDataProcessingContext MetaDataProcessingContext) throws IndexException;
 
   void clear(String indexName, ObjectID segmentOid, MetaDataProcessingContext metaDataContext) throws IndexException;
 
-  void replace(String indexName, Object key, Object value, Object previousValue, List<NVPair> attributes,
+  void replace(String indexName, String key, ValueID value, ValueID previousValue, List<NVPair> attributes,
                ObjectID segmentOid, MetaDataProcessingContext metaDataContext) throws IndexException;
 
   public SearchResult searchIndex(String indexName, List queryStack, boolean includeKeys, boolean includeValues,

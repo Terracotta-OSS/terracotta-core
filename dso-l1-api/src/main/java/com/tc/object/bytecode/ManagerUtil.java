@@ -15,12 +15,12 @@ import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.metadata.MetaDataDescriptor;
-import com.tc.object.metadata.NVPair;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.tc.statistics.StatisticRetrievalAction;
+import com.terracottatech.search.NVPair;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

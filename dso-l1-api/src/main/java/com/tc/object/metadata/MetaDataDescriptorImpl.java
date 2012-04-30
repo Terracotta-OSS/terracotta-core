@@ -8,8 +8,12 @@ import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
-import com.tc.object.metadata.AbstractNVPair.EnumNVPair;
 import com.tc.util.ClassUtils;
+import com.terracottatech.search.AbstractNVPair;
+import com.terracottatech.search.AbstractNVPair.EnumNVPair;
+import com.terracottatech.search.NVPair;
+import com.terracottatech.search.ValueID;
+import com.terracottatech.search.ValueType;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,8 +32,9 @@ import java.util.Map;
  */
 public class MetaDataDescriptorImpl implements MetaDataDescriptorInternal {
 
-  private static final MetaDataDescriptorImpl TEMPLATE    = new MetaDataDescriptorImpl("template");
-  public static final MetaDataDescriptor[]    EMPTY_ARRAY = new MetaDataDescriptor[] {};
+  private static final NVPairSerializer       NVPAIR_SERIALIZER = new NVPairSerializer();
+  private static final MetaDataDescriptorImpl TEMPLATE          = new MetaDataDescriptorImpl("template");
+  public static final MetaDataDescriptor[]    EMPTY_ARRAY       = new MetaDataDescriptor[] {};
 
   private final String                        category;
   private final List<NVPair>                  metaDatas;
@@ -72,7 +77,7 @@ public class MetaDataDescriptorImpl implements MetaDataDescriptorInternal {
     final int size = in.readInt();
     List<NVPair> data = new ArrayList<NVPair>(size);
     for (int i = 0; i < size; i++) {
-      data.add(AbstractNVPair.deserializeInstance(in, serializer));
+      data.add(NVPAIR_SERIALIZER.deserialize(in, serializer));
     }
 
     return new MetaDataDescriptorImpl(cat, Collections.unmodifiableList(data), id);
@@ -86,7 +91,7 @@ public class MetaDataDescriptorImpl implements MetaDataDescriptorInternal {
 
     out.writeInt(metaDatas.size());
     for (NVPair nvpair : metaDatas) {
-      nvpair.serializeTo(out, serializer);
+      NVPAIR_SERIALIZER.serialize(nvpair, out, serializer);
     }
   }
 
@@ -153,7 +158,7 @@ public class MetaDataDescriptorImpl implements MetaDataDescriptorInternal {
   }
 
   public void add(String name, ObjectID value) {
-    metaDatas.add(new AbstractNVPair.ObjectIdNVPair(name, value));
+    metaDatas.add(new AbstractNVPair.ValueIdNVPair(name, new ValueID(value.toLong())));
   }
 
   public void addNull(String name) {
@@ -235,7 +240,7 @@ public class MetaDataDescriptorImpl implements MetaDataDescriptorInternal {
         case NULL: {
           throw new AssertionError();
         }
-        case OBJECT_ID: {
+        case VALUE_ID: {
           add(name, (ObjectID) value);
         }
       }
@@ -268,7 +273,7 @@ public class MetaDataDescriptorImpl implements MetaDataDescriptorInternal {
     map.put(Date.class, ValueType.DATE);
     map.put(java.sql.Date.class, ValueType.SQL_DATE);
     map.put(byte[].class, ValueType.BYTE_ARRAY);
-    map.put(ObjectID.class, ValueType.OBJECT_ID);
+    map.put(ObjectID.class, ValueType.VALUE_ID);
 
     TYPES = map;
   }

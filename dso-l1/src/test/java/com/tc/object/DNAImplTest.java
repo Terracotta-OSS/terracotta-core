@@ -21,9 +21,9 @@ import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.metadata.MetaDataDescriptorImpl;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
-import com.tc.object.metadata.NVPair;
-import com.tc.object.metadata.ValueType;
 import com.tc.util.Assert;
+import com.terracottatech.search.NVPair;
+import com.terracottatech.search.ValueType;
 
 import java.util.Arrays;
 import java.util.Date;

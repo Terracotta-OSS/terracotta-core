@@ -7,9 +7,9 @@ import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.object.dna.impl.NullObjectStringSerializer;
 import com.tc.object.dna.impl.ObjectStringSerializer;
-import com.tc.object.metadata.AbstractNVPair;
-import com.tc.object.metadata.NVPair;
-import com.tc.search.IndexQueryResult;
+import com.tc.object.metadata.NVPairSerializer;
+import com.terracottatech.search.IndexQueryResult;
+import com.terracottatech.search.NVPair;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,10 +22,12 @@ import java.util.List;
  */
 public class IndexQueryResultsImpl implements IndexQueryResults {
 
-  private static final ObjectStringSerializer NULL_SERIALIZER = new NullObjectStringSerializer();
+  private static final IndexQueryResultSerializer INDEX_QUERY_RESULT_SERIALIZER = new IndexQueryResultSerializer();
+  private static final NVPairSerializer           NVPAIR_SERIALIZER             = new NVPairSerializer();
+  private static final ObjectStringSerializer     NULL_SERIALIZER               = new NullObjectStringSerializer();
 
-  private List<IndexQueryResult>              queryResults;
-  private List<NVPair>                        aggregatorResults;
+  private List<IndexQueryResult>                  queryResults;
+  private List<NVPair>                            aggregatorResults;
 
   public IndexQueryResultsImpl(List<IndexQueryResult> queryResults, List<NVPair> aggregatorResults) {
     this.queryResults = queryResults;
@@ -53,14 +55,13 @@ public class IndexQueryResultsImpl implements IndexQueryResults {
     int queryCount = input.readInt();
     this.queryResults = new ArrayList<IndexQueryResult>();
     while (queryCount-- < 0) {
-      IndexQueryResult result = new IndexQueryResultImpl();
-      result.deserializeFrom(input);
+      IndexQueryResult result = INDEX_QUERY_RESULT_SERIALIZER.deserializeFrom(input);
       this.queryResults.add(result);
     }
     int aggregatorCount = input.readInt();
     this.aggregatorResults = new ArrayList<NVPair>();
     while (aggregatorCount-- < 0) {
-      NVPair pair = AbstractNVPair.deserializeInstance(input, NULL_SERIALIZER);
+      NVPair pair = NVPAIR_SERIALIZER.deserialize(input, NULL_SERIALIZER);
       this.aggregatorResults.add(pair);
     }
     return this;
@@ -72,11 +73,11 @@ public class IndexQueryResultsImpl implements IndexQueryResults {
   public void serializeTo(TCByteBufferOutput output) {
     output.writeInt(this.queryResults.size());
     for (IndexQueryResult result : this.queryResults) {
-      result.serializeTo(output);
+      INDEX_QUERY_RESULT_SERIALIZER.serialize(result, output);
     }
     output.writeInt(this.aggregatorResults.size());
     for (NVPair pair : this.aggregatorResults) {
-      pair.serializeTo(output, NULL_SERIALIZER);
+      NVPAIR_SERIALIZER.serialize(pair, output, NULL_SERIALIZER);
     }
   }
 

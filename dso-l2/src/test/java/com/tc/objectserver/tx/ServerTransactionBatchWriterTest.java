@@ -25,12 +25,12 @@ import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.StringLockID;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
-import com.tc.object.metadata.NVPair;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.util.Assert;
 import com.tc.util.SequenceID;
+import com.terracottatech.search.NVPair;
 
 import java.io.IOException;
 import java.util.ArrayList;

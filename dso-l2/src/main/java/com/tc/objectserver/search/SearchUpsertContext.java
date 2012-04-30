@@ -4,8 +4,9 @@
 package com.tc.objectserver.search;
 
 import com.tc.object.ObjectID;
-import com.tc.object.metadata.NVPair;
 import com.tc.objectserver.metadata.MetaDataProcessingContext;
+import com.terracottatech.search.NVPair;
+import com.terracottatech.search.ValueID;
 
 import java.util.List;
 
@@ -17,11 +18,11 @@ import java.util.List;
 public class SearchUpsertContext extends BaseSearchEventContext {
 
   private final List<NVPair> attributes;
-  private final Object       cacheKey;
-  private final Object       cacheValue;
+  private final String       cacheKey;
+  private final ValueID      cacheValue;
   private final boolean      isInsert;
 
-  public SearchUpsertContext(ObjectID segmentOid, String name, Object cacheKey, Object cacheValue,
+  public SearchUpsertContext(ObjectID segmentOid, String name, String cacheKey, ValueID cacheValue,
                              List<NVPair> attributes, MetaDataProcessingContext metaDataContext, final boolean isInsert) {
     super(segmentOid, name, metaDataContext);
     this.cacheKey = cacheKey;
@@ -33,14 +34,14 @@ public class SearchUpsertContext extends BaseSearchEventContext {
   /**
    * Key for cache entry.
    */
-  public Object getCacheKey() {
+  public String getCacheKey() {
     return cacheKey;
   }
 
   /**
    * Value for cache entry
    */
-  public Object getCacheValue() {
+  public ValueID getCacheValue() {
     return cacheValue;
   }
 

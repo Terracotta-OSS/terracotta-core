@@ -28,6 +28,7 @@
     <jetty.version>6.1.8</jetty.version>
     <slf4j.version>1.6.4</slf4j.version>
     <offheap-store.version>1.0.6</offheap-store.version>
+    <search.version>1.0.0-SNAPSHOT</search.version>
     <management.version>1.0.0-SNAPSHOT</management.version>
     <terracotta-license.version>1.0.4-SNAPSHOT</terracotta-license.version>
     <derby.version>10.8.2.2</derby.version>
@@ -81,11 +82,6 @@
         <groupId>org.terracotta</groupId>
         <artifactId>linked-child-process</artifactId>
         <version>${linked-child-process.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.lucene</groupId>
-        <artifactId>lucene-core</artifactId>
-        <version>3.0.3</version>
       </dependency>
       <dependency>
         <groupId>log4j</groupId>
@@ -222,6 +218,11 @@
         <groupId>com.terracottatech</groupId>
         <artifactId>offheap-store</artifactId>
         <version>${offheap-store.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.terracottatech</groupId>
+        <artifactId>search</artifactId>
+        <version>${search.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta.license</groupId>

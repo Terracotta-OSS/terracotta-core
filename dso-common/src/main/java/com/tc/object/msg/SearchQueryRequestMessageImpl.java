@@ -15,10 +15,11 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.SearchRequestID;
 import com.tc.object.dna.impl.NullObjectStringSerializer;
 import com.tc.object.dna.impl.ObjectStringSerializer;
-import com.tc.object.metadata.AbstractNVPair;
-import com.tc.object.metadata.NVPair;
+import com.tc.object.metadata.NVPairSerializer;
 import com.tc.object.session.SessionID;
-import com.tc.search.StackOperations;
+import com.terracottatech.search.AbstractNVPair;
+import com.terracottatech.search.NVPair;
+import com.terracottatech.search.StackOperations;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -31,6 +32,7 @@ import java.util.Set;
  */
 public class SearchQueryRequestMessageImpl extends DSOMessageBase implements SearchQueryRequestMessage {
 
+  private static final NVPairSerializer       NVPAIR_SERIALIZER      = new NVPairSerializer();
   private static final ObjectStringSerializer NULL_SERIALIZER        = new NullObjectStringSerializer();
 
   private final static byte                   SEARCH_REQUEST_ID      = 0;
@@ -108,12 +110,12 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
 
     putNVPair(SORT_ATTRIBUTES, this.sortAttributes.size());
     for (final NVPair sortedAttributes : this.sortAttributes) {
-      sortedAttributes.serializeTo(outStream, NULL_SERIALIZER);
+      NVPAIR_SERIALIZER.serialize(sortedAttributes, outStream, NULL_SERIALIZER);
     }
 
     putNVPair(AGGREGATORS, this.aggregators.size());
     for (final NVPair attributeAggregator : this.aggregators) {
-      attributeAggregator.serializeTo(outStream, NULL_SERIALIZER);
+      NVPAIR_SERIALIZER.serialize(attributeAggregator, outStream, NULL_SERIALIZER);
     }
 
     if (!queryStack.isEmpty()) {
@@ -185,7 +187,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
         int sortCount = getIntValue();
 
         while (sortCount-- > 0) {
-          NVPair pair = AbstractNVPair.deserializeInstance(inputStream, NULL_SERIALIZER);
+          NVPair pair = NVPAIR_SERIALIZER.deserialize(inputStream, NULL_SERIALIZER);
           this.sortAttributes.add(pair);
         }
         return true;
@@ -195,7 +197,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
         int attributeAggregatorCount = getIntValue();
 
         while (attributeAggregatorCount-- > 0) {
-          NVPair pair = AbstractNVPair.deserializeInstance(inputStream, NULL_SERIALIZER);
+          NVPair pair = NVPAIR_SERIALIZER.deserialize(inputStream, NULL_SERIALIZER);
           this.aggregators.add(pair);
         }
         return true;
@@ -206,7 +208,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
         return true;
 
       case STACK_NVPAIR_MARKER:
-        NVPair pair = AbstractNVPair.deserializeInstance(inputStream, NULL_SERIALIZER);
+        NVPair pair = NVPAIR_SERIALIZER.deserialize(inputStream, NULL_SERIALIZER);
         queryStack.add(pair);
         return true;
 
