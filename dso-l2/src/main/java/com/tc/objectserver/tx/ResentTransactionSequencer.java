@@ -128,6 +128,7 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
   private void addToPending(Collection txns) {
     for (Iterator i = txns.iterator(); i.hasNext();) {
       ServerTransaction txn = (ServerTransaction) i.next();
+      txn.markResent();
       this.pendingTxns.put(txn.getServerTransactionID(), txn);
     }
   }

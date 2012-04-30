@@ -33,8 +33,14 @@ public class SearchEventHandler extends AbstractEventHandler {
       SearchUpsertContext suc = (SearchUpsertContext) context;
 
       try {
-        this.indexManager.upsert(suc.getCacheName(), suc.getCacheKey(), suc.getCacheValue(), suc.getAttributes(),
-                                 suc.isPutIfAbsent(), suc.getSegmentOid(), suc.getMetaDataProcessingContext());
+        if (suc.isInsert()) {
+          this.indexManager.insert(suc.getCacheName(), suc.getCacheKey(), suc.getCacheValue(), suc.getAttributes(),
+                                   suc.getSegmentOid(), suc.getMetaDataProcessingContext());
+        } else {
+
+          this.indexManager.update(suc.getCacheName(), suc.getCacheKey(), suc.getCacheValue(), suc.getAttributes(),
+                                   suc.getSegmentOid(), suc.getMetaDataProcessingContext());
+        }
       } catch (IndexException e) {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);

@@ -85,7 +85,7 @@ public class LicenseManager {
       CONSOLE_LOGGER
           .error("Terracotta license key is required for Enterprise capabilities. Please place "
                  + LICENSE_KEY_FILENAME
-                 + " in Terracotta installed directory or in resource path. You could also specify it through system property -D"
+                 + " in the Terracotta installation directory or in the resource path. You can also specify it as a system property with -D"
                  + PRODUCTKEY_PATH_PROPERTY + "=/path/to/key");
       LOGGER.error("License key not found", new LicenseException());
       System.exit(1);

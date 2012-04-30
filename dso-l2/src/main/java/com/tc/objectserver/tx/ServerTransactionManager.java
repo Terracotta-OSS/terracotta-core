@@ -111,5 +111,5 @@ public interface ServerTransactionManager {
 
   public long getTotalNumOfActiveTransactions();
 
-  public void processMetaData(Collection<ServerTransaction> txns);
+  public void processMetaData(ServerTransaction txn, ApplyTransactionInfo applyInfo);
 }

@@ -14,10 +14,11 @@ public class IndexSyncMessageFactory {
     return msg;
   }
 
-  public static IndexSyncMessage createIndexSyncMessage(String cacheName, String fileName, byte[] fileData,
-                                                        long sequenceID, boolean isTCFile, boolean isLast) {
+  public static IndexSyncMessage createIndexSyncMessage(String cacheName, String indexId, String fileName,
+                                                        byte[] fileData, long sequenceID, boolean isTCFile,
+                                                        boolean isLast) {
     IndexSyncMessage msg = new IndexSyncMessage(IndexSyncMessage.INDEX_SYNC_TYPE);
-    msg.initialize(cacheName, fileName, fileData, sequenceID, isTCFile, isLast);
+    msg.initialize(cacheName, indexId, fileName, fileData, sequenceID, isTCFile, isLast);
     return msg;
   }
 

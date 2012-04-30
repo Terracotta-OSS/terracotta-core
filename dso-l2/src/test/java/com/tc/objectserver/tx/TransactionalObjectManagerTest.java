@@ -58,7 +58,6 @@ public class TransactionalObjectManagerTest extends TCTestCase {
                                                               this.coordinator);
     ServerConfigurationContext scc = Mockito.mock(ServerConfigurationContext.class);
     Mockito.when(scc.getTransactionManager()).thenReturn(new TestServerTransactionManager());
-    this.txObjectManager.initializeContext(scc);
   }
 
   // This test is added to reproduce a failure. More test are needed for TransactionalObjectManager
@@ -127,7 +126,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
 
     // Apply and commit complete for the first transaction
     this.txObjectManager.applyTransactionComplete(new ApplyTransactionInfo(stxn1.isActiveTxn(), stxn1
-        .getServerTransactionID()));
+        .getServerTransactionID(), false));
     ApplyCompleteEventContext acec = (ApplyCompleteEventContext) this.coordinator.applyCompleteSink.queue.take();
     assertNotNull(acec);
     assertTrue(this.coordinator.applyCompleteSink.queue.isEmpty());
@@ -276,7 +275,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
 
     // Apply and commit complete for the first transaction
     this.txObjectManager.applyTransactionComplete(new ApplyTransactionInfo(stxn1.isActiveTxn(), stxn1
-        .getServerTransactionID()));
+        .getServerTransactionID(), false));
     ApplyCompleteEventContext acec = (ApplyCompleteEventContext) this.coordinator.applyCompleteSink.queue.take();
     assertNotNull(acec);
     assertTrue(this.coordinator.applyCompleteSink.queue.isEmpty());
@@ -386,7 +385,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
 
     // Apply and commit complete for the 3'rd transaction
     this.txObjectManager.applyTransactionComplete(new ApplyTransactionInfo(stxn3.isActiveTxn(), stxn3
-        .getServerTransactionID()));
+        .getServerTransactionID(), false));
     acec = (ApplyCompleteEventContext) this.coordinator.applyCompleteSink.queue.take();
     assertNotNull(acec);
     assertTrue(this.coordinator.applyCompleteSink.queue.isEmpty());

@@ -69,7 +69,7 @@ public class TCNotRunningTest extends TestCase {
     stage.start(new ConfigurationContextImpl(null));
     stage.getSink().add(new TestEventContext());
     testHandler.waitUntilHandledEventCount(1);
-    junit.framework.Assert.assertTrue("Exit should be called", callbackOnExitHandler.exitCalled);
+    callbackOnExitHandler.waitUntilExitCalled();
     debug("test complete");
   }
 
@@ -135,6 +135,22 @@ public class TCNotRunningTest extends TestCase {
     public void callbackOnExit(CallbackOnExitState state) {
       debug("Callback on exit called");
       exitCalled = true;
+    }
+
+    public void waitUntilExitCalled() {
+      int iterations = 0;
+      while (!exitCalled) {
+        debug("Waiting until exit called: " + exitCalled);
+        if (iterations++ >= 60) { throw new RuntimeException("Waited for a minute already. Exit not called: "
+                                                             + exitCalled); }
+        debug("Sleeping for 1 sec...");
+        try {
+          Thread.sleep(1000);
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+        debug("after sleep");
+      }
     }
   }
 

@@ -21,8 +21,11 @@ public interface IndexManager {
   void remove(String indexName, Object key, ObjectID segmentOid, MetaDataProcessingContext metaDataContext)
       throws IndexException;
 
-  void upsert(String indexName, Object key, Object value, List<NVPair> attributes, boolean onlyIfAbsent,
-              ObjectID segmentOid, MetaDataProcessingContext metaDataContext) throws IndexException;
+  void update(String indexName, Object key, Object value, List<NVPair> attributes, ObjectID segmentOid,
+              MetaDataProcessingContext metaDataContext) throws IndexException;
+
+  void insert(String cacheName, Object cacheKey, Object cacheValue, List<NVPair> attributes, ObjectID segmentOid,
+              MetaDataProcessingContext metaDataProcessingContext) throws IndexException;
 
   void clear(String indexName, ObjectID segmentOid, MetaDataProcessingContext metaDataContext) throws IndexException;
 
@@ -41,5 +44,6 @@ public interface IndexManager {
 
   String[] getSearchIndexNames();
 
-  InputStream getIndexFile(String indexName, String fileName) throws IOException;
+  InputStream getIndexFile(String cacheName, String indexId, String fileName) throws IOException;
+
 }

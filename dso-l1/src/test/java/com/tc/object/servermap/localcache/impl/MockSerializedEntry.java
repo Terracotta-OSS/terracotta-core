@@ -8,25 +8,13 @@ import com.tc.object.TCClass;
 import com.tc.object.TCObjectSelfImpl;
 
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class MockSerializedEntry extends TCObjectSelfImpl {
-  private final AtomicInteger touchCount = new AtomicInteger(0);
-  private final byte[]        myArray;
-  private long                lastAccessed;
+  private final byte[] myArray;
+  private long         lastAccessed;
 
   public MockSerializedEntry(ObjectID id, byte[] array, TCClass tcClazz) {
     this(id, array, tcClazz, System.currentTimeMillis());
-  }
-
-  @Override
-  public void markTxnInProgress() {
-    touchCount.incrementAndGet();
-  }
-
-  @Override
-  public void markTxnComplete() {
-    touchCount.decrementAndGet();
   }
 
   public MockSerializedEntry(ObjectID id, byte[] array, TCClass tcClazz, long lastAccessedTime) {

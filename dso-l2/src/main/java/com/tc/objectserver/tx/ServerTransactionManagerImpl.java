@@ -453,11 +453,9 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     this.resentTxnSequencer.addTransactions(txns);
   }
 
-  public void processMetaData(Collection<ServerTransaction> txns) {
-    for (ServerTransaction txn : txns) {
-      if (metaDataManager.processMetaDatas(txn, txn.getMetaDataReaders())) {
-        processingMetaDataCompleted(txn.getSourceID(), txn.getTransactionID());
-      }
+  public void processMetaData(ServerTransaction txn, ApplyTransactionInfo applyInfo) {
+    if (metaDataManager.processMetaData(txn, applyInfo)) {
+      processingMetaDataCompleted(txn.getSourceID(), txn.getTransactionID());
     }
   }
 

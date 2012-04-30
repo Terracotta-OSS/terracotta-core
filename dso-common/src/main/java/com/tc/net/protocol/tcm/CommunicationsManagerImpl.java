@@ -388,13 +388,13 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   private void startHealthCheckCallbackPortListener(HealthCheckerConfig healthCheckrConfig) {
     if (!healthCheckrConfig.isCallbackPortListenerNeeded()) {
       // Callback Port Listeners are not needed for L2s.
-      logger.info("HealtCheck CallbackPort Listener not requested");
+      logger.info("HealthCheck CallbackPort Listener not requested");
       return;
     }
 
     int bindPort = healthCheckrConfig.getCallbackPortListenerBindPort();
     if (bindPort == TransportHandshakeMessage.NO_CALLBACK_PORT) {
-      logger.info("HealtCheck CallbackPort Listener disabled");
+      logger.info("HealthCheck CallbackPort Listener disabled");
       return;
     }
 

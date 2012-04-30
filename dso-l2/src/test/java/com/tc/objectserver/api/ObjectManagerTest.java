@@ -233,7 +233,6 @@ public class ObjectManagerTest extends TCTestCase {
                                                               this.coordinator);
     ServerConfigurationContext scc = Mockito.mock(ServerConfigurationContext.class);
     Mockito.when(scc.getTransactionManager()).thenReturn(new TestServerTransactionManager());
-    this.txObjectManager.initializeContext(scc);
     this.objectManager.setTransactionalObjectManager(this.txObjectManager);
   }
 
@@ -1681,7 +1680,8 @@ public class ObjectManagerTest extends TCTestCase {
     final ServerTransaction txn = aoc.getTxn();
     final Map managedObjects = aoc.getObjects();
     final ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
-    final ApplyTransactionInfo applyTxnInfo = new ApplyTransactionInfo(txn.isActiveTxn(), txn.getServerTransactionID());
+    final ApplyTransactionInfo applyTxnInfo = new ApplyTransactionInfo(txn.isActiveTxn(), txn.getServerTransactionID(),
+                                                                       false);
     for (final Iterator i = txn.getChanges().iterator(); i.hasNext();) {
       final DNA dna = (DNA) i.next();
       final ManagedObject mo = (ManagedObject) managedObjects.get(dna.getObjectID());

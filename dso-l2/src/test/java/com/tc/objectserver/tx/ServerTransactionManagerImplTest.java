@@ -25,6 +25,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
+import com.tc.objectserver.context.TransactionLookupContext;
 import com.tc.objectserver.gtx.TestGlobalTransactionManager;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
 import com.tc.objectserver.impl.TestGarbageCollectionManager;
@@ -684,7 +685,11 @@ public class ServerTransactionManagerImplTest extends TestCase {
   private class TestTransactionalObjectManager extends NullTransactionalObjectManager {
     @Override
     public void addTransactions(Collection<ServerTransaction> txns) {
-      transactionManager.processMetaData(txns);
+      Set<TransactionLookupContext> txnContexts = new HashSet<TransactionLookupContext>();
+      for (ServerTransaction txn : txns) {
+        txnContexts.add(new TransactionLookupContext(txn, false));
+        transactionManager.processMetaData(txn, new ApplyTransactionInfo());
+      }
     }
   }
 }

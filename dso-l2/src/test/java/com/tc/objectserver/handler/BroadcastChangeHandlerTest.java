@@ -216,6 +216,19 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
+    @Override
+    public boolean isSearchEnabled() {
+      return false;
+    }
+
+    public boolean isResent() {
+      return false;
+    }
+
+    public void markResent() {
+      throw new ImplementMe();
+    }
+
   }
 
   private static class TestServerConfigurationContext implements ServerConfigurationContext {
@@ -794,7 +807,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       //
     }
 
-    public void processMetaData(Collection<ServerTransaction> txns) {
+    public void processMetaData(ServerTransaction txn, ApplyTransactionInfo applyInfo) {
       //
     }
   }

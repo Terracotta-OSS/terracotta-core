@@ -33,46 +33,60 @@ public class ServerMessageTransport extends MessageTransportBase {
     wireNewConnection(conn);
   }
 
+  @Override
   protected ConnectionAttacher getConnectionAttacher() {
     if (this.status.isRestart()) {
       return new RestartConnectionAttacher();
     } else return super.getConnectionAttacher();
   }
 
+  @Override
   public NetworkStackID open() {
     throw new UnsupportedOperationException("Server transport doesn't support open()");
   }
 
+  @Override
   protected void receiveTransportMessageImpl(WireProtocolMessage message) {
+    boolean notifyTransportConnected = false;
     synchronized (status) {
       if (status.isStart()) {
-        verifyAndHandleAck(message);
+        notifyTransportConnected = verifyAndHandleAck(message);
         message.recycle();
-        return;
-      }
-
-      /*
-       * Server Tx can move from START to CLOSED state on client connection restore failure (Client ACK would have
-       * reached the server, but worker thread might not have processed it yet and the OOOReconnectTimeout thread pushed
-       * the Server Tx to closed state).
-       */
-      if (!status.isEstablished()) {
+      } else if (!status.isEstablished()) {
+        /*
+         * Server Tx can move from START to CLOSED state on client connection restore failure (Client ACK would have
+         * reached the server, but worker thread might not have processed it yet and the OOOReconnectTimeout thread
+         * pushed the Server Tx to closed state).
+         */
         logger.warn("Ignoring the message received for an Un-Established Connection; " + message.getSource() + "; "
                     + message);
         message.recycle();
         return;
       }
     }
+
+    // Transport connected notification happens out here to avoid being done in the status lock scope. This will avoid
+    // the deadlock encountered in DEV-7123.
+    if (notifyTransportConnected) {
+      fireTransportConnectedEvent();
+      return;
+    }
+
     // ReceiveToReceiveLayer(message) takes care of verifying the handshake message
     super.receiveToReceiveLayer(message);
   }
 
-  private void verifyAndHandleAck(WireProtocolMessage message) {
+  /**
+   * @return true if we need to fire the transport connected event
+   */
+  private boolean verifyAndHandleAck(WireProtocolMessage message) {
     if (!verifyAck(message)) {
       handleHandshakeError(new TransportHandshakeErrorContext("Expected an ACK message but received: " + message,
                                                               TransportHandshakeError.ERROR_HANDSHAKE));
+      return false;
     } else {
       handleAck((TransportHandshakeMessage) message);
+      return true;
     }
   }
 
@@ -84,7 +98,6 @@ public class ServerMessageTransport extends MessageTransportBase {
       status.established();
       ack.getSource().setTransportEstablished();
     }
-    fireTransportConnectedEvent();
   }
 
   private boolean verifyAck(WireProtocolMessage message) {

@@ -218,6 +218,40 @@ public class MessageTransportTest extends TCTestCase {
     assertTrue(serverTransport.isConnected());
   }
 
+  public void testTransportConnectedScope() throws Exception {
+    HoldsStatusLockListener listener = new HoldsStatusLockListener();
+    createServerTransport();
+    serverTransport.addTransportListener(listener);
+    TransportHandshakeMessage ack = this.transportHandshakeMessageFactory.createAck(connectionId, this.serverTransport
+        .getConnection());
+    this.serverTransport.receiveTransportMessage(ack);
+    assertFalse(listener.holdsStatusLock);
+  }
+
+  private class HoldsStatusLockListener implements MessageTransportListener {
+    boolean holdsStatusLock = false;
+
+    public void notifyTransportConnected(MessageTransport transport) {
+      holdsStatusLock = Thread.holdsLock(serverTransport.status);
+    }
+
+    public void notifyTransportDisconnected(MessageTransport transport, boolean forcedDisconnect) {
+      //
+    }
+
+    public void notifyTransportConnectAttempt(MessageTransport transport) {
+      //
+    }
+
+    public void notifyTransportClosed(MessageTransport transport) {
+      //
+    }
+
+    public void notifyTransportReconnectionRejected(MessageTransport transport) {
+      //
+    }
+  }
+
   private void createServerTransport() throws Exception {
     this.serverTransport = new ServerMessageTransport(this.connectionId, this.serverConnection,
                                                       createHandshakeErrorHandler(),

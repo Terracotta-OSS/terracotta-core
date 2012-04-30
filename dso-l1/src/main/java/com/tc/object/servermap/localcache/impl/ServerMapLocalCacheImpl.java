@@ -167,10 +167,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                                                  "Attempt to access a shared object outside the scope of a shared lock.",
                                                                  Thread.currentThread().getName(), manager
                                                                      .getClientID()); }
-      Object actualValue = localCacheValue.getValueObject();
-      if (actualValue instanceof TCObjectSelf) {
-        ((TCObjectSelf) actualValue).markTxnInProgress();
-      }
       txn.addTransactionCompleteListener(listener);
     }
   }
@@ -630,10 +626,6 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         }
       }
 
-      Object actualValue = value.getValueObject();
-      if (actualValue instanceof TCObjectSelf) {
-        ((TCObjectSelf) actualValue).markTxnComplete();
-      }
       // use localStore directly instead of calling recalculateSize(key) as already under lock
       this.localStore.recalculateSize(key);
     } finally {
