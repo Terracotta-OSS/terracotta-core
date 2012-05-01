@@ -30,7 +30,7 @@
     <offheap-store.version>1.0.6</offheap-store.version>
     <search.version>1.0.0-SNAPSHOT</search.version>
     <management.version>1.0.0-SNAPSHOT</management.version>
-    <terracotta-license.version>1.0.4-SNAPSHOT</terracotta-license.version>
+    <terracotta-license.version>1.0.5-SNAPSHOT</terracotta-license.version>
     <derby.version>10.8.2.2</derby.version>
     <tcconfig.version>3.8.0-SNAPSHOT</tcconfig.version>
     <sleepycat.version>4.1.17</sleepycat.version>
