@@ -7,11 +7,13 @@ import static org.terracotta.license.LicenseConstants.CAPABILITY_AUTHENTICATION;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_OPERATOR_CONSOLE;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_ROOTS;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_SEARCH;
+import static org.terracotta.license.LicenseConstants.CAPABILITY_SECURITY;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_SERVER_STRIPING;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_SESSIONS;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_TERRACOTTA_SERVER_ARRAY_OFFHEAP;
 import static org.terracotta.license.LicenseConstants.LICENSE_CAPABILITIES;
 import static org.terracotta.license.LicenseConstants.LICENSE_KEY_FILENAME;
+import static org.terracotta.license.LicenseConstants.LICENSE_TYPE_TRIAL;
 import static org.terracotta.license.LicenseConstants.PRODUCTKEY_PATH_PROPERTY;
 import static org.terracotta.license.LicenseConstants.TERRACOTTA_SERVER_ARRAY_MAX_OFFHEAP;
 
@@ -168,7 +170,16 @@ public class LicenseManager {
     return ProductInfo.getInstance().isEnterprise();
   }
 
+  public static boolean isTrialLicense() {
+    assertLicenseValid();
+    return getLicense().type().equals(LICENSE_TYPE_TRIAL);
+  }
+
   public static void verifySearchCapability() {
     verifyCapability(CAPABILITY_SEARCH);
+  }
+
+  public static void verifySecurityCapability() {
+    verifyCapability(CAPABILITY_SECURITY);
   }
 }
