@@ -30,7 +30,7 @@
     <ee.suffix/>
     <packaging>dir</packaging>
     <kit.name>${terracotta.artifactId}-${project.version}</kit.name>
-    <rootDir>${project.build.directory}/${kit.name}</rootDir>
+    <rootDir>target/${kit.name}</rootDir>
     <skip.schema>true</skip.schema>
     <no.extra>false</no.extra>
     <gt.kit>false</gt.kit>    
