@@ -62,6 +62,9 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
       case SerializationUtil.CLEAR:
         references.clear();
         break;
+      case SerializationUtil.DESTROY:
+        references.clear();
+        break;
       default:
         throw new AssertionError("Invalid action:" + method);
     }
