@@ -20,7 +20,7 @@ Pom.project = project
  */
 class IzPack {
   static File kitDirectory() {
-    new File(Pom.property("rootDir"))
+    new File("target", Pom.property("kit.name"))
   }
 
   /**
