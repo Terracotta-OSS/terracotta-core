@@ -130,7 +130,7 @@ public class ClientConfig {
   /**
    * Set the max heap size
    * 
-   * @param maxHeap maximum heap size
+   * @param maxHeap maximum heap size in MB
    */
   public void setMaxHeap(int maxHeap) {
     this.maxHeap = maxHeap;
