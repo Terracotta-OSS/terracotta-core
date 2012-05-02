@@ -20,7 +20,7 @@ Pom.project = project
  */
 class IzPack {
   static File kitDirectory() {
-    new File("target", Pom.property("kit.name"))
+    new File(Pom.property("rootDir"))
   }
 
   /**
@@ -67,6 +67,7 @@ class IzPack {
   }
 
   static findScriptFiles(rootDir) {
+    def kitDirPath = rootDir.absolutePath
     def ant = new AntBuilder()
     def scriptFiles = ant.fileset(dir: rootDir) {
       include(name: "**/*.sh")
@@ -74,8 +75,11 @@ class IzPack {
     }
     def scripts = []
     for (script in scriptFiles) {
-      def relativeScriptFile = new File(rootDir.name, script.name)
-      scripts << relativeScriptFile
+      def scriptPath = script.file.absolutePath
+      if (scriptPath.startsWith(kitDirPath)) {
+        def relativeScriptPath = rootDir.name + scriptPath.substring(kitDirPath.size())
+        scripts << relativeScriptPath
+      }
     }
     scripts
   }
