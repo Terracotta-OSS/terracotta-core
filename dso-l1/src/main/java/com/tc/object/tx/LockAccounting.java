@@ -8,8 +8,6 @@ import EDU.oswego.cs.dl.util.concurrent.Latch;
 
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.object.locks.LockID;
 
 import java.util.Collection;
@@ -22,8 +20,6 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class LockAccounting {
-  private static final TCLogger                          logger                         = TCLogging
-                                                                                            .getLogger(LockAccounting.class);
   private static final long                              WAIT_FOR_TRANSACTIONS_INTERVAL = 10 * 1000;
 
   private final CopyOnWriteArrayList<TxnRemovedListener> listeners                      = new CopyOnWriteArrayList<TxnRemovedListener>();
