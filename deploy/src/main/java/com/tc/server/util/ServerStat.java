@@ -16,6 +16,7 @@ import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
@@ -27,6 +28,7 @@ public class ServerStat {
   private static final int      DEFAULT_JMX_PORT = 9520;
 
   private final String          host;
+  private final String          hostName;
   private final int             port;
   private final String          username;
   private final String          password;
@@ -37,10 +39,11 @@ public class ServerStat {
   private boolean               connected;
   private String                errorMessage     = "";
 
-  public ServerStat(String username, String password, String host, int port) {
+  public ServerStat(String username, String password, String host, String hostAlias, int port) {
     this.username = username;
     this.password = password;
     this.host = host;
+    this.hostName = hostAlias;
     this.port = port;
     connect();
   }
@@ -84,13 +87,14 @@ public class ServerStat {
 
   @Override
   public String toString() {
+    String serverId = hostName != null ? hostName : host;
     StringBuilder sb = new StringBuilder();
-    sb.append(host + ".health: " + getHealth()).append(NEWLINE);
-    sb.append(host + ".role: " + getRole()).append(NEWLINE);
-    sb.append(host + ".state: " + getState()).append(NEWLINE);
-    sb.append(host + ".jmxport: " + port).append(NEWLINE);
+    sb.append(serverId + ".health: " + getHealth()).append(NEWLINE);
+    sb.append(serverId + ".role: " + getRole()).append(NEWLINE);
+    sb.append(serverId + ".state: " + getState()).append(NEWLINE);
+    sb.append(serverId + ".jmxport: " + port).append(NEWLINE);
     if (!connected) {
-      sb.append(host + ".error: " + errorMessage).append(NEWLINE);
+      sb.append(serverId + ".error: " + errorMessage).append(NEWLINE);
     }
     return sb.toString();
   }
@@ -150,11 +154,12 @@ public class ServerStat {
       throw new RuntimeException("Error parsing " + configFile + ": " + e.getMessage());
     }
     TcConfig tcConfig = tcConfigDocument.getTcConfig();
-    Server[] servers = tcConfig.getServers().getServerArray();
-    for (Server server : servers) {
+    List<Server> serversList = tcConfig.getServers().getServerList();
+    for (Server server : serversList) {
       String host = server.getHost();
+      String hostName = server.getName();
       int jmxPort = server.getJmxPort().getIntValue() == 0 ? DEFAULT_JMX_PORT : server.getJmxPort().getIntValue();
-      ServerStat stat = new ServerStat(username, password, host, jmxPort);
+      ServerStat stat = new ServerStat(username, password, host, hostName, jmxPort);
       System.out.println(stat.toString());
     }
   }
@@ -184,7 +189,7 @@ public class ServerStat {
         throw new RuntimeException("Failed to parse jmxport: " + info);
       }
     }
-    ServerStat stat = new ServerStat(username, password, host, port);
+    ServerStat stat = new ServerStat(username, password, host, null, port);
     System.out.println(stat.toString());
   }
 }
