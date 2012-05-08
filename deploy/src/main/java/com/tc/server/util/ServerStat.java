@@ -16,7 +16,6 @@ import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
@@ -154,8 +153,8 @@ public class ServerStat {
       throw new RuntimeException("Error parsing " + configFile + ": " + e.getMessage());
     }
     TcConfig tcConfig = tcConfigDocument.getTcConfig();
-    List<Server> serversList = tcConfig.getServers().getServerList();
-    for (Server server : serversList) {
+    Server[] servers = tcConfig.getServers().getServerArray();
+    for (Server server : servers) {
       String host = server.getHost();
       String hostName = server.getName();
       int jmxPort = server.getJmxPort().getIntValue() == 0 ? DEFAULT_JMX_PORT : server.getJmxPort().getIntValue();
