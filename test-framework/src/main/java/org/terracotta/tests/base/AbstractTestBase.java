@@ -93,9 +93,11 @@ public abstract class AbstractTestBase extends TCTestCase {
         System.out.println("*************** Starting Test with Test Profile : " + testConfig.getConfigName()
                            + " **************************");
         setJavaHome();
-        testServerManager = new TestServerManager(this.testConfig, this.tempDir, this.tcConfigFile, this.javaHome);
         clientRunner = new TestClientManager(tempDir, this, this.testConfig);
-        startServers();
+        if (!testConfig.isStandAloneTest()) {
+          testServerManager = new TestServerManager(this.testConfig, this.tempDir, this.tcConfigFile, this.javaHome);
+          startServers();
+        }
         TestHandlerMBean testHandlerMBean = new TestHandler(testServerManager, testConfig);
         jmxServerManager = new TestJMXServerManager(new PortChooser().chooseRandomPort(), testHandlerMBean);
         jmxServerManager.startJMXServer();
@@ -258,7 +260,7 @@ public abstract class AbstractTestBase extends TCTestCase {
     if (testWillRun) {
       System.out.println("Waiting for During Cluster running thread to finish");
       duringRunningClusterThread.join();
-      this.testServerManager.stopAllServers();
+      if (!testConfig.isStandAloneTest()) this.testServerManager.stopAllServers();
       this.jmxServerManager.stopJmxServer();
       System.out.println("*************** Stopped Test with Test Profile : " + testConfig.getConfigName()
                          + " **************************");

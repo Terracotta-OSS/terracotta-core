@@ -106,7 +106,8 @@ public class TestConfig {
   }
 
   /**
-   * enables or disable the test in standAlone mode
+   * enables or disable the test in standAlone mode. Note that if this is set the servers will not start and so the user
+   * has to make sure that there are no errors like crashing the servers, or using clustered barrier etc.
    * 
    * @param
    */
