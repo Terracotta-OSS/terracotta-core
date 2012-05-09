@@ -119,7 +119,7 @@ public class TestBaseUtil {
     Iterator<String> i = jvmArgs.iterator();
     while (i.hasNext()) {
       String arg = i.next();
-      if (arg.startsWith("-Xmx") || arg.startsWith("-Xms")) {
+      if (arg.startsWith("-Xmx") || arg.startsWith("-Xms") || arg.startsWith("-XX:MaxDirectMemorySize")) {
         System.err.println("Ignoring '" + arg + "'. Heap size should be set through L2Config.");
         i.remove();
       }
