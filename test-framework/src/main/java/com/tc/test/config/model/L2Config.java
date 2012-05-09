@@ -27,6 +27,7 @@ public class L2Config {
   private boolean                 isProxyDsoPorts       = false;
   private int                     minHeap               = 256;
   private int                     maxHeap               = 256;
+  private int                     directMemorySize      = maxHeap;
   private int                     proxyWaitTime         = 20 * 1000;
   private int                     proxyDownTime         = 100;
   private final BytemanConfig     bytemanConfig         = new BytemanConfig();
@@ -226,6 +227,24 @@ public class L2Config {
    */
   public void setMaxHeap(int maxHeap) {
     this.maxHeap = maxHeap;
+  }
+
+  /**
+   * Gets the "-XX:MaxDirectMemorySize" to pass to the server
+   * 
+   * @return -XX:MaxDirectMemorySize
+   */
+  public int getDirectMemorySize() {
+    return directMemorySize;
+  }
+
+  /**
+   * Sets "-XX:MaxDirectMemorySize"
+   * 
+   * @param -XX:MaxDirectMemorySize in MB
+   */
+  public void setDirectMemorySize(int directMemorySize) {
+    this.directMemorySize = directMemorySize;
   }
 
   public int getProxyWaitTime() {

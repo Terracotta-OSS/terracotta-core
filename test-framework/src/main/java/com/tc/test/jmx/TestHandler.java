@@ -97,4 +97,9 @@ public class TestHandler implements TestHandlerMBean {
   public void startServer(int groupIndex, int serverIndex) throws Exception {
     testServerManager.startServer(groupIndex, serverIndex);
   }
+
+  @Override
+  public boolean isStandAloneTest() {
+    return this.testConfig.isStandAloneTest();
+  }
 }

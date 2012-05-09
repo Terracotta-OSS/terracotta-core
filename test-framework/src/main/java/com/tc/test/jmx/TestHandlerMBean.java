@@ -110,4 +110,9 @@ public interface TestHandlerMBean {
    * @param serverIndex the server in the group to start
    */
   public void startServer(int groupIndex, int serverIndex) throws Exception;
+
+  /**
+   * @return true if the test is configured to run in standAlone mode, false otherwise
+   */
+  public boolean isStandAloneTest();
 }

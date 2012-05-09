@@ -115,7 +115,7 @@ public class TestBaseUtil {
     }
   }
 
-  public static void setHeapSizeArgs(List<String> jvmArgs, int minHeap, int maxHeap) {
+  public static void setHeapSizeArgs(List<String> jvmArgs, int minHeap, int maxHeap, int directMemorySize) {
     Iterator<String> i = jvmArgs.iterator();
     while (i.hasNext()) {
       String arg = i.next();
@@ -126,6 +126,7 @@ public class TestBaseUtil {
     }
     jvmArgs.add("-Xms" + minHeap + "m");
     jvmArgs.add("-Xmx" + maxHeap + "m");
+    jvmArgs.add("-XX:MaxDirectMemorySize=" + directMemorySize + "m");
   }
 
   public static void configureOffHeap(TestConfig testConfig, int maxDirectMemory, int offHeapDataSize) {

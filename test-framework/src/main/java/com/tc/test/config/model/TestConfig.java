@@ -4,21 +4,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * This class is responsible for creating all configurations for a test. It has
- * individual members who take care of specifying specific sets of config for a
- * test
+ * This class is responsible for creating all configurations for a test. It has individual members who take care of
+ * specifying specific sets of config for a test
  * 
  * @author rsingh
  */
 public class TestConfig {
 
-  private int numOfGroups = 1;
-  private final String configName;
-  private final L2Config l2Config = new L2Config();
-  private final CrashConfig crashConfig = new CrashConfig();
-  private final GroupConfig groupConfig = new GroupConfig();
-  private final ClientConfig clientConfig = new ClientConfig();
+  private int                       numOfGroups      = 1;
+  private final String              configName;
+  private final L2Config            l2Config         = new L2Config();
+  private final CrashConfig         crashConfig      = new CrashConfig();
+  private final GroupConfig         groupConfig      = new GroupConfig();
+  private final ClientConfig        clientConfig     = new ClientConfig();
   private final Map<String, String> tcPropertiesMap;
+  private boolean                   isStandAloneTest = false;
 
   public TestConfig(String configName) {
     this.configName = configName;
@@ -27,8 +27,7 @@ public class TestConfig {
 
   /**
    * Returns the configuration for each L2 in the test. <br>
-   * Note that any change done via this object will reflect in all the L2s of
-   * the test
+   * Note that any change done via this object will reflect in all the L2s of the test
    * 
    * @return the L2 config for the test.
    */
@@ -45,8 +44,7 @@ public class TestConfig {
 
   /**
    * Returns the group configuration for each group <br>
-   * note that any change done via this object will reflect in each mirror
-   * group of the test configuration
+   * note that any change done via this object will reflect in each mirror group of the test configuration
    * 
    * @return
    */
@@ -56,8 +54,7 @@ public class TestConfig {
 
   /**
    * Returns the configuration for each client. <br>
-   * Note that any change done via this object will reflect in each client of
-   * the test
+   * Note that any change done via this object will reflect in each client of the test
    * 
    * @return
    */
@@ -74,8 +71,7 @@ public class TestConfig {
 
   /**
    * The map containing tc-properties to be overwritten <br>
-   * note that these properties will added to the tc-config for each server
-   * and client
+   * note that these properties will added to the tc-config for each server and client
    * 
    * @return
    */
@@ -86,40 +82,48 @@ public class TestConfig {
   /**
    * Adds a tc property in the config for each server and client
    * 
-   * @param key
-   *            : tc property key
-   * @param value
-   *            : tc property value
+   * @param key : tc property key
+   * @param value : tc property value
    */
   public void addTcProperty(String key, String value) {
     tcPropertiesMap.put(key, value);
   }
 
   /**
-   * Sets the number of mirror groups for test. Default is one, each having
-   * one server
+   * Sets the number of mirror groups for test. Default is one, each having one server
    * 
-   * @param numOfGroups
-   *            : number ofr mirror groups to be present for the test
+   * @param numOfGroups : number ofr mirror groups to be present for the test
    */
   public void setNumOfGroups(int numOfGroups) {
     this.numOfGroups = numOfGroups;
   }
 
   /**
+   * @return : true if the test is supposed to be run in standAlone mode
+   */
+  public boolean isStandAloneTest() {
+    return isStandAloneTest;
+  }
+
+  /**
+   * enables or disable the test in standAlone mode
+   * 
+   * @param
+   */
+  public void setStandAloneTest(boolean isStandAloneTest) {
+    this.isStandAloneTest = isStandAloneTest;
+  }
+
+  /**
    * creates a default test configuration object for the test
    * 
-   * @param configName
-   *            : name of the config
-   * @param numOfGroups
-   *            : how many mirror gorups should be present in the test
-   * @param numOfServersPerGroup
-   *            : how many server in each mirror group should be present for
-   *            the test
+   * @param configName : name of the config
+   * @param numOfGroups : how many mirror gorups should be present in the test
+   * @param numOfServersPerGroup : how many server in each mirror group should be present for the test
    * @return
    */
-  public static TestConfig createTestConfig(final String configName,
-      final int numOfGroups, final int numOfServersPerGroup) {
+  public static TestConfig createTestConfig(final String configName, final int numOfGroups,
+                                            final int numOfServersPerGroup) {
     TestConfig testConfig = new TestConfig(configName);
     testConfig.setNumOfGroups(numOfGroups);
     testConfig.getGroupConfig().setMemberCount(numOfServersPerGroup);
@@ -143,8 +147,7 @@ public class TestConfig {
   }
 
   /**
-   * Creates a test config with one mirror group having two servers in as
-   * member
+   * Creates a test config with one mirror group having two servers in as member
    * 
    * @return
    */
@@ -153,8 +156,7 @@ public class TestConfig {
   }
 
   /**
-   * Creates a test config with two mirror groups having two servers each as
-   * member
+   * Creates a test config with two mirror groups having two servers each as member
    * 
    * @return
    */
