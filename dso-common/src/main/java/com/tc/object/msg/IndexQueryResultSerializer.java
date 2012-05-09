@@ -9,24 +9,36 @@ import com.tc.object.dna.impl.NullObjectStringSerializer;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.metadata.NVPairSerializer;
 import com.terracottatech.search.IndexQueryResult;
-import com.terracottatech.search.IndexQueryResultImpl;
 import com.terracottatech.search.NVPair;
-import com.terracottatech.search.ValueID;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class IndexQueryResultSerializer {
+public abstract class IndexQueryResultSerializer<T extends IndexQueryResult> {
 
-  private static final NVPairSerializer       NVPAIR_SERIALIZER = new NVPairSerializer();
-  private static final ObjectStringSerializer NULL_SERIALIZER   = new NullObjectStringSerializer();
+  static final NVPairSerializer       NVPAIR_SERIALIZER = new NVPairSerializer();
+  static final ObjectStringSerializer NULL_SERIALIZER   = new NullObjectStringSerializer();
 
-  public void serialize(IndexQueryResult result, TCByteBufferOutput output) {
-    output.writeString(result.getKey());
-    output.writeLong(result.getValue().toLong());
+  protected abstract class IndexQueryResultBuilder {
+    protected List<NVPair> attributes;
+    protected List<NVPair> sortAttributes;
 
+    protected IndexQueryResultBuilder setAttributes(List<NVPair> attrs) {
+      attributes = attrs;
+      return this;
+    }
+
+    protected IndexQueryResultBuilder setSortAttributes(List<NVPair> attrs) {
+      sortAttributes = attrs;
+      return this;
+    }
+
+    protected abstract T build();
+  }
+
+  public void serialize(T result, TCByteBufferOutput output) throws IOException {
     List<NVPair> attributes = result.getAttributes();
     output.writeInt(attributes.size());
     for (NVPair pair : attributes) {
@@ -40,9 +52,11 @@ public class IndexQueryResultSerializer {
     }
   }
 
-  public IndexQueryResult deserializeFrom(TCByteBufferInput input) throws IOException {
-    String key = input.readString();
-    ValueID valueID = new ValueID(input.readLong());
+  abstract T deserializeFrom(TCByteBufferInput input) throws IOException;
+
+  protected abstract IndexQueryResultBuilder builder();
+
+  protected IndexQueryResultBuilder buildCommonFields(TCByteBufferInput input) throws IOException {
     int size = input.readInt();
 
     List<NVPair> attributes = size > 0 ? new ArrayList<NVPair>() : Collections.EMPTY_LIST;
@@ -58,7 +72,10 @@ public class IndexQueryResultSerializer {
       NVPair pair = NVPAIR_SERIALIZER.deserialize(input, NULL_SERIALIZER);
       sortAttributes.add(pair);
     }
+    return builder().setAttributes(attributes).setSortAttributes(sortAttributes);
+  }
 
-    return new IndexQueryResultImpl(key, valueID, attributes, sortAttributes);
+  static IndexQueryResultSerializer getInstance(boolean isGroupBy) {
+    return isGroupBy ? new GroupedQueryResultSerializer() : new NonGroupedQueryResultSerializer();
   }
 }

@@ -37,10 +37,11 @@ public interface SearchQueryResponseMessage extends TCMessage {
    * @param aggregatorResults
    * @param aggregatorResults
    * @param anyCriteriaMatched
+   * @param isGroupBy
    */
   public void initSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupIDFrom,
                                         List<IndexQueryResult> results, List<Aggregator> aggregators,
-                                        boolean anyCriteriaMatched);
+                                        boolean anyCriteriaMatched, boolean isGroupBy);
 
   /**
    * Initialize error response
@@ -66,5 +67,7 @@ public interface SearchQueryResponseMessage extends TCMessage {
   public boolean isError();
 
   public boolean isAnyCriteriaMatched();
+
+  public boolean isQueryGroupBy();
 
 }

@@ -30,6 +30,13 @@ public class MockRemoteSearchRequestManager implements RemoteSearchRequestManage
     return null;
   }
 
+  @Override
+  public SearchQueryResults query(String cachename, List queryStack, Set<String> attributeSet,
+                                  Set<String> groupByAttributes, List<NVPair> sortAttributeMap,
+                                  List<NVPair> aggregators, int maxResults, int batchSize) {
+    return null;
+  }
+
   public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
     //
   }

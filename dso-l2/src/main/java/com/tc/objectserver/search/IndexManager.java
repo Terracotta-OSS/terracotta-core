@@ -37,8 +37,8 @@ public interface IndexManager {
                ObjectID segmentOid, MetaDataProcessingContext metaDataContext) throws IndexException;
 
   public SearchResult searchIndex(String indexName, List queryStack, boolean includeKeys, boolean includeValues,
-                                  Set<String> attributeSet, List<NVPair> sortAttributes, List<NVPair> aggregators,
-                                  int maxResults) throws IndexException;
+                                  Set<String> attributeSet, Set<String> groupByAttributes, List<NVPair> sortAttributes,
+                                  List<NVPair> aggregators, int maxResults) throws IndexException;
 
   public SyncSnapshot snapshot() throws IndexException;
 

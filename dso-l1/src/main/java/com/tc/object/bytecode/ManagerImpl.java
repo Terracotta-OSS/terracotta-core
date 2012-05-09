@@ -941,6 +941,17 @@ public class ManagerImpl implements Manager {
                                       aggregators, maxResults, batchSize);
   }
 
+  @Override
+  public SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
+                                         Set<String> groupByAttribues, List<NVPair> sortAttributes,
+                                         List<NVPair> aggregators, int maxResults, int batchSize) {
+    if (QUERY_WAIT_FOR_TXNS) {
+      waitForAllCurrentTransactionsToComplete();
+    }
+    return searchRequestManager.query(cachename, queryStack, attributeSet, groupByAttribues, sortAttributes,
+                                      aggregators, maxResults, batchSize);
+  }
+
   public NVPair createNVPair(String name, Object value) {
     return AbstractNVPair.createNVPair(name, value);
   }

@@ -26,23 +26,21 @@ import java.util.List;
  *
  */
 public class SearchQueryResponseMessageImpl extends DSOMessageBase implements SearchQueryResponseMessage {
-  private static final IndexQueryResultSerializer INDEX_QUERY_RESULT_SERIALIZER = new IndexQueryResultSerializer();
 
-  private final static byte                       SEARCH_REQUEST_ID             = 0;
-  private final static byte                       GROUP_ID_FROM                 = 1;
-  private final static byte                       RESULTS_SIZE                  = 2;
-  private final static byte                       AGGREGATOR_RESULTS_SIZE       = 3;
-  private final static byte                       ERROR_MESSAGE                 = 4;
-  private final static byte                       IS_ERROR                      = 5;
-  private final static byte                       ANY_CRITERIA_MATCHED          = 6;
+  private static final byte      SEARCH_REQUEST_ID       = 0;
+  private static final byte      GROUP_ID_FROM           = 1;
+  private static final byte      RESULTS_SIZE            = 2;
+  private static final byte      AGGREGATOR_RESULTS_SIZE = 3;
+  private static final byte      ERROR_MESSAGE           = 4;
+  private static final byte      ANY_CRITERIA_MATCHED    = 5;
 
-  private SearchRequestID                         requestID;
-  private GroupID                                 groupIDFrom;
-  private List<IndexQueryResult>                  results;
-  private List<Aggregator>                        aggregators;
-  private String                                  errorMessage;
-  private boolean                                 isError;
-  private boolean                                 anyCriteriaMatched;
+  private SearchRequestID        requestID;
+  private GroupID                groupIDFrom;
+  private List<IndexQueryResult> results;
+  private List<Aggregator>       aggregators;
+  private String                 errorMessage;
+  private boolean                anyCriteriaMatched;
+  private boolean                isQueryGroupBy;
 
   public SearchQueryResponseMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                         MessageChannel channel, TCMessageType type) {
@@ -59,20 +57,19 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
    */
   public void initSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupID,
                                         List<IndexQueryResult> searchResults, List<Aggregator> aggregatorList,
-                                        boolean criteriaMatched) {
-    this.isError = false;
+                                        boolean criteriaMatched, boolean isGroupBy) {
     this.requestID = searchRequestID;
     this.groupIDFrom = groupID;
     this.results = searchResults;
     this.aggregators = aggregatorList;
     this.anyCriteriaMatched = criteriaMatched;
+    this.isQueryGroupBy = isGroupBy;
   }
 
   /**
    * {@inheritDoc}
    */
   public void initSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupID, String errMsg) {
-    this.isError = true;
     this.requestID = searchRequestID;
     this.groupIDFrom = groupID;
     this.errorMessage = errMsg;
@@ -86,11 +83,15 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
   }
 
   public boolean isError() {
-    return isError;
+    return errorMessage != null;
   }
 
   public boolean isAnyCriteriaMatched() {
     return anyCriteriaMatched;
+  }
+
+  public boolean isQueryGroupBy() {
+    return isQueryGroupBy;
   }
 
   /**
@@ -130,9 +131,16 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
 
     if (results != null) {
       putNVPair(RESULTS_SIZE, this.results.size());
+      outStream.writeBoolean(isQueryGroupBy);
+      IndexQueryResultSerializer<IndexQueryResult> writer = IndexQueryResultSerializer.getInstance(isQueryGroupBy);
 
       for (IndexQueryResult result : this.results) {
-        INDEX_QUERY_RESULT_SERIALIZER.serialize(result, outStream);
+        try {
+          writer.serialize(result, outStream);
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+
       }
     }
 
@@ -152,7 +160,6 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
       putNVPair(ERROR_MESSAGE, errorMessage);
     }
 
-    putNVPair(IS_ERROR, isError);
     putNVPair(ANY_CRITERIA_MATCHED, anyCriteriaMatched);
   }
 
@@ -171,16 +178,20 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
 
       case RESULTS_SIZE:
         int size = getIntValue();
-        this.results = new ArrayList(size);
+        this.results = new ArrayList<IndexQueryResult>(size);
+        this.isQueryGroupBy = getBooleanValue();
+        IndexQueryResultSerializer<IndexQueryResult> reader = IndexQueryResultSerializer.getInstance(isQueryGroupBy);
+
         while (size-- > 0) {
-          IndexQueryResult result = INDEX_QUERY_RESULT_SERIALIZER.deserializeFrom(input);
+
+          IndexQueryResult result = reader.deserializeFrom(input);
           this.results.add(result);
         }
         return true;
 
       case AGGREGATOR_RESULTS_SIZE:
         int aggregatorSize = getIntValue();
-        this.aggregators = new ArrayList(aggregatorSize);
+        this.aggregators = new ArrayList<Aggregator>(aggregatorSize);
         while (aggregatorSize-- > 0) {
           Aggregator aggregator = AbstractAggregator.deserializeInstance(input);
           this.aggregators.add(aggregator);
@@ -189,9 +200,6 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
       case ERROR_MESSAGE:
         this.errorMessage = input.readString();
         return true;
-      case IS_ERROR:
-        this.isError = input.readBoolean();
-        return true;
       case ANY_CRITERIA_MATCHED:
         this.anyCriteriaMatched = input.readBoolean();
         return true;
@@ -199,5 +207,4 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
         return false;
     }
   }
-
 }

@@ -7,9 +7,9 @@ import com.terracottatech.search.IndexQueryResult;
 
 import java.util.List;
 
-public interface SearchQueryResults {
+public interface SearchQueryResults<T extends IndexQueryResult> {
 
-  List<IndexQueryResult> getResults();
+  List<T> getResults();
 
   List<Object> getAggregatorResults();
 

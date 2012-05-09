@@ -332,6 +332,13 @@ public class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
+  @Override
+  public SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
+                                         Set<String> groupByAttribues, List<NVPair> sortAttributes,
+                                         List<NVPair> aggregators, int maxResults, int batchSize) {
+    throw new UnsupportedOperationException();
+  }
+
   public NVPair createNVPair(String name, Object value) {
     throw new UnsupportedOperationException();
   }
