@@ -27,7 +27,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jetty.version>6.1.8</jetty.version>
     <slf4j.version>1.6.4</slf4j.version>
-    <offheap-store.version>1.0.6</offheap-store.version>
+    <offheap-store.version>1.0.8-SNAPSHOT</offheap-store.version>
     <search.version>1.0.0-SNAPSHOT</search.version>
     <management.version>1.0.0-SNAPSHOT</management.version>
     <terracotta-license.version>1.0.4-SNAPSHOT</terracotta-license.version>
