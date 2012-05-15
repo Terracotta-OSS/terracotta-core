@@ -7,27 +7,29 @@ package com.tc.management.beans;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.AbstractTerracottaMBean;
+import com.tc.management.L1Info;
 import com.tc.management.TCClient;
-import com.tc.util.runtime.ThreadDumpUtil;
 
 import javax.management.NotCompliantMBeanException;
 
 public class L1Dumper extends AbstractTerracottaMBean implements L1DumperMBean {
 
-  private static final boolean  DEBUG                         = false;
+  private static final boolean  DEBUG                        = false;
 
-  private static final TCLogger logger                        = TCLogging.getLogger(L1Dumper.class);
-  private static final int      DEFAULT_THREAD_DUMP_COUNT     = 3;
-  private static final long     DEFAULT_THREAD_DUMP_INTERVAL  = 1000;
+  private static final TCLogger logger                       = TCLogging.getLogger(L1Dumper.class);
+  private static final int      DEFAULT_THREAD_DUMP_COUNT    = 3;
+  private static final long     DEFAULT_THREAD_DUMP_INTERVAL = 1000;
 
-  public int                    threadDumpCount               = DEFAULT_THREAD_DUMP_COUNT;
-  public long                   threadDumpInterval            = DEFAULT_THREAD_DUMP_INTERVAL;
+  public int                    threadDumpCount              = DEFAULT_THREAD_DUMP_COUNT;
+  public long                   threadDumpInterval           = DEFAULT_THREAD_DUMP_INTERVAL;
 
   private final TCClient        tclient;
+  private final L1Info          l1Info;
 
-  public L1Dumper(TCClient tclient) throws NotCompliantMBeanException {
+  public L1Dumper(TCClient tclient, L1Info l1InfoBean) throws NotCompliantMBeanException {
     super(L1DumperMBean.class, false);
     this.tclient = tclient;
+    this.l1Info = l1InfoBean;
   }
 
   public void doClientDump() {
@@ -51,7 +53,7 @@ public class L1Dumper extends AbstractTerracottaMBean implements L1DumperMBean {
   public void doThreadDump() throws Exception {
     debugPrintln("ThreadDumping:  count=[" + threadDumpCount + "] interval=[" + threadDumpInterval + "]");
     for (int i = 0; i < threadDumpCount; i++) {
-      TCLogging.getDumpLogger().info(ThreadDumpUtil.getThreadDump());
+      l1Info.takeThreadDump(System.currentTimeMillis());
       Thread.sleep(threadDumpInterval);
     }
   }
