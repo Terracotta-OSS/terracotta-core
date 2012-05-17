@@ -49,7 +49,8 @@ public class L1ServerMapLocalStoreTransactionCompletionListener implements Trans
   public void postTransactionCallback() {
     serverMapLocalCache
         .postTransactionCallback(key, value,
-                                 transactionCompleteOperation == TransactionCompleteOperation.UNPIN_AND_REMOVE_ENTRY);
+                                 transactionCompleteOperation == TransactionCompleteOperation.UNPIN_AND_REMOVE_ENTRY,
+                                 this);
     listenerCount.decrementAndGet();
   }
 

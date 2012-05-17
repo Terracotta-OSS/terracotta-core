@@ -78,6 +78,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   private final Map<ObjectID, Object>                oidsForWhichTxnAreInProgress = new ConcurrentHashMap<ObjectID, Object>();
 
   private final ConcurrentHashMap                    pendingTransactionEntries;
+  private final ConcurrentHashMap                    keyToListeners;
+
   private final ReentrantReadWriteLock[]             locks;
   private final TCConcurrentMultiMap<LockID, Object> lockIDMappings;
 
@@ -94,6 +96,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     this.removeCallback = removeCallback;
     this.localStore = localStore;
     this.pendingTransactionEntries = new ConcurrentHashMap(CONCURRENCY, 0.75f, CONCURRENCY);
+    this.keyToListeners = new ConcurrentHashMap(CONCURRENCY, 0.75f, CONCURRENCY);
     this.lockIDMappings = new TCConcurrentMultiMap<LockID, Object>(CONCURRENCY, 0.75f, CONCURRENCY);
     this.locks = new ReentrantReadWriteLock[CONCURRENCY];
     for (int i = 0; i < CONCURRENCY; i++) {
@@ -166,6 +169,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                                                  Thread.currentThread().getName(), manager
                                                                      .getClientID()); }
       txn.addTransactionCompleteListener(listener);
+      keyToListeners.put(key, listener);
     }
   }
 
@@ -603,10 +607,10 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     l1LocalCacheManager.transactionComplete(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 
-  public void postTransactionCallback(Object key, AbstractLocalCacheStoreValue value, boolean removeEntry) {
+  public void postTransactionCallback(Object key, AbstractLocalCacheStoreValue value, boolean removeEntry,
+                                      L1ServerMapLocalStoreTransactionCompletionListener listener) {
     ReentrantReadWriteLock lock = getLock(key);
     lock.writeLock().lock();
-
     try {
       final ObjectID objectId = value.getValueObjectId();
       oidsForWhichTxnAreInProgress.remove(objectId);
@@ -614,6 +618,11 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         remoteRemoveObjectIfPossible(value);
       }
 
+      if (keyToListeners.get(key) == listener) {
+        keyToListeners.remove(key);
+      } else {
+        return;
+      }
       if (removeEntry) {
         removeFromLocalCache(key, value);
       } else {
