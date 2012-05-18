@@ -168,8 +168,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                                                  "Attempt to access a shared object outside the scope of a shared lock.",
                                                                  Thread.currentThread().getName(), manager
                                                                      .getClientID()); }
-      txn.addTransactionCompleteListener(listener);
       keyToListeners.put(key, listener);
+      txn.addTransactionCompleteListener(listener);
     }
   }
 
