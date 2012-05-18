@@ -298,28 +298,7 @@
                       <cleanEmptyDirectories>true</cleanEmptyDirectories>
                       <failIfNotFound>false</failIfNotFound>
                     </resource>
-                    <resource>
-                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
-                      <targetPath>${rootDir}/ehcache</targetPath>
-                      <file>${ehcache-core.readme.url}</file>
-                    </resource>
-                    <resource>
-                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
-                      <targetPath>${rootDir}/ehcache</targetPath>
-                      <file>${ehcache-core.quickstart.url}</file>
-                    </resource>
-                    <resource>
-                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
-                      <targetPath>${rootDir}/ehcache</targetPath>
-                      <file>${ehcache-core.tcschema.url}</file>
-                      <destFileName>ehcache.xml</destFileName>
-                    </resource>
-                    <resource>
-                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
-                      <targetPath>${rootDir}/ehcache/licenses</targetPath>
-                      <file>${ehcache-core.tclicense.url}</file>
-                    </resource>
-                    
+                   
                     <!-- move tmc to the root, https://jira.terracotta.org/jira/browse/DEV-7354 -->
                      <resource>
                       <targetPath>${rootDir}/tmc</targetPath>
