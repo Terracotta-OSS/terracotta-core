@@ -140,7 +140,7 @@ public class TestClientManager {
       try {
         testBase.evaluateClientOutput(client.getName(), result.getExitCode(), output);
       } catch (Throwable t) {
-        System.out.println("*************Got excpetion in One of the Clients Killing other clients");
+        System.out.println("*************Got exception in One of the Clients Killing other clients");
         System.out.println("**** For Details Refer to client Logs at " + output.getAbsolutePath());
         stopAllClients();
         throw new AssertionError(t);
