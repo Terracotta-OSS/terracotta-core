@@ -126,12 +126,13 @@ public class TestBaseUtil {
     }
     jvmArgs.add("-Xms" + minHeap + "m");
     jvmArgs.add("-Xmx" + maxHeap + "m");
-    jvmArgs.add("-XX:MaxDirectMemorySize=" + directMemorySize + "m");
+
+    if (directMemorySize > 0) jvmArgs.add("-XX:MaxDirectMemorySize=" + directMemorySize + "m");
   }
 
   public static void configureOffHeap(TestConfig testConfig, int maxDirectMemory, int offHeapDataSize) {
     testConfig.getL2Config().setOffHeapEnabled(true);
-    testConfig.getL2Config().addExtraServerJvmArg("-XX:MaxDirectMemorySize=" + maxDirectMemory + "m");
+    testConfig.getL2Config().setDirectMemorySize(maxDirectMemory);
     testConfig.getL2Config().setMaxOffHeapDataSize(offHeapDataSize);
     testConfig.getL2Config().setPersistenceMode(PersistenceMode.PERMANENT_STORE);
 

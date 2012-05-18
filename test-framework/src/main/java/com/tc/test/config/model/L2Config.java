@@ -27,7 +27,7 @@ public class L2Config {
   private boolean                 isProxyDsoPorts       = false;
   private int                     minHeap               = 256;
   private int                     maxHeap               = 256;
-  private int                     directMemorySize      = maxHeap;
+  private int                     directMemorySize      = -1;
   private int                     proxyWaitTime         = 20 * 1000;
   private int                     proxyDownTime         = 100;
   private final BytemanConfig     bytemanConfig         = new BytemanConfig();

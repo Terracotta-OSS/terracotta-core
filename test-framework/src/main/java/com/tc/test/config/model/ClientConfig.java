@@ -19,7 +19,7 @@ public class ClientConfig {
   private boolean                               shouldResolveLicense = true;
   private int                                   minHeap              = 64;
   private int                                   maxHeap              = 128;
-  private int                                   directMemorySize     = maxHeap;
+  private int                                   directMemorySize     = -1;
   private final BytemanConfig                   bytemanConfig        = new BytemanConfig();
 
   public ClientConfig() {
