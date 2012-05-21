@@ -81,17 +81,19 @@ public class JMXConnectorProxy implements JMXConnector {
   }
 
   private void determineConnector() throws Exception {
-    JMXServiceURL url = new JMXServiceURL(getSecureJMXConnectorURL(m_host, m_port));
-
+    JMXServiceURL url = null;
+    if (m_env != null && m_env.containsKey("jmx.remote.credentials")) {
+      url = new JMXServiceURL(getSecureJMXConnectorURL(m_host, m_port));
+    } else {
+      url = new JMXServiceURL(getJMXConnectorURL(m_host, m_port));
+    }
     try {
       m_connector = JMXConnectorFactory.connect(url, m_env);
       m_serviceURL = url;
     } catch (IOException ioe) {
       if (isConnectException(ioe)) { throw ioe; }
       if (isAuthenticationException(ioe)) { throw new SecurityException("Invalid login name or credentials"); }
-      url = new JMXServiceURL(getJMXConnectorURL(m_host, m_port));
-      m_connector = JMXConnectorFactory.connect(url, m_env);
-      m_serviceURL = url;
+      throw ioe;
     }
   }
 
