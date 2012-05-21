@@ -4,21 +4,22 @@
  */
 package com.tc.admin;
 
-
 import com.tc.admin.common.ApplicationContext;
 
 import java.awt.Point;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Date;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class ThreadDumpEntry implements Runnable {
   protected ApplicationContext appContext;
-  private Future<String>       future;
+  private final Future<String> future;
   private String               text;
-  private Date                 time;
+  private final Date           time;
   private Point                viewPosition;
 
   private static final int     DEFAULT_TIMEOUT_SECONDS = 300;
@@ -42,7 +43,14 @@ public class ThreadDumpEntry implements Runnable {
     } catch (CancellationException ce) {
       result = appContext.format("canceled");
     } catch (Exception e) {
-      result = e.getMessage();
+      Throwable t = e;
+
+      if (t instanceof UndeclaredThrowableException || t instanceof ExecutionException) {
+        t = t.getCause();
+      }
+
+      appContext.log(t);
+      result = t.getMessage();
     }
     setThreadDump(result);
   }
@@ -87,6 +95,7 @@ public class ThreadDumpEntry implements Runnable {
     return viewPosition;
   }
 
+  @Override
   public String toString() {
     return time.toString();
   }
