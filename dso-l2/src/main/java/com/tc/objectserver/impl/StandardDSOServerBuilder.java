@@ -38,6 +38,7 @@ import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.object.msg.MessageRecycler;
+import com.tc.object.net.ChannelStats;
 import com.tc.object.net.ChannelStatsImpl;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.persistence.api.PersistentMapStore;
@@ -194,9 +195,10 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                                                final DSOChannelManager channelManager,
                                                                final Sink respondToServerTCMapSink,
                                                                final Sink managedObjectRequestSink,
-                                                               ClientStateManager clientStateManager) {
+                                                               ClientStateManager clientStateManager,
+                                                               ChannelStats channelStats) {
     return new ServerMapRequestManagerImpl(objectMgr, channelManager, respondToServerTCMapSink,
-                                           managedObjectRequestSink, clientStateManager);
+                                           managedObjectRequestSink, clientStateManager, channelStats);
   }
 
   public ServerConfigurationContext createServerConfigurationContext(StageManager stageManager,

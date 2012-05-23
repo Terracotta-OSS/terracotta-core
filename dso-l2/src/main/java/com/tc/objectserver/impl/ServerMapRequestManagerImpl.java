@@ -11,15 +11,16 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
 import com.tc.object.ObjectRequestID;
+import com.tc.object.ObjectRequestServerContext.LOOKUP_STATE;
 import com.tc.object.ServerMapGetValueRequest;
 import com.tc.object.ServerMapGetValueResponse;
 import com.tc.object.ServerMapRequestID;
 import com.tc.object.ServerMapRequestType;
-import com.tc.object.ObjectRequestServerContext.LOOKUP_STATE;
 import com.tc.object.msg.GetAllKeysServerMapResponseMessage;
 import com.tc.object.msg.GetAllSizeServerMapResponseMessage;
 import com.tc.object.msg.GetValueServerMapResponseMessage;
 import com.tc.object.msg.ObjectNotFoundServerMapResponseMessage;
+import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.objectserver.api.ObjectManager;
@@ -44,8 +45,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
 
@@ -56,15 +57,17 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
   private final Sink                  managedObjectRequestSink;
   private final ServerMapRequestQueue requestQueue = new ServerMapRequestQueue();
   private final ClientStateManager    clientStateManager;
+  private final ChannelStats          channelStats;
 
   public ServerMapRequestManagerImpl(final ObjectManager objectManager, final DSOChannelManager channelManager,
                                      final Sink respondToServerTCMapSink, final Sink managedObjectRequestSink,
-                                     ClientStateManager clientStateManager) {
+                                     ClientStateManager clientStateManager, ChannelStats channelStats) {
     this.channelManager = channelManager;
     this.objectManager = objectManager;
     this.respondToServerTCMapSink = respondToServerTCMapSink;
     this.managedObjectRequestSink = managedObjectRequestSink;
     this.clientStateManager = clientStateManager;
+    this.channelStats = channelStats;
   }
 
   public void requestValues(final ClientID clientID, final ObjectID mapID,
@@ -135,6 +138,10 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
             Set<ObjectID> objectIdstoPrefetch = Collections.EMPTY_SET;
             if (!objectIdsForKeys.isEmpty()) {
               objectIdstoPrefetch = clientStateManager.addReferences(clientID, objectIdsForKeys);
+              MessageChannel channel = getActiveChannel(clientID);
+              if (channel != null) {
+                this.channelStats.notifyObjectRequest(channel, objectIdstoPrefetch.size());
+              }
             }
 
             for (ObjectID valueObjectId : objectIdstoPrefetch) {

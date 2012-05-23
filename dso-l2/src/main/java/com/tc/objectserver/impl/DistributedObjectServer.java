@@ -1038,7 +1038,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.serverMapRequestManager = this.serverBuilder
         .createServerMapRequestManager(this.objectManager, channelManager, respondToServerTCMapStage.getSink(),
-                                       objectRequestStage.getSink(), this.clientStateManager);
+                                       objectRequestStage.getSink(), this.clientStateManager, channelStats);
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.serverMapRequestManager));
 
     final ServerTransactionFactory serverTransactionFactory = new ServerTransactionFactory();

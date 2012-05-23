@@ -23,12 +23,14 @@ import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
+import com.tc.object.ObjectRequestServerContext.LOOKUP_STATE;
 import com.tc.object.ServerMapGetValueRequest;
 import com.tc.object.ServerMapGetValueResponse;
 import com.tc.object.ServerMapRequestID;
-import com.tc.object.ObjectRequestServerContext.LOOKUP_STATE;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.msg.GetValueServerMapResponseMessage;
+import com.tc.object.net.ChannelStats;
+import com.tc.object.net.ChannelStatsImpl;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.objectserver.api.ObjectManager;
@@ -40,6 +42,7 @@ import com.tc.objectserver.l1.api.ObjectReferenceAddListener;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ConcurrentDistributedServerMapManagedObjectState;
 import com.tc.stats.Stats;
+import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 
@@ -66,12 +69,13 @@ public class ServerMapRequestManagerTest extends TestCase {
     final Sink respondToServerTCMapSink = mock(Sink.class);
     final Sink managedObjectRequestSink = mock(Sink.class);
     final DSOChannelManager channelManager = mock(DSOChannelManager.class);
+    final ChannelStats channelStats = new ChannelStatsImpl(new CounterManagerImpl(), channelManager);
     final ServerMapRequestManagerImpl serverMapRequestManager = new ServerMapRequestManagerImpl(
                                                                                                 objManager,
                                                                                                 channelManager,
                                                                                                 respondToServerTCMapSink,
                                                                                                 managedObjectRequestSink,
-                                                                                                null);
+                                                                                                null, channelStats);
     final ArrayList requests = new ArrayList();
     Set<Object> keys = new HashSet<Object>();
     keys.add(portableKey);
@@ -137,12 +141,13 @@ public class ServerMapRequestManagerTest extends TestCase {
     final Sink respondToServerMapSink = mock(Sink.class);
     final Sink managedObjectRequestSink = mock(Sink.class);
     final DSOChannelManager channelManager = mock(DSOChannelManager.class);
+    final ChannelStats channelStats = new ChannelStatsImpl(new CounterManagerImpl(), channelManager);
     final ServerMapRequestManagerImpl serverMapRequestManager = new ServerMapRequestManagerImpl(
                                                                                                 objManager,
                                                                                                 channelManager,
                                                                                                 respondToServerMapSink,
                                                                                                 managedObjectRequestSink,
-                                                                                                null);
+                                                                                                null, channelStats);
     final ArrayList request1 = new ArrayList();
     Set<Object> keys1 = new HashSet<Object>();
     keys1.add(portableKey1);
@@ -228,14 +233,16 @@ public class ServerMapRequestManagerTest extends TestCase {
     final TestSink managedObjectRequestSink = new TestSink();
     final DSOChannelManager channelManager = mock(DSOChannelManager.class);
     TestClientStateManager clientStateManager = new TestClientStateManager();
+    final ChannelStats channelStats = new ChannelStatsImpl(new CounterManagerImpl(), channelManager);
     final ServerMapRequestManagerImpl serverMapRequestManager = new ServerMapRequestManagerImpl(
                                                                                                 objManager,
                                                                                                 channelManager,
                                                                                                 respondToServerMapSink,
                                                                                                 managedObjectRequestSink,
-                                                                                                clientStateManager);
-    ServerMapGetValueRequest mapGetValueRequest = new ServerMapGetValueRequest(requestID1, Collections
-        .singleton(portableKey1));
+                                                                                                clientStateManager,
+                                                                                                channelStats);
+    ServerMapGetValueRequest mapGetValueRequest = new ServerMapGetValueRequest(requestID1,
+                                                                               Collections.singleton(portableKey1));
     serverMapRequestManager.requestValues(clientID, mapID, Collections.singletonList(mapGetValueRequest));
 
     ConcurrentDistributedServerMapManagedObjectState managedObjectState = new TestCDSMManagedObjectState(0, map);
