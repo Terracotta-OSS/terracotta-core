@@ -347,14 +347,6 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
     });
   }
 
-  void endIfDisconnected() {
-    synchronized (this.status) {
-      if (!this.isConnected() && !this.status.isEnd()) {
-        this.status.end();
-      }
-    }
-  }
-
   private static final class HandshakeResult {
     private final SynAckMessage synAck;
 

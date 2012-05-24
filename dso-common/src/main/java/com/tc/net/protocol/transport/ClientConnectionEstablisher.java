@@ -211,7 +211,6 @@ public class ClientConnectionEstablisher {
 
         }
       }
-      cmt.endIfDisconnected();
     } finally {
       asyncReconnecting.set(false);
     }
