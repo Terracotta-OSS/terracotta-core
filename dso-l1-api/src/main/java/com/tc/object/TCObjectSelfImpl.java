@@ -3,6 +3,7 @@
  */
 package com.tc.object;
 
+import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
@@ -47,6 +48,9 @@ public class TCObjectSelfImpl implements TCObjectSelf {
     this.oid = newId;
     // Assuming isNew to be false
     this.isNew = false;
+    if (this instanceof Manageable) {
+      ((Manageable) this).__tc_managed(this);
+    }
   }
 
   public void initClazzIfRequired(TCClass tcc) {
