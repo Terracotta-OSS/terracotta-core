@@ -8,6 +8,7 @@ import org.apache.commons.lang.StringUtils;
 import org.terracotta.NativeToolHandler;
 
 import com.tc.config.Directories;
+import com.tc.lcp.LinkedJavaProcess;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
@@ -209,9 +210,11 @@ public class TestConfigObject {
   }
 
   private static void initBaseDir() {
-    String baseDirProp = System.getProperty(TC_BASE_DIR);
-    if (baseDirProp == null || baseDirProp.trim().equals("")) invalidBaseDir();
+    String baseDirProp = TestConfigUtil.getTcBaseDirPath();
     baseDir = new File(baseDirProp);
+    if (!baseDir.exists()) {
+      baseDir.mkdirs();
+    }
     if (!baseDir.isDirectory()) invalidBaseDir();
   }
 
@@ -386,6 +389,9 @@ public class TestConfigObject {
 
   public String linkedChildProcessPath() {
     String out = this.properties.getProperty(LINKED_CHILD_PROCESS_CLASSPATH);
+    if (out == null) {
+      out = TestConfigUtil.jarFor(LinkedJavaProcess.class);
+    }
     Assert.assertNotBlank(out);
     assertValidClasspath(out);
     return out;

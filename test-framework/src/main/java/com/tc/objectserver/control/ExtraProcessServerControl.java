@@ -18,6 +18,7 @@ import com.tc.process.StreamCopier;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TestConfigObject;
+import com.tc.test.TestConfigUtil;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.Vm;
 
@@ -243,8 +244,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   }
 
   private void addEnvVarsForWindows(List args) {
-    String tcBaseDir = System.getProperty("tc.base-dir");
-    if (tcBaseDir == null || tcBaseDir.equals("")) { throw new AssertionError("tc.base-dir is not set!"); }
+    String tcBaseDir = TestConfigUtil.getTcBaseDirPath();
     args.add("-Dtc.base-dir=" + tcBaseDir);
     String val = System.getProperty("tc.tests.info.property-files");
     if (val != null && !val.trim().equals("")) {
