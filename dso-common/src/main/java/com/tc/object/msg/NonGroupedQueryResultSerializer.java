@@ -34,7 +34,7 @@ public class NonGroupedQueryResultSerializer extends IndexQueryResultSerializer<
   }
 
   @Override
-  public void serialize(NonGroupedQueryResult result, TCByteBufferOutput output) throws IOException {
+  public void serialize(NonGroupedQueryResult result, TCByteBufferOutput output) {
     output.writeString(result.getKey());
     output.writeLong(result.getValue().toLong());
     super.serialize(result, output);

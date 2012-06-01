@@ -40,7 +40,7 @@ public class GroupedQueryResultSerializer extends IndexQueryResultSerializer<Gro
   }
 
   @Override
-  public void serialize(GroupedQueryResult result, TCByteBufferOutput output) throws IOException {
+  public void serialize(GroupedQueryResult result, TCByteBufferOutput output) {
     output.writeInt(result.getGroupedAttributes().size());
     for (NVPair pair : result.getGroupedAttributes()) {
       NVPAIR_SERIALIZER.serialize(pair, output, NULL_SERIALIZER);
@@ -48,7 +48,11 @@ public class GroupedQueryResultSerializer extends IndexQueryResultSerializer<Gro
 
     output.writeInt(result.getAggregators().size());
     for (Aggregator agg : result.getAggregators()) {
-      agg.serializeTo(output);
+      try {
+        agg.serializeTo(output);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
     super.serialize(result, output);
   }

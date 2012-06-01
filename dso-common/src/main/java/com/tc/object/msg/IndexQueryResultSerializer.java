@@ -38,7 +38,7 @@ public abstract class IndexQueryResultSerializer<T extends IndexQueryResult> {
     protected abstract T build();
   }
 
-  public void serialize(T result, TCByteBufferOutput output) throws IOException {
+  public void serialize(T result, TCByteBufferOutput output) {
     List<NVPair> attributes = result.getAttributes();
     output.writeInt(attributes.size());
     for (NVPair pair : attributes) {

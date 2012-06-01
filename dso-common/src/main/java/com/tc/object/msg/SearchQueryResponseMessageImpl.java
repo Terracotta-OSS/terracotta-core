@@ -55,6 +55,7 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
   /**
    * {@inheritDoc}
    */
+  @Override
   public void initSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupID,
                                         List<IndexQueryResult> searchResults, List<Aggregator> aggregatorList,
                                         boolean criteriaMatched, boolean isGroupBy) {
@@ -69,6 +70,7 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
   /**
    * {@inheritDoc}
    */
+  @Override
   public void initSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupID, String errMsg) {
     this.requestID = searchRequestID;
     this.groupIDFrom = groupID;
@@ -78,18 +80,22 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
   /**
    * {@inheritDoc}
    */
+  @Override
   public String getErrorMessage() {
     return errorMessage;
   }
 
+  @Override
   public boolean isError() {
     return errorMessage != null;
   }
 
+  @Override
   public boolean isAnyCriteriaMatched() {
     return anyCriteriaMatched;
   }
 
+  @Override
   public boolean isQueryGroupBy() {
     return isQueryGroupBy;
   }
@@ -97,6 +103,7 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
   /**
    * {@inheritDoc}
    */
+  @Override
   public SearchRequestID getRequestID() {
     return this.requestID;
   }
@@ -104,6 +111,7 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
   /**
    * {@inheritDoc}
    */
+  @Override
   public GroupID getGroupIDFrom() {
     return this.groupIDFrom;
   }
@@ -111,6 +119,7 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
   /**
    * {@inheritDoc}
    */
+  @Override
   public List<IndexQueryResult> getResults() {
     return this.results;
   }
@@ -118,6 +127,7 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
   /**
    * {@inheritDoc}
    */
+  @Override
   public List<Aggregator> getAggregators() {
     return aggregators;
   }
@@ -135,12 +145,7 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
       IndexQueryResultSerializer<IndexQueryResult> writer = IndexQueryResultSerializer.getInstance(isQueryGroupBy);
 
       for (IndexQueryResult result : this.results) {
-        try {
-          writer.serialize(result, outStream);
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-
+        writer.serialize(result, outStream);
       }
     }
 
