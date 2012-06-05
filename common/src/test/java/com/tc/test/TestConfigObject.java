@@ -88,6 +88,7 @@ public class TestConfigObject {
   private static final String     L2_STARTUP_PREFIX                = DYNAMIC_PROPERTIES_PREFIX + "l2.startup.";
   public static final String      L2_STARTUP_MODE                  = L2_STARTUP_PREFIX + "mode";
   public static final String      L2_STARTUP_JAVA_HOME             = L2_STARTUP_PREFIX + "jvm";
+  public static final String      L2_CLASSPATH                     = DYNAMIC_PROPERTIES_PREFIX + "l2.classpath";
 
   private static final String     EMMA_LIB                         = DYNAMIC_PROPERTIES_PREFIX + "emma.lib";
   private static final String     JAVA_HOME_15                     = DYNAMIC_PROPERTIES_PREFIX + "JAVA_HOME_15";
@@ -299,6 +300,10 @@ public class TestConfigObject {
 
   public String osName() {
     return getProperty(OS_NAME);
+  }
+
+  public String l2Classpath() {
+    return getProperty(L2_CLASSPATH);
   }
 
   public String platform() {
