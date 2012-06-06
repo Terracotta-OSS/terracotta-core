@@ -1,9 +1,7 @@
 package org.terracotta.tests.base;
 
-import org.apache.commons.lang.StringUtils;
 import org.terracotta.test.util.TestBaseUtil;
 
-import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.lcp.LinkedJavaProcess;
 import com.tc.process.Exec;
 import com.tc.process.Exec.Result;
@@ -157,16 +155,13 @@ public class TestClientManager {
   }
 
   private String addRequiredJarsToClasspath(Class client, String classPath) {
-    String mbsp = TestBaseUtil.jarFor(MBeanServerInvocationProxy.class);
     String test = TestBaseUtil.jarFor(client);
     String junit = TestBaseUtil.jarFor(org.junit.Assert.class);
     String linkedChild = TestBaseUtil.jarFor(LinkedJavaProcess.class);
     String abstractClientBase = TestBaseUtil.jarFor(AbstractClientBase.class);
     String jmxp = TestBaseUtil.jarFor(JMXMPConnector.class);
     String log4j = TestBaseUtil.jarFor(org.apache.log4j.LogManager.class);
-    String stringUtils = TestBaseUtil.jarFor(StringUtils.class);
-    classPath = testBase.makeClasspath(classPath, mbsp, test, junit, linkedChild, abstractClientBase, jmxp, log4j,
-                                       stringUtils);
+    classPath = testBase.makeClasspath(classPath, test, junit, linkedChild, abstractClientBase, jmxp, log4j);
     return classPath;
   }
 

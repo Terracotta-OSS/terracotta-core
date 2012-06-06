@@ -5,7 +5,7 @@ package org.terracotta.tests.base;
 
 import org.terracotta.test.util.JMXUtils;
 
-import com.tc.admin.common.MBeanServerInvocationProxy;
+import com.tc.objectserver.control.MBeanServerInvocationProxy;
 import com.tc.test.jmx.TestHandler;
 import com.tc.test.jmx.TestHandlerMBean;
 import com.tc.test.setup.GroupsData;
