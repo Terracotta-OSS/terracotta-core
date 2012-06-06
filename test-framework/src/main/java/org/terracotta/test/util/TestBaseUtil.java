@@ -19,6 +19,7 @@ import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -117,13 +118,17 @@ public class TestBaseUtil {
 
   public static void setHeapSizeArgs(List<String> jvmArgs, int minHeap, int maxHeap, int directMemorySize) {
     Iterator<String> i = jvmArgs.iterator();
+    List<String> illegalArgs = new ArrayList<String>();
     while (i.hasNext()) {
       String arg = i.next();
       if (arg.startsWith("-Xmx") || arg.startsWith("-Xms") || arg.startsWith("-XX:MaxDirectMemorySize")) {
-        System.err.println("Ignoring '" + arg + "'. Heap size should be set through L2Config.");
-        i.remove();
+        illegalArgs.add(arg);
       }
     }
+    if (!illegalArgs.isEmpty()) { throw new AssertionError(
+                                                           "Invalid use of jvmArgs - "
+                                                               + illegalArgs
+                                                               + " - use testConfig.get[Client/L2]Config().set[MaxHeap/MinHeap/DirectMemorySize]() instead!"); }
     jvmArgs.add("-Xms" + minHeap + "m");
     jvmArgs.add("-Xmx" + maxHeap + "m");
 
