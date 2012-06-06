@@ -17,13 +17,13 @@ import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.TerracottaLocking;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.metadata.MetaDataDescriptor;
-import com.tc.object.metadata.NVPair;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.toolkit.object.serialization.SerializationStrategy;
+import com.terracottatech.search.NVPair;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -369,6 +369,10 @@ public interface Manager extends TerracottaLocking {
 
   public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                          Set<String> attributeSet, List<NVPair> sortAttributes,
+                                         List<NVPair> aggregators, int maxResults, int batchSize);
+
+  public SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
+                                         Set<String> groupByAttribues, List<NVPair> sortAttributes,
                                          List<NVPair> aggregators, int maxResults, int batchSize);
 
   public NVPair createNVPair(String name, Object value);

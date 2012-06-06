@@ -7,7 +7,7 @@ import com.tc.async.api.EventContext;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.object.SearchRequestID;
-import com.tc.object.metadata.NVPair;
+import com.terracottatech.search.NVPair;
 
 import java.util.LinkedList;
 import java.util.List;

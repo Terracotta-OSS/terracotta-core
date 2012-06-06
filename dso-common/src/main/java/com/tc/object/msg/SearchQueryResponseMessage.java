@@ -6,8 +6,8 @@ package com.tc.object.msg;
 import com.tc.net.GroupID;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.SearchRequestID;
-import com.tc.search.IndexQueryResult;
-import com.tc.search.aggregator.Aggregator;
+import com.terracottatech.search.IndexQueryResult;
+import com.terracottatech.search.aggregator.Aggregator;
 
 import java.util.List;
 
@@ -37,10 +37,11 @@ public interface SearchQueryResponseMessage extends TCMessage {
    * @param aggregatorResults
    * @param aggregatorResults
    * @param anyCriteriaMatched
+   * @param isGroupBy
    */
   public void initSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupIDFrom,
                                         List<IndexQueryResult> results, List<Aggregator> aggregators,
-                                        boolean anyCriteriaMatched);
+                                        boolean anyCriteriaMatched, boolean isGroupBy);
 
   /**
    * Initialize error response
@@ -66,5 +67,7 @@ public interface SearchQueryResponseMessage extends TCMessage {
   public boolean isError();
 
   public boolean isAnyCriteriaMatched();
+
+  public boolean isQueryGroupBy();
 
 }

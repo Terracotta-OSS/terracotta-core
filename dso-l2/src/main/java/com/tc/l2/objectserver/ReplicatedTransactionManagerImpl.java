@@ -316,7 +316,9 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
           // the new passive arrives before the transaction containing a change to this object, then we might apply full
           // DNA on old object. Coming to think of it, it might happen even in 1 PASSIVE case, since the ACTIVE computes
           // the diff only after sending a few txns, which migh contain some new objects.
-          logger.warn("Ignoring ObjectSyncTransaction for " + oid + " dna = " + dna + " since its already present");
+          if (logger.isDebugEnabled()) {
+            logger.debug("Ignoring ObjectSyncTransaction for " + oid + " dna = " + dna + " since its already present");
+          }
           modified = true;
           List moreChanges = pca.getAnyPendingChangesForAndClear(oid);
           Assert.assertTrue(moreChanges.isEmpty());

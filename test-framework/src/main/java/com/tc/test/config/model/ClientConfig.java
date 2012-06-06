@@ -19,6 +19,7 @@ public class ClientConfig {
   private boolean                               shouldResolveLicense = true;
   private int                                   minHeap              = 64;
   private int                                   maxHeap              = 128;
+  private int                                   directMemorySize     = -1;
   private final BytemanConfig                   bytemanConfig        = new BytemanConfig();
 
   public ClientConfig() {
@@ -130,10 +131,28 @@ public class ClientConfig {
   /**
    * Set the max heap size
    * 
-   * @param maxHeap maximum heap size
+   * @param maxHeap maximum heap size in MB
    */
   public void setMaxHeap(int maxHeap) {
     this.maxHeap = maxHeap;
+  }
+
+  /**
+   * Gets the "-XX:MaxDirectMemorySize" to pass to the client
+   * 
+   * @return -XX:MaxDirectMemorySize
+   */
+  public int getDirectMemorySize() {
+    return directMemorySize;
+  }
+
+  /**
+   * Sets "-XX:MaxDirectMemorySize"
+   * 
+   * @param -XX:MaxDirectMemorySize in MB
+   */
+  public void setDirectMemorySize(int directMemorySize) {
+    this.directMemorySize = directMemorySize;
   }
 
   public BytemanConfig getBytemanConfig() {

@@ -19,6 +19,10 @@
         dependencyManagement section of the parent POM.
     -->
     <dependency>
+      <groupId>com.terracottatech</groupId>
+      <artifactId>search</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.terracotta</groupId>
       <artifactId>management-ehcache-impl</artifactId>
       <version>${management.version}</version>

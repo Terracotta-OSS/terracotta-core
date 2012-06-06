@@ -4,6 +4,7 @@
 package com.tc.object.metadata;
 
 import com.tc.object.ObjectID;
+import com.terracottatech.search.NVPair;
 
 import java.util.Date;
 import java.util.Iterator;

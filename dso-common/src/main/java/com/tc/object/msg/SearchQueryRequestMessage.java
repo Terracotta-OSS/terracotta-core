@@ -8,7 +8,7 @@ import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.SearchRequestID;
-import com.tc.object.metadata.NVPair;
+import com.terracottatech.search.NVPair;
 
 import java.util.List;
 import java.util.Set;
@@ -52,8 +52,9 @@ public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEvent
   public void initializeSearchRequestMessage(final SearchRequestID searchRequestID, final GroupID groupFrom,
                                              final String cacheName, final List queryStack, final boolean keys,
                                              final boolean values, final Set<String> attributeSet,
-                                             final List<NVPair> sortAttributesMap, final List<NVPair> aggregators,
-                                             int maxResults, int batchSize, boolean prefetchFirstBatch);
+                                             Set<String> groupByAttrs, final List<NVPair> sortAttributesMap,
+                                             final List<NVPair> aggregators, int maxResults, int batchSize,
+                                             boolean prefetchFirstBatch);
 
   /**
    * Name of cache to query against.
@@ -75,6 +76,11 @@ public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEvent
    * @return Set<String>
    */
   public Set<String> getAttributes();
+
+  /**
+   * Return set of attributes to group results by
+   */
+  public Set<String> getGroupByAttributes();
 
   /**
    * Return a map of sort attributes

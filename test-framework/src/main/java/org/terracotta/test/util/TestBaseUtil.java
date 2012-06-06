@@ -115,22 +115,24 @@ public class TestBaseUtil {
     }
   }
 
-  public static void setHeapSizeArgs(List<String> jvmArgs, int minHeap, int maxHeap) {
+  public static void setHeapSizeArgs(List<String> jvmArgs, int minHeap, int maxHeap, int directMemorySize) {
     Iterator<String> i = jvmArgs.iterator();
     while (i.hasNext()) {
       String arg = i.next();
-      if (arg.startsWith("-Xmx") || arg.startsWith("-Xms")) {
+      if (arg.startsWith("-Xmx") || arg.startsWith("-Xms") || arg.startsWith("-XX:MaxDirectMemorySize")) {
         System.err.println("Ignoring '" + arg + "'. Heap size should be set through L2Config.");
         i.remove();
       }
     }
     jvmArgs.add("-Xms" + minHeap + "m");
     jvmArgs.add("-Xmx" + maxHeap + "m");
+
+    if (directMemorySize > 0) jvmArgs.add("-XX:MaxDirectMemorySize=" + directMemorySize + "m");
   }
 
   public static void configureOffHeap(TestConfig testConfig, int maxDirectMemory, int offHeapDataSize) {
     testConfig.getL2Config().setOffHeapEnabled(true);
-    testConfig.getL2Config().addExtraServerJvmArg("-XX:MaxDirectMemorySize=" + maxDirectMemory + "m");
+    testConfig.getL2Config().setDirectMemorySize(maxDirectMemory);
     testConfig.getL2Config().setMaxOffHeapDataSize(offHeapDataSize);
     testConfig.getL2Config().setPersistenceMode(PersistenceMode.PERMANENT_STORE);
 

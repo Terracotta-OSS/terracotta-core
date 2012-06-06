@@ -518,7 +518,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
   }
 
   public void writeUTF(String str) {
-    throw new UnsupportedOperationException("use writeString() instead");
+    writeString(str);
   }
 
 }

@@ -127,10 +127,12 @@ public interface ServerMapLocalCache {
    */
   Set getKeys();
 
-  void postTransactionCallback(Object key, AbstractLocalCacheStoreValue value, boolean removeEntry);
+  void postTransactionCallback(Object key,
+                               AbstractLocalCacheStoreValue value,
+                               boolean removeEntry,
+                               L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
 
-  void transactionComplete(
-                           L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
+  void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
 
   void recalculateSize(Object key);
 

@@ -42,7 +42,7 @@ class IzPack {
 
     kitDirectory().eachFile { file ->
       if (file.isDirectory()) {
-        def pack = [name: file.name, files: [file]]
+        def pack = [name: file.name, files: [file], scripts: findScriptFiles(file)]
         result.add(pack)
       }
       else {
@@ -63,8 +63,25 @@ class IzPack {
       ["opensource-1.jpg", "opensource-2.jpg", "opensource-3.jpg",
        "opensource-4.jpg", "opensource-5.jpg", "opensource-5.jpg",
        "opensource-5.jpg"]
-      
     }
+  }
+
+  static findScriptFiles(rootDir) {
+    def kitDirPath = rootDir.absolutePath
+    def ant = new AntBuilder()
+    def scriptFiles = ant.fileset(dir: rootDir) {
+      include(name: "**/*.sh")
+      include(name: "**/*.bat")
+    }
+    def scripts = []
+    for (script in scriptFiles) {
+      def scriptPath = script.file.absolutePath
+      if (scriptPath.startsWith(kitDirPath)) {
+        def relativeScriptPath = rootDir.name + scriptPath.substring(kitDirPath.size())
+        scripts << relativeScriptPath
+      }
+    }
+    scripts
   }
 }
 
@@ -129,6 +146,9 @@ xml.installation(version: "1.0") {
         description(p.name)
         p.files.each { f ->
           file(src: f.name, targetdir: "\$INSTALL_PATH")
+        }
+        for (script in p.scripts) {
+          executable(stage: "never", os: "unix", targetfile: "\$INSTALL_PATH/${script}")
         }
       }
     }

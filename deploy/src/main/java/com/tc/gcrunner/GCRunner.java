@@ -125,14 +125,22 @@ public class GCRunner {
 
     ObjectManagementMonitorMBean mbean = null;
     final JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector(username, password, host, port);
-    final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-    mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.OBJECT_MANAGEMENT,
-                                                     ObjectManagementMonitorMBean.class, false);
     try {
+      final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+      mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.OBJECT_MANAGEMENT,
+                                                       ObjectManagementMonitorMBean.class, false);
       mbean.runGC();
     } catch (RuntimeException e) {
       // DEV-1168
       consoleLogger.error((e.getCause() == null ? e.getMessage() : e.getCause().getMessage()));
+    } finally {
+      if (jmxConnector != null) {
+        try {
+          jmxConnector.close();
+        } catch (Exception e2) {
+          // System.out.println("Exception while trying to close the JMX connector for port no: " + jmxPort);
+        }
+      }
     }
   }
 
@@ -168,10 +176,14 @@ public class GCRunner {
     ServerGroupInfo[] serverGrpInfos = null;
     TCServerInfoMBean mbean = null;
     final JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector(username, password, host, port);
-    final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-    mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
-    serverGrpInfos = mbean.getServerGroupInfo();
-    jmxConnector.close();
+    try {
+      final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+      mbean = MBeanServerInvocationProxy
+          .newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
+      serverGrpInfos = mbean.getServerGroupInfo();
+    } finally {
+      jmxConnector.close();
+    }
     return serverGrpInfos;
   }
 

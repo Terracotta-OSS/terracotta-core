@@ -26,6 +26,16 @@
   
   <dependencies>
     <dependency>
+      <groupId>com.terracottatech</groupId>
+      <artifactId>search</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.lucene</groupId>
+          <artifactId>lucene-core</artifactId>
+        </exclusion>          
+      </exclusions>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>common</artifactId>
       <version>${project.version}</version>

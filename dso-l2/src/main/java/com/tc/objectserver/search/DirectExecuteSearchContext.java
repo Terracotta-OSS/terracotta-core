@@ -5,6 +5,7 @@ package com.tc.objectserver.search;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.metadata.MetaDataProcessingContext;
+import com.terracottatech.search.IndexException;
 
 abstract class DirectExecuteSearchContext extends BaseSearchEventContext {
 

@@ -8,6 +8,7 @@ import org.apache.commons.lang.StringUtils;
 import org.terracotta.NativeToolHandler;
 
 import com.tc.config.Directories;
+import com.tc.lcp.LinkedJavaProcess;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
@@ -87,6 +88,7 @@ public class TestConfigObject {
   private static final String     L2_STARTUP_PREFIX                = DYNAMIC_PROPERTIES_PREFIX + "l2.startup.";
   public static final String      L2_STARTUP_MODE                  = L2_STARTUP_PREFIX + "mode";
   public static final String      L2_STARTUP_JAVA_HOME             = L2_STARTUP_PREFIX + "jvm";
+  public static final String      L2_CLASSPATH                     = DYNAMIC_PROPERTIES_PREFIX + "l2.classpath";
 
   private static final String     EMMA_LIB                         = DYNAMIC_PROPERTIES_PREFIX + "emma.lib";
   private static final String     JAVA_HOME_15                     = DYNAMIC_PROPERTIES_PREFIX + "JAVA_HOME_15";
@@ -209,9 +211,11 @@ public class TestConfigObject {
   }
 
   private static void initBaseDir() {
-    String baseDirProp = System.getProperty(TC_BASE_DIR);
-    if (baseDirProp == null || baseDirProp.trim().equals("")) invalidBaseDir();
+    String baseDirProp = TestConfigUtil.getTcBaseDirPath();
     baseDir = new File(baseDirProp);
+    if (!baseDir.exists()) {
+      baseDir.mkdirs();
+    }
     if (!baseDir.isDirectory()) invalidBaseDir();
   }
 
@@ -296,6 +300,10 @@ public class TestConfigObject {
 
   public String osName() {
     return getProperty(OS_NAME);
+  }
+
+  public String l2Classpath() {
+    return getProperty(L2_CLASSPATH);
   }
 
   public String platform() {
@@ -386,6 +394,9 @@ public class TestConfigObject {
 
   public String linkedChildProcessPath() {
     String out = this.properties.getProperty(LINKED_CHILD_PROCESS_CLASSPATH);
+    if (out == null) {
+      out = TestConfigUtil.jarFor(LinkedJavaProcess.class);
+    }
     Assert.assertNotBlank(out);
     assertValidClasspath(out);
     return out;

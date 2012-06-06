@@ -298,6 +298,33 @@
                       <cleanEmptyDirectories>true</cleanEmptyDirectories>
                       <failIfNotFound>false</failIfNotFound>
                     </resource>
+                   
+                    <!-- move tmc to the root, https://jira.terracotta.org/jira/browse/DEV-7354 -->
+                     <resource>
+                      <targetPath>${rootDir}/tmc</targetPath>
+                      <directory>${rootDir}/ehcache/tmc</directory>
+                      <preservePath>true</preservePath>
+                      <failIfNotFound>false</failIfNotFound>
+                      <!-- move does not really work; it will move the files at the root, but not the dirs... -->
+                      <!-- move>true</move-->
+                    </resource>
+                    <resource>
+                      <directory>${rootDir}/ehcache/tmc/</directory>
+                      <clean>true</clean>
+                      <cleanEmptyDirectories>true</cleanEmptyDirectories>
+                      <failIfNotFound>false</failIfNotFound>
+                    </resource>
+                    <resource>
+                      <targetPath>${rootDir}/bin</targetPath>
+                      <directory>${rootDir}/tmc/bin</directory>
+                      <includes>
+                       <include>add-tc-agent.*</include>
+                       <include>keychain.*</include>
+                       <include>usermanagement.*</include>
+                       <include>management-cli-common.*</include>
+                      </includes>
+                      <failIfNotFound>false</failIfNotFound>
+                    </resource>
                     
                     <!-- quartz -->
                     <resource>

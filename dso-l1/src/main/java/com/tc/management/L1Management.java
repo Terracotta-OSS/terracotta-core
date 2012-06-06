@@ -78,9 +78,9 @@ public class L1Management extends TerracottaManagement {
     this.statisticsAgentSubSystem = statisticsAgentSubSystem;
 
     try {
-      l1DumpBean = new L1Dumper(client);
-      clusterBean = new TerracottaCluster();
       l1InfoBean = new L1Info(client, rawConfigText);
+      l1DumpBean = new L1Dumper(client, l1InfoBean);
+      clusterBean = new TerracottaCluster();
       instrumentationLoggingBean = new InstrumentationLogging(instrumentationLogger);
       runtimeOutputOptionsBean = new RuntimeOutputOptions(runtimeLogger);
       runtimeLoggingBean = new RuntimeLogging(runtimeLogger);

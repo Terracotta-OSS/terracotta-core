@@ -16,13 +16,13 @@ import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.metadata.MetaDataDescriptor;
-import com.tc.object.metadata.NVPair;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.toolkit.object.serialization.SerializationStrategy;
+import com.terracottatech.search.NVPair;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -1173,6 +1173,13 @@ public class ManagerUtil {
                                                 List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults,
                                                 int batchSize) {
     return getManager().executeQuery(cachename, queryStack, includeKeys, includeValues, attributeSet, sortAttributes,
+                                     aggregators, maxResults, batchSize);
+  }
+
+  public static SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
+                                                Set<String> groupByAttributes, List<NVPair> sortAttributes,
+                                                List<NVPair> aggregators, int maxResults, int batchSize) {
+    return getManager().executeQuery(cachename, queryStack, attributeSet, groupByAttributes, sortAttributes,
                                      aggregators, maxResults, batchSize);
   }
 

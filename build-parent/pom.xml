@@ -27,7 +27,10 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jetty.version>6.1.8</jetty.version>
     <slf4j.version>1.6.4</slf4j.version>
-    <offheap-store.version>1.0.6</offheap-store.version>
+    <offheap-store.version>1.0.8-SNAPSHOT</offheap-store.version>
+    <search.version>1.0.0-SNAPSHOT</search.version>
+    <security-core-version>1.0.0-SNAPSHOT</security-core-version>
+    <security-keychain-version>1.0.0-SNAPSHOT</security-keychain-version>
     <management.version>1.0.0-SNAPSHOT</management.version>
     <terracotta-license.version>1.0.4-SNAPSHOT</terracotta-license.version>
     <derby.version>10.8.2.2</derby.version>
@@ -81,11 +84,6 @@
         <groupId>org.terracotta</groupId>
         <artifactId>linked-child-process</artifactId>
         <version>${linked-child-process.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.lucene</groupId>
-        <artifactId>lucene-core</artifactId>
-        <version>3.0.3</version>
       </dependency>
       <dependency>
         <groupId>log4j</groupId>
@@ -222,6 +220,21 @@
         <groupId>com.terracottatech</groupId>
         <artifactId>offheap-store</artifactId>
         <version>${offheap-store.version}</version>
+      </dependency>
+      <dependency>
+    	<groupId>com.terracotta</groupId>
+    	<artifactId>security-core</artifactId>
+    	<version>${security-core-version}</version>
+      </dependency>
+      <dependency>
+    	<groupId>com.terracotta</groupId>
+    	<artifactId>security-keychain</artifactId>
+    	<version>${security-keychain-version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.terracottatech</groupId>
+        <artifactId>search</artifactId>
+        <version>${search.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta.license</groupId>

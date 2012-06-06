@@ -29,6 +29,7 @@ import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.object.msg.MessageRecycler;
+import com.tc.object.net.ChannelStats;
 import com.tc.object.net.ChannelStatsImpl;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.persistence.api.PersistentMapStore;
@@ -99,7 +100,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
 
   ServerMapRequestManager createServerMapRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,
                                                         Sink respondToServerTCMapSink, Sink managedObjectRequestSink,
-                                                        ClientStateManager clientStateManager);
+                                                        ClientStateManager clientStateManager, ChannelStats channelStats);
 
   ObjectRequestManager createObjectRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,
                                                   ClientStateManager clientStateMgr,

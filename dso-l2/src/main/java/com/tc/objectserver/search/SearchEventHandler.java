@@ -9,6 +9,7 @@ import com.tc.async.api.EventContext;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.terracottatech.search.IndexException;
 
 import java.io.IOException;
 

@@ -15,10 +15,11 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.SearchRequestID;
 import com.tc.object.dna.impl.NullObjectStringSerializer;
 import com.tc.object.dna.impl.ObjectStringSerializer;
-import com.tc.object.metadata.AbstractNVPair;
-import com.tc.object.metadata.NVPair;
+import com.tc.object.metadata.NVPairSerializer;
 import com.tc.object.session.SessionID;
-import com.tc.search.StackOperations;
+import com.terracottatech.search.AbstractNVPair;
+import com.terracottatech.search.NVPair;
+import com.terracottatech.search.StackOperations;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -31,21 +32,23 @@ import java.util.Set;
  */
 public class SearchQueryRequestMessageImpl extends DSOMessageBase implements SearchQueryRequestMessage {
 
+  private static final NVPairSerializer       NVPAIR_SERIALIZER      = new NVPairSerializer();
   private static final ObjectStringSerializer NULL_SERIALIZER        = new NullObjectStringSerializer();
 
-  private final static byte                   SEARCH_REQUEST_ID      = 0;
-  private final static byte                   GROUP_ID_FROM          = 1;
-  private final static byte                   CACHE_NAME             = 2;
-  private final static byte                   INCLUDE_KEYS           = 3;
-  private final static byte                   ATTRIBUTES             = 4;
-  private final static byte                   SORT_ATTRIBUTES        = 5;
-  private final static byte                   AGGREGATORS            = 6;
-  private final static byte                   STACK_OPERATION_MARKER = 7;
-  private final static byte                   STACK_NVPAIR_MARKER    = 8;
-  private final static byte                   MAX_RESULTS            = 9;
-  private final static byte                   INCLUDE_VALUES         = 10;
-  private final static byte                   BATCH_SIZE             = 11;
-  private final static byte                   PREFETCH_FIRST_BATCH   = 12;
+  private static final byte                   SEARCH_REQUEST_ID      = 0;
+  private static final byte                   GROUP_ID_FROM          = 1;
+  private static final byte                   CACHE_NAME             = 2;
+  private static final byte                   INCLUDE_KEYS           = 3;
+  private static final byte                   ATTRIBUTES             = 4;
+  private static final byte                   GROUP_BY_ATTRIBUTES    = 5;
+  private static final byte                   SORT_ATTRIBUTES        = 6;
+  private static final byte                   AGGREGATORS            = 7;
+  private static final byte                   STACK_OPERATION_MARKER = 8;
+  private static final byte                   STACK_NVPAIR_MARKER    = 9;
+  private static final byte                   MAX_RESULTS            = 10;
+  private static final byte                   INCLUDE_VALUES         = 11;
+  private static final byte                   BATCH_SIZE             = 12;
+  private static final byte                   PREFETCH_FIRST_BATCH   = 13;
 
   private SearchRequestID                     requestID;
   private GroupID                             groupIDFrom;
@@ -54,6 +57,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   private boolean                             includeKeys;
   private boolean                             includeValues;
   private Set<String>                         attributes;
+  private Set<String>                         groupByAttributes;
   private List<NVPair>                        sortAttributes;
   private List<NVPair>                        aggregators;
   private int                                 maxResults;
@@ -72,8 +76,9 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
 
   public void initializeSearchRequestMessage(SearchRequestID searchRequestID, GroupID groupID, String cache,
                                              List stack, boolean keys, boolean values, Set<String> attributeSet,
-                                             List<NVPair> sortAttributesMap, List<NVPair> attributeAggregators,
-                                             int max, int batch, boolean prefetchFirst) {
+                                             Set<String> groupByAttrs, List<NVPair> sortAttributesMap,
+                                             List<NVPair> attributeAggregators, int max, int batch,
+                                             boolean prefetchFirst) {
     this.requestID = searchRequestID;
     this.groupIDFrom = groupID;
     this.cacheName = cache;
@@ -81,6 +86,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
     this.includeKeys = keys;
     this.includeValues = values;
     this.attributes = attributeSet;
+    this.groupByAttributes = groupByAttrs;
     this.sortAttributes = sortAttributesMap;
     this.aggregators = attributeAggregators;
     this.maxResults = max;
@@ -106,14 +112,19 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
       outStream.writeString(attribute);
     }
 
+    putNVPair(GROUP_BY_ATTRIBUTES, this.groupByAttributes.size());
+    for (final String attribute : this.groupByAttributes) {
+      outStream.writeString(attribute);
+    }
+
     putNVPair(SORT_ATTRIBUTES, this.sortAttributes.size());
     for (final NVPair sortedAttributes : this.sortAttributes) {
-      sortedAttributes.serializeTo(outStream, NULL_SERIALIZER);
+      NVPAIR_SERIALIZER.serialize(sortedAttributes, outStream, NULL_SERIALIZER);
     }
 
     putNVPair(AGGREGATORS, this.aggregators.size());
     for (final NVPair attributeAggregator : this.aggregators) {
-      attributeAggregator.serializeTo(outStream, NULL_SERIALIZER);
+      NVPAIR_SERIALIZER.serialize(attributeAggregator, outStream, NULL_SERIALIZER);
     }
 
     if (!queryStack.isEmpty()) {
@@ -180,12 +191,22 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
         }
         return true;
 
+      case GROUP_BY_ATTRIBUTES:
+        this.groupByAttributes = new HashSet<String>();
+        count = getIntValue();
+        // Directly decode the key
+        while (count-- > 0) {
+          String attribute = getStringValue();
+          this.groupByAttributes.add(attribute);
+        }
+        return true;
+
       case SORT_ATTRIBUTES:
         this.sortAttributes = new LinkedList();
         int sortCount = getIntValue();
 
         while (sortCount-- > 0) {
-          NVPair pair = AbstractNVPair.deserializeInstance(inputStream, NULL_SERIALIZER);
+          NVPair pair = NVPAIR_SERIALIZER.deserialize(inputStream, NULL_SERIALIZER);
           this.sortAttributes.add(pair);
         }
         return true;
@@ -195,7 +216,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
         int attributeAggregatorCount = getIntValue();
 
         while (attributeAggregatorCount-- > 0) {
-          NVPair pair = AbstractNVPair.deserializeInstance(inputStream, NULL_SERIALIZER);
+          NVPair pair = NVPAIR_SERIALIZER.deserialize(inputStream, NULL_SERIALIZER);
           this.aggregators.add(pair);
         }
         return true;
@@ -206,7 +227,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
         return true;
 
       case STACK_NVPAIR_MARKER:
-        NVPair pair = AbstractNVPair.deserializeInstance(inputStream, NULL_SERIALIZER);
+        NVPair pair = NVPAIR_SERIALIZER.deserialize(inputStream, NULL_SERIALIZER);
         queryStack.add(pair);
         return true;
 
@@ -283,6 +304,11 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
    */
   public List<NVPair> getSortAttributes() {
     return sortAttributes;
+  }
+
+  @Override
+  public Set<String> getGroupByAttributes() {
+    return groupByAttributes;
   }
 
   /**

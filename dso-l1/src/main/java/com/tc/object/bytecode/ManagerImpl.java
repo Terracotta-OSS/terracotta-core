@@ -50,10 +50,8 @@ import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.InstrumentationLoggerImpl;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.logging.RuntimeLoggerImpl;
-import com.tc.object.metadata.AbstractNVPair;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.metadata.MetaDataDescriptorImpl;
-import com.tc.object.metadata.NVPair;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.operatorevent.TerracottaOperatorEvent;
@@ -77,6 +75,8 @@ import com.tc.util.Util;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.runtime.Vm;
 import com.tcclient.cluster.DsoClusterInternal;
+import com.terracottatech.search.AbstractNVPair;
+import com.terracottatech.search.NVPair;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
@@ -970,6 +970,17 @@ public class ManagerImpl implements Manager {
       waitForAllCurrentTransactionsToComplete();
     }
     return searchRequestManager.query(cachename, queryStack, includeKeys, includeValues, attributeSet, sortAttributes,
+                                      aggregators, maxResults, batchSize);
+  }
+
+  @Override
+  public SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
+                                         Set<String> groupByAttribues, List<NVPair> sortAttributes,
+                                         List<NVPair> aggregators, int maxResults, int batchSize) {
+    if (QUERY_WAIT_FOR_TXNS) {
+      waitForAllCurrentTransactionsToComplete();
+    }
+    return searchRequestManager.query(cachename, queryStack, attributeSet, groupByAttribues, sortAttributes,
                                       aggregators, maxResults, batchSize);
   }
 

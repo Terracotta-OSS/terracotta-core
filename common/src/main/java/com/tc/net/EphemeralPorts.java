@@ -6,6 +6,7 @@ package com.tc.net;
 import com.tc.process.StreamCollector;
 import com.tc.util.FindbugsSuppressWarnings;
 import com.tc.util.runtime.Os;
+import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -121,7 +122,7 @@ public class EphemeralPorts {
     }
 
     private Range getNetshRange() {
-      final int DEFAULT_LOWER = 49151;
+      final int DEFAULT_LOWER = 49152;
       final int DEFAULT_UPPER = 65535;
 
       try {
@@ -132,26 +133,23 @@ public class EphemeralPorts {
         Exec exec = new Exec(cmd);
         BufferedReader reader = new BufferedReader(new StringReader(exec.execute(Exec.STDOUT)));
 
-        Pattern startPattern = Pattern.compile("^Start Port.*: (\\p{XDigit}+)");
-        Pattern numPattern = Pattern.compile("^Number of Ports.*: (\\p{XDigit}+)");
+        Pattern pattern = Pattern.compile("^.*: (\\p{XDigit}+)");
         int start = -1;
         int num = -1;
-        String line = null;
+        String line;
         while ((line = reader.readLine()) != null) {
-          Matcher matcher = startPattern.matcher(line);
-          if (matcher.matches()) {
-            if (start != -1) { throw new AssertionError("start already seen: " + start); }
+          Matcher matcher = pattern.matcher(line);
+          if (start == -1 && matcher.matches()) {
             start = Integer.parseInt(matcher.group(1));
-          }
-
-          matcher = numPattern.matcher(line);
-          if (matcher.matches()) {
-            if (num != -1) { throw new AssertionError("number already seen: " + num); }
+          } else if (num == -1 && matcher.matches()) {
             num = Integer.parseInt(matcher.group(1));
+          } else if (start != -1 && num != -1) {
+            break;
           }
         }
+        IOUtils.closeQuietly(reader);
 
-        if ((num == -1) || (start == -1)) { throw new AssertionError("start: " + start + ", num = " + num); }
+        if ((num == -1) || (start == -1)) { throw new Exception("start: " + start + ", num = " + num); }
 
         return new Range(start, start + num - 1);
       } catch (Exception e) {

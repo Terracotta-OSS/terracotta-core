@@ -4,19 +4,20 @@
 package com.tc.objectserver.search;
 
 import com.tc.object.ObjectID;
-import com.tc.object.metadata.NVPair;
 import com.tc.objectserver.metadata.MetaDataProcessingContext;
+import com.terracottatech.search.NVPair;
+import com.terracottatech.search.ValueID;
 
 import java.util.List;
 
 public class SearchReplaceContext extends BaseSearchEventContext {
 
   private final List<NVPair> attributes;
-  private final Object       cacheKey;
-  private final Object       cacheValue;
-  private final Object       prevValue;
+  private final String       cacheKey;
+  private final ValueID      cacheValue;
+  private final ValueID      prevValue;
 
-  public SearchReplaceContext(ObjectID segmentOid, String name, Object cacheKey, Object cacheValue, Object prevValue,
+  public SearchReplaceContext(ObjectID segmentOid, String name, String cacheKey, ValueID cacheValue, ValueID prevValue,
                               List<NVPair> attributes, MetaDataProcessingContext context) {
     super(segmentOid, name, context);
     this.cacheKey = cacheKey;
@@ -25,11 +26,11 @@ public class SearchReplaceContext extends BaseSearchEventContext {
     this.attributes = attributes;
   }
 
-  public Object getCacheKey() {
+  public String getCacheKey() {
     return cacheKey;
   }
 
-  public Object getCacheValue() {
+  public ValueID getCacheValue() {
     return cacheValue;
   }
 
@@ -37,7 +38,7 @@ public class SearchReplaceContext extends BaseSearchEventContext {
     return attributes;
   }
 
-  public Object getPreviousValue() {
+  public ValueID getPreviousValue() {
     return prevValue;
   }
 

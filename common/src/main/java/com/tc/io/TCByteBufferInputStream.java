@@ -522,8 +522,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     throw new UnsupportedOperationException();
   }
 
-  public final String readUTF() {
-    // Don't implement this method --> use readString() instead
-    throw new UnsupportedOperationException();
+  public final String readUTF() throws IOException {
+    return readString();
   }
 }

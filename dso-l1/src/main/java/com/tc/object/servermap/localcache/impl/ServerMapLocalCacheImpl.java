@@ -78,8 +78,10 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   private final Map<ObjectID, Object>                          removedObjectIDs             = new ConcurrentHashMap<ObjectID, Object>();
   private final Map<ObjectID, Object>                          oidsForWhichTxnAreInProgress = new ConcurrentHashMap<ObjectID, Object>();
 
-  private final ConcurrentHashMap                              pendingTransactionEntries;
-  private final ReentrantReadWriteLock[]                       locks;
+  private final ConcurrentHashMap                    pendingTransactionEntries;
+  private final ConcurrentHashMap                    keyToListeners;
+
+  private final ReentrantReadWriteLock[]             locks;
   private final TCConcurrentMultiMap<LockID, ValueOIDKeyTuple> lockIDMappings;
 
   /**
@@ -95,6 +97,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     this.removeCallback = removeCallback;
     this.localStore = localStore;
     this.pendingTransactionEntries = new ConcurrentHashMap(CONCURRENCY, 0.75f, CONCURRENCY);
+    this.keyToListeners = new ConcurrentHashMap(CONCURRENCY, 0.75f, CONCURRENCY);
     this.lockIDMappings = new TCConcurrentMultiMap<LockID, ValueOIDKeyTuple>(CONCURRENCY, 0.75f, CONCURRENCY);
     this.locks = new ReentrantReadWriteLock[CONCURRENCY];
     for (int i = 0; i < CONCURRENCY; i++) {
@@ -167,6 +170,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
                                                                  "Attempt to access a shared object outside the scope of a shared lock.",
                                                                  Thread.currentThread().getName(), manager
                                                                      .getClientID()); }
+      keyToListeners.put(key, listener);
       txn.addTransactionCompleteListener(listener);
     }
   }
@@ -604,7 +608,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     l1LocalCacheManager.transactionComplete(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 
-  public void postTransactionCallback(Object key, AbstractLocalCacheStoreValue value, boolean removeEntry) {
+  public void postTransactionCallback(Object key, AbstractLocalCacheStoreValue value, boolean removeEntry,
+                                      L1ServerMapLocalStoreTransactionCompletionListener listener) {
     ReentrantReadWriteLock lock = getLock(key);
     lock.writeLock().lock();
     try {
@@ -614,6 +619,11 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         remoteRemoveObjectIfPossible(value);
       }
 
+      if (keyToListeners.get(key) == listener) {
+        keyToListeners.remove(key);
+      } else {
+        return;
+      }
       if (removeEntry) {
         removeFromLocalCache(key, value);
       } else {

@@ -129,7 +129,7 @@ public class ClientBeanBag {
   }
 
   synchronized void registerBean(final ObjectName objName) {
-    LOGGER.info("registerBean: " + objName);
+    LOGGER.debug("registerBean: " + objName);
 
     ObjectName modifiedObjName = null;
     try {
@@ -138,7 +138,7 @@ public class ClientBeanBag {
         if (beanNames.add(modifiedObjName)) {
           MBeanMirror mirror = MBeanMirrorFactory.newMBeanMirror(l1Connection, objName, modifiedObjName);
           l2MBeanServer.registerMBean(mirror, modifiedObjName);
-          LOGGER.info("Tunneled MBean '" + modifiedObjName + "'");
+          LOGGER.debug("Tunneled MBean '" + modifiedObjName + "'");
         }
       } else {
         LOGGER.info("Ignoring bean for registration: " + objName);
@@ -152,14 +152,14 @@ public class ClientBeanBag {
   }
 
   synchronized void unregisterBean(ObjectName objName, boolean remove) {
-    LOGGER.info("unregisterBean: " + objName);
+    LOGGER.debug("unregisterBean: " + objName);
 
     ObjectName modifiedObjName = null;
     try {
       modifiedObjName = TerracottaManagement.addNodeInfo(objName, channel.getRemoteAddress());
       if (beanNames.contains(modifiedObjName)) {
         l2MBeanServer.unregisterMBean(modifiedObjName);
-        LOGGER.info("Unregistered Tunneled MBean '" + modifiedObjName + "'");
+        LOGGER.debug("Unregistered Tunneled MBean '" + modifiedObjName + "'");
       } else {
         LOGGER.info("Ignoring bean for unregistration: " + objName);
       }

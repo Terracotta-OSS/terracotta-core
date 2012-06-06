@@ -111,13 +111,22 @@ public class DumpServer {
   public void dumpServer() throws Exception {
     L2DumperMBean mbean = null;
     final JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector(username, password, host, port);
-    final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-    mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.DUMPER, L2DumperMBean.class, false);
     try {
+      final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+      mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.DUMPER, L2DumperMBean.class, false);
       mbean.doServerDump();
     } catch (RuntimeException e) {
       // DEV-1168
       consoleLogger.error((e.getCause() == null ? e.getMessage() : e.getCause().getMessage()));
+
+    } finally {
+      if (jmxConnector != null) {
+        try {
+          jmxConnector.close();
+        } catch (IOException e) {
+          // ignore
+        }
+      }
     }
   }
 }

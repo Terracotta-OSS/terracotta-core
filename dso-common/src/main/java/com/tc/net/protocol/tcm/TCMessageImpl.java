@@ -13,9 +13,10 @@ import com.tc.net.protocol.AbstractTCNetworkMessage;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockIDSerializer;
-import com.tc.object.metadata.NVPair;
+import com.tc.object.metadata.NVPairSerializer;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
+import com.terracottatech.search.NVPair;
 
 import java.io.IOException;
 
@@ -24,16 +25,18 @@ import java.io.IOException;
  */
 public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements TCMessage {
 
-  private final MessageMonitor     monitor;
-  private final SetOnceFlag        processed = new SetOnceFlag();
-  private final SetOnceFlag        isSent    = new SetOnceFlag();
-  private final TCMessageType      type;
-  private final MessageChannel     channel;
-  private final boolean            isOutgoing;
-  private int                      nvCount;
-  private TCByteBufferOutputStream out;
-  private TCByteBufferInputStream  bbis;
-  private int                      messageVersion;
+  private static final NVPairSerializer NVPAIR_SERIALIZER = new NVPairSerializer();
+
+  private final MessageMonitor          monitor;
+  private final SetOnceFlag             processed         = new SetOnceFlag();
+  private final SetOnceFlag             isSent            = new SetOnceFlag();
+  private final TCMessageType           type;
+  private final MessageChannel          channel;
+  private final boolean                 isOutgoing;
+  private int                           nvCount;
+  private TCByteBufferOutputStream      out;
+  private TCByteBufferInputStream       bbis;
+  private int                           messageVersion;
 
   /**
    * Creates a new TCMessage to write data into (ie. to send to the network)
@@ -265,7 +268,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   protected void putNVPair(final byte name, final NVPair nvPair, final ObjectStringSerializer serializer) {
     nvCount++;
     out.write(name);
-    nvPair.serializeTo(out, serializer);
+    NVPAIR_SERIALIZER.serialize(nvPair, out, serializer);
   }
 
   protected void putNVPair(final byte name, final byte value) {

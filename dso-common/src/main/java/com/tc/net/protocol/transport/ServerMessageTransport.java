@@ -48,10 +48,11 @@ public class ServerMessageTransport extends MessageTransportBase {
   @Override
   protected void receiveTransportMessageImpl(WireProtocolMessage message) {
     boolean notifyTransportConnected = false;
+    boolean recycleAndReturn = false;
     synchronized (status) {
       if (status.isStart()) {
+        recycleAndReturn = true;
         notifyTransportConnected = verifyAndHandleAck(message);
-        message.recycle();
       } else if (!status.isEstablished()) {
         /*
          * Server Tx can move from START to CLOSED state on client connection restore failure (Client ACK would have
@@ -60,20 +61,22 @@ public class ServerMessageTransport extends MessageTransportBase {
          */
         logger.warn("Ignoring the message received for an Un-Established Connection; " + message.getSource() + "; "
                     + message);
-        message.recycle();
-        return;
+        recycleAndReturn = true;
       }
     }
 
-    // Transport connected notification happens out here to avoid being done in the status lock scope. This will avoid
-    // the deadlock encountered in DEV-7123.
-    if (notifyTransportConnected) {
-      fireTransportConnectedEvent();
+    if (recycleAndReturn) {
+      if (notifyTransportConnected) {
+        // Transport connected notification happens out here to avoid being done in the status lock scope. This will
+        // avoid the deadlock encountered in DEV-7123.
+        fireTransportConnectedEvent();
+      }
+      message.recycle();
       return;
+    } else {
+      // ReceiveToReceiveLayer(message) takes care of verifying the handshake message
+      super.receiveToReceiveLayer(message);
     }
-
-    // ReceiveToReceiveLayer(message) takes care of verifying the handshake message
-    super.receiveToReceiveLayer(message);
   }
 
   /**

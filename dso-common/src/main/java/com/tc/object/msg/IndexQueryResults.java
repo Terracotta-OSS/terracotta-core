@@ -4,8 +4,8 @@
 package com.tc.object.msg;
 
 import com.tc.io.TCSerializable;
-import com.tc.object.metadata.NVPair;
-import com.tc.search.IndexQueryResult;
+import com.terracottatech.search.IndexQueryResult;
+import com.terracottatech.search.NVPair;
 
 import java.util.List;
 

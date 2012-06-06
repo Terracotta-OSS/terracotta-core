@@ -18,6 +18,7 @@ import com.tc.process.StreamCopier;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TestConfigObject;
+import com.tc.test.TestConfigUtil;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.Vm;
 
@@ -169,7 +170,6 @@ public class ExtraProcessServerControl extends ServerControlBase {
     this.runningDirectory = runningDirectory;
 
     addProductKeyIfExists(jvmArgs);
-    jvmArgs.add("-Dcom.tc.l1.modules.repositories=" + System.getProperty("com.tc.l1.modules.repositories"));
     jvmArgs.add("-Dtc.base-dir=" + System.getProperty("tc.base-dir"));
     jvmArgs.add("-D" + Directories.TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME + "=true");
     debugParams.addDebugParamsTo(jvmArgs);
@@ -243,8 +243,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   }
 
   private void addEnvVarsForWindows(List args) {
-    String tcBaseDir = System.getProperty("tc.base-dir");
-    if (tcBaseDir == null || tcBaseDir.equals("")) { throw new AssertionError("tc.base-dir is not set!"); }
+    String tcBaseDir = TestConfigUtil.getTcBaseDirPath();
     args.add("-Dtc.base-dir=" + tcBaseDir);
     String val = System.getProperty("tc.tests.info.property-files");
     if (val != null && !val.trim().equals("")) {
@@ -269,6 +268,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     }
   }
 
+  @Override
   public void mergeSTDOUT() {
     if (useIdentifier) {
       process.mergeSTDOUT(getStreamIdentifier(getDsoPort(), OUT_STREAM));
@@ -277,6 +277,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     }
   }
 
+  @Override
   public void mergeSTDERR() {
     if (useIdentifier) {
       process.mergeSTDERR(getStreamIdentifier(getDsoPort(), ERR_STREAM));
@@ -321,6 +322,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     this.outStream = outputStream;
   }
 
+  @Override
   public void start() throws Exception {
     startWithoutWait();
     waitUntilStarted();
@@ -332,6 +334,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     waitUntilStarted(seconds);
   }
 
+  @Override
   public void startWithoutWait() throws Exception {
     System.err.println("Starting " + this.name + ", main=" + getMainClassName() + ", main args="
                        + ArrayUtils.toString(getMainClassArguments()) + ", jvm=[" + getJavaHome() + "]");
@@ -351,6 +354,10 @@ public class ExtraProcessServerControl extends ServerControlBase {
   protected LinkedJavaProcess createLinkedJavaProcess(String mainClassName, List<String> args, List<String> jvmargs) {
     VerboseGCHelper.getInstance().setupVerboseGcLogging(jvmargs, serverName, mainClassName);
     LinkedJavaProcess result = new LinkedJavaProcess(mainClassName, args, jvmargs);
+    String l2Classpath = TestConfigObject.getInstance().l2Classpath();
+    if (l2Classpath != null) {
+      result.setClasspath(l2Classpath + File.pathSeparator + TestConfigObject.getInstance().linkedChildProcessPath());
+    }
     result.setMaxRuntime(TestConfigObject.getInstance().getJunitTimeoutInSeconds() + 180);
     result.setDirectory(this.runningDirectory);
     File processJavaHome = getJavaHome();
@@ -364,6 +371,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     return createLinkedJavaProcess(getMainClassName(), getMainClassArguments(), jvmArgs);
   }
 
+  @Override
   public void crash() throws Exception {
     System.out.println("Crashing server " + this.name + "...");
     if (process != null) {
@@ -373,6 +381,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     System.out.println(this.name + " crashed.");
   }
 
+  @Override
   public void attemptForceShutdown() throws Exception {
     System.out.println("Force Shutting down server " + this.name + "...");
     List<String> mainClassArguments = new ArrayList<String>();
@@ -406,6 +415,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
 
   }
 
+  @Override
   public void shutdown() throws Exception {
     try {
       attemptForceShutdown();
@@ -432,6 +442,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     }
   }
 
+  @Override
   public void waitUntilShutdown() throws Exception {
     long start = System.currentTimeMillis();
     long timeout = start + SHUTDOWN_WAIT_TIME;
@@ -446,6 +457,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     }
   }
 
+  @Override
   public int waitFor() throws Exception {
     int rv = process.waitFor();
 

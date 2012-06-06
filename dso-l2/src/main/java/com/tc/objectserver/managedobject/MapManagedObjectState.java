@@ -74,7 +74,7 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
         }
         if (old instanceof ObjectID) {
           removedValueFromMap(objectID, applyInfo, (ObjectID) old);
-          addKeyPresentForValue(applyInfo, (ObjectID) value);
+          if (value instanceof ObjectID) addKeyPresentForValue(applyInfo, (ObjectID) value);
         }
         break;
       case SerializationUtil.REMOVE:

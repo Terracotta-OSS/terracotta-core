@@ -77,7 +77,7 @@ public class TestClientManager {
     // removed duplicate args and use the one added in the last in case of multiple entries
     TestBaseUtil.removeDuplicateJvmArgs(jvmArgs);
     TestBaseUtil.setHeapSizeArgs(jvmArgs, testConfig.getClientConfig().getMinHeap(), testConfig.getClientConfig()
-        .getMaxHeap());
+        .getMaxHeap(), testConfig.getClientConfig().getDirectMemorySize());
     testConfig.getClientConfig().getBytemanConfig().addTo(jvmArgs, tempDir);
 
     String clientArgs = System.getProperty(CLIENT_ARGS);
@@ -140,7 +140,7 @@ public class TestClientManager {
       try {
         testBase.evaluateClientOutput(client.getName(), result.getExitCode(), output);
       } catch (Throwable t) {
-        System.out.println("*************Got excpetion in One of the Clients Killing other clients");
+        System.out.println("*************Got exception in One of the Clients Killing other clients");
         System.out.println("**** For Details Refer to client Logs at " + output.getAbsolutePath());
         stopAllClients();
         throw new AssertionError(t);
