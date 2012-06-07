@@ -49,6 +49,7 @@ public class TestHandler implements TestHandlerMBean {
     testServerManager.restartCrashedServer(groupIndex, serverIndex);
   }
 
+  @Override
   public void reastartLastCrashedServer(final int groupIndex) throws Exception {
     testServerManager.restartLastCrashedServer(groupIndex);
   }
@@ -61,6 +62,11 @@ public class TestHandler implements TestHandlerMBean {
   @Override
   public void crashAllPassiveServers(int groupIndex) throws Exception {
     testServerManager.crashAllPassive(groupIndex);
+  }
+
+  @Override
+  public void crashPassive(int groupIndex, int serverIndex) throws Exception {
+    testServerManager.crashPassive(groupIndex, serverIndex);
   }
 
   @Override

@@ -42,6 +42,7 @@ public class TestServerManager {
       final GroupServerManager serverManager = groups[i];
 
       Runnable r = new Runnable() {
+        @Override
         public void run() {
           try {
             serverManager.startAllServers();
@@ -160,6 +161,10 @@ public class TestServerManager {
 
   public void crashAllPassive(int groupIndex) throws Exception {
     groups[groupIndex].crashAllPassive();
+  }
+
+  public void crashPassive(int groupIndex, int serverIndex) throws Exception {
+    groups[groupIndex].crashPassive(serverIndex);
   }
 
   public void crashServer(int groupIndex, int serverIndex) throws Exception {
