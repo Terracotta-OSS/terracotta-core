@@ -9,10 +9,7 @@ import com.tc.net.GroupID;
 import com.terracottatech.config.MirrorGroup;
 
 import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.TreeMap;
 
 public class ActiveCoordinatorHelper {
@@ -21,52 +18,25 @@ public class ActiveCoordinatorHelper {
   public static ActiveServerGroupConfigObject[] generateGroupInfo(ActiveServerGroupConfigObject[] originalGroupInfos)
       throws ConfigurationSetupException {
     TreeMap<String, ActiveServerGroupConfigObject> candidateGroupNames = generateCandidateGroupNames(originalGroupInfos);
+
     if (originalGroupInfos.length != candidateGroupNames.size()) { throw new ConfigurationSetupException(
                                                                                                          "The group names specified are same "
                                                                                                              + candidateGroupNames
                                                                                                                  .keySet()); }
-    Set<String> userSpecifiedGroupNames = getUserSpecifiedNames(originalGroupInfos);
     // Generate Group Info
-
     ActiveServerGroupConfigObject[] groupInfos = new ActiveServerGroupConfigObject[originalGroupInfos.length];
-    int groupNameGeneratorSequence = 0;
-    int i = 0;
+    int groupID = 0;
     for (Entry<String, ActiveServerGroupConfigObject> entry : candidateGroupNames.entrySet()) {
       ActiveServerGroupConfigObject groupInfo = entry.getValue();
       if (groupNameNotSet(groupInfo)) {
-        String groupName = null;
-        do {
-          groupName = GROUP_NAME_PREFIX + groupNameGeneratorSequence;
-          groupNameGeneratorSequence++;
-        } while (userSpecifiedGroupNames.contains(groupName));
-        groupInfo.setGroupName(groupName);
+        groupInfo.setGroupName(GROUP_NAME_PREFIX + groupID);
       }
-      groupInfos[i] = groupInfo;
-      i++;
-    }
-
-    Arrays.sort(groupInfos, new Comparator<ActiveServerGroupConfigObject>() {
-      public int compare(ActiveServerGroupConfigObject o1, ActiveServerGroupConfigObject o2) {
-        return o1.getGroupName().compareTo(o2.getGroupName());
-      }
-    });
-
-    for (i = 0; i < groupInfos.length; i++) {
-      groupInfos[i].setGroupId(new GroupID(i));
+      groupInfo.setGroupId(new GroupID(groupID));
+      groupInfos[groupID] = groupInfo;
+      groupID++;
     }
 
     return groupInfos;
-  }
-
-  private static Set<String> getUserSpecifiedNames(ActiveServerGroupConfigObject[] originalGroupInfos) {
-    Set<String> userSpecifiedNames = new HashSet<String>();
-    for (ActiveServerGroupConfigObject originalGroupInfo : originalGroupInfos) {
-      ActiveServerGroupConfigObject groupInfo = originalGroupInfo;
-      if (!groupNameNotSet(groupInfo)) {
-        userSpecifiedNames.add(groupInfo.getGroupName());
-      }
-    }
-    return userSpecifiedNames;
   }
 
   public static MirrorGroup[] generateGroupNames(MirrorGroup[] originalGroupInfos) {
