@@ -63,9 +63,9 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
 
   public void addNode(Node node) {
     DiscoveryStateMachine stateMachine = new DiscoveryStateMachine(node);
+    stateMachine.start();
     DiscoveryStateMachine old = nodeStateMap.put(getNodeName(node), stateMachine);
     Assert.assertNull("Duplicate nodes specified in config, please check " + getNodeName(node), old);
-    stateMachine.start();
 
     if (stateMachine.isTimeToConnect()) {
       stateMachine.connecting();
