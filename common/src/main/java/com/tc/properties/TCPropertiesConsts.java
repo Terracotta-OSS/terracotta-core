@@ -941,4 +941,17 @@ public interface TCPropertiesConsts {
 
   public static final String APP_GROUPS_DEBUG                                               = "appgroups.debug";
 
+  /*********************************************************************************************************************
+   * <code>
+   * Section :  OffHeap File System Settings
+   * offHeapFilesystem.chm.segments         - Number of segments of the CHM representing the OffHeapFile. This parameter controls the maximum size of an OffHeapFile.
+   *                                          Maximum Size = 2GB * Segments 
+   * offHeapFilesystem.file.blockSize       - Controls the granularity at which space is allocated to each file. File size will increase in multiples of blockSize (bytes).
+   * offHeapFileSystem.file.maxDataPageSize - Controls the maximum page size used by the underlying CHM for allocating memory (bytes).
+   * </code>
+   ********************************************************************************************************************/
+  public static final String FILESYSTEM_CHM_SEGMENTS                                        = "offHeapFilesystem.chm.segments";
+  public static final String FILESYSTEM_BLOCK_SIZE                                          = "offHeapFilesystem.file.blockSize";
+  public static final String FILESYSTEM_MAX_DATA_PAGE_SIZE                                  = "offHeapFileSystem.file.maxDataPageSize";
+
 }
