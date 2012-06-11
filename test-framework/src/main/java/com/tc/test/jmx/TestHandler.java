@@ -85,6 +85,11 @@ public class TestHandler implements TestHandlerMBean {
   }
 
   @Override
+  public void waitUntilEveryPassiveStandBy(int groupIndex) throws Exception {
+    testServerManager.waitUntilEveryPassiveStandBy(groupIndex);
+  }
+
+  @Override
   public GroupsData[] getGroupsData() {
     return testServerManager.getGroupsData();
   }

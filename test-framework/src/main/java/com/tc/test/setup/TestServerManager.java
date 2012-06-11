@@ -185,6 +185,10 @@ public class TestServerManager {
     groups[groupIndex].waituntilPassiveStandBy();
   }
 
+  public void waitUntilEveryPassiveStandBy(int groupIndex) throws Exception {
+    groups[groupIndex].waituntilEveryPassiveStandBy();
+  }
+
   public int getNumberOfGroups() {
     return testConfig.getNumOfGroups();
   }

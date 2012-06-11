@@ -82,6 +82,11 @@ public interface TestHandlerMBean {
   public void waitUntilPassiveStandBy(int groupIndex) throws Exception;
 
   /**
+   * Waits until every passive in group goes into standby
+   */
+  public void waitUntilEveryPassiveStandBy(int groupIndex) throws Exception;
+
+  /**
    * Returns all the groups data for each mirror group
    * 
    * @return

@@ -630,6 +630,12 @@ public class GroupServerManager {
     }
   }
 
+  public void waituntilEveryPassiveStandBy() throws Exception {
+    while (!isEveryPassiveStandBy()) {
+      Thread.sleep(1000);
+    }
+  }
+
   private boolean isProxyL2GroupPort() {
     return testConfig.getL2Config().isProxyL2groupPorts();
   }
@@ -687,7 +693,7 @@ public class GroupServerManager {
     return activeIndex < 0 ? false : true;
   }
 
-  public boolean isPassiveStandBy() {
+  public boolean isEveryPassiveStandBy() {
 
     System.out.println("Searching for appropriate passive server(s)... ");
     int passives = 0;
@@ -715,6 +721,26 @@ public class GroupServerManager {
     return passives == expectedPassives;
   }
 
+  public boolean isPassiveStandBy() {
+
+    System.out.println("Searching for appropriate passive server(s)... ");
+    for (int i = 0; i < groupData.getServerCount(); i++) {
+      try {
+        if (tcServerInfoMBeans[i].isPassiveStandby()) { return true; }
+      } catch (Exception e) {
+        System.out.println("Need to fetch tcServerInfoMBean for server=[" + serverControl[i].getDsoPort() + "]... ["
+                           + e.getMessage() + "]");
+        try {
+          tcServerInfoMBeans[i] = getTcServerInfoMBean(i);
+          if (tcServerInfoMBeans[i].isPassiveStandby()) return true;
+        } catch (Exception e2) {
+          System.out.println("exception restoring jmx connection [" + e2.getMessage() + "]");
+        }
+      }
+    }
+
+    return false;
+  }
   public void startCrasher() {
     if (!testConfig.getCrashConfig().getCrashMode().equals(ServerCrashMode.NO_CRASH)
         && !testConfig.getCrashConfig().getCrashMode().equals(ServerCrashMode.CUSTOMIZED_CRASH)) {
