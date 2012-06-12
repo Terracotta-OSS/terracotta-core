@@ -49,6 +49,7 @@ public class TestHandler implements TestHandlerMBean {
     testServerManager.restartCrashedServer(groupIndex, serverIndex);
   }
 
+  @Override
   public void reastartLastCrashedServer(final int groupIndex) throws Exception {
     testServerManager.restartLastCrashedServer(groupIndex);
   }
@@ -64,6 +65,11 @@ public class TestHandler implements TestHandlerMBean {
   }
 
   @Override
+  public void crashPassive(int groupIndex, int serverIndex) throws Exception {
+    testServerManager.crashPassive(groupIndex, serverIndex);
+  }
+
+  @Override
   public boolean isActivePresent(int groupIndex) throws Exception {
     return testServerManager.isActivePresent(groupIndex);
   }
@@ -76,6 +82,11 @@ public class TestHandler implements TestHandlerMBean {
   @Override
   public void waitUntilPassiveStandBy(int groupIndex) throws Exception {
     testServerManager.waitUntilPassiveStandBy(groupIndex);
+  }
+
+  @Override
+  public void waitUntilEveryPassiveStandBy(int groupIndex) throws Exception {
+    testServerManager.waitUntilEveryPassiveStandBy(groupIndex);
   }
 
   @Override

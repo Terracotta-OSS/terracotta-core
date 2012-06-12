@@ -47,6 +47,15 @@ public interface TestHandlerMBean {
   public void crashAllPassiveServers(int groupIndex) throws Exception;
 
   /**
+   * Crashes a specific passive from the given group
+   * 
+   * @param groupIndex
+   * @param serverIndex
+   * @throws Exception
+   */
+  public void crashPassive(int groupIndex, int serverIndex) throws Exception;
+
+  /**
    * Finds out whether an active is present in a particular mirror group
    * 
    * @param groupIndex the group index
@@ -71,6 +80,11 @@ public interface TestHandlerMBean {
    * @throws Exception
    */
   public void waitUntilPassiveStandBy(int groupIndex) throws Exception;
+
+  /**
+   * Waits until every passive in group goes into standby
+   */
+  public void waitUntilEveryPassiveStandBy(int groupIndex) throws Exception;
 
   /**
    * Returns all the groups data for each mirror group
