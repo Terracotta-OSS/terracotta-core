@@ -12,7 +12,7 @@
   <properties>
     <tc-maven-plugin.version>1.10.0-SNAPSHOT</tc-maven-plugin.version>
     <terracotta-session.version>3.0.0-SNAPSHOT</terracotta-session.version>
-    <toolkit-api>1.4</toolkit-api>
+    <toolkit-api>1.6</toolkit-api>
     <toolkit-runtime.version>6.0.0-SNAPSHOT</toolkit-runtime.version>
   </properties> 
 
