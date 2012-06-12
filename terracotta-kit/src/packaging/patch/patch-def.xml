@@ -11,6 +11,7 @@
     relative to the kit root directory.
   -->
   <files>
+    <file>RELEASE-NOTES.txt</file>
     <file>lib/tc.jar</file>
   </files>
 </patch>

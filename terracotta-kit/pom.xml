@@ -514,7 +514,7 @@
                     def patchDef = new XmlSlurper().parse(patchDefFile)
                     def patchLevel = patchDef.level.text()
                     def patchName = "${kit.name}-patch${patchLevel}"
-                    def patchFiles = patchDef.files.collect { it.text() }
+                    def patchFiles = patchDef.files.file.list().collect { it.text() }
 
                     ant.tar(destfile: "${project.build.directory}/${patchName}.tar.gz", longfile: "gnu", compression: "gzip") {
                       patchFiles.each { file -&gt;
