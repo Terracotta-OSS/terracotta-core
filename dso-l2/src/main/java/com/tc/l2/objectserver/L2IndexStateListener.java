@@ -13,4 +13,5 @@ public interface L2IndexStateListener {
 
   public void indexSyncCompleteFor(NodeID nodeID);
 
+  public void indexesInSyncOnNode(NodeID nodeID);
 }
