@@ -116,16 +116,13 @@ public class GroupServerManager {
   private void createServers() {
 
     for (int i = 0; i < groupData.getServerCount(); i++) {
-      ArrayList<String> perServerJvmArgs;
+      ArrayList<String> perServerJvmArgs = new ArrayList<String>();
+      perServerJvmArgs.addAll(testConfig.getL2Config().getExtraServerJvmArgs());
       if (isProxyL2GroupPort()) {
-        perServerJvmArgs = testConfig.getL2Config().getExtraServerJvmArgs();
         // hidden tc.properties only used by L2 proxy testing purpose
         perServerJvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT + "="
                              + groupData.getL2GroupPort(i));
-      } else {
-        perServerJvmArgs = testConfig.getL2Config().getExtraServerJvmArgs();
       }
-
       serverControl[i] = getServerControl(groupData.getDsoPort(i), groupData.getJmxPort(i),
                                           groupData.getServerNames()[i], perServerJvmArgs);
       expectedServerRunning[i] = false;
