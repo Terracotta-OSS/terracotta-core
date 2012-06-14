@@ -204,10 +204,6 @@ public abstract class AbstractTestBase extends TCTestCase {
       cp += SEP + jar;
     }
 
-    for (String extra : getExtraJars()) {
-      cp += SEP + extra;
-    }
-
     Map<String, LogLevel> loggingConfigs = configureTCLogging(tcLoggingConfigs);
     if (loggingConfigs.size() > 0) {
       cp += SEP + getTCLoggingFilePath(loggingConfigs);
@@ -340,6 +336,7 @@ public abstract class AbstractTestBase extends TCTestCase {
 
   private void executeDuringRunningCluster() {
     duringRunningClusterThread = new Thread(new Runnable() {
+      @Override
       public void run() {
         try {
           duringRunningCluster();
