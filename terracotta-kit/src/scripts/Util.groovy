@@ -121,4 +121,31 @@ class Util {
                   failOnNoReplacements: "true")
                   
     }    
+
+    static final String BUILD_DATA_FILE_NAME = "build-data.txt"
+    static final String PATCH_DATA_FILE_NAME = "patch-data.txt"
+    static final String RESOURCES_DIR = "lib/resources"
+
+    static String createPatchDataFile(project, patchLevel) {
+      def rootDir = project.properties['rootDir']
+      def resourcesDir = new File(rootDir, RESOURCES_DIR)
+
+      File buildDataFile = new File(resourcesDir, BUILD_DATA_FILE_NAME)
+      Properties buildData = new Properties()
+      buildDataFile.withReader { reader ->
+        buildData.load(reader)
+      }
+
+      Properties patchData = new Properties()
+      patchData['terracotta.patch.level'] = patchLevel
+      buildData.each { key, value ->
+        def patchDataKey = key.replaceAll(/\.build\./, ".patch.")
+        patchData[patchDataKey] = value
+      }
+      File patchDataFile = new File(resourcesDir, PATCH_DATA_FILE_NAME)
+      patchDataFile.withWriter { writer ->
+        patchData.store(writer, null)
+      }
+      return RESOURCES_DIR + File.separator + PATCH_DATA_FILE_NAME
+    }
 }

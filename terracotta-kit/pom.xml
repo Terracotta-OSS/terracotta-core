@@ -507,8 +507,13 @@
                 <goals>
                   <goal>execute</goal>
                 </goals>
-                <configuration>         
+                <configuration>
+                  <scriptpath>
+                    <element>${basedir}/src/scripts</element>
+                  </scriptpath>                
                   <source>
+                    import Util
+
                     File kitDir = new File("${rootDir}")
                     File patchDefFile = new File("${patch.def.file}")
                     def patchDef = new XmlSlurper().parse(patchDefFile)
@@ -516,21 +521,24 @@
                     def patchName = "${kit.name}-patch${patchLevel}"
                     def patchFiles = patchDef.files.file.list().collect { it.text() }
 
+                    String patchDataFile = Util.createPatchDataFile(project, patchLevel)
+                    patchFiles.leftShift(patchDataFile)
+
                     ant.tar(destfile: "${project.build.directory}/${patchName}.tar.gz", longfile: "gnu", compression: "gzip") {
                       patchFiles.each { file -&gt;
                         tarfileset(dir: "${kitDir}") {
                           include(name: file)
                         }
                       }
-                    } 
-                </source>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>            
-      </plugins>
-    </build>
-  </profile>
+                    }
+                  </source>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
 
   <!-- *************************************** -->
   <!--   profile to make tar ball of the kit   -->    
