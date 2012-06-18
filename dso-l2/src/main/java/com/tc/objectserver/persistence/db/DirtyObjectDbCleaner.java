@@ -56,13 +56,27 @@ public class DirtyObjectDbCleaner {
   }
 
   // callers should close any open db environment before doing backup
-  protected void backupDirtyObjectDb() throws TCDatabaseException {
-
+  protected void cleanDirtyObjectDb() throws TCDatabaseException {
+    boolean backup = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_NHA_DIRTYDB_BACKUP_ENABLED, true);
     String dataPath = this.l2DataPath.getAbsolutePath();
     Assert.assertNotBlank(dataPath);
+    File dirtyDbSourcedir = new File(dataPath + File.separator + L2DSOConfig.OBJECTDB_DIRNAME + File.separator);
+    if (backup) {
+      TCFile dirtyDbBackupPath = new TCFileImpl(new File(dataPath + File.separator
+                                                         + L2DSOConfig.DIRTY_OBJECTDB_BACKUP_DIRNAME));
+      backUpAndRollback(dirtyDbSourcedir, dirtyDbBackupPath);
+    }
 
-    TCFile dirtyDbBackupPath = new TCFileImpl(new File(dataPath + File.separator
-                                                       + L2DSOConfig.DIRTY_OBJECTDB_BACKUP_DIRNAME));
+    try {
+      FileUtils.deleteDirectory(dirtyDbSourcedir);
+      Assert.eval(!dirtyDbSourcedir.exists());
+      FileUtils.forceMkdir(dirtyDbSourcedir);
+    } catch (IOException e) {
+      throw new TCDatabaseException(e);
+    }
+  }
+
+  private void backUpAndRollback(File dirtyDbSourcedir, TCFile dirtyDbBackupPath) throws TCDatabaseException {
     if (!dirtyDbBackupPath.exists()) {
       logger.info("Creating dirtyDbBackupPath : " + dirtyDbBackupPath.getFile().getAbsolutePath());
       try {
@@ -75,32 +89,20 @@ public class DirtyObjectDbCleaner {
     } else {
       logger.info("dirtyDbBackupPath : " + dirtyDbBackupPath.getFile().getAbsolutePath());
     }
-
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSS");
     Date d = new Date();
     String timeStamp = dateFormat.format(d);
-    File dirtyDbSourcedir = new File(dataPath + File.separator + L2DSOConfig.OBJECTDB_DIRNAME + File.separator);
     File dirtyDbBackupDestDir = new File(dirtyDbBackupPath + File.separator + L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX
                                          + timeStamp);
-
     try {
       boolean success = dirtyDbSourcedir.renameTo(dirtyDbBackupDestDir);
       if (!success) {
         logger.warn("Unable to move the dirty objectdb, performing a copy and delete.");
         FileUtils.copyDirectory(dirtyDbSourcedir, dirtyDbBackupDestDir);
-        FileUtils.deleteDirectory(dirtyDbSourcedir);
       }
     } catch (Exception e) {
       throw new TCDatabaseException("Not able to move dirty objectdbs to " + dirtyDbBackupDestDir.getAbsolutePath()
                                     + ". Reason: " + e.getMessage());
-    }
-
-    Assert.eval(!dirtyDbSourcedir.exists());
-    try {
-      FileUtils.forceMkdir(dirtyDbSourcedir);
-    } catch (IOException e) {
-      throw new TCDatabaseException("Not able to create dbhome " + dirtyDbSourcedir.getAbsolutePath() + ". Reason: "
-                                    + e.getClass().getName());
     }
     logger.info("Successfully moved dirty objectdb to " + dirtyDbBackupDestDir.getAbsolutePath() + ".");
     rollDirtyObjectDbBackups(dirtyDbBackupPath.getFile(),
@@ -117,6 +119,7 @@ public class DirtyObjectDbCleaner {
     String pathPrefix = dirtyDbBackupPath.getAbsolutePath() + File.separator + L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX;
 
     Arrays.sort(contents, new Comparator<File>() {
+      @Override
       public int compare(File o1, File o2) {
         // have the newest first...
         if (o1.lastModified() < o2.lastModified()) return 1;

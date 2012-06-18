@@ -4,6 +4,8 @@
  */
 package com.tc.l2.objectserver;
 
+import org.apache.commons.io.FileUtils;
+
 import com.tc.io.TCFile;
 import com.tc.io.TCFileImpl;
 import com.tc.logging.TCLogger;
@@ -11,16 +13,20 @@ import com.tc.logging.TCLogging;
 import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.persistence.db.DirtyObjectDbCleaner;
+import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.persistence.db.TCMapStore;
 import com.tc.objectserver.persistence.inmemory.NullPersistenceTransactionProvider;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 
 /**
  * There is already a system test for checking creation of backup directory for old database: PassiveSmoothStartTest .
@@ -61,7 +67,7 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
     System.out.println("XXX dbHome: " + dbHome.getAbsolutePath());
     System.out.println("XXX dbBckup: " + dirtyDbBackupPath.getFile().getAbsolutePath());
 
-    dbCleaner = new TestDirtyObjectDBCleaner(persistentMapStore, dbHome, logger);
+    dbCleaner = new TestDirtyObjectDBCleaner(persistentMapStore, dataPath, logger);
   }
 
   private void createBackupDirs(File parentDir, String prefix, int count) {
@@ -76,11 +82,12 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
   private void cleanBackupDirs(File parentDir, String prefix) {
     Assert.eval(parentDir.exists());
     File[] backupDirs = getDbBackupDirs(parentDir);
-    for (File dir : backupDirs) {
-      if (dir.delete()) {
-        System.out.println("XXX cleanup - deleted bkup dir :" + dir);
-      } else {
-        System.out.println("XXX cleanup - not able to delete bkup dir : " + dir);
+    for (File backupDir : backupDirs) {
+      try {
+        FileUtils.deleteDirectory(backupDir);
+      } catch (IOException e) {
+        System.out.println("XXX cleanup - not able to delete bkup dir :" + backupDir.getAbsolutePath() + " Exception: "
+                           + e.getMessage());
       }
     }
   }
@@ -88,6 +95,7 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
   private File[] getDbBackupDirs(File parentDir) {
     Assert.eval(parentDir.exists());
     File[] dirs = parentDir.listFiles(new FilenameFilter() {
+      @Override
       public boolean accept(File dir, String name) {
         if (name.startsWith(L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX)) { return true; }
         return false;
@@ -97,6 +105,7 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
   }
 
   public void testRollbackMore() throws Exception {
+
     createBackupDirs(dirtyDbBackupPath.getFile(), L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX, 5);
     dbCleaner.rollDirtyObjectDbBackups(dirtyDbBackupPath.getFile(), 3);
     File[] backupDirs = getDbBackupDirs(dirtyDbBackupPath.getFile());
@@ -126,6 +135,21 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
     Assert.assertEquals(5, getDbBackupDirs(dirtyDbBackupPath.getFile()).length);
   }
 
+  public void testCleanUpDirtyObjectDbWithBackUp() throws Exception {
+    cleanBackupDirs(dirtyDbBackupPath.getFile(), L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX);
+    dbCleaner.cleanDirtyObjectDb();
+    Assert.assertEquals(1, getDbBackupDirs(dirtyDbBackupPath.getFile()).length);
+    dbCleaner.cleanDirtyObjectDb();
+    Assert.assertEquals(2, getDbBackupDirs(dirtyDbBackupPath.getFile()).length);
+    TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_NHA_DIRTYDB_BACKUP_ENABLED, "false");
+    dbCleaner.cleanDirtyObjectDb();
+    Assert.assertEquals(2, getDbBackupDirs(dirtyDbBackupPath.getFile()).length);
+    cleanBackupDirs(dirtyDbBackupPath.getFile(), L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX);
+    dbCleaner.cleanDirtyObjectDb();
+    Assert.assertEquals(0, getDbBackupDirs(dirtyDbBackupPath.getFile()).length);
+    
+  }
+
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
@@ -137,6 +161,11 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
 
     public TestDirtyObjectDBCleaner(PersistentMapStore clusterStateStore, File dataPath, TCLogger logger) {
       super(clusterStateStore, dataPath, logger);
+    }
+
+    @Override
+    protected void cleanDirtyObjectDb() throws TCDatabaseException {
+      super.cleanDirtyObjectDb();
     }
 
     @Override
