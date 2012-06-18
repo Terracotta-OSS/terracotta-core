@@ -293,7 +293,7 @@ public interface TCPropertiesConsts {
    * tcgroupcomm.reconnect.sendWindow     - Max outstanding messages before ack received
    * tcgroupcomm.reconnect.enabled        - Enable L2-L2 reconnect
    * send.timeout.millis                  - Number of milliseconds to retry sending a message
-   * dirtydb.backup                       - Creates BackUp of DirtyDB only If it is set to true.
+   * dirtydb.backup.enabled               - Creates BackUp of DirtyDB only If it is set to true.
    * </code>
    ********************************************************************************************************************/
   public static final String L2_NHA_TCGROUPCOMM_HANDSHAKE_TIMEOUT                           = "l2.nha.tcgroupcomm.handshake.timeout";
