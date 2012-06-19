@@ -6,6 +6,7 @@ package com.tc.object.servermap.localcache.impl;
 import com.tc.async.api.Sink;
 import com.tc.exception.TCRuntimeException;
 import com.tc.invalidation.Invalidations;
+import com.tc.net.NodeID;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObjectSelf;
@@ -80,18 +81,22 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     this.txnCompleteSink = txnCompleteSink;
   }
 
+  @Override
   public void initializeTCObjectSelfStore(TCObjectSelfCallback callback) {
     this.tcObjectSelfStore.initializeTCObjectSelfStore(callback);
   }
 
+  @Override
   public void setLockManager(ClientLockManager lockManager) {
     this.lockManager = lockManager;
   }
 
+  @Override
   public void initializeTCObjectSelfIfRequired(TCObjectSelf tcoSelf) {
     this.tcObjectSelfStore.initializeTCObjectSelfIfRequired(tcoSelf);
   }
 
+  @Override
   public synchronized ServerMapLocalCache getOrCreateLocalCache(ObjectID mapId, ClientObjectManager objectManager,
                                                                 Manager manager, boolean localCacheEnabled,
                                                                 L1ServerMapLocalCacheStore serverMapLocalStore) {
@@ -138,6 +143,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     mapIdTolocalCache.remove(mapID);
   }
 
+  @Override
   public void recallLocks(Set<LockID> lockIds) {
     if (PINNING_ENABLED) {
       for (LockID lockId : lockIds) {
@@ -148,6 +154,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     locksRecallHelper.recallLocks(lockIds);
   }
 
+  @Override
   public void recallLocksInline(Set<LockID> lockIds) {
     if (PINNING_ENABLED) {
       for (LockID lockId : lockIds) {
@@ -158,13 +165,15 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     locksRecallHelper.recallLocksInline(lockIds);
   }
 
-  public void addAllObjectIDsToValidate(Invalidations invalidations) {
-    tcObjectSelfStore.addAllObjectIDsToValidate(invalidations);
+  @Override
+  public void addAllObjectIDsToValidate(Invalidations invalidations, NodeID remoteNode) {
+    tcObjectSelfStore.addAllObjectIDsToValidate(invalidations, remoteNode);
   }
 
   /**
    * This method is called only for invalidations
    */
+  @Override
   public ObjectIDSet removeEntriesForObjectId(ObjectID mapID, Set<ObjectID> set) {
     ObjectIDSet invalidationsFailed = new ObjectIDSet();
 
@@ -195,6 +204,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   /**
    * This method is called only when recall happens
    */
+  @Override
   public void removeEntriesForLockId(LockID lockID) {
     if (PINNING_ENABLED) {
       this.lockManager.unpinLock(lockID);
@@ -207,6 +217,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     }
   }
 
+  @Override
   public void rememberMapIdForValueLockId(LockID valueLockId, ServerMapLocalCache localCache) {
     if (PINNING_ENABLED) {
       this.lockManager.pinLock(valueLockId);
@@ -215,6 +226,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     lockIdsToLocalCache.add(valueLockId, localCache);
   }
 
+  @Override
   public void evictElements(Map evictedElements, ServerMapLocalCache localCache) {
     Set<Map.Entry> entries = evictedElements.entrySet();
     for (Entry entry : entries) {
@@ -222,6 +234,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     }
   }
 
+  @Override
   public synchronized void shutdown() {
     tcObjectSelfStore.shutdown();
 
@@ -240,11 +253,13 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
       this.serverMapLocalCache = serverMapLocalCache;
     }
 
+    @Override
     public void notifyElementEvicted(K key, V value) {
       notifyElementsEvicted(Collections.singletonMap(key, value));
     }
 
     // TODO: does this need to be present in the interface? not called from outside
+    @Override
     public void notifyElementsEvicted(Map<K, V> evictedElements) {
       // This should be inside another thread, if not it will cause a deadlock
       L1ServerMapEvictedElementsContext context = new L1ServerMapEvictedElementsContext(evictedElements,
@@ -252,10 +267,12 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
       capacityEvictionSink.add(context);
     }
 
+    @Override
     public void notifyElementExpired(K key, V v) {
       notifyElementEvicted(key, v);
     }
 
+    @Override
     public void notifyDisposed(L1ServerMapLocalCacheStore store) {
       removeStore(store);
     }
@@ -265,49 +282,60 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   // TCObjectSelfStore methods
   // ----------------------------------------
 
+  @Override
   public Object getById(ObjectID oid) {
     return tcObjectSelfStore.getById(oid);
   }
 
+  @Override
   public void addTCObjectSelfTemp(TCObjectSelf tcObjectSelf) {
     tcObjectSelfStore.addTCObjectSelfTemp(tcObjectSelf);
   }
 
+  @Override
   public boolean addTCObjectSelf(L1ServerMapLocalCacheStore store, AbstractLocalCacheStoreValue localStoreValue,
                                  Object tcoself, boolean isNew) {
     return tcObjectSelfStore.addTCObjectSelf(store, localStoreValue, tcoself, isNew);
   }
 
+  @Override
   public void removeTCObjectSelfTemp(TCObjectSelf objectSelf, boolean notifyServer) {
     tcObjectSelfStore.removeTCObjectSelfTemp(objectSelf, notifyServer);
   }
 
+  @Override
   public void removeTCObjectSelf(AbstractLocalCacheStoreValue localStoreValue) {
     tcObjectSelfStore.removeTCObjectSelf(localStoreValue);
   }
 
+  @Override
   public int size() {
     return tcObjectSelfStore.size();
   }
 
+  @Override
   public void addAllObjectIDs(Set oids) {
     tcObjectSelfStore.addAllObjectIDs(oids);
   }
 
+  @Override
   public boolean contains(ObjectID objectID) {
     return tcObjectSelfStore.contains(objectID);
   }
 
+  @Override
   public void removeObjectById(ObjectID oid) {
     tcObjectSelfStore.removeObjectById(oid);
   }
 
   private class RemoveCallback implements ServerMapLocalCacheRemoveCallback {
+    @Override
     public void removedElement(AbstractLocalCacheStoreValue localStoreValue) {
       removeTCObjectSelf(localStoreValue);
     }
   }
 
+  @Override
   public void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     txnCompleteSink.add(l1ServerMapLocalStoreTransactionCompletionListener);
   }

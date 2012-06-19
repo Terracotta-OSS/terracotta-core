@@ -7,6 +7,8 @@ import com.tc.exception.TCNotRunningException;
 import com.tc.invalidation.Invalidations;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.GroupID;
+import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectSelf;
@@ -44,6 +46,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     if (isShutdown) { throw new TCNotRunningException("TCObjectSelfStore already shutdown"); }
   }
 
+  @Override
   public void removeObjectById(ObjectID oid) {
     isShutdownThenException();
 
@@ -59,6 +62,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     }
   }
 
+  @Override
   public Object getById(ObjectID oid) {
     isShutdownThenException();
 
@@ -141,6 +145,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     }
   }
 
+  @Override
   public void initializeTCObjectSelfIfRequired(TCObjectSelf tcoSelf) {
     isShutdownThenException();
 
@@ -149,6 +154,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     }
   }
 
+  @Override
   public void addTCObjectSelfTemp(TCObjectSelf tcObjectSelf) {
     isShutdownThenException();
 
@@ -163,6 +169,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     }
   }
 
+  @Override
   public boolean addTCObjectSelf(L1ServerMapLocalCacheStore store, AbstractLocalCacheStoreValue localStoreValue,
                                  Object tcoself, final boolean isNew) {
     isShutdownThenException();
@@ -190,6 +197,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     return true;
   }
 
+  @Override
   public void removeTCObjectSelfTemp(TCObjectSelf objectSelf, boolean notifyServer) {
     isShutdownThenException();
 
@@ -214,6 +222,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
   }
 
+  @Override
   public void removeTCObjectSelf(AbstractLocalCacheStoreValue localStoreValue) {
     isShutdownThenException();
 
@@ -242,12 +251,13 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     }
   }
 
-  public void addAllObjectIDsToValidate(Invalidations invalidations) {
+  @Override
+  public void addAllObjectIDsToValidate(Invalidations invalidations, NodeID remoteNode) {
     isShutdownThenException();
 
     tcObjectStoreLock.writeLock().lock();
     try {
-      tcObjectSelfStoreOids.addAllObjectIDsToValidate(invalidations);
+      tcObjectSelfStoreOids.addAllObjectIDsToValidate(invalidations, remoteNode);
       for (ObjectID id : tcObjectSelfTempCache.keySet()) {
         invalidations.add(ObjectID.NULL_ID, id);
       }
@@ -256,6 +266,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     }
   }
 
+  @Override
   public int size() {
     isShutdownThenException();
 
@@ -267,6 +278,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     }
   }
 
+  @Override
   public void addAllObjectIDs(Set oids) {
     isShutdownThenException();
 
@@ -279,6 +291,7 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     }
   }
 
+  @Override
   public boolean contains(ObjectID objectID) {
     isShutdownThenException();
 
@@ -290,10 +303,12 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     }
   }
 
+  @Override
   public void initializeTCObjectSelfStore(TCObjectSelfCallback callback) {
     this.tcObjectSelfRemovedFromStoreCallback = callback;
   }
 
+  @Override
   public void shutdown() {
     this.isShutdown = true;
   }
@@ -326,9 +341,12 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
       return eventualIds.contains(id) || nonEventualIds.contains(id);
     }
 
-    public void addAllObjectIDsToValidate(Invalidations invalidations) {
+    public void addAllObjectIDsToValidate(Invalidations invalidations, NodeID remoteNode) {
+      int grpID = ((GroupID) remoteNode).toInt();
       for (ObjectID id : eventualIds) {
-        invalidations.add(ObjectID.NULL_ID, id);
+        if (id.getGroupID() == grpID) {
+          invalidations.add(ObjectID.NULL_ID, id);
+        }
       }
     }
 
