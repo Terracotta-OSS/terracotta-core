@@ -15,9 +15,9 @@ import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.persistence.db.DirtyObjectDbCleaner;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.persistence.db.TCMapStore;
-import com.tc.objectserver.persistence.inmemory.NullPersistenceTransactionProvider;
+import com.tc.objectserver.storage.api.DBEnvironment;
+import com.tc.objectserver.storage.api.DBFactory;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
-import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
@@ -36,7 +36,7 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
 
   private File                     dbHome;
   private File                     dataPath;
-  private BerkeleyDBEnvironment    dbenv;
+  private DBEnvironment            dbenv;
   private TCFile                   dirtyDbBackupPath = null;
   private final TCLogger           logger            = TCLogging.getLogger(DirtyObjectDBRollbackTest.class);
   private TestDirtyObjectDBCleaner dbCleaner;
@@ -52,10 +52,10 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
     dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
     dbHome.mkdir();
 
-    dbenv = new BerkeleyDBEnvironment(true, dbHome);
+    dbenv = DBFactory.getInstance().createEnvironment(true, dbHome);
     dbenv.open();
 
-    PersistenceTransactionProvider persistentTxProvider = new NullPersistenceTransactionProvider();
+    PersistenceTransactionProvider persistentTxProvider = dbenv.getPersistenceTransactionProvider();
     PersistentMapStore persistentMapStore = new TCMapStore(persistentTxProvider, logger,
                                                            dbenv.getClusterStateStoreDatabase());
 
@@ -68,6 +68,8 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
     System.out.println("XXX dbBckup: " + dirtyDbBackupPath.getFile().getAbsolutePath());
 
     dbCleaner = new TestDirtyObjectDBCleaner(persistentMapStore, dataPath, logger);
+
+    dbenv.close();
   }
 
   private void createBackupDirs(File parentDir, String prefix, int count) {
@@ -153,7 +155,6 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
-    dbenv.close();
     cleanBackupDirs(dirtyDbBackupPath.getFile(), L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX);
   }
 
