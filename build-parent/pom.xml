@@ -232,9 +232,20 @@
       </dependency>
       <dependency>
         <groupId>com.terracottatech</groupId>
+        <artifactId>search-ee</artifactId>
+        <version>${search.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+          </exclusion>          
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>com.terracottatech</groupId>
         <artifactId>search</artifactId>
         <version>${search.version}</version>
-      </dependency>
+      </dependency>          
       <dependency>
         <groupId>org.terracotta.license</groupId>
         <artifactId>terracotta-license</artifactId>
