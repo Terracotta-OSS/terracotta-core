@@ -258,8 +258,11 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
     tcObjectStoreLock.writeLock().lock();
     try {
       tcObjectSelfStoreOids.addAllObjectIDsToValidate(invalidations, remoteNode);
+      int grpID = ((GroupID) remoteNode).toInt();
       for (ObjectID id : tcObjectSelfTempCache.keySet()) {
-        invalidations.add(ObjectID.NULL_ID, id);
+        if (id.getGroupID() == grpID) {
+          invalidations.add(ObjectID.NULL_ID, id);
+        }
       }
     } finally {
       tcObjectStoreLock.writeLock().unlock();
