@@ -331,6 +331,16 @@
                       <failIfNotFound>false</failIfNotFound>
                     </resource>
                     <resource>
+                      <file>${rootDir}/lib/management-cli/jetty-runner.jar</file>
+                      <clean>true</clean>                      
+                      <failIfNotFound>false</failIfNotFound>
+                    </resource>
+                    <resource>
+                      <file>${rootDir}/lib/management-cli/start.jar</file>
+                      <clean>true</clean>                      
+                      <failIfNotFound>false</failIfNotFound>
+                    </resource>
+                    <resource>
                       <directory>${rootDir}/tmc/</directory>
                       <clean>true</clean>
                       <cleanEmptyDirectories>true</cleanEmptyDirectories>
