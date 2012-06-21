@@ -159,7 +159,7 @@ public class DBPersistorImpl implements Persistor {
       }
 
       close();
-      dirtyObjectDbCleaner.backupDirtyObjectDb();
+      dirtyObjectDbCleaner.cleanDirtyObjectDb();
       open(dbenv, logger);
     }
   }

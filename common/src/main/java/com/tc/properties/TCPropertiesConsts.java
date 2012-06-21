@@ -293,6 +293,7 @@ public interface TCPropertiesConsts {
    * tcgroupcomm.reconnect.sendWindow     - Max outstanding messages before ack received
    * tcgroupcomm.reconnect.enabled        - Enable L2-L2 reconnect
    * send.timeout.millis                  - Number of milliseconds to retry sending a message
+   * dirtydb.backup.enabled               - Creates BackUp of DirtyDB only If it is set to true.
    * </code>
    ********************************************************************************************************************/
   public static final String L2_NHA_TCGROUPCOMM_HANDSHAKE_TIMEOUT                           = "l2.nha.tcgroupcomm.handshake.timeout";
@@ -308,6 +309,7 @@ public interface TCPropertiesConsts {
   public static final String L2_NHA_DIRTYDB_AUTODELETE                                      = "l2.nha.dirtydb.autoDelete";
   public static final String L2_NHA_DIRTYDB_ROLLING                                         = "l2.nha.dirtydb.rolling";
   public static final String L2_NHA_AUTORESTART                                             = "l2.nha.autoRestart";
+  public static final String L2_NHA_DIRTYDB_BACKUP_ENABLED                                  = "l2.nha.dirtydb.backup.enabled";
 
   /*********************************************************************************************************************
    * <code>
@@ -944,7 +946,7 @@ public interface TCPropertiesConsts {
    * <code>
    * Section :  OffHeap File System Settings
    * offHeapFilesystem.chm.segments         - Number of segments of the CHM representing the OffHeapFile. This parameter controls the maximum size of an OffHeapFile.
-   *                                          Maximum Size = 2GB * Segments 
+   *                                          Maximum Size = 2GB * Segments
    * offHeapFilesystem.file.blockSize       - Controls the granularity at which space is allocated to each file. File size will increase in multiples of blockSize (bytes).
    * offHeapFileSystem.file.maxDataPageSize - Controls the maximum page size used by the underlying CHM for allocating memory (bytes).
    * </code>

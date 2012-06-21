@@ -100,6 +100,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
    * This method is used to sync up all ObjectIDs from the remote ObjectManagers. It is synchronous and after when it
    * returns nobody is allowed to join the cluster with existing objects.
    */
+  @Override
   public void sync() {
     try {
       final GroupResponse gr = this.groupManager.sendAllAndWaitForResponse(ObjectListSyncMessageFactory
@@ -132,15 +133,18 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   }
 
   // Query current state of the other L2
+  @Override
   public void query(final NodeID nodeID) throws GroupException {
     this.groupManager.sendTo(nodeID, ObjectListSyncMessageFactory.createObjectListSyncRequestMessage());
   }
 
+  @Override
   public void clear(final NodeID nodeID) {
     this.passiveSyncStateManager.removeL2(nodeID);
     this.gcMonitor.clear(nodeID);
   }
 
+  @Override
   public void messageReceived(final NodeID fromNode, final GroupMessage msg) {
     if (msg instanceof ObjectListSyncMessage) {
       final ObjectListSyncMessage clusterMsg = (ObjectListSyncMessage) msg;
@@ -153,8 +157,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     } else if (msg instanceof IndexSyncCompleteAckMessage) {
       NodeID nodeID = msg.messageFrom();
       logger.info("Received IndexSyncCompleteAckMessage from " + nodeID);
-      this.passiveSyncStateManager.indexSyncComplete(nodeID);
-      moveNodeToPassiveStandByIfPossible(nodeID);
+      indexesInSyncOnNode(nodeID);
     } else {
       throw new AssertionError("ReplicatedObjectManagerImpl : Received wrong message type :" + msg.getClass().getName()
                                + " : " + msg);
@@ -168,6 +171,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     }
   }
 
+  @Override
   public void handleGCResult(final GCResultMessage gcMsg) {
     final SortedSet gcedOids = gcMsg.getGCedObjectIDs();
     if (this.stateManager.isActiveCoordinator()) {
@@ -226,6 +230,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       // XXX:: 3 passives - partial sync.
       ReplicatedObjectManagerImpl.this.transactionManager
           .callBackOnResentTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
+            @Override
             public void onCompletion() {
               ReplicatedObjectManagerImpl.this.gcMonitor.add2L2StateManagerWhenGCDisabled(nodeID,
                                                                                           clusterMsg.getObjectIDs(),
@@ -239,12 +244,14 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     return this.passiveSyncStateManager.addL2(nodeID, oids, currentState);
   }
 
+  @Override
   public void missingObjectsFor(final NodeID nodeID, final int missingObjects) {
     if (missingObjects == 0) {
       this.passiveSyncStateManager.objectSyncComplete(nodeID);
       moveNodeToPassiveStandByIfPossible(nodeID);
     } else {
       final Runnable syncRunnable = new Runnable() {
+        @Override
         public void run() {
           objectsSyncRequestSink.add(new SyncObjectsRequest(nodeID));
         }
@@ -253,6 +260,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     }
   }
 
+  @Override
   public void objectSyncCompleteFor(final NodeID nodeID) {
     try {
       logger.info("Object Sync completed for " + nodeID);
@@ -270,6 +278,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     }
   }
 
+  @Override
   public void indexSyncStartFor(NodeID nodeID) {
     try {
       logger.info("Index Sync started for " + nodeID);
@@ -288,6 +297,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
   }
 
+  @Override
   public void indexFilesFor(NodeID nodeID, int indexFiles) {
     if (indexFiles == 0) {
       indexSyncCompleteFor(nodeID);
@@ -296,6 +306,13 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     }
   }
 
+  @Override
+  public void indexesInSyncOnNode(NodeID node) {
+    this.passiveSyncStateManager.indexSyncComplete(node);
+    moveNodeToPassiveStandByIfPossible(node);
+  }
+
+  @Override
   public void indexSyncCompleteFor(NodeID nodeID) {
     try {
       logger.info("Index Sync completed for " + nodeID);
@@ -339,6 +356,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     }
   }
 
+  @Override
   public boolean relayTransactions() {
     return this.passiveSyncStateManager.getL2Count() > 0;
   }
@@ -381,6 +399,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       final long id = gcInfo.getIteration();
       ReplicatedObjectManagerImpl.this.transactionManager
           .callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
+            @Override
             public void onCompletion() {
               ReplicatedObjectManagerImpl.this.groupManager.sendAll(msg);
             }
@@ -407,7 +426,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     private void disableGCIfPossible() {
       if (!this.disabled) {
         this.disabled = ReplicatedObjectManagerImpl.this.objectManager.getGarbageCollector().requestDisableGC();
-        logger.info((this.disabled ? "DGC is disabled." : "DGC is is not disabled."));
+        logger.info((this.disabled ? "DGC is disabled." : "DGC is not disabled."));
       }
     }
 

@@ -300,7 +300,7 @@
                     </resource>
                    
                     <!-- move tmc to the root, https://jira.terracotta.org/jira/browse/DEV-7354 -->
-                     <resource>
+                    <resource>
                       <targetPath>${rootDir}/tmc</targetPath>
                       <directory>${rootDir}/ehcache/tmc</directory>
                       <preservePath>true</preservePath>
@@ -323,6 +323,27 @@
                        <include>usermanagement.*</include>
                        <include>management-cli-common.*</include>
                       </includes>
+                      <failIfNotFound>false</failIfNotFound>
+                    </resource>
+                    <resource>
+                      <targetPath>${rootDir}/lib/management-cli</targetPath>
+                      <directory>${rootDir}/tmc/lib</directory>
+                      <failIfNotFound>false</failIfNotFound>
+                    </resource>
+                    <resource>
+                      <file>${rootDir}/lib/management-cli/jetty-runner.jar</file>
+                      <clean>true</clean>                      
+                      <failIfNotFound>false</failIfNotFound>
+                    </resource>
+                    <resource>
+                      <file>${rootDir}/lib/management-cli/start.jar</file>
+                      <clean>true</clean>                      
+                      <failIfNotFound>false</failIfNotFound>
+                    </resource>
+                    <resource>
+                      <directory>${rootDir}/tmc/</directory>
+                      <clean>true</clean>
+                      <cleanEmptyDirectories>true</cleanEmptyDirectories>
                       <failIfNotFound>false</failIfNotFound>
                     </resource>
                     
@@ -507,14 +528,22 @@
                 <goals>
                   <goal>execute</goal>
                 </goals>
-                <configuration>         
+                <configuration>
+                  <scriptpath>
+                    <element>${basedir}/src/scripts</element>
+                  </scriptpath>                
                   <source>
+                    import Util
+
                     File kitDir = new File("${rootDir}")
                     File patchDefFile = new File("${patch.def.file}")
                     def patchDef = new XmlSlurper().parse(patchDefFile)
                     def patchLevel = patchDef.level.text()
                     def patchName = "${kit.name}-patch${patchLevel}"
-                    def patchFiles = patchDef.files.collect { it.text() }
+                    def patchFiles = patchDef.files.file.list().collect { it.text() }
+
+                    String patchDataFile = Util.createPatchDataFile(project, patchLevel)
+                    patchFiles.leftShift(patchDataFile)
 
                     ant.tar(destfile: "${project.build.directory}/${patchName}.tar.gz", longfile: "gnu", compression: "gzip") {
                       patchFiles.each { file -&gt;
@@ -522,15 +551,15 @@
                           include(name: file)
                         }
                       }
-                    } 
-                </source>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>            
-      </plugins>
-    </build>
-  </profile>
+                    }
+                  </source>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
 
   <!-- *************************************** -->
   <!--   profile to make tar ball of the kit   -->    
