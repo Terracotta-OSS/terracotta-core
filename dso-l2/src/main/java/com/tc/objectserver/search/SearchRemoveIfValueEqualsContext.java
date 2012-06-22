@@ -9,18 +9,25 @@ import com.terracottatech.search.ValueID;
 
 import java.util.Map;
 
-public class SearchEvictionRemoveContext extends BaseSearchEventContext {
+public class SearchRemoveIfValueEqualsContext extends BaseSearchEventContext {
 
   private final Map<String, ValueID> toRemove;
 
-  public SearchEvictionRemoveContext(ObjectID segmentOid, String cacheName, Map<String, ValueID> toRemove,
-                                     MetaDataProcessingContext context) {
+  private final boolean              isEviction;
+
+  public SearchRemoveIfValueEqualsContext(ObjectID segmentOid, String cacheName, Map<String, ValueID> toRemove,
+                                          MetaDataProcessingContext context, boolean isEviction) {
     super(segmentOid, cacheName, context);
     this.toRemove = toRemove;
+    this.isEviction = isEviction;
   }
 
   public Map<String, ValueID> getRemoves() {
     return toRemove;
+  }
+
+  public boolean isEviction() {
+    return isEviction;
   }
 
 }

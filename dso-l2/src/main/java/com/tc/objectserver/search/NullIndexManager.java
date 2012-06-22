@@ -19,20 +19,24 @@ import java.util.Set;
 
 public class NullIndexManager implements IndexManager {
 
+  @Override
   public SearchResult searchIndex(String name, List queryStack, boolean includeKeys, boolean includeValues,
                                   Set<String> attributeSet, Set<String> groupByAttributes, List<NVPair> sortAttributes,
                                   List<NVPair> aggregators, int maxResults) {
     return null;
   }
 
+  @Override
   public void shutdown() {
     //
   }
 
+  @Override
   public void remove(String indexName, String key, ObjectID segmentOid, MetaDataProcessingContext metaDataContext) {
     //
   }
 
+  @Override
   public void update(String indexName, String key, ValueID value, List<NVPair> attributes, ObjectID segmentOid,
                      MetaDataProcessingContext metaDataContex) {
     //
@@ -44,40 +48,49 @@ public class NullIndexManager implements IndexManager {
     //
   }
 
+  @Override
   public void clear(String indexName, ObjectID segmentOid, MetaDataProcessingContext metaDataContext) {
     //
   }
 
+  @Override
   public SyncSnapshot snapshot() {
     return new SyncSnapshot() {
+      @Override
       public void release() {
         //
       }
 
+      @Override
       public Map<String, List<IndexFile>> getFilesToSync() {
         return Collections.EMPTY_MAP;
       }
     };
   }
 
+  @Override
   public void removeIfValueEqual(String indexName, Map<String, ValueID> toRemove, ObjectID segmentOid,
-                                 MetaDataProcessingContext metaDataContext) {
+                                 MetaDataProcessingContext metaDataContext, boolean fromEviction) {
     //
   }
 
+  @Override
   public void replace(String indexName, String key, ValueID value, ValueID previousValue, List<NVPair> attributes,
                       ObjectID segmentOid, MetaDataProcessingContext metaDataContext) {
     //
   }
 
+  @Override
   public void optimizeSearchIndex(String indexName) {
     //
   }
 
+  @Override
   public String[] getSearchIndexNames() {
     return new String[] {};
   }
 
+  @Override
   public InputStream getIndexFile(String cacheName, String indexId, String fileName) {
     throw new AssertionError();
   }

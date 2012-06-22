@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.tx;
 
+import com.tc.l2.objectserver.ResentServerTransaction;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
@@ -128,8 +129,7 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
   private void addToPending(Collection txns) {
     for (Iterator i = txns.iterator(); i.hasNext();) {
       ServerTransaction txn = (ServerTransaction) i.next();
-      txn.markResent();
-      this.pendingTxns.put(txn.getServerTransactionID(), txn);
+      this.pendingTxns.put(txn.getServerTransactionID(), new ResentServerTransaction(txn));
     }
   }
 
