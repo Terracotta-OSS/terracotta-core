@@ -45,58 +45,72 @@ public final class TestServerTransaction implements ServerTransaction {
     this.gtid = gtid;
   }
 
+  @Override
   public ObjectStringSerializer getSerializer() {
     throw new ImplementMe();
   }
 
+  @Override
   public LockID[] getLockIDs() {
     return new LockID[] { new StringLockID("saro") };
   }
 
+  @Override
   public NodeID getSourceID() {
     return this.sid.getSourceID();
   }
 
+  @Override
   public TransactionID getTransactionID() {
     return this.sid.getClientTransactionID();
   }
 
+  @Override
   public SequenceID getClientSequenceID() {
     return SequenceID.NULL_ID;
   }
 
+  @Override
   public List getChanges() {
     return this.changes;
   }
 
+  @Override
   public Map getNewRoots() {
     return Collections.EMPTY_MAP;
   }
 
+  @Override
   public TxnType getTransactionType() {
     throw new ImplementMe();
   }
 
+  @Override
   public ObjectIDSet getObjectIDs() {
     return this.oids;
   }
 
+  @Override
   public Collection getNotifies() {
     return Collections.EMPTY_LIST;
   }
 
+  @Override
   public ServerTransactionID getServerTransactionID() {
     return this.sid;
   }
 
+  @Override
   public TxnBatchID getBatchID() {
     return this.bid;
   }
 
+  @Override
   public DmiDescriptor[] getDmiDescriptors() {
     throw new ImplementMe();
   }
 
+  @Override
   public MetaDataReader[] getMetaDataReaders() {
     return this.metaDataReaders;
   }
@@ -105,41 +119,49 @@ public final class TestServerTransaction implements ServerTransaction {
     return false;
   }
 
+  @Override
   public ObjectIDSet getNewObjectIDs() {
     throw new ImplementMe();
   }
 
+  @Override
   public GlobalTransactionID getGlobalTransactionID() {
     if (this.gtid != null) { return this.gtid; }
     throw new AssertionError("Gid is not set !");
   }
 
+  @Override
   public boolean isActiveTxn() {
     return true;
   }
 
+  @Override
   public boolean isResent() {
     return false;
   }
 
-  public void markResent() {
-    throw new ImplementMe();
-  }
-
+  @Override
   public int getNumApplicationTxn() {
     return 1;
   }
 
+  @Override
   public void setGlobalTransactionID(GlobalTransactionID gid) {
     throw new ImplementMe();
   }
 
+  @Override
   public long[] getHighWaterMarks() {
     return this.hwm;
   }
 
   @Override
   public boolean isSearchEnabled() {
+    return false;
+  }
+
+  @Override
+  public boolean isEviction() {
     return false;
   }
 

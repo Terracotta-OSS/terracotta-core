@@ -39,90 +39,107 @@ public class PrunedServerTransaction implements ServerTransaction {
     this.newOids = newOids;
   }
 
+  @Override
   public Collection getNotifies() {
     return this.orgTxn.getNotifies();
   }
 
+  @Override
   public TxnBatchID getBatchID() {
     return this.orgTxn.getBatchID();
   }
 
+  @Override
   public List getChanges() {
     return this.prunedChanges;
   }
 
+  @Override
   public NodeID getSourceID() {
     return this.orgTxn.getSourceID();
   }
 
+  @Override
   public DmiDescriptor[] getDmiDescriptors() {
     return this.orgTxn.getDmiDescriptors();
   }
 
+  @Override
   public MetaDataReader[] getMetaDataReaders() {
     return this.orgTxn.getMetaDataReaders();
   }
 
+  @Override
   public LockID[] getLockIDs() {
     return this.orgTxn.getLockIDs();
   }
 
+  @Override
   public ObjectIDSet getNewObjectIDs() {
     return this.newOids;
   }
 
+  @Override
   public Map getNewRoots() {
     return this.orgTxn.getNewRoots();
   }
 
+  @Override
   public ObjectIDSet getObjectIDs() {
     return this.oids;
   }
 
+  @Override
   public ObjectStringSerializer getSerializer() {
     return this.orgTxn.getSerializer();
   }
 
+  @Override
   public ServerTransactionID getServerTransactionID() {
     return this.orgTxn.getServerTransactionID();
   }
 
+  @Override
   public TransactionID getTransactionID() {
     return this.orgTxn.getTransactionID();
   }
 
+  @Override
   public TxnType getTransactionType() {
     return this.orgTxn.getTransactionType();
   }
 
+  @Override
   public SequenceID getClientSequenceID() {
     return this.orgTxn.getClientSequenceID();
   }
 
+  @Override
   public GlobalTransactionID getGlobalTransactionID() {
     return this.orgTxn.getGlobalTransactionID();
   }
 
+  @Override
   public boolean isActiveTxn() {
     return this.orgTxn.isActiveTxn();
   }
 
+  @Override
   public boolean isResent() {
     return this.orgTxn.isResent();
   }
 
-  public void markResent() {
-    this.orgTxn.markResent();
-  }
-
+  @Override
   public int getNumApplicationTxn() {
     return this.orgTxn.getNumApplicationTxn();
   }
 
+  @Override
   public void setGlobalTransactionID(final GlobalTransactionID gid) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public long[] getHighWaterMarks() {
     return EMPTY_LONG_ARRAY;
   }
@@ -132,4 +149,8 @@ public class PrunedServerTransaction implements ServerTransaction {
     return this.orgTxn.isSearchEnabled();
   }
 
+  @Override
+  public boolean isEviction() {
+    return this.orgTxn.isEviction();
+  }
 }

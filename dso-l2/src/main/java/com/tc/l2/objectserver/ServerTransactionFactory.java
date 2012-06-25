@@ -16,10 +16,10 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
+import com.tc.objectserver.tx.ServerEvictionTransactionImpl;
 import com.tc.objectserver.tx.ServerMapEvictionDNA;
 import com.tc.objectserver.tx.ServerMapEvictionMetaDataReader;
 import com.tc.objectserver.tx.ServerTransaction;
-import com.tc.objectserver.tx.ServerTransactionImpl;
 import com.tc.util.SequenceID;
 
 import java.util.Collections;
@@ -58,14 +58,14 @@ public class ServerTransactionFactory {
                                                                  final String className, final Map candidates,
                                                                  final ObjectStringSerializer serializer,
                                                                  final String cacheName) {
-    return new ServerTransactionImpl(TxnBatchID.NULL_BATCH_ID, getNextTransactionID(), SequenceID.NULL_ID,
+    return new ServerEvictionTransactionImpl(TxnBatchID.NULL_BATCH_ID, getNextTransactionID(), SequenceID.NULL_ID,
                                      NULL_LOCK_ID, localNodeID,
                                      Collections.singletonList(createServerMapEvictionDNAFor(oid, className,
                                                                                              candidates, cacheName)),
                                      serializer, Collections.EMPTY_MAP, TxnType.NORMAL, Collections.EMPTY_LIST,
                                      NULL_DMI_DESCRIPTOR,
                                      new MetaDataReader[] { createEvictionMetaDataFor(oid, cacheName, candidates) }, 1,
-                                     EMPTY_HIGH_WATER_MARK);
+                                             EMPTY_HIGH_WATER_MARK);
   }
 
   private MetaDataReader createEvictionMetaDataFor(ObjectID oid, String cacheName, Map candidates) {

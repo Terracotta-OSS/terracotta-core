@@ -50,43 +50,53 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
     Assert.assertEquals(dnaCount, changes.size());
   }
 
+  @Override
   public Collection getNotifies() {
     return Collections.EMPTY_LIST;
   }
 
+  @Override
   public TxnBatchID getBatchID() {
     return TxnBatchID.NULL_BATCH_ID;
   }
 
+  @Override
   public List getChanges() {
     return this.changes;
   }
 
+  @Override
   public NodeID getSourceID() {
     return this.serverID;
   }
 
+  @Override
   public SequenceID getClientSequenceID() {
     return SequenceID.NULL_ID;
   }
 
+  @Override
   public DmiDescriptor[] getDmiDescriptors() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public MetaDataReader[] getMetaDataReaders() {
     // meta data is not stored in the object state so there is nothing to provide here on the object sync.
     return EMPTY_META_DATA_READER_ARRAY;
   }
 
+  @Override
   public LockID[] getLockIDs() {
     return new LockID[0];
   }
 
+  @Override
   public Map getNewRoots() {
     return this.rootsMap;
   }
 
+  @Override
   public ObjectIDSet getObjectIDs() {
     return this.oids;
   }
@@ -94,57 +104,69 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
   /*
    * All objects contained in ObjectSync Message are new Objects for the passive
    */
+  @Override
   public ObjectIDSet getNewObjectIDs() {
     return this.oids;
   }
 
+  @Override
   public ObjectStringSerializer getSerializer() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public ServerTransactionID getServerTransactionID() {
     return this.serverTxnID;
   }
 
+  @Override
   public TransactionID getTransactionID() {
     return this.txnID;
   }
 
+  @Override
   public TxnType getTransactionType() {
     return TxnType.NORMAL;
   }
 
   // XXX:: this is server generated txn, hence GID is not assigned.
+  @Override
   public GlobalTransactionID getGlobalTransactionID() {
     return GlobalTransactionID.NULL_ID;
   }
 
+  @Override
   public boolean isActiveTxn() {
     return false;
   }
 
+  @Override
   public boolean isResent() {
     return false;
   }
 
-  public void markResent() {
-    throw new UnsupportedOperationException();
-  }
-
+  @Override
   public int getNumApplicationTxn() {
     return 1;
   }
 
+  @Override
   public void setGlobalTransactionID(final GlobalTransactionID gid) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public long[] getHighWaterMarks() {
     return EMPTY_LONG_ARRAY;
   }
 
   @Override
   public boolean isSearchEnabled() {
+    return false;
+  }
+
+  @Override
+  public boolean isEviction() {
     return false;
   }
 }

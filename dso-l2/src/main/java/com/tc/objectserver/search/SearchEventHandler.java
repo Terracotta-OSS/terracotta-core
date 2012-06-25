@@ -63,11 +63,11 @@ public class SearchEventHandler extends AbstractEventHandler {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);
       }
-    } else if (context instanceof SearchEvictionRemoveContext) {
-      SearchEvictionRemoveContext serc = (SearchEvictionRemoveContext) context;
+    } else if (context instanceof SearchRemoveIfValueEqualsContext) {
+      SearchRemoveIfValueEqualsContext serc = (SearchRemoveIfValueEqualsContext) context;
       try {
         this.indexManager.removeIfValueEqual(serc.getCacheName(), serc.getRemoves(), serc.getSegmentOid(),
-                                             serc.getMetaDataProcessingContext());
+                                             serc.getMetaDataProcessingContext(), serc.isEviction());
       } catch (IndexException e) {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);

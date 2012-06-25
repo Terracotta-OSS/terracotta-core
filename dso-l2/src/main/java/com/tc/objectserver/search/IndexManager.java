@@ -20,7 +20,7 @@ import java.util.Set;
 public interface IndexManager {
 
   void removeIfValueEqual(String indexName, Map<String, ValueID> toRemove, ObjectID segmentOid,
-                          MetaDataProcessingContext metaDataContext) throws IndexException;
+                          MetaDataProcessingContext metaDataContext, boolean fromEviction) throws IndexException;
 
   void remove(String indexName, String key, ObjectID segmentOid, MetaDataProcessingContext metaDataContext)
       throws IndexException;

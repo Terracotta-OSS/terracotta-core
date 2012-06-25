@@ -19,7 +19,6 @@ import com.tc.object.tx.TxnType;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
-import com.tc.util.concurrent.SetOnceFlag;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -48,8 +47,6 @@ public class ServerTransactionImpl implements ServerTransaction {
   private final TxnBatchID             batchID;
   private final int                    numApplicationTxn;
   private final long[]                 highWaterMarks;
-
-  private final SetOnceFlag            isResent = new SetOnceFlag();
 
   private GlobalTransactionID          globalTxnID;
 
@@ -91,64 +88,79 @@ public class ServerTransactionImpl implements ServerTransaction {
   // re-ordered before apply. This is not a problem because for an transaction to be re-ordered, it should not
   // have any common objects between them. hence if g1 is the first txn and g2 is the second txn, g2 can be applied
   // before g1 only when g2 has no common objects(or locks) with g1. If this is not true then we cant assign gid here.
+  @Override
   public void setGlobalTransactionID(final GlobalTransactionID gid) throws GlobalTransactionIDAlreadySetException {
     if (this.globalTxnID != null) { throw new GlobalTransactionIDAlreadySetException("Gid already assigned : " + this
                                                                                      + " gid : " + gid); }
     this.globalTxnID = gid;
   }
 
+  @Override
   public int getNumApplicationTxn() {
     return this.numApplicationTxn;
   }
 
+  @Override
   public ObjectStringSerializer getSerializer() {
     return this.serializer;
   }
 
+  @Override
   public LockID[] getLockIDs() {
     return this.lockIDs;
   }
 
+  @Override
   public NodeID getSourceID() {
     return this.sourceID;
   }
 
+  @Override
   public TransactionID getTransactionID() {
     return this.txID;
   }
 
+  @Override
   public SequenceID getClientSequenceID() {
     return this.seqID;
   }
 
+  @Override
   public List getChanges() {
     return this.changes;
   }
 
+  @Override
   public Map getNewRoots() {
     return this.newRoots;
   }
 
+  @Override
   public TxnType getTransactionType() {
     return this.transactionType;
   }
 
+  @Override
   public ObjectIDSet getObjectIDs() {
     return this.objectIDs;
   }
 
+  @Override
   public ObjectIDSet getNewObjectIDs() {
     return this.newObjectIDs;
   }
 
+  @Override
   public Collection getNotifies() {
     return this.notifies;
   }
 
+  @Override
   public DmiDescriptor[] getDmiDescriptors() {
     return this.dmis;
   }
 
+  @Override
   public MetaDataReader[] getMetaDataReaders() {
     return this.metaDataReaders;
   }
@@ -171,31 +183,33 @@ public class ServerTransactionImpl implements ServerTransaction {
     return sb.toString();
   }
 
+  @Override
   public ServerTransactionID getServerTransactionID() {
     return this.serverTxID;
   }
 
+  @Override
   public TxnBatchID getBatchID() {
     return this.batchID;
   }
 
+  @Override
   public GlobalTransactionID getGlobalTransactionID() {
     if (this.globalTxnID == null) { throw new AssertionError("Gid not assigned : " + this); }
     return this.globalTxnID;
   }
 
+  @Override
   public boolean isActiveTxn() {
     return true;
   }
 
+  @Override
   public boolean isResent() {
-    return isResent.isSet();
+    return false;
   }
 
-  public void markResent() {
-    isResent.set();
-  }
-
+  @Override
   public long[] getHighWaterMarks() {
     return this.highWaterMarks;
   }
@@ -203,5 +217,10 @@ public class ServerTransactionImpl implements ServerTransaction {
   @Override
   public boolean isSearchEnabled() {
     return getMetaDataReaders().length > 0;
+  }
+
+  @Override
+  public boolean isEviction() {
+    return false;
   }
 }
