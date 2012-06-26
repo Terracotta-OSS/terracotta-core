@@ -9,6 +9,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.mockito.Matchers;
+import org.mockito.Mockito;
+
 import com.tc.net.ClientID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
@@ -59,7 +62,8 @@ public class ResentTransactionSequencerTest extends TestCase {
     verify(this.transactionManager, never()).callBackOnTxnsInSystemCompletion(this.callBack);
 
     this.sequencer.addTransactions(client1Txns);
-    verify(this.txnObjectManager, times(1)).addTransactions(client1Txns);
+    verify(this.txnObjectManager, Mockito.atLeastOnce()).addTransactions(Matchers
+                                                                             .anyCollectionOf(ServerTransaction.class));
     verify(this.transactionManager, times(1)).callBackOnTxnsInSystemCompletion(this.callBack);
 
   }
