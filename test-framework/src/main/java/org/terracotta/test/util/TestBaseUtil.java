@@ -13,6 +13,9 @@ import com.tc.util.runtime.Vm;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -169,4 +172,28 @@ public class TestBaseUtil {
     }
   }
 
+  public static String getThreadDump() {
+    final String newline = System.getProperty("line.separator", "\n");
+    StringBuffer rv = new StringBuffer();
+    ThreadMXBean tbean = ManagementFactory.getThreadMXBean();
+    for (long id : tbean.getAllThreadIds()) {
+      ThreadInfo tinfo = tbean.getThreadInfo(id, Integer.MAX_VALUE);
+      rv.append("Thread name: " + tinfo.getThreadName()).append("-" + id).append(newline);
+      for (StackTraceElement e : tinfo.getStackTrace()) {
+        rv.append("    at " + e).append(newline);
+      }
+      rv.append(newline);
+    }
+    return rv.toString();
+  }
+
+  public static List<ThreadInfo> getThreadDumpAsList() {
+    List<ThreadInfo> list = new ArrayList();
+    ThreadMXBean tbean = ManagementFactory.getThreadMXBean();
+    for (long id : tbean.getAllThreadIds()) {
+      ThreadInfo tinfo = tbean.getThreadInfo(id, Integer.MAX_VALUE);
+      list.add(tinfo);
+    }
+    return list;
+  }
 }
