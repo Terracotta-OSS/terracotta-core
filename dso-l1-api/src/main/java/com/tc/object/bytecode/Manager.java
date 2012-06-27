@@ -345,11 +345,11 @@ public interface Manager extends TerracottaLocking {
 
   public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                          Set<String> attributeSet, List<NVPair> sortAttributes,
-                                         List<NVPair> aggregators, int maxResults, int batchSize);
+                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn);
 
   public SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
                                          Set<String> groupByAttribues, List<NVPair> sortAttributes,
-                                         List<NVPair> aggregators, int maxResults, int batchSize);
+                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn);
 
   public NVPair createNVPair(String name, Object value);
 
