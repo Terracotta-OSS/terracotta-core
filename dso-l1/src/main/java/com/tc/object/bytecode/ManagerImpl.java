@@ -117,10 +117,6 @@ public class ManagerImpl implements Manager {
   private final SerializationUtil                  serializer          = new SerializationUtil();
   private final MethodDisplayNames                 methodDisplay       = new MethodDisplayNames(this.serializer);
 
-  private static final boolean                     QUERY_WAIT_FOR_TXNS = TCPropertiesImpl
-                                                                           .getProperties()
-                                                                           .getBoolean(TCPropertiesConsts.SEARCH_QUERY_WAIT_FOR_TXNS);
-
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents) {
     this(true, null, null, null, null, config, connectionComponents, true, null, null, false);
   }
@@ -164,10 +160,12 @@ public class ManagerImpl implements Manager {
     this.clientMode = isExpressRejoinMode ? ClientMode.EXPRESS_REJOIN_MODE : ClientMode.DSO_MODE;
   }
 
+  @Override
   public void init() {
     init(false, null);
   }
 
+  @Override
   public void initForTests(CountDownLatch latch) {
     init(true, latch);
   }
@@ -182,14 +180,17 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  @Override
   public String getClientID() {
     return Long.toString(this.dso.getChannel().getClientIDProvider().getClientID().toLong());
   }
 
+  @Override
   public String getUUID() {
     return this.config.getUUID().toString();
   }
 
+  @Override
   public TunneledDomainUpdater getTunneledDomainUpdater() {
     if (null == dso) { return null; }
     return dso.getTunneledDomainManager();
@@ -206,14 +207,17 @@ public class ManagerImpl implements Manager {
     // NOTE: it is entirely possible more signatures might need to added here
 
     final Object o = new Manageable() {
+      @Override
       public void __tc_managed(final TCObject t) {
         throw new AssertionError();
       }
 
+      @Override
       public TCObject __tc_managed() {
         return null;
       }
 
+      @Override
       public boolean __tc_isManaged() {
         return false;
       }
@@ -230,6 +234,7 @@ public class ManagerImpl implements Manager {
                                                                            .getLogger(DistributedObjectClient.class)));
 
     final StartupAction action = new StartupHelper.StartupAction() {
+      @Override
       public void execute() throws Throwable {
         final AbstractClientFactory clientFactory = AbstractClientFactory.getFactory();
         ManagerImpl.this.dso = clientFactory.createClient(ManagerImpl.this.config, group,
@@ -263,16 +268,19 @@ public class ManagerImpl implements Manager {
     startupHelper.startUp();
   }
 
+  @Override
   public void registerBeforeShutdownHook(final Runnable beforeShutdownHook) {
     if (this.shutdownManager != null) {
       this.shutdownManager.registerBeforeShutdownHook(beforeShutdownHook);
     }
   }
 
+  @Override
   public void stop() {
     shutdown(false, false);
   }
 
+  @Override
   public void stopImmediate() {
     shutdown(false, true);
   }
@@ -306,6 +314,7 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  @Override
   public void logicalInvoke(final Object object, final String methodSignature, final Object[] params) {
     final Manageable m = (Manageable) object;
     if (m.__tc_managed() != null) {
@@ -332,6 +341,7 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  @Override
   public void logicalInvokeWithTransaction(final Object object, final Object lockObject, final String methodName,
                                            final Object[] params) {
     final LockID lock = generateLockIdentifier(lockObject);
@@ -372,14 +382,17 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  @Override
   public Object lookupOrCreateRoot(final String name, final Object object) {
     return lookupOrCreateRoot(name, object, false);
   }
 
+  @Override
   public Object lookupOrCreateRootNoDepth(final String name, final Object obj) {
     return lookupOrCreateRoot(name, obj, true);
   }
 
+  @Override
   public Object createOrReplaceRoot(final String name, final Object object) {
     try {
       return this.objectManager.createOrReplaceRoot(name, object);
@@ -403,11 +416,13 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  @Override
   public boolean isLiteralAutolock(final Object o) {
     if (o instanceof Manageable) { return false; }
     return (!(o instanceof Class)) && (!(o instanceof ObjectID)) && LiteralValues.isLiteralInstance(o);
   }
 
+  @Override
   public boolean isDsoMonitorEntered(final Object o) {
     if (this.objectManager.isCreationInProgress()) { return false; }
 
@@ -428,6 +443,7 @@ public class ManagerImpl implements Manager {
     return dsoMonitorEntered;
   }
 
+  @Override
   public TCObject lookupOrCreate(final Object obj) {
     if (obj instanceof Manageable) {
       TCObject tco = ((Manageable) obj).__tc_managed();
@@ -437,6 +453,7 @@ public class ManagerImpl implements Manager {
     return this.objectManager.lookupOrCreate(obj);
   }
 
+  @Override
   public TCObject lookupExistingOrNull(final Object pojo) {
     if (pojo == null) { return null; }
 
@@ -452,18 +469,22 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  @Override
   public Object lookupObject(final ObjectID id) throws ClassNotFoundException {
     return this.objectManager.lookupObject(id);
   }
 
+  @Override
   public void preFetchObject(final ObjectID id) {
     this.objectManager.preFetchObject(id);
   }
 
+  @Override
   public Object lookupObject(final ObjectID id, final ObjectID parentContext) throws ClassNotFoundException {
     return this.objectManager.lookupObject(id, parentContext);
   }
 
+  @Override
   public boolean distributedMethodCall(final Object receiver, final String method, final Object[] params,
                                        final boolean runOnAllNodes) {
     final TCObject tco = lookupExistingOrNull(receiver);
@@ -480,10 +501,12 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  @Override
   public void distributedMethodCallCommit() {
     this.methodCallManager.distributedInvokeCommit();
   }
 
+  @Override
   public void checkWriteAccess(final Object context) {
     // XXX: make sure that "context" is the ALWAYS the right object to check here, and then rename it
     if (isManaged(context)) {
@@ -495,10 +518,12 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  @Override
   public boolean isLiteralInstance(final Object obj) {
     return LiteralValues.isLiteralInstance(obj);
   }
 
+  @Override
   public boolean isManaged(final Object obj) {
     if (obj instanceof Manageable) {
       final TCObject tcobj = ((Manageable) obj).__tc_managed();
@@ -508,6 +533,7 @@ public class ManagerImpl implements Manager {
     return this.objectManager.isManaged(obj);
   }
 
+  @Override
   public boolean isDsoMonitored(final Object obj) {
     if (this.objectManager.isCreationInProgress() || this.txManager.isTransactionLoggingDisabled()) { return false; }
 
@@ -519,6 +545,7 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  @Override
   public Object lookupRoot(final String name) {
     try {
       return this.objectManager.lookupRoot(name);
@@ -530,14 +557,17 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  @Override
   public Object getChangeApplicator(final Class clazz) {
     return this.config.getChangeApplicator(clazz);
   }
 
+  @Override
   public boolean isLogical(final Object object) {
     return this.config.isLogical(object.getClass().getName());
   }
 
+  @Override
   public boolean isRoot(final Field field) {
     final String fName = field.getName();
     final Class c = field.getDeclaringClass();
@@ -558,11 +588,13 @@ public class ManagerImpl implements Manager {
     return false;
   }
 
+  @Override
   public TCProperties getTCProperties() {
     return TCPropertiesImpl.getProperties();
   }
 
   private class ShutdownAction implements Runnable {
+    @Override
     public void run() {
       // XXX: we should just call stop(), but for the 1.5 (chex) release, I'm reverting the behavior
       // stop();
@@ -571,14 +603,17 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  @Override
   public boolean isPhysicallyInstrumented(final Class clazz) {
     return this.portability.isClassPhysicallyInstrumented(clazz);
   }
 
+  @Override
   public TCLogger getLogger(final String loggerName) {
     return TCLogging.getLogger(loggerName);
   }
 
+  @Override
   public InstrumentationLogger getInstrumentationLogger() {
     return this.instrumentationLogger;
   }
@@ -658,22 +693,27 @@ public class ManagerImpl implements Manager {
     return this.methodCallManager;
   }
 
+  @Override
   public boolean isFieldPortableByOffset(final Object pojo, final long fieldOffset) {
     throw new AssertionError();
   }
 
+  @Override
   public ClassProvider getClassProvider() {
     return this.classProvider;
   }
 
+  @Override
   public DsoCluster getDsoCluster() {
     return this.dsoCluster;
   }
 
+  @Override
   public MBeanServer getMBeanServer() {
     return this.dso.getL1Management().getMBeanServer();
   }
 
+  @Override
   public StatisticRetrievalAction getStatisticRetrievalActionInstance(final String name) {
     if (this.statisticsAgentSubSystem.waitUntilSetupComplete()) {
       return this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry().getActionInstance(name);
@@ -682,65 +722,80 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  @Override
   public void registerStatisticRetrievalAction(StatisticRetrievalAction sra) {
     this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry().registerActionInstance(sra);
   }
 
   private static class FakeManageableObject implements Manageable {
 
+    @Override
     public boolean __tc_isManaged() {
       return false;
     }
 
+    @Override
     public void __tc_managed(final TCObject t) {
       //
     }
 
+    @Override
     public TCObject __tc_managed() {
       return null;
     }
   }
 
+  @Override
   public LockID generateLockIdentifier(final long l) {
     return this.lockIdFactory.generateLockIdentifier(l);
   }
 
+  @Override
   public LockID generateLockIdentifier(final String str) {
     return this.lockIdFactory.generateLockIdentifier(str);
   }
 
+  @Override
   public LockID generateLockIdentifier(final Object obj) {
     return this.lockIdFactory.generateLockIdentifier(obj);
   }
 
+  @Override
   public LockID generateLockIdentifier(final Object obj, final String fieldName) {
     return this.lockIdFactory.generateLockIdentifier(obj, fieldName);
   }
 
+  @Override
   public int globalHoldCount(final LockID lock, final LockLevel level) {
     return this.lockManager.globalHoldCount(lock, level);
   }
 
+  @Override
   public int globalPendingCount(final LockID lock) {
     return this.lockManager.globalPendingCount(lock);
   }
 
+  @Override
   public int globalWaitingCount(final LockID lock) {
     return this.lockManager.globalWaitingCount(lock);
   }
 
+  @Override
   public boolean isLocked(final LockID lock, final LockLevel level) {
     return this.lockManager.isLocked(lock, level);
   }
 
+  @Override
   public boolean isLockedByCurrentThread(final LockID lock, final LockLevel level) {
     return this.lockManager.isLockedByCurrentThread(lock, level);
   }
 
+  @Override
   public int localHoldCount(final LockID lock, final LockLevel level) {
     return this.lockManager.localHoldCount(lock, level);
   }
 
+  @Override
   public void lock(final LockID lock, final LockLevel level) {
     if (clusteredLockingEnabled(lock)) {
       this.lockManager.lock(lock, level);
@@ -752,6 +807,7 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  @Override
   public void lockInterruptibly(final LockID lock, final LockLevel level) throws InterruptedException {
     if (clusteredLockingEnabled(lock)) {
       this.lockManager.lockInterruptibly(lock, level);
@@ -763,6 +819,7 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  @Override
   public Notify notify(final LockID lock, final Object waitObject) {
     if (clusteredLockingEnabled(lock) && (lock instanceof DsoLockID)) {
       this.txManager.notify(this.lockManager.notify(lock, waitObject));
@@ -772,6 +829,7 @@ public class ManagerImpl implements Manager {
     return NotifyImpl.NULL;
   }
 
+  @Override
   public Notify notifyAll(final LockID lock, final Object waitObject) {
     if (clusteredLockingEnabled(lock) && (lock instanceof DsoLockID)) {
       this.txManager.notify(this.lockManager.notifyAll(lock, waitObject));
@@ -781,6 +839,7 @@ public class ManagerImpl implements Manager {
     return NotifyImpl.NULL;
   }
 
+  @Override
   public boolean tryLock(final LockID lock, final LockLevel level) {
     if (clusteredLockingEnabled(lock)) {
       if (this.lockManager.tryLock(lock, level)) {
@@ -797,6 +856,7 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  @Override
   public boolean tryLock(final LockID lock, final LockLevel level, final long timeout) throws InterruptedException {
     if (clusteredLockingEnabled(lock)) {
       if (this.lockManager.tryLock(lock, level, timeout)) {
@@ -813,6 +873,7 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  @Override
   public void unlock(final LockID lock, final LockLevel level) {
     if (clusteredLockingEnabled(lock)) {
       try {
@@ -823,6 +884,7 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  @Override
   public void wait(final LockID lock, final Object waitObject) throws InterruptedException {
     if (clusteredLockingEnabled(lock) && (lock instanceof DsoLockID)) {
       try {
@@ -841,6 +903,7 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  @Override
   public void wait(final LockID lock, final Object waitObject, final long timeout) throws InterruptedException {
     if (clusteredLockingEnabled(lock) && (lock instanceof DsoLockID)) {
       try {
@@ -859,10 +922,12 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  @Override
   public void pinLock(final LockID lock) {
     this.lockManager.pinLock(lock);
   }
 
+  @Override
   public void unpinLock(final LockID lock) {
     this.lockManager.unpinLock(lock);
   }
@@ -872,10 +937,12 @@ public class ManagerImpl implements Manager {
         .isObjectCreationInProgress());
   }
 
+  @Override
   public boolean isLockedByCurrentThread(final LockLevel level) {
     return this.lockManager.isLockedByCurrentThread(level);
   }
 
+  @Override
   public void monitorEnter(final LockID lock, final LockLevel level) {
     lock(lock, level);
   }
@@ -884,6 +951,7 @@ public class ManagerImpl implements Manager {
    * We catch IMSE exception here as it can be thrown when an unlock is clustered but the acquiring lock wasn't. This
    * can happen when a user follows the unsupported lock-share-unlock pattern.
    */
+  @Override
   @FindbugsSuppressWarnings("IMSE_DONT_CATCH_IMSE")
   public void monitorExit(final LockID lock, final LockLevel level) {
     try {
@@ -923,18 +991,21 @@ public class ManagerImpl implements Manager {
                                                              + "to commit a transaction and unlock the associated lock.  The unlock was called on exiting a Java synchronized block.  In order "
                                                              + "to prevent the calling thread from entering an infinite loop the client JVM will now be terminated.";
 
+  @Override
   public void waitForAllCurrentTransactionsToComplete() {
     this.txManager.waitForAllCurrentTransactionsToComplete();
   }
 
+  @Override
   public MetaDataDescriptor createMetaDataDescriptor(String category) {
     return new MetaDataDescriptorImpl(category);
   }
 
+  @Override
   public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                          Set<String> attributeSet, List<NVPair> sortAttributes,
-                                         List<NVPair> aggregators, int maxResults, int batchSize) {
-    if (QUERY_WAIT_FOR_TXNS) {
+                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn) {
+    if (shouldWaitForTxn(waitForTxn)) {
       waitForAllCurrentTransactionsToComplete();
     }
     return searchRequestManager.query(cachename, queryStack, includeKeys, includeValues, attributeSet, sortAttributes,
@@ -944,14 +1015,19 @@ public class ManagerImpl implements Manager {
   @Override
   public SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
                                          Set<String> groupByAttribues, List<NVPair> sortAttributes,
-                                         List<NVPair> aggregators, int maxResults, int batchSize) {
-    if (QUERY_WAIT_FOR_TXNS) {
+                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn) {
+    if (shouldWaitForTxn(waitForTxn)) {
       waitForAllCurrentTransactionsToComplete();
     }
     return searchRequestManager.query(cachename, queryStack, attributeSet, groupByAttribues, sortAttributes,
                                       aggregators, maxResults, batchSize);
   }
 
+  private boolean shouldWaitForTxn(boolean userChoice) {
+    return TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.SEARCH_QUERY_WAIT_FOR_TXNS, userChoice);
+  }
+
+  @Override
   public NVPair createNVPair(String name, Object value) {
     return AbstractNVPair.createNVPair(name, value);
   }
@@ -961,10 +1037,12 @@ public class ManagerImpl implements Manager {
     return this.dso;
   }
 
+  @Override
   public void verifyCapability(String capability) {
     LicenseManager.verifyCapability(capability);
   }
 
+  @Override
   public void fireOperatorEvent(EventType eventLevel, EventSubsystem eventSubsystem, String eventMessage) {
     TerracottaOperatorEvent opEvent = new TerracottaOperatorEventImpl(eventLevel, eventSubsystem, eventMessage, "");
     TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(opEvent);
