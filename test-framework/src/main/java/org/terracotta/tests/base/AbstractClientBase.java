@@ -10,6 +10,8 @@ import com.tc.test.jmx.TestHandler;
 import com.tc.test.jmx.TestHandlerMBean;
 import com.tc.test.setup.GroupsData;
 
+import java.util.Date;
+
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 
@@ -36,6 +38,7 @@ public abstract class AbstractClientBase implements Runnable {
     }
   }
 
+  @Override
   public final void run() {
     try {
       doTest();
@@ -70,5 +73,9 @@ public abstract class AbstractClientBase implements Runnable {
 
   public String getTerracottaUrl() {
     return this.testControlMBean.getTerracottaUrl();
+  }
+
+  public static void debug(String msg) {
+    System.out.println(new Date() + " " + Thread.currentThread().getName() + ": " + msg);
   }
 }
