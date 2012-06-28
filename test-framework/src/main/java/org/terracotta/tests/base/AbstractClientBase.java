@@ -51,6 +51,7 @@ public abstract class AbstractClientBase implements Runnable {
       } catch (Exception e) {
         new Exception("Unabled to dump cluster state.", e).printStackTrace();
       }
+      testControlMBean.clientExitedWithException(t);
       System.exit(1);
     }
   }
