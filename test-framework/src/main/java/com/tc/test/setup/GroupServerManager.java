@@ -16,6 +16,7 @@ import com.tc.test.config.model.ServerCrashMode;
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.proxy.ProxyConnectManager;
 import com.tc.test.proxy.ProxyConnectManagerImpl;
+import com.tc.text.Banner;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.File;
@@ -36,7 +37,12 @@ import junit.framework.Assert;
 
 public class GroupServerManager {
 
+  private static final String       DEBUG_SERVER_PROPERTY = "l2.debug";
   private static final boolean      DEBUG            = Boolean.getBoolean("test.framework.debug");
+  /**
+   * If set to true allows remote debugging of java applications. Do Not Use This Flag with Crashing Enabled.
+   */
+  private static final boolean      DEBUG_SERVER          = Boolean.getBoolean(DEBUG_SERVER_PROPERTY);
   private final GroupsData          groupData;
   private final ServerControl[]     serverControl;
   private final TestConfig          testConfig;
@@ -123,10 +129,19 @@ public class GroupServerManager {
         perServerJvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT + "="
                              + groupData.getL2GroupPort(i));
       }
+      if (shouldDebugServer(i)) {
+        int debugPort = 11000 + i;
+        perServerJvmArgs.add("-agentlib:jdwp=transport=dt_socket,suspend=y,server=y,address=" + debugPort);
+        Banner.infoBanner("waiting for debugger to attach on port " + debugPort);
+      }
       serverControl[i] = getServerControl(groupData.getDsoPort(i), groupData.getJmxPort(i),
                                           groupData.getServerNames()[i], perServerJvmArgs);
       expectedServerRunning[i] = false;
     }
+  }
+
+  private boolean shouldDebugServer(int debugPortOffset) {
+    return DEBUG_SERVER || Boolean.getBoolean(DEBUG_SERVER_PROPERTY + "." + debugPortOffset);
   }
 
   private ServerControl getServerControl(int dsoPort, int jmxPort, String serverName, List<String> jvmArgs) {
