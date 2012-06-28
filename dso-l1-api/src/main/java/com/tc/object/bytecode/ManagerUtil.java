@@ -1171,16 +1171,17 @@ public class ManagerUtil {
   public static SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys,
                                                 boolean includeValues, Set<String> attributeSet,
                                                 List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults,
-                                                int batchSize) {
+                                                int batchSize, boolean waitForTxn) {
     return getManager().executeQuery(cachename, queryStack, includeKeys, includeValues, attributeSet, sortAttributes,
-                                     aggregators, maxResults, batchSize);
+                                     aggregators, maxResults, batchSize, waitForTxn);
   }
 
   public static SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
                                                 Set<String> groupByAttributes, List<NVPair> sortAttributes,
-                                                List<NVPair> aggregators, int maxResults, int batchSize) {
+                                                List<NVPair> aggregators, int maxResults, int batchSize,
+                                                boolean waitForTxn) {
     return getManager().executeQuery(cachename, queryStack, attributeSet, groupByAttributes, sortAttributes,
-                                     aggregators, maxResults, batchSize);
+                                     aggregators, maxResults, batchSize, waitForTxn);
   }
 
   public static NVPair createNVPair(String name, Object value) {

@@ -907,6 +907,10 @@ public interface TCPropertiesConsts {
    * </code>
    ********************************************************************************************************************/
 
+  public static final String L2_OFFHEAP_ALLOCATION_SLOW                                     = "l2.offHeapCache.allocation.slow";
+  public static final String L2_OFFHEAP_ALLOCATION_CRITICAL                                 = "l2.offHeapCache.allocation.critical";
+  public static final String L2_OFFHEAP_ALLOCATION_CRITICAL_HALT                            = "l2.offHeapCache.allocation.critical.halt";
+
   public static final String L2_OFFHEAP_MAP_CACHE_MIN_PAGE_SIZE                             = "l2.offHeapCache.map.min.page.size";
   public static final String L2_OFFHEAP_MAP_CACHE_MAX_PAGE_SIZE                             = "l2.offHeapCache.map.max.page.size";
   public static final String L2_OFFHEAP_MAP_CACHE_TABLESIZE                                 = "l2.offHeapCache.map.tableSize";
