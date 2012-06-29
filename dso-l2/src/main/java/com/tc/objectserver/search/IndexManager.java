@@ -40,7 +40,7 @@ public interface IndexManager {
                                   Set<String> attributeSet, Set<String> groupByAttributes, List<NVPair> sortAttributes,
                                   List<NVPair> aggregators, int maxResults) throws IndexException;
 
-  public SyncSnapshot snapshot() throws IndexException;
+  public SyncSnapshot snapshot(String id) throws IndexException;
 
   void shutdown();
 
