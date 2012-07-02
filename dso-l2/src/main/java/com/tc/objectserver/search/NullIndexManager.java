@@ -54,7 +54,7 @@ public class NullIndexManager implements IndexManager {
   }
 
   @Override
-  public SyncSnapshot snapshot() {
+  public SyncSnapshot snapshot(String syncId) {
     return new SyncSnapshot() {
       @Override
       public void release() {
