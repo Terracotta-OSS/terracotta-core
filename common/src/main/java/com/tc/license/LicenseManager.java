@@ -26,7 +26,6 @@ import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.ProductInfo;
-import com.tc.util.runtime.Vm;
 
 import java.io.InputStream;
 import java.util.Date;
@@ -141,18 +140,13 @@ public class LicenseManager {
 
   public static void verifyServerArrayOffheapCapability(String maxOffHeapConfigured) {
     verifyCapability(CAPABILITY_TERRACOTTA_SERVER_ARRAY_OFFHEAP);
-    long maxHeapFromVMInBytes = Vm.maxDirectMemory();
-    if (maxHeapFromVMInBytes == 0) {
-      //
-      throw new LicenseException("No direct memory was set at JVM level. Please set it with -XX:MaxDirectMemorySize");
-    }
+
 
     String maxHeapSizeFromLicense = getLicense().getRequiredProperty(TERRACOTTA_SERVER_ARRAY_MAX_OFFHEAP);
     long maxOffHeapLicensedInBytes = MemorySizeParser.parse(maxHeapSizeFromLicense);
     long maxOffHeapConfiguredInBytes = MemorySizeParser.parse(maxOffHeapConfigured);
 
     if (CONSOLE_LOGGER.isDebugEnabled()) {
-      CONSOLE_LOGGER.debug("max offheap from VM: " + maxHeapFromVMInBytes);
       CONSOLE_LOGGER.debug("max offheap licensed: " + maxOffHeapLicensedInBytes);
       CONSOLE_LOGGER.debug("max offheap configured: " + maxOffHeapConfiguredInBytes);
     }
