@@ -32,7 +32,7 @@ import java.io.InputStream;
 import java.util.Date;
 
 public class LicenseManager {
-  private static final long                           OFFHEAP_OVERHEAD_BYTES = 4 * 1024L * 1024L * 1024L;
+
   private static final TCLogger                       CONSOLE_LOGGER         = CustomerLogging.getConsoleLogger();
   private static final TCLogger                       LOGGER                 = TCLogging
                                                                                  .getLogger(LicenseManager.class);
@@ -142,7 +142,7 @@ public class LicenseManager {
   public static void verifyServerArrayOffheapCapability(String maxOffHeapConfigured) {
     verifyCapability(CAPABILITY_TERRACOTTA_SERVER_ARRAY_OFFHEAP);
     long maxHeapFromVMInBytes = Vm.maxDirectMemory();
-    if (maxHeapFromVMInBytes == 0 || maxHeapFromVMInBytes == Long.MAX_VALUE) {
+    if (maxHeapFromVMInBytes == 0) {
       //
       throw new LicenseException("No direct memory was set at JVM level. Please set it with -XX:MaxDirectMemorySize");
     }
@@ -157,10 +157,10 @@ public class LicenseManager {
       CONSOLE_LOGGER.debug("max offheap configured: " + maxOffHeapConfiguredInBytes);
     }
 
-    boolean offHeapSizeAllowed = maxOffHeapConfiguredInBytes <= (maxOffHeapLicensedInBytes + OFFHEAP_OVERHEAD_BYTES);
+    boolean offHeapSizeAllowed = maxOffHeapConfiguredInBytes <= maxOffHeapLicensedInBytes;
     if (!offHeapSizeAllowed) {
       throw new LicenseException("Your license only allows up to " + maxHeapSizeFromLicense
-                                 + " + (4GB of overhead) in offheap size. Your Terracotta server is configured with "
+                                 + " in offheap size. Your Terracotta server is configured with "
                                  + maxOffHeapConfigured);
     }
   }
