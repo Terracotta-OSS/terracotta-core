@@ -61,7 +61,7 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
   }
 
   public void testTcHibernateSerializedEntry() throws Exception {
-    final String className = ToolkitTypeNames.SERIALIZED_ENTRY_TYPE;
+    final String className = ToolkitTypeNames.SERIALIZED_MAP_VALUE_TYPE;
     final TestDNACursor cursor = new TestDNACursor();
 
     cursor.addPhysicalAction(TDCSerializedEntryManagedObjectState.CREATE_TIME_FIELD, new Integer(1), false);

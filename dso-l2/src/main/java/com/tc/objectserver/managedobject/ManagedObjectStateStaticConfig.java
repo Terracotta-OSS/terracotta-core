@@ -49,13 +49,13 @@ public enum ManagedObjectStateStaticConfig {
   /**
    * SerializedEntry - explicit state factory
    */
-  SERIALIZED_ENTRY(ToolkitTypeNames.SERIALIZED_ENTRY_TYPE, Factory.SERIALIZED_ENTRY_TYPE_FACTORY),
+  SERIALIZED_ENTRY(ToolkitTypeNames.SERIALIZED_MAP_VALUE_TYPE, Factory.SERIALIZED_MAP_VALUE_TYPE_FACTORY),
 
   /**
    * CustomeLifespanSerializedEntry - explicit state factory
    */
-  CUSTOM_LIFESPAN_SERIALIZED_ENTRY(ToolkitTypeNames.CUSTOM_LIFESPAN_SERIALIZED_ENTRY_TYPE,
-      Factory.CUSTOM_LIFESPAN_SERIALIZED_ENTRY_TYPE_FACTORY),
+  CUSTOM_LIFESPAN_SERIALIZED_ENTRY(ToolkitTypeNames.CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE_TYPE,
+      Factory.CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE_TYPE_FACTORY),
 
   /**
    * Toolkit clusteredSortedSet type - reuses list object state
@@ -207,7 +207,7 @@ public enum ManagedObjectStateStaticConfig {
         return new ClusteredNotifierManagedObjectState(classId);
       }
     },
-    SERIALIZED_ENTRY_TYPE_FACTORY() {
+    SERIALIZED_MAP_VALUE_TYPE_FACTORY() {
 
       @Override
       protected byte getStateObjectType() {
@@ -225,7 +225,7 @@ public enum ManagedObjectStateStaticConfig {
         return new TDCSerializedEntryManagedObjectState(classId);
       }
     },
-    CUSTOM_LIFESPAN_SERIALIZED_ENTRY_TYPE_FACTORY() {
+    CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE_TYPE_FACTORY() {
 
       @Override
       protected byte getStateObjectType() {
@@ -326,8 +326,8 @@ public enum ManagedObjectStateStaticConfig {
     public final static String CLUSTERED_OBJECT_STRIPE_IMPL          = defineConstant("com.terracotta.toolkit.object.ClusteredObjectStripeImpl");
     public final static String SERVER_MAP_TYPE                       = defineConstant("com.terracotta.toolkit.collections.map.ServerMap");
     public final static String CLUSTERED_NOTIFIER_TYPE               = defineConstant("com.terracotta.toolkit.events.ClusteredNotifierImpl");
-    public final static String SERIALIZED_ENTRY_TYPE                 = defineConstant("com.terracotta.toolkit.object.serialization.SerializedEntry");
-    public final static String CUSTOM_LIFESPAN_SERIALIZED_ENTRY_TYPE = defineConstant("com.terracotta.toolkit.object.serialization.CustomLifespanSerializedEntry");
+    public final static String SERIALIZED_MAP_VALUE_TYPE                 = defineConstant("com.terracotta.toolkit.object.serialization.SerializedMapValue");
+    public final static String CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE_TYPE = defineConstant("com.terracotta.toolkit.object.serialization.CustomLifespanSerializedMapValue");
     public final static String CLUSTERED_SORTED_SET_IMPL             = defineConstant("com.terracotta.toolkit.collections.ClusteredSortedSetImpl");
   }
 }
