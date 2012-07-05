@@ -323,9 +323,9 @@ public enum ManagedObjectStateStaticConfig {
     public final static String CLUSTERED_LIST_IMPL                       = defineConstant("com.terracotta.toolkit.collections.ClusteredListImpl");
     public final static String SERIALIZED_CLUSTERED_OBJECT_IMPL          = defineConstant("com.terracotta.toolkit.object.serialization.SerializedClusterObjectImpl");
     public final static String NON_PARTIAL_MAP_IMPL                      = defineConstant("com.terracotta.toolkit.object.serialization.NonPartialMapImpl");
-    public final static String CLUSTERED_OBJECT_STRIPE_IMPL              = defineConstant("com.terracotta.toolkit.object.ClusteredObjectStripeImpl");
+    public final static String CLUSTERED_OBJECT_STRIPE_IMPL              = defineConstant("com.terracotta.toolkit.object.ToolkitObjectStripeImpl");
     public final static String SERVER_MAP_TYPE                           = defineConstant("com.terracotta.toolkit.collections.map.ServerMap");
-    public final static String CLUSTERED_NOTIFIER_TYPE                   = defineConstant("com.terracotta.toolkit.events.ClusteredNotifierImpl");
+    public final static String CLUSTERED_NOTIFIER_TYPE                   = defineConstant("com.terracotta.toolkit.events.ToolkitNotifierImpl");
     public final static String SERIALIZED_MAP_VALUE_TYPE                 = defineConstant("com.terracotta.toolkit.object.serialization.SerializedMapValue");
     public final static String CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE_TYPE = defineConstant("com.terracotta.toolkit.object.serialization.CustomLifespanSerializedMapValue");
     public final static String CLUSTERED_SORTED_SET_IMPL                 = defineConstant("com.terracotta.toolkit.collections.ClusteredSortedSetImpl");
