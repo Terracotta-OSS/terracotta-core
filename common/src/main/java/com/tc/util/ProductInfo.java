@@ -337,11 +337,7 @@ public final class ProductInfo {
 
   public String buildID() {
     if (buildID == null) {
-      String rev = revision;
-      if (isEnterprise()) {
-        rev = ee_revision + "-" + revision;
-      }
-      buildID = buildTimestampAsString() + " (Revision " + rev + " by " + user + "@" + host + " from " + branch + ")";
+      buildID = buildTimestampAsString() + " (Revision " + revision + " by " + user + "@" + host + " from " + branch + ")";
     }
     return buildID;
   }
@@ -355,12 +351,7 @@ public final class ProductInfo {
   }
 
   public String patchBuildID() {
-    String rev = patchRevision;
-    if (isEnterprise()) {
-      rev = patchEERevision + "-" + patchRevision;
-    }
-
-    return patchTimestampAsString() + " (Revision " + rev + " by " + patchUser + "@" + patchHost + " from "
+    return patchTimestampAsString() + " (Revision " + patchRevision + " by " + patchUser + "@" + patchHost + " from "
            + patchBranch + ")";
   }
 
