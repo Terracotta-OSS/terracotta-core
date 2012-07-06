@@ -68,7 +68,6 @@ import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.text.ConsoleParagraphFormatter;
 import com.tc.text.StringFormatter;
-import com.tc.toolkit.object.serialization.SerializationStrategy;
 import com.tc.util.Assert;
 import com.tc.util.FindbugsSuppressWarnings;
 import com.tc.util.Util;
@@ -86,6 +85,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
 import javax.management.MBeanServer;
@@ -117,10 +117,9 @@ public class ManagerImpl implements Manager {
   private DmiManager                               methodCallManager;
 
   private final SerializationUtil                  serializer          = new SerializationUtil();
-  // Used by toolkit objects
-  private volatile SerializationStrategy           serializationStrategy;
 
   private final MethodDisplayNames                 methodDisplay       = new MethodDisplayNames(this.serializer);
+  private final ConcurrentHashMap<String, Object>  registeredObjects = new ConcurrentHashMap<String, Object>();
 
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents) {
     this(true, null, null, null, null, config, connectionComponents, true, null, null, false);
@@ -392,6 +391,7 @@ public class ManagerImpl implements Manager {
     return lookupOrCreateRoot(name, object, false);
   }
 
+  @Override
   public Object lookupOrCreateRoot(final String name, final Object object, GroupID gid) {
     try {
       return this.objectManager.lookupOrCreateRoot(name, object, gid);
@@ -401,6 +401,7 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  @Override
   public Object lookupRoot(final String name, GroupID gid) {
     try {
       return this.objectManager.lookupRoot(name, gid);
@@ -476,6 +477,7 @@ public class ManagerImpl implements Manager {
     return this.objectManager.lookupOrCreate(obj);
   }
 
+  @Override
   public TCObject lookupOrCreate(final Object obj, GroupID gid) {
     if (obj instanceof Manageable) {
       TCObject tco = ((Manageable) obj).__tc_managed();
@@ -1085,6 +1087,7 @@ public class ManagerImpl implements Manager {
     return this.dso.getGroupIDs();
   }
 
+  @Override
   public void lockIDWait(final LockID lock, final long timeout) throws InterruptedException {
     try {
       this.txManager.commit(lock, LockLevel.WRITE);
@@ -1099,26 +1102,29 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  @Override
   public void lockIDNotifyAll(final LockID lock) {
     this.txManager.notify(this.lockManager.notifyAll(lock, null));
   }
 
+  @Override
   public void lockIDNotify(final LockID lock) {
     this.txManager.notify(this.lockManager.notify(lock, null));
   }
 
   @Override
-  public void registerSerializationStrategy(SerializationStrategy strategy) {
-    if (serializationStrategy == null) {
-      this.serializationStrategy = strategy;
+  public Object registerObjectByNameIfAbsent(String name, Object object) {
+    Object old = registeredObjects.putIfAbsent(name, object);
+    if (old != null) {
+      return old;
+    } else {
+      return object;
     }
   }
 
   @Override
-  public SerializationStrategy getSerializationStrategy() {
-    if (this.serializationStrategy == null) { throw new IllegalStateException(
-                                                                              "SerializationStrategy is not initialized"); }
-    return this.serializationStrategy;
+  public <T> T lookupRegisteredObjectByName(String name, Class<T> expectedType) {
+    return expectedType.cast(registeredObjects.get(name));
   }
 
 }

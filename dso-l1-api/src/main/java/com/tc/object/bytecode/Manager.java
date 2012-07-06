@@ -22,7 +22,6 @@ import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.tc.statistics.StatisticRetrievalAction;
-import com.tc.toolkit.object.serialization.SerializationStrategy;
 import com.terracottatech.search.NVPair;
 
 import java.lang.reflect.Field;
@@ -393,7 +392,21 @@ public interface Manager extends TerracottaLocking {
 
   void lockIDNotify(final LockID lock);
 
-  void registerSerializationStrategy(SerializationStrategy strategy);
+  /**
+   * Register an object with given name if null is mapped currently to the name. Otherwise returns old mapped object.
+   * 
+   * @param name Name to use for registering the object
+   * @param object Object to register
+   * @return the previous value associated with the specified name, or same 'object' if there was no mapping for the
+   *         name
+   */
+  <T> T registerObjectByNameIfAbsent(String name, T object);
 
-  SerializationStrategy getSerializationStrategy();
+  /**
+   * Lookup and return an already registered object by name if it exists, otherwise null.
+   * 
+   * @return lookup and return an already registered object by name if it exists, otherwise null
+   * @throws ClassCastException if a mapping exists for name, but is of different type other than expectedType
+   */
+  <T> T lookupRegisteredObjectByName(String name, Class<T> expectedType);
 }

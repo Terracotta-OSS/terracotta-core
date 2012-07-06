@@ -26,7 +26,6 @@ import com.tc.properties.NullTCProperties;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.tc.statistics.StatisticRetrievalAction;
-import com.tc.toolkit.object.serialization.SerializationStrategy;
 import com.terracottatech.search.NVPair;
 
 import java.lang.reflect.Field;
@@ -466,13 +465,14 @@ public class NullManager implements Manager {
   }
 
   @Override
-  public void registerSerializationStrategy(SerializationStrategy strategy) {
-    throw new UnsupportedOperationException();
+  public Object registerObjectByNameIfAbsent(String name, Object object) {
+    throw new ImplementMe();
   }
 
   @Override
-  public SerializationStrategy getSerializationStrategy() {
-    throw new UnsupportedOperationException();
+  public <T> T lookupRegisteredObjectByName(String name, Class<T> expectedType) {
+    throw new ImplementMe();
   }
+
 
 }

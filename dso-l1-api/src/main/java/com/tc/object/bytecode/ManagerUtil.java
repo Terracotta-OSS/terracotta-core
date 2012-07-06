@@ -21,7 +21,6 @@ import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.tc.statistics.StatisticRetrievalAction;
-import com.tc.toolkit.object.serialization.SerializationStrategy;
 import com.terracottatech.search.NVPair;
 
 import java.io.PrintWriter;
@@ -1300,13 +1299,13 @@ public class ManagerUtil {
     mgr.registerBeforeShutdownHook(r);
   }
 
-  public static void registerSerializationStrategy(SerializationStrategy strategy) {
+  public static <T> T registerObjectByNameIfAbsent(String name, T object) {
     Manager mgr = getManager();
-    mgr.registerSerializationStrategy(strategy);
+    return mgr.registerObjectByNameIfAbsent(name, object);
   }
 
-  public static SerializationStrategy getSerializationStrategy() {
+  public static <T> T lookupRegisteredObjectByName(String name, Class<T> expectedType) {
     Manager mgr = getManager();
-    return mgr.getSerializationStrategy();
+    return mgr.lookupRegisteredObjectByName(name, expectedType);
   }
 }
