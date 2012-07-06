@@ -333,7 +333,7 @@ public enum ManagedObjectStateStaticConfig {
     public final static String TOOLKIT_NOTIFIER_TYPE                     = defineConstant("com.terracotta.toolkit.events.ToolkitNotifierImpl");
     public final static String SERIALIZED_MAP_VALUE_TYPE                 = defineConstant("com.terracotta.toolkit.object.serialization.SerializedMapValue");
     public final static String CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE_TYPE = defineConstant("com.terracotta.toolkit.object.serialization.CustomLifespanSerializedMapValue");
-    public final static String TOOLKIT_SORTED_SET_IMPL                   = defineConstant("com.terracotta.toolkit.collections.ClusteredSortedSetImpl");
+    public final static String TOOLKIT_SORTED_SET_IMPL                   = defineConstant("com.terracotta.toolkit.collections.ToolkitSortedSetImpl");
     public final static String TOOLKIT_SET_IMPL                          = defineConstant("com.terracotta.toolkit.collections.ToolkitSetImpl");
   }
 }
