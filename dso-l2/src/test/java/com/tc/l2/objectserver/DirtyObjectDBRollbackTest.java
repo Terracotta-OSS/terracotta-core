@@ -141,6 +141,11 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
     cleanBackupDirs(dirtyDbBackupPath.getFile(), L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX);
     dbCleaner.cleanDirtyObjectDb();
     Assert.assertEquals(1, getDbBackupDirs(dirtyDbBackupPath.getFile()).length);
+    long start = System.currentTimeMillis();
+    // wait for the clock to move in case we run into some really fast machine
+    while (System.currentTimeMillis() == start) {
+      Thread.sleep(1000);
+    }
     dbCleaner.cleanDirtyObjectDb();
     Assert.assertEquals(2, getDbBackupDirs(dirtyDbBackupPath.getFile()).length);
     TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_NHA_DIRTYDB_BACKUP_ENABLED, "false");
