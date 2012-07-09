@@ -69,7 +69,7 @@ public class ManagedObjectSerializerTest extends TestCase {
       cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { "stringField" + i, "Some nice string field" + i });
       cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { "shortField" + i, Short.valueOf((short) 1) });
     }
-    final TestDNA dna = new TestDNA(cursor, "com.terracotta.toolkit.object.ClusteredObjectStripeImpl");
+    final TestDNA dna = new TestDNA(cursor, "com.terracotta.toolkit.object.ToolkitObjectStripeImpl");
     return dna;
   }
 }
