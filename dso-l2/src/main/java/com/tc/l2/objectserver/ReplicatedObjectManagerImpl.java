@@ -291,8 +291,14 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
                                 L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
                                 "Error sending Index Sync Start message "
                                     + L2HAZapNodeRequestProcessor.getErrorString(e));
+      clear(nodeID);
     } catch (SequenceGeneratorException e) {
       logger.error("Error Sending Index Sync Start message  to : " + nodeID, e);
+      this.groupManager.zapNode(nodeID,
+                                L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
+                                "Error sending Index Sync Start message "
+                                    + L2HAZapNodeRequestProcessor.getErrorString(e));
+      clear(nodeID);
     }
 
   }
