@@ -134,8 +134,7 @@ public class ConfigHelper {
       l2ConfigBuilders[serverIndex].setL2GroupPort(getL2GroupPort(groupIndex, serverIndex));
 
       // set logs
-      l2ConfigBuilders[serverIndex]
-          .setLogs(new File(temmDir, getServerName(groupIndex, serverIndex)).getAbsolutePath());
+      l2ConfigBuilders[serverIndex].setLogs(getLogDirectoryPath(groupIndex, serverIndex));
       l2ConfigBuilders[serverIndex].setData(getDataDirectoryPath(groupIndex, serverIndex));
       l2ConfigBuilders[serverIndex].setStatistics(getStatisticsDirectoryPath(groupIndex, serverIndex));
 
@@ -168,6 +167,7 @@ public class ConfigHelper {
       int[] l2GroupPorts = new int[numOfServersPerGroup];
       String[] serverNames = new String[numOfServersPerGroup];
       String[] dataDirectoryPath = new String[numOfServersPerGroup];
+      String[] logDirectoryPath = new String[numOfServersPerGroup];
       int[] proxyL2GroupPorts = null;
       int[] proxyDsoPorts = null;
       for (int serverIndex = 0; serverIndex < numOfServersPerGroup; serverIndex++) {
@@ -178,6 +178,7 @@ public class ConfigHelper {
         String serverName = SERVER_NAME + (groupIndex * numOfServersPerGroup + serverIndex);
         serverNames[serverIndex] = serverName;
         dataDirectoryPath[serverIndex] = new File(temmDir, serverName + File.separator + "data").getAbsolutePath();
+        logDirectoryPath[serverIndex] = new File(temmDir, serverName).getAbsolutePath();
       }
       if (isProxyDsoPort()) {
         proxyDsoPorts = new int[numOfServersPerGroup];
@@ -193,7 +194,7 @@ public class ConfigHelper {
       }
 
       groupData[groupIndex] = new GroupsData(groupName, dsoPorts, jmxPorts, l2GroupPorts, serverNames, proxyDsoPorts,
-                                             proxyL2GroupPorts, dataDirectoryPath);
+                                             proxyL2GroupPorts, dataDirectoryPath, logDirectoryPath);
     }
   }
 
@@ -251,6 +252,10 @@ public class ConfigHelper {
 
   protected String getDataDirectoryPath(final int groupIndex, final int serverIndex) {
     return groupData[groupIndex].getDataDirectoryPath(serverIndex);
+  }
+
+  protected String getLogDirectoryPath(final int groupIndex, final int serverIndex) {
+    return groupData[groupIndex].getLogDirectoryPath(serverIndex);
   }
 
   private String getStatisticsDirectoryPath(int groupIndex, int serverIndex) {
