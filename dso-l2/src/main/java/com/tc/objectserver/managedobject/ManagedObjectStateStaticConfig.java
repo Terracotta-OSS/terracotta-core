@@ -331,7 +331,7 @@ public enum ManagedObjectStateStaticConfig {
     public final static String TOOLKIT_TYPE_ROOT_IMPL                    = defineConstant("com.terracotta.toolkit.roots.impl.ToolkitTypeRootImpl");
     public final static String TOOLKIT_LIST_IMPL                         = defineConstant("com.terracotta.toolkit.collections.ToolkitListImpl");
     public final static String SERIALIZED_CLUSTERED_OBJECT_IMPL          = defineConstant("com.terracotta.toolkit.object.serialization.SerializedClusterObjectImpl");
-    public final static String NON_PARTIAL_MAP_IMPL                      = defineConstant("com.terracotta.toolkit.object.serialization.NonPartialMapImpl");
+    public final static String NON_PARTIAL_MAP_IMPL                      = defineConstant("com.terracotta.toolkit.object.serialization.SerializerMapImpl");
     public final static String TOOLKIT_OBJECT_STRIPE_IMPL                = defineConstant("com.terracotta.toolkit.object.ToolkitObjectStripeImpl");
     public final static String SERVER_MAP_TYPE                           = defineConstant("com.terracotta.toolkit.collections.map.ServerMap");
     public final static String TOOLKIT_NOTIFIER_TYPE                     = defineConstant("com.terracotta.toolkit.events.ToolkitNotifierImpl");
