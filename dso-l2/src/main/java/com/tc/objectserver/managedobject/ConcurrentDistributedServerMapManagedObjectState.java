@@ -270,6 +270,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     } else if (value instanceof ObjectID) {
       // Invalidate the value so that the VM that initiated this call can remove it from the local cache.
       removedValueFromMap(mapID, applyInfo, (ObjectID) value);
+      addKeyPresentForValue(applyInfo, (ObjectID) value);
     }
   }
 
@@ -307,10 +308,12 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
    * EvictableMap interface
    */
 
+  @Override
   public int getMaxTotalCount() {
     return this.targetMaxTotalCount;
   }
 
+  @Override
   public int getSize() {
     return this.references.size();
   }
@@ -319,14 +322,17 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     return new HashSet(this.references.keySet());
   }
 
+  @Override
   public int getTTISeconds() {
     return this.maxTTISeconds;
   }
 
+  @Override
   public int getTTLSeconds() {
     return this.maxTTLSeconds;
   }
 
+  @Override
   public void evictionCompleted() {
     this.evictionStatus = EvictionStatus.NOT_INITIATED;
   }
@@ -366,6 +372,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     return samples;
   }
 
+  @Override
   public String getCacheName() {
     return cacheName;
   }
