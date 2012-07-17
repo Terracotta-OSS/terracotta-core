@@ -45,6 +45,7 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     super(in);
   }
 
+  @Override
   public void apply(final ObjectID objectID, final DNACursor cursor, final ApplyTransactionInfo applyInfo)
       throws IOException {
     while (cursor.next()) {
@@ -84,9 +85,11 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
         }
         break;
       case SerializationUtil.CLEAR:
+      case SerializationUtil.DESTROY:
         clearedMap(applyInfo, references.values());
         this.references.clear();
         break;
+
       default:
         throw new AssertionError("Invalid action:" + method);
     }
@@ -122,6 +125,7 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     return params[1];
   }
 
+  @Override
   public void dehydrate(final ObjectID objectID, final DNAWriter writer, final DNAType type) {
     for (final Iterator i = this.references.entrySet().iterator(); i.hasNext();) {
       final Entry entry = (Entry) i.next();
@@ -146,6 +150,7 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     }
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     final PrettyPrinter rv = out;
     out = out.println("MapManagedObjectState").duplicateAndIndent();
@@ -153,6 +158,7 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     return rv;
   }
 
+  @Override
   public ManagedObjectFacade createFacade(final ObjectID objectID, final String className, int limit) {
     final int size = this.references.size();
 
@@ -201,6 +207,7 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     return new MapManagedObjectState(in);
   }
 
+  @Override
   public byte getType() {
     return MAP_TYPE;
   }
@@ -211,10 +218,12 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     return this.references.equals(mmo.references);
   }
 
+  @Override
   public PersistableCollection getPersistentCollection() {
     return (PersistableCollection) getMap();
   }
 
+  @Override
   public void setPersistentCollection(final PersistableCollection collection) {
     setMap((Map) collection);
   }
@@ -227,6 +236,7 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     return result;
   }
 
+  @Override
   public void destroy() {
     if (this.references instanceof TCDestroyable) {
       ((TCDestroyable) this.references).destroy();
