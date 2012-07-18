@@ -148,13 +148,13 @@ public class StateManagerImpl implements StateManager {
   private synchronized void moveToPassiveState(Enrollment winningEnrollment) {
     electionMgr.reset(winningEnrollment);
     if (state == START_STATE) {
-      state = winningEnrollment.isANewCandidate() ? PASSIVE_STANDBY : PASSIVE_UNINTIALIZED;
+      state = winningEnrollment.isANewCandidate() ? PASSIVE_STANDBY : PASSIVE_UNINITIALIZED;
       info("Moved to " + state, true);
       fireStateChangedOperatorEvent();
       stateChangeSink.add(new StateChangedEvent(START_STATE, state));
     } else if (state == ACTIVE_COORDINATOR) {
       // TODO:: Support this later
-      throw new AssertionError("Cant move to " + PASSIVE_UNINTIALIZED + " from " + ACTIVE_COORDINATOR
+      throw new AssertionError("Cant move to " + PASSIVE_UNINITIALIZED + " from " + ACTIVE_COORDINATOR
                                + " at least for now");
     } else {
       debugInfo("Move to passive state ignored - state=" + state + ", winningEnrollMent: " + winningEnrollment);
@@ -200,7 +200,7 @@ public class StateManagerImpl implements StateManager {
   }
 
   public boolean isPassiveUnitialized() {
-    return (state == PASSIVE_UNINTIALIZED);
+    return (state == PASSIVE_UNINITIALIZED);
   }
 
   public void moveNodeToPassiveStandby(NodeID nodeID) {
@@ -363,7 +363,7 @@ public class StateManagerImpl implements StateManager {
         // ACTIVE Node is gone
         setActiveNodeID(ServerID.NULL_ID);
       }
-      if (state != PASSIVE_UNINTIALIZED && state != ACTIVE_COORDINATOR && activeNode.isNull()) {
+      if (state != PASSIVE_UNINITIALIZED && state != ACTIVE_COORDINATOR && activeNode.isNull()) {
         elect = true;
       }
     }

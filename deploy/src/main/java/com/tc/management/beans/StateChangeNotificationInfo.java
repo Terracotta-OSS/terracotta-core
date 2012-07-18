@@ -29,7 +29,7 @@ public class StateChangeNotificationInfo {
     map = new HashMap();
     map.put(StateManager.ACTIVE_COORDINATOR.getName(), ACTIVE_INFO);
     map.put(StateManager.PASSIVE_STANDBY.getName(), PASSIVE_STANDBY_INFO);
-    map.put(StateManager.PASSIVE_UNINTIALIZED.getName(), PASSIVE_UNINIT_INFO);
+    map.put(StateManager.PASSIVE_UNINITIALIZED.getName(), PASSIVE_UNINIT_INFO);
     map.put(StateManager.START_STATE.getName(), START_INFO);
     map.put(StateManager.STOP_STATE.getName(), STOP_INFO);
   }
