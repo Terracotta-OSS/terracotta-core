@@ -129,15 +129,6 @@ public class ManagerUtil {
     return getManager().getClientID();
   }
 
-  /**
-   * Get Unique Client identifier
-   * 
-   * @return Unique Client identifier
-   */
-  public static String getUUID() {
-    return getManager().getUUID();
-  }
-
   public static void registerStatisticRetrievalAction(StatisticRetrievalAction sra) {
     getManager().registerStatisticRetrievalAction(sra);
   }
