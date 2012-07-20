@@ -126,7 +126,6 @@
       <plugin>
         <groupId>org.codehaus.gmaven</groupId>
         <artifactId>gmaven-plugin</artifactId>
-        <version>${gmaven-plugin.version}</version>
         <executions>
           <execution>
             <id>inject-correct-pom-to-jar</id>
