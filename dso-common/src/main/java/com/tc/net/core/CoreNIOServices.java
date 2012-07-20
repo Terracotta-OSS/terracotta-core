@@ -3,9 +3,6 @@
  */
 package com.tc.net.core;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
-
 import com.tc.exception.TCInternalError;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -39,11 +36,14 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The communication thread. Creates {@link Selector selector}, registers {@link SocketChannel} to the selector and does
  * other NIO operations.
- *
+ * 
  * @author mgovinda
  */
 
@@ -90,6 +90,11 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
   public void cleanupChannel(SocketChannel channel, Runnable callback) {
     readerComm.cleanupChannel(channel, callback);
     writerComm.cleanupChannel(channel, callback);
+  }
+
+  public void detach(final SocketChannel channel) {
+    readerComm.unregister(channel);
+    writerComm.unregister(channel);
   }
 
   public void closeEvent(TCListenerEvent event) {
@@ -169,7 +174,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
   /**
    * Change thread ownership of a connection or upgrade weight.
-   *
+   * 
    * @param connection : connection which has to be transfered from the main selector thread to a new worker comm thread
    *        that has the least weight. If the connection is already managed by a comm thread, then just update
    *        connection's weight.
@@ -263,12 +268,12 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
   }
 
   protected class CommThread extends Thread {
-    private final Selector         selector;
-    private final LinkedQueue      selectorTasks;
-    private final String           name;
-    private final SynchronizedLong bytesRead    = new SynchronizedLong(0);
-    private final SynchronizedLong bytesWritten = new SynchronizedLong(0);
-    private final COMM_THREAD_MODE mode;
+    private final Selector            selector;
+    private final LinkedBlockingQueue selectorTasks;
+    private final String              name;
+    private final AtomicLong          bytesRead    = new AtomicLong(0);
+    private final AtomicLong          bytesWritten = new AtomicLong(0);
+    private final COMM_THREAD_MODE    mode;
 
     public CommThread(final COMM_THREAD_MODE mode) {
       name = commThreadName + (mode == COMM_THREAD_MODE.NIO_READER ? "_R" : "_W");
@@ -276,7 +281,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       setName(name);
 
       this.selector = createSelector();
-      this.selectorTasks = new LinkedQueue();
+      this.selectorTasks = new LinkedBlockingQueue();
       this.mode = mode;
     }
 
@@ -501,7 +506,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       }
     }
 
-    private void dispose(Selector localSelector, LinkedQueue localSelectorTasks) {
+    private void dispose(Selector localSelector, LinkedBlockingQueue localSelectorTasks) {
       Assert.eval(Thread.currentThread() == this);
 
       if (localSelector != null) {
@@ -535,7 +540,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       Assert.eval(Thread.currentThread() == this);
 
       Selector localSelector = this.selector;
-      LinkedQueue localSelectorTasks = this.selectorTasks;
+      LinkedBlockingQueue localSelectorTasks = this.selectorTasks;
 
       while (true) {
         final int numKeys;
@@ -571,7 +576,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
           Runnable task = null;
           while (true) {
             try {
-              task = (Runnable) localSelectorTasks.poll(0);
+              task = (Runnable) localSelectorTasks.poll(0, TimeUnit.MILLISECONDS);
               break;
             } catch (InterruptedException ie) {
               logger.error("Error getting task from task queue", ie);
@@ -620,20 +625,16 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
             if (isReader() && key.isValid() && key.isReadable()) {
               int read;
               TCChannelReader reader = (TCChannelReader) key.attachment();
+              ScatteringByteChannel channel = (ScatteringByteChannel) key.channel();
               do {
-                read = reader.doRead();
-                this.bytesRead.add(read);
+                read = reader.doRead(channel);
+                this.bytesRead.addAndGet(read);
               } while ((read != 0) && key.isReadable());
             }
 
             if (key.isValid() && !isReader() && key.isWritable()) {
-              int written = ((TCChannelWriter) key.attachment()).doWrite();
-              this.bytesWritten.add(written);
-            }
-
-            TCConnection conn = (TCConnection) key.attachment();
-            if (conn != null && conn.isClosePending()) {
-              conn.asynchClose();
+              int written = ((TCChannelWriter) key.attachment()).doWrite((GatheringByteChannel) key.channel());
+              this.bytesWritten.addAndGet(written);
             }
 
           } catch (CancelledKeyException cke) {

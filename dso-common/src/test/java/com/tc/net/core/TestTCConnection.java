@@ -88,8 +88,4 @@ public class TestTCConnection implements TCConnection {
     return false;
   }
 
-  public boolean isClosePending() {
-    return false;
-  }
-
 }

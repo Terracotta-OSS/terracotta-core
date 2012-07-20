@@ -1,10 +1,8 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
 package com.tc.net.core;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 import EDU.oswego.cs.dl.util.concurrent.Latch;
 
 import com.tc.bytes.TCByteBuffer;
@@ -15,7 +13,6 @@ import com.tc.net.NIOWorkarounds;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionEventCaller;
 import com.tc.net.core.event.TCConnectionEventListener;
-import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.transport.WireProtocolGroupMessageImpl;
@@ -39,20 +36,20 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedSelectorException;
+import java.nio.channels.GatheringByteChannel;
+import java.nio.channels.ScatteringByteChannel;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLHandshakeException;
-
 /**
  * The {@link TCConnection} implementation. SocketChannel read/write happens here.
- *
+ * 
  * @author teck
  * @author mgovinda
  */
@@ -64,10 +61,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
   private volatile CoreNIOServices           commWorker;
   private volatile SocketChannel             channel;
-  private volatile BufferManager             bufferManager;
-  private volatile PipeSocket                pipeSocket;
 
-  private final BufferManagerFactory         bufferManagerFactory;
   private final AtomicBoolean                transportEstablished        = new AtomicBoolean(false);
   private final LinkedList<TCNetworkMessage> writeMessages               = new LinkedList<TCNetworkMessage>();
   private final TCConnectionManagerImpl      parent;
@@ -86,9 +80,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private final AtomicLong                   totalRead                   = new AtomicLong(0);
   private final AtomicLong                   totalWrite                  = new AtomicLong(0);
   private final ArrayList<WriteContext>      writeContexts               = new ArrayList<WriteContext>();
-  private final Object                       pipeSocketWriteInterestLock = new Object();
-  private boolean                            hasPipeSocketWriteInterest  = false;
-  private int                                writeBufferSize             = 0;
 
   private static final boolean               MSG_GROUPING_ENABLED        = TCPropertiesImpl
                                                                              .getProperties()
@@ -96,13 +87,11 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private static final int                   MSG_GROUPING_MAX_SIZE_BYTES = TCPropertiesImpl
                                                                              .getProperties()
                                                                              .getInt(TCPropertiesConsts.TC_MESSAGE_GROUPING_MAXSIZE_KB,
-                                                                                 128) * 1024;
+                                                                                     128) * 1024;
   private static final boolean               MESSSAGE_PACKUP             = TCPropertiesImpl
                                                                              .getProperties()
                                                                              .getBoolean(TCPropertiesConsts.TC_MESSAGE_PACKUP_ENABLED,
-                                                                                 true);
-  private final Object                       readerLock                  = new Object();
-  private final Object                       writerLock                  = new Object();
+                                                                                         true);
 
   static {
     logger.info("Comms Message Batching " + (MSG_GROUPING_ENABLED ? "enabled" : "disabled"));
@@ -114,13 +103,13 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   // for creating unconnected client connections
   TCConnectionImpl(final TCConnectionEventListener listener, final TCProtocolAdaptor adaptor,
                    final TCConnectionManagerImpl managerJDK14, final CoreNIOServices nioServiceThread,
-                   final SocketParams socketParams, final TCSecurityManager securityManager) {
-    this(listener, adaptor, null, managerJDK14, nioServiceThread, socketParams, securityManager);
+                   final SocketParams socketParams) {
+    this(listener, adaptor, null, managerJDK14, nioServiceThread, socketParams);
   }
 
   TCConnectionImpl(final TCConnectionEventListener listener, final TCProtocolAdaptor adaptor, final SocketChannel ch,
                    final TCConnectionManagerImpl parent, final CoreNIOServices nioServiceThread,
-                   final SocketParams socketParams, final TCSecurityManager securityManager) {
+                   final SocketParams socketParams) {
 
     Assert.assertNotNull(parent);
     Assert.assertNotNull(adaptor);
@@ -134,15 +123,8 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
     this.channel = ch;
 
-    if (securityManager != null) {
-      this.bufferManagerFactory = securityManager.getBufferManagerFactory();
-    } else {
-      this.bufferManagerFactory = new ClearTextBufferManagerFactory();
-    }
-
     if (ch != null) {
       socketParams.applySocketParams(ch.socket());
-      this.bufferManager = bufferManagerFactory.createBufferManager(ch, false);
     }
 
     this.socketParams = socketParams;
@@ -166,16 +148,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       synchronized (this.writeMessages) {
         this.writeMessages.clear();
       }
-    }
-    try {
-      if (pipeSocket != null) {
-        synchronized (pipeSocketWriteInterestLock) {
-          writeBufferSize = 0;
-        }
-        pipeSocket.dispose();
-      }
-    } catch (IOException ioe) {
-      logger.warn("error closing pipesocket", ioe);
     }
   }
 
@@ -212,7 +184,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     this.channel = newSocket;
     newSocket.configureBlocking(false);
     Assert.eval(this.commWorker != null);
-    this.bufferManager = bufferManagerFactory.createBufferManager(newSocket, true);
     this.commWorker.requestReadInterest(this, newSocket);
   }
 
@@ -224,19 +195,9 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   }
 
   private Socket detachImpl() throws IOException {
-    this.pipeSocket = new PipeSocket() {
-      @Override
-      public void onWrite() {
-        synchronized (pipeSocketWriteInterestLock) {
-          writeBufferSize++;
-          if (!hasPipeSocketWriteInterest) {
-            TCConnectionImpl.this.commWorker.requestWriteInterest(TCConnectionImpl.this, TCConnectionImpl.this.channel);
-            hasPipeSocketWriteInterest = true;
-          }
-        }
-      }
-    };
-    return pipeSocket;
+    this.commWorker.detach(this.channel);
+    this.channel.configureBlocking(true);
+    return this.channel.socket();
   }
 
   private boolean asynchConnectImpl(final TCSocketAddress address) throws IOException {
@@ -256,105 +217,16 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     return rv;
   }
 
-  public int doRead() throws IOException {
-    synchronized (readerLock) {
-      return doReadInternal();
-    }
+  public int doRead(final ScatteringByteChannel sbc) {
+    final int read = doReadInternal(sbc);
+    this.totalRead.addAndGet(read);
+    return read;
   }
 
-  private int doReadInternal() throws IOException {
-    int channelRead = 0;
-    try {
-      channelRead = bufferManager.recvToBuffer();
-      if (-1 == channelRead) {
-        closeReadOnEOF();
-        return 0;
-      }
-    } catch (SSLException ssle) {
-      logger.error("SSL error: " + ssle);
-      closeReadOnException(ssle);
-      return 0;
-    } catch (IOException ioe) {
-      closeReadOnException(ioe);
-      return 0;
-    }
-
-    int totalBytesReadFromBuffer = 0;
-    int read = 0;
-    do {
-      read = doReadFromBuffer();
-      totalBytesReadFromBuffer += read;
-    } while (read != 0);
-
-    this.totalRead.addAndGet(totalBytesReadFromBuffer);
-    return totalBytesReadFromBuffer;
-  }
-
-  public int doReadFromBuffer() {
-    if (pipeSocket != null) {
-      try {
-        return bufferManager.forwardFromReadBuffer(pipeSocket.getInputPipeSinkChannel());
-      } catch (IOException e) {
-        return -1;
-      }
-    } else {
-      return doReadFromBufferInternal();
-    }
-  }
-
-  public int doWrite() throws IOException {
-    synchronized (writerLock) {
-      return doWriteInternal();
-    }
-  }
-
-  public int doWriteInternal() throws IOException {
-    int written = doWriteToBuffer();
-    int channelWritten = 0;
-    while (channelWritten != written) {
-      int sent = 0;
-      try {
-        sent = bufferManager.sendFromBuffer();
-      } catch (SSLHandshakeException she) {
-        logger
-            .error("SSL handshake error: unable to find valid certification path to requested target, closing connection.");
-        closeWriteOnException(she);
-        break;
-      } catch (SSLException ssle) {
-        logger.error("SSL error: " + ssle);
-        closeWriteOnException(ssle);
-        break;
-      } catch (IOException ioe) {
-        closeWriteOnException(ioe);
-        break;
-      }
-      channelWritten += sent;
-    }
-    this.totalWrite.addAndGet(channelWritten);
-    return channelWritten;
-  }
-
-  public int doWriteToBuffer() {
-    if (pipeSocket != null) {
-      try {
-        synchronized (pipeSocketWriteInterestLock) {
-          int gotFromSendBuffer = bufferManager.forwardToWriteBuffer(pipeSocket.getOutputPipeSourceChannel());
-          if (gotFromSendBuffer > -1) {
-            writeBufferSize -= gotFromSendBuffer;
-          }
-
-          if (writeBufferSize == 0 && hasPipeSocketWriteInterest) {
-            TCConnectionImpl.this.commWorker.removeWriteInterest(TCConnectionImpl.this, TCConnectionImpl.this.channel);
-            hasPipeSocketWriteInterest = false;
-          }
-          return gotFromSendBuffer;
-        }
-      } catch (IOException e) {
-        return -1;
-      }
-    } else {
-      return doWriteToBufferInternal();
-    }
+  public int doWrite(final GatheringByteChannel gbc) {
+    final int written = doWriteInternal(gbc);
+    this.totalWrite.addAndGet(written);
+    return written;
   }
 
   private void buildWriteContextsFromMessages() {
@@ -423,30 +295,59 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     return TCByteBufferFactory.getTotalBufferSizeNeededForMessageSize(length);
   }
 
-  private int doReadFromBufferInternal() {
+  private int doReadInternal(final ScatteringByteChannel sbc) {
     final boolean debug = logger.isDebugEnabled();
     final TCByteBuffer[] readBuffers = getReadBuffers();
 
     int bytesRead = 0;
-    // Do the read in a loop, instead of calling read(ByteBuffer[]).
-    // This seems to avoid memory leaks on sun's 1.4.2 JDK
-    for (final TCByteBuffer readBuffer : readBuffers) {
-      final ByteBuffer buf = extractNioBuffer(readBuffer);
-
-      if (buf.hasRemaining()) {
-        final int read = bufferManager.forwardFromReadBuffer(buf);
-
-        if (0 == read) {
-          break;
-        }
-
-        bytesRead += read;
+    boolean readEOF = false;
+    try {
+      // Do the read in a loop, instead of calling read(ByteBuffer[]).
+      // This seems to avoid memory leaks on sun's 1.4.2 JDK
+      for (final TCByteBuffer readBuffer : readBuffers) {
+        final ByteBuffer buf = extractNioBuffer(readBuffer);
 
         if (buf.hasRemaining()) {
-          // don't move on to the next buffer if we didn't fill the current one
-          break;
+          final int read = sbc.read(buf);
+
+          if (-1 == read) {
+            // Normal EOF
+            readEOF = true;
+            break;
+          }
+
+          if (0 == read) {
+            break;
+          }
+
+          bytesRead += read;
+
+          if (buf.hasRemaining()) {
+            // don't move on to the next buffer if we didn't fill the current one
+            break;
+          }
         }
       }
+    } catch (final IOException ioe) {
+      if (logger.isInfoEnabled()) {
+        logger.info("error reading from channel " + this.channel.toString() + ": " + ioe.getMessage());
+      }
+
+      this.eventCaller.fireErrorEvent(this.eventListeners, this, ioe, null);
+      return bytesRead;
+    }
+
+    if (readEOF) {
+      if (bytesRead > 0) {
+        addNetworkData(readBuffers, bytesRead);
+      }
+
+      if (debug) {
+        logger.debug("EOF read on connection " + this.channel.toString());
+      }
+
+      this.eventCaller.fireEndOfFileEvent(this.eventListeners, this);
+      return bytesRead;
     }
 
     Assert.eval(bytesRead >= 0);
@@ -460,7 +361,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     return bytesRead;
   }
 
-  public int doWriteToBufferInternal() {
+  public int doWriteInternal(final GatheringByteChannel gbc) {
     final boolean debug = logger.isDebugEnabled();
     int totalBytesWritten = 0;
 
@@ -475,21 +376,29 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       final TCByteBuffer[] buffers = context.entireMessageData;
 
       long bytesWritten = 0;
-      // Do the write in a loop, instead of calling write(ByteBuffer[]).
-      // This seems to avoid memory leaks and faster
-      for (int i = context.index, nn = buffers.length; i < nn; i++) {
-        final int written = bufferManager.forwardToWriteBuffer(buffers[i].getNioBuffer());
-        if (written == 0) {
+      try {
+        // Do the write in a loop, instead of calling write(ByteBuffer[]).
+        // This seems to avoid memory leaks and faster
+        for (int i = context.index, nn = buffers.length; i < nn; i++) {
+          final int written = gbc.write(buffers[i].getNioBuffer());
+          if (written == 0) {
+            break;
+          }
+
+          bytesWritten += written;
+
+          if (buffers[i].hasRemaining()) {
+            break;
+          } else {
+            context.incrementIndexAndCleanOld();
+          }
+        }
+      } catch (final IOException ioe) {
+        if (NIOWorkarounds.windowsWritevWorkaround(ioe)) {
           break;
         }
 
-        bytesWritten += written;
-
-        if (buffers[i].hasRemaining()) {
-          break;
-        } else {
-          context.incrementIndexAndCleanOld();
-        }
+        this.eventCaller.fireErrorEvent(this.eventListeners, this, ioe, context.message);
       }
 
       if (debug) {
@@ -772,9 +681,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       this.protocolAdaptor.addReadData(this, data, length);
     } catch (final Exception e) {
       logger.error(this.toString() + " " + e.getMessage());
-      for (TCByteBuffer tcByteBuffer : data) {
-        tcByteBuffer.clear();
-      }
       this.eventCaller.fireErrorEvent(this.eventListeners, this, e, null);
       return;
     }
@@ -851,49 +757,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     hdr.setMessageCount(messageCount);
     hdr.computeChecksum();
     return message;
-  }
-
-  public void closeReadOnEOF() throws IOException {
-    if (pipeSocket != null) {
-      TCConnectionImpl.this.commWorker.removeReadInterest(TCConnectionImpl.this, TCConnectionImpl.this.channel);
-      pipeSocket.closeRead();
-    } else {
-      if (logger.isDebugEnabled()) {
-        logger.debug("EOF read on connection " + this.channel.toString());
-      }
-      this.eventCaller.fireEndOfFileEvent(this.eventListeners, this);
-    }
-  }
-
-  public void closeReadOnException(Exception e) throws IOException {
-    if (pipeSocket != null) {
-      TCConnectionImpl.this.commWorker.removeReadInterest(TCConnectionImpl.this, TCConnectionImpl.this.channel);
-      pipeSocket.closeRead();
-    } else {
-      if (logger.isInfoEnabled()) {
-        logger.info("error reading from channel " + this.channel.toString() + ": " + e.getMessage());
-      }
-
-      this.eventCaller.fireErrorEvent(this.eventListeners, this, e, null);
-    }
-  }
-
-  public boolean isClosePending() {
-    return pipeSocket != null && pipeSocket.isClosed();
-  }
-
-  public void closeWriteOnException(IOException ioe) throws IOException {
-    if (pipeSocket != null) {
-      TCConnectionImpl.this.commWorker.removeWriteInterest(TCConnectionImpl.this, TCConnectionImpl.this.channel);
-      pipeSocket.closeWrite();
-
-    } else {
-      if (logger.isInfoEnabled()) {
-        logger.info("error reading from channel " + this.channel.toString() + ": " + ioe.getMessage());
-      }
-      if (NIOWorkarounds.windowsWritevWorkaround(ioe)) { return; }
-      this.eventCaller.fireErrorEvent(this.eventListeners, this, ioe, null);
-    }
   }
 
   private static class WriteContext {

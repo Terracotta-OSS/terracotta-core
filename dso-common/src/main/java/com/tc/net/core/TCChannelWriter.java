@@ -3,7 +3,7 @@
  */
 package com.tc.net.core;
 
-import java.io.IOException;
+import java.nio.channels.GatheringByteChannel;
 
 /**
  * Interface used by {@link CoreNIOServices comms threads} to request writing a channel. This interface makes it
@@ -13,5 +13,5 @@ import java.io.IOException;
  * @author teck
  */
 interface TCChannelWriter {
-  int doWrite() throws IOException;
+  int doWrite(GatheringByteChannel channel);
 }
