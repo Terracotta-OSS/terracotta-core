@@ -23,6 +23,7 @@
     <ehcache.version>2.7.0-SNAPSHOT</ehcache.version>
     <quartz.version>3.0.0-SNAPSHOT</quartz.version>
     <terracotta-session.version>3.0.0-SNAPSHOT</terracotta-session.version>
+    <management-client.version>1.1.0-SNAPSHOT</management-client.version>
 
     <skip.deploy>true</skip.deploy>
     <skip.testjar>true</skip.testjar>
@@ -269,8 +270,8 @@
                       <targetPath>${rootDir}/console</targetPath>
                       <dependency>
                         <groupId>com.terracotta</groupId>
-                        <artifactId>management-client-war</artifactId>
-                        <version>${management.version}</version>
+                        <artifactId>management-client</artifactId>
+                        <version>${management-client.version}</version>
                         <type>war</type>
                       </dependency>
                       <dependenciesAtM2>true</dependenciesAtM2>
