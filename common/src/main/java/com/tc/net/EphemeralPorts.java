@@ -1,5 +1,6 @@
 /*
- * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net;
 
@@ -133,21 +134,15 @@ public class EphemeralPorts {
         Exec exec = new Exec(cmd);
         BufferedReader reader = new BufferedReader(new StringReader(exec.execute(Exec.STDOUT)));
 
-        Pattern startPattern = Pattern.compile("^.*: (\\p{XDigit}+)");
-        Pattern numPattern = Pattern.compile("^.*: (\\p{XDigit}+)");
+        Pattern pattern = Pattern.compile("^.*: (\\p{XDigit}+)");
         int start = -1;
         int num = -1;
         String line;
         while ((line = reader.readLine()) != null) {
-          Matcher matcher = startPattern.matcher(line);
-          if (matcher.matches()) {
-            if (start != -1) { throw new Exception("start already seen: " + start); }
+          Matcher matcher = pattern.matcher(line);
+          if (start == -1 && matcher.matches()) {
             start = Integer.parseInt(matcher.group(1));
-          }
-
-          matcher = numPattern.matcher(line);
-          if (matcher.matches()) {
-            if (num != -1) { throw new Exception("number already seen: " + num); }
+          } else if (num == -1 && matcher.matches()) {
             num = Integer.parseInt(matcher.group(1));
           } else if (start != -1 && num != -1) {
             break;
