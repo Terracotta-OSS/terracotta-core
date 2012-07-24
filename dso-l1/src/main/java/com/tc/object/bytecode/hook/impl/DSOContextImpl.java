@@ -15,6 +15,7 @@ import org.apache.log4j.spi.RootLogger;
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.aspectwerkz.transform.InstrumentationContext;
 import com.tc.aspectwerkz.transform.WeavingStrategy;
+import com.tc.client.AbstractClientFactory;
 import com.tc.config.schema.L2ConfigForL1.L2Data;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
@@ -48,6 +49,7 @@ import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.security.ProtectionDomain;
+import java.util.Map;
 
 public class DSOContextImpl implements DSOContext {
 
@@ -126,6 +128,11 @@ public class DSOContextImpl implements DSOContext {
 
     return context;
   }
+
+  public static TCSecurityManager createSecurityManager(Map<String, Object> env) {
+    return AbstractClientFactory.getFactory().createClientSecurityManager(env);
+  }
+
 
   private void startToolkitConfigurator() throws Exception {
     Class toolkitConfiguratorClass = null;
