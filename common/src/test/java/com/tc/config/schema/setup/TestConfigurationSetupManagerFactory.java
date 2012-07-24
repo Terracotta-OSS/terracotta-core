@@ -14,12 +14,15 @@ import com.tc.config.schema.CommonL1Config;
 import com.tc.config.schema.CommonL2Config;
 import com.tc.config.schema.HaConfigSchema;
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
+import com.tc.config.schema.SecurityConfig;
 import com.tc.config.schema.SystemConfig;
 import com.tc.config.schema.beanfactory.ConfigBeanFactory;
 import com.tc.config.schema.beanfactory.TerracottaDomainConfigurationDocumentBeanFactory;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory.ConfigMode;
+import com.tc.net.core.SecurityInfo;
+import com.tc.object.config.schema.DSOApplicationConfig;
 import com.tc.object.config.schema.L1DSOConfig;
 import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.object.config.schema.L2DSOConfigObject;
@@ -171,6 +174,7 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
 
   private boolean                               isConfigDone            = false;
   private boolean                               offHeapEnabled          = false;
+  private boolean                               securityEnabled         = false;
   private String                                maxOffHeapDataSize      = "-1m";
   private PersistenceMode.Enum                  persistenceMode         = PersistenceMode.TEMPORARY_SWAP_ONLY;
   private final L1ConfigurationSetupManagerImpl sampleL1Manager;
@@ -470,6 +474,66 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
 
   }
 
+  public void setSecurityConfig(final String certificateUri, final String keychainUrl, final String keychainImpl,
+                                final String secretProviderImpl, final String authUrl, final String realmImpl) {
+    securityEnabled = true;
+    l2DSOConfig().securityConfig().getSsl().setCertificate(certificateUri);
+    l2DSOConfig().securityConfig().getKeychain().setUrl(keychainUrl);
+    l2DSOConfig().securityConfig().getKeychain().setClass1(keychainImpl);
+    l2DSOConfig().securityConfig().getKeychain().setSecretProvider(secretProviderImpl);
+    l2DSOConfig().securityConfig().getAuth().setUrl(authUrl);
+    l2DSOConfig().securityConfig().getAuth().setRealm(realmImpl);
+    sampleL2Manager.setSecurityConfig(new SecurityConfig() {
+      @Override
+      public String getSslCertificateUri() {
+        return certificateUri;
+      }
+
+      @Override
+      public String getKeyChainImplClass() {
+        return keychainImpl;
+      }
+
+      @Override
+      public String getSecretProviderImplClass() {
+        return secretProviderImpl;
+      }
+
+      @Override
+      public String getKeyChainUrl() {
+        return keychainUrl;
+      }
+
+      @Override
+      public String getRealmImplClass() {
+        return realmImpl;
+      }
+
+      @Override
+      public String getRealmUrl() {
+        return authUrl;
+      }
+
+      @Override
+      public String getUser() {
+        return null;
+      }
+
+      @Override
+      public void changesInItemIgnored(final ConfigItem item) {
+      }
+
+      @Override
+      public void changesInItemForbidden(final ConfigItem item) {
+      }
+
+      @Override
+      public XmlObject getBean() {
+        return null;
+      }
+    });
+  }
+
   public void setOffHeapConfigObject(boolean enabled, String maxDataSize) {
     offHeapEnabled = enabled;
     maxOffHeapDataSize = maxDataSize;
@@ -506,6 +570,34 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
 
   public String getOffHeapMaxDataSize() {
     return maxOffHeapDataSize;
+  }
+
+  public boolean isSecurityEnabled() {
+    return securityEnabled;
+  }
+
+  public String getSecuritySslCertificateUri() {
+    return l2DSOConfig().securityConfig().getSsl().getCertificate();
+  }
+
+  public String getSecurityKeychainUrl() {
+    return l2DSOConfig().securityConfig().getKeychain().getUrl();
+  }
+
+  public String getSecurityKeychainImpl() {
+    return l2DSOConfig().securityConfig().getKeychain().getClass1();
+  }
+
+  public String getSecuritySecretProviderImpl() {
+    return l2DSOConfig().securityConfig().getKeychain().getSecretProvider();
+  }
+
+  public String getSecurityAuthUrl() {
+    return l2DSOConfig().securityConfig().getAuth().getUrl();
+  }
+
+  public String getSecurityAuthImpl() {
+    return l2DSOConfig().securityConfig().getAuth().getRealm();
   }
 
   public boolean getGCEnabled() {
@@ -551,7 +643,7 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     this(null, illegalConfigurationChangeHandler);
   }
 
-  public L1ConfigurationSetupManager getL1TVSConfigurationSetupManager() {
+  public L1ConfigurationSetupManager getL1TVSConfigurationSetupManager(SecurityInfo securityInfo) {
     return this.sampleL1Manager;
   }
 
@@ -573,10 +665,18 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
       System.setProperty(ConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME, l2sSpec.toString());
     }
 
+    final SecurityInfo securityInfo;
+    if(Boolean.getBoolean("tc.test.runSecure")) {
+      securityInfo = new SecurityInfo(Boolean.getBoolean("tc.test.runSecure"), "test");
+    } else {
+      securityInfo = new SecurityInfo();
+    }
+
     L1ConfigurationSetupManagerImpl configSetupManager = new L1ConfigurationSetupManagerImpl(configCreator,
                                                                                              this.defaultValueProvider,
                                                                                              this.xmlObjectComparator,
-                                                                                             this.illegalChangeHandler);
+                                                                                             this.illegalChangeHandler,
+                                                                                             securityInfo);
 
     return configSetupManager;
   }

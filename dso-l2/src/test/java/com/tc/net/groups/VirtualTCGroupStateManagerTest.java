@@ -470,7 +470,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
   private TCGroupManagerImpl createTCGroupManager(Node node) throws Exception {
     StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
     TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), node.getHost(), node.getPort(), node
-        .getGroupPort(), stageManager);
+        .getGroupPort(), stageManager, null);
     ConfigurationContext context = new ConfigurationContextImpl(stageManager);
     stageManager.startAll(context, Collections.EMPTY_LIST);
     return gm;

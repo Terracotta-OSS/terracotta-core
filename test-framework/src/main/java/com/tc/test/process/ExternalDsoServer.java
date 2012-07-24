@@ -207,6 +207,10 @@ public class ExternalDsoServer {
     jvmArgs.add(jvmarg);
   }
 
+  public void addMoreArg(String arg) {
+    serverProc.additionalArgs.add(arg);
+  }
+
   public void dumpServerControl() throws Exception {
     this.serverProc.dumpServerControl();
   }

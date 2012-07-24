@@ -18,13 +18,15 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
   /**
    * VERSION_1: Transport Handshake Message Version for Terracotta <= 2.5
    * VERSION_2: Transport Handshake Message Version for Terracotta = 2.6
-   * VERSION_2: Transport Handshake Message Version for Terracotta = 3.6 (Ulloa)
+   * VERSION_3: Transport Handshake Message Version for Terracotta = 3.6 (Ulloa)
+   * VERSION_4: Transport Handshake Message Version for Terracotta = 3.7 (Gladstone)
    * VERSION: Current Version for Transport Handshake Messages
    */
   static final byte          VERSION_1  = 1;
   static final byte          VERSION_2  = 2;
   static final byte          VERSION_3  = 3;
-  static final byte          VERSION    = VERSION_3;
+  static final byte          VERSION_4  = 4;
+  static final byte          VERSION    = VERSION_4;
 
 
   static final byte          SYN        = 1;

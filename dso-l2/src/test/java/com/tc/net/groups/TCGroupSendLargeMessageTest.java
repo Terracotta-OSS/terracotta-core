@@ -48,7 +48,7 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
     final Node[] allNodes = new Node[] { new Node(LOCALHOST, p1, p1 + 1), new Node(LOCALHOST, p2, p2 + 1) };
 
     StageManager stageManager1 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)), new QueueFactory());
-    TCGroupManagerImpl gm1 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p1, p1 + 1, stageManager1);
+    TCGroupManagerImpl gm1 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p1, p1 + 1, stageManager1, null);
     ConfigurationContext context1 = new ConfigurationContextImpl(stageManager1);
     stageManager1.startAll(context1, Collections.EMPTY_LIST);
     gm1.setDiscover(new TCGroupMemberDiscoveryStatic(gm1));
@@ -56,7 +56,7 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
     gm1.registerForMessages(GCResultMessage.class, l1);
 
     StageManager stageManager2 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)), new QueueFactory());
-    TCGroupManagerImpl gm2 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p2, p2 + 1, stageManager2);
+    TCGroupManagerImpl gm2 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p2, p2 + 1, stageManager2, null);
     ConfigurationContext context2 = new ConfigurationContextImpl(stageManager2);
     stageManager2.startAll(context2, Collections.EMPTY_LIST);
     gm2.setDiscover(new TCGroupMemberDiscoveryStatic(gm2));

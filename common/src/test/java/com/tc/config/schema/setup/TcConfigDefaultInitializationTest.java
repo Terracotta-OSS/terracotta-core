@@ -15,6 +15,7 @@ import com.terracottatech.config.Authentication;
 import com.terracottatech.config.HttpAuthentication;
 import com.terracottatech.config.License;
 import com.terracottatech.config.Offheap;
+import com.terracottatech.config.Security;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 import com.terracottatech.config.TcProperties;
 
@@ -23,7 +24,7 @@ import java.lang.reflect.Method;
 
 public class TcConfigDefaultInitializationTest extends TCTestCase {
   private static Class[] exemptedElements = { License.class, TcProperties.class, Authentication.class,
-      HttpAuthentication.class, Offheap.class };
+      HttpAuthentication.class, Offheap.class, Security.class };
   private TcConfig       config;
 
   @Override
@@ -74,7 +75,7 @@ public class TcConfigDefaultInitializationTest extends TCTestCase {
     for (Method method : methods) {
       if (method.getName().startsWith("isSet")) {
         Class returnTypeOfGetMethod = findReturnTypeOfGet(xmlObject, method.getName());
-        if (isExmpted(returnTypeOfGetMethod)) continue;
+        if (isExempted(returnTypeOfGetMethod)) continue;
         Boolean isSet = (Boolean) method.invoke(xmlObject, new Object[0]);
         Assert.assertTrue("method: " + method.getName(), isSet);
         System.out.println(method.getName() + ": true");
@@ -117,7 +118,7 @@ public class TcConfigDefaultInitializationTest extends TCTestCase {
     throw new AssertionError("can't get the method with method name : " + getMethod);
   }
 
-  private static boolean isExmpted(Class clazz) {
+  private static boolean isExempted(Class clazz) {
     for (Class exemptedElement : exemptedElements) {
       if (exemptedElement.equals(clazz)) return true;
     }

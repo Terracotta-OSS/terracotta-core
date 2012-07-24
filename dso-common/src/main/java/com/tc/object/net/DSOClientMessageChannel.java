@@ -36,7 +36,7 @@ public interface DSOClientMessageChannel {
 
   public void addListener(ChannelEventListener listener);
 
-  public void open() throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException,
+  public void open(char[] password) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException,
       CommStackMismatchException;
 
   public boolean isConnected();

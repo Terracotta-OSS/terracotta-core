@@ -20,6 +20,9 @@ import javax.management.NotificationListener;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
+import javax.management.remote.rmi.RMIConnectorServer;
+import javax.rmi.ssl.SslRMIClientSocketFactory;
+import javax.rmi.ssl.SslRMIServerSocketFactory;
 import javax.security.auth.Subject;
 
 public class JMXConnectorProxy implements JMXConnector {
@@ -29,6 +32,7 @@ public class JMXConnectorProxy implements JMXConnector {
   private JMXServiceURL      m_serviceURL;
   private JMXConnector       m_connector;
   private final JMXConnector m_connectorProxy;
+  private final boolean      m_secured;
 
   public static final String JMXMP_URI_PATTERN  = "service:jmx:jmxmp://{0}:{1}";
   public static final String JMXRMI_URI_PATTERN = "service:jmx:rmi:///jndi/rmi://{0}:{1}/jmxrmi";
@@ -38,14 +42,19 @@ public class JMXConnectorProxy implements JMXConnector {
   }
 
   public JMXConnectorProxy(final String host, final int port, final Map env) {
+    this(host, port, env, false);
+  }
+
+  public JMXConnectorProxy(final String host, final int port, final Map env, final boolean secured) {
     m_host = host;
     m_port = port;
     m_env = env;
     m_connectorProxy = getConnectorProxy();
+    m_secured = secured;
   }
 
   public JMXConnectorProxy(final String host, final int port) {
-    this(host, port, null);
+    this(host, port, null, false);
   }
 
   private JMXConnector getConnectorProxy() {
@@ -83,15 +92,29 @@ public class JMXConnectorProxy implements JMXConnector {
   private void determineConnector() throws Exception {
     JMXServiceURL url = new JMXServiceURL(getSecureJMXConnectorURL(m_host, m_port));
 
-    try {
+    if (m_secured) {
+      SslRMIClientSocketFactory csf = new SslRMIClientSocketFactory();
+      SslRMIServerSocketFactory ssf = new SslRMIServerSocketFactory();
+      m_env.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, csf);
+      m_env.put(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE, ssf);
+
+      // Needed to avoid "non-JRMP server at remote endpoint" error
+      m_env.put("com.sun.jndi.rmi.factory.socket", csf);
+
+      m_serviceURL = new JMXServiceURL("service:jmx:rmi://" + m_host+ ":" + m_port
+                                       + "/jndi/rmi://" + m_host + ":" + m_port + "/jmxrmi");
       m_connector = JMXConnectorFactory.connect(url, m_env);
-      m_serviceURL = url;
-    } catch (IOException ioe) {
-      if (isConnectException(ioe)) { throw ioe; }
-      if (isAuthenticationException(ioe)) { throw new SecurityException("Invalid login name or credentials"); }
-      url = new JMXServiceURL(getJMXConnectorURL(m_host, m_port));
-      m_connector = JMXConnectorFactory.connect(url, m_env);
-      m_serviceURL = url;
+    } else {
+      try {
+        m_connector = JMXConnectorFactory.connect(url, m_env);
+        m_serviceURL = url;
+      } catch (IOException ioe) {
+        if (isConnectException(ioe)) { throw ioe; }
+        if (isAuthenticationException(ioe)) { throw new SecurityException("Invalid login name or credentials"); }
+        url = new JMXServiceURL(getJMXConnectorURL(m_host, m_port));
+        m_connector = JMXConnectorFactory.connect(url, m_env);
+        m_serviceURL = url;
+      }
     }
   }
 

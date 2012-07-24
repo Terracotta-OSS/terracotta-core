@@ -9,6 +9,7 @@ import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
+import com.tc.net.core.SecurityInfo;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.ConnectionID;
@@ -17,6 +18,8 @@ import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionProvider;
+import com.tc.security.PwProvider;
+import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
@@ -33,11 +36,16 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   private ChannelID                   channelID;
   private final ChannelIDProviderImpl cidProvider;
   private final SessionProvider       sessionProvider;
+  private final SecurityInfo          securityInfo;
+  private final PwProvider            pwProvider;
   private volatile SessionID          channelSessionID = SessionID.NULL_ID;
 
   protected ClientMessageChannelImpl(final TCMessageFactory msgFactory, final TCMessageRouter router,
-                                     final SessionProvider sessionProvider, final NodeID remoteNodeID) {
+                                     final SessionProvider sessionProvider, final NodeID remoteNodeID,
+                                     final SecurityInfo securityInfo, final PwProvider pwProvider) {
     super(router, logger, msgFactory, remoteNodeID);
+    this.securityInfo = securityInfo;
+    this.pwProvider = pwProvider;
     this.cidProvider = new ChannelIDProviderImpl();
     this.sessionProvider = sessionProvider;
     this.sessionProvider.initProvider(remoteNodeID);
@@ -46,14 +54,29 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   @Override
   public NetworkStackID open() throws TCTimeoutException, UnknownHostException, IOException,
       MaxConnectionsExceededException, CommStackMismatchException {
+    return open(null);
+  }
+
+  @Override
+  public NetworkStackID open(char[] pw) throws TCTimeoutException, UnknownHostException, IOException,
+      MaxConnectionsExceededException, CommStackMismatchException {
     final ChannelStatus status = getStatus();
 
     synchronized (status) {
       if (status.isOpen()) { throw new IllegalStateException("Channel already open"); }
       // initialize the connection ID, using the local JVM ID
-      ((MessageTransport) this.sendLayer).initConnectionID(new ConnectionID(JvmIDUtil.getJvmID(),
-                                                                            (((ClientID) getLocalNodeID()).toLong())));
+      String username = null;
+      if(securityInfo.hasCredentials()) {
+        username = securityInfo.getUsername();
+        Assert.assertNotNull("TCSecurityManager", pwProvider);
+        Assert.assertNotNull("Password", pw);
+      }
+      final ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(),
+          (((ClientID)getLocalNodeID()).toLong()),
+          username, pw);
+      ((MessageTransport) this.sendLayer).initConnectionID(cid);
       final NetworkStackID id = this.sendLayer.open();
+      cid.authenticated();
       channelOpened();
       this.channelID = new ChannelID(id.toLong());
       setLocalNodeID(new ClientID(id.toLong()));

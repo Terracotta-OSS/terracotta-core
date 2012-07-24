@@ -77,9 +77,9 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return this.channel;
   }
 
-  public void open() throws TCTimeoutException, UnknownHostException, IOException, MaxConnectionsExceededException,
+  public void open(final char[] pw) throws TCTimeoutException, UnknownHostException, IOException, MaxConnectionsExceededException,
       CommStackMismatchException {
-    this.channel.open();
+    this.channel.open(pw);
   }
 
   public void close() {

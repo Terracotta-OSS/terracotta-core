@@ -88,7 +88,7 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
                                                                                                "Test Server"),
                                                                    new ServerID(),
                                                                    new TransportHandshakeErrorNullHandler(),
-                                                                   Collections.EMPTY_MAP, Collections.EMPTY_MAP);
+                                                                   Collections.EMPTY_MAP, Collections.EMPTY_MAP, null);
     NetworkListener listener = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
     listener.start(Collections.EMPTY_SET);

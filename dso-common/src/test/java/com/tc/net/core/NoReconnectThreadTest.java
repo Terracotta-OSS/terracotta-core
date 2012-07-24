@@ -95,7 +95,8 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                                                      "Test Server"),
                                                                          new ServerID(),
                                                                          new TransportHandshakeErrorNullHandler(),
-                                                                         Collections.EMPTY_MAP, Collections.EMPTY_MAP);
+                                                                         Collections.EMPTY_MAP, Collections.EMPTY_MAP,
+                                                                         null);
     NetworkListener listener = serverCommsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
                                                              new DefaultConnectionIdFactory());
     listener.start(Collections.EMPTY_SET);
@@ -155,7 +156,8 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                                                      "Test Server"),
                                                                          new ServerID(),
                                                                          new TransportHandshakeErrorNullHandler(),
-                                                                         Collections.EMPTY_MAP, Collections.EMPTY_MAP);
+                                                                         Collections.EMPTY_MAP, Collections.EMPTY_MAP,
+                                                                         null);
     NetworkListener listener = serverCommsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
                                                              new DefaultConnectionIdFactory());
     listener.start(Collections.EMPTY_SET);

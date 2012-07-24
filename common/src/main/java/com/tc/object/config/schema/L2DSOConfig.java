@@ -9,6 +9,7 @@ import com.terracottatech.config.DsoServerData;
 import com.terracottatech.config.GarbageCollection;
 import com.terracottatech.config.Offheap;
 import com.terracottatech.config.Persistence;
+import com.terracottatech.config.Security;
 
 /**
  * Represents all configuration read by the DSO L2 and which is independent of application.
@@ -39,5 +40,7 @@ public interface L2DSOConfig extends Config {
   String bind();
 
   Offheap offHeapConfig();
+
+  Security securityConfig();
 
 }

@@ -26,6 +26,8 @@ import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
+import com.tc.net.core.SecurityInfo;
+import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.L2ReconnectConfigImpl;
@@ -98,6 +100,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   private final ReconnectConfig                             l2ReconnectConfig;
 
   private final Sink                                        httpSink;
+  private final TCSecurityManager                           securityManager;
   private final ServerID                                    thisNodeID;
   private final int                                         groupPort;
   private final ConnectionPolicy                            connectionPolicy;
@@ -132,16 +135,18 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
    * Setup a communication manager which can establish channel from either sides.
    */
   public TCGroupManagerImpl(L2ConfigurationSetupManager configSetupManager, StageManager stageManager,
-                            ServerID thisNodeID, Sink httpSink, NodesStore nodesStore) {
-    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, httpSink, nodesStore);
+                            ServerID thisNodeID, Sink httpSink, NodesStore nodesStore, TCSecurityManager securityManager) {
+    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, httpSink, nodesStore, securityManager);
   }
 
   public TCGroupManagerImpl(L2ConfigurationSetupManager configSetupManager, ConnectionPolicy connectionPolicy,
-                            StageManager stageManager, ServerID thisNodeID, Sink httpSink, NodesStore nodesStore) {
+                            StageManager stageManager, ServerID thisNodeID, Sink httpSink, NodesStore nodesStore,
+                            TCSecurityManager securityManager) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     this.thisNodeID = thisNodeID;
     this.httpSink = httpSink;
+    this.securityManager = securityManager;
     this.l2ReconnectConfig = new L2ReconnectConfigImpl();
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
 
@@ -179,9 +184,10 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
    * for testing purpose only. Tester needs to do setDiscover().
    */
   public TCGroupManagerImpl(ConnectionPolicy connectionPolicy, String hostname, int port, int groupPort,
-                            StageManager stageManager) {
+                            StageManager stageManager, TCSecurityManager securityManager) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
+    this.securityManager = securityManager;
     this.l2ReconnectConfig = new L2ReconnectConfigImpl();
     this.httpSink = null;
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
@@ -214,7 +220,8 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
                                                           new HealthCheckerConfigImpl(l2Properties
                                                               .getPropertiesFor("healthcheck.l2"), "TCGroupManager"),
                                                           thisNodeID, new TransportHandshakeErrorHandlerForGroupComm(),
-                                                          messageTypeClassMapping, messageTypeFactoryMapping);
+                                                          messageTypeClassMapping, messageTypeFactoryMapping,
+        securityManager);
 
     groupListener = communicationsManager.createListener(new NullSessionManager(), socketAddress, true,
                                                          new DefaultConnectionIdFactory(), httpSink);
@@ -523,7 +530,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     return groupResponse;
   }
 
-  private void openChannel(ConnectionAddressProvider addrProvider, ChannelEventListener listener)
+  private void openChannel(ConnectionAddressProvider addrProvider, ChannelEventListener listener, final char[] password)
       throws TCTimeoutException, UnknownHostException, MaxConnectionsExceededException, IOException,
       CommStackMismatchException {
 
@@ -542,7 +549,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
                                                                              addrProvider);
 
     channel.addListener(listener);
-    channel.open();
+    channel.open(password);
 
     handshake(channel);
     return;
@@ -550,7 +557,21 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
   public void openChannel(String hostname, int port, ChannelEventListener listener) throws TCTimeoutException,
       UnknownHostException, MaxConnectionsExceededException, IOException, CommStackMismatchException {
-    openChannel(new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(hostname, port) }), listener);
+    final char[] password;
+    final SecurityInfo securityInfo;
+    if (isSecured()) {
+      securityInfo = new SecurityInfo(true, securityManager.getIntraL2Username());
+      password = securityManager.getPasswordForTC(securityInfo.getUsername(), hostname, port);
+    } else {
+      password = null;
+      securityInfo = new SecurityInfo();
+    }
+    openChannel(new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(hostname, port, securityInfo) }), listener, password);
+  }
+
+  private boolean isSecured() {
+    // TODO this is lame... see com.tc.server.TCServerImpl#TCServerImpl line 48 though...
+    return securityManager != null;
   }
 
   /*

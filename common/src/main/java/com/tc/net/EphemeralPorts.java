@@ -133,15 +133,21 @@ public class EphemeralPorts {
         Exec exec = new Exec(cmd);
         BufferedReader reader = new BufferedReader(new StringReader(exec.execute(Exec.STDOUT)));
 
-        Pattern pattern = Pattern.compile("^.*: (\\p{XDigit}+)");
+        Pattern startPattern = Pattern.compile("^.*: (\\p{XDigit}+)");
+        Pattern numPattern = Pattern.compile("^.*: (\\p{XDigit}+)");
         int start = -1;
         int num = -1;
         String line;
         while ((line = reader.readLine()) != null) {
-          Matcher matcher = pattern.matcher(line);
-          if (start == -1 && matcher.matches()) {
+          Matcher matcher = startPattern.matcher(line);
+          if (matcher.matches()) {
+            if (start != -1) { throw new Exception("start already seen: " + start); }
             start = Integer.parseInt(matcher.group(1));
-          } else if (num == -1 && matcher.matches()) {
+          }
+
+          matcher = numPattern.matcher(line);
+          if (matcher.matches()) {
+            if (num != -1) { throw new Exception("number already seen: " + num); }
             num = Integer.parseInt(matcher.group(1));
           } else if (start != -1 && num != -1) {
             break;

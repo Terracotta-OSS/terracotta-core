@@ -6,6 +6,7 @@ package com.tc.config.schema;
 
 import org.apache.xmlbeans.QNameSet;
 import org.apache.xmlbeans.SchemaType;
+import org.apache.xmlbeans.XmlBoolean;
 import org.apache.xmlbeans.XmlCursor;
 import org.apache.xmlbeans.XmlDocumentProperties;
 import org.apache.xmlbeans.XmlObject;
@@ -70,6 +71,30 @@ public class MockServers implements Servers {
   }
 
   public void removeServer(int arg0) {
+    throw new ImplementMe();
+  }
+
+  public boolean getSecure() {
+    throw new ImplementMe();
+  }
+
+  public XmlBoolean xgetSecure() {
+    throw new ImplementMe();
+  }
+
+  public boolean isSetSecure() {
+    throw new ImplementMe();
+  }
+
+  public void setSecure(boolean secure) {
+    throw new ImplementMe();
+  }
+
+  public void xsetSecure(XmlBoolean secure) {
+    throw new ImplementMe();
+  }
+
+  public void unsetSecure() {
     throw new ImplementMe();
   }
 

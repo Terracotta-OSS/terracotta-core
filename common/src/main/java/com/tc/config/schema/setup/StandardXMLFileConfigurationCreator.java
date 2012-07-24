@@ -22,10 +22,13 @@ import com.tc.config.schema.setup.sources.URLConfigurationSource;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.core.SecurityInfo;
+
 import com.tc.object.config.schema.L1DSOConfigObject;
 import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.security.PwProvider;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.terracottatech.config.TcConfigDocument;
@@ -76,18 +79,25 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   private TcConfigDocument           tcConfigDocument;
   private TcConfigDocument           providedTcConfigDocument;
   private final DefaultValueProvider defaultValueProvider                 = new SchemaDefaultValueProvider();
+  private final PwProvider           pwProvider;
 
   public StandardXMLFileConfigurationCreator(final ConfigurationSpec configurationSpec,
                                              final ConfigBeanFactory beanFactory) {
-    this(TCLogging.getLogger(StandardXMLFileConfigurationCreator.class), configurationSpec, beanFactory);
+    this(TCLogging.getLogger(StandardXMLFileConfigurationCreator.class), configurationSpec, beanFactory, null);
+  }
+
+  public StandardXMLFileConfigurationCreator(final ConfigurationSpec configurationSpec,
+                                             final ConfigBeanFactory beanFactory, PwProvider pwProvider) {
+    this(TCLogging.getLogger(StandardXMLFileConfigurationCreator.class), configurationSpec, beanFactory, pwProvider);
   }
 
   public StandardXMLFileConfigurationCreator(final TCLogger logger, final ConfigurationSpec configurationSpec,
-                                             final ConfigBeanFactory beanFactory) {
+                                             final ConfigBeanFactory beanFactory, PwProvider pwProvider) {
     Assert.assertNotNull(beanFactory);
     this.logger = logger;
     this.beanFactory = beanFactory;
     this.configurationSpec = configurationSpec;
+    this.pwProvider = pwProvider;
   }
 
   public void createConfigurationIntoRepositories(MutableBeanRepository l1BeanRepository,
@@ -177,11 +187,20 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   private ConfigurationSource attemptToCreateServerSource(String text) {
     Matcher matcher = SERVER_PATTERN.matcher(text);
     if (matcher.matches()) {
+      boolean secure = false;
+      String username = null;
       String host = matcher.group(1);
+      int userSeparatorIndex = host.indexOf('@');
+      if (userSeparatorIndex > -1) {
+        username = host.substring(0, userSeparatorIndex);
+        secure = true;
+        host = host.substring(userSeparatorIndex + 1);
+      }
+      final SecurityInfo securityInfo = new SecurityInfo(secure, username);
       String portText = matcher.group(2);
 
       try {
-        return new ServerConfigurationSource(host.trim(), Integer.parseInt(portText.trim()));
+        return new ServerConfigurationSource(host.trim(), Integer.parseInt(portText.trim()), securityInfo, pwProvider);
       } catch (Exception e) {/**/
       }
     }

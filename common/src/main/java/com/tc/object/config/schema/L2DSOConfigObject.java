@@ -20,15 +20,19 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
+import com.terracottatech.config.Auth;
 import com.terracottatech.config.BindPort;
 import com.terracottatech.config.DsoServerData;
 import com.terracottatech.config.GarbageCollection;
+import com.terracottatech.config.Keychain;
 import com.terracottatech.config.Offheap;
 import com.terracottatech.config.Persistence;
 import com.terracottatech.config.PersistenceMode;
 import com.terracottatech.config.PersistenceMode.Enum;
+import com.terracottatech.config.Security;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
+import com.terracottatech.config.Ssl;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.File;
@@ -47,6 +51,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
 
   private final Persistence       persistence;
   private final Offheap           offHeapConfig;
+  private final Security          securityConfig;
   private final GarbageCollection garbageCollection;
   private final DsoServerData     dso;
   private final BindPort          dsoPort;
@@ -83,10 +88,22 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     } else {
       this.offHeapConfig = Offheap.Factory.newInstance();
     }
+    if (server.isSetSecurity()) {
+      this.securityConfig = server.getSecurity();
+    } else {
+      this.securityConfig = Security.Factory.newInstance();
+      this.securityConfig.setSsl(Ssl.Factory.newInstance());
+      this.securityConfig.setKeychain(Keychain.Factory.newInstance());
+      this.securityConfig.setAuth(Auth.Factory.newInstance());
+    }
   }
 
   public Offheap offHeapConfig() {
     return this.offHeapConfig;
+  }
+
+  public Security securityConfig() {
+    return this.securityConfig;
   }
 
   public BindPort dsoPort() {
@@ -134,6 +151,9 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     if (servers.getServerArray().length == 0) {
       servers.addNewServer();
     }
+    if (!servers.isSetSecure()) {
+      servers.setSecure(false);
+    }
 
     for (int i = 0; i < servers.sizeOfServerArray(); i++) {
       Server server = servers.getServerArray(i);
@@ -150,6 +170,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
       initializeIndexDiretory(server, defaultValueProvider, directoryLoadedFrom);
       initializeStatisticsDirectory(server, defaultValueProvider, directoryLoadedFrom);
       initializeDso(server, defaultValueProvider);
+      initializeSecurity(server, defaultValueProvider);
     }
 
     HaConfigObject.initializeHa(servers, defaultValueProvider);
@@ -312,6 +333,44 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     if (!dso.isSetClientReconnectWindow()) {
       dso.setClientReconnectWindow(getDefaultReconnectWindow(server, defaultValueProvider));
     }
+  }
+
+  private static void initializeSecurity(Server server, DefaultValueProvider defaultValueProvider) throws XmlException {
+    if (server.isSetSecurity()) {
+      initializeSsl(server.getSecurity(), defaultValueProvider);
+      initializeKeyChain(server.getSecurity(), defaultValueProvider);
+      initializeAuth(server.getSecurity(), defaultValueProvider);
+    }
+  }
+
+  private static void initializeSsl(Security security, DefaultValueProvider defaultValueProvider) {
+    security.getSsl().setCertificate(ParameterSubstituter.substitute(security.getSsl().getCertificate()));
+  }
+
+  private static void initializeKeyChain(final Security security, final DefaultValueProvider defaultValueProvider) throws XmlException {
+    final String defaultKeyChainImpl =
+        ((XmlString)defaultValueProvider.defaultFor(security.schemaType(), "keychain/class")).getStringValue();
+
+    if(!security.getKeychain().isSetClass1()) {
+      security.getKeychain().setClass1(defaultKeyChainImpl);
+    }
+    security.getKeychain().setUrl(ParameterSubstituter.substitute(security.getKeychain().getUrl()));
+  }
+
+  private static void initializeAuth(final Security security, final DefaultValueProvider defaultValueProvider) throws XmlException {
+    final String defaultRealm =
+        ((XmlString)defaultValueProvider.defaultFor(security.schemaType(), "auth/realm")).getStringValue();
+    final String defaultUser =
+        ((XmlString)defaultValueProvider.defaultFor(security.schemaType(), "auth/user")).getStringValue();
+
+    if(!security.getAuth().isSetRealm()) {
+      security.getAuth().setRealm(defaultRealm);
+    }
+    if(!security.getAuth().isSetUser()) {
+      security.getAuth().setUser(defaultUser);
+    }
+
+    security.getAuth().setUrl(ParameterSubstituter.substitute(security.getAuth().getUrl()));
   }
 
   private static void initializePersisitence(Server server, DefaultValueProvider defaultValueProvider)

@@ -10,6 +10,7 @@ import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.CommonL2Config;
 import com.tc.config.schema.HaConfigSchema;
+import com.tc.config.schema.SecurityConfig;
 import com.tc.config.schema.SystemConfig;
 import com.tc.config.schema.UpdateCheckConfig;
 import com.tc.config.schema.dynamic.ConfigItem;
@@ -262,6 +263,10 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
       return this.l2Config.getL2Identifier();
     }
 
+    public SecurityConfig getSecurity() {
+      return this.l2Config.getSecurity();
+    }
+
     public HaConfigSchema haConfig() {
       return this.l2Config.haConfig();
     }
@@ -278,6 +283,10 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
                                                     TerracottaOperatorEventLogger opEventLogger)
         throws ConfigurationSetupException {
       return this.l2Config.reloadConfiguration(serverConnectionValidator, opEventLogger);
+    }
+
+    public boolean isSecure() {
+      return this.l2Config.isSecure();
     }
 
     public SystemConfig systemConfig() {

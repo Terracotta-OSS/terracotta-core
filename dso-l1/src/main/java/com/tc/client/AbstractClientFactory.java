@@ -5,6 +5,7 @@
 package com.tc.client;
 
 import com.tc.lang.TCThreadGroup;
+import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
@@ -14,6 +15,8 @@ import com.tc.object.logging.RuntimeLogger;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.util.factory.AbstractFactory;
 import com.tcclient.cluster.DsoClusterInternal;
+
+import java.util.Map;
 
 public abstract class AbstractClientFactory extends AbstractFactory {
   private static String FACTORY_SERVICE_ID            = "com.tc.client.ClientFactory";
@@ -29,5 +32,7 @@ public abstract class AbstractClientFactory extends AbstractFactory {
                                                        Manager manager,
                                                        StatisticsAgentSubSystem statisticsAgentSubSystem,
                                                        DsoClusterInternal dsoCluster, RuntimeLogger runtimeLogger,
-                                                       ClientMode clientMode);
+                                                       ClientMode clientMode, TCSecurityManager securityManager);
+
+  public abstract TCSecurityManager createClientSecurityManager(Map<String, Object> env);
 }

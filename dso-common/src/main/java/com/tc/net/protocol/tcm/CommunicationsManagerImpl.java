@@ -18,6 +18,7 @@ import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.core.TCListener;
+import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.NetworkStackHarness;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.transport.ConnectionHealthChecker;
@@ -89,6 +90,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   private NetworkListener                                                   callbackportListener      = null;
   private final TransportHandshakeErrorHandler                              handshakeErrHandler;
   private final String                                                      commsMgrName;
+  private final TCSecurityManager                                           securityManager;
 
   /**
    * Create a communications manager. This implies that one or more network handling threads will be started on your
@@ -98,7 +100,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    NetworkStackHarnessFactory stackHarnessFactory, ConnectionPolicy connectionPolicy) {
     this(commsMgrName, monitor, new TCMessageRouterImpl(), stackHarnessFactory, null, connectionPolicy, 0,
          new DisabledHealthCheckerConfigImpl(), new TransportHandshakeErrorHandlerForL1(), Collections.EMPTY_MAP,
-         Collections.EMPTY_MAP);
+         Collections.EMPTY_MAP, null);
 
   }
 
@@ -107,7 +109,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    int workerCommCount) {
     this(commsMgrName, monitor, new TCMessageRouterImpl(), stackHarnessFactory, null, connectionPolicy,
          workerCommCount, new DisabledHealthCheckerConfigImpl(), new TransportHandshakeErrorHandlerForL1(),
-         Collections.EMPTY_MAP, Collections.EMPTY_MAP);
+         Collections.EMPTY_MAP, Collections.EMPTY_MAP, null);
   }
 
   public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor,
@@ -122,7 +124,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    HealthCheckerConfig config, Map<TCMessageType, Class> messageTypeClassMapping,
                                    Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping) {
     this(commsMgrName, monitor, messageRouter, stackHarnessFactory, null, connectionPolicy, 0, config,
-         new TransportHandshakeErrorHandlerForL1(), messageTypeClassMapping, messageTypeFactoryMapping);
+         new TransportHandshakeErrorHandlerForL1(), messageTypeClassMapping, messageTypeFactoryMapping, null);
   }
 
   public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor, TCMessageRouter messageRouter,
@@ -130,9 +132,10 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    int workerCommCount, HealthCheckerConfig config, ServerID serverID,
                                    TransportHandshakeErrorHandler transportHandshakeErrorHandler,
                                    Map<TCMessageType, Class> messageTypeClassMapping,
-                                   Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping) {
+                                   Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping,
+                                   TCSecurityManager securityManager) {
     this(commsMgrName, monitor, messageRouter, stackHarnessFactory, null, connectionPolicy, workerCommCount, config,
-         transportHandshakeErrorHandler, messageTypeClassMapping, messageTypeFactoryMapping);
+         transportHandshakeErrorHandler, messageTypeClassMapping, messageTypeFactoryMapping, securityManager);
     this.serverID = serverID;
   }
 
@@ -142,10 +145,11 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    HealthCheckerConfig healthCheckerConf,
                                    TransportHandshakeErrorHandler transportHandshakeErrorHandler,
                                    Map<TCMessageType, Class> messageTypeClassMapping,
-                                   Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping) {
+                                   Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping,
+                                   TCSecurityManager securityManager) {
     this(commsMgrName, monitor, messageRouter, stackHarnessFactory, connMgr, connectionPolicy, workerCommCount,
          healthCheckerConf, transportHandshakeErrorHandler, messageTypeClassMapping, messageTypeFactoryMapping,
-         ReconnectionRejectedHandler.DEFAULT_BEHAVIOUR);
+         ReconnectionRejectedHandler.DEFAULT_BEHAVIOUR, securityManager);
   }
 
   /**
@@ -153,7 +157,6 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
    * actually want to use an explicit connection manager
    * 
    * @param connMgr the connection manager to use
-   * @param serverDescriptors
    */
   public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor, TCMessageRouter messageRouter,
                                    NetworkStackHarnessFactory stackHarnessFactory, TCConnectionManager connMgr,
@@ -162,7 +165,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    TransportHandshakeErrorHandler transportHandshakeErrorHandler,
                                    Map<TCMessageType, Class> messageTypeClassMapping,
                                    Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping,
-                                   ReconnectionRejectedHandler reconnectionRejectedHandler) {
+                                   ReconnectionRejectedHandler reconnectionRejectedHandler, TCSecurityManager securityManager) {
     this.commsMgrName = commsMgrName;
     this.monitor = monitor;
     this.messageRouter = messageRouter;
@@ -175,10 +178,11 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     this.messageTypeClassMapping.putAll(messageTypeClassMapping);
     this.messageTypeFactoryMapping.putAll(messageTypeFactoryMapping);
     this.reconnectionRejectedHandler = reconnectionRejectedHandler;
+    this.securityManager = securityManager;
 
     Assert.assertNotNull(commsMgrName);
     if (null == connMgr) {
-      this.connectionManager = new TCConnectionManagerImpl(commsMgrName, workerCommCount, healthCheckerConfig);
+      this.connectionManager = new TCConnectionManagerImpl(commsMgrName, workerCommCount, healthCheckerConfig, securityManager);
     } else {
       this.connectionManager = connMgr;
     }
@@ -264,7 +268,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     }
 
     ClientMessageChannelImpl rv = new ClientMessageChannelImpl(msgFactory, this.messageRouter, sessionProvider,
-                                                               new GroupID(addressProvider.getGroupId()));
+                                                               new GroupID(addressProvider.getGroupId()), addressProvider.getSecurityInfo(), securityManager);
     if (transportFactory == null) transportFactory = new MessageTransportFactoryImpl(transportMessageFactory,
                                                                                      connectionHealthChecker,
                                                                                      connectionManager,
@@ -381,7 +385,8 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                                                 this.transportMessageFactory, connectionIdFactory,
                                                                 this.connectionPolicy,
                                                                 new WireProtocolAdaptorFactoryImpl(httpSink),
-                                                                wireProtocolMessageSink, licenseLock, this.commsMgrName);
+                                                                wireProtocolMessageSink, licenseLock, this.commsMgrName,
+                                                                this.securityManager);
     return connectionManager.createListener(addr, stackProvider, Constants.DEFAULT_ACCEPT_QUEUE_DEPTH, resueAddr);
   }
 

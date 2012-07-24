@@ -17,6 +17,7 @@ import com.tc.async.api.StageManager;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.client.ClientMode;
 import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.tc.exception.TCRuntimeException;
 import com.tc.handler.CallbackDumpAdapter;
 import com.tc.handler.CallbackDumpHandler;
 import com.tc.io.TCByteBufferOutputStream;
@@ -43,6 +44,7 @@ import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ClusterTopologyChangedListener;
 import com.tc.net.core.ConnectionInfo;
+import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
@@ -274,6 +276,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private Stage                                      clusterEventsStage;
 
   private L1ServerMapLocalCacheManager               globalLocalCacheManager;
+  private TCSecurityManager                          securityManager;
 
   public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
                                  final ClassProvider classProvider,
@@ -281,7 +284,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                  final StatisticsAgentSubSystem statisticsAgentSubSystem,
                                  final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger) {
     this(config, threadGroup, classProvider, connectionComponents, manager, statisticsAgentSubSystem, dsoCluster,
-         runtimeLogger, ClientMode.DSO_MODE);
+         runtimeLogger, ClientMode.DSO_MODE, null);
   }
 
   public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
@@ -289,11 +292,12 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                  final PreparedComponentsFromL2Connection connectionComponents, final Manager manager,
                                  final StatisticsAgentSubSystem statisticsAgentSubSystem,
                                  final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger,
-                                 final ClientMode clientMode) {
+                                 final ClientMode clientMode, final TCSecurityManager securityManager) {
     super(threadGroup);
     Assert.assertNotNull(config);
     this.clientMode = clientMode;
     this.config = config;
+    this.securityManager = securityManager;
     this.classProvider = classProvider;
     this.connectionComponents = connectionComponents;
     this.manager = manager;
@@ -387,12 +391,21 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     }
   }
 
+  private void validateSecurityConfig() {
+    if (config.getSecurityInfo().isSecure() && securityManager == null) {
+      throw new TCRuntimeException("client configured as secure but was constructed without securityManager");
+    }
+    if (!config.getSecurityInfo().isSecure() && securityManager != null) {
+      throw new TCRuntimeException("client not configured as secure but was constructed with securityManager");
+    }
+  }
+
   private void validateGroupConfigOrExit() {
     final boolean toCheckTopology = TCPropertiesImpl.getProperties()
         .getBoolean(TCPropertiesConsts.L1_L2_CONFIG_VALIDATION_ENABLED);
     if (toCheckTopology) {
       try {
-        this.config.validateGroupInfo();
+        this.config.validateGroupInfo(securityManager);
       } catch (final ConfigurationSetupException e) {
         CONSOLE_LOGGER.error(e.getMessage());
         System.exit(1);
@@ -403,7 +416,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private ReconnectConfig getReconnectPropertiesFromServerOrExit() {
     ReconnectConfig reconnectConfig = null;
     try {
-      reconnectConfig = this.config.getL1ReconnectProperties();
+      reconnectConfig = this.config.getL1ReconnectProperties(securityManager);
     } catch (ConfigurationSetupException e) {
       CONSOLE_LOGGER.error(e.getMessage());
       System.exit(1);
@@ -429,7 +442,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   }
 
   public synchronized void start(CountDownLatch testStartLatch) {
-
+    validateSecurityConfig();
     validateGroupConfigOrExit();
 
     final TCProperties tcProperties = TCPropertiesImpl.getProperties();
@@ -475,7 +488,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                      new HealthCheckerConfigClientImpl(this.l1Properties
                                          .getPropertiesFor("healthcheck.l2"), "DSO Client"),
                                      getMessageTypeClassMapping(), getMessageTypeFactoryMApping(encoding),
-                                     reconnectionRejectedHandler);
+                                     reconnectionRejectedHandler, securityManager);
 
     DSO_LOGGER.debug("Created CommunicationsManager.");
 
@@ -799,7 +812,14 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     while (maxConnectRetries <= 0 || i < maxConnectRetries) {
       try {
         DSO_LOGGER.debug("Trying to open channel....");
-        this.channel.open();
+        final char[] pw;
+        if(config.getSecurityInfo().hasCredentials()) {
+          Assert.assertNotNull(securityManager);
+          pw = securityManager.getPasswordForTC(config.getSecurityInfo().getUsername(), serverHost, serverPort);
+        } else {
+          pw = null;
+        }
+        this.channel.open(pw);
         DSO_LOGGER.debug("Channel open");
         break;
       } catch (final TCTimeoutException tcte) {

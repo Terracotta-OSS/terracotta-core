@@ -5,6 +5,7 @@
 package com.tc.client;
 
 import com.tc.lang.TCThreadGroup;
+import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
@@ -13,6 +14,8 @@ import com.tc.object.loaders.ClassProvider;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tcclient.cluster.DsoClusterInternal;
+
+import java.util.Map;
 
 public class StandardClientFactory extends AbstractClientFactory {
 
@@ -23,8 +26,13 @@ public class StandardClientFactory extends AbstractClientFactory {
                                               final Manager manager,
                                               final StatisticsAgentSubSystem statisticsAgentSubSystem,
                                               final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger,
-                                              final ClientMode clientMode) {
+                                              final ClientMode clientMode, final TCSecurityManager securityManager) {
     return new DistributedObjectClient(config, threadGroup, classProvider, connectionComponents, manager,
-                                       statisticsAgentSubSystem, dsoCluster, runtimeLogger, clientMode);
+                                       statisticsAgentSubSystem, dsoCluster, runtimeLogger, clientMode, securityManager);
+  }
+
+  @Override
+  public TCSecurityManager createClientSecurityManager(Map<String, Object> env) {
+    return null;
   }
 }

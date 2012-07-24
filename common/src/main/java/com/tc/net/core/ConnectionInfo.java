@@ -12,17 +12,27 @@ public class ConnectionInfo implements java.io.Serializable {
   private final int                    port;
   private final int                    groupId;
   private final String                 groupName;
+  private final SecurityInfo           securityInfo;
 
   public ConnectionInfo(String hostname, int port) {
-    this(hostname, port, 0, null);
+    this(hostname, port, new SecurityInfo());
+  }
+
+  public ConnectionInfo(String hostname, int port, SecurityInfo securityInfo) {
+    this(hostname, port, 0, null, securityInfo);
   }
 
   public ConnectionInfo(String hostname, int port, int groupId, String groupName) {
+    this(hostname, port, groupId, groupName, new SecurityInfo());
+  }
+
+  public ConnectionInfo(String hostname, int port, int groupId, String groupName, SecurityInfo securityInfo) {
     Assert.assertNotNull(hostname);
     this.hostname = hostname;
     this.port = port;
     this.groupId = groupId;
     this.groupName = groupName;
+    this.securityInfo = securityInfo;
   }
 
   public String getHostname() {
@@ -63,5 +73,9 @@ public class ConnectionInfo implements java.io.Serializable {
 
   public String toString() {
     return (s == null ? (s = hostname + ":" + port + (groupName != null ? ":" + groupName : "")) : s);
+  }
+
+  public SecurityInfo getSecurityInfo() {
+    return securityInfo;
   }
 }

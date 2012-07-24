@@ -10,6 +10,7 @@ import com.tc.config.schema.L2ConfigForL1.L2Data;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.net.core.ConnectionInfo;
+import com.tc.net.core.SecurityInfo;
 import com.tc.util.stringification.OurStringBuilder;
 
 /**
@@ -20,10 +21,14 @@ public class ConnectionInfoConfig {
   private final ConnectionInfo[] connectionInfos;
 
   public ConnectionInfoConfig(L2Data[] l2sData) {
-    this.connectionInfos = createValueFrom(l2sData);
+    this(l2sData, new SecurityInfo());
   }
 
-  private ConnectionInfo[] createValueFrom(L2Data[] l2sData) {
+  public ConnectionInfoConfig(L2Data[] l2sData, SecurityInfo securityInfo) {
+    this.connectionInfos = createValueFrom(l2sData, securityInfo);
+  }
+
+  private ConnectionInfo[] createValueFrom(L2Data[] l2sData, final SecurityInfo securityInfo) {
     ConnectionInfo[] out;
 
     String serversProperty = System.getProperty("tc.server");
@@ -48,13 +53,22 @@ public class ConnectionInfoConfig {
           }
         }
 
-        out[i] = new ConnectionInfo(host, dsoPort);
+        boolean secure = false;
+        String urlUsername = null;
+        int userSeparatorIndex = host.indexOf('@');
+        if (userSeparatorIndex > -1) {
+          secure = true;
+          urlUsername = host.substring(0, userSeparatorIndex);
+          host = host.substring(userSeparatorIndex + 1);
+        }
+
+        out[i] = new ConnectionInfo(host, dsoPort, new SecurityInfo(secure, urlUsername));
       }
     } else {
       out = new ConnectionInfo[l2sData.length];
 
       for (int i = 0; i < out.length; ++i) {
-        out[i] = new ConnectionInfo(l2sData[i].host(), l2sData[i].dsoPort(), l2sData[i].getGroupId(), l2sData[i].getGroupName());
+        out[i] = new ConnectionInfo(l2sData[i].host(), l2sData[i].dsoPort(), l2sData[i].getGroupId(), l2sData[i].getGroupName(), securityInfo);
       }
     }
 

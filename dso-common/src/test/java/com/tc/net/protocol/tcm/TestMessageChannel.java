@@ -95,6 +95,10 @@ public class TestMessageChannel implements MessageChannel {
     return null;
   }
 
+  public NetworkStackID open(char[] password) {
+    return null;
+  }
+
   public void notifyTransportConnected(MessageTransport transport) {
     return;
   }

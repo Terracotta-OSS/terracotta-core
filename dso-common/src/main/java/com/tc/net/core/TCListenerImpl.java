@@ -9,6 +9,7 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.core.event.TCListenerEvent;
 import com.tc.net.core.event.TCListenerEventListener;
+import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.util.Assert;
@@ -45,9 +46,12 @@ final class TCListenerImpl implements TCListener {
   private final CopyOnWriteArraySet       listeners       = new CopyOnWriteArraySet();
   private final ProtocolAdaptorFactory    factory;
   private final CoreNIOServices           commNIOServiceThread;
+  private final TCSecurityManager         securityManager;
 
   TCListenerImpl(ServerSocketChannel ssc, ProtocolAdaptorFactory factory, TCConnectionEventListener listener,
-                 TCConnectionManagerImpl managerJDK14, CoreNIOServices commNIOServiceThread) {
+                 TCConnectionManagerImpl managerJDK14, CoreNIOServices commNIOServiceThread,
+                 TCSecurityManager securityManager) {
+    this.securityManager = securityManager;
     this.addr = ssc.socket().getInetAddress();
     this.port = ssc.socket().getLocalPort();
     this.sockAddr = new TCSocketAddress(this.addr, this.port);
@@ -66,7 +70,8 @@ final class TCListenerImpl implements TCListener {
   TCConnectionImpl createConnection(SocketChannel ch, CoreNIOServices nioServiceThread, SocketParams socketParams)
       throws IOException {
     TCProtocolAdaptor adaptor = getProtocolAdaptorFactory().getInstance();
-    TCConnectionImpl rv = new TCConnectionImpl(listener, adaptor, ch, parent, nioServiceThread, socketParams);
+    TCConnectionImpl rv = new TCConnectionImpl(listener, adaptor, ch, parent, nioServiceThread, socketParams,
+                                               securityManager);
     rv.finishConnect();
     parent.newConnection(rv);
     return rv;

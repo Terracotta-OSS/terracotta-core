@@ -7,10 +7,16 @@ import com.tc.net.protocol.tcm.ChannelID;
 
 public class ConnectionID {
 
+  private static final char        DOT_PLACEHOLDER = ' ';
+  private static final char        DOT             = '.';
+
   private final long               channelID;
   private final String             serverID;
   private final String             jvmID;
   private final Exception          initEx;
+  private final String             username;
+
+  private volatile char[]          password;
 
   private static final String      NULL_SERVER_ID = "ffffffffffffffffffffffffffffffff";
   public static final String       NULL_JVM_ID    = "ffffffffffffffffffffffffffffffffffffffffffffffff";
@@ -20,6 +26,7 @@ public class ConnectionID {
   private static final char        SEP            = '.';
 
   public static ConnectionID parse(String compositeID) throws InvalidConnectionIDException {
+
     if (compositeID == null) { throw new InvalidConnectionIDException("NULL ConnectionID"); }
 
     int idx = compositeID.indexOf(SEP);
@@ -45,15 +52,23 @@ public class ConnectionID {
     if (server.length() != 32) { throw new InvalidConnectionIDException(compositeID, "invalid serverID length: "
                                                                                      + server.length()); }
 
-    String jvmID = compositeID.substring(idx2 + 1);
+    int idx3 = compositeID.indexOf(SEP, idx2 + 1);
+    int idx4 = compositeID.indexOf(SEP, idx3 + 1);
+    String jvmID = compositeID.substring(idx2 + 1, idx3);
     if (jvmID.length() < 1) { throw new InvalidConnectionIDException(compositeID, "invalid jvmId length: "
                                                                                   + jvmID.length()); }
 
     if (!validateCharsInServerID(server)) { throw new InvalidConnectionIDException(compositeID,
                                                                                    "invalid chars in serverID: "
                                                                                        + server); }
+    String username = null;
+    char[] password = null;
+    if (idx3 != idx4 - 1) {
+      username = compositeID.substring(idx3 + 1, idx4).replace(DOT_PLACEHOLDER, DOT);
+      password = compositeID.substring(idx4 + 1).toCharArray();
+    }
 
-    return new ConnectionID(jvmID, channel, server);
+    return new ConnectionID(jvmID, channel, server, username, password);
   }
 
   /**
@@ -68,6 +83,14 @@ public class ConnectionID {
   }
 
   public ConnectionID(String jvmID, long channelID, String serverID) {
+    this(jvmID, channelID, serverID, null, (char[]) null);
+  }
+
+  public ConnectionID(String jvmID, long channelID, String serverID, String username, String password) {
+    this(jvmID, channelID, serverID, username, password == null ? null : password.toCharArray());
+  }
+
+  public ConnectionID(String jvmID, long channelID, String serverID, String username, char[] password) {
     this.jvmID = jvmID;
     this.channelID = channelID;
     this.serverID = serverID;
@@ -77,6 +100,16 @@ public class ConnectionID {
     } else {
       initEx = null;
     }
+    this.username = username;
+    this.password = password;
+  }
+
+  public void authenticated() {
+    this.password = null;
+  }
+
+  public ConnectionID(String jvmID, long channelID, String username, char[] password) {
+    this(jvmID, channelID, NULL_SERVER_ID, username, password);
   }
 
   public ConnectionID(String jvmID, long channelID) {
@@ -85,7 +118,7 @@ public class ConnectionID {
 
   @Override
   public String toString() {
-    return "ConnectionID(" + getID() + ")";
+    return "ConnectionID" + (isSecured() ? ".secured(" : "(") + getID() + ")[" + "]";
   }
 
   public boolean isNull() {
@@ -140,9 +173,34 @@ public class ConnectionID {
   }
 
   public String getID() {
-    StringBuilder sb = new StringBuilder(64);
+    return getID(false);
+  }
+
+  public String getID(final boolean withCredentials) {
+    StringBuilder sb = new StringBuilder(withCredentials ? 128 : 64);
     sb.append(this.channelID).append(SEP).append(this.serverID).append(SEP).append(this.jvmID);
+    if (withCredentials) {
+      sb.append(SEP);
+      if(username != null) {
+        sb.append(username.replace(DOT, DOT_PLACEHOLDER));
+      }
+      sb.append(SEP);
+      if(password != null) {
+        sb.append(password);
+      }
+    }
     return sb.toString();
   }
 
+  public String getUsername() {
+    return username;
+  }
+
+  public char[] getPassword() {
+    return password;
+  }
+
+  public boolean isSecured() {
+    return username != null;
+  }
 }

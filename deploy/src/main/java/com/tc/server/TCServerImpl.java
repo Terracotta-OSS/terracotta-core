@@ -6,12 +6,14 @@ package com.tc.server;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.mortbay.jetty.Request;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.handler.ContextHandlerCollection;
 import org.mortbay.jetty.security.Constraint;
 import org.mortbay.jetty.security.ConstraintMapping;
 import org.mortbay.jetty.security.HashUserRealm;
 import org.mortbay.jetty.security.SecurityHandler;
+import org.mortbay.jetty.security.UserRealm;
 import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.DefaultServlet;
 import org.mortbay.jetty.servlet.ServletHandler;
@@ -30,6 +32,7 @@ import com.tc.config.schema.CommonL2Config;
 import com.tc.config.schema.ConfigurationModel;
 import com.tc.config.schema.HaConfigSchema;
 import com.tc.config.schema.L2Info;
+import com.tc.config.schema.SecurityConfig;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.messaging.http.ConfigServlet;
 import com.tc.config.schema.messaging.http.GroupIDMapServlet;
@@ -51,6 +54,7 @@ import com.tc.management.beans.TCServerInfo;
 import com.tc.net.GroupID;
 import com.tc.net.OrderedGroupIDs;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -78,9 +82,11 @@ import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
@@ -99,6 +105,8 @@ public class TCServerImpl extends SEDA implements TCServer {
   public static final String                L1_RECONNECT_PROPERTIES_FROML2_SERVELET_PATH = "/l1reconnectproperties";
 
   public static final String                HTTP_AUTHENTICATION_ROLE_STATISTICS          = "statistics";
+
+  public static final String                HTTP_SECURITY_ROLE                           = "terracotta";
 
   private static final TCLogger             logger                                       = TCLogging
                                                                                              .getLogger(TCServer.class);
@@ -119,6 +127,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   private final L2ConfigurationSetupManager configurationSetupManager;
   protected final ConnectionPolicy          connectionPolicy;
   private boolean                           shutdown                                     = false;
+  private         TCSecurityManager         securityManager;
 
   /**
    * This should only be used for tests.
@@ -140,11 +149,20 @@ public class TCServerImpl extends SEDA implements TCServer {
     validateEnterpriseFeatures(manager);
     this.configurationSetupManager = manager;
 
+    if(configurationSetupManager.isSecure()) {
+      this.securityManager = createSecurityManager(configurationSetupManager.getSecurity());
+    }
+
     this.statisticsGathererSubSystem = new StatisticsGathererSubSystem();
     if (!this.statisticsGathererSubSystem.setup(manager.commonl2Config())) {
       notifyShutdown();
       throw new RuntimeException("Unable to setup StatisticsGathererSubSystem");
     }
+  }
+
+  protected TCSecurityManager createSecurityManager(final SecurityConfig securityConfig) {
+    throw new UnsupportedOperationException("Only Terracotta EE supports the security feature, " +
+                                            "you're currently running an OS version");
   }
 
   private void validateEnterpriseFeatures(final L2ConfigurationSetupManager manager) {
@@ -429,7 +447,7 @@ public class TCServerImpl extends SEDA implements TCServer {
         consoleLogger.info("Available Max Runtime Memory: " + (Runtime.getRuntime().maxMemory() / 1024 / 1024) + "MB");
       }
 
-      TCServerImpl.this.terracottaConnector = new TerracottaConnector();
+      TCServerImpl.this.terracottaConnector = new TerracottaConnector(TCServerImpl.this.configurationSetupManager.getSecurity() != null);
       startHTTPServer(commonL2Config, TCServerImpl.this.terracottaConnector);
 
       Stage stage = getStageManager().createStage("dso-http-bridge",
@@ -489,7 +507,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     this.dsoServer = createDistributedObjectServer(this.configurationSetupManager, this.connectionPolicy, httpSink,
                                                    new TCServerInfo(this, this.state, objectStatsRecorder),
-                                                   objectStatsRecorder, this.state, this);
+                                                   objectStatsRecorder, this.state, this, this.securityManager);
     this.dsoServer.start();
     registerDSOServer();
   }
@@ -498,9 +516,10 @@ public class TCServerImpl extends SEDA implements TCServer {
                                                                   ConnectionPolicy policy, Sink httpSink,
                                                                   TCServerInfo serverInfo,
                                                                   ObjectStatsRecorder objectStatsRecorder,
-                                                                  L2State l2State, TCServerImpl serverImpl) {
+                                                                  L2State l2State, TCServerImpl serverImpl,
+                                                                  TCSecurityManager securityManager) {
     return new DistributedObjectServer(configSetupManager, getThreadGroup(), policy, httpSink, serverInfo,
-                                       objectStatsRecorder, l2State, this, this);
+                                       objectStatsRecorder, l2State, this, this, securityManager);
   }
 
   private void startHTTPServer(final CommonL2Config commonL2Config, final TerracottaConnector tcConnector)
@@ -511,22 +530,15 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     Context context = new Context(null, "/", Context.NO_SESSIONS | Context.SECURITY);
 
-    if (commonL2Config.httpAuthentication()) {
-      Constraint constraint = new Constraint();
-      constraint.setName(Constraint.__BASIC_AUTH);
-      constraint.setRoles(new String[] { HTTP_AUTHENTICATION_ROLE_STATISTICS });
-      constraint.setAuthenticate(true);
-
-      ConstraintMapping cm = new ConstraintMapping();
-      cm.setConstraint(constraint);
-      cm.setPathSpec(STATISTICS_GATHERER_SERVLET_PATH);
-
-      SecurityHandler sh = new SecurityHandler();
-      sh.setUserRealm(new HashUserRealm("Terracotta Statistics Gatherer", commonL2Config
-          .httpAuthenticationUserRealmFile()));
-      sh.setConstraintMappings(new ConstraintMapping[] { cm });
-
-      context.addHandler(sh);
+    if(commonL2Config.isSecure()) {
+      final String pathSpec = "/*";
+      final TCUserRealm userRealm = new TCUserRealm(securityManager);
+      setupBasicAuth(context, pathSpec, userRealm, HTTP_SECURITY_ROLE);
+      logger.info("HTTPS Authentication enabled for path '" + pathSpec + "'");
+    } else if (commonL2Config.httpAuthentication()) {
+      final HashUserRealm userRealm = new HashUserRealm("Terracotta Statistics Gatherer", commonL2Config
+          .httpAuthenticationUserRealmFile());
+      setupBasicAuth(context, STATISTICS_GATHERER_SERVLET_PATH, userRealm, HTTP_AUTHENTICATION_ROLE_STATISTICS);
       logger.info("HTTP Authentication enabled for path '" + STATISTICS_GATHERER_SERVLET_PATH
                   + "', using user realm file '" + commonL2Config.httpAuthenticationUserRealmFile() + "'");
     }
@@ -644,6 +656,23 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
   }
 
+  private void setupBasicAuth(final Context context, final String pathSpec, final UserRealm userRealm, String... roles) {
+    Constraint constraint = new Constraint();
+    constraint.setName(Constraint.__BASIC_AUTH);
+    constraint.setRoles(roles);
+    constraint.setAuthenticate(true);
+
+    ConstraintMapping cm = new ConstraintMapping();
+    cm.setConstraint(constraint);
+    cm.setPathSpec(pathSpec);
+
+    SecurityHandler sh = new SecurityHandler();
+    sh.setUserRealm(userRealm);
+    sh.setConstraintMappings(new ConstraintMapping[] { cm });
+
+    context.addHandler(sh);
+  }
+
   private static void createAndAddServlet(final ServletHandler servletHandler, final String servletClassName,
                                           final String path) {
     ServletHolder holder = servletHandler.addServletWithMapping(servletClassName, path);
@@ -750,3 +779,63 @@ public class TCServerImpl extends SEDA implements TCServer {
     return configurationModel.equals(ConfigurationModel.PRODUCTION);
   }
 }
+
+class TCUserRealm implements UserRealm {
+
+  private final ConcurrentHashMap<String, Principal> users           = new ConcurrentHashMap<String, Principal>();
+  private final TCSecurityManager                    securityManager;
+
+  TCUserRealm(final TCSecurityManager securityManager) {
+    this.securityManager = securityManager;
+  }
+
+  @Override
+  public String getName() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public Principal getPrincipal(final String username) {
+    return users.get(username);
+  }
+
+  @Override
+  public Principal authenticate(final String username, final Object credentials, final Request request) {
+    final Principal authenticatedUser = securityManager.authenticate(username, ((String)credentials).toCharArray());
+    if(authenticatedUser != null) {
+      users.put(authenticatedUser.getName(), authenticatedUser);
+    }
+    return authenticatedUser;
+  }
+
+  @Override
+  public boolean reauthenticate(final Principal user) {
+    return true;
+  }
+
+  @Override
+  public boolean isUserInRole(final Principal user, final String role) {
+    return user != null && TCServerImpl.HTTP_SECURITY_ROLE.equals(role);
+  }
+
+  @Override
+  public void disassociate(final Principal user) {
+  }
+
+  @Override
+  public Principal pushRole(final Principal user, final String role) {
+    return user;
+  }
+
+  @Override
+  public Principal popRole(final Principal user) {
+    return user;
+  }
+
+  @Override
+  public void logout(final Principal user) {
+    users.remove(user.getName());
+  }
+}
+
+

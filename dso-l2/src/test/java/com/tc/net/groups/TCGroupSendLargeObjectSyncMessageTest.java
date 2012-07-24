@@ -67,7 +67,7 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
     final StageManager stageManager1 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)),
                                                             new QueueFactory());
     final TCGroupManagerImpl gm1 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p1, p1 + 1,
-                                                          stageManager1);
+                                                          stageManager1, null);
     final ConfigurationContext context1 = new ConfigurationContextImpl(stageManager1);
     stageManager1.startAll(context1, Collections.EMPTY_LIST);
     gm1.setDiscover(new TCGroupMemberDiscoveryStatic(gm1));
@@ -77,7 +77,7 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
     final StageManager stageManager2 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)),
                                                             new QueueFactory());
     final TCGroupManagerImpl gm2 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p2, p2 + 1,
-                                                          stageManager2);
+                                                          stageManager2, null);
     final ConfigurationContext context2 = new ConfigurationContextImpl(stageManager2);
     stageManager2.startAll(context2, Collections.EMPTY_LIST);
     gm2.setDiscover(new TCGroupMemberDiscoveryStatic(gm2));

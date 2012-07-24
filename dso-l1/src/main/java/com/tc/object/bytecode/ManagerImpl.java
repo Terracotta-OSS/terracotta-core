@@ -23,6 +23,7 @@ import com.tc.license.LicenseManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.TunneledDomainUpdater;
+import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ClientShutdownManager;
 import com.tc.object.DistributedObjectClient;
@@ -103,6 +104,7 @@ public class ManagerImpl implements Manager {
   private final RuntimeLogger                      runtimeLogger;
   private final LockIdFactory                      lockIdFactory;
   private final ClientMode                         clientMode;
+  private final TCSecurityManager                  securityManager;
 
   private final InstrumentationLogger              instrumentationLogger;
 
@@ -117,16 +119,18 @@ public class ManagerImpl implements Manager {
   private final SerializationUtil                  serializer          = new SerializationUtil();
   private final MethodDisplayNames                 methodDisplay       = new MethodDisplayNames(this.serializer);
 
-  public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents) {
-    this(true, null, null, null, null, config, connectionComponents, true, null, null, false);
+  public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
+                     final TCSecurityManager securityManager) {
+    this(true, null, null, null, null, config, connectionComponents, true, null, null, false, securityManager);
   }
 
   public ManagerImpl(final boolean startClient, final ClientObjectManager objectManager,
                      final ClientTransactionManager txManager, final ClientLockManager lockManager,
                      final RemoteSearchRequestManager searchRequestManager, final DSOClientConfigHelper config,
-                     final PreparedComponentsFromL2Connection connectionComponents) {
+                     final PreparedComponentsFromL2Connection connectionComponents,
+                     final TCSecurityManager securityManager) {
     this(startClient, objectManager, txManager, lockManager, searchRequestManager, config, connectionComponents, true,
-         null, null, false);
+         null, null, false, securityManager);
   }
 
   public ManagerImpl(final boolean startClient, final ClientObjectManager objectManager,
@@ -134,8 +138,9 @@ public class ManagerImpl implements Manager {
                      final RemoteSearchRequestManager searchRequestManager, final DSOClientConfigHelper config,
                      final PreparedComponentsFromL2Connection connectionComponents,
                      final boolean shutdownActionRequired, final RuntimeLogger runtimeLogger, final ClassLoader loader,
-                     final boolean isExpressRejoinMode) {
+                     final boolean isExpressRejoinMode, final TCSecurityManager securityManager) {
     this.objectManager = objectManager;
+    this.securityManager = securityManager;
     this.portability = config.getPortability();
     this.txManager = txManager;
     this.lockManager = lockManager;
@@ -242,7 +247,7 @@ public class ManagerImpl implements Manager {
                                                           ManagerImpl.this.connectionComponents, ManagerImpl.this,
                                                           ManagerImpl.this.statisticsAgentSubSystem,
                                                           ManagerImpl.this.dsoCluster, ManagerImpl.this.runtimeLogger,
-                                                          ManagerImpl.this.clientMode);
+                                                          ManagerImpl.this.clientMode, ManagerImpl.this.securityManager);
 
         if (forTests) {
           ManagerImpl.this.dso.setCreateDedicatedMBeanServer(true);

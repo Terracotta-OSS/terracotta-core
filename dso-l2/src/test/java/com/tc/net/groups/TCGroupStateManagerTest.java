@@ -403,7 +403,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
     StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
     TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), nodes[localIndex].getHost(),
                                                    nodes[localIndex].getPort(), nodes[localIndex].getGroupPort(),
-                                                   stageManager);
+                                                   stageManager, null);
     ConfigurationContext context = new ConfigurationContextImpl(stageManager);
     stageManager.startAll(context, Collections.EMPTY_LIST);
     gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));

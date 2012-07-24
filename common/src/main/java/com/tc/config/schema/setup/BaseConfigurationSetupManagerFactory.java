@@ -10,6 +10,7 @@ import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.defaults.SchemaDefaultValueProvider;
 import com.tc.config.schema.utils.StandardXmlObjectComparator;
 import com.tc.config.schema.utils.XmlObjectComparator;
+import com.tc.net.core.SecurityInfo;
 import com.tc.util.Assert;
 
 /**
@@ -33,4 +34,8 @@ public abstract class BaseConfigurationSetupManagerFactory implements Configurat
     this.xmlObjectComparator = new StandardXmlObjectComparator();
   }
 
+  @Override
+  public L1ConfigurationSetupManager getL1TVSConfigurationSetupManager() throws ConfigurationSetupException {
+    return getL1TVSConfigurationSetupManager(new SecurityInfo());
+  }
 }

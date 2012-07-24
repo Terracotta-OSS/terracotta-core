@@ -19,6 +19,8 @@ import com.tc.config.schema.ConfigTCProperties;
 import com.tc.config.schema.ConfigTCPropertiesFromObject;
 import com.tc.config.schema.HaConfigSchema;
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
+import com.tc.config.schema.SecurityConfig;
+import com.tc.config.schema.SecurityConfigObject;
 import com.tc.config.schema.SystemConfig;
 import com.tc.config.schema.SystemConfigObject;
 import com.tc.config.schema.UpdateCheckConfig;
@@ -42,6 +44,7 @@ import com.tc.util.Assert;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.MirrorGroups;
 import com.terracottatech.config.PersistenceMode;
+import com.terracottatech.config.Security;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.System;
@@ -85,6 +88,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
   private SystemConfig                      systemConfig;
   private volatile ActiveServerGroupsConfig activeServerGroupsConfig;
+  private volatile SecurityConfig           securityConfig;
+  private volatile boolean                  secure;
 
   public L2ConfigurationSetupManagerImpl(ConfigurationCreator configurationCreator, String thisL2Identifier,
                                          DefaultValueProvider defaultValueProvider,
@@ -136,14 +141,39 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
                                                                        this);
 
     Servers serversBean = (Servers) serversBeanRepository().bean();
+    this.secure = serversBean != null && serversBean.getSecure();
     Server[] servers = serversBean != null ? serversBean.getServerArray() : null;
+    Server server = null;
 
     if (thisL2Identifier != null) {
       this.thisL2Identifier = thisL2Identifier;
+      if (servers != null) {
+        for (Server s : servers) {
+          if (s.getName().equals(thisL2Identifier)) {
+            server = s;
+            break;
+          }
+        }
+      }
     } else {
-      Server s = autoChooseThisL2(servers);
-      this.thisL2Identifier = (s != null ? s.getName() : null);
+      server = autoChooseThisL2(servers);
+      this.thisL2Identifier = (server != null ? server.getName() : null);
     }
+
+    if (secure && server != null) {
+      final Server s = server;
+      ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), Security.class,
+                                                                   new ChildBeanFetcher() {
+                                                                     public XmlObject getChild(XmlObject parent) {
+                                                                       return s.getSecurity();
+                                                                     }
+                                                                   });
+      securityConfig = new SecurityConfigObject(createContext(beanRepository, getConfigFilePath()));
+    } else {
+      securityConfig = null;
+    }
+
+
     verifyL2Identifier(servers, this.thisL2Identifier);
     this.myConfigData = setupConfigDataForL2(this.thisL2Identifier);
 
@@ -153,6 +183,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     validateGroups();
     validateDSOClusterPersistenceMode();
     validateHaConfiguration();
+    validateSecurityConfiguration();
   }
 
   public TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator,
@@ -188,8 +219,16 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     return TopologyReloadStatus.TOPOLOGY_CHANGE_ACCEPTABLE;
   }
 
+  public boolean isSecure() {
+    return secure;
+  }
+
   public String getL2Identifier() {
     return this.thisL2Identifier;
+  }
+
+  public SecurityConfig getSecurity() {
+    return this.securityConfig;
   }
 
   private void verifyPortUsed(Set<String> serverPorts, String hostname, int port) throws ConfigurationSetupException {
@@ -332,6 +371,11 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     return configurationCreator().directoryConfigurationLoadedFrom();
   }
 
+  public void setSecurityConfig(final SecurityConfig securityConfig) {
+    this.secure = securityConfig != null;
+    this.securityConfig = securityConfig;
+  }
+
   private class L2ConfigData {
     private final String              name;
     private final ChildBeanRepository beanRepository;
@@ -344,7 +388,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
       findMyL2Bean(); // To get the exception in case things are screwed up
       this.beanRepository = new ChildBeanRepository(serversBeanRepository(), Server.class, new BeanFetcher());
       this.commonL2Config = new CommonL2ConfigObject(createContext(this.beanRepository, configurationCreator()
-          .directoryConfigurationLoadedFrom()));
+          .directoryConfigurationLoadedFrom()), secure);
       this.dsoL2Config = new L2DSOConfigObject(createContext(this.beanRepository, configurationCreator()
           .directoryConfigurationLoadedFrom()));
     }
@@ -606,6 +650,13 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
                                                                                         + " group(s) set to networked HA and "
                                                                                         + diskbasedHa
                                                                                         + " group(s) set to disk-based HA."); }
+  }
+
+  private void validateSecurityConfiguration() throws ConfigurationSetupException {
+    Servers servers = (Servers)serversBeanRepository().bean();
+    if (servers.getSecure() && securityConfig.getSslCertificateUri() == null) {
+      throw new ConfigurationSetupException("Security is enabled but server " + thisL2Identifier + " has no configured SSL certificate.");
+    }
   }
 
   public CommonL2Config commonL2ConfigFor(String name) throws ConfigurationSetupException {

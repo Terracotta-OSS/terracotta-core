@@ -38,21 +38,21 @@ public class HaConfigTest extends TCTestCase {
                                                                                                         tcConfig
                                                                                                             .getAbsolutePath() },
                                                                                                     StandardConfigurationSetupManagerFactory.ConfigMode.L2,
-                                                                                                    new FatalIllegalConfigurationChangeHandler());
+                                                                                                    new FatalIllegalConfigurationChangeHandler(), null);
       HaConfig haConfig = new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null));
       Assert.assertTrue(haConfig.getNodesStore().getAllNodes().length == 1);
 
       // test for picking up right active server group for a give server
       factory = new StandardConfigurationSetupManagerFactory(new String[] { "-f", tcConfig.getAbsolutePath(), "-n",
           "server1" }, StandardConfigurationSetupManagerFactory.ConfigMode.L2,
-                                                                new FatalIllegalConfigurationChangeHandler());
+                                                                new FatalIllegalConfigurationChangeHandler(), null);
       haConfig = new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null));
       Assert.assertTrue(haConfig.getNodesStore().getAllNodes().length == 1);
 
       // expecting an error when given non existing server for haConfig
       factory = new StandardConfigurationSetupManagerFactory(new String[] { "-f", tcConfig.getAbsolutePath(), "-n",
           "server2" }, StandardConfigurationSetupManagerFactory.ConfigMode.L2,
-                                                                new FatalIllegalConfigurationChangeHandler());
+                                                                new FatalIllegalConfigurationChangeHandler(), null);
       try {
         new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null));
         throw new AssertionError("Config setup manager is suppose to blast for non-existing server name");

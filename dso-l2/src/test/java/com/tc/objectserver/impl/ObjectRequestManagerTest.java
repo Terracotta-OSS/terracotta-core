@@ -1056,6 +1056,10 @@ public class ObjectRequestManagerTest extends TestCase {
       return null;
     }
 
+    public NetworkStackID open(char[] password) {
+      return null;
+    }
+
     public Object removeAttachment(final String key) {
       return null;
     }
