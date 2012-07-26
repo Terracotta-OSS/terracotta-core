@@ -127,7 +127,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   private final L2ConfigurationSetupManager configurationSetupManager;
   protected final ConnectionPolicy          connectionPolicy;
   private boolean                           shutdown                                     = false;
-  private         TCSecurityManager         securityManager;
+  protected final TCSecurityManager         securityManager;
 
   /**
    * This should only be used for tests.
@@ -151,6 +151,8 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     if(configurationSetupManager.isSecure()) {
       this.securityManager = createSecurityManager(configurationSetupManager.getSecurity());
+    } else {
+      this.securityManager = null;
     }
 
     this.statisticsGathererSubSystem = new StatisticsGathererSubSystem();
@@ -528,7 +530,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     this.dsoServer = createDistributedObjectServer(this.configurationSetupManager, this.connectionPolicy, httpSink,
                                                    new TCServerInfo(this, this.state, objectStatsRecorder),
-                                                   objectStatsRecorder, this.state, this, this.securityManager);
+                                                   objectStatsRecorder, this.state, this);
     this.dsoServer.start();
     registerDSOServer();
   }
@@ -537,8 +539,7 @@ public class TCServerImpl extends SEDA implements TCServer {
                                                                   ConnectionPolicy policy, Sink httpSink,
                                                                   TCServerInfo serverInfo,
                                                                   ObjectStatsRecorder objectStatsRecorder,
-                                                                  L2State l2State, TCServerImpl serverImpl,
-                                                                  TCSecurityManager securityManager) {
+                                                                  L2State l2State, TCServerImpl serverImpl) {
     return new DistributedObjectServer(configSetupManager, getThreadGroup(), policy, httpSink, serverInfo,
                                        objectStatsRecorder, l2State, this, this, securityManager);
   }
