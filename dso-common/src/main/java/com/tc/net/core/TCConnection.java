@@ -128,4 +128,10 @@ public interface TCConnection extends NetworkMessageSink {
   public void setTransportEstablished();
 
   public boolean isTransportEstablished();
+
+  /**
+   *
+   * @return true iff the connection as been marked for close but hasn't been closed yet
+   */
+  boolean isClosePending();
 }

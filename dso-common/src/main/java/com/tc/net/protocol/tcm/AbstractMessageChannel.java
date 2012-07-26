@@ -107,6 +107,9 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
   public abstract NetworkStackID open() throws MaxConnectionsExceededException, TCTimeoutException,
       UnknownHostException, IOException, CommStackMismatchException;
 
+  public abstract NetworkStackID open(char[] password) throws MaxConnectionsExceededException, TCTimeoutException,
+      UnknownHostException, IOException, CommStackMismatchException;
+
   private void fireChannelOpenedEvent() {
     fireEvent(new ChannelEventImpl(ChannelEventType.CHANNEL_OPENED_EVENT, AbstractMessageChannel.this));
   }

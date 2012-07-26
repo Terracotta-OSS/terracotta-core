@@ -12,6 +12,7 @@ import com.tc.net.GroupID;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.config.ConfigInfoFromL2Impl;
 import com.tc.object.config.ConnectionInfoConfig;
+import com.tc.security.PwProvider;
 import com.tc.util.Assert;
 
 import java.util.Map;
@@ -26,15 +27,19 @@ public class PreparedComponentsFromL2Connection {
   private final Map<String, GroupID>        groupnameIDMap;
 
   public PreparedComponentsFromL2Connection(L1ConfigurationSetupManager config) {
-    Assert.assertNotNull(config);
-    this.config = config;
-    this.groupnameIDMap = readGroupnameIDMapFromL2();
+    this(config, null);
   }
 
-  private Map<String, GroupID> readGroupnameIDMapFromL2() {
-    Map<String, GroupID> map = null;
+  public PreparedComponentsFromL2Connection(L1ConfigurationSetupManager config, PwProvider pwProvider) {
+    Assert.assertNotNull(config);
+    this.config = config;
+    this.groupnameIDMap = readGroupnameIDMapFromL2(pwProvider);
+  }
+
+  private Map<String, GroupID> readGroupnameIDMapFromL2(PwProvider pwProvider) {
+    Map<String, GroupID> map;
     try {
-      map = new ConfigInfoFromL2Impl(this.config).getGroupNameIDMapFromL2();
+      map = new ConfigInfoFromL2Impl(this.config, pwProvider).getGroupNameIDMapFromL2();
     } catch (ConfigurationSetupException e) {
       throw new TCRuntimeException(e);
     }
@@ -55,7 +60,7 @@ public class PreparedComponentsFromL2Connection {
     for (L2Data l2 : l2s) {
       l2.setGroupId(getGroupID(l2.getGroupName()));
     }
-    return new ConnectionInfoConfig(l2s);
+    return new ConnectionInfoConfig(l2s, config.getSecurityInfo());
   }
 
   public ConnectionInfoConfig[] createConnectionInfoConfigItemByGroup() {
@@ -79,7 +84,7 @@ public class PreparedComponentsFromL2Connection {
 
     ConnectionInfoConfig[] items = new ConnectionInfoConfig[l2DataByGroup.length];
     for (int i = 0; i < l2DataByGroup.length; i++) {
-      items[i] = new ConnectionInfoConfig(l2DataByGroup[i]);
+      items[i] = new ConnectionInfoConfig(l2DataByGroup[i], config.getSecurityInfo());
     }
     return items;
   }

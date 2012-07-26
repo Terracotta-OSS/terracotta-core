@@ -28,16 +28,17 @@
     <jetty.version>6.1.8</jetty.version>
     <slf4j.version>1.6.4</slf4j.version>
     <offheap-store.version>1.0.8-SNAPSHOT</offheap-store.version>
-    <search.version>1.0.0-SNAPSHOT</search.version>
+    <search.version>1.1.0-SNAPSHOT</search.version>
     <security-core-version>1.0.0-SNAPSHOT</security-core-version>
     <security-keychain-version>1.0.0-SNAPSHOT</security-keychain-version>
-    <management.version>1.0.0-SNAPSHOT</management.version>
-    <terracotta-license.version>1.0.4-SNAPSHOT</terracotta-license.version>
+    <management.version>2.7.0-SNAPSHOT</management.version>
+    <terracotta-license.version>1.0.4</terracotta-license.version>
+    <maven-forge-plugin.version>1.0.6-SNAPSHOT</maven-forge-plugin.version>
     <derby.version>10.8.2.2</derby.version>
     <tcconfig.version>3.8.0-SNAPSHOT</tcconfig.version>
     <sleepycat.version>5.0.55</sleepycat.version>
-    <linked-child-process.version>1.0.7</linked-child-process.version>
-    <gmaven-plugin.version>1.3</gmaven-plugin.version>
+    <linked-child-process.version>1.0.8</linked-child-process.version>
+    <gmaven-plugin.version>1.4</gmaven-plugin.version>
     <copy-maven-plugin.version>0.2.3.8</copy-maven-plugin.version>
     <surefire.version>2.10</surefire.version>
     <skip.deploy>false</skip.deploy>
@@ -138,6 +139,12 @@
         <groupId>org.apache.xmlbeans</groupId>
         <artifactId>xmlbeans</artifactId>
         <version>2.4.0</version>
+        <exclusions>
+          <exclusion>
+            <groupId>stax</groupId>
+            <artifactId>stax-api</artifactId>
+          </exclusion>
+        </exclusions>        
       </dependency>
       <dependency>
         <groupId>org.apache.xmlbeans</groupId>
@@ -183,6 +190,12 @@
         <groupId>jline</groupId>
         <artifactId>jline</artifactId>
         <version>0.9.94</version>
+        <exclusions>
+          <exclusion>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+          </exclusion>
+        </exclusions>        
       </dependency>
       <dependency>
         <groupId>jfree</groupId>

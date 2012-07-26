@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * The communication thread. Creates {@link Selector selector}, registers {@link SocketChannel} to the selector and does
  * other NIO operations.
- * 
+ *
  * @author mgovinda
  */
 
@@ -90,11 +90,6 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
   public void cleanupChannel(SocketChannel channel, Runnable callback) {
     readerComm.cleanupChannel(channel, callback);
     writerComm.cleanupChannel(channel, callback);
-  }
-
-  public void detach(final SocketChannel channel) {
-    readerComm.unregister(channel);
-    writerComm.unregister(channel);
   }
 
   public void closeEvent(TCListenerEvent event) {
@@ -174,7 +169,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
   /**
    * Change thread ownership of a connection or upgrade weight.
-   * 
+   *
    * @param connection : connection which has to be transfered from the main selector thread to a new worker comm thread
    *        that has the least weight. If the connection is already managed by a comm thread, then just update
    *        connection's weight.
@@ -625,16 +620,20 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
             if (isReader() && key.isValid() && key.isReadable()) {
               int read;
               TCChannelReader reader = (TCChannelReader) key.attachment();
-              ScatteringByteChannel channel = (ScatteringByteChannel) key.channel();
               do {
-                read = reader.doRead(channel);
+                read = reader.doRead();
                 this.bytesRead.addAndGet(read);
               } while ((read != 0) && key.isReadable());
             }
 
             if (key.isValid() && !isReader() && key.isWritable()) {
-              int written = ((TCChannelWriter) key.attachment()).doWrite((GatheringByteChannel) key.channel());
+              int written = ((TCChannelWriter) key.attachment()).doWrite();
               this.bytesWritten.addAndGet(written);
+            }
+
+            TCConnection conn = (TCConnection) key.attachment();
+            if (conn != null && conn.isClosePending()) {
+              conn.asynchClose();
             }
 
           } catch (CancelledKeyException cke) {

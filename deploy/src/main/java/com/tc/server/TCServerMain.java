@@ -24,7 +24,7 @@ public class TCServerMain {
       ConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(
                                                                                                     args,
                                                                                                     StandardConfigurationSetupManagerFactory.ConfigMode.L2,
-                                                                                                    new FatalIllegalConfigurationChangeHandler());
+                                                                                                    new FatalIllegalConfigurationChangeHandler(), null);
       AbstractServerFactory serverFactory = AbstractServerFactory.getFactory();
       TCServer server = serverFactory.createServer(factory.createL2TVSConfigurationSetupManager(null), threadGroup);
       server.start();

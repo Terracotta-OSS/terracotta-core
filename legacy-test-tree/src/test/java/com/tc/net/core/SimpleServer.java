@@ -37,7 +37,7 @@ public class SimpleServer {
     this.sink = sink;
     this.port = port;
     this.connMgr = new TCConnectionManagerImpl("TestConnMgr", serverThreadCount,
-                                                new HealthCheckerConfigImpl("DefaultConfigForActiveConnections"));
+                                                new HealthCheckerConfigImpl("DefaultConfigForActiveConnections"), null);
   }
 
   public TCConnectionManager getConnectionManager() {

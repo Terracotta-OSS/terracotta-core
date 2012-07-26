@@ -133,4 +133,8 @@ public class MockTCConnection implements TCConnection {
   public boolean isTransportEstablished() {
     return false;
   }
+
+  public boolean isClosePending() {
+    return false;
+  }
 }

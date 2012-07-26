@@ -9,11 +9,12 @@ import com.tc.logging.TCLogger;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 
-/*
+/**
  * Checks if the TC-Properties and TC-Config settings for Health Checker and Reconnect are adequate to provide High
  * Availability. The checks are inspired from the experiences described in Field War Stories (FWS) in JIRA. The checks
  * are just broad guidelines--production deployments will still hand tune Health Check settings and may choose to ignore
  * these warnings.
+ * 
  * @author dkumar
  */
 public class HASettingsChecker {
@@ -63,7 +64,7 @@ public class HASettingsChecker {
     this.isHighAvailabilityEnabled = checkIfHighAvailabilityIsEnabled(tcConfig, tcProperties);
   }
 
-  /*
+  /**
    * High level validation method for checking if the Health Check settings at L1 and L2 can provide robust fail-over.
    */
   public void validateHealthCheckSettingsForHighAvailability() {
@@ -74,7 +75,7 @@ public class HASettingsChecker {
 
   }
 
-  /*
+  /**
    * To guard against the scenario described in DEV-6345 and FWS-101. Checks if there is enough time for L1s to fail
    * over to a new ACTIVE L2 by taking into account L2 election time and client reconnect window. Prints a warning if
    * L1-L2HealthCheck > L2-L2HealthCheck + ElectionTime + ClientReconnectWindow
@@ -86,7 +87,7 @@ public class HASettingsChecker {
     }
   }
 
-  /*
+  /**
    * To guard against the scenario described in DEV-6345 and FWS-32. In case of a new ACTIVE L2, this ensures that the
    * L1 clients attempt to connect to L2 only after the election is complete. Prints a warning if L1-L2HealthCheck <
    * L2-L2HealthCheck + ElectionTime

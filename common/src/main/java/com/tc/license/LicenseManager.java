@@ -26,33 +26,33 @@ import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.ProductInfo;
-import com.tc.util.runtime.Vm;
 
 import java.io.InputStream;
 import java.util.Date;
 
 public class LicenseManager {
-  private static final long                           BYTES_PER_MEGABYTE = 1024 * 1024L;
-  private static final long                           BYTES_PER_GIGABYTE = 1024 * 1024L * 1024L;
-  private static final TCLogger                       CONSOLE_LOGGER     = CustomerLogging.getConsoleLogger();
-  private static final TCLogger                       LOGGER             = TCLogging.getLogger(LicenseManager.class);
-  public static final String                          EXIT_MESSAGE       = "TERRACOTTA IS EXITING. Contact your Terracotta sales representative to "
-                                                                           + "learn how to enable licensed usage of this feature. For more information, "
-                                                                           + "visit Terracotta support at http://www.terracotta.org.";
-  public static final String                          EXPIRY_WARNING     = "Your license key is valid until %s. "
-                                                                           + "You have %s remaining until the expiration date. "
-                                                                           + "When the expiration date is reached TERRACOTTA WILL CEASE FUNCTIONING.";
-  public static final String                          EXPIRED_ERROR      = "Your product key expired on %s. "
-                                                                           + EXIT_MESSAGE;
-  public static final int                             WARNING_MARK       = 240;
-  public static final long                            HOUR               = 1000 * 60 * 60;
+
+  private static final TCLogger                       CONSOLE_LOGGER         = CustomerLogging.getConsoleLogger();
+  private static final TCLogger                       LOGGER                 = TCLogging
+                                                                                 .getLogger(LicenseManager.class);
+  public static final String                          EXIT_MESSAGE           = "TERRACOTTA IS EXITING. Contact your Terracotta sales representative to "
+                                                                               + "learn how to enable licensed usage of this feature. For more information, "
+                                                                               + "visit Terracotta support at http://www.terracotta.org.";
+  public static final String                          EXPIRY_WARNING         = "Your license key is valid until %s. "
+                                                                               + "You have %s remaining until the expiration date. "
+                                                                               + "When the expiration date is reached TERRACOTTA WILL CEASE FUNCTIONING.";
+  public static final String                          EXPIRED_ERROR          = "Your product key expired on %s. "
+                                                                               + EXIT_MESSAGE;
+  public static final int                             WARNING_MARK           = 240;
+  public static final long                            HOUR                   = 1000 * 60 * 60;
 
   private static volatile boolean                     initialized;
 
   // lazily-init, don't use directly
   // use getLicense() instead
   private static License                              license;
-  private static final AbstractLicenseResolverFactory factory            = AbstractLicenseResolverFactory.getFactory();
+  private static final AbstractLicenseResolverFactory factory                = AbstractLicenseResolverFactory
+                                                                                 .getFactory();
 
   private static synchronized void init() {
     license = factory.resolveLicense();
@@ -138,31 +138,24 @@ public class LicenseManager {
     return getLicense().getRequiredProperty(LICENSE_CAPABILITIES);
   }
 
-  public static void verifyServerArrayOffheapCapability(String maxOffheap) {
+  public static void verifyServerArrayOffheapCapability(String maxOffHeapConfigured) {
     verifyCapability(CAPABILITY_TERRACOTTA_SERVER_ARRAY_OFFHEAP);
-    long maxHeapFromVMInBytes = Vm.maxDirectMemory();
-    if (maxHeapFromVMInBytes == 0 || maxHeapFromVMInBytes == Long.MAX_VALUE) {
-      //
-      throw new LicenseException("No direct memory was set at JVM level. Please set it with -XX:MaxDirectMemorySize");
-    }
+
 
     String maxHeapSizeFromLicense = getLicense().getRequiredProperty(TERRACOTTA_SERVER_ARRAY_MAX_OFFHEAP);
-    long maxHeapAllowedInBytes = MemorySizeParser.parse(maxHeapSizeFromLicense);
+    long maxOffHeapLicensedInBytes = MemorySizeParser.parse(maxHeapSizeFromLicense);
+    long maxOffHeapConfiguredInBytes = MemorySizeParser.parse(maxOffHeapConfigured);
 
     if (CONSOLE_LOGGER.isDebugEnabled()) {
-      CONSOLE_LOGGER.debug("max offheap from VM: " + maxHeapFromVMInBytes);
-      CONSOLE_LOGGER.debug("max offheap allowed: " + maxHeapAllowedInBytes);
+      CONSOLE_LOGGER.debug("max offheap licensed: " + maxOffHeapLicensedInBytes);
+      CONSOLE_LOGGER.debug("max offheap configured: " + maxOffHeapConfiguredInBytes);
     }
 
-    if (maxHeapFromVMInBytes > maxHeapAllowedInBytes) {
-      long maxHeapFromVM = maxHeapFromVMInBytes / BYTES_PER_GIGABYTE;
-      String unit = "GB";
-      if (maxHeapFromVM == 0) {
-        maxHeapFromVM = maxHeapFromVMInBytes / BYTES_PER_MEGABYTE;
-        unit = "MB";
-      }
+    boolean offHeapSizeAllowed = maxOffHeapConfiguredInBytes <= maxOffHeapLicensedInBytes;
+    if (!offHeapSizeAllowed) {
       throw new LicenseException("Your license only allows up to " + maxHeapSizeFromLicense
-                                 + " in offheap size. Your VM is configured with " + maxHeapFromVM + unit);
+                                 + " in offheap size. Your Terracotta server is configured with "
+                                 + maxOffHeapConfigured);
     }
   }
 

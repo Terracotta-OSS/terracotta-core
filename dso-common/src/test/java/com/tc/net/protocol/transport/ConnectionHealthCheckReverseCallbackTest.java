@@ -94,7 +94,7 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
                                                 new TCMessageRouterImpl(), new PlainNetworkStackHarnessFactory(),
                                                 serverConnMgr, new NullConnectionPolicy(), 0, serverHC,
                                                 new TransportHandshakeErrorNullHandler(), Collections.EMPTY_MAP,
-                                                Collections.EMPTY_MAP);
+                                                Collections.EMPTY_MAP, null);
     String host = "localhost";
 
     serverComms.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);

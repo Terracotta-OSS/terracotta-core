@@ -190,7 +190,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   /**
    * Override this method if there is a need to do some verification when the clients are done
    */
-  protected void postClientVerification() {
+  protected void postClientVerification() throws Exception {
     //
   }
 

@@ -116,7 +116,7 @@ public class RestartTestEnvironment {
     config = new StandardConfigurationSetupManagerFactory(new String[] {
         StandardConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFile.getAbsolutePath() },
                                                           StandardConfigurationSetupManagerFactory.ConfigMode.L2,
-                                                          new MockIllegalConfigurationChangeHandler());
+                                                          new MockIllegalConfigurationChangeHandler(), null);
   }
 
   private void writeL2Config() throws Exception {
@@ -152,6 +152,15 @@ public class RestartTestEnvironment {
     }
 
     L2ConfigBuilder l2 = new L2ConfigBuilder();
+    if (configFactory != null) {
+      l2.setSecurityEnabled(configFactory.isSecurityEnabled());
+      l2.setSecurityCertificateUri(configFactory.getSecuritySslCertificateUri());
+      l2.setSecurityKeychainUrl(configFactory.getSecurityKeychainUrl());
+      l2.setSecurityKeychainImpl(configFactory.getSecurityKeychainImpl());
+      l2.setSecuritySecretProviderImpl(configFactory.getSecuritySecretProviderImpl());
+      l2.setSecurityAuthUrl(configFactory.getSecurityAuthUrl());
+      l2.setSecurityAuthImpl(configFactory.getSecurityAuthImpl());
+    }
     l2.setDSOPort(serverPort);
     l2.setJMXPort(adminPort);
     l2.setL2GroupPort(groupPort);

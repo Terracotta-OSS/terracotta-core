@@ -54,7 +54,7 @@ public class L2State implements StateChangeListener {
   }
 
   public boolean isPassiveUninitialized() {
-    if (getState().equals(StateManager.PASSIVE_UNINTIALIZED)) { return true; }
+    if (getState().equals(StateManager.PASSIVE_UNINITIALIZED)) { return true; }
     return false;
   }
 

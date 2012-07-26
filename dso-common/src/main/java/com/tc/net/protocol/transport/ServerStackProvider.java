@@ -5,6 +5,7 @@ package com.tc.net.protocol.transport;
 
 import com.tc.logging.TCLogger;
 import com.tc.net.core.TCConnection;
+import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.IllegalReconnectException;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackHarness;
@@ -18,6 +19,7 @@ import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
 import com.tc.net.protocol.tcm.msgs.CommsMessageFactory;
 import com.tc.util.Assert;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -39,6 +41,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   private final ConnectionPolicy                 connectionPolicy;
   private final WireProtocolAdaptorFactory       wireProtocolAdaptorFactory;
   private final WireProtocolMessageSink          wireProtoMsgsink;
+  private final TCSecurityManager                securityManager;
   private final MessageTransportFactory          messageTransportFactory;
   private final List                             transportListeners = new ArrayList(1);
   private final TCLogger                         logger;
@@ -54,7 +57,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
                              WireProtocolAdaptorFactory wireProtocolAdaptorFactory, ReentrantLock licenseLock) {
     this(logger, initialConnectionIDs, harnessFactory, channelFactory, messageTransportFactory,
          handshakeMessageFactory, connectionIdFactory, connectionPolicy, wireProtocolAdaptorFactory, null, licenseLock,
-         CommunicationsManager.COMMSMGR_SERVER);
+         CommunicationsManager.COMMSMGR_SERVER, null);
   }
 
   public ServerStackProvider(TCLogger logger, Set initialConnectionIDs, NetworkStackHarnessFactory harnessFactory,
@@ -64,11 +67,12 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
                              ConnectionIDFactory connectionIdFactory, ConnectionPolicy connectionPolicy,
                              WireProtocolAdaptorFactory wireProtocolAdaptorFactory,
                              WireProtocolMessageSink wireProtoMsgSink, ReentrantLock licenseLock,
-                             final String commsMgrName) {
+                             final String commsMgrName, final TCSecurityManager securityManager) {
     this.messageTransportFactory = messageTransportFactory;
     this.connectionPolicy = connectionPolicy;
     this.wireProtocolAdaptorFactory = wireProtocolAdaptorFactory;
     this.wireProtoMsgsink = wireProtoMsgSink;
+    this.securityManager = securityManager;
     Assert.assertNotNull(harnessFactory);
     this.harnessFactory = harnessFactory;
     this.channelFactory = channelFactory;
@@ -95,13 +99,16 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
 
     final NetworkStackHarness harness;
     final MessageTransport rv;
+    ConnectionID ourConnectionId;
     if (connectionId.isNewConnection()) {
       if (connectionId.getChannelID() == ChannelID.NULL_ID.toLong()) {
-        connectionId = connectionIdFactory.nextConnectionId(connectionId.getJvmID());
+        ourConnectionId = connectionIdFactory.nextConnectionId(connectionId.getJvmID());
       } else {
-        connectionId = connectionIdFactory.makeConnectionId(connectionId.getJvmID(), connectionId.getChannelID());
+        ourConnectionId = connectionIdFactory.makeConnectionId(connectionId.getJvmID(), connectionId.getChannelID());
       }
 
+      connectionId = new ConnectionID(ourConnectionId.getJvmID(), ourConnectionId.getChannelID(),
+          ourConnectionId.getServerID(), connectionId.getUsername(), connectionId.getPassword());
       rv = messageTransportFactory.createNewTransport(connectionId, connection, createHandshakeErrorHandler(),
                                                       handshakeMessageFactory, transportListeners);
       newStackHarness(connectionId, rv);
@@ -298,7 +305,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           connectionId = this.transport.getConnectionId();
           if (connectionId.isJvmIDNull()) {
             connectionId = new ConnectionID(sentConnectionId.getJvmID(), connectionId.getChannelID(),
-                                            connectionId.getServerID());
+                                            connectionId.getServerID(), sentConnectionId.getUsername(), sentConnectionId.getPassword());
             this.transport.initConnectionID(connectionId);
           }
           isMaxConnectionReached = !connectionPolicy.connectClient(connectionId);
@@ -326,6 +333,23 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         this.isHandshakeError = true;
         return;
       }
+      Principal principal = null;
+      if (securityManager != null) {
+        if (!connectionId.isSecured()) {
+          logger.fatal("Security is enabled here on the server, but we didn't get credentials on the handshake!");
+          this.isHandshakeError = true;
+          return;
+        } else {
+          if ((principal = securityManager.authenticate(connectionId.getUsername(), connectionId.getPassword())) == null) {
+            logger.fatal("Authentication failed for user " + connectionId.getUsername()
+                         + " with pw (" + connectionId.getPassword().length + "): " + new String(connectionId.getPassword()));
+            this.isHandshakeError = true;
+            return;
+          }
+        }
+      }
+      logger.info("User " + principal + " successfully authenticated");
+      // todo store principal ?
       sendSynAck(connectionId, syn.getSource(), isMaxConnectionReached);
     }
 

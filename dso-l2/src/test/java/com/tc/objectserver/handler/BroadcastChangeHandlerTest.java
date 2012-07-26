@@ -624,6 +624,11 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
 
     @Override
+    public NetworkStackID open(char[] password) {
+      throw new ImplementMe();
+    }
+
+    @Override
     public Object removeAttachment(final String key) {
       throw new ImplementMe();
     }

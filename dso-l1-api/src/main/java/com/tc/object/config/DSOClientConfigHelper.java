@@ -12,6 +12,7 @@ import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.config.schema.CommonL1Config;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
+import com.tc.net.core.SecurityInfo;
 import com.tc.object.Portability;
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.TransparencyClassAdapter;
@@ -21,6 +22,7 @@ import com.tc.object.config.schema.DSORuntimeOutputOptions;
 import com.tc.object.config.schema.InstrumentedClass;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.properties.ReconnectConfig;
+import com.tc.security.PwProvider;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -208,9 +210,9 @@ public interface DSOClientConfigHelper extends DSOMBeanConfig, ModuleConfigurati
 
   Collection<ClassAdapterFactory> getCustomAdapters(ClassInfo classInfo);
 
-  public ReconnectConfig getL1ReconnectProperties() throws ConfigurationSetupException;
+  public ReconnectConfig getL1ReconnectProperties(final PwProvider pwProvider) throws ConfigurationSetupException;
 
-  public void validateGroupInfo() throws ConfigurationSetupException;
+  public void validateGroupInfo(final PwProvider pwProvider) throws ConfigurationSetupException;
 
   boolean useResolveLockWhenClearing(Class clazz);
 
@@ -224,4 +226,6 @@ public interface DSOClientConfigHelper extends DSOMBeanConfig, ModuleConfigurati
   L1ConfigurationSetupManager reloadServersConfiguration() throws ConfigurationSetupException;
 
   Collection<ClassAdapterFactory> getAfterDSOAdapters(ClassInfo classInfo);
+
+  SecurityInfo getSecurityInfo();
 }

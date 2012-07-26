@@ -37,4 +37,17 @@ public class ConnectionAddressProvider implements ClusterTopologyChangedListener
     }
     return addresses[0].getGroupId();
   }
+
+  public SecurityInfo getSecurityInfo() {
+    SecurityInfo securityInfo = null;
+
+    for (ConnectionInfo address : addresses) {
+      if(securityInfo != null && !securityInfo.equals(address.getSecurityInfo())) {
+        throw new IllegalStateException("Multiple SecurityInfo differ!");
+      }
+      securityInfo = address.getSecurityInfo();
+    }
+
+    return securityInfo;
+  }
 }

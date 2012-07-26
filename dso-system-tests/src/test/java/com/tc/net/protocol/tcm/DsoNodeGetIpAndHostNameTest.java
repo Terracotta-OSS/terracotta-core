@@ -178,7 +178,7 @@ public class DsoNodeGetIpAndHostNameTest extends BaseDSOTestCase {
     PreparedComponentsFromL2Connection l2Connection = new PreparedComponentsFromL2Connection(manager);
     ManagerImpl tcmanager = new ManagerImpl(true, new TestClientObjectManager(), new MockTransactionManager(),
                                             new MockClientLockManager(), new MockRemoteSearchRequestManager(),
-                                            configHelper, l2Connection);
+                                            configHelper, l2Connection, null);
     DSOContext context = DSOContextImpl.createContext(configHelper, tcmanager);
     ClassProcessorHelper.setContext(Thread.currentThread().getContextClassLoader(), context);
     tcmanager.initForTests(null);

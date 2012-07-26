@@ -19,6 +19,13 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
   private PortConfigBuilder groupPortBuilder = null;
   private boolean           offheapEnabled  = false;
   private String            offheapMaxDataSize;
+  private boolean           security_enabled  = false;
+  private String            security_certificateUri;
+  private String            security_keychainUrl;
+  private String            security_keychainImpl;
+  private String            security_secretProviderImpl;
+  private String            security_authUrl;
+  private String            security_authImpl;
 
   public L2ConfigBuilder() {
     super(3, ALL_PROPERTIES);
@@ -145,6 +152,38 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     this.offheapMaxDataSize = maxDataSize;
   }
 
+  public boolean isSecurityEnabled() {
+    return security_enabled;
+  }
+
+  public void setSecurityEnabled(boolean enabled) {
+    this.security_enabled = enabled;
+  }
+
+  public void setSecurityCertificateUri(String certificateUri) {
+    this.security_certificateUri = certificateUri;
+  }
+
+  public void setSecurityKeychainUrl(String keychainUrl) {
+    this.security_keychainUrl = keychainUrl;
+  }
+
+  public void setSecurityKeychainImpl(String securityKeychainImpl) {
+    security_keychainImpl = securityKeychainImpl;
+  }
+
+  public void setSecuritySecretProviderImpl(String secretProviderImpl) {
+    security_secretProviderImpl = secretProviderImpl;
+  }
+
+  public void setSecurityAuthUrl(String authUrl) {
+    this.security_authUrl = authUrl;
+  }
+
+  public void setSecurityAuthImpl(String authImpl) {
+    security_authImpl = authImpl;
+  }
+
   private static final String[] L2                   = new String[] { "data", "logs", "data-backup", "statistics" };
 
   private static final String[] DSO_PERSISTENCE_MODE = new String[] { "mode" };
@@ -168,7 +207,7 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     out += elements(L2) + getPortsConfig() + elementGroup("authentication", AUTHENTICATION) + openElement("dso", DSO)
            + elements(DSO_RECONNECTWINDOW) + openElement("persistence", DSO_PERSISTENCE)
            + elements(DSO_PERSISTENCE_MODE) + getOffHeapConfig() + closeElement("persistence", DSO_PERSISTENCE)
-           + elementGroup("garbage-collection", DSO_GC) + closeElement("dso", DSO);
+           + elementGroup("garbage-collection", DSO_GC) + closeElement("dso", DSO) + getSecurityConfig();
 
     out += closeElement("server");
 
@@ -182,6 +221,26 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     out += "<enabled>" + offheapEnabled + "</enabled>\n";
     out += "<maxDataSize>" + offheapMaxDataSize + "</maxDataSize>\n";
     out += "</offheap>\n";
+    return out;
+  }
+
+  private String getSecurityConfig() {
+    if (!security_enabled) return "\n";
+    String out = "\n";
+    out += "<security>\n";
+    out += "\t<ssl>\n";
+    out += "\t\t<certificate>" + security_certificateUri + "</certificate>\n";
+    out += "\t</ssl>\n";
+    out += "\t<keychain>\n";
+    out += "\t\t<class>" + security_keychainImpl + "</class>\n";
+    out += "\t\t<url>" + security_keychainUrl + "</url>\n";
+    out += "\t\t<secret-provider>" + security_secretProviderImpl + "</secret-provider>\n";
+    out += "\t</keychain>\n";
+    out += "\t<auth>\n";
+    out += "\t\t<realm>" + security_authImpl + "</realm>\n";
+    out += "\t\t<url>" + security_authUrl + "</url>\n";
+    out += "\t</auth>\n";
+    out += "</security>\n";
     return out;
   }
 

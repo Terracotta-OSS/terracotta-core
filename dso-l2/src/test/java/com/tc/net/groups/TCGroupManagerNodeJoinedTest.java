@@ -166,7 +166,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     for (int i = 0; i < nodes; ++i) {
       StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stageManager);
+                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stageManager, null);
       ConfigurationContext context = new ConfigurationContextImpl(stageManager);
       stageManager.startAll(context, Collections.EMPTY_LIST);
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));
@@ -227,7 +227,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     for (int i = 0; i < nodes; ++i) {
       StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stageManager);
+                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stageManager, null);
       ConfigurationContext context = new ConfigurationContextImpl(stageManager);
       stageManager.startAll(context, Collections.EMPTY_LIST);
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));
@@ -307,7 +307,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     for (int i = 0; i < nodes; ++i) {
       StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stageManager);
+                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stageManager, null);
       ConfigurationContext context = new ConfigurationContextImpl(stageManager);
       stageManager.startAll(context, Collections.EMPTY_LIST);
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));

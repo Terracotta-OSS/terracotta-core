@@ -11,6 +11,7 @@ import com.tc.management.L1Management;
 import com.tc.management.TCClient;
 import com.tc.management.remote.protocol.terracotta.TunneledDomainManager;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
+import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
@@ -80,7 +81,8 @@ public interface DSOClientBuilder {
                                                     final HealthCheckerConfig hcConfig,
                                                     Map<TCMessageType, Class> messageTypeClassMapping,
                                                     Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping,
-                                                    ReconnectionRejectedHandler reconnectionRejectedBehaviour);
+                                                    ReconnectionRejectedHandler reconnectionRejectedBehaviour,
+                                                    TCSecurityManager securityManager);
 
   TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch, final DSOMBeanConfig config);
 

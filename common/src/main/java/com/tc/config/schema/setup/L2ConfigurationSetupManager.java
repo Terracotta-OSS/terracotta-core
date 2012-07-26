@@ -7,6 +7,7 @@ import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.CommonL2Config;
 import com.tc.config.schema.HaConfigSchema;
+import com.tc.config.schema.SecurityConfig;
 import com.tc.config.schema.SystemConfig;
 import com.tc.config.schema.UpdateCheckConfig;
 import com.tc.object.config.schema.L2DSOConfig;
@@ -47,6 +48,8 @@ public interface L2ConfigurationSetupManager {
 
   String getL2Identifier();
 
+  SecurityConfig getSecurity();
+
   CommonL2Config commonL2ConfigFor(String name) throws ConfigurationSetupException;
 
   L2DSOConfig dsoL2ConfigFor(String name) throws ConfigurationSetupException;
@@ -54,4 +57,6 @@ public interface L2ConfigurationSetupManager {
   TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator,
                                            TerracottaOperatorEventLogger opeventlogger)
       throws ConfigurationSetupException;
+
+  boolean isSecure();
 }

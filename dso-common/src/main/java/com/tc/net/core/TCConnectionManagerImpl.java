@@ -11,6 +11,7 @@ import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.core.event.TCListenerEvent;
 import com.tc.net.core.event.TCListenerEventListener;
+import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.transport.ConnectionHealthCheckerUtil;
@@ -46,12 +47,15 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   private final ConnectionEvents        connEvents;
   private final ListenerEvents          listenerEvents;
   private final SocketParams            socketParams;
+  private final TCSecurityManager       securityManager;
 
   public TCConnectionManagerImpl() {
-    this("ConnectionMgr", 0, new HealthCheckerConfigImpl("DefaultConfigForActiveConnections"));
+    this("ConnectionMgr", 0, new HealthCheckerConfigImpl("DefaultConfigForActiveConnections"), null);
   }
 
-  public TCConnectionManagerImpl(String name, int workerCommCount, HealthCheckerConfig healthCheckerConfig) {
+  public TCConnectionManagerImpl(String name, int workerCommCount, HealthCheckerConfig healthCheckerConfig,
+                                 TCSecurityManager securityManager) {
+    this.securityManager = securityManager;
     this.connEvents = new ConnectionEvents();
     this.listenerEvents = new ListenerEvents();
     this.socketParams = new SocketParams();
@@ -61,7 +65,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   }
 
   protected TCConnection createConnectionImpl(TCProtocolAdaptor adaptor, TCConnectionEventListener listener) {
-    return new TCConnectionImpl(listener, adaptor, this, comm.nioServiceThreadForNewConnection(), socketParams);
+    return new TCConnectionImpl(listener, adaptor, this, comm.nioServiceThreadForNewConnection(), socketParams, securityManager);
   }
 
   protected TCListener createListenerImpl(TCSocketAddress addr, ProtocolAdaptorFactory factory, int backlog,
@@ -85,7 +89,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
 
     CoreNIOServices commThread = comm.nioServiceThreadForNewListener();
 
-    TCListenerImpl rv = new TCListenerImpl(ssc, factory, getConnectionListener(), this, commThread);
+    TCListenerImpl rv = new TCListenerImpl(ssc, factory, getConnectionListener(), this, commThread, securityManager);
 
     commThread.registerListener(rv, ssc);
 

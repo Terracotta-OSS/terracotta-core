@@ -100,7 +100,7 @@ public class MockChannel implements DSOClientMessageChannel {
     throw new ImplementMe();
   }
 
-  public void open() {
+  public void open(final char[] password) {
     throw new ImplementMe();
   }
 

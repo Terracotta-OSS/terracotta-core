@@ -23,6 +23,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
 import javax.management.AttributeChangeNotification;
@@ -34,6 +35,9 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXServiceURL;
 
 public class ServerConnectionManager implements NotificationListener {
+
+  private static AtomicBoolean               secured = new AtomicBoolean(false);
+
   private L2Info                             l2Info;
   private boolean                            autoConnect;
   private ConnectionContext                  connectCntx;
@@ -81,6 +85,10 @@ public class ServerConnectionManager implements NotificationListener {
 
       JDKLogging.setLevel("javax.management.remote", level);
     }
+  }
+
+  public static void setSecuredEnv(boolean value) {
+    secured.set(value);
   }
 
   public ServerConnectionManager(String host, int port, boolean autoConnect, ConnectionListener listener) {
@@ -149,7 +157,13 @@ public class ServerConnectionManager implements NotificationListener {
 
   public void setCredentials(String[] creds) {
     Map<String, Object> connEnv = getConnectionEnvironment();
-    connEnv.put("jmx.remote.credentials", creds);
+    Object[] values;
+    if(secured.get()) {
+      values = new Object[] { creds[0], creds[1].toCharArray() };
+    } else {
+      values = creds;
+    }
+    connEnv.put("jmx.remote.credentials", values);
   }
 
   public void clearCredentials() {
@@ -159,7 +173,13 @@ public class ServerConnectionManager implements NotificationListener {
 
   public String[] getCredentials() {
     Map<String, Object> connEnv = getConnectionEnvironment();
-    return (String[]) connEnv.get("jmx.remote.credentials");
+    final Object o = connEnv.get("jmx.remote.credentials");
+    if(secured.get()) { // need to put back in a String[], as this isn't encapsulated any better
+      final Object[] creds = (Object[]) o;
+      return new String[] { (String) creds[0],  new String((char[]) creds[1]) };
+    } else {
+      return (String[]) o;
+    }
   }
 
   static void cacheCredentials(ServerConnectionManager scm, String[] credentials) {
@@ -269,7 +289,7 @@ public class ServerConnectionManager implements NotificationListener {
       } catch (Exception e) {/**/
       }
     }
-    jmxConnector = new JMXConnectorProxy(getHostname(), getJMXPortNumber(), getConnectionEnvironment());
+    jmxConnector = new JMXConnectorProxy(getHostname(), getJMXPortNumber(), getConnectionEnvironment(), secured.get());
   }
 
   public JMXConnector getJmxConnector() {

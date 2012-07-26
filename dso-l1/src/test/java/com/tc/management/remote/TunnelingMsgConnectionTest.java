@@ -9,6 +9,7 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.management.remote.protocol.terracotta.JmxRemoteTunnelMessage;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.management.remote.protocol.terracotta.TunnelingMessageConnection;
+import com.tc.net.core.SecurityInfo;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.ClientMessageChannelImpl;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -102,7 +103,7 @@ public class TunnelingMsgConnectionTest extends TCTestCase {
 
     MockClientMessageChannelForTMC() {
       super(new TCMessageFactoryImpl(new NullSessionManager(), new NullMessageMonitor()), null,
-            new NullSessionManager(), null);
+            new NullSessionManager(), null, new SecurityInfo(), null);
       queue = new BoundedLinkedQueue(10);
       for (int i = 0; i < queue.capacity(); i++) {
         try {

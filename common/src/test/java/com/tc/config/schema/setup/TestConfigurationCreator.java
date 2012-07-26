@@ -18,7 +18,7 @@ public class TestConfigurationCreator extends StandardXMLFileConfigurationCreato
 
   public TestConfigurationCreator(final ConfigurationSpec configurationSpec, final ConfigBeanFactory beanFactory,
                                   boolean trustedSource) {
-    super(TCLogging.getLogger(TestConfigurationCreator.class), configurationSpec, beanFactory);
+    super(TCLogging.getLogger(TestConfigurationCreator.class), configurationSpec, beanFactory, null);
     this.trustedSource = trustedSource;
   }
 

@@ -21,12 +21,15 @@ import com.tc.logging.TCLogger;
 import com.tc.management.TerracottaManagement;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
+import com.tc.security.PwProvider;
 import com.tc.util.concurrent.ThreadUtil;
 
+import java.io.Console;
 import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetAddress;
+import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,6 +45,7 @@ public class TCStop {
   private final String          username;
   private final String          password;
   private final boolean         forceStop;
+  private final boolean         secured;
 
   public static final String    DEFAULT_HOST  = "localhost";
   public static final int       DEFAULT_PORT  = 9520;
@@ -53,6 +57,7 @@ public class TCStop {
     commandLineBuilder.setOptions(options);
     commandLineBuilder.addOption("u", "username", true, "username", String.class, false);
     commandLineBuilder.addOption("w", "password", true, "password", String.class, false);
+    commandLineBuilder.addOption("s", "secured", false, "secured", String.class, false);
     commandLineBuilder.addOption("force", "force", false, "force", String.class, false);
     commandLineBuilder.addOption("h", "help", String.class, false);
 
@@ -77,26 +82,40 @@ public class TCStop {
     boolean userNameSpecified = commandLineBuilder.hasOption('u');
     boolean passwordSpecified = commandLineBuilder.hasOption('w');
     boolean forceSpecified = commandLineBuilder.hasOption("force");
+    boolean securedSpecified = commandLineBuilder.hasOption("s");
     ArrayList tmpArgs = new ArrayList(Arrays.asList(args));
     tmpArgs.remove("-force");
     tmpArgs.remove("--force");
 
     String userName = null;
-    String password = null;
+    final String password;
     if (userNameSpecified) {
       userName = commandLineBuilder.getOptionValue('u');
       if (passwordSpecified) {
         password = commandLineBuilder.getOptionValue('w');
       } else {
-        password = CommandLineBuilder.readPassword();
+        final Console console = System.console();
+        if(console != null) {
+          password = new String(console.readPassword("Enter password: ")); // Hu?!
+        } else {
+          password = CommandLineBuilder.readPassword();
+        }
       }
+    } else {
+      password = null;
     }
 
+    boolean secured = false;
     if (configSpecified || System.getProperty("tc.config") != null || configFile.exists()) {
       if (!configSpecified && System.getProperty("tc.config") == null) {
 
         tmpArgs.add("-f");
-        tmpArgs.add(configFile.getAbsolutePath());
+        final String absolutePath = configFile.getAbsolutePath();
+        if(securedSpecified && absolutePath.indexOf('@') == -1 && userNameSpecified) {
+          tmpArgs.add(userName + "@" + absolutePath);
+        } else {
+          tmpArgs.add(absolutePath);
+        }
       }
 
       args = (String[]) tmpArgs.toArray(new String[tmpArgs.size()]);
@@ -105,7 +124,21 @@ public class TCStop {
       ConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(
                                                                                               args,
                                                                                               StandardConfigurationSetupManagerFactory.ConfigMode.L2,
-                                                                                              changeHandler);
+                                                                                              changeHandler, new PwProvider() {
+        @Override
+        public char[] getPasswordFor(final URI uri) {
+          return getPassword();
+        }
+
+        @Override
+        public char[] getPasswordForTC(final String user, final String host, final int port) {
+          return getPassword();
+        }
+
+        private char[] getPassword() {
+          return password != null ? password.toCharArray() : null;
+        }
+      });
 
       String name = null;
       if (nameSpecified) {
@@ -114,6 +147,12 @@ public class TCStop {
 
       L2ConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(name);
       String[] servers = manager.allCurrentlyKnownServers();
+
+      if(manager.isSecure() || securedSpecified) {
+        final Class<?> securityManagerClass = Class.forName("com.tc.net.core.security.TCClientSecurityManager");
+        securityManagerClass.newInstance();
+        secured = true;
+      }
 
       if (nameSpecified && !Arrays.asList(servers).contains(name)) {
         consoleLogger.error("The specified configuration of the Terracotta server instance '" + name
@@ -156,7 +195,7 @@ public class TCStop {
     }
 
     try {
-      new TCStop(host, port, userName, password, forceSpecified).stop();
+      new TCStop(host, port, userName, password, forceSpecified, secured).stop();
     } catch (SecurityException se) {
       consoleLogger.error(se.getMessage());
       commandLineBuilder.usageAndDie();
@@ -180,20 +219,21 @@ public class TCStop {
   }
 
   public TCStop(String host, int port) {
-    this(host, port, null, null, false);
+    this(host, port, null, null, false, false);
   }
 
-  public TCStop(String host, int port, String userName, String password, boolean forceStop) {
+  public TCStop(String host, int port, String userName, String password, boolean forceStop, boolean secured) {
     this.host = host;
     this.port = port;
     this.username = userName;
     this.password = password;
     this.forceStop = forceStop;
+    this.secured = secured;
   }
 
   public void stop() throws IOException {
     JMXConnector jmxc = null;
-    jmxc = CommandLineBuilder.getJMXConnector(username, password, host, port);
+    jmxc = CommandLineBuilder.getJMXConnector(username, password, host, port, secured);
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
 
     // To be in sync with Test framework's server shutdown grace time
@@ -269,7 +309,7 @@ public class TCStop {
     JMXConnector jmxConnector = null;
 
     try {
-      jmxConnector = CommandLineBuilder.getJMXConnector(username, password, l2Info.host(), l2Info.jmxPort());
+      jmxConnector = CommandLineBuilder.getJMXConnector(username, password, l2Info.host(), l2Info.jmxPort(), secured);
       final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
       mbean = MBeanServerInvocationProxy
           .newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);

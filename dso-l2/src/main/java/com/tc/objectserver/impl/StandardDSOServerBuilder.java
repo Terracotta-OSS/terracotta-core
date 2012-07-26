@@ -30,6 +30,7 @@ import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.net.GroupID;
 import com.tc.net.ServerID;
+import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.SingleNodeGroupManager;
 import com.tc.net.groups.StripeIDStateManager;
@@ -102,12 +103,15 @@ import java.util.List;
 import javax.management.MBeanServer;
 
 public class StandardDSOServerBuilder implements DSOServerBuilder {
-  private final HaConfig   haConfig;
-  private final GroupID    thisGroupID;
-  protected final TCLogger logger;
+  private final HaConfig          haConfig;
+  private final GroupID           thisGroupID;
 
-  public StandardDSOServerBuilder(final HaConfig haConfig, final TCLogger logger) {
+  protected final TCSecurityManager securityManager;
+  protected final TCLogger          logger;
+
+  public StandardDSOServerBuilder(final HaConfig haConfig, final TCLogger logger, final TCSecurityManager securityManager) {
     this.logger = logger;
+    this.securityManager = securityManager;
     this.logger.info("Standard DSO Server created");
     this.haConfig = haConfig;
     this.thisGroupID = this.haConfig.getThisGroupID();
@@ -140,7 +144,8 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                              final Sink httpSink, final StripeIDStateManager stripeStateManager,
                                              final ServerGlobalTransactionManager gtxm) {
     if (networkedHA) {
-      return new TCGroupManagerImpl(configManager, stageManager, serverNodeID, httpSink, this.haConfig.getNodesStore());
+      return new TCGroupManagerImpl(configManager, stageManager, serverNodeID, httpSink, this.haConfig.getNodesStore(),
+                                    securityManager);
     } else {
       return new SingleNodeGroupManager();
     }

@@ -264,34 +264,42 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     return wgf;
   }
 
+  @Override
   public void start() {
     this.stateManager.startElection();
   }
 
+  @Override
   public StateManager getStateManager() {
     return this.stateManager;
   }
 
+  @Override
   public L2ObjectStateManager getL2ObjectStateManager() {
     return this.l2ObjectStateManager;
   }
 
+  @Override
   public ReplicatedClusterStateManager getReplicatedClusterStateManager() {
     return this.rClusterStateMgr;
   }
 
+  @Override
   public ReplicatedObjectManager getReplicatedObjectManager() {
     return this.rObjectManager;
   }
 
+  @Override
   public ReplicatedTransactionManager getReplicatedTransactionManager() {
     return this.rTxnManager;
   }
 
+  @Override
   public GroupManager getGroupManager() {
     return this.groupManager;
   }
 
+  @Override
   public void l2StateChanged(final StateChangedEvent sce) {
     // someone wants to be notified earlier
     fireStateChangedEvent(sce);
@@ -324,6 +332,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     }
   }
 
+  @Override
   public void nodeJoined(final NodeID nodeID) {
     log(nodeID + " joined the cluster");
     if (this.stateManager.isActiveCoordinator()) {
@@ -351,6 +360,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     this.consoleLogger.warn(message);
   }
 
+  @Override
   public void nodeLeft(final NodeID nodeID) {
     warn(nodeID + " left the cluster");
     if (this.stateManager.isActiveCoordinator()) {
@@ -363,6 +373,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     this.indexSequenceGenerator.clearSequenceFor(nodeID);
   }
 
+  @Override
   public void sequenceCreatedFor(final Object key) throws SequenceGeneratorException {
     final NodeID nodeID = (NodeID) key;
     try {
@@ -373,10 +384,12 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                                 L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
                                 "Error publishing reset counter for " + nodeID
                                     + L2HAZapNodeRequestProcessor.getErrorString(ge));
+      rObjectManager.clear(nodeID);
       throw new SequenceGeneratorException(ge);
     }
   }
 
+  @Override
   public void sequenceDestroyedFor(final Object key) {
     // NOP
   }
@@ -391,6 +404,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     return false;
   }
 
+  @Override
   public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     final StringBuilder strBuilder = new StringBuilder();
     strBuilder.append(L2HACoordinator.class.getSimpleName() + " [ ");
@@ -401,10 +415,12 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     return out;
   }
 
+  @Override
   public StateSyncManager getStateSyncManager() {
     return this.l2PassiveSyncStateManager;
   }
 
+  @Override
   public boolean isStartedWithCleanDB() {
     return this.isCleanDB;
   }

@@ -93,7 +93,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
                                                        new TCThreadGroup(new ThrowableHandler(TCLogging
                                                            .getLogger(TCGroupManagerImplTest.class))),
                                                        new QueueFactory());
-      groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stageManager);
+      groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stageManager, null);
       ConfigurationContext context = new ConfigurationContextImpl(stageManager);
       stageManager.startAll(context, Collections.EMPTY_LIST);
       groups[i].setDiscover(new TCGroupMemberDiscoveryStatic(groups[i]));

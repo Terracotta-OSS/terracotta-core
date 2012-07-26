@@ -139,10 +139,12 @@ public class ClusterStateMessage extends AbstractGroupMessage {
     else out.writeString(conn.getJvmID());
     out.writeLong(conn.getChannelID());
     out.writeString(conn.getServerID());
+    out.writeString(conn.getUsername());
+    out.writeString(conn.getPassword() == null ? null : new String(conn.getPassword()));
   }
 
   private ConnectionID readConnectionID(TCByteBufferInput in) throws IOException {
-    return new ConnectionID(in.readString(), in.readLong(), in.readString());
+    return new ConnectionID(in.readString(), in.readLong(), in.readString(), in.readString(), in.readString());
   }
 
   public long getNextAvailableObjectID() {

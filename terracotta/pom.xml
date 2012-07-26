@@ -26,13 +26,11 @@
       <groupId>org.terracotta.internal</groupId>
       <artifactId>deploy</artifactId>
       <version>${project.version}</version>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>dso-statistics</artifactId>
       <version>${project.version}</version>
-      <scope>provided</scope>
     </dependency>
   </dependencies>
 
@@ -44,6 +42,7 @@
         <configuration>
           <rootPath>${basedir}/..</rootPath>
           <addClasspath>true</addClasspath>
+          <excludeGroupIds>org.terracotta.internal</excludeGroupIds>
           <manifestEntries>
             <Main-Class>com.tc.cli.CommandLineMain</Main-Class>
             <Class-Path>resources/</Class-Path>
@@ -85,22 +84,6 @@
         <version>2.2.1</version>
         <executions>
           <execution>
-            <id>assemble-jar</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <archive>
-                <manifestFile>${project.build.directory}/MANIFEST.MF</manifestFile>
-              </archive>
-              <descriptors>
-                <descriptor>${basedir}/src/assemble/jar.xml</descriptor>
-              </descriptors>
-              <appendAssemblyId>false</appendAssemblyId>
-            </configuration>
-          </execution>
-          <execution>
             <id>assemble-sources</id>
             <phase>package</phase>
             <goals>
@@ -115,6 +98,68 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>1.7.1</version>
+        <configuration>
+          <artifactSet>
+            <includes>
+              <include>org.terracotta.internal:*</include>
+            </includes>
+          </artifactSet>       
+          <filters>
+            <filter>
+              <artifact>*:*</artifact>
+              <excludes>
+                <exclude>**/META-INF/maven/org.terracotta.internal/**</exclude>
+              </excludes>
+            </filter>		  
+          </filters>    
+          <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
+          <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>           
+          <transformers>
+            <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+              <resource>MANIFEST.MF</resource>
+            </transformer>          
+            <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+              <resource>META-INF/MANIFEST.MF</resource>
+              <file>${project.build.directory}/MANIFEST.MF</file>
+            </transformer>          
+          </transformers>            
+        </configuration>
+        <executions>
+          <execution>
+            <id>shade-jar</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.gmaven</groupId>
+        <artifactId>gmaven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>inject-correct-pom-to-jar</id>
+            <phase>package</phase>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+            <configuration>
+              <source>
+                def jarFile = new File(project.build.directory, "${project.artifactId}-${project.version}.jar")
+                ant.jar(destfile: jarFile, update: "true") {
+                  zipfileset(file: new File(project.build.directory, "dependency-reduced-pom.xml"), 
+                             fullpath: "META-INF/maven/${project.groupId}/${project.artifactId}/pom.xml")
+                }
+              </source>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>       
     </plugins>
   </build>
 </project>

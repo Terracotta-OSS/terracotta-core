@@ -86,12 +86,12 @@ public class TCGroupMessageWrapperTest extends TestCase {
                                                 new PlainNetworkStackHarnessFactory(), null,
                                                 new NullConnectionPolicy(), 0, new DisabledHealthCheckerConfigImpl(),
                                                 new TransportHandshakeErrorNullHandler(), Collections.EMPTY_MAP,
-                                                Collections.EMPTY_MAP);
+                                                Collections.EMPTY_MAP, null);
     serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", monitor, new TCMessageRouterImpl(),
                                                 new PlainNetworkStackHarnessFactory(), null,
                                                 new NullConnectionPolicy(), 0, new DisabledHealthCheckerConfigImpl(),
                                                 new TransportHandshakeErrorNullHandler(), Collections.EMPTY_MAP,
-                                                Collections.EMPTY_MAP);
+                                                Collections.EMPTY_MAP, null);
   }
 
   @Override

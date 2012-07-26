@@ -121,6 +121,10 @@ public class TestClientMessageChannel implements ClientMessageChannel {
     throw new ImplementMe();
   }
 
+  public NetworkStackID open(char[] password) {
+    throw new ImplementMe();
+  }
+
   public Object removeAttachment(final String key) {
     throw new ImplementMe();
   }

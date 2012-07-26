@@ -64,6 +64,9 @@ public interface MessageChannel {
   public NetworkStackID open() throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException,
       IOException, CommStackMismatchException;
 
+  public NetworkStackID open(char[] password) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException,
+      IOException, CommStackMismatchException;
+
   public void close();
   
   public NodeID getLocalNodeID();

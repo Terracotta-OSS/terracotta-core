@@ -17,9 +17,10 @@ public class GroupsData implements Serializable {
   private final int[]    proxyL2GroupPorts;
   private final int[]    proxyDsoPorts;
   private final String[] dataDirectoryPath;
+  private final String[] logDirectoryPath;
 
   public GroupsData(String groupName, int[] dsoPorts, int[] jmxPorts, int[] l2GroupPorts, String[] serverNames,
-                    int[] proxyDsoPorts, int[] proxyL2GroupPorts, String[] dataDirectoryPath) {
+                    int[] proxyDsoPorts, int[] proxyL2GroupPorts, String[] dataDirectoryPath, String[] logDirectoryPath) {
     this.groupName = groupName;
     this.serverNames = serverNames;
     this.dsoPorts = dsoPorts;
@@ -28,6 +29,7 @@ public class GroupsData implements Serializable {
     this.proxyDsoPorts = proxyDsoPorts;
     this.proxyL2GroupPorts = proxyL2GroupPorts;
     this.dataDirectoryPath = dataDirectoryPath;
+    this.logDirectoryPath = logDirectoryPath;
   }
 
   public void setDsoPorts(int[] dsoPorts) {
@@ -74,6 +76,12 @@ public class GroupsData implements Serializable {
                           + this.dataDirectoryPath.length,
                       (serverIndex >= 0 && serverIndex < this.dataDirectoryPath.length));
     return dataDirectoryPath[serverIndex];
+  }
+
+  public String getLogDirectoryPath(final int serverIndex) {
+    Assert.assertTrue("server index > numOfServers, serverIndex: " + serverIndex + " numOfServers: "
+                      + this.logDirectoryPath.length, (serverIndex >= 0 && serverIndex < this.logDirectoryPath.length));
+    return logDirectoryPath[serverIndex];
   }
 
   public String[] getServerNames() {
