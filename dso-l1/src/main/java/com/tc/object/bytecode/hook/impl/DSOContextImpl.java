@@ -46,7 +46,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.ConnectException;
-import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.security.ProtectionDomain;
 import java.util.Map;
@@ -185,6 +184,7 @@ public class DSOContextImpl implements DSOContext {
     l.debug(h.toString(), new Throwable());
   }
 
+  @Override
   public Manager getManager() {
     return this.manager;
   }
@@ -200,12 +200,14 @@ public class DSOContextImpl implements DSOContext {
    * 
    * @return new byte array if the class is instrumented and same input byte array if not.
    */
+  @Override
   public byte[] preProcess(String name, byte[] data, int offset, int length, ClassLoader caller) {
     InstrumentationContext context = new InstrumentationContext(name, data, caller);
     weavingStrategy.transform(name, context);
     return context.getCurrentBytecode();
   }
 
+  @Override
   public void postProcess(Class clazz, ClassLoader caller) {
     // NOP
   }
@@ -278,11 +280,13 @@ public class DSOContextImpl implements DSOContext {
                                  + theURL + "'. Is the L2 running?");
   }
 
+  @Override
   public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
                           ProtectionDomain protectionDomain, byte[] classfileBuffer) {
     return preProcess(className, classfileBuffer, 0, classfileBuffer.length, loader);
   }
 
+  @Override
   public void shutdown() {
     if (expressRejoinClient) {
       manager.stopImmediate();
