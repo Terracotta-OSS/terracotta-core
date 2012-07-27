@@ -7,11 +7,12 @@ import com.tc.net.ClientID;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.ServerLockContext;
-import com.tc.object.locks.ServerLockLevel;
-import com.tc.object.locks.ThreadID;
 import com.tc.object.locks.ServerLockContext.State;
 import com.tc.object.locks.ServerLockContext.Type;
+import com.tc.object.locks.ServerLockLevel;
+import com.tc.object.locks.ThreadID;
 import com.tc.objectserver.locks.context.LinkedServerLockContext;
+import com.tc.objectserver.locks.context.SingleServerLockContext;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 
@@ -65,8 +66,9 @@ public final class ServerLockImpl extends AbstractServerLock {
   protected void reestablishLock(ClientServerExchangeLockContext cselc, LockHelper helper) {
     // if greedy request then award greedily and don't respond
     if (cselc.getThreadID().equals(ThreadID.VM_ID)) {
-      awardLockGreedily(helper, createPendingContext((ClientID) cselc.getNodeID(), cselc.getThreadID(), cselc
-          .getState().getLockLevel(), helper), false);
+      awardLockGreedily(helper,
+                        createPendingContext((ClientID) cselc.getNodeID(), cselc.getThreadID(), cselc.getState()
+                            .getLockLevel(), helper), false);
     } else {
       super.reestablishLock(cselc, helper);
     }
@@ -220,11 +222,14 @@ public final class ServerLockImpl extends AbstractServerLock {
           queue(cid, cselc.getThreadID(), cselc.getState().getLockLevel(), Type.PENDING, -1, helper);
           break;
         case TRY_PENDING:
-          Assert.assertFalse(hasGreedyReadHolder);
-          if (cselc.timeout() <= 0) {
-            cannotAward(cid, cselc.getThreadID(), cselc.getState().getLockLevel(), helper);
-          } else {
-            queue(cid, cselc.getThreadID(), cselc.getState().getLockLevel(), Type.TRY_PENDING, cselc.timeout(), helper);
+          if (!checkDuplicate(new SingleServerLockContext(cid, cselc.getThreadID()))) {
+            Assert.assertFalse(hasGreedyReadHolder);
+            if (cselc.timeout() <= 0) {
+              cannotAward(cid, cselc.getThreadID(), cselc.getState().getLockLevel(), helper);
+            } else {
+              queue(cid, cselc.getThreadID(), cselc.getState().getLockLevel(), Type.TRY_PENDING, cselc.timeout(),
+                    helper);
+            }
           }
           break;
         case WAITER:
@@ -257,8 +262,10 @@ public final class ServerLockImpl extends AbstractServerLock {
 
     List<ServerLockContext> greedyHolders = getGreedyHolders();
     for (ServerLockContext greedyHolder : greedyHolders) {
-      LockResponseContext lrc = LockResponseContextFactory.createLockRecallResponseContext(lockID, greedyHolder
-          .getClientID(), greedyHolder.getThreadID(), level);
+      LockResponseContext lrc = LockResponseContextFactory.createLockRecallResponseContext(lockID,
+                                                                                           greedyHolder.getClientID(),
+                                                                                           greedyHolder.getThreadID(),
+                                                                                           level);
       helper.getLockSink().add(lrc);
       isRecalled = true;
     }
