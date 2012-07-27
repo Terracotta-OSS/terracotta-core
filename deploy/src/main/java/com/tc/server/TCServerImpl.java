@@ -127,7 +127,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   private final L2ConfigurationSetupManager configurationSetupManager;
   protected final ConnectionPolicy          connectionPolicy;
   private boolean                           shutdown                                     = false;
-  private         TCSecurityManager         securityManager;
+  protected final TCSecurityManager         securityManager;
 
   /**
    * This should only be used for tests.
@@ -151,6 +151,8 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     if(configurationSetupManager.isSecure()) {
       this.securityManager = createSecurityManager(configurationSetupManager.getSecurity());
+    } else {
+      this.securityManager = null;
     }
 
     this.statisticsGathererSubSystem = new StatisticsGathererSubSystem();
@@ -184,6 +186,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     return new OrderedGroupIDs(gids);
   }
 
+  @Override
   public ServerGroupInfo[] serverGroups() {
     L2Info[] l2Infos = infoForAllL2s();
     List<ActiveServerGroupConfig> groups = this.configurationSetupManager.activeServerGroupsConfig()
@@ -206,6 +209,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     return result;
   }
 
+  @Override
   public L2Info[] infoForAllL2s() {
     String[] allKnownL2s = this.configurationSetupManager.allCurrentlyKnownServers();
     L2Info[] out = new L2Info[allKnownL2s.length];
@@ -236,6 +240,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     return out;
   }
 
+  @Override
   public String getDescriptionOfCapabilities() {
     if (ProductInfo.getInstance().isEnterprise()) {
       return LicenseManager.licensedCapabilities();
@@ -248,6 +253,7 @@ public class TCServerImpl extends SEDA implements TCServer {
    * I realize this is wrong, since the server can still be starting but we'll have to deal with the whole stopping
    * issue later, and there's the TCStop feature which should be removed.
    */
+  @Override
   public void stop() {
     synchronized (this.stateLock) {
       if (!this.state.isStartState()) {
@@ -260,6 +266,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   }
 
+  @Override
   public void start() {
     synchronized (this.stateLock) {
       if (this.state.isStartState()) {
@@ -275,11 +282,13 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
   }
 
+  @Override
   public boolean canShutdown() {
     return (!this.state.isStartState() || (this.dsoServer != null && this.dsoServer.isBlocking()))
            && !this.state.isStopState();
   }
 
+  @Override
   public synchronized void shutdown() {
     if (canShutdown()) {
       this.state.setState(StateManager.STOP_STATE);
@@ -291,28 +300,34 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
   }
 
+  @Override
   public long getStartTime() {
     return this.startTime;
   }
 
+  @Override
   public void updateActivateTime() {
     if (this.activateTime == -1) {
       this.activateTime = System.currentTimeMillis();
     }
   }
 
+  @Override
   public long getActivateTime() {
     return this.activateTime;
   }
 
+  @Override
   public boolean isGarbageCollectionEnabled() {
     return this.configurationSetupManager.dsoL2Config().garbageCollection().getEnabled();
   }
 
+  @Override
   public int getGarbageCollectionInterval() {
     return this.configurationSetupManager.dsoL2Config().garbageCollection().getInterval();
   }
 
+  @Override
   public String getConfig() {
     try {
       InputStream is = this.configurationSetupManager.rawConfigFile();
@@ -322,20 +337,24 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
   }
 
+  @Override
   public String getPersistenceMode() {
     return this.configurationSetupManager.dsoL2Config().getPersistence().getMode().toString();
   }
 
+  @Override
   public String getFailoverMode() {
     HaConfigSchema haConfig = this.configurationSetupManager.haConfig();
     return haConfig.getHa().getMode().toString();
   }
 
+  @Override
   public int getDSOListenPort() {
     if (this.dsoServer != null) { return this.dsoServer.getListenPort(); }
     throw new IllegalStateException("DSO Server not running");
   }
 
+  @Override
   public int getDSOGroupPort() {
     if (this.dsoServer != null) { return this.dsoServer.getGroupPort(); }
     throw new IllegalStateException("DSO Server not running");
@@ -345,14 +364,17 @@ public class TCServerImpl extends SEDA implements TCServer {
     return this.dsoServer;
   }
 
+  @Override
   public boolean isStarted() {
     return !this.state.isStartState();
   }
 
+  @Override
   public boolean isActive() {
     return this.state.isActiveCoordinator();
   }
 
+  @Override
   public boolean isStopped() {
     // XXX:: introduce a new state when stop is officially supported.
     return this.state.isStartState();
@@ -434,6 +456,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   private class StartAction implements StartupAction {
+    @Override
     public void execute() throws Throwable {
       if (logger.isDebugEnabled()) {
         logger.debug("Starting Terracotta server instance...");
@@ -507,7 +530,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     this.dsoServer = createDistributedObjectServer(this.configurationSetupManager, this.connectionPolicy, httpSink,
                                                    new TCServerInfo(this, this.state, objectStatsRecorder),
-                                                   objectStatsRecorder, this.state, this, this.securityManager);
+                                                   objectStatsRecorder, this.state, this);
     this.dsoServer.start();
     registerDSOServer();
   }
@@ -516,8 +539,7 @@ public class TCServerImpl extends SEDA implements TCServer {
                                                                   ConnectionPolicy policy, Sink httpSink,
                                                                   TCServerInfo serverInfo,
                                                                   ObjectStatsRecorder objectStatsRecorder,
-                                                                  L2State l2State, TCServerImpl serverImpl,
-                                                                  TCSecurityManager securityManager) {
+                                                                  L2State l2State, TCServerImpl serverImpl) {
     return new DistributedObjectServer(configSetupManager, getThreadGroup(), policy, httpSink, serverInfo,
                                        objectStatsRecorder, l2State, this, this, securityManager);
   }
@@ -680,6 +702,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     servletHandler.addServlet(holder);
   }
 
+  @Override
   public void dump() {
     if (this.dsoServer != null) {
       this.dsoServer.dump();
@@ -729,16 +752,19 @@ public class TCServerImpl extends SEDA implements TCServer {
       this.manager = manager;
     }
 
+    @Override
     public TCLogger getLogger(final Class clazz) {
       return TCLogging.getLogger(clazz);
     }
 
+    @Override
     public Stage getStage(final String name) {
       return this.manager.getStage(name);
     }
 
   }
 
+  @Override
   public void startBeanShell(final int port) {
     if (this.dsoServer != null) {
       this.dsoServer.startBeanShell(port);
@@ -750,6 +776,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     notifyAll();
   }
 
+  @Override
   public synchronized void waitUntilShutdown() {
     while (!shutdown) {
       try {
@@ -760,20 +787,24 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
   }
 
+  @Override
   public void reloadConfiguration() throws ConfigurationSetupException {
     dsoServer.reloadConfiguration();
   }
 
+  @Override
   public String[] processArguments() {
     return configurationSetupManager.processArguments();
   }
 
+  @Override
   public void dumpClusterState() {
     if (this.dsoServer != null) {
       this.dsoServer.dumpClusterState();
     }
   }
 
+  @Override
   public boolean isProduction() {
     ConfigurationModel configurationModel = configurationSetupManager.systemConfig().configurationModel();
     return configurationModel.equals(ConfigurationModel.PRODUCTION);
@@ -820,6 +851,7 @@ class TCUserRealm implements UserRealm {
 
   @Override
   public void disassociate(final Principal user) {
+    //
   }
 
   @Override

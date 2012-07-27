@@ -131,6 +131,7 @@ public class TCStop {
         }
 
         @Override
+        @SuppressWarnings("hiding")
         public char[] getPasswordForTC(final String user, final String host, final int port) {
           return getPassword();
         }

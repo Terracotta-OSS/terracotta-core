@@ -22,7 +22,6 @@ import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory.ConfigMode;
 import com.tc.net.core.SecurityInfo;
-import com.tc.object.config.schema.DSOApplicationConfig;
 import com.tc.object.config.schema.L1DSOConfig;
 import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.object.config.schema.L2DSOConfigObject;
@@ -521,10 +520,12 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
 
       @Override
       public void changesInItemIgnored(final ConfigItem item) {
+        //
       }
 
       @Override
       public void changesInItemForbidden(final ConfigItem item) {
+        //
       }
 
       @Override
@@ -643,6 +644,7 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     this(null, illegalConfigurationChangeHandler);
   }
 
+  @Override
   public L1ConfigurationSetupManager getL1TVSConfigurationSetupManager(SecurityInfo securityInfo) {
     return this.sampleL1Manager;
   }
@@ -681,6 +683,7 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     return configSetupManager;
   }
 
+  @Override
   public L2ConfigurationSetupManagerImpl createL2TVSConfigurationSetupManager(String l2Identifier)
       throws ConfigurationSetupException {
     String effectiveL2Identifier = l2Identifier == null ? this.defaultL2Identifier : l2Identifier;
