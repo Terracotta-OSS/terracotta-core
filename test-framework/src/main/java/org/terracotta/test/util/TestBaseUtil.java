@@ -31,6 +31,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+
 public class TestBaseUtil {
 
   public static void removeDuplicateJvmArgs(List<String> jvmArgs) {
@@ -195,5 +199,33 @@ public class TestBaseUtil {
       list.add(tinfo);
     }
     return list;
+  }
+
+  public static void dumpHeap(String dumpName) {
+    try {
+      MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+      String hotSpotDiagName = "com.sun.management:type=HotSpotDiagnostic";
+      ObjectName name = new ObjectName(hotSpotDiagName);
+      String operationName = "dumpHeap";
+  
+      new File("heapDumps").mkdirs();
+      File tempFile = new File("heapDumps/" + dumpName + "_" + (System.currentTimeMillis()) + ".hprof");
+      tempFile.delete();
+      String dumpFilename = tempFile.getAbsolutePath();
+  
+      Object[] params = new Object[] { dumpFilename, Boolean.TRUE };
+      String[] signature = new String[] { String.class.getName(), boolean.class.getName() };
+      try {
+        mbs.invoke(name, operationName, params, signature);
+      } catch (InstanceNotFoundException e) {
+        System.out.println("heap dump failed: " + e);
+        return;
+      }
+  
+      System.out.println("dumped heap in file " + dumpFilename);
+    } catch (Exception e) {
+      System.out.println("Caught exception while trying to heap dump:");
+      e.printStackTrace();
+    }
   }
 }
