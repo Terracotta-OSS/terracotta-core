@@ -32,7 +32,7 @@
     <security-core-version>1.1.0-SNAPSHOT</security-core-version>
     <security-keychain-version>1.1.0-SNAPSHOT</security-keychain-version>
     <management.version>2.7.0-SNAPSHOT</management.version>
-    <terracotta-license.version>1.0.4</terracotta-license.version>
+    <terracotta-license.version>1.0.5-SNAPSHOT</terracotta-license.version>
     <maven-forge-plugin.version>1.0.6-SNAPSHOT</maven-forge-plugin.version>
     <derby.version>10.8.2.2</derby.version>
     <tcconfig.version>3.8.0-SNAPSHOT</tcconfig.version>
