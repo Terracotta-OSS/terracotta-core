@@ -4,6 +4,8 @@
  */
 package com.tc.server;
 
+import net.sf.ehcache.management.service.impl.JmxRepositoryService;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.mortbay.jetty.Request;
@@ -472,7 +474,6 @@ public class TCServerImpl extends SEDA implements TCServer {
 
       TCServerImpl.this.terracottaConnector = new TerracottaConnector(TCServerImpl.this.configurationSetupManager.getSecurity() != null);
       startHTTPServer(commonL2Config, TCServerImpl.this.terracottaConnector);
-
       Stage stage = getStageManager().createStage("dso-http-bridge",
                                                   new HttpConnectionHandler(TCServerImpl.this.terracottaConnector), 1,
                                                   100);
@@ -480,6 +481,9 @@ public class TCServerImpl extends SEDA implements TCServer {
 
       // the following code starts the jmx server as well
       startDSOServer(stage.getSink());
+
+      // when the jmx server is started, we can attach the JMXRepository service used for the rest management agent
+      JmxRepositoryService.create();
 
       if (isActive()) {
         updateActivateTime();
