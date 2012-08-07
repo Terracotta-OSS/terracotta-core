@@ -15,7 +15,7 @@ public class TestDNA implements DNA {
   public DNACursor cursor;
   public ObjectID  objectID;
   public long      version;
-  public String    typeName       = "SomeClassName";
+  public String    typeName       = "com.terracotta.toolkit.roots.impl.ToolkitTypeRootImpl";
   public ObjectID  parentObjectID = ObjectID.NULL_ID;
   public boolean   isDelta;
 

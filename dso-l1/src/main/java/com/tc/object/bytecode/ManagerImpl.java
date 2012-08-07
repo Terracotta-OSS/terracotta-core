@@ -23,6 +23,7 @@ import com.tc.license.LicenseManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.TunneledDomainUpdater;
+import com.tc.net.GroupID;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ClientShutdownManager;
@@ -85,6 +86,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
 import javax.management.MBeanServer;
@@ -117,7 +119,9 @@ public class ManagerImpl implements Manager {
   private DmiManager                               methodCallManager;
 
   private final SerializationUtil                  serializer          = new SerializationUtil();
+
   private final MethodDisplayNames                 methodDisplay       = new MethodDisplayNames(this.serializer);
+  private final ConcurrentHashMap<String, Object>  registeredObjects = new ConcurrentHashMap<String, Object>();
 
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
                      final TCSecurityManager securityManager) {
@@ -393,6 +397,26 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
+  public Object lookupOrCreateRoot(final String name, final Object object, GroupID gid) {
+    try {
+      return this.objectManager.lookupOrCreateRoot(name, object, gid);
+    } catch (final Throwable t) {
+      Util.printLogAndRethrowError(t, logger);
+      throw new AssertionError();
+    }
+  }
+
+  @Override
+  public Object lookupRoot(final String name, GroupID gid) {
+    try {
+      return this.objectManager.lookupRoot(name, gid);
+    } catch (final Throwable t) {
+      Util.printLogAndRethrowError(t, logger);
+      throw new AssertionError();
+    }
+  }
+
+  @Override
   public Object lookupOrCreateRootNoDepth(final String name, final Object obj) {
     return lookupOrCreateRoot(name, obj, true);
   }
@@ -456,6 +480,16 @@ public class ManagerImpl implements Manager {
     }
 
     return this.objectManager.lookupOrCreate(obj);
+  }
+
+  @Override
+  public TCObject lookupOrCreate(final Object obj, GroupID gid) {
+    if (obj instanceof Manageable) {
+      TCObject tco = ((Manageable) obj).__tc_managed();
+      if (tco != null) { return tco; }
+    }
+
+    return this.objectManager.lookupOrCreate(obj, gid);
   }
 
   @Override
@@ -1052,4 +1086,50 @@ public class ManagerImpl implements Manager {
     TerracottaOperatorEvent opEvent = new TerracottaOperatorEventImpl(eventLevel, eventSubsystem, eventMessage, "");
     TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(opEvent);
   }
+
+  @Override
+  public GroupID[] getGroupIDs() {
+    return this.dso.getGroupIDs();
+  }
+
+  @Override
+  public void lockIDWait(final LockID lock, final long timeout) throws InterruptedException {
+    try {
+      this.txManager.commit(lock, LockLevel.WRITE);
+    } catch (final UnlockedSharedObjectException e) {
+      throw new IllegalMonitorStateException();
+    }
+    try {
+      this.lockManager.wait(lock, null, timeout);
+    } finally {
+      // XXX this is questionable
+      this.txManager.begin(lock, LockLevel.WRITE);
+    }
+  }
+
+  @Override
+  public void lockIDNotifyAll(final LockID lock) {
+    this.txManager.notify(this.lockManager.notifyAll(lock, null));
+  }
+
+  @Override
+  public void lockIDNotify(final LockID lock) {
+    this.txManager.notify(this.lockManager.notify(lock, null));
+  }
+
+  @Override
+  public Object registerObjectByNameIfAbsent(String name, Object object) {
+    Object old = registeredObjects.putIfAbsent(name, object);
+    if (old != null) {
+      return old;
+    } else {
+      return object;
+    }
+  }
+
+  @Override
+  public <T> T lookupRegisteredObjectByName(String name, Class<T> expectedType) {
+    return expectedType.cast(registeredObjects.get(name));
+  }
+
 }

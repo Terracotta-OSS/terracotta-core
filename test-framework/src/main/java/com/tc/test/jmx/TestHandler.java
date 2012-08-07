@@ -113,4 +113,11 @@ public class TestHandler implements TestHandlerMBean {
   public boolean isStandAloneTest() {
     return this.testConfig.isStandAloneTest();
   }
+
+  @Override
+  public void clientExitedWithException(Throwable t) {
+    t.printStackTrace();
+
+  }
+
 }

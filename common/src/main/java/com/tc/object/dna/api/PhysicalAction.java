@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.dna.api;
 
@@ -22,14 +23,16 @@ public class PhysicalAction {
 
   /**
    * Construct a physical action representing a new value for an entire array
+   * 
    * @param value The new array
    */
   public PhysicalAction(Object value) {
     this(null, -1, value, false, ENTIRE_ARRAY);
   }
-  
+
   /**
    * Construct a physical action representing a new subarray
+   * 
    * @param value The new subarray
    * @param startPos The starting position for the new subarray
    */
@@ -38,19 +41,18 @@ public class PhysicalAction {
   }
 
   /**
-   * Construct a physical action representing a single array element
-   * change.
+   * Construct a physical action representing a single array element change.
+   * 
    * @param index The index in the array parent
    * @param value The new value for the array element
-   * @param isReference Whether the new value is a reference 
+   * @param isReference Whether the new value is a reference
    */
   public PhysicalAction(int index, Object value, boolean isReference) {
     this(null, index, value, isReference, ARRAY_ELEMENT);
   }
 
   /**
-   * Construct a physical action that consists of a field, a new value, and 
-   * whether the new value is a reference.
+   * Construct a physical action that consists of a field, a new value, and whether the new value is a reference.
    */
   public PhysicalAction(String field, Object value, boolean isReference) {
     this(field, -1, value, isReference, TRUE_PHYSICAL);
@@ -58,6 +60,7 @@ public class PhysicalAction {
 
   /**
    * Main internal constructor with all parameters.
+   * 
    * @param field Field name, will be null for all but true physical
    * @param index Array index or -1 if not an array index
    * @param value Value
@@ -74,6 +77,7 @@ public class PhysicalAction {
 
   /**
    * Get field name, only valid if this physical action is a true physical field change.
+   * 
    * @return Field name, never null
    * @throws IllegalStateException If called on an action that returns false for {@link #isTruePhysical()}
    */
@@ -85,6 +89,7 @@ public class PhysicalAction {
 
   /**
    * Get object value
+   * 
    * @return Object value
    */
   public Object getObject() {
@@ -93,6 +98,7 @@ public class PhysicalAction {
 
   /**
    * Is the object a reference?
+   * 
    * @return True if reference
    */
   public boolean isReference() {
@@ -100,8 +106,9 @@ public class PhysicalAction {
   }
 
   /**
-   * If this is an array element, the index of the element.  If this is a subarray,
-   * the starting position of the new subarray.  Otherwise, an error.
+   * If this is an array element, the index of the element. If this is a subarray, the starting position of the new
+   * subarray. Otherwise, an error.
+   * 
    * @return The array index
    * @throws IllegalStateException If not an array element or subarray
    */
@@ -130,12 +137,18 @@ public class PhysicalAction {
   public boolean isEntireArray() {
     return type == ENTIRE_ARRAY;
   }
-  
+
   /**
    * @return True if this is a subarray change
    */
   public boolean isSubArray() {
     return type == SUB_ARRAY;
+  }
+
+  @Override
+  public String toString() {
+    return "PhysicalAction [field=" + field + ", value=" + value + ", index=" + index + ", isReference=" + isReference
+           + ", type=" + type + "]";
   }
 
 }

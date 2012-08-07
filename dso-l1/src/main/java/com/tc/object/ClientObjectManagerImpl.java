@@ -103,7 +103,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private static final int                      COMMIT_SIZE                  = 100;
 
   private State                                 state                        = RUNNING;
-  private final Map                             roots                        = new HashMap();
   private final ConcurrentMap<Object, TCObject> pojoToManaged                = new MapMaker()
                                                                                  .concurrencyLevel(REFERENCE_MAP_SEGS)
                                                                                  .weakKeys().makeMap();
@@ -114,7 +113,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private final TraverseTest                    traverseTest;
   private final DSOClientConfigHelper           clientConfiguration;
   private final TCClassFactory                  clazzFactory;
-  private final Set                             rootLookupsInProgress        = new HashSet();
   private final ObjectIDProvider                idProvider;
   private final TCObjectFactory                 factory;
   private final ObjectStore                     objectStore;
@@ -143,6 +141,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
                                                                              };
   private final Semaphore                       creationSemaphore            = new Semaphore(1, true);
+  private final RootsHolder                     rootsHolder;
 
   public ClientObjectManagerImpl(final RemoteObjectManager remoteObjectManager,
                                  final DSOClientConfigHelper clientConfiguration, final ObjectIDProvider idProvider,
@@ -151,6 +150,19 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
                                  final TCObjectFactory objectFactory, final Portability portability,
                                  final DSOClientMessageChannel channel,
                                  final ToggleableReferenceManager referenceManager, TCObjectSelfStore tcObjectSelfStore) {
+    this(remoteObjectManager, clientConfiguration, idProvider, runtimeLogger, provider, classProvider, classFactory,
+         objectFactory, portability, channel, referenceManager, tcObjectSelfStore,
+         new RootsHolder(new GroupID[] { new GroupID(0) }));
+  }
+
+  public ClientObjectManagerImpl(final RemoteObjectManager remoteObjectManager,
+                                 final DSOClientConfigHelper clientConfiguration, final ObjectIDProvider idProvider,
+                                 final RuntimeLogger runtimeLogger, final ClientIDProvider provider,
+                                 final ClassProvider classProvider, final TCClassFactory classFactory,
+                                 final TCObjectFactory objectFactory, final Portability portability,
+                                 final DSOClientMessageChannel channel,
+                                 final ToggleableReferenceManager referenceManager,
+                                 TCObjectSelfStore tcObjectSelfStore, RootsHolder holder) {
     this.objectStore = new ObjectStore(tcObjectSelfStore);
     this.remoteObjectManager = remoteObjectManager;
     this.clientConfiguration = clientConfiguration;
@@ -167,6 +179,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     this.factory = objectFactory;
     this.factory.setObjectManager(this);
     this.appEventContextFactory = new NonPortableEventContextFactory(provider);
+    this.rootsHolder = holder;
 
     startReaper();
     ensureKeyClassesLoaded();
@@ -353,9 +366,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return lookupOrCreateIfNecesary(pojo, this.appEventContextFactory.createNonPortableEventContext(pojo), gid);
   }
 
-  private TCObject lookupOrCreate(final Object pojo, final NonPortableEventContext context) {
+  private TCObject lookupOrCreate(final Object pojo, final NonPortableEventContext context, GroupID gid) {
     if (pojo == null) { return TCObjectFactory.NULL_TC_OBJECT; }
-    return lookupOrCreateIfNecesary(pojo, context, GroupID.NULL_ID);
+    return lookupOrCreateIfNecesary(pojo, context, gid);
   }
 
   private TCObject lookupOrCreateIfNecesary(final Object pojo, final NonPortableEventContext context, final GroupID gid) {
@@ -397,8 +410,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     throw new RuntimeException(t);
   }
 
-  private TCObject lookupExistingLiteralRootOrNull(final String rootName) {
-    final ObjectID rootID = (ObjectID) this.roots.get(rootName);
+  private TCObject lookupExistingLiteralRootOrNull(final String rootName, GroupID gid) {
+    final ObjectID rootID = this.rootsHolder.getRootIDForName(rootName, gid);
     return basicLookupByID(rootID);
   }
 
@@ -650,8 +663,12 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   public Object lookupRoot(final String rootName) {
+    return lookupRoot(rootName, this.rootsHolder.getGroupIDForRoot(rootName));
+  }
+
+  public Object lookupRoot(final String rootName, GroupID gid) {
     try {
-      return lookupRootOptionallyCreateOrReplace(rootName, null, false, true, false);
+      return lookupRootOptionallyCreateOrReplace(rootName, null, false, true, false, gid);
     } catch (final ClassNotFoundException e) {
       throw new TCClassNotFoundException(e);
     }
@@ -662,7 +679,18 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
    */
   public Object lookupOrCreateRoot(final String rootName, final Object root) {
     try {
-      return lookupOrCreateRoot(rootName, root, true, false);
+      return lookupOrCreateRoot(rootName, root, true, false, this.rootsHolder.getGroupIDForRoot(rootName));
+    } catch (final ClassNotFoundException e) {
+      throw new TCClassNotFoundException(e);
+    }
+  }
+
+  /**
+   * Check to see if the root is already in existence on the server. If it is then get it if not then create it.
+   */
+  public Object lookupOrCreateRoot(final String rootName, final Object root, final GroupID gid) {
+    try {
+      return lookupOrCreateRoot(rootName, root, true, false, gid);
     } catch (final ClassNotFoundException e) {
       throw new TCClassNotFoundException(e);
     }
@@ -677,7 +705,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     if (existingRoot == null) {
       return lookupOrCreateRoot(rootName, root, false);
     } else if (isLiteralPojo(root)) {
-      final TCObject tcObject = lookupExistingLiteralRootOrNull(rootName);
+      final TCObject tcObject = lookupExistingLiteralRootOrNull(rootName, rootsHolder.getGroupIDForRoot(rootName));
       tcObject.literalValueChanged(root, existingRoot);
       return root;
     } else {
@@ -687,7 +715,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   public Object lookupOrCreateRootNoDepth(final String rootName, final Object root) {
     try {
-      return lookupOrCreateRoot(rootName, root, true, true);
+      return lookupOrCreateRoot(rootName, root, true, true, this.rootsHolder.getGroupIDForRoot(rootName));
     } catch (final ClassNotFoundException e) {
       throw new TCClassNotFoundException(e);
     }
@@ -695,7 +723,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   public Object lookupOrCreateRoot(final String rootName, final Object root, final boolean dsoFinal) {
     try {
-      return lookupOrCreateRoot(rootName, root, dsoFinal, false);
+      return lookupOrCreateRoot(rootName, root, dsoFinal, false, this.rootsHolder.getGroupIDForRoot(rootName));
     } catch (final ClassNotFoundException e) {
       throw new TCClassNotFoundException(e);
     }
@@ -706,13 +734,13 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   private Object lookupOrCreateRoot(final String rootName, final Object root, final boolean dsoFinal,
-                                    final boolean noDepth) throws ClassNotFoundException {
+                                    final boolean noDepth, GroupID gid) throws ClassNotFoundException {
     if (root != null) {
       // this will throw an exception if root is not portable
       checkPortabilityOfRoot(root, rootName, root.getClass());
     }
 
-    return lookupRootOptionallyCreateOrReplace(rootName, root, true, dsoFinal, noDepth);
+    return lookupRootOptionallyCreateOrReplace(rootName, root, true, dsoFinal, noDepth, gid);
   }
 
   private void checkPortabilityOfTraversedReference(final TraversedReference reference, final Class referringClass,
@@ -846,35 +874,41 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return null;
   }
 
-  private boolean rootLookupInProgress(final String rootName) {
-    return this.rootLookupsInProgress.contains(rootName);
+  private boolean rootLookupInProgress(final String rootName, GroupID gid) {
+    return this.rootsHolder.isLookupInProgress(rootName, gid);
   }
 
-  private void markRootLookupInProgress(final String rootName) {
-    final boolean wasAdded = this.rootLookupsInProgress.add(rootName);
+  private void markRootLookupInProgress(final String rootName, GroupID gid) {
+    final boolean wasAdded = this.rootsHolder.markRootLookupInProgress(rootName, gid);
     if (!wasAdded) { throw new AssertionError("Attempt to mark a root lookup that is already in progress."); }
   }
 
-  private void markRootLookupNotInProgress(final String rootName) {
-    final boolean removed = this.rootLookupsInProgress.remove(rootName);
+  private void markRootLookupNotInProgress(final String rootName, GroupID gid) {
+    final boolean removed = this.rootsHolder.unmarkRootLookupInProgress(rootName, gid);
     if (!removed) { throw new AssertionError("Attempt to unmark a root lookup that wasn't in progress."); }
   }
 
-  public synchronized void replaceRootIDIfNecessary(final String rootName, final ObjectID newRootID) {
+  @Override
+  public void replaceRootIDIfNecessary(String rootName, ObjectID newRootID) {
+    replaceRootIDIfNecessary(rootName, new GroupID(newRootID.getGroupID()), newRootID);
+  }
+
+  public synchronized void replaceRootIDIfNecessary(final String rootName, final GroupID gid, final ObjectID newRootID) {
     waitUntilRunning();
 
-    final ObjectID oldRootID = (ObjectID) this.roots.get(rootName);
+    final ObjectID oldRootID = this.rootsHolder.getRootIDForName(rootName, gid);
     if (oldRootID == null || oldRootID.equals(newRootID)) { return; }
 
-    this.roots.put(rootName, newRootID);
+    this.rootsHolder.addRoot(rootName, newRootID);
   }
 
   private Object lookupRootOptionallyCreateOrReplace(final String rootName, final Object rootPojo,
-                                                     final boolean create, final boolean dsoFinal, final boolean noDepth)
-      throws ClassNotFoundException {
+                                                     final boolean create, final boolean dsoFinal,
+                                                     final boolean noDepth, GroupID gid) throws ClassNotFoundException {
     final boolean replaceRootIfExistWhenCreate = !dsoFinal && create;
 
     ObjectID rootID = null;
+    gid = gid == null || GroupID.NULL_ID.equals(gid) ? rootsHolder.getGroupIDForRoot(rootName) : gid;
 
     boolean retrieveNeeded = false;
     boolean isNew = false;
@@ -885,16 +919,16 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       synchronized (this) {
         while (true) {
           if (!replaceRootIfExistWhenCreate) {
-            rootID = (ObjectID) this.roots.get(rootName);
+            rootID = this.rootsHolder.getRootIDForName(rootName, gid);
             if (rootID != null) {
               break;
             }
           } else {
             rootID = ObjectID.NULL_ID;
           }
-          if (!rootLookupInProgress(rootName)) {
+          if (!rootLookupInProgress(rootName, gid)) {
             lookupInProgress = true;
-            markRootLookupInProgress(rootName);
+            markRootLookupInProgress(rootName, gid);
             break;
           } else {
             try {
@@ -915,7 +949,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     isNew = retrieveNeeded || (rootID.isNull() && create);
 
     if (retrieveNeeded) {
-      rootID = this.remoteObjectManager.retrieveRootID(rootName);
+      rootID = this.remoteObjectManager.retrieveRootID(rootName, gid);
     }
 
     if (rootID.isNull() && create) {
@@ -923,9 +957,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       // TODO:: Optimize this, do lazy instantiation
       TCObject root = null;
       if (isLiteralPojo(rootPojo)) {
-        root = basicCreate(rootPojo);
+        root = basicCreate(rootPojo, gid);
       } else {
-        root = lookupOrCreate(rootPojo, this.appEventContextFactory.createNonPortableRootContext(rootName, rootPojo));
+        root = lookupOrCreate(rootPojo, this.appEventContextFactory.createNonPortableRootContext(rootName, rootPojo),
+                              gid);
       }
       rootID = root.getObjectID();
       this.txManager.createRoot(rootName, rootID);
@@ -933,10 +968,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
     synchronized (this) {
       if (isNew && !rootID.isNull()) {
-        this.roots.put(rootName, rootID);
+        this.rootsHolder.addRoot(rootName, rootID);
       }
       if (lookupInProgress) {
-        markRootLookupNotInProgress(rootName);
+        markRootLookupNotInProgress(rootName, gid);
         notifyAll();
       }
     }
@@ -944,9 +979,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return lookupObject(rootID, null, noDepth, false);
   }
 
-  private TCObject basicCreate(final Object rootPojo) {
-    reserveObjectIds(1, GroupID.NULL_ID);
-    return basicCreateIfNecessary(rootPojo, GroupID.NULL_ID);
+  private TCObject basicCreate(final Object rootPojo, GroupID gid) {
+    reserveObjectIds(1, gid);
+    return basicCreateIfNecessary(rootPojo, gid);
   }
 
   private TCObject basicLookupByID(final ObjectID id) {
@@ -961,7 +996,12 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     if (obj == null) { return null; }
     if (obj instanceof TCObjectSelf) {
       TCObjectSelf self = (TCObjectSelf) obj;
-      if (self.isInitialized()) { return self; }
+      if (self.isInitialized()) {
+        return self;
+      } else {
+        // return null when not initialized yet, as __tc_managed() is itself and not null
+        return null;
+      }
     }
 
     if (obj instanceof Manageable) { return ((Manageable) obj).__tc_managed(); }
@@ -1323,7 +1363,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   public synchronized PrettyPrinter prettyPrint(final PrettyPrinter out) {
     out.print(this.getClass().getName()).flush();
-    out.indent().print("roots Map: ").print(Integer.valueOf(this.roots.size())).flush();
+    out.indent().print("roots Map: ").print(Integer.valueOf(this.rootsHolder.size())).flush();
     out.indent().print("idToManaged size: ").print(Integer.valueOf(this.objectStore.size())).flush();
     out.indent().print("pojoToManaged size: ").print(Integer.valueOf(this.pojoToManaged.size())).flush();
     return out;
@@ -1486,4 +1526,5 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   public void initializeTCClazzIfRequired(TCObjectSelf tcObjectSelf) {
     this.factory.initClazzIfRequired(tcObjectSelf.getClass(), tcObjectSelf);
   }
+
 }

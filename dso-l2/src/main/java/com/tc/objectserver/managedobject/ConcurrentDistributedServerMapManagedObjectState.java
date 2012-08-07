@@ -31,24 +31,29 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
-public class ConcurrentDistributedServerMapManagedObjectState extends ConcurrentDistributedMapManagedObjectState
-    implements EvictableMap {
+public class ConcurrentDistributedServerMapManagedObjectState extends PartialMapManagedObjectState implements
+    EvictableMap {
 
-  private static final TCLogger LOGGER                           = TCLogging
-                                                                     .getLogger(ConcurrentDistributedMapManagedObjectState.class);
-  private static final boolean  ENABLE_DELETE_VALUE_ON_REMOVE    = TCPropertiesImpl
-                                                                     .getProperties()
-                                                                     .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_ENABLED,
-                                                                                 true);
+  private static final TCLogger LOGGER                         = TCLogging
+                                                                   .getLogger(ConcurrentDistributedServerMapManagedObjectState.class);
+  private static final boolean  ENABLE_DELETE_VALUE_ON_REMOVE  = TCPropertiesImpl
+                                                                   .getProperties()
+                                                                   .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_ENABLED,
+                                                                               true);
 
-  public static final String    MAX_TTI_SECONDS_FIELDNAME        = "maxTTISeconds";
-  public static final String    MAX_TTL_SECONDS_FIELDNAME        = "maxTTLSeconds";
-  public static final String    TARGET_MAX_TOTAL_COUNT_FIELDNAME = "targetMaxTotalCount";
-  public static final String    INVALIDATE_ON_CHANGE             = "invalidateOnChange";
-  public static final String    CACHE_NAME_FIELDNAME             = "cacheName";
-  public static final String    LOCAL_CACHE_ENABLED_FIELDNAME    = "localCacheEnabled";
+  public static final String    CACHE_NAME_FIELDNAME           = "cacheName";
+  public static final String    INVALIDATE_ON_CHANGE_FIELDNAME = "invalidateOnChange";
+  public static final String    LOCK_TYPE_FIELDNAME            = "lockType";
+  public static final String    LOCAL_CACHE_ENABLED_FIELDNAME  = "localCacheEnabled";
+  public static final String    MAX_TTI_SECONDS_FIELDNAME      = "maxTTISeconds";
+  public static final String    MAX_TTL_SECONDS_FIELDNAME      = "maxTTLSeconds";
+  public static final String    MAX_COUNT_IN_CLUSTER_FIELDNAME = "maxCountInCluster";
+  public static final String    COMPRESSION_ENABLED_FIELDNAME  = "compressionEnabled";
+  public static final String    COPY_ON_READ_ENABLED_FIELDNAME = "copyOnReadEnabled";
 
-  private static final double   OVERSHOOT                        = getOvershoot();
+  protected int                 dsoLockType;
+
+  private static final double   OVERSHOOT                      = getOvershoot();
 
   static {
     LOGGER.info("Eviction overshoot threshold is " + OVERSHOOT);
@@ -67,15 +72,20 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   private int            targetMaxTotalCount;
   private String         cacheName;
   private boolean        localCacheEnabled;
+  private boolean        compressionEnabled;
+  private boolean        copyOnReadEnabled;
 
   protected ConcurrentDistributedServerMapManagedObjectState(final ObjectInput in) throws IOException {
     super(in);
+    this.dsoLockType = in.readInt();
     this.maxTTISeconds = in.readInt();
     this.maxTTLSeconds = in.readInt();
     this.targetMaxTotalCount = in.readInt();
     this.invalidateOnChange = in.readBoolean();
     this.cacheName = in.readUTF();
     this.localCacheEnabled = in.readBoolean();
+    this.compressionEnabled = in.readBoolean();
+    this.copyOnReadEnabled = in.readBoolean();
   }
 
   protected ConcurrentDistributedServerMapManagedObjectState(final long classId, final Map map) {
@@ -84,7 +94,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
 
   @Override
   public byte getType() {
-    return CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE;
+    return ManagedObjectStateStaticConfig.SERVER_MAP.getStateObjectType();
   }
 
   @Override
@@ -96,6 +106,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   public void dehydrate(final ObjectID objectID, final DNAWriter writer, final DNAType type) {
     if (type == DNAType.L2_SYNC) {
       // Write entire state info
+      dehydrateFields(objectID, writer);
       super.dehydrate(objectID, writer, type);
     } else if (type == DNAType.L1_FAULT) {
       // Don't fault the references
@@ -103,15 +114,16 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     }
   }
 
-  @Override
   protected void dehydrateFields(final ObjectID objectID, final DNAWriter writer) {
-    super.dehydrateFields(objectID, writer);
+    writer.addPhysicalAction(LOCK_TYPE_FIELDNAME, dsoLockType);
     writer.addPhysicalAction(MAX_TTI_SECONDS_FIELDNAME, Integer.valueOf(this.maxTTISeconds));
     writer.addPhysicalAction(MAX_TTL_SECONDS_FIELDNAME, Integer.valueOf(this.maxTTLSeconds));
-    writer.addPhysicalAction(TARGET_MAX_TOTAL_COUNT_FIELDNAME, Integer.valueOf(this.targetMaxTotalCount));
-    writer.addPhysicalAction(INVALIDATE_ON_CHANGE, Boolean.valueOf(this.invalidateOnChange));
+    writer.addPhysicalAction(MAX_COUNT_IN_CLUSTER_FIELDNAME, Integer.valueOf(this.targetMaxTotalCount));
+    writer.addPhysicalAction(INVALIDATE_ON_CHANGE_FIELDNAME, Boolean.valueOf(this.invalidateOnChange));
     writer.addPhysicalAction(CACHE_NAME_FIELDNAME, cacheName);
     writer.addPhysicalAction(LOCAL_CACHE_ENABLED_FIELDNAME, localCacheEnabled);
+    writer.addPhysicalAction(COMPRESSION_ENABLED_FIELDNAME, compressionEnabled);
+    writer.addPhysicalAction(COPY_ON_READ_ENABLED_FIELDNAME, copyOnReadEnabled);
   }
 
   @Override
@@ -124,19 +136,15 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
         final PhysicalAction physicalAction = (PhysicalAction) action;
 
         final String fieldName = physicalAction.getFieldName();
-        if (fieldName.equals(DSO_LOCK_TYPE_FIELDNAME)) {
+        if (fieldName.equals(LOCK_TYPE_FIELDNAME)) {
           this.dsoLockType = ((Integer) physicalAction.getObject());
-        } else if (fieldName.equals(LOCK_STRATEGY_FIELDNAME)) {
-          final ObjectID newLockStrategy = (ObjectID) physicalAction.getObject();
-          getListener().changed(objectID, this.lockStrategy, newLockStrategy);
-          this.lockStrategy = newLockStrategy;
         } else if (fieldName.equals(MAX_TTI_SECONDS_FIELDNAME)) {
           this.maxTTISeconds = ((Integer) physicalAction.getObject());
         } else if (fieldName.equals(MAX_TTL_SECONDS_FIELDNAME)) {
           this.maxTTLSeconds = ((Integer) physicalAction.getObject());
-        } else if (fieldName.equals(TARGET_MAX_TOTAL_COUNT_FIELDNAME)) {
+        } else if (fieldName.equals(MAX_COUNT_IN_CLUSTER_FIELDNAME)) {
           this.targetMaxTotalCount = ((Integer) physicalAction.getObject());
-        } else if (fieldName.equals(INVALIDATE_ON_CHANGE)) {
+        } else if (fieldName.equals(INVALIDATE_ON_CHANGE_FIELDNAME)) {
           this.invalidateOnChange = ((Boolean) physicalAction.getObject());
         } else if (fieldName.equals(CACHE_NAME_FIELDNAME)) {
           Object value = physicalAction.getObject();
@@ -149,6 +157,10 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
           this.cacheName = name;
         } else if (fieldName.equals(LOCAL_CACHE_ENABLED_FIELDNAME)) {
           this.localCacheEnabled = (Boolean) physicalAction.getObject();
+        } else if (COMPRESSION_ENABLED_FIELDNAME.equals(physicalAction.getFieldName())) {
+          this.compressionEnabled = (Boolean) physicalAction.getObject();
+        } else if (COPY_ON_READ_ENABLED_FIELDNAME.equals(physicalAction.getFieldName())) {
+          this.copyOnReadEnabled = (Boolean) physicalAction.getObject();
         } else {
           throw new AssertionError("unexpected field name: " + fieldName);
         }
@@ -157,7 +169,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
         final int method = logicalAction.getMethod();
         final Object[] params = logicalAction.getParameters();
         applyMethod(objectID, applyInfo, method, params);
-        if (method == SerializationUtil.CLEAR || method == SerializationUtil.CLEAR_LOCAL_CACHE) {
+        if (method == SerializationUtil.CLEAR || method == SerializationUtil.CLEAR_LOCAL_CACHE
+            || method == SerializationUtil.DESTROY) {
           // clear needs to be broadcasted so local caches can be cleared elsewhere
           broadcast = true;
         }
@@ -194,6 +207,9 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
         evictionCompleted();
         break;
       case SerializationUtil.CLEAR_LOCAL_CACHE:
+        break;
+      case SerializationUtil.DESTROY:
+        this.references.clear();
         break;
       default:
         super.applyMethod(objectID, applyInfo, method, params);
@@ -277,12 +293,15 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   @Override
   protected void basicWriteTo(final ObjectOutput out) throws IOException {
     super.basicWriteTo(out);
+    out.writeInt(this.dsoLockType);
     out.writeInt(this.maxTTISeconds);
     out.writeInt(this.maxTTLSeconds);
     out.writeInt(this.targetMaxTotalCount);
     out.writeBoolean(this.invalidateOnChange);
     out.writeUTF(this.cacheName);
     out.writeBoolean(localCacheEnabled);
+    out.writeBoolean(compressionEnabled);
+    out.writeBoolean(copyOnReadEnabled);
   }
 
   public Object getValueForKey(final Object portableKey) {
@@ -293,9 +312,10 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   protected boolean basicEquals(final LogicalManagedObjectState o) {
     if (!(o instanceof ConcurrentDistributedServerMapManagedObjectState)) { return false; }
     final ConcurrentDistributedServerMapManagedObjectState mmo = (ConcurrentDistributedServerMapManagedObjectState) o;
-    return super.basicEquals(o) && this.maxTTISeconds == mmo.maxTTISeconds && this.maxTTLSeconds == mmo.maxTTLSeconds
-           && this.invalidateOnChange == mmo.invalidateOnChange && this.targetMaxTotalCount == mmo.targetMaxTotalCount
-           && this.localCacheEnabled == mmo.localCacheEnabled;
+    return super.basicEquals(o) && this.dsoLockType == mmo.dsoLockType && this.maxTTISeconds == mmo.maxTTISeconds
+           && this.maxTTLSeconds == mmo.maxTTLSeconds && this.invalidateOnChange == mmo.invalidateOnChange
+           && this.targetMaxTotalCount == mmo.targetMaxTotalCount && this.localCacheEnabled == mmo.localCacheEnabled
+           && this.compressionEnabled == mmo.compressionEnabled && this.copyOnReadEnabled == mmo.copyOnReadEnabled;
   }
 
   static MapManagedObjectState readFrom(final ObjectInput in) throws IOException {
@@ -388,6 +408,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     result = prime * result + maxTTISeconds;
     result = prime * result + maxTTLSeconds;
     result = prime * result + targetMaxTotalCount;
+    result = prime * result + (compressionEnabled ? 1231 : 1237);
+    result = prime * result + (copyOnReadEnabled ? 1231 : 1237);
     return result;
   }
 

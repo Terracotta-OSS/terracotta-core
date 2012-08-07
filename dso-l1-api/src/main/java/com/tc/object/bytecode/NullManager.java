@@ -5,9 +5,11 @@
 package com.tc.object.bytecode;
 
 import com.tc.cluster.DsoCluster;
+import com.tc.exception.ImplementMe;
 import com.tc.logging.NullTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.management.TunneledDomainUpdater;
+import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.loaders.ClassProvider;
@@ -20,6 +22,7 @@ import com.tc.object.logging.NullInstrumentationLogger;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
+import com.tc.properties.NullTCProperties;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.tc.statistics.StatisticRetrievalAction;
@@ -178,7 +181,7 @@ public class NullManager implements Manager {
 
   @Override
   public TCProperties getTCProperties() {
-    throw new UnsupportedOperationException();
+    return NullTCProperties.INSTANCE;
   }
 
   @Override
@@ -213,7 +216,7 @@ public class NullManager implements Manager {
 
   @Override
   public DsoCluster getDsoCluster() {
-    throw new UnsupportedOperationException();
+    return null;
   }
 
   @Override
@@ -424,5 +427,52 @@ public class NullManager implements Manager {
   public void stopImmediate() {
     //
   }
+
+  @Override
+  public Object lookupOrCreateRoot(String name, Object object, GroupID gid) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public GroupID[] getGroupIDs() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Object lookupRoot(String name, GroupID gid) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public TCObject lookupOrCreate(Object obj, GroupID gid) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public void lockIDWait(LockID lock, long timeout) {
+    throw new UnsupportedOperationException();
+
+  }
+
+  @Override
+  public void lockIDNotifyAll(LockID lock) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void lockIDNotify(LockID lock) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Object registerObjectByNameIfAbsent(String name, Object object) {
+    throw new ImplementMe();
+  }
+
+  @Override
+  public <T> T lookupRegisteredObjectByName(String name, Class<T> expectedType) {
+    throw new ImplementMe();
+  }
+
 
 }

@@ -29,14 +29,17 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
     this.maxElementsInMemory = maxElementsInMemory * 2;
   }
 
+  @Override
   public boolean addListener(L1ServerMapLocalCacheStoreListener<K, V> listener) {
     return listeners.add(listener);
   }
 
+  @Override
   public synchronized V get(K key) {
     return backingCache.get(key);
   }
 
+  @Override
   public V put(K key, V value) {
     V oldValue = null;
     synchronized (this) {
@@ -69,6 +72,7 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
     }
   }
 
+  @Override
   public V remove(K key) {
     final V value;
     synchronized (this) {
@@ -77,10 +81,12 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
     return value;
   }
 
+  @Override
   public Object remove(K key, V value) {
     return remove(key);
   }
 
+  @Override
   public boolean removeListener(L1ServerMapLocalCacheStoreListener<K, V> listener) {
     return listeners.remove(listener);
   }
@@ -91,18 +97,22 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
     }
   }
 
+  @Override
   public synchronized int size() {
     return backingCache.size() / 2;
   }
 
+  @Override
   public synchronized void unpinAll() {
     pinnedKeys.clear();
   }
 
+  @Override
   public synchronized boolean isPinned(K key) {
     return pinnedKeys.contains(key);
   }
 
+  @Override
   public synchronized void setPinned(K key, boolean pinned) {
     if (pinned) {
       pinnedKeys.add(key);
@@ -112,14 +122,17 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
   }
 
   // TODO: Remove it using an iterator
+  @Override
   public synchronized void clear() {
     backingCache.clear();
   }
 
+  @Override
   public synchronized List getKeys() {
     return new ArrayList(backingCache.keySet());
   }
 
+  @Override
   public int getMaxElementsInMemory() {
     return maxElementsInMemory / 2;
   }
@@ -133,52 +146,54 @@ public class L1ServerMapLocalCacheStoreHashMap<K, V> implements L1ServerMapLocal
     return listeners;
   }
 
+  @Override
   public long onHeapSizeInBytes() {
     // HashMap doesn't have heap size calculations.
     return 0;
   }
 
+  @Override
   public long offHeapSizeInBytes() {
     // No offheap for the simple hashmap case
     return 0;
   }
 
+  @Override
   public int onHeapSize() {
     return backingCache.size() / 2;
   }
 
+  @Override
   public int offHeapSize() {
     return 0;
   }
 
+  @Override
   public void dispose() {
     // Nothing to dispose of
   }
 
+  @Override
   public boolean containsKeyOnHeap(K key) {
     return backingCache.containsKey(key);
   }
 
+  @Override
   public boolean containsKeyOffHeap(K key) {
     return false;
   }
 
+  @Override
   public void setMaxEntriesLocalHeap(int maxEntriesLocalHeap) {
     // Not used for this local cache store implementation
   }
 
+  @Override
   public void setMaxBytesLocalHeap(long maxBytesLocalHeap) {
     // Not used for this local cache store implementation
   }
 
-  public void replace(K key, V oldValue, V newValue) {
-    synchronized (this) {
-      if (backingCache.containsKey(key)) {
-        backingCache.put(key, newValue);
-      }
-    }
-  }
-
+  @Override
   public void recalculateSize(K key) {
     //
   }

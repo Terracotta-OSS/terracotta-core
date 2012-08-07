@@ -18,6 +18,11 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 public class Invalidations implements TCSerializable {
+  @Override
+  public String toString() {
+    return "Invalidations [invalidationsPerCdsm=" + invalidationsPerCdsm + "]";
+  }
+
   private final Map<ObjectID, ObjectIDSet> invalidationsPerCdsm;
 
   public Invalidations() {
@@ -63,6 +68,7 @@ public class Invalidations implements TCSerializable {
     }
   }
 
+  @Override
   public Object deserializeFrom(TCByteBufferInput in) throws IOException {
     int size = in.readInt();
     for (int i = 0; i < size; i++) {
@@ -94,6 +100,7 @@ public class Invalidations implements TCSerializable {
     return true;
   }
 
+  @Override
   public void serializeTo(TCByteBufferOutput out) {
     out.writeInt(this.invalidationsPerCdsm.size());
     for (Entry<ObjectID, ObjectIDSet> entry : this.invalidationsPerCdsm.entrySet()) {

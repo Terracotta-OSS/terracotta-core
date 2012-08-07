@@ -47,6 +47,9 @@ public class SerializationUtil {
   public final static int         SET_TARGET_MAX_TOTAL_COUNT           = 31;
   public final static int         SET_MAX_TTI                          = 32;
   public final static int         SET_MAX_TTL                          = 33;
+  public final static int         CLUSTERED_NOTIFIER                   = 34;
+  public final static int         DESTROY                              = 35;
+  public final static int         FIELD_CHANGED                        = 36;
 
   public final static String      PUSH_SIGNATURE                       = "push(Ljava/lang/Object;)java/lang/Object;";
   public final static String      POP_SIGNATURE                        = "pop()java/lang/Object;";
@@ -126,6 +129,9 @@ public class SerializationUtil {
   public final static String      SIGNAL_ALL_SIGNATURE                 = "signalAll()V";
   public final static String      TRANSFORM_VALUES_SIGNATURE           = "transformValues(Lgnu/trove/TObjectFunction;)V";
   public final static String      URL_SET_SIGNATURE                    = "set(Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V";
+  public final static String      CLUSTERED_NOTIFIER_SIGNATURE         = "clusteredNotifier()V";
+  public final static String      DESTROY_SIGNATURE                    = "destroy()V";
+  public final static String      FIELD_CHANGED_SIGNATURE              = "fieldChanged()V";
 
   private final TObjectIntHashMap mappings                             = new TObjectIntHashMap();
 
@@ -172,6 +178,9 @@ public class SerializationUtil {
     mappings.put(SET_TARGET_MAX_TOTAL_COUNT_SIGNATURE, SET_TARGET_MAX_TOTAL_COUNT);
     mappings.put(SET_MAX_TTI_SIGNATURE, SET_MAX_TTI);
     mappings.put(SET_MAX_TTL_SIGNATURE, SET_MAX_TTL);
+    mappings.put(CLUSTERED_NOTIFIER_SIGNATURE, CLUSTERED_NOTIFIER);
+    mappings.put(DESTROY_SIGNATURE, DESTROY);
+    mappings.put(FIELD_CHANGED_SIGNATURE, FIELD_CHANGED);
   }
 
   public String[] getSignatures() {

@@ -87,7 +87,7 @@ public interface TestHandlerMBean {
   public void waitUntilEveryPassiveStandBy(int groupIndex) throws Exception;
 
   /**
-   * Returns all the groups data for each mirror group
+   * Returns all the groups data for each mirror group ` ``````````````````````
    * 
    * @return
    */
@@ -129,4 +129,10 @@ public interface TestHandlerMBean {
    * @return true if the test is configured to run in standAlone mode, false otherwise
    */
   public boolean isStandAloneTest();
+
+  public void clientExitedWithException(Throwable t);
+  /*
+   * Prints the stackTrace in testFramework logs if Client exits abnormally
+   */
+
 }

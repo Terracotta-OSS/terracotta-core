@@ -9,6 +9,7 @@
   
   <!-- allow hardcoded toolkit classnames in these files -->
   <suppress id="forbidden-toolkit-classes" files="TCClassFactory.java" />
-  <suppress id="forbidden-toolkit-classes" files="ManagedObjectStateFactory.java" />  
+  <suppress id="forbidden-toolkit-classes" files="ManagedObjectStateFactory.java" />
+  <suppress id="forbidden-toolkit-classes" files="ManagedObjectStateStaticConfig.java" />  
   <suppress id="forbidden-toolkit-classes" files="DSOContextImpl.java" />
 </suppressions>

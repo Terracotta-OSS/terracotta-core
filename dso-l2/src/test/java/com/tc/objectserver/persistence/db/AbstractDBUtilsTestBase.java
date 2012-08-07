@@ -7,6 +7,7 @@ package com.tc.objectserver.persistence.db;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
+import com.tc.object.SerializationUtil;
 import com.tc.object.TestDNACursor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
@@ -14,6 +15,7 @@ import com.tc.object.dna.api.DNAException;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
@@ -30,6 +32,7 @@ import com.tc.test.TCTestCase;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Random;
 import java.util.Set;
 
 public abstract class AbstractDBUtilsTestBase extends TCTestCase {
@@ -42,22 +45,7 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
   private Set                     mos;
   private ObjectInstanceMonitor   imo;
   private int                     version = 1;
-  private int                     dnaRequestCount;
   protected BerkeleyDBEnvironment dbenv;
-
-  protected static class SampleDNA1 extends AbstractSampleDNA1 {
-
-    public SampleDNA1(final DNACursor cursor, final long version, final boolean isDelta) {
-      super("Sample1", cursor, version, isDelta);
-    }
-  }
-
-  protected static class SampleDNA2 extends AbstractSampleDNA1 {
-
-    public SampleDNA2(final DNACursor cursor, final long version, final boolean isDelta) {
-      super("Sample2", cursor, version, isDelta);
-    }
-  }
 
   @Override
   public void setUp() throws Exception {
@@ -80,8 +68,6 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
     this.transactionSequence = 0;
     this.objectIDSequence = 0;
     this.version = 1;
-    this.dnaRequestCount = 0;
-
   }
 
   protected void populateSleepycatDB(final DBPersistorImpl sleepycatPersistor) {
@@ -106,10 +92,13 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
     }
     mop.saveAllObjects(ptx, this.mos);
 
-    final ManagedObject mo = newPhysicalObject(newObjectID());
-    mop.saveObject(ptx, mo);
+    // add another one
+    final ObjectID oid = newObjectID();
+    final ManagedObject mo = newLogicalObject(oid, newLogicalMapDNA(false, true, 101));
+    assertTrue(mo.isDirty());
     this.mos.add(mo);
     mop.addNewObject(mo);
+    mop.saveObject(ptx, mo);
 
     ptx.commit();
 
@@ -127,14 +116,118 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
       assertTrue(test.isEqual(loaded));
       assertNotSame(test, loaded);
       assertNotSame(mop.loadObjectByID(test.getID()), mop.loadObjectByID(test.getID()));
-      loaded.apply(newPhysicalDNA(true), new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(),
-                   this.imo, false);
+      // loaded.apply(newPhysicalDNA(true), new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(),
+      // this.imo, false);
     }
   }
 
   private ManagedObject newManagedObject(final ObjectID oid, final int i) {
-    return newPhysicalObject(oid);
+    switch (i % 10) {
+      case 0:
+        return newLogicalMapObject(oid);
+      case 1:
+        return newLogicalArrayObject(oid);
+      case 2:
+        return newLogicalLiteralObject(oid);
+      case 3:
+        return newLogicalListObject(oid);
+      default:
+        return newLogicalSetObject(oid);
+    }
+  }
 
+  private ManagedObject newLogicalSetObject(final ObjectID oid) {
+    return newLogicalObject(oid, newLogicalSetDNA(false));
+  }
+
+  private TestDNA newLogicalSetDNA(final boolean delta) {
+    final TestDNACursor cursor = new TestDNACursor();
+    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new Integer(10343) });
+    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { "Hello" });
+    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(25) });
+    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { newLong() });
+    final TestDNA dna = new TestDNA(cursor, "com.terracotta.toolkit.collections.ClusteredSortedSetImpl");
+    dna.version = this.version++;
+    dna.isDelta = delta;
+    return dna;
+  }
+
+  private ManagedObject newLogicalListObject(final ObjectID oid) {
+    return newLogicalObject(oid, newLogicalListDNA(false));
+  }
+
+  private TestDNA newLogicalListDNA(final boolean delta) {
+    final TestDNACursor cursor = new TestDNACursor();
+    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new Integer(10343) });
+    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { "Hello" });
+    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(25) });
+    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { newLong() });
+    final TestDNA dna = new TestDNA(cursor, "com.terracotta.toolkit.collections.ClusteredListImpl");
+    dna.version = this.version++;
+    dna.isDelta = delta;
+    return dna;
+  }
+
+  private ManagedObject newLogicalLiteralObject(final ObjectID oid) {
+    return newLogicalObject(oid, newLiteralDNA(false));
+  }
+
+  private TestDNA newLiteralDNA(final boolean delta) {
+    final TestDNACursor cursor = new TestDNACursor();
+    final Short s = Short.valueOf((short) 0x0045);
+    cursor.addLiteralAction("literal", s);
+    final TestDNA dna = new TestDNA(cursor, Short.class.getName());
+    dna.version = this.version++;
+    dna.isDelta = delta;
+    return dna;
+  }
+
+  private ManagedObject newLogicalArrayObject(final ObjectID oid) {
+    return newLogicalObject(oid, newLogicalArrayDNA(false));
+  }
+
+  private TestDNA newLogicalArrayDNA(final boolean delta) {
+    final TestDNACursor cursor = new TestDNACursor();
+    final Object[] array = new Object[] { newLong(), newLong(), newLong() };
+    cursor.addArrayAction(array);
+    final TestDNA dna = new TestDNA(cursor, "com.terracotta.toolkit.object.ClusteredObjectStripeImpl");
+    dna.version = this.version++;
+    dna.isDelta = delta;
+    return dna;
+  }
+
+  Random r = new Random();
+
+  private Long newLong() {
+    return Long.valueOf(this.r.nextLong());
+  }
+
+  private ManagedObject newLogicalMapObject(final ObjectID oid) {
+    return newLogicalObject(oid, newLogicalMapDNA(false, false, -1));
+  }
+
+  private ManagedObject newLogicalObject(final ObjectID objectID, final TestDNA dna) {
+    final ManagedObjectImpl rv = new ManagedObjectImpl(objectID);
+    assertTrue(rv.isNew());
+    rv.apply(dna, new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(), this.imo, false);
+    return rv;
+  }
+
+  private TestDNA newLogicalMapDNA(final boolean delta, boolean addOids, int numberOfOids) {
+    final TestDNACursor cursor = new TestDNACursor();
+    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(10), "King Kong" });
+    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(20), "Mad Max" });
+    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(25), "Mummy Returns" });
+
+    if (addOids) {
+      for (int i = 0; i < numberOfOids; i++) {
+        cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { "notExists" + i, newObjectID() });
+      }
+    }
+    final TestDNA dna = new TestDNA(cursor, "com.terracotta.toolkit.roots.impl.ToolkitTypeRootImpl");
+    dna.version = this.version++;
+    dna.isDelta = delta;
+    return dna;
   }
 
   private void addRoot(final ManagedObjectPersistor mop, final PersistenceTransaction ptx, final String rootName,
@@ -146,46 +239,6 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
 
   private ObjectID newObjectID() {
     return new ObjectID(++this.objectIDSequence);
-  }
-
-  private ManagedObject newPhysicalObject(final ObjectID objectID) {
-    final ManagedObjectImpl rv = new ManagedObjectImpl(objectID);
-    final DNA dna = newPhysicalDNA(false);
-    assertTrue(rv.isNew());
-    rv.apply(dna, new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(), this.imo, false);
-    return rv;
-  }
-
-  private DNA newPhysicalDNA(final boolean delta) {
-    final TestDNACursor cursor = new TestDNACursor();
-    cursor.addPhysicalAction("stringField", "Foo", true);
-    cursor.addPhysicalAction("referenceField", newObjectID(), true);
-    this.dnaRequestCount++;
-
-    DNA dna = null;
-    if (this.dnaRequestCount == 1) {
-      cursor.reset();
-      dna = new SampleDNA1(cursor, this.version++, delta);
-    }
-    if (this.dnaRequestCount == 2) {
-      cursor.reset();
-      dna = new SampleDNA2(cursor, this.version++, delta);
-    }
-    if (this.dnaRequestCount == 3) {
-      cursor.reset();
-      dna = new SampleDNA3(cursor, this.version++, delta);
-    }
-    if (this.dnaRequestCount == 4) {
-      cursor.reset();
-      dna = new SampleDNA4(cursor, this.version++, delta);
-    }
-    if (this.dnaRequestCount == 5) {
-      cursor.reset();
-      dna = new SampleDNA5(cursor, this.version++, delta);
-      this.dnaRequestCount = 0;
-    }
-
-    return dna;
   }
 
   protected DBPersistorImpl getSleepycatPersistor(final File dir) {
@@ -201,27 +254,6 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
       throw new AssertionError(e);
     }
     return persistor;
-  }
-
-  protected static class SampleDNA3 extends AbstractSampleDNA1 {
-
-    public SampleDNA3(final DNACursor cursor, final long version, final boolean isDelta) {
-      super("Sample3", cursor, version, isDelta);
-    }
-  }
-
-  protected static class SampleDNA4 extends AbstractSampleDNA1 {
-
-    public SampleDNA4(final DNACursor cursor, final long version, final boolean isDelta) {
-      super("Sample4", cursor, version, isDelta);
-    }
-  }
-
-  protected static class SampleDNA5 extends AbstractSampleDNA1 {
-
-    public SampleDNA5(final DNACursor cursor, final long version, final boolean isDelta) {
-      super("Sample5", cursor, version, isDelta);
-    }
   }
 
   protected static abstract class AbstractSampleDNA1 implements DNA {

@@ -22,9 +22,9 @@ public interface RemoteLockManager {
 
   public void recallCommit(LockID lock, Collection<ClientServerExchangeLockContext> lockState, boolean batch);
 
-  public void flush(LockID lock, ServerLockLevel level);
+  public void flush(LockID lock, boolean noLocksLeftOnClient);
 
-  public boolean asyncFlush(LockID lock, LockFlushCallback callback, ServerLockLevel level);
+  public boolean asyncFlush(LockID lock, LockFlushCallback callback, boolean noLocksLeftOnClient);
 
   public void query(LockID lock, ThreadID thread);
 

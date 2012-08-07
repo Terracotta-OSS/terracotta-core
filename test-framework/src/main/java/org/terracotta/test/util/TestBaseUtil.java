@@ -13,12 +13,16 @@ import com.tc.util.runtime.Vm;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -26,6 +30,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 public class TestBaseUtil {
 
@@ -117,13 +125,17 @@ public class TestBaseUtil {
 
   public static void setHeapSizeArgs(List<String> jvmArgs, int minHeap, int maxHeap, int directMemorySize) {
     Iterator<String> i = jvmArgs.iterator();
+    List<String> illegalArgs = new ArrayList<String>();
     while (i.hasNext()) {
       String arg = i.next();
       if (arg.startsWith("-Xmx") || arg.startsWith("-Xms") || arg.startsWith("-XX:MaxDirectMemorySize")) {
-        System.err.println("Ignoring '" + arg + "'. Heap size should be set through L2Config.");
-        i.remove();
+        illegalArgs.add(arg);
       }
     }
+    if (!illegalArgs.isEmpty()) { throw new AssertionError(
+                                                           "Invalid use of jvmArgs - "
+                                                               + illegalArgs
+                                                               + " - use testConfig.get[Client/L2]Config().set[MaxHeap/MinHeap/DirectMemorySize]() instead!"); }
     jvmArgs.add("-Xms" + minHeap + "m");
     jvmArgs.add("-Xmx" + maxHeap + "m");
 
@@ -164,4 +176,56 @@ public class TestBaseUtil {
     }
   }
 
+  public static String getThreadDump() {
+    final String newline = System.getProperty("line.separator", "\n");
+    StringBuffer rv = new StringBuffer();
+    ThreadMXBean tbean = ManagementFactory.getThreadMXBean();
+    for (long id : tbean.getAllThreadIds()) {
+      ThreadInfo tinfo = tbean.getThreadInfo(id, Integer.MAX_VALUE);
+      rv.append("Thread name: " + tinfo.getThreadName()).append("-" + id).append(newline);
+      for (StackTraceElement e : tinfo.getStackTrace()) {
+        rv.append("    at " + e).append(newline);
+      }
+      rv.append(newline);
+    }
+    return rv.toString();
+  }
+
+  public static List<ThreadInfo> getThreadDumpAsList() {
+    List<ThreadInfo> list = new ArrayList();
+    ThreadMXBean tbean = ManagementFactory.getThreadMXBean();
+    for (long id : tbean.getAllThreadIds()) {
+      ThreadInfo tinfo = tbean.getThreadInfo(id, Integer.MAX_VALUE);
+      list.add(tinfo);
+    }
+    return list;
+  }
+
+  public static void dumpHeap(String dumpName) {
+    try {
+      MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+      String hotSpotDiagName = "com.sun.management:type=HotSpotDiagnostic";
+      ObjectName name = new ObjectName(hotSpotDiagName);
+      String operationName = "dumpHeap";
+  
+      new File("heapDumps").mkdirs();
+      File tempFile = new File("heapDumps/" + dumpName + "_" + (System.currentTimeMillis()) + ".hprof");
+      tempFile.delete();
+      String dumpFilename = tempFile.getAbsolutePath();
+  
+      Object[] params = new Object[] { dumpFilename, Boolean.TRUE };
+      String[] signature = new String[] { String.class.getName(), boolean.class.getName() };
+      try {
+        mbs.invoke(name, operationName, params, signature);
+      } catch (InstanceNotFoundException e) {
+        System.out.println("heap dump failed: " + e);
+        return;
+      }
+  
+      System.out.println("dumped heap in file " + dumpFilename);
+    } catch (Exception e) {
+      System.out.println("Caught exception while trying to heap dump:");
+      e.printStackTrace();
+    }
+  }
 }

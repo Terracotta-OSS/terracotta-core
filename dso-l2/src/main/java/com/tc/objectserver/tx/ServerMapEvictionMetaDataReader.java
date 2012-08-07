@@ -37,6 +37,7 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
     this.oid = oid;
   }
 
+  @Override
   public Iterator<MetaDataDescriptorInternal> iterator() {
     return new RemoveIterator();
   }
@@ -45,92 +46,114 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
 
     private boolean nextCalled = false;
 
+    @Override
     public boolean hasNext() {
       return !nextCalled;
     }
 
+    @Override
     public MetaDataDescriptorInternal next() {
       if (nextCalled) { throw new NoSuchElementException(); }
       nextCalled = true;
       return this;
     }
 
+    @Override
     public void remove() {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void add(String name, boolean value) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void add(String name, byte value) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void add(String name, char value) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void add(String name, double value) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void add(String name, float value) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void add(String name, int value) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void add(String name, long value) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void add(String name, short value) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void add(String name, Date value) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void add(String name, java.sql.Date value) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void add(String name, Enum value) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void add(String name, String value) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void add(String name, byte[] value) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void add(String name, Object value) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void add(String name, ObjectID value) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void addNull(String name) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void set(String name, Object newValue) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public String getCategory() {
       return "SEARCH";
     }
 
+    @Override
     public void serializeTo(TCByteBufferOutput out, ObjectStringSerializer serializer) {
       serializer.writeString(out, getCategory());
       out.writeLong(oid.toLong());
@@ -143,8 +166,15 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
       for (Object o : candidates.entrySet()) {
         Entry e = (Entry) o;
 
+        String key;
         // XXX: assumes key/value types of UTF8ByteDataHolder/ObjectID!
-        String key = ((UTF8ByteDataHolder) e.getKey()).asString();
+        if (e.getKey() instanceof UTF8ByteDataHolder) {
+          key = ((UTF8ByteDataHolder) e.getKey()).asString();
+        } else {
+          // assume literals
+          key = e.getKey().toString();
+        }
+
         ObjectID value = (ObjectID) e.getValue();
 
         NVPAIR_SERIALIZER.serialize(new StringNVPair("", key), out, serializer);
@@ -152,10 +182,12 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
       }
     }
 
+    @Override
     public Iterator<NVPair> getMetaDatas() {
       return new RemoveMetaDataIterator(numberOfNvPairs());
     }
 
+    @Override
     public int numberOfNvPairs() {
       // 2 (cache name and command)
       // 1 (number of removes)
@@ -163,10 +195,12 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
       return 2 + 1 + (candidates.size() * 2);
     }
 
+    @Override
     public ObjectID getObjectId() {
       return oid;
     }
 
+    @Override
     public void setObjectID(ObjectID id) {
       throw new AssertionError();
     }
@@ -183,10 +217,12 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
         this.numberOfNvPairs = numberOfNvPairs;
       }
 
+      @Override
       public boolean hasNext() {
         return count < numberOfNvPairs;
       }
 
+      @Override
       public NVPair next() {
         count++;
         if (count > numberOfNvPairs) { throw new NoSuchElementException(); }
@@ -204,8 +240,15 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
               throw new AssertionError(count);
           }
         } else if ((count % 2) == 0) {
-          // XXX: assumes String key!
-          return AbstractNVPair.createNVPair("", ((UTF8ByteDataHolder) next.getKey()).asString());
+          // XXX: assumes Literal key!
+          Object key = next.getKey();
+          if (key instanceof UTF8ByteDataHolder) {
+            key = ((UTF8ByteDataHolder) key).asString();
+          } else {
+            // assume literals
+            key = key.toString();
+          }
+          return AbstractNVPair.createNVPair("", key);
         } else {
           // XXX: assumes ObjectID value!
           ObjectID valueOid = (ObjectID) next.getValue();
@@ -217,6 +260,7 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
         }
       }
 
+      @Override
       public void remove() {
         throw new UnsupportedOperationException();
       }

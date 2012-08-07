@@ -200,11 +200,13 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       if (flush) {
         while (true) {
           ServerLockLevel flushLevel;
+          boolean noLocksHeld;
           synchronized (this) {
             flushLevel = this.greediness.getFlushLevel();
+            noLocksHeld = noLocksHeld(null, thread);
           }
 
-          remote.flush(this.lock, flushLevel);
+          remote.flush(this.lock, noLocksHeld);
 
           synchronized (this) {
             if (flushLevel.equals(this.greediness.getFlushLevel())) {
@@ -573,11 +575,13 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
       while (true) {
         ServerLockLevel flushLevel;
+        boolean noLocksHeld;
         synchronized (this) {
           flushLevel = this.greediness.getFlushLevel();
+          noLocksHeld = noLocksHeld(null, null);
         }
 
-        remote.flush(this.lock, flushLevel);
+        remote.flush(this.lock, noLocksHeld);
 
         synchronized (this) {
           if (flushLevel.equals(this.greediness.getFlushLevel())) {
@@ -673,12 +677,14 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
     while (true) {
       ServerLockLevel flushLevel;
+      boolean noLocksHeld;
       synchronized (this) {
         flushLevel = this.greediness.getFlushLevel();
+        noLocksHeld = noLocksHeld(unlock, null);
       }
 
       if (flushOnUnlock(unlock)) {
-        remote.flush(this.lock, flushLevel);
+        remote.flush(this.lock, noLocksHeld);
       }
 
       synchronized (this) {
@@ -689,6 +695,22 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
                       + this.greediness.getFlushLevel() + " during flush operation");
         }
       }
+    }
+  }
+
+  private boolean noLocksHeld(LockHold unlockHold, ThreadID thread) {
+    synchronized (this) {
+      if (this.greediness == ClientGreediness.WRITE_RECALL_FOR_READ_IN_PROGRESS
+          || this.greediness == ClientGreediness.RECALLED_WRITE_FOR_READ) { return false; }
+
+      for (final LockStateNode s : this) {
+        if (s == unlockHold || s.getOwner().equals(thread)) {
+          continue;
+        }
+
+        if (s instanceof LockHold) { return false; }
+      }
+      return true;
     }
   }
 
@@ -977,7 +999,8 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     if (canRecallNow()) {
       final ServerLockLevel flushLevel = this.greediness.getFlushLevel();
       final LockFlushCallback callback = new RecallCallback(remote, batch, flushLevel);
-      if (remote.asyncFlush(this.lock, callback, flushLevel)) {
+      boolean noLocksHeld = noLocksHeld(null, null);
+      if (remote.asyncFlush(this.lock, callback, noLocksHeld)) {
         return recallCommit(remote, batch);
       } else {
         return this.greediness.recallInProgress();
@@ -1009,7 +1032,8 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
             LOGGER.info("Retrying flush on " + lock + " as flush level moved from " + expectedFlushLevel + " to "
                         + flushLevel + " during flush operation");
             LockFlushCallback callback = new RecallCallback(remote, batch, flushLevel);
-            if (remote.asyncFlush(id, callback, flushLevel)) {
+            boolean noLocksHeld = noLocksHeld(null, null);
+            if (remote.asyncFlush(id, callback, noLocksHeld)) {
               greediness = recallCommit(remote, batch);
             }
           }

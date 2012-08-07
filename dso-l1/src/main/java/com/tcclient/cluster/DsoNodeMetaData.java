@@ -3,7 +3,9 @@
  */
 package com.tcclient.cluster;
 
-public class DsoNodeMetaData {
+import java.io.Serializable;
+
+public class DsoNodeMetaData implements Serializable {
 
   private final String ip;
   private final String hostname;

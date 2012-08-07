@@ -6,7 +6,6 @@ package com.tc.objectserver.storage.util;
 
 import com.tc.objectserver.persistence.db.AbstractDBUtilsTestBase;
 import com.tc.objectserver.persistence.db.DBPersistorImpl;
-import com.tc.objectserver.storage.util.ManagedObjectReport;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.concurrent.ThreadUtil;
@@ -14,7 +13,6 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.io.File;
 
 public class ManagedObjectReportTest extends AbstractDBUtilsTestBase {
-
   public void testManagedObjectReport() throws Exception {
 
     File databaseDir = new File(getTempDirectory().toString() + File.separator + "db-data");
@@ -27,7 +25,7 @@ public class ManagedObjectReportTest extends AbstractDBUtilsTestBase {
     // wait for checkpoint to flush log to oid store
     ThreadUtil.reallySleep(TCPropertiesImpl.getProperties()
         .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_LOADOBJECTID_CHECKPOINT_MAXSLEEP) + 100);
-    
+
     managedObjectReport.report();
     assertEquals(managedObjectReport.totalCounter.get(), 101);
     assertEquals(managedObjectReport.doesNotExistInSet.size(), 101);

@@ -484,6 +484,7 @@ public class TCTestCase extends TestCase {
     final ExecutionMode currentMode = executionMode();
     final String skipMessage = this.getClass().getName() + " is in " + testCategory() + ", skipping because this is a "
                                + currentMode + " run.";
+    System.out.println("Current mode: " + currentMode + ", test category: " + testCategory());
     switch (currentMode) {
       case DEVELOPMENT:
         return true;

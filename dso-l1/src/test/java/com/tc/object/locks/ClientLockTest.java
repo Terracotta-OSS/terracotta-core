@@ -480,9 +480,7 @@ public class ClientLockTest extends TestCase {
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(3), LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0);
 
-      lock
-          .recall(
-                  new AssertingGreedyRemoteLockManager(lock, RemoteOperation.TXN_FLUSHED, RemoteOperation.RECALL_COMMIT),
+      lock.recall(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.TXN_FLUSHED, RemoteOperation.RECALL_COMMIT),
                   ServerLockLevel.WRITE, 0, false);
 
       lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.READ);
@@ -519,9 +517,7 @@ public class ClientLockTest extends TestCase {
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(2), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0);
 
-      lock
-          .recall(
-                  new AssertingGreedyRemoteLockManager(lock, RemoteOperation.TXN_FLUSHED, RemoteOperation.RECALL_COMMIT),
+      lock.recall(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.TXN_FLUSHED, RemoteOperation.RECALL_COMMIT),
                   ServerLockLevel.WRITE, 0, false);
 
       lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
@@ -860,9 +856,7 @@ public class ClientLockTest extends TestCase {
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0);
 
-      lock
-          .recall(
-                  new AssertingGreedyRemoteLockManager(lock, RemoteOperation.TXN_FLUSHED, RemoteOperation.RECALL_COMMIT),
+      lock.recall(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.TXN_FLUSHED, RemoteOperation.RECALL_COMMIT),
                   ServerLockLevel.READ, 0, false);
 
       lock.lock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(2), LockLevel.READ);
@@ -886,9 +880,7 @@ public class ClientLockTest extends TestCase {
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0);
 
-      lock
-          .recall(
-                  new AssertingGreedyRemoteLockManager(lock, RemoteOperation.TXN_FLUSHED, RemoteOperation.RECALL_COMMIT),
+      lock.recall(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.TXN_FLUSHED, RemoteOperation.RECALL_COMMIT),
                   ServerLockLevel.READ, 0, true);
 
       ThreadUtil.reallySleep(10);
@@ -969,7 +961,7 @@ public class ClientLockTest extends TestCase {
       this.legal = Arrays.asList(legal);
     }
 
-    public void flush(LockID lock, ServerLockLevel level) {
+    public void flush(LockID lock, boolean noLocksLeftOnClient) {
       Assert.assertTrue(legal.contains(RemoteOperation.FLUSH));
     }
 
@@ -981,7 +973,7 @@ public class ClientLockTest extends TestCase {
       Assert.assertTrue(legal.contains(RemoteOperation.INTERRUPT));
     }
 
-    public boolean asyncFlush(LockID lock, LockFlushCallback callback, ServerLockLevel level) {
+    public boolean asyncFlush(LockID lock, LockFlushCallback callback, boolean noLocksLeftOnClient) {
       Assert.assertTrue(legal.contains(RemoteOperation.TXN_FLUSHED));
       return true;
     }

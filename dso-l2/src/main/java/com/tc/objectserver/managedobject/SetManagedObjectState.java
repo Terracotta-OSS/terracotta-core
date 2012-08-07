@@ -6,10 +6,10 @@ package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
-import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.persistence.db.PersistableCollection;
@@ -60,6 +60,9 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
         references.removeAll(Arrays.asList(params));
         break;
       case SerializationUtil.CLEAR:
+        references.clear();
+        break;
+      case SerializationUtil.DESTROY:
         references.clear();
         break;
       default:

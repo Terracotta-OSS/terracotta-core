@@ -1,9 +1,7 @@
 package org.terracotta.tests.base;
 
-import org.apache.commons.lang.StringUtils;
 import org.terracotta.test.util.TestBaseUtil;
 
-import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.lcp.LinkedJavaProcess;
 import com.tc.process.Exec;
 import com.tc.process.Exec.Result;
@@ -16,30 +14,34 @@ import com.tc.util.concurrent.SetOnceFlag;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.management.remote.jmxmp.JMXMPConnector;
 
 import junit.framework.Assert;
 
 public class TestClientManager {
+  private static final String           STANDALONE_CLIENT_DEBUG_PROPERTY = "standalone.client.debug";
+
   /**
    * If set to true allows debugging of java applications
    */
-  private static final boolean          DEBUG_CLIENTS  = Boolean.getBoolean("standalone.client.debug");
+  private static final boolean          DEBUG_CLIENTS                    = Boolean
+                                                                             .getBoolean(STANDALONE_CLIENT_DEBUG_PROPERTY);
 
   /**
    * arguments to be passed to the clients. e.g mvn -Psystem-tests integration-test -Dtest=MyTest
    * -DclientJVMArgs="-DsomeProp=value1 -DsomeProp2=value2" In the spawned clients, these will be passed as JVMArgs
    * System.getProperty("someProp"); => will return value1 System.getProperty("someProp2"); => will return value2
    */
-  public static final String            CLIENT_ARGS    = "clientJVMArgs";
+  public static final String            CLIENT_ARGS                      = "clientJVMArgs";
 
-  private volatile int                  clientIndex    = 1;
+  private final AtomicInteger           clientIndex                      = new AtomicInteger(0);
   private final File                    tempDir;
   private final AbstractTestBase        testBase;
   private final TestConfig              testConfig;
-  private final SetOnceFlag             stopped        = new SetOnceFlag();
-  private final List<LinkedJavaProcess> runningClients = new ArrayList<LinkedJavaProcess>();
+  private final SetOnceFlag             stopped                          = new SetOnceFlag();
+  private final List<LinkedJavaProcess> runningClients                   = new ArrayList<LinkedJavaProcess>();
 
   public TestClientManager(final File tempDir, final AbstractTestBase testBase, final TestConfig testConfig) {
     this.testConfig = testConfig;
@@ -60,8 +62,9 @@ public class TestClientManager {
       if (stopped.isSet()) { return; }
     }
     ArrayList<String> jvmArgs = new ArrayList<String>();
-    if (DEBUG_CLIENTS) {
-      int debugPort = 9000 + (clientIndex++);
+    int debugPortOffset = clientIndex.getAndIncrement();
+    if (shouldDebugClient(debugPortOffset)) {
+      int debugPort = 9000 + debugPortOffset;
       jvmArgs.add("-agentlib:jdwp=transport=dt_socket,suspend=y,server=y,address=" + debugPort);
       Banner.infoBanner("waiting for debugger to attach on port " + debugPort);
     }
@@ -148,6 +151,10 @@ public class TestClientManager {
     }
   }
 
+  private boolean shouldDebugClient(int debugPortOffset) {
+    return DEBUG_CLIENTS || Boolean.getBoolean(STANDALONE_CLIENT_DEBUG_PROPERTY + "." + debugPortOffset);
+  }
+
   private String addExtraJarsToClassPath(String classPath) {
     for (String extraJar : testBase.getExtraJars()) {
       classPath = testBase.addToClasspath(extraJar, classPath);
@@ -157,16 +164,13 @@ public class TestClientManager {
   }
 
   private String addRequiredJarsToClasspath(Class client, String classPath) {
-    String mbsp = TestBaseUtil.jarFor(MBeanServerInvocationProxy.class);
     String test = TestBaseUtil.jarFor(client);
     String junit = TestBaseUtil.jarFor(org.junit.Assert.class);
     String linkedChild = TestBaseUtil.jarFor(LinkedJavaProcess.class);
     String abstractClientBase = TestBaseUtil.jarFor(AbstractClientBase.class);
     String jmxp = TestBaseUtil.jarFor(JMXMPConnector.class);
     String log4j = TestBaseUtil.jarFor(org.apache.log4j.LogManager.class);
-    String stringUtils = TestBaseUtil.jarFor(StringUtils.class);
-    classPath = testBase.makeClasspath(classPath, mbsp, test, junit, linkedChild, abstractClientBase, jmxp, log4j,
-                                       stringUtils);
+    classPath = testBase.makeClasspath(classPath, test, junit, linkedChild, abstractClientBase, jmxp, log4j);
     return classPath;
   }
 

@@ -175,6 +175,14 @@ public interface ClientObjectManager extends TCObjectSelfCallback {
   public Object lookupRoot(String name);
 
   /**
+   * Find named root object in a particular group
+   * 
+   * @param name Root name
+   * @return Root object
+   */
+  public Object lookupRoot(String name, GroupID groupID);
+
+  /**
    * Find and create if necessary a root object for the specified named root. All dependent objects needed will be
    * faulted in to arbitrary depth.
    * 
@@ -193,6 +201,16 @@ public interface ClientObjectManager extends TCObjectSelfCallback {
    * @return New or existing object to use as root
    */
   public Object lookupOrCreateRoot(String name, Object obj);
+
+  /**
+   * Find and create if necessary a root object for the specified named root.
+   * 
+   * @param name Root name
+   * @param obj Instance to use if new
+   * @param gid GroupID where the object needs to be created
+   * @return New or existing object to use as root
+   */
+  public Object lookupOrCreateRoot(String name, Object obj, GroupID gid);
 
   /**
    * Find and create if necessary a root object for the specified named root. All dependent objects needed will be
@@ -340,4 +358,5 @@ public interface ClientObjectManager extends TCObjectSelfCallback {
    * @return the weak reference
    */
   WeakReference newWeakObjectReference(ObjectID objectID, Object peer);
+
 }
