@@ -146,7 +146,7 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { "Hello" });
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(25) });
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { newLong() });
-    final TestDNA dna = new TestDNA(cursor, "com.terracotta.toolkit.collections.ClusteredSortedSetImpl");
+    final TestDNA dna = new TestDNA(cursor, "com.terracotta.toolkit.collections.ToolkitSortedSetImpl");
     dna.version = this.version++;
     dna.isDelta = delta;
     return dna;
@@ -162,7 +162,7 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { "Hello" });
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(25) });
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { newLong() });
-    final TestDNA dna = new TestDNA(cursor, "com.terracotta.toolkit.collections.ClusteredListImpl");
+    final TestDNA dna = new TestDNA(cursor, "com.terracotta.toolkit.collections.ToolkitListImpl");
     dna.version = this.version++;
     dna.isDelta = delta;
     return dna;
@@ -190,7 +190,7 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
     final TestDNACursor cursor = new TestDNACursor();
     final Object[] array = new Object[] { newLong(), newLong(), newLong() };
     cursor.addArrayAction(array);
-    final TestDNA dna = new TestDNA(cursor, "com.terracotta.toolkit.object.ClusteredObjectStripeImpl");
+    final TestDNA dna = new TestDNA(cursor, "com.terracotta.toolkit.object.ToolkitObjectStripeImpl");
     dna.version = this.version++;
     dna.isDelta = delta;
     return dna;
@@ -271,26 +271,32 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
       this.isDelta = isDelta;
     }
 
+    @Override
     public String getTypeName() {
       return this.typeName;
     }
 
+    @Override
     public ObjectID getObjectID() throws DNAException {
       return this.objectID;
     }
 
+    @Override
     public DNACursor getCursor() {
       return this.cursor;
     }
 
+    @Override
     public boolean hasLength() {
       return false;
     }
 
+    @Override
     public int getArraySize() {
       return 0;
     }
 
+    @Override
     public ObjectID getParentObjectID() throws DNAException {
       return this.parentObjectID;
     }
@@ -303,10 +309,12 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
       return;
     }
 
+    @Override
     public long getVersion() {
       return this.version;
     }
 
+    @Override
     public boolean isDelta() {
       return this.isDelta;
     }
@@ -319,6 +327,7 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
 
   protected static class TestManagedObjectChangeListenerProvider implements ManagedObjectChangeListenerProvider {
 
+    @Override
     public ManagedObjectChangeListener getListener() {
       return new NullManagedObjectChangeListener();
 
