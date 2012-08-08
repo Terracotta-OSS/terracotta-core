@@ -181,6 +181,10 @@ public class TestServerManager {
 
   }
 
+  public boolean isServerRunning(int groupIndex, int serverIndex) {
+    return groups[groupIndex].isServerRunning(serverIndex);
+  }
+
   public void waitUntilPassiveStandBy(int groupIndex) throws Exception {
     groups[groupIndex].waituntilPassiveStandBy();
   }

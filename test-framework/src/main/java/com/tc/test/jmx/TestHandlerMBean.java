@@ -130,9 +130,19 @@ public interface TestHandlerMBean {
    */
   public boolean isStandAloneTest();
 
-  public void clientExitedWithException(Throwable t);
-  /*
+  /**
    * Prints the stackTrace in testFramework logs if Client exits abnormally
+   * 
+   * @param t exception that the client exited with.
    */
+  public void clientExitedWithException(Throwable t);
 
+  /**
+   * Check if the server is running.
+   * 
+   * @param groupIndex group for the server
+   * @param serverIndex server index
+   * @return true if the server is running.
+   */
+  public boolean isServerRunning(int groupIndex, int serverIndex);
 }

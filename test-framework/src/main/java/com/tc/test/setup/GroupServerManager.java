@@ -636,6 +636,10 @@ public class GroupServerManager {
     closeJMXConnector(activeIndex);
   }
 
+  public boolean isServerRunning(int index) {
+    return serverControl[index] != null && serverControl[index].isRunning();
+  }
+
   public void waituntilPassiveStandBy() throws Exception {
     while (!isPassiveStandBy()) {
       Thread.sleep(1000);

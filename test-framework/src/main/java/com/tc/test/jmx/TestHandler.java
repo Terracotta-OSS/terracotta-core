@@ -120,4 +120,8 @@ public class TestHandler implements TestHandlerMBean {
 
   }
 
+  @Override
+  public boolean isServerRunning(int groupIndex, int serverIndex) {
+    return testServerManager.isServerRunning(groupIndex, serverIndex);
+  }
 }
