@@ -77,6 +77,6 @@ public abstract class AbstractClientBase implements Runnable {
   }
 
   public static void debug(String msg) {
-    System.out.println(new Date() + " " + Thread.currentThread().getName() + ": " + msg);
+    System.out.println("[D E B U G : " + new Date() + " '" + Thread.currentThread().getName() + "'] " + msg);
   }
 }
