@@ -7,6 +7,7 @@ package com.tc.net.core;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.GatheringByteChannel;
@@ -36,12 +37,15 @@ class ClearTextBufferManager implements BufferManager {
     sendBuffer.flip();
     int written = this.channel.write(sendBuffer);
     sendBuffer.compact();
+    if (written == -1) { throw new EOFException(); }
     return written;
   }
 
   @Override
   public int recvToBuffer() throws IOException {
-    return this.channel.read(recvBuffer);
+    int read = this.channel.read(recvBuffer);
+    if (read == -1) { throw new EOFException(); }
+    return read;
   }
 
   @Override
@@ -62,6 +66,7 @@ class ClearTextBufferManager implements BufferManager {
     recvBuffer.flip();
     int forwarded = gbc.write(recvBuffer);
     recvBuffer.compact();
+    if (forwarded == -1) { throw new EOFException(); }
     return forwarded;
   }
 
@@ -72,7 +77,9 @@ class ClearTextBufferManager implements BufferManager {
 
   @Override
   public int forwardToWriteBuffer(ScatteringByteChannel sbc) throws IOException {
-    return sbc.read(sendBuffer);
+    int read = sbc.read(sendBuffer);
+    if (read == -1) { throw new EOFException(); }
+    return read;
   }
 
   private static int forwardBuffer(final ByteBuffer source, final ByteBuffer dest) {
