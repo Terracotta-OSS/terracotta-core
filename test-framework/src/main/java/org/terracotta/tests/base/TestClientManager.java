@@ -83,11 +83,6 @@ public class TestClientManager {
         .getMaxHeap(), testConfig.getClientConfig().getDirectMemorySize());
     testConfig.getClientConfig().getBytemanConfig().addTo(jvmArgs, tempDir);
 
-    String clientArgs = System.getProperty(CLIENT_ARGS);
-    if (clientArgs != null) {
-      extraClientMainArgs.add(clientArgs);
-    }
-
     List<String> clientMainArgs = new ArrayList<String>();
     clientMainArgs.add(client.getName());
     clientMainArgs.add(Integer.toString(testBase.getTestControlMbeanPort()));
@@ -176,6 +171,11 @@ public class TestClientManager {
 
   private void configureClientExtraJVMArgs(List<String> jvmArgs) {
     jvmArgs.addAll(testConfig.getClientConfig().getExtraClientJvmArgs());
+    // JVM Args Specified through command line using -DclientJVMArgs="args"
+    String clientArgs = System.getProperty(CLIENT_ARGS);
+    if (clientArgs != null) {
+      jvmArgs.add(clientArgs);
+    }
   }
 
   private synchronized void stopAllClients() {
