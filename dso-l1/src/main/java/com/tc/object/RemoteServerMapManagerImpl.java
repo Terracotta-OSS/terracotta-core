@@ -538,6 +538,11 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
                                                                               this.portableKeys);
     }
 
+    @Override
+    public String toString() {
+      return "GetValueServerMapRequestContext@" + System.identityHashCode(this);
+    }
+
   }
 
   private static class GetAllKeysServerMapRequestContext extends AbstractServerMapRequestContext {
@@ -550,6 +555,11 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     @Override
     public void initializeMessage(final ServerMapRequestMessage requestMessage) {
       ((GetAllKeysServerMapRequestMessage) requestMessage).initializeSnapshotRequest(this.requestID, this.oid);
+    }
+
+    @Override
+    public String toString() {
+      return "GetAllKeysServerMapRequestContext@" + System.identityHashCode(this);
     }
 
   }
@@ -566,6 +576,11 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     @Override
     public void initializeMessage(final ServerMapRequestMessage requestMessage) {
       ((GetAllSizeServerMapRequestMessage) requestMessage).initializeGetAllSizeRequest(this.requestID, this.mapIDs);
+    }
+
+    @Override
+    public String toString() {
+      return "GetAllSizeServerMapRequestContext@" + System.identityHashCode(this);
     }
 
   }
