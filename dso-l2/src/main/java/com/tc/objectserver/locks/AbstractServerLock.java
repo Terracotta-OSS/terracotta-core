@@ -301,7 +301,7 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
   private void validateWaitNotifyState(ClientID cid, ThreadID tid, ServerLockContext holder, LockHelper helper) {
     if (holder == null) {
       throw new TCIllegalMonitorStateException("No holder present for when trying to wait/notify " + cid + "," + tid
-                                               + " for lock = " + lockID);
+                                               + " for lock = " + toString());
     } else if (holder.getState() != State.HOLDER_WRITE && holder.getState() != State.GREEDY_HOLDER_WRITE) {
       String message = "Holder not in correct state while wait/notify " + lockID + " " + holder;
       throw new TCIllegalMonitorStateException(message);

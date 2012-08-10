@@ -24,6 +24,7 @@ public class L1ServerMapLocalStoreTransactionCompletionListener implements Trans
   private final Object                       key;
   private final TransactionCompleteOperation transactionCompleteOperation;
   private final AbstractLocalCacheStoreValue value;
+  private final long                         time;
 
   public L1ServerMapLocalStoreTransactionCompletionListener(ServerMapLocalCache serverMapLocalCache, Object key,
                                                             AbstractLocalCacheStoreValue value,
@@ -35,9 +36,13 @@ public class L1ServerMapLocalStoreTransactionCompletionListener implements Trans
     if (listenerCount.incrementAndGet() % 50 == 0 && logger.isDebugEnabled()) {
       logger.debug("Number of active server map transation completion listeners: " + listenerCount.get());
     }
+    logger.warn("Shruti creating txn ");
+    time = System.currentTimeMillis();
   }
 
+  @Override
   public void transactionComplete(TransactionID txnID) {
+    logger.warn("Shruti Time taken to complete txn " + (System.currentTimeMillis() - time));
     if (transactionCompleteOperation == TransactionCompleteOperation.UNPIN_AND_REMOVE_ENTRY) {
       postTransactionCallback();
     } else {
