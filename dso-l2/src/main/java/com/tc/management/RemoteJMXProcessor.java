@@ -7,22 +7,27 @@ package com.tc.management;
 import com.tc.async.api.AddPredicate;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
+import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.Stats;
 import com.tc.util.concurrent.ThreadPreferenceExecutor;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Collection;
 import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import javax.management.remote.message.Message;
 
 public class RemoteJMXProcessor implements Sink {
 
-  private final Executor executor;
+  private static final TCLogger logger = TCLogging.getLogger(RemoteJMXProcessor.class);
+
+  private final Executor        executor;
 
   {
     TCProperties props = TCPropertiesImpl.getProperties();
@@ -39,22 +44,34 @@ public class RemoteJMXProcessor implements Sink {
     final CallbackExecuteContext callbackContext = (CallbackExecuteContext) context;
 
     try {
-      executor.execute(new Runnable() {
-        public void run() {
-          Thread currentThread = Thread.currentThread();
-          ClassLoader prevLoader = currentThread.getContextClassLoader();
-          currentThread.setContextClassLoader(callbackContext.getThreadContextLoader());
+      int retries = 0;
+      while (true) {
+        try {
+          executor.execute(new Runnable() {
+            public void run() {
+              Thread currentThread = Thread.currentThread();
+              ClassLoader prevLoader = currentThread.getContextClassLoader();
+              currentThread.setContextClassLoader(callbackContext.getThreadContextLoader());
 
-          try {
-            Message result = callbackContext.getCallback().execute(callbackContext.getRequest());
-            callbackContext.getFuture().set(result);
-          } catch (Throwable t) {
-            callbackContext.getFuture().setException(t);
-          } finally {
-            currentThread.setContextClassLoader(prevLoader);
-          }
+              try {
+                Message result = callbackContext.getCallback().execute(callbackContext.getRequest());
+                callbackContext.getFuture().set(result);
+              } catch (Throwable t) {
+                callbackContext.getFuture().setException(t);
+              } finally {
+                currentThread.setContextClassLoader(prevLoader);
+              }
+            }
+          });
+          break;
+        } catch (RejectedExecutionException e) {
+          ThreadUtil.reallySleep(10);
+          retries++;
         }
-      });
+        if (retries % 100 == 0) {
+          logger.warn("JMX Processor is saturated. Retried processing a request " + retries + " times.");
+        }
+      }
     } catch (Throwable t) {
       callbackContext.getFuture().setException(t);
     }
