@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<assembly>
+  <id>jar</id>
+
+  <formats>
+    <format>jar</format>
+  </formats>
+  
+  <includeBaseDirectory>false</includeBaseDirectory>
+
+  <fileSets>
+    <fileSet>
+      <directory>${project.build.directory}/classes</directory>
+      <outputDirectory>/</outputDirectory>
+    </fileSet>
+  </fileSets>
+
+  <dependencySets>
+    <dependencySet>
+      <unpack>true</unpack>
+      <includes>
+        <include>org.terracotta.toolkit:terracotta-toolkit-${toolkit-api-version}-impl</include>
+        <include>org.terracotta.toolkit:terracotta-toolkit-${toolkit-api-version}-api</include>
+        <include>org.terracotta.toolkit:terracotta-toolkit-${toolkit-api-version}-api-internal</include>
+      </includes>
+    </dependencySet>    
+  </dependencySets>
+</assembly>

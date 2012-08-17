@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<assembly>
+  <id>jar</id>
+
+  <formats>
+    <format>dir</format>
+  </formats>
+
+  <includeBaseDirectory>false</includeBaseDirectory>
+
+  <dependencySets>
+
+    <dependencySet>
+      <outputDirectory>L1</outputDirectory>
+      <useTransitiveDependencies>true</useTransitiveDependencies>
+      <includes>
+        <include>org.terracotta:${terracotta-l1.artifactId}</include>
+      </includes>
+      <useTransitiveFiltering>true</useTransitiveFiltering>
+      <useProjectArtifact>false</useProjectArtifact>
+      <scope>provided</scope>
+    </dependencySet>
+
+    <dependencySet>
+      <outputDirectory>TIMs</outputDirectory>
+      <useTransitiveDependencies>true</useTransitiveDependencies>
+      <outputFileNameMapping>${artifact.artifactId}-${artifact.baseVersion}.${artifact.extension}</outputFileNameMapping>
+      <includes>
+        <include>org.terracotta.toolkit:terracotta-toolkit-${toolkit-api-version}</include>
+	<include>org.terracotta.toolkit:terracotta-toolkit-${toolkit-api-version}-internal</include>      
+      </includes>
+      <scope>provided</scope>
+    </dependencySet>
+
+    <dependencySet>
+      <outputDirectory>ehcache</outputDirectory>
+      <useTransitiveDependencies>true</useTransitiveDependencies>
+      <useTransitiveFiltering>true</useTransitiveFiltering>
+      <useProjectArtifact>false</useProjectArtifact>
+      <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
+      <includes>
+        <include>net.sf.ehcache:ehcache</include>
+        <include>org.slf4j:slf4j-api</include>
+      </includes>
+      <scope>provided</scope>
+    </dependencySet>
+
+    <dependencySet>
+      <unpack>true</unpack>
+      <scope>provided</scope>
+      <unpackOptions>
+        <includes>
+          <include>**/build-data.txt</include>
+          <include>**/license.txt</include>
+        </includes>
+        <excludes>
+          <exclude>**/META-INF/maven/**</exclude>
+        </excludes>
+      </unpackOptions>
+      <includes>
+        <include>org.terracotta:${terracotta-l1.artifactId}</include>
+      </includes>
+    </dependencySet>
+       
+  </dependencySets>
+</assembly>

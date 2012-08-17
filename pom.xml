@@ -47,6 +47,13 @@
     <module>terracotta-l1-parent</module>
     <module>terracotta-l1</module>
     <module>test-framework</module>        
+
+    <module>toolkit-impl</module>
+    <module>toolkit-express-impl</module>
+    <module>toolkit-runtime</module>
+    <module>toolkit</module>
+    <module>toolkit-system-tests</module>
+    <module>truezip-repkg</module>
   </modules>
   
   <profiles>
@@ -78,6 +85,11 @@
         <module>../ent-active-active-tests</module>
         <module>../terracotta-ee</module>
         <module>../terracotta-l1-ee</module>         
+        <module>../toolkit-impl-ee</module>
+        <module>../toolkit-express-impl-ee</module>
+        <module>../toolkit-ee</module>
+        <module>../toolkit-runtime-ee</module>
+        <module>../toolkit-ee-system-tests</module>
       </modules>        
     </profile>
     

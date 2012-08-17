@@ -1,0 +1,33 @@
+RULE initialize trace
+CLASS DistributedObjectClient
+METHOD start
+AT ENTRY
+IF true
+DO traceOpen("Foo");
+traceln("Foo", "======== Starting server =========");
+ENDRULE
+
+RULE trace SerializerMapImpl put
+CLASS SerializerMapImpl
+METHOD put
+AT ENTRY
+IF true
+DO traceln("Foo","[SerializerMapImpl] put - key: " + $key + " value:->  " + $value);
+ENDRULE
+
+
+RULE trace SerializerMapImpl internalPut
+CLASS SerializerMapImpl
+METHOD internalPut
+AT ENTRY
+IF true
+DO traceln("Foo","[SerializerMapImpl] put - key: " + $key + " value:->  " + $value);
+ENDRULE
+
+RULE trace NonPartialMapImplApplicator apply
+CLASS NonPartialMapImplApplicator
+METHOD apply
+AT ENTRY
+IF true
+DO traceln("Foo","[SerializerMapImpl] put - key: " + $params[0] + " value:->  " + $params[1]);
+ENDRULE
