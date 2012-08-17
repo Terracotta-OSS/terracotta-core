@@ -27,6 +27,7 @@ public class JMXConnectionLeakTest extends BaseDSOTestCase {
   private ExternalDsoServer    server;
   private int                  jmxPort;
   private ServerMBeanRetriever serverMBeanRetriever;
+  private final int            count = 10;
 
   @Override
   protected void setUp() throws Exception {
@@ -45,14 +46,28 @@ public class JMXConnectionLeakTest extends BaseDSOTestCase {
     int initialCount = getNetInfoEstablishedConnectionsCount(jmxPort);
 
     ServerStat.main(getServerStatArgs());
-    Assert.assertEquals(initialCount, getNetInfoEstablishedConnectionsCount(jmxPort));
+    int now = getNetInfoEstablishedConnectionsCount(jmxPort);
+    Assert.assertTrue("initialCount : " + initialCount + " Now count: " + now,
+                      initialCount >= getNetInfoEstablishedConnectionsCount(jmxPort));
     String[] args = getHostNamePortMainArgs();
-    ClusterDumper.main(args);
-    Assert.assertEquals(initialCount, getNetInfoEstablishedConnectionsCount(jmxPort));
-    DumpServer.main(args);
-    Assert.assertEquals(initialCount, getNetInfoEstablishedConnectionsCount(jmxPort));
-    GCRunner.main(args);
-    Assert.assertEquals(initialCount, getNetInfoEstablishedConnectionsCount(jmxPort));
+    for (int i = 0; i < count; i++) {
+      ClusterDumper.main(args);
+    }
+    now = getNetInfoEstablishedConnectionsCount(jmxPort);
+    Assert.assertTrue("initialCount : " + initialCount + " Now count: " + now,
+                      initialCount >= getNetInfoEstablishedConnectionsCount(jmxPort));
+    for (int i = 0; i < count; i++) {
+      DumpServer.main(args);
+    }
+    now = getNetInfoEstablishedConnectionsCount(jmxPort);
+    Assert.assertTrue("initialCount : " + initialCount + " Now count: " + now,
+                      initialCount >= getNetInfoEstablishedConnectionsCount(jmxPort));
+    for (int i = 0; i < count; i++) {
+      GCRunner.main(args);
+    }
+    now = getNetInfoEstablishedConnectionsCount(jmxPort);
+    Assert.assertTrue("initialCount : " + initialCount + " Now count: " + now,
+                      initialCount >= getNetInfoEstablishedConnectionsCount(jmxPort));
 
   }
 
