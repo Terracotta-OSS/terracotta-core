@@ -27,8 +27,7 @@
       <useTransitiveDependencies>true</useTransitiveDependencies>
       <outputFileNameMapping>${artifact.artifactId}-${artifact.baseVersion}.${artifact.extension}</outputFileNameMapping>
       <includes>
-        <include>org.terracotta.toolkit:terracotta-toolkit-${toolkit-api-version}</include>
-	<include>org.terracotta.toolkit:terracotta-toolkit-${toolkit-api-version}-internal</include>      
+        <include>org.terracotta.internal:terracotta-toolkit</include>
       </includes>
       <scope>provided</scope>
     </dependencySet>

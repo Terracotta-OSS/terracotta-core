@@ -20,9 +20,9 @@
     <dependencySet>
       <unpack>true</unpack>
       <includes>
-        <include>org.terracotta.toolkit:terracotta-toolkit-${toolkit-api-version}-impl</include>
-        <include>org.terracotta.toolkit:terracotta-toolkit-${toolkit-api-version}-api</include>
-        <include>org.terracotta.toolkit:terracotta-toolkit-${toolkit-api-version}-api-internal</include>
+        <include>org.terracotta.internal:terracotta-toolkit-impl</include>
+        <include>org.terracotta.toolkit:terracotta-toolkit-api</include>
+        <include>org.terracotta.toolkit:terracotta-toolkit-api-internal</include>
       </includes>
     </dependencySet>    
   </dependencySets>

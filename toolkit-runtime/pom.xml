@@ -155,24 +155,24 @@
         </executions>
       </plugin>
 
-      <!--plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
         <version>1.7.1</version>
         <configuration>
           <artifactSet>
             <includes>
-              <include>org.terracotta.toolkit:express-impl</include>
-              <include>org.terracotta.toolkit:truezip-repkg</include>
-              <include>org.terracotta.toolkit:terracotta-toolkit-${toolkit-api-version}-api</include>
- 	          <include>org.terracotta.toolkit:terracotta-toolkit-${toolkit-api-version}-api-internal</include>
+              <include>org.terracotta.internal:toolkit-express-impl</include>
+              <include>org.terracotta.internal:truezip-repkg</include>
+              <include>org.terracotta.toolkit:terracotta-toolkit-api</include>
+              <include>org.terracotta.toolkit:terracotta-toolkit-api-internal</include>
             </includes>
           </artifactSet>       
           <filters>
             <filter>
               <artifact>*:*</artifact>
               <excludes>
-                <exclude>**/META-INF/maven/org.terracotta.toolkit/**</exclude>
+                <exclude>**/META-INF/maven/org.terracotta.internal/**</exclude>
               </excludes>
             </filter>		  
           </filters>    
@@ -198,7 +198,7 @@
             </goals>
           </execution>
         </executions>
-      </plugin-->    
+      </plugin>    
 
       <plugin>
         <groupId>org.terracotta</groupId>
@@ -239,7 +239,7 @@
         </executions>
       </plugin>      
       
-      <!--plugin>
+      <plugin>
         <groupId>org.codehaus.gmaven</groupId>
         <artifactId>gmaven-plugin</artifactId>
         <version>${gmaven-plugin.version}</version>
@@ -277,7 +277,7 @@
             </configuration>
           </execution>
         </executions>
-      </plugin-->      
+      </plugin>      
     </plugins>
   </build>
 
