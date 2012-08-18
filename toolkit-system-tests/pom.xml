@@ -22,6 +22,7 @@
 
   <properties>
     <terracotta.core.version>3.8.0-SNAPSHOT</terracotta.core.version>
+    <skipTests>true</skipTests>
   </properties>
 
   <dependencies>
@@ -77,9 +78,15 @@
       <plugin>
         <groupId>org.terracotta</groupId>
         <artifactId>maven-forge-plugin</artifactId>
-        <configuration>
-          <__TC_skipToolkitResolve>true</__TC_skipToolkitResolve>
-        </configuration>
+        <executions>
+          <execution>
+            <id>default-test</id>
+            <phase>integration-test</phase>
+            <configuration>
+              <skipTests>${skipTests}</skipTests>
+            </configuration>
+          </execution>
+        </executions>        
       </plugin>
     </plugins>
   </build>
