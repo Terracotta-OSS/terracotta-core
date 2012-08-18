@@ -9,7 +9,6 @@
     <relativePath>../build-parent</relativePath>
   </parent>
 
-  <groupId>org.terracotta</groupId>
   <artifactId>terracotta-toolkit-runtime</artifactId>
   <name>terracotta-toolkit-runtime</name>
   <packaging>jar</packaging>
@@ -242,7 +241,6 @@
       <plugin>
         <groupId>org.codehaus.gmaven</groupId>
         <artifactId>gmaven-plugin</artifactId>
-        <version>${gmaven-plugin.version}</version>
         <executions>
           <execution>
             <id>prepare-pom-xml</id>

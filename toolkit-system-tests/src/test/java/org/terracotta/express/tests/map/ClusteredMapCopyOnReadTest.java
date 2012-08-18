@@ -12,7 +12,6 @@ import org.terracotta.toolkit.store.ToolkitStoreConfigBuilder;
 import com.tc.test.config.model.TestConfig;
 
 import java.io.Serializable;
-import java.util.concurrent.BrokenBarrierException;
 
 import junit.framework.Assert;
 
@@ -35,7 +34,7 @@ public class ClusteredMapCopyOnReadTest extends AbstractExpressActivePassiveTest
       basicTest(toolkit);
     }
 
-    private void basicTest(Toolkit toolkit) throws InterruptedException, BrokenBarrierException {
+    private void basicTest(Toolkit toolkit) {
       ToolkitStoreConfigBuilder builder = new ToolkitStoreConfigBuilder();
       builder.copyOnReadEnabled(true);
       ToolkitCache<String, MyObject> copyOnReadEnabledMap = toolkit.getCache("copyOnReadEnabledMap", builder.build(),

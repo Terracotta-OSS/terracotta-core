@@ -3,7 +3,7 @@
  */
 package org.terracotta.express.tests;
 
-import org.terracotta.express.tests.base.ClientBase;
+import org.terracotta.tests.base.AbstractClientBase;
 
 import com.tc.test.jmx.TestHandlerMBean;
 
@@ -46,7 +46,7 @@ public class ServerCrasher implements Runnable {
     long remainingMillis = getRemainingMillis();
     while (remainingMillis > 0) {
       try {
-        ClientBase.debug("[server crasher] sleeping for " + remainingMillis + " millis...");
+        AbstractClientBase.debug("[server crasher] sleeping for " + remainingMillis + " millis...");
         Thread.sleep(remainingMillis);
       } catch (InterruptedException e) {
         e.printStackTrace();
@@ -54,13 +54,13 @@ public class ServerCrasher implements Runnable {
       remainingMillis = getRemainingMillis();
     }
 
-    ClientBase.debug("[server crasher] crashing active server...");
+    AbstractClientBase.debug("[server crasher] crashing active server...");
     try {
       testBean.crashActiveAndWaitForPassiveToTakeOver(0);
-      ClientBase.debug("[server crasher] crashed active server.");
+      AbstractClientBase.debug("[server crasher] crashed active server.");
       success = true;
     } catch (Exception e) {
-      ClientBase.debug("[server crasher] FAILED to crash active server.");
+      AbstractClientBase.debug("[server crasher] FAILED to crash active server.");
       e.printStackTrace();
     }
   }

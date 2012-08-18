@@ -97,8 +97,4 @@ public abstract class ClientBase extends AbstractClientBase {
       throw new AssertionError(e);
     }
   }
-
-  public static final void debug(String fmt, Object... args) {
-    System.out.println("[T E S T] " + String.format(fmt, args));
-  }
 }
