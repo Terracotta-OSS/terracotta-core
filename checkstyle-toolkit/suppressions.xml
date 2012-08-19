@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE suppressions PUBLIC
+    "-//Puppy Crawl//DTD Suppressions 1.1//EN"
+    "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
+
+<suppressions>
+  <!-- toolkit project allowed to use these classes-->
+  <suppress id="forbidden-toolkit-classes" files=".java" />
+  <suppress id="forbidden-express-classes" files=".java" />
+
+</suppressions>

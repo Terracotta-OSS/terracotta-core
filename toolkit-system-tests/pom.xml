@@ -22,7 +22,7 @@
 
   <properties>
     <terracotta.core.version>3.8.0-SNAPSHOT</terracotta.core.version>
-    <skipTests>true</skipTests>
+    <checkstyle-suppressions-file>${basedir}/../checkstyle-toolkit/suppressions.xml</checkstyle-suppressions-file>
   </properties>
 
   <dependencies>

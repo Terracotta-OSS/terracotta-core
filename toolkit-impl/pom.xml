@@ -16,7 +16,7 @@
 
   <properties>
     <ehcache.version>2.7.0-SNAPSHOT</ehcache.version>
-    <skipCheckstyle>true</skipCheckstyle>
+    <checkstyle-suppressions-file>${basedir}/../checkstyle-toolkit/suppressions.xml</checkstyle-suppressions-file>
   </properties>
 
   <dependencies>
