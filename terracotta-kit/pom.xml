@@ -18,8 +18,6 @@
   <name>terracotta-kit</name>
 
   <properties>
-    <toolkit.api>1.6</toolkit.api>
-    <toolkit.version>6.0.0-SNAPSHOT</toolkit.version>
     <ehcache.version>2.7.0-SNAPSHOT</ehcache.version>
     <quartz.version>3.0.0-SNAPSHOT</quartz.version>
     <terracotta-session.version>3.0.0-SNAPSHOT</terracotta-session.version>
@@ -38,7 +36,7 @@
 
     <terracotta.artifactId>terracotta${ee.suffix}</terracotta.artifactId>
     <terracotta.jarname>${terracotta.artifactId}-${project.version}.jar</terracotta.jarname>
-    <toolkit.artifactId>terracotta-toolkit-${toolkit.api}-runtime${ee.suffix}</toolkit.artifactId> 
+    <toolkit.artifactId>terracotta-toolkit-runtime${ee.suffix}</toolkit.artifactId> 
     <ehcache.artifactId>ehcache-kit</ehcache.artifactId>
     <quartz.artifactId>quartz-kit</quartz.artifactId>
 
@@ -63,7 +61,7 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>${toolkit.artifactId}</artifactId>
-      <version>${toolkit.version}</version>
+      <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>       
 
