@@ -21,9 +21,6 @@ public abstract class ClusteredMapMaxElementsOnDiskTestClient extends ClientBase
   @Override
   protected void test(Toolkit toolkit) throws Throwable {
     testMaxElementsOnDisk(toolkit, getConsistency());
-    System.out.println("Testing with Strong Cache");
-    testMaxElementsOnDisk(toolkit, Consistency.STRONG);
-
   }
   
   public abstract Consistency getConsistency();
@@ -49,6 +46,9 @@ public abstract class ClusteredMapMaxElementsOnDiskTestClient extends ClientBase
       }
 
     });
+    cache.destroy();
+    debug("Done with cache11");
+
     builder.maxCountLocalHeap(10);
     builder.maxTotalCount(100);
     final ToolkitCache cache2 = toolkit.getCache("cache22", builder.build(), null);
@@ -62,7 +62,6 @@ public abstract class ClusteredMapMaxElementsOnDiskTestClient extends ClientBase
         return cache2.size() < 1000;
       }
     });
-    cache.destroy();
     cache2.destroy();
 
   }
