@@ -34,7 +34,7 @@ public abstract class ClusteredMapMaxElementsOnDiskTestClient extends ClientBase
     builder.maxCountLocalHeap(10);
     builder.maxTotalCount(0);
     final ToolkitCache cache = toolkit.getCache("cache11", builder.build(), null);
-    final int size = 5000;
+    final int size = 2000;
     populateCache(cache, size);
     WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
 
@@ -59,7 +59,7 @@ public abstract class ClusteredMapMaxElementsOnDiskTestClient extends ClientBase
       public Boolean call() throws Exception {
         cache2.put(i++, i);
         System.out.println("cache22 size" + cache2.size());
-        return cache2.size() < 1000;
+        return cache2.size() < 200;
       }
     });
     cache2.destroy();
