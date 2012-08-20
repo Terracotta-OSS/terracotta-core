@@ -33,7 +33,7 @@
     <security-keychain-version>1.1.0-SNAPSHOT</security-keychain-version>
     <management.version>2.7.0-SNAPSHOT</management.version>
     <terracotta-license.version>1.0.5-SNAPSHOT</terracotta-license.version>
-    <toolkit-api.version>2.0</toolkit-api.version>
+    <toolkit-api.version>2.0-SNAPSHOT</toolkit-api.version>
     <!-- version of ehcache embedded inside toolkit -->
     <ehcache.version>2.7.0-SNAPSHOT</ehcache.version>
     <maven-forge-plugin.version>1.0.6-SNAPSHOT</maven-forge-plugin.version>
