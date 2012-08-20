@@ -118,6 +118,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         .getExistingValueOrException(config);
   }
 
+  @Override
   public void initializeLocalCache(L1ServerMapLocalCacheStore<K, V> localCacheStore) {
     if (localCacheStore == null) { throw new AssertionError("Local Cache Store cannot be null"); }
     this.l1ServerMapLocalCacheStore = localCacheStore;
@@ -139,6 +140,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     return lockType;
   }
 
+  @Override
   public boolean isEventual() {
     return this.consistency == Consistency.EVENTUAL;
   }
@@ -245,6 +247,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     return deserialize(key, serializedMapValue);
   }
 
+  @Override
   public V checkAndGetNonExpiredValue(K key, Object value, GetType getType, boolean quiet) {
     SerializedMapValue serializedMapValue = asSerializedMapValue(value);
     return deserialize(key, expireEntryIfNecessary(key, serializedMapValue, getType, quiet));
@@ -266,7 +269,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         serializedMapValue = null;
       } else {
         if (!quiet) {
-          markUsed(serializedMapValue, now);
+          markUsed(key, serializedMapValue, now);
         }
         expired = false;
       }
@@ -297,9 +300,10 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     }
   }
 
-  private void markUsed(SerializedMapValue serializedMapValue, int usedAtTime) {
+  private void markUsed(Object key, SerializedMapValue serializedMapValue,
+                        int usedAtTime) {
     if (shouldUpdateIdleTimer(usedAtTime, maxTTISeconds, serializedMapValue.internalGetLastAccessedTime())) {
-      serializedMapValue.updateLastAccessedTime(usedAtTime);
+      serializedMapValue.updateLastAccessedTime(key, tcObjectServerMap, usedAtTime);
     }
   }
 
@@ -470,6 +474,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     ManagerUtil.commitLock(lockID, LockingUtils.translate(type).toInt());
   }
 
+  @Override
   public ToolkitReadWriteLock createLockForKey(Object key) {
     final Long lockId = generateLockIdForKey(key);
     if (lockId == null) {
@@ -479,6 +484,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     return new UnnamedToolkitReadWriteLock(lockId);
   }
 
+  @Override
   public void clearLocalCache() {
     if (isEventual()) {
       // DEV-5244: no need to broadcast 'clear local cache' when invalidateOnChange
@@ -499,28 +505,34 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     this.tcObjectServerMap.clearAllLocalCacheInline(this);
   }
 
+  @Override
   public int localSize() {
     return this.tcObjectServerMap.getLocalSize();
   }
 
+  @Override
   public Set<K> localKeySet() {
     return this.tcObjectServerMap.getLocalKeySet();
   }
 
+  @Override
   public boolean containsLocalKey(final Object key) {
     return this.tcObjectServerMap.containsLocalKey(key);
   }
 
+  @Override
   public void unpinAll() {
     if (!localCacheEnabled) { throw new UnsupportedOperationException(
                                                                       "unpinAll is not supported when local cache is disabled"); }
     this.tcObjectServerMap.unpinAll();
   }
 
+  @Override
   public boolean isPinned(K key) {
     return this.tcObjectServerMap.isPinned(assertKeyLiteral(key));
   }
 
+  @Override
   public void setPinned(K key, boolean pinned) {
     if (!localCacheEnabled) { throw new UnsupportedOperationException(
                                                                       "Pinning is not supported when local cache is disabled"); }
@@ -593,6 +605,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     }
   }
 
+  @Override
   public void unlockedPutNoReturnWithMetaData(K key, V value, int createTimeInSecs, int customMaxTTISeconds,
                                               int customMaxTTLSeconds, MetaData metaData) {
     doLogicalPutUnlocked(key, value, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds, metaData);
@@ -626,6 +639,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   }
 
+  @Override
   public V putIfAbsent(final K key, final V value) {
     assertNotNull(value);
     return internalPutIfAbsent(key, value, timeSource.nowInSeconds(), ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
@@ -691,6 +705,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     return removeWithMetaData(key, null);
   }
 
+  @Override
   public V removeWithMetaData(final Object key, final MetaData metaData) {
     if (!LiteralValues.isLiteralInstance(key)) {
       // Returning null as we cannot key passed needs to be portable else if the key is not Literal
@@ -723,10 +738,12 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     }
   }
 
+  @Override
   public boolean remove(final Object key, final Object value) {
     return removeWithMetaData(key, value, null);
   }
 
+  @Override
   public boolean removeWithMetaData(Object key, Object value, final MetaData metaData) {
     if (!LiteralValues.isLiteralInstance(key)) {
       // Returning null as we cannot key passed needs to be portable else if the key is not Literal
@@ -766,10 +783,12 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     }
   }
 
+  @Override
   public void unlockedRemoveNoReturnWithMetaData(Object key, MetaData metaData) {
     doLogicalRemoveUnlocked(key, metaData);
   }
 
+  @Override
   public void removeNoReturnWithMetaData(Object key, final MetaData metaData) {
     if (!LiteralValues.isLiteralInstance(key)) {
       // Returning null as we cannot key passed needs to be portable else if the key is not Literal
@@ -794,6 +813,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     }
   }
 
+  @Override
   public V replace(final K key, final V value) {
     assertNotNull(value);
 
@@ -826,6 +846,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     }
   }
 
+  @Override
   public boolean replace(final K key, final V oldValue, final V newValue) {
     assertNotNull(oldValue);
     assertNotNull(newValue);
@@ -863,6 +884,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     }
   }
 
+  @Override
   public void evictedInServer(boolean notifyEvicted, Object key) {
     internalRemoveFromLocalCache(key);
     if (notifyEvicted) {
@@ -891,6 +913,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     clearWithMetaData(null);
   }
 
+  @Override
   public void unlockedClearWithMetaData(MetaData metaData) {
     tcObjectServerMap.doClear(this);
     if (metaData != null) {
@@ -899,6 +922,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     }
   }
 
+  @Override
   public void clearWithMetaData(final MetaData metaData) {
     beginLock(getInstanceDsoLockName(), this.lockType);
     try {
@@ -970,18 +994,22 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     commitLock(lockId, this.lockType);
   }
 
+  @Override
   public long localOnHeapSizeInBytes() {
     return tcObjectServerMap.getLocalOnHeapSizeInBytes();
   }
 
+  @Override
   public long localOffHeapSizeInBytes() {
     return tcObjectServerMap.getLocalOffHeapSizeInBytes();
   }
 
+  @Override
   public int localOnHeapSize() {
     return tcObjectServerMap.getLocalOnHeapSize();
   }
 
+  @Override
   public int localOffHeapSize() {
     return tcObjectServerMap.getLocalOffHeapSize();
   }
@@ -997,10 +1025,12 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     }
   }
 
+  @Override
   public boolean containsKeyLocalOnHeap(Object key) {
     return tcObjectServerMap.containsKeyLocalOnHeap(assertKeyLiteral(key));
   }
 
+  @Override
   public boolean containsKeyLocalOffHeap(Object key) {
     return tcObjectServerMap.containsKeyLocalOffHeap(assertKeyLiteral(key));
   }
@@ -1038,14 +1068,17 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
           return new Iterator<V>() {
             private final Iterator<Entry<K, V>> i = entrySet().iterator();
 
+            @Override
             public boolean hasNext() {
               return i.hasNext();
             }
 
+            @Override
             public V next() {
               return i.next().getValue();
             }
 
+            @Override
             public void remove() {
               i.remove();
             }
@@ -1081,18 +1114,22 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     disposeLocally();
   }
 
+  @Override
   public int getMaxTTISeconds() {
     return maxTTISeconds;
   }
 
+  @Override
   public int getMaxTTLSeconds() {
     return maxTTLSeconds;
   }
 
+  @Override
   public int getMaxCountInCluster() {
     return maxCountInCluster;
   }
 
+  @Override
   public boolean isLocalCacheEnabled() {
     return localCacheEnabled;
   }

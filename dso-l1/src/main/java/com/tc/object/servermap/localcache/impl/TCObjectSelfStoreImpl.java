@@ -50,11 +50,16 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   public void removeObjectById(ObjectID oid) {
     isShutdownThenException();
 
-    tcObjectStoreLock.readLock().lock();
+    tcObjectStoreLock.writeLock().lock();
     try {
+      if (tcObjectSelfTempCache.containsKey(oid)) {
+        removeTCObjectSelfTemp(tcObjectSelfTempCache.get(oid), true);
+        return;
+      }
+
       if (!tcObjectSelfStoreOids.contains(oid)) { return; }
     } finally {
-      tcObjectStoreLock.readLock().unlock();
+      tcObjectStoreLock.writeLock().unlock();
     }
 
     for (ServerMapLocalCache cache : localCaches.keySet()) {
@@ -252,6 +257,33 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   }
 
   @Override
+  public void removeTCObjectSelf(TCObjectSelf self) {
+    isShutdownThenException();
+
+    synchronized (tcObjectSelfRemovedFromStoreCallback) {
+      tcObjectStoreLock.writeLock().lock();
+
+      try {
+        ObjectID valueOid = self.getObjectID();
+
+        if (ObjectID.NULL_ID.equals(valueOid) || !tcObjectSelfStoreOids.contains(valueOid)) {
+          if (logger.isDebugEnabled()) {
+            logger.debug("XXX Removing TCObjectSelf from Store Failed, ObjectID=" + valueOid
+                         + " , TCObjectSelfStore contains it = " + tcObjectSelfStoreOids.contains(valueOid));
+          }
+          return;
+        }
+
+        tcObjectSelfRemovedFromStoreCallback.removedTCObjectSelfFromStore(self);
+        tcObjectSelfStoreOids.remove(valueOid);
+      } finally {
+        tcObjectStoreLock.writeLock().unlock();
+      }
+      this.tcObjectSelfRemovedFromStoreCallback.notifyAll();
+    }
+  }
+
+  @Override
   public void addAllObjectIDsToValidate(Invalidations invalidations, NodeID remoteNode) {
     isShutdownThenException();
 
@@ -325,6 +357,12 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
         eventualIds.add(id);
       } else {
         nonEventualIds.add(id);
+      }
+    }
+
+    public void remove(ObjectID id) {
+      if (!eventualIds.remove(id)) {
+        nonEventualIds.remove(id);
       }
     }
 

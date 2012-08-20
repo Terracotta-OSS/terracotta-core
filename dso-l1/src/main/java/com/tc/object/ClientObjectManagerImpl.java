@@ -195,10 +195,12 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     isManaged(new Object());
   }
 
+  @Override
   public Class getClassFor(final String className) throws ClassNotFoundException {
     return this.classProvider.getClassFor(className);
   }
 
+  @Override
   public synchronized boolean isLocal(final ObjectID objectID) {
     if (null == objectID) { return false; }
 
@@ -207,18 +209,21 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return this.remoteObjectManager.isInDNACache(objectID);
   }
 
+  @Override
   public synchronized void pause(final NodeID remote, final int disconnected) {
     assertNotPaused("Attempt to pause while PAUSED");
     this.state = PAUSED;
     notifyAll();
   }
 
+  @Override
   public synchronized void unpause(final NodeID remote, final int disconnected) {
     assertNotRunning("Attempt to unpause while RUNNING");
     this.state = RUNNING;
     notifyAll();
   }
 
+  @Override
   public synchronized void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                                final ClientHandshakeMessage handshakeMessage) {
     if (isShutdown()) return;
@@ -274,15 +279,18 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return this.state == SHUTDOWN;
   }
 
+  @Override
   public TraversedReferences getPortableObjects(final Class clazz, final Object start, final TraversedReferences addTo) {
     final TCClass tcc = this.clazzFactory.getOrCreate(clazz, this);
     return tcc.getPortableObjects(start, addTo);
   }
 
+  @Override
   public void setTransactionManager(final ClientTransactionManager txManager) {
     this.txManager = txManager;
   }
 
+  @Override
   public ClientTransactionManager getTransactionManager() {
     return this.txManager;
   }
@@ -330,6 +338,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return basicLookup(pojo);
   }
 
+  @Override
   public void shutdown() {
     this.objectStore.shutdown();
     synchronized (this) {
@@ -355,12 +364,14 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
+  @Override
   public TCObject lookupOrCreate(final Object pojo) {
     if (pojo == null) { return TCObjectFactory.NULL_TC_OBJECT; }
     return lookupOrCreateIfNecesary(pojo, this.appEventContextFactory.createNonPortableEventContext(pojo),
                                     GroupID.NULL_ID);
   }
 
+  @Override
   public TCObject lookupOrCreate(final Object pojo, final GroupID gid) {
     if (pojo == null) { return TCObjectFactory.NULL_TC_OBJECT; }
     return lookupOrCreateIfNecesary(pojo, this.appEventContextFactory.createNonPortableEventContext(pojo), gid);
@@ -415,10 +426,12 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return basicLookupByID(rootID);
   }
 
+  @Override
   public TCObject lookupExistingOrNull(final Object pojo) {
     return basicLookup(pojo);
   }
 
+  @Override
   public ObjectID lookupExistingObjectID(final Object pojo) {
     if (LiteralValues.isLiteralInstance(pojo)) { return ObjectID.NULL_ID; }
     if (pojo instanceof TCObjectSelf) { return ((TCObjectSelf) pojo).getObjectID(); }
@@ -436,6 +449,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
    * 
    * @param id Object identifier
    */
+  @Override
   public void preFetchObject(final ObjectID id) {
     if (id.isNull()) return;
 
@@ -452,18 +466,22 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
+  @Override
   public Object lookupObjectQuiet(ObjectID id) throws ClassNotFoundException {
     return lookupObject(id, null, false, true);
   }
 
+  @Override
   public Object lookupObjectNoDepth(final ObjectID id) throws ClassNotFoundException {
     return lookupObject(id, null, true, false);
   }
 
+  @Override
   public Object lookupObject(final ObjectID objectID) throws ClassNotFoundException {
     return lookupObject(objectID, null, false, false);
   }
 
+  @Override
   public Object lookupObject(final ObjectID id, final ObjectID parentContext) throws ClassNotFoundException {
     return lookupObject(id, parentContext, false, false);
   }
@@ -504,16 +522,19 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   }
 
+  @Override
   public boolean isManaged(final Object pojo) {
     return pojo != null && !LiteralValues.isLiteral(pojo.getClass().getName()) && lookupExistingOrNull(pojo) != null;
   }
 
+  @Override
   public boolean isCreationInProgress() {
     return getLocalLookupContext().getObjectCreationCount().get() > 0 ? true : false;
   }
 
   // Done
 
+  @Override
   public TCObject lookup(final ObjectID id) throws ClassNotFoundException {
     return lookup(id, null, false, false);
   }
@@ -620,6 +641,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   }
 
+  @Override
   public void removedTCObjectSelfFromStore(TCObjectSelf tcoSelf) {
     synchronized (this) {
       // Calling remove from within the synchronized block to make sure there are no races between the lookups and
@@ -654,6 +676,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     waitSet.clear();
   }
 
+  @Override
   public synchronized TCObject lookupIfLocal(final ObjectID id) {
     return basicLookupByID(id);
   }
@@ -662,10 +685,12 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return this.objectStore.addAllObjectIDs(oids);
   }
 
+  @Override
   public Object lookupRoot(final String rootName) {
     return lookupRoot(rootName, this.rootsHolder.getGroupIDForRoot(rootName));
   }
 
+  @Override
   public Object lookupRoot(final String rootName, GroupID gid) {
     try {
       return lookupRootOptionallyCreateOrReplace(rootName, null, false, true, false, gid);
@@ -677,6 +702,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   /**
    * Check to see if the root is already in existence on the server. If it is then get it if not then create it.
    */
+  @Override
   public Object lookupOrCreateRoot(final String rootName, final Object root) {
     try {
       return lookupOrCreateRoot(rootName, root, true, false, this.rootsHolder.getGroupIDForRoot(rootName));
@@ -688,6 +714,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   /**
    * Check to see if the root is already in existence on the server. If it is then get it if not then create it.
    */
+  @Override
   public Object lookupOrCreateRoot(final String rootName, final Object root, final GroupID gid) {
     try {
       return lookupOrCreateRoot(rootName, root, true, false, gid);
@@ -700,6 +727,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
    * This method must be called within a DSO synchronized context. Currently, this is called in a setter method of a
    * replaceable root.
    */
+  @Override
   public Object createOrReplaceRoot(final String rootName, final Object root) {
     final Object existingRoot = lookupRoot(rootName);
     if (existingRoot == null) {
@@ -713,6 +741,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
+  @Override
   public Object lookupOrCreateRootNoDepth(final String rootName, final Object root) {
     try {
       return lookupOrCreateRoot(rootName, root, true, true, this.rootsHolder.getGroupIDForRoot(rootName));
@@ -721,6 +750,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
+  @Override
   public Object lookupOrCreateRoot(final String rootName, final Object root, final boolean dsoFinal) {
     try {
       return lookupOrCreateRoot(rootName, root, dsoFinal, false, this.rootsHolder.getGroupIDForRoot(rootName));
@@ -776,6 +806,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
+  @Override
   public void checkPortabilityOfField(final Object fieldValue, final String fieldName, final Object pojo)
       throws TCNonPortableObjectError {
     final NonPortableReason reason = checkPortabilityOf(fieldValue);
@@ -795,6 +826,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
    * This is used by the senders of ApplicationEvents to provide a version of a logically-managed pojo in the state it
    * would have been in had the ApplicationEvent not occurred.
    */
+  @Override
   public Object cloneAndInvokeLogicalOperation(Object pojo, String methodName, final Object[] params) {
     try {
       final Class c = pojo.getClass();
@@ -828,6 +860,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return pojo;
   }
 
+  @Override
   public void checkPortabilityOfLogicalAction(final Object[] params, final int index, final String methodName,
                                               final Object pojo) throws TCNonPortableObjectError {
     final Object param = params[index];
@@ -1097,6 +1130,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
+  @Override
   public void sendApplicationEvent(final Object pojo, final ApplicationEvent event) {
     final JMXMessage jmxMsg = this.channel.getJMXMessage();
     storeObjectHierarchy(pojo, event.getApplicationEventContext());
@@ -1104,6 +1138,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     jmxMsg.send();
   }
 
+  @Override
   public void storeObjectHierarchy(final Object root, final ApplicationEventContext context) {
     try {
       final WalkVisitor wv = new WalkVisitor(this, this.clientConfiguration, context);
@@ -1115,6 +1150,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
+  @Override
   public ToggleableStrongReference getOrCreateToggleRef(final ObjectID id, final Object peer) {
     // We don't need ObjectID param anymore, but it is useful when debugging so I didn't remove it
     return this.referenceManager.getOrCreateFor(peer);
@@ -1123,6 +1159,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private class AddManagedObjectAction implements TraversalAction, PostCreateMethodGatherer {
     private final Map<Object, List<Method>> toCall = new IdentityHashMap<Object, List<Method>>();
 
+    @Override
     public final void visit(final List objects, final GroupID gid) {
       for (final Object pojo : objects) {
         final List<Method> postCreateMethods = ClientObjectManagerImpl.this.clazzFactory
@@ -1139,6 +1176,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       }
     }
 
+    @Override
     public final Map<Object, List<Method>> getPostCreateMethods() {
       return this.toCall;
     }
@@ -1146,6 +1184,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   private class NewObjectTraverseTest implements TraverseTest {
 
+    @Override
     public boolean shouldTraverse(final Object object) {
       // literals should be skipped -- without this check, literal members (field values, array element values, in
       // collection, etc) of newly shared instances would get TCObjects and ObjectIDs assigned to them.
@@ -1156,6 +1195,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       return tco.isNew();
     }
 
+    @Override
     public void checkPortability(final TraversedReference reference, final Class referringClass,
                                  final NonPortableEventContext context) throws TCNonPortableObjectError {
       checkPortabilityOfTraversedReference(reference, referringClass, context);
@@ -1212,6 +1252,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return this.idProvider.next(txn, pojo, gid);
   }
 
+  @Override
   public WeakReference createNewPeer(final TCClass clazz, final DNA dna) {
     return newWeakObjectReference(dna.getObjectID(), createNewPojoObject(clazz, dna));
   }
@@ -1228,6 +1269,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
+  @Override
   public WeakReference createNewPeer(final TCClass clazz, final int size, final ObjectID id, final ObjectID parentID) {
     return newWeakObjectReference(id, createNewPojoObject(clazz, size, id, parentID));
   }
@@ -1247,6 +1289,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
+  @Override
   public WeakReference newWeakObjectReference(final ObjectID oid, final Object referent) {
     if (this.runtimeLogger.getFlushDebug()) {
       return new LoggingWeakObjectReference(oid, referent, this.referenceQueue);
@@ -1255,14 +1298,17 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
+  @Override
   public TCClass getOrCreateClass(final Class clazz) {
     return this.clazzFactory.getOrCreate(clazz, this);
   }
 
+  @Override
   public boolean isPortableClass(final Class clazz) {
     return this.portability.isPortableClass(clazz);
   }
 
+  @Override
   public boolean isPortableInstance(final Object obj) {
     return this.portability.isPortableInstance(obj);
   }
@@ -1304,6 +1350,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   // XXX::: Cache eviction doesn't clear it from the cache. it happens in reap().
+  @Override
   public void evictCache(final CacheStats stat) {
     final int size = objectStore_size();
     int toEvict = stat.getObjectCountToEvict(size);
@@ -1361,6 +1408,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     writer.flush();
   }
 
+  @Override
   public synchronized PrettyPrinter prettyPrint(final PrettyPrinter out) {
     out.print(this.getClass().getName()).flush();
     out.indent().print("roots Map: ").print(Integer.valueOf(this.rootsHolder.size())).flush();
@@ -1523,6 +1571,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     Map<Object, List<Method>> getPostCreateMethods();
   }
 
+  @Override
   public void initializeTCClazzIfRequired(TCObjectSelf tcObjectSelf) {
     this.factory.initClazzIfRequired(tcObjectSelf.getClass(), tcObjectSelf);
   }

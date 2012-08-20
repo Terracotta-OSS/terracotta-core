@@ -13,8 +13,12 @@ import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectSelf;
 import com.tc.object.TCObjectSelfImpl;
+import com.tc.object.TCObjectServerMap;
 import com.tc.object.bytecode.Manageable;
+import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
+import com.tc.object.tx.TransactionCompleteListener;
+import com.tc.object.tx.TransactionID;
 import com.tc.util.FindbugsSuppressWarnings;
 import com.terracotta.toolkit.concurrent.locks.UnnamedToolkitLock;
 
@@ -151,6 +155,7 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
            + shared + "]";
   }
 
+  @Override
   public void writeExternal(ObjectOutput out) throws IOException {
     super.serialize(out);
     out.writeInt(createTime);
@@ -160,6 +165,7 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
     out.writeBoolean(shared);
   }
 
+  @Override
   public void readExternal(ObjectInput in) throws IOException {
     super.deserialize(in);
     internalSetCreateTime(in.readInt());
@@ -262,10 +268,15 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
     return Math.min(expiresAtTTI, expiresAtTTL);
   }
 
-  public void updateLastAccessedTime(int usedAtTime) {
+  public void updateLastAccessedTime(Object key, TCObjectServerMap tcObjectServerMap, int usedAtTime) {
     synchronized (getResolveLock()) {
+      Object checkedOutObject = tcObjectServerMap.checkOutObject(key, this);
+      if (checkedOutObject == null) { return; }
+
       UPDATE_LAST_ACCESSED_TIME_CONCURRENT_LOCK.lock();
       try {
+        registerTransactionListener(key, tcObjectServerMap);
+        
         this.lastAccessedTime = usedAtTime;
         this.logicalInvoke(SerializationUtil.FIELD_CHANGED, SerializationUtil.FIELD_CHANGED_SIGNATURE, new Object[] {
             SerializedMapValueApplicator.LAST_ACCESS_TIME_FIELD_NAME, usedAtTime });
@@ -273,6 +284,17 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
         UPDATE_LAST_ACCESSED_TIME_CONCURRENT_LOCK.unlock();
       }
     }
+  }
+
+  private void registerTransactionListener(final Object key, final TCObjectServerMap tcObjectServerMap) {
+    TransactionCompleteListener completeListener = new TransactionCompleteListener() {
+      @Override
+      public void transactionComplete(TransactionID txnID) {
+        tcObjectServerMap.checkInObject(key, SerializedMapValue.this);
+      }
+    };
+
+    ManagerUtil.addTransactionCompleteListener(completeListener);
   }
 
 }

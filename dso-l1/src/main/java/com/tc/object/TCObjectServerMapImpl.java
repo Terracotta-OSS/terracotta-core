@@ -86,6 +86,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
   }
 
+  @Override
   public void initialize(final int maxTTISeconds, final int maxTTLSeconds, final int targetMaxTotalCount,
                          final boolean invalidateOnChangeFlag, final boolean localCacheEnabledFlag) {
     this.invalidateOnChange = invalidateOnChangeFlag;
@@ -105,6 +106,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @param key Key Object
    * @param value Object in the mapping
    */
+  @Override
   public void doLogicalPut(final TCServerMap map, final L lockID, final Object key, final Object value) {
     synchronized (localLock) {
       ObjectID valueObjectID = invokeLogicalPut(map, key, value);
@@ -113,6 +115,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
   }
 
+  @Override
   public void doClear(TCServerMap map) {
     synchronized (localLock) {
       logicalInvoke(SerializationUtil.CLEAR, SerializationUtil.PUT_SIGNATURE, NO_ARGS);
@@ -126,6 +129,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @param key Key Object
    * @param value Object in the mapping
    */
+  @Override
   public void doLogicalPutUnlocked(TCServerMap map, Object key, Object value) {
     synchronized (localLock) {
       ObjectID valueObjectID = invokeLogicalPut(map, key, value);
@@ -138,6 +142,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
   }
 
+  @Override
   public Object doLogicalPutIfAbsentUnlocked(TCServerMap map, Object key, Object value) {
     synchronized (localLock) {
       AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
@@ -161,6 +166,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     return null;
   }
 
+  @Override
   public boolean doLogicalReplaceUnlocked(TCServerMap map, Object key, Object current, Object newValue) {
     synchronized (localLock) {
       AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
@@ -189,6 +195,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @param lockID, lock under which this entry is removed
    * @param key Key Object
    */
+  @Override
   public void doLogicalRemove(final TCServerMap map, final L lockID, final Object key) {
     synchronized (localLock) {
       invokeLogicalRemove(map, key);
@@ -203,6 +210,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @param map ServerTCMap
    * @param key Key Object
    */
+  @Override
   public void doLogicalRemoveUnlocked(TCServerMap map, Object key) {
     synchronized (localLock) {
       invokeLogicalRemove(map, key);
@@ -222,6 +230,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @param key Key Object
    * @return
    */
+  @Override
   public boolean doLogicalRemoveUnlocked(TCServerMap map, Object key, Object value) {
     synchronized (localLock) {
       AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
@@ -252,6 +261,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @param lockID Lock under which this call is made
    * @return value Object in the mapping, null if no mapping present.
    */
+  @Override
   public Object getValue(final TCServerMap map, final L lockID, final Object key) {
     if (!isCacheInitialized()) { return null; }
     AbstractLocalCacheStoreValue item = this.cache.getLocalValueStrong(key);
@@ -292,6 +302,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    *        but not shared, it is not supported.
    * @return value Object in the mapping, null if no mapping present.
    */
+  @Override
   public Object getValueUnlocked(TCServerMap map, Object key) {
     AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
     if (item != null) { return item.getValueObject(); }
@@ -310,6 +321,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
   }
 
+  @Override
   public Map<Object, Object> getAllValuesUnlocked(final Map<ObjectID, Set<Object>> mapIdToKeysMap) {
     synchronized (localLock) {
       Map<Object, Object> rv = new HashMap<Object, Object>();
@@ -523,6 +535,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @param map ServerTCMap
    * @return set Set return snapshot of keys
    */
+  @Override
   public Set keySet(final TCServerMap map) {
     final TCObject tcObject = map.__tc_managed();
     if (tcObject == null) { throw new UnsupportedOperationException("keySet is not supported in a non-shared ServerMap"); }
@@ -540,6 +553,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @param maps ServerTCMap[]
    * @return long for size of map.
    */
+  @Override
   public long getAllSize(final TCServerMap[] maps) {
     final ObjectID[] mapIDs = new ObjectID[maps.length];
     for (int i = 0; i < maps.length; ++i) {
@@ -552,6 +566,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     return this.serverMapManager.getAllSize(mapIDs);
   }
 
+  @Override
   public int getLocalSize() {
     if (!isCacheInitialized()) { return 0; }
     return this.cache.size();
@@ -560,6 +575,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   /**
    * unpin all pinned keys
    */
+  @Override
   public void unpinAll() {
     if (!isCacheInitialized()) { return; }
     cache.unpinAll();
@@ -568,6 +584,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   /**
    * check the key is pinned or not
    */
+  @Override
   public boolean isPinned(Object key) {
     if (!isCacheInitialized()) { return false; }
     return cache.isPinned(key);
@@ -576,6 +593,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   /**
    * pin or unpin the key
    */
+  @Override
   public void setPinned(Object key, boolean pinned) {
     if (!isCacheInitialized()) { return; }
     cache.setPinned(key, pinned);
@@ -594,6 +612,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * 
    * @param map ServerTCMap
    */
+  @Override
   public void clearLocalCache(final TCServerMap map) {
     synchronized (localLock) {
       if (!isCacheInitialized()) { return; }
@@ -601,6 +620,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
   }
 
+  @Override
   public void evictedInServer(Object key) {
     synchronized (localLock) {
       // MNK-2875: Since server side eviction messages come in asynchronously with the initialization process, it's
@@ -612,6 +632,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
   }
 
+  @Override
   public void clearAllLocalCacheInline(final TCServerMap map) {
     synchronized (localLock) {
       if (!isCacheInitialized()) { return; }
@@ -633,11 +654,13 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     throw new AssertionError("clearReferences should not be called from L1 cache manager");
   }
 
+  @Override
   public Set getLocalKeySet() {
     if (!isCacheInitialized()) { return Collections.EMPTY_SET; }
     return this.cache.getKeys();
   }
 
+  @Override
   public boolean containsLocalKey(final Object key) {
     if (!isCacheInitialized()) { return false; }
     if (this.localCacheEnabled) {
@@ -647,6 +670,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
   }
 
+  @Override
   public Object getValueFromLocalCache(final Object key) {
     if (!isCacheInitialized()) { return null; }
     AbstractLocalCacheStoreValue cachedItem = this.cache.getLocalValue(key);
@@ -720,16 +744,19 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
                   new Object[] { key, value });
   }
 
+  @Override
   public void addMetaData(MetaDataDescriptor mdd) {
     this.objectManager.getTransactionManager().addMetaDataDescriptor(this, (MetaDataDescriptorInternal) mdd);
   }
 
+  @Override
   public void setupLocalStore(L1ServerMapLocalCacheStore serverMapLocalStore) {
     // this is called from CDSMDso.__tc_managed(tco)
     this.serverMapLocalStore = serverMapLocalStore;
     setupLocalCache(serverMapLocalStore);
   }
 
+  @Override
   public void destroyLocalStore() {
     this.serverMapLocalStore = null;
     this.cache = null;
@@ -740,44 +767,60 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
                                                                localCacheEnabled, serverMapLocalStore);
   }
 
+  @Override
   public long getLocalOnHeapSizeInBytes() {
     if (!isCacheInitialized()) { return 0; }
     return this.cache.onHeapSizeInBytes();
   }
 
+  @Override
   public long getLocalOffHeapSizeInBytes() {
     if (!isCacheInitialized()) { return 0; }
     return this.cache.offHeapSizeInBytes();
   }
 
+  @Override
   public int getLocalOnHeapSize() {
     if (!isCacheInitialized()) { return 0; }
     return this.cache.onHeapSize();
   }
 
+  @Override
   public int getLocalOffHeapSize() {
     if (!isCacheInitialized()) { return 0; }
     return this.cache.offHeapSize();
   }
 
+  @Override
   public boolean containsKeyLocalOnHeap(Object key) {
     if (!isCacheInitialized()) { return false; }
     return this.cache.containsKeyOnHeap(key);
   }
 
+  @Override
   public boolean containsKeyLocalOffHeap(Object key) {
     if (!isCacheInitialized()) { return false; }
     return this.cache.containsKeyOffHeap(key);
   }
 
+  @Override
   public void setLocalCacheEnabled(boolean enabled) {
     this.localCacheEnabled = enabled;
     this.cache.setLocalCacheEnabled(enabled);
   }
 
+  @Override
   public void recalculateLocalCacheSize(Object key) {
     if (isCacheInitialized()) {
       this.cache.recalculateSize(key);
     }
+  }
+
+  public void checkInObject(Object key, Object value) {
+    this.cache.checkInObject(key, value);
+  }
+
+  public Object checkOutObject(Object key, Object value) {
+    return this.cache.checkOutObject(key, value);
   }
 }

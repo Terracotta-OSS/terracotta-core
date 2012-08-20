@@ -309,6 +309,11 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   }
 
   @Override
+  public void removeTCObjectSelf(TCObjectSelf self) {
+    tcObjectSelfStore.removeTCObjectSelf(self);
+  }
+
+  @Override
   public int size() {
     return tcObjectSelfStore.size();
   }
@@ -332,6 +337,11 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     @Override
     public void removedElement(AbstractLocalCacheStoreValue localStoreValue) {
       removeTCObjectSelf(localStoreValue);
+    }
+
+    @Override
+    public void removedElement(TCObjectSelf removed) {
+      removeTCObjectSelf(removed);
     }
   }
 

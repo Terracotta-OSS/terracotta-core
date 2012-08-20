@@ -17,6 +17,7 @@ import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.TerracottaLocking;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.metadata.MetaDataDescriptor;
+import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.properties.TCProperties;
@@ -409,4 +410,6 @@ public interface Manager extends TerracottaLocking {
    * @throws ClassCastException if a mapping exists for name, but is of different type other than expectedType
    */
   <T> T lookupRegisteredObjectByName(String name, Class<T> expectedType);
+
+  void addTransactionCompleteListener(TransactionCompleteListener listener);
 }

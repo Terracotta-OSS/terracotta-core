@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -75,14 +76,16 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   private final Manager                                        manager;
   private final ServerMapLocalCacheRemoveCallback              removeCallback;
 
-  private final Map<ObjectID, Object>                          removedObjectIDs             = new ConcurrentHashMap<ObjectID, Object>();
+  private final ConcurrentMap<ObjectID, Object>                removedObjectIDs             = new ConcurrentHashMap<ObjectID, Object>();
   private final Map<ObjectID, Object>                          oidsForWhichTxnAreInProgress = new ConcurrentHashMap<ObjectID, Object>();
 
-  private final ConcurrentHashMap                    pendingTransactionEntries;
-  private final ConcurrentHashMap                    keyToListeners;
+  private final ConcurrentHashMap                              pendingTransactionEntries;
+  private final ConcurrentHashMap                              keyToListeners;
 
-  private final ReentrantReadWriteLock[]             locks;
+  private final ReentrantReadWriteLock[]                       locks;
   private final TCConcurrentMultiMap<LockID, ValueOIDKeyTuple> lockIDMappings;
+
+  private final ConcurrentHashMap<ObjectID, Integer>           checkedOutObjects            = new ConcurrentHashMap<ObjectID, Integer>();
 
   /**
    * Not public constructor, should be created only by the global local cache manager
@@ -109,14 +112,17 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return locks[Math.abs(key.hashCode() % CONCURRENCY)];
   }
 
+  @Override
   public L1ServerMapLocalCacheStore getInternalStore() {
     return localStore;
   }
 
+  @Override
   public void setLocalCacheEnabled(boolean enable) {
     this.localCacheEnabled = enable;
   }
 
+  @Override
   public void addToCache(final Object key, final AbstractLocalCacheStoreValue localCacheValue,
                          final MapOperationType mapOperation) {
     ReentrantReadWriteLock lock = getLock(key);
@@ -250,6 +256,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return new L1ServerMapLocalStoreTransactionCompletionListener(this, key, value, onTransactionComplete);
   }
 
+  @Override
   public void clear() {
     grabAllLocks();
     try {
@@ -263,6 +270,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   /**
    * unpin all pinned keys
    */
+  @Override
   public void unpinAll() {
     this.localStore.unpinAll();
   }
@@ -270,6 +278,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   /**
    * check the key is pinned or not
    */
+  @Override
   public boolean isPinned(Object key) {
     return this.localStore.isPinned(key);
   }
@@ -277,10 +286,12 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   /**
    * pin or unpin the key
    */
+  @Override
   public void setPinned(Object key, boolean pinned) {
     this.localStore.setPinned(key, pinned);
   }
 
+  @Override
   public void clearInline() {
     Set<LockID> lockIDs = null;
     grabAllLocks();
@@ -330,10 +341,12 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
+  @Override
   public int size() {
     return this.localStore.size() + (this.pendingTransactionEntries.size() / 2);
   }
 
+  @Override
   public void evictedInServer(Object key) {
     ReentrantReadWriteLock lock = getLock(key);
     lock.writeLock().lock();
@@ -348,10 +361,12 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   /**
    * When a remove from local cache is called, remove and flush
    */
+  @Override
   public void removeFromLocalCache(Object key) {
     removeFromLocalCache(key, null);
   }
 
+  @Override
   public void removeFromLocalCache(Object key, AbstractLocalCacheStoreValue value) {
     ReentrantReadWriteLock lock = getLock(key);
     lock.writeLock().lock();
@@ -393,6 +408,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return removed;
   }
 
+  @Override
   public void entryEvicted(Object key, Object value) {
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("XXX entryEvicted " + key + " " + value);
@@ -458,11 +474,13 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return lockID;
   }
 
+  @Override
   public Set getKeys() {
     return Collections.unmodifiableSet(new LocalStoreKeySet(localStore.getKeys(), this.pendingTransactionEntries
         .keySet(), size(), IGNORE_ID_FILTER));
   }
 
+  @Override
   public Object getMappingUnlocked(final Object keyOrId) {
     Object rv = pendingTransactionEntries.get(keyOrId);
     if (rv != null) { return rv; }
@@ -480,6 +498,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   /**
    * Returned value may be coherent or incoherent or null
    */
+  @Override
   public AbstractLocalCacheStoreValue getLocalValue(final Object key) {
     ReentrantReadWriteLock lock = getLock(key);
     lock.readLock().lock();
@@ -490,6 +509,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
   }
 
+  @Override
   public AbstractLocalCacheStoreValue getLocalValueStrong(final Object key) {
     ReentrantReadWriteLock lock = getLock(key);
 
@@ -517,6 +537,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return set.contains(new ValueOIDKeyTuple(key, value.getValueObjectId()));
   }
 
+  @Override
   public boolean removeEntriesForObjectId(ObjectID objectId) {
     Object key = getMappingUnlocked(objectId);
     if (LOGGER.isDebugEnabled()) {
@@ -540,6 +561,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return true;
   }
 
+  @Override
   public void removeEntriesForLockId(LockID lockId) {
     Set<ValueOIDKeyTuple> removedSet = this.lockIDMappings.removeAll(lockId);
     if (removedSet != null) {
@@ -585,6 +607,21 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     if (removed != null) {
       ObjectID objectID = removed.getValueObjectId();
       if (isRemoteRemovePossible(objectID)) {
+        removedObjectIDs.remove(objectID);
+        removeCallback.removedElement(removed);
+      }
+    }
+  }
+
+  private void remoteRemoveObjectIfPossible(TCObjectSelf removed) {
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("XXX remoteRemoveObjectIfPossible " + removed);
+    }
+
+    if (removed != null) {
+      ObjectID objectID = removed.getObjectID();
+      if (isRemoteRemovePossible(objectID)) {
+        removedObjectIDs.remove(objectID);
         removeCallback.removedElement(removed);
       }
     }
@@ -596,18 +633,20 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   private boolean isRemoteRemovePossible(ObjectID objectId) {
     if (ObjectID.NULL_ID.equals(objectId)) { return false; }
 
-    if (oidsForWhichTxnAreInProgress.containsKey(objectId)) {
-      removedObjectIDs.put(objectId, NULL_VALUE);
+    if (oidsForWhichTxnAreInProgress.containsKey(objectId) || checkedOutObjects.containsKey(objectId)) {
+      removedObjectIDs.putIfAbsent(objectId, NULL_VALUE);
       return false;
     } else {
       return true;
     }
   }
 
+  @Override
   public void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     l1LocalCacheManager.transactionComplete(l1ServerMapLocalStoreTransactionCompletionListener);
   }
 
+  @Override
   public void postTransactionCallback(Object key, AbstractLocalCacheStoreValue value, boolean removeEntry,
                                       L1ServerMapLocalStoreTransactionCompletionListener listener) {
     ReentrantReadWriteLock lock = getLock(key);
@@ -615,7 +654,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     try {
       final ObjectID objectId = value.getValueObjectId();
       oidsForWhichTxnAreInProgress.remove(objectId);
-      if (removedObjectIDs.remove(objectId) != null) {
+      if (removedObjectIDs.containsKey(objectId)) {
         remoteRemoveObjectIfPossible(value);
       }
 
@@ -649,6 +688,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   static class IgnoreIdsFilter implements LocalStoreKeySetFilter {
 
+    @Override
     public boolean accept(Object value) {
       if (isMetaInfoMapping(value)) { return false; }
       return true;
@@ -656,23 +696,28 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
 
   }
 
+  @Override
   public long onHeapSizeInBytes() {
     return this.localStore.onHeapSizeInBytes();
   }
 
+  @Override
   public long offHeapSizeInBytes() {
     return this.localStore.offHeapSizeInBytes();
   }
 
+  @Override
   public int onHeapSize() {
     int totalInMemoryCount = this.localStore.onHeapSize() + pendingTransactionEntries.size() / 2;
     return totalInMemoryCount < 0 ? Integer.MAX_VALUE : totalInMemoryCount;
   }
 
+  @Override
   public int offHeapSize() {
     return this.localStore.offHeapSize();
   }
 
+  @Override
   public boolean containsKeyOnHeap(Object key) {
     boolean containsKey = pendingTransactionEntries.containsKey(key);
     if (!containsKey) {
@@ -681,6 +726,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return containsKey;
   }
 
+  @Override
   public boolean containsKeyOffHeap(Object key) {
     return this.localStore.containsKeyOffHeap(key);
   }
@@ -745,6 +791,7 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     return this.lockIDMappings;
   }
 
+  @Override
   public void recalculateSize(Object key) {
     if (key == null) { return; }
     ReentrantReadWriteLock rrwl = getLock(key);
@@ -753,6 +800,46 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       this.localStore.recalculateSize(key);
     } finally {
       rrwl.writeLock().unlock();
+    }
+  }
+
+  @Override
+  public void checkInObject(Object key, Object valueParam) {
+    if (valueParam == null || !(valueParam instanceof TCObjectSelf)) { return; }
+    ObjectID oidParam = ((TCObjectSelf) valueParam).getObjectID();
+
+    ReentrantReadWriteLock lock = getLock(key);
+    lock.writeLock().lock();
+    try {
+      if (checkedOutObjects.get(oidParam) != null && checkedOutObjects.get(oidParam).intValue() == 1) {
+        checkedOutObjects.remove(oidParam);
+        if (removedObjectIDs.containsKey(oidParam)) {
+          remoteRemoveObjectIfPossible((TCObjectSelf) valueParam);
+        }
+      }
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
+  @Override
+  public Object checkOutObject(Object key, Object valueParam) {
+    if (valueParam == null || !(valueParam instanceof TCObjectSelf)) { return null; }
+    ObjectID oidParam = ((TCObjectSelf) valueParam).getObjectID();
+
+    ReentrantReadWriteLock lock = getLock(key);
+    lock.writeLock().lock();
+    try {
+      AbstractLocalCacheStoreValue value = getLocalValue(key);
+      if (value == null || !value.getValueObjectId().equals(oidParam)) { return null; }
+
+      Integer checkedOutCount = checkedOutObjects.get(oidParam);
+      checkedOutCount = checkedOutCount == null ? 1 : checkedOutCount + 1;
+
+      checkedOutObjects.put(oidParam, checkedOutCount);
+      return value.getValueObject();
+    } finally {
+      lock.writeLock().unlock();
     }
   }
 

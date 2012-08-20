@@ -16,6 +16,7 @@ import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.metadata.MetaDataDescriptor;
+import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.properties.TCProperties;
@@ -1307,5 +1308,10 @@ public class ManagerUtil {
   public static <T> T lookupRegisteredObjectByName(String name, Class<T> expectedType) {
     Manager mgr = getManager();
     return mgr.lookupRegisteredObjectByName(name, expectedType);
+  }
+
+  public static void addTransactionCompleteListener(TransactionCompleteListener listener) {
+    Manager mgr = getManager();
+    mgr.addTransactionCompleteListener(listener);
   }
 }

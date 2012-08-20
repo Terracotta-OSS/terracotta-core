@@ -262,5 +262,11 @@ public class TCObjectSelfTransactionApplyTest extends TestCase {
       throw new ImplementMe();
 
     }
+
+    @Override
+    public void removeTCObjectSelf(TCObjectSelf self) {
+      throw new ImplementMe();
+
+    }
   }
 }

@@ -54,6 +54,7 @@ import com.tc.object.logging.RuntimeLoggerImpl;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.metadata.MetaDataDescriptorImpl;
 import com.tc.object.tx.ClientTransactionManager;
+import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
@@ -1132,4 +1133,7 @@ public class ManagerImpl implements Manager {
     return expectedType.cast(registeredObjects.get(name));
   }
 
+  public void addTransactionCompleteListener(TransactionCompleteListener listener) {
+    txManager.getCurrentTransaction().addTransactionCompleteListener(listener);
+  }
 }
