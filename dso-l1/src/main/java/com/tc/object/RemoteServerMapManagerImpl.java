@@ -22,6 +22,7 @@ import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.Util;
@@ -607,6 +608,17 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     // NOTE: if this impl changes, check RemoteServerMapManagerGroupImpl
     if (lockID == null) { throw new AssertionError("ID cannot be null"); }
     this.globalLocalCacheManager.removeEntriesForLockId(lockID);
+  }
+
+  @Override
+  public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.print(this.getClass().getName()).print("Group Id: ").print(groupID).flush();
+    out.indent().print("outstandingRequests count: ").print(Integer.valueOf(this.outstandingRequests.size())).flush();
+    for (Entry<ServerMapRequestID, AbstractServerMapRequestContext> entry : outstandingRequests.entrySet()) {
+      out.indent().print(entry.getKey()).print(entry.getValue());
+    }
+    out.flush();
+    return out;
   }
 
 }
