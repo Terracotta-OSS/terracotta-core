@@ -3,6 +3,8 @@
  */
 package com.terracotta.toolkit.object.serialization;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
 import com.tc.object.LiteralValues;
 import com.tc.object.SerializationUtil;
@@ -10,6 +12,8 @@ import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.locks.LockLevel;
+import com.tc.object.tx.TransactionCompleteListener;
+import com.tc.object.tx.TransactionID;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -22,6 +26,8 @@ public class SerializerMapImpl<K, V> implements SerializerMap<K, V>, Manageable 
   private volatile TCObject tcObject;
   private volatile GroupID  gid;
   private volatile String   lockID;
+  private static final boolean  serLogEnabled = Boolean.getBoolean("serLogEnabled");
+  private static final TCLogger LOGGER        = TCLogging.getLogger(SerializerMapImpl.class);
 
   @Override
   public void __tc_managed(TCObject t) {
@@ -78,12 +84,44 @@ public class SerializerMapImpl<K, V> implements SerializerMap<K, V>, Manageable 
         V val = createSCOIfNeeded(value);
         synchronized (localResolveLock) {
         V ret = internalput(key, val);
-          tcObject.logicalInvoke(SerializationUtil.PUT, SerializationUtil.PUT_SIGNATURE, new Object[] { key, val });
+        tcObject.logicalInvoke(SerializationUtil.PUT, SerializationUtil.PUT_SIGNATURE, new Object[] { key, val });
+        if (serLogEnabled && !key.equals("nextMapping")) {
+          if (isKeyInt(key)) {
+            final Integer keyOrValue = Integer.parseInt((String) key);
+            LOGGER.info("serlog put key " + key);
+            ManagerUtil.addTransactionCompleteListener(new TransactionCompleteListener() {
+              @Override
+              public void transactionComplete(TransactionID txnID) {
+                LOGGER.info("serlog transactionCompleted key " + keyOrValue);
+
+              }
+            });
+          } else {
+            final Integer keyOrValue = (Integer) value;
+            LOGGER.info("serlog put value " + value);
+            ManagerUtil.addTransactionCompleteListener(new TransactionCompleteListener() {
+              @Override
+              public void transactionComplete(TransactionID txnID) {
+                LOGGER.info("serlog transactionCompleted value " + keyOrValue);
+
+              }
+            });
+          }
+        }
         return ret;
         }
       } finally {
         writeUnlock();
       }
+  }
+
+  private boolean isKeyInt(K key) {
+    try {
+      Integer.parseInt((String)key);
+      return true;
+    } catch (NumberFormatException e) {
+      return false;
+    }
   }
 
   @Override

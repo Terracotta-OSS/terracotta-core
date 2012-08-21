@@ -185,7 +185,7 @@ public class ObjectStreamClassMapping {
 
     public SerializableDataKey(ObjectStreamClass desc) throws IOException {
       this.serializedOsc = getSerializedForm(desc);
-      this.stringForm = new String(getSerializedOsc(), Charset.forName(CHARSET));
+      this.stringForm = new String(serializedOsc, Charset.forName(CHARSET));
     }
 
     public String getStringForm() {
@@ -235,7 +235,7 @@ public class ObjectStreamClassMapping {
         }
         return desc;
       } catch (Throwable t) {
-        LOGGER.debug("JRockit ObjectStreamClass pruning work-around failed.", t);
+        LOGGER.warn("JRockit ObjectStreamClass pruning work-around failed.", t);
         return desc;
       }
     }

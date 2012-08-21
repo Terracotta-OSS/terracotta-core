@@ -76,9 +76,7 @@ public class SerializerMapImplApplicator extends BaseApplicator {
   }
 
   @Override
-  public Object getNewInstance(ClientObjectManager objectManager, DNA dna) throws IOException, ClassNotFoundException {
-    if (false) { throw new IOException(); } // silence compiler warning
-    if (false) { throw new ClassNotFoundException(); } // silence compiler warning
+  public Object getNewInstance(ClientObjectManager objectManager, DNA dna) {
     throw new UnsupportedOperationException();
   }
 

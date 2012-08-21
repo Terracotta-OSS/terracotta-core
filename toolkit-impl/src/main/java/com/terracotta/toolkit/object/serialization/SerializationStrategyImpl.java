@@ -13,7 +13,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.ObjectStreamClass;
 import java.io.OutputStream;
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
@@ -36,14 +35,21 @@ public class SerializationStrategyImpl implements SerializationStrategy {
     tccl = new ThreadContextAwareClassLoader(SerializationStrategyImpl.class.getClassLoader());
   }
 
+  @Override
   public Object deserialize(final byte[] data, boolean compression) throws IOException, ClassNotFoundException {
     InputStream in = new ByteArrayInputStream(data);
     if (compression) {
       in = new GZIPInputStream(in);
     }
-    return new SerializerObjectInputStream(in, serializer, tccl).readObject();
+    SerializerObjectInputStream sois = new SerializerObjectInputStream(in, serializer, tccl);
+    try {
+      return sois.readObject();
+    } finally {
+      sois.close();
+    }
   }
 
+  @Override
   public byte[] serialize(final Object value, boolean compression) throws NotSerializableRuntimeException {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     SerializerObjectOutputStream oos = null;
@@ -68,6 +74,7 @@ public class SerializationStrategyImpl implements SerializationStrategy {
     return baos.toByteArray();
   }
 
+  @Override
   public String serializeToString(final Object key) throws NotSerializableRuntimeException {
     if (key instanceof String) {
       String stringKey = (String) key;
@@ -86,7 +93,7 @@ public class SerializationStrategyImpl implements SerializationStrategy {
     try {
       out = new StringSerializedObjectOutputStream();
       ObjectOutputStream oos = new SerializerObjectOutputStream(out, serializer);
-      writeStringKey(key, oos);
+      oos.writeObject(key);
       oos.close();
     } catch (IOException e) {
       throw new NotSerializableRuntimeException(e);
@@ -94,22 +101,14 @@ public class SerializationStrategyImpl implements SerializationStrategy {
     return out.toString();
   }
 
+  @Override
   public Object deserializeFromString(final String key) throws IOException, ClassNotFoundException {
-    if (key.length() >= 1 && key.charAt(0) == MARKER) { return readStringKey(new SerializerObjectInputStream(
-                                                                                                             new StringSerializedObjectInputStream(
-                                                                                                                                                   key),
-                                                                                                             serializer,
-                                                                                                             tccl)); }
-
+    if (key.length() >= 1 && key.charAt(0) == MARKER) {
+      StringSerializedObjectInputStream ssois = new StringSerializedObjectInputStream(key);
+      SerializerObjectInputStream sois = new SerializerObjectInputStream(ssois, serializer, tccl);
+      return sois.readObject();
+    }
     return key;
-  }
-
-  protected void writeStringKey(final Object key, final ObjectOutputStream oos) throws IOException {
-    oos.writeObject(key);
-  }
-
-  protected Serializable readStringKey(final ObjectInputStream ois) throws IOException, ClassNotFoundException {
-    return (Serializable) ois.readObject();
   }
 
   private static class StringSerializedObjectInputStream extends InputStream {
