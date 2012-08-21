@@ -638,37 +638,6 @@ public class TCServerImpl extends SEDA implements TCServer {
     contextHandlerCollection.addHandler(context);
 
     if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.MANAGEMENT_REST_ENABLED, true)) {
-      // register console webapp
-      if (tcInstallDir != null) {
-        File consoleDir = new File(tcInstallDir, "console");
-
-        String[] files = consoleDir.list(new FilenameFilter() {
-          @Override
-          public boolean accept(File dir, String name) {
-            return name.endsWith(".war");
-          }
-        });
-
-        if (files != null && files.length > 0) {
-          String warFile = files[0];
-          logger.info("deploying console web UI from archive " + warFile);
-          WebAppContext consoleContext = new WebAppContext();
-
-          // DEV-8020: add slf4j to the web app's system classes to avoid "multiple bindings" warning
-          List<String> systemClasses = new ArrayList<String>(Arrays.asList(consoleContext.getSystemClasses()));
-          systemClasses.add("org.slf4j.");
-          consoleContext.setSystemClasses(systemClasses.toArray(new String[systemClasses.size()]));
-
-          consoleContext.setContextPath("/console");
-          consoleContext.setWar(consoleDir.getPath() + File.separator + warFile);
-          contextHandlerCollection.addHandler(consoleContext);
-        } else {
-          logger.info("could not find console web UI archive");
-        }
-      } else {
-        logger.info("TC install dir not set, cannot find console web UI archive");
-      }
-
       // register REST webapp
       Context restContext = new Context(null, "/tc-management-api", Context.NO_SESSIONS | Context.SECURITY);
       ServletHolder servletHolder = new ServletHolder(ServletContainer.class);
