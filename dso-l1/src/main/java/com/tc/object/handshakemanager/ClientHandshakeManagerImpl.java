@@ -88,6 +88,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     }
   }
 
+  @Override
   public void shutdown() {
     isShutdown = true;
     shutdownCallbacks();
@@ -106,6 +107,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     }
   }
 
+  @Override
   public void initiateHandshake(final NodeID remoteNode) {
     this.logger.debug("Initiating handshake...");
     synchronized (transitionInProgress) {
@@ -127,6 +129,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     return false;
   }
 
+  @Override
   public void notifyChannelEvent(final ChannelEvent event) {
     if (GroupID.ALL_GROUPS.equals(event.getChannel().getRemoteNodeID())) { throw new AssertionError(
                                                                                                     "Recd event for Group Channel : "
@@ -136,6 +139,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     } else if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT) {
       this.pauseSink.add(new PauseContext(false, event.getChannel().getRemoteNodeID()));
     } else if (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT) {
+      disconnected(event.getChannel().getRemoteNodeID());
       // ReconnectionRejectedListenerImpl is anyway firing thisNodeLeft on Channel Close. Below one seems to be
       // redundant.
       // if (!isShutdown) {
@@ -148,6 +152,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     return 1 == this.disconnected;
   }
 
+  @Override
   public void disconnected(final NodeID remoteNode) {
     if (checkShutdown()) return;
     State currentState = getState(remoteNode);
@@ -191,6 +196,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     }
   }
 
+  @Override
   public void connected(final NodeID remoteNode) {
     this.logger.info("Connected: Unpausing from " + getState(remoteNode) + " RemoteNode : " + remoteNode
                      + ". Disconnect count : " + getDisconnectedCount());
@@ -204,6 +210,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     initiateHandshake(remoteNode);
   }
 
+  @Override
   public void acknowledgeHandshake(final ClientHandshakeAckMessage handshakeAck) {
     acknowledgeHandshake(handshakeAck.getSourceNodeID(), handshakeAck.getPersistentServer(),
                          handshakeAck.getThisNodeId(), handshakeAck.getAllNodes(), handshakeAck.getServerVersion());
@@ -278,10 +285,12 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     }
   }
 
+  @Override
   public boolean serverIsPersistent() {
     return this.serverIsPersistent;
   }
 
+  @Override
   public synchronized void waitForHandshake() {
     boolean isInterrupted = false;
     try {
