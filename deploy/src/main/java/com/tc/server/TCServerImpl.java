@@ -86,6 +86,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -652,6 +653,12 @@ public class TCServerImpl extends SEDA implements TCServer {
           String warFile = files[0];
           logger.info("deploying console web UI from archive " + warFile);
           WebAppContext consoleContext = new WebAppContext();
+
+          // DEV-8020: add slf4j to the web app's system classes to avoid "multiple bindings" warning
+          List<String> systemClasses = new ArrayList<String>(Arrays.asList(consoleContext.getSystemClasses()));
+          systemClasses.add("org.slf4j.");
+          consoleContext.setSystemClasses(systemClasses.toArray(new String[systemClasses.size()]));
+
           consoleContext.setContextPath("/console");
           consoleContext.setWar(consoleDir.getPath() + File.separator + warFile);
           contextHandlerCollection.addHandler(consoleContext);
