@@ -147,7 +147,7 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
             client.join();
             return client;
           } catch (ClientShutdownException e) {
-            LOG.warning(e.getMessage());
+            throw new IllegalStateException("this client already shutdown", e);
           }
         } else {
           synchronized (tcConfig.intern()) {
@@ -157,7 +157,7 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
                 client.join();
                 return client;
               } catch (ClientShutdownException e) {
-                LOG.warning(e.getMessage());
+                throw new IllegalStateException("this client already shutdown", e);
               }
             } else {
               client = createClient(tcConfig, isUrlConfig, rejoinClient, tunneledMBeanDomains);
