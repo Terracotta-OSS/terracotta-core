@@ -35,8 +35,8 @@ public class URLConfigClient extends ClientBase {
     config = new TerracottaClientConfigParams().tcConfigSnippetOrUrl(yoyodb).isUrl(true).newTerracottaClientConfig();
     TerracottaInternalClient client2 = TerracottaInternalClientStaticFactory.createTerracottaL1Client(config);
 
-    // these two clients should not be same because now we do not share L1s with same URL
-    if (client1 == client2) { throw new AssertionError(); }
+    // these two clients should be same because now we share L1s with same URL
+    if (client1 != client2) { throw new AssertionError(); }
 
     System.setProperty(yoyo, configUrl + ",localhost:1234");
     config = new TerracottaClientConfigParams().tcConfigSnippetOrUrl(yoyodb).isUrl(true).newTerracottaClientConfig();
