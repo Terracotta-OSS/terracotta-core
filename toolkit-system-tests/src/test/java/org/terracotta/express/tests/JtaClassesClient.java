@@ -33,7 +33,7 @@ public class JtaClassesClient extends ClientBase {
     Class<?> tkClass = webAppLoader.loadClass(ToolkitFactory.class.getName());
     String fullTCUrl = "toolkit:terracotta://" + getTerracottaUrl();
     Object toolkit = tkClass.getMethod("createToolkit", String.class).invoke(tkClass, fullTCUrl);
-    Object map = toolkit.getClass().getMethod("getMap", String.class).invoke(toolkit, "foo");
+    Object map = toolkit.getClass().getMethod("getMap", String.class, Class.class, Class.class).invoke(toolkit, "foo", Object.class, Object.class);
 
     ClassLoader clusteredLoader = map.getClass().getClassLoader();
 
