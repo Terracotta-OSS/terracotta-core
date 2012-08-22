@@ -37,10 +37,8 @@ public abstract class AbstractToolkitStoreIteratorClient extends ClientBase {
         public void run() {
           while (true) {
             int number = getNextRandom();
-            System.out.println("Put : " + number);
             store.put(String.valueOf(number), String.valueOf(number));
             number = getNextRandom();
-            System.out.println("Remove : " + number);
             store.remove(String.valueOf(number));
           }
         }
@@ -48,9 +46,9 @@ public abstract class AbstractToolkitStoreIteratorClient extends ClientBase {
       randomPutRemover.setDaemon(true);
       randomPutRemover.start();
     }
-    long startTime = System.currentTimeMillis();
-    long test_duration = TimeUnit.MINUTES.toMillis(8);
-    while (System.currentTimeMillis() - startTime < test_duration) {
+    long startTime = System.nanoTime();
+    long test_duration = TimeUnit.MINUTES.toNanos(8);
+    while (System.nanoTime() - startTime < test_duration) {
       for (String s : store.keySet()) {
         Assert.assertNotNull(s);
       }
@@ -60,6 +58,7 @@ public abstract class AbstractToolkitStoreIteratorClient extends ClientBase {
       for (Entry<String, String> entry : store.entrySet()) {
         Assert.assertNotNull(entry.getKey());
         Assert.assertNotNull(entry.getValue());
+        Assert.assertEquals(entry.getKey(), entry.getValue());
       }
     }
   }
