@@ -106,33 +106,6 @@
         <module>devwork/terracotta-toolkit-api</module>
       </modules>
     </profile>
-    <!-- activate by default if 'terracotta-toolkit' module exists. 
-         You have to check out this module manually under 'community/devwork' -->
-    <profile>
-      <id>toolkit</id>
-      <activation>
-        <file>
-          <exists>devwork/terracotta-toolkit</exists>
-        </file>
-      </activation>      
-      <modules>
-        <module>devwork/terracotta-toolkit</module>
-      </modules>
-    </profile>
-    <!-- activate by default if 'terracotta-toolkit-ee' module exists. 
-         You have to check out this module manually under 'community/devwork' -->
-    <profile>
-      <id>toolkit-ee</id>
-      <activation>
-        <file>
-          <exists>devwork/terracotta-toolkit-ee</exists>
-        </file>
-      </activation>      
-      <modules>
-        <module>devwork/terracotta-toolkit-ee</module>
-      </modules>
-    </profile>  
-    
     <!-- activate by default if 'ehcache' module exists. 
          You have to check out this module manually under 'community/devwork' -->
     <profile>
