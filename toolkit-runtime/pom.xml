@@ -78,15 +78,15 @@
         <version>2.7</version>
         <executions>
           <execution>
-            <phase>prepare-package</phase>
+            <phase>package</phase>
             <goals>
               <goal>jar</goal>
             </goals>
             <configuration>
               <skip>${skipJavadoc}</skip>
-              <quiet>true</quiet>
+              <quiet>false</quiet>
               <sourcepath>${project.build.directory}/sources</sourcepath>
-              <excludePackageNames>com.terracotta</excludePackageNames>
+              <excludePackageNames>com.terracotta,com.tc.*,org.osgi.*</excludePackageNames> 
             </configuration>
           </execution>
         </executions>
