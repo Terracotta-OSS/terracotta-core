@@ -44,12 +44,10 @@ public class SerializationUtil {
   public final static int         URL_SET                              = 28;
   public final static int         CLEAR_LOCAL_CACHE                    = 29;
   public final static int         EVICTION_COMPLETED                   = 30;
-  public final static int         SET_TARGET_MAX_TOTAL_COUNT           = 31;
-  public final static int         SET_MAX_TTI                          = 32;
-  public final static int         SET_MAX_TTL                          = 33;
-  public final static int         CLUSTERED_NOTIFIER                   = 34;
-  public final static int         DESTROY                              = 35;
-  public final static int         FIELD_CHANGED                        = 36;
+  public final static int         CLUSTERED_NOTIFIER                   = 31;
+  public final static int         DESTROY                              = 32;
+  public final static int         FIELD_CHANGED                        = 33;
+  public final static int         INT_FIELD_CHANGED                    = 34;
 
   public final static String      PUSH_SIGNATURE                       = "push(Ljava/lang/Object;)java/lang/Object;";
   public final static String      POP_SIGNATURE                        = "pop()java/lang/Object;";
@@ -132,6 +130,7 @@ public class SerializationUtil {
   public final static String      CLUSTERED_NOTIFIER_SIGNATURE         = "clusteredNotifier()V";
   public final static String      DESTROY_SIGNATURE                    = "destroy()V";
   public final static String      FIELD_CHANGED_SIGNATURE              = "fieldChanged()V";
+  public final static String      INT_FIELD_CHANGED_SIGNATURE          = "intFieldChanged(Ljava/lang/String;I)V";
 
   private final TObjectIntHashMap mappings                             = new TObjectIntHashMap();
 
@@ -175,12 +174,10 @@ public class SerializationUtil {
     mappings.put(URL_SET_SIGNATURE, URL_SET);
     mappings.put(CLEAR_LOCAL_CACHE_SIGNATURE, CLEAR_LOCAL_CACHE);
     mappings.put(EVICTION_COMPLETED_SIGNATURE, EVICTION_COMPLETED);
-    mappings.put(SET_TARGET_MAX_TOTAL_COUNT_SIGNATURE, SET_TARGET_MAX_TOTAL_COUNT);
-    mappings.put(SET_MAX_TTI_SIGNATURE, SET_MAX_TTI);
-    mappings.put(SET_MAX_TTL_SIGNATURE, SET_MAX_TTL);
     mappings.put(CLUSTERED_NOTIFIER_SIGNATURE, CLUSTERED_NOTIFIER);
     mappings.put(DESTROY_SIGNATURE, DESTROY);
     mappings.put(FIELD_CHANGED_SIGNATURE, FIELD_CHANGED);
+    mappings.put(INT_FIELD_CHANGED_SIGNATURE, INT_FIELD_CHANGED);
   }
 
   public String[] getSignatures() {

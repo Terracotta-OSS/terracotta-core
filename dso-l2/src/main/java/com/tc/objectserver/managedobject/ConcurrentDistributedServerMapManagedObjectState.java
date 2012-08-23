@@ -185,14 +185,25 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   protected void applyMethod(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
                              final Object[] params) {
     switch (method) {
-      case SerializationUtil.SET_MAX_TTI:
-        this.maxTTISeconds = (Integer) params[0];
-        break;
-      case SerializationUtil.SET_MAX_TTL:
-        this.maxTTLSeconds = (Integer) params[0];
-        break;
-      case SerializationUtil.SET_TARGET_MAX_TOTAL_COUNT:
-        this.targetMaxTotalCount = (Integer) params[0];
+      case SerializationUtil.INT_FIELD_CHANGED:
+        final String name;
+        Object nameValue = params[0];
+        int intValue = (Integer) params[1];
+        if (nameValue instanceof UTF8ByteDataHolder) {
+          name = ((UTF8ByteDataHolder) nameValue).asString();
+        } else {
+          name = (String) nameValue;
+        }
+        if (MAX_TTI_SECONDS_FIELDNAME.equals(name)) {
+          this.maxTTISeconds = intValue;
+        } else if (MAX_TTL_SECONDS_FIELDNAME.equals(name)) {
+          this.maxTTLSeconds = intValue;
+        } else if (MAX_COUNT_IN_CLUSTER_FIELDNAME.equals(name)) {
+          this.targetMaxTotalCount = intValue;
+        } else {
+          throw new AssertionError("Unknown int field changed for oid: " + objectID + " - name: " + name + ", value: "
+                                   + intValue);
+        }
         break;
       case SerializationUtil.REMOVE_IF_VALUE_EQUAL:
         applyRemoveIfValueEqual(objectID, applyInfo, params);
@@ -359,6 +370,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
   // TODO:: This implementation could be better, could use LinkedHashMap to increase the chances of getting the
   // right samples, also should it return a sorted Map ? Are objects with lower OIDs having more changes to be evicted ?
+  @Override
   public Map getRandomSamples(final int count, final ClientObjectReferenceSet serverMapEvictionClientObjectRefSet) {
     if (evictionStatus == EvictionStatus.SAMPLED) {
       // There is already a random sample that is yet to be processed, so returning empty collection. This can happen if

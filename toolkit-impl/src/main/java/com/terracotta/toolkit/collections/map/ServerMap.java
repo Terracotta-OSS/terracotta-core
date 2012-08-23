@@ -300,8 +300,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     }
   }
 
-  private void markUsed(Object key, SerializedMapValue serializedMapValue,
-                        int usedAtTime) {
+  private void markUsed(Object key, SerializedMapValue serializedMapValue, int usedAtTime) {
     if (shouldUpdateIdleTimer(usedAtTime, maxTTISeconds, serializedMapValue.internalGetLastAccessedTime())) {
       serializedMapValue.updateLastAccessedTime(key, tcObjectServerMap, usedAtTime);
     }
@@ -1164,7 +1163,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private void setMaxTTI(int intValue) {
     try {
       this.maxTTISeconds = intValue;
-      ManagerUtil.logicalInvoke(this, SerializationUtil.SET_MAX_TTI_SIGNATURE, new Object[] { this.maxTTISeconds });
+      ManagerUtil.logicalInvoke(this, SerializationUtil.INT_FIELD_CHANGED_SIGNATURE, new Object[] {
+          ServerMapApplicator.MAX_TTI_SECONDS_FIELDNAME, this.maxTTISeconds });
     } finally {
       internalClearLocalCache();
     }
@@ -1173,7 +1173,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private void setMaxTTL(int intValue) {
     try {
       this.maxTTLSeconds = intValue;
-      ManagerUtil.logicalInvoke(this, SerializationUtil.SET_MAX_TTL_SIGNATURE, new Object[] { this.maxTTLSeconds });
+      ManagerUtil.logicalInvoke(this, SerializationUtil.INT_FIELD_CHANGED_SIGNATURE, new Object[] {
+          ServerMapApplicator.MAX_TTL_SECONDS_FIELDNAME, this.maxTTLSeconds });
     } finally {
       internalClearLocalCache();
     }
@@ -1182,8 +1183,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private void setMaxTotalCount(int intValue) {
     try {
       this.maxCountInCluster = intValue;
-      ManagerUtil.logicalInvoke(this, SerializationUtil.SET_TARGET_MAX_TOTAL_COUNT_SIGNATURE,
-                                new Object[] { this.maxCountInCluster });
+      ManagerUtil.logicalInvoke(this, SerializationUtil.INT_FIELD_CHANGED_SIGNATURE, new Object[] {
+          ServerMapApplicator.MAX_COUNT_IN_CLUSTER_FIELDNAME, this.maxCountInCluster });
     } finally {
       internalClearLocalCache();
     }
