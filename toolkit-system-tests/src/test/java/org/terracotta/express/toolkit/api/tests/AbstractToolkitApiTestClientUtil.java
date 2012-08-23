@@ -49,7 +49,6 @@ public abstract class AbstractToolkitApiTestClientUtil extends ClientBase {
     checkKeySet();
     checkValues();
     checkEntrySet();
-
   }
 
   private void checkReplaceTwoARgs() throws InterruptedException, BrokenBarrierException {
@@ -196,10 +195,11 @@ public abstract class AbstractToolkitApiTestClientUtil extends ClientBase {
 
           }
         }
+      }
         barrier.await();
         Assert.assertFalse(map.containsKey(keyValueGenerator.getKey(20)));
         barrier.await();
-      }
+      
     } finally {
       tearDown();
     }
@@ -334,8 +334,9 @@ public abstract class AbstractToolkitApiTestClientUtil extends ClientBase {
   }
 
   private void checkRemoveTwoArgs() throws InterruptedException, BrokenBarrierException {
-    int removeStartIndex = START + 20;
-    int removeCount = 20;
+    final int REMOVE_COUNT = 20;
+    final int REMOVE_START_INDEX = START + REMOVE_COUNT;
+
     setUp();
     try {
       index = barrier.await();
@@ -346,17 +347,17 @@ public abstract class AbstractToolkitApiTestClientUtil extends ClientBase {
       Assert.assertTrue("checkContainsKey Failed", checkAllKeysPresent(START, END));
       index = barrier.await();
       if (index == 0) {
-        doSomeRemoves(removeStartIndex, removeCount);
+        doSomeRemoves(REMOVE_START_INDEX, REMOVE_COUNT);
       }
       barrier.await();
-      Assert.assertTrue("checkContainsKey Failed", checkAllKeysPresent(START, removeStartIndex));
-      Assert.assertTrue("checkContainsKey Failed", checkAllKeysAbsent(removeStartIndex, removeCount));
-      Assert.assertTrue("checkContainsKey Failed", checkAllKeysPresent(removeStartIndex + removeCount, END));
+      Assert.assertTrue("checkContainsKey Failed", checkAllKeysPresent(START, REMOVE_START_INDEX));
+      Assert.assertTrue("checkContainsKey Failed", checkAllKeysAbsent(REMOVE_START_INDEX, REMOVE_COUNT));
+      Assert.assertTrue("checkContainsKey Failed", checkAllKeysPresent(REMOVE_START_INDEX + REMOVE_COUNT, END));
 
       index = barrier.await();
       if (index == 0) {
-        String value = (String) map.remove(keyValueGenerator.getKey(10));
-        Assert.assertEquals(value, keyValueGenerator.getValue(10));
+        Object value = map.remove(keyValueGenerator.getKey(REMOVE_START_INDEX - 1));
+        Assert.assertEquals(value.toString(), keyValueGenerator.getValue(REMOVE_START_INDEX - 1).toString());
       }
       barrier.await();
 
@@ -441,20 +442,20 @@ public abstract class AbstractToolkitApiTestClientUtil extends ClientBase {
       barrier.await();
       Assert.assertFalse("CheckPut Failed, map is empty", map.isEmpty());
       Assert.assertTrue(checkKeyValuePairs(START, END));
-      String value = null;
+      Object value = null;
       Assert.assertFalse(map.containsKey(keyValueGenerator.getKey(101)));
       index = barrier.await();
       if (index == 0) {
-        value = (String) map.put(keyValueGenerator.getKey(101), keyValueGenerator.getValue(101));
+        value = map.put(keyValueGenerator.getKey(101), keyValueGenerator.getValue(101));
       }
       barrier.await();
       Assert.assertEquals(keyValueGenerator.getValue(101), map.get(keyValueGenerator.getKey(101)));
       Assert.assertNull(value);
       index = barrier.await();
       if (index == 0) {
-        value = (String) map.put(keyValueGenerator.getKey(101), keyValueGenerator.getValue(201));
+        value = map.put(keyValueGenerator.getKey(101), keyValueGenerator.getValue(201));
         Assert.assertNotNull(value);
-        Assert.assertEquals(value, keyValueGenerator.getValue(101));
+        Assert.assertEquals(value.toString(), keyValueGenerator.getValue(101).toString());
       }
       barrier.await();
       Assert.assertEquals(keyValueGenerator.getValue(201), map.get(keyValueGenerator.getKey(101)));

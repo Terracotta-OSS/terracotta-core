@@ -11,6 +11,6 @@ public class ToolkitStoreApiTest extends AbstractToolkitTestBase {
 
   public ToolkitStoreApiTest(TestConfig testConfig) {
     super(testConfig, ToolkitStoreApiKeyValGrClient.class, ToolkitStoreApiKeyValGrClient.class);
-    disableTest();
+    // disableTest();
   }
 }

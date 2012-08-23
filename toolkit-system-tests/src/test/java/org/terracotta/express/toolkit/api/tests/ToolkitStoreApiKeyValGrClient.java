@@ -28,10 +28,8 @@ public class ToolkitStoreApiKeyValGrClient extends AbstractToolkitApiTestClientU
     keyValueGenerator = new LiteralKeyLiteralValueGenerator();
     super.test(toolkit);
     this.test();
-    keyValueGenerator = new NonLiteralKeyLiteralValueGenerator();
-    super.test(toolkit);
-    this.test();
-    keyValueGenerator = new NonLiteralKeyNonLiteralValueGenerator();
+
+    keyValueGenerator = new LiteralKeyNonLiteralValueGenerator();
     super.test(toolkit);
     this.test();
   }
