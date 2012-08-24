@@ -23,6 +23,7 @@ import org.terracotta.toolkit.events.ToolkitNotifier;
 import org.terracotta.toolkit.internal.TerracottaL1Instance;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.ToolkitLogger;
+import org.terracotta.toolkit.internal.ToolkitProperties;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
 import org.terracotta.toolkit.store.ToolkitStore;
@@ -80,6 +81,7 @@ public class TerracottaToolkit implements ToolkitInternal {
   private final CacheManager                                   defaultToolkitCacheManager;
   private final TerracottaL1Instance                           tcClient;
   private final WeakValueMapManager                            weakValueMapManager                  = new WeakValueMapManager();
+  private ToolkitProperties                                    toolkitProperties;
 
   public TerracottaToolkit(TerracottaL1Instance tcClient) {
     this.tcClient = tcClient;
@@ -291,4 +293,11 @@ public class TerracottaToolkit implements ToolkitInternal {
     ManagerUtil.verifyCapability(capability);
   }
 
+  @Override
+  public synchronized ToolkitProperties getProperties() {
+    if (toolkitProperties == null) {
+      toolkitProperties = new TerracottaProperties();
+    }
+    return toolkitProperties;
+  }
 }

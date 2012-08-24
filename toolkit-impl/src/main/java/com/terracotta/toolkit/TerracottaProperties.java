@@ -3,16 +3,19 @@
  */
 package com.terracotta.toolkit;
 
+import org.terracotta.toolkit.internal.ToolkitProperties;
+
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.properties.TCProperties;
 
-public class TerracottaProperties {
+public class TerracottaProperties implements ToolkitProperties {
   private final TCProperties delegate;
 
   public TerracottaProperties() {
     this.delegate = ManagerUtil.getTCProperties();
   }
 
+  @Override
   public Boolean getBoolean(String key, Boolean defaultValue) {
     String str = getProperty(key);
     if (str == null) {
@@ -22,10 +25,12 @@ public class TerracottaProperties {
     }
   }
 
+  @Override
   public Boolean getBoolean(String key) {
     return getBoolean(key, Boolean.FALSE);
   }
 
+  @Override
   public Integer getInteger(String key, Integer defaultValue) {
     try {
       return Integer.valueOf(getProperty(key));
@@ -34,10 +39,12 @@ public class TerracottaProperties {
     }
   }
 
+  @Override
   public Integer getInteger(String key) {
     return getInteger(key, null);
   }
 
+  @Override
   public Long getLong(String key, Long defaultValue) {
     try {
       return Long.valueOf(getProperty(key));
@@ -46,10 +53,12 @@ public class TerracottaProperties {
     }
   }
 
+  @Override
   public Long getLong(String key) {
     return getLong(key, null);
   }
 
+  @Override
   public String getProperty(String key, String defaultValue) {
     String value = getProperty(key);
     if (value == null) {
@@ -59,10 +68,12 @@ public class TerracottaProperties {
     }
   }
 
+  @Override
   public String getProperty(String key) {
     return delegate.getProperty(key, true);
   }
 
+  @Override
   public void setProperty(String key, String value) {
     delegate.setProperty(key, value);
   }
