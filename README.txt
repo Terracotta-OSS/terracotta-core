@@ -70,10 +70,6 @@ from the community folder:
 
 %> mvn install -DskipTests -Pkit,enterprise,os,dist -am -pl terracotta-kit
 
-Note that for any dso-l1 changes, you will a need minimum of 
-terracotta-toolkit-ee to be present in the devwork folder (as described by 
-#7). 
-
 ******************************************************************************
 6. To start/stop TC server and Dev Console from the build (not using kit)
 ******************************************************************************
@@ -99,16 +95,16 @@ For convenience, you can include other Forge projects into the main build to
 have them all compile in one go. To be able to do that, svn checkout those
 projects under "community/devwork". List of projects currently recognize are:
 
-- terracotta-toolkit(-ee)
+- terracotta-toolkit-api
 - ehcache(-ee)
 - quartz(-ee)
 
-Let say you have terracotta-toolkit-ee under devwork. This step will compile
-core, terracotta-toolkit and terracotta-toolkit-ee all in one command:
+Let say you have ehcache-ee under devwork. This step will compile
+core, ehcache and ehcache-ee all in one command:
 
 %> mvn clean install -P os -DskipTests
 
-The profile 'os' is recognized by terracotta-toolkit-ee to include terracotta-toolkit
+The profile 'os' is recognized by ehcache-ee to include ehcache
 
 ******************************************************************************
 8. Smart build: making the build a bit faster by specify what module was changed.
@@ -123,10 +119,10 @@ Notice the absence of "clean" step. Usually, you don't need to clean every time.
 
 You can also build projects along with it's dependencies (reverse of the above):
 
-%> mvn install -am -pl devwork/terracotta-toolkit-ee/toolkit-runtime-ee
+%> mvn install -am -pl toolkit-runtime
 
-This will build toolkit-runtime-ee and all it's direct and indirect dependencies.
-Note that you need to specify the actual file path to toolkit-runtime-ee in order
+This will build toolkit-runtime and all it's direct and indirect dependencies.
+Note that you need to specify the actual file path to toolkit-runtime in order
 for maven to find it.
 
 ******************************************************************************
