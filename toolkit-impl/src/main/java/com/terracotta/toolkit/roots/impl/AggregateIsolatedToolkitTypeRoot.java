@@ -10,6 +10,7 @@ import org.terracotta.toolkit.object.ToolkitObject;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.locks.LockLevel;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
+import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.object.TCToolkitObject;
 import com.terracotta.toolkit.object.ToolkitObjectType;
 import com.terracotta.toolkit.roots.AggregateToolkitTypeRoot;
@@ -79,14 +80,12 @@ public class AggregateIsolatedToolkitTypeRoot<T extends ToolkitObject, S extends
     return "@__tc_toolkit_object_lock_" + toolkitObjectType.name() + "_" + name;
   }
 
-  @Override
-  public void lock(ToolkitObjectType toolkitObjectType, String name) {
+  private void lock(ToolkitObjectType toolkitObjectType, String name) {
     String lockID = generateLockIdentifier(toolkitObjectType, name);
     ManagerUtil.beginLock(lockID, LockLevel.WRITE_LEVEL);
   }
 
-  @Override
-  public void unlock(ToolkitObjectType toolkitObjectType, String name) {
+  private void unlock(ToolkitObjectType toolkitObjectType, String name) {
     String lockID = generateLockIdentifier(toolkitObjectType, name);
     ManagerUtil.commitLock(lockID, LockLevel.WRITE_LEVEL);
   }
@@ -96,4 +95,16 @@ public class AggregateIsolatedToolkitTypeRoot<T extends ToolkitObject, S extends
     this.isolatedTypes.remove(name);
   }
 
+  @Override
+  public final void destroy(AbstractDestroyableToolkitObject obj, ToolkitObjectType type) {
+    lock(type, obj.getName());
+    try {
+      if (!obj.isDestroyed()) {
+        removeToolkitType(type, obj.getName());
+        obj.destroyFromCluster();
+      }
+    } finally {
+      unlock(type, obj.getName());
+    }
+  }
 }

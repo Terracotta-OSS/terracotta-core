@@ -29,7 +29,7 @@ public class DestroyableToolkitSortedSet<E extends Comparable<? super E>> extend
   }
 
   @Override
-  public void afterDestroy() {
+  public void applyDestroy() {
     this.set = DestroyedInstanceProxy.createNewInstance(ToolkitSortedSet.class, getName());
   }
 

@@ -25,7 +25,7 @@ public class DestroyableToolkitSet<E> extends AbstractDestroyableToolkitObject<T
   }
 
   @Override
-  public void afterDestroy() {
+  public void applyDestroy() {
     this.set = DestroyedInstanceProxy.createNewInstance(ToolkitSet.class, getName());
   }
 

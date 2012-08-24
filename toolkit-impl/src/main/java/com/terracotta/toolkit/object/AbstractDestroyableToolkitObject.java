@@ -6,15 +6,18 @@ package com.terracotta.toolkit.object;
 import org.terracotta.toolkit.object.ToolkitObject;
 
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
+import com.terracotta.toolkit.factory.impl.AbstractPrimaryToolkitObjectFactory;
 
 public abstract class AbstractDestroyableToolkitObject<T extends ToolkitObject> implements DestroyableToolkitObject {
 
-  protected final ToolkitObjectFactory<T> factory;
-  private final DestroyApplicator         destroyApplicator;
-  private volatile boolean                destroyed;
+  protected final AbstractPrimaryToolkitObjectFactory factory;
+  private final DestroyApplicator                     destroyApplicator;
+  private volatile boolean                            destroyed;
 
   public AbstractDestroyableToolkitObject(ToolkitObjectFactory<T> factory) {
-    this.factory = factory;
+    if (!(factory instanceof AbstractPrimaryToolkitObjectFactory)) { throw new IllegalStateException(); }
+
+    this.factory = (AbstractPrimaryToolkitObjectFactory) factory;
     this.destroyApplicator = new DestroyApplicatorImpl(this);
   }
 
@@ -29,21 +32,18 @@ public abstract class AbstractDestroyableToolkitObject<T extends ToolkitObject> 
 
   @Override
   public final void destroy() {
-    factory.lock(this);
-    try {
-      if (!destroyed) {
-        factory.destroy((T) this);
-        destroyed = true;
-      }
-    } finally {
-      factory.unlock(this);
-    }
+    factory.destroy(this);
+  }
+
+  public void destroyFromCluster() {
+    doDestroy();
+    destroyed = true;
   }
 
   /**
    * After destroy
    */
-  public abstract void afterDestroy();
+  public abstract void applyDestroy();
 
   private static class DestroyApplicatorImpl implements DestroyApplicator {
 
@@ -57,7 +57,7 @@ public abstract class AbstractDestroyableToolkitObject<T extends ToolkitObject> 
     public void applyDestroy() {
       toolkitObject.destroyed = true;
       toolkitObject.factory.applyDestroy(toolkitObject);
-      toolkitObject.afterDestroy();
+      toolkitObject.applyDestroy();
     }
 
     @Override

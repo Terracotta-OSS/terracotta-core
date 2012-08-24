@@ -31,7 +31,7 @@ public class DestroyableToolkitNotifier<T> extends AbstractDestroyableToolkitObj
   }
 
   @Override
-  public void afterDestroy() {
+  public void applyDestroy() {
     this.notifier = DestroyedInstanceProxy.createNewInstance(ToolkitNotifier.class, getName());
   }
 

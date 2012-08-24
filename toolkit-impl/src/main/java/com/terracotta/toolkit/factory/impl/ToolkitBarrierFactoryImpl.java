@@ -8,11 +8,12 @@ import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.terracotta.toolkit.concurrent.ToolkitBarrierImpl;
+import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.ToolkitObjectType;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
 import com.terracotta.toolkit.util.ToolkitIDGeneratorImpl;
 
-public class ToolkitBarrierFactoryImpl extends AbstractSecondaryToolkitObjectFactory<ToolkitBarrier> {
+public class ToolkitBarrierFactoryImpl implements ToolkitObjectFactory<ToolkitBarrier> {
   public static final String           PARTIES_CONFIG_NAME = "PARTIES";
   private final ToolkitStore           barriers;
   private final ToolkitIDGeneratorImpl barrierIdGenerator;

@@ -45,7 +45,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   }
 
   @Override
-  public void afterDestroy() {
+  public void applyDestroy() {
     this.activeDelegate = DestroyedInstanceProxy.createNewInstance(ToolkitCacheInternal.class, getName());
   }
 

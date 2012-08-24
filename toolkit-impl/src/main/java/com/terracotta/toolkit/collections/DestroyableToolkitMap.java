@@ -29,7 +29,7 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
   }
 
   @Override
-  public void afterDestroy() {
+  public void applyDestroy() {
     this.map = DestroyedInstanceProxy.createNewInstance(ToolkitMap.class, getName());
   }
 

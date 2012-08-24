@@ -33,7 +33,7 @@ public class ToolkitBlockingQueueImpl<E> extends AbstractDestroyableToolkitObjec
   }
 
   @Override
-  public void afterDestroy() {
+  public void applyDestroy() {
     throw new UnsupportedOperationException();
   }
 

@@ -8,6 +8,7 @@ import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.object.ToolkitObject;
 
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
+import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.object.TCToolkitObject;
 import com.terracotta.toolkit.object.ToolkitObjectType;
 
@@ -29,18 +30,10 @@ public interface AggregateToolkitTypeRoot<T extends ToolkitObject, S extends TCT
   void removeToolkitType(ToolkitObjectType toolkitObjectType, String name);
 
   /**
-   * Take a cluster-wide lock for FQN: ToolkitObjectType + name
-   */
-  void lock(ToolkitObjectType toolkitObjectType, String name);
-
-  /**
-   * Unlock cluster-wide lock for FQN: ToolkitObjectType + name
-   */
-  void unlock(ToolkitObjectType toolkitObjectType, String name);
-
-  /**
    * Apply destroy
    */
   void applyDestroy(String name);
+
+  void destroy(AbstractDestroyableToolkitObject obj, ToolkitObjectType type);
 
 }
