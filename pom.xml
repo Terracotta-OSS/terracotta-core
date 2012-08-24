@@ -67,7 +67,7 @@
 
     <!-- activate to include EE modules if it's EE branch -->
     <profile>
-      <id>ee</id>
+      <id>include-ee-modules</id>
       <properties>
         <build.edition>enterprise</build.edition>
       </properties>
