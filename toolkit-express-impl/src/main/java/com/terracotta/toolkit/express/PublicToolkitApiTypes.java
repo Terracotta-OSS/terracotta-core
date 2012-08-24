@@ -38,6 +38,7 @@ import org.terracotta.toolkit.events.ToolkitNotifier;
 import org.terracotta.toolkit.internal.TerracottaL1Instance;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.ToolkitLogger;
+import org.terracotta.toolkit.internal.ToolkitProperties;
 import org.terracotta.toolkit.internal.cache.TimestampedValue;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheMetaDataCallback;
@@ -130,6 +131,7 @@ abstract class PublicToolkitApiTypes {
     tmpSet.add("org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal$1");
     tmpSet.add(ToolkitLogger.class.getName());
     tmpSet.add(ToolkitMap.class.getName());
+    tmpSet.add(ToolkitProperties.class.getName());
     tmpSet.add(ToolkitStoreConfigBuilder.class.getName());
     tmpSet.add(ToolkitStoreConfigBuilderInternal.class.getName());
     tmpSet.add("org.terracotta.toolkit.store.ToolkitStoreConfigBuilder$ConfigFieldMapping");
