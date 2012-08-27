@@ -5,6 +5,8 @@ package com.terracotta.toolkit.express;
 
 import com.terracotta.toolkit.express.TerracottaInternalClientImpl.ClientShutdownException;
 
+import java.util.Set;
+
 public interface TerracottaInternalClient {
   /**
    * Instantiates a class using an internal instrumentation capable class loader.
@@ -22,17 +24,22 @@ public interface TerracottaInternalClient {
   <T> T instantiate(String className, Class[] cstrArgTypes, Object[] cstrArgs) throws Exception;
 
   /**
-   * Returns true if the client is rejoin enabled client. Otherwise false
+   * Returns true if the client is a dedicated client. Otherwise false
    */
   boolean isDedicatedClient();
 
   /**
-   * Join the same client, introspecting modules from the specified classes
+   * Join the same client
    */
-  void join() throws ClientShutdownException;
+  void join(Set<String> tunnelledMBeanDomains) throws ClientShutdownException;
 
   /**
    * Shuts down the client
    */
   void shutdown();
+
+  /**
+   * Returns whether this client has been shutdown or not
+   */
+  boolean isShutdown();
 }

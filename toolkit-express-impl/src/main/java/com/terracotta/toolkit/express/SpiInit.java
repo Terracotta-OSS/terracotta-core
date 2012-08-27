@@ -6,8 +6,6 @@ package com.terracotta.toolkit.express;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.hook.DSOContext;
 
-import java.net.URL;
-import java.util.Collection;
 import java.util.Set;
 
 public class SpiInit implements DSOContextControl {
@@ -16,27 +14,25 @@ public class SpiInit implements DSOContextControl {
 
   public SpiInit(Object context) {
     this.dsoContext = (DSOContext) context;
+    ManagerUtil.enableSingleton(dsoContext.getManager());
   }
 
   @Override
-  public void init(Set<String> tunnelledMBeanDomains) {
-    ManagerUtil.enableSingleton(dsoContext.getManager());
+  public void activateTunnelledMBeanDomains(Set<String> tunnelledMBeanDomains) {
+    boolean sendCurrentTunnelledDomains = false;
     if (tunnelledMBeanDomains != null) {
       for (String mbeanDomain : tunnelledMBeanDomains) {
         dsoContext.getModuleConfigurtion().addTunneledMBeanDomain(mbeanDomain);
+        sendCurrentTunnelledDomains = true;
       }
+    }
+    if (sendCurrentTunnelledDomains) {
+      dsoContext.getManager().getTunneledDomainUpdater().sendCurrentTunneledDomains();
     }
   }
 
   @Override
   public void shutdown() {
     dsoContext.shutdown();
-  }
-
-  @Override
-  public void activateModules(Collection<URL> modules) {
-    // module might have registered new mbean domains
-    dsoContext.getManager().getTunneledDomainUpdater().sendCurrentTunneledDomains();
-
   }
 }

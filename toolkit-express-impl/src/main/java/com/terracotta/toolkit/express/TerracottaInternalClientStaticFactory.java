@@ -17,7 +17,7 @@ public class TerracottaInternalClientStaticFactory {
     // not instantiable
   }
 
-  public static TerracottaInternalClient createTerracottaL1Client(TerracottaClientConfig config) {
+  public static TerracottaInternalClient getOrCreateTerracottaInternalClient(TerracottaClientConfig config) {
     return INSTANCE.getOrCreateL1Client(config);
   }
 }

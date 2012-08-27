@@ -6,6 +6,7 @@ package org.terracotta.express.tests;
 import org.terracotta.express.tests.base.ClientBase;
 import org.terracotta.toolkit.Toolkit;
 
+import com.tc.util.Assert;
 import com.terracotta.toolkit.client.TerracottaClientConfig;
 import com.terracotta.toolkit.client.TerracottaClientConfigParams;
 import com.terracotta.toolkit.express.TerracottaInternalClient;
@@ -30,30 +31,47 @@ public class URLConfigClient extends ClientBase {
 
     TerracottaClientConfig config = new TerracottaClientConfigParams().tcConfigSnippetOrUrl(configUrl).isUrl(true)
         .newTerracottaClientConfig();
-    TerracottaInternalClient client1 = TerracottaInternalClientStaticFactory.createTerracottaL1Client(config);
+    TerracottaInternalClient client1 = TerracottaInternalClientStaticFactory
+        .getOrCreateTerracottaInternalClient(config);
+
+    // clusteringToolkit client is shared with client1
+    Assert.assertFalse(client1.isDedicatedClient());
 
     config = new TerracottaClientConfigParams().tcConfigSnippetOrUrl(yoyodb).isUrl(true).newTerracottaClientConfig();
-    TerracottaInternalClient client2 = TerracottaInternalClientStaticFactory.createTerracottaL1Client(config);
+    TerracottaInternalClient client2 = TerracottaInternalClientStaticFactory
+        .getOrCreateTerracottaInternalClient(config);
+
+    Assert.assertFalse(client2.isDedicatedClient());
 
     // these two clients should be same because now we share L1s with same URL
     if (client1 != client2) { throw new AssertionError(); }
 
     System.setProperty(yoyo, configUrl + ",localhost:1234");
     config = new TerracottaClientConfigParams().tcConfigSnippetOrUrl(yoyodb).isUrl(true).newTerracottaClientConfig();
-    TerracottaInternalClient client3 = TerracottaInternalClientStaticFactory.createTerracottaL1Client(config);
+    TerracottaInternalClient client3 = TerracottaInternalClientStaticFactory
+        .getOrCreateTerracottaInternalClient(config);
+
+    Assert.assertFalse(client2.isDedicatedClient());
 
     if (client3 == client1) { throw new AssertionError(); }
 
     client1.shutdown();
-    client1 = null;
-    client2.shutdown();
-    client2 = null;
-    client3.shutdown();
-    client3 = null;
+    Assert.assertFalse(client1.isShutdown());
+    Assert.assertFalse(client2.isShutdown());
 
-    TerracottaInternalClientStaticFactory.createTerracottaL1Client(new TerracottaClientConfigParams()
-                                                                       .tcConfigSnippetOrUrl(yoyodb).isUrl(true)
-                                                                       .newTerracottaClientConfig())
-        .shutdown();
+    client2.shutdown();
+    // still shared by clusteringToolkit client
+    Assert.assertFalse(client1.isShutdown());
+    Assert.assertFalse(client2.isShutdown());
+
+    getClusteringToolkit().shutdown();
+    Assert.assertTrue(client1.isShutdown());
+    Assert.assertTrue(client2.isShutdown());
+    client1 = null;
+    client2 = null;
+
+    client3.shutdown();
+    Assert.assertTrue(client3.isShutdown());
+    client3 = null;
   }
 }

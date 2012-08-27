@@ -127,7 +127,8 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
     if (isUrlConfig) {
       synchronized (tcConfig.intern()) {
         TerracottaInternalClient removed = clientsByUrl.remove(tcConfig);
-        if (removed != client) { throw new AssertionError("removed: " + removed + " but " + client + " for " + tcConfig); }
+        if (removed != client) { throw new AssertionError("removed: " + removed + ", expecting: " + client + ", for "
+                                                          + tcConfig); }
       }
     }
   }
@@ -143,22 +144,12 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
       } else {
         client = clientsByUrl.get(tcConfig);
         if (client != null) {
-          try {
-            client.join();
-            return client;
-          } catch (ClientShutdownException e) {
-            throw new IllegalStateException("this client already shutdown", e);
-          }
+          return joinSharedClient(client, tunneledMBeanDomains);
         } else {
           synchronized (tcConfig.intern()) {
             client = clientsByUrl.get(tcConfig);
             if (client != null) {
-              try {
-                client.join();
-                return client;
-              } catch (ClientShutdownException e) {
-                throw new IllegalStateException("this client already shutdown", e);
-              }
+              return joinSharedClient(client, tunneledMBeanDomains);
             } else {
               client = createClient(tcConfig, isUrlConfig, rejoinClient, tunneledMBeanDomains);
               clientsByUrl.put(tcConfig, client);
@@ -168,6 +159,15 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
       }
     }
     return client;
+  }
+
+  private TerracottaInternalClient joinSharedClient(TerracottaInternalClient client, Set<String> tunneledMBeanDomains) {
+    try {
+      client.join(tunneledMBeanDomains);
+      return client;
+    } catch (ClientShutdownException e) {
+      throw new IllegalStateException("this client is already shutdown", e);
+    }
   }
 
   private TerracottaInternalClient createClient(String tcConfig, boolean isUrlConfig, final boolean rejoinClient,
@@ -187,7 +187,7 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
     Map<String, Object> env = createEnvIfAbsent(tcConfig);
     TerracottaInternalClient client = new TerracottaInternalClientImpl(tcConfig, isUrlConfig, jarManager,
                                                                        timJars.toArray(new URL[] {}), getClass()
-                                                                           .getClassLoader(), l1Jars, new Class[0],
+                                                                           .getClassLoader(), l1Jars,
                                                                        this, rejoinClient, tunneledMBeanDomains, env);
     return client;
   }

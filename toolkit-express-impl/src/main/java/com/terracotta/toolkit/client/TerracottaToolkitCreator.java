@@ -37,7 +37,7 @@ public class TerracottaToolkitCreator {
 
   private TerracottaInternalClient createInternalClient(TerracottaClientConfig config) {
     try {
-      return TerracottaInternalClientStaticFactory.createTerracottaL1Client(config);
+      return TerracottaInternalClientStaticFactory.getOrCreateTerracottaInternalClient(config);
     } catch (Exception e) {
       throw new RuntimeException("Unable to create Terracotta L1 Client", e);
     }
