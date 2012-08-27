@@ -50,16 +50,18 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
   public void removeObjectById(ObjectID oid) {
     isShutdownThenException();
 
-    tcObjectStoreLock.writeLock().lock();
-    try {
-      if (tcObjectSelfTempCache.containsKey(oid)) {
-        removeTCObjectSelfTemp(tcObjectSelfTempCache.get(oid), true);
-        return;
-      }
+    synchronized (tcObjectSelfRemovedFromStoreCallback) {
+      tcObjectStoreLock.writeLock().lock();
+      try {
+        if (tcObjectSelfTempCache.containsKey(oid)) {
+          removeTCObjectSelfTemp(tcObjectSelfTempCache.get(oid), true);
+          return;
+        }
 
-      if (!tcObjectSelfStoreOids.contains(oid)) { return; }
-    } finally {
-      tcObjectStoreLock.writeLock().unlock();
+        if (!tcObjectSelfStoreOids.contains(oid)) { return; }
+      } finally {
+        tcObjectStoreLock.writeLock().unlock();
+      }
     }
 
     for (ServerMapLocalCache cache : localCaches.keySet()) {
