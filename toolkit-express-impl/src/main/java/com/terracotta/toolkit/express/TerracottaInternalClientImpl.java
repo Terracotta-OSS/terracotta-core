@@ -40,6 +40,44 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
   private final boolean                         rejoinEnabled;
   private boolean                               shutdown = false;
 
+  TerracottaInternalClientImpl(String tcConfig, boolean isUrlConfig, JarManager jarManager, URL[] timJars,
+                               ClassLoader appLoader, List<Jar> l1Jars, TerracottaInternalClientFactory parent,
+                               boolean rejoinEnabled, Set<String> tunneledMBeanDomains, Map<String, Object> env) {
+    this.rejoinEnabled = rejoinEnabled;
+    this.tcConfig = tcConfig;
+    this.isUrlConfig = isUrlConfig;
+    this.jarManager = jarManager;
+    this.parent = parent;
+
+    try {
+      this.appClassLoader = new AppClassLoader(appLoader);
+      this.clusteredStateLoader = createClusteredStateLoader(appLoader, timJars, l1Jars);
+
+      Class bootClass = clusteredStateLoader.loadClass(StandaloneL1Boot.class.getName());
+      Constructor<?> cstr = bootClass.getConstructor(String.class, Boolean.TYPE, ClassLoader.class, Boolean.TYPE,
+                                                     Map.class);
+
+      // XXX: It's be nice to not use Object here, but exposing the necessary type (DSOContext) seems wrong too)
+      if (isUrlConfig && isRequestingSecuredEnv(tcConfig)) {
+        if (env != null) {
+          env.put("com.terracotta.SecretProvider", // replaces old instance if rejoin
+                  newSecretProviderDelegate(clusteredStateLoader, env.get(TerracottaInternalClientImpl.SECRET_PROVIDER)));
+        }
+      }
+      Callable<Object> boot = (Callable<Object>) cstr.newInstance(tcConfig, isUrlConfig, clusteredStateLoader,
+                                                                  rejoinEnabled, env);
+
+      Object context = boot.call();
+
+      Class spiInit = clusteredStateLoader.loadClass(SPI_INIT);
+      contextControl = (DSOContextControl) spiInit.getConstructor(Object.class).newInstance(context);
+      join(tunneledMBeanDomains);
+
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   @Override
   public boolean isDedicatedClient() {
     return rejoinEnabled;
@@ -111,44 +149,6 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
     }
 
     return urls;
-  }
-
-  TerracottaInternalClientImpl(String tcConfig, boolean isUrlConfig, JarManager jarManager, URL[] timJars,
-                               ClassLoader appLoader, List<Jar> l1Jars, TerracottaInternalClientFactory parent,
-                               boolean rejoinEnabled, Set<String> tunneledMBeanDomains, Map<String, Object> env) {
-    this.rejoinEnabled = rejoinEnabled;
-    this.tcConfig = tcConfig;
-    this.isUrlConfig = isUrlConfig;
-    this.jarManager = jarManager;
-    this.parent = parent;
-
-    try {
-      this.appClassLoader = new AppClassLoader(appLoader);
-      this.clusteredStateLoader = createClusteredStateLoader(appLoader, timJars, l1Jars);
-
-      Class bootClass = clusteredStateLoader.loadClass(StandaloneL1Boot.class.getName());
-      Constructor<?> cstr = bootClass.getConstructor(String.class, Boolean.TYPE, ClassLoader.class, Boolean.TYPE,
-                                                     Map.class);
-
-      // XXX: It's be nice to not use Object here, but exposing the necessary type (DSOContext) seems wrong too)
-      if (isUrlConfig && isRequestingSecuredEnv(tcConfig)) {
-        if (env != null) {
-          env.put("com.terracotta.SecretProvider", // replaces old instance if rejoin
-                  newSecretProviderDelegate(clusteredStateLoader, env.get(TerracottaInternalClientImpl.SECRET_PROVIDER)));
-        }
-      }
-      Callable<Object> boot = (Callable<Object>) cstr.newInstance(tcConfig, isUrlConfig, clusteredStateLoader,
-                                                                  rejoinEnabled, env);
-
-      Object context = boot.call();
-
-      Class spiInit = clusteredStateLoader.loadClass(SPI_INIT);
-      contextControl = (DSOContextControl) spiInit.getConstructor(Object.class).newInstance(context);
-      join(tunneledMBeanDomains);
-
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private ClusteredStateLoader createClusteredStateLoader(ClassLoader appLoader, URL[] timJars, List<Jar> l1Jars)
