@@ -166,6 +166,7 @@ public class DSOContextImpl implements DSOContext {
     this.manager = manager;
     this.instrumentationLogger = manager.getInstrumentationLogger();
     this.weavingStrategy = new DefaultWeavingStrategy(configHelper, instrumentationLogger);
+    logger.info("DSOContext created with expressRejoinClient=" + expressRejoinClient);
   }
 
   private void resolveClasses() {
