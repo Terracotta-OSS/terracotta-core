@@ -3,12 +3,11 @@
  */
 package com.terracotta.toolkit.factory.impl;
 
-import org.terracotta.toolkit.collections.ToolkitSortedSet;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
-import com.terracotta.toolkit.collections.DestroyableToolkitSortedSet;
 import com.terracotta.toolkit.collections.ToolkitSortedSetImpl;
+import com.terracotta.toolkit.collections.map.ToolkitSortedMapImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.ToolkitObjectType;
 import com.terracotta.toolkit.roots.ToolkitTypeRootsFactory;
@@ -16,12 +15,12 @@ import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
 import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
 
 /**
- * An implementation of {@link ClusteredSortedSetFactory}
+ * An implementation of {@link ToolkitSortedSetFactory}
  */
 public class ToolkitSortedSetFactoryImpl extends
-    AbstractPrimaryToolkitObjectFactory<ToolkitSortedSet, ToolkitSortedSetImpl> {
+    AbstractPrimaryToolkitObjectFactory<ToolkitSortedSetImpl, ToolkitSortedMapImpl> {
 
-  private static final SortedSetIsolatedTypeFactory FACTORY = new SortedSetIsolatedTypeFactory();
+  private static final SetIsolatedTypeFactory FACTORY = new SetIsolatedTypeFactory();
 
   public ToolkitSortedSetFactoryImpl(ToolkitInternal toolkit, ToolkitTypeRootsFactory rootsFactory) {
     super(toolkit, rootsFactory.createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_SORTED_SET_ROOT_NAME,
@@ -33,20 +32,21 @@ public class ToolkitSortedSetFactoryImpl extends
     return ToolkitObjectType.SORTED_SET;
   }
 
-  private static class SortedSetIsolatedTypeFactory implements
-      IsolatedToolkitTypeFactory<ToolkitSortedSet, ToolkitSortedSetImpl> {
+  private static class SetIsolatedTypeFactory implements
+      IsolatedToolkitTypeFactory<ToolkitSortedSetImpl, ToolkitSortedMapImpl> {
 
     @Override
-    public ToolkitSortedSet createIsolatedToolkitType(ToolkitObjectFactory<ToolkitSortedSet> factory, String name,
-                                                      Configuration config, ToolkitSortedSetImpl tcClusteredObject) {
-      return new DestroyableToolkitSortedSet(factory, tcClusteredObject, name);
+    public ToolkitSortedSetImpl createIsolatedToolkitType(ToolkitObjectFactory<ToolkitSortedSetImpl> factory,
+                                                          String name,
+ Configuration config,
+                                                          ToolkitSortedMapImpl tcClusteredObject) {
+      return new ToolkitSortedSetImpl(factory, tcClusteredObject);
     }
 
     @Override
-    public ToolkitSortedSetImpl createTCClusteredObject(Configuration config) {
-      return new ToolkitSortedSetImpl();
+    public ToolkitSortedMapImpl createTCClusteredObject(Configuration config) {
+      return new ToolkitSortedMapImpl();
     }
-
   }
 
 }

@@ -28,21 +28,21 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements ToolkitMap<K, V> {
-  private final KeyValueHolder<K, V>    keyValueHolder;
+  protected final KeyValueHolder<K, V>  keyValueHolder;
 
-  private volatile Object               localResolveLock;
-  private volatile ToolkitReadWriteLock lock;
+  protected volatile Object             localResolveLock;
+  protected volatile ToolkitReadWriteLock lock;
   private final List<MutateOperation>   pendingChanges = new ArrayList();
 
   public ToolkitMapImpl() {
-    this(new ConcurrentHashMap<K, V>());
+    this(new KeyValueHolder(new ConcurrentHashMap<K, V>()));
   }
 
-  public ToolkitMapImpl(Map<K, V> map) {
-    this.keyValueHolder = new KeyValueHolder(map);
+  public ToolkitMapImpl(KeyValueHolder keyValueHolder) {
+    this.keyValueHolder = keyValueHolder;
   }
 
-  private void applyPendingChanges() {
+  protected void applyPendingChanges() {
     for (Iterator<MutateOperation> iterator = pendingChanges.iterator(); iterator.hasNext();) {
       MutateOperation mutateOperation = iterator.next();
       Object tcKey = mutateOperation.getKey();
@@ -271,7 +271,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     }
   }
 
-  private V unlockedRemove(Object key) {
+  protected V unlockedRemove(Object key) {
     applyPendingChanges();
     ObjectID oidKey = keyValueHolder.getKeyObjectID(key);
     if (oidKey == null) { return null; }
@@ -318,7 +318,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     try {
       synchronized (localResolveLock) {
         applyPendingChanges();
-        return new ToolkitKeySet();
+        return new ToolkitKeySet(keyValueHolder.keySet());
       }
     } finally {
       lock.readLock().unlock();
@@ -331,7 +331,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     try {
       synchronized (localResolveLock) {
         applyPendingChanges();
-        return new ToolkitValueCollection();
+        return new ToolkitValueCollection(keyValueHolder.values());
       }
     } finally {
       lock.readLock().unlock();
@@ -344,7 +344,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     try {
       synchronized (localResolveLock) {
         applyPendingChanges();
-        return new ToolkitMapEntrySet();
+        return new ToolkitMapEntrySet(keyValueHolder.entrySet());
       }
     } finally {
       lock.readLock().unlock();
@@ -415,7 +415,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     this.keyValueHolder.clear();
   }
 
-  private static class KeyValueHolder<K, V> {
+  static class KeyValueHolder<K, V> {
     private final Map<K, V>            keyToValue;
     private final HashMap<K, ObjectID> keyToIds = new HashMap<K, ObjectID>();
 
@@ -475,11 +475,11 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     }
   }
 
-  private class ToolkitKeySet implements Set<K> {
+  class ToolkitKeySet implements Set<K> {
     private final Set<K> keySet;
 
-    public ToolkitKeySet() {
-      this.keySet = keyValueHolder.keySet();
+    public ToolkitKeySet(Set<K> keySet) {
+      this.keySet = keySet;
     }
 
     @Override
@@ -661,11 +661,11 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     }
   }
 
-  private class ToolkitValueCollection implements Collection<V> {
+  class ToolkitValueCollection implements Collection<V> {
     private final Collection<V> values;
 
-    public ToolkitValueCollection() {
-      values = keyValueHolder.values();
+    public ToolkitValueCollection(Collection<V> values) {
+      this.values = values;
     }
 
     @Override
@@ -823,11 +823,11 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     }
   }
 
-  private class ToolkitMapEntrySet implements Set<Entry<K, V>> {
+  class ToolkitMapEntrySet implements Set<Entry<K, V>> {
     private final Set<Entry<K, V>> entrySet;
 
-    public ToolkitMapEntrySet() {
-      this.entrySet = keyValueHolder.entrySet();
+    public ToolkitMapEntrySet(Set<Entry<K, V>> entrySet) {
+      this.entrySet = entrySet;
     }
 
     @Override

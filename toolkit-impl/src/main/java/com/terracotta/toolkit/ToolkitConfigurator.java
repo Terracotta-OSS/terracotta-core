@@ -7,25 +7,23 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.terracotta.toolkit.collections.ToolkitListImpl;
 import com.terracotta.toolkit.collections.ToolkitListImplApplicator;
-import com.terracotta.toolkit.collections.ToolkitSetImpl;
-import com.terracotta.toolkit.collections.ToolkitSetImplApplicator;
-import com.terracotta.toolkit.collections.ToolkitSortedSetImpl;
 import com.terracotta.toolkit.collections.map.ServerMap;
 import com.terracotta.toolkit.collections.map.ServerMapApplicator;
 import com.terracotta.toolkit.collections.map.ToolkitMapImpl;
 import com.terracotta.toolkit.collections.map.ToolkitMapImplApplicator;
+import com.terracotta.toolkit.collections.map.ToolkitSortedMapImpl;
 import com.terracotta.toolkit.events.ToolkitNotifierImpl;
 import com.terracotta.toolkit.events.ToolkitNotifierImplApplicator;
 import com.terracotta.toolkit.object.ToolkitObjectStripeImpl;
 import com.terracotta.toolkit.object.ToolkitObjectStripeImplApplicator;
 import com.terracotta.toolkit.object.serialization.CustomLifespanSerializedEntryApplicator;
 import com.terracotta.toolkit.object.serialization.CustomLifespanSerializedMapValue;
-import com.terracotta.toolkit.object.serialization.SerializerMapImpl;
-import com.terracotta.toolkit.object.serialization.SerializerMapImplApplicator;
 import com.terracotta.toolkit.object.serialization.SerializedClusterObjectImpl;
 import com.terracotta.toolkit.object.serialization.SerializedClusterObjectImplApplicator;
 import com.terracotta.toolkit.object.serialization.SerializedMapValue;
 import com.terracotta.toolkit.object.serialization.SerializedMapValueApplicator;
+import com.terracotta.toolkit.object.serialization.SerializerMapImpl;
+import com.terracotta.toolkit.object.serialization.SerializerMapImplApplicator;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeRootImpl;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeRootImplApplicator;
 
@@ -88,16 +86,12 @@ public class ToolkitConfigurator {
                                         CustomLifespanSerializedEntryApplicator.class.getName());
     spec.setHonorTransient(true);
 
-    // ClusteredSortedSet
-    spec = configHelper.getOrCreateSpec(ToolkitSortedSetImpl.class.getName(), ToolkitSetImplApplicator.class.getName());
-    spec.setHonorTransient(true);
-
-    // ToolkitSet
-    spec = configHelper.getOrCreateSpec(ToolkitSetImpl.class.getName(), ToolkitSetImplApplicator.class.getName());
-    spec.setHonorTransient(true);
-
     // ToolkitMap
     spec = configHelper.getOrCreateSpec(ToolkitMapImpl.class.getName(), ToolkitMapImplApplicator.class.getName());
+    spec.setHonorTransient(true);
+
+    // ToolkitSortedMap
+    spec = configHelper.getOrCreateSpec(ToolkitSortedMapImpl.class.getName(), ToolkitMapImplApplicator.class.getName());
     spec.setHonorTransient(true);
   }
 }

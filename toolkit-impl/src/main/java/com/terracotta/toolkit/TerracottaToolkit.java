@@ -13,6 +13,7 @@ import org.terracotta.toolkit.collections.ToolkitBlockingQueue;
 import org.terracotta.toolkit.collections.ToolkitList;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.collections.ToolkitSet;
+import org.terracotta.toolkit.collections.ToolkitSortedMap;
 import org.terracotta.toolkit.collections.ToolkitSortedSet;
 import org.terracotta.toolkit.concurrent.ToolkitBarrier;
 import org.terracotta.toolkit.concurrent.atomic.ToolkitAtomicLong;
@@ -34,6 +35,8 @@ import com.tc.net.GroupID;
 import com.tc.object.bytecode.ManagerUtil;
 import com.terracotta.toolkit.cluster.TerracottaClusterInfo;
 import com.terracotta.toolkit.collections.ToolkitBlockingQueueImpl;
+import com.terracotta.toolkit.collections.ToolkitSetImpl;
+import com.terracotta.toolkit.collections.ToolkitSortedSetImpl;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreFactory;
 import com.terracotta.toolkit.collections.servermap.api.ehcacheimpl.EhcacheSMLocalStoreStaticFactory;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockImpl;
@@ -49,6 +52,7 @@ import com.terracotta.toolkit.factory.impl.ToolkitListFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitMapFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitNotifierFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitSetFactoryImpl;
+import com.terracotta.toolkit.factory.impl.ToolkitSortedMapFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitSortedSetFactoryImpl;
 import com.terracotta.toolkit.object.serialization.SerializationStrategy;
 import com.terracotta.toolkit.object.serialization.SerializationStrategyImpl;
@@ -70,13 +74,14 @@ public class TerracottaToolkit implements ToolkitInternal {
   private final ToolkitObjectFactory<ToolkitList>              clusteredListFactory;
   private final ToolkitObjectFactory<ToolkitCache>             clusteredCacheFactory;
   private final ToolkitObjectFactory<ToolkitMap>               clusteredMapFactory;
+  private final ToolkitObjectFactory<ToolkitSortedMap>         clusteredSortedMapFactory;
   private final ToolkitObjectFactory<ToolkitCache>             clusteredStoreFactory;
   private final ToolkitObjectFactory<ToolkitAtomicLong>        clusteredAtomicLongFactory;
   private final ToolkitObjectFactory<ToolkitBarrier>           clusteredBarrierFactory;
   private final ToolkitObjectFactory<ToolkitNotifier>          clusteredNotifierFactory;
   private final ToolkitObjectFactory<ToolkitBlockingQueueImpl> clusteredBlockingQueueFactory;
-  private final ToolkitObjectFactory<ToolkitSortedSet>         clusteredSortedSetFactory;
-  private final ToolkitObjectFactory<ToolkitSet>               clusteredSetFactory;
+  private final ToolkitObjectFactory<ToolkitSortedSetImpl>     clusteredSortedSetFactory;
+  private final ToolkitObjectFactory<ToolkitSetImpl>           clusteredSetFactory;
   private final ServerMapLocalStoreFactory                     serverMapLocalStoreFactory;
   private final CacheManager                                   defaultToolkitCacheManager;
   private final TerracottaL1Instance                           tcClient;
@@ -108,6 +113,7 @@ public class TerracottaToolkit implements ToolkitInternal {
                                                                            createSearchBuilderFactory(),
                                                                            serverMapLocalStoreFactory);
     clusteredMapFactory = new ToolkitMapFactoryImpl(this, toolkitTypeRootsFactory);
+    clusteredSortedMapFactory = new ToolkitSortedMapFactoryImpl(this, toolkitTypeRootsFactory);
     clusteredStoreFactory = ToolkitCacheFactoryImpl.newToolkitStoreFactory(this, toolkitTypeRootsFactory,
                                                                            createSearchBuilderFactory(),
                                                                            serverMapLocalStoreFactory);
@@ -162,6 +168,12 @@ public class TerracottaToolkit implements ToolkitInternal {
   @Override
   public <K, V> ToolkitMap<K, V> getMap(String name, Class<K> keyKlazz, Class<V> valueKlazz) {
     return clusteredMapFactory.getOrCreate(name, null);
+  }
+
+  @Override
+  public <K extends Comparable<? super K>, V> ToolkitSortedMap<K, V> getSortedMap(String name, Class<K> keyKlazz,
+                                                                                  Class<V> valueKlazz) {
+    return clusteredSortedMapFactory.getOrCreate(name, null);
   }
 
   @Override

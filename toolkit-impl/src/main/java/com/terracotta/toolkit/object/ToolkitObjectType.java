@@ -30,6 +30,10 @@ public enum ToolkitObjectType {
    */
   MAP,
   /**
+   * {@link ToolkitMap}
+   */
+  SORTED_MAP,
+  /**
    * {@link ToolkitStore}
    */
   STORE,

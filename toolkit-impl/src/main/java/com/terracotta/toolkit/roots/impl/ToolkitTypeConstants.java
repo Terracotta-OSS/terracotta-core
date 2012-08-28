@@ -9,6 +9,7 @@ public abstract class ToolkitTypeConstants {
 
   public static final String  TOOLKIT_LIST_ROOT_NAME           = PREFIX + "toolkitListRoot";
   public static final String  TOOLKIT_MAP_ROOT_NAME            = PREFIX + "toolkitMapRoot";
+  public static final String  TOOLKIT_SORTED_MAP_ROOT_NAME     = PREFIX + "toolkitSortedMapRoot";
   public static final String  TOOLKIT_STORE_ROOT_NAME          = PREFIX + "toolkitStoreRoot";
   public static final String  TOOLKIT_CACHE_ROOT_NAME          = PREFIX + "toolkitCacheRoot";
   public static final String  TOOLKIT_ATOMIC_LONG_MAP_NAME     = PREFIX + "toolkitAtomicLongMap";

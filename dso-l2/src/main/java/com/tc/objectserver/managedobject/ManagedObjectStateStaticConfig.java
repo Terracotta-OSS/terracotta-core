@@ -58,18 +58,13 @@ public enum ManagedObjectStateStaticConfig {
       Factory.CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE_TYPE_FACTORY),
 
   /**
-   * Toolkit clusteredSortedSet type - reuses list object state
-   */
-  CLUSTERED_SORTED_SET(ToolkitTypeNames.TOOLKIT_SORTED_SET_IMPL, Factory.SET_TYPE_FACTORY),
-
-  /**
-   * Toolkit toolkitSet type - reuses list object state
-   */
-  TOOLKIT_SET(ToolkitTypeNames.TOOLKIT_SET_IMPL, Factory.SET_TYPE_FACTORY),
-  /**
    * Toolkit Map Type
    */
-  TOOLKIT_MAP(ToolkitTypeNames.TOOLKIT_MAP_IMPL, Factory.MAP_TYPE_FACTORY);
+  TOOLKIT_MAP(ToolkitTypeNames.TOOLKIT_MAP_IMPL, Factory.MAP_TYPE_FACTORY),
+  /**
+   * Toolkit Sorted Map Type
+   */
+  TOOLKIT_SORTED_MAP(ToolkitTypeNames.TOOLKIT_SORTED_MAP_IMPL, Factory.MAP_TYPE_FACTORY);
 
   private static final Map<String, ManagedObjectStateStaticConfig> NAME_TO_CONFIG_MAP = new ConcurrentHashMap<String, ManagedObjectStateStaticConfig>();
 
@@ -337,8 +332,7 @@ public enum ManagedObjectStateStaticConfig {
     public final static String TOOLKIT_NOTIFIER_TYPE                     = defineConstant("com.terracotta.toolkit.events.ToolkitNotifierImpl");
     public final static String SERIALIZED_MAP_VALUE_TYPE                 = defineConstant("com.terracotta.toolkit.object.serialization.SerializedMapValue");
     public final static String CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE_TYPE = defineConstant("com.terracotta.toolkit.object.serialization.CustomLifespanSerializedMapValue");
-    public final static String TOOLKIT_SORTED_SET_IMPL                   = defineConstant("com.terracotta.toolkit.collections.ToolkitSortedSetImpl");
-    public final static String TOOLKIT_SET_IMPL                          = defineConstant("com.terracotta.toolkit.collections.ToolkitSetImpl");
     public final static String TOOLKIT_MAP_IMPL                          = defineConstant("com.terracotta.toolkit.collections.map.ToolkitMapImpl");
+    public final static String TOOLKIT_SORTED_MAP_IMPL                   = defineConstant("com.terracotta.toolkit.collections.map.ToolkitSortedMapImpl");
   }
 }
