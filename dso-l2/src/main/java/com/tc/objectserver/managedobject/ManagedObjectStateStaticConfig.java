@@ -33,11 +33,11 @@ public enum ManagedObjectStateStaticConfig {
   /**
    * Toolkit Serializer map - reuses map managed object state
    */
-  NON_PARTIAL_MAP(ToolkitTypeNames.NON_PARTIAL_MAP_IMPL, Factory.MAP_TYPE_FACTORY),
+  NON_PARTIAL_MAP(ToolkitTypeNames.SERIALIZER_MAP_IMPL, Factory.MAP_TYPE_FACTORY),
   /**
    * Toolkit ClusteredObjectStripe config - explicit state factory
    */
-  CLUSTERED_OBJECT_STRIPE(ToolkitTypeNames.TOOLKIT_OBJECT_STRIPE_IMPL, Factory.CLUSTERED_OBJECT_STRIPE_TYPE_FACTORY),
+  CLUSTERED_OBJECT_STRIPE(ToolkitTypeNames.TOOLKIT_OBJECT_STRIPE_IMPL, Factory.TOOLKIT_OBJECT_STRIPE_TYPE_FACTORY),
   /**
    * ServerMap - explicit state factory
    */
@@ -45,7 +45,7 @@ public enum ManagedObjectStateStaticConfig {
   /**
    * ClusteredNotifier - explicit state factory
    */
-  CLUSTERED_NOTIFIER(ToolkitTypeNames.TOOLKIT_NOTIFIER_TYPE, Factory.CLUSTERED_NOTIFIER_TYPE_FACTORY),
+  CLUSTERED_NOTIFIER(ToolkitTypeNames.TOOLKIT_NOTIFIER_TYPE, Factory.TOOLKIT_NOTIFIER_TYPE_FACTORY),
   /**
    * SerializedEntry - explicit state factory
    */
@@ -64,7 +64,15 @@ public enum ManagedObjectStateStaticConfig {
   /**
    * Toolkit Sorted Map Type
    */
-  TOOLKIT_SORTED_MAP(ToolkitTypeNames.TOOLKIT_SORTED_MAP_IMPL, Factory.MAP_TYPE_FACTORY);
+  TOOLKIT_SORTED_MAP(ToolkitTypeNames.TOOLKIT_SORTED_MAP_IMPL, Factory.MAP_TYPE_FACTORY),
+  /**
+   * Toolkit set type
+   */
+  TOOLKIT_SET(ToolkitTypeNames.TOOLKIT_SET_IMPL, Factory.SET_TYPE_FACTORY),
+  /**
+   * Toolkit sorted set type
+   */
+  TOOLKIT_SORTED_SET(ToolkitTypeNames.TOOLKIT_SORTED_SET_IMPL, Factory.SET_TYPE_FACTORY);
 
   private static final Map<String, ManagedObjectStateStaticConfig> NAME_TO_CONFIG_MAP = new ConcurrentHashMap<String, ManagedObjectStateStaticConfig>();
 
@@ -169,7 +177,7 @@ public enum ManagedObjectStateStaticConfig {
       }
 
     },
-    CLUSTERED_OBJECT_STRIPE_TYPE_FACTORY() {
+    TOOLKIT_OBJECT_STRIPE_TYPE_FACTORY() {
 
       @Override
       public ManagedObjectState readFrom(ObjectInput objectInput) throws IOException, ClassNotFoundException {
@@ -198,7 +206,7 @@ public enum ManagedObjectStateStaticConfig {
                                                                         .createPersistentMap(oid));
       }
     },
-    CLUSTERED_NOTIFIER_TYPE_FACTORY() {
+    TOOLKIT_NOTIFIER_TYPE_FACTORY() {
 
       @Override
       public ManagedObjectState readFrom(ObjectInput objectInput) throws IOException {
@@ -326,7 +334,7 @@ public enum ManagedObjectStateStaticConfig {
     public final static String TOOLKIT_TYPE_ROOT_IMPL                    = defineConstant("com.terracotta.toolkit.roots.impl.ToolkitTypeRootImpl");
     public final static String TOOLKIT_LIST_IMPL                         = defineConstant("com.terracotta.toolkit.collections.ToolkitListImpl");
     public final static String SERIALIZED_CLUSTERED_OBJECT_IMPL          = defineConstant("com.terracotta.toolkit.object.serialization.SerializedClusterObjectImpl");
-    public final static String NON_PARTIAL_MAP_IMPL                      = defineConstant("com.terracotta.toolkit.object.serialization.SerializerMapImpl");
+    public final static String SERIALIZER_MAP_IMPL                       = defineConstant("com.terracotta.toolkit.object.serialization.SerializerMapImpl");
     public final static String TOOLKIT_OBJECT_STRIPE_IMPL                = defineConstant("com.terracotta.toolkit.object.ToolkitObjectStripeImpl");
     public final static String SERVER_MAP_TYPE                           = defineConstant("com.terracotta.toolkit.collections.map.ServerMap");
     public final static String TOOLKIT_NOTIFIER_TYPE                     = defineConstant("com.terracotta.toolkit.events.ToolkitNotifierImpl");
@@ -334,5 +342,7 @@ public enum ManagedObjectStateStaticConfig {
     public final static String CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE_TYPE = defineConstant("com.terracotta.toolkit.object.serialization.CustomLifespanSerializedMapValue");
     public final static String TOOLKIT_MAP_IMPL                          = defineConstant("com.terracotta.toolkit.collections.map.ToolkitMapImpl");
     public final static String TOOLKIT_SORTED_MAP_IMPL                   = defineConstant("com.terracotta.toolkit.collections.map.ToolkitSortedMapImpl");
+    public final static String TOOLKIT_SORTED_SET_IMPL                   = defineConstant("com.terracotta.toolkit.collections.ToolkitSortedSetImpl");
+    public final static String TOOLKIT_SET_IMPL                          = defineConstant("com.terracotta.toolkit.collections.ToolkitSetImpl");
   }
 }
