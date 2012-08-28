@@ -30,9 +30,15 @@ public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implement
     this.sink = sink;
   }
 
+  @Override
   public void addReadData(TCConnection source, TCByteBuffer[] data, int length) throws TCProtocolException {
-    final WireProtocolMessage msg = (WireProtocolMessage) this.processIncomingData(source, data, length);
-
+    final WireProtocolMessage msg;
+    try {
+      msg = (WireProtocolMessage) this.processIncomingData(source, data, length);
+    } catch (TCProtocolException e) {
+      init();
+      throw e;
+    }
     if (msg != null) {
       init();
       if (logger.isDebugEnabled()) {
@@ -56,15 +62,18 @@ public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implement
     return;
   }
 
+  @Override
   protected AbstractTCNetworkHeader getNewProtocolHeader() {
     return new WireProtocolHeader();
   }
 
+  @Override
   protected int computeDataLength(TCNetworkHeader header) {
     WireProtocolHeader wph = (WireProtocolHeader) header;
     return wph.getTotalPacketLength() - wph.getHeaderByteLength();
   }
 
+  @Override
   protected TCNetworkMessage createMessage(TCConnection source, TCNetworkHeader hdr, TCByteBuffer[] data)
       throws TCProtocolException {
     if (data == null) { throw new TCProtocolException("Wire protocol messages must have a payload"); }
