@@ -25,14 +25,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-public class ClusteredObjectStripeState extends AbstractManagedObjectState {
+public class ToolkitObjectStripeState extends AbstractManagedObjectState {
 
   private final long                   classID;
 
   private volatile Map<String, Object> configMap = new HashMap<String, Object>();
   private Object[]                     componentObjects;
 
-  public ClusteredObjectStripeState(final long classID) {
+  public ToolkitObjectStripeState(final long classID) {
     this.classID = classID;
   }
 
@@ -40,7 +40,7 @@ public class ClusteredObjectStripeState extends AbstractManagedObjectState {
   protected boolean basicEquals(final AbstractManagedObjectState obj) {
     if (this == obj) return true;
     if (getClass() != obj.getClass()) return false;
-    ClusteredObjectStripeState other = (ClusteredObjectStripeState) obj;
+    ToolkitObjectStripeState other = (ToolkitObjectStripeState) obj;
     if (classID != other.classID) return false;
     if (!Arrays.equals(componentObjects, other.componentObjects)) return false;
     if (configMap == null) {
@@ -188,8 +188,8 @@ public class ClusteredObjectStripeState extends AbstractManagedObjectState {
     return rv;
   }
 
-  static ClusteredObjectStripeState readFrom(final ObjectInput in) throws IOException, ClassNotFoundException {
-    final ClusteredObjectStripeState state = new ClusteredObjectStripeState(in.readLong());
+  static ToolkitObjectStripeState readFrom(final ObjectInput in) throws IOException, ClassNotFoundException {
+    final ToolkitObjectStripeState state = new ToolkitObjectStripeState(in.readLong());
     state.readFromInternal(in);
     return state;
   }

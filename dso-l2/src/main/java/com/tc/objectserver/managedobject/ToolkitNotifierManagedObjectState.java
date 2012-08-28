@@ -18,10 +18,10 @@ import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
-public class ClusteredNotifierManagedObjectState extends AbstractManagedObjectState {
+public class ToolkitNotifierManagedObjectState extends AbstractManagedObjectState {
   private final long classID;
 
-  public ClusteredNotifierManagedObjectState(final long classID) {
+  public ToolkitNotifierManagedObjectState(final long classID) {
     this.classID = classID;
   }
 
@@ -73,15 +73,15 @@ public class ClusteredNotifierManagedObjectState extends AbstractManagedObjectSt
 
   @Override
   protected boolean basicEquals(AbstractManagedObjectState o) {
-    if (o instanceof ClusteredNotifierManagedObjectState) {
+    if (o instanceof ToolkitNotifierManagedObjectState) {
       return true;
     } else {
       return false;
     }
   }
 
-  public static ClusteredNotifierManagedObjectState readFrom(ObjectInput in) throws IOException {
-    final ClusteredNotifierManagedObjectState state = new ClusteredNotifierManagedObjectState(in.readLong());
+  public static ToolkitNotifierManagedObjectState readFrom(ObjectInput in) throws IOException {
+    final ToolkitNotifierManagedObjectState state = new ToolkitNotifierManagedObjectState(in.readLong());
     return state;
   }
 

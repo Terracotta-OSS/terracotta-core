@@ -181,13 +181,13 @@ public enum ManagedObjectStateStaticConfig {
 
       @Override
       public ManagedObjectState readFrom(ObjectInput objectInput) throws IOException, ClassNotFoundException {
-        return ClusteredObjectStripeState.readFrom(objectInput);
+        return ToolkitObjectStripeState.readFrom(objectInput);
       }
 
       @Override
       public ManagedObjectState newInstance(ObjectID oid, long classId,
                                             PersistentCollectionFactory persistentCollectionFactory) {
-        return new ClusteredObjectStripeState(classId);
+        return new ToolkitObjectStripeState(classId);
       }
 
     },
@@ -210,13 +210,13 @@ public enum ManagedObjectStateStaticConfig {
 
       @Override
       public ManagedObjectState readFrom(ObjectInput objectInput) throws IOException {
-        return ClusteredNotifierManagedObjectState.readFrom(objectInput);
+        return ToolkitNotifierManagedObjectState.readFrom(objectInput);
       }
 
       @Override
       public ManagedObjectState newInstance(ObjectID oid, long classId,
                                             PersistentCollectionFactory persistentCollectionFactory) {
-        return new ClusteredNotifierManagedObjectState(classId);
+        return new ToolkitNotifierManagedObjectState(classId);
       }
     },
     SERIALIZED_MAP_VALUE_TYPE_FACTORY() {
