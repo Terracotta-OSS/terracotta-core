@@ -23,6 +23,7 @@ import org.terracotta.toolkit.collections.ToolkitBlockingQueue;
 import org.terracotta.toolkit.collections.ToolkitList;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.collections.ToolkitSet;
+import org.terracotta.toolkit.collections.ToolkitSortedMap;
 import org.terracotta.toolkit.collections.ToolkitSortedSet;
 import org.terracotta.toolkit.concurrent.ToolkitBarrier;
 import org.terracotta.toolkit.concurrent.atomic.ToolkitAtomicLong;
@@ -147,6 +148,7 @@ abstract class PublicToolkitApiTypes {
     tmpSet.add(ToolkitSortedSet.class.getName());
     tmpSet.add(ToolkitStore.class.getName());
     tmpSet.add(ToolkitCacheInternal.class.getName());
+    tmpSet.add(ToolkitSortedMap.class.getName());
 
     PUBLIC_TOOLKIT_TYPE_CLASS_NAMES = Collections.unmodifiableSet(tmpSet);
   }
