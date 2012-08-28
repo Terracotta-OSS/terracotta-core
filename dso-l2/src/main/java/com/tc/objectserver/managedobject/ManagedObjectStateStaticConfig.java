@@ -24,7 +24,7 @@ public enum ManagedObjectStateStaticConfig {
   /**
    * Toolkit clusteredList type - reuses list object state
    */
-  CLUSTERED_LIST(ToolkitTypeNames.TOOLKIT_LIST_IMPL, Factory.LIST_TYPE_FACTORY),
+  TOOLKIT_LIST(ToolkitTypeNames.TOOLKIT_LIST_IMPL, Factory.LIST_TYPE_FACTORY),
   /**
    * Toolkit SerializedClusteredObject type - explicit type
    */
@@ -33,11 +33,11 @@ public enum ManagedObjectStateStaticConfig {
   /**
    * Toolkit Serializer map - reuses map managed object state
    */
-  NON_PARTIAL_MAP(ToolkitTypeNames.SERIALIZER_MAP_IMPL, Factory.MAP_TYPE_FACTORY),
+  SERIALIZER_MAP(ToolkitTypeNames.SERIALIZER_MAP_IMPL, Factory.MAP_TYPE_FACTORY),
   /**
    * Toolkit ClusteredObjectStripe config - explicit state factory
    */
-  CLUSTERED_OBJECT_STRIPE(ToolkitTypeNames.TOOLKIT_OBJECT_STRIPE_IMPL, Factory.TOOLKIT_OBJECT_STRIPE_TYPE_FACTORY),
+  TOOLKIT_OBJECT_STRIPE(ToolkitTypeNames.TOOLKIT_OBJECT_STRIPE_IMPL, Factory.TOOLKIT_OBJECT_STRIPE_TYPE_FACTORY),
   /**
    * ServerMap - explicit state factory
    */
@@ -45,16 +45,16 @@ public enum ManagedObjectStateStaticConfig {
   /**
    * ClusteredNotifier - explicit state factory
    */
-  CLUSTERED_NOTIFIER(ToolkitTypeNames.TOOLKIT_NOTIFIER_TYPE, Factory.TOOLKIT_NOTIFIER_TYPE_FACTORY),
+  TOOLKIT_NOTIFIER(ToolkitTypeNames.TOOLKIT_NOTIFIER_TYPE, Factory.TOOLKIT_NOTIFIER_TYPE_FACTORY),
   /**
    * SerializedEntry - explicit state factory
    */
-  SERIALIZED_ENTRY(ToolkitTypeNames.SERIALIZED_MAP_VALUE_TYPE, Factory.SERIALIZED_MAP_VALUE_TYPE_FACTORY),
+  SERIALIZED_MAP_VALUE(ToolkitTypeNames.SERIALIZED_MAP_VALUE_TYPE, Factory.SERIALIZED_MAP_VALUE_TYPE_FACTORY),
 
   /**
    * CustomeLifespanSerializedEntry - explicit state factory
    */
-  CUSTOM_LIFESPAN_SERIALIZED_ENTRY(ToolkitTypeNames.CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE_TYPE,
+  CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE(ToolkitTypeNames.CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE_TYPE,
       Factory.CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE_TYPE_FACTORY),
 
   /**

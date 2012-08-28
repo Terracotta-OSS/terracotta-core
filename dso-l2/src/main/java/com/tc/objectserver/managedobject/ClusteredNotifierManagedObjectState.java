@@ -58,7 +58,7 @@ public class ClusteredNotifierManagedObjectState extends AbstractManagedObjectSt
 
   @Override
   public byte getType() {
-    return ManagedObjectStateStaticConfig.CLUSTERED_NOTIFIER.getStateObjectType();
+    return ManagedObjectStateStaticConfig.TOOLKIT_NOTIFIER.getStateObjectType();
   }
 
   @Override

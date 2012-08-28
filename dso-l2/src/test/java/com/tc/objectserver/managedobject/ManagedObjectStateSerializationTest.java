@@ -74,7 +74,7 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
   }
 
   public void testTcHibernateCustomSerializedEntry() throws Exception {
-    final String className = ManagedObjectStateStaticConfig.CUSTOM_LIFESPAN_SERIALIZED_ENTRY.getClientClassName();
+    final String className = ManagedObjectStateStaticConfig.CUSTOM_LIFESPAN_SERIALIZED_MAP_VALUE.getClientClassName();
     final TestDNACursor cursor = new TestDNACursor();
 
     cursor.addPhysicalAction(TDCSerializedEntryManagedObjectState.CREATE_TIME_FIELD, Integer.valueOf(1), false);

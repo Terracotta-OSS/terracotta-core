@@ -153,7 +153,7 @@ public class ClusteredObjectStripeState extends AbstractManagedObjectState {
   }
 
   public byte getType() {
-    return ManagedObjectStateStaticConfig.CLUSTERED_OBJECT_STRIPE.getStateObjectType();
+    return ManagedObjectStateStaticConfig.TOOLKIT_OBJECT_STRIPE.getStateObjectType();
   }
 
   public void writeTo(final ObjectOutput out) throws IOException {

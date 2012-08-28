@@ -22,6 +22,7 @@ import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListenerProvider;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
+import com.tc.objectserver.managedobject.ManagedObjectStateStaticConfig;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListener;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
@@ -146,7 +147,7 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { "Hello" });
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(25) });
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { newLong() });
-    final TestDNA dna = new TestDNA(cursor, "com.terracotta.toolkit.collections.ToolkitSortedSetImpl");
+    final TestDNA dna = new TestDNA(cursor, ManagedObjectStateStaticConfig.TOOLKIT_SET.getClientClassName());
     dna.version = this.version++;
     dna.isDelta = delta;
     return dna;
@@ -162,7 +163,7 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { "Hello" });
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(25) });
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { newLong() });
-    final TestDNA dna = new TestDNA(cursor, "com.terracotta.toolkit.collections.ToolkitListImpl");
+    final TestDNA dna = new TestDNA(cursor, ManagedObjectStateStaticConfig.TOOLKIT_LIST.getClientClassName());
     dna.version = this.version++;
     dna.isDelta = delta;
     return dna;
@@ -190,7 +191,7 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
     final TestDNACursor cursor = new TestDNACursor();
     final Object[] array = new Object[] { newLong(), newLong(), newLong() };
     cursor.addArrayAction(array);
-    final TestDNA dna = new TestDNA(cursor, "com.terracotta.toolkit.object.ToolkitObjectStripeImpl");
+    final TestDNA dna = new TestDNA(cursor, ManagedObjectStateStaticConfig.TOOLKIT_OBJECT_STRIPE.getClientClassName());
     dna.version = this.version++;
     dna.isDelta = delta;
     return dna;
@@ -224,7 +225,7 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
         cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { "notExists" + i, newObjectID() });
       }
     }
-    final TestDNA dna = new TestDNA(cursor, "com.terracotta.toolkit.roots.impl.ToolkitTypeRootImpl");
+    final TestDNA dna = new TestDNA(cursor, ManagedObjectStateStaticConfig.TOOLKIT_TYPE_ROOT.getClientClassName());
     dna.version = this.version++;
     dna.isDelta = delta;
     return dna;
