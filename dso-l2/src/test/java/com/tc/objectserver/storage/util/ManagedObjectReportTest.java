@@ -27,11 +27,11 @@ public class ManagedObjectReportTest extends AbstractDBUtilsTestBase {
         .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_LOADOBJECTID_CHECKPOINT_MAXSLEEP) + 100);
 
     managedObjectReport.report();
-    assertEquals(managedObjectReport.totalCounter.get(), 101);
-    assertEquals(managedObjectReport.doesNotExistInSet.size(), 101);
-    assertEquals(managedObjectReport.objectIDIsNullCounter.get(), 0);
-    assertEquals(managedObjectReport.nullObjectIDSet.size(), 0);
-    assertEquals(managedObjectReport.classMap.size(), 5);
+    assertEquals(101, managedObjectReport.totalCounter.get());
+    assertEquals(101, managedObjectReport.doesNotExistInSet.size());
+    assertEquals(0, managedObjectReport.objectIDIsNullCounter.get());
+    assertEquals(0, managedObjectReport.nullObjectIDSet.size());
+    assertEquals(4, managedObjectReport.classMap.size());
 
   }
 
