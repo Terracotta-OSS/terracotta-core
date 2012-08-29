@@ -130,27 +130,9 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
         return newLogicalArrayObject(oid);
       case 2:
         return newLogicalLiteralObject(oid);
-      case 3:
-        return newLogicalListObject(oid);
       default:
-        return newLogicalSetObject(oid);
+        return newLogicalListObject(oid);
     }
-  }
-
-  private ManagedObject newLogicalSetObject(final ObjectID oid) {
-    return newLogicalObject(oid, newLogicalSetDNA(false));
-  }
-
-  private TestDNA newLogicalSetDNA(final boolean delta) {
-    final TestDNACursor cursor = new TestDNACursor();
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new Integer(10343) });
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { "Hello" });
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(25) });
-    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { newLong() });
-    final TestDNA dna = new TestDNA(cursor, ManagedObjectStateStaticConfig.TOOLKIT_SET.getClientClassName());
-    dna.version = this.version++;
-    dna.isDelta = delta;
-    return dna;
   }
 
   private ManagedObject newLogicalListObject(final ObjectID oid) {
