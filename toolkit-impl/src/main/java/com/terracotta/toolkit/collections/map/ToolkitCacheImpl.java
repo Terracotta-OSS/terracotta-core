@@ -9,10 +9,8 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
-import org.terracotta.toolkit.internal.cache.ToolkitCacheMetaDataCallback;
-import org.terracotta.toolkit.internal.cache.ToolkitCacheWithMetadata;
-import org.terracotta.toolkit.internal.meta.MetaData;
 import org.terracotta.toolkit.internal.search.SearchBuilder;
+import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
 import com.tc.object.ObjectID;
 import com.terracotta.toolkit.collections.DestroyedInstanceProxy;
@@ -28,7 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject implements
-    DistributedToolkitType<InternalToolkitMap<K, V>>, ToolkitCacheWithMetadata<K, V>, ValuesResolver<K, V>,
+    DistributedToolkitType<InternalToolkitMap<K, V>>, ValuesResolver<K, V>,
     ToolkitCacheInternal<K, V> {
 
   private final AggregateServerMap<K, V>      aggregateServerMap;
@@ -54,6 +52,7 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     activeDelegate.destroy();
   }
 
+  @Override
   public String getName() {
     return name;
   }
@@ -129,16 +128,6 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   }
 
   @Override
-  public void putAllWithMetaData(Collection<EntryWithMetaData<K, V>> entries) {
-    activeDelegate.putAllWithMetaData(entries);
-  }
-
-  @Override
-  public void removeAllWithMetaData(Collection<EntryWithMetaData<K, V>> entries) {
-    activeDelegate.removeAllWithMetaData(entries);
-  }
-
-  @Override
   public void clear() {
     activeDelegate.clear();
   }
@@ -156,41 +145,6 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   @Override
   public Set<java.util.Map.Entry<K, V>> entrySet() {
     return activeDelegate.entrySet();
-  }
-
-  @Override
-  public MetaData createMetaData(String category) {
-    return activeDelegate.createMetaData(category);
-  }
-
-  @Override
-  public EntryWithMetaData<K, V> createEntryWithMetaData(K key, V value, MetaData metaData) {
-    return activeDelegate.createEntryWithMetaData(key, value, metaData);
-  }
-
-  @Override
-  public void putNoReturnWithMetaData(K key, V value, MetaData metaData) {
-    activeDelegate.putNoReturnWithMetaData(key, value, metaData);
-  }
-
-  @Override
-  public void clearWithMetaData(MetaData metaData) {
-    activeDelegate.clearWithMetaData(metaData);
-  }
-
-  @Override
-  public void removeNoReturnWithMetaData(Object key, MetaData metaData) {
-    activeDelegate.removeNoReturnWithMetaData(key, metaData);
-  }
-
-  @Override
-  public V removeWithMetaData(Object key, MetaData metaData) {
-    return activeDelegate.removeWithMetaData(key, metaData);
-  }
-
-  @Override
-  public boolean removeWithMetaData(Object key, Object value, MetaData metaData) {
-    return activeDelegate.removeWithMetaData(key, value, metaData);
   }
 
   @Override
@@ -289,29 +243,6 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   }
 
   @Override
-  public V putIfAbsentWithMetaData(K key, V value, MetaData metaData) {
-    return activeDelegate.putIfAbsentWithMetaData(key, value, metaData);
-  }
-
-  @Override
-  public V putIfAbsentWithMetaData(K key, V value, int createTimeInSecs, int customMaxTTISeconds,
-                                   int customMaxTTLSeconds, MetaData metaData) {
-    return activeDelegate.putIfAbsentWithMetaData(key, value, createTimeInSecs, customMaxTTISeconds,
-                                                  customMaxTTLSeconds, metaData);
-  }
-
-  @Override
-  public void putNoReturnWithMetaData(K key, V value, int createTimeInSecs, int maxTTISeconds, int maxTTLSeconds,
-                                      MetaData metaData) {
-    activeDelegate.putNoReturnWithMetaData(key, value, createTimeInSecs, maxTTISeconds, maxTTLSeconds, metaData);
-  }
-
-  @Override
-  public void setMetaDataCallback(ToolkitCacheMetaDataCallback callback) {
-    activeDelegate.setMetaDataCallback(callback);
-  }
-
-  @Override
   public long localOnHeapSizeInBytes() {
     return activeDelegate.localOnHeapSizeInBytes();
   }
@@ -342,18 +273,6 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   }
 
   @Override
-  public V putWithMetaData(K key, V value, MetaData metaData) {
-    return activeDelegate.putWithMetaData(key, value, metaData);
-  }
-
-  @Override
-  public V putWithMetaData(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds,
-                           MetaData metaData) {
-    return activeDelegate.putWithMetaData(key, value, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds,
-                                          metaData);
-  }
-
-  @Override
   public void disposeLocally() {
     activeDelegate.disposeLocally();
   }
@@ -364,13 +283,13 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   }
 
   @Override
-  public void unlockedPutNoReturn(K k, V v, int createTime, int customTTI, int customTTL, MetaData metadata) {
-    activeDelegate.unlockedPutNoReturn(k, v, createTime, customTTI, customTTL, metadata);
+  public void unlockedPutNoReturn(K k, V v, int createTime, int customTTI, int customTTL) {
+    activeDelegate.unlockedPutNoReturn(k, v, createTime, customTTI, customTTL);
   }
 
   @Override
-  public void unlockedRemoveNoReturn(Object k, MetaData metadata) {
-    activeDelegate.unlockedRemoveNoReturn(k, metadata);
+  public void unlockedRemoveNoReturn(Object k) {
+    activeDelegate.unlockedRemoveNoReturn(k);
   }
 
   @Override
@@ -391,6 +310,22 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   @Override
   public Iterator<InternalToolkitMap<K, V>> iterator() {
     return aggregateServerMap.iterator();
+  }
+
+  @Override
+  public void setAttributeExtractor(ToolkitAttributeExtractor extractor) {
+    activeDelegate.setAttributeExtractor(extractor);
+  }
+
+  @Override
+  public V put(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
+    return activeDelegate.put(key, value, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
+  }
+
+  @Override
+  public void removeAll(Set<K> keys) {
+    activeDelegate.removeAll(keys);
+
   }
 
 }

@@ -14,10 +14,9 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
-import org.terracotta.toolkit.internal.cache.ToolkitCacheMetaDataCallback;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
-import org.terracotta.toolkit.internal.meta.MetaData;
 import org.terracotta.toolkit.internal.search.SearchBuilder;
+import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
 
 import com.tc.exception.TCNotRunningException;
@@ -46,7 +45,6 @@ import com.terracotta.toolkit.config.ConfigChangeListener;
 import com.terracotta.toolkit.config.ImmutableConfiguration;
 import com.terracotta.toolkit.config.UnclusteredConfiguration;
 import com.terracotta.toolkit.config.cache.InternalCacheConfigurationType;
-import com.terracotta.toolkit.meta.MetaDataImpl;
 import com.terracotta.toolkit.object.DestroyApplicator;
 import com.terracotta.toolkit.object.ToolkitObjectStripe;
 import com.terracotta.toolkit.object.ToolkitObjectType;
@@ -155,6 +153,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     this.gcCallback = new WeakValueGCCallbackImpl(localCacheStore);
 
     this.timeSource = new SystemTimeSource();
+
   }
 
   private static boolean isValidType(ToolkitObjectType toolkitObjectType) {
@@ -246,11 +245,6 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   @Override
-  public V put(K key, V value) {
-    return getServerMapForKey(key).put(key, value);
-  }
-
-  @Override
   public V remove(Object key) {
     return getServerMapForKey(key).remove(key);
   }
@@ -278,11 +272,6 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   @Override
-  public V putIfAbsent(K key, V value) {
-    return getServerMapForKey(key).putIfAbsent(key, value);
-  }
-
-  @Override
   public boolean remove(Object key, Object value) {
     return getServerMapForKey(key).remove(key, value);
   }
@@ -299,7 +288,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void removeNoReturn(Object key) {
-    getServerMapForKey(key).removeNoReturnWithMetaData(key, null);
+    getServerMapForKey(key).removeNoReturn(key);
   }
 
   @Override
@@ -314,8 +303,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void putNoReturn(K key, V value) {
-    putNoReturnWithMetaData(key, value, timeSource.nowInSeconds(), ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
-                            ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS, null);
+    putNoReturn(key, value, timeSource.nowInSeconds(), ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
+                ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS);
   }
 
   @Override
@@ -391,71 +380,21 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   @Override
-  public MetaData createMetaData(String category) {
-    return new MetaDataImpl(category);
-  }
-
-  @Override
-  public EntryWithMetaData<K, V> createEntryWithMetaData(K key, V value, MetaData metaData) {
-    return new EntryWithMetaDataImpl(key, value, metaData);
-  }
-
-  @Override
-  public void putNoReturnWithMetaData(K key, V value, MetaData metaData) {
-    putNoReturnWithMetaData(key, value, timeSource.nowInSeconds(), ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
-                            ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS, metaData);
-  }
-
-  @Override
   public void putNoReturn(K key, V value, long createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
-    putNoReturnWithMetaData(key, value, (int) createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds, null);
+    getServerMapForKey(key).putNoReturn(key, value, (int) createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
   }
 
   @Override
   public V putIfAbsent(K key, V value, long createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
-    return putIfAbsentWithMetaData(key, value, (int) createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds, null);
+    return getServerMapForKey(key).putIfAbsent(key, value, (int) createTimeInSecs, customMaxTTISeconds,
+                                               customMaxTTLSeconds);
   }
 
   @Override
-  public V putIfAbsentWithMetaData(K key, V value, MetaData metaData) {
-    return putIfAbsentWithMetaData(key, value, timeSource.nowInSeconds(), ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
-                                   ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS, metaData);
-  }
-
-  @Override
-  public V putIfAbsentWithMetaData(K key, V value, int createTimeInSecs, int customMaxTTISeconds,
-                                   int customMaxTTLSeconds, MetaData metaData) {
-    return getServerMapForKey(key).putIfAbsentWithMetaData(key, value, createTimeInSecs, customMaxTTISeconds,
-                                                           customMaxTTLSeconds, metaData);
-  }
-
-  @Override
-  public void putNoReturnWithMetaData(K key, V value, int createTimeInSecs, int customMaxTTISeconds,
-                                      int customMaxTTLSeconds, MetaData metaData) {
-    getServerMapForKey(key).putNoReturnWithMetaData(key, value, createTimeInSecs, customMaxTTISeconds,
-                                                    customMaxTTLSeconds, metaData);
-  }
-
-  @Override
-  public void clearWithMetaData(MetaData metaData) {
-    for (InternalToolkitMap<K, V> map : serverMaps) {
-      map.clearWithMetaData(metaData);
-    }
-  }
-
-  @Override
-  public void removeNoReturnWithMetaData(Object key, MetaData metaData) {
-    getServerMapForKey(key).removeNoReturnWithMetaData(key, metaData);
-  }
-
-  @Override
-  public V removeWithMetaData(Object key, MetaData metaData) {
-    return getServerMapForKey(key).removeWithMetaData(key, metaData);
-  }
-
-  @Override
-  public boolean removeWithMetaData(Object key, Object value, MetaData metaData) {
-    return getServerMapForKey(key).removeWithMetaData(key, value, metaData);
+  public V putIfAbsent(K key, V value) {
+    return getServerMapForKey(key).putIfAbsent(key, value, timeSource.nowInSeconds(),
+                                               ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
+                                               ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS);
   }
 
   @Override
@@ -504,97 +443,92 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void putAll(Map<? extends K, ? extends V> map) {
-    putAllWithMetaData(new EntryWithNullMetaDataSet(map.entrySet()));
-  }
-
-  @Override
-  public void putAllWithMetaData(Collection<EntryWithMetaData<K, V>> entries) {
-    if (entries == null || entries.isEmpty()) { return; }
+    if (map == null || map.isEmpty()) { return; }
     if (isExplicitLocked()) { throw new UnsupportedOperationException(); }
     switch (consistency) {
       case STRONG:
       case SYNCHRONOUS_STRONG:
-        for (EntryWithMetaData<K, V> entry : entries) {
-          putNoReturnWithMetaData(entry.getKey(), entry.getValue(), entry.getMetaData());
+        for (Map.Entry<? extends K, ? extends V> entry : map.entrySet()) {
+          putNoReturn(entry.getKey(), entry.getValue());
         }
         break;
       case EVENTUAL: {
-        unlockedPutAll(entries);
+        unlockedPutAll(map);
       }
     }
   }
 
-  private void unlockedPutAll(Collection<EntryWithMetaData<K, V>> entries) {
-    Iterator<EntryWithMetaData<K, V>> iter = entries.iterator();
+  private <L extends K, W extends V> void unlockedPutAll(Map<L, W> map) {
+    Iterator<Map.Entry<L, W>> iter = map.entrySet().iterator();
     while (iter.hasNext()) {
-      Set<EntryWithMetaData<K, V>> batchedEntries = createPutAllBatch(iter);
+      Map<K, V> batchedEntries = createPutAllBatch(iter);
       commitPutAllBatch(batchedEntries);
     }
   }
 
-  private void commitPutAllBatch(Set<EntryWithMetaData<K, V>> batchedEntries) {
+  private void commitPutAllBatch(Map<? extends K, ? extends V> batchedEntries) {
     EVENTUAL_BULKOPS_CONCURRENT_LOCK.lock();
     try {
-      for (EntryWithMetaData<K, V> entry : batchedEntries) {
+      for (Map.Entry<? extends K, ? extends V> entry : batchedEntries.entrySet()) {
         int now = timeSource.nowInSeconds();
         unlockedPutNoReturn(entry.getKey(), entry.getValue(), now, ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
-                            ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS, entry.getMetaData());
+                            ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS);
       }
     } finally {
       EVENTUAL_BULKOPS_CONCURRENT_LOCK.unlock();
     }
   }
 
-  private Set<EntryWithMetaData<K, V>> createPutAllBatch(Iterator<EntryWithMetaData<K, V>> iter) {
+  private <L extends K, W extends V> Map<K, V> createPutAllBatch(Iterator<Map.Entry<L, W>> iter) {
     long currentByteSize = 0;
-    Set<EntryWithMetaData<K, V>> batchedEntries = new HashSet<EntryWithMetaData<K, V>>();
+    Map<K, V> batchedEntries = new HashMap<K, V>();
     while (currentByteSize < BULK_OPS_KB_SIZE && iter.hasNext()) {
-      EntryWithMetaData<K, V> entry = iter.next();
+      Map.Entry<? extends K, ? extends V> entry = iter.next();
       currentByteSize += getEntrySize(entry, false);
-      batchedEntries.add(entry);
+      batchedEntries.put(entry.getKey(), entry.getValue());
     }
     return batchedEntries;
   }
 
   @Override
-  public void removeAllWithMetaData(Collection<EntryWithMetaData<K, V>> entries) {
-    if (entries == null || entries.isEmpty()) { return; }
+  public void removeAll(Set<K> keys) {
+    if (keys == null || keys.isEmpty()) { return; }
     if (isExplicitLocked()) { throw new UnsupportedOperationException(); }
     switch (consistency) {
       case STRONG:
       case SYNCHRONOUS_STRONG:
-        for (EntryWithMetaData<K, V> entry : entries) {
-          removeNoReturnWithMetaData(entry.getKey(), entry.getMetaData());
+        for (K key : keys) {
+          removeNoReturn(key);
         }
         break;
       case EVENTUAL: {
-        Iterator<EntryWithMetaData<K, V>> iter = entries.iterator();
+        Iterator<K> iter = keys.iterator();
         while (iter.hasNext()) {
           long currentByteSize = 0;
-          Set<EntryWithMetaData<K, V>> batchedEntries = createRemoveAllBatch(iter, currentByteSize);
+          Set<K> batchedEntries = createRemoveAllBatch(iter, currentByteSize);
           commitRemoveAllBatch(batchedEntries);
         }
       }
     }
   }
 
-  private void commitRemoveAllBatch(Set<EntryWithMetaData<K, V>> batchedEntries) {
+  private void commitRemoveAllBatch(Set<K> batchedEntries) {
     EVENTUAL_BULKOPS_CONCURRENT_LOCK.lock();
     try {
-      for (EntryWithMetaData<K, V> entry : batchedEntries) {
-        unlockedRemoveNoReturn(entry.getKey(), entry.getMetaData());
+      for (K key : batchedEntries) {
+        unlockedRemoveNoReturn(key);
       }
     } finally {
       EVENTUAL_BULKOPS_CONCURRENT_LOCK.unlock();
     }
   }
 
-  private Set<EntryWithMetaData<K, V>> createRemoveAllBatch(Iterator<EntryWithMetaData<K, V>> iter, long currentByteSize) {
-    Set<EntryWithMetaData<K, V>> batchedEntries = new HashSet<EntryWithMetaData<K, V>>();
+  private Set<K> createRemoveAllBatch(Iterator<K> iter, long currentByteSize) {
+    Set<K> batchedEntries = new HashSet<K>();
     while (currentByteSize < BULK_OPS_KB_SIZE && iter.hasNext()) {
-      EntryWithMetaData<K, V> entry = iter.next();
-      currentByteSize += sizeOfEngine.sizeOf(entry.getKey(), null, null).getCalculated();
-      batchedEntries.add(entry);
+      K key = iter.next();
+      currentByteSize += sizeOfEngine.sizeOf(key, null, null).getCalculated();
+      batchedEntries.add(key);
     }
     return batchedEntries;
   }
@@ -731,32 +665,23 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  public void setMetaDataCallback(ToolkitCacheMetaDataCallback callback) {
-    for (InternalToolkitMap serverMap : this.serverMaps) {
-      serverMap.setMetaDataCallback(callback);
-    }
-  }
-
   private boolean isExplicitLocked() {
     return false;
   }
 
   @Override
-  public void unlockedPutNoReturn(K key, V value, int createTimeInSecs, int customTTISeconds, int customTTLSeconds,
-                                  MetaData metaData) {
-    getServerMapForKey(key).unlockedPutNoReturnWithMetaData(key, value, createTimeInSecs, customTTISeconds,
-                                                            customTTLSeconds, metaData);
+  public void unlockedPutNoReturn(K key, V value, int createTimeInSecs, int customTTISeconds, int customTTLSeconds) {
+    getServerMapForKey(key).unlockedPutNoReturn(key, value, createTimeInSecs, customTTISeconds, customTTLSeconds);
   }
 
   @Override
-  public void unlockedRemoveNoReturn(Object key, MetaData metaData) {
-    getServerMapForKey(key).unlockedRemoveNoReturnWithMetaData(key, metaData);
+  public void unlockedRemoveNoReturn(Object key) {
+    getServerMapForKey(key).unlockedRemoveNoReturn(key);
   }
 
-  public void unlockedClear(MetaData metaData) {
+  public void unlockedClear() {
     for (InternalToolkitMap<K, V> map : serverMaps) {
-      map.unlockedClearWithMetaData(metaData);
+      map.unlockedClear();
     }
   }
 
@@ -796,16 +721,15 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   @Override
-  public V putWithMetaData(K key, V value, MetaData metaData) {
-    return putWithMetaData(key, value, timeSource.nowInSeconds(), ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
-                           ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS, metaData);
+  public V put(K key, V value) {
+    return put(key, value, timeSource.nowInSeconds(), ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
+               ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS);
   }
 
   @Override
-  public V putWithMetaData(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds,
-                           MetaData metaData) {
-    return getServerMapForKey(key).putWithMetaData(key, value, createTimeInSecs, customMaxTTISeconds,
-                                                   customMaxTTLSeconds, metaData);
+  public V put(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
+    return getServerMapForKey(key).put(key, value, createTimeInSecs, customMaxTTISeconds,
+                                                   customMaxTTLSeconds);
   }
 
   @Override
@@ -876,5 +800,12 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
       throw new UnsupportedOperationException();
     }
 
+  }
+
+  @Override
+  public void setAttributeExtractor(ToolkitAttributeExtractor attrExtractor) {
+    for (InternalToolkitMap serverMap : this.serverMaps) {
+      serverMap.registerAttributeExtractor(attrExtractor);
+    }
   }
 }

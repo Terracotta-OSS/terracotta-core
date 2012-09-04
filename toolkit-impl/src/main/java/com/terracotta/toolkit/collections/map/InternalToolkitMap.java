@@ -5,9 +5,8 @@ package com.terracotta.toolkit.collections.map;
 
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
-import org.terracotta.toolkit.internal.cache.ToolkitCacheMetaDataCallback;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
-import org.terracotta.toolkit.internal.meta.MetaData;
+import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
@@ -34,14 +33,11 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
 
   int getMaxCountInCluster();
 
-  V putWithMetaData(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds,
-                    MetaData metaData);
+  V put(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds);
 
-  void putNoReturnWithMetaData(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds,
-                               MetaData metaData);
+  void putNoReturn(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds);
 
-  V putIfAbsentWithMetaData(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds,
-                            MetaData metaData);
+  V putIfAbsent(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds);
 
   V get(Object key, boolean quiet);
 
@@ -51,15 +47,9 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
 
   void setConfigField(String name, Object value);
 
-  void setMetaDataCallback(ToolkitCacheMetaDataCallback callback);
-
   void initializeLocalCache(L1ServerMapLocalCacheStore<K, V> localCacheStore);
 
-  void removeNoReturnWithMetaData(Object key, MetaData metaData);
-
-  V removeWithMetaData(Object key, MetaData metaData);
-
-  boolean removeWithMetaData(Object key, Object value, MetaData metaData);
+  void removeNoReturn(Object key);
 
   V unsafeLocalGet(Object key);
 
@@ -77,8 +67,6 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
 
   boolean containsLocalKey(Object key);
 
-  void clearWithMetaData(MetaData metaData);
-
   V checkAndGetNonExpiredValue(K key, Object value, GetType getType, boolean quiet);
 
   void clearLocalCache();
@@ -95,12 +83,11 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
 
   boolean containsKeyLocalOffHeap(Object key);
 
-  void unlockedPutNoReturnWithMetaData(K key, V value, int createTimeInSecs, int customMaxTTISeconds,
-                                       int customMaxTTLSeconds, MetaData metaData);
+  void unlockedPutNoReturn(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds);
 
-  void unlockedRemoveNoReturnWithMetaData(Object key, MetaData metaData);
+  void unlockedRemoveNoReturn(Object key);
 
-  public void unlockedClearWithMetaData(MetaData metaData);
+  public void unlockedClear();
 
   boolean isCompressionEnabled();
 
@@ -109,4 +96,6 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
   void disposeLocally();
 
   ToolkitReadWriteLock createLockForKey(K key);
+
+  void registerAttributeExtractor(ToolkitAttributeExtractor extractor);
 }

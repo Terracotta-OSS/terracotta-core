@@ -8,6 +8,7 @@ public interface SearchConstants {
   public interface Meta {
     String KEY     = "KEY@";
     String COMMAND = "COMMAND@";
+    String ATTR    = "ATTR@";
     String VALUE   = "VALUE@";
   }
 

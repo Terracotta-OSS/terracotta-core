@@ -26,6 +26,15 @@ public final class Validator {
     }
   }
 
+  public static <T> T instance(String name, Object value, Class<T> clazz) {
+    if (clazz.isInstance(value)) {
+      return clazz.cast(value);
+    } else {
+      throw new IllegalArgumentException(String.format("Value %s of '%s' is not an instance of expected type %s",
+                                                       value, name, clazz.getName()));
+    }
+  }
+
   public static int integer(String name, Object value) {
     if (value instanceof Integer) {
       return ((Integer) value).intValue();
