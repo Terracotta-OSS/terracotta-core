@@ -61,4 +61,6 @@ public interface TCServer {
   void reloadConfiguration() throws ConfigurationSetupException;
 
   boolean isProduction();
+
+  boolean isSecure();
 }

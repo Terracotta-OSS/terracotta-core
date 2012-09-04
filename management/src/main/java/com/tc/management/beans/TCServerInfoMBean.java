@@ -125,4 +125,6 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   boolean isEnterprise();
 
   boolean isProduction();
+
+  boolean isSecure();
 }

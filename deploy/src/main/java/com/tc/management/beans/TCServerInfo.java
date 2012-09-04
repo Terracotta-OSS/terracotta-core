@@ -485,4 +485,8 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   public boolean isProduction() {
     return server.isProduction();
   }
+
+  public boolean isSecure() {
+    return server.isSecure();
+  }
 }

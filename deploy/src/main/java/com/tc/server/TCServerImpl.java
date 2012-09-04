@@ -4,8 +4,6 @@
  */
 package com.tc.server;
 
-import net.sf.ehcache.management.service.impl.JmxRepositoryService;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.mortbay.jetty.Request;
@@ -22,7 +20,6 @@ import org.mortbay.jetty.servlet.ServletHandler;
 import org.mortbay.jetty.servlet.ServletHolder;
 import org.mortbay.jetty.webapp.WebAppContext;
 
-import com.sun.jersey.spi.container.servlet.ServletContainer;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
@@ -121,6 +118,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   protected DistributedObjectServer         dsoServer;
   private Server                            httpServer;
+  private ContextHandlerCollection          contextHandlerCollection;
   private TerracottaConnector               terracottaConnector;
   private StatisticsGathererSubSystem       statisticsGathererSubSystem;
 
@@ -483,8 +481,7 @@ public class TCServerImpl extends SEDA implements TCServer {
       // the following code starts the jmx server as well
       startDSOServer(stage.getSink());
 
-      // when the jmx server is started, we can attach the JMXRepository service used for the rest management agent
-      JmxRepositoryService.create();
+      addManagementWebApp();
 
       if (isActive()) {
         updateActivateTime();
@@ -553,7 +550,7 @@ public class TCServerImpl extends SEDA implements TCServer {
       throws Exception {
     this.httpServer = new Server();
     this.httpServer.addConnector(tcConnector);
-    ContextHandlerCollection contextHandlerCollection = new ContextHandlerCollection();
+    this.contextHandlerCollection = new ContextHandlerCollection();
 
     Context context = new Context(null, "/", Context.NO_SESSIONS | Context.SECURITY);
 
@@ -637,16 +634,6 @@ public class TCServerImpl extends SEDA implements TCServer {
     context.setServletHandler(servletHandler);
     contextHandlerCollection.addHandler(context);
 
-    if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.MANAGEMENT_REST_ENABLED, true)) {
-      // register REST webapp
-      Context restContext = new Context(null, "/tc-management-api", Context.NO_SESSIONS | Context.SECURITY);
-      ServletHolder servletHolder = new ServletHolder(ServletContainer.class);
-      servletHolder.setInitParameter("com.sun.jersey.config.property.packages", "net.sf.ehcache.management");
-      servletHolder.setInitParameter("com.sun.jersey.api.json.POJOMappingFeature", "true");
-      restContext.addServlet(servletHolder, "/*");
-      contextHandlerCollection.addHandler(restContext);
-    }
-
     this.httpServer.addHandler(contextHandlerCollection);
     this.httpServer.setSessionIdManager(new TcHashSessionIdManager());
 
@@ -655,6 +642,48 @@ public class TCServerImpl extends SEDA implements TCServer {
     } catch (Exception e) {
       consoleLogger.warn("Couldn't start HTTP server", e);
       throw e;
+    }
+  }
+
+  private void addManagementWebApp() throws Exception {
+    File tcInstallDir;
+    try {
+      tcInstallDir = Directories.getInstallationRoot();
+    } catch (FileNotFoundException e) {
+      // if an error occurs during the retrieval of the installation root, just set it to null
+      // so that the fallback mechanism can be used
+      tcInstallDir = null;
+    }
+
+    if (tcInstallDir != null && TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.MANAGEMENT_REST_ENABLED, true)) {
+      // register REST webapp
+      File managementDir = new File(tcInstallDir, "management");
+
+      String[] files = managementDir.list(new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+          return name.endsWith(".war");
+        }
+      });
+
+      if (files != null && files.length > 0) {
+        String warFile = files[0];
+        logger.info("deploying management REST services from archive " + warFile);
+        WebAppContext restContext = new WebAppContext();
+
+        // DEV-8020: add slf4j to the web app's system classes to avoid "multiple bindings" warning
+        List<String> systemClasses = new ArrayList<String>(Arrays.asList(restContext.getSystemClasses()));
+        systemClasses.add("org.slf4j.");
+        restContext.setSystemClasses(systemClasses.toArray(new String[systemClasses.size()]));
+
+        restContext.setContextPath("/tc-management-api");
+        restContext.setWar(managementDir.getPath() + File.separator + warFile);
+        contextHandlerCollection.addHandler(restContext);
+
+        if (contextHandlerCollection.isStarted()) {
+          restContext.start();
+        }
+      }
     }
   }
 
@@ -788,6 +817,11 @@ public class TCServerImpl extends SEDA implements TCServer {
   public boolean isProduction() {
     ConfigurationModel configurationModel = configurationSetupManager.systemConfig().configurationModel();
     return configurationModel.equals(ConfigurationModel.PRODUCTION);
+  }
+
+  @Override
+  public boolean isSecure() {
+    return securityManager != null;
   }
 }
 

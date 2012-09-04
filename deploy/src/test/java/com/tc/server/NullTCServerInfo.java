@@ -252,4 +252,8 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public boolean isProduction() {
     return false;
   }
+
+  public boolean isSecure() {
+    return false;
+  }
 }
