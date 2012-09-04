@@ -224,7 +224,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   }
 
   private Socket detachImpl() throws IOException {
-    this.pipeSocket = new PipeSocket() {
+    this.pipeSocket = new PipeSocket(channel.socket()) {
       @Override
       public void onWrite() {
         synchronized (pipeSocketWriteInterestLock) {
