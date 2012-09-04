@@ -43,13 +43,10 @@ import org.terracotta.toolkit.internal.ToolkitProperties;
 import org.terracotta.toolkit.internal.cache.TimestampedValue;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheMetaDataCallback;
-import org.terracotta.toolkit.internal.cache.ToolkitCacheWithMetadata;
-import org.terracotta.toolkit.internal.cache.ToolkitCacheWithMetadata.EntryWithMetaData;
 import org.terracotta.toolkit.internal.cluster.OutOfBandClusterListener;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.internal.meta.MetaData;
 import org.terracotta.toolkit.internal.search.SearchBuilder;
-import org.terracotta.toolkit.internal.search.SearchException;
 import org.terracotta.toolkit.internal.search.SearchQueryResultSet;
 import org.terracotta.toolkit.internal.search.SearchResult;
 import org.terracotta.toolkit.internal.store.ToolkitCacheConfigBuilderInternal;
@@ -60,6 +57,9 @@ import org.terracotta.toolkit.object.Destroyable;
 import org.terracotta.toolkit.object.ToolkitLockedObject;
 import org.terracotta.toolkit.object.ToolkitObject;
 import org.terracotta.toolkit.object.serialization.NotSerializableRuntimeException;
+import org.terracotta.toolkit.search.SearchException;
+import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
+import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractorException;
 import org.terracotta.toolkit.store.ToolkitStore;
 import org.terracotta.toolkit.store.ToolkitStoreConfigBuilder;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields;
@@ -85,7 +85,6 @@ abstract class PublicToolkitApiTypes {
     tmpSet.add("org.terracotta.toolkit.store.ConfigurationImpl");
     tmpSet.add(Consistency.class.getName());
     tmpSet.add(Destroyable.class.getName());
-    tmpSet.add(EntryWithMetaData.class.getName());
     tmpSet.add(InvalidToolkitConfigException.class.getName());
     tmpSet.add(MetaData.class.getName());
     tmpSet.add(NotSerializableRuntimeException.class.getName());
@@ -115,7 +114,6 @@ abstract class PublicToolkitApiTypes {
     tmpSet.add(ToolkitCacheConfigFields.class.getName());
     tmpSet.add(ToolkitCacheListener.class.getName());
     tmpSet.add(ToolkitCacheMetaDataCallback.class.getName());
-    tmpSet.add(ToolkitCacheWithMetadata.class.getName());
     tmpSet.add(ToolkitCapability.class.getName());
     tmpSet.add(ToolkitFactory.class.getName());
     tmpSet.add("org.terracotta.toolkit.ToolkitFactory$ToolkitFactoryServiceLookup$1");
@@ -148,6 +146,8 @@ abstract class PublicToolkitApiTypes {
     tmpSet.add(ToolkitSortedSet.class.getName());
     tmpSet.add(ToolkitStore.class.getName());
     tmpSet.add(ToolkitCacheInternal.class.getName());
+    tmpSet.add(ToolkitAttributeExtractor.class.getName());
+    tmpSet.add(ToolkitAttributeExtractorException.class.getName());
     tmpSet.add(ToolkitSortedMap.class.getName());
 
     PUBLIC_TOOLKIT_TYPE_CLASS_NAMES = Collections.unmodifiableSet(tmpSet);
