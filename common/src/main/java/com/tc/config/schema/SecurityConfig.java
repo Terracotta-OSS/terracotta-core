@@ -12,4 +12,6 @@ public interface SecurityConfig extends Config {
   String getRealmImplClass();
   String getRealmUrl();
   String getUser();
+  String getSecurityServiceLocation();
+  Integer getSecurityServiceTimeout();
 }

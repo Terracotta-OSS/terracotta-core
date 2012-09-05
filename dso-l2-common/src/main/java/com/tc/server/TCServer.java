@@ -63,4 +63,8 @@ public interface TCServer {
   boolean isProduction();
 
   boolean isSecure();
+
+  String getSecurityServiceLocation();
+
+  Integer getSecurityServiceTimeout();
 }

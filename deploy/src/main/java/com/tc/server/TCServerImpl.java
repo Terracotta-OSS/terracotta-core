@@ -823,6 +823,22 @@ public class TCServerImpl extends SEDA implements TCServer {
   public boolean isSecure() {
     return securityManager != null;
   }
+
+  @Override
+  public String getSecurityServiceLocation() {
+    if (configurationSetupManager.getSecurity() == null) {
+      return null;
+    }
+    return configurationSetupManager.getSecurity().getSecurityServiceLocation();
+  }
+
+  @Override
+  public Integer getSecurityServiceTimeout() {
+    if (configurationSetupManager.getSecurity() == null) {
+      return null;
+    }
+    return configurationSetupManager.getSecurity().getSecurityServiceTimeout();
+  }
 }
 
 class TCUserRealm implements UserRealm {

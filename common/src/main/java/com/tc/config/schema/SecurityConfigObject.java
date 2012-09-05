@@ -5,6 +5,7 @@
 package com.tc.config.schema;
 
 import com.tc.config.schema.context.ConfigContext;
+import com.terracottatech.config.Management;
 import com.terracottatech.config.Security;
 import com.terracottatech.config.Ssl;
 
@@ -59,4 +60,20 @@ public class SecurityConfigObject extends BaseConfigObject implements SecurityCo
     return bean.getAuth().getUser();
   }
 
+  public String getSecurityServiceLocation() {
+    final Security bean = (Security)this.context.bean();
+    if(bean == null) { return null; }
+    Management management = bean.getManagement();
+    if(management == null) { return null; }
+    return management.getIa();
+  }
+
+  @Override
+  public Integer getSecurityServiceTimeout() {
+    final Security bean = (Security)this.context.bean();
+    if(bean == null) { return null; }
+    Management management = bean.getManagement();
+    if(management == null) { return null; }
+    return management.getTimeout();
+  }
 }

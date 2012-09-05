@@ -489,4 +489,12 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   public boolean isSecure() {
     return server.isSecure();
   }
+
+  public String getSecurityServiceLocation() {
+    return server.getSecurityServiceLocation();
+  }
+
+  public Integer getSecurityServiceTimeout() {
+    return server.getSecurityServiceTimeout();
+  }
 }

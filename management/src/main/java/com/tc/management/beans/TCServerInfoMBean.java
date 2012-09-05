@@ -127,4 +127,8 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   boolean isProduction();
 
   boolean isSecure();
+
+  String getSecurityServiceLocation();
+
+  Integer getSecurityServiceTimeout();
 }
