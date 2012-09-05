@@ -204,21 +204,20 @@ public abstract class AbstractTestBase extends TCTestCase {
       cp += SEP + jar;
     }
 
-    Map<String, LogLevel> loggingConfigs = configureTCLogging(tcLoggingConfigs);
-    if (loggingConfigs.size() > 0) {
-      cp += SEP + getTCLoggingFilePath(loggingConfigs);
+    if (!tcLoggingConfigs.isEmpty()) {
+      cp += SEP + getTCLoggingFilePath();
     }
     return cp;
   }
 
-  private String getTCLoggingFilePath(Map<String, LogLevel> loggingConfigs) {
+  private String getTCLoggingFilePath() {
     File log4jPropFile = null;
     String path = "";
     BufferedWriter writer = null;
     try {
       log4jPropFile = new File(getTempDirectory(), TCLogging.LOG4J_PROPERTIES_FILENAME);
       writer = new BufferedWriter(new FileWriter(log4jPropFile));
-      for (Entry<String, LogLevel> entry : loggingConfigs.entrySet()) {
+      for (Entry<String, LogLevel> entry : tcLoggingConfigs.entrySet()) {
         writer.write(log4jPrefix + entry.getKey() + "=" + entry.getValue().name());
       }
     } catch (IOException e) {
@@ -242,8 +241,8 @@ public abstract class AbstractTestBase extends TCTestCase {
     return Collections.emptyList();
   }
 
-  protected Map<String, LogLevel> configureTCLogging(Map<String, LogLevel> loggingConfigs) {
-    return tcLoggingConfigs;
+  protected void configureTCLogging(String className, LogLevel LogLevel) {
+    tcLoggingConfigs.put(className, LogLevel);
   }
 
   protected String getTerracottaURL() {
