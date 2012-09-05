@@ -7,7 +7,7 @@ import org.terracotta.express.tests.base.AbstractToolkitTestBase;
 import org.terracotta.express.tests.base.ClientBase;
 import org.terracotta.toolkit.Toolkit;
 import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
-import org.terracotta.toolkit.internal.cache.ToolkitCacheWithMetadata;
+import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 
 import com.tc.test.config.model.TestConfig;
 
@@ -37,12 +37,12 @@ public class CustomTTLTest extends AbstractToolkitTestBase {
       System.out.println("Got toolkit: " + toolkit);
 
       System.out.println("Getting map...");
-      ToolkitCacheWithMetadata<String, String> cache = (ToolkitCacheWithMetadata<String, String>) toolkit
+      ToolkitCacheInternal<String, String> cache = (ToolkitCacheInternal) toolkit
           .getCache("someMap", String.class);
       System.out.println("Got cache: " + cache.getClass().getName());
 
       System.out.println("Inserting custom ttl key-value");
-      cache.putWithMetaData("key", "value", now(), ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS, TTL_SECONDS, null);
+      cache.put("key", "value", now(), ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS, TTL_SECONDS);
 
       String value = cache.get("key");
       System.out.println("Got value: " + value);

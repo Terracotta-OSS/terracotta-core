@@ -9,7 +9,7 @@ import org.terracotta.express.tests.base.ClientBase;
 import org.terracotta.toolkit.Toolkit;
 import org.terracotta.toolkit.ToolkitCapability;
 import org.terracotta.toolkit.cache.ToolkitCache;
-import org.terracotta.toolkit.internal.cache.ToolkitCacheWithMetadata;
+import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 
 import com.tc.test.config.model.TestConfig;
 
@@ -30,8 +30,8 @@ public class SearchCapabilityDisabledTest extends AbstractToolkitTestBase {
       System.out.println("Got toolkit: " + toolkit.getClass().getName());
       Assert.assertFalse(toolkit.isCapabilityEnabled(ToolkitCapability.SEARCH));
       ToolkitCache cache = toolkit.getCache("some-cache", null);
-      Assert.assertTrue(cache instanceof ToolkitCacheWithMetadata);
-      ToolkitCacheWithMetadata cmd = (ToolkitCacheWithMetadata) cache;
+      Assert.assertTrue(cache instanceof ToolkitCacheInternal);
+      ToolkitCacheInternal cmd = (ToolkitCacheInternal) cache;
       try {
         cmd.createSearchBuilder();
       } catch (UnsupportedOperationException e) {
