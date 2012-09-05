@@ -147,6 +147,7 @@ abstract class PublicToolkitApiTypes {
     tmpSet.add(ToolkitStore.class.getName());
     tmpSet.add(ToolkitCacheInternal.class.getName());
     tmpSet.add(ToolkitAttributeExtractor.class.getName());
+    tmpSet.add(ToolkitAttributeExtractor.class.getName() + "$1");
     tmpSet.add(ToolkitAttributeExtractorException.class.getName());
     tmpSet.add(ToolkitSortedMap.class.getName());
 
