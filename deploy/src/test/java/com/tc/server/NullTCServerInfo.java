@@ -256,4 +256,14 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public boolean isSecure() {
     return false;
   }
+
+  @Override
+  public String getSecurityServiceLocation() {
+    return null;
+  }
+
+  @Override
+  public Integer getSecurityServiceTimeout() {
+    return null;
+  }
 }

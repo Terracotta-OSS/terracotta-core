@@ -519,6 +519,16 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
       }
 
       @Override
+      public String getSecurityServiceLocation() {
+        return null;
+      }
+
+      @Override
+      public Integer getSecurityServiceTimeout() {
+        return null;
+      }
+
+      @Override
       public void changesInItemIgnored(final ConfigItem item) {
         //
       }
