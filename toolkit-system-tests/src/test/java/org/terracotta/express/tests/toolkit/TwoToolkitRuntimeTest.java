@@ -1,6 +1,6 @@
 /*
-* All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
-*/
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ */
 package org.terracotta.express.tests.toolkit;
 
 import org.terracotta.express.tests.base.AbstractToolkitTestBase;
@@ -29,13 +29,12 @@ import junit.framework.Assert;
 
 public class TwoToolkitRuntimeTest extends AbstractToolkitTestBase {
 
-
-public TwoToolkitRuntimeTest(TestConfig testConfig) {
-super(testConfig);
+  public TwoToolkitRuntimeTest(TestConfig testConfig) {
+    super(testConfig);
     testConfig.getClientConfig().setClientClasses(MyClient.class, 1);
-}
+  }
 
-@Override
+  @Override
   protected List<String> getExtraJars() {
     List<String> list = new ArrayList<String>();
     Manifest manifest = new Manifest();
@@ -46,18 +45,19 @@ super(testConfig);
       String expressRuntime = TestBaseUtil.jarFor(ToolkitFactory.class);
       target = new JarOutputStream(new FileOutputStream(path), manifest);
       File inputDirectory = new File("META-INF");
-    inputDirectory.mkdir();
-    File services = new File("META-INF"+ File.separator +"services");
-    services.mkdir();
-      File someFile = new File("META-INF" + File.separator + "services"+ File.separator +"org.terracotta.toolkit.api.ToolkitFactoryService");
-    someFile.createNewFile();
-    Writer writer = new FileWriter(someFile);
+      inputDirectory.mkdir();
+      File services = new File("META-INF" + File.separator + "services");
+      services.mkdir();
+      File someFile = new File("META-INF" + File.separator + "services" + File.separator
+                               + "org.terracotta.toolkit.api.ToolkitFactoryService");
+      someFile.createNewFile();
+      Writer writer = new FileWriter(someFile);
 
-    writer.write("org.terracotta.express.tests.toolkit.TestToolkitFactoryService");
-    writer.flush();
-    writer.close();
-    add(services, target);
-    target.close();
+      writer.write("org.terracotta.express.tests.toolkit.TestToolkitFactoryService");
+      writer.flush();
+      writer.close();
+      add(services, target);
+      target.close();
       list.add(path);
       list.add(expressRuntime);
     } catch (FileNotFoundException e) {
@@ -82,44 +82,41 @@ super(testConfig);
       } catch (Exception e) {
         System.err.println("Expected error came!!");
         Assert.assertTrue(e.getMessage().contains("Multiple Toolkit implementation found "));
-  }
-}
-  }
-
-
-  private void add(File source, JarOutputStream target) throws IOException {BufferedInputStream in = null;
-  try {
-    if (source.isDirectory()) {
-      String name = source.getPath().replace("\\", "/");
-      if (!name.isEmpty()) {
-        if (!name.endsWith("/")) name += "/";
-        JarEntry entry = new JarEntry(name);
-        entry.setTime(source.lastModified());
-        target.putNextEntry(entry);
-        target.closeEntry();
       }
-      for (File nestedFile : source.listFiles())
-        add(nestedFile, target);
-      return;
     }
-
-    JarEntry entry = new JarEntry(source.getPath().replace("\\", "/"));
-    entry.setTime(source.lastModified());
-    target.putNextEntry(entry);
-    in = new BufferedInputStream(new FileInputStream(source));
-
-    byte[] buffer = new byte[1024];
-    while (true) {
-      int count = in.read(buffer);
-      if (count == -1) break;
-      target.write(buffer, 0, count);
-    }
-    target.closeEntry();
-  } finally {
-    if (in != null) in.close();
   }
+
+  private void add(File source, JarOutputStream target) throws IOException {
+    BufferedInputStream in = null;
+    try {
+      if (source.isDirectory()) {
+        String name = source.getPath().replace("\\", "/");
+        if (!name.isEmpty()) {
+          if (!name.endsWith("/")) name += "/";
+          JarEntry entry = new JarEntry(name);
+          entry.setTime(source.lastModified());
+          target.putNextEntry(entry);
+          target.closeEntry();
+        }
+        for (File nestedFile : source.listFiles())
+          add(nestedFile, target);
+        return;
+      }
+
+      JarEntry entry = new JarEntry(source.getPath().replace("\\", "/"));
+      entry.setTime(source.lastModified());
+      target.putNextEntry(entry);
+      in = new BufferedInputStream(new FileInputStream(source));
+
+      byte[] buffer = new byte[1024];
+      while (true) {
+        int count = in.read(buffer);
+        if (count == -1) break;
+        target.write(buffer, 0, count);
+      }
+      target.closeEntry();
+    } finally {
+      if (in != null) in.close();
+    }
   }
 }
-
-
-
