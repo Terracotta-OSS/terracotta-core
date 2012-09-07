@@ -1201,6 +1201,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   private MetaData createPutSearchMetaData(K key, V value)
   {
+    if (!isSearchable()) return null;
     MetaData md = createBaseMetaData();
     md.add(SearchConstants.Meta.KEY, key);
 
