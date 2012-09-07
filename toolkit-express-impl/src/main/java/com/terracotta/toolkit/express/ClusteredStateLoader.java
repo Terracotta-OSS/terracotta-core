@@ -95,8 +95,6 @@ class ClusteredStateLoader extends URLClassLoader {
       }
     }
 
-    if (PublicToolkitApiTypes.isClassPublicToolkitApiType(name)) { return appLoader.loadClass(name); }
-
     // try with specified urls
     try {
       return super.loadClass(name, false);

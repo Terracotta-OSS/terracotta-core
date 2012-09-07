@@ -55,9 +55,7 @@
     <!-- stuff that goes into TIMs -->
     <dependency>
       <groupId>org.terracotta.internal</groupId>
-      <artifactId>terracotta-toolkit</artifactId>
-      <!-- I don't think this can be a range. 
-           It needs to be a version that "works" with the terracotta version bundled here as well -->
+      <artifactId>terracotta-toolkit-impl</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>

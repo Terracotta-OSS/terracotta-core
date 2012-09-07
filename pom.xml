@@ -51,7 +51,7 @@
     <module>toolkit-impl</module>
     <module>toolkit-express-impl</module>
     <module>toolkit-runtime</module>
-    <module>toolkit</module>
+    <!-- module>toolkit</module-->
     <module>toolkit-system-tests</module>
     <module>truezip-repkg</module>
   </modules>
@@ -87,7 +87,7 @@
         <module>../terracotta-l1-ee</module>         
         <module>../toolkit-impl-ee</module>
         <module>../toolkit-express-impl-ee</module>
-        <module>../toolkit-ee</module>
+        <!--module>../toolkit-ee</module-->
         <module>../toolkit-runtime-ee</module>
         <module>../toolkit-ee-system-tests</module>
       </modules>        
