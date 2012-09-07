@@ -179,9 +179,15 @@ public class TestBaseUtil {
   public static String getThreadDump() {
     final String newline = System.getProperty("line.separator", "\n");
     StringBuffer rv = new StringBuffer();
+    // tbean may contain entries for some threads which are already dead
     ThreadMXBean tbean = ManagementFactory.getThreadMXBean();
     for (long id : tbean.getAllThreadIds()) {
+      // if id is the id of a thread which is already dead
+      // we'll get tinfo == null in the next line
       ThreadInfo tinfo = tbean.getThreadInfo(id, Integer.MAX_VALUE);
+      if (tinfo == null) {
+        continue;
+      }
       rv.append("Thread name: " + tinfo.getThreadName()).append("-" + id).append(newline);
       for (StackTraceElement e : tinfo.getStackTrace()) {
         rv.append("    at " + e).append(newline);
