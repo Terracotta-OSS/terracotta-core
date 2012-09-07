@@ -92,6 +92,9 @@ public class ClientObjectReferenceSet implements ObjectReferenceAddListener {
     return found;
   }
 
+  /**
+   * returned size might be slightly more than the actual number of references being holded on the client.
+   */
   public int size() {
     refreshClientObjectReferencesIfNeeded();
     this.lock.readLock().lock();
@@ -110,10 +113,12 @@ public class ClientObjectReferenceSet implements ObjectReferenceAddListener {
     }
   }
 
+  @Override
   public void objectReferenceAdded(ObjectID objectID) {
     this.liveObjectReferences.add(objectID);
   }
 
+  @Override
   public void objectReferencesAdded(Set<ObjectID> objectIDs) {
     this.liveObjectReferences.addAll(objectIDs);
   }
@@ -128,8 +133,8 @@ public class ClientObjectReferenceSet implements ObjectReferenceAddListener {
       monitorObjectReferenceAddition();
 
       this.snapshotObjectReferences = new ObjectIDSet();
-      this.clientStateManager.addAllReferencedIdsTo(snapshotObjectReferences);
       this.liveObjectReferences = new StripedObjectIDSet();
+      this.clientStateManager.addAllReferencedIdsTo(snapshotObjectReferences);
     } finally {
       this.lock.writeLock().unlock();
     }
@@ -142,7 +147,9 @@ public class ClientObjectReferenceSet implements ObjectReferenceAddListener {
   private void monitorObjectReferenceAddition() {
 
     if (objectRefAddRegistered) return;
-
+    // This timer task is here to avoid memory leak.
+    // When this Set is not in use and it will unregister the Listener so that the liveObjectReferences will not keep
+    // growing for ever. The state will be updated when someone checks for a contains on this set.
     final TimerTask task = new TimerTask() {
       @Override
       public void run() {
