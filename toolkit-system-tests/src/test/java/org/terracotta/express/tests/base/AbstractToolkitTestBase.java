@@ -4,6 +4,7 @@
 package org.terracotta.express.tests.base;
 
 import org.terracotta.test.util.TestBaseUtil;
+import org.terracotta.tests.base.AbstractClientBase;
 import org.terracotta.tests.base.AbstractTestBase;
 import org.terracotta.toolkit.ToolkitFactory;
 
@@ -12,7 +13,7 @@ import com.tc.test.config.model.TestConfig;
 
 public abstract class AbstractToolkitTestBase extends AbstractTestBase {
 
-  public AbstractToolkitTestBase(TestConfig testConfig, Class<? extends ClientBase>... c) {
+  public AbstractToolkitTestBase(TestConfig testConfig, Class<? extends AbstractClientBase>... c) {
     super(testConfig);
     testConfig.getClientConfig().setClientClasses(c);
   }

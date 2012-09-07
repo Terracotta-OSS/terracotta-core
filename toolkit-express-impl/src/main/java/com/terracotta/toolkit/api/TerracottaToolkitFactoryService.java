@@ -3,6 +3,7 @@
  */
 package com.terracotta.toolkit.api;
 
+import org.terracotta.toolkit.InvalidToolkitConfigException;
 import org.terracotta.toolkit.Toolkit;
 import org.terracotta.toolkit.ToolkitInstantiationException;
 import org.terracotta.toolkit.api.ToolkitFactoryService;
@@ -11,20 +12,31 @@ import com.terracotta.toolkit.client.TerracottaClientConfig;
 import com.terracotta.toolkit.client.TerracottaClientConfigParams;
 import com.terracotta.toolkit.client.TerracottaToolkitCreator;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
 public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
 
-  private static final char       COMMA                       = ',';
-  private final static String     TERRACOTTA_TOOLKIT_TYPE     = "terracotta";
-  private static final String     TUNNELLED_MBEAN_DOMAINS_KEY = "tunnelledMBeanDomains";
-  private static final String     TC_CONFIG_SNIPPET_KEY       = "tcConfigSnippet";
-  private static final String     REJOIN_KEY                  = "rejoin";
-  private static final Properties EMPTY_PROPERTIES            = new Properties();
+  private static final char         COMMA                       = ',';
+  private static final String       TOOLKIT_IMPL_CLASS_NAME     = "com.terracotta.toolkit.TerracottaToolkit";
+  private static final String       TOOLKIT_IMPL_EE_CLASS_NAME  = "com.terracotta.toolkit.EnterpriseTerracottaToolkit";
+  private final static String       TERRACOTTA_TOOLKIT_TYPE     = "terracotta";
+  private static final String       TUNNELLED_MBEAN_DOMAINS_KEY = "tunnelledMBeanDomains";
+  private static final String       TC_CONFIG_SNIPPET_KEY       = "tcConfigSnippet";
+  private static final String       REJOIN_KEY                  = "rejoin";
+  private static final Properties   EMPTY_PROPERTIES            = new Properties();
+  private static final List<String> WRONG_JARS_CLASSES;
+  static {
+    List<String> tmp = new ArrayList<String>();
+    tmp.add(TOOLKIT_IMPL_CLASS_NAME);
+    tmp.add(TOOLKIT_IMPL_EE_CLASS_NAME);
+    WRONG_JARS_CLASSES = tmp;
+  }
 
   @Override
   public boolean canHandleToolkitType(String type, String subName) {
@@ -33,16 +45,34 @@ public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
 
   @Override
   public Toolkit createToolkit(String type, String subName, Properties properties) throws ToolkitInstantiationException {
+    properties = properties == null ? EMPTY_PROPERTIES : properties;
     if (!canHandleToolkitType(type, subName)) {
       //
       throw new ToolkitInstantiationException("Cannot handle toolkit of type: " + type + ", subName: " + subName);
     }
-    properties = properties == null ? EMPTY_PROPERTIES : properties;
-    TerracottaClientConfig config = createTerracottaClientConfig(type, subName, properties);
     try {
-      return createToolkit(config);
+      checkForWrongClasspath();
+      return createToolkit(createTerracottaClientConfig(type, subName, properties));
     } catch (Throwable t) {
-      throw new ToolkitInstantiationException("There were some problem in creating toolkit", t);
+      if (t instanceof ToolkitInstantiationException) {
+        throw (ToolkitInstantiationException) t;
+      } else {
+        throw new ToolkitInstantiationException("There were some problem in creating toolkit", t);
+      }
+    }
+  }
+
+  private void checkForWrongClasspath() throws InvalidToolkitConfigException {
+    // check if toolkit-impl(-ee) jars are in classpath
+    for (final String cname : WRONG_JARS_CLASSES) {
+      try {
+        Class.forName(cname, false, TerracottaToolkitFactoryService.class.getClassLoader());
+        throw new InvalidToolkitConfigException(
+                                                "Wrong jars found in classpath! Probably you have toolkit-impl jars present in the classpath, "
+                                                    + "please remove them (found class in classpath: '" + cname + "').");
+      } catch (ClassNotFoundException e) {
+        // ok
+      }
     }
   }
 
