@@ -10,6 +10,7 @@ import com.tc.test.jmx.TestHandler;
 import com.tc.test.jmx.TestHandlerMBean;
 import com.tc.test.setup.GroupsData;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.management.MBeanServerConnection;
@@ -17,9 +18,10 @@ import javax.management.remote.JMXConnector;
 
 public abstract class AbstractClientBase implements Runnable {
 
-  public final int               HEAVY_CLIENT_TEST_TIME = 5 * 60 * 1000;
+  public final int                      HEAVY_CLIENT_TEST_TIME = 5 * 60 * 1000;
+  private static final SimpleDateFormat DATE_FORMATTER         = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss.SSS");
 
-  private final TestHandlerMBean testControlMBean;
+  private final TestHandlerMBean        testControlMBean;
 
   abstract protected void doTest() throws Throwable;
 
@@ -76,7 +78,8 @@ public abstract class AbstractClientBase implements Runnable {
     return this.testControlMBean.getTerracottaUrl();
   }
 
-  public static void debug(String msg) {
-    System.out.println("[D E B U G : " + new Date() + " '" + Thread.currentThread().getName() + "'] " + msg);
+  public static synchronized void debug(String msg) {
+    System.out.println("[D E B U G : " + DATE_FORMATTER.format(new Date()) + " '" + Thread.currentThread().getName()
+                       + "'] " + msg);
   }
 }
