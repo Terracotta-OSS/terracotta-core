@@ -3,6 +3,8 @@
  */
 package com.terracotta.toolkit.express;
 
+import org.terracotta.toolkit.cluster.ClusterInfo;
+
 import com.terracotta.toolkit.client.TerracottaClientConfig;
 import com.terracotta.toolkit.express.TerracottaInternalClientImpl.ClientShutdownException;
 import com.terracotta.toolkit.express.loader.Handler;
@@ -29,6 +31,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 
 public class TerracottaInternalClientFactoryImpl implements TerracottaInternalClientFactory {
+  private static final String                              TERRACOTTA_CLUSTER_INFO_CLASSNAME                                = "com.terracotta.toolkit.cluster.TerracottaClusterInfo";
   private static final String                              EHCACHE_EXPRESS_ENTERPRISE_TERRACOTTA_CLUSTERED_INSTANCE_FACTORY = "net.sf.ehcache.terracotta.ExpressEnterpriseTerracottaClusteredInstanceFactory";
   private static final String                              EHCACHE_EXPRESS_TERRACOTTA_CLUSTERED_INSTANCE_FACTORY            = "net.sf.ehcache.terracotta.StandaloneTerracottaClusteredInstanceFactory";
   private static final boolean                             DEBUG_ON                                                         = Boolean
@@ -134,7 +137,7 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
   }
 
   private TerracottaInternalClient getOrCreateClient(String tcConfig, boolean isUrlConfig, final boolean rejoinClient,
-                                                Set<String> tunneledMBeanDomains) {
+                                                     Set<String> tunneledMBeanDomains) {
     TerracottaInternalClient client = null;
     if (rejoinClient) {
       return createClient(tcConfig, isUrlConfig, rejoinClient, tunneledMBeanDomains);
@@ -142,15 +145,18 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
       if (!isUrlConfig) {
         return createClient(tcConfig, isUrlConfig, rejoinClient, tunneledMBeanDomains);
       } else {
-        client = clientsByUrl.get(tcConfig);
-        if (client != null) {
-          return joinSharedClient(client, tunneledMBeanDomains);
-        } else {
-          synchronized (tcConfig.intern()) {
-            client = clientsByUrl.get(tcConfig);
-            if (client != null) {
+        synchronized (tcConfig.intern()) {
+          client = clientsByUrl.get(tcConfig);
+          if (client == null) {
+            // create a new client
+            client = createClient(tcConfig, isUrlConfig, rejoinClient, tunneledMBeanDomains);
+            clientsByUrl.put(tcConfig, client);
+          } else {
+            // check if existing client is online, if not create a new one else reuse
+            if (isClusterOnline(client)) {
               return joinSharedClient(client, tunneledMBeanDomains);
             } else {
+              // create a new client and update the mapping too
               client = createClient(tcConfig, isUrlConfig, rejoinClient, tunneledMBeanDomains);
               clientsByUrl.put(tcConfig, client);
             }
@@ -159,6 +165,16 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
       }
     }
     return client;
+  }
+
+  private boolean isClusterOnline(TerracottaInternalClient client) {
+    try {
+      ClusterInfo info = client.instantiate(TERRACOTTA_CLUSTER_INFO_CLASSNAME, new Class[0],
+                                            new Object[0]);
+      return info.areOperationsEnabled();
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to create ClusterInfo instance of already existing client", e);
+    }
   }
 
   private TerracottaInternalClient joinSharedClient(TerracottaInternalClient client, Set<String> tunneledMBeanDomains) {
@@ -187,8 +203,8 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
     Map<String, Object> env = createEnvIfAbsent(tcConfig);
     TerracottaInternalClient client = new TerracottaInternalClientImpl(tcConfig, isUrlConfig, jarManager,
                                                                        timJars.toArray(new URL[] {}), getClass()
-                                                                           .getClassLoader(), l1Jars,
-                                                                       this, rejoinClient, tunneledMBeanDomains, env);
+                                                                           .getClassLoader(), l1Jars, this,
+                                                                       rejoinClient, tunneledMBeanDomains, env);
     return client;
   }
 
