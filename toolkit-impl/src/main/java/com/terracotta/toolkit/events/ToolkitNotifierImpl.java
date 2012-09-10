@@ -11,11 +11,13 @@ import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.locks.LockLevel;
 import com.terracotta.toolkit.TerracottaLogger;
 import com.terracotta.toolkit.cluster.TerracottaNode;
+import com.terracotta.toolkit.factory.impl.ToolkitNotifierFactoryImpl;
 import com.terracotta.toolkit.object.AbstractTCToolkitObject;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
 
 public class ToolkitNotifierImpl<T> extends AbstractTCToolkitObject implements ToolkitNotifier<T> {
 
@@ -24,10 +26,14 @@ public class ToolkitNotifierImpl<T> extends AbstractTCToolkitObject implements T
   private final transient CopyOnWriteArrayList<ToolkitNotificationListener<T>> listeners = new CopyOnWriteArrayList<ToolkitNotificationListener<T>>();
   private final String                                                         currentNodeIdStringForm;
   private volatile String                                                      lockid;
+  private final ExecutorService                                                notifierService;
 
   public ToolkitNotifierImpl() {
     this.currentNodeIdStringForm = strategy.serializeToString(new TerracottaNode(ManagerUtil.getManager()
         .getDsoCluster().getCurrentNode()));
+    this.notifierService = ManagerUtil
+        .lookupRegisteredObjectByName(ToolkitNotifierFactoryImpl.TOOLKIT_NOTIFIER_EXECUTOR_SERVICE,
+                                      ExecutorService.class);
   }
 
   @Override
@@ -65,26 +71,32 @@ public class ToolkitNotifierImpl<T> extends AbstractTCToolkitObject implements T
   /**
    * Called by applicator on receiving a remote msg
    */
-  protected void onNotification(String remoteMsg, String remoteNodeID) {
-    ToolkitNotificationEventImpl<T> event = new ToolkitNotificationEventImpl<T>(strategy, remoteNodeID, remoteMsg);
-    for (ToolkitNotificationListener<T> listener : listeners) {
-      try {
-        listener.onNotification(event);
-      } catch (Throwable t) {
-        // ignore any exception happening on listeners
-        LOGGER.warn("Exception while trying to notify listener ", t);
+  protected void onNotification(final String remoteMsg, final String remoteNodeID) {
+    notifierService.execute(new Runnable() {
+      @Override
+      public void run() {
+        ToolkitNotificationEventImpl<T> event = new ToolkitNotificationEventImpl<T>(strategy, remoteNodeID, remoteMsg);
+        for (ToolkitNotificationListener<T> listener : listeners) {
+          try {
+            listener.onNotification(event);
+          } catch (Throwable t) {
+            // ignore any exception happening on listeners
+            LOGGER.warn("Exception while trying to notify listener ", t);
+          }
+        }
+
       }
-    }
+    });
   }
 
   private void begin() {
     String lockID = getLockID();
-    ManagerUtil.beginLock(lockID, LockLevel.WRITE_LEVEL);
+    ManagerUtil.beginLock(lockID, LockLevel.CONCURRENT_LEVEL);
   }
 
   private void commit() {
     String lockID = getLockID();
-    ManagerUtil.commitLock(lockID, LockLevel.WRITE_LEVEL);
+    ManagerUtil.commitLock(lockID, LockLevel.CONCURRENT_LEVEL);
   }
 
   private String getLockID() {
