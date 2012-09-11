@@ -674,12 +674,13 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       } else {
         EVENTUAL_CONCURRENT_LOCK.lock();
         try {
+          K portableKey = (K) assertKeyLiteral(key);
           SerializedMapValue serializedMapValue = createSerializedMapValue(value, createTimeInSecs,
                                                                            customMaxTTISeconds, customMaxTTLSeconds);
           V old = deserialize(key,
                               asSerializedMapValue(this.tcObjectServerMap
-                                  .doLogicalPutIfAbsentUnlocked(this, assertKeyLiteral(key), serializedMapValue)));
-          MetaData metaData = createPutSearchMetaData(key, value);
+                                  .doLogicalPutIfAbsentUnlocked(this, portableKey, serializedMapValue)));
+          MetaData metaData = createPutSearchMetaData(portableKey, value);
           if (old == null && metaData != null) {
             metaData.set(SearchConstants.Meta.COMMAND, SearchConstants.Commands.PUT_IF_ABSENT);
             metaData.add(SearchConstants.Meta.VALUE, serializedMapValue.getObjectID());
