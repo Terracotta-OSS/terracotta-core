@@ -471,6 +471,8 @@ public interface TCPropertiesConsts {
   public static final String L1_SOCKET_CONNECT_TIMEOUT                                      = "l1.socket.connect.timeout";
   public static final String L1_SOCKET_RECONNECT_WAIT_INTERVAL                              = "l1.socket.reconnect.waitInterval";
   public static final String L1_CLUSTEREVENTS_OOB_JOINTIME_MILLIS                           = "l1.clusterevents.outofbandnotifier.jointime.millis";
+  public static final String L1_CLUSTEREVENT_EXECUTOR_MAX_THREADS                           = "l1.clusterevent.executor.maxThreads";
+  public static final String L1_CLUSTEREVENT_EXECUTOR_MAX_WAIT_SECONDS                      = "l1.clusterevent.executor.maxWaitSeconds";
 
   /*********************************************************************************************************************
    * <code>

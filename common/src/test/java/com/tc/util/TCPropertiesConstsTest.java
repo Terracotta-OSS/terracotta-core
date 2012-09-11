@@ -30,6 +30,9 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.PRODUCTKEY_PATH);
     exemptedProperties.add(TCPropertiesConsts.PRODUCTKEY_RESOURCE_PATH);
 
+    exemptedProperties.add(TCPropertiesConsts.L1_CLUSTEREVENT_EXECUTOR_MAX_THREADS);
+    exemptedProperties.add(TCPropertiesConsts.L1_CLUSTEREVENT_EXECUTOR_MAX_WAIT_SECONDS);
+
     exemptedProperties.add(TCPropertiesConsts.L2_CACHEMANAGER_THRESHOLD);
     exemptedProperties.add(TCPropertiesConsts.L2_CACHEMANAGER_CRITICALTHRESHOLD);
 

@@ -218,7 +218,7 @@ public abstract class AbstractTestBase extends TCTestCase {
       log4jPropFile = new File(getTempDirectory(), TCLogging.LOG4J_PROPERTIES_FILENAME);
       writer = new BufferedWriter(new FileWriter(log4jPropFile));
       for (Entry<String, LogLevel> entry : tcLoggingConfigs.entrySet()) {
-        writer.write(log4jPrefix + entry.getKey() + "=" + entry.getValue().name());
+        writer.write(log4jPrefix + entry.getKey() + "=" + entry.getValue().name() + "\n");
       }
     } catch (IOException e) {
       throw new IllegalStateException(e.getMessage());

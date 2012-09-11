@@ -73,15 +73,18 @@ public class StageImpl implements Stage {
     }
   }
 
+  @Override
   public void destroy() {
     stopThreads();
   }
 
+  @Override
   public void start(ConfigurationContext context) {
     handler.initializeContext(context);
     startThreads();
   }
 
+  @Override
   public Sink getSink() {
     return stageQueue;
   }
@@ -105,6 +108,7 @@ public class StageImpl implements Stage {
       thread.shutdown();
       thread.interrupt();
     }
+    handler.destroy();
   }
 
   @Override
@@ -202,6 +206,7 @@ public class StageImpl implements Stage {
     return rootCause instanceof TCNotRunningException;
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.print(this.name + " queue depth: " + getSink().size()).flush();
     return out;

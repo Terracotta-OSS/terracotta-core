@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class CacheManager implements CacheMemoryEventsListener {
 
@@ -88,13 +89,13 @@ public class CacheManager implements CacheMemoryEventsListener {
     private long                       startTime;
     private State                      state = INIT;
 
-    private long                       lastLogTime;              // timestamp to store the time of last log
-    private final long                 LOG_INTERVAL_MILLI = 5000; // 5 seconds
+    private long                       lastLoggingTime;              // timestamp to store the time of last log
+    private final long                 logIntervalMillis = TimeUnit.SECONDS.toMillis(5L); // 5 seconds
 
     public CacheStatistics(CacheMemoryEventType type, MemoryUsage usage) {
       this.type = type;
       this.usage = usage;
-      this.lastLogTime = System.currentTimeMillis();
+      this.lastLoggingTime = System.currentTimeMillis();
     }
 
     public void validate() {
@@ -122,8 +123,8 @@ public class CacheManager implements CacheMemoryEventsListener {
       final long collectionCount = usage.getCollectionCount();
       if (config.isLoggingEnabled()) {
         // Mechanism to control the amount of logging.
-        if (toEvict > 0 || (System.currentTimeMillis() - lastLogTime > LOG_INTERVAL_MILLI)) {
-          lastLogTime = System.currentTimeMillis();
+        if (toEvict > 0 || (System.currentTimeMillis() - lastLoggingTime > logIntervalMillis)) {
+          lastLoggingTime = System.currentTimeMillis();
           logger.info("Asking to evict " + toEvict + " current size = " + currentCount + " calculated cache size = "
                       + calculatedCacheSize + " heap used = " + usedPercentage + " %  gc count = " + collectionCount);
         }
