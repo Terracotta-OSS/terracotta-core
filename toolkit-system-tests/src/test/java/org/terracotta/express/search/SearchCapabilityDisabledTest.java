@@ -28,7 +28,7 @@ public class SearchCapabilityDisabledTest extends AbstractToolkitTestBase {
     @Override
     protected void test(Toolkit toolkit) throws Throwable {
       System.out.println("Got toolkit: " + toolkit.getClass().getName());
-      Assert.assertFalse(toolkit.isCapabilityEnabled(ToolkitCapability.SEARCH));
+      Assert.assertFalse(toolkit.isCapabilityEnabled(ToolkitCapability.SEARCH.name()));
       ToolkitCache cache = toolkit.getCache("some-cache", null);
       Assert.assertTrue(cache instanceof ToolkitCacheInternal);
       ToolkitCacheInternal cmd = (ToolkitCacheInternal) cache;

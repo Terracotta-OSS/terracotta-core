@@ -5,7 +5,6 @@ package com.terracotta.toolkit;
 
 import net.sf.ehcache.CacheManager;
 
-import org.terracotta.toolkit.ToolkitCapability;
 import org.terracotta.toolkit.cache.ToolkitCache;
 import org.terracotta.toolkit.cache.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.cluster.ClusterInfo;
@@ -251,15 +250,8 @@ public class TerracottaToolkit implements ToolkitInternal {
   }
 
   @Override
-  public boolean isCapabilityEnabled(ToolkitCapability capability) {
-    switch (capability) {
-      case SEARCH:
-        return false;
-      case OFFHEAP:
-        return false;
-    }
-    // don't define default, so as to catch missing case at compile time
-    throw new AssertionError("Unhandled capability - " + capability);
+  public boolean isCapabilityEnabled(String capability) {
+    return false;
   }
 
   private static class TerracottaClusterInfoHolder {
@@ -298,11 +290,6 @@ public class TerracottaToolkit implements ToolkitInternal {
   @Override
   public String getClientUUID() {
     return ManagerUtil.getUUID();
-  }
-
-  @Override
-  public void isCapabilityEnabled(String capability) {
-    ManagerUtil.verifyCapability(capability);
   }
 
   @Override
