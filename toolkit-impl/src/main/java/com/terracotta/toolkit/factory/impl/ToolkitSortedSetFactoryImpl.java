@@ -6,6 +6,7 @@ package com.terracotta.toolkit.factory.impl;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
+import com.terracotta.toolkit.collections.DestroyableToolkitSortedMap;
 import com.terracotta.toolkit.collections.ToolkitSortedSetImpl;
 import com.terracotta.toolkit.collections.map.ToolkitSortedMapImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
@@ -37,10 +38,10 @@ public class ToolkitSortedSetFactoryImpl extends
 
     @Override
     public ToolkitSortedSetImpl createIsolatedToolkitType(ToolkitObjectFactory<ToolkitSortedSetImpl> factory,
-                                                          String name,
- Configuration config,
+                                                          String name, Configuration config,
                                                           ToolkitSortedMapImpl tcClusteredObject) {
-      return new ToolkitSortedSetImpl(factory, tcClusteredObject);
+      DestroyableToolkitSortedMap map = new DestroyableToolkitSortedMap(factory, tcClusteredObject, name);
+      return new ToolkitSortedSetImpl(map);
     }
 
     @Override

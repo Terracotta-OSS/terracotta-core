@@ -6,6 +6,7 @@ package com.terracotta.toolkit.factory.impl;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
+import com.terracotta.toolkit.collections.DestroyableToolkitMap;
 import com.terracotta.toolkit.collections.ToolkitSetImpl;
 import com.terracotta.toolkit.collections.map.ToolkitMapImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
@@ -32,7 +33,8 @@ public class ToolkitSetFactoryImpl extends AbstractPrimaryToolkitObjectFactory<T
     @Override
     public ToolkitSetImpl createIsolatedToolkitType(ToolkitObjectFactory<ToolkitSetImpl> factory, String name,
                                                     Configuration config, ToolkitMapImpl tcClusteredObject) {
-      return new ToolkitSetImpl(factory, tcClusteredObject);
+      DestroyableToolkitMap map = new DestroyableToolkitMap(factory, tcClusteredObject, name);
+      return new ToolkitSetImpl(map);
     }
 
     @Override

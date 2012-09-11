@@ -9,21 +9,17 @@ import org.terracotta.toolkit.object.Destroyable;
 import org.terracotta.toolkit.object.ToolkitLockedObject;
 import org.terracotta.toolkit.object.ToolkitObject;
 
-import com.terracotta.toolkit.factory.ToolkitObjectFactory;
-import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 
-public class ToolkitSetImpl<E> extends AbstractDestroyableToolkitObject<ToolkitSet<E>> implements ToolkitSet<E> {
+public class ToolkitSetImpl<E> implements ToolkitSet<E> {
   static final Integer          DUMMY_VALUE = 0;
   private final Map<E, Integer> toolkitMap;
 
-  public ToolkitSetImpl(ToolkitObjectFactory factory, Map<E, Integer> toolkitMap) {
-    super(factory);
+  public ToolkitSetImpl(Map<E, Integer> toolkitMap) {
     this.toolkitMap = toolkitMap;
   }
 
@@ -144,13 +140,13 @@ public class ToolkitSetImpl<E> extends AbstractDestroyableToolkitObject<ToolkitS
   }
 
   @Override
-  public void doDestroy() {
-    ((Destroyable) toolkitMap).destroy();
+  public boolean isDestroyed() {
+    return ((Destroyable) toolkitMap).isDestroyed();
   }
 
   @Override
-  public void applyDestroy() {
-    throw new UnsupportedOperationException();
+  public void destroy() {
+    ((Destroyable) toolkitMap).destroy();
   }
 
 }
