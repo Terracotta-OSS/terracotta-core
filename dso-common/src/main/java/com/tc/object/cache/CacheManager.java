@@ -64,6 +64,7 @@ public class CacheManager implements CacheMemoryEventsListener {
                                          config.getLeastCount(), memoryManager, this);
   }
 
+  @Override
   public void memoryUsed(CacheMemoryEventType type, MemoryUsage usage) {
     CacheStatistics cp = new CacheStatistics(type, usage);
     evictable.evictCache(cp);
@@ -87,9 +88,13 @@ public class CacheManager implements CacheMemoryEventsListener {
     private long                       startTime;
     private State                      state = INIT;
 
+    private long                       lastLogTime;              // timestamp to store the time of last log
+    private final long                 LOG_INTERVAL_MILLI = 5000; // 5 seconds
+
     public CacheStatistics(CacheMemoryEventType type, MemoryUsage usage) {
       this.type = type;
       this.usage = usage;
+      this.lastLogTime = System.currentTimeMillis();
     }
 
     public void validate() {
@@ -99,6 +104,7 @@ public class CacheManager implements CacheMemoryEventsListener {
       }
     }
 
+    @Override
     public int getObjectCountToEvict(int currentCount) {
       startTime = System.currentTimeMillis();
       countBefore = currentCount;
@@ -115,8 +121,12 @@ public class CacheManager implements CacheMemoryEventsListener {
       final int usedPercentage = usage.getUsedPercentage();
       final long collectionCount = usage.getCollectionCount();
       if (config.isLoggingEnabled()) {
-        logger.info("Asking to evict " + toEvict + " current size = " + currentCount + " calculated cache size = "
-                    + calculatedCacheSize + " heap used = " + usedPercentage + " %  gc count = " + collectionCount);
+        // Mechanism to control the amount of logging.
+        if (toEvict > 0 || (System.currentTimeMillis() - lastLogTime > LOG_INTERVAL_MILLI)) {
+          lastLogTime = System.currentTimeMillis();
+          logger.info("Asking to evict " + toEvict + " current size = " + currentCount + " calculated cache size = "
+                      + calculatedCacheSize + " heap used = " + usedPercentage + " %  gc count = " + collectionCount);
+        }
       }
       if (statisticsAgentSubSystem.isActive()) {
         storeCacheEvictRequestStats(currentCount, toEvict, calculatedCacheSize, usedPercentage, collectionCount);
@@ -183,6 +193,7 @@ public class CacheManager implements CacheMemoryEventsListener {
       }
     }
 
+    @Override
     public void objectEvicted(int evictedCount, int currentCount, List targetObjects4GC, boolean printNewObjects) {
       this.evicted = evictedCount;
       this.countAfter = currentCount;
