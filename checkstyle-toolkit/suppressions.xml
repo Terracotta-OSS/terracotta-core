@@ -8,5 +8,6 @@
   <!-- toolkit project allowed to use these classes-->
   <suppress id="forbidden-toolkit-classes" files=".java" />
   <suppress id="forbidden-express-classes" files=".java" />
+  <suppress id="forbidden-static-toolkit-type-var-check" files=".java" />
 
 </suppressions>
