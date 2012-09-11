@@ -17,7 +17,6 @@ import com.terracotta.toolkit.collections.DestroyedInstanceProxy;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.type.DistributedToolkitType;
-import com.terracotta.toolkit.util.collections.WeakValueGCCallback;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -300,11 +299,6 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   @Override
   public V unlockedGet(Object k, boolean quiet) {
     return activeDelegate.unlockedGet(k, quiet);
-  }
-
-  @Override
-  public WeakValueGCCallback getGCCallback() {
-    return aggregateServerMap.getGCCallback();
   }
 
   @Override

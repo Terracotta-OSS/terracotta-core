@@ -60,7 +60,7 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
 
         distributedType = distributedTypeFactory.createDistributedType(toolkit, factory, name, stripeObjects,
                                                                        effectiveConfig);
-        localCache.put(name, distributedType, distributedType.getGCCallback());
+        localCache.put(name, distributedType);
         return distributedType;
       }
     } finally {

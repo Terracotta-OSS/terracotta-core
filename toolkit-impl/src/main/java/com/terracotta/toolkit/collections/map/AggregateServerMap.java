@@ -50,7 +50,6 @@ import com.terracotta.toolkit.object.ToolkitObjectStripe;
 import com.terracotta.toolkit.object.ToolkitObjectType;
 import com.terracotta.toolkit.search.SearchBuilderFactory;
 import com.terracotta.toolkit.type.DistributedToolkitType;
-import com.terracotta.toolkit.util.collections.WeakValueGCCallback;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -106,7 +105,6 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   private final SearchBuilderFactory                            searchBuilderFactory;
   private final ServerMapLocalStoreFactory                      serverMapLocalStoreFactory;
   private final TerracottaClusterInfo                           clusterInfo                          = new TerracottaClusterInfo();
-  private final WeakValueGCCallback                             gcCallback;
 
   private static int getTerracottaProperty(String propName, int defaultValue) {
     try {
@@ -149,11 +147,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
       stripeObject.addConfigChangeListener(this);
     }
 
-    L1ServerMapLocalCacheStore<K, V> localCacheStore = initializeLocalCache();
-    this.gcCallback = new WeakValueGCCallbackImpl(localCacheStore);
-
+    initializeLocalCache();
     this.timeSource = new SystemTimeSource();
-
   }
 
   private static boolean isValidType(ToolkitObjectType toolkitObjectType) {
@@ -747,27 +742,6 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
       }
     }
     return map;
-  }
-
-  @Override
-  public WeakValueGCCallback getGCCallback() {
-    return gcCallback;
-  }
-
-  private static class WeakValueGCCallbackImpl implements WeakValueGCCallback {
-    private final L1ServerMapLocalCacheStore localCacheStore;
-
-    public WeakValueGCCallbackImpl(L1ServerMapLocalCacheStore cacheStore) {
-      this.localCacheStore = cacheStore;
-    }
-
-    @Override
-    public void callback() {
-      // TODO: should we dispose it?
-      // Dont think after dispose, we can recreate the cache with the same name
-      localCacheStore.clear();
-    }
-
   }
 
   @Override

@@ -19,7 +19,6 @@ public class ToolkitCacheJVMGCdLookupHungTest extends AbstractToolkitTestBase {
 
   public ToolkitCacheJVMGCdLookupHungTest(TestConfig testConfig) {
     super(testConfig, ToolkitCacheJVMGCdLookupHungTestClient.class);
-    disableTest();
   }
   
   public static class ToolkitCacheJVMGCdLookupHungTestClient extends ClientBase {

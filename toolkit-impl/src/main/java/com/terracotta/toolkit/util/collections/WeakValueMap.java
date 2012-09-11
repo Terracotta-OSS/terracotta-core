@@ -26,13 +26,9 @@ public class WeakValueMap<V> {
   }
 
   public synchronized V put(String name, V value) {
-    return put(name, value, null);
-  }
-
-  public synchronized V put(String name, V value, WeakValueGCCallback weakValueGCCallback) {
     cleanupReferenceQueue();
 
-    NamedWeakReference<V> reference = new NamedWeakReference(name, value, referenceQueue, weakValueGCCallback);
+    NamedWeakReference<V> reference = new NamedWeakReference(name, value, referenceQueue);
     NamedWeakReference<V> oldReference = internalMap.put(name, reference);
     return oldReference == null ? null : oldReference.get();
   }
@@ -51,34 +47,19 @@ public class WeakValueMap<V> {
 
       NamedWeakReference<V> weakReference = (NamedWeakReference) gcdObject;
       internalMap.remove(weakReference.getName());
-
-      gcCallbackIfNecessary(weakReference);
-    }
-  }
-
-  private void gcCallbackIfNecessary(NamedWeakReference<V> weakReference) {
-    WeakValueGCCallback callback = weakReference.getGcCallback();
-    if (callback != null) {
-      callback.callback();
     }
   }
 
   private static class NamedWeakReference<V> extends WeakReference<V> {
     private final String              name;
-    private final WeakValueGCCallback gcCallback;
 
-    public NamedWeakReference(String name, V reference, ReferenceQueue referenceQueue, WeakValueGCCallback gcCallback) {
+    public NamedWeakReference(String name, V reference, ReferenceQueue referenceQueue) {
       super(reference, referenceQueue);
       this.name = name;
-      this.gcCallback = gcCallback;
     }
 
     public String getName() {
       return name;
-    }
-
-    public WeakValueGCCallback getGcCallback() {
-      return gcCallback;
     }
   }
 }
