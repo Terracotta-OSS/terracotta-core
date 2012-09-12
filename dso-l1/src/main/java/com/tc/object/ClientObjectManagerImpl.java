@@ -131,11 +131,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   private final boolean                         sendErrors                   = System.getProperty("project.name") != null;
 
-  private final Map                             objectLatchStateMap          = new HashMap();
-  private final ThreadLocal                     localLookupContext           = new VicariousThreadLocal() {
+  private final Map<ObjectID, ObjectLatchState> objectLatchStateMap          = new HashMap();
+  private final ThreadLocal<LocalLookupContext> localLookupContext           = new VicariousThreadLocal() {
 
                                                                                @Override
-                                                                               protected synchronized Object initialValue() {
+                                                                               protected synchronized LocalLookupContext initialValue() {
                                                                                  return new LocalLookupContext();
                                                                                }
 
@@ -296,11 +296,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   private LocalLookupContext getLocalLookupContext() {
-    return (LocalLookupContext) this.localLookupContext.get();
+    return this.localLookupContext.get();
   }
 
   private ObjectLatchState getObjectLatchState(final ObjectID id) {
-    return (ObjectLatchState) this.objectLatchStateMap.get(id);
+    return this.objectLatchStateMap.get(id);
   }
 
   private ObjectLatchState markLookupInProgress(final ObjectID id) {

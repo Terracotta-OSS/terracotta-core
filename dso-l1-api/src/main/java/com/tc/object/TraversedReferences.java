@@ -34,5 +34,5 @@ public interface TraversedReferences {
    * Walk through the references traversed
    * @return Iterator<TraversedReference>
    */
-  public Iterator iterator();
+  public Iterator<TraversedReference> iterator();
 }

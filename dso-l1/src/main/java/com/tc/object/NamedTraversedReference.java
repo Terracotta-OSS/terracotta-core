@@ -10,9 +10,7 @@ public class NamedTraversedReference implements TraversedReference {
   private final Object value;
 
   public NamedTraversedReference(String fullyQualifiedFieldname, Object value) {
-    this.className = null;
-    this.fieldName = fullyQualifiedFieldname;
-    this.value = value;
+    this(null, fullyQualifiedFieldname, value);
   }
 
   public NamedTraversedReference(String className, String fieldName, Object value) {
@@ -21,14 +19,17 @@ public class NamedTraversedReference implements TraversedReference {
     this.value = value;
   }
   
+  @Override
   public Object getValue() {
     return this.value;
   }
 
+  @Override
   public boolean isAnonymous() {
     return false;
   }
 
+  @Override
   public String getFullyQualifiedReferenceName() {
     return this.className == null ? fieldName : className + "." + fieldName;
   }

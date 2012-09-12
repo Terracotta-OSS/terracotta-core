@@ -35,9 +35,9 @@ public class Traverser {
       TraversedReferences portableObjects = new TraversedReferencesImpl();
       portableObjects = portableObjectProvider.getPortableObjects(clazz, start, portableObjects);
 
-      for (Iterator i = portableObjects.iterator(); i.hasNext();) {
+      for (Iterator<TraversedReference> i = portableObjects.iterator(); i.hasNext();) {
         try {
-          TraversedReference currentReference = (TraversedReference) i.next();
+          TraversedReference currentReference = i.next();
           Object currentObject = currentReference.getValue();
 
           if (doNotTraverse(traverseTest, visited, currentObject)) {
@@ -66,7 +66,8 @@ public class Traverser {
     return false;
   }
 
-  public void traverse(Object object, TraversalAction action) {
+  // package protected - used for tests only
+  void traverse(Object object, TraversalAction action) {
     traverse(object, NULL_TEST, null, action, GroupID.NULL_ID);
   }
 
