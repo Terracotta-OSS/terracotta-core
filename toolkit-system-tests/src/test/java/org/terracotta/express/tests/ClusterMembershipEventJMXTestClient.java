@@ -44,7 +44,7 @@ public class ClusterMembershipEventJMXTestClient extends ClientBase {
 
   @Override
   public void test(Toolkit toolkit) throws Throwable {
-    locateClusterBean();
+    locateClusterBean(toolkit);
     runTest();
   }
 
@@ -82,6 +82,7 @@ public class ClusterMembershipEventJMXTestClient extends ClientBase {
     }
 
     NotificationListener listener = new NotificationListener() {
+      @Override
       public void handleNotification(final Notification notification, final Object handback) {
         /**/
       }
@@ -95,11 +96,11 @@ public class ClusterMembershipEventJMXTestClient extends ClientBase {
     }
   }
 
-  private void locateClusterBean() throws Exception {
+  private void locateClusterBean(Toolkit toolkit) throws Exception {
     List servers = MBeanServerFactory.findMBeanServer(null);
     if (servers.size() == 0) { throw new RuntimeException("No mean server found!"); }
 
-    clusterBean = TerracottaManagement.addNodeInfo(L1MBeanNames.CLUSTER_BEAN_PUBLIC, new UUID(getUUID()));
+    clusterBean = TerracottaManagement.addNodeInfo(L1MBeanNames.CLUSTER_BEAN_PUBLIC, new UUID(getClientUUID(toolkit)));
     for (int i = 0; i < servers.size(); i++) {
       MBeanServer mbeanServer = (MBeanServer) servers.get(i);
       if (mbeanServer.isRegistered(clusterBean)) {
@@ -121,6 +122,7 @@ public class ClusterMembershipEventJMXTestClient extends ClientBase {
       // listener for newly registered MBeans;
       // only clusterBean will ever be notified for due to the filter below
       NotificationListener listener = new NotificationListener() {
+        @Override
         public void handleNotification(final Notification notification, final Object handback) {
           synchronized (clusterBeanBag) {
             clusterBeanBag.add(handback);
@@ -131,6 +133,7 @@ public class ClusterMembershipEventJMXTestClient extends ClientBase {
 
       // filter to let only clusterBean passed through
       NotificationFilter filter = new NotificationFilter() {
+        @Override
         public boolean isNotificationEnabled(final Notification notification) {
           if (notification.getType().equals("JMX.mbean.registered")
               && ((MBeanServerNotification) notification).getMBeanName().equals(clusterBean)) return true;

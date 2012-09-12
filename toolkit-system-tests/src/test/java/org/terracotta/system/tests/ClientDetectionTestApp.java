@@ -44,7 +44,7 @@ public class ClientDetectionTestApp extends ClientBase implements NotificationLi
     getCurrentChannelIds();
     mbsc.addNotificationListener(L2MBeanNames.DSO, this, null, null);
 
-    System.out.println("@@@@@@@ I'm online.... id = " + getClientID());
+    System.out.println("@@@@@@@ I'm online.... id = " + getClientUUID(toolkit));
 
     System.out.println("Waiting For All Clients to come up");
     while (getClientsConnected(getDSOClientMBeans()) != 4) {
@@ -92,6 +92,7 @@ public class ClientDetectionTestApp extends ClientBase implements NotificationLi
     return set.size();
   }
 
+  @Override
   public void handleNotification(Notification notification, Object handback) {
     if ("dso.client.attached".equalsIgnoreCase(notification.getType())) {
       // extract channel id

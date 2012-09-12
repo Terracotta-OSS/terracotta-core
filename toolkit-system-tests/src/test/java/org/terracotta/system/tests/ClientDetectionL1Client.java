@@ -15,7 +15,7 @@ public class ClientDetectionL1Client extends ClientBase {
 
   @Override
   protected void test(Toolkit toolkit) throws Throwable {
-    System.out.println("@@@@@@@ I'm online.... id = " + getClientID());
+    System.out.println("@@@@@@@ I'm online.... id = " + getClientUUID(toolkit));
     this.clientDetectionBarrier.await();
     Thread.sleep(10 * 1000);
   }

@@ -8,15 +8,11 @@ import org.terracotta.toolkit.Toolkit;
 import org.terracotta.toolkit.ToolkitFactory;
 import org.terracotta.toolkit.ToolkitInstantiationException;
 import org.terracotta.toolkit.concurrent.ToolkitBarrier;
+import org.terracotta.toolkit.internal.ToolkitInternal;
 
 import java.util.concurrent.BrokenBarrierException;
 
 public abstract class ClientBase extends AbstractClientBase {
-  private static final String TEST_LIST_NAME                                             = "testList@testFramework";
-  private static final String MANAGER_UTIL_CLASS_NAME                                    = "com.tc.object.bytecode.ManagerUtil";
-  private static final String MANAGER_UTIL_GETUUID_METHOD                                = "getUUID";
-  private static final String MANAGER_UTIL_WAITFORALLCURRENTTRANSACTIONTOCOMPLETE_METHOD = "waitForAllCurrentTransactionsToComplete";
-  private static final String MANAGER_UTIL_GETCLIENTID_METHOD                            = "getClientID";
   private ToolkitBarrier      barrier;
   private Toolkit             clusteringToolkit;
 
@@ -66,35 +62,11 @@ public abstract class ClientBase extends AbstractClientBase {
     return getBarrierForAllClients().await();
   }
 
-  public String getUUID() {
-    try {
-      ClassLoader cl = getClusteringToolkit().getList(TEST_LIST_NAME, null).getClass().getClassLoader();
-      Class managerUtil = cl.loadClass(MANAGER_UTIL_CLASS_NAME);
-      return (String) managerUtil.getMethod(MANAGER_UTIL_GETUUID_METHOD).invoke(null);
-    } catch (Exception e) {
-      throw new AssertionError(e);
-    }
+  public void waitForAllCurrentTransactionsToComplete(Toolkit toolkit) {
+    ((ToolkitInternal) toolkit).waitUntilAllTransactionsComplete();
   }
 
-  // work around for ManagerUtil.waitForAllCurrentTransactionsToComplete()
-  public void waitForAllCurrentTransactionsToComplete() {
-    try {
-      ClassLoader cl = getClusteringToolkit().getList(TEST_LIST_NAME, null).getClass().getClassLoader();
-      Class managerUtil = cl.loadClass(MANAGER_UTIL_CLASS_NAME);
-      managerUtil.getMethod(MANAGER_UTIL_WAITFORALLCURRENTTRANSACTIONTOCOMPLETE_METHOD).invoke(null);
-    } catch (Exception e) {
-      throw new AssertionError(e);
-    }
-  }
-
-  // work around for ManagerUtil.getClientID
-  public String getClientID() {
-    try {
-      ClassLoader cl = getClusteringToolkit().getList(TEST_LIST_NAME, null).getClass().getClassLoader();
-      Class managerUtil = cl.loadClass(MANAGER_UTIL_CLASS_NAME);
-      return (String) managerUtil.getMethod(MANAGER_UTIL_GETCLIENTID_METHOD).invoke(null);
-    } catch (Exception e) {
-      throw new AssertionError(e);
-    }
+  public String getClientUUID(Toolkit toolkit) {
+    return ((ToolkitInternal) toolkit).getClientUUID();
   }
 }

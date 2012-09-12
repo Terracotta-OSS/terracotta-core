@@ -55,15 +55,15 @@ public class WaitForAllCurrentTransactionsToCompleteTestApp extends ClientBase {
         doPut();
         Assert.assertEquals(numOfPut + getParticipantCount() - 1, queue.size());
         info("XXX Txns in the system");
-        getPendingTransactionsCount();
+        getPendingTransactionsCount(toolkit);
       }
       waitForAllClients();
-      waitTxnComplete();
+      waitTxnComplete(toolkit);
       waitForAllClients();
       if (index == 0) {
         Thread.sleep(1000);
         info("XXX Txns in the system, after txn complete");
-        Assert.assertEquals(0, getPendingTransactionsCount());
+        Assert.assertEquals(0, getPendingTransactionsCount(toolkit));
       }
       waitForAllClients();
       if (index != 0) {
@@ -76,14 +76,14 @@ public class WaitForAllCurrentTransactionsToCompleteTestApp extends ClientBase {
     waitForAllClients();
   }
 
-  private void waitTxnComplete() {
+  private void waitTxnComplete(Toolkit toolkit) {
     long now = System.currentTimeMillis();
-    waitForAllCurrentTransactionsToComplete();
-    info("XXX Client-" + getClientID() + " waitForAllCurrentTransactionsToComplete took "
+    waitForAllCurrentTransactionsToComplete(toolkit);
+    info("XXX Client-" + getClientUUID(toolkit) + " waitForAllCurrentTransactionsToComplete took "
          + (System.currentTimeMillis() - now) + "ms");
   }
 
-  private long getPendingTransactionsCount() {
+  private long getPendingTransactionsCount(Toolkit toolkit) {
     MBeanServerConnection mbsc;
     int jmxPort = getTestControlMbean().getGroupsData()[0].getJmxPort(0);
     try {
@@ -99,7 +99,7 @@ public class WaitForAllCurrentTransactionsToCompleteTestApp extends ClientBase {
     for (ObjectName o : map.keySet()) {
       info("Pending Tranaction count for " + o + " size: " + map.get(o));
       String cid = o.getKeyProperty("channelID");
-      if (cid.equals(getClientID())) {
+      if (cid.equals(getClientUUID(toolkit))) {
         l = map.get(o);
         info("XXX Pending Tranaction count for channleID=" + cid + " size: " + l);
       }
