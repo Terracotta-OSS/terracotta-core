@@ -20,11 +20,11 @@ import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStore;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreConfig;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreFactory;
 
-public class EhcacheSMLocalStoreStaticFactory implements ServerMapLocalStoreFactory {
+public class EhcacheSMLocalStoreFactory implements ServerMapLocalStoreFactory {
 
   private final CacheManager defaultCacheManager;
 
-  public EhcacheSMLocalStoreStaticFactory(CacheManager defaultCacheManager) {
+  public EhcacheSMLocalStoreFactory(CacheManager defaultCacheManager) {
     this.defaultCacheManager = defaultCacheManager;
   }
 
