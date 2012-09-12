@@ -69,7 +69,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     this.objectFactory = new TestObjectFactory();
     this.runtimeLogger = new NullRuntimeLogger();
     this.tcObjectSelfStore = new L1ServerMapLocalCacheManagerImpl(new TestLocksRecallService(), new MockSink(),
-                                                                  new MockSink());
+                                                                  new MockSink(), new MockSink());
 
     this.rootName = "myRoot";
     this.object = new Object();
@@ -94,6 +94,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
 
     final AtomicBoolean pass = new AtomicBoolean(false);
     Thread waiter = new Thread(new Runnable() {
+      @Override
       public void run() {
         try {
           System.out.println("Running a root replace to waitUntilRunning");
@@ -128,6 +129,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     final List errors = Collections.synchronizedList(new ArrayList());
 
     final Runnable lookup = new Runnable() {
+      @Override
       public void run() {
         try {
           ClientObjectManagerTest.this.mgr.lookup(id);
@@ -240,6 +242,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
       this.exceptionHolder = exceptionHolder;
     }
 
+    @Override
     public void run() {
       try {
         assertNotNull(this.clientObjectManager);
@@ -415,6 +418,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
       return this.exception == null;
     }
 
+    @Override
     public void run() {
       try {
         this.result = this.manager.lookupOrCreateRoot(this.rootName, this.object);
@@ -462,34 +466,42 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
       this.objectID = objectID;
     }
 
+    @Override
     public long getVersion() {
       throw new ImplementMe();
     }
 
+    @Override
     public boolean hasLength() {
       throw new ImplementMe();
     }
 
+    @Override
     public int getArraySize() {
       return this.arraySize;
     }
 
+    @Override
     public String getTypeName() {
       return getClass().getName();
     }
 
+    @Override
     public ObjectID getObjectID() throws DNAException {
       return this.objectID;
     }
 
+    @Override
     public ObjectID getParentObjectID() throws DNAException {
       return this.parentObjectID;
     }
 
+    @Override
     public DNACursor getCursor() {
       throw new ImplementMe();
     }
 
+    @Override
     public boolean isDelta() {
       return false;
     }
@@ -508,23 +520,28 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
 
                                                   };
 
+    @Override
     public void setObjectManager(final ClientObjectManager objectManager) {
       this.clientObjectManager = objectManager;
     }
 
+    @Override
     public Object getNewPeerObject(final TCClass type, final Object parent) throws IllegalArgumentException,
         SecurityException {
       return new TestObject();
     }
 
+    @Override
     public Object getNewArrayInstance(final TCClass type, final int size) {
       throw new ImplementMe();
     }
 
+    @Override
     public Object getNewPeerObject(final TCClass type) throws IllegalArgumentException, SecurityException {
       return new TestObject();
     }
 
+    @Override
     public Object getNewPeerObject(final TCClass type, final DNA dna) {
       return new TestObject();
     }
@@ -533,6 +550,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
       return (Counter) this.localDepthCounter.get();
     }
 
+    @Override
     public TCObject getNewInstance(final ObjectID id, final Object peer, final Class clazz, final boolean isNew) {
       TCObjectPhysical tcObj = null;
       if (id.toLong() == 1) {
@@ -566,6 +584,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
       return tcObj;
     }
 
+    @Override
     public void initClazzIfRequired(Class clazz, TCObjectSelf tcObjectSelf) {
       throw new ImplementMe();
 
@@ -577,34 +596,41 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     public TestObject object;
     private TCObject  tcObject;
 
+    @Override
     public void __tc_getallfields(final Map map) {
       throw new ImplementMe();
 
     }
 
+    @Override
     public Object __tc_getmanagedfield(final String name) {
       throw new ImplementMe();
     }
 
+    @Override
     public void __tc_setfield(final String name, final Object value) {
       if ("object".equals(name)) {
         this.object = (TestObject) value;
       }
     }
 
+    @Override
     public void __tc_setmanagedfield(final String name, final Object value) {
       throw new ImplementMe();
 
     }
 
+    @Override
     public boolean __tc_isManaged() {
       return this.tcObject == null ? false : true;
     }
 
+    @Override
     public void __tc_managed(final TCObject t) {
       this.tcObject = t;
     }
 
+    @Override
     public TCObject __tc_managed() {
       return this.tcObject;
     }
@@ -616,21 +642,25 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     @SuppressWarnings("unused")
     private StupidTestObject    object;
 
+    @Override
     public void __tc_getallfields(final Map map) {
       throw new ImplementMe();
 
     }
 
+    @Override
     public Object __tc_getmanagedfield(final String name) {
       throw new ImplementMe();
     }
 
+    @Override
     public void __tc_setfield(final String name, final Object value) {
       if ("object".equals(name)) {
         this.object = (StupidTestObject) value;
       }
     }
 
+    @Override
     public void __tc_setmanagedfield(final String name, final Object value) {
       throw new ImplementMe();
     }

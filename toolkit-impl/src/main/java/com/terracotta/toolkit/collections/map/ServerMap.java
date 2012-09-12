@@ -30,6 +30,7 @@ import com.tc.object.bytecode.NotClearable;
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
+import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.terracotta.toolkit.TerracottaProperties;
 import com.terracotta.toolkit.concurrent.locks.LockingUtils;
 import com.terracotta.toolkit.concurrent.locks.LongLockStrategy;
@@ -132,11 +133,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   @Override
-  public void initializeLocalCache(L1ServerMapLocalCacheStore<K, V> localCacheStore) {
+  public void initializeLocalCache(L1ServerMapLocalCacheStore<K, V> localCacheStore, PinnedEntryFaultCallback callback) {
     if (localCacheStore == null) { throw new AssertionError("Local Cache Store cannot be null"); }
     this.l1ServerMapLocalCacheStore = localCacheStore;
     this.tcObjectServerMap.initialize(maxTTISeconds, maxTTLSeconds, maxCountInCluster, isEventual(), localCacheEnabled);
-    this.tcObjectServerMap.setupLocalStore(l1ServerMapLocalCacheStore);
+    this.tcObjectServerMap.setupLocalStore(l1ServerMapLocalCacheStore, callback);
   }
 
   @Override

@@ -201,9 +201,11 @@ public interface TCPropertiesConsts {
    * Section : L1 Seda stage properties
    * Description : This section contains configuration for SEDA stages for L1
    * stage.sink.capacity  : Capacity of L1's seda stage queue, Integer.MAX_VALUE if not set
+   * pinned.entry.fault.stage.threads : Number of threads for pinned entry fault stage
    * </code>
    ********************************************************************************************************************/
   public static final String L1_SEDA_STAGE_SINK_CAPACITY                                    = "l1.seda.stage.sink.capacity";
+  public static final String L1_SEDA_PINNED_ENTRY_FAULT_STAGE_THREADS                       = "l1.seda.pinned.entry.fault.stage.threads";
 
   /*********************************************************************************************************************
    * <code>
@@ -522,11 +524,13 @@ public interface TCPropertiesConsts {
    *                         : Maximum number of requests send immediately after which it will be batched
    * remote.batchLookupTimePeriod
    *                         : Time to wait before sending batch requests
+   * faultInvalidatedPinnedEntries : If enabled pinned entries will be faulted again from L2 on invalidations.
    * 
    * </code>
    ********************************************************************************************************************/
   public static final String L1_SERVERMAPMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY        = "l1.servermapmanager.remote.maxRequestSentImmediately";
   public static final String L1_SERVERMAPMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD            = "l1.servermapmanager.remote.batchLookupTimePeriod";
+  public static final String L1_SERVERMAPMANAGER_FAULT_INVALIDATED_PINNED_ENTRIES           = "l1.servermapmanager.faultInvalidatedPinnedEntries";
 
   /*********************************************************************************************************************
    * <code>

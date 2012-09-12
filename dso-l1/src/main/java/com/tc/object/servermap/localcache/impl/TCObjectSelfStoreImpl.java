@@ -16,6 +16,7 @@ import com.tc.object.TCObjectSelfCallback;
 import com.tc.object.TCObjectSelfStore;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
+import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.util.ObjectIDSet;
 
@@ -26,19 +27,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
-  private final TCObjectSelfStoreObjectIDSet                   tcObjectSelfStoreOids = new TCObjectSelfStoreObjectIDSet();
-  private final ReentrantReadWriteLock                         tcObjectStoreLock     = new ReentrantReadWriteLock();
-  private volatile TCObjectSelfCallback                        tcObjectSelfRemovedFromStoreCallback;
-  private final Map<ObjectID, TCObjectSelf>                    tcObjectSelfTempCache = new HashMap<ObjectID, TCObjectSelf>();
+  private final TCObjectSelfStoreObjectIDSet                                     tcObjectSelfStoreOids = new TCObjectSelfStoreObjectIDSet();
+  private final ReentrantReadWriteLock                                           tcObjectStoreLock     = new ReentrantReadWriteLock();
+  private volatile TCObjectSelfCallback                                          tcObjectSelfRemovedFromStoreCallback;
+  private final Map<ObjectID, TCObjectSelf>                                      tcObjectSelfTempCache = new HashMap<ObjectID, TCObjectSelf>();
 
-  private final ConcurrentHashMap<ServerMapLocalCache, Object> localCaches;
+  private final ConcurrentHashMap<ServerMapLocalCache, PinnedEntryFaultCallback> localCaches;
 
-  private static final TCLogger                                logger                = TCLogging
-                                                                                         .getLogger(TCObjectSelfStoreImpl.class);
+  private static final TCLogger                                                  logger                = TCLogging
+                                                                                                           .getLogger(TCObjectSelfStoreImpl.class);
 
-  private volatile boolean                                     isShutdown            = false;
+  private volatile boolean                                                       isShutdown            = false;
 
-  public TCObjectSelfStoreImpl(ConcurrentHashMap<ServerMapLocalCache, Object> localCaches) {
+  public TCObjectSelfStoreImpl(ConcurrentHashMap<ServerMapLocalCache, PinnedEntryFaultCallback> localCaches) {
     this.localCaches = localCaches;
   }
 

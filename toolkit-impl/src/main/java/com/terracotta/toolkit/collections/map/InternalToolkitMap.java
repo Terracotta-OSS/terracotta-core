@@ -10,6 +10,7 @@ import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
+import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.terracotta.toolkit.collections.map.ServerMap.GetType;
 import com.terracotta.toolkit.object.TCToolkitObject;
 
@@ -47,7 +48,7 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
 
   void setConfigField(String name, Object value);
 
-  void initializeLocalCache(L1ServerMapLocalCacheStore<K, V> localCacheStore);
+  void initializeLocalCache(L1ServerMapLocalCacheStore<K, V> localCacheStore, PinnedEntryFaultCallback callback);
 
   void removeNoReturn(Object key);
 

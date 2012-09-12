@@ -27,6 +27,7 @@ import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.LocalCacheStoreEventualValue;
 import com.tc.object.servermap.localcache.LocalCacheStoreStrongValue;
 import com.tc.object.servermap.localcache.MapOperationType;
+import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.object.servermap.localcache.impl.ServerMapLocalCacheImpl.ValueOIDKeyTuple;
 import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.ClientTransactionManager;
@@ -79,7 +80,8 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     locksRecallHelper = testLocksRecallHelper;
     maxInMemory = maxElementsInMemory;
     sink = new MySink();
-    globalLocalCacheManager = new L1ServerMapLocalCacheManagerImpl(locksRecallHelper, sink, new TxnCompleteSink());
+    globalLocalCacheManager = new L1ServerMapLocalCacheManagerImpl(locksRecallHelper, sink, new TxnCompleteSink(),
+                                                                   Mockito.mock(Sink.class));
     globalLocalCacheManager.setLockManager(new MockClientLockManager());
     mockTCObjectSelfCallback = new MockTCObjectSelfCallback();
     globalLocalCacheManager.initializeTCObjectSelfStore(mockTCObjectSelfCallback);
@@ -91,8 +93,8 @@ public class ServerMapLocalCacheImplTest extends TestCase {
     Mockito.when(com.getTransactionManager()).thenReturn(ctm);
     Mockito.when(ctm.getCurrentTransaction()).thenReturn(clientTransaction);
     localCacheStore = new L1ServerMapLocalCacheStoreHashMap(maxElementsInMemory);
-    cache = (ServerMapLocalCacheImpl) globalLocalCacheManager.getOrCreateLocalCache(mapID, com, null, true,
-                                                                                    localCacheStore);
+    cache = (ServerMapLocalCacheImpl) globalLocalCacheManager
+        .getOrCreateLocalCache(mapID, com, null, true, localCacheStore, Mockito.mock(PinnedEntryFaultCallback.class));
   }
 
   public void testDev6522() {

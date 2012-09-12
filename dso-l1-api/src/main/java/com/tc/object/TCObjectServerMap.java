@@ -6,6 +6,7 @@ package com.tc.object;
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
+import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 
 import java.util.Map;
 import java.util.Set;
@@ -234,8 +235,10 @@ public interface TCObjectServerMap<L> extends TCObject {
 
   /**
    * Setup the local store for use. This method is called whenever the map is created or faulted in the L1 first time.
+   * 
+   * @param callback
    */
-  void setupLocalStore(L1ServerMapLocalCacheStore serverMapLocalStore);
+  void setupLocalStore(L1ServerMapLocalCacheStore serverMapLocalStore, PinnedEntryFaultCallback callback);
 
   /**
    * Destroy the local store.

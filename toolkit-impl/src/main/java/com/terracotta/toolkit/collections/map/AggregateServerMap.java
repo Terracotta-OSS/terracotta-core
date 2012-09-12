@@ -29,6 +29,7 @@ import com.tc.object.TCObjectServerMap;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
+import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.util.FindbugsSuppressWarnings;
 import com.terracotta.toolkit.cluster.TerracottaClusterInfo;
 import com.terracotta.toolkit.collections.map.ServerMap.GetType;
@@ -147,7 +148,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
       stripeObject.addConfigChangeListener(this);
     }
 
-    initializeLocalCache();
+    PinnedEntryFaultCallback pinnedEntryFaultCallback = new PinnedEntryFaultCallbackImpl(this);
+    L1ServerMapLocalCacheStore<K, V> localCacheStore = initializeLocalCache(pinnedEntryFaultCallback);
     this.timeSource = new SystemTimeSource();
   }
 
@@ -158,10 +160,10 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     return false;
   }
 
-  private L1ServerMapLocalCacheStore<K, V> initializeLocalCache() {
+  private L1ServerMapLocalCacheStore<K, V> initializeLocalCache(PinnedEntryFaultCallback pinnedEntryFaultCallback) {
     L1ServerMapLocalCacheStore<K, V> localCacheStore = createLocalCacheStore();
     for (InternalToolkitMap<K, V> serverMap : serverMaps) {
-      serverMap.initializeLocalCache(localCacheStore);
+      serverMap.initializeLocalCache(localCacheStore, pinnedEntryFaultCallback);
     }
     return localCacheStore;
   }
@@ -723,8 +725,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public V put(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
-    return getServerMapForKey(key).put(key, value, createTimeInSecs, customMaxTTISeconds,
-                                                   customMaxTTLSeconds);
+    return getServerMapForKey(key).put(key, value, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
   }
 
   @Override
@@ -780,6 +781,25 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   public void setAttributeExtractor(ToolkitAttributeExtractor attrExtractor) {
     for (InternalToolkitMap serverMap : this.serverMaps) {
       serverMap.registerAttributeExtractor(attrExtractor);
+    }
+  }
+
+  private static class PinnedEntryFaultCallbackImpl implements PinnedEntryFaultCallback {
+
+    private final AggregateServerMap serverMap;
+
+    public PinnedEntryFaultCallbackImpl(AggregateServerMap serverMap) {
+      this.serverMap = serverMap;
+    }
+
+    @Override
+    public void unlockedGet(Object key) {
+      serverMap.unlockedGet(key, true);
+    }
+
+    @Override
+    public void get(Object key) {
+      serverMap.get(key);
     }
   }
 }

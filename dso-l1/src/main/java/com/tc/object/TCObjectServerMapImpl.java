@@ -19,6 +19,7 @@ import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.LocalCacheStoreEventualValue;
 import com.tc.object.servermap.localcache.LocalCacheStoreStrongValue;
 import com.tc.object.servermap.localcache.MapOperationType;
+import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -69,6 +70,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   private volatile L1ServerMapLocalCacheStore serverMapLocalStore;
   private final TCObjectSelfStore             tcObjectSelfStore;
   final L1ServerMapLocalCacheManager          globalLocalCacheManager;
+  private volatile PinnedEntryFaultCallback   callback;
 
   public TCObjectServerMapImpl(final Manager manager, final ClientObjectManager objectManager,
                                final RemoteServerMapManager serverMapManager, final ObjectID id, final Object peer,
@@ -82,7 +84,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     this.manager = manager;
     this.globalLocalCacheManager = globalLocalCacheManager;
     if (serverMapLocalStore != null) {
-      setupLocalCache(serverMapLocalStore);
+      setupLocalCache(serverMapLocalStore, callback);
     }
   }
 
@@ -750,10 +752,12 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   @Override
-  public void setupLocalStore(L1ServerMapLocalCacheStore serverMapLocalStore) {
+  public void setupLocalStore(L1ServerMapLocalCacheStore serverMapLocalStore,
+                              PinnedEntryFaultCallback callback) {
     // this is called from CDSMDso.__tc_managed(tco)
+    this.callback = callback;
     this.serverMapLocalStore = serverMapLocalStore;
-    setupLocalCache(serverMapLocalStore);
+    setupLocalCache(serverMapLocalStore, callback);
   }
 
   @Override
@@ -762,9 +766,10 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     this.cache = null;
   }
 
-  private void setupLocalCache(L1ServerMapLocalCacheStore serverMapLocalStore) {
+  private void setupLocalCache(L1ServerMapLocalCacheStore serverMapLocalStore,
+                               PinnedEntryFaultCallback callback) {
     this.cache = globalLocalCacheManager.getOrCreateLocalCache(this.objectID, objectManager, manager,
-                                                               localCacheEnabled, serverMapLocalStore);
+                                                               localCacheEnabled, serverMapLocalStore, callback);
   }
 
   @Override
@@ -816,10 +821,12 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
   }
 
+  @Override
   public void checkInObject(Object key, Object value) {
     this.cache.checkInObject(key, value);
   }
 
+  @Override
   public Object checkOutObject(Object key, Object value) {
     return this.cache.checkOutObject(key, value);
   }

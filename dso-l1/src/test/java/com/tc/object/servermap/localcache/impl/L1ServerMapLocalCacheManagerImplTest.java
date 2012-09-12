@@ -29,6 +29,7 @@ import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.LocalCacheStoreEventualValue;
 import com.tc.object.servermap.localcache.MapOperationType;
+import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.stats.Stats;
 import com.tc.util.concurrent.ThreadUtil;
@@ -64,7 +65,7 @@ public class L1ServerMapLocalCacheManagerImplTest extends TestCase {
 
     LocksRecallService locksRecallHelper = new LocksRecallServiceImpl(lockRecallHandler, lockRecallStage);
     this.l1LocalCacheManagerImpl = new L1ServerMapLocalCacheManagerImpl(locksRecallHelper, testSink,
-                                                                        new TxnCompleteSink());
+                                                                        new TxnCompleteSink(), Mockito.mock(Sink.class));
     this.l1LocalCacheManagerImpl.setLockManager(clientLockManager);
   }
 
@@ -74,7 +75,8 @@ public class L1ServerMapLocalCacheManagerImplTest extends TestCase {
     ObjectID oid = new ObjectID(1001);
     L1ServerMapLocalCacheStoreHashMap serverMapLocalStore = new L1ServerMapLocalCacheStoreHashMap();
     this.l1LocalCacheManagerImpl.getOrCreateLocalCache(mapId, Mockito.mock(ClientObjectManager.class), null, true,
-                                                       serverMapLocalStore);
+                                                       serverMapLocalStore,
+                                                       Mockito.mock(PinnedEntryFaultCallback.class));
     TCObjectSelf self = Mockito.mock(TCObjectSelf.class);
     Mockito.when(self.getObjectID()).thenReturn(oid);
     AbstractLocalCacheStoreValue localStoreValue = new LocalCacheStoreEventualValue(oid, self);
@@ -119,7 +121,7 @@ public class L1ServerMapLocalCacheManagerImplTest extends TestCase {
     L1ServerMapLocalCacheStore store = new L1ServerMapLocalCacheStoreHashMap();
     ObjectID mapID = new ObjectID(100);
     ServerMapLocalCache localCache = this.l1LocalCacheManagerImpl.getOrCreateLocalCache(mapID, Mockito
-        .mock(ClientObjectManager.class), null, true, store);
+        .mock(ClientObjectManager.class), null, true, store, Mockito.mock(PinnedEntryFaultCallback.class));
     localCache.setLocalCacheEnabled(true);
 
     MockTCObjectSelfCallback tcObjectSelfCallback = new MockTCObjectSelfCallback();
@@ -127,8 +129,8 @@ public class L1ServerMapLocalCacheManagerImplTest extends TestCase {
 
     LockID lockID = new LongLockID(100);
 
-    MockModesAdd.addStrongValueToCache(localCache, l1LocalCacheManagerImpl, "key", lockID, MockModesAdd
-        .createMockSerializedEntry(12345), mapID, MapOperationType.GET);
+    MockModesAdd.addStrongValueToCache(localCache, l1LocalCacheManagerImpl, "key", lockID,
+                                       MockModesAdd.createMockSerializedEntry(12345), mapID, MapOperationType.GET);
 
     this.l1LocalCacheManagerImpl.removeEntriesForLockId(lockID);
 
@@ -145,6 +147,7 @@ public class L1ServerMapLocalCacheManagerImplTest extends TestCase {
 
     public MySink(final AbstractEventHandler handler) {
       Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           while (true) {
             EventContext context;
@@ -167,6 +170,7 @@ public class L1ServerMapLocalCacheManagerImplTest extends TestCase {
       t1.start();
     }
 
+    @Override
     public void add(EventContext context) {
       try {
         q.put(context);
@@ -192,46 +196,57 @@ public class L1ServerMapLocalCacheManagerImplTest extends TestCase {
       }
     }
 
+    @Override
     public boolean addLossy(EventContext context) {
       throw new ImplementMe();
     }
 
+    @Override
     public void addMany(Collection contexts) {
       throw new ImplementMe();
     }
 
+    @Override
     public void clear() {
       throw new ImplementMe();
     }
 
+    @Override
     public AddPredicate getPredicate() {
       throw new ImplementMe();
     }
 
+    @Override
     public void setAddPredicate(AddPredicate predicate) {
       throw new ImplementMe();
     }
 
+    @Override
     public int size() {
       throw new ImplementMe();
     }
 
+    @Override
     public void enableStatsCollection(boolean enable) {
       throw new ImplementMe();
     }
 
+    @Override
     public Stats getStats(long frequency) {
       throw new ImplementMe();
     }
 
+    @Override
     public Stats getStatsAndReset(long frequency) {
       throw new ImplementMe();
     }
 
+    @Override
     public boolean isStatsCollectionEnabled() {
       throw new ImplementMe();
     }
 
+    @Override
     public void resetStats() {
       throw new ImplementMe();
     }
@@ -259,54 +274,66 @@ public class L1ServerMapLocalCacheManagerImplTest extends TestCase {
   private static class TxnCompleteSink implements Sink {
     L1ServerMapTransactionCompletionHandler completionHandler = new L1ServerMapTransactionCompletionHandler();
 
+    @Override
     public void add(EventContext context) {
       completionHandler.handleEvent(context);
     }
 
+    @Override
     public boolean addLossy(EventContext context) {
       throw new ImplementMe();
     }
 
+    @Override
     public void addMany(Collection contexts) {
       throw new ImplementMe();
 
     }
 
+    @Override
     public void clear() {
       throw new ImplementMe();
 
     }
 
+    @Override
     public AddPredicate getPredicate() {
       throw new ImplementMe();
     }
 
+    @Override
     public void setAddPredicate(AddPredicate predicate) {
       throw new ImplementMe();
 
     }
 
+    @Override
     public int size() {
       throw new ImplementMe();
     }
 
+    @Override
     public void enableStatsCollection(boolean enable) {
       throw new ImplementMe();
 
     }
 
+    @Override
     public Stats getStats(long frequency) {
       throw new ImplementMe();
     }
 
+    @Override
     public Stats getStatsAndReset(long frequency) {
       throw new ImplementMe();
     }
 
+    @Override
     public boolean isStatsCollectionEnabled() {
       throw new ImplementMe();
     }
 
+    @Override
     public void resetStats() {
       throw new ImplementMe();
 

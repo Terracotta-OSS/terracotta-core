@@ -5,6 +5,8 @@ package com.terracotta.toolkit.collections.servermap.api.ehcacheimpl;
 
 import net.sf.ehcache.CacheException;
 import net.sf.ehcache.Element;
+import net.sf.ehcache.config.PinningConfiguration;
+import net.sf.ehcache.config.PinningConfiguration.Store;
 import net.sf.ehcache.terracotta.InternalEhcache;
 
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStore;
@@ -174,6 +176,17 @@ public class OnlineEhcacheSMLocalStore implements ServerMapLocalStore<Object, Ob
   @Override
   public void recalculateSize(Object key) {
     localStoreCache.recalculateSize(key);
+  }
+
+  @Override
+  public boolean isLocalHeapOrMemoryTierPinned() {
+    PinningConfiguration pinningConfiguration = localStoreCache.getCacheConfiguration().getPinningConfiguration();
+    if (pinningConfiguration == null) {
+      return false;
+    } else {
+      return pinningConfiguration.getStore().equals(Store.LOCALHEAP)
+             || pinningConfiguration.getStore().equals(Store.LOCALMEMORY);
+    }
   }
 
 }

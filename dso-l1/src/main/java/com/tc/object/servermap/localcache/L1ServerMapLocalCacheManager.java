@@ -26,10 +26,12 @@ public interface L1ServerMapLocalCacheManager extends LocksRecallService, TCObje
    * Create a local cache for use or return already created local cache for the mapId
    * 
    * @param serverMapLocalStore
+   * @param callback
    */
   public ServerMapLocalCache getOrCreateLocalCache(ObjectID mapId, ClientObjectManager objectManager, Manager manager,
                                                    boolean localCacheEnabled,
-                                                   L1ServerMapLocalCacheStore serverMapLocalStore);
+                                                   L1ServerMapLocalCacheStore serverMapLocalStore,
+                                                   PinnedEntryFaultCallback callback);
 
   /**
    * flush the entries from the LocalCache associated with the given map id.<br>
@@ -51,6 +53,7 @@ public interface L1ServerMapLocalCacheManager extends LocksRecallService, TCObje
   /**
    * Shut down all local caches
    */
+  @Override
   public void shutdown();
 
   public void evictElements(Map evictedElements, ServerMapLocalCache serverMapLocalCache);
@@ -59,4 +62,5 @@ public interface L1ServerMapLocalCacheManager extends LocksRecallService, TCObje
 
   public void transactionComplete(
                                   L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener);
+
 }

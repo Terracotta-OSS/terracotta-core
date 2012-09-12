@@ -54,4 +54,6 @@ public interface ServerMapLocalStore<K, V> {
   public boolean containsKeyOffHeap(K key);
 
   public void recalculateSize(K key);
+
+  public boolean isLocalHeapOrMemoryTierPinned();
 }

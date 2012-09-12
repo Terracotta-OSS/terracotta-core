@@ -17,6 +17,7 @@ import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.LocalCacheStoreFullException;
 import com.tc.object.servermap.localcache.LocalCacheStoreStrongValue;
 import com.tc.object.servermap.localcache.MapOperationType;
+import com.tc.object.servermap.localcache.PinnedEntryInvalidationListener;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.object.servermap.localcache.ServerMapLocalCacheRemoveCallback;
 import com.tc.object.servermap.localcache.impl.L1ServerMapLocalStoreTransactionCompletionListener.TransactionCompleteOperation;
@@ -33,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -62,12 +64,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * </ul>
  */
 public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
-  private static final TCLogger                                LOGGER                       = TCLogging
-                                                                                                .getLogger(ServerMapLocalCacheImpl.class);
-  private static final int                                     CONCURRENCY                  = 256;
+  private static final TCLogger                                LOGGER                           = TCLogging
+                                                                                                    .getLogger(ServerMapLocalCacheImpl.class);
+  private static final int                                     CONCURRENCY                      = 256;
 
-  private static final LocalStoreKeySetFilter                  IGNORE_ID_FILTER             = new IgnoreIdsFilter();
-  private static final Object                                  NULL_VALUE                   = new Object();
+  private static final LocalStoreKeySetFilter                  IGNORE_ID_FILTER                 = new IgnoreIdsFilter();
+  private static final Object                                  NULL_VALUE                       = new Object();
 
   private final L1ServerMapLocalCacheManager                   l1LocalCacheManager;
   private volatile boolean                                     localCacheEnabled;
@@ -76,8 +78,8 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   private final Manager                                        manager;
   private final ServerMapLocalCacheRemoveCallback              removeCallback;
 
-  private final ConcurrentMap<ObjectID, Object>                removedObjectIDs             = new ConcurrentHashMap<ObjectID, Object>();
-  private final Map<ObjectID, Object>                          oidsForWhichTxnAreInProgress = new ConcurrentHashMap<ObjectID, Object>();
+  private final ConcurrentMap<ObjectID, Object>                removedObjectIDs                 = new ConcurrentHashMap<ObjectID, Object>();
+  private final Map<ObjectID, Object>                          oidsForWhichTxnAreInProgress     = new ConcurrentHashMap<ObjectID, Object>();
 
   private final ConcurrentHashMap                              pendingTransactionEntries;
   private final ConcurrentHashMap                              keyToListeners;
@@ -85,7 +87,9 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   private final ReentrantReadWriteLock[]                       locks;
   private final TCConcurrentMultiMap<LockID, ValueOIDKeyTuple> lockIDMappings;
 
-  private final ConcurrentHashMap<ObjectID, Integer>           checkedOutObjects            = new ConcurrentHashMap<ObjectID, Integer>();
+  private final ConcurrentHashMap<ObjectID, Integer>           checkedOutObjects                = new ConcurrentHashMap<ObjectID, Integer>();
+
+  private final Set<PinnedEntryInvalidationListener>           pinnedEntryInvalidationListeners = new CopyOnWriteArraySet<PinnedEntryInvalidationListener>();
 
   /**
    * Not public constructor, should be created only by the global local cache manager
@@ -288,6 +292,9 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
    */
   @Override
   public void setPinned(Object key, boolean pinned) {
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("XXX setpinned entry  " + key + " " + pinned);
+    }
     this.localStore.setPinned(key, pinned);
   }
 
@@ -438,6 +445,9 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
       AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) localStore.get(key);
       if (value != null && value.getValueObjectId().equals(oid)) {
         if (localStore.isPinned(key)) {
+          if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("XXX reput pinned entry evicted " + key + " " + oid);
+          }
           localStore.put(oid, key);
         } else {
           AbstractLocalCacheStoreValue removed = (AbstractLocalCacheStoreValue) localStore.remove(key);
@@ -540,10 +550,11 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
   @Override
   public boolean removeEntriesForObjectId(ObjectID objectId) {
     Object key = getMappingUnlocked(objectId);
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("XXX removeEntriesForObjectId " + objectId + " key=" + key);
-    }
     if (key == null) { return false; }
+    boolean wasPinned = isKeyPinnedOrTierPinned(key);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("XXX removeEntriesForObjectId " + objectId + " key=" + key + " wasPinned: " + wasPinned);
+    }
 
     ReentrantReadWriteLock lock = getLock(key);
     lock.writeLock().lock();
@@ -554,11 +565,28 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
         AbstractLocalCacheStoreValue value = (AbstractLocalCacheStoreValue) remove(key);
         initiateLockRecall(removeLockIDMetaMapping(key, value));
         remoteRemoveObjectIfPossible(value);
+        if (wasPinned) {
+          notifyPinnedEntryInvalidated(key, value.isEventualConsistentValue());
+        }
       }
     } finally {
       lock.writeLock().unlock();
     }
     return true;
+  }
+
+  private boolean isKeyPinnedOrTierPinned(Object key) {
+    return localStore.isLocalHeapOrMemoryTierPinned() || isPinned(key);
+  }
+
+  private void notifyPinnedEntryInvalidated(Object key, boolean eventual) {
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("XXX notify Invalidated key=" + key + "eventual: " + eventual);
+    }
+    for (PinnedEntryInvalidationListener listener : pinnedEntryInvalidationListeners) {
+      listener.notifyKeyInvalidated(this, key, eventual);
+    }
+
   }
 
   @Override
@@ -578,7 +606,12 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     try {
       if (ObjectID.NULL_ID.equals(removedTuple.valueObjectID)) {
         // value was a literal so dont need to remote remove it
+        boolean wasPinned = isKeyPinnedOrTierPinned(removedTuple.key);
+        AbstractLocalCacheStoreValue localValue = getLocalValue(removedTuple.key);
         remove(removedTuple.key);
+        if (wasPinned) {
+          notifyPinnedEntryInvalidated(removedTuple.key, localValue.isEventualConsistentValue());
+        }
         // remoteRemoveObjectIfPossible((AbstractLocalCacheStoreValue) value);
       } else {
         removeEntriesForObjectId(removedTuple.valueObjectID);
@@ -890,4 +923,25 @@ public final class ServerMapLocalCacheImpl implements ServerMapLocalCache {
     }
 
   }
+
+  @Override
+  public boolean registerPinnedEntryInvalidationListener(PinnedEntryInvalidationListener listener) {
+    return pinnedEntryInvalidationListeners.add(listener);
+  }
+
+  @Override
+  public boolean unRegisterPinnedEntryInvalidationListener(PinnedEntryInvalidationListener listener) {
+    return pinnedEntryInvalidationListeners.remove(listener);
+  }
+
+  @Override
+  public final boolean equals(Object obj) {
+    return super.equals(obj);
+  }
+
+  @Override
+  public int hashCode() {
+    return super.hashCode();
+  }
+
 }

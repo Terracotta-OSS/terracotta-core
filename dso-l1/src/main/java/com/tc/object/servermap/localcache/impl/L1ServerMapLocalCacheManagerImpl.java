@@ -20,6 +20,8 @@ import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStoreListener;
+import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
+import com.tc.object.servermap.localcache.PinnedEntryInvalidationListener;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.object.servermap.localcache.ServerMapLocalCacheRemoveCallback;
 import com.tc.properties.TCPropertiesConsts;
@@ -36,49 +38,54 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheManager {
-  private final Object                                                           NULL_VALUE          = new Object();
 
-  private static final boolean                                                   PINNING_ENABLED     = TCPropertiesImpl
-                                                                                                         .getProperties()
-                                                                                                         .getBoolean(TCPropertiesConsts.L1_LOCKMANAGER_PINNING_ENABLED);
+  private static final boolean                                                   PINNING_ENABLED                      = TCPropertiesImpl
+                                                                                                                          .getProperties()
+                                                                                                                          .getBoolean(TCPropertiesConsts.L1_LOCKMANAGER_PINNING_ENABLED);
 
+  private static final boolean                                                   FAULT_INVALIDATED_PINNED_ENTRIES     = TCPropertiesImpl
+                                                                                                                          .getProperties()
+                                                                                                                          .getBoolean(TCPropertiesConsts.L1_SERVERMAPMANAGER_FAULT_INVALIDATED_PINNED_ENTRIES,
+                                                                                                                                      false);
   /**
    * For invalidations
    */
-  private final ConcurrentHashMap<ObjectID, ServerMapLocalCache>                 mapIdTolocalCache   = new ConcurrentHashMap<ObjectID, ServerMapLocalCache>();
+  private final ConcurrentHashMap<ObjectID, ServerMapLocalCache>                 mapIdTolocalCache                    = new ConcurrentHashMap<ObjectID, ServerMapLocalCache>();
   // We also need the reverse mapping to easily remove the server map from existence on disposal
-  private final TCConcurrentMultiMap<ServerMapLocalCache, ObjectID>              localCacheToMapIds  = new TCConcurrentMultiMap<ServerMapLocalCache, ObjectID>();
+  private final TCConcurrentMultiMap<ServerMapLocalCache, ObjectID>              localCacheToMapIds                   = new TCConcurrentMultiMap<ServerMapLocalCache, ObjectID>();
 
   /**
    * For lock recalls
    */
-  private final TCConcurrentMultiMap<LockID, ServerMapLocalCache>                lockIdsToLocalCache = new TCConcurrentMultiMap<LockID, ServerMapLocalCache>();
+  private final TCConcurrentMultiMap<LockID, ServerMapLocalCache>                lockIdsToLocalCache                  = new TCConcurrentMultiMap<LockID, ServerMapLocalCache>();
 
   /**
    * All local caches
    */
-  private final ConcurrentHashMap<ServerMapLocalCache, Object>                   localCaches         = new ConcurrentHashMap<ServerMapLocalCache, Object>();
+  private final ConcurrentHashMap<ServerMapLocalCache, PinnedEntryFaultCallback> localCacheToPinnedEntryFaultCallback = new ConcurrentHashMap<ServerMapLocalCache, PinnedEntryFaultCallback>();
 
   /**
    * Identity HashMap of all stores
    */
-  private final IdentityHashMap<L1ServerMapLocalCacheStore, ServerMapLocalCache> localStores         = new IdentityHashMap<L1ServerMapLocalCacheStore, ServerMapLocalCache>();
+  private final IdentityHashMap<L1ServerMapLocalCacheStore, ServerMapLocalCache> localStores                          = new IdentityHashMap<L1ServerMapLocalCacheStore, ServerMapLocalCache>();
 
-  private final AtomicBoolean                                                    shutdown            = new AtomicBoolean();
+  private final AtomicBoolean                                                    shutdown                             = new AtomicBoolean();
   private final LocksRecallService                                               locksRecallHelper;
   private final Sink                                                             capacityEvictionSink;
   private final Sink                                                             txnCompleteSink;
   private final RemoveCallback                                                   removeCallback;
   private final TCObjectSelfStore                                                tcObjectSelfStore;
   private volatile ClientLockManager                                             lockManager;
+  private final PinnedEntryInvalidationListener                                  pinnedEntryInvalidationListener;
 
   public L1ServerMapLocalCacheManagerImpl(LocksRecallService locksRecallHelper, Sink capacityEvictionSink,
-                                          Sink txnCompleteSink) {
+                                          Sink txnCompleteSink, Sink pinnedEntryFaultSink) {
     this.locksRecallHelper = locksRecallHelper;
     this.capacityEvictionSink = capacityEvictionSink;
     removeCallback = new RemoveCallback();
-    tcObjectSelfStore = new TCObjectSelfStoreImpl(localCaches);
+    tcObjectSelfStore = new TCObjectSelfStoreImpl(localCacheToPinnedEntryFaultCallback);
     this.txnCompleteSink = txnCompleteSink;
+    this.pinnedEntryInvalidationListener = new Listener(localCacheToPinnedEntryFaultCallback, pinnedEntryFaultSink);
   }
 
   @Override
@@ -99,10 +106,13 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   @Override
   public synchronized ServerMapLocalCache getOrCreateLocalCache(ObjectID mapId, ClientObjectManager objectManager,
                                                                 Manager manager, boolean localCacheEnabled,
-                                                                L1ServerMapLocalCacheStore serverMapLocalStore) {
+                                                                L1ServerMapLocalCacheStore serverMapLocalStore,
+                                                                PinnedEntryFaultCallback callback) {
     if (shutdown.get()) {
       throwAlreadyShutdownException();
     }
+
+    if (callback == null) { throw new AssertionError("PinnedEntryFault Callback is null"); }
 
     ServerMapLocalCache serverMapLocalCache = null;
 
@@ -111,8 +121,13 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     } else {
       serverMapLocalCache = new ServerMapLocalCacheImpl(objectManager, manager, this, localCacheEnabled,
                                                         removeCallback, serverMapLocalStore);
+
+      if (FAULT_INVALIDATED_PINNED_ENTRIES) {
+        serverMapLocalCache.registerPinnedEntryInvalidationListener(pinnedEntryInvalidationListener);
+      }
+
       localStores.put(serverMapLocalStore, serverMapLocalCache);
-      localCaches.put(serverMapLocalCache, NULL_VALUE);
+      localCacheToPinnedEntryFaultCallback.put(serverMapLocalCache, callback);
       serverMapLocalStore.addListener(new L1ServerMapLocalCacheStoreListenerImpl(serverMapLocalCache));
     }
 
@@ -127,7 +142,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   public void removeStore(L1ServerMapLocalCacheStore store) {
     ServerMapLocalCache localCache = localStores.remove(store);
     if (localCache != null) {
-      localCaches.remove(localCache);
+      localCacheToPinnedEntryFaultCallback.remove(localCache);
       for (ObjectID mapId : localCacheToMapIds.removeAll(localCache)) {
         mapIdTolocalCache.remove(mapId);
       }
@@ -178,7 +193,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     ObjectIDSet invalidationsFailed = new ObjectIDSet();
 
     if (ObjectID.NULL_ID.equals(mapID)) {
-      for (ServerMapLocalCache cache : localCaches.keySet()) {
+      for (ServerMapLocalCache cache : localCacheToPinnedEntryFaultCallback.keySet()) {
         for (ObjectID id : set) {
           boolean success = cache.removeEntriesForObjectId(id);
           if (!success) {
@@ -349,4 +364,24 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   public void transactionComplete(L1ServerMapLocalStoreTransactionCompletionListener l1ServerMapLocalStoreTransactionCompletionListener) {
     txnCompleteSink.add(l1ServerMapLocalStoreTransactionCompletionListener);
   }
+
+  private static class Listener implements PinnedEntryInvalidationListener {
+    private final Sink                                               pinnedEntryFaultSink;
+    private final Map<ServerMapLocalCache, PinnedEntryFaultCallback> localCacheToPinnedEntryFaultCallback;
+
+    public Listener(Map<ServerMapLocalCache, PinnedEntryFaultCallback> localCacheToPinnedEntryFaultCallback,
+                    Sink pinnedEntryFaultSink) {
+      this.localCacheToPinnedEntryFaultCallback = localCacheToPinnedEntryFaultCallback;
+      this.pinnedEntryFaultSink = pinnedEntryFaultSink;
+
+    }
+
+    @Override
+    public void notifyKeyInvalidated(ServerMapLocalCache cache, Object key, boolean eventual) {
+      PinnedEntryFaultCallback callback = localCacheToPinnedEntryFaultCallback.get(cache);
+      pinnedEntryFaultSink.add(new PinnedEntryFaultContext(key, eventual, callback));
+    }
+
+  }
+
 }
