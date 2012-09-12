@@ -5,7 +5,6 @@ package com.tc.object.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
-import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesConsts;
@@ -90,7 +89,9 @@ public class ClusterInternalEventsHandler extends AbstractEventHandler {
       @Override
       public void run() {
         if (context instanceof ClusterInternalEventsContext) {
-          handleClusterInternalEvents((ClusterInternalEventsContext) context);
+          ClusterInternalEventsContext eventContext = (ClusterInternalEventsContext) context;
+          dsoClusterEventsNotifier.notifyDsoClusterListener(eventContext.getEventType(), eventContext.getEvent(),
+                                                            eventContext.getDsoClusterListener());
         } else {
           throw new AssertionError("Unknown Context " + context);
         }
@@ -102,19 +103,9 @@ public class ClusterInternalEventsHandler extends AbstractEventHandler {
     } catch (InterruptedException e) {
       logger.warn("clusterEventExecutor interrupted while waiting for result");
     } catch (ExecutionException e) {
-      throw new IllegalStateException(e);
+      throw new RuntimeException(e.getCause());
     } catch (TimeoutException e) {
       logger.warn("clusterEventExecutor timedout while waiting for result");
-    }
-  }
-
-  private void handleClusterInternalEvents(ClusterInternalEventsContext context) {
-    try {
-      dsoClusterEventsNotifier.notifyDsoClusterListener(context.getEventType(), context.getEvent(),
-                                                        context.getDsoClusterListener());
-    } catch (TCNotRunningException tcnre) {
-      logger.warn("Unable to notify " + context.getEventType() + " to " + context.getDsoClusterListener() + " - "
-                  + tcnre.getMessage());
     }
   }
 
