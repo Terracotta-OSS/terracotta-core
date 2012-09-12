@@ -91,12 +91,12 @@ public class ToolkitNotifierImpl<T> extends AbstractTCToolkitObject implements T
 
   private void begin() {
     String lockID = getLockID();
-    ManagerUtil.beginLock(lockID, LockLevel.CONCURRENT_LEVEL);
+    ManagerUtil.beginLock(lockID, LockLevel.CONCURRENT);
   }
 
   private void commit() {
     String lockID = getLockID();
-    ManagerUtil.commitLock(lockID, LockLevel.CONCURRENT_LEVEL);
+    ManagerUtil.commitLock(lockID, LockLevel.CONCURRENT);
   }
 
   private String getLockID() {

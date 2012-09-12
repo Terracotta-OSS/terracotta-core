@@ -23,17 +23,17 @@ public class LongLockStrategy<K> implements LockStrategy<Long, K> {
 
   @Override
   public void lock(Long lockId, ToolkitLockTypeInternal type) {
-    ManagerUtil.beginLock(lockId, LockingUtils.translate(type).toInt());
+    ManagerUtil.beginLock(lockId, LockingUtils.translate(type));
   }
 
   @Override
   public void commitLock(Long lockID, ToolkitLockTypeInternal type) {
-    ManagerUtil.commitLock(lockID, LockingUtils.translate(type).toInt());
+    ManagerUtil.commitLock(lockID, LockingUtils.translate(type));
   }
 
   @Override
   public boolean beginLock(Long lockID, ToolkitLockTypeInternal type, long nanos) throws InterruptedException {
-    return ManagerUtil.tryBeginLock(lockID, LockingUtils.translate(type).toInt(), nanos);
+    return ManagerUtil.tryBeginLock(lockID, LockingUtils.translate(type), nanos);
   }
 
 }

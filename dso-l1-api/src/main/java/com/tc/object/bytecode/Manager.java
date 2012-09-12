@@ -42,11 +42,6 @@ public interface Manager extends TerracottaLocking {
   /** Bytecode type definition for this class */
   public static final String TYPE                        = "L" + CLASS + ";";
 
-  public final static int    LOCK_TYPE_READ              = LockLevel.READ_LEVEL;
-  public final static int    LOCK_TYPE_WRITE             = LockLevel.WRITE_LEVEL;
-  public final static int    LOCK_TYPE_CONCURRENT        = LockLevel.CONCURRENT_LEVEL;
-  public final static int    LOCK_TYPE_SYNCHRONOUS_WRITE = LockLevel.SYNCHRONOUS_WRITE_LEVEL;
-
   /**
    * Determine whether this class is physically instrumented
    * 

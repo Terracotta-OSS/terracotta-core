@@ -119,12 +119,12 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
 
   private void lock(ToolkitObjectType toolkitObjectType, String name) {
     String lockID = generateLockIdentifier(toolkitObjectType, name);
-    ManagerUtil.beginLock(lockID, LockLevel.WRITE_LEVEL);
+    ManagerUtil.beginLock(lockID, LockLevel.WRITE);
   }
 
   private void unlock(ToolkitObjectType toolkitObjectType, String name) {
     String lockID = generateLockIdentifier(toolkitObjectType, name);
-    ManagerUtil.commitLock(lockID, LockLevel.WRITE_LEVEL);
+    ManagerUtil.commitLock(lockID, LockLevel.WRITE);
   }
 
   @Override

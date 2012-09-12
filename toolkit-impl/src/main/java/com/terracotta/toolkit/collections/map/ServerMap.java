@@ -485,11 +485,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private static void beginLock(String lockID, final ToolkitLockTypeInternal type) {
-    ManagerUtil.beginLock(lockID, LockingUtils.translate(type).toInt());
+    ManagerUtil.beginLock(lockID, LockingUtils.translate(type));
   }
 
   private static void commitLock(String lockID, final ToolkitLockTypeInternal type) {
-    ManagerUtil.commitLock(lockID, LockingUtils.translate(type).toInt());
+    ManagerUtil.commitLock(lockID, LockingUtils.translate(type));
   }
 
   @Override

@@ -17,7 +17,6 @@ import java.util.concurrent.locks.Condition;
 public class UnnamedToolkitLock implements ToolkitLock {
   private final Object        lockID;
   private final LockLevel     level;
-  private final int           intLevel;
   private final ConditionImpl conditionImpl = new ConditionImpl();
 
   public UnnamedToolkitLock(String lockId, ToolkitLockTypeInternal lockType) {
@@ -31,36 +30,40 @@ public class UnnamedToolkitLock implements ToolkitLock {
   private UnnamedToolkitLock(Object lockId, LockLevel level) {
     this.lockID = lockId;
     this.level = level;
-    this.intLevel = level.toInt();
   }
 
   protected Object getLockId() {
     return lockID;
   }
 
+  @Override
   public void lock() {
-    ManagerUtil.monitorEnter(lockID, intLevel);
+    ManagerUtil.monitorEnter(lockID, level);
   }
 
+  @Override
   public void lockInterruptibly() throws InterruptedException {
-    ManagerUtil.monitorEnterInterruptibly(lockID, intLevel);
+    ManagerUtil.monitorEnterInterruptibly(lockID, level);
   }
 
+  @Override
   public boolean tryLock() {
-    return ManagerUtil.tryMonitorEnter(lockID, intLevel);
+    return ManagerUtil.tryMonitorEnter(lockID, level);
   }
 
+  @Override
   public boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
-    return ManagerUtil.tryMonitorEnter(lockID, intLevel, unit.toNanos(time));
+    return ManagerUtil.tryMonitorEnter(lockID, level, unit.toNanos(time));
   }
 
+  @Override
   public void unlock() {
-    ManagerUtil.monitorExit(lockID, intLevel);
+    ManagerUtil.monitorExit(lockID, level);
   }
 
   @Override
   public boolean isHeldByCurrentThread() {
-    return ManagerUtil.isHeldByCurrentThread(lockID, intLevel);
+    return ManagerUtil.isHeldByCurrentThread(lockID, level);
   }
 
   @Override

@@ -197,9 +197,9 @@ public class ManagerUtil {
    * @param fieldOffset Field offset in pojo
    * @param type Lock level
    */
-  public static void beginVolatile(final Object pojo, final long fieldOffset, final int type) {
+  public static void beginVolatile(final Object pojo, final long fieldOffset, final LockLevel level) {
     TCObject TCObject = lookupExistingOrNull(pojo);
-    beginVolatile(TCObject, TCObject.getFieldNameByOffset(fieldOffset), type);
+    beginVolatile(TCObject, TCObject.getFieldNameByOffset(fieldOffset), level);
   }
 
   /**
@@ -208,9 +208,9 @@ public class ManagerUtil {
    * @param pojo Instance containing field
    * @param fieldOffset Field offset in pojo
    */
-  public static void commitVolatile(final Object pojo, final long fieldOffset, final int type) {
+  public static void commitVolatile(final Object pojo, final long fieldOffset, final LockLevel level) {
     TCObject TCObject = lookupExistingOrNull(pojo);
-    commitVolatile(TCObject, TCObject.getFieldNameByOffset(fieldOffset), type);
+    commitVolatile(TCObject, TCObject.getFieldNameByOffset(fieldOffset), level);
   }
 
   /**
@@ -220,10 +220,10 @@ public class ManagerUtil {
    * @param fieldName Field name holding volatile object
    * @param type Lock type
    */
-  public static void beginVolatile(final TCObject TCObject, final String fieldName, final int type) {
+  public static void beginVolatile(final TCObject TCObject, final String fieldName, final LockLevel level) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(TCObject, fieldName);
-    mgr.lock(lock, LockLevel.fromInt(type));
+    mgr.lock(lock, level);
   }
 
   /**
@@ -232,18 +232,18 @@ public class ManagerUtil {
    * @param lockID Lock identifier
    * @param type Lock type
    */
-  public static void beginLock(final String lockID, final int type) {
+  public static void beginLock(final String lockID, final LockLevel level) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockID);
-    mgr.lock(lock, LockLevel.fromInt(type));
+    mgr.lock(lock, level);
   }
 
   /**
    * Begins a lock without associating any transaction context.
    */
   @Deprecated
-  public static void beginLockWithoutTxn(final String lockID, final int type) {
-    beginLock(lockID, type);
+  public static void beginLockWithoutTxn(final String lockID, final LockLevel level) {
+    beginLock(lockID, level);
   }
 
   /**
@@ -254,8 +254,8 @@ public class ManagerUtil {
    * @param contextInfo
    */
   @Deprecated
-  public static void beginLock(final String lockID, final int type, final String contextInfo) {
-    beginLock(lockID, type);
+  public static void beginLock(final String lockID, final LockLevel level, final String contextInfo) {
+    beginLock(lockID, level);
   }
 
   /**
@@ -265,10 +265,10 @@ public class ManagerUtil {
    * @param type Lock type
    * @return True if lock was successful
    */
-  public static boolean tryBeginLock(final String lockID, final int type) {
+  public static boolean tryBeginLock(final String lockID, final LockLevel level) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockID);
-    return mgr.tryLock(lock, LockLevel.fromInt(type));
+    return mgr.tryLock(lock, level);
   }
 
   /**
@@ -279,11 +279,11 @@ public class ManagerUtil {
    * @param timeoutInNanos Timeout in nanoseconds
    * @return True if lock was successful
    */
-  public static boolean tryBeginLock(final String lockID, final int type, final long timeoutInNanos)
+  public static boolean tryBeginLock(final String lockID, final LockLevel level, final long timeoutInNanos)
       throws InterruptedException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockID);
-    return mgr.tryLock(lock, LockLevel.fromInt(type), timeoutInNanos / 1000000);
+    return mgr.tryLock(lock, level, timeoutInNanos / 1000000);
   }
 
   /**
@@ -292,10 +292,10 @@ public class ManagerUtil {
    * @param TCObject Volatile object TCObject
    * @param fieldName Field holding the volatile object
    */
-  public static void commitVolatile(final TCObject TCObject, final String fieldName, final int type) {
+  public static void commitVolatile(final TCObject TCObject, final String fieldName, final LockLevel level) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(TCObject, fieldName);
-    mgr.unlock(lock, LockLevel.fromInt(type));
+    mgr.unlock(lock, level);
   }
 
   /**
@@ -303,10 +303,10 @@ public class ManagerUtil {
    * 
    * @param lockID Lock name
    */
-  public static void commitLock(final String lockID, final int type) {
+  public static void commitLock(final String lockID, final LockLevel level) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockID);
-    mgr.unlock(lock, LockLevel.fromInt(type));
+    mgr.unlock(lock, level);
   }
 
   public static void pinLock(final String lockID) {
@@ -581,10 +581,10 @@ public class ManagerUtil {
    * @param obj Object
    * @param type Lock type
    */
-  public static void monitorEnter(final Object obj, final int type) {
+  public static void monitorEnter(final Object obj, final LockLevel level) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
-    mgr.lock(lock, LockLevel.fromInt(type));
+    mgr.lock(lock, level);
   }
 
   /**
@@ -595,8 +595,8 @@ public class ManagerUtil {
    * @param contextInfo Configuration text of the lock
    */
   @Deprecated
-  public static void monitorEnter(final Object obj, final int type, final String contextInfo) {
-    monitorEnter(obj, type);
+  public static void monitorEnter(final Object obj, final LockLevel level, final String contextInfo) {
+    monitorEnter(obj, level);
   }
 
   /**
@@ -604,24 +604,24 @@ public class ManagerUtil {
    * 
    * @param obj Object
    */
-  public static void monitorExit(final Object obj, final int type) {
+  public static void monitorExit(final Object obj, final LockLevel level) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
-    mgr.unlock(lock, LockLevel.fromInt(type));
+    mgr.unlock(lock, level);
   }
 
   @Deprecated
-  public static void instrumentationMonitorEnter(final Object obj, final int type) {
+  public static void instrumentationMonitorEnter(final Object obj, final LockLevel level) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
-    mgr.monitorEnter(lock, LockLevel.fromInt(type));
+    mgr.monitorEnter(lock, level);
   }
 
   @Deprecated
-  public static void instrumentationMonitorExit(final Object obj, final int type) {
+  public static void instrumentationMonitorExit(final Object obj, final LockLevel level) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
-    mgr.monitorExit(lock, LockLevel.fromInt(type));
+    mgr.monitorExit(lock, level);
   }
 
   /**
@@ -640,16 +640,16 @@ public class ManagerUtil {
    * @return True if locked at this level
    * @throws NullPointerException If obj is null
    */
-  public static boolean isLocked(final Object obj, final int lockLevel) {
+  public static boolean isLocked(final Object obj, final LockLevel level) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
-    return mgr.isLocked(lock, LockLevel.fromInt(lockLevel));
+    return mgr.isLocked(lock, level);
   }
 
-  public static boolean tryMonitorEnter(final Object obj, final int type) {
+  public static boolean tryMonitorEnter(final Object obj, final LockLevel level) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
-    return mgr.tryLock(lock, LockLevel.fromInt(type));
+    return mgr.tryLock(lock, level);
   }
 
   /**
@@ -661,11 +661,11 @@ public class ManagerUtil {
    * @return True if entered
    * @throws NullPointerException If obj is null
    */
-  public static boolean tryMonitorEnter(final Object obj, final int type, final long timeoutInNanos)
+  public static boolean tryMonitorEnter(final Object obj, final LockLevel level, final long timeoutInNanos)
       throws InterruptedException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
-    return mgr.tryLock(lock, LockLevel.fromInt(type), timeoutInNanos / 1000000);
+    return mgr.tryLock(lock, level, timeoutInNanos / 1000000);
   }
 
   /**
@@ -676,10 +676,10 @@ public class ManagerUtil {
    * @throws NullPointerException If obj is null
    * @throws InterruptedException If interrupted while entering or waiting
    */
-  public static void monitorEnterInterruptibly(final Object obj, final int type) throws InterruptedException {
+  public static void monitorEnterInterruptibly(final Object obj, final LockLevel level) throws InterruptedException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
-    mgr.lockInterruptibly(lock, LockLevel.fromInt(type));
+    mgr.lockInterruptibly(lock, level);
   }
 
   /**
@@ -690,10 +690,10 @@ public class ManagerUtil {
    * @return Lock count
    * @throws NullPointerException If obj is null
    */
-  public static int localHeldCount(final Object obj, final int lockLevel) {
+  public static int localHeldCount(final Object obj, final LockLevel level) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
-    return mgr.localHoldCount(lock, LockLevel.fromInt(lockLevel));
+    return mgr.localHoldCount(lock, level);
   }
 
   /**
@@ -704,10 +704,10 @@ public class ManagerUtil {
    * @return True if held by current thread
    * @throws NullPointerException If obj is null
    */
-  public static boolean isHeldByCurrentThread(final Object obj, final int lockLevel) {
+  public static boolean isHeldByCurrentThread(final Object obj, final LockLevel level) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
-    return mgr.isLockedByCurrentThread(lock, LockLevel.fromInt(lockLevel));
+    return mgr.isLockedByCurrentThread(lock, level);
   }
 
   /**
@@ -717,10 +717,10 @@ public class ManagerUtil {
    * @param lockLevel The lock level
    * @return True if held by current thread
    */
-  public static boolean isLockHeldByCurrentThread(final String lockId, final int lockLevel) {
+  public static boolean isLockHeldByCurrentThread(final String lockId, final LockLevel level) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockId);
-    return mgr.isLockedByCurrentThread(lock, LockLevel.fromInt(lockLevel));
+    return mgr.isLockedByCurrentThread(lock, level);
   }
 
   /**
@@ -1194,10 +1194,10 @@ public class ManagerUtil {
    * @param long lockID Lock identifier
    * @param type Lock type
    */
-  public static void beginLock(final long lockID, final int type) {
+  public static void beginLock(final long lockID, final LockLevel level) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockID);
-    mgr.lock(lock, LockLevel.fromInt(type));
+    mgr.lock(lock, level);
   }
 
   /**
@@ -1207,10 +1207,10 @@ public class ManagerUtil {
    * @param type Lock type
    * @return True if lock was successful
    */
-  public static boolean tryBeginLock(final long lockID, final int type) {
+  public static boolean tryBeginLock(final long lockID, final LockLevel level) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockID);
-    return mgr.tryLock(lock, LockLevel.fromInt(type));
+    return mgr.tryLock(lock, level);
   }
 
   /**
@@ -1221,11 +1221,11 @@ public class ManagerUtil {
    * @param timeoutInNanos Timeout in nanoseconds
    * @return True if lock was successful
    */
-  public static boolean tryBeginLock(final long lockID, final int type, final long timeoutInNanos)
+  public static boolean tryBeginLock(final long lockID, final LockLevel level, final long timeoutInNanos)
       throws InterruptedException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockID);
-    return mgr.tryLock(lock, LockLevel.fromInt(type), timeoutInNanos / 1000000);
+    return mgr.tryLock(lock, level, timeoutInNanos / 1000000);
   }
 
   /**
@@ -1233,10 +1233,10 @@ public class ManagerUtil {
    * 
    * @param long lockID Lock name
    */
-  public static void commitLock(final long lockID, final int type) {
+  public static void commitLock(final long lockID, final LockLevel level) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockID);
-    mgr.unlock(lock, LockLevel.fromInt(type));
+    mgr.unlock(lock, level);
   }
 
   public static void pinLock(final long lockID) {
@@ -1258,10 +1258,10 @@ public class ManagerUtil {
    * @param lockLevel The lock level
    * @return True if held by current thread
    */
-  public static boolean isLockHeldByCurrentThread(final long lockId, final int lockLevel) {
+  public static boolean isLockHeldByCurrentThread(final long lockId, final LockLevel level) {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockId);
-    return mgr.isLockedByCurrentThread(lock, LockLevel.fromInt(lockLevel));
+    return mgr.isLockedByCurrentThread(lock, level);
   }
 
   public static void verifyCapability(String capability) {

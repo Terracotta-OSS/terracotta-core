@@ -19,19 +19,19 @@ public final class RootsUtil {
 
   public static <T> T lookupOrCreateRootInGroup(GroupID gid, String name, RootObjectCreator<T> creator) {
     String lockId = generateLockId(name);
-    ManagerUtil.beginLock(lockId, LockLevel.READ_LEVEL);
+    ManagerUtil.beginLock(lockId, LockLevel.READ);
     try {
       Object root = ManagerUtil.lookupRoot(name, gid);
       if (root != null) { return (T) root; }
     } finally {
-      ManagerUtil.commitLock(lockId, LockLevel.READ_LEVEL);
+      ManagerUtil.commitLock(lockId, LockLevel.READ);
     }
 
-    ManagerUtil.beginLock(lockId, LockLevel.WRITE_LEVEL);
+    ManagerUtil.beginLock(lockId, LockLevel.WRITE);
     try {
       return (T) ManagerUtil.lookupOrCreateRoot(name, creator.create(), gid);
     } finally {
-      ManagerUtil.commitLock(lockId, LockLevel.WRITE_LEVEL);
+      ManagerUtil.commitLock(lockId, LockLevel.WRITE);
     }
   }
 

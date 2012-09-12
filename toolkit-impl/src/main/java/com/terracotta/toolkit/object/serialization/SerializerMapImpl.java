@@ -41,26 +41,26 @@ public class SerializerMapImpl<K, V> implements SerializerMap<K, V>, Manageable 
   }
 
   private void writeLock() {
-    lock(LockLevel.WRITE_LEVEL);
+    lock(LockLevel.WRITE);
   }
 
   private void writeUnlock() {
-    unlock(LockLevel.WRITE_LEVEL);
+    unlock(LockLevel.WRITE);
   }
 
   private void readLock() {
-    lock(LockLevel.READ_LEVEL);
+    lock(LockLevel.READ);
   }
 
   private void readUnlock() {
-    unlock(LockLevel.READ_LEVEL);
+    unlock(LockLevel.READ);
   }
 
-  private void lock(int lockLevel) {
+  private void lock(LockLevel lockLevel) {
     ManagerUtil.beginLock(getLockID(), lockLevel);
   }
 
-  private void unlock(int lockLevel) {
+  private void unlock(LockLevel lockLevel) {
     ManagerUtil.commitLock(getLockID(), lockLevel);
   }
 

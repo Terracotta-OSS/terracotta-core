@@ -149,7 +149,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     }
 
     PinnedEntryFaultCallback pinnedEntryFaultCallback = new PinnedEntryFaultCallbackImpl(this);
-    L1ServerMapLocalCacheStore<K, V> localCacheStore = initializeLocalCache(pinnedEntryFaultCallback);
+    initializeLocalCache(pinnedEntryFaultCallback);
     this.timeSource = new SystemTimeSource();
   }
 
@@ -620,7 +620,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   @Override
   public void setConfigField(String fieldChanged, Serializable changedValue) {
-    ManagerUtil.beginLock(CONFIG_CHANGE_LOCK_ID, LockLevel.CONCURRENT_LEVEL);
+    ManagerUtil.beginLock(CONFIG_CHANGE_LOCK_ID, LockLevel.CONCURRENT);
     try {
       InternalCacheConfigurationType configType = InternalCacheConfigurationType.getTypeFromConfigString(fieldChanged);
       if (!configType.isDynamicChangeAllowed()) { throw new IllegalArgumentException(
@@ -653,7 +653,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         stripe.setConfigField(fieldChanged, changedValue);
       }
     } finally {
-      ManagerUtil.commitLock(CONFIG_CHANGE_LOCK_ID, LockLevel.CONCURRENT_LEVEL);
+      ManagerUtil.commitLock(CONFIG_CHANGE_LOCK_ID, LockLevel.CONCURRENT);
     }
   }
 
