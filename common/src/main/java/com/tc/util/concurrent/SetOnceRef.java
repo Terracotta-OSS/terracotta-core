@@ -13,10 +13,9 @@ package com.tc.util.concurrent;
  * 
  * @author teck
  */
-public final class SetOnceRef {
-  private Object        ref;
+public final class SetOnceRef<V> {
+  private V             ref;
   private boolean       set;
-  private final Object  lock = new Object();
   private final boolean allowsNullValue;
 
   /**
@@ -34,7 +33,7 @@ public final class SetOnceRef {
    * @param ref The reference to hold
    * @throws IllegalArgumentException If the reference to hold is null
    */
-  public SetOnceRef(Object ref) {
+  public SetOnceRef(V ref) {
     this(ref, false, true);
   }
 
@@ -45,7 +44,7 @@ public final class SetOnceRef {
    * @param allowNull true to allow nulls to be stored in this instance
    * @throws IllegalArgumentException if allowNull is true and the given reference is null
    */
-  public SetOnceRef(Object ref, boolean allowNull) {
+  public SetOnceRef(V ref, boolean allowNull) {
     this(ref, allowNull, true);
   }
 
@@ -58,7 +57,7 @@ public final class SetOnceRef {
     this(null, allowNull, false);
   }
 
-  private SetOnceRef(final Object ref, final boolean allowNull, final boolean init) {
+  private SetOnceRef(final V ref, final boolean allowNull, final boolean init) {
     this.allowsNullValue = allowNull;
 
     if (init) {
@@ -76,14 +75,13 @@ public final class SetOnceRef {
   }
 
   /**
-   * Attmept to set the reference to the given value
+   * Attempt to set the reference to the given value
    * 
    * @param ref the reference to set in this instance
    * @throws IllegalStateException if the reference has already been set by another thread
    * @throws IllegalArgumentException if the given reference is null and this instance does not allow the null value
    */
-  public void set(final Object ref) {
-    synchronized (lock) {
+  public synchronized void set(final V ref) {
       if (set) { throw new IllegalStateException("Reference has already been set"); }
 
       if ((!allowsNull()) && (ref == null)) { throw new IllegalArgumentException(
@@ -91,7 +89,6 @@ public final class SetOnceRef {
 
       set = true;
       this.ref = ref;
-    }
   }
 
   /**
@@ -100,12 +97,10 @@ public final class SetOnceRef {
    * @return the reference, may be null if this instance allow nulls (see <code>allowNull</code>
    * @throws IllegalStateException if a valid reference value has not yet been set
    */
-  public Object get() {
-    synchronized (lock) {
+  public synchronized V get() {
       if (!set) { throw new IllegalStateException("Reference has not been set"); }
 
       return ref;
-    }
   }
 
   /**
@@ -113,9 +108,7 @@ public final class SetOnceRef {
    * 
    * @return true iff the reference has been set
    */
-  public boolean isSet() {
-    synchronized (lock) {
+  public synchronized boolean isSet() {
       return set;
-    }
   }
 }
