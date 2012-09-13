@@ -80,8 +80,8 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private final AtomicBoolean                isSocketEndpoint            = new AtomicBoolean(false);
   private final SetOnceFlag                  closed                      = new SetOnceFlag();
   private final AtomicBoolean                connected                   = new AtomicBoolean(false);
-  private final SetOnceRef                   localSocketAddress          = new SetOnceRef();
-  private final SetOnceRef                   remoteSocketAddress         = new SetOnceRef();
+  private final SetOnceRef<TCSocketAddress>  localSocketAddress          = new SetOnceRef<TCSocketAddress>();
+  private final SetOnceRef<TCSocketAddress>  remoteSocketAddress         = new SetOnceRef<TCSocketAddress>();
   private final SocketParams                 socketParams;
   private final AtomicLong                   totalRead                   = new AtomicLong(0);
   private final AtomicLong                   totalWrite                  = new AtomicLong(0);
@@ -256,6 +256,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     return rv;
   }
 
+  @Override
   public int doRead() throws IOException {
     synchronized (readerLock) {
       return doReadInternal();
@@ -298,6 +299,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     }
   }
 
+  @Override
   public int doWrite() throws IOException {
     synchronized (writerLock) {
       return doWriteInternal();
@@ -568,12 +570,14 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     }
   }
 
+  @Override
   public final void asynchClose() {
     if (this.closed.attemptSet()) {
       closeImpl(createCloseCallback(null));
     }
   }
 
+  @Override
   public final boolean close(final long timeout) {
     if (timeout <= 0) { throw new IllegalArgumentException("timeout cannot be less than or equal to zero"); }
 
@@ -596,6 +600,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     final boolean fireClose = isConnected();
 
     return new Runnable() {
+      @Override
       public void run() {
         setConnected(false);
         TCConnectionImpl.this.parent.connectionClosed(TCConnectionImpl.this);
@@ -611,10 +616,12 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     };
   }
 
+  @Override
   public final boolean isClosed() {
     return this.closed.isSet();
   }
 
+  @Override
   public final boolean isConnected() {
     return this.connected.get();
   }
@@ -631,14 +638,14 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     if (this.isSocketEndpoint.get()) {
       buf.append(" local=");
       if (this.localSocketAddress.isSet()) {
-        buf.append(((TCSocketAddress) this.localSocketAddress.get()).getStringForm());
+        buf.append(this.localSocketAddress.get().getStringForm());
       } else {
         buf.append("[unknown]");
       }
 
       buf.append(" remote=");
       if (this.remoteSocketAddress.isSet()) {
-        buf.append(((TCSocketAddress) this.remoteSocketAddress.get()).getStringForm());
+        buf.append(this.remoteSocketAddress.get().getStringForm());
       } else {
         buf.append("[unknown]");
       }
@@ -661,30 +668,36 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     return buf.toString();
   }
 
+  @Override
   public final void addListener(final TCConnectionEventListener listener) {
     if (listener == null) { return; }
     this.eventListeners.add(listener); // don't need sync
   }
 
+  @Override
   public final void removeListener(final TCConnectionEventListener listener) {
     if (listener == null) { return; }
     this.eventListeners.remove(listener); // don't need sync
   }
 
+  @Override
   public final long getConnectTime() {
     return this.connectTime.get();
   }
 
+  @Override
   public final long getIdleTime() {
     return System.currentTimeMillis()
            - (this.lastDataWriteTime.get() > this.lastDataReceiveTime.get() ? this.lastDataWriteTime.get()
                : this.lastDataReceiveTime.get());
   }
 
+  @Override
   public final long getIdleReceiveTime() {
     return System.currentTimeMillis() - this.lastDataReceiveTime.get();
   }
 
+  @Override
   public final synchronized void connect(final TCSocketAddress addr, final int timeout) throws IOException,
       TCTimeoutException {
     if (this.closed.isSet() || this.connected.get()) { throw new IllegalStateException(
@@ -693,6 +706,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     finishConnect();
   }
 
+  @Override
   public final synchronized boolean asynchConnect(final TCSocketAddress addr) throws IOException {
     if (this.closed.isSet() || this.connected.get()) { throw new IllegalStateException(
                                                                                        "Connection closed or already connected"); }
@@ -706,6 +720,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     return rv;
   }
 
+  @Override
   public final void putMessage(final TCNetworkMessage message) {
     this.lastDataWriteTime.set(System.currentTimeMillis());
 
@@ -717,12 +732,14 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     putMessageImpl(message);
   }
 
+  @Override
   public final TCSocketAddress getLocalAddress() {
-    return (TCSocketAddress) this.localSocketAddress.get();
+    return this.localSocketAddress.get();
   }
 
+  @Override
   public final TCSocketAddress getRemoteAddress() {
-    return (TCSocketAddress) this.remoteSocketAddress.get();
+    return this.remoteSocketAddress.get();
   }
 
   private final void setConnected(final boolean connected) {
@@ -790,6 +807,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     this.eventCaller.fireErrorEvent(this.eventListeners, this, e, context);
   }
 
+  @Override
   public final Socket detach() throws IOException {
     this.parent.removeConnection(this);
     return detachImpl();
@@ -810,6 +828,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     }
 
     message.setSentCallback(new Runnable() {
+      @Override
       public void run() {
         for (final Runnable callback : callbacks) {
           if (callback != null) {
@@ -831,6 +850,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     final Runnable callback = payload.getSentCallback();
     if (callback != null) {
       message.setSentCallback(new Runnable() {
+        @Override
         public void run() {
           callback.run();
         }
@@ -870,6 +890,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     }
   }
 
+  @Override
   public boolean isClosePending() {
     return pipeSocket != null && pipeSocket.isClosed();
   }
@@ -994,14 +1015,17 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     }
   }
 
+  @Override
   public void addWeight(final int addWeightBy) {
     this.commWorker.addWeight(this, addWeightBy, this.channel);
   }
 
+  @Override
   public void setTransportEstablished() {
     this.transportEstablished.set(true);
   }
 
+  @Override
   public boolean isTransportEstablished() {
     return this.transportEstablished.get();
   }
