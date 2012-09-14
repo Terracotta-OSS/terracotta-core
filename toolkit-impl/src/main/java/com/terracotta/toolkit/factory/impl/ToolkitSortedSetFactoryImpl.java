@@ -6,6 +6,7 @@ package com.terracotta.toolkit.factory.impl;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
+import com.tc.object.bytecode.PlatformService;
 import com.terracotta.toolkit.collections.DestroyableToolkitSortedMap;
 import com.terracotta.toolkit.collections.ToolkitSortedSetImpl;
 import com.terracotta.toolkit.collections.map.ToolkitSortedMapImpl;
@@ -23,9 +24,10 @@ public class ToolkitSortedSetFactoryImpl extends
 
   private static final SetIsolatedTypeFactory FACTORY = new SetIsolatedTypeFactory();
 
-  public ToolkitSortedSetFactoryImpl(ToolkitInternal toolkit, ToolkitTypeRootsFactory rootsFactory) {
+  public ToolkitSortedSetFactoryImpl(ToolkitInternal toolkit, ToolkitTypeRootsFactory rootsFactory,
+                                     PlatformService platformService) {
     super(toolkit, rootsFactory.createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_SORTED_SET_ROOT_NAME,
-                                                                FACTORY));
+                                                                FACTORY, platformService));
   }
 
   @Override

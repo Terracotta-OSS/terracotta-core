@@ -6,23 +6,26 @@ package com.terracotta.toolkit.object.serialization;
 import org.terracotta.toolkit.object.serialization.NotSerializableRuntimeException;
 
 import com.tc.net.GroupID;
-import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.bytecode.PlatformService;
 
 import java.io.Serializable;
 
 public class SerializedClusterObjectFactoryImpl implements SerializedClusterObjectFactory {
 
   private final SerializationStrategy strategy;
+  private final PlatformService       platformService;
 
-  public SerializedClusterObjectFactoryImpl(SerializationStrategy strategy) {
+  public SerializedClusterObjectFactoryImpl(PlatformService platformService, SerializationStrategy strategy) {
     this.strategy = strategy;
+    this.platformService = platformService;
   }
 
+  @Override
   public SerializedClusterObject createSerializedClusterObject(final Object value, final GroupID gid)
       throws NotSerializableRuntimeException {
     SerializedClusterObject clusterObject;
     clusterObject = new SerializedClusterObjectImpl(value, strategy.serialize(value, false));
-    ManagerUtil.lookupOrCreate(clusterObject, gid);
+    platformService.lookupOrCreate(clusterObject, gid);
     return clusterObject;
   }
 
@@ -34,7 +37,7 @@ public class SerializedClusterObjectFactoryImpl implements SerializedClusterObje
     } else {
       serializedMapValue = new SerializedMapValue<Serializable>(params);
     }
-    ManagerUtil.lookupOrCreate(serializedMapValue, gid);
+    platformService.lookupOrCreate(serializedMapValue, gid);
     return serializedMapValue;
   }
 

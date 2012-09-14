@@ -10,9 +10,9 @@ import com.tc.net.GroupID;
 import com.tc.object.LiteralValues;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
-import com.tc.object.bytecode.ManagerUtil;
-import com.terracotta.toolkit.concurrent.locks.UnnamedToolkitReadWriteLock;
+import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.object.AbstractTCToolkitObject;
+import com.terracotta.toolkit.object.ToolkitObjectType;
 import com.terracotta.toolkit.object.serialization.SerializedClusterObject;
 
 import java.io.Serializable;
@@ -51,6 +51,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
     lock.readLock().unlock();
   }
 
+  @Override
   public ToolkitReadWriteLock getReadWriteLock() {
     return lock;
   }
@@ -226,7 +227,7 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
   }
 
   private void logicalInvoke(String signature, Object[] params) {
-    ManagerUtil.logicalInvoke(this, signature, params);
+    platformService.logicalInvoke(this, signature, params);
   }
 
   @Override
@@ -234,8 +235,8 @@ public class ToolkitListImpl<E> extends AbstractTCToolkitObject implements Toolk
     tcObject = t;
     gid = new GroupID(t.getObjectID().getGroupID());
     localResolveLock = tcObject.getResolveLock();
-    String lockID = "__tc_list_" + tcObject.getObjectID().toLong();
-    lock = new UnnamedToolkitReadWriteLock(lockID);
+    lock = ToolkitLockingApi
+        .createUnnamedReadWriteLock(ToolkitObjectType.LIST, tcObject.getObjectID(), platformService);
   }
 
   @Override

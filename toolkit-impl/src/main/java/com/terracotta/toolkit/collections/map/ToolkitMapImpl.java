@@ -12,9 +12,9 @@ import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
-import com.tc.object.bytecode.ManagerUtil;
-import com.terracotta.toolkit.concurrent.locks.UnnamedToolkitReadWriteLock;
+import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.object.AbstractTCToolkitObject;
+import com.terracotta.toolkit.object.ToolkitObjectType;
 import com.terracotta.toolkit.object.serialization.SerializedClusterObject;
 
 import java.util.ArrayList;
@@ -28,11 +28,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements ToolkitMap<K, V> {
-  protected final KeyValueHolder<K, V>  keyValueHolder;
+  protected final KeyValueHolder<K, V>    keyValueHolder;
 
-  protected volatile Object             localResolveLock;
+  protected volatile Object               localResolveLock;
   protected volatile ToolkitReadWriteLock lock;
-  private final List<MutateOperation>   pendingChanges = new ArrayList();
+  private final List<MutateOperation>     pendingChanges = new ArrayList();
 
   public ToolkitMapImpl() {
     this(new KeyValueHolder(new ConcurrentHashMap<K, V>()));
@@ -75,8 +75,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     tcObject = t;
     gid = new GroupID(t.getObjectID().getGroupID());
     localResolveLock = tcObject.getResolveLock();
-    String lockID = "__tc_map_" + tcObject.getObjectID().toLong();
-    lock = new UnnamedToolkitReadWriteLock(lockID);
+    lock = ToolkitLockingApi.createUnnamedReadWriteLock(ToolkitObjectType.MAP, tcObject.getObjectID(), platformService);
   }
 
   @Override
@@ -95,7 +94,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     if (oidKey == null) {
       return createTCCompatibleObject(key);
     } else {
-      return ManagerUtil.lookupObject(oidKey);
+      return platformService.lookupObject(oidKey);
     }
   }
 
@@ -203,7 +202,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
     keyValueHolder.put(key, value, getObjectIDForKey(tcKey));
 
-    ManagerUtil.logicalInvoke(this, SerializationUtil.PUT_SIGNATURE, new Object[] { tcKey, tcVal });
+    platformService.logicalInvoke(this, SerializationUtil.PUT_SIGNATURE, new Object[] { tcKey, tcVal });
     return rv;
   }
 
@@ -278,7 +277,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     V oldValue = keyValueHolder.remove(key);
 
     Object tcKey = getOrCreateObjectForKey(key);
-    ManagerUtil.logicalInvoke(this, SerializationUtil.REMOVE_SIGNATURE, new Object[] { tcKey });
+    platformService.logicalInvoke(this, SerializationUtil.REMOVE_SIGNATURE, new Object[] { tcKey });
 
     return oldValue;
   }
@@ -305,7 +304,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
       synchronized (localResolveLock) {
         applyPendingChanges();
         this.keyValueHolder.clear();
-        ManagerUtil.logicalInvoke(this, SerializationUtil.CLEAR_SIGNATURE, new Object[] {});
+        platformService.logicalInvoke(this, SerializationUtil.CLEAR_SIGNATURE, new Object[] {});
       }
     } finally {
       lock.writeLock().unlock();
@@ -653,7 +652,8 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
           iterator.remove();
           Object tcKey = getOrCreateObjectForKey(currentValue);
           keyValueHolder.removeObjectIDForKey(currentValue);
-          ManagerUtil.logicalInvoke(ToolkitMapImpl.this, SerializationUtil.REMOVE_SIGNATURE, new Object[] { tcKey });
+          platformService
+              .logicalInvoke(ToolkitMapImpl.this, SerializationUtil.REMOVE_SIGNATURE, new Object[] { tcKey });
         }
       } finally {
         lock.writeLock().unlock();
@@ -1054,7 +1054,8 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
           iterator.remove();
           Object tcKey = getOrCreateObjectForKey(entry.getKey());
           keyValueHolder.removeObjectIDForKey(entry.getKey());
-          ManagerUtil.logicalInvoke(ToolkitMapImpl.this, SerializationUtil.REMOVE_SIGNATURE, new Object[] { tcKey });
+          platformService
+              .logicalInvoke(ToolkitMapImpl.this, SerializationUtil.REMOVE_SIGNATURE, new Object[] { tcKey });
         }
       } finally {
         lock.writeLock().unlock();

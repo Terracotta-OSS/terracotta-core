@@ -6,6 +6,7 @@ package com.terracotta.toolkit.factory.impl;
 import org.terracotta.toolkit.cache.ToolkitCache;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
+import com.tc.object.bytecode.PlatformService;
 import com.terracotta.toolkit.collections.map.ServerMap;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreFactory;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
@@ -24,28 +25,31 @@ public class ToolkitCacheFactoryImpl extends AbstractPrimaryToolkitObjectFactory
 
   private ToolkitCacheFactoryImpl(ToolkitInternal toolkit, ToolkitObjectType type,
                                   ToolkitTypeRootsFactory rootsFactory, SearchBuilderFactory searchBuilderFactory,
-                                  ServerMapLocalStoreFactory serverMapLocalStoreFactory) {
+                                  ServerMapLocalStoreFactory serverMapLocalStoreFactory, PlatformService platformService) {
     super(toolkit, rootsFactory
         .createAggregateDistributedTypeRoot(getRootNameFor(type),
                                             new ToolkitCacheDistributedTypeFactory(searchBuilderFactory,
-                                                                                   serverMapLocalStoreFactory)));
+                                                                                   serverMapLocalStoreFactory),
+                                            platformService));
     this.type = type;
   }
 
   public static ToolkitCacheFactoryImpl newToolkitCacheFactory(ToolkitInternal toolkit,
                                                                ToolkitTypeRootsFactory rootsFactory,
                                                                SearchBuilderFactory searchBuilderFactory,
-                                                               ServerMapLocalStoreFactory serverMapLocalStoreFactory) {
+                                                               ServerMapLocalStoreFactory serverMapLocalStoreFactory,
+                                                               PlatformService platformService) {
     return new ToolkitCacheFactoryImpl(toolkit, ToolkitObjectType.CACHE, rootsFactory, searchBuilderFactory,
-                                       serverMapLocalStoreFactory);
+                                       serverMapLocalStoreFactory, platformService);
   }
 
   public static ToolkitCacheFactoryImpl newToolkitStoreFactory(ToolkitInternal toolkit,
                                                                ToolkitTypeRootsFactory rootsFactory,
                                                                SearchBuilderFactory searchBuilderFactory,
-                                                               ServerMapLocalStoreFactory serverMapLocalStoreFactory) {
+                                                               ServerMapLocalStoreFactory serverMapLocalStoreFactory,
+                                                               PlatformService platformService) {
     return new ToolkitCacheFactoryImpl(toolkit, ToolkitObjectType.STORE, rootsFactory, searchBuilderFactory,
-                                       serverMapLocalStoreFactory);
+                                       serverMapLocalStoreFactory, platformService);
   }
 
   @Override

@@ -7,63 +7,58 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLockType;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
-import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.locks.LockLevel;
+import com.tc.object.bytecode.PlatformService;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 
 public class UnnamedToolkitLock implements ToolkitLock {
-  private final Object        lockID;
-  private final LockLevel     level;
-  private final ConditionImpl conditionImpl = new ConditionImpl();
+  private final ToolkitLockDetail lockDetail;
+  private final ConditionImpl   conditionImpl = new ConditionImpl();
+  private final PlatformService   service;
 
-  public UnnamedToolkitLock(String lockId, ToolkitLockTypeInternal lockType) {
-    this(lockId, LockingUtils.translate(lockType));
+  UnnamedToolkitLock(PlatformService platformService, String lockId, ToolkitLockTypeInternal lockType) {
+    this(platformService, ToolkitLockDetail.newLockDetail(lockId, lockType));
   }
 
-  public UnnamedToolkitLock(long lockId, ToolkitLockTypeInternal lockType) {
-    this(lockId, LockingUtils.translate(lockType));
+  UnnamedToolkitLock(PlatformService platformService, long lockId, ToolkitLockTypeInternal lockType) {
+    this(platformService, ToolkitLockDetail.newLockDetail(lockId, lockType));
   }
 
-  private UnnamedToolkitLock(Object lockId, LockLevel level) {
-    this.lockID = lockId;
-    this.level = level;
-  }
-
-  protected Object getLockId() {
-    return lockID;
+  private UnnamedToolkitLock(PlatformService platformService, ToolkitLockDetail lockDetail) {
+    this.lockDetail = lockDetail;
+    this.service = platformService;
   }
 
   @Override
   public void lock() {
-    ManagerUtil.monitorEnter(lockID, level);
+    ToolkitLockingApi.lock(lockDetail, service);
   }
 
   @Override
   public void lockInterruptibly() throws InterruptedException {
-    ManagerUtil.monitorEnterInterruptibly(lockID, level);
+    ToolkitLockingApi.lockInterruptibly(lockDetail, service);
   }
 
   @Override
   public boolean tryLock() {
-    return ManagerUtil.tryMonitorEnter(lockID, level);
+    return ToolkitLockingApi.tryLock(lockDetail, service);
   }
 
   @Override
   public boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
-    return ManagerUtil.tryMonitorEnter(lockID, level, unit.toNanos(time));
+    return ToolkitLockingApi.tryLock(lockDetail, time, unit, service);
   }
 
   @Override
   public void unlock() {
-    ManagerUtil.monitorExit(lockID, level);
+    ToolkitLockingApi.unlock(lockDetail, service);
   }
 
   @Override
   public boolean isHeldByCurrentThread() {
-    return ManagerUtil.isHeldByCurrentThread(lockID, level);
+    return ToolkitLockingApi.isHeldByCurrentThread(lockDetail, service);
   }
 
   @Override
@@ -79,7 +74,7 @@ public class UnnamedToolkitLock implements ToolkitLock {
 
   @Override
   public Condition getCondition() {
-    ToolkitLockTypeInternal lockType = getLockTypeInternal();
+    ToolkitLockTypeInternal lockType = lockDetail.getToolkitInternalLockType();
     if (lockType == ToolkitLockTypeInternal.READ || lockType == ToolkitLockTypeInternal.CONCURRENT) {
       //
       throw new UnsupportedOperationException("Conditions not supported for this lock type - " + lockType);
@@ -87,13 +82,9 @@ public class UnnamedToolkitLock implements ToolkitLock {
     return conditionImpl;
   }
 
-  private ToolkitLockTypeInternal getLockTypeInternal() {
-    return LockingUtils.translate(level);
-  }
-
   @Override
   public ToolkitLockType getLockType() {
-    return getLockTypeInternal().getToolkitLockType();
+    return lockDetail.getToolkitInternalLockType().getToolkitLockType();
   }
 
   private final class ConditionImpl implements Condition {
@@ -109,7 +100,7 @@ public class UnnamedToolkitLock implements ToolkitLock {
       try {
         while (true) {
           try {
-            ManagerUtil.lockIDWait(lockID, 0);
+            ToolkitLockingApi.lockIdWait(lockDetail, service);
           } catch (InterruptedException e) {
             interrupted = true;
             continue;
@@ -130,7 +121,7 @@ public class UnnamedToolkitLock implements ToolkitLock {
 
       long finalTime = System.nanoTime() + nanosTimeout;
 
-      ManagerUtil.lockIDWait(lockID, TimeUnit.NANOSECONDS.toMillis(nanosTimeout));
+      ToolkitLockingApi.lockIdWait(lockDetail, nanosTimeout, TimeUnit.NANOSECONDS, service);
 
       return finalTime - System.nanoTime();
     }
@@ -148,12 +139,12 @@ public class UnnamedToolkitLock implements ToolkitLock {
 
     @Override
     public void signal() {
-      ManagerUtil.lockIDNotify(lockID);
+      ToolkitLockingApi.lockIdNotify(lockDetail, service);
     }
 
     @Override
     public void signalAll() {
-      ManagerUtil.lockIDNotifyAll(lockID);
+      ToolkitLockingApi.lockIdNotifyAll(lockDetail, service);
     }
 
   }

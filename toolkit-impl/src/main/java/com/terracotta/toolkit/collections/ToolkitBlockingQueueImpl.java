@@ -83,7 +83,7 @@ public class ToolkitBlockingQueueImpl<E> extends AbstractDestroyableToolkitObjec
 
   @Override
   public void put(E e) throws InterruptedException {
-    while (!offer(e, Long.MAX_VALUE, TimeUnit.SECONDS)) {
+    while (!offer(e, Long.MAX_VALUE, TimeUnit.NANOSECONDS)) {
       // keep trying until added successfully
     }
   }
@@ -124,7 +124,7 @@ public class ToolkitBlockingQueueImpl<E> extends AbstractDestroyableToolkitObjec
   public E take() throws InterruptedException {
     while (true) {
       // keep trying until successful
-      E value = poll(Long.MAX_VALUE, TimeUnit.SECONDS);
+      E value = poll(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
       if (value != null) { return value; }
     }
   }
@@ -268,6 +268,7 @@ public class ToolkitBlockingQueueImpl<E> extends AbstractDestroyableToolkitObjec
 
   // from AbstractQueue, AbstractCollection
 
+  @Override
   public boolean add(E e) {
     if (offer(e)) return true;
     else throw new IllegalStateException("Queue full");
@@ -282,6 +283,7 @@ public class ToolkitBlockingQueueImpl<E> extends AbstractDestroyableToolkitObjec
    * @return the head of this queue
    * @throws NoSuchElementException if this queue is empty
    */
+  @Override
   public E remove() {
     E x = poll();
     if (x != null) return x;
@@ -297,6 +299,7 @@ public class ToolkitBlockingQueueImpl<E> extends AbstractDestroyableToolkitObjec
    * @return the head of this queue
    * @throws NoSuchElementException if this queue is empty
    */
+  @Override
   public E element() {
     E x = peek();
     if (x != null) return x;
@@ -308,6 +311,7 @@ public class ToolkitBlockingQueueImpl<E> extends AbstractDestroyableToolkitObjec
    * <p>
    * This implementation repeatedly invokes {@link #poll poll} until it returns <tt>null</tt>.
    */
+  @Override
   public void clear() {
     while (poll() != null) {
       //
@@ -318,6 +322,7 @@ public class ToolkitBlockingQueueImpl<E> extends AbstractDestroyableToolkitObjec
   /**
    * TODO: Should we just add the remaining capacity
    */
+  @Override
   public boolean addAll(Collection<? extends E> c) {
     lock.writeLock().lock();
     try {
@@ -351,22 +356,27 @@ public class ToolkitBlockingQueueImpl<E> extends AbstractDestroyableToolkitObjec
     }
   }
 
+  @Override
   public boolean isEmpty() {
     return backingList.isEmpty();
   }
 
+  @Override
   public boolean contains(Object o) {
     return backingList.contains(o);
   }
 
+  @Override
   public Object[] toArray() {
     return backingList.toArray();
   }
 
+  @Override
   public <T> T[] toArray(T[] a) {
     return backingList.toArray(a);
   }
 
+  @Override
   public boolean remove(Object o) {
     lock.writeLock().lock();
     try {
@@ -381,10 +391,12 @@ public class ToolkitBlockingQueueImpl<E> extends AbstractDestroyableToolkitObjec
     }
   }
 
+  @Override
   public boolean containsAll(Collection<?> c) {
     return backingList.containsAll(c);
   }
 
+  @Override
   public boolean removeAll(Collection<?> c) {
     lock.writeLock().lock();
     try {
@@ -401,6 +413,7 @@ public class ToolkitBlockingQueueImpl<E> extends AbstractDestroyableToolkitObjec
     }
   }
 
+  @Override
   public boolean retainAll(Collection<?> c) {
     lock.writeLock().lock();
     try {

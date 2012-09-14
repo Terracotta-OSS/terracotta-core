@@ -3,9 +3,11 @@
  */
 package com.terracotta.toolkit.roots.impl;
 
+import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
+
 import com.tc.net.GroupID;
-import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.locks.LockLevel;
+import com.tc.object.bytecode.PlatformService;
+import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 
 public final class RootsUtil {
 
@@ -17,25 +19,21 @@ public final class RootsUtil {
     T create();
   }
 
-  public static <T> T lookupOrCreateRootInGroup(GroupID gid, String name, RootObjectCreator<T> creator) {
-    String lockId = generateLockId(name);
-    ManagerUtil.beginLock(lockId, LockLevel.READ);
+  public static <T> T lookupOrCreateRootInGroup(PlatformService platformService, GroupID gid, String name,
+                                                RootObjectCreator<T> creator) {
+    ToolkitLockingApi.lock(name, ToolkitLockTypeInternal.READ, platformService);
     try {
-      Object root = ManagerUtil.lookupRoot(name, gid);
+      Object root = platformService.lookupRoot(name, gid);
       if (root != null) { return (T) root; }
     } finally {
-      ManagerUtil.commitLock(lockId, LockLevel.READ);
+      ToolkitLockingApi.unlock(name, ToolkitLockTypeInternal.READ, platformService);
     }
 
-    ManagerUtil.beginLock(lockId, LockLevel.WRITE);
+    ToolkitLockingApi.lock(name, ToolkitLockTypeInternal.WRITE, platformService);
     try {
-      return (T) ManagerUtil.lookupOrCreateRoot(name, creator.create(), gid);
+      return (T) platformService.lookupOrCreateRoot(name, creator.create(), gid);
     } finally {
-      ManagerUtil.commitLock(lockId, LockLevel.WRITE);
+      ToolkitLockingApi.unlock(name, ToolkitLockTypeInternal.WRITE, platformService);
     }
-  }
-
-  private static String generateLockId(String name) {
-    return "__TC_ROOT_" + name;
   }
 }

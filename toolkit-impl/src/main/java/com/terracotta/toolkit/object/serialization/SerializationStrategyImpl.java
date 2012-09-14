@@ -5,6 +5,8 @@ package com.terracotta.toolkit.object.serialization;
 
 import org.terracotta.toolkit.object.serialization.NotSerializableRuntimeException;
 
+import com.tc.object.bytecode.PlatformService;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -30,8 +32,8 @@ public class SerializationStrategyImpl implements SerializationStrategy {
   private final ObjectStreamClassMapping      serializer;
   private final ThreadContextAwareClassLoader tccl;
 
-  public SerializationStrategyImpl(SerializerMap serializerMap) {
-    this.serializer = new ObjectStreamClassMapping(serializerMap);
+  public SerializationStrategyImpl(PlatformService platformService, SerializerMap serializerMap) {
+    this.serializer = new ObjectStreamClassMapping(platformService, serializerMap);
     tccl = new ThreadContextAwareClassLoader(SerializationStrategyImpl.class.getClassLoader());
   }
 

@@ -32,6 +32,8 @@ import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
 
 import com.tc.net.GroupID;
 import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.bytecode.PlatformService;
+import com.tc.object.bytecode.PlatformServiceImpl;
 import com.terracotta.toolkit.cluster.TerracottaClusterInfo;
 import com.terracotta.toolkit.collections.ToolkitBlockingQueueImpl;
 import com.terracotta.toolkit.collections.ToolkitSetImpl;
@@ -70,6 +72,7 @@ import java.util.UUID;
 public class TerracottaToolkit implements ToolkitInternal {
 
   public static final String                                   TOOLKIT_SERIALIZER_REGISTRATION_NAME = "TOOLKIT_SERIALIZER";
+  public static final String                                   PLATFORM_SERVICE_REGISTRATION_NAME   = "PLATFORM_SERVICE";
   private final ToolkitObjectFactory<ToolkitList>              clusteredListFactory;
   private final ToolkitObjectFactory<ToolkitCache>             clusteredCacheFactory;
   private final ToolkitObjectFactory<ToolkitMap>               clusteredMapFactory;
@@ -87,10 +90,16 @@ public class TerracottaToolkit implements ToolkitInternal {
   private final WeakValueMapManager                            weakValueMapManager                  = new WeakValueMapManager();
   private ToolkitProperties                                    toolkitProperties;
 
+  protected final PlatformService                              platformService;
+  private final ClusterInfo                                    clusterInfoInstance;
+
   public TerracottaToolkit(TerracottaL1Instance tcClient) {
     this.tcClient = tcClient;
+    platformService = ManagerUtil.registerObjectByNameIfAbsent(PLATFORM_SERVICE_REGISTRATION_NAME,
+                                                               new PlatformServiceImpl());
+    clusterInfoInstance = new TerracottaClusterInfo(platformService);
     SerializationStrategy strategy = createSerializationStrategy();
-    Object old = ManagerUtil.registerObjectByNameIfAbsent(TOOLKIT_SERIALIZER_REGISTRATION_NAME, strategy);
+    Object old = platformService.registerObjectByNameIfAbsent(TOOLKIT_SERIALIZER_REGISTRATION_NAME, strategy);
     if (old != null) {
       if (old instanceof SerializationStrategy) {
         strategy = (SerializationStrategy) old;
@@ -104,19 +113,19 @@ public class TerracottaToolkit implements ToolkitInternal {
 
     ToolkitTypeRootsStaticFactory toolkitTypeRootsFactory = new ToolkitTypeRootsStaticFactory(weakValueMapManager);
 
-    clusteredNotifierFactory = new ToolkitNotifierFactoryImpl(this, toolkitTypeRootsFactory);
-    clusteredListFactory = new ToolkitListFactoryImpl(this, toolkitTypeRootsFactory);
+    clusteredNotifierFactory = new ToolkitNotifierFactoryImpl(this, toolkitTypeRootsFactory, platformService);
+    clusteredListFactory = new ToolkitListFactoryImpl(this, toolkitTypeRootsFactory, platformService);
     // create set factory before map factory, as map uses set internally
-    clusteredSetFactory = new ToolkitSetFactoryImpl(this, toolkitTypeRootsFactory);
+    clusteredSetFactory = new ToolkitSetFactoryImpl(this, toolkitTypeRootsFactory, platformService);
     clusteredCacheFactory = ToolkitCacheFactoryImpl.newToolkitCacheFactory(this, toolkitTypeRootsFactory,
                                                                            createSearchBuilderFactory(),
-                                                                           serverMapLocalStoreFactory);
-    clusteredMapFactory = new ToolkitMapFactoryImpl(this, toolkitTypeRootsFactory);
-    clusteredSortedMapFactory = new ToolkitSortedMapFactoryImpl(this, toolkitTypeRootsFactory);
+                                                                           serverMapLocalStoreFactory, platformService);
+    clusteredMapFactory = new ToolkitMapFactoryImpl(this, toolkitTypeRootsFactory, platformService);
+    clusteredSortedMapFactory = new ToolkitSortedMapFactoryImpl(this, toolkitTypeRootsFactory, platformService);
     clusteredStoreFactory = ToolkitCacheFactoryImpl.newToolkitStoreFactory(this, toolkitTypeRootsFactory,
                                                                            createSearchBuilderFactory(),
-                                                                           serverMapLocalStoreFactory);
-    clusteredBlockingQueueFactory = new ToolkitBlockingQueueFactoryImpl(this, toolkitTypeRootsFactory);
+                                                                           serverMapLocalStoreFactory, platformService);
+    clusteredBlockingQueueFactory = new ToolkitBlockingQueueFactoryImpl(this, toolkitTypeRootsFactory, platformService);
     ToolkitStore atomicLongs = clusteredStoreFactory.getOrCreate(ToolkitTypeConstants.TOOLKIT_ATOMIC_LONG_MAP_NAME,
                                                                  new ToolkitStoreConfigBuilder()
                                                                      .consistency(Consistency.STRONG).build());
@@ -127,7 +136,7 @@ public class TerracottaToolkit implements ToolkitInternal {
                                                                   .consistency(Consistency.STRONG).build());
     clusteredBarrierFactory = new ToolkitBarrierFactoryImpl(barriers);
 
-    clusteredSortedSetFactory = new ToolkitSortedSetFactoryImpl(this, toolkitTypeRootsFactory);
+    clusteredSortedSetFactory = new ToolkitSortedSetFactoryImpl(this, toolkitTypeRootsFactory, platformService);
   }
 
   private CacheManager createDefaultToolkitCacheManager() {
@@ -136,11 +145,12 @@ public class TerracottaToolkit implements ToolkitInternal {
   }
 
   private SerializationStrategy createSerializationStrategy() {
-    return new SerializationStrategyImpl(getOrCreateSerializerRootMap());
+    return new SerializationStrategyImpl(platformService, getOrCreateSerializerRootMap(platformService));
   }
 
-  private static SerializerMap getOrCreateSerializerRootMap() {
-    return RootsUtil.lookupOrCreateRootInGroup(new GroupID(0), ToolkitTypeConstants.SERIALIZER_MAP_ROOT_NAME,
+  private static SerializerMap getOrCreateSerializerRootMap(PlatformService platformService) {
+    return RootsUtil.lookupOrCreateRootInGroup(platformService, new GroupID(0),
+                                               ToolkitTypeConstants.SERIALIZER_MAP_ROOT_NAME,
                                                new RootObjectCreator<SerializerMapImpl>() {
                                                  @Override
                                                  public SerializerMapImpl create() {
@@ -177,7 +187,7 @@ public class TerracottaToolkit implements ToolkitInternal {
 
   @Override
   public ClusterInfo getClusterInfo() {
-    return TerracottaClusterInfoHolder.INSTANCE;
+    return clusterInfoInstance;
   }
 
   @Override
@@ -187,12 +197,12 @@ public class TerracottaToolkit implements ToolkitInternal {
 
   @Override
   public ToolkitLock getLock(String name, ToolkitLockTypeInternal internalLockType) {
-    return new ToolkitLockImpl(name, internalLockType);
+    return new ToolkitLockImpl(platformService, name, internalLockType);
   }
 
   @Override
   public ToolkitReadWriteLock getReadWriteLock(String name) {
-    return new ToolkitReadWriteLockImpl(name);
+    return new ToolkitReadWriteLockImpl(platformService, name);
   }
 
   @Override
@@ -226,7 +236,7 @@ public class TerracottaToolkit implements ToolkitInternal {
 
   @Override
   public void fireOperatorEvent(OperatorEventLevel level, String applicationName, String eventMessage) {
-    OperatorEventUtil.fireOperatorEvent(level, applicationName, eventMessage);
+    OperatorEventUtil.fireOperatorEvent(platformService, level, applicationName, eventMessage);
   }
 
   @Override
@@ -254,23 +264,19 @@ public class TerracottaToolkit implements ToolkitInternal {
     return false;
   }
 
-  private static class TerracottaClusterInfoHolder {
-    private static ClusterInfo INSTANCE = new TerracottaClusterInfo();
-  }
-
   @Override
   public void registerBeforeShutdownHook(Runnable hook) {
-    ManagerUtil.getManager().registerBeforeShutdownHook(hook);
+    platformService.registerBeforeShutdownHook(hook);
   }
 
   @Override
   public ToolkitLogger getLogger(String name) {
-    return new TerracottaLogger(name);
+    return new TerracottaLogger(name, platformService);
   }
 
   @Override
   public void waitUntilAllTransactionsComplete() {
-    ManagerUtil.waitForAllCurrentTransactionsToComplete();
+    platformService.waitForAllCurrentTransactionsToComplete();
   }
 
   protected SearchBuilderFactory createSearchBuilderFactory() {
@@ -289,13 +295,13 @@ public class TerracottaToolkit implements ToolkitInternal {
 
   @Override
   public String getClientUUID() {
-    return ManagerUtil.getUUID();
+    return platformService.getUUID();
   }
 
   @Override
   public synchronized ToolkitProperties getProperties() {
     if (toolkitProperties == null) {
-      toolkitProperties = new TerracottaProperties();
+      toolkitProperties = new TerracottaProperties(platformService);
     }
     return toolkitProperties;
   }

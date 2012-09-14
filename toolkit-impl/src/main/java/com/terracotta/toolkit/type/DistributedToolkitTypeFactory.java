@@ -6,6 +6,7 @@ package com.terracotta.toolkit.type;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
+import com.tc.object.bytecode.PlatformService;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.TCToolkitObject;
 import com.terracotta.toolkit.object.ToolkitObjectStripe;
@@ -24,7 +25,8 @@ public interface DistributedToolkitTypeFactory<T extends DistributedToolkitType<
    * @param name
    */
   T createDistributedType(ToolkitInternal toolkit, ToolkitObjectFactory factory, String name,
-                          ToolkitObjectStripe<S>[] stripeObjects, Configuration configuration);
+                          ToolkitObjectStripe<S>[] stripeObjects, Configuration configuration,
+                          PlatformService platformService);
 
   /**
    * Create the stripe objects

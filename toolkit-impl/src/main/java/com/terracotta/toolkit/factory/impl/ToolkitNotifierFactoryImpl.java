@@ -7,7 +7,7 @@ import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.events.ToolkitNotifier;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
-import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.bytecode.PlatformService;
 import com.terracotta.toolkit.TerracottaProperties;
 import com.terracotta.toolkit.events.DestroyableToolkitNotifier;
 import com.terracotta.toolkit.events.ToolkitNotifierImpl;
@@ -31,16 +31,34 @@ public class ToolkitNotifierFactoryImpl extends
     AbstractPrimaryToolkitObjectFactory<ToolkitNotifier, ToolkitNotifierImpl> {
   public static final String                       TOOLKIT_NOTIFIER_EXECUTOR_SERVICE = "toolkitNotifierExecutorService";
 
-  private static int                               MAX_NOTIFIER_THREAD_COUNT         = new TerracottaProperties()
-                                                                                         .getInteger("maxToolkitNotifierThreadCount",
-                                                                                                     20);
-
   private static final NotifierIsolatedTypeFactory FACTORY                           = new NotifierIsolatedTypeFactory();
 
-  public ToolkitNotifierFactoryImpl(ToolkitInternal toolkit, ToolkitTypeRootsFactory rootsFactory) {
+  public ToolkitNotifierFactoryImpl(ToolkitInternal toolkit, ToolkitTypeRootsFactory rootsFactory,
+                                    PlatformService platformService) {
     super(toolkit, rootsFactory.createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_NOTIFIER_ROOT_NAME,
-                                                                FACTORY));
-    final ExecutorService notifierService = new ThreadPoolExecutor(0, MAX_NOTIFIER_THREAD_COUNT, 60L, TimeUnit.SECONDS,
+                                                                FACTORY, platformService));
+
+    final ExecutorService notifierService = createExecutorService(platformService);
+    ExecutorService service = platformService.registerObjectByNameIfAbsent(TOOLKIT_NOTIFIER_EXECUTOR_SERVICE,
+                                                                           notifierService);
+    if (service == notifierService) {
+      registerForShutdown(notifierService, service);
+    }
+  }
+
+  private void registerForShutdown(final ExecutorService notifierService, ExecutorService service) {
+    toolkit.registerBeforeShutdownHook(new Runnable() {
+      @Override
+      public void run() {
+        notifierService.shutdown();
+      }
+    });
+  }
+
+  private ExecutorService createExecutorService(PlatformService platformService) {
+    int maxNotifierThreadCount = new TerracottaProperties(platformService).getInteger("maxToolkitNotifierThreadCount",
+                                                                                      20);
+    final ExecutorService notifierService = new ThreadPoolExecutor(0, maxNotifierThreadCount, 60L, TimeUnit.SECONDS,
                                                                    new SynchronousQueue<Runnable>(),
                                                                    new ThreadFactory() {
                                                                      private final AtomicInteger count = new AtomicInteger();
@@ -56,16 +74,7 @@ public class ToolkitNotifierFactoryImpl extends
                                                                        return thread;
                                                                      }
                                                                    });
-    ExecutorService service = ManagerUtil.registerObjectByNameIfAbsent(TOOLKIT_NOTIFIER_EXECUTOR_SERVICE,
-                                                                       notifierService);
-    if (service == notifierService) {
-      toolkit.registerBeforeShutdownHook(new Runnable() {
-        @Override
-        public void run() {
-          notifierService.shutdown();
-        }
-      });
-    }
+    return notifierService;
   }
 
   @Override

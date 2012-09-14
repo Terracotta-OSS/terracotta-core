@@ -6,7 +6,8 @@ package com.terracotta.toolkit.object.serialization;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
 import com.tc.logging.TCLogger;
-import com.tc.object.bytecode.ManagerUtil;
+import com.tc.logging.TCLogging;
+import com.tc.object.bytecode.PlatformService;
 import com.tc.util.runtime.Vm;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockImpl;
 
@@ -26,8 +27,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ObjectStreamClassMapping {
-  private static final TCLogger                   LOGGER       = ManagerUtil.getLogger(ObjectStreamClassMapping.class
-                                                                   .getName());
+  private static final TCLogger                   LOGGER       = TCLogging.getLogger(ObjectStreamClassMapping.class);
   private static final Field                      SUPER_DESC;
   private static final Method                     IS_SERIALIZABLE;
   private static final String                     CHARSET      = "ISO-8859-1";
@@ -65,7 +65,7 @@ public class ObjectStreamClassMapping {
     IS_SERIALIZABLE = isSerializable;
   }
 
-  public ObjectStreamClassMapping(SerializerMap serializerMap) {
+  public ObjectStreamClassMapping(PlatformService platformService, SerializerMap serializerMap) {
     /**
      * For each ObjectStreamClass, this map contains two entries 1. <key, int> and 2. <int, byte []> where key is String
      * representation of SerializableDataKey.
@@ -73,7 +73,7 @@ public class ObjectStreamClassMapping {
     this.serializerMap = serializerMap;
     this.oscSoftQueue = new ReferenceQueue<ObjectStreamClass>();
     this.localCache = new ConcurrentHashMap<Integer, CachedOscReference>();
-    this.lock = new ToolkitLockImpl(LOCK_ID, ToolkitLockTypeInternal.WRITE);
+    this.lock = new ToolkitLockImpl(platformService, LOCK_ID, ToolkitLockTypeInternal.WRITE);
 
   }
 

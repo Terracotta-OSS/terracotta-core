@@ -7,6 +7,7 @@ import org.terracotta.toolkit.collections.ToolkitBlockingQueue;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
+import com.tc.object.bytecode.PlatformService;
 import com.terracotta.toolkit.collections.DestroyableToolkitList;
 import com.terracotta.toolkit.collections.ToolkitBlockingQueueImpl;
 import com.terracotta.toolkit.collections.ToolkitListImpl;
@@ -24,9 +25,10 @@ public class ToolkitBlockingQueueFactoryImpl extends
   public static final String              CAPACITY_FIELD_NAME = "capacity";
   private static final CBQIsolatedFactory FACTORY             = new CBQIsolatedFactory();
 
-  public ToolkitBlockingQueueFactoryImpl(ToolkitInternal toolkit, ToolkitTypeRootsFactory rootsFactory) {
+  public ToolkitBlockingQueueFactoryImpl(ToolkitInternal toolkit, ToolkitTypeRootsFactory rootsFactory,
+                                         PlatformService platformService) {
     super(toolkit, rootsFactory.createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_BLOCKING_QUEUE_ROOT_NAME,
-                                                                FACTORY));
+                                                                FACTORY, platformService));
   }
 
   @Override

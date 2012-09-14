@@ -5,9 +5,10 @@ package com.terracotta.toolkit.roots.impl;
 
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
+import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
-import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.locks.LockLevel;
+import com.tc.object.bytecode.PlatformService;
+import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.object.TCToolkitObject;
@@ -25,12 +26,15 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
   private final ToolkitTypeRoot<ToolkitObjectStripe<S>>[] roots;
   private final DistributedToolkitTypeFactory<T, S>       distributedTypeFactory;
   private final WeakValueMap<T>                           localCache;
+  private final PlatformService                           platformService;
 
   protected AggregateDistributedToolkitTypeRoot(ToolkitTypeRoot<ToolkitObjectStripe<S>>[] roots,
-                                                DistributedToolkitTypeFactory<T, S> factory, WeakValueMap weakValueMap) {
+                                                DistributedToolkitTypeFactory<T, S> factory, WeakValueMap weakValueMap,
+                                                PlatformService platformService) {
     this.roots = roots;
     this.distributedTypeFactory = factory;
     this.localCache = weakValueMap;
+    this.platformService = platformService;
   }
 
   @Override
@@ -59,13 +63,13 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
         }
 
         distributedType = distributedTypeFactory.createDistributedType(toolkit, factory, name, stripeObjects,
-                                                                       effectiveConfig);
+                                                                       effectiveConfig, platformService);
         localCache.put(name, distributedType);
         return distributedType;
       }
     } finally {
       unlock(type, name);
-      ManagerUtil.waitForAllCurrentTransactionsToComplete();
+      platformService.waitForAllCurrentTransactionsToComplete();
     }
   }
 
@@ -113,18 +117,12 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
     }
   }
 
-  private String generateLockIdentifier(ToolkitObjectType toolkitObjectType, String name) {
-    return "@__tc_toolkit_object_lock_" + toolkitObjectType.name() + "_" + name;
-  }
-
   private void lock(ToolkitObjectType toolkitObjectType, String name) {
-    String lockID = generateLockIdentifier(toolkitObjectType, name);
-    ManagerUtil.beginLock(lockID, LockLevel.WRITE);
+    ToolkitLockingApi.lock(toolkitObjectType, name, ToolkitLockTypeInternal.WRITE, platformService);
   }
 
   private void unlock(ToolkitObjectType toolkitObjectType, String name) {
-    String lockID = generateLockIdentifier(toolkitObjectType, name);
-    ManagerUtil.commitLock(lockID, LockLevel.WRITE);
+    ToolkitLockingApi.unlock(toolkitObjectType, name, ToolkitLockTypeInternal.WRITE, platformService);
   }
 
   @Override

@@ -8,18 +8,20 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitLockType;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
-public class UnnamedToolkitReadWriteLock implements ToolkitReadWriteLock {
+import com.tc.object.bytecode.PlatformService;
+
+public final class UnnamedToolkitReadWriteLock implements ToolkitReadWriteLock {
   private final ToolkitLock writeLock;
   private final ToolkitLock readLock;
 
-  public UnnamedToolkitReadWriteLock(String lockId) {
-    this(new UnnamedToolkitLock(lockId, ToolkitLockTypeInternal.WRITE),
-         new UnnamedToolkitLock(lockId, ToolkitLockTypeInternal.READ));
+  UnnamedToolkitReadWriteLock(PlatformService platformService, String lockId) {
+    this(new UnnamedToolkitLock(platformService, lockId, ToolkitLockTypeInternal.WRITE),
+         new UnnamedToolkitLock(platformService, lockId, ToolkitLockTypeInternal.READ));
   }
 
-  public UnnamedToolkitReadWriteLock(long lockId) {
-    this(new UnnamedToolkitLock(lockId, ToolkitLockTypeInternal.WRITE),
-         new UnnamedToolkitLock(lockId, ToolkitLockTypeInternal.READ));
+  UnnamedToolkitReadWriteLock(PlatformService platformService, long lockId) {
+    this(new UnnamedToolkitLock(platformService, lockId, ToolkitLockTypeInternal.WRITE),
+         new UnnamedToolkitLock(platformService, lockId, ToolkitLockTypeInternal.READ));
   }
 
   private UnnamedToolkitReadWriteLock(ToolkitLock writeLock, ToolkitLock readLock) {

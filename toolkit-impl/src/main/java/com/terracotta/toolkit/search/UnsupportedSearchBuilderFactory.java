@@ -5,6 +5,7 @@ package com.terracotta.toolkit.search;
 
 import org.terracotta.toolkit.internal.search.SearchBuilder;
 
+import com.tc.object.bytecode.PlatformService;
 import com.terracotta.toolkit.collections.map.ValuesResolver;
 
 public class UnsupportedSearchBuilderFactory implements SearchBuilderFactory {
@@ -16,7 +17,8 @@ public class UnsupportedSearchBuilderFactory implements SearchBuilderFactory {
   }
 
   @Override
-  public SearchBuilder createSearchBuilder(ValuesResolver valuesResolver, boolean eventual) {
+  public SearchBuilder createSearchBuilder(ValuesResolver valuesResolver, boolean eventual,
+                                           PlatformService platformService) {
     throw new UnsupportedOperationException("Search is supported in enterprise version only");
   }
 

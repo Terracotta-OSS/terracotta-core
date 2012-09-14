@@ -5,7 +5,7 @@ package com.terracotta.toolkit.events;
 
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
 
-import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.bytecode.PlatformService;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 
@@ -33,9 +33,10 @@ public class OperatorEventUtil {
     throw new AssertionError("unknown OperatorEventLevel " + level);
   }
 
-  public static void fireOperatorEvent(OperatorEventLevel level, String applicationName, String eventMessage) {
+  public static void fireOperatorEvent(PlatformService platformService, OperatorEventLevel level,
+                                       String applicationName, String eventMessage) {
     String message = applicationName + ": " + eventMessage;
-    ManagerUtil.fireOperatorEvent(translateOperatorEventLevel(level), EventSubsystem.APPLICATION, message);
+    platformService.fireOperatorEvent(translateOperatorEventLevel(level), EventSubsystem.APPLICATION, message);
 
   }
 }

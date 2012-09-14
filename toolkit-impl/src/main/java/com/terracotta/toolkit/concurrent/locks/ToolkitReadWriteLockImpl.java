@@ -3,21 +3,34 @@
  */
 package com.terracotta.toolkit.concurrent.locks;
 
-public class ToolkitReadWriteLockImpl extends UnnamedToolkitReadWriteLock {
-  private static final String PREFIX = "_tc_read_write_lock@";
-  private final String        name;
+import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
+import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 
-  public ToolkitReadWriteLockImpl(String name) {
-    super(generateLockId(name));
+import com.tc.object.bytecode.PlatformService;
+import com.terracotta.toolkit.object.ToolkitObjectType;
+
+public class ToolkitReadWriteLockImpl implements ToolkitReadWriteLock {
+  private final String                      name;
+  private final UnnamedToolkitReadWriteLock delegate;
+
+  public ToolkitReadWriteLockImpl(PlatformService platformService, String name) {
     this.name = name;
-  }
-
-  private static String generateLockId(String id) {
-    return PREFIX + id;
+    this.delegate = ToolkitLockingApi.createUnnamedReadWriteLock(ToolkitObjectType.READ_WRITE_LOCK, name,
+                                                                 platformService);
   }
 
   @Override
   public String getName() {
     return name;
+  }
+
+  @Override
+  public ToolkitLock readLock() {
+    return delegate.readLock();
+  }
+
+  @Override
+  public ToolkitLock writeLock() {
+    return delegate.writeLock();
   }
 }

@@ -8,6 +8,7 @@ import com.tc.object.LiteralValues;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.bytecode.PlatformService;
 import com.terracotta.toolkit.TerracottaToolkit;
 import com.terracotta.toolkit.object.serialization.SerializationStrategy;
 import com.terracotta.toolkit.object.serialization.SerializedClusterObject;
@@ -26,9 +27,12 @@ public abstract class AbstractTCToolkitObject implements TCToolkitObject {
   protected volatile TCObject                    tcObject;
   private volatile DestroyApplicator             applyDestroyCallback;
   private volatile boolean                       destroyed = false;
+  protected final PlatformService                platformService;
 
   public AbstractTCToolkitObject() {
-    SerializationStrategy registeredSerializer = ManagerUtil
+    platformService = ManagerUtil
+        .lookupRegisteredObjectByName(TerracottaToolkit.PLATFORM_SERVICE_REGISTRATION_NAME, PlatformService.class);
+    SerializationStrategy registeredSerializer = platformService
         .lookupRegisteredObjectByName(TerracottaToolkit.TOOLKIT_SERIALIZER_REGISTRATION_NAME,
                                       SerializationStrategy.class);
     if (registeredSerializer == null) {
@@ -36,7 +40,7 @@ public abstract class AbstractTCToolkitObject implements TCToolkitObject {
       throw new AssertionError("No SerializationStrategy registered in L1");
     }
     this.strategy = registeredSerializer;
-    this.serializedClusterObjectFactory = new SerializedClusterObjectFactoryImpl(strategy);
+    this.serializedClusterObjectFactory = new SerializedClusterObjectFactoryImpl(platformService, strategy);
   }
 
   @Override
@@ -56,7 +60,7 @@ public abstract class AbstractTCToolkitObject implements TCToolkitObject {
   }
 
   protected void doLogicalDestroy() {
-    ManagerUtil.logicalInvoke(this, SerializationUtil.DESTROY_SIGNATURE, new Object[] {});
+    platformService.logicalInvoke(this, SerializationUtil.DESTROY_SIGNATURE, new Object[] {});
   }
 
   @Override

@@ -6,7 +6,7 @@ package com.terracotta.toolkit.roots.impl;
 import org.terracotta.toolkit.object.ToolkitObject;
 
 import com.tc.net.GroupID;
-import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.bytecode.PlatformService;
 import com.terracotta.toolkit.object.TCToolkitObject;
 import com.terracotta.toolkit.object.ToolkitObjectStripe;
 import com.terracotta.toolkit.roots.AggregateToolkitTypeRoot;
@@ -26,18 +26,22 @@ public class ToolkitTypeRootsStaticFactory implements ToolkitTypeRootsFactory {
     this.manager = manager;
   }
 
+  @Override
   public <T extends ToolkitObject, S extends TCToolkitObject> AggregateIsolatedToolkitTypeRoot<T, S> createAggregateIsolatedTypeRoot(String name,
-                                                                                                                                     IsolatedToolkitTypeFactory<T, S> isolatedTypeFactory) {
-    GroupID[] gids = ManagerUtil.getGroupIDs();
+                                                                                                                                     IsolatedToolkitTypeFactory<T, S> isolatedTypeFactory,
+                                                                                                                                     PlatformService platformService) {
+    GroupID[] gids = platformService.getGroupIDs();
     ToolkitTypeRoot<S>[] roots = new ToolkitTypeRoot[gids.length];
     for (int i = 0; i < gids.length; i++) {
-      roots[i] = lookupOrCreateRootInGroup(gids[i], name);
+      roots[i] = lookupOrCreateRootInGroup(platformService, gids[i], name);
     }
-    return new AggregateIsolatedToolkitTypeRoot<T, S>(roots, isolatedTypeFactory, manager.createWeakValueMap());
+    return new AggregateIsolatedToolkitTypeRoot<T, S>(roots, isolatedTypeFactory, manager.createWeakValueMap(),
+                                                      platformService);
   }
 
-  private static ToolkitTypeRoot lookupOrCreateRootInGroup(GroupID gid, String name) {
-    return RootsUtil.lookupOrCreateRootInGroup(gid, name, new RootObjectCreator<ToolkitTypeRootImpl>() {
+  private static ToolkitTypeRoot lookupOrCreateRootInGroup(PlatformService platformService, GroupID gid, String name) {
+    return RootsUtil.lookupOrCreateRootInGroup(platformService, gid, name,
+                                               new RootObjectCreator<ToolkitTypeRootImpl>() {
       @Override
       public ToolkitTypeRootImpl create() {
         return new ToolkitTypeRootImpl();
@@ -45,13 +49,16 @@ public class ToolkitTypeRootsStaticFactory implements ToolkitTypeRootsFactory {
     });
   }
 
+  @Override
   public <T extends DistributedToolkitType<S>, S extends TCToolkitObject> AggregateToolkitTypeRoot<T, S> createAggregateDistributedTypeRoot(String rootName,
-                                                                                                                                            DistributedToolkitTypeFactory<T, S> aggregateToolkitTypeFactory) {
-    GroupID[] gids = ManagerUtil.getGroupIDs();
+                                                                                                                                            DistributedToolkitTypeFactory<T, S> aggregateToolkitTypeFactory,
+                                                                                                                                            PlatformService platformService) {
+    GroupID[] gids = platformService.getGroupIDs();
     ToolkitTypeRoot<ToolkitObjectStripe<S>>[] roots = new ToolkitTypeRoot[gids.length];
     for (int i = 0; i < gids.length; i++) {
-      roots[i] = lookupOrCreateRootInGroup(gids[i], rootName);
+      roots[i] = lookupOrCreateRootInGroup(platformService, gids[i], rootName);
     }
-    return new AggregateDistributedToolkitTypeRoot(roots, aggregateToolkitTypeFactory, manager.createWeakValueMap());
+    return new AggregateDistributedToolkitTypeRoot(roots, aggregateToolkitTypeFactory, manager.createWeakValueMap(),
+                                                   platformService);
   }
 }

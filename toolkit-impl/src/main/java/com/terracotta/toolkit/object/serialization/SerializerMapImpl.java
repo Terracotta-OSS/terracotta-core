@@ -3,13 +3,17 @@
  */
 package com.terracotta.toolkit.object.serialization;
 
+import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
+
 import com.tc.net.GroupID;
 import com.tc.object.LiteralValues;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.locks.LockLevel;
+import com.tc.object.bytecode.PlatformService;
+import com.terracotta.toolkit.TerracottaToolkit;
+import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -17,11 +21,17 @@ import java.util.Map;
 
 public class SerializerMapImpl<K, V> implements SerializerMap<K, V>, Manageable {
 
-  private final Map<K, V>   localMap = new HashMap<K, V>();
-  private volatile Object   localResolveLock;
-  private volatile TCObject tcObject;
-  private volatile GroupID  gid;
-  private volatile String   lockID;
+  private final Map<K, V>       localMap = new HashMap<K, V>();
+  private volatile Object       localResolveLock;
+  private volatile TCObject     tcObject;
+  private volatile GroupID      gid;
+  private volatile String       lockID;
+  private final PlatformService platformService;
+
+  public SerializerMapImpl() {
+    platformService = ManagerUtil.lookupRegisteredObjectByName(TerracottaToolkit.PLATFORM_SERVICE_REGISTRATION_NAME,
+                                                               PlatformService.class);
+  }
 
   @Override
   public void __tc_managed(TCObject t) {
@@ -41,27 +51,27 @@ public class SerializerMapImpl<K, V> implements SerializerMap<K, V>, Manageable 
   }
 
   private void writeLock() {
-    lock(LockLevel.WRITE);
+    lock(ToolkitLockTypeInternal.WRITE);
   }
 
   private void writeUnlock() {
-    unlock(LockLevel.WRITE);
+    unlock(ToolkitLockTypeInternal.WRITE);
   }
 
   private void readLock() {
-    lock(LockLevel.READ);
+    lock(ToolkitLockTypeInternal.READ);
   }
 
   private void readUnlock() {
-    unlock(LockLevel.READ);
+    unlock(ToolkitLockTypeInternal.READ);
   }
 
-  private void lock(LockLevel lockLevel) {
-    ManagerUtil.beginLock(getLockID(), lockLevel);
+  private void lock(ToolkitLockTypeInternal lockLevel) {
+    ToolkitLockingApi.lock(getLockID(), lockLevel, platformService);
   }
 
-  private void unlock(LockLevel lockLevel) {
-    ManagerUtil.commitLock(getLockID(), lockLevel);
+  private void unlock(ToolkitLockTypeInternal lockLevel) {
+    ToolkitLockingApi.unlock(getLockID(), lockLevel, platformService);
   }
 
   private String getLockID() {
@@ -73,29 +83,29 @@ public class SerializerMapImpl<K, V> implements SerializerMap<K, V>, Manageable 
 
   @Override
   public V put(K key, V value) {
-      writeLock();
-      try {
-        V val = createSCOIfNeeded(value);
-        synchronized (localResolveLock) {
+    writeLock();
+    try {
+      V val = createSCOIfNeeded(value);
+      synchronized (localResolveLock) {
         V ret = internalput(key, val);
         tcObject.logicalInvoke(SerializationUtil.PUT, SerializationUtil.PUT_SIGNATURE, new Object[] { key, val });
         return ret;
-        }
-      } finally {
-        writeUnlock();
       }
+    } finally {
+      writeUnlock();
+    }
   }
 
   @Override
   public V get(K key) {
-      readLock();
-      try {
-        synchronized (localResolveLock) {
-          return localMap.get(key);
-        }
-      } finally {
-        readUnlock();
+    readLock();
+    try {
+      synchronized (localResolveLock) {
+        return localMap.get(key);
       }
+    } finally {
+      readUnlock();
+    }
   }
 
   @Override
@@ -108,7 +118,7 @@ public class SerializerMapImpl<K, V> implements SerializerMap<K, V>, Manageable 
   private V createSCOIfNeeded(V value) {
     if (LiteralValues.isLiteralInstance(value)) { return value; }
     SerializedClusterObject sco = new SerializedClusterObjectImpl(null, (byte[]) value);
-    ManagerUtil.lookupOrCreate(sco, gid);
+    platformService.lookupOrCreate(sco, gid);
     return (V) sco;
   }
 

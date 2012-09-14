@@ -6,16 +6,17 @@ package com.terracotta.toolkit.events;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.events.ToolkitNotificationEvent;
 
-import com.terracotta.toolkit.TerracottaLogger;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.terracotta.toolkit.object.serialization.SerializationStrategy;
 
 public class ToolkitNotificationEventImpl<T> implements ToolkitNotificationEvent<T> {
-  private static final TerracottaLogger LOGGER = new TerracottaLogger(ToolkitNotificationEventImpl.class);
-  private final SerializationStrategy   strategy;
-  private final String                  remoteNodeSerializedForm;
-  private final String                  msgSerializedForm;
-  private volatile ClusterNode          remoteNode;
-  private volatile T                    msg;
+  private static final TCLogger       LOGGER = TCLogging.getLogger(ToolkitNotificationEventImpl.class);
+  private final SerializationStrategy strategy;
+  private final String                remoteNodeSerializedForm;
+  private final String                msgSerializedForm;
+  private volatile ClusterNode        remoteNode;
+  private volatile T                  msg;
 
   public ToolkitNotificationEventImpl(SerializationStrategy strategy, String remoteNode, String msg) {
     this.strategy = strategy;

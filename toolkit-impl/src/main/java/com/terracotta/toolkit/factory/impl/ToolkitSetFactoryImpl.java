@@ -6,6 +6,7 @@ package com.terracotta.toolkit.factory.impl;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
+import com.tc.object.bytecode.PlatformService;
 import com.terracotta.toolkit.collections.DestroyableToolkitMap;
 import com.terracotta.toolkit.collections.ToolkitSetImpl;
 import com.terracotta.toolkit.collections.map.ToolkitMapImpl;
@@ -19,8 +20,10 @@ public class ToolkitSetFactoryImpl extends AbstractPrimaryToolkitObjectFactory<T
 
   private static final SetIsolatedTypeFactory FACTORY = new SetIsolatedTypeFactory();
 
-  public ToolkitSetFactoryImpl(ToolkitInternal toolkit, ToolkitTypeRootsFactory rootsFactory) {
-    super(toolkit, rootsFactory.createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_SET_ROOT_NAME, FACTORY));
+  public ToolkitSetFactoryImpl(ToolkitInternal toolkit, ToolkitTypeRootsFactory rootsFactory,
+                               PlatformService platformService) {
+    super(toolkit, rootsFactory.createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_SET_ROOT_NAME, FACTORY,
+                                                                platformService));
   }
 
   @Override

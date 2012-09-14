@@ -5,7 +5,7 @@ package com.terracotta.toolkit.meta;
 
 import org.terracotta.toolkit.internal.meta.MetaData;
 
-import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.bytecode.PlatformService;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.terracottatech.search.NVPair;
 
@@ -18,8 +18,8 @@ public class MetaDataImpl implements MetaData {
 
   private final MetaDataDescriptor mdd;
 
-  public MetaDataImpl(String category) {
-    this.mdd = ManagerUtil.createMetaDataDescriptor(category);
+  public MetaDataImpl(PlatformService platformService, String category) {
+    this.mdd = platformService.createMetaDataDescriptor(category);
   }
 
   @Override
@@ -32,58 +32,72 @@ public class MetaDataImpl implements MetaData {
     mdd.add(name, value);
   }
 
+  @Override
   public void add(String name, boolean value) {
     mdd.add(name, value);
   }
 
+  @Override
   public void add(String name, byte value) {
     mdd.add(name, value);
   }
 
+  @Override
   public void add(String name, char value) {
     mdd.add(name, value);
   }
 
+  @Override
   public void add(String name, double value) {
     mdd.add(name, value);
   }
 
+  @Override
   public void add(String name, float value) {
     mdd.add(name, value);
   }
 
+  @Override
   public void add(String name, int value) {
     mdd.add(name, value);
   }
 
+  @Override
   public void add(String name, long value) {
     mdd.add(name, value);
   }
 
+  @Override
   public void add(String name, short value) {
     mdd.add(name, value);
   }
 
+  @Override
   public void add(String name, String value) {
     mdd.add(name, value);
   }
 
+  @Override
   public void add(String name, byte[] value) {
     mdd.add(name, value);
   }
 
+  @Override
   public void add(String name, Enum value) {
     mdd.add(name, value);
   }
 
+  @Override
   public void add(String name, Date value) {
     mdd.add(name, value);
   }
 
+  @Override
   public void add(String name, java.sql.Date value) {
     mdd.add(name, value);
   }
 
+  @Override
   public void set(String name, Object newValue) {
     mdd.set(name, newValue);
   }
@@ -92,6 +106,7 @@ public class MetaDataImpl implements MetaData {
     return mdd;
   }
 
+  @Override
   public Map<String, Object> getMetaDatas() {
     Map<String, Object> rv = new HashMap<String, Object>();
     Iterator<NVPair> metaDatas = mdd.getMetaDatas();

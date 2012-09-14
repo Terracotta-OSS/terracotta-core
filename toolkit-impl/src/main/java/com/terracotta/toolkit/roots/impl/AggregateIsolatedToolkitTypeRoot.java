@@ -5,10 +5,11 @@ package com.terracotta.toolkit.roots.impl;
 
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
+import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.object.ToolkitObject;
 
-import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.locks.LockLevel;
+import com.tc.object.bytecode.PlatformService;
+import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.object.TCToolkitObject;
@@ -24,13 +25,15 @@ public class AggregateIsolatedToolkitTypeRoot<T extends ToolkitObject, S extends
   private final ToolkitTypeRoot<S>[]             roots;
   private final IsolatedToolkitTypeFactory<T, S> isolatedTypeFactory;
   private final WeakValueMap<T>                  isolatedTypes;
+  private final PlatformService                  platformService;
 
   protected AggregateIsolatedToolkitTypeRoot(ToolkitTypeRoot<S>[] roots,
                                              IsolatedToolkitTypeFactory<T, S> isolatedTypeFactory,
-                                             WeakValueMap weakValueMap) {
+                                             WeakValueMap weakValueMap, PlatformService platformService) {
     this.roots = roots;
     this.isolatedTypeFactory = isolatedTypeFactory;
     this.isolatedTypes = weakValueMap;
+    this.platformService = platformService;
   }
 
   @Override
@@ -57,7 +60,7 @@ public class AggregateIsolatedToolkitTypeRoot<T extends ToolkitObject, S extends
 
     } finally {
       unlock(type, name);
-      ManagerUtil.waitForAllCurrentTransactionsToComplete();
+      platformService.waitForAllCurrentTransactionsToComplete();
     }
   }
 
@@ -76,18 +79,12 @@ public class AggregateIsolatedToolkitTypeRoot<T extends ToolkitObject, S extends
     return roots[Math.abs(name.hashCode() % roots.length)];
   }
 
-  private String generateLockIdentifier(ToolkitObjectType toolkitObjectType, String name) {
-    return "@__tc_toolkit_object_lock_" + toolkitObjectType.name() + "_" + name;
-  }
-
   private void lock(ToolkitObjectType toolkitObjectType, String name) {
-    String lockID = generateLockIdentifier(toolkitObjectType, name);
-    ManagerUtil.beginLock(lockID, LockLevel.WRITE);
+    ToolkitLockingApi.lock(toolkitObjectType, name, ToolkitLockTypeInternal.WRITE, platformService);
   }
 
   private void unlock(ToolkitObjectType toolkitObjectType, String name) {
-    String lockID = generateLockIdentifier(toolkitObjectType, name);
-    ManagerUtil.commitLock(lockID, LockLevel.WRITE);
+    ToolkitLockingApi.unlock(toolkitObjectType, name, ToolkitLockTypeInternal.WRITE, platformService);
   }
 
   @Override

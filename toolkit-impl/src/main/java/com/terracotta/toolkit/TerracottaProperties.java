@@ -5,14 +5,14 @@ package com.terracotta.toolkit;
 
 import org.terracotta.toolkit.internal.ToolkitProperties;
 
-import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.bytecode.PlatformService;
 import com.tc.properties.TCProperties;
 
 public class TerracottaProperties implements ToolkitProperties {
   private final TCProperties delegate;
 
-  public TerracottaProperties() {
-    this.delegate = ManagerUtil.getTCProperties();
+  public TerracottaProperties(PlatformService platformService) {
+    this.delegate = platformService.getTCProperties();
   }
 
   @Override

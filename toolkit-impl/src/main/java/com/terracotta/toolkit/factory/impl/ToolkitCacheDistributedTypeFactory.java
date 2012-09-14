@@ -10,6 +10,7 @@ import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields;
 
+import com.tc.object.bytecode.PlatformService;
 import com.terracotta.toolkit.collections.map.AggregateServerMap;
 import com.terracotta.toolkit.collections.map.InternalToolkitMap;
 import com.terracotta.toolkit.collections.map.ServerMap;
@@ -48,11 +49,12 @@ public class ToolkitCacheDistributedTypeFactory<K extends Serializable, V extend
   public ToolkitCacheImpl<K, V> createDistributedType(ToolkitInternal toolkit, ToolkitObjectFactory factory,
                                                       String name,
                                                       ToolkitObjectStripe<InternalToolkitMap<K, V>>[] stripeObjects,
-                                                      Configuration configuration) {
+                                                      Configuration configuration, PlatformService platformService) {
     validateExistingClusterWideConfigs(stripeObjects, configuration);
     AggregateServerMap aggregateServerMap = new AggregateServerMap(factory.getManufacturedToolkitObjectType(),
                                                                    searchBuilderFactory, name, stripeObjects,
-                                                                   configuration, serverMapLocalStoreFactory);
+                                                                   configuration, serverMapLocalStoreFactory,
+                                                                   platformService);
     return new ToolkitCacheImpl<K, V>(factory, toolkit, name, aggregateServerMap);
   }
 

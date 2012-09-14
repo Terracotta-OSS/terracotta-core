@@ -6,6 +6,8 @@ package com.terracotta.toolkit.object.serialization;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.tc.object.bytecode.PlatformServiceImpl;
+
 import java.io.IOException;
 import java.io.ObjectStreamClass;
 import java.util.HashMap;
@@ -24,7 +26,7 @@ public class ObjectStreamClassMappingTest {
   @Before
   public void init() {
     localSerializerMap = new LocalSerializerMap();
-    serializer = new ObjectStreamClassMapping(localSerializerMap);
+    serializer = new ObjectStreamClassMapping(new PlatformServiceImpl(), localSerializerMap);
   }
 
   @Test

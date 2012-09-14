@@ -5,12 +5,13 @@ package com.terracotta.toolkit.events;
 
 import org.terracotta.toolkit.events.ToolkitNotificationListener;
 import org.terracotta.toolkit.events.ToolkitNotifier;
+import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.SerializationUtil;
-import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.locks.LockLevel;
-import com.terracotta.toolkit.TerracottaLogger;
 import com.terracotta.toolkit.cluster.TerracottaNode;
+import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.factory.impl.ToolkitNotifierFactoryImpl;
 import com.terracotta.toolkit.object.AbstractTCToolkitObject;
 
@@ -21,17 +22,17 @@ import java.util.concurrent.ExecutorService;
 
 public class ToolkitNotifierImpl<T> extends AbstractTCToolkitObject implements ToolkitNotifier<T> {
 
-  private static final TerracottaLogger                                        LOGGER    = new TerracottaLogger(
-                                                                                                                ToolkitNotifierImpl.class);
+  private static final TCLogger                                                LOGGER    = TCLogging
+                                                                                             .getLogger(ToolkitNotifierImpl.class);
+
   private final transient CopyOnWriteArrayList<ToolkitNotificationListener<T>> listeners = new CopyOnWriteArrayList<ToolkitNotificationListener<T>>();
   private final String                                                         currentNodeIdStringForm;
   private volatile String                                                      lockid;
   private final ExecutorService                                                notifierService;
 
   public ToolkitNotifierImpl() {
-    this.currentNodeIdStringForm = strategy.serializeToString(new TerracottaNode(ManagerUtil.getManager()
-        .getDsoCluster().getCurrentNode()));
-    this.notifierService = ManagerUtil
+    this.currentNodeIdStringForm = strategy.serializeToString(new TerracottaNode(platformService.getCurrentNode()));
+    this.notifierService = platformService
         .lookupRegisteredObjectByName(ToolkitNotifierFactoryImpl.TOOLKIT_NOTIFIER_EXECUTOR_SERVICE,
                                       ExecutorService.class);
   }
@@ -64,7 +65,7 @@ public class ToolkitNotifierImpl<T> extends AbstractTCToolkitObject implements T
   private void unlockedNotifyListeners(T msg) {
     String stringMsg = null;
     stringMsg = strategy.serializeToString(msg);
-    ManagerUtil.logicalInvoke(this, SerializationUtil.CLUSTERED_NOTIFIER_SIGNATURE, new Object[] { stringMsg,
+    platformService.logicalInvoke(this, SerializationUtil.CLUSTERED_NOTIFIER_SIGNATURE, new Object[] { stringMsg,
         currentNodeIdStringForm });
   }
 
@@ -90,13 +91,11 @@ public class ToolkitNotifierImpl<T> extends AbstractTCToolkitObject implements T
   }
 
   private void begin() {
-    String lockID = getLockID();
-    ManagerUtil.beginLock(lockID, LockLevel.CONCURRENT);
+    ToolkitLockingApi.lock(getLockID(), ToolkitLockTypeInternal.CONCURRENT, platformService);
   }
 
   private void commit() {
-    String lockID = getLockID();
-    ManagerUtil.commitLock(lockID, LockLevel.CONCURRENT);
+    ToolkitLockingApi.unlock(getLockID(), ToolkitLockTypeInternal.CONCURRENT, platformService);
   }
 
   private String getLockID() {

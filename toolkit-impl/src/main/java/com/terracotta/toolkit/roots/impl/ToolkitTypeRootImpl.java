@@ -10,6 +10,8 @@ import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.NotClearable;
+import com.tc.object.bytecode.PlatformService;
+import com.terracotta.toolkit.TerracottaToolkit;
 import com.terracotta.toolkit.object.TCToolkitObject;
 import com.terracotta.toolkit.roots.ToolkitTypeRoot;
 
@@ -22,10 +24,17 @@ public class ToolkitTypeRootImpl<T extends TCToolkitObject> implements ToolkitTy
   private transient volatile GroupID            gid;
   private transient volatile Object             localResolveLock;
 
+  private final PlatformService                 platformService;
+
+  public ToolkitTypeRootImpl() {
+    platformService = ManagerUtil.lookupRegisteredObjectByName(TerracottaToolkit.PLATFORM_SERVICE_REGISTRATION_NAME,
+                                                               PlatformService.class);
+  }
+
   @Override
   public void addClusteredObject(String name, T manageable) {
     synchronized (localResolveLock) {
-      ManagerUtil.lookupOrCreate(manageable, gid);
+      platformService.lookupOrCreate(manageable, gid);
       // TODO: write a test
       localCache.put(name, manageable.__tc_managed().getObjectID());
       logicalInvokePut(name, manageable);
@@ -58,7 +67,7 @@ public class ToolkitTypeRootImpl<T extends TCToolkitObject> implements ToolkitTy
   }
 
   private T faultValue(ObjectID value) {
-    return (T) ManagerUtil.lookupObject(value);
+    return (T) platformService.lookupObject(value);
   }
 
   @Override

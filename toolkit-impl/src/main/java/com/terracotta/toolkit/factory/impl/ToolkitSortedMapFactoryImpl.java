@@ -7,6 +7,7 @@ import org.terracotta.toolkit.collections.ToolkitSortedMap;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
+import com.tc.object.bytecode.PlatformService;
 import com.terracotta.toolkit.collections.DestroyableToolkitSortedMap;
 import com.terracotta.toolkit.collections.map.ToolkitSortedMapImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
@@ -20,9 +21,10 @@ public class ToolkitSortedMapFactoryImpl extends
 
   private static final MapIsolatedTypeFactory FACTORY = new MapIsolatedTypeFactory();
 
-  public ToolkitSortedMapFactoryImpl(ToolkitInternal toolkit, ToolkitTypeRootsFactory rootsFactory) {
+  public ToolkitSortedMapFactoryImpl(ToolkitInternal toolkit, ToolkitTypeRootsFactory rootsFactory,
+                                     PlatformService platformService) {
     super(toolkit, rootsFactory.createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_SORTED_MAP_ROOT_NAME,
-                                                                FACTORY));
+                                                                FACTORY, platformService));
   }
 
   @Override

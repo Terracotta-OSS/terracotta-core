@@ -5,7 +5,7 @@ package com.terracotta.toolkit.meta;
 
 import org.terracotta.toolkit.internal.meta.MetaData;
 
-import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.bytecode.PlatformService;
 import com.tc.object.metadata.MetaDataDescriptor;
 
 import java.util.Map;
@@ -22,12 +22,14 @@ public class Extractor {
 
   /**
    * Extract internal {@link MetaDataDescriptor} from {@link MetaData}
+   * 
+   * @param platformService
    */
-  public static MetaDataDescriptor extractInternalDescriptorFrom(MetaData metaData) {
+  public static MetaDataDescriptor extractInternalDescriptorFrom(PlatformService platformService, MetaData metaData) {
     if (metaData instanceof MetaDataImpl) {
       return ((MetaDataImpl) metaData).getInternalMetaDataDescriptor();
     } else {
-      MetaDataDescriptor mdd = ManagerUtil.createMetaDataDescriptor(metaData.getCategory());
+      MetaDataDescriptor mdd = platformService.createMetaDataDescriptor(metaData.getCategory());
       Map<String, Object> map = metaData.getMetaDatas();
       for (Entry<String, Object> entry : map.entrySet()) {
         mdd.set(entry.getKey(), entry.getValue());

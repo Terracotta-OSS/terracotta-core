@@ -13,7 +13,7 @@ import org.terracotta.toolkit.internal.cluster.OutOfBandClusterListener;
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterEvent;
 import com.tc.cluster.DsoClusterTopology;
-import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.bytecode.PlatformService;
 import com.tcclient.cluster.DsoClusterInternal;
 import com.tcclient.cluster.DsoClusterInternal.DsoClusterEventType;
 import com.tcclient.cluster.DsoNode;
@@ -31,8 +31,8 @@ public class TerracottaClusterInfo implements ClusterInfo {
 
   private final DsoCluster dsoCluster;
 
-  public TerracottaClusterInfo() {
-    this.dsoCluster = ManagerUtil.getManager().getDsoCluster();
+  public TerracottaClusterInfo(PlatformService platformService) {
+    this.dsoCluster = platformService.getDsoCluster();
   }
 
   @Override
@@ -92,10 +92,12 @@ public class TerracottaClusterInfo implements ClusterInfo {
 
   private ClusterEvent translateEvent(final DsoClusterEvent event, final Type type) {
     return new ClusterEvent() {
+      @Override
       public ClusterNode getNode() {
         return new TerracottaNode(event.getNode());
       }
 
+      @Override
       public Type getType() {
         return type;
       }
@@ -110,22 +112,27 @@ public class TerracottaClusterInfo implements ClusterInfo {
       this.listener = listener;
     }
 
+    @Override
     public void operationsEnabled(final DsoClusterEvent event) {
       listener.onClusterEvent(translateEvent(event, Type.OPERATIONS_ENABLED));
     }
 
+    @Override
     public void operationsDisabled(DsoClusterEvent event) {
       listener.onClusterEvent(translateEvent(event, Type.OPERATIONS_DISABLED));
     }
 
+    @Override
     public void nodeLeft(DsoClusterEvent event) {
       listener.onClusterEvent(translateEvent(event, Type.NODE_LEFT));
     }
 
+    @Override
     public void nodeJoined(DsoClusterEvent event) {
       listener.onClusterEvent(translateEvent(event, Type.NODE_JOINED));
     }
 
+    @Override
     public boolean useOutOfBandNotification(DsoClusterEventType type, DsoClusterEvent event) {
       if (listener instanceof OutOfBandClusterListener) {
         return ((OutOfBandClusterListener) listener)

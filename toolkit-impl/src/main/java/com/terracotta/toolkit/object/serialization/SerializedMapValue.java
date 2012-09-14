@@ -6,7 +6,6 @@ package com.terracotta.toolkit.object.serialization;
 import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.internal.cache.TimestampedValue;
-import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
 import com.tc.object.LocalCacheAddCallBack;
 import com.tc.object.SerializationUtil;
@@ -16,11 +15,11 @@ import com.tc.object.TCObjectSelfImpl;
 import com.tc.object.TCObjectServerMap;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.bytecode.PlatformService;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
-import com.tc.object.tx.TransactionCompleteListener;
-import com.tc.object.tx.TransactionID;
 import com.tc.util.FindbugsSuppressWarnings;
-import com.terracotta.toolkit.concurrent.locks.UnnamedToolkitLock;
+import com.terracotta.toolkit.TerracottaToolkit;
+import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -36,9 +35,12 @@ import java.io.ObjectOutput;
 public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externalizable, Manageable,
     LocalCacheAddCallBack {
 
-  private static final ToolkitLock   UPDATE_LAST_ACCESSED_TIME_CONCURRENT_LOCK = new UnnamedToolkitLock(
-                                                                                                        "servermap-update-last-accessed-time-concurrent-lock",
-                                                                                                        ToolkitLockTypeInternal.CONCURRENT);
+  private static final ToolkitLock   UPDATE_LAST_ACCESSED_TIME_CONCURRENT_LOCK = ToolkitLockingApi
+                                                                                   .createConcurrentTransactionLock("servermap-update-last-accessed-time-concurrent-lock",
+                                                                                                                    ManagerUtil
+                                                                                                                        .lookupRegisteredObjectByName(TerracottaToolkit.PLATFORM_SERVICE_REGISTRATION_NAME,
+                                                                                                                                                      PlatformService.class));
+
   private static final int           NEVER_EXPIRE                              = Integer.MAX_VALUE;
   /**
    * <pre>
@@ -270,13 +272,14 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
 
   public void updateLastAccessedTime(Object key, TCObjectServerMap tcObjectServerMap, int usedAtTime) {
     synchronized (getResolveLock()) {
-      Object checkedOutObject = tcObjectServerMap.checkOutObject(key, this);
-      if (checkedOutObject == null) { return; }
+      // TODO: DEV-8099
+      // Object checkedOutObject = tcObjectServerMap.checkOutObject(key, this);
+      // if (checkedOutObject == null) { return; }
 
       UPDATE_LAST_ACCESSED_TIME_CONCURRENT_LOCK.lock();
       try {
         registerTransactionListener(key, tcObjectServerMap);
-        
+
         this.lastAccessedTime = usedAtTime;
         this.logicalInvoke(SerializationUtil.FIELD_CHANGED, SerializationUtil.FIELD_CHANGED_SIGNATURE, new Object[] {
             SerializedMapValueApplicator.LAST_ACCESS_TIME_FIELD_NAME, usedAtTime });
@@ -287,14 +290,7 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
   }
 
   private void registerTransactionListener(final Object key, final TCObjectServerMap tcObjectServerMap) {
-    TransactionCompleteListener completeListener = new TransactionCompleteListener() {
-      @Override
-      public void transactionComplete(TransactionID txnID) {
-        tcObjectServerMap.checkInObject(key, SerializedMapValue.this);
-      }
-    };
-
-    ManagerUtil.addTransactionCompleteListener(completeListener);
+    // TODO: DEV-8099
   }
 
 }
