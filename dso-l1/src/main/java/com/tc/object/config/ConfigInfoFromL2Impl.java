@@ -8,6 +8,7 @@ import org.apache.xmlbeans.XmlObject;
 import org.terracotta.groupConfigForL1.GroupnameId;
 import org.terracotta.groupConfigForL1.GroupnameIdMapDocument;
 import org.terracotta.groupConfigForL1.ServerGroupsDocument;
+import org.xml.sax.SAXParseException;
 
 import com.tc.config.schema.L2ConfigForL1.L2Data;
 import com.tc.config.schema.setup.ConfigurationSetupException;
@@ -103,31 +104,24 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
   public Map<String, GroupID> getGroupNameIDMapFromL2() throws ConfigurationSetupException {
     Map<String, GroupID> map = new HashMap<String, GroupID>();
 
-    InputStream in = getPropertiesFromServerViaHttp("Groupname ID Map", GROUPID_MAP_SERVLET_PATH);
-
-    GroupnameIdMapDocument groupnameIdMapDocument = null;
-    try {
-      groupnameIdMapDocument = new ParseXmlObjectStream<GroupnameIdMapDocument>()
-          .parse("l1 properties", in, new FactoryParser<GroupnameIdMapDocument>() {
-            @Override
-            public GroupnameIdMapDocument parse(InputStream in2) throws Exception {
-              return GroupnameIdMapDocument.Factory.parse(in2);
-            }
-          });
-    } catch (Exception e) {
-      consoleLogger.error(e.getMessage());
-      logger.error(e);
-      throw new AssertionError(e);
-    }
-    GroupnameId[] gids = groupnameIdMapDocument.getGroupnameIdMap().getGroupnameIdArray();
-    for (GroupnameId gid : gids) {
+    GroupnameIdMapDocument groupnameIdMapDocument = getAndParseDocumentFromL2("Groupname ID Map",
+                                                                              GROUPID_MAP_SERVLET_PATH,
+                                                                              new FactoryParser<GroupnameIdMapDocument>() {
+                                                                                @Override
+                                                                                public GroupnameIdMapDocument parse(InputStream in2)
+                                                                                    throws Exception {
+                                                                                  return GroupnameIdMapDocument.Factory
+                                                                                      .parse(in2);
+                                                                                }
+                                                                              });
+    for (GroupnameId gid : groupnameIdMapDocument.getGroupnameIdMap().getGroupnameIdArray()) {
       int groupID = gid.getGid().intValue();
       if (groupID <= -1) { throw new ConfigurationSetupException("Wrong group ID " + groupID + " of " + gid.getName()); }
       map.put(gid.getName(), new GroupID(groupID));
     }
 
     // a little bit verification
-    int groupCount = geGroupCount();
+    int groupCount = getGroupCount();
     if (map.size() != groupCount) { throw new ConfigurationSetupException("Expect group count " + groupCount
                                                                           + " but see mapping " + map.size()); }
 
@@ -140,24 +134,13 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
    */
   @Override
   public L1ReconnectPropertiesDocument getL1ReconnectPropertiesFromL2() throws ConfigurationSetupException {
-    InputStream in = getPropertiesFromServerViaHttp("L1 Reconnect Properties",
-                                                    L1_RECONNECT_PROPERTIES_FROML2_SERVELET_PATH);
-
-    L1ReconnectPropertiesDocument l1ReconnectPropFromL2 = null;
-    try {
-      l1ReconnectPropFromL2 = new ParseXmlObjectStream<L1ReconnectPropertiesDocument>()
-          .parse("l1 properties", in, new FactoryParser<L1ReconnectPropertiesDocument>() {
-            @Override
-            public L1ReconnectPropertiesDocument parse(InputStream in2) throws Exception {
-              return L1ReconnectPropertiesDocument.Factory.parse(in2);
-            }
-          });
-    } catch (Exception e) {
-      consoleLogger.error(e.getMessage());
-      logger.error(e);
-      throw new AssertionError(e);
-    }
-    return l1ReconnectPropFromL2;
+    return getAndParseDocumentFromL2("L1 Reconnect Properties", L1_RECONNECT_PROPERTIES_FROML2_SERVELET_PATH,
+                                     new FactoryParser<L1ReconnectPropertiesDocument>() {
+                                       @Override
+                                       public L1ReconnectPropertiesDocument parse(InputStream in2) throws Exception {
+                                         return L1ReconnectPropertiesDocument.Factory.parse(in2);
+                                       }
+                                     });
   }
 
   /*
@@ -166,26 +149,42 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
    */
   @Override
   public ServerGroupsDocument getServerGroupsFromL2() throws ConfigurationSetupException {
-    InputStream in = getPropertiesFromServerViaHttp("Cluster topology", GROUP_INFO_SERVLET_PATH);
-
-    ServerGroupsDocument serversGrpDocument = null;
-    try {
-      serversGrpDocument = new ParseXmlObjectStream<ServerGroupsDocument>()
-          .parse("server groups properties", in, new FactoryParser<ServerGroupsDocument>() {
-            @Override
-            public ServerGroupsDocument parse(InputStream in2) throws Exception {
-              return ServerGroupsDocument.Factory.parse(in2);
-            }
-          });
-    } catch (Exception e) {
-      consoleLogger.error(e.getMessage());
-      logger.error(e);
-      throw new AssertionError(e);
-    }
-    return serversGrpDocument;
+    return getAndParseDocumentFromL2("Cluster topology", GROUP_INFO_SERVLET_PATH,
+                                     new FactoryParser<ServerGroupsDocument>() {
+                                       @Override
+                                       public ServerGroupsDocument parse(InputStream in2) throws Exception {
+                                         return ServerGroupsDocument.Factory.parse(in2);
+                                       }
+                                     });
   }
 
-  private int geGroupCount() throws ConfigurationSetupException {
+  private <T extends XmlObject> T getAndParseDocumentFromL2(String message, String httpPath,
+                                                            FactoryParser<T> factoryParser)
+      throws ConfigurationSetupException {
+    int tries = 0;
+    while (true) {
+      InputStream in = getPropertiesFromServerViaHttp(message, httpPath);
+      try {
+        try {
+          return new ParseXmlObjectStream<T>().parse(message, in, factoryParser);
+        } catch (SAXParseException e) {
+          if (tries++ < 10) {
+            logger.warn("Got an XML parse exception retrieving L1 reconnect properties. Retrying...");
+            continue;
+          } else {
+            throw e;
+          }
+        }
+      } catch (Exception e) {
+        consoleLogger.error(e.getMessage());
+        logger.error(e);
+        throw new AssertionError(e);
+      }
+
+    }
+  }
+
+  private int getGroupCount() throws ConfigurationSetupException {
     return getServerGroupsFromL2().getServerGroups().getServerGroupArray().length;
   }
 
@@ -287,6 +286,7 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
           } finally {
             propFromL2Stream.close();
           }
+
           return new ByteArrayInputStream(baos.toByteArray());
         }
       } catch (IOException e) {
