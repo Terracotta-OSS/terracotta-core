@@ -13,6 +13,7 @@ import org.terracotta.toolkit.internal.cluster.OutOfBandClusterListener;
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterEvent;
 import com.tc.cluster.DsoClusterTopology;
+import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.PlatformService;
 import com.tcclient.cluster.DsoClusterInternal;
 import com.tcclient.cluster.DsoClusterInternal.DsoClusterEventType;
@@ -33,6 +34,10 @@ public class TerracottaClusterInfo implements ClusterInfo {
 
   public TerracottaClusterInfo(PlatformService platformService) {
     this.dsoCluster = platformService.getDsoCluster();
+  }
+
+  public TerracottaClusterInfo() {
+    this.dsoCluster = ManagerUtil.getManager().getDsoCluster();
   }
 
   @Override
