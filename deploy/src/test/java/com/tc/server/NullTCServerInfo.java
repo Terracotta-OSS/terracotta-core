@@ -266,4 +266,9 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public Integer getSecurityServiceTimeout() {
     return null;
   }
+
+  @Override
+  public String getSecurityHostname() {
+    return null;
+  }
 }

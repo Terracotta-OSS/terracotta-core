@@ -81,6 +81,8 @@ import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -838,6 +840,22 @@ public class TCServerImpl extends SEDA implements TCServer {
       return null;
     }
     return configurationSetupManager.getSecurity().getSecurityServiceTimeout();
+  }
+
+  @Override
+  public String getSecurityHostname() {
+    String securityHostname = null;
+    if (configurationSetupManager.getSecurity() != null) {
+      securityHostname = configurationSetupManager.getSecurity().getSecurityHostname();
+    }
+    if (securityHostname == null) {
+      try {
+        securityHostname = InetAddress.getLocalHost().getHostName();
+      } catch (UnknownHostException e) {
+        securityHostname = null;
+      }
+    }
+    return securityHostname;
   }
 }
 

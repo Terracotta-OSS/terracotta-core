@@ -68,12 +68,19 @@ public class SecurityConfigObject extends BaseConfigObject implements SecurityCo
     return management.getIa();
   }
 
-  @Override
   public Integer getSecurityServiceTimeout() {
     final Security bean = (Security)this.context.bean();
     if(bean == null) { return null; }
     Management management = bean.getManagement();
     if(management == null) { return null; }
     return management.getTimeout();
+  }
+
+  public String getSecurityHostname() {
+    final Security bean = (Security)this.context.bean();
+    if(bean == null) { return null; }
+    Management management = bean.getManagement();
+    if(management == null) { return null; }
+    return management.getHostname();
   }
 }

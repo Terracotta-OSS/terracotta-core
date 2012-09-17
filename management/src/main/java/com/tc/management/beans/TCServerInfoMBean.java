@@ -131,4 +131,7 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   String getSecurityServiceLocation();
 
   Integer getSecurityServiceTimeout();
+
+  String getSecurityHostname();
+
 }

@@ -529,6 +529,11 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
       }
 
       @Override
+      public String getSecurityHostname() {
+        return null;
+      }
+
+      @Override
       public void changesInItemIgnored(final ConfigItem item) {
         //
       }

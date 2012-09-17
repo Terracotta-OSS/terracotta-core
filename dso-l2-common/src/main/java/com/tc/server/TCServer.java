@@ -67,4 +67,7 @@ public interface TCServer {
   String getSecurityServiceLocation();
 
   Integer getSecurityServiceTimeout();
+
+  String getSecurityHostname();
+
 }

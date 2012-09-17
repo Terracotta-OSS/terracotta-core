@@ -14,4 +14,5 @@ public interface SecurityConfig extends Config {
   String getUser();
   String getSecurityServiceLocation();
   Integer getSecurityServiceTimeout();
+  String getSecurityHostname();
 }

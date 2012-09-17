@@ -494,6 +494,11 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     return server.getSecurityServiceLocation();
   }
 
+  public String getSecurityHostname() {
+    server.getDSOListenPort();
+    return server.getSecurityHostname();
+  }
+
   public Integer getSecurityServiceTimeout() {
     return server.getSecurityServiceTimeout();
   }
