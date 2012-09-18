@@ -5,17 +5,22 @@ package org.terracotta.express.toolkit.api.tests;
 
 import org.terracotta.toolkit.Toolkit;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
+import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.store.ToolkitStore;
+import org.terracotta.toolkit.store.ToolkitStoreConfigBuilder;
+import org.terracotta.toolkit.store.ToolkitStoreConfigFields;
+import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
 
-import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
 import junit.framework.Assert;
 
 public class ToolkitStoreApiKeyValGrClient extends AbstractToolkitApiTestClientUtil {
-  private ToolkitStore store;
-  private Toolkit      toolkit;
+  protected ToolkitStore store;
+  protected Toolkit    toolkit;
 
   public ToolkitStoreApiKeyValGrClient(String[] args) {
     super(args);
@@ -24,27 +29,62 @@ public class ToolkitStoreApiKeyValGrClient extends AbstractToolkitApiTestClientU
   @Override
   protected void test(Toolkit toolKit) throws Throwable {
     this.toolkit = toolKit;
-    setDs(toolkit);
+    testWithStrongStore(toolKit);
+    index = barrier.await();
+    if (index == 0) {
+      clearDs();
+    }
+    barrier.await();
+    testWithEventualStore(toolKit);
+  }
+
+  private void clearDs() {
+    System.err.println("^^^^^^^^^DESTROYING STORE^^^^^^^^^^^^");
+    store.destroy();
+    System.err.println("Destroyed");
+  }
+
+  private void testWithStrongStore(Toolkit toolKit) throws Throwable {
+    this.toolkit = toolKit;
+    setStrongDs(toolkit, NAME_OF_DS);
+
     keyValueGenerator = new LiteralKeyLiteralValueGenerator();
-    super.test(toolkit);
     this.test();
 
     keyValueGenerator = new LiteralKeyNonLiteralValueGenerator();
-    super.test(toolkit);
     this.test();
   }
 
-  protected void test() throws InterruptedException, BrokenBarrierException {
+  private void testWithEventualStore(Toolkit toolKit) throws Throwable {
+    this.toolkit = toolKit;
+    setEventualDs(toolkit, NAME_OF_DS);
+    keyValueGenerator = new LiteralKeyLiteralValueGenerator();
+    this.test();
+
+    keyValueGenerator = new LiteralKeyNonLiteralValueGenerator();
+    this.test();
+  }
+
+  @Override
+  protected void test() throws Exception {
+    super.test();
     checkDestroy();
     checkGetName();
     checkIsDestroyed();
     checkGetAll();
-    checkCreateLockForKey();
     checkRemoveNoReturn();
     checkPutNoReturn();
+    checkCreateLockForKey();
   }
 
   private void checkCreateLockForKey() throws InterruptedException, BrokenBarrierException {
+    // run this test for only Store with strong consistency
+    if (store.getConfiguration().getString(ToolkitStoreConfigFields.CONSISTENCY_FIELD_NAME)
+        .equals(ToolkitStoreConfigFields.Consistency.EVENTUAL.toString())) {
+      System.err
+          .println("*************************Need not checkCreateLockForKey for Eventual Store************************");
+ return;
+    }
     setUp();
 
     try {
@@ -65,15 +105,20 @@ public class ToolkitStoreApiKeyValGrClient extends AbstractToolkitApiTestClientU
             cyclicBarrier.await();
             ToolkitReadWriteLock rwLock = store.createLockForKey(10);
             System.out.println("Lock Acquired by thread1");
+            rwLock.writeLock().lock();
             try {
               cyclicBarrier.await();
-              Thread.sleep(50000);
+              cyclicBarrier.await();
+              Thread.sleep(5000);
             } catch (InterruptedException e) {
               e.printStackTrace();
             } finally {
               rwLock.writeLock().unlock();
+              System.err.println("Lock relaesed by thread1");
             }
           } catch (Throwable t) {
+            System.err.println("Exception in thread1,Stack Trace :");
+            t.printStackTrace();
             Assert.fail();
 
           }
@@ -87,13 +132,18 @@ public class ToolkitStoreApiKeyValGrClient extends AbstractToolkitApiTestClientU
             cyclicBarrier.await();
             cyclicBarrier.await();
             long now = System.currentTimeMillis();
+            cyclicBarrier.await();
             System.err.println("THread2 Attempting to get ");
             store.get(10);
             System.err.println("THread2 got the value");
             long diff = System.currentTimeMillis() - now;
-            Assert.assertTrue("CreateLock not working Properly " + diff + "MilliSecs", diff >= 40000);
+            System.err.println("waited for : " + diff);
+            Assert.assertTrue("CreateLock not working Properly " + diff + "MilliSecs",
+ diff >= 4000);
 
           } catch (Throwable t) {
+            System.err.println("Exception in thread2,Stack Trace :");
+            t.printStackTrace();
             Assert.fail();
           }
         }
@@ -157,10 +207,10 @@ public class ToolkitStoreApiKeyValGrClient extends AbstractToolkitApiTestClientU
     }
   }
 
-  private HashSet getKeySet(int start, int count) {
-    HashSet tmpHashSet = new HashSet();
+  protected Set getKeySet(int start, int count) {
+    Set tmpHashSet = new TreeSet();
     for (int i = start; i < start + count; i++) {
-      tmpHashSet.add(i);
+      tmpHashSet.add(keyValueGenerator.getKey(i));
     }
     return tmpHashSet;
   }
@@ -174,7 +224,7 @@ public class ToolkitStoreApiKeyValGrClient extends AbstractToolkitApiTestClientU
       }
       index = barrier.await();
       if (index == 0) {
-        HashSet keys = getKeySet(START, END);
+        Set keys = getKeySet(START, END);
         tempMap = store.getAll(keys);
         Assert.assertTrue(checkKeyValuePairs(START, END));
       }
@@ -185,17 +235,30 @@ public class ToolkitStoreApiKeyValGrClient extends AbstractToolkitApiTestClientU
 
   }
 
+
   @Override
-  public void setDs(Toolkit toolkit) {
+  protected void setStrongDs(Toolkit toolkit, String name) {
     barrier = toolkit.getBarrier("mybarr", 2);
-    map = store = toolkit.getStore("myStore", null);
+    ToolkitStoreConfigBuilder configBuilder = new ToolkitStoreConfigBuilder().consistency(Consistency.STRONG);
+    Configuration config = configBuilder.build();
+    map = store = toolkit.getStore(name, config, String.class);
+
+  }
+
+  @Override
+  protected void setEventualDs(Toolkit toolkit, String name) {
+    barrier = toolkit.getBarrier("mybarr", 2);
+    ToolkitStoreConfigBuilder configBuilder = new ToolkitStoreConfigBuilder().consistency(Consistency.EVENTUAL);
+    Configuration config = configBuilder.build();
+    map = store = toolkit.getStore(name, config, String.class);
+
   }
 
   @Override
   protected void checkGetName() throws InterruptedException, BrokenBarrierException {
     setUp();
     try {
-      Assert.assertEquals("myStore", store.getName());
+      Assert.assertEquals(NAME_OF_DS, store.getName());
     } finally {
       tearDown();
     }

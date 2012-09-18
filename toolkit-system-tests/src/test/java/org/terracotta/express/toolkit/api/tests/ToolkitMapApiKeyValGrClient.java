@@ -17,10 +17,12 @@ public class ToolkitMapApiKeyValGrClient extends AbstractToolkitApiTestClientUti
   @Override
   protected void test(Toolkit toolKit) throws Throwable {
     this.toolkit = toolKit;
-    setDs(toolkit);
+    setEventualDs(toolkit, NAME_OF_DS);// this consistency is not used while creating map
+
     keyValueGenerator = new LiteralKeyLiteralValueGenerator();
     super.test(toolkit);
     this.test();
+
     keyValueGenerator = new NonLiteralKeyLiteralValueGenerator();
     super.test(toolkit);
     this.test();
@@ -29,7 +31,8 @@ public class ToolkitMapApiKeyValGrClient extends AbstractToolkitApiTestClientUti
     this.test();
   }
 
-  public void test() throws Throwable {
+  @Override
+  public void test() throws InterruptedException, BrokenBarrierException {
     checkDestroy();
     checkGetName();
     checkIsDestroyed();
@@ -59,17 +62,10 @@ public class ToolkitMapApiKeyValGrClient extends AbstractToolkitApiTestClientUti
   }
 
   @Override
-  public void setDs(Toolkit toolkit) {
-    barrier = toolkit.getBarrier("mybarr", 2);
-    map = toolkitMap = toolkit.getMap("myMap", null, null);
-    keyValueGenerator = new LiteralKeyLiteralValueGenerator();
-  }
-
-  @Override
   protected void checkGetName() throws InterruptedException, BrokenBarrierException {
     setUp();
     try {
-      Assert.assertEquals("myMap", toolkitMap.getName());
+      Assert.assertEquals(NAME_OF_DS, toolkitMap.getName());
     } finally {
       tearDown();
     }
@@ -107,6 +103,17 @@ public class ToolkitMapApiKeyValGrClient extends AbstractToolkitApiTestClientUti
     } finally {
       tearDown();
     }
+  }
+
+  @Override
+  public void setEventualDs(Toolkit toolkit, String name) {
+    barrier = toolkit.getBarrier("myBarrier", 2);
+    toolkitMap = (ToolkitMap) (map = toolkit.getMap(name, String.class, String.class));
+  }
+
+  @Override
+  protected void setStrongDs(Toolkit toolkit, String name) {
+    // no op
   }
 
 }

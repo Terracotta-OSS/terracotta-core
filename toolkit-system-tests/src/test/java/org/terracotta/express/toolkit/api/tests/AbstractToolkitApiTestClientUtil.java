@@ -5,6 +5,7 @@ package org.terracotta.express.toolkit.api.tests;
 
 import org.junit.Assert;
 import org.terracotta.express.tests.base.ClientBase;
+import org.terracotta.test.util.WaitUtil;
 import org.terracotta.toolkit.Toolkit;
 import org.terracotta.toolkit.concurrent.ToolkitBarrier;
 
@@ -15,25 +16,34 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 
 public abstract class AbstractToolkitApiTestClientUtil extends ClientBase {
-  ToolkitBarrier    barrier;
-  ConcurrentMap     map;
-  int               index;
-  final int         START = 0;
-  final int         END   = 50;
-  KeyValueGenerator keyValueGenerator;
+  protected ToolkitBarrier      barrier;
+  protected ConcurrentMap  map;
+  protected int            index;
+  protected final static int  START = 0;
+  protected final static int  END   = 50;
+  protected KeyValueGenerator keyValueGenerator;
   protected Map     tempMap;
+  protected static final String NAME_OF_DS = "myDS";
 
   public AbstractToolkitApiTestClientUtil(String[] args) {
     super(args);
   }
 
-  public abstract void setDs(Toolkit toolkit);
+  protected abstract void setStrongDs(Toolkit toolkit, String name);
+
+  protected abstract void setEventualDs(Toolkit toolkit, String name);
 
   @Override
   protected void test(Toolkit toolkit) throws Throwable {
+    this.test();
+  }
+
+  protected void test() throws Exception {
+    checkPutIfAbsent();
     checkGet();
     checkIsEmpty();
     checkClear();
@@ -43,12 +53,12 @@ public abstract class AbstractToolkitApiTestClientUtil extends ClientBase {
     checkReplaceTwoARgs();
     checkReplaceThreeArgs();
     checkPut();
-    checkPutIfAbsent();
     checkSize();
     checkPutALL();
     checkKeySet();
     checkValues();
     checkEntrySet();
+
   }
 
   private void checkReplaceTwoARgs() throws InterruptedException, BrokenBarrierException {
@@ -129,7 +139,7 @@ public abstract class AbstractToolkitApiTestClientUtil extends ClientBase {
     }
   }
 
-  private void checkPutIfAbsent() throws InterruptedException, BrokenBarrierException {
+  private void checkPutIfAbsent() throws Exception {
     setUp();
     try {
       Assert.assertFalse(map.containsKey(keyValueGenerator.getKey(1)));
@@ -138,13 +148,19 @@ public abstract class AbstractToolkitApiTestClientUtil extends ClientBase {
       System.err.println("******index = " + index + "******");
       if (index == 1) {
         map.putIfAbsent(keyValueGenerator.getKey(1), keyValueGenerator.getValue(1));
-        System.err.println("Key" + keyValueGenerator.getKey(1) + " " + keyValueGenerator.getValue(1) + " Value");
+        System.err.println("Key is " + keyValueGenerator.getKey(1) + " Value is " + keyValueGenerator.getValue(1));
+        System.err.println(map.get(keyValueGenerator.getKey(1)));
+        WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
+          @Override
+          public Boolean call() throws Exception {
+            return map.get(keyValueGenerator.getKey(1)) != null;
+          }
+        });
         System.err.println("just after put " + map.get(keyValueGenerator.getKey(1)));
         System.err.println("Put done");
       }
       barrier.await();
-      System.err.println(map.get(keyValueGenerator.getKey(1)));
-      Assert.assertEquals(keyValueGenerator.getValue(1), map.get(keyValueGenerator.getKey(1)));
+      Assert.assertEquals("index = " + index, keyValueGenerator.getValue(1), map.get(keyValueGenerator.getKey(1)));
       Assert.assertTrue(map.containsKey(keyValueGenerator.getKey(1)));
       index = barrier.await();
       if (index == 0) {
@@ -209,8 +225,14 @@ public abstract class AbstractToolkitApiTestClientUtil extends ClientBase {
     Iterator iterator = entrySet.iterator();
     while (iterator.hasNext()) {
       Map.Entry mapEntry = (Map.Entry) iterator.next();
-      if (!map.containsKey(mapEntry.getKey())) return false;
-      if (mapEntry.getValue() != map.get(mapEntry.getKey())) return false;
+      if (!map.containsKey(mapEntry.getKey())) {
+        System.err.println("Key " + mapEntry.getKey() + "not present");
+        return false;
+      }
+      if (!mapEntry.getValue().equals(map.get(mapEntry.getKey()))) {
+        System.err.println("mismatch : mapentry : " + mapEntry.getValue() + " map.get : " + map.get(mapEntry.getKey())
+                           + " for key :" + mapEntry.getKey());
+        return false; }
     }
     return true;
   }
@@ -481,8 +503,11 @@ public abstract class AbstractToolkitApiTestClientUtil extends ClientBase {
   }
 
   protected void tearDown() throws InterruptedException, BrokenBarrierException {
+    System.err.println("Waiting on barrier in TearDown()");
     barrier.await();
+    System.err.println("Waiting on barrier in TearDown() over...clearing map");
     map.clear();
+    System.err.println("Returning from TearDown()");
   }
 
   protected void setUp() throws InterruptedException, BrokenBarrierException {
@@ -499,7 +524,9 @@ public abstract class AbstractToolkitApiTestClientUtil extends ClientBase {
       System.err.println("*****In checkGet Method*****");
       System.err.println("****Index = " + index + "****");
       if (index == 0) {
+        System.err.println("Doing Puts");
         doSomePuts(START, END);
+        System.err.println("Done putting");
       }
       barrier.await();
       Assert.assertTrue(checkKeyValuePairs(START, END));
@@ -512,12 +539,16 @@ public abstract class AbstractToolkitApiTestClientUtil extends ClientBase {
   protected boolean checkKeyValuePairs(int start, int end) {
     Assert.assertNotNull("map is null", map);
     Assert.assertNotNull("keyValueGenerator null", keyValueGenerator);
-    System.err.print("Entered checkKeyValuePairs");
+    System.err.println("Entered checkKeyValuePairs");
     for (int iterator = start; iterator < end; iterator++) {
-      if (map.get(keyValueGenerator.getKey(iterator)).equals(keyValueGenerator.getValue(iterator))) {
+      System.err.println("Iterating for key: " + keyValueGenerator.getKey(iterator));
+      if (map.get(keyValueGenerator.getKey(iterator)) != null
+          && map.get(keyValueGenerator.getKey(iterator)).equals(keyValueGenerator.getValue(iterator))) {
         System.err.println("Key exists : " + keyValueGenerator.getKey(iterator));
         continue;
       } else {
+        System.err.println(" Value for key : " + keyValueGenerator.getKey(iterator) + " value = "
+                           + map.get(keyValueGenerator.getKey(iterator)));
         return false;
       }
     }
@@ -525,9 +556,14 @@ public abstract class AbstractToolkitApiTestClientUtil extends ClientBase {
   }
 
   protected void doSomePuts(int start, int end) {
-    for (int iterator = start; iterator < end; iterator++) {
-      map.put(keyValueGenerator.getKey(iterator), keyValueGenerator.getValue(iterator));
+    System.err.println("*****in doSomePuts***** start=" + start + " end  = " + end);
+    for (int keyIndex = start; keyIndex < end; keyIndex++) {
+      map.put(keyValueGenerator.getKey(keyIndex), keyValueGenerator.getValue(keyIndex));
+      System.err.println("for Key : " + keyValueGenerator.getKey(keyIndex) + "Map contains : "
+                         + map.get(keyValueGenerator.getKey(keyIndex)));
     }
+    System.err.println("returning from do dome puts");
+    return;
   }
 
 }

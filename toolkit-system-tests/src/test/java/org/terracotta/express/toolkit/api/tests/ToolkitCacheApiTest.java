@@ -7,8 +7,10 @@ import org.terracotta.express.tests.base.AbstractToolkitTestBase;
 
 import com.tc.test.config.model.TestConfig;
 
-public class ToolkitMapApiTest extends AbstractToolkitTestBase {
-  public ToolkitMapApiTest(TestConfig testConfig) {
-    super(testConfig, ToolkitMapApiKeyValGrClient.class, ToolkitMapApiKeyValGrClient.class);
+public class ToolkitCacheApiTest extends AbstractToolkitTestBase {
+
+  public ToolkitCacheApiTest(TestConfig testConfig) {
+    super(testConfig, ToolkitCacheApiKeyValGrClient.class, ToolkitCacheApiKeyValGrClient.class);
   }
+
 }
