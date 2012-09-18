@@ -7,6 +7,8 @@ import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.events.ToolkitNotifier;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.bytecode.PlatformService;
 import com.terracotta.toolkit.TerracottaProperties;
 import com.terracotta.toolkit.events.DestroyableToolkitNotifier;
@@ -29,6 +31,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ToolkitNotifierFactoryImpl extends
     AbstractPrimaryToolkitObjectFactory<ToolkitNotifier, ToolkitNotifierImpl> {
+  private static final TCLogger                    LOGGER                            = TCLogging
+                                                                                         .getLogger(ToolkitNotifierFactoryImpl.class);
   public static final String                       TOOLKIT_NOTIFIER_EXECUTOR_SERVICE = "toolkitNotifierExecutorService";
 
   private static final NotifierIsolatedTypeFactory FACTORY                           = new NotifierIsolatedTypeFactory();
@@ -42,14 +46,15 @@ public class ToolkitNotifierFactoryImpl extends
     ExecutorService service = platformService.registerObjectByNameIfAbsent(TOOLKIT_NOTIFIER_EXECUTOR_SERVICE,
                                                                            notifierService);
     if (service == notifierService) {
-      registerForShutdown(notifierService, service);
+      registerForShutdown(notifierService);
     }
   }
 
-  private void registerForShutdown(final ExecutorService notifierService, ExecutorService service) {
+  private void registerForShutdown(final ExecutorService notifierService) {
     toolkit.registerBeforeShutdownHook(new Runnable() {
       @Override
       public void run() {
+        LOGGER.info("Shutting Down Notifier Thread Pool");
         notifierService.shutdown();
       }
     });

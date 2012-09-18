@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 
 public class ToolkitNotifierImpl<T> extends AbstractTCToolkitObject implements ToolkitNotifier<T> {
 
@@ -73,21 +74,29 @@ public class ToolkitNotifierImpl<T> extends AbstractTCToolkitObject implements T
    * Called by applicator on receiving a remote msg
    */
   protected void onNotification(final String remoteMsg, final String remoteNodeID) {
-    notifierService.execute(new Runnable() {
-      @Override
-      public void run() {
-        ToolkitNotificationEventImpl<T> event = new ToolkitNotificationEventImpl<T>(strategy, remoteNodeID, remoteMsg);
-        for (ToolkitNotificationListener<T> listener : listeners) {
-          try {
-            listener.onNotification(event);
-          } catch (Throwable t) {
-            // ignore any exception happening on listeners
-            LOGGER.warn("Exception while trying to notify listener ", t);
+    try {
+      notifierService.execute(new Runnable() {
+        @Override
+        public void run() {
+          ToolkitNotificationEventImpl<T> event = new ToolkitNotificationEventImpl<T>(strategy, remoteNodeID, remoteMsg);
+          for (ToolkitNotificationListener<T> listener : listeners) {
+            try {
+              listener.onNotification(event);
+            } catch (Throwable t) {
+              // ignore any exception happening on listeners
+              LOGGER.warn("Exception while trying to notify listener ", t);
+            }
           }
-        }
 
+        }
+      });
+    } catch (RejectedExecutionException e) {
+      if (notifierService.isShutdown()) {
+        LOGGER.debug("Ignoring Notification as Notifier is shutdown" + e);
+      } else {
+        throw e;
       }
-    });
+    }
   }
 
   private void begin() {
