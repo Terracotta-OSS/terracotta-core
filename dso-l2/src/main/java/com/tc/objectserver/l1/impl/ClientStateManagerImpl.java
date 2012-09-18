@@ -42,6 +42,7 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     this.objectRefsAddListener = new CopyOnWriteArraySet<ObjectReferenceAddListener>();
   }
 
+  @Override
   public List<DNA> createPrunedChangesAndAddObjectIDTo(final Collection<DNA> changes,
                                                        final ApplyTransactionInfo applyInfo, final NodeID id,
                                                        final Set<ObjectID> lookupObjectIDs,
@@ -96,25 +97,25 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     }
   }
 
+  @Override
   public void addReference(final NodeID id, final ObjectID objectID) {
     final ClientStateImpl c = getClientState(id);
     if (c != null) {
       c.lock();
       try {
         c.addReference(objectID);
-
-        for (ObjectReferenceAddListener listener : this.objectRefsAddListener) {
-          listener.objectReferenceAdded(objectID);
-        }
-
       } finally {
         c.unlock();
+      }
+      for (ObjectReferenceAddListener listener : this.objectRefsAddListener) {
+        listener.objectReferenceAdded(objectID);
       }
     } else {
       this.logger.warn(": addReference : Client state is NULL (probably due to disconnect) : " + id);
     }
   }
 
+  @Override
   public void registerObjectReferenceAddListener(ObjectReferenceAddListener listener) {
     boolean added = this.objectRefsAddListener.add(listener);
     if (!added) {
@@ -122,6 +123,7 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     }
   }
 
+  @Override
   public void unregisterObjectReferenceAddListener(ObjectReferenceAddListener listener) {
     boolean removed = this.objectRefsAddListener.remove(listener);
     if (!removed) {
@@ -139,6 +141,7 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
    * @param requested set of Objects requested, this set is mutated to remove any object that is already present in the
    *        client.
    */
+  @Override
   public void removeReferences(final NodeID id, final Set<ObjectID> removed, final Set<ObjectID> requested) {
     final ClientStateImpl c = getClientState(id);
     if (c != null) {
@@ -154,6 +157,7 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     }
   }
 
+  @Override
   public boolean hasReference(final NodeID id, final ObjectID objectID) {
     final ClientStateImpl c = getClientState(id);
     if (c != null) {
@@ -169,6 +173,7 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     }
   }
 
+  @Override
   public Set<ObjectID> addAllReferencedIdsTo(final Set<ObjectID> ids) {
     for (final ClientStateImpl c : this.clientStates.values()) {
       c.lock();
@@ -181,6 +186,7 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     return ids;
   }
 
+  @Override
   public void removeReferencedFrom(final NodeID id, final Set<ObjectID> oids) {
     final ClientStateImpl c = getClientState(id);
     if (c == null) {
@@ -199,12 +205,14 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
   /*
    * returns newly added references
    */
+  @Override
   public Set<ObjectID> addReferences(final NodeID id, final Set<ObjectID> oids) {
     final ClientStateImpl c = getClientState(id);
     if (c == null) {
       this.logger.warn(": addReferences : Client state is NULL (probably due to disconnect) : " + id);
       return Collections.emptySet();
     }
+    final Set<ObjectID> newReferences = new HashSet<ObjectID>();
     c.lock();
     try {
       final Set<ObjectID> refs = c.getReferences();
@@ -213,27 +221,28 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
         return oids;
       }
 
-      final Set<ObjectID> newReferences = new HashSet<ObjectID>();
       for (final ObjectID oid : oids) {
         if (refs.add(oid)) {
           newReferences.add(oid);
         }
       }
 
-      for (ObjectReferenceAddListener listener : this.objectRefsAddListener) {
-        listener.objectReferencesAdded(oids);
-      }
-
-      return newReferences;
     } finally {
       c.unlock();
     }
+    for (ObjectReferenceAddListener listener : this.objectRefsAddListener) {
+      listener.objectReferencesAdded(oids);
+    }
+
+    return newReferences;
   }
 
+  @Override
   public void shutdownNode(final NodeID waitee) {
     this.clientStates.remove(waitee);
   }
 
+  @Override
   public boolean startupNode(final NodeID nodeID) {
     return (this.clientStates.putIfAbsent(nodeID, new ClientStateImpl(nodeID)) == null);
   }
@@ -242,6 +251,7 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     return this.clientStates.get(id);
   }
 
+  @Override
   public int getReferenceCount(final NodeID nodeID) {
     final ClientStateImpl c = getClientState(nodeID);
     if (c == null) { return 0; }
@@ -253,10 +263,12 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     }
   }
 
+  @Override
   public Set<NodeID> getConnectedClientIDs() {
     return Collections.unmodifiableSet(this.clientStates.keySet());
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     final PrettyPrinter rv = out;
     out.print(getClass().getName()).flush();
@@ -306,32 +318,39 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
       return "ClientStateImpl[" + this.nodeID + ", " + this.managed + "]";
     }
 
+    @Override
     public Set<ObjectID> getReferences() {
       return this.managed;
     }
 
+    @Override
     public PrettyPrinter prettyPrint(final PrettyPrinter out) {
       out.print(getClass().getName()).flush();
       out.duplicateAndIndent().indent().print("managed: ").visit(this.managed);
       return out;
     }
 
+    @Override
     public void addReference(final ObjectID id) {
       this.managed.add(id);
     }
 
+    @Override
     public boolean containsReference(final ObjectID id) {
       return this.managed.contains(id);
     }
 
+    @Override
     public void removeReferences(final Set<ObjectID> references) {
       this.managed.removeAll(references);
     }
 
+    @Override
     public void addReferencedIdsTo(final Set<ObjectID> ids) {
       ids.addAll(this.managed);
     }
 
+    @Override
     public NodeID getNodeID() {
       return this.nodeID;
     }

@@ -115,12 +115,22 @@ public class ClientObjectReferenceSet implements ObjectReferenceAddListener {
 
   @Override
   public void objectReferenceAdded(ObjectID objectID) {
+    this.lock.readLock().lock();
+    try {
     this.liveObjectReferences.add(objectID);
+    } finally {
+      this.lock.readLock().unlock();
+    }
   }
 
   @Override
   public void objectReferencesAdded(Set<ObjectID> objectIDs) {
+    this.lock.readLock().lock();
+    try {
     this.liveObjectReferences.addAll(objectIDs);
+    } finally {
+      this.lock.readLock().unlock();
+    }
   }
 
   private void reinitObjectReferenceSnapshot() {
