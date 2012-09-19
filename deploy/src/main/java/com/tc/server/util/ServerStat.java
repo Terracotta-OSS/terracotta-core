@@ -4,10 +4,14 @@
  */
 package com.tc.server.util;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.xmlbeans.XmlException;
 
 import com.tc.cli.CommandLineBuilder;
 import com.tc.config.Loader;
+import com.tc.config.schema.L2Info;
+import com.tc.config.schema.ServerGroupInfo;
+import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.terracottatech.config.Server;
@@ -68,7 +72,7 @@ public class ServerStat {
     } catch (Exception e) {
       String rootCauseMessage = e.getMessage() != null ? e.getMessage() : e.getCause().getMessage();
       errorMessage = "Failed to connect to " + host + ":" + port + ". "
-                     + (rootCauseMessage != null ? rootCauseMessage : "");
+          + (rootCauseMessage != null ? rootCauseMessage : "");
       closeQuietly(jmxc);
       connected = false;
     }
@@ -89,6 +93,24 @@ public class ServerStat {
     return infoBean.getHealthStatus();
   }
 
+  /**
+   * Finds and returns the name of the group which this server belongs to.
+   */
+  public String getGroupName() {
+    if (!connected) return UNKNOWN;
+    ServerGroupInfo[] serverGroupInfos = infoBean.getServerGroupInfo();
+    for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
+      L2Info[] l2Infos = serverGroupInfo.members();
+      for (L2Info l2Info : l2Infos) {
+        if (this.host.equals(l2Info.host()) && this.port == l2Info.jmxPort()) {
+          return serverGroupInfo.name();
+        }
+      }
+    }
+    return UNKNOWN;
+  }
+
+
   @Override
   public String toString() {
     String serverId = hostName != null ? hostName : host;
@@ -97,6 +119,7 @@ public class ServerStat {
     sb.append(serverId + ".role: " + getRole()).append(NEWLINE);
     sb.append(serverId + ".state: " + getState()).append(NEWLINE);
     sb.append(serverId + ".jmxport: " + port).append(NEWLINE);
+    sb.append(serverId + ".group name: " + getGroupName()).append(NEWLINE);
     if (!connected) {
       sb.append(serverId + ".error: " + errorMessage).append(NEWLINE);
     }
@@ -114,12 +137,12 @@ public class ServerStat {
 
   public static void main(String[] args) {
     String usage = " server-stat -s host1,host2" + NEWLINE + "       server-stat -s host1:9520,host2:9520" + NEWLINE
-                   + "       server-stat -f /path/to/tc-config.xml" + NEWLINE;
+        + "       server-stat -f /path/to/tc-config.xml" + NEWLINE;
 
     CommandLineBuilder commandLineBuilder = new CommandLineBuilder(ServerStat.class.getName(), args);
 
     commandLineBuilder.addOption("s", true, "Terracotta server instance list (comma separated)", String.class, false,
-                                 "list");
+        "list");
     commandLineBuilder.addOption("f", true, "Terracotta tc-config file", String.class, false, "file");
     commandLineBuilder.addOption("h", "help", String.class, false);
     commandLineBuilder.addOption("u", "username", true, "username", String.class, false);
@@ -157,14 +180,18 @@ public class ServerStat {
     }
   }
 
-  private static void handleConfigFile(String username, String password, String configFile) {
+  private static void handleConfigFile(String username, String password, String configFilePath) {
     TcConfigDocument tcConfigDocument = null;
     try {
-      tcConfigDocument = new Loader().parse(new File(configFile));
+
+      String configFileContent = FileUtils.readFileToString(new File(configFilePath));
+      String configFileSubstitutedContent = ParameterSubstituter.substitute(configFileContent);
+
+      tcConfigDocument = new Loader().parse(configFileSubstitutedContent);
     } catch (IOException e) {
-      throw new RuntimeException("Error reading " + configFile + ": " + e.getMessage());
+      throw new RuntimeException("Error reading " + configFilePath + ": " + e.getMessage());
     } catch (XmlException e) {
-      throw new RuntimeException("Error parsing " + configFile + ": " + e.getMessage());
+      throw new RuntimeException("Error parsing " + configFilePath + ": " + e.getMessage());
     }
     TcConfig tcConfig = tcConfigDocument.getTcConfig();
     Server[] servers = tcConfig.getServers().getServerArray();
