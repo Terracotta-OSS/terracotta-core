@@ -52,7 +52,6 @@
     <module>toolkit-express-impl</module>
     <module>toolkit-runtime</module>
     <module>toolkit-system-tests</module>
-    <module>truezip-repkg</module>
   </modules>
   
   <profiles>

@@ -38,11 +38,6 @@
       <artifactId>terracotta-toolkit-api-internal</artifactId>
       <version>${toolkit-api.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>truezip-repkg</artifactId>
-      <version>${project.version}</version>
-    </dependency>
 
     <!-- Stuff that goes into L1 -->
     <dependency>
@@ -103,7 +98,7 @@
             </goals>
             <configuration>
               <includeGroupIds>org.terracotta.toolkit</includeGroupIds>
-              <excludeArtifactIds>truezip-repkg</excludeArtifactIds>
+              <excludeArtifactIds></excludeArtifactIds>
               <classifier>sources</classifier>
               <failOnMissingClassifierArtifact>true</failOnMissingClassifierArtifact>
               <outputDirectory>${project.build.directory}/sources</outputDirectory>
@@ -160,7 +155,6 @@
           <artifactSet>
             <includes>
               <include>org.terracotta.internal:toolkit-express-impl</include>
-              <include>org.terracotta.internal:truezip-repkg</include>
               <include>org.terracotta.toolkit:terracotta-toolkit-api</include>
               <include>org.terracotta.toolkit:terracotta-toolkit-api-internal</include>
             </includes>
