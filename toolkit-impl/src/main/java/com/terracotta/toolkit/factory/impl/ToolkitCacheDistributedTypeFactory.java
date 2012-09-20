@@ -6,8 +6,10 @@ package com.terracotta.toolkit.factory.impl;
 import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 
 import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
+import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
+import org.terracotta.toolkit.search.attribute.ToolkitAttributeType;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields;
 
 import com.tc.object.bytecode.PlatformService;
@@ -35,6 +37,7 @@ public class ToolkitCacheDistributedTypeFactory<K extends Serializable, V extend
 
   private static final ServerMap[]         EMPTY_SERVER_MAP_ARRAY = new ServerMap[0];
   private static final Configuration[]     EMPTY_CONFIG_ARRAY     = new Configuration[0];
+  private static final String              SEARCH_ATTR_TYPES_MAP_SUFFIX = "searchAttributeTypesMap";
 
   private final SearchBuilderFactory       searchBuilderFactory;
   private final ServerMapLocalStoreFactory serverMapLocalStoreFactory;
@@ -51,9 +54,11 @@ public class ToolkitCacheDistributedTypeFactory<K extends Serializable, V extend
                                                       ToolkitObjectStripe<InternalToolkitMap<K, V>>[] stripeObjects,
                                                       Configuration configuration, PlatformService platformService) {
     validateExistingClusterWideConfigs(stripeObjects, configuration);
+    ToolkitMap<String, ToolkitAttributeType> attrSchema = toolkit.getMap(name + "|" + SEARCH_ATTR_TYPES_MAP_SUFFIX,
+                                                                         String.class, ToolkitAttributeType.class);
     AggregateServerMap aggregateServerMap = new AggregateServerMap(factory.getManufacturedToolkitObjectType(),
                                                                    searchBuilderFactory, name, stripeObjects,
-                                                                   configuration, serverMapLocalStoreFactory,
+                                                                   configuration, attrSchema, serverMapLocalStoreFactory,
                                                                    platformService);
     return new ToolkitCacheImpl<K, V>(factory, toolkit, name, aggregateServerMap);
   }

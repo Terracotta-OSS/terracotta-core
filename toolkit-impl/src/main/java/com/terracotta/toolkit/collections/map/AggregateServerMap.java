@@ -10,6 +10,7 @@ import net.sf.ehcache.pool.impl.DefaultSizeOfEngine;
 import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
+import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
@@ -17,6 +18,7 @@ import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.internal.search.SearchBuilder;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
+import org.terracotta.toolkit.search.attribute.ToolkitAttributeType;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
 
 import com.tc.exception.TCNotRunningException;
@@ -99,6 +101,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   private final ServerMapLocalStoreFactory                      serverMapLocalStoreFactory;
   private final TerracottaClusterInfo                           clusterInfo;
   private final PlatformService                                 platformService;
+  private final ToolkitMap<String, ToolkitAttributeType>        attrSchema;
 
   private int getTerracottaProperty(String propName, int defaultValue) {
     try {
@@ -111,6 +114,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   public AggregateServerMap(ToolkitObjectType type, SearchBuilderFactory searchBuilderFactory, String name,
                             ToolkitObjectStripe<ServerMap<K, V>>[] stripeObjects, Configuration config,
+                            ToolkitMap<String, ToolkitAttributeType> attributeTypes,
                             ServerMapLocalStoreFactory serverMapLocalStoreFactory, PlatformService platformService) {
     this.searchBuilderFactory = searchBuilderFactory;
     this.platformService = platformService;
@@ -130,6 +134,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     }
     this.name = name;
     this.stripeObjects = stripeObjects;
+    this.attrSchema = attributeTypes;
     this.listeners = new CopyOnWriteArrayList<ToolkitCacheListener<K>>();
     List<ServerMap<K, V>> list = new ArrayList<ServerMap<K, V>>();
     for (ToolkitObjectStripe<ServerMap<K, V>> stripeObject : stripeObjects) {
@@ -783,6 +788,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   public void setAttributeExtractor(ToolkitAttributeExtractor attrExtractor) {
     for (InternalToolkitMap serverMap : this.serverMaps) {
       serverMap.registerAttributeExtractor(attrExtractor);
+      ((ServerMap) serverMap).setSearchAttributeTypes(attrSchema);
     }
   }
 
