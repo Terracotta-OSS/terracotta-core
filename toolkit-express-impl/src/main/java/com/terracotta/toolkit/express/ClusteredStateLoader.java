@@ -3,9 +3,13 @@
  */
 package com.terracotta.toolkit.express;
 
+import com.terracotta.toolkit.express.loader.Util;
+
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.net.URLClassLoader;
+import java.security.SecureClassLoader;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,12 +27,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * <li>Loads classes from its url - (which has urls of jars inside jars)</li>
  * <li>use app loader for everything else.</li>
  */
-class ClusteredStateLoader extends URLClassLoader {
-
+class ClusteredStateLoader extends SecureClassLoader {
   private static final boolean      USE_APP_JTA_CLASSES;
+  private static final String       PRIVATE_CLASS_SUFFIX = ".class_terracotta";
 
   private final ClassLoader         appLoader;
   private final Map<String, byte[]> extraClasses = new ConcurrentHashMap<String, byte[]>();
+  private final List<String>        embeddedResourcePrefixes;
 
   static {
     String prop = System.getProperty(ClusteredStateLoader.class.getName() + ".USE_APP_JTA_CLASSES", "true");
@@ -36,9 +41,10 @@ class ClusteredStateLoader extends URLClassLoader {
     USE_APP_JTA_CLASSES = Boolean.valueOf(prop);
   }
 
-  ClusteredStateLoader(URL[] urls, AppClassLoader appLoader) {
-    super(urls, null);
+  ClusteredStateLoader(List<String> prefixes, AppClassLoader appLoader) {
+    super(null);
     this.appLoader = appLoader;
+    this.embeddedResourcePrefixes = prefixes;
   }
 
   void addExtraClass(String name, byte[] classBytes) {
@@ -46,12 +52,15 @@ class ClusteredStateLoader extends URLClassLoader {
   }
 
   @Override
-  protected void addURL(URL url) {
-    super.addURL(url);
-  }
-
-  @Override
   public InputStream getResourceAsStream(String name) {
+    URL resource = findResourceWithPrefix(name);
+    if (resource != null) {
+      try {
+        return resource.openStream();
+      } catch (IOException e) {
+        // ignore
+      }
+    }
     InputStream in = super.getResourceAsStream(name);
     if (in != null) return in;
     return appLoader.getResourceAsStream(name);
@@ -59,7 +68,9 @@ class ClusteredStateLoader extends URLClassLoader {
 
   @Override
   public URL getResource(String name) {
-    URL resource = super.getResource(name);
+    URL resource = findResourceWithPrefix(name);
+    if (resource != null) { return resource; }
+    resource = super.getResource(name);
     if (resource != null) { return resource; }
     return appLoader.getResource(name);
   }
@@ -95,12 +106,9 @@ class ClusteredStateLoader extends URLClassLoader {
       }
     }
 
-    // try with specified urls
-    try {
-      return super.loadClass(name, false);
-    } catch (ClassNotFoundException e) {
-      //
-    }
+    // try loading class with prefixes, it could come from embedded jars
+    URL url = findClassWithPrefix(name);
+    if (url != null) { return loadClassFromPrefixResource(name, url); }
 
     // last path is to delegate to the app loader and finally to the thread context loader
     // A case where final fallback to the thread context is relevant is when the
@@ -117,6 +125,43 @@ class ClusteredStateLoader extends URLClassLoader {
       }
 
       throw cnfe;
+    }
+  }
+
+  private URL findClassWithPrefix(String name) {
+    String resource = name.replace('.', '/').concat(PRIVATE_CLASS_SUFFIX);
+    for (String prefix : embeddedResourcePrefixes) {
+      URL url = appLoader.getResource(prefix + resource);
+      if (url != null) { return url; }
+    }
+    return null;
+  }
+
+  private URL findResourceWithPrefix(String name) {
+    String resource = name.endsWith(".class") ? name.substring(0, name.lastIndexOf(".class")) + PRIVATE_CLASS_SUFFIX
+        : name;
+    for (String prefix : embeddedResourcePrefixes) {
+      URL url = appLoader.getResource(prefix + resource);
+      if (url != null) { return url; }
+    }
+    return null;
+  }
+
+  private Class<?> loadClassFromPrefixResource(String name, URL url) {
+    String packageName = name.substring(0, name.lastIndexOf('.'));
+    try {
+      definePackage(packageName, null, null, null, null, null, null, null);
+    } catch (IllegalArgumentException e) {
+      // package already defined
+    }
+
+    try {
+      byte[] bytes = Util.extract(url.openStream());
+      Class<?> clazz = defineClass(name, bytes, 0, bytes.length, appLoader.getClass().getProtectionDomain()
+          .getCodeSource());
+      return clazz;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 

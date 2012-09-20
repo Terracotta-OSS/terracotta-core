@@ -72,7 +72,7 @@
       </properties>
       <activation>
         <file>
-          <exists>../terracotta-ee</exists>
+          <exists>../terracotta-ee/pom.xml</exists>
         </file>
       </activation>      
       <modules>
