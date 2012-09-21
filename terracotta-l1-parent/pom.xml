@@ -66,10 +66,6 @@
       </exclusions>      
     </dependency>
     <dependency>
-      <groupId>javax.management</groupId>
-      <artifactId>jmxremote</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>jmxremote_optional-tc</artifactId>
     </dependency>

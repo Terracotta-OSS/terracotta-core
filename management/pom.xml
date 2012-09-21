@@ -50,11 +50,6 @@
       <artifactId>jmxremote_optional-tc</artifactId>
     </dependency>
     <dependency>
-      <groupId>javax.management</groupId>
-      <artifactId>jmxremote</artifactId>
-    </dependency>    
-    
-    <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>common</artifactId>
       <version>${project.version}</version>

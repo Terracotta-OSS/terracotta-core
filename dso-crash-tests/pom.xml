@@ -83,11 +83,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>javax.management</groupId>
-      <artifactId>jmxremote</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>treemap</groupId>
       <artifactId>treemap</artifactId>
       <scope>test</scope>
