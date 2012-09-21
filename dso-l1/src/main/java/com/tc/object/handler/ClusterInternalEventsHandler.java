@@ -11,10 +11,10 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.Assert;
 import com.tcclient.cluster.ClusterInternalEventsContext;
 import com.tcclient.cluster.DsoClusterEventsNotifier;
 
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -23,6 +23,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+
 
 /**
  * Handler firing the dso cluster internal events to the listeners
@@ -50,12 +51,8 @@ public class ClusterInternalEventsHandler extends AbstractEventHandler {
                                                                                     new LinkedBlockingQueue<Runnable>(),
                                                                                     daemonThreadFactory);
 
-    public Future submit(Runnable runnable) {
-      return eventExecutor.submit(runnable);
-    }
-
-    public List<Runnable> shutdownNow() {
-      return eventExecutor.shutdownNow();
+    public ThreadPoolExecutor getExecutorService() {
+      return eventExecutor;
     }
 
     @Override
@@ -85,7 +82,10 @@ public class ClusterInternalEventsHandler extends AbstractEventHandler {
 
   @Override
   public void handleEvent(final EventContext context) {
-    Future eventFuture = clusterEventExecutor.submit(new Runnable() {
+    ThreadPoolExecutor service = clusterEventExecutor.getExecutorService();
+    debug("adding task to clusterEventExecutor "+context);
+//    Assert.assertFalse(service.isTerminating() || service.isShutdown() || service.isTerminated());
+    Future eventFuture = service.submit(new Runnable() {
       @Override
       public void run() {
         if (context instanceof ClusterInternalEventsContext) {
@@ -112,6 +112,13 @@ public class ClusterInternalEventsHandler extends AbstractEventHandler {
   @Override
   public synchronized void destroy() {
     super.destroy();
-    clusterEventExecutor.shutdownNow();
+    clusterEventExecutor.getExecutorService().shutdownNow();
+    debug("destroy clusterEventExecutor is shutdown");
+  }
+
+  private void debug(String message) {
+    if (logger.isDebugEnabled()) {
+      logger.debug(message);
+    }
   }
 }
