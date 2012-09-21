@@ -616,7 +616,10 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       }
     } else {
       MetaData metaData = createPutSearchMetaData(key, value);
-      metaData.set(SearchConstants.Meta.COMMAND, SearchConstants.Commands.PUT);
+
+      if (metaData != null) {
+        metaData.set(SearchConstants.Meta.COMMAND, SearchConstants.Commands.PUT);
+      }
 
       final Long lockID = generateLockIdForKey(key);
       beginLock(lockID, this.lockType);
