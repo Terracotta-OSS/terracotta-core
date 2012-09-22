@@ -1265,15 +1265,18 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   private MetaData createPutSearchMetaData(K key, V value) {
     if (!isSearchable()) return null;
+
     MetaData md = createBaseMetaData();
     md.add(SearchConstants.Meta.KEY, key);
-    if (!attributeSchema.isSet()) throw new IllegalStateException("Search attribute schema not set");
 
     try {
       Map<String, ToolkitAttributeType> recordedTypes = new HashMap<String, ToolkitAttributeType>();
       Map<String, ToolkitAttributeType> searchAttributeTypes = attributeSchema.get();
       boolean updateTypes = searchAttributeTypes.isEmpty();
-      for (Map.Entry<String, Object> attr : attrExtractor.attributesFor(key, value).entrySet()) {
+
+      Map<String, Object> attrs = attrExtractor.attributesFor(key, value);
+      if (attrs == ToolkitAttributeExtractor.DO_NOT_INDEX) return null;
+      for (Map.Entry<String, Object> attr : attrs.entrySet()) {
         String attrName = attr.getKey();
         Object attrValue = attr.getValue();
 
