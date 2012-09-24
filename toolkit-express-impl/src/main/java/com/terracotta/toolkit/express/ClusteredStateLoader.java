@@ -32,7 +32,7 @@ class ClusteredStateLoader extends SecureClassLoader {
   private static final String       PRIVATE_CLASS_SUFFIX = ".class_terracotta";
 
   private final ClassLoader         appLoader;
-  private final Map<String, byte[]> extraClasses = new ConcurrentHashMap<String, byte[]>();
+  private final Map<String, byte[]> extraClasses         = new ConcurrentHashMap<String, byte[]>();
   private final List<String>        embeddedResourcePrefixes;
 
   static {
@@ -149,10 +149,8 @@ class ClusteredStateLoader extends SecureClassLoader {
 
   private Class<?> loadClassFromPrefixResource(String name, URL url) {
     String packageName = name.substring(0, name.lastIndexOf('.'));
-    try {
+    if (getPackage(packageName) == null) {
       definePackage(packageName, null, null, null, null, null, null, null);
-    } catch (IllegalArgumentException e) {
-      // package already defined
     }
 
     try {
