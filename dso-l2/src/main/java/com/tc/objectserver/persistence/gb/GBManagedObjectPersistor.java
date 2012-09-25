@@ -3,7 +3,11 @@ package com.tc.objectserver.persistence.gb;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
+import com.tc.objectserver.persistence.gb.gbapi.GBManager;
 import com.tc.objectserver.persistence.gb.gbapi.GBMap;
+import com.tc.objectserver.persistence.gb.gbapi.GBMapConfig;
+import com.tc.objectserver.persistence.gb.gbapi.GBMapMutationListener;
+import com.tc.objectserver.persistence.gb.gbapi.GBSerializer;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.util.ObjectIDSet;
 
@@ -15,15 +19,68 @@ import java.util.*;
 public class GBManagedObjectPersistor implements ManagedObjectPersistor {
 
   // This should be persistent
-  private final GBMap<String, ObjectID> rootMap = null;
-  private final GBMap<ObjectID, ManagedObject> objectMap = null;
-  private final GBSequence objectIDSequence = null;
+  private final GBMap<String, ObjectID> rootMap;
+  private final GBMap<ObjectID, ManagedObject> objectMap;
+  private final GBSequence objectIDSequence;
 
   private final GBObjectIDSetMaintainer oidSetMaintainer = new GBObjectIDSetMaintainer();
 
+  public GBManagedObjectPersistor(GBMap<String, ObjectID> rootMap, GBMap<ObjectID, ManagedObject> objectMap, GBSequence objectIDSequence) {
+    this.rootMap = rootMap;
+    this.objectMap = objectMap;
+    this.objectIDSequence = objectIDSequence;
+  }
 
-  public GBManagedObjectPersistor() {
+  public static GBMapConfig<String, ObjectID> rootMapConfig() {
+    return new GBMapConfig<String, ObjectID>() {
+      @Override
+      public void setKeySerializer(GBSerializer<String> serializer) {
+      }
 
+      @Override
+      public void setValueSerializer(GBSerializer<ObjectID> serializer) {
+      }
+
+      @Override
+      public Class<String> getKeyClass() {
+        return null;
+      }
+
+      @Override
+      public Class<ObjectID> getValueClass() {
+        return null;
+      }
+
+      @Override
+      public void addListener(GBMapMutationListener<String, ObjectID> listener) {
+      }
+    };
+  }
+
+  public static GBMapConfig<ObjectID, ManagedObject> objectConfig(GBManager gbManager) {
+    return new GBMapConfig<ObjectID, ManagedObject>() {
+      @Override
+      public void setKeySerializer(GBSerializer<ObjectID> serializer) {
+      }
+
+      @Override
+      public void setValueSerializer(GBSerializer<ManagedObject> serializer) {
+      }
+
+      @Override
+      public Class<ObjectID> getKeyClass() {
+        return null;
+      }
+
+      @Override
+      public Class<ManagedObject> getValueClass() {
+        return null;
+      }
+
+      @Override
+      public void addListener(GBMapMutationListener<ObjectID, ManagedObject> listener) {
+      }
+    };
   }
 
   @Override

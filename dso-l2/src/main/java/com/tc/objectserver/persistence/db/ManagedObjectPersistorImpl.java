@@ -291,14 +291,14 @@ public final class ManagedObjectPersistorImpl extends DBPersistorBase implements
       if (value != null) {
         final ManagedObject mo = getManagedObjectData(value);
         loadCollection(tx, mo);
-        tx.commit();
         return mo;
       } else {
         return null;
       }
     } catch (final Throwable e) {
-      abortOnError(tx);
       throw new DBException(e);
+    } finally {
+      tx.commit();
     }
   }
 

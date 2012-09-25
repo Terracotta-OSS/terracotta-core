@@ -1,6 +1,9 @@
 package com.tc.objectserver.persistence.gb;
 
 import com.tc.objectserver.persistence.gb.gbapi.GBMap;
+import com.tc.objectserver.persistence.gb.gbapi.GBMapConfig;
+import com.tc.objectserver.persistence.gb.gbapi.GBMapMutationListener;
+import com.tc.objectserver.persistence.gb.gbapi.GBSerializer;
 import com.tc.util.sequence.MutableSequence;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -13,7 +16,7 @@ public class GBSequence implements MutableSequence {
   private final GBMap<String, Long> sequenceMap;
   private final String name;
 
-  public GBSequence(GBMap<String, Long> sequenceMap, String name) {
+  GBSequence(GBMap<String, Long> sequenceMap, String name) {
     this.name = name;
     this.sequenceMap = sequenceMap;
     Long current = sequenceMap.get(name);
@@ -21,6 +24,32 @@ public class GBSequence implements MutableSequence {
       current = 0L;
       sequenceMap.put(name, current);
     }
+  }
+
+  public static GBMapConfig<String, Long> config() {
+    return new GBMapConfig<String, Long>() {
+      @Override
+      public void setKeySerializer(GBSerializer<String> serializer) {
+      }
+
+      @Override
+      public void setValueSerializer(GBSerializer<Long> serializer) {
+      }
+
+      @Override
+      public Class<String> getKeyClass() {
+        return null;
+      }
+
+      @Override
+      public Class<Long> getValueClass() {
+        return null;
+      }
+
+      @Override
+      public void addListener(GBMapMutationListener<String, Long> listener) {
+      }
+    };
   }
 
   @Override

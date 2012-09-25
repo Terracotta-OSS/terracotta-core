@@ -34,7 +34,6 @@ public class TCMapStore extends DBPersistorBase implements PersistentMapStore {
       TCDatabaseEntry<String, String> entry = new TCDatabaseEntry<String, String>();
       entry.setKey(key);
       Status status = this.database.get(entry, tx);
-      tx.commit();
 
       if (Status.SUCCESS.equals(status)) {
         return entry.getValue();
@@ -44,9 +43,10 @@ public class TCMapStore extends DBPersistorBase implements PersistentMapStore {
         throw new DBException("Unable to retrieve value for key " + key + " in SleepycatMapStore : " + status);
       }
     } catch (Exception t) {
-      abortOnError(tx);
       logger.error("Exception on get ", t);
       throw (t instanceof DBException ? (DBException) t : new DBException(t));
+    } finally {
+      tx.commit();
     }
   }
 
@@ -59,11 +59,11 @@ public class TCMapStore extends DBPersistorBase implements PersistentMapStore {
 
       if (status != Status.SUCCESS) { throw new DBException("Unable to store value: " + value + " for key: " + key
                                                             + "): " + status); }
-      tx.commit();
     } catch (Exception t) {
-      abortOnError(tx);
       logger.error("Exception on put ", t);
       throw (t instanceof DBException ? (DBException) t : new DBException(t));
+    } finally {
+      tx.commit();
     }
   }
 
@@ -73,7 +73,6 @@ public class TCMapStore extends DBPersistorBase implements PersistentMapStore {
     PersistenceTransaction tx = persistenceTransactionProvider.newTransaction();
     try {
       Status status = this.database.delete(key, tx);
-      tx.commit();
 
       if (Status.NOT_FOUND.equals(status)) {
         return false;
@@ -81,9 +80,10 @@ public class TCMapStore extends DBPersistorBase implements PersistentMapStore {
                                                                          + " in SleepycatMapStore : " + status); }
       return true;
     } catch (Exception t) {
-      abortOnError(tx);
       logger.error("Exception on remove ", t);
       throw (t instanceof DBException ? (DBException) t : new DBException(t));
+    } finally {
+      tx.commit();
     }
   }
 

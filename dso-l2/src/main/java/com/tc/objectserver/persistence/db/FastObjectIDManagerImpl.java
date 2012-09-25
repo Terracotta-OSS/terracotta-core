@@ -229,7 +229,7 @@ public final class FastObjectIDManagerImpl extends DBPersistorBase implements Ob
             if (stoppedFlag.isStopped()) {
               cursor.close();
               cursor = null;
-              abortOnError(tx);
+              tx.abort();
               return isAllFlushed;
             }
 
@@ -286,7 +286,7 @@ public final class FastObjectIDManagerImpl extends DBPersistorBase implements Ob
         logger.debug("Checkpoint updated " + changes + " objectIDs");
       } catch (final TCDatabaseException e) {
         logger.error("Error ojectID checkpoint: ", e);
-        abortOnError(tx);
+        tx.abort();
         throw new TCRuntimeException(e);
       }
     }

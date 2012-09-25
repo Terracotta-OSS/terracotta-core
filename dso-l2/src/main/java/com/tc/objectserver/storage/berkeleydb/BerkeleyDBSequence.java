@@ -77,12 +77,12 @@ class BerkeleyDBSequence extends AbstractBerkeleyDatabase implements MutableSequ
       } else {
         throw new DBException("Unable to retrieve UID for SleepycatSequence: " + status);
       }
-      tx.commit();
       return newuid;
     } catch (Exception t) {
-      tx.abort();
       t.printStackTrace();
       throw (t instanceof DBException ? (DBException) t : new DBException(t));
+    } finally {
+      tx.commit();
     }
   }
 

@@ -72,37 +72,35 @@ class ClientStatePersistorImpl extends DBPersistorBase implements ClientStatePer
   }
 
   private void basicSave(long clientID) {
+    PersistenceTransaction tx = ptp.newTransaction();
     try {
-      PersistenceTransaction tx = ptp.newTransaction();
       Status status = db.insert(clientID, tx);
       if (status != Status.SUCCESS) {
-        tx.abort();
         throw new DBException("Unable to save client state: ChannelID " + clientID + "; status: " + status);
       }
-      tx.commit();
     } catch (Exception e) {
       throw new DBException(e);
+    } finally {
+      tx.commit();
     }
   }
 
   public synchronized void deleteClientState(ChannelID id) {
+    PersistenceTransaction tx = ptp.newTransaction();
     try {
-      PersistenceTransaction tx = ptp.newTransaction();
-
       Status status = db.delete(id.toLong(), tx);
       if (Status.NOT_FOUND.equals(status)) {
-        tx.abort();
         throw new ClientNotFoundException("Client not found: " + id);
       }
       if (!Status.SUCCESS.equals(status)) {
-        tx.abort();
         throw new DBException("Unable to delete client state: " + id + "; status: " + status);
       }
 
-      tx.commit();
       logger.info("Deleted client state for " + id);
     } catch (Exception e) {
       throw new DBException(e);
+    } finally {
+      tx.commit();
     }
   }
 }

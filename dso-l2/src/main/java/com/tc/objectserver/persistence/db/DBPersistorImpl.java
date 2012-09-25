@@ -222,29 +222,7 @@ public class DBPersistorImpl implements Persistor {
 
     private static final TCLogger logger = TCLogging.getLogger(DBPersistorBase.class);
 
-    protected void abortOnError(final PersistenceTransaction tx) {
-      try {
-        if (tx != null) {
-          tx.abort();
-        }
-      } catch (final Exception e) {
-        // This doesn't throw an exception as we don't want to create a Red herring.
-        logger.error("Error on abortOnError", e);
-      }
 
-    }
-
-    protected void abortOnError(final TCDatabaseCursor cursor, final PersistenceTransaction tx) {
-      if (cursor != null) {
-        try {
-          cursor.close();
-        } catch (final Exception e) {
-          // This doesn't throw an exception as we don't want to create a Red herring.
-          logger.error("Error on abortOnError", e);
-        }
-      }
-      abortOnError(tx);
-    }
 
   }
 

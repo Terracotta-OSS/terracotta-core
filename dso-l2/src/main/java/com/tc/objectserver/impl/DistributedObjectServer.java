@@ -619,7 +619,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     sraForDbEnv = this.dbenv.getSRAs();
 
     // Setting the DB environment for the bean which takes backup of the active server
-    this.persistor = new GBPersistor();
+    this.persistor = new GBPersistor(dbhome);
 
 
     // register the terracotta operator event logger

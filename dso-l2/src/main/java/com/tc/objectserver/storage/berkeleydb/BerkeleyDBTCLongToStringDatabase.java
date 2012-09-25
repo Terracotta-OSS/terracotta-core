@@ -30,20 +30,17 @@ public class BerkeleyDBTCLongToStringDatabase extends AbstractBerkeleyDatabase i
   }
 
   public TLongObjectHashMap loadMappingsInto(TLongObjectHashMap target, PersistenceTransaction tx) {
-    Cursor cursor = null;
+    DatabaseEntry key = new DatabaseEntry(), value = new DatabaseEntry();
     try {
-      DatabaseEntry key = new DatabaseEntry(), value = new DatabaseEntry();
-      cursor = db.openCursor(pt2nt(tx), cursorConfig);
-      while (OperationStatus.SUCCESS.equals(cursor.getNext(key, value, LockMode.DEFAULT))) {
-        target.put(Conversion.bytes2Long(key.getData()), bytes2String(value));
-      }
-      cursor.close();
-      tx.commit();
-    } catch (Throwable t) {
-      if (cursor != null) {
+      Cursor cursor = db.openCursor(pt2nt(tx), cursorConfig);
+      try {
+        while (OperationStatus.SUCCESS.equals(cursor.getNext(key, value, LockMode.DEFAULT))) {
+          target.put(Conversion.bytes2Long(key.getData()), bytes2String(value));
+        }
+      } finally {
         cursor.close();
       }
-      tx.abort();
+    } catch (Throwable t) {
       throw new DBException(t);
     }
     return target;

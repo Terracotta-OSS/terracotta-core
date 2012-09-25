@@ -37,21 +37,15 @@ public class BerkeleyDBTCIntToBytesDatabase extends BerkeleyDBTCBytesBytesDataba
 
   public Map<Integer, byte[]> getAll(PersistenceTransaction tx) {
     Map<Integer, byte[]> allClazzBytes = new HashMap<Integer, byte[]>();
-    Cursor cursor = null;
+    Cursor cursor = db.openCursor(pt2nt(tx), cursorConfig);
     try {
-      cursor = db.openCursor(pt2nt(tx), cursorConfig);
       DatabaseEntry key = new DatabaseEntry();
       DatabaseEntry value = new DatabaseEntry();
       while (OperationStatus.SUCCESS.equals(cursor.getNext(key, value, LockMode.DEFAULT))) {
         allClazzBytes.put(Integer.valueOf(Conversion.bytes2Int(key.getData())), value.getData());
       }
+    } finally {
       cursor.close();
-      tx.commit();
-    } catch (Exception e) {
-      if (cursor != null) {
-        cursor.close();
-      }
-      tx.abort();
     }
     return allClazzBytes;
   }
