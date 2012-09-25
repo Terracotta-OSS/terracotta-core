@@ -1,7 +1,6 @@
 package com.tc.objectserver.persistence.gb;
 
 import com.tc.object.gtx.GlobalTransactionID;
-import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 import com.tc.objectserver.persistence.api.TransactionPersistor;
 import com.tc.objectserver.persistence.gb.gbapi.GBManager;

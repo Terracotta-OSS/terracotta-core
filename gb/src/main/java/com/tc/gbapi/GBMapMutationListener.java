@@ -1,7 +1,6 @@
-package com.tc.objectserver.persistence.gb.gbapi;
+package com.tc.gbapi;
 
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 /**
  * @author tim

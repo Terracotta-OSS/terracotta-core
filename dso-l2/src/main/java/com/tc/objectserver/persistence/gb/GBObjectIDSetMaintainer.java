@@ -8,7 +8,6 @@ import com.tc.objectserver.persistence.gb.gbapi.GBRetriever;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 /**
  * @author tim

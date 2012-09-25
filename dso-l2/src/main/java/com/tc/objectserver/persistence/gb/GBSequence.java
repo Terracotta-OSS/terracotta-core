@@ -6,8 +6,6 @@ import com.tc.objectserver.persistence.gb.gbapi.GBMapMutationListener;
 import com.tc.objectserver.persistence.gb.gbapi.GBSerializer;
 import com.tc.util.sequence.MutableSequence;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 /**
  * @author tim
  */

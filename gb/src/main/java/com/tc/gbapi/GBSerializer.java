@@ -1,4 +1,4 @@
-package com.tc.objectserver.persistence.gb.gbapi;
+package com.tc.gbapi;
 
 import java.nio.ByteBuffer;
 
