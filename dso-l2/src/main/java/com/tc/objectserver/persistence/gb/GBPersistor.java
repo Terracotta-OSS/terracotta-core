@@ -39,6 +39,7 @@ public class GBPersistor implements Persistor {
   private final GBClientStatePersistor clientStatePersistor;
   private final GBPersistentMapStore persistentMapStore;
   private final GBSequenceManager sequenceManager;
+  private final GBPersistenceTransactionProvider persistenceTransactionProvider;
 
   public GBPersistor(File path) {
     gbManager = new GBManager(path, null);
@@ -53,6 +54,7 @@ public class GBPersistor implements Persistor {
     clientStatePersistor = new GBClientStatePersistor(sequenceManager.getSequence(CLIENT_STATE_SEQUENCE), gbManager.getMap(CLIENT_STATES, ChannelID.class, Boolean.class));
     managedObjectPersistor = new GBManagedObjectPersistor(gbManager.getMap(ROOT_DB, String.class, ObjectID.class), gbManager.getMap(OBJECT_DB, ObjectID.class, ManagedObject.class), sequenceManager.getSequence(OBJECT_ID_SEQUENCE));
     gidSequence = sequenceManager.getSequence(GLOBAL_TRANSACTION_ID_SEQUENCE);
+    persistenceTransactionProvider = new GBPersistenceTransactionProvider(gbManager);
   }
 
   private void verifyOrCreate(GBManager manager) {
@@ -77,7 +79,7 @@ public class GBPersistor implements Persistor {
 
   @Override
   public PersistenceTransactionProvider getPersistenceTransactionProvider() {
-    return null;
+    return persistenceTransactionProvider;
   }
 
   @Override

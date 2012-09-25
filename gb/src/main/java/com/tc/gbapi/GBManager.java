@@ -40,4 +40,12 @@ public class GBManager {
     // throws when called before start()
     return null;
   }
+
+  public void begin() {
+
+  }
+
+  public void commit() {
+
+  }
 }
