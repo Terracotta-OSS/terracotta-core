@@ -8,8 +8,8 @@ import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 import com.tc.objectserver.persistence.api.*;
-import com.tc.objectserver.persistence.gb.gbapi.GBManager;
-import com.tc.objectserver.persistence.gb.gbapi.GBManagerConfiguration;
+import com.tc.gbapi.GBManager;
+import com.tc.gbapi.GBManagerConfiguration;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.util.sequence.MutableSequence;
 

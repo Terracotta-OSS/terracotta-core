@@ -3,11 +3,11 @@ package com.tc.objectserver.persistence.gb;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
-import com.tc.objectserver.persistence.gb.gbapi.GBManager;
-import com.tc.objectserver.persistence.gb.gbapi.GBMap;
-import com.tc.objectserver.persistence.gb.gbapi.GBMapConfig;
-import com.tc.objectserver.persistence.gb.gbapi.GBMapMutationListener;
-import com.tc.objectserver.persistence.gb.gbapi.GBSerializer;
+import com.tc.gbapi.GBManager;
+import com.tc.gbapi.GBMap;
+import com.tc.gbapi.GBMapConfig;
+import com.tc.gbapi.GBMapMutationListener;
+import com.tc.gbapi.GBSerializer;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.util.ObjectIDSet;
 

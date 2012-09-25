@@ -3,8 +3,8 @@ package com.tc.objectserver.persistence.gb;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
-import com.tc.objectserver.persistence.gb.gbapi.GBMapMutationListener;
-import com.tc.objectserver.persistence.gb.gbapi.GBRetriever;
+import com.tc.gbapi.GBMapMutationListener;
+import com.tc.gbapi.GBRetriever;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Map;

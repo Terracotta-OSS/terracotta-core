@@ -1,7 +1,7 @@
 package com.tc.objectserver.persistence.gb;
 
-import com.tc.objectserver.persistence.gb.gbapi.GBManager;
-import com.tc.objectserver.persistence.gb.gbapi.GBMap;
+import com.tc.gbapi.GBManager;
+import com.tc.gbapi.GBMap;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;

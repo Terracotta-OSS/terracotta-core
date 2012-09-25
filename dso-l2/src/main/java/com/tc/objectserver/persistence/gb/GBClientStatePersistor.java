@@ -2,10 +2,10 @@ package com.tc.objectserver.persistence.gb;
 
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.objectserver.persistence.api.ClientStatePersistor;
-import com.tc.objectserver.persistence.gb.gbapi.GBMap;
-import com.tc.objectserver.persistence.gb.gbapi.GBMapConfig;
-import com.tc.objectserver.persistence.gb.gbapi.GBMapMutationListener;
-import com.tc.objectserver.persistence.gb.gbapi.GBSerializer;
+import com.tc.gbapi.GBMap;
+import com.tc.gbapi.GBMapConfig;
+import com.tc.gbapi.GBMapMutationListener;
+import com.tc.gbapi.GBSerializer;
 import com.tc.objectserver.persistence.inmemory.ClientNotFoundException;
 import com.tc.util.sequence.MutableSequence;
 

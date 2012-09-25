@@ -85,7 +85,12 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-all</artifactId>
       <scope>test</scope>
-    </dependency>    
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>gb</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
    
 </project>
