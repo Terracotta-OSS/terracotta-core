@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.impl;
 
+import com.tc.objectserver.persistence.gb.GBPersistor;
 import org.apache.commons.io.FileUtils;
 
 import bsh.EvalError;
@@ -618,22 +619,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     sraForDbEnv = this.dbenv.getSRAs();
 
     // Setting the DB environment for the bean which takes backup of the active server
-    try {
-      if (persistent) {
-        this.persistor = new DBPersistorImpl(TCLogging.getLogger(DBPersistorImpl.class), this.dbenv,
-                                             serializationAdapterFactory, this.configSetupManager.commonl2Config()
-                                                 .dataPath(), this.objectStatsRecorder);
-        this.l2Management.initBackupMbean(this.dbenv);
-      } else {
-        this.persistor = new TempSwapDBPersistorImpl(TCLogging.getLogger(DBPersistorImpl.class), this.dbenv,
-                                                     serializationAdapterFactory, this.configSetupManager
-                                                         .commonl2Config().dataPath(), this.objectStatsRecorder);
-      }
-    } catch (TCDatabaseException tcde) {
-      consoleLogger.error(tcde.getMessage());
-      logger.error(tcde);
-      System.exit(-1);
-    }
+    this.persistor = new GBPersistor();
+
 
     // register the terracotta operator event logger
     this.operatorEventHistoryProvider = new DsoOperatorEventHistoryProvider();
