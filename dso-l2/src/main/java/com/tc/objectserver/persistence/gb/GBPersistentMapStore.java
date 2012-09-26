@@ -1,10 +1,10 @@
 package com.tc.objectserver.persistence.gb;
 
-import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.gbapi.GBMap;
 import com.tc.gbapi.GBMapConfig;
 import com.tc.gbapi.GBMapMutationListener;
 import com.tc.gbapi.GBSerializer;
+import com.tc.object.persistence.api.PersistentMapStore;
 
 /**
  * @author tim
@@ -49,7 +49,7 @@ public class GBPersistentMapStore implements PersistentMapStore {
 
   @Override
   public boolean remove(String key) {
-    return stateMap.remove(key);
+    return stateMap.remove(key) != null;
   }
 
   @Override

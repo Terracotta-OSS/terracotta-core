@@ -17,9 +17,10 @@ public interface GBMap<K, V> {
   @Deprecated
   public long size(); // only really used for stats logging
 
-  public void put(K key, V value);
+  // TODO: what exception to catch when 
+  public V put(K key, V value);
   public V get(K key);
-  public boolean remove(K key);
+  public V remove(K key);
   public void removeAll(Collection<K> keys);
   public boolean containsKey(K key);
 }
