@@ -49,7 +49,7 @@ public class GBPersistentMapStore implements PersistentMapStore {
 
   @Override
   public boolean remove(String key) {
-    return stateMap.remove(key) != null;
+    return stateMap.remove(key);
   }
 
   @Override
