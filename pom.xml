@@ -83,6 +83,7 @@
         <module>../ent-deploy</module>
         <module>../ent-system-tests</module>
         <module>../ent-active-active-tests</module>
+        <module>../gb-offheap</module>
         <module>../terracotta-ee</module>
         <module>../terracotta-l1-ee</module>         
         <module>../toolkit-impl-ee</module>
