@@ -4,6 +4,11 @@ import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
@@ -22,6 +27,8 @@ public class GBManager {
 
   private final GBMapFactory factory;
   private final GBManagerConfigurationDummy configuration;
+
+  private final ConcurrentMap<String, GBMap<?, ?>> maps = new ConcurrentHashMap<String, GBMap<?, ?>>();
   private volatile Status status;
 
 
@@ -35,12 +42,20 @@ public class GBManager {
   }
 
   public Future<Void> start() {
-    return new FutureTask<Void>(new Runnable() {
+    final FutureTask<Void> future = new FutureTask<Void>(new Runnable() {
       @Override
       public void run() {
+        for (Map.Entry<String, GBMapConfig<?, ?>> mapConfigEntry : configuration.mapConfig().entrySet()) {
+          final GBMap<?, ?> map = factory.createMap(mapConfigEntry.getValue());
+          if (maps.putIfAbsent(mapConfigEntry.getKey(), map) != null) {
+            throw new IllegalStateException("Duplicated map for alias: " + mapConfigEntry.getKey());
+          }
+        }
         status = Status.STARTED;
       }
     }, null);
+    new Thread(future).start();
+    return future;
   }
 
   public <K, V> void attachMap(String name, GBMap<K, V> map) throws IllegalStateException {
@@ -57,7 +72,7 @@ public class GBManager {
 
   public <K, V> GBMap<K, V> getMap(String name, Class<K> keyClass, Class<V> valueClass) {
     checkIsStarted();
-    return null;
+    return (GBMap<K, V>)maps.get(name);
   }
 
   public void begin() {
@@ -69,7 +84,7 @@ public class GBManager {
   }
 
   private void checkIsStarted() {
-    if(status != Status.STARTED) {
+    if (status != Status.STARTED) {
       throw new IllegalStateException("We're " + status + " which is not started");
     }
   }
@@ -89,6 +104,8 @@ public class GBManager {
     }
   }
 
-  private static enum Status { INITIALIZED, STARTED, STOPPED };
+  private static enum Status {INITIALIZED, STARTED, STOPPED}
+
+  ;
 
 }
