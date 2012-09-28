@@ -1,5 +1,6 @@
 package com.tc.objectserver.persistence.gb;
 
+import com.tc.gbapi.impl.GBOnHeapMapConfig;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.objectserver.persistence.api.ClientStatePersistor;
 import com.tc.gbapi.GBMap;
@@ -24,29 +25,7 @@ public class GBClientStatePersistor implements ClientStatePersistor {
   }
 
   public static GBMapConfig<ChannelID, Boolean> config() {
-    return new GBMapConfig<ChannelID, Boolean>() {
-      @Override
-      public void setKeySerializer(GBSerializer<ChannelID> serializer) {
-      }
-
-      @Override
-      public void setValueSerializer(GBSerializer<Boolean> serializer) {
-      }
-
-      @Override
-      public Class<ChannelID> getKeyClass() {
-        return null;
-      }
-
-      @Override
-      public Class<Boolean> getValueClass() {
-        return null;
-      }
-
-      @Override
-      public void addListener(GBMapMutationListener<ChannelID, Boolean> listener) {
-      }
-    };
+    return new GBOnHeapMapConfig<ChannelID, Boolean>(ChannelID.class, Boolean.class);
   }
 
   @Override

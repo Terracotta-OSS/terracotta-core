@@ -4,6 +4,7 @@ import com.tc.gbapi.GBMap;
 import com.tc.gbapi.GBMapConfig;
 import com.tc.gbapi.GBMapMutationListener;
 import com.tc.gbapi.GBSerializer;
+import com.tc.gbapi.impl.GBOnHeapMapConfig;
 import com.tc.object.persistence.api.PersistentMapStore;
 
 /**
@@ -17,29 +18,7 @@ public class GBPersistentMapStore implements PersistentMapStore {
   }
 
   public static GBMapConfig<String, String> config() {
-    return new GBMapConfig<String, String>() {
-      @Override
-      public void setKeySerializer(GBSerializer<String> serializer) {
-      }
-
-      @Override
-      public void setValueSerializer(GBSerializer<String> serializer) {
-      }
-
-      @Override
-      public Class<String> getKeyClass() {
-        return null;
-      }
-
-      @Override
-      public Class<String> getValueClass() {
-        return null;
-      }
-
-      @Override
-      public void addListener(GBMapMutationListener<String, String> listener) {
-      }
-    };
+    return new GBOnHeapMapConfig<String, String>(String.class, String.class);
   }
 
   @Override

@@ -1,5 +1,6 @@
 package com.tc.objectserver.persistence.gb;
 
+import com.tc.gbapi.GBMapConfig;
 import com.tc.io.serializer.api.StringIndex;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
@@ -40,8 +41,10 @@ public class GBPersistor implements Persistor {
   private final GBPersistentMapStore persistentMapStore;
   private final GBSequenceManager sequenceManager;
   private final GBPersistenceTransactionProvider persistenceTransactionProvider;
+  private final GBObjectIDSetMaintainer objectIDSetMaintainer;
 
   public GBPersistor(File path) {
+    objectIDSetMaintainer = new GBObjectIDSetMaintainer();
     gbManager = new GBManager(path, null);
     verifyOrCreate(gbManager);
     gbManager.start();
@@ -60,17 +63,17 @@ public class GBPersistor implements Persistor {
   private void verifyOrCreate(GBManager manager) {
     GBManagerConfiguration configuration = manager.getConfiguration();
 
-    if (!configuration.mapConfig().isEmpty()) {
-      throw new IllegalStateException("Restartable is not supported.");
+    if (configuration.mapConfig().isEmpty()) {
+      configuration.mapConfig().put(TRANSACTION, GBTransactionPersistor.config());
+      configuration.mapConfig().put(CLIENT_STATES, GBClientStatePersistor.config());
+      configuration.mapConfig().put(OBJECT_DB, GBManagedObjectPersistor.objectConfig(
+              manager));
+      configuration.mapConfig().put(ROOT_DB, GBManagedObjectPersistor.rootMapConfig());
+      configuration.mapConfig().put(STATE_MAP, GBPersistentMapStore.config());
+      configuration.mapConfig().put(SEQUENCE_MAP, GBSequence.config());
     }
 
-    configuration.mapConfig().put(TRANSACTION, GBTransactionPersistor.config());
-    configuration.mapConfig().put(CLIENT_STATES, GBClientStatePersistor.config());
-    configuration.mapConfig().put(OBJECT_DB, GBManagedObjectPersistor.objectConfig(
-            manager));
-    configuration.mapConfig().put(ROOT_DB, GBManagedObjectPersistor.rootMapConfig());
-    configuration.mapConfig().put(STATE_MAP, GBPersistentMapStore.config());
-    configuration.mapConfig().put(SEQUENCE_MAP, GBSequence.config());
+    ((GBMapConfig<ObjectID, ManagedObject>) configuration.mapConfig().get(OBJECT_DB)).addListener(objectIDSetMaintainer);
   }
 
   @Override

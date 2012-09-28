@@ -1,5 +1,6 @@
 package com.tc.objectserver.persistence.gb;
 
+import com.tc.gbapi.impl.GBOnHeapMapConfig;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
@@ -32,55 +33,12 @@ public class GBManagedObjectPersistor implements ManagedObjectPersistor {
   }
 
   public static GBMapConfig<String, ObjectID> rootMapConfig() {
-    return new GBMapConfig<String, ObjectID>() {
-      @Override
-      public void setKeySerializer(GBSerializer<String> serializer) {
-      }
-
-      @Override
-      public void setValueSerializer(GBSerializer<ObjectID> serializer) {
-      }
-
-      @Override
-      public Class<String> getKeyClass() {
-        return null;
-      }
-
-      @Override
-      public Class<ObjectID> getValueClass() {
-        return null;
-      }
-
-      @Override
-      public void addListener(GBMapMutationListener<String, ObjectID> listener) {
-      }
-    };
+    return new GBOnHeapMapConfig<String, ObjectID>(String.class, ObjectID.class);
   }
 
   public static GBMapConfig<ObjectID, ManagedObject> objectConfig(GBManager gbManager) {
-    return new GBMapConfig<ObjectID, ManagedObject>() {
-      @Override
-      public void setKeySerializer(GBSerializer<ObjectID> serializer) {
-      }
-
-      @Override
-      public void setValueSerializer(GBSerializer<ManagedObject> serializer) {
-      }
-
-      @Override
-      public Class<ObjectID> getKeyClass() {
-        return null;
-      }
-
-      @Override
-      public Class<ManagedObject> getValueClass() {
-        return null;
-      }
-
-      @Override
-      public void addListener(GBMapMutationListener<ObjectID, ManagedObject> listener) {
-      }
-    };
+    return new GBOnHeapMapConfig<ObjectID, ManagedObject>(ObjectID.class,
+                                                          ManagedObject.class);
   }
 
   @Override
