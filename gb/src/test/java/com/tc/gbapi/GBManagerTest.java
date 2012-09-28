@@ -1,6 +1,7 @@
 package com.tc.gbapi;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.tc.gbapi.impl.GBOnHeapMapImpl;
@@ -17,11 +18,13 @@ public class GBManagerTest {
     manager = new GBManager(null, null);
   }
 
+  @Ignore
   @Test(expected = IllegalStateException.class)
   public void testCantAttachMapIfNotStarted() {
     manager.attachMap("whatever!", new GBOnHeapMapImpl<Object, Object>());
   }
 
+  @Ignore
   @Test(expected = IllegalStateException.class)
   public void testCantAccessMapIfNotStarted() {
     manager.getMap("whatever!", Object.class, Object.class);
