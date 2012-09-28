@@ -39,7 +39,7 @@ import com.terracotta.toolkit.collections.ToolkitBlockingQueueImpl;
 import com.terracotta.toolkit.collections.ToolkitSetImpl;
 import com.terracotta.toolkit.collections.ToolkitSortedSetImpl;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreFactory;
-import com.terracotta.toolkit.collections.servermap.api.gbimpl.GBServerMapLocalStoreFactory;
+import com.terracotta.toolkit.collections.servermap.api.ehcacheimpl.EhcacheSMLocalStoreFactory;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockImpl;
 import com.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLockImpl;
 import com.terracotta.toolkit.config.UnclusteredConfiguration;
@@ -109,8 +109,7 @@ public class TerracottaToolkit implements ToolkitInternal {
     }
 
     defaultToolkitCacheManager = createDefaultToolkitCacheManager();
-    serverMapLocalStoreFactory = new GBServerMapLocalStoreFactory();// new
-                                                                    // EhcacheSMLocalStoreFactory(defaultToolkitCacheManager);
+    serverMapLocalStoreFactory = new EhcacheSMLocalStoreFactory(defaultToolkitCacheManager);
 
     ToolkitTypeRootsStaticFactory toolkitTypeRootsFactory = new ToolkitTypeRootsStaticFactory(weakValueMapManager);
 
