@@ -4,6 +4,7 @@ import com.tc.gbapi.GBMap;
 import com.tc.gbapi.GBMapConfig;
 import com.tc.gbapi.GBMapMutationListener;
 import com.tc.gbapi.GBSerializer;
+import com.tc.gbapi.impl.GBOnHeapMapConfig;
 import com.tc.util.sequence.MutableSequence;
 
 /**
@@ -25,29 +26,7 @@ public class GBSequence implements MutableSequence {
   }
 
   public static GBMapConfig<String, Long> config() {
-    return new GBMapConfig<String, Long>() {
-      @Override
-      public void setKeySerializer(GBSerializer<String> serializer) {
-      }
-
-      @Override
-      public void setValueSerializer(GBSerializer<Long> serializer) {
-      }
-
-      @Override
-      public Class<String> getKeyClass() {
-        return null;
-      }
-
-      @Override
-      public Class<Long> getValueClass() {
-        return null;
-      }
-
-      @Override
-      public void addListener(GBMapMutationListener<String, Long> listener) {
-      }
-    };
+    return new GBOnHeapMapConfig<String, Long>(String.class, Long.class);
   }
 
   @Override
