@@ -12,6 +12,4 @@ public interface GBManagerConfiguration {
 
   Map<String, GBMapConfig<?, ?>> mapConfig();
 
-  Map<String, GBCacheConfig<?, ?>> cacheConfig();
-
 }

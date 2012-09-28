@@ -7,5 +7,5 @@ import java.util.Collection;
  */
 public interface GBMapFactory {
 
-  <K, V> GBMap<K, V> createMap(Collection<Object> configs);
+  <K, V> GBMap<K, V> createMap(GBMapConfig<K, V> mapConfig, Object ... configs);
 }
