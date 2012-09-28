@@ -8,10 +8,10 @@ import java.util.Map;
  */
 public interface GBManagerConfiguration {
 
-	Collection<Object> sharedConfig();
+  Collection<Object> sharedConfig();
 
-	Map<String, GBMapConfig<?, ?>> mapConfig();
+  Map<String, GBMapConfig<?, ?>> mapConfig();
 
-	Map<String, GBCacheConfig<?, ?>> cacheConfig();
+  Map<String, GBCacheConfig<?, ?>> cacheConfig();
 
 }
