@@ -75,7 +75,7 @@ public class GBOnHeapMapImpl<K, V> implements GBMap<K, V> {
     final Lock lock = getLockFor(key.hashCode()).writeLock();
     lock.lock();
     try {
-      final V previous = store.put(key, value);
+      store.put(key, value);
       notifyAdd(key, value);
     } finally {
       lock.unlock();
