@@ -6,6 +6,8 @@ import org.junit.Test;
 
 import com.tc.gbapi.impl.GBOnHeapMapImpl;
 
+import java.util.concurrent.ExecutionException;
+
 /**
  * @author Alex Snaps
  */
@@ -18,15 +20,19 @@ public class GBManagerTest {
     manager = new GBManager(null, null);
   }
 
-  @Ignore
   @Test(expected = IllegalStateException.class)
   public void testCantAttachMapIfNotStarted() {
     manager.attachMap("whatever!", new GBOnHeapMapImpl<Object, Object>());
   }
 
-  @Ignore
   @Test(expected = IllegalStateException.class)
   public void testCantAccessMapIfNotStarted() {
     manager.getMap("whatever!", Object.class, Object.class);
+  }
+
+  @Test
+  public void testReturnNullWhenNotAttached() throws ExecutionException, InterruptedException {
+    manager.start().get();
+    manager.getMap("wahtever!", Object.class, Object.class);
   }
 }
