@@ -153,6 +153,11 @@ public class GBOnHeapMapImpl<K, V> implements GBMap<K, V> {
     h += (h << 2) + (h << 14);
     return h ^ (h >>> 16);
   }
+
+  @Override
+  public void clear() {
+    store.clear();
+  }
 }
 
 class GBOnHeapRetriever<T> implements GBRetriever<T> {

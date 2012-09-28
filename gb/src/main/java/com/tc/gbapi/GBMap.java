@@ -30,4 +30,6 @@ public interface GBMap<K, V> {
   public void removeAll(Collection<K> keys);
 
   public boolean containsKey(K key);
+
+  public void clear();
 }
