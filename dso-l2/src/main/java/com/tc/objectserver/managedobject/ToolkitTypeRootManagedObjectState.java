@@ -3,16 +3,17 @@
  */
 package com.tc.objectserver.managedobject;
 
+import com.tc.gbapi.GBMap;
+
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.util.Map;
 
 public class ToolkitTypeRootManagedObjectState extends PartialMapManagedObjectState {
   public ToolkitTypeRootManagedObjectState(ObjectInput in) throws IOException {
     super(in);
   }
 
-  protected ToolkitTypeRootManagedObjectState(final long classID, final Map map) {
+  protected ToolkitTypeRootManagedObjectState(final long classID, final GBMap<Object, Object> map) {
     super(classID, map);
   }
 

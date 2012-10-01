@@ -5,15 +5,14 @@
 package com.tc.objectserver.managedobject;
 
 import com.tc.exception.TCRuntimeException;
-import com.tc.io.serializer.api.StringIndex;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.loaders.Namespace;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.managedobject.ManagedObjectStateStaticConfig.Factory;
-import com.tc.objectserver.persistence.api.PersistentCollectionFactory;
-import com.tc.objectserver.persistence.api.Persistor;
+import com.tc.objectserver.persistence.gb.GBPersistentMapFactory;
+import com.tc.objectserver.persistence.gb.GBPersistor;
 import com.tc.util.Assert;
 
 import java.io.IOException;
@@ -28,8 +27,6 @@ public class ManagedObjectStateFactory {
 
   private static final Map                          classNameToStateMap = new ConcurrentHashMap();
   private final ManagedObjectChangeListenerProvider listenerProvider;
-  private final StringIndex                         stringIndex;
-  private final PhysicalManagedObjectStateFactory   physicalMOFactory;
 
   /**
    * I know singletons are BAD, but this way we save about 16 bytes for every shared object we store in the server and
@@ -40,7 +37,7 @@ public class ManagedObjectStateFactory {
   // this is present for tests
   private static boolean                            disableAssertions   = false;
 
-  private final PersistentCollectionFactory         persistentCollectionFactory;
+  private final GBPersistentMapFactory mapFactory;
 
   static {
     // XXX: Support for terracotta toolkit
@@ -48,28 +45,21 @@ public class ManagedObjectStateFactory {
                             Byte.valueOf(ManagedObjectState.SET_TYPE));
   }
 
-  private ManagedObjectStateFactory(final ManagedObjectChangeListenerProvider listenerProvider,
-                                    final StringIndex stringIndex,
-                                    final PhysicalManagedObjectStateFactory physicalMOFactory,
-                                    final PersistentCollectionFactory factory) {
+  private ManagedObjectStateFactory(final ManagedObjectChangeListenerProvider listenerProvider, GBPersistentMapFactory mapFactory) {
     this.listenerProvider = listenerProvider;
-    this.stringIndex = stringIndex;
-    this.physicalMOFactory = physicalMOFactory;
-    this.persistentCollectionFactory = factory;
+    this.mapFactory = mapFactory;
   }
 
   /*
    * @see comments above
    */
   public static synchronized ManagedObjectStateFactory createInstance(final ManagedObjectChangeListenerProvider listenerProvider,
-                                                                      final Persistor persistor) {
+                                                                      final GBPersistor persistor) {
     if (singleton != null && !disableAssertions) {
       // not good !!
       throw new AssertionError("This class is singleton. It is not to be instanciated more than once. " + singleton);
     }
-    singleton = new ManagedObjectStateFactory(listenerProvider, persistor.getStringIndex(),
-                                              new PhysicalManagedObjectStateFactory(persistor.getClassPersistor()),
-                                              persistor.getPersistentCollectionFactory());
+    singleton = new ManagedObjectStateFactory(listenerProvider, persistor.getPersistentMapFactory());
     return singleton;
   }
 
@@ -101,53 +91,31 @@ public class ManagedObjectStateFactory {
     return singleton;
   }
 
-  public StringIndex getStringIndex() {
-    return this.stringIndex;
-  }
-
   public ManagedObjectChangeListener getListener() {
     return this.listenerProvider.getListener();
   }
 
   public ManagedObjectState createState(final ObjectID oid, final ObjectID parentID, final String className,
                                         final DNACursor cursor) {
+    // TODO: Maybe drop this call? We can just have a static map of toolkit objects.
     final byte type = getStateObjectTypeFor(className);
 
-    if (type == ManagedObjectState.LITERAL_TYPE) { return new LiteralTypesManagedObjectState(); }
-
-    final long classID = getClassID(className);
-
-    if (type == ManagedObjectState.PHYSICAL_TYPE) { throw new AssertionError();
-    // physical objects no longer supported
-    // return this.physicalMOFactory.create(classID, oid, parentID, className, cursor);
+    if (type == ManagedObjectState.LITERAL_TYPE) {
+      // Can't this actually happen? Literal types only exist inside other structures.
+      throw new AssertionError();
     }
-    switch (type) {
-      case ManagedObjectState.ARRAY_TYPE:
-        return new ArrayManagedObjectState(classID);
-      case ManagedObjectState.MAP_TYPE:
-        return new MapManagedObjectState(classID, this.persistentCollectionFactory.createPersistentMap(oid));
-      case ManagedObjectState.PARTIAL_MAP_TYPE:
-        return new PartialMapManagedObjectState(classID, this.persistentCollectionFactory.createPersistentMap(oid));
-      case ManagedObjectState.SET_TYPE:
-        return new SetManagedObjectState(classID, this.persistentCollectionFactory.createPersistentSet(oid));
-      case ManagedObjectState.LIST_TYPE:
-        return new ListManagedObjectState(classID);
-      case ManagedObjectState.QUEUE_TYPE:
-        return new QueueManagedObjectState(classID);
+
+    if (type == ManagedObjectState.PHYSICAL_TYPE) {
+      // physical objects no longer supported
+      throw new AssertionError();
     }
+
     ManagedObjectStateStaticConfig config = ManagedObjectStateStaticConfig.getConfigForClientClassName(className);
-    if (config != null) { return config.getFactory().newInstance(oid, classID, persistentCollectionFactory); }
-
-    // Unreachable
-    throw new AssertionError("Type : " + type + " is unknown !");
-  }
-
-  private long getClassID(final String className) {
-    return getStringIndex().getOrCreateIndexFor(className);
+    return config.getFactory().newInstance(oid, config.ordinal(), mapFactory);
   }
 
   public String getClassName(final long classID) {
-    return getStringIndex().getStringFor(classID);
+    return ManagedObjectStateStaticConfig.values()[((int) classID)].getClientClassName();
   }
 
   private byte getStateObjectTypeFor(String className) {
@@ -175,7 +143,7 @@ public class ManagedObjectStateFactory {
 
   public PhysicalManagedObjectState createPhysicalState(final ObjectID parentID, final int classId)
       throws ClassNotFoundException {
-    return this.physicalMOFactory.create(parentID, classId);
+    throw new UnsupportedOperationException();
   }
 
   public ManagedObjectState readManagedObjectStateFrom(final ObjectInput in, final byte type) {
@@ -215,8 +183,6 @@ public class ManagedObjectStateFactory {
 
   public ManagedObjectState recreateState(final ObjectID id, final ObjectID pid, final String className,
                                           final DNACursor cursor, final ManagedObjectState oldState) {
-    Assert.assertEquals(ManagedObjectState.PHYSICAL_TYPE, oldState.getType());
-    final long classID = getClassID(className);
-    return this.physicalMOFactory.recreate(classID, pid, className, cursor, (PhysicalManagedObjectState) oldState);
+    throw new UnsupportedOperationException();
   }
 }

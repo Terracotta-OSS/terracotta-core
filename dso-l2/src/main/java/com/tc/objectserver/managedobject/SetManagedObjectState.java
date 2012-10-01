@@ -4,31 +4,29 @@
  */
 package com.tc.objectserver.managedobject;
 
+import com.tc.gbapi.GBMap;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
-import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.persistence.db.PersistableCollection;
 import com.tc.objectserver.persistence.db.TCDestroyable;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Set;
 
 /**
  * ManagedObjectState for sets.
  */
-public class SetManagedObjectState extends LogicalManagedObjectState implements PersistableObjectState, TCDestroyable {
-  protected Set references;
+public class SetManagedObjectState extends LogicalManagedObjectState implements TCDestroyable {
+  protected GBMap<Object, Object> references;
 
-  SetManagedObjectState(long classID, Set set) {
+  SetManagedObjectState(long classID, GBMap<Object, Object> set) {
     super(classID);
     this.references = set;
   }
@@ -51,7 +49,7 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
       case SerializationUtil.ADD:
         Object v = params[0];
         addChangeToCollector(objectID, v, includeIDs);
-        references.add(v);
+        references.put(v, true);
         break;
       case SerializationUtil.REMOVE:
         references.remove(params[0]);
@@ -78,34 +76,38 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
   }
 
   public void dehydrate(ObjectID objectID, DNAWriter writer, DNAType type) {
-    for (Iterator i = references.iterator(); i.hasNext();) {
-      Object value = i.next();
-      writer.addLogicalAction(SerializationUtil.ADD, new Object[] { value });
+    for (Object o : references.keySet()) {
+      writer.addLogicalAction(SerializationUtil.ADD, new Object[] { o });
     }
   }
 
   @Override
   protected void addAllObjectReferencesTo(Set refs) {
-    addAllObjectReferencesFromIteratorTo(this.references.iterator(), refs);
+    for (Object o : references.keySet()) {
+      if (o instanceof ObjectID) {
+        refs.add(o);
+      }
+    }
   }
 
   public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit) {
-    final int size = references.size();
-
-    if (limit < 0) {
-      limit = size;
-    } else {
-      limit = Math.min(limit, size);
-    }
-
-    Object[] data = new Object[limit];
-
-    int index = 0;
-    for (Iterator iter = references.iterator(); iter.hasNext() && index < limit; index++) {
-      data[index] = iter.next();
-    }
-
-    return LogicalManagedObjectFacade.createSetInstance(objectID, className, data, size);
+    throw new UnsupportedOperationException();
+//    final int size = references.size();
+//
+//    if (limit < 0) {
+//      limit = size;
+//    } else {
+//      limit = Math.min(limit, size);
+//    }
+//
+//    Object[] data = new Object[limit];
+//
+//    int index = 0;
+//    for (Iterator iter = references.iterator(); iter.hasNext() && index < limit; index++) {
+//      data[index] = iter.next();
+//    }
+//
+//    return LogicalManagedObjectFacade.createSetInstance(objectID, className, data, size);
   }
 
   public byte getType() {
@@ -122,20 +124,6 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
   protected boolean basicEquals(LogicalManagedObjectState o) {
     SetManagedObjectState mo = (SetManagedObjectState) o;
     return references.equals(mo.references);
-  }
-
-  public void setSet(Set set) {
-    if (this.references != null) { throw new AssertionError("The references map is already set ! " + references); }
-    this.references = set;
-  }
-
-  public PersistableCollection getPersistentCollection() {
-    return (PersistableCollection) references;
-  }
-
-  public void setPersistentCollection(PersistableCollection collection) {
-    if (this.references != null) { throw new AssertionError("The references map is already set ! " + references); }
-    this.references = (Set) collection;
   }
 
   static SetManagedObjectState readFrom(ObjectInput in) throws IOException, ClassNotFoundException {

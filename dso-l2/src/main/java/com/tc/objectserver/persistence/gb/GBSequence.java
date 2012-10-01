@@ -2,8 +2,6 @@ package com.tc.objectserver.persistence.gb;
 
 import com.tc.gbapi.GBMap;
 import com.tc.gbapi.GBMapConfig;
-import com.tc.gbapi.GBMapMutationListener;
-import com.tc.gbapi.GBSerializer;
 import com.tc.gbapi.impl.GBOnHeapMapConfig;
 import com.tc.util.sequence.MutableSequence;
 
@@ -43,8 +41,8 @@ public class GBSequence implements MutableSequence {
 
   @Override
   public synchronized void setNext(long next) {
-    if (next <= sequenceMap.get(name)) {
-      throw new AssertionError();
+    if (next < sequenceMap.get(name)) {
+      throw new AssertionError("next=" + next + " current=" + sequenceMap.get(name));
     }
     sequenceMap.put(name, next);
   }

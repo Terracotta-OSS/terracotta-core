@@ -5,7 +5,7 @@ package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObjectState;
-import com.tc.objectserver.persistence.api.PersistentCollectionFactory;
+import com.tc.objectserver.persistence.gb.GBPersistentMapFactory;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -112,8 +112,8 @@ public enum ManagedObjectStateStaticConfig {
 
       @Override
       public ManagedObjectState newInstance(ObjectID oid, long classId,
-                                            PersistentCollectionFactory persistentCollectionFactory) {
-        return new ToolkitTypeRootManagedObjectState(classId, persistentCollectionFactory.createPersistentMap(oid));
+                                            GBPersistentMapFactory persistentCollectionFactory) {
+        return new ToolkitTypeRootManagedObjectState(classId, persistentCollectionFactory.createMap(oid));
       }
 
     },
@@ -131,8 +131,8 @@ public enum ManagedObjectStateStaticConfig {
 
       @Override
       public ManagedObjectState newInstance(ObjectID oid, long classId,
-                                            PersistentCollectionFactory persistentCollectionFactory) {
-        return new MapManagedObjectState(classId, persistentCollectionFactory.createPersistentMap(oid));
+                                            GBPersistentMapFactory persistentCollectionFactory) {
+        return new MapManagedObjectState(classId, persistentCollectionFactory.createMap(oid));
       }
 
     },
@@ -150,7 +150,7 @@ public enum ManagedObjectStateStaticConfig {
 
       @Override
       public ManagedObjectState newInstance(ObjectID oid, long classId,
-                                            PersistentCollectionFactory persistentCollectionFactory) {
+                                            GBPersistentMapFactory persistentCollectionFactory) {
         return new ListManagedObjectState(classId);
       }
 
@@ -164,7 +164,7 @@ public enum ManagedObjectStateStaticConfig {
 
       @Override
       public ManagedObjectState newInstance(ObjectID oid, long classId,
-                                            PersistentCollectionFactory persistentCollectionFactory) {
+                                            GBPersistentMapFactory persistentCollectionFactory) {
         return new SerializedClusterObjectState(classId);
       }
 
@@ -178,7 +178,7 @@ public enum ManagedObjectStateStaticConfig {
 
       @Override
       public ManagedObjectState newInstance(ObjectID oid, long classId,
-                                            PersistentCollectionFactory persistentCollectionFactory) {
+                                            GBPersistentMapFactory persistentCollectionFactory) {
         return new ToolkitObjectStripeState(classId);
       }
 
@@ -192,10 +192,10 @@ public enum ManagedObjectStateStaticConfig {
 
       @Override
       public ManagedObjectState newInstance(ObjectID oid, long classId,
-                                            PersistentCollectionFactory persistentCollectionFactory) {
+                                            GBPersistentMapFactory persistentCollectionFactory) {
         return new ConcurrentDistributedServerMapManagedObjectState(classId,
                                                                     persistentCollectionFactory
-                                                                        .createPersistentMap(oid));
+                                                                        .createMap(oid));
       }
     },
     TOOLKIT_NOTIFIER_TYPE_FACTORY() {
@@ -207,7 +207,7 @@ public enum ManagedObjectStateStaticConfig {
 
       @Override
       public ManagedObjectState newInstance(ObjectID oid, long classId,
-                                            PersistentCollectionFactory persistentCollectionFactory) {
+                                            GBPersistentMapFactory persistentCollectionFactory) {
         return new ToolkitNotifierManagedObjectState(classId);
       }
     },
@@ -225,7 +225,7 @@ public enum ManagedObjectStateStaticConfig {
 
       @Override
       public ManagedObjectState newInstance(ObjectID oid, long classId,
-                                            PersistentCollectionFactory persistentCollectionFactory) {
+                                            GBPersistentMapFactory persistentCollectionFactory) {
         return new TDCSerializedEntryManagedObjectState(classId);
       }
     },
@@ -243,7 +243,7 @@ public enum ManagedObjectStateStaticConfig {
 
       @Override
       public ManagedObjectState newInstance(ObjectID oid, long classId,
-                                            PersistentCollectionFactory persistentCollectionFactory) {
+                                            GBPersistentMapFactory persistentCollectionFactory) {
         return new TDCCustomLifespanSerializedEntryManagedObjectState(classId);
       }
     },
@@ -261,8 +261,8 @@ public enum ManagedObjectStateStaticConfig {
 
       @Override
       public ManagedObjectState newInstance(ObjectID oid, long classId,
-                                            PersistentCollectionFactory persistentCollectionFactory) {
-        return new SetManagedObjectState(classId, persistentCollectionFactory.createPersistentSet(oid));
+                                            GBPersistentMapFactory persistentCollectionFactory) {
+        return new SetManagedObjectState(classId, persistentCollectionFactory.createMap(oid));
       }
 
     };
@@ -295,7 +295,7 @@ public enum ManagedObjectStateStaticConfig {
     public abstract ManagedObjectState readFrom(ObjectInput objectInput) throws IOException, ClassNotFoundException;
 
     public abstract ManagedObjectState newInstance(ObjectID oid, long classId,
-                                                   PersistentCollectionFactory persistentCollectionFactory);
+                                                   GBPersistentMapFactory persistentMapFactory);
 
     static {
       for (Factory type : Factory.values()) {

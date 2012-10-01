@@ -11,8 +11,6 @@ import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
-import com.tc.object.cache.CacheStats;
-import com.tc.object.cache.Evictable;
 import com.tc.object.cache.EvictionPolicy;
 import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.api.ObjectManager;
@@ -20,8 +18,6 @@ import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.objectserver.api.ObjectManagerStatsListener;
 import com.tc.objectserver.api.ShutdownError;
 import com.tc.objectserver.context.DGCResultContext;
-import com.tc.objectserver.context.ManagedObjectFaultingContext;
-import com.tc.objectserver.context.ManagedObjectFlushingContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
@@ -32,15 +28,12 @@ import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.db.TCDestroyable;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.tx.NullTransactionalObjectManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
@@ -51,7 +44,6 @@ import com.tc.util.concurrent.TCConcurrentMultiMap;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -72,7 +64,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * Manages access to all the Managed objects in the system. This class is rewritten to be concurrent.
  */
-public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeListener, Evictable, PrettyPrintable {
+public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeListener, PrettyPrintable {
 
   private static enum LookupState {
     RETRY, NOT_AVAILABLE, AVAILABLE
@@ -97,9 +89,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private static final TCLogger                                 logger          = TCLogging
                                                                                     .getLogger(ObjectManager.class);
 
-  private static final int                                      MAX_COMMIT_SIZE = TCPropertiesImpl
-                                                                                    .getProperties()
-                                                                                    .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_MAXOBJECTS_TO_COMMIT);
 
   private final ManagedObjectStore                              objectStore;
   private final ConcurrentMap<ObjectID, ManagedObjectReference> references;
@@ -121,19 +110,13 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private final ClientStateManager                              stateManager;
   private final ObjectManagerConfig                             config;
   private final PersistenceTransactionProvider                  persistenceTransactionProvider;
-  private final Sink                                            faultSink;
-  private final Sink                                            flushSink;
 
-  private final ObjectStatsRecorder                             objectStatsRecorder;
   private final NoReferencesIDStore                             noReferencesIDStore;
   private final Sink                                            destroyableMapSink;
 
   public ObjectManagerImpl(final ObjectManagerConfig config, final ClientStateManager stateManager,
                            final ManagedObjectStore objectStore, final EvictionPolicy cache,
-                           final PersistenceTransactionProvider persistenceTransactionProvider, final Sink faultSink,
-                           final Sink flushSink, final ObjectStatsRecorder objectStatsRecorder, Sink destroyableMapSink) {
-    this.faultSink = faultSink;
-    this.flushSink = flushSink;
+                           final PersistenceTransactionProvider persistenceTransactionProvider, Sink destroyableMapSink) {
     Assert.assertNotNull(objectStore);
     this.config = config;
     this.stateManager = stateManager;
@@ -141,7 +124,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     this.evictionPolicy = cache;
     this.persistenceTransactionProvider = persistenceTransactionProvider;
     this.references = new ConcurrentHashMap<ObjectID, ManagedObjectReference>(16384, 0.75f, 256);
-    this.objectStatsRecorder = objectStatsRecorder;
     this.noReferencesIDStore = new NoReferencesIDStoreImpl(config.doGC());
     this.destroyableMapSink = destroyableMapSink;
   }
@@ -327,43 +309,26 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     ManagedObjectReference rv = getReference(id);
 
     if (rv == null) {
-      rv = initiateFaultingFor(id, context.removeOnRelease());
-    } else if (rv instanceof FaultingManagedObjectReference) {
-      // Check to see if the retrieve was complete and the Object is missing
-      final FaultingManagedObjectReference fmr = (FaultingManagedObjectReference) rv;
-      if (!fmr.isFaultingInProgress()) {
-        this.references.remove(id, fmr);
-        logger.warn("Request for non-existent object : " + id + " context = " + context);
+      ManagedObject mo = objectStore.getObjectByID(id);
+      if (mo == null) {
+        // Object doesn't exist, bail out early.
         context.missingObject(id);
         return null;
+      } else {
+        // TODO: Maybe check for serialized entry here and flip the remove on release flag?
+        addNewReference(mo, false);
+        rv = mo.getReference();
       }
-      if (context.updateStats()) {
-        this.stats.cacheMiss();
-      }
-    } else {
-      if (context.updateStats()) {
-        this.stats.cacheHit();
-      }
-      if (rv.isCacheManaged()) {
-        // TODO:: this is synchronized, see if we can avoid synchronization
-        this.evictionPolicy.markReferenced(rv);
-      }
+    }
+
+    if (context.updateStats()) {
+      this.stats.cacheHit();
+    }
+    if (rv.isCacheManaged()) {
+      // TODO:: this is synchronized, see if we can avoid synchronization
+      this.evictionPolicy.markReferenced(rv);
     }
     return rv;
-  }
-
-  // Request Faulting in a different stage and give back a "Referenced" proxy
-  private ManagedObjectReference initiateFaultingFor(final ObjectID id, final boolean removeOnRelease) {
-
-    this.stats.cacheMiss();
-    final FaultingManagedObjectReference myRef = new FaultingManagedObjectReference(id);
-    final ManagedObjectReference oldRef = addFaultingReference(myRef);
-    if (null == oldRef) {
-      final ManagedObjectFaultingContext mofc = new ManagedObjectFaultingContext(id, removeOnRelease);
-      this.faultSink.add(mofc);
-      return myRef;
-    }
-    return oldRef;
   }
 
   public void addFaultedObject(final ObjectID oid, final ManagedObject mo, final boolean removeOnRelease) {
@@ -387,20 +352,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public void preFetchObjectsAndCreate(final Set<ObjectID> oids, final Set<ObjectID> newOids) {
     createNewObjects(newOids);
-    preFetchObjects(oids);
-  }
-
-  private void preFetchObjects(final Set<ObjectID> oids) {
-    for (final ObjectID id : oids) {
-      final ManagedObjectReference rv = getReference(id);
-      if (rv == null) {
-        // This object is not in the cache, initiate faulting for the object
-        this.preFetchedCount.incrementAndGet();
-        initiateFaultingFor(id, false);
-      } else {
-        this.stats.cacheHit();
-      }
-    }
   }
 
   private ManagedObjectReference addNewReference(final ManagedObject obj, final boolean isRemoveOnRelease) {
@@ -421,60 +372,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return newReference;
   }
 
-  private ManagedObjectReference addFaultingReference(final FaultingManagedObjectReference reference) {
-    return this.references.putIfAbsent(reference.getObjectID(), reference);
-  }
-
   private ManagedObjectReference addFaultedReference(final ManagedObject obj, final boolean isRemoveOnRelease,
                                                      final FaultingManagedObjectReference fr) {
     return addNewReference(obj.getReference(), isRemoveOnRelease, fr);
-  }
-
-  private void reapCache(final Collection removalCandidates, final Collection<ManagedObject> toFlush,
-                         final Collection<ManagedObjectReference> removedObjects) {
-    this.lock.readLock().lock();
-    try {
-      if (this.collector.isPausingOrPaused()) {
-        // TODO::May be nice to just wait till the state changes and proceed
-        return;
-      }
-      for (final Object cand : removalCandidates) {
-        final ManagedObjectReference removalCandidate = (ManagedObjectReference) cand;
-        if (removalCandidate == null || removalCandidate.isReferenced()) {
-          continue;
-        }
-        if (markReferenced(removalCandidate)) {
-          // It is possible that before the cache evictor has a chance to mark the reference, the DGC could come and
-          // remove the reference, hence we check in references map again - this order of checking is important
-          final ObjectID id = removalCandidate.getObjectID();
-          if (this.references.containsKey(id)) {
-            this.evictionPolicy.remove(removalCandidate);
-            if (removalCandidate.getObject().isDirty()) {
-              Assert.assertFalse(this.config.paranoid());
-              toFlush.add(removalCandidate.getObject());
-            } else {
-              // paranoid mode or the object is not dirty - just remove from reference
-              final ManagedObjectReference inMap = this.removeReferenceAndDestroyIfNecessary(id);
-              if (inMap != removalCandidate) { throw new AssertionError("Not the same element : removalCandidate : "
-                                                                        + removalCandidate + " inMap : " + inMap); }
-              removedObjects.add(removalCandidate);
-              unmarkReferenced(removalCandidate);
-              makeUnBlocked(id);
-            }
-          } else {
-            unmarkReferenced(removalCandidate);
-          }
-        }
-      }
-      notifyCollectorEvictedObjects(toFlush);
-      notifyCollectorEvictedObjects(removedObjects);
-    } finally {
-      this.lock.readLock().unlock();
-    }
-  }
-
-  private void notifyCollectorEvictedObjects(final Collection evicted) {
-    this.collector.notifyObjectsEvicted(evicted);
   }
 
   private void evicted(final Collection managedObjects) {
@@ -677,9 +577,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
    */
   public void releaseAllAndCommit(final PersistenceTransaction persistenceTransaction,
                                   final Collection<ManagedObject> managedObjects) {
-    if (this.config.paranoid()) {
-      flushAllAndCommit(persistenceTransaction, managedObjects);
-    }
+    flushAllAndCommit(persistenceTransaction, managedObjects);
     for (final ManagedObject managedObject : managedObjects) {
       basicRelease(managedObject);
     }
@@ -813,14 +711,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       this.objectStore.addNewObject(object);
       this.noReferencesIDStore.addToNoReferences(object);
       object.setIsNew(false);
-      addToCacheIfNecessary(object.getReference());
       fireNewObjectinitialized(object.getID());
-    }
-  }
-
-  private void addToCacheIfNecessary(final ManagedObjectReference mor) {
-    if (mor.isCacheManaged()) {
-      this.evictionPolicy.add(mor);
     }
   }
 
@@ -843,6 +734,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private ManagedObjectReference removeReferenceAndDestroyIfNecessary(ObjectID oid) {
+//    logger.info("XXX removing reference " + oid);
     final ManagedObjectReference removed = this.references.remove(oid);
     if (removed != null && removed.getObject() != null) {
       ManagedObjectState removedManagedObjectState = removed.getObject().getManagedObjectState();
@@ -998,83 +890,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private void assertNotInShutdown() {
     if (this.inShutdown.get()) { throw new ShutdownError(); }
-  }
-
-  public void evictCache(final CacheStats stat) {
-    final int size = references_size();
-    final int toEvict = stat.getObjectCountToEvict(size);
-    if (toEvict <= 0) { return; }
-
-    // This could be a costly call, so call just once
-    Collection removalCandidates = this.evictionPolicy.getRemovalCandidates(toEvict);
-
-    HashSet<ManagedObject> toFlush = new HashSet<ManagedObject>();
-    ArrayList<ManagedObjectReference> removed = new ArrayList<ManagedObjectReference>();
-    reapCache(removalCandidates, toFlush, removed);
-
-    if (this.objectStatsRecorder.getFlushDebug()) {
-      updateFlushStats(toFlush, removed);
-    }
-
-    final int evicted = (toFlush.size() + removed.size());
-    final boolean doPostRelease = !removed.isEmpty();
-
-    this.stats.flushed(evicted);
-
-    // Let GC work for us
-    removed = null;
-    removalCandidates = null;
-
-    if (!toFlush.isEmpty()) {
-      initateFlushRequest(toFlush);
-      toFlush = null; // make GC work
-      waitUntilFlushComplete();
-    }
-
-    // TODO:: Send the right objects to the cache manager
-    stat.objectEvicted(evicted, references_size(), Collections.EMPTY_LIST, true);
-    if (doPostRelease) {
-      // Only running postRelease when necessary to avoid hogging memory manager thread here.
-      postRelease();
-    }
-  }
-
-  private void updateFlushStats(final Collection<ManagedObject> toFlush,
-                                final Collection<ManagedObjectReference> removedObjects) {
-    final Iterator<ManagedObject> flushIter = toFlush.iterator();
-    while (flushIter.hasNext()) {
-      String className = flushIter.next().getManagedObjectState().getClassName();
-      if (className == null) {
-        className = "UNKNOWN";
-      }
-      this.objectStatsRecorder.updateFlushStats(className);
-    }
-    final Iterator<ManagedObjectReference> removedIter = removedObjects.iterator();
-    while (removedIter.hasNext()) {
-      String className = removedIter.next().getObject().getManagedObjectState().getClassName();
-      if (className == null) {
-        className = "UNKNOWN";
-      }
-      this.objectStatsRecorder.updateFlushStats(className);
-    }
-  }
-
-  private void waitUntilFlushComplete() {
-    this.flushInProgress.waitUntil(0);
-  }
-
-  private void initateFlushRequest(final Collection toFlush) {
-    this.flushInProgress.increment(toFlush.size());
-    for (final Iterator i = toFlush.iterator(); i.hasNext();) {
-      int count = 0;
-      final ManagedObjectFlushingContext mofc = new ManagedObjectFlushingContext();
-      while (count < MAX_COMMIT_SIZE && i.hasNext()) {
-        mofc.addObjectToFlush(i.next());
-        count++;
-        // i.remove();
-      }
-      this.flushSink.add(mofc);
-    }
   }
 
   public void flushAndEvict(final List objects2Flush) {

@@ -77,6 +77,7 @@ import com.tc.objectserver.persistence.api.Persistor;
 import com.tc.objectserver.persistence.db.CustomSerializationAdapterFactory;
 import com.tc.objectserver.persistence.db.DBPersistorImpl;
 import com.tc.objectserver.persistence.db.SerializationAdapterFactory;
+import com.tc.objectserver.persistence.gb.GBPersistor;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransaction;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransactionProvider;
 import com.tc.objectserver.persistence.inmemory.InMemoryPersistor;
@@ -170,7 +171,7 @@ public class ObjectManagerTest extends TCTestCase {
     this.clientStateManager = new ClientStateManagerImpl(TCLogging.getLogger(ClientStateManager.class));
     ManagedObjectStateFactory.enableLegacyTypes();
     ManagedObjectStateFactory.disableSingleton(true);
-    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), new InMemoryPersistor());
+    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), new GBPersistor(getTempDirectory()));
     this.newObjectCounter = new SampledCounterImpl(new SampledCounterConfig(1, 1, true, 0L));
     this.objectfaultCounter = new SampledCounterImpl(new SampledCounterConfig(1, 1, true, 0L));
     this.objectflushCounter = new SampledCounterImpl(new SampledCounterConfig(1, 1, true, 0L));
@@ -202,8 +203,7 @@ public class ObjectManagerTest extends TCTestCase {
     final TestSink faultSink = new TestSink();
     final TestSink flushSink = new TestSink();
     this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, store, cache,
-                                               this.persistenceTransactionProvider, faultSink, flushSink,
-                                               this.objectStatsRecorder, Mockito.mock(Sink.class));
+                                               this.persistenceTransactionProvider, Mockito.mock(Sink.class));
     this.testFaultSinkContext = new TestSinkContext();
     new TestMOFaulter(this.objectManager, store, faultSink, this.testFaultSinkContext, this.logger).start();
     new TestMOFlusher(this.objectManager, flushSink, new NullSinkContext(), this.logger).start();
@@ -215,8 +215,7 @@ public class ObjectManagerTest extends TCTestCase {
     final TestSink flushSink = new TestSink();
     this.objectStore = new InMemoryManagedObjectStore(this.managed);
     this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, this.objectStore, cache,
-                                               this.persistenceTransactionProvider, faultSink, flushSink,
-                                               this.objectStatsRecorder, Mockito.mock(Sink.class));
+                                               this.persistenceTransactionProvider, Mockito.mock(Sink.class));
     this.testFaultSinkContext = new TestSinkContext();
     new TestMOFaulter(this.objectManager, this.objectStore, faultSink, this.testFaultSinkContext, this.logger).start();
     TestMOFlusherWithLatch flusherWithLatch = new TestMOFlusherWithLatch(objectManager, flushSink,
@@ -797,8 +796,7 @@ public class ObjectManagerTest extends TCTestCase {
     final TestSink flushSink = new TestSink();
     this.config.paranoid = paranoid;
     this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, store, new LRUEvictionPolicy(100),
-                                               this.persistenceTransactionProvider, faultSink, flushSink,
-                                               this.objectStatsRecorder, Mockito.mock(Sink.class));
+                                               this.persistenceTransactionProvider, Mockito.mock(Sink.class));
     new TestMOFaulter(this.objectManager, store, faultSink, new NullSinkContext(), logger).start();
     new TestMOFlusher(this.objectManager, flushSink, new NullSinkContext(), logger).start();
 

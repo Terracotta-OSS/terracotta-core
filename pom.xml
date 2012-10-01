@@ -51,7 +51,7 @@
     <module>toolkit-impl</module>
     <module>toolkit-express-impl</module>
     <module>toolkit-runtime</module>
-    <!--module>toolkit-system-tests</module-->
+    <module>toolkit-system-tests</module>
 
     <module>gb</module>
   </modules>

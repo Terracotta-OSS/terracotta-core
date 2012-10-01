@@ -3,6 +3,7 @@
  */
 package com.tc.objectserver.managedobject;
 
+import com.tc.gbapi.GBMap;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
@@ -27,7 +28,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
@@ -88,7 +88,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     this.copyOnReadEnabled = in.readBoolean();
   }
 
-  protected ConcurrentDistributedServerMapManagedObjectState(final long classId, final Map map) {
+  protected ConcurrentDistributedServerMapManagedObjectState(final long classId, final GBMap<Object, Object> map) {
     super(classId, map);
   }
 
@@ -346,7 +346,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
   @Override
   public int getSize() {
-    return this.references.size();
+    return (int)this.references.size();
   }
 
   public Set getAllKeys() {
@@ -379,26 +379,30 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     }
     this.evictionStatus = EvictionStatus.SAMPLED;
     final Map samples = new HashMap(count);
-    final Map ignored = new HashMap(count);
+    final Set<Object> ignored = new HashSet<Object>(count);
     final Random r = new Random();
     final int size = getSize();
     final int chance = count > size ? 100 : Math.max(10, (count / size) * 100);
-    for (final Iterator i = this.references.entrySet().iterator(); samples.size() < count && i.hasNext();) {
-      final Entry e = (Entry) i.next();
-      Object value = e.getValue();
-      if (serverMapEvictionClientObjectRefSet.contains(value)) {
-        continue;
-      }
+    for (final Iterator<Object> i = this.references.keySet().iterator(); samples.size() < count && i.hasNext();) {
+      final Object k = i.next();
       if (r.nextInt(100) < chance) {
-        samples.put(e.getKey(), value);
+        Object value = references.get(k);
+        if (serverMapEvictionClientObjectRefSet.contains(value)) {
+          continue;
+        }
+        samples.put(k, value);
       } else {
-        ignored.put(e.getKey(), value);
+        ignored.add(k);
       }
     }
     if (samples.size() < count) {
-      for (final Iterator i = ignored.entrySet().iterator(); samples.size() < count && i.hasNext();) {
-        final Entry e = (Entry) i.next();
-        samples.put(e.getKey(), e.getValue());
+      for (final Iterator<Object> i = ignored.iterator(); samples.size() < count && i.hasNext();) {
+        final Object k = i.next();
+        final Object v = references.get(k);
+        if (serverMapEvictionClientObjectRefSet.contains(v)) {
+          continue;
+        }
+        samples.put(k, v);
       }
     }
     return samples;

@@ -191,8 +191,6 @@ import com.tc.objectserver.handler.GarbageDisposeHandler;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
 import com.tc.objectserver.handler.InvalidateObjectsHandler;
 import com.tc.objectserver.handler.JMXEventsHandler;
-import com.tc.objectserver.handler.ManagedObjectFaultHandler;
-import com.tc.objectserver.handler.ManagedObjectFlushHandler;
 import com.tc.objectserver.handler.ManagedObjectRequestHandler;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
 import com.tc.objectserver.handler.RecallObjectsHandler;
@@ -234,12 +232,9 @@ import com.tc.objectserver.persistence.api.TransactionStore;
 import com.tc.objectserver.persistence.db.ConnectionIDFactoryImpl;
 import com.tc.objectserver.persistence.db.CustomSerializationAdapterFactory;
 import com.tc.objectserver.persistence.db.DBException;
-import com.tc.objectserver.persistence.db.DBPersistorImpl;
 import com.tc.objectserver.persistence.db.DBSequenceKeys;
 import com.tc.objectserver.persistence.db.DatabaseDirtyException;
 import com.tc.objectserver.persistence.db.SerializationAdapterFactory;
-import com.tc.objectserver.persistence.db.TCDatabaseException;
-import com.tc.objectserver.persistence.db.TempSwapDBPersistorImpl;
 import com.tc.objectserver.persistence.db.TransactionStoreImpl;
 import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.SearchEventHandler;
@@ -679,7 +674,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     clientStateStore = this.persistor.getClientStatePersistor();
 
-    ManagedObjectStateFactory.createInstance(managedObjectChangeListenerProvider, this.persistor);
+    ManagedObjectStateFactory.createInstance(managedObjectChangeListenerProvider, (GBPersistor) this.persistor);
 
     final int commWorkerThreadCount = L2Utils.getOptimalCommWorkerThreads();
     final int stageWorkerThreadCount = L2Utils.getOptimalStageWorkerThreads();
@@ -739,19 +734,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         .createCounter(sampledCounterConfig);
 
     final SequenceValidator sequenceValidator = new SequenceValidator(0);
-    // Server initiated request processing queues shouldn't have any max queue size.
 
-    final ManagedObjectFaultHandler managedObjectFaultHandler = new ManagedObjectFaultHandler(
-                                                                                              time2FaultFromDiskOrOffheap,
-                                                                                              time2Add2ObjMgr,
-                                                                                              this.objectStatsRecorder);
-    final Stage faultManagedObjectStage = stageManager
-        .createStage(ServerConfigurationContext.MANAGED_OBJECT_FAULT_STAGE, managedObjectFaultHandler,
-                     this.l2Properties.getInt("seda.faultstage.threads", stageWorkerThreadCount), -1);
-    final ManagedObjectFlushHandler managedObjectFlushHandler = new ManagedObjectFlushHandler(this.objectStatsRecorder);
-    final Stage flushManagedObjectStage = stageManager
-        .createStage(ServerConfigurationContext.MANAGED_OBJECT_FLUSH_STAGE, managedObjectFlushHandler, (persistent ? 1
-            : this.l2Properties.getInt("seda.flushstage.threads", stageWorkerThreadCount)), -1);
     final long enterpriseMarkStageInterval = objManagerProperties.getPropertiesFor("dgc")
         .getLong("enterpriseMarkStageInterval");
     final TCProperties youngDGCProperties = objManagerProperties.getPropertiesFor("dgc").getPropertiesFor("young");
@@ -780,8 +763,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                new DestroyableMapHandler(), 1, -1);
     this.objectManager = new ObjectManagerImpl(objectManagerConfig, this.clientStateManager, this.objectStore,
                                                swapCache, dbenv.getPersistenceTransactionProvider(),
-                                               faultManagedObjectStage.getSink(), flushManagedObjectStage.getSink(),
-                                               this.objectStatsRecorder, destroyableMapStage.getSink());
+                                               destroyableMapStage.getSink());
 
     this.objectManager.setStatsListener(objMgrStats);
     this.gcStatsEventPublisher = new GCStatsEventPublisher();
@@ -802,16 +784,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     // CDV-1181 warn if using CMS
     tcMemManager.checkGarbageCollectors();
 
-    if (cacheManagerProperties.getBoolean("enabled")) {
-      this.cacheManager = new CacheManager(this.objectManager, cacheConfig, this.threadGroup,
-                                           this.statisticsAgentSubSystem, tcMemManager);
-      this.cacheManager.start();
-      if (logger.isDebugEnabled()) {
-        logger.debug("CacheManager Enabled : " + this.cacheManager);
-      }
-    } else {
-      logger.warn("CacheManager is Disabled");
-    }
 
     this.connectionIdFactory = new ConnectionIDFactoryImpl(clientStateStore);
 
@@ -1142,8 +1114,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.groupCommManager));
     // initialize the garbage collector
-    final MutableSequence dgcSequence = this.dbenv.getSequence(this.dbenv.getPersistenceTransactionProvider(), logger,
-                                                               DBSequenceKeys.DGC_SEQUENCE_NAME, 1);
+    final MutableSequence dgcSequence = ((GBPersistor) persistor).getSequenceManager().getSequence(DBSequenceKeys.DGC_SEQUENCE_NAME);
     final DGCSequenceProvider dgcSequenceProvider = new DGCSequenceProvider(dgcSequence);
     final GarbageCollector gc = this.serverBuilder.createGarbageCollector(toInit, objectManagerConfig,
                                                                           this.objectManager, this.clientStateManager,

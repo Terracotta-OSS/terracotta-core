@@ -1,14 +1,14 @@
 package com.tc.objectserver.persistence.gb;
 
 import com.tc.gbapi.impl.GBOnHeapMapConfig;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.gbapi.GBManager;
 import com.tc.gbapi.GBMap;
 import com.tc.gbapi.GBMapConfig;
-import com.tc.gbapi.GBMapMutationListener;
-import com.tc.gbapi.GBSerializer;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.util.ObjectIDSet;
 
@@ -57,7 +57,8 @@ public class GBManagedObjectPersistor implements ManagedObjectPersistor {
 
   @Override
   public ObjectID loadRootID(String name) {
-    return rootMap.get(name);
+    ObjectID id = rootMap.get(name);
+    return id == null ? ObjectID.NULL_ID : id;
   }
 
   @Override
@@ -88,6 +89,7 @@ public class GBManagedObjectPersistor implements ManagedObjectPersistor {
   @Override
   public void saveObject(PersistenceTransaction tx, ManagedObject managedObject) {
     objectMap.put(managedObject.getID(), managedObject);
+    managedObject.setIsDirty(false);
   }
 
   @Override
@@ -108,7 +110,11 @@ public class GBManagedObjectPersistor implements ManagedObjectPersistor {
   }
 
   private <K, V> Map<K, V> asJdkMap(GBMap<K, V> map) {
-    return null;
+    Map<K, V> m = new HashMap<K, V>();
+    for (K k : map.keySet()) {
+      m.put(k, map.get(k));
+    }
+    return m;
   }
 
   @Override

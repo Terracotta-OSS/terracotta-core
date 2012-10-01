@@ -1,6 +1,8 @@
 package com.tc.objectserver.persistence.gb;
 
 import com.tc.gbapi.GBMapConfig;
+import com.tc.gbapi.GBMapFactory;
+import com.tc.gbapi.impl.GBOnHeapMapFactory;
 import com.tc.io.serializer.api.StringIndex;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
@@ -32,6 +34,7 @@ public class GBPersistor implements Persistor {
   private static final String OBJECT_ID_SEQUENCE = "object_id_sequence";
   private static final String GLOBAL_TRANSACTION_ID_SEQUENCE = "global_transaction_id_sequence";
 
+  private final GBMapFactory mapFactory;
   private final GBManager gbManager;
 
   private final GBTransactionPersistor transactionPersistor;
@@ -42,12 +45,18 @@ public class GBPersistor implements Persistor {
   private final GBSequenceManager sequenceManager;
   private final GBPersistenceTransactionProvider persistenceTransactionProvider;
   private final GBObjectIDSetMaintainer objectIDSetMaintainer;
+  private final GBPersistentMapFactory persistentMapFactory;
 
   public GBPersistor(File path) {
     objectIDSetMaintainer = new GBObjectIDSetMaintainer();
-    gbManager = new GBManager(path, null);
+    mapFactory = new GBOnHeapMapFactory();
+    gbManager = new GBManager(path, mapFactory);
     verifyOrCreate(gbManager);
-    gbManager.start();
+    try {
+      gbManager.start().get();
+    } catch (Exception e) {
+      throw new AssertionError(e);
+    }
 
     sequenceManager = new GBSequenceManager(gbManager.getMap(SEQUENCE_MAP, String.class, Long.class));
     transactionPersistor = new GBTransactionPersistor(gbManager.getMap(TRANSACTION,
@@ -58,6 +67,7 @@ public class GBPersistor implements Persistor {
     managedObjectPersistor = new GBManagedObjectPersistor(gbManager.getMap(ROOT_DB, String.class, ObjectID.class), gbManager.getMap(OBJECT_DB, ObjectID.class, ManagedObject.class), sequenceManager.getSequence(OBJECT_ID_SEQUENCE));
     gidSequence = sequenceManager.getSequence(GLOBAL_TRANSACTION_ID_SEQUENCE);
     persistenceTransactionProvider = new GBPersistenceTransactionProvider(gbManager);
+    persistentMapFactory = new GBPersistentMapFactory(gbManager, mapFactory);
   }
 
   private void verifyOrCreate(GBManager manager) {
@@ -107,21 +117,29 @@ public class GBPersistor implements Persistor {
 
   @Override
   public ClassPersistor getClassPersistor() {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public StringIndex getStringIndex() {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public PersistentCollectionFactory getPersistentCollectionFactory() {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public PersistentMapStore getPersistentStateStore() {
     return persistentMapStore;
+  }
+
+  public GBPersistentMapFactory getPersistentMapFactory() {
+    return persistentMapFactory;
+  }
+
+  public GBSequenceManager getSequenceManager() {
+    return sequenceManager;
   }
 }

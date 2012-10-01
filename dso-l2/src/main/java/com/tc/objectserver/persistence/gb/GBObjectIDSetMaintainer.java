@@ -36,7 +36,8 @@ public class GBObjectIDSetMaintainer implements GBMapMutationListener<ObjectID, 
 
   @Override
   public void added(GBRetriever<ObjectID> key, GBRetriever<ManagedObject> value, Map<? extends Enum, Object> metadata) {
-    byte type = (Byte) metadata.get(ObjectMetadataEnum.TYPE);
+//    byte type = (Byte) metadata.get(ObjectMetadataEnum.TYPE);
+    byte type  = value.retrieve().getManagedObjectState().getType();
     ObjectID k = key.retrieve();
     if (PersistentCollectionsUtil.isEvictableMapType(type)) {
       evictableObjectIDSet.add(k);
@@ -49,7 +50,8 @@ public class GBObjectIDSetMaintainer implements GBMapMutationListener<ObjectID, 
 
   @Override
   public void removed(GBRetriever<ObjectID> key, GBRetriever<ManagedObject> value, Map<? extends Enum, Object> metadata) {
-    byte type = (Byte) metadata.get(ObjectMetadataEnum.TYPE);
+//    byte type = (Byte) metadata.get(ObjectMetadataEnum.TYPE);
+    byte type  = value.retrieve().getManagedObjectState().getType();
     ObjectID k = key.retrieve();
     if (PersistentCollectionsUtil.isEvictableMapType(type)) {
       evictableObjectIDSet.remove(k);

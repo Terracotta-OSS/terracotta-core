@@ -113,7 +113,7 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     }
   }
 
-  private String getString(Object param) {
+  private static String getString(Object param) {
     if (param instanceof UTF8ByteDataHolder) {
       return ((UTF8ByteDataHolder) param).asString();
     } else if (param instanceof String) {

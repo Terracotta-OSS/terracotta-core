@@ -4,11 +4,11 @@
  */
 package com.tc.objectserver.managedobject;
 
+import com.tc.gbapi.GBMap;
 import com.tc.object.ObjectID;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.util.Map;
 
 /**
  * This class represents Maps that can handle partial collections in the L1 side. Currently supported classses are
@@ -17,7 +17,7 @@ import java.util.Map;
  */
 public class PartialMapManagedObjectState extends MapManagedObjectState {
 
-  protected PartialMapManagedObjectState(final long classID, final Map map) {
+  protected PartialMapManagedObjectState(final long classID, final GBMap<Object, Object> map) {
     super(classID, map);
   }
 
