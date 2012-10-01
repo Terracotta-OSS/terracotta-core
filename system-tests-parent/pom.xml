@@ -200,7 +200,7 @@
   </profiles>
 
   <properties>
-    <terracotta.core.version>${project.version}</terracotta.core.version>
+    <terracotta.core.version>3.8.0-SNAPSHOT</terracotta.core.version>
     <tc.core.artifactId>terracotta</tc.core.artifactId>
     <ee.license/>
     <productKeyPath>${user.home}/.tc/terracotta-license.key</productKeyPath>
