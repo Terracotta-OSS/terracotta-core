@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.ListenerNotFoundException;
+import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
 import javax.management.QueryExp;
@@ -72,6 +73,9 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
 
   boolean addNotificationListener(ObjectName on, NotificationListener listener) throws IOException,
       InstanceNotFoundException;
+
+  boolean addNotificationListener(ObjectName on, NotificationListener listener, NotificationFilter filter)
+      throws IOException, InstanceNotFoundException;
 
   Set<ObjectName> queryNames(ObjectName on, QueryExp query) throws IOException;
 

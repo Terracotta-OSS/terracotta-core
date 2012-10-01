@@ -17,6 +17,7 @@ import javax.management.ListenerNotFoundException;
 import javax.management.MBeanException;
 import javax.management.MBeanServerConnection;
 import javax.management.MalformedObjectNameException;
+import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
@@ -70,7 +71,7 @@ public class ConnectionContext {
     return mbsc != null;
   }
 
-  private static final ObjectName MBEAN_SERVER_DELEGATE;
+  public static final ObjectName MBEAN_SERVER_DELEGATE;
   static {
     try {
       MBEAN_SERVER_DELEGATE = new ObjectName("JMImplementation:type=MBeanServerDelegate");
@@ -128,12 +129,17 @@ public class ConnectionContext {
     return mbsc != null ? mbeanHelper.invoke(mbsc, bean, operation, args, argTypes) : null;
   }
 
-  public void addNotificationListener(ObjectName bean, NotificationListener listener) throws InstanceNotFoundException,
-      IOException {
+  public void addNotificationListener(ObjectName bean, NotificationListener listener, NotificationFilter filter)
+      throws InstanceNotFoundException, IOException {
     if (mbsc != null) {
       safeRemoveNotificationListener(bean, listener);
-      mbeanHelper.addNotificationListener(mbsc, bean, listener);
+      mbeanHelper.addNotificationListener(mbsc, bean, listener, filter);
     }
+  }
+
+  public void addNotificationListener(ObjectName on, NotificationListener listener) throws InstanceNotFoundException,
+      IOException {
+    addNotificationListener(on, listener, null);
   }
 
   private void safeRemoveNotificationListener(ObjectName bean, NotificationListener listener) {

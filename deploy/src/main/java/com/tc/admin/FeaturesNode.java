@@ -7,6 +7,7 @@ import org.apache.commons.lang.StringUtils;
 
 import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.ComponentNode;
+import com.tc.admin.common.MBeanRegistrationFilter;
 import com.tc.admin.common.SyncHTMLEditorKit;
 import com.tc.admin.common.XScrollPane;
 import com.tc.admin.common.XTextPane;
@@ -26,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.management.MBeanServerNotification;
+import javax.management.MalformedObjectNameException;
 import javax.management.Notification;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
@@ -85,11 +87,19 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
     }
   }
 
+  private static final MBeanRegistrationFilter MBEAN_REGISTRATION_FILTER;
+  static {
+    try {
+      MBEAN_REGISTRATION_FILTER = new MBeanRegistrationFilter("org.terracotta:type=Loader,*");
+    } catch (MalformedObjectNameException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   private void addMBeanServerDelegateListener() {
     IServer activeCoord = clusterModel.getActiveCoordinator();
     try {
-      ObjectName on = new ObjectName("JMImplementation:type=MBeanServerDelegate");
-      activeCoord.addNotificationListener(on, this);
+      activeCoord.addNotificationListener(ConnectionContext.MBEAN_SERVER_DELEGATE, this, MBEAN_REGISTRATION_FILTER);
     } catch (Exception e) {
       /**/
     }
@@ -99,8 +109,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
     IServer activeCoord = clusterModel.getActiveCoordinator();
     if (activeCoord != null) {
       try {
-        ObjectName on = new ObjectName("JMImplementation:type=MBeanServerDelegate");
-        activeCoord.addNotificationListener(on, this);
+        activeCoord.removeNotificationListener(ConnectionContext.MBEAN_SERVER_DELEGATE, this);
       } catch (Exception e) {
         /**/
       }
@@ -125,7 +134,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
     ensureFeatureNodes();
   }
 
-  private void ensureFeatureNodes() {
+  private synchronized void ensureFeatureNodes() {
     Iterator<Map.Entry<String, Feature>> featureIter = activeFeatureMap.entrySet().iterator();
     while (featureIter.hasNext()) {
       Map.Entry<String, Feature> entry = featureIter.next();
@@ -151,6 +160,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
       this.featureNode = featureNode;
     }
 
+    @Override
     public void presentationReady(boolean ready) {
       handlePresentationReady(featureNode);
     }
@@ -257,22 +267,27 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
     setTearDown(true);
   }
 
+  @Override
   public void handleNotification(Notification notification, Object handback) {
     String type = notification.getType();
     if (notification instanceof MBeanServerNotification) {
       final MBeanServerNotification mbsn = (MBeanServerNotification) notification;
+      final ObjectName beanName = mbsn.getMBeanName();
+
       if (type.equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
-            if (testRegisterFeature(mbsn.getMBeanName())) {
+            if (testRegisterFeature(beanName)) {
               ensureFeatureNodes();
             }
           }
         });
       } else if (type.equals(MBeanServerNotification.UNREGISTRATION_NOTIFICATION)) {
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
-            testUnregisterFeature(mbsn.getMBeanName());
+            testUnregisterFeature(beanName);
           }
         });
       }
@@ -296,6 +311,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
     return myApplicationPanel;
   }
 
+  @Override
   public void hyperlinkUpdate(HyperlinkEvent e) {
     XTextPane textPane = (XTextPane) e.getSource();
     HyperlinkEvent.EventType type = e.getEventType();

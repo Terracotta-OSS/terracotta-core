@@ -32,10 +32,16 @@ public class FeatureNode extends ComponentNode implements PropertyChangeListener
     this.featurePanel = new FeaturePanel(feature, this, adminClientContext, clusterModel);
     this.listenerList = new EventListenerList();
 
-    this.featurePanel.addPropertyChangeListener(this);
-
     setComponent(this.featurePanel);
     setName(feature.getDisplayName());
+
+    /*
+     * This is bad; need a start method or some lifecycle-y thing.
+     */
+    this.featurePanel.addPropertyChangeListener(this);
+    if (isPresentationReady()) {
+      firePresentationReady(true);
+    }
   }
 
   public boolean isPresentationReady() {
@@ -43,6 +49,7 @@ public class FeatureNode extends ComponentNode implements PropertyChangeListener
     return p != null && p.isReady();
   }
 
+  @Override
   public void propertyChange(PropertyChangeEvent evt) {
     String prop = evt.getPropertyName();
     if (Presentation.PROP_PRESENTATION_READY.equals(prop)) {

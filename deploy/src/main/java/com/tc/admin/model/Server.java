@@ -65,9 +65,11 @@ import javax.management.InstanceNotFoundException;
 import javax.management.ListenerNotFoundException;
 import javax.management.MBeanServerNotification;
 import javax.management.Notification;
+import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
 import javax.management.QueryExp;
+import javax.management.relation.MBeanServerNotificationFilter;
 import javax.management.remote.JMXConnector;
 import javax.naming.CommunicationException;
 import javax.naming.ServiceUnavailableException;
@@ -354,9 +356,25 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     }
   }
 
+  private static class MBeanRegistrationFilter extends MBeanServerNotificationFilter implements java.io.Serializable {
+    static final long serialVersionUID = 42L;
+
+    @Override
+    public boolean isNotificationEnabled(Notification notif) {
+      if (notif instanceof MBeanServerNotification) {
+        MBeanServerNotification mbsn = (MBeanServerNotification) notif;
+        return mbsn.getType() == MBeanServerNotification.REGISTRATION_NOTIFICATION
+               && mbsn.getMBeanName().getDomain().startsWith("org.terracotta");
+      }
+      return false;
+    }
+  }
+
+  private static final MBeanRegistrationFilter MBEAN_REGISTRATION_FILTER = new MBeanRegistrationFilter();
+
   protected void connectionEstablished() {
     try {
-      addNotificationListener(new ObjectName("JMImplementation:type=MBeanServerDelegate"), this);
+      addNotificationListener(ConnectionContext.MBEAN_SERVER_DELEGATE, this, MBEAN_REGISTRATION_FILTER);
       testAddLogListener();
       filterReadySet();
     } catch (Exception e) {
@@ -648,51 +666,17 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return getMBeanProxy(on, mbeanType, false);
   }
 
-  private final ConcurrentHashMap<ObjectName, NotificationListenerDelegate> notificationListenerDelegateMap = new ConcurrentHashMap<ObjectName, NotificationListenerDelegate>();
-
-  public static class NotificationListenerDelegate implements NotificationListener {
-    List<NotificationListener>           listeners                = new ArrayList<NotificationListener>();
-    private final NotificationListener[] EMPTY_NOTIFICATION_ARRAY = new NotificationListener[0];
-
-    NotificationListenerDelegate(NotificationListener listener) {
-      addNotificationListener(listener);
-    }
-
-    public void handleNotification(Notification notification, Object handback) {
-      for (NotificationListener listener : listeners.toArray(EMPTY_NOTIFICATION_ARRAY)) {
-        try {
-          listener.handleNotification(notification, handback);
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-      }
-    }
-
-    void addNotificationListener(NotificationListener listener) {
-      listeners.add(listener);
-    }
-
-    void removeNotificationListener(NotificationListener listener) {
-      listeners.remove(listener);
-    }
-
-    int getListenerListSize() {
-      return listeners.size();
-    }
-  }
-
   public boolean addNotificationListener(ObjectName on, NotificationListener listener) throws IOException,
       InstanceNotFoundException {
+    return addNotificationListener(on, listener, null);
+  }
+
+  public boolean addNotificationListener(ObjectName on, NotificationListener listener, NotificationFilter filter)
+      throws IOException, InstanceNotFoundException {
     ConnectionContext cc = getConnectionContext();
     if (cc != null) {
       safeRemoveNotificationListener(on, listener);
-      NotificationListenerDelegate delegate = notificationListenerDelegateMap.get(on);
-      if (delegate == null) {
-        notificationListenerDelegateMap.put(on, delegate = new NotificationListenerDelegate(listener));
-        cc.addNotificationListener(on, delegate);
-      } else {
-        delegate.addNotificationListener(listener);
-      }
+      cc.addNotificationListener(on, listener, filter);
       return true;
     }
     return false;
@@ -710,14 +694,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       InstanceNotFoundException, ListenerNotFoundException {
     ConnectionContext cc = getConnectionContext();
     if (cc != null) {
-      NotificationListenerDelegate delegate = notificationListenerDelegateMap.get(on);
-      if (delegate != null) {
-        delegate.removeNotificationListener(listener);
-        if (delegate.getListenerListSize() == 0) {
-          notificationListenerDelegateMap.remove(on);
-          cc.removeNotificationListener(on, delegate);
-        }
-      }
+      cc.removeNotificationListener(on, listener);
       return true;
     }
     return false;

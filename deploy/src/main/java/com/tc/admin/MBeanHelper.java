@@ -15,6 +15,7 @@ import javax.management.ListenerNotFoundException;
 import javax.management.MBeanException;
 import javax.management.MBeanServerConnection;
 import javax.management.MalformedObjectNameException;
+import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
@@ -116,12 +117,17 @@ public class MBeanHelper {
     }
   }
 
-  public void addNotificationListener(MBeanServerConnection mbsc, ObjectName bean, NotificationListener listener)
-      throws InstanceNotFoundException, IOException {
+  public void addNotificationListener(MBeanServerConnection mbsc, ObjectName bean, NotificationListener listener,
+                                      NotificationFilter filter) throws InstanceNotFoundException, IOException {
     if (bean == null) { throw new IllegalArgumentException("ObjectName is null"); }
     if (mbsc != null) {
-      mbsc.addNotificationListener(bean, listener, null, null);
+      mbsc.addNotificationListener(bean, listener, filter, null);
     }
+  }
+
+  public void addNotificationListener(MBeanServerConnection mbsc, ObjectName bean, NotificationListener listener)
+      throws InstanceNotFoundException, IOException {
+    addNotificationListener(mbsc, bean, listener, null);
   }
 
   public void removeNotificationListener(MBeanServerConnection mbsc, ObjectName bean, NotificationListener listener)
