@@ -47,6 +47,7 @@
     <module>terracotta-l1-parent</module>
     <module>terracotta-l1</module>
     <module>test-framework</module>        
+    <module>system-tests-parent</module>        
 
     <module>toolkit-impl</module>
     <module>toolkit-express-impl</module>

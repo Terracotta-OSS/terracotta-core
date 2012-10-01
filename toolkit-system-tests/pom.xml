@@ -9,19 +9,17 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.terracotta.forge</groupId>
-    <artifactId>tim-system-tests-parent</artifactId>
-    <version>1.10.0-SNAPSHOT</version>
-    <relativePath/>
+    <groupId>org.terracotta</groupId>
+    <artifactId>system-tests-parent</artifactId>    
+    <version>3.8.0-SNAPSHOT</version>
+    <relativePath>../system-tests-parent</relativePath>
   </parent>
 
   <groupId>org.terracotta.internal</groupId>
   <artifactId>toolkit-system-tests</artifactId>
   <name>toolkit-system-tests</name>
-  <version>${terracotta.core.version}</version>
 
   <properties>
-    <terracotta.core.version>3.8.0-SNAPSHOT</terracotta.core.version>
     <checkstyle-suppressions-file>${basedir}/../checkstyle-toolkit/suppressions.xml</checkstyle-suppressions-file>
   </properties>
 

@@ -1,0 +1,533 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.terracotta</groupId>
+    <artifactId>terracotta-root</artifactId>
+    <version>3.8.0-SNAPSHOT</version>
+    <relativePath>..</relativePath>
+  </parent>
+
+  <groupId>org.terracotta</groupId>
+  <artifactId>system-tests-parent</artifactId>
+  <packaging>pom</packaging>
+
+  <name>System Tests Parent</name>
+  <description>Parent POM for system tests</description>
+
+  <licenses>
+    <license>
+      <name>Terracotta Public License</name>
+      <url>http://www.terracotta.org/license.txt</url>
+    </license>
+  </licenses>
+
+  <profiles>
+    <profile>
+      <id>workaround-windows</id>
+      <activation>
+        <os><family>windows</family></os>
+      </activation>
+      <properties>
+        <localMavenRepository>C:\DOCUME~1\${user.name}\.m2\repository</localMavenRepository>
+        <productKeyPath>C:\temp\tc\terracotta-license.key</productKeyPath>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>enable-system-gc-jrockit</id>
+      <activation>
+        <property>
+          <name>java.vm.name</name>
+          <value>Oracle JRockit(R)</value>
+        </property>
+      </activation>
+      <properties>
+	<jrockit-jvm-arguments>-XXfullSystemGC</jrockit-jvm-arguments>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>container-debug</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.terracotta</groupId>
+            <artifactId>maven-forge-plugin</artifactId>
+            <configuration>
+              <printSummary>true</printSummary>
+              <reportFormat>plain</reportFormat>
+              <systemProperties>
+                <property>
+                  <name>com.tc.test.server.appserver.deployment.GenericServer.ENABLE_DEBUGGER</name>
+                  <value>true</value>
+                </property>
+                <property>
+                  <name>tc.classloader.writeToDisk</name>
+                  <value>true</value>
+                </property>
+              </systemProperties>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>ee</id>
+      <properties>
+        <tc.core.artifactId>terracotta-ee</tc.core.artifactId>
+        <ee.license>-Dcom.tc.productkey.path=${productKeyPath}</ee.license>
+        <skipTests>false</skipTests>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>system-tests</id>
+      <properties>
+        <skipTests>false</skipTests>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.terracotta</groupId>
+            <artifactId>maven-forge-plugin</artifactId>
+            <configuration>
+              <printSummary>true</printSummary>
+              <reportFormat>plain</reportFormat>
+              <excludes>
+                <exclude>**/Abstract*.java</exclude>
+              </excludes>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.terracotta.maven.plugins</groupId>
+            <artifactId>tc-maven-plugin</artifactId>
+            <version>${tc-maven-plugin.version}</version>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>container-tests</id>
+      <activation>
+        <property>
+          <name>appserver</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <!-- increase websphere test timeout to 1800 seconds (30 minutes) -->
+          <plugin>
+            <groupId>org.codehaus.gmaven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+            <version>${gmaven-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>modify-websphere-tests-timeout</id>
+                <phase>generate-test-resources</phase>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+                <configuration>
+                  <source><![CDATA[
+                    if (project.properties['appserver'] =~ /websphere/) {
+                      project.properties.setProperty('tc.tests.info.junit-test-timeout-inseconds', '1800')
+                    }
+                    ]]>
+                  </source>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.terracotta.plugin</groupId>
+            <artifactId>maven-appserver-plugin</artifactId>
+            <version>${maven-appserver-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>install-appserver</id>
+                <phase>pre-integration-test</phase>
+                <goals>
+                  <goal>setup</goal>
+                </goals>
+                <configuration>
+                  <url>
+                    <param>http://download.terracotta.org/appservers</param>
+                    <param>http://kong.terracotta.lan/resources/appservers</param>
+                  </url>
+                  <testPropertiesFile>${tc.tests.configuration.properties.file}</testPropertiesFile>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>run-test-group</id>
+      <properties>
+        <skipTests>false</skipTests>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.terracotta</groupId>
+            <artifactId>maven-forge-plugin</artifactId>
+            <configuration>
+              <printSummary>true</printSummary>
+              <reportFormat>plain</reportFormat>
+              <excludes>
+                <exclude>**/Abstract*.java</exclude>
+              </excludes>
+              <includes>
+                <include>**/${testGroup}/*Test.java</include>
+              </includes>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.terracotta.maven.plugins</groupId>
+            <artifactId>tc-maven-plugin</artifactId>
+            <version>${tc-maven-plugin.version}</version>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
+  <properties>
+    <terracotta.core.version>${project.version}</terracotta.core.version>
+    <tc.core.artifactId>terracotta</tc.core.artifactId>
+    <ee.license/>
+    <productKeyPath>${user.home}/.tc/terracotta-license.key</productKeyPath>
+    <container-test-framework.version>1.4.0-SNAPSHOT</container-test-framework.version>
+    <tc-maven-plugin.version>1.10.0-SNAPSHOT</tc-maven-plugin.version>
+
+    <tc.tests.configuration.properties.file>${project.build.testOutputDirectory}/tc.tests.properties</tc.tests.configuration.properties.file>
+    <tc.system.tests.properties>${project.build.testOutputDirectory}/com/tc/properties/tests.properties</tc.system.tests.properties>
+
+    <surefire.version>2.10</surefire.version>
+    <gmaven-plugin.version>1.4</gmaven-plugin.version>
+    <maven.project.version>2.0.9</maven.project.version>
+    <cargo-maven2-plugin.version>1.0.3</cargo-maven2-plugin.version>
+    <tc.linked-child-process.version>1.0.8</tc.linked-child-process.version>
+    <maven-appserver-plugin.version>1.0.4</maven-appserver-plugin.version>
+    <tc.native-tool.version>1.0.2</tc.native-tool.version>
+
+    <tc.config>-Dtc.config=tc-config.xml</tc.config>
+    <tc.base-dir>${project.build.directory}</tc.base-dir>
+    <tc.dso.globalmode>false</tc.dso.globalmode>
+
+    <tc.tests.info.property-files>${tc.tests.configuration.properties.file}</tc.tests.info.property-files>
+    <tc.tests.info.temp-root>${project.build.directory}/temp</tc.tests.info.temp-root>
+    <tc.tests.info.data-root>${project.build.directory}/data</tc.tests.info.data-root>
+    <tc.tests.info.linked-child-process-classpath>${localMavenRepository}/org/terracotta/linked-child-process/${tc.linked-child-process.version}/linked-child-process-${tc.linked-child-process.version}.jar</tc.tests.info.linked-child-process-classpath>
+    <tc.tests.info.junit-test-timeout-inseconds>1800</tc.tests.info.junit-test-timeout-inseconds>
+    <tc.tests.info.l2.startup.mode>internal</tc.tests.info.l2.startup.mode>
+    <derby.logSwitchInterval>10240000</derby.logSwitchInterval>
+    <jrockit-jvm-arguments/>
+    <surefire.min-memory>64m</surefire.min-memory>
+    <surefire.max-memory>128m</surefire.max-memory>
+    <surefire.additional-jvm-args/>
+    <surefire.argLine>-server -Xms${surefire.min-memory} -Xmx${surefire.max-memory} ${surefire.additional-jvm-args} ${jrockit-jvm-arguments} -Dtc.base-dir=${tc.base-dir} ${tc.config} -Dtc.dso.globalmode=${tc.dso.globalmode} -Dtc.tests.info.property-files=${tc.tests.info.property-files} -Dcom.tc.properties=${tc.system.tests.properties} -Dcom.tc.l2.derbydb.derby.storage.logSwitchInterval=${derby.logSwitchInterval} -Dcom.sun.management.jmxremote ${ee.license}</surefire.argLine>
+    <skipTests>true</skipTests>
+
+    <!--
+        Unfortunately, this silly localMavenRepository property is necessary
+        because we have to treat it specially on Windows and set it to
+        C:\DOCUME~1\${user.name}\.m2\repository to avoid spaces in the path
+        (see the container-tests-windows profile definition).
+    -->
+    <localMavenRepository>${user.home}/.m2/repository</localMavenRepository>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>terracotta</artifactId>
+        <version>${terracotta.core.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>terracotta-ee</artifactId>
+        <version>${terracotta.core.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>linked-child-process</artifactId>
+        <version>${tc.linked-child-process.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>native-tool</artifactId>
+        <version>${tc.native-tool.version}</version>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>${tc.core.artifactId}</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.test</groupId>
+      <artifactId>container-test-framework</artifactId>
+      <version>${container-test-framework.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>linked-child-process</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>native-tool</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.10</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.test</groupId>
+      <artifactId>test-framework</artifactId>
+      <version>${terracotta.core.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>false</filtering>
+      </resource>
+      <resource>
+        <directory>src/main/filtered-resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+    <testResources>
+      <testResource>
+        <directory>src/test/resources</directory>
+        <filtering>false</filtering>
+      </testResource>
+      <testResource>
+        <directory>src/test/filtered-resources</directory>
+        <filtering>true</filtering>
+      </testResource>
+    </testResources>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.codehaus.cargo</groupId>
+          <artifactId>cargo-maven2-plugin</artifactId>
+          <version>${cargo-maven2-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <!-- we include the surefire plugin to get a known version and to always tell
+               it to skip tests. The toolkit resolver plugin is the actual thing that runs
+               tests -->
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>${surefire.version}</version>
+          <configuration>
+            <skipTests>true</skipTests>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.terracotta</groupId>
+          <artifactId>maven-forge-plugin</artifactId>
+          <version>${maven-forge-plugin.version}</version>
+          <configuration>
+            <skipTests>true</skipTests>
+          </configuration>
+          <executions>
+            <execution>
+              <id>default-test</id>
+              <phase>integration-test</phase>
+              <goals>
+                <goal>test</goal>
+              </goals>
+              <configuration>
+                <skipTests>${skipTests}</skipTests>
+                <forkMode>always</forkMode>
+                <printSummary>true</printSummary>
+                <forkedProcessTimeoutInSeconds>${tc.tests.info.junit-test-timeout-inseconds}</forkedProcessTimeoutInSeconds>
+                <useSystemClassLoader>true</useSystemClassLoader>
+                <workingDirectory>${project.build.directory}</workingDirectory>
+                <__TC_skipToolkitResolve>true</__TC_skipToolkitResolve>
+                <argLine>${surefire.argLine}</argLine>
+              </configuration>
+            </execution>
+            <execution>
+              <id>setl2classpath</id>
+              <phase>process-test-resources</phase>
+              <goals>
+                <goal>setl2classpath</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.gmaven</groupId>
+          <artifactId>gmaven-plugin</artifactId>
+          <version>${gmaven-plugin.version}</version>
+          <executions>
+            <execution>
+              <id>generate-test-properties</id>
+              <phase>process-test-resources</phase>
+              <goals>
+                <goal>execute</goal>
+              </goals>
+              <configuration>
+                <source><![CDATA[
+                  Properties outputProperties = new Properties()
+                  project.properties.each { key, value ->
+                    if (key =~ /^tc\.tests\./) {
+                      outputProperties.setProperty(key, value)
+                    }
+                  }
+
+                  String propertiesFileName = project.properties.getProperty(
+                      "tc.tests.configuration.properties.file")
+                  File propertiesFile = new File(propertiesFileName)
+                  assert !propertiesFile.isDirectory()
+                  propertiesFile.parentFile.mkdirs()
+                  def outputStream = new FileOutputStream(propertiesFile)
+                  try {
+                    outputProperties.store(outputStream, "")
+                  }
+                  finally {
+                    outputStream.close()
+                  }
+                  ]]></source>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>        
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>2.1</version>
+          <executions>
+            <execution>
+              <id>build-full-classpath</id>
+              <phase>integration-test</phase>
+              <goals>
+                <goal>build-classpath</goal>
+              </goals>
+              <configuration>
+                <outputFile>${project.build.directory}/classpath.txt</outputFile>
+              </configuration>
+            </execution>
+            <execution>
+              <id>build-compile-classpath</id>
+              <phase>integration-test</phase>
+              <goals>
+                <goal>build-classpath</goal>
+              </goals>
+              <configuration>
+                <includeScope>compile</includeScope>
+                <outputFile>${project.build.directory}/compile-classpath.txt</outputFile>
+              </configuration>
+            </execution>
+            <execution>
+              <id>build-test-classpath</id>
+              <phase>integration-test</phase>
+              <goals>
+                <goal>build-classpath</goal>
+              </goals>
+              <configuration>
+                <includeScope>test</includeScope>
+                <outputFile>${project.build.directory}/test-classpath.txt</outputFile>
+              </configuration>
+            </execution>
+            <execution>
+              <id>build-runtime-classpath</id>
+              <phase>compile</phase>
+              <goals>
+                <goal>build-classpath</goal>
+              </goals>
+              <configuration>
+                <includeScope>runtime</includeScope>
+                <outputFile>${project.build.directory}/runtime-classpath.txt</outputFile>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.terracotta</groupId>
+        <artifactId>maven-forge-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.gmaven</groupId>
+        <artifactId>gmaven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.2</version>
+      </plugin>
+    </plugins>
+
+  </build>
+
+  <repositories>
+    <repository>
+      <id>terracotta-snapshots</id>
+      <url>http://www.terracotta.org/download/reflector/snapshots</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>terracotta-releases</id>
+      <url>http://www.terracotta.org/download/reflector/releases</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>jboss-public</id>
+      <url>http://repository.jboss.org/nexus/content/groups/public</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>    
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>terracotta-snapshots</id>
+      <url>http://www.terracotta.org/download/reflector/snapshots</url>
+    </pluginRepository>
+    <pluginRepository>
+      <id>terracotta-releases</id>
+      <url>http://www.terracotta.org/download/reflector/releases</url>
+    </pluginRepository>   
+  </pluginRepositories>
+
+</project>
