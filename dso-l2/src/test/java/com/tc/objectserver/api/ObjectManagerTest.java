@@ -22,9 +22,6 @@ import com.tc.object.SerializationUtil;
 import com.tc.object.cache.CacheStats;
 import com.tc.object.cache.Cacheable;
 import com.tc.object.cache.EvictionPolicy;
-import com.tc.object.cache.LRUEvictionPolicy;
-import com.tc.object.cache.NullCache;
-import com.tc.object.cache.TestCacheStats;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
@@ -70,7 +67,6 @@ import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.MapEntryFacade;
-import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.api.Persistor;
@@ -80,7 +76,6 @@ import com.tc.objectserver.persistence.db.SerializationAdapterFactory;
 import com.tc.objectserver.persistence.gb.GBPersistor;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransaction;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransactionProvider;
-import com.tc.objectserver.persistence.inmemory.InMemoryPersistor;
 import com.tc.objectserver.persistence.inmemory.NullPersistenceTransactionProvider;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
@@ -150,7 +145,6 @@ public class ObjectManagerTest extends TCTestCase {
   private TransactionalObjectManagerImpl     txObjectManager;
   private TestSinkContext                    testFaultSinkContext;
   private long                               version = 0;
-  private ObjectStatsRecorder                objectStatsRecorder;
 
   /**
    * Constructor for ObjectManagerTest.
@@ -178,7 +172,6 @@ public class ObjectManagerTest extends TCTestCase {
     this.stats = new ObjectManagerStatsImpl(this.newObjectCounter, this.objectfaultCounter, this.objectflushCounter);
     this.persistenceTransactionProvider = new TestPersistenceTransactionProvider();
     this.NULL_TRANSACTION = TestPersistenceTransaction.NULL_TRANSACTION;
-    this.objectStatsRecorder = new ObjectStatsRecorder();
   }
 
   private void initObjectManager() {
@@ -190,31 +183,26 @@ public class ObjectManagerTest extends TCTestCase {
   }
 
   private void initObjectManager(final ThreadGroup threadGroup) {
-    initObjectManager(threadGroup, new NullCache());
-  }
-
-  private void initObjectManager(final ThreadGroup threadGroup, final EvictionPolicy cache) {
     this.objectStore = new InMemoryManagedObjectStore(this.managed);
-    initObjectManager(threadGroup, cache, this.objectStore);
+    initObjectManager(threadGroup, this.objectStore);
   }
 
-  private void initObjectManager(final ThreadGroup threadGroup, final EvictionPolicy cache,
+  private void initObjectManager(final ThreadGroup threadGroup,
                                  final ManagedObjectStore store) {
     final TestSink faultSink = new TestSink();
     final TestSink flushSink = new TestSink();
-    this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, store, cache,
+    this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, store,
                                                this.persistenceTransactionProvider, Mockito.mock(Sink.class));
     this.testFaultSinkContext = new TestSinkContext();
     new TestMOFaulter(this.objectManager, store, faultSink, this.testFaultSinkContext, this.logger).start();
     new TestMOFlusher(this.objectManager, flushSink, new NullSinkContext(), this.logger).start();
   }
 
-  private TestMOFlusherWithLatch initObjectManagerAndGetFlusher(final ThreadGroup threadGroup,
-                                                                final EvictionPolicy cache) {
+  private TestMOFlusherWithLatch initObjectManagerAndGetFlusher(final ThreadGroup threadGroup) {
     final TestSink faultSink = new TestSink();
     final TestSink flushSink = new TestSink();
     this.objectStore = new InMemoryManagedObjectStore(this.managed);
-    this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, this.objectStore, cache,
+    this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, this.objectStore,
                                                this.persistenceTransactionProvider, Mockito.mock(Sink.class));
     this.testFaultSinkContext = new TestSinkContext();
     new TestMOFaulter(this.objectManager, this.objectStore, faultSink, this.testFaultSinkContext, this.logger).start();
@@ -331,8 +319,7 @@ public class ObjectManagerTest extends TCTestCase {
   // DEV-2324
   public void testReachableObjects() {
     this.config.paranoid = true;
-    initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))),
-                      new LRUEvictionPolicy(-1));
+    initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))));
     this.objectManager.setStatsListener(this.stats);
 
     assertEquals(0, this.stats.getTotalCacheHits());
@@ -393,8 +380,7 @@ public class ObjectManagerTest extends TCTestCase {
 
   public void testPreFetchObjects() {
     this.config.paranoid = true;
-    initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))),
-                      new LRUEvictionPolicy(-1));
+    initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))));
     this.objectManager.setStatsListener(this.stats);
 
     // first assert that no hits/misses occurred for clean stats.
@@ -795,7 +781,7 @@ public class ObjectManagerTest extends TCTestCase {
     final TestSink faultSink = new TestSink();
     final TestSink flushSink = new TestSink();
     this.config.paranoid = paranoid;
-    this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, store, new LRUEvictionPolicy(100),
+    this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, store,
                                                this.persistenceTransactionProvider, Mockito.mock(Sink.class));
     new TestMOFaulter(this.objectManager, store, faultSink, new NullSinkContext(), logger).start();
     new TestMOFlusher(this.objectManager, flushSink, new NullSinkContext(), logger).start();
@@ -1018,8 +1004,7 @@ public class ObjectManagerTest extends TCTestCase {
 
   public void testCacheStats() throws Exception {
     this.config.paranoid = true;
-    initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))),
-                      new LRUEvictionPolicy(-1));
+    initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))));
     this.objectManager.setStatsListener(this.stats);
 
     assertEquals(0, this.stats.getTotalRequests());
@@ -1258,7 +1243,7 @@ public class ObjectManagerTest extends TCTestCase {
                                                                                             new MockSink());
     this.objectStore = persistentMOStore;
     this.config.paranoid = true;
-    initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))), new NullCache(),
+    initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))),
                       this.objectStore);
     initTransactionObjectManager();
 
@@ -1520,8 +1505,7 @@ public class ObjectManagerTest extends TCTestCase {
 
   public void testGetObjectReferencesFrom() {
     this.config.paranoid = true;
-    final TestEvictionPolicy policy = new TestEvictionPolicy();
-    initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))), policy);
+    initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))));
     this.objectManager.setStatsListener(this.stats);
 
     final TestGarbageCollector gc = new TestGarbageCollector(this.objectManager);
@@ -1549,14 +1533,11 @@ public class ObjectManagerTest extends TCTestCase {
 
     gc.notifyReadyToGC();
     gc.notifyGCComplete();
-
-    policy.objects = objects;
   }
 
   public void testFaultWithConcurrentRemove() throws Exception {
     this.config.paranoid = true;
-    initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))),
-                      new LRUEvictionPolicy(-1));
+    initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))));
     final TestGarbageCollector gc = new TestGarbageCollector(this.objectManager);
     this.objectManager.setGarbageCollector(gc);
     this.objectManager.start();

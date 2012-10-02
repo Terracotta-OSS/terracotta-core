@@ -762,7 +762,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage destroyableMapStage = stageManager.createStage(ServerConfigurationContext.DESTROYABLE_MAP_STAGE,
                                                                new DestroyableMapHandler(), 1, -1);
     this.objectManager = new ObjectManagerImpl(objectManagerConfig, this.clientStateManager, this.objectStore,
-                                               swapCache, dbenv.getPersistenceTransactionProvider(),
+                                               persistor.getPersistenceTransactionProvider(),
                                                destroyableMapStage.getSink());
 
     this.objectManager.setStatsListener(objMgrStats);

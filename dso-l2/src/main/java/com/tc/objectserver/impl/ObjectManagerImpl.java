@@ -11,7 +11,6 @@ import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
-import com.tc.object.cache.EvictionPolicy;
 import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
@@ -92,7 +91,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private final ManagedObjectStore                              objectStore;
   private final ConcurrentMap<ObjectID, ManagedObjectReference> references;
-  private final EvictionPolicy                                  evictionPolicy;
   private final Counter                                         flushInProgress = new Counter();
   private final AtomicInteger                                   checkedOutCount = new AtomicInteger();
   private final AtomicInteger                                   preFetchedCount = new AtomicInteger();
@@ -115,13 +113,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private final Sink                                            destroyableMapSink;
 
   public ObjectManagerImpl(final ObjectManagerConfig config, final ClientStateManager stateManager,
-                           final ManagedObjectStore objectStore, final EvictionPolicy cache,
-                           final PersistenceTransactionProvider persistenceTransactionProvider, Sink destroyableMapSink) {
+                           final ManagedObjectStore objectStore, final PersistenceTransactionProvider persistenceTransactionProvider,
+                           Sink destroyableMapSink) {
     Assert.assertNotNull(objectStore);
     this.config = config;
     this.stateManager = stateManager;
     this.objectStore = objectStore;
-    this.evictionPolicy = cache;
     this.persistenceTransactionProvider = persistenceTransactionProvider;
     this.references = new ConcurrentHashMap<ObjectID, ManagedObjectReference>(16384, 0.75f, 256);
     this.noReferencesIDStore = new NoReferencesIDStoreImpl(config.doGC());
@@ -320,14 +317,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         rv = mo.getReference();
       }
     }
-
-    if (context.updateStats()) {
-      this.stats.cacheHit();
-    }
-    if (rv.isCacheManaged()) {
-      // TODO:: this is synchronized, see if we can avoid synchronization
-      this.evictionPolicy.markReferenced(rv);
-    }
     return rv;
   }
 
@@ -366,8 +355,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
                                                           + newReference); }
     if (removeOnRelease) {
       newReference.setRemoveOnRelease(removeOnRelease);
-    } else if (newReference.isCacheManaged()) {
-      this.evictionPolicy.add(newReference);
     }
     return newReference;
   }
@@ -611,9 +598,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         }
         this.noReferencesIDStore.clearFromNoReferencesStore(id);
         if (ref != null) {
-          if (ref.isCacheManaged()) {
-            this.evictionPolicy.remove(ref);
-          } else if (ref.isNew()) { throw new AssertionError("DGCed Reference is still new : " + ref); }
+          if (ref.isNew()) { throw new AssertionError("DGCed Reference is still new : " + ref); }
         }
       }
     } finally {
