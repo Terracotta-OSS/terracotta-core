@@ -11,17 +11,17 @@ import net.sf.ehcache.management.service.CacheManagerService;
 import net.sf.ehcache.management.service.CacheService;
 import net.sf.ehcache.management.service.EntityResourceFactory;
 import org.terracotta.management.ServiceExecutionException;
-import org.terracotta.management.ServiceLocator;
 import org.terracotta.management.resource.AgentEntity;
 import org.terracotta.management.resource.AgentMetadataEntity;
 import org.terracotta.management.resource.Representable;
-import org.terracotta.management.resource.services.LicenseService;
-import org.terracotta.management.resource.services.LicenseServiceImpl;
-import org.terracotta.management.resource.services.validator.RequestValidator;
+
+import com.terracotta.management.security.ContextService;
+import com.terracotta.management.security.RequestTicketMonitor;
+import com.terracotta.management.security.UserService;
+import com.terracotta.management.user.UserInfo;
 
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
-import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,7 +30,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.management.JMX;
-import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 
@@ -43,27 +42,17 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
 
   private final MBeanServerConnection mBeanServerConnection;
   private final JmxEhcacheRequestValidator requestValidator;
+  private final RequestTicketMonitor ticketMonitor;
+  private final ContextService contextService;
+  private final UserService userService;
 
-  public static void create() {
-    try {
-      MBeanServer findMBeanServer = ManagementFactory.getPlatformMBeanServer();
-      JmxEhcacheRequestValidator requestValidator = new JmxEhcacheRequestValidator(findMBeanServer);
-      JmxRepositoryService repoSvc = new JmxRepositoryService(findMBeanServer, requestValidator);
-      ServiceLocator locator = new ServiceLocator().loadService(LicenseService.class, new LicenseServiceImpl(true))
-                                                   .loadService(RequestValidator.class, requestValidator)
-                                                   .loadService(CacheManagerService.class, repoSvc)
-                                                   .loadService(CacheService.class, repoSvc)
-                                                   .loadService(EntityResourceFactory.class, repoSvc)
-                                                   .loadService(AgentService.class, repoSvc);
-      ServiceLocator.load(locator);
-    } catch (Exception ioe) {
-      throw new RuntimeException(ioe);
-    }
-  }
-
-  public JmxRepositoryService(MBeanServerConnection mBeanServerConnection, JmxEhcacheRequestValidator requestValidator) {
+  public JmxRepositoryService(MBeanServerConnection mBeanServerConnection, JmxEhcacheRequestValidator requestValidator,
+                              RequestTicketMonitor ticketMonitor, ContextService contextService, UserService userService) {
     this.mBeanServerConnection = mBeanServerConnection;
     this.requestValidator = requestValidator;
+    this.ticketMonitor = ticketMonitor;
+    this.contextService = contextService;
+    this.userService = userService;
   }
 
   private ObjectName getRepositoryServiceName(String node) {
@@ -95,40 +84,55 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
   public void updateCacheManager(String cacheManagerName, CacheManagerEntity resource) throws ServiceExecutionException {
     ObjectName repositoryService = getRepositoryServiceName(requestValidator.getValidatedNode());
 
+    String ticket = ticketMonitor.issueRequestTicket();
+    String token = userService.putUserInfo(contextService.getUserInfo());
+
     DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
-    mbean.invoke(null, null, "updateCacheManager", new Class<?>[] { String.class, CacheManagerEntity.class }, new Object[] { cacheManagerName, resource });
+    mbean.invoke(ticket, token, "updateCacheManager", new Class<?>[] { String.class, CacheManagerEntity.class }, new Object[] { cacheManagerName, resource });
   }
 
   @Override
   public void clearCacheStats(String cacheManagerName, String cacheName) {
     ObjectName repositoryService = getRepositoryServiceName(requestValidator.getValidatedNode());
 
+    String ticket = ticketMonitor.issueRequestTicket();
+    String token = userService.putUserInfo(contextService.getUserInfo());
+
     DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
-    mbean.invoke(null, null, "clearCacheStats", new Class<?>[] { String.class, String.class }, new Object[] { cacheManagerName, cacheName });
+    mbean.invoke(ticket, token, "clearCacheStats", new Class<?>[] { String.class, String.class }, new Object[] { cacheManagerName, cacheName });
   }
 
   @Override
   public void createOrUpdateCache(String cacheManagerName, String cacheName, CacheEntity resource) throws ServiceExecutionException {
     ObjectName repositoryService = getRepositoryServiceName(requestValidator.getValidatedNode());
 
+    String ticket = ticketMonitor.issueRequestTicket();
+    String token = userService.putUserInfo(contextService.getUserInfo());
+
     DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
-    mbean.invoke(null, null, "createOrUpdateCache", new Class<?>[] { String.class, String.class, CacheEntity.class }, new Object[] { cacheManagerName, cacheName, resource });
+    mbean.invoke(ticket, token, "createOrUpdateCache", new Class<?>[] { String.class, String.class, CacheEntity.class }, new Object[] { cacheManagerName, cacheName, resource });
   }
 
   @Override
   public void clearCache(String cacheManagerName, String cacheName) {
     ObjectName repositoryService = getRepositoryServiceName(requestValidator.getValidatedNode());
 
+    String ticket = ticketMonitor.issueRequestTicket();
+    String token = userService.putUserInfo(contextService.getUserInfo());
+
     DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
-    mbean.invoke(null, null, "clearCache", new Class<?>[] { String.class, String.class }, new Object[] { cacheManagerName, cacheName });
+    mbean.invoke(ticket, token, "clearCache", new Class<?>[] { String.class, String.class }, new Object[] { cacheManagerName, cacheName });
   }
 
   @Override
   public Collection<CacheManagerEntity> createCacheManagerEntities(Set<String> cacheManagerNames, Set<String> attributes) {
     ObjectName repositoryService = getRepositoryServiceName(requestValidator.getValidatedNode());
 
+    String ticket = ticketMonitor.issueRequestTicket();
+    String token = userService.putUserInfo(contextService.getUserInfo());
+
     DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
-    byte[] bytes = mbean.invoke(null, null, "createCacheManagerEntities", new Class<?>[] { Set.class, Set.class }, new Object[] { cacheManagerNames, attributes });
+    byte[] bytes = mbean.invoke(ticket, token, "createCacheManagerEntities", new Class<?>[] { Set.class, Set.class }, new Object[] { cacheManagerNames, attributes });
     return deserialize(bytes);
   }
 
@@ -136,8 +140,11 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
   public Collection<CacheManagerConfigEntity> createCacheManagerConfigEntities(Set<String> cacheManagerNames) {
     ObjectName repositoryService = getRepositoryServiceName(requestValidator.getValidatedNode());
 
+    String ticket = ticketMonitor.issueRequestTicket();
+    String token = userService.putUserInfo(contextService.getUserInfo());
+
     DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
-    byte[] bytes = mbean.invoke(null, null, "createCacheManagerConfigEntities", new Class<?>[] { Set.class }, new Object[] { cacheManagerNames });
+    byte[] bytes = mbean.invoke(ticket, token, "createCacheManagerConfigEntities", new Class<?>[] { Set.class }, new Object[] { cacheManagerNames });
     return deserialize(bytes);
   }
 
@@ -145,8 +152,11 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
   public Collection<CacheEntity> createCacheEntities(Set<String> cacheManagerNames, Set<String> cacheNames, Set<String> attributes) {
     ObjectName repositoryService = getRepositoryServiceName(requestValidator.getValidatedNode());
 
+    String ticket = ticketMonitor.issueRequestTicket();
+    String token = userService.putUserInfo(contextService.getUserInfo());
+
     DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
-    byte[] bytes = mbean.invoke(null, null, "createCacheEntities", new Class<?>[] { Set.class, Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames, attributes });
+    byte[] bytes = mbean.invoke(ticket, token, "createCacheEntities", new Class<?>[] { Set.class, Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames, attributes });
     return deserialize(bytes);
   }
 
@@ -154,8 +164,11 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
   public Collection<CacheConfigEntity> createCacheConfigEntities(Set<String> cacheManagerNames, Set<String> cacheNames) {
     ObjectName repositoryService = getRepositoryServiceName(requestValidator.getValidatedNode());
 
+    String ticket = ticketMonitor.issueRequestTicket();
+    String token = userService.putUserInfo(contextService.getUserInfo());
+
     DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
-    byte[] bytes = mbean.invoke(null, null, "createCacheConfigEntities", new Class<?>[] { Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames });
+    byte[] bytes = mbean.invoke(ticket, token, "createCacheConfigEntities", new Class<?>[] { Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames });
     return deserialize(bytes);
   }
 
@@ -163,8 +176,11 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
   public Collection<CacheStatisticSampleEntity> createCacheStatisticSampleEntity(Set<String> cacheManagerNames, Set<String> cacheNames, Set<String> statNames) {
     ObjectName repositoryService = getRepositoryServiceName(requestValidator.getValidatedNode());
 
+    String ticket = ticketMonitor.issueRequestTicket();
+    String token = userService.putUserInfo(contextService.getUserInfo());
+
     DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
-    byte[] bytes = mbean.invoke(null, null, "createCacheStatisticSampleEntity", new Class<?>[] { Set.class, Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames, statNames });
+    byte[] bytes = mbean.invoke(ticket, token, "createCacheStatisticSampleEntity", new Class<?>[] { Set.class, Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames, statNames });
     return deserialize(bytes);
   }
 
@@ -177,6 +193,7 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
       idSet = nodes;
     }
 
+    UserInfo userInfo = contextService.getUserInfo();
     for (String id : idSet) {
       if (!nodes.contains(id)) {
         throw new ServiceExecutionException("Unknown agent ID : " + id);
@@ -184,8 +201,12 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
 
       requestValidator.setValidatedNode(id);
       ObjectName repositoryService = getRepositoryServiceName(id);
+
+      String ticket = ticketMonitor.issueRequestTicket();
+      String token = userService.putUserInfo(userInfo);
+
       DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
-      byte[] bytes = mbean.invoke(null, null, "getAgentsMetadata", new Class<?>[] { Set.class }, new Object[] { Collections.emptySet() });
+      byte[] bytes = mbean.invoke(ticket, token, "getAgentsMetadata", new Class<?>[] { Set.class }, new Object[] { Collections.emptySet() });
       Collection<AgentMetadataEntity> resp = deserialize(bytes); 
       for(AgentMetadataEntity ame :  resp) {
         ame.setAgentId(id);
