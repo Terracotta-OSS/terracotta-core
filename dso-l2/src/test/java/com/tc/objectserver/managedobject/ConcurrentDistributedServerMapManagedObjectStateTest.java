@@ -40,7 +40,7 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
     final ConcurrentDistributedServerMapManagedObjectState state3 = (ConcurrentDistributedServerMapManagedObjectState) createManagedObjectState(ManagedObjectStateStaticConfig.ToolkitTypeNames.SERVER_MAP_TYPE,
                                                                                                                                                 cursor3);
     state3.apply(new ObjectID(1), cursor3, new ApplyTransactionInfo());
-    assertTrue(state3.references.isEmpty());
+    assertTrue(state3.references.size() == 0);
 
   }
 

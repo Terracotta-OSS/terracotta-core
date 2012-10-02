@@ -11,6 +11,7 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.loaders.Namespace;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.managedobject.ManagedObjectStateStaticConfig.Factory;
+import com.tc.objectserver.persistence.api.Persistor;
 import com.tc.objectserver.persistence.gb.GBPersistentMapFactory;
 import com.tc.objectserver.persistence.gb.GBPersistor;
 import com.tc.util.Assert;
@@ -63,6 +64,11 @@ public class ManagedObjectStateFactory {
     return singleton;
   }
 
+  public static synchronized ManagedObjectStateFactory createInstance(final ManagedObjectChangeListenerProvider listenerProvider,
+                                                                      final Persistor persistor) {
+    throw new AssertionError();
+  }
+
   // This is provided only for testing
   public static synchronized void disableSingleton(final boolean b) {
     disableAssertions = b;
@@ -97,48 +103,12 @@ public class ManagedObjectStateFactory {
 
   public ManagedObjectState createState(final ObjectID oid, final ObjectID parentID, final String className,
                                         final DNACursor cursor) {
-    // TODO: Maybe drop this call? We can just have a static map of toolkit objects.
-    final byte type = getStateObjectTypeFor(className);
-
-    if (type == ManagedObjectState.LITERAL_TYPE) {
-      // Can't this actually happen? Literal types only exist inside other structures.
-      throw new AssertionError();
-    }
-
-    if (type == ManagedObjectState.PHYSICAL_TYPE) {
-      // physical objects no longer supported
-      throw new AssertionError();
-    }
-
     ManagedObjectStateStaticConfig config = ManagedObjectStateStaticConfig.getConfigForClientClassName(className);
     return config.getFactory().newInstance(oid, config.ordinal(), mapFactory);
   }
 
   public String getClassName(final long classID) {
     return ManagedObjectStateStaticConfig.values()[((int) classID)].getClientClassName();
-  }
-
-  private byte getStateObjectTypeFor(String className) {
-    final String logicalExtendingClassName = Namespace.parseLogicalNameIfNeceesary(className);
-    if (logicalExtendingClassName != null) {
-      final Byte t = (Byte) classNameToStateMap.get(logicalExtendingClassName);
-      if (t != null) { return t.byteValue(); }
-
-      className = Namespace.parseClassNameIfNecessary(className);
-    }
-
-    if (className.startsWith("[")) { return ManagedObjectState.ARRAY_TYPE; }
-
-    final Byte type = (Byte) classNameToStateMap.get(className);
-    if (type != null) { return type.byteValue(); }
-    if (LiteralValues.isLiteral(className)) { return ManagedObjectState.LITERAL_TYPE; }
-
-    ManagedObjectStateStaticConfig config = ManagedObjectStateStaticConfig.getConfigForClientClassName(className);
-    if (config != null) { return config.getStateObjectType(); }
-
-    throw new AssertionError("This server doesn't recognize types of '" + className + "'");
-    // physical types no more supported
-    // return ManagedObjectState.PHYSICAL_TYPE;
   }
 
   public PhysicalManagedObjectState createPhysicalState(final ObjectID parentID, final int classId)

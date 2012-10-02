@@ -17,6 +17,7 @@ import com.tc.async.api.AddPredicate;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.exception.ImplementMe;
+import com.tc.gbapi.GBMap;
 import com.tc.invalidation.Invalidations;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -322,8 +323,55 @@ public class ServerMapRequestManagerTest extends TestCase {
 
   private static class TestCDSMManagedObjectState extends ConcurrentDistributedServerMapManagedObjectState {
 
-    protected TestCDSMManagedObjectState(long classId, Map map) {
-      super(classId, map);
+    protected TestCDSMManagedObjectState(long classId, final Map m) {
+      super(classId, new GBMap<Object, Object>() {
+        @Override
+        public Set<Object> keySet() {
+          return m.keySet();
+        }
+
+        @Override
+        public Collection<Object> values() {
+          return m.values();
+        }
+
+        @Override
+        public long size() {
+          return m.size();
+        }
+
+        @Override
+        public void put(final Object key, final Object value) {
+          m.put(key, value);
+        }
+
+        @Override
+        public Object get(final Object key) {
+          return m.get(key);
+        }
+
+        @Override
+        public boolean remove(final Object key) {
+          return m.remove(key) != null;
+        }
+
+        @Override
+        public void removeAll(final Collection<Object> keys) {
+          for (Object key : keys) {
+            m.remove(key);
+          }
+        }
+
+        @Override
+        public boolean containsKey(final Object key) {
+          return m.containsKey(key);
+        }
+
+        @Override
+        public void clear() {
+          m.clear();
+        }
+      });
     }
 
   }

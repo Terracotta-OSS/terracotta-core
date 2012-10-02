@@ -1056,7 +1056,7 @@ public class ObjectManagerTest extends TCTestCase {
     assertEquals(10, this.stats.getTotalCacheHits());
     assertEquals(20, this.stats.getTotalCacheMisses());
 
-    evictCache(10);
+//    evictCache(10);
 
     ids = makeObjectIDSet(14, 4);
     results = new TestResultsContext(ids, new ObjectIDSet());
@@ -1071,12 +1071,12 @@ public class ObjectManagerTest extends TCTestCase {
     assertEquals(hitRate, this.stats.getCacheHitRatio(), 0D);
   }
 
-  private void evictCache(final int inCache) {
-    final TestCacheStats tc = new TestCacheStats();
-    tc.toKeep = inCache;
-    this.objectManager.evictCache(tc);
-    tc.validate();
-  }
+//  private void evictCache(final int inCache) {
+//    final TestCacheStats tc = new TestCacheStats();
+//    tc.toKeep = inCache;
+//    this.objectManager.evictCache(tc);
+//    tc.validate();
+//  }
 
   private ObjectIDSet makeObjectIDSet(final int begin, final int end) {
     final ObjectIDSet rv = new ObjectIDSet();
@@ -1095,7 +1095,7 @@ public class ObjectManagerTest extends TCTestCase {
 
   private Set<ObjectID> createObjects(final int num, final int inCache) {
     Set<ObjectID> oids = createObjects(num);
-    evictCache(inCache);
+//    evictCache(inCache);
     return oids;
   }
 
@@ -1136,59 +1136,59 @@ public class ObjectManagerTest extends TCTestCase {
   /**
    * DEV-5113
    */
-  public void testEvictCacheAndGCRunParallel() throws Exception {
-    this.config.paranoid = false;
-    TestMOFlusherWithLatch flushWithLatch = initObjectManagerAndGetFlusher(createThreadGroup(),
-                                                                           new LRUEvictionPolicy(-1));
-    this.config.myGCThreadSleepTime = -1;
-    final TestGarbageCollector gc = new TestGarbageCollector(this.objectManager);
-    this.objectManager.setGarbageCollector(gc);
-    this.objectManager.start();
-
-    ArrayList<ManagedObject> managedObjects = new ArrayList<ManagedObject>();
-    ObjectIDSet objectIDset = new ObjectIDSet();
-    for (int i = 0; i < 10000; i++) {
-      ObjectID id = new ObjectID(i);
-      ManagedObject mo = new TestManagedObject(id, new ArrayList<ObjectID>(3));
-
-      mo.setIsDirty(true);
-      this.objectManager.createObject(mo);
-
-      managedObjects.add(mo);
-      objectIDset.add(id);
-    }
-
-    Thread evictor = new Thread() {
-      @Override
-      public void run() {
-        objectManager.evictCache(new CacheStats() {
-          public void objectEvicted(int evictedCount, int currentCount, List targetObjects4GC, boolean printNewObjects) {
-            //
-          }
-
-          public int getObjectCountToEvict(int currentCount) {
-            return 10000;
-          }
-        });
-
-      }
-    };
-    evictor.start();
-
-    ThreadUtil.reallySleep(5000);
-
-    final Thread gcCaller = new Thread(new GCCaller(), "GCCaller");
-    gcCaller.start();
-    gc.collectedObjects = objectIDset;
-
-    // FLUSHER and the EVICTOR are running in parallel now. High chance of race in removing the references
-    flushWithLatch.getLatch().release();
-    gc.allow_blockUntilReadyToGC_ToProceed();
-
-    assertTrue(gc.waitFor_notifyGCComplete_ToBeCalled(150000));
-    gcCaller.join();
-    evictor.join();
-  }
+//  public void testEvictCacheAndGCRunParallel() throws Exception {
+//    this.config.paranoid = false;
+//    TestMOFlusherWithLatch flushWithLatch = initObjectManagerAndGetFlusher(createThreadGroup(),
+//                                                                           new LRUEvictionPolicy(-1));
+//    this.config.myGCThreadSleepTime = -1;
+//    final TestGarbageCollector gc = new TestGarbageCollector(this.objectManager);
+//    this.objectManager.setGarbageCollector(gc);
+//    this.objectManager.start();
+//
+//    ArrayList<ManagedObject> managedObjects = new ArrayList<ManagedObject>();
+//    ObjectIDSet objectIDset = new ObjectIDSet();
+//    for (int i = 0; i < 10000; i++) {
+//      ObjectID id = new ObjectID(i);
+//      ManagedObject mo = new TestManagedObject(id, new ArrayList<ObjectID>(3));
+//
+//      mo.setIsDirty(true);
+//      this.objectManager.createObject(mo);
+//
+//      managedObjects.add(mo);
+//      objectIDset.add(id);
+//    }
+//
+//    Thread evictor = new Thread() {
+//      @Override
+//      public void run() {
+//        objectManager.evictCache(new CacheStats() {
+//          public void objectEvicted(int evictedCount, int currentCount, List targetObjects4GC, boolean printNewObjects) {
+//            //
+//          }
+//
+//          public int getObjectCountToEvict(int currentCount) {
+//            return 10000;
+//          }
+//        });
+//
+//      }
+//    };
+//    evictor.start();
+//
+//    ThreadUtil.reallySleep(5000);
+//
+//    final Thread gcCaller = new Thread(new GCCaller(), "GCCaller");
+//    gcCaller.start();
+//    gc.collectedObjects = objectIDset;
+//
+//    // FLUSHER and the EVICTOR are running in parallel now. High chance of race in removing the references
+//    flushWithLatch.getLatch().release();
+//    gc.allow_blockUntilReadyToGC_ToProceed();
+//
+//    assertTrue(gc.waitFor_notifyGCComplete_ToBeCalled(150000));
+//    gcCaller.join();
+//    evictor.join();
+//  }
 
   public void testObjectManagerGC() throws Exception {
     initObjectManager();
@@ -1551,12 +1551,6 @@ public class ObjectManagerTest extends TCTestCase {
     gc.notifyGCComplete();
 
     policy.objects = objects;
-    final CacheStatsYoungGC cacheStats = new CacheStatsYoungGC();
-    this.objectManager.evictCache(cacheStats);
-
-    final Set<ObjectID> returnedCachedReapSet = this.objectManager.getObjectReferencesFrom(new ObjectID(4), true);
-    assertEquals(0, returnedCachedReapSet.size());
-
   }
 
   public void testFaultWithConcurrentRemove() throws Exception {
