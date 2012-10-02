@@ -96,7 +96,7 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
     ObjectName repositoryService = getRepositoryServiceName(requestValidator.getValidatedNode());
 
     DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
-    mbean.invoke("updateCacheManager", new Class<?>[] { String.class, CacheManagerEntity.class }, new Object[] { cacheManagerName, resource });
+    mbean.invoke(null, null, "updateCacheManager", new Class<?>[] { String.class, CacheManagerEntity.class }, new Object[] { cacheManagerName, resource });
   }
 
   @Override
@@ -104,7 +104,7 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
     ObjectName repositoryService = getRepositoryServiceName(requestValidator.getValidatedNode());
 
     DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
-    mbean.invoke("clearCacheStats", new Class<?>[] { String.class, String.class }, new Object[] { cacheManagerName, cacheName });
+    mbean.invoke(null, null, "clearCacheStats", new Class<?>[] { String.class, String.class }, new Object[] { cacheManagerName, cacheName });
   }
 
   @Override
@@ -112,7 +112,7 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
     ObjectName repositoryService = getRepositoryServiceName(requestValidator.getValidatedNode());
 
     DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
-    mbean.invoke("createOrUpdateCache", new Class<?>[] { String.class, String.class, CacheEntity.class }, new Object[] { cacheManagerName, cacheName, resource });
+    mbean.invoke(null, null, "createOrUpdateCache", new Class<?>[] { String.class, String.class, CacheEntity.class }, new Object[] { cacheManagerName, cacheName, resource });
   }
 
   @Override
@@ -120,7 +120,7 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
     ObjectName repositoryService = getRepositoryServiceName(requestValidator.getValidatedNode());
 
     DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
-    mbean.invoke("clearCache", new Class<?>[] { String.class, String.class }, new Object[] { cacheManagerName, cacheName });
+    mbean.invoke(null, null, "clearCache", new Class<?>[] { String.class, String.class }, new Object[] { cacheManagerName, cacheName });
   }
 
   @Override
@@ -128,7 +128,7 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
     ObjectName repositoryService = getRepositoryServiceName(requestValidator.getValidatedNode());
 
     DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
-    byte[] bytes = mbean.invoke("createCacheManagerEntities", new Class<?>[] { Set.class, Set.class }, new Object[] { cacheManagerNames, attributes });
+    byte[] bytes = mbean.invoke(null, null, "createCacheManagerEntities", new Class<?>[] { Set.class, Set.class }, new Object[] { cacheManagerNames, attributes });
     return deserialize(bytes);
   }
 
@@ -137,7 +137,7 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
     ObjectName repositoryService = getRepositoryServiceName(requestValidator.getValidatedNode());
 
     DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
-    byte[] bytes = mbean.invoke("createCacheManagerConfigEntities", new Class<?>[] { Set.class }, new Object[] { cacheManagerNames });
+    byte[] bytes = mbean.invoke(null, null, "createCacheManagerConfigEntities", new Class<?>[] { Set.class }, new Object[] { cacheManagerNames });
     return deserialize(bytes);
   }
 
@@ -146,7 +146,7 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
     ObjectName repositoryService = getRepositoryServiceName(requestValidator.getValidatedNode());
 
     DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
-    byte[] bytes = mbean.invoke("createCacheEntities", new Class<?>[] { Set.class, Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames, attributes });
+    byte[] bytes = mbean.invoke(null, null, "createCacheEntities", new Class<?>[] { Set.class, Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames, attributes });
     return deserialize(bytes);
   }
 
@@ -155,7 +155,7 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
     ObjectName repositoryService = getRepositoryServiceName(requestValidator.getValidatedNode());
 
     DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
-    byte[] bytes = mbean.invoke("createCacheConfigEntities", new Class<?>[] { Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames });
+    byte[] bytes = mbean.invoke(null, null, "createCacheConfigEntities", new Class<?>[] { Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames });
     return deserialize(bytes);
   }
 
@@ -164,7 +164,7 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
     ObjectName repositoryService = getRepositoryServiceName(requestValidator.getValidatedNode());
 
     DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
-    byte[] bytes = mbean.invoke("createCacheStatisticSampleEntity", new Class<?>[] { Set.class, Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames, statNames });
+    byte[] bytes = mbean.invoke(null, null, "createCacheStatisticSampleEntity", new Class<?>[] { Set.class, Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames, statNames });
     return deserialize(bytes);
   }
 
@@ -185,7 +185,7 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
       requestValidator.setValidatedNode(id);
       ObjectName repositoryService = getRepositoryServiceName(id);
       DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
-      byte[] bytes = mbean.invoke("getAgentsMetadata", new Class<?>[] { Set.class }, new Object[] { Collections.emptySet() });
+      byte[] bytes = mbean.invoke(null, null, "getAgentsMetadata", new Class<?>[] { Set.class }, new Object[] { Collections.emptySet() });
       Collection<AgentMetadataEntity> resp = deserialize(bytes); 
       for(AgentMetadataEntity ame :  resp) {
         ame.setAgentId(id);
