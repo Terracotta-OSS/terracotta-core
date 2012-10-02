@@ -50,18 +50,21 @@ public final class JmxEhcacheRequestValidator extends AbstractEhcacheRequestVali
   @Override
   protected void validateAgentSegment(List<PathSegment> pathSegments) {
     String ids = pathSegments.get(0).getMatrixParameters().getFirst("ids");
-    if (Utils.trimToNull(ids) == null || ids.split(",").length > 1) {
-      throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
+    
+    if (ids != null) {
+      if (ids.split(",").length > 1) {
+        throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
           .entity(String.format("Only a single agent id can be used.")).build());
-    }
+      }
 
-    Set<String> nodes = getNodes();
-    if (!nodes.contains(ids)) {
-      throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
+      Set<String> nodes = getNodes();
+      if (!nodes.contains(ids)) {
+        throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
           .entity(String.format("Agent ID must be in '%s'.", nodes)).build());
-    }
+      }
 
-    tlNode.set(ids);
+      tlNode.set(ids);
+    }
   }
 
   private Set<String> getNodes() {

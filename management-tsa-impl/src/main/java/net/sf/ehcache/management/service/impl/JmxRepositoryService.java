@@ -25,13 +25,13 @@ import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.management.JMX;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
-import javax.management.MBeanServerFactory;
 import javax.management.ObjectName;
 
 /**
@@ -174,12 +174,31 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
   }
 
   @Override
-  public Collection<AgentMetadataEntity> getAgentsMetadata(Set<String> ids) throws ServiceExecutionException {
-    ObjectName repositoryService = getRepositoryServiceName(requestValidator.getValidatedNode());
+  public Collection<AgentMetadataEntity> getAgentsMetadata(Set<String> idSet) throws ServiceExecutionException {
+    Collection<AgentMetadataEntity> result = new ArrayList<AgentMetadataEntity>();
 
-    DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
-    byte[] bytes = mbean.invoke("getAgentsMetadata", new Class<?>[] { Set.class }, new Object[] { ids });
-    return deserialize(bytes);
+    Set<String> nodes = getNodes();
+    if (idSet.isEmpty()) {
+      idSet = nodes;
+    }
+
+    for (String id : idSet) {
+      if (!nodes.contains(id)) {
+        throw new ServiceExecutionException("Unknown agent ID : " + id);
+      }
+
+      requestValidator.setValidatedNode(id);
+      ObjectName repositoryService = getRepositoryServiceName(id);
+      DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
+      byte[] bytes = mbean.invoke("getAgentsMetadata", new Class<?>[] { Set.class }, new Object[] { Collections.emptySet() });
+      Collection<AgentMetadataEntity> resp = deserialize(bytes); 
+      for(AgentMetadataEntity ame :  resp) {
+        ame.setAgentId(id);
+      }
+      result.addAll(resp);
+    }
+
+    return result;
   }
 
   @Override
