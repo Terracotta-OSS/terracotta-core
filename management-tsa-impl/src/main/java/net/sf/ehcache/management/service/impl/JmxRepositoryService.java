@@ -21,6 +21,7 @@ import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -49,15 +50,9 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
       // JMXConnector connector = JMXConnectorFactory.connect(target);
       // MBeanServerConnection mBeanServerConnection = connector.getMBeanServerConnection();
 
-      ArrayList<MBeanServer> findMBeanServer = MBeanServerFactory.findMBeanServer(null);
-      // for (MBeanServer mBeanServer : findMBeanServer) {
-      // System.out.println("mbean !" + mBeanServer.toString());
-      // }
-      if (findMBeanServer.size() != 1) {
-        throw new AssertionError("Found " + findMBeanServer.size() + " MBeanServers - should be == 1");
-      }
-      JmxRepositoryService repoSvc = new JmxRepositoryService(findMBeanServer.get(0));
-      requestValidator = new JmxEhcacheRequestValidator(findMBeanServer.get(0));
+      MBeanServer findMBeanServer = ManagementFactory.getPlatformMBeanServer();
+      JmxRepositoryService repoSvc = new JmxRepositoryService(findMBeanServer);
+      requestValidator = new JmxEhcacheRequestValidator(findMBeanServer);
 //      JmxRepositoryService repoSvc = new JmxRepositoryService(mBeanServerConnection);
 //      requestValidator = new JmxEhcacheRequestValidator(mBeanServerConnection);
       ServiceLocator locator = new ServiceLocator().loadService(LicenseService.class, new LicenseServiceImpl(true))
