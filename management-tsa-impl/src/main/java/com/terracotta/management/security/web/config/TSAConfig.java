@@ -16,8 +16,13 @@ import javax.management.ObjectName;
  */
 public class TSAConfig {
 
+  private static final String DEFAULT_IA_URL = "https://localhost:9443/tmc/api/assertIdentity";
+  private static final int DEFAULT_TIMEOUT = 10000;
+
   private static volatile KeyChainAccessor KEY_CHAIN_ACCESSOR;
   private static final Object KEY_CHAIN_ACCESSOR_LOCK = new Object();
+  private static volatile SSLContextFactory SSL_CONTEXT_FACTORY;
+  private static final Object SSL_CONTEXT_FACTORY_LOCK = new Object();
 
   public static boolean isSslEnabled() {
     try {
@@ -25,7 +30,6 @@ public class TSAConfig {
       Object secure = mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "Secure");
       return Boolean.TRUE.equals(secure);
     } catch (Exception e) {
-      e.printStackTrace(System.out);
       return false;
     }
   }
@@ -42,15 +46,44 @@ public class TSAConfig {
   }
 
   public static SSLContextFactory getSSLContextFactory() throws KeychainInitializationException {
-    return new DfltSSLContextFactory(getKeyChain(), null, null, false);
+    if (SSL_CONTEXT_FACTORY == null) {
+      synchronized (SSL_CONTEXT_FACTORY_LOCK) {
+        if (SSL_CONTEXT_FACTORY == null) {
+          SSL_CONTEXT_FACTORY = new DfltSSLContextFactory(getKeyChain(), null, null, false);
+        }
+      }
+    }
+    return SSL_CONTEXT_FACTORY;
   }
 
   public static String getSecurityServiceLocation() {
-    return "https://localhost:9443/tmc/api/assertIdentity";
+    try {
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      Object response = mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "SecurityServiceLocation");
+
+      if (response == null) {
+        return DEFAULT_IA_URL;
+      }
+
+      return (String)response;
+    } catch (Exception e) {
+      throw new RuntimeException("Error getting SecurityServiceLocation", e);
+    }
   }
 
   public static Integer getSecurityTimeout() {
-    return 10000;
+    try {
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      Object response = mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "SecurityServiceTimeout");
+
+      if (response == null) {
+        return DEFAULT_TIMEOUT;
+      }
+
+      return (Integer)response;
+    } catch (Exception e) {
+      throw new RuntimeException("Error getting SecurityServiceTimeout", e);
+    }
   }
 
 }
