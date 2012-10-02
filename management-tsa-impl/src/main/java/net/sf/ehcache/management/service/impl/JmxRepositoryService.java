@@ -42,19 +42,13 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
   private final static Set<String> DFLT_ATTRS = new HashSet<String>(Arrays.asList(new String[] { "Name" }));
 
   private final MBeanServerConnection mBeanServerConnection;
-  private static JmxEhcacheRequestValidator requestValidator;
+  private final JmxEhcacheRequestValidator requestValidator;
 
   public static void create() {
     try {
-      // JMXServiceURL target = new JMXServiceURL(serviceURL);
-      // JMXConnector connector = JMXConnectorFactory.connect(target);
-      // MBeanServerConnection mBeanServerConnection = connector.getMBeanServerConnection();
-
       MBeanServer findMBeanServer = ManagementFactory.getPlatformMBeanServer();
-      JmxRepositoryService repoSvc = new JmxRepositoryService(findMBeanServer);
-      requestValidator = new JmxEhcacheRequestValidator(findMBeanServer);
-//      JmxRepositoryService repoSvc = new JmxRepositoryService(mBeanServerConnection);
-//      requestValidator = new JmxEhcacheRequestValidator(mBeanServerConnection);
+      JmxEhcacheRequestValidator requestValidator = new JmxEhcacheRequestValidator(findMBeanServer);
+      JmxRepositoryService repoSvc = new JmxRepositoryService(findMBeanServer, requestValidator);
       ServiceLocator locator = new ServiceLocator().loadService(LicenseService.class, new LicenseServiceImpl(true))
                                                    .loadService(RequestValidator.class, requestValidator)
                                                    .loadService(CacheManagerService.class, repoSvc)
@@ -67,8 +61,9 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
     }
   }
 
-  public JmxRepositoryService(MBeanServerConnection mBeanServerConnection) {
+  public JmxRepositoryService(MBeanServerConnection mBeanServerConnection, JmxEhcacheRequestValidator requestValidator) {
     this.mBeanServerConnection = mBeanServerConnection;
+    this.requestValidator = requestValidator;
   }
 
   private ObjectName getRepositoryServiceName(String node) {
