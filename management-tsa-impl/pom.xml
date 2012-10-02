@@ -5,14 +5,15 @@
   <packaging>war</packaging>
   
   <parent>
-    <groupId>com.terracotta</groupId>
-    <artifactId>management-parent</artifactId>
-    <version>1.1.0-SNAPSHOT</version>
-    <relativePath>..</relativePath>
+    <groupId>org.terracotta</groupId>
+    <artifactId>build-parent</artifactId>
+    <version>3.8.0-SNAPSHOT</version>
+    <relativePath>../build-parent</relativePath>
   </parent>
   
   <properties>
     <ehcache.management.version>2.7.0-SNAPSHOT</ehcache.management.version>
+    <management.apps.parent.version>1.1.0-SNAPSHOT</management.apps.parent.version>
   </properties>
 
 
@@ -20,7 +21,7 @@
     <dependency>
       <groupId>com.terracotta</groupId>
       <artifactId>security-REST</artifactId>
-      <version>${project.version}</version>
+      <version>${management.apps.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>net.sf.ehcache</groupId>

@@ -30,6 +30,7 @@
     <module>dso-l1-api</module>
     <module>dso-common</module>
     <module>management</module>
+    <module>management-tsa-impl</module>
     <module>dso-l2-common</module> 
     <module>dso-statistics</module>
     <module>dso-l1</module>
