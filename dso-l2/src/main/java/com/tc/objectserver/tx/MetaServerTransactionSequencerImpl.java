@@ -6,15 +6,13 @@ package com.tc.objectserver.tx;
 
 import com.tc.net.NodeID;
 import com.tc.objectserver.context.TransactionLookupContext;
-import com.tc.util.concurrent.CopyOnWriteArrayMap;
+import com.tc.util.concurrent.CopyOnWriteSequentialMap;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  * This class is supposed to reduce the processing when pending and blocked transactions reaches high thresholds, since
@@ -27,20 +25,75 @@ import java.util.Map.Entry;
  * We have to fix it so that GIDs are assigned just before applies and are somehow broadcasted to passive too and
  * passive has to apply the transactions in that order. Right now this class is purely experimental.
  */
-public class MetaServerTransactionSequencerImpl implements ServerTransactionSequencer, ServerTransactionSequencerStats {
+public class MetaServerTransactionSequencerImpl implements ServerTransactionSequencer {
 
-  private CopyOnWriteArrayMap txnSequencers = new CopyOnWriteArrayMap(new CopyOnWriteArrayMap.TypedArrayFactory() {
-                                              public Object[] createTypedArray(int size) {
-                                                return new ServerTransactionSequencer[size];
-                                              }
-                                            });
+  private final CopyOnWriteSequentialMap<NodeID, ServerTransactionSequencer> txnSequencers = new CopyOnWriteSequentialMap<NodeID, ServerTransactionSequencer>(
+                                                                                                                                                              new CopyOnWriteSequentialMap.TypedArrayFactory() {
+                                                                                        @Override
+                                                                                        public ServerTransactionSequencer[] createTypedArray(int size) {
+                                                                                          return new ServerTransactionSequencer[size];
+                                                                                        }
+                                                                                      });
 
   private int                 index;
+  private final ServerTransactionSequencerStats                              msStats       = new ServerTransactionSequencerStats() {
+                                                                                             @Override
+                                                                                             public int getBlockedObjectsCount() {
+                                                                                               int blockedObjectCount = 0;
+                                                                                               for (ServerTransactionSequencer element : txnSequencers
+                                                                                                   .values()) {
+                                                                                                 ServerTransactionSequencerStats stsi = element
+                                                                                                     .getStats();
+                                                                                                 blockedObjectCount += stsi
+                                                                                                     .getBlockedObjectsCount();
+                                                                                               }
+                                                                                               return blockedObjectCount;
+                                                                                             }
 
+                                                                                             @Override
+                                                                                             public int getBlockedTxnsCount() {
+                                                                                               int blockedTxnCount = 0;
+                                                                                               for (ServerTransactionSequencer element : txnSequencers
+                                                                                                   .values()) {
+                                                                                                 ServerTransactionSequencerStats stsi = element
+                                                                                                     .getStats();
+                                                                                                 blockedTxnCount += stsi
+                                                                                                     .getBlockedTxnsCount();
+                                                                                               }
+                                                                                               return blockedTxnCount;
+                                                                                             }
+
+                                                                                             @Override
+                                                                                             public int getPendingTxnsCount() {
+                                                                                               int pendingTxnsCount = 0;
+                                                                                               for (ServerTransactionSequencer element : txnSequencers
+                                                                                                   .values()) {
+                                                                                                 ServerTransactionSequencerStats stsi = element
+                                                                                                     .getStats();
+                                                                                                 pendingTxnsCount += stsi
+                                                                                                     .getPendingTxnsCount();
+                                                                                               }
+                                                                                               return pendingTxnsCount;
+                                                                                             }
+
+                                                                                             @Override
+                                                                                             public int getTxnsCount() {
+                                                                                               int txnsCount = 0;
+                                                                                               for (ServerTransactionSequencer element : txnSequencers
+                                                                                                   .values()) {
+                                                                                                 ServerTransactionSequencerStats stsi = element
+                                                                                                     .getStats();
+                                                                                                 txnsCount += stsi
+                                                                                                     .getTxnsCount();
+                                                                                               }
+                                                                                               return txnsCount;
+                                                                                             }
+                                                                                           };
+
+  @Override
   public void addTransactionLookupContexts(Collection<TransactionLookupContext> txnLookupContexts) {
-    LinkedHashMap<NodeID, List<TransactionLookupContext>> segregated = segregateIncommingTransaction(txnLookupContexts);
-    for (Iterator i = segregated.entrySet().iterator(); i.hasNext();) {
-      Map.Entry<NodeID, List<TransactionLookupContext>> e = (Entry<NodeID, List<TransactionLookupContext>>) i.next();
+    LinkedHashMap<NodeID, List<TransactionLookupContext>> segregated = segregateIncomingTransaction(txnLookupContexts);
+    for (Map.Entry<NodeID, List<TransactionLookupContext>> e : segregated.entrySet()) {
       ServerTransactionSequencer sequencer = getOrCreateTransactionSequencer(e.getKey());
       sequencer.addTransactionLookupContexts(e.getValue());
     }
@@ -48,7 +101,7 @@ public class MetaServerTransactionSequencerImpl implements ServerTransactionSequ
 
   private ServerTransactionSequencer getOrCreateTransactionSequencer(NodeID key) {
     synchronized (txnSequencers) {
-      ServerTransactionSequencer sq = (ServerTransactionSequencer) txnSequencers.get(key);
+      ServerTransactionSequencer sq = txnSequencers.get(key);
       if (sq == null) {
         sq = new ServerTransactionSequencerImpl();
         txnSequencers.put(key, sq);
@@ -57,11 +110,10 @@ public class MetaServerTransactionSequencerImpl implements ServerTransactionSequ
     }
   }
 
-  private LinkedHashMap<NodeID, List<TransactionLookupContext>> segregateIncommingTransaction(
+  private LinkedHashMap<NodeID, List<TransactionLookupContext>> segregateIncomingTransaction(
                                                                                               Collection<TransactionLookupContext> txnLookupContexts) {
     LinkedHashMap<NodeID, List<TransactionLookupContext>> map = new LinkedHashMap<NodeID, List<TransactionLookupContext>>();
-    for (Iterator i = txnLookupContexts.iterator(); i.hasNext();) {
-      TransactionLookupContext transactionLookupContext = (TransactionLookupContext) i.next();
+    for (TransactionLookupContext transactionLookupContext : txnLookupContexts) {
       NodeID n = transactionLookupContext.getSourceID();
       List<TransactionLookupContext> list = map.get(n);
       if (list == null) {
@@ -73,8 +125,9 @@ public class MetaServerTransactionSequencerImpl implements ServerTransactionSequ
     return map;
   }
 
+  @Override
   public TransactionLookupContext getNextTxnLookupContextToProcess() {
-    ServerTransactionSequencer[] _txnSequencers = (ServerTransactionSequencer[]) txnSequencers.valuesToArray();
+    ServerTransactionSequencer[] _txnSequencers = txnSequencers.valuesToArray();
     if (_txnSequencers.length == 0) return null;
     if (index >= _txnSequencers.length) index = 0;
     int end = index;
@@ -86,16 +139,19 @@ public class MetaServerTransactionSequencerImpl implements ServerTransactionSequ
     return null;
   }
 
+  @Override
   public void makePending(ServerTransaction txn) {
-    ServerTransactionSequencer sq = (ServerTransactionSequencer) txnSequencers.get(txn.getSourceID());
+    ServerTransactionSequencer sq = txnSequencers.get(txn.getSourceID());
     sq.makePending(txn);
   }
 
+  @Override
   public void makeUnpending(ServerTransaction txn) {
-    ServerTransactionSequencer sq = (ServerTransactionSequencer) txnSequencers.get(txn.getSourceID());
+    ServerTransactionSequencer sq = txnSequencers.get(txn.getSourceID());
     sq.makeUnpending(txn);
   }
 
+  @Override
   public String toString() {
     return "MetaServerTransactionSequencerImpl { txnSequencers : " + txnSequencers.size() + " index = " + index + " } ";
   }
@@ -105,39 +161,8 @@ public class MetaServerTransactionSequencerImpl implements ServerTransactionSequ
     return txnSequencers.size();
   }
 
-  public int getBlockedObjectsCount() {
-    int blockedObjectCount = 0;
-    for (Iterator i = txnSequencers.values().iterator(); i.hasNext();) {
-      ServerTransactionSequencerStats stsi = (ServerTransactionSequencerStats) i.next();
-      blockedObjectCount += stsi.getBlockedObjectsCount();
-    }
-    return blockedObjectCount;
-  }
-
-  public int getBlockedTxnsCount() {
-    int blockedTxnCount = 0;
-    for (Iterator i = txnSequencers.values().iterator(); i.hasNext();) {
-      ServerTransactionSequencerStats stsi = (ServerTransactionSequencerStats) i.next();
-      blockedTxnCount += stsi.getBlockedTxnsCount();
-    }
-    return blockedTxnCount;
-  }
-
-  public int getPendingTxnsCount() {
-    int pendingTxnsCount = 0;
-    for (Iterator i = txnSequencers.values().iterator(); i.hasNext();) {
-      ServerTransactionSequencerStats stsi = (ServerTransactionSequencerStats) i.next();
-      pendingTxnsCount += stsi.getPendingTxnsCount();
-    }
-    return pendingTxnsCount;
-  }
-
-  public int getTxnsCount() {
-    int txnsCount = 0;
-    for (Iterator i = txnSequencers.values().iterator(); i.hasNext();) {
-      ServerTransactionSequencerStats stsi = (ServerTransactionSequencerStats) i.next();
-      txnsCount += stsi.getTxnsCount();
-    }
-    return txnsCount;
+  @Override
+  public ServerTransactionSequencerStats getStats() {
+    return msStats;
   }
 }

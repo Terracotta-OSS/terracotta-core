@@ -4,6 +4,8 @@
  */
 package com.tc.util.concurrent;
 
+import com.tc.util.concurrent.CopyOnWriteSequentialMap.TypedArrayFactory;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -16,10 +18,10 @@ import java.util.Set;
 
 import junit.framework.TestCase;
 
-public class CopyOnWriteArrayMapTest extends TestCase {
+public class CopyOnWriteSequentialMapTest extends TestCase {
 
   public void testBasic() throws Exception {
-    CopyOnWriteArrayMap cam = new CopyOnWriteArrayMap();
+    CopyOnWriteSequentialMap cam = new CopyOnWriteSequentialMap();
     ArrayList al = new ArrayList();
     assertArrayEquals(al.toArray(), cam.values().toArray());
 
@@ -27,7 +29,7 @@ public class CopyOnWriteArrayMapTest extends TestCase {
     String s1 = "Hello there";
     al.add(s1);
     cam.put(s1, s1);
-    assertArrayEquals(al.toArray(), cam.values().toArray());
+    assertArrayEquals(al.toArray(), cam.values().toArray(new Object[cam.size()]));
 
     // test put new key
     String s2 = "Hello back";
@@ -75,7 +77,7 @@ public class CopyOnWriteArrayMapTest extends TestCase {
   }
 
   public void testSameValueMappedTo2Keys() throws Exception {
-    CopyOnWriteArrayMap cam = new CopyOnWriteArrayMap();
+    CopyOnWriteSequentialMap cam = new CopyOnWriteSequentialMap();
     ArrayList al = new ArrayList();
     assertArrayEquals(al.toArray(), cam.values().toArray());
 
@@ -101,7 +103,7 @@ public class CopyOnWriteArrayMapTest extends TestCase {
   }
 
   public void testBasicEntrySet() throws Exception {
-    CopyOnWriteArrayMap cam = new CopyOnWriteArrayMap();
+    CopyOnWriteSequentialMap cam = new CopyOnWriteSequentialMap();
     cam.put(Integer.valueOf(10), "String value 10");
     cam.put(Integer.valueOf(20), "String value 20");
     cam.put(Integer.valueOf(30), "String value 30");
@@ -129,7 +131,7 @@ public class CopyOnWriteArrayMapTest extends TestCase {
   }
 
   public void testBasicKeySet() throws Exception {
-    CopyOnWriteArrayMap cam = new CopyOnWriteArrayMap();
+    CopyOnWriteSequentialMap cam = new CopyOnWriteSequentialMap();
     cam.put(Integer.valueOf(10), "String value 10");
     cam.put(Integer.valueOf(20), "String value 20");
     cam.put(Integer.valueOf(30), "String value 30");
@@ -154,8 +156,11 @@ public class CopyOnWriteArrayMapTest extends TestCase {
   }
 
   public void testTypedArrayFactory() throws Exception {
-    CopyOnWriteArrayMap cam = new CopyOnWriteArrayMap(new CopyOnWriteArrayMap.TypedArrayFactory() {
-      public Object[] createTypedArray(int size) {
+    CopyOnWriteSequentialMap<Long, String> cam = new CopyOnWriteSequentialMap<Long, String>(
+new TypedArrayFactory() {
+
+      @Override
+      public String[] createTypedArray(int size) {
         return new String[size];
       }
     });
@@ -163,13 +168,25 @@ public class CopyOnWriteArrayMapTest extends TestCase {
     cam.put(Long.valueOf(999), "you");
     cam.put(Long.valueOf(9999), "jude");
 
-    String values[] = (String[]) cam.valuesToArray();
+    String values[] = cam.valuesToArray();
     assertEquals(3, values.length);
     Set s = new HashSet(Arrays.asList(values));
     assertTrue(s.remove("hey"));
     assertTrue(s.remove("you"));
     assertTrue(s.remove("jude"));
     assertTrue(s.isEmpty());
+  }
+
+  public void testConcurrentMod() {
+    CopyOnWriteSequentialMap<Long, String> cam = new CopyOnWriteSequentialMap<Long, String>();
+    cam.put(1l, "abc");
+    cam.put(2l, "fff");
+    Iterator<Long> keyItr = cam.keySet().iterator();
+    assertEquals(Long.valueOf(1), keyItr.next());
+    cam.put(120l, "def");
+    assertEquals("fff", cam.get(keyItr.next()));
+    assertFalse(keyItr.hasNext()); // no more elements in *iterated* snapshot
+    assertEquals("def", cam.get(120l));
   }
 
   private void assertArrayEquals(Object[] a1, Object[] a2) {

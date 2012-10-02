@@ -249,6 +249,7 @@ import com.tc.objectserver.storage.api.DBFactory;
 import com.tc.objectserver.storage.api.OffheapStats;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.tx.CommitTransactionMessageRecycler;
+import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.ServerTransactionManagerConfig;
 import com.tc.objectserver.tx.ServerTransactionManagerImpl;
 import com.tc.objectserver.tx.ServerTransactionSequencerImpl;
@@ -463,6 +464,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return this.serverBuilder;
   }
 
+  @Override
   public void dump() {
     this.dumpHandler.dump();
     this.serverBuilder.dump();
@@ -1171,6 +1173,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.l2Management.findObjectManagementMonitorMBean().registerGCController(new GCControllerImpl(this.objectManager
                                                                                   .getGarbageCollector()));
     this.l2Management.findObjectManagementMonitorMBean().registerObjectIdFetcher(new ObjectIdsFetcher() {
+      @Override
       public Set getAllObjectIds() {
         return DistributedObjectServer.this.objectManager.getAllObjectIDs();
       }
@@ -1243,7 +1246,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     // populate the statistics retrieval register
     populateStatisticsRetrievalRegistry(serverStats, this.seda.getStageManager(), mm, this.transactionManager,
-                                        serverTransactionSequencerImpl, sraForDbEnv);
+                                        serverTransactionSequencerImpl.getStats(), sraForDbEnv);
 
     // XXX: yucky casts
     this.managementContext = new ServerManagementContext(this.transactionManager, this.objectRequestManager,
@@ -1440,6 +1443,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   private void setLoggerOnExit() {
     CommonShutDownHook.addShutdownHook(new Runnable() {
+      @Override
       public void run() {
         logger.info("L2 Exiting...");
       }
@@ -1449,7 +1453,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private void populateStatisticsRetrievalRegistry(final DSOGlobalServerStats serverStats,
                                                    final StageManager stageManager,
                                                    final MessageMonitor messageMonitor,
-                                                   final ServerTransactionManagerImpl txnManager,
+                                                   final ServerTransactionManager txnManager,
                                                    final ServerTransactionSequencerStats serverTransactionSequencerStats,
                                                    final StatisticRetrievalAction[] srasForDbEnv) {
     if (this.statisticsAgentSubSystem.isActive()) {
@@ -1736,10 +1740,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return this.l1ReconnectConfig;
   }
 
+  @Override
   public void addAllLocksTo(final LockInfoByThreadID lockInfo) {
     // this feature not implemented for server. DEV-1949
   }
 
+  @Override
   public ThreadIDMap getThreadIDMap() {
     return new NullThreadIDMapImpl();
   }
@@ -1748,10 +1754,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return this.groupCommManager;
   }
 
+  @Override
   public void registerForDump(final CallbackDumpAdapter dumpAdapter) {
     this.dumpHandler.registerForDump(dumpAdapter);
   }
 
+  @Override
   public boolean isAlive(final String name) {
     throw new UnsupportedOperationException();
   }
