@@ -1,5 +1,6 @@
 package com.tc.objectserver.persistence.gb;
 
+import com.tc.gbapi.GBMapFactory;
 import com.tc.gbapi.impl.GBOnHeapMapConfig;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -23,13 +24,17 @@ public class GBManagedObjectPersistor implements ManagedObjectPersistor {
   private final GBMap<String, ObjectID> rootMap;
   private final GBMap<ObjectID, ManagedObject> objectMap;
   private final GBSequence objectIDSequence;
+  private final GBMapFactory factory;
+  private final GBManager manager;
 
   private final GBObjectIDSetMaintainer oidSetMaintainer = new GBObjectIDSetMaintainer();
 
-  public GBManagedObjectPersistor(GBMap<String, ObjectID> rootMap, GBMap<ObjectID, ManagedObject> objectMap, GBSequence objectIDSequence) {
+  public GBManagedObjectPersistor(GBMap<String, ObjectID> rootMap, GBMap<ObjectID, ManagedObject> objectMap, GBSequence objectIDSequence, final GBMapFactory factory, final GBManager manager) {
     this.rootMap = rootMap;
     this.objectMap = objectMap;
     this.objectIDSequence = objectIDSequence;
+    this.factory = factory;
+    this.manager = manager;
   }
 
   public static GBMapConfig<String, ObjectID> rootMapConfig() {
@@ -157,4 +162,20 @@ public class GBManagedObjectPersistor implements ManagedObjectPersistor {
     // Only appears to be used in tests, probably get rid of this.
     return oidSetMaintainer.mapObjectIDSetSnapshot();
   }
+
+  public GBMap<Object, Object> createMap(ObjectID objectID) {
+    GBMap<Object, Object> map = factory.createMap(new GBOnHeapMapConfig<Object, Object>(Object.class, Object.class));
+    manager.attachMap(objectID.toString(), map, Object.class, Object.class);
+    return map;
+  }
+
+  public GBMap<Object, Object> getMap(ObjectID objectID) {
+    GBMap<Object, Object> map = manager.getMap(objectID.toString(), Object.class, Object.class);
+    if (map == null) {
+      throw new AssertionError("Could not find map for oid " + objectID);
+    }
+    return map;
+  }
+
+
 }

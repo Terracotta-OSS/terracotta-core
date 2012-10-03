@@ -109,6 +109,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private final ObjectManagerConfig                             config;
   private final PersistenceTransactionProvider                  persistenceTransactionProvider;
 
+  // TODO: Flip this around to ReferencesIDStore? It's highly probable that we'll have more objects with no references
   private final NoReferencesIDStore                             noReferencesIDStore;
   private final Sink                                            destroyableMapSink;
 
@@ -520,7 +521,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public void createNewObjects(final Set<ObjectID> newObjectIDs) {
     for (final ObjectID oid : newObjectIDs) {
-      final ManagedObject mo = new ManagedObjectImpl(oid);
+      final ManagedObject mo = new ManagedObjectImpl(oid, objectStore);
       createObject(mo);
     }
   }
@@ -564,7 +565,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
    */
   public void releaseAllAndCommit(final PersistenceTransaction persistenceTransaction,
                                   final Collection<ManagedObject> managedObjects) {
-    flushAllAndCommit(persistenceTransaction, managedObjects);
+//    flushAllAndCommit(persistenceTransaction, managedObjects);
     for (final ManagedObject managedObject : managedObjects) {
       basicRelease(managedObject);
     }

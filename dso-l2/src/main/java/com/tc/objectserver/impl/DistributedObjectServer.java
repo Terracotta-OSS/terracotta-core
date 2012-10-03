@@ -937,17 +937,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     // Lookup stage should never be blocked trying to add to apply stage
     stageManager.createStage(ServerConfigurationContext.APPLY_CHANGES_STAGE,
-                             new ApplyTransactionChangeHandler(instanceMonitor, this.transactionManager), 1, -1);
-
-    stageManager.createStage(ServerConfigurationContext.APPLY_COMPLETE_STAGE, new ApplyCompleteTransactionHandler(), 1,
-                             maxStageSize);
+                             new ApplyTransactionChangeHandler(instanceMonitor, this.transactionManager, persistor.getPersistenceTransactionProvider()), 1, -1);
 
     // Server initiated request processing stages should not be bounded
     stageManager.createStage(ServerConfigurationContext.RECALL_OBJECTS_STAGE, new RecallObjectsHandler(), 1, -1);
-
-    final int commitThreads = (persistent ? this.l2Properties.getInt("seda.commitstage.threads") : 1);
-    stageManager.createStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE,
-                             new CommitTransactionChangeHandler(transactionStorePTP), commitThreads, maxStageSize);
 
     txnStageCoordinator.lookUpSinks();
 

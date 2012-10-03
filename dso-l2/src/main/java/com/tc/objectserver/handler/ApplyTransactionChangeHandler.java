@@ -22,10 +22,13 @@ import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.locks.ServerLock;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
+import com.tc.objectserver.storage.api.PersistenceTransaction;
+import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -50,11 +53,19 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
 
   private int                            count                           = 0;
   private GlobalTransactionID            lowWaterMark                    = GlobalTransactionID.NULL_ID;
+  private final PersistenceTransactionProvider persistenceTransactionProvider;
 
   public ApplyTransactionChangeHandler(final ObjectInstanceMonitor instanceMonitor, final GlobalTransactionManager gtxm) {
+    throw new AssertionError();
+  }
+
+  public ApplyTransactionChangeHandler(final ObjectInstanceMonitor instanceMonitor, final GlobalTransactionManager gtxm,
+                                       PersistenceTransactionProvider persistenceTransactionProvider) {
     this.instanceMonitor = instanceMonitor;
     this.gtxm = gtxm;
+    this.persistenceTransactionProvider = persistenceTransactionProvider;
   }
+
 
   @Override
   public void handleEvent(final EventContext context) {
@@ -66,8 +77,11 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     final ApplyTransactionInfo applyInfo = new ApplyTransactionInfo(txn.isActiveTxn(), stxnID, txn.isSearchEnabled());
 
     if (atc.needsApply()) {
+      PersistenceTransaction tx = persistenceTransactionProvider.newTransaction();
       this.transactionManager.apply(txn, atc.getObjects(), applyInfo, this.instanceMonitor);
+      tx.commit();
       this.txnObjectMgr.applyTransactionComplete(applyInfo);
+      this.transactionManager.commit(null, applyInfo.getObjectsToRelease(), txn.getNewRoots(), Collections.singleton(stxnID), applyInfo.getObjectIDsToDelete());
     } else {
       this.transactionManager.skipApplyAndCommit(txn);
 

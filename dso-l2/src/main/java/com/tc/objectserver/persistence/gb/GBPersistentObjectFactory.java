@@ -9,17 +9,17 @@ import com.tc.object.ObjectID;
 /**
  * @author tim
  */
-public class GBPersistentMapFactory {
+public class GBPersistentObjectFactory {
   private final GBManager gbManager;
   private final GBMapFactory factory;
 
-  public GBPersistentMapFactory(final GBManager gbManager, final GBMapFactory factory) {
+  public GBPersistentObjectFactory(final GBManager gbManager, final GBMapFactory factory) {
     this.gbManager = gbManager;
     this.factory = factory;
   }
 
   public GBMap<Object, Object> createMap(ObjectID objectID) {
-    GBMap<Object, Object> map = factory.createMap(new GBOnHeapMapConfig<Object, Object>(Object.class, Object.class ));
+    GBMap<Object, Object> map = factory.createMap(new GBOnHeapMapConfig<Object, Object>(Object.class, Object.class));
     gbManager.attachMap(objectID.toString(), map, Object.class, Object.class);
     return map;
   }

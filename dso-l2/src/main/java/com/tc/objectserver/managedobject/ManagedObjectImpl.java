@@ -22,8 +22,8 @@ import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.impl.ManagedObjectReference;
-import com.tc.objectserver.managedobject.bytecode.ClassNotCompatableException;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
+import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
@@ -71,10 +71,16 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   private transient TLinkable              next;
 
   private transient int                    accessed;
+  private final ManagedObjectStore store;
 
   public ManagedObjectImpl(final ObjectID id) {
+    throw new UnsupportedOperationException();
+  }
+
+  public ManagedObjectImpl(final ObjectID id, ManagedObjectStore store) {
     Assert.assertNotNull(id);
     this.id = id;
+    this.store = store;
   }
 
   /**
@@ -184,20 +190,19 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     final DNACursor cursor = dna.getCursor();
 
     if (this.state == null) {
+      if (!isUninitialized) {
+        throw new AssertionError("Creating state on an initialized object.");
+      }
       setState(getStateFactory().createState(this.id, dna.getParentObjectID(), dna.getTypeName(), cursor));
     }
     try {
-      try {
-        this.state.apply(this.id, cursor, applyInfo);
-      } catch (final ClassNotCompatableException cnce) {
-        // reinitialize state object and try again
-        reinitializeState(dna.getParentObjectID(), getClassname(), cursor, this.state);
-        this.state.apply(this.id, cursor, applyInfo);
-      }
+      this.state.apply(this.id, cursor, applyInfo);
     } catch (final IOException e) {
       throw new DNAException(e);
     }
-    setIsDirty(true);
+
+    // TODO: Do something about that null.
+    store.commitObject(null, this);
     // Not unsetting isNew() flag on apply, but rather on release
     // setBasicIsNew(false);
   }

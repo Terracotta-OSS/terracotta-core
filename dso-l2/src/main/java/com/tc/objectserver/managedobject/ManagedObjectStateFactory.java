@@ -5,14 +5,12 @@
 package com.tc.objectserver.managedobject;
 
 import com.tc.exception.TCRuntimeException;
-import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.loaders.Namespace;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.managedobject.ManagedObjectStateStaticConfig.Factory;
 import com.tc.objectserver.persistence.api.Persistor;
-import com.tc.objectserver.persistence.gb.GBPersistentMapFactory;
+import com.tc.objectserver.persistence.gb.GBPersistentObjectFactory;
 import com.tc.objectserver.persistence.gb.GBPersistor;
 import com.tc.util.Assert;
 
@@ -38,7 +36,7 @@ public class ManagedObjectStateFactory {
   // this is present for tests
   private static boolean                            disableAssertions   = false;
 
-  private final GBPersistentMapFactory mapFactory;
+  private final GBPersistentObjectFactory objectFactory;
 
   static {
     // XXX: Support for terracotta toolkit
@@ -46,9 +44,9 @@ public class ManagedObjectStateFactory {
                             Byte.valueOf(ManagedObjectState.SET_TYPE));
   }
 
-  private ManagedObjectStateFactory(final ManagedObjectChangeListenerProvider listenerProvider, GBPersistentMapFactory mapFactory) {
+  private ManagedObjectStateFactory(final ManagedObjectChangeListenerProvider listenerProvider, GBPersistentObjectFactory objectFactory) {
     this.listenerProvider = listenerProvider;
-    this.mapFactory = mapFactory;
+    this.objectFactory = objectFactory;
   }
 
   /*
@@ -60,7 +58,7 @@ public class ManagedObjectStateFactory {
       // not good !!
       throw new AssertionError("This class is singleton. It is not to be instanciated more than once. " + singleton);
     }
-    singleton = new ManagedObjectStateFactory(listenerProvider, persistor.getPersistentMapFactory());
+    singleton = new ManagedObjectStateFactory(listenerProvider, persistor.getPersistentObjectFactory());
     return singleton;
   }
 
@@ -104,7 +102,7 @@ public class ManagedObjectStateFactory {
   public ManagedObjectState createState(final ObjectID oid, final ObjectID parentID, final String className,
                                         final DNACursor cursor) {
     ManagedObjectStateStaticConfig config = ManagedObjectStateStaticConfig.getConfigForClientClassName(className);
-    return config.getFactory().newInstance(oid, config.ordinal(), mapFactory);
+    return config.getFactory().newInstance(oid, config.ordinal(), objectFactory);
   }
 
   public String getClassName(final long classID) {

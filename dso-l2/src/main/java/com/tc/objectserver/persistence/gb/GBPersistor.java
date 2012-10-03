@@ -45,7 +45,7 @@ public class GBPersistor implements Persistor {
   private final GBSequenceManager sequenceManager;
   private final GBPersistenceTransactionProvider persistenceTransactionProvider;
   private final GBObjectIDSetMaintainer objectIDSetMaintainer;
-  private final GBPersistentMapFactory persistentMapFactory;
+  private final GBPersistentObjectFactory persistentObjectFactory;
 
   public GBPersistor(File path) {
     objectIDSetMaintainer = new GBObjectIDSetMaintainer();
@@ -64,10 +64,10 @@ public class GBPersistor implements Persistor {
                                                                        GlobalTransactionDescriptor.class));
     persistentMapStore = new GBPersistentMapStore(gbManager.getMap(STATE_MAP, String.class, String.class));
     clientStatePersistor = new GBClientStatePersistor(sequenceManager.getSequence(CLIENT_STATE_SEQUENCE), gbManager.getMap(CLIENT_STATES, ChannelID.class, Boolean.class));
-    managedObjectPersistor = new GBManagedObjectPersistor(gbManager.getMap(ROOT_DB, String.class, ObjectID.class), gbManager.getMap(OBJECT_DB, ObjectID.class, ManagedObject.class), sequenceManager.getSequence(OBJECT_ID_SEQUENCE));
+    managedObjectPersistor = new GBManagedObjectPersistor(gbManager.getMap(ROOT_DB, String.class, ObjectID.class), gbManager.getMap(OBJECT_DB, ObjectID.class, ManagedObject.class), sequenceManager.getSequence(OBJECT_ID_SEQUENCE), mapFactory, gbManager);
     gidSequence = sequenceManager.getSequence(GLOBAL_TRANSACTION_ID_SEQUENCE);
     persistenceTransactionProvider = new GBPersistenceTransactionProvider(gbManager);
-    persistentMapFactory = new GBPersistentMapFactory(gbManager, mapFactory);
+    persistentObjectFactory = new GBPersistentObjectFactory(gbManager, mapFactory);
   }
 
   private void verifyOrCreate(GBManager manager) {
@@ -135,8 +135,8 @@ public class GBPersistor implements Persistor {
     return persistentMapStore;
   }
 
-  public GBPersistentMapFactory getPersistentMapFactory() {
-    return persistentMapFactory;
+  public GBPersistentObjectFactory getPersistentObjectFactory() {
+    return persistentObjectFactory;
   }
 
   public GBSequenceManager getSequenceManager() {

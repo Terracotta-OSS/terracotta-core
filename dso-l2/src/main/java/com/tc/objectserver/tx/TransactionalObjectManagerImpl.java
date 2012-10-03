@@ -20,8 +20,6 @@ import com.tc.objectserver.context.TransactionLookupContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
@@ -39,7 +37,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -50,9 +47,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
   private static final TCLogger                                       logger                  = TCLogging
                                                                                                   .getLogger(TransactionalObjectManagerImpl.class);
-  private static final int                                            MAX_COMMIT_SIZE         = TCPropertiesImpl
-                                                                                                  .getProperties()
-                                                                                                  .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_MAXOBJECTS_TO_COMMIT);
+
   private final ObjectManager                                         objectManager;
   private final ServerTransactionSequencer                            sequencer;
   private final ServerGlobalTransactionManager                        gtxm;
@@ -67,7 +62,6 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   private final Set                                                   pendingObjectRequest    = new HashSet();
   private final PendingList                                           pendingTxnList          = new PendingList();
   private final Queue<LookupContext>                                  processedPendingLookups = new ConcurrentLinkedQueue<LookupContext>();
-  private final Queue<ApplyTransactionInfo>                           processedApplys         = new ConcurrentLinkedQueue<ApplyTransactionInfo>();
 
   private final TransactionalStageCoordinator                         txnStageCoordinator;
 
@@ -213,11 +207,10 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
            + this.pendingTxnList.size() + " pending object requests = " + this.pendingObjectRequest.size();
   }
 
-  private Map getRequiredObjectsMap(Collection oids, Map objects) {
-    HashMap map = new HashMap(oids.size());
-    for (Iterator i = oids.iterator(); i.hasNext();) {
-      Object oid = i.next();
-      Object mo = objects.get(oid);
+  private Map<ObjectID, ManagedObject> getRequiredObjectsMap(Collection<ObjectID> oids, Map<ObjectID, ManagedObject> objects) {
+    Map<ObjectID, ManagedObject> map = new HashMap<ObjectID, ManagedObject>(oids.size());
+    for (ObjectID oid : oids) {
+      ManagedObject mo = objects.get(oid);
       if (mo == null) {
         dumpToLogger();
         log("NULL !! " + oid + " not found ! " + oids);
@@ -317,75 +310,33 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   }
 
   // ApplyTransaction stage method
-  public boolean applyTransactionComplete(final ApplyTransactionInfo applyInfo) {
-    this.processedApplys.add(applyInfo);
-    this.txnStageCoordinator.initiateApplyComplete();
+  public synchronized boolean applyTransactionComplete(final ApplyTransactionInfo applyInfo) {
+    TxnObjectGrouping grouping = this.applyPendingTxns.remove(applyInfo.getServerTransactionID());
+    Assert.assertNotNull(grouping);
+    if (grouping.applyComplete(applyInfo)) {
+      // Since verifying against all txns is costly, only the prime one (the one that created this grouping) is verfied
+      // against
+      ServerTransactionID pTxnID = grouping.getServerTransactionID();
+      Assert.assertNull(this.applyPendingTxns.get(pTxnID));
+
+      for (ObjectID oid : grouping.getObjects().keySet()) {
+        TxnObjectGrouping old = this.checkedOutObjects.remove(oid);
+        Assert.assertNotNull(old);
+      }
+
+      applyInfo.addObjectsToBeReleased(grouping.getObjects().values());
+    }
     return true;
   }
 
   // Apply Complete stage method
   public void processApplyComplete() {
-    ApplyTransactionInfo applyInfo;
-    List<ApplyTransactionInfo> completedApplyTxnInfos = new ArrayList<ApplyTransactionInfo>();
-    while ((applyInfo = this.processedApplys.poll()) != null) {
-      completedApplyTxnInfos.add(applyInfo);
-    }
-    if (completedApplyTxnInfos.size() > 0) {
-      processApplyTxnComplete(completedApplyTxnInfos);
-    }
-  }
-
-  private synchronized void processApplyTxnComplete(List<ApplyTransactionInfo> completedApplyTxnInfos) {
-    for (ApplyTransactionInfo applyTxnInfo : completedApplyTxnInfos) {
-      processApplyTxnComplete(applyTxnInfo);
-    }
-  }
-
-  private void processApplyTxnComplete(ApplyTransactionInfo applyTxnInfo) {
-    TxnObjectGrouping grouping = this.applyPendingTxns.remove(applyTxnInfo.getServerTransactionID());
-    Assert.assertNotNull(grouping);
-    if (grouping.applyComplete(applyTxnInfo)) {
-      // Since verifying against all txns is costly, only the prime one (the one that created this grouping) is verfied
-      // against
-      ServerTransactionID pTxnID = grouping.getServerTransactionID();
-      Assert.assertNull(this.applyPendingTxns.get(pTxnID));
-      TxnObjectGrouping old = this.commitPendingTxns.put(pTxnID, grouping);
-      Assert.assertNull(old);
-      this.txnStageCoordinator.initiateCommit();
-    }
+    throw new AssertionError();
   }
 
   // Commit Transaction stage method
   public synchronized void commitTransactionsComplete(CommitTransactionContext ctc) {
-
-    if (this.commitPendingTxns.isEmpty()) { return; }
-
-    Map<String, ObjectID> newRoots = new HashMap<String, ObjectID>();
-    Map<ObjectID, ManagedObject> objects = new HashMap<ObjectID, ManagedObject>();
-    Collection<ServerTransactionID> txnIDs = new ArrayList<ServerTransactionID>();
-    SortedSet<ObjectID> deletedObjects = new ObjectIDSet();
-    for (Iterator<TxnObjectGrouping> i = this.commitPendingTxns.values().iterator(); i.hasNext();) {
-      TxnObjectGrouping tog = i.next();
-      newRoots.putAll(tog.getNewRoots());
-      txnIDs.addAll(tog.getTxnIDs());
-      objects.putAll(tog.getObjects());
-      deletedObjects.addAll(tog.getDeletedObjects());
-      i.remove();
-      if (objects.size() > MAX_COMMIT_SIZE) {
-        break;
-      }
-    }
-    ctc.initialize(txnIDs, objects.values(), newRoots, deletedObjects);
-
-    for (ObjectID oid : objects.keySet()) {
-      TxnObjectGrouping old = this.checkedOutObjects.remove(oid);
-      Assert.assertNotNull(old);
-    }
-
-    if (!this.commitPendingTxns.isEmpty()) {
-      // More commits needed
-      this.txnStageCoordinator.initiateCommit();
-    }
+    throw new AssertionError();
   }
 
   // recall from ObjectManager on DGC start
