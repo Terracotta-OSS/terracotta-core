@@ -31,8 +31,6 @@ import com.tc.util.Assert;
 import com.tc.util.Conversion;
 import com.tc.util.TCCollections;
 
-import gnu.trove.TLinkable;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -51,7 +49,6 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   private final static byte                IS_DIRTY_OFFSET          = 2;
   private final static byte                REFERENCED_OFFSET        = 4;
   private final static byte                REMOVE_ON_RELEASE_OFFSET = 8;
-  private final static byte                PINNED_OFFSET            = 16;
   private final static byte                IS_DB_NEW_OFFSET         = 32;
 
   private final static byte                INITIAL_FLAG_VALUE       = IS_DIRTY_OFFSET | IS_NEW_OFFSET
@@ -66,11 +63,6 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   // TODO::Split this flag into two so that concurrency is maintained
   private volatile transient byte          flags                    = INITIAL_FLAG_VALUE;
 
-  // TODO:: Remove Cacheable interface from this Object and remove these two references
-  private transient TLinkable              previous;
-  private transient TLinkable              next;
-
-  private transient int                    accessed;
   private final ManagedObjectStore store;
 
   public ManagedObjectImpl(final ObjectID id) {
@@ -211,20 +203,10 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     if (this.state != null) { throw new AssertionError("Trying to set state on already initialized object : " + this
                                                        + " state : " + this.state); }
     this.state = newState;
-    final ManagedObjectCacheStrategy strategy = ManagedObjectStateUtil.getCacheStrategy(newState);
-    if (strategy == ManagedObjectCacheStrategy.PINNED) {
-      pin();
-    }
   }
 
   private boolean isUninitialized() {
     return this.version == UNINITIALIZED_VERSION;
-  }
-
-  private void reinitializeState(final ObjectID pid, final String className, final DNACursor cursor,
-                                 final ManagedObjectState oldState) {
-    this.state = null;
-    setState(getStateFactory().recreateState(this.id, pid, className, cursor, oldState));
   }
 
   private ManagedObjectStateFactory getStateFactory() {
@@ -265,7 +247,6 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     out.indent().print("isDirty:" + isDirty());
     out.indent().print("isNew:" + isNew());
     out.indent().print("isReferenced:" + isReferenced()).println();
-    out.indent().print("next: " + (getNext() != null) + " prev: " + (getPrevious() != null));
     return rv;
   }
 
@@ -308,78 +289,12 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     return getFlag(REFERENCED_OFFSET);
   }
 
-  /**
-   * Pins this reference in the cache.
-   */
-  public void pin() {
-    setFlag(PINNED_OFFSET, true);
-  }
-
-  public void unpin() {
-    setFlag(PINNED_OFFSET, false);
-  }
-
-  /**
-   * Determines whether or not this reference is pinned in the ObjectManager's cache. This allows the object manager to
-   * lookup multiple objects one at a time without evicting them from the cache.
-   */
-  public boolean isPinned() {
-    return getFlag(PINNED_OFFSET);
-  }
-
-  /*********************************************************************************************************************
-   * ManagedObjectReference::Cacheable interface XXX:: Most of these methods are not synchronized (except when accessing
-   * the flag field which can be accessed from multiple threads) 'coz it is expected that these are called under the
-   * scope of a bigger sync block (from evictionPolicy)
-   */
-
   public void setRemoveOnRelease(final boolean removeOnRelease) {
     setFlag(REMOVE_ON_RELEASE_OFFSET, removeOnRelease);
   }
 
-  public void markAccessed() {
-    this.accessed++;
-  }
-
-  public void clearAccessed() {
-    this.accessed = 0;
-  }
-
-  public boolean recentlyAccessed() {
-    return this.accessed > 0;
-  }
-
-  public int accessCount(final int factor) {
-    this.accessed = this.accessed / factor;
-    return this.accessed;
-  }
-
   public ObjectID getObjectID() {
     return getID();
-  }
-
-  public TLinkable getNext() {
-    return this.next;
-  }
-
-  public TLinkable getPrevious() {
-    return this.previous;
-  }
-
-  public void setNext(final TLinkable next) {
-    this.next = next;
-  }
-
-  public void setPrevious(final TLinkable previous) {
-    this.previous = previous;
-  }
-
-  public synchronized boolean canEvict() {
-    return !isReferenced();
-  }
-
-  public synchronized boolean isCacheManaged() {
-    return !(isNew() || isPinned() || isRemoveOnRelease());
   }
 
   public long getVersion() {
