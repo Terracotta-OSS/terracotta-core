@@ -30,6 +30,7 @@
     <module>dso-l1-api</module>
     <module>dso-common</module>
     <module>management</module>
+    <module>management-tsa-impl</module>
     <module>dso-l2-common</module> 
     <module>dso-statistics</module>
     <module>dso-l1</module>
@@ -47,6 +48,7 @@
     <module>terracotta-l1-parent</module>
     <module>terracotta-l1</module>
     <module>test-framework</module>        
+    <module>system-tests-parent</module>        
 
     <module>toolkit-impl</module>
     <module>toolkit-express-impl</module>
@@ -154,6 +156,30 @@
       </activation>      
       <modules>
         <module>devwork/quartz-ee</module>
+      </modules>
+    </profile>     
+ 
+    <profile>
+      <id>management-core</id>
+      <activation>
+        <file>
+          <exists>devwork/management-core</exists>
+        </file>
+      </activation>      
+      <modules>
+        <module>devwork/management-core</module>
+      </modules>
+    </profile>     
+ 
+   <profile>
+      <id>management-apps</id>
+      <activation>
+        <file>
+          <exists>devwork/management-apps</exists>
+        </file>
+      </activation>      
+      <modules>
+        <module>devwork/management-apps</module>
       </modules>
     </profile>     
   </profiles>

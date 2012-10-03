@@ -15,7 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-public class ServerTransactionSequencerImpl implements ServerTransactionSequencer, ServerTransactionSequencerStats {
+public class ServerTransactionSequencerImpl implements ServerTransactionSequencer {
 
   private static final TCLogger    logger      = TCLogging.getLogger(ServerTransactionSequencerImpl.class);
 
@@ -29,6 +29,39 @@ public class ServerTransactionSequencerImpl implements ServerTransactionSequence
   private int                      txnsCount;
   private boolean                  reconcile   = false;
 
+  private final ServerTransactionSequencerStats tsStats     = new ServerTransactionSequencerStats() {
+
+                                                              @Override
+                                                              public int getBlockedObjectsCount() {
+                                                                synchronized (ServerTransactionSequencerImpl.this) {
+                                                                  return objects.getCount();
+                                                                }
+                                                              }
+
+                                                              @Override
+                                                              public int getBlockedTxnsCount() {
+                                                                synchronized (ServerTransactionSequencerImpl.this) {
+                                                                  return blockedQ.size();
+                                                                }
+                                                              }
+
+                                                              @Override
+                                                              public int getPendingTxnsCount() {
+                                                                synchronized (ServerTransactionSequencerImpl.this) {
+                                                                  return pendingTxns.size();
+                                                                }
+                                                              }
+
+                                                              @Override
+                                                              public int getTxnsCount() {
+                                                                synchronized (ServerTransactionSequencerImpl.this) {
+                                                                  return txnsCount;
+                                                                }
+                                                              }
+
+                                                            };
+
+  @Override
   public synchronized void addTransactionLookupContexts(Collection<TransactionLookupContext> txnLookupContexts) {
     if (false) log_incoming(txnLookupContexts);
     txnQ.addAll(txnLookupContexts);
@@ -42,6 +75,7 @@ public class ServerTransactionSequencerImpl implements ServerTransactionSequence
     }
   }
 
+  @Override
   public synchronized TransactionLookupContext getNextTxnLookupContextToProcess() {
     reconcileIfNeeded();
     while (!txnQ.isEmpty()) {
@@ -58,6 +92,11 @@ public class ServerTransactionSequencerImpl implements ServerTransactionSequence
     }
     if (false) log_no_txns_to_process();
     return null;
+  }
+
+  @Override
+  public ServerTransactionSequencerStats getStats() {
+    return tsStats;
   }
 
   private void reconcileIfNeeded() {
@@ -90,12 +129,14 @@ public class ServerTransactionSequencerImpl implements ServerTransactionSequence
     return objects.isBlocked(txn.getObjectIDs());
   }
 
+  @Override
   public synchronized void makePending(ServerTransaction txn) {
     objects.makePending(txn.getObjectIDs());
     Assert.assertTrue(pendingTxns.add(txn.getServerTransactionID()));
     if (false) logger.info("Make Pending : " + txn);
   }
 
+  @Override
   public synchronized void makeUnpending(ServerTransaction txn) {
     Assert.assertTrue(pendingTxns.remove(txn.getServerTransactionID()));
     objects.makeUnpending(txn.getObjectIDs());
@@ -114,29 +155,6 @@ public class ServerTransactionSequencerImpl implements ServerTransactionSequence
     return false;
   }
 
-  
-  /**
-   * ===========================================================================
-   * Stats Interface 
-   * ===========================================================================
-   */
-
-  public synchronized int getBlockedObjectsCount() {
-    return objects.getCount();
-  }
-
-  public synchronized int getBlockedTxnsCount() {
-    return blockedQ.size();
-  }
-
-  public synchronized int getPendingTxnsCount() {
-    return pendingTxns.size();
-  }
-
-  public synchronized int getTxnsCount() {
-    return txnsCount;
-  }
-  
   private static final class BlockedSet {
 
     Set cause  = new HashSet();
@@ -170,6 +188,7 @@ public class ServerTransactionSequencerImpl implements ServerTransactionSequence
       effect.clear();
     }
 
+    @Override
     public String toString() {
       StringBuffer toStringBuffer = new StringBuffer();
       toStringBuffer.append("cause: " + cause).append("\n").append("effect: " + effect).append("\n");

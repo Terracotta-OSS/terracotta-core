@@ -17,4 +17,5 @@ public interface ServerTransactionSequencer {
 
   public void makeUnpending(ServerTransaction txn);
 
+  public ServerTransactionSequencerStats getStats();
 }

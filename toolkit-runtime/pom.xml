@@ -16,7 +16,6 @@
 
   <properties>
     <terracotta-l1.artifactId>terracotta-l1</terracotta-l1.artifactId>
-    <skipJavadoc>false</skipJavadoc>
     <archive>${project.build.directory}/${project.artifactId}-${project.version}.jar</archive>
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
   </properties>
@@ -67,26 +66,6 @@
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <version>2.7</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-            <configuration>
-              <skip>${skipJavadoc}</skip>
-              <quiet>false</quiet>
-              <sourcepath>${project.build.directory}/sources</sourcepath>
-              <excludePackageNames>com.terracotta,com.tc.*,org.osgi.*</excludePackageNames> 
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
         <version>2.4</version>
         <executions>
@@ -110,7 +89,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
-        <version>2.2.1</version><!--$NO-MVN-MAN-VER$-->
+        <version>2.3</version><!--$NO-MVN-MAN-VER$-->
         <executions>
           <execution>
             <id>package-L1-and-TIMs</id>

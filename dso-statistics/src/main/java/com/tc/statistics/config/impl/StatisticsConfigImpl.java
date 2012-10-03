@@ -8,7 +8,6 @@ import com.tc.statistics.buffer.memory.MemoryStatisticsBufferImpl;
 import com.tc.statistics.config.DSOStatisticsConfig;
 import com.tc.statistics.retrieval.StatisticsRetriever;
 import com.tc.util.Assert;
-import com.tc.util.concurrent.CopyOnWriteArrayMap;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,7 +17,7 @@ public class StatisticsConfigImpl implements DSOStatisticsConfig {
   private final Map defaultParams;
   private final DSOStatisticsConfig parent;
 
-  private final Map params = new CopyOnWriteArrayMap();
+  private final Map<String, Object> params = Collections.synchronizedMap(new HashMap<String, Object>());
 
   public StatisticsConfigImpl() {
     // initialize default parameters
@@ -39,22 +38,27 @@ public class StatisticsConfigImpl implements DSOStatisticsConfig {
     this.parent = parent;
   }
 
+  @Override
   public DSOStatisticsConfig getParent() {
     return parent;
   }
 
+  @Override
   public DSOStatisticsConfig createChild() {
     return new StatisticsConfigImpl(this);
   }
 
+  @Override
   public void setParam(final String key, final Object value) {
     params.put(key, value);
   }
 
+  @Override
   public void removeParam(final String key) {
     params.remove(key);
   }
 
+  @Override
   public Object getParam(final String key) {
     Object value = params.get(key);
     if (null == value) {
@@ -67,6 +71,7 @@ public class StatisticsConfigImpl implements DSOStatisticsConfig {
     return value;
   }
 
+  @Override
   public long getParamLong(final String key) {
     Object value = getParam(key);
     if (null == value) {
@@ -76,6 +81,7 @@ public class StatisticsConfigImpl implements DSOStatisticsConfig {
     return ((Number)value).longValue();
   }
 
+  @Override
   public String getParamString(final String key) {
     Object value = getParam(key);
     if (null == value) {

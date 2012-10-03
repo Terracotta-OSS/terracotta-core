@@ -9,9 +9,7 @@ import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
-import org.terracotta.toolkit.internal.cache.ToolkitCacheMetaDataCallback;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
-import org.terracotta.toolkit.internal.meta.MetaData;
 import org.terracotta.toolkit.search.SearchException;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractorException;
@@ -39,12 +37,15 @@ import com.terracotta.toolkit.concurrent.locks.LockingUtils;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.config.cache.InternalCacheConfigurationType;
 import com.terracotta.toolkit.meta.Extractor;
+import com.terracotta.toolkit.meta.MetaData;
 import com.terracotta.toolkit.meta.MetaDataImpl;
+import com.terracotta.toolkit.meta.ToolkitCacheMetaDataCallback;
 import com.terracotta.toolkit.object.AbstractTCToolkitObject;
 import com.terracotta.toolkit.object.serialization.CustomLifespanSerializedMapValue;
 import com.terracotta.toolkit.object.serialization.SerializedMapValue;
 import com.terracotta.toolkit.object.serialization.SerializedMapValueParameters;
-import com.terracotta.toolkit.search.SearchConstants;
+import com.terracottatech.search.SearchCommand;
+import com.terracottatech.search.SearchMetaData;
 
 import java.util.AbstractCollection;
 import java.util.Collection;
@@ -363,7 +364,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       try {
         boolean mutated = this.tcObjectServerMap.doLogicalRemoveUnlocked(this, key, serializedMapValue);
         if (mutated && metaData != null) {
-          metaData.set(SearchConstants.Meta.COMMAND, SearchConstants.Commands.REMOVE_IF_VALUE_EQUAL);
+          metaData.set(SearchMetaData.COMMAND, SearchCommand.REMOVE_IF_VALUE_EQUAL);
           metaData.add("", 1);
           metaData.add("", key);
           metaData.add("", serializedMapValue.getObjectID());
@@ -431,7 +432,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         break;
     }
     if (metaData != null) {
-      metaData.add(SearchConstants.Meta.VALUE, serializedMapValue.getObjectID());
+      metaData.add(SearchMetaData.VALUE, serializedMapValue.getObjectID());
       addMetaData(metaData);
     }
   }
@@ -456,8 +457,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     MetaData metaData = createRemoveSearchMetaData(key);
 
     if (metaData != null) {
-      metaData.set(SearchConstants.Meta.COMMAND, SearchConstants.Commands.REMOVE);
-      metaData.add(SearchConstants.Meta.KEY, key.toString());
+      metaData.set(SearchMetaData.COMMAND, SearchCommand.REMOVE);
+      metaData.add(SearchMetaData.KEY, key.toString());
       addMetaData(metaData);
     }
   }
@@ -602,7 +603,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         // NOTE - pass to extractor original value, not serialized version
         MetaData metaData = createPutSearchMetaData(key, value);
         if (metaData != null) {
-          metaData.set(SearchConstants.Meta.COMMAND, SearchConstants.Commands.PUT);
+          metaData.set(SearchMetaData.COMMAND, SearchCommand.PUT);
         }
 
         eventualConcurrentLock.lock();
@@ -618,7 +619,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       MetaData metaData = createPutSearchMetaData(key, value);
 
       if (metaData != null) {
-        metaData.set(SearchConstants.Meta.COMMAND, SearchConstants.Commands.PUT);
+        metaData.set(SearchMetaData.COMMAND, SearchCommand.PUT);
       }
 
       final Long lockID = generateLockIdForKey(key);
@@ -637,7 +638,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   public void unlockedPutNoReturn(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
     MetaData md = createPutSearchMetaData(key, value);
     if (md != null) {
-      md.set(SearchConstants.Meta.COMMAND, SearchConstants.Commands.PUT);
+      md.set(SearchMetaData.COMMAND, SearchCommand.PUT);
 
     }
     doLogicalPutUnlocked(key, value, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds, md);
@@ -653,7 +654,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       } else {
         MetaData metaData = createPutSearchMetaData(key, value);
         if (metaData != null) {
-          metaData.set(SearchConstants.Meta.COMMAND, SearchConstants.Commands.PUT);
+          metaData.set(SearchMetaData.COMMAND, SearchCommand.PUT);
         }
         eventualConcurrentLock.lock();
         try {
@@ -665,7 +666,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     } else {
       MetaData metaData = createPutSearchMetaData(key, value);
       if (metaData != null) {
-        metaData.set(SearchConstants.Meta.COMMAND, SearchConstants.Commands.PUT);
+        metaData.set(SearchMetaData.COMMAND, SearchCommand.PUT);
       }
 
       final Long lockID = generateLockIdForKey(key);
@@ -709,8 +710,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
                               asSerializedMapValue(this.tcObjectServerMap
                                   .doLogicalPutIfAbsentUnlocked(this, portableKey, serializedMapValue)));
           if (old == null && metaData != null) {
-            metaData.set(SearchConstants.Meta.COMMAND, SearchConstants.Commands.PUT_IF_ABSENT);
-            metaData.add(SearchConstants.Meta.VALUE, serializedMapValue.getObjectID());
+            metaData.set(SearchMetaData.COMMAND, SearchCommand.PUT_IF_ABSENT);
+            metaData.add(SearchMetaData.VALUE, serializedMapValue.getObjectID());
             addMetaData(metaData);
           }
           return old;
@@ -728,7 +729,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         V old = deserialize(key, asSerializedMapValue(doLogicalGetValueLocked(key, lockID)));
         if (old == null) {
           if (metaData != null) {
-            metaData.set(SearchConstants.Meta.COMMAND, SearchConstants.Commands.PUT_IF_ABSENT);
+            metaData.set(SearchMetaData.COMMAND, SearchCommand.PUT_IF_ABSENT);
           }
 
           doLogicalPutLocked(lockID, key, value, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds, metaData);
@@ -859,7 +860,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       if (old != null) {
         MetaData metaData = createPutSearchMetaData(key, value);
         if (metaData != null) {
-          metaData.set(SearchConstants.Meta.COMMAND, SearchConstants.Commands.PUT);
+          metaData.set(SearchMetaData.COMMAND, SearchCommand.PUT);
         }
         eventualConcurrentLock.lock();
         try {
@@ -874,7 +875,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
       MetaData metaData = createPutSearchMetaData(key, value);
       if (metaData != null) {
-        metaData.set(SearchConstants.Meta.COMMAND, SearchConstants.Commands.PUT);
+        metaData.set(SearchMetaData.COMMAND, SearchCommand.PUT);
       }
 
       final Long lockID = generateLockIdForKey(key);
@@ -901,7 +902,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     if (isEventual()) {
       final V old = deserialize(key, asSerializedMapValue(doLogicalGetValueUnlocked(key)));
       MetaData metaData = createPutSearchMetaData(key, newValue);
-      if (metaData != null) metaData.set(SearchConstants.Meta.COMMAND, SearchConstants.Commands.PUT);
+      if (metaData != null) metaData.set(SearchMetaData.COMMAND, SearchCommand.PUT);
 
       if (old != null && old.equals(oldValue)) {
         eventualConcurrentLock.lock();
@@ -918,7 +919,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     } else {
       MetaData metaData = createPutSearchMetaData(key, newValue);
       if (metaData != null) {
-        metaData.set(SearchConstants.Meta.COMMAND, SearchConstants.Commands.PUT);
+        metaData.set(SearchMetaData.COMMAND, SearchCommand.PUT);
       }
 
       final Long lockID = generateLockIdForKey(key);
@@ -968,7 +969,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     tcObjectServerMap.doClear(this);
     MetaData metaData = createClearSearchMetaData();
     if (metaData != null) {
-      metaData.set(SearchConstants.Meta.COMMAND, SearchConstants.Commands.CLEAR);
+      metaData.set(SearchMetaData.COMMAND, SearchCommand.CLEAR);
       addMetaData(metaData);
     }
   }
@@ -1267,7 +1268,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     if (!isSearchable()) return null;
 
     MetaData md = createBaseMetaData();
-    md.add(SearchConstants.Meta.KEY, key);
+    md.add(SearchMetaData.KEY, key);
 
     try {
       Map<String, ToolkitAttributeType> recordedTypes = new HashMap<String, ToolkitAttributeType>();
@@ -1292,7 +1293,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
             }
           }
 
-          md.add(SearchConstants.Meta.ATTR + attr.getKey(), attr.getValue());
+          md.add(SearchMetaData.ATTR + attr.getKey(), attr.getValue());
         }
       }
 
@@ -1331,8 +1332,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private MetaData createBaseMetaData() {
     MetaData meta = createMetaData("SEARCH");
     // TODO: does this match Ehcache's fully qualified name?
-    meta.add("CACHENAME@", name);
-    meta.add(SearchConstants.Meta.COMMAND, "NOT-SET");
+    meta.add(SearchMetaData.CACHENAME, name);
+    meta.add(SearchMetaData.COMMAND, SearchCommand.NOT_SET);
     return meta;
   }
 

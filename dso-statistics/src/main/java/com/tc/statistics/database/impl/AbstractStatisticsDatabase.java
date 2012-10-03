@@ -20,7 +20,7 @@ import com.tc.statistics.jdbc.JdbcHelper;
 import com.tc.statistics.jdbc.PreparedStatementHandler;
 import com.tc.statistics.jdbc.ResultSetHandler;
 import com.tc.util.Assert;
-import com.tc.util.concurrent.CopyOnWriteArrayMap;
+import com.tc.util.concurrent.CopyOnWriteSequentialMap;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -29,12 +29,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
-  protected final Map           preparedStatements = new CopyOnWriteArrayMap();
+  protected final CopyOnWriteSequentialMap<String, PreparedStatement> preparedStatements = new CopyOnWriteSequentialMap<String, PreparedStatement>();
 
   protected volatile Connection connection;
 
@@ -52,20 +50,23 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
 
   protected abstract void openConnection() throws StatisticsDatabaseException;
 
+  @Override
   public void ensureExistingConnection() throws StatisticsDatabaseException {
     if (null == connection) { throw new StatisticsDatabaseNotReadyException(); }
   }
 
+  @Override
   public Connection getConnection() {
     return connection;
   }
 
+  @Override
   public PreparedStatement createPreparedStatement(final String sql) throws StatisticsDatabaseException {
     ensureExistingConnection();
 
     try {
       PreparedStatement stmt = connection.prepareStatement(sql);
-      PreparedStatement previous = (PreparedStatement) preparedStatements.put(sql, stmt);
+      PreparedStatement previous = preparedStatements.put(sql, stmt);
       if (previous != null) {
         previous.close();
       }
@@ -75,10 +76,12 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
     }
   }
 
+  @Override
   public PreparedStatement getPreparedStatement(final String sql) {
-    return (PreparedStatement) preparedStatements.get(sql);
+    return preparedStatements.get(sql);
   }
 
+  @Override
   public void createVersionTable() throws SQLException {
     JdbcHelper.executeUpdate(getConnection(), "CREATE TABLE IF NOT EXISTS dbstructureversion ("
                                               + "version INT NOT NULL PRIMARY KEY, " + "created TIMESTAMP NOT NULL)");
@@ -86,6 +89,7 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
 
   // TODO: Currently version checks just fail hard when they don't match, in the future this should
   // be made more intelligent to automatically migrate from older versions to newer ones.
+  @Override
   public void checkVersion(final int currentVersion, long currentChecksum) throws StatisticsDatabaseException {
     ChecksumCalculator csc = JdbcHelper.getActiveChecksumCalculator();
     Assert.assertNotNull("Expected the checksum of SQL statements to be calculated at this time.", csc);
@@ -104,6 +108,7 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
         try {
           JdbcHelper.executeQuery(getConnection(), "SELECT version, created FROM dbstructureversion",
                                   new ResultSetHandler() {
+                                    @Override
                                     public void useResultSet(ResultSet resultSet) throws SQLException {
                                       if (resultSet.next()) {
                                         version[0] = Integer.valueOf(resultSet.getInt("version"));
@@ -144,7 +149,8 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
       JdbcHelper.executeUpdate(getConnection(),
                                "INSERT INTO dbstructureversion (version, created) VALUES (?, CURRENT_TIMESTAMP)",
                                new PreparedStatementHandler() {
-                                 public void setParameters(PreparedStatement statement) throws SQLException {
+                                 @Override
+                                public void setParameters(PreparedStatement statement) throws SQLException {
                                    statement.setInt(1, currentVersion);
                                  }
                                });
@@ -153,6 +159,7 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
     }
   }
 
+  @Override
   public StatisticData getStatisticsData(String sessionId, final ResultSet resultSet) throws SQLException {
     StatisticData data = new StatisticData().sessionId(sessionId).agentIp(resultSet.getString("agentip"))
         .agentDifferentiator(resultSet.getString("agentdifferentiator")).moment(resultSet.getTimestamp("moment"))
@@ -180,6 +187,7 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
     return data;
   }
 
+  @Override
   public synchronized void close() throws StatisticsDatabaseException {
     if (null == connection) return;
 
@@ -187,10 +195,8 @@ public abstract class AbstractStatisticsDatabase implements StatisticsDatabase {
 
     try {
       try {
-        Set entries = preparedStatements.entrySet();
-        for (Iterator entries_it = entries.iterator(); entries_it.hasNext();) {
-          Map.Entry entry = (Map.Entry) entries_it.next();
-          PreparedStatement stmt = (PreparedStatement) entry.getValue();
+        for (Map.Entry<String, PreparedStatement> entry : preparedStatements.entrySet()) {
+          PreparedStatement stmt = entry.getValue();
           try {
             stmt.close();
           } catch (SQLException e) {

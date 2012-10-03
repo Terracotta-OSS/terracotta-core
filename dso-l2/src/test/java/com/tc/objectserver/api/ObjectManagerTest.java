@@ -82,6 +82,7 @@ import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionImpl;
+import com.tc.objectserver.tx.ServerTransactionSequencer;
 import com.tc.objectserver.tx.ServerTransactionSequencerImpl;
 import com.tc.objectserver.tx.TestServerTransactionManager;
 import com.tc.objectserver.tx.TestTransactionalStageCoordinator;
@@ -213,7 +214,7 @@ public class ObjectManagerTest extends TCTestCase {
   }
 
   private void initTransactionObjectManager() {
-    final ServerTransactionSequencerImpl sequencer = new ServerTransactionSequencerImpl();
+    final ServerTransactionSequencer sequencer = new ServerTransactionSequencerImpl();
     this.coordinator = new TestTransactionalStageCoordinator();
     this.gtxMgr = new TestGlobalTransactionManager();
     this.txObjectManager = new TransactionalObjectManagerImpl(this.objectManager, sequencer, this.gtxMgr,
@@ -810,10 +811,12 @@ public class ObjectManagerTest extends TCTestCase {
         return new LogicalAction(SerializationUtil.PUT, new Object[] { fieldName, oidHoler.get() });
       }
 
+      @Override
       public PhysicalAction getPhysicalAction() {
         return null;
       }
 
+      @Override
       public boolean next() {
         if (hasNext) {
           hasNext = false;
@@ -822,18 +825,22 @@ public class ObjectManagerTest extends TCTestCase {
         return false;
       }
 
+      @Override
       public boolean next(final DNAEncoding encoding) {
         throw new ImplementMe();
       }
 
+      @Override
       public Object getAction() {
         throw new ImplementMe();
       }
 
+      @Override
       public int getActionCount() {
         return 1;
       }
 
+      @Override
       public void reset() throws UnsupportedOperationException {
         hasNext = true;
       }
@@ -1041,8 +1048,6 @@ public class ObjectManagerTest extends TCTestCase {
     assertEquals(10, this.stats.getTotalCacheHits());
     assertEquals(20, this.stats.getTotalCacheMisses());
 
-//    evictCache(10);
-
     ids = makeObjectIDSet(14, 4);
     results = new TestResultsContext(ids, new ObjectIDSet());
     this.objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
@@ -1055,13 +1060,6 @@ public class ObjectManagerTest extends TCTestCase {
     final double hitRate = ((double) 15) / ((double) 40);
     assertEquals(hitRate, this.stats.getCacheHitRatio(), 0D);
   }
-
-//  private void evictCache(final int inCache) {
-//    final TestCacheStats tc = new TestCacheStats();
-//    tc.toKeep = inCache;
-//    this.objectManager.evictCache(tc);
-//    tc.validate();
-//  }
 
   private ObjectIDSet makeObjectIDSet(final int begin, final int end) {
     final ObjectIDSet rv = new ObjectIDSet();
@@ -1117,63 +1115,6 @@ public class ObjectManagerTest extends TCTestCase {
       // expected
     }
   }
-
-  /**
-   * DEV-5113
-   */
-//  public void testEvictCacheAndGCRunParallel() throws Exception {
-//    this.config.paranoid = false;
-//    TestMOFlusherWithLatch flushWithLatch = initObjectManagerAndGetFlusher(createThreadGroup(),
-//                                                                           new LRUEvictionPolicy(-1));
-//    this.config.myGCThreadSleepTime = -1;
-//    final TestGarbageCollector gc = new TestGarbageCollector(this.objectManager);
-//    this.objectManager.setGarbageCollector(gc);
-//    this.objectManager.start();
-//
-//    ArrayList<ManagedObject> managedObjects = new ArrayList<ManagedObject>();
-//    ObjectIDSet objectIDset = new ObjectIDSet();
-//    for (int i = 0; i < 10000; i++) {
-//      ObjectID id = new ObjectID(i);
-//      ManagedObject mo = new TestManagedObject(id, new ArrayList<ObjectID>(3));
-//
-//      mo.setIsDirty(true);
-//      this.objectManager.createObject(mo);
-//
-//      managedObjects.add(mo);
-//      objectIDset.add(id);
-//    }
-//
-//    Thread evictor = new Thread() {
-//      @Override
-//      public void run() {
-//        objectManager.evictCache(new CacheStats() {
-//          public void objectEvicted(int evictedCount, int currentCount, List targetObjects4GC, boolean printNewObjects) {
-//            //
-//          }
-//
-//          public int getObjectCountToEvict(int currentCount) {
-//            return 10000;
-//          }
-//        });
-//
-//      }
-//    };
-//    evictor.start();
-//
-//    ThreadUtil.reallySleep(5000);
-//
-//    final Thread gcCaller = new Thread(new GCCaller(), "GCCaller");
-//    gcCaller.start();
-//    gc.collectedObjects = objectIDset;
-//
-//    // FLUSHER and the EVICTOR are running in parallel now. High chance of race in removing the references
-//    flushWithLatch.getLatch().release();
-//    gc.allow_blockUntilReadyToGC_ToProceed();
-//
-//    assertTrue(gc.waitFor_notifyGCComplete_ToBeCalled(150000));
-//    gcCaller.join();
-//    evictor.join();
-//  }
 
   public void testObjectManagerGC() throws Exception {
     initObjectManager();
@@ -1608,10 +1549,12 @@ public class ObjectManagerTest extends TCTestCase {
 
   public static class CacheStatsYoungGC implements CacheStats {
 
+    @Override
     public int getObjectCountToEvict(final int currentCount) {
       return 2;
     }
 
+    @Override
     public void objectEvicted(final int evictedCount, final int currentCount, final List targetObjects4GC,
                               final boolean printNewObjects) {
       //
@@ -1623,26 +1566,32 @@ public class ObjectManagerTest extends TCTestCase {
 
     public Set<TestManagedObject> objects;
 
+    @Override
     public boolean add(final Cacheable obj) {
       return false;
     }
 
+    @Override
     public int getCacheCapacity() {
       return 0;
     }
 
+    @Override
     public Collection getRemovalCandidates(final int maxCount) {
       return this.objects;
     }
 
+    @Override
     public void markReferenced(final Cacheable obj) {
       //
     }
 
+    @Override
     public void remove(final Cacheable obj) {
       //
     }
 
+    @Override
     public PrettyPrinter prettyPrint(final PrettyPrinter out) {
       return new PrettyPrinterImpl(new PrintWriter(new StringWriter()));
     }
@@ -1687,47 +1636,58 @@ public class ObjectManagerTest extends TCTestCase {
       return _version++;
     }
 
+    @Override
     public long getVersion() {
       return this.version;
     }
 
+    @Override
     public boolean hasLength() {
       return true;
     }
 
+    @Override
     public int getArraySize() {
       return 3;
     }
 
+    @Override
     public String getTypeName() {
       return "[Ljava/lang/String;";
     }
 
+    @Override
     public ObjectID getObjectID() throws DNAException {
       return this.id;
     }
 
+    @Override
     public ObjectID getParentObjectID() throws DNAException {
       return ObjectID.NULL_ID;
     }
 
+    @Override
     public DNACursor getCursor() {
       return new DNACursor() {
         int count = 0;
 
+        @Override
         public boolean next() {
           this.count++;
           return this.count <= 2;
         }
 
+        @Override
         public LogicalAction getLogicalAction() {
           throw new ImplementMe();
         }
 
+        @Override
         public Object getAction() {
           throw new ImplementMe();
         }
 
+        @Override
         public PhysicalAction getPhysicalAction() {
           switch (this.count) {
             case 1:
@@ -1739,20 +1699,24 @@ public class ObjectManagerTest extends TCTestCase {
           }
         }
 
+        @Override
         public boolean next(final DNAEncoding encoding) {
           throw new ImplementMe();
         }
 
+        @Override
         public int getActionCount() {
           return 2;
         }
 
+        @Override
         public void reset() throws UnsupportedOperationException {
           throw new ImplementMe();
         }
       };
     }
 
+    @Override
     public boolean isDelta() {
       return this.delta;
     }
@@ -1768,39 +1732,48 @@ public class ObjectManagerTest extends TCTestCase {
       this.setID = setID;
     }
 
+    @Override
     public long getVersion() {
       return 0;
     }
 
+    @Override
     public boolean hasLength() {
       return false;
     }
 
+    @Override
     public int getArraySize() {
       return -1;
     }
 
+    @Override
     public String getTypeName() {
       return this.className;
     }
 
+    @Override
     public ObjectID getObjectID() throws DNAException {
       return this.setID;
     }
 
+    @Override
     public ObjectID getParentObjectID() throws DNAException {
       return ObjectID.NULL_ID;
     }
 
+    @Override
     public DNACursor getCursor() {
       return new DNACursor() {
         int count;
 
+        @Override
         public boolean next() {
           this.count++;
           return this.count <= 3;
         }
 
+        @Override
         public LogicalAction getLogicalAction() {
           switch (this.count) {
             case 1:
@@ -1813,28 +1786,34 @@ public class ObjectManagerTest extends TCTestCase {
           }
         }
 
+        @Override
         public PhysicalAction getPhysicalAction() {
           throw new ImplementMe();
         }
 
+        @Override
         public boolean next(final DNAEncoding encoding) {
           throw new ImplementMe();
         }
 
+        @Override
         public Object getAction() {
           throw new ImplementMe();
         }
 
+        @Override
         public int getActionCount() {
           return 3;
         }
 
+        @Override
         public void reset() throws UnsupportedOperationException {
           throw new ImplementMe();
         }
       };
     }
 
+    @Override
     public boolean isDelta() {
       return false;
     }
@@ -1855,40 +1834,49 @@ public class ObjectManagerTest extends TCTestCase {
       this.isDelta = isDelta;
     }
 
+    @Override
     public long getVersion() {
       return 0;
     }
 
+    @Override
     public boolean hasLength() {
       return false;
     }
 
+    @Override
     public int getArraySize() {
       return -1;
     }
 
+    @Override
     public String getTypeName() {
       return "com.terracotta.toolkit.roots.impl.ToolkitTypeRootImpl";
     }
 
+    @Override
     public ObjectID getObjectID() throws DNAException {
       return this.objectID;
     }
 
+    @Override
     public ObjectID getParentObjectID() throws DNAException {
       return ObjectID.NULL_ID;
     }
 
+    @Override
     public DNACursor getCursor() {
       return new DNACursor() {
 
         int count = 0;
 
+        @Override
         public boolean next() {
           this.count++;
           return this.count <= 3;
         }
 
+        @Override
         public LogicalAction getLogicalAction() {
           switch (this.count) {
             case 1:
@@ -1902,28 +1890,34 @@ public class ObjectManagerTest extends TCTestCase {
           }
         }
 
+        @Override
         public PhysicalAction getPhysicalAction() {
           throw new ImplementMe();
         }
 
+        @Override
         public boolean next(final DNAEncoding encoding) {
           throw new ImplementMe();
         }
 
+        @Override
         public Object getAction() {
           throw new ImplementMe();
         }
 
+        @Override
         public int getActionCount() {
           return 3;
         }
 
+        @Override
         public void reset() throws UnsupportedOperationException {
           throw new ImplementMe();
         }
       };
     }
 
+    @Override
     public boolean isDelta() {
       return this.isDelta;
     }
@@ -1940,39 +1934,48 @@ public class ObjectManagerTest extends TCTestCase {
       this.setID = setID;
     }
 
+    @Override
     public long getVersion() {
       return 0;
     }
 
+    @Override
     public boolean hasLength() {
       return false;
     }
 
+    @Override
     public int getArraySize() {
       return -1;
     }
 
+    @Override
     public String getTypeName() {
       return this.className;
     }
 
+    @Override
     public ObjectID getObjectID() throws DNAException {
       return this.setID;
     }
 
+    @Override
     public ObjectID getParentObjectID() throws DNAException {
       return ObjectID.NULL_ID;
     }
 
+    @Override
     public DNACursor getCursor() {
       return new DNACursor() {
         int count;
 
+        @Override
         public boolean next() {
           this.count++;
           return this.count <= 1;
         }
 
+        @Override
         public LogicalAction getLogicalAction() {
           switch (this.count) {
             case 1:
@@ -1982,28 +1985,34 @@ public class ObjectManagerTest extends TCTestCase {
           }
         }
 
+        @Override
         public PhysicalAction getPhysicalAction() {
           throw new ImplementMe();
         }
 
+        @Override
         public boolean next(final DNAEncoding encoding) {
           throw new ImplementMe();
         }
 
+        @Override
         public Object getAction() {
           throw new ImplementMe();
         }
 
+        @Override
         public int getActionCount() {
           return 1;
         }
 
+        @Override
         public void reset() throws UnsupportedOperationException {
           throw new ImplementMe();
         }
       };
     }
 
+    @Override
     public boolean isDelta() {
       return false;
     }
@@ -2038,6 +2047,7 @@ public class ObjectManagerTest extends TCTestCase {
       }
     }
 
+    @Override
     public synchronized void setResults(final ObjectManagerLookupResults results) {
       this.complete = true;
       this.objects.putAll(results.getObjects());
@@ -2047,14 +2057,17 @@ public class ObjectManagerTest extends TCTestCase {
       notifyAll();
     }
 
+    @Override
     public ObjectIDSet getLookupIDs() {
       return this.ids;
     }
 
+    @Override
     public ObjectIDSet getNewObjectIDs() {
       return this.newIDS;
     }
 
+    @Override
     public boolean updateStats() {
       return this.updateStats;
     }
@@ -2067,44 +2080,54 @@ public class ObjectManagerTest extends TCTestCase {
       this.id = id;
     }
 
+    @Override
     public long getVersion() {
       return 0;
     }
 
+    @Override
     public boolean hasLength() {
       return false;
     }
 
+    @Override
     public int getArraySize() {
       return -1;
     }
 
+    @Override
     public String getTypeName() {
       return "java.lang.Integer";
     }
 
+    @Override
     public ObjectID getObjectID() throws DNAException {
       return this.id;
     }
 
+    @Override
     public ObjectID getParentObjectID() throws DNAException {
       return new ObjectID(25);
     }
 
+    @Override
     public DNACursor getCursor() {
       return new DNACursor() {
 
         int count = 0;
 
+        @Override
         public boolean next() {
           this.count++;
           return this.count < 2;
         }
 
+        @Override
         public LogicalAction getLogicalAction() {
           return null;
         }
 
+        @Override
         public Object getAction() {
           switch (this.count) {
             case 1: {
@@ -2116,24 +2139,29 @@ public class ObjectManagerTest extends TCTestCase {
           }
         }
 
+        @Override
         public PhysicalAction getPhysicalAction() {
           throw new ImplementMe();
         }
 
+        @Override
         public boolean next(final DNAEncoding encoding) {
           throw new ImplementMe();
         }
 
+        @Override
         public int getActionCount() {
           return 1;
         }
 
+        @Override
         public void reset() throws UnsupportedOperationException {
           throw new ImplementMe();
         }
       };
     }
 
+    @Override
     public boolean isDelta() {
       return false;
     }
@@ -2142,6 +2170,7 @@ public class ObjectManagerTest extends TCTestCase {
 
   private class GCCaller implements Runnable {
 
+    @Override
     public void run() {
       ObjectManagerTest.this.objectManager.getGarbageCollector().doGC(GCType.FULL_GC);
     }
@@ -2292,6 +2321,7 @@ public class ObjectManagerTest extends TCTestCase {
       this.counter.reset();
     }
 
+    @Override
     public synchronized void postProcess() {
       this.counter.increment();
     }
@@ -2299,6 +2329,7 @@ public class ObjectManagerTest extends TCTestCase {
 
   private static class NullSinkContext implements SinkContext {
 
+    @Override
     public void postProcess() {
       // do nothing
     }

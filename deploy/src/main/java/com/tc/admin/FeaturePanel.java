@@ -60,6 +60,7 @@ public class FeaturePanel extends XContainer implements PropertyChangeListener {
       panel.add(progressBar, gbc);
       progressBar.setIndeterminate(true);
       adminClientContext.execute(new Runnable() {
+        @Override
         public void run() {
           while (true) {
             if (feature.isReady()) {
@@ -102,12 +103,14 @@ public class FeaturePanel extends XContainer implements PropertyChangeListener {
 
   private void createPresentationLater() {
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         createPresentation();
       }
     });
   }
 
+  @Override
   public void propertyChange(PropertyChangeEvent evt) {
     String prop = evt.getPropertyName();
     if (Presentation.PROP_PRESENTATION_READY.equals(prop)) {
@@ -152,6 +155,7 @@ public class FeaturePanel extends XContainer implements PropertyChangeListener {
 
   private void showErrorLater(final Throwable error) {
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         showError(error);
       }

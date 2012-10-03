@@ -21,7 +21,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeRefusedMessage;
-import com.tc.util.concurrent.CopyOnWriteArrayMap;
+import com.tc.util.concurrent.CopyOnWriteSequentialMap;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -37,12 +37,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManagerMBean {
   private static final TCLogger      logger         = TCLogging.getLogger(DSOChannelManager.class);
 
-  private final CopyOnWriteArrayMap  activeChannels = new CopyOnWriteArrayMap(
-                                                                              new CopyOnWriteArrayMap.TypedArrayFactory() {
-
-                                                                                public Object[] createTypedArray(final int size) {
-                                                                                  return new MessageChannel[size];
-                                                                                }
+  private final CopyOnWriteSequentialMap<NodeID, MessageChannel> activeChannels = new CopyOnWriteSequentialMap<NodeID, MessageChannel>(
+                                                                              new CopyOnWriteSequentialMap.TypedArrayFactory() {
+                                                                                                                 @Override
+                                                                                                                 public MessageChannel[] createTypedArray(final int size) {
+                                                                                                                   return new MessageChannel[size];
+                                                                                                                 }
 
                                                                               });
   private final List                 eventListeners = new CopyOnWriteArrayList();
@@ -64,12 +64,14 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
     this.stripeIDStateManager = stripeIDStateManager;
   }
 
+  @Override
   public MessageChannel getActiveChannel(final NodeID id) throws NoSuchChannelException {
-    final MessageChannel rv = (MessageChannel) activeChannels.get(id);
+    final MessageChannel rv = activeChannels.get(id);
     if (rv == null) { throw new NoSuchChannelException("No such channel: " + id); }
     return rv;
   }
 
+  @Override
   public void closeAll(final Collection clientIDs) {
     for (Iterator i = clientIDs.iterator(); i.hasNext();) {
       Object o = i.next();
@@ -87,14 +89,17 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
     }
   }
 
+  @Override
   public MessageChannel[] getActiveChannels() {
-    return (MessageChannel[]) activeChannels.valuesToArray();
+    return activeChannels.valuesToArray();
   }
 
+  @Override
   public boolean isActiveID(final NodeID nodeID) {
     return activeChannels.containsKey(nodeID);
   }
 
+  @Override
   public String getChannelAddress(final NodeID nid) {
     try {
       MessageChannel channel = getActiveChannel(nid);
@@ -105,6 +110,7 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
     }
   }
 
+  @Override
   public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(final NodeID nid)
       throws NoSuchChannelException {
     return (BatchTransactionAcknowledgeMessage) getActiveChannel(nid)
@@ -124,10 +130,12 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
     return (ClientHandshakeAckMessage) channel.createMessage(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE);
   }
 
+  @Override
   public TCConnection[] getAllActiveClientConnections() {
     return connectionManager.getAllActiveConnections();
   }
 
+  @Override
   public void makeChannelActive(final ClientID clientID, final boolean persistent) {
     try {
       ClientHandshakeAckMessage ackMsg = newClientHandshakeAckMessage(clientID);
@@ -145,6 +153,7 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
     }
   }
 
+  @Override
   public void makeChannelRefuse(ClientID clientID, String message) {
     try {
       ClientHandshakeRefusedMessage handshakeRefuseMsg = newClientHandshakeRefusedMessage(clientID);
@@ -160,24 +169,25 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
 
   private Set<ClientID> getAllActiveClientIDs() {
     Set<ClientID> clientIDs = new HashSet<ClientID>();
-    synchronized (activeChannels) {
-      for (Iterator i = activeChannels.keySet().iterator(); i.hasNext();) {
-        ClientID cid = (ClientID) i.next();
+      for (Object element : activeChannels.keySet()) {
+        ClientID cid = (ClientID) element;
         clientIDs.add(cid);
       }
-    }
     return clientIDs;
   }
 
+  @Override
   public void makeChannelActiveNoAck(final MessageChannel channel) {
     activeChannels.put(getClientIDFor(channel.getChannelID()), channel);
   }
 
+  @Override
   public void addEventListener(final DSOChannelManagerEventListener listener) {
     if (listener == null) { throw new NullPointerException("listener cannot be be null"); }
     eventListeners.add(listener);
   }
 
+  @Override
   public Set getAllClientIDs() {
     Set channelIDs = genericChannelManager.getAllChannelIDs();
     Set clientIDs = new HashSet(channelIDs.size());
@@ -204,10 +214,12 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
 
   private class GenericChannelEventListener implements ChannelManagerEventListener {
 
+    @Override
     public void channelCreated(final MessageChannel channel) {
       // nothing
     }
 
+    @Override
     public void channelRemoved(final MessageChannel channel) {
       activeChannels.remove(getClientIDFor(channel.getChannelID()));
       fireChannelRemovedEvent(channel);
@@ -215,6 +227,7 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
 
   }
 
+  @Override
   public ClientID getClientIDFor(final ChannelID channelID) {
     return new ClientID(channelID.toLong());
   }

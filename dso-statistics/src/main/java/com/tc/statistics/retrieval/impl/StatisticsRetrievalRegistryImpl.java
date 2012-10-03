@@ -8,36 +8,39 @@ import com.tc.logging.TCLogging;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.util.Assert;
-import com.tc.util.concurrent.CopyOnWriteArrayMap;
+import com.tc.util.concurrent.CopyOnWriteSequentialMap;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
 
 public class StatisticsRetrievalRegistryImpl implements StatisticsRetrievalRegistry {
   private final static TCLogger LOGGER = TCLogging.getLogger(StatisticsRetrievalRegistryImpl.class);
 
-  private final Map instanceMap = new CopyOnWriteArrayMap();
+  private final CopyOnWriteSequentialMap<String, StatisticRetrievalAction> instanceMap = new CopyOnWriteSequentialMap<String, StatisticRetrievalAction>();
 
+  @Override
   public void removeAllActionInstances() {
     instanceMap.clear();
   }
 
-  public Collection getSupportedStatistics() {
-    return Collections.unmodifiableSet(instanceMap.keySet());
+  @Override
+  public Collection<String> getSupportedStatistics() {
+    return instanceMap.keySet();
   }
 
-  public Collection getRegisteredActionInstances() {
-    return Collections.unmodifiableCollection(instanceMap.values());
+  @Override
+  public Collection<StatisticRetrievalAction> getRegisteredActionInstances() {
+    return instanceMap.values();
   }
 
+  @Override
   public StatisticRetrievalAction getActionInstance(final String name) {
     if (null == name) {
       return null;
     }
-    return (StatisticRetrievalAction)instanceMap.get(name);
+    return instanceMap.get(name);
   }
 
+  @Override
   public void registerActionInstance(final StatisticRetrievalAction action) {
     if (null == action) {
       return;
@@ -47,6 +50,7 @@ public class StatisticsRetrievalRegistryImpl implements StatisticsRetrievalRegis
     instanceMap.put(action.getName(), action);
   }
 
+  @Override
   public void registerActionInstance(final String sraClassName) {
     try {
       Class sra_cpu_class = Class.forName(sraClassName);

@@ -10,7 +10,7 @@
   <includeBaseDirectory>false</includeBaseDirectory>
 
   <dependencySets>
-
+    
     <dependencySet>
       <outputDirectory>L1</outputDirectory>
       <useTransitiveDependencies>true</useTransitiveDependencies>
@@ -19,13 +19,14 @@
       </includes>
       <useTransitiveFiltering>true</useTransitiveFiltering>
       <useProjectArtifact>false</useProjectArtifact>
+      <outputFileNameMapping>${artifact.artifactId}-${artifact.baseVersion}${dashClassifier?}.${artifact.extension}</outputFileNameMapping>
       <scope>provided</scope>
     </dependencySet>
 
     <dependencySet>
       <outputDirectory>TIMs</outputDirectory>
       <useTransitiveDependencies>true</useTransitiveDependencies>
-      <outputFileNameMapping>${artifact.artifactId}-${artifact.baseVersion}.${artifact.extension}</outputFileNameMapping>
+      <outputFileNameMapping>${artifact.artifactId}-${artifact.baseVersion}${dashClassifier?}.${artifact.extension}</outputFileNameMapping>
       <includes>
         <include>org.terracotta.internal:terracotta-toolkit-impl</include>
       </includes>

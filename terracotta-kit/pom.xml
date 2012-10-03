@@ -20,8 +20,8 @@
   <properties>
     <ehcache.version>2.7.0-SNAPSHOT</ehcache.version>
     <quartz.version>3.0.0-SNAPSHOT</quartz.version>
-    <terracotta-session.version>3.0.0-SNAPSHOT</terracotta-session.version>
     <management-tsa.version>1.1.0-SNAPSHOT</management-tsa.version>
+    <toolkit-api.version>2.0-SNAPSHOT</toolkit-api.version>
 
     <skip.deploy>true</skip.deploy>
     <skip.testjar>true</skip.testjar>
@@ -64,6 +64,13 @@
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>       
+    
+    <dependency>
+      <groupId>org.terracotta.toolkit</groupId>
+      <artifactId>terracotta-toolkit-api</artifactId>
+      <version>${toolkit-api.version}</version>
+      <scope>provided</scope>
+    </dependency>       
 
     <dependency>
       <groupId>org.terracotta</groupId>
@@ -100,13 +107,6 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- express session -->
-    <dependency>
-      <groupId>org.terracotta.session</groupId>
-      <artifactId>terracotta-session</artifactId>
-      <version>${terracotta-session.version}</version>
-      <scope>provided</scope>
-    </dependency>
   </dependencies>
 
   <profiles>
@@ -136,7 +136,7 @@
     </profile>    
 
     <!-- ******************************************************************* -->
-    <!--   profile to exclude extra packaging of ehcache, quartz, sessions   -->    
+    <!--   profile to exclude extra packaging of ehcache, quartz   -->    
     <!-- ******************************************************************* -->     
     <profile>
       <id>no-extra</id>
@@ -254,8 +254,9 @@
                       <runIf>{{ "${no.extra}" != "true" }}</runIf>
                       <targetPath>${rootDir}/common/docs/javadoc</targetPath>
                       <dependency>
-                        <groupId>org.terracotta</groupId>
-                        <artifactId>${toolkit.artifactId}</artifactId>
+                        <groupId>org.terracotta.toolkit</groupId>
+                        <artifactId>terracotta-toolkit-api</artifactId>
+                        <version>${toolkit-api.version}</version>
                         <classifier>javadoc</classifier>
                       </dependency>
                       <unpack>true</unpack>
@@ -368,17 +369,6 @@
                       <cleanEmptyDirectories>true</cleanEmptyDirectories>
                       <failIfNotFound>false</failIfNotFound>
                     </resource>                    
-
-                    <!-- session express -->
-                    <resource>
-                      <runIf>{{ "${no.extra}" != "true" }}</runIf>
-                      <targetPath>${rootDir}/sessions</targetPath>
-                      <dependency>
-                        <groupId>org.terracotta.session</groupId>
-                        <artifactId>terracotta-session</artifactId>
-                      </dependency>
-                      <dependenciesAtM2>true</dependenciesAtM2>
-                    </resource>
 
                     <!-- 1. remove build-data.txt from terracotta jar and rename it to tc.jar 
                          2. set execution permissions for scripts and library files

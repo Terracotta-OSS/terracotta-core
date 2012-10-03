@@ -83,8 +83,7 @@ public class ClusterInternalEventsHandler extends AbstractEventHandler {
   @Override
   public void handleEvent(final EventContext context) {
     ThreadPoolExecutor service = clusterEventExecutor.getExecutorService();
-    debug("adding task to clusterEventExecutor "+context);
-//    Assert.assertFalse(service.isTerminating() || service.isShutdown() || service.isTerminated());
+    Assert.assertFalse(service.isTerminating() || service.isShutdown() || service.isTerminated());
     Future eventFuture = service.submit(new Runnable() {
       @Override
       public void run() {

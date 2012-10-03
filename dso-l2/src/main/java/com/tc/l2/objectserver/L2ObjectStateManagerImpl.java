@@ -17,7 +17,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.State;
-import com.tc.util.concurrent.CopyOnWriteArrayMap;
+import com.tc.util.concurrent.CopyOnWriteSequentialMap;
 import com.tc.util.concurrent.ThrottledTaskExecutor;
 
 import java.util.Collection;
@@ -32,10 +32,10 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
   private static final TCLogger          logger                 = TCLogging.getLogger(L2ObjectStateManagerImpl.class);
 
   private final ObjectManager            objectManager;
-  private final CopyOnWriteArrayMap      nodes                  = new CopyOnWriteArrayMap();
-  private final CopyOnWriteArrayList     listeners              = new CopyOnWriteArrayList();
+  private final CopyOnWriteSequentialMap<NodeID, L2ObjectStateImpl> nodes                  = new CopyOnWriteSequentialMap<NodeID, L2ObjectStateImpl>();
+  private final CopyOnWriteArrayList<L2ObjectStateListener>         listeners              = new CopyOnWriteArrayList<L2ObjectStateListener>();
   private final ServerTransactionManager transactionManager;
-  private final CopyOnWriteArrayMap      syncExecutorContextMap = new CopyOnWriteArrayMap();
+  private final CopyOnWriteSequentialMap<NodeID, SyncExecutorContext> syncExecutorContextMap = new CopyOnWriteSequentialMap<NodeID, SyncExecutorContext>();
   private final int                      syncMaxPendingMsgs;
   private long                           currentSessionId       = 0;
 
@@ -52,28 +52,29 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     this.syncMaxPendingMsgs = (maxSyncPendingMsgs <= 0) ? Integer.MAX_VALUE : maxSyncPendingMsgs;
   }
 
+  @Override
   public void registerForL2ObjectStateChangeEvents(final L2ObjectStateListener listener) {
     this.listeners.add(listener);
   }
 
   private void fireMissingObjectsStateEvent(final NodeID nodeID, final int missingObjects) {
-    for (final Iterator i = this.listeners.iterator(); i.hasNext();) {
-      final L2ObjectStateListener l = (L2ObjectStateListener) i.next();
+    for (L2ObjectStateListener l : this.listeners) {
       l.missingObjectsFor(nodeID, missingObjects);
     }
   }
 
   private void fireObjectSyncCompleteEvent(final NodeID nodeID) {
-    for (final Iterator i = this.listeners.iterator(); i.hasNext();) {
-      final L2ObjectStateListener l = (L2ObjectStateListener) i.next();
+    for (L2ObjectStateListener l : this.listeners) {
       l.objectSyncCompleteFor(nodeID);
     }
   }
 
+  @Override
   public int getL2Count() {
     return this.nodes.size();
   }
 
+  @Override
   public void removeL2(final NodeID nodeID) {
     final Object l2State = this.nodes.remove(nodeID);
     if (l2State == null) {
@@ -82,10 +83,11 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     this.syncExecutorContextMap.remove(nodeID);
   }
 
+  @Override
   public boolean addL2(final NodeID nodeID, final Set oids) {
     L2ObjectStateImpl l2State;
     synchronized (this.nodes) {
-      l2State = (L2ObjectStateImpl) this.nodes.get(nodeID);
+      l2State = this.nodes.get(nodeID);
       if (l2State != null) {
         logger.warn("L2State already present for " + nodeID + ". " + l2State
                     + " IGNORING setExistingObjectsList : oids count = " + oids.size());
@@ -96,6 +98,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     }
     final L2ObjectStateImpl _l2State = l2State;
     this.transactionManager.callBackOnResentTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
+      @Override
       public void onCompletion() {
         _l2State.moveToReadyToSyncState();
       }
@@ -103,8 +106,9 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     return true;
   }
 
+  @Override
   public ManagedObjectSyncContext getSomeObjectsToSyncContext(final NodeID nodeID, final int count) {
-    final L2ObjectStateImpl l2State = (L2ObjectStateImpl) this.nodes.get(nodeID);
+    final L2ObjectStateImpl l2State = this.nodes.get(nodeID);
     if (l2State != null) {
       return l2State.getSomeObjectsToSyncContext(count);
     } else {
@@ -113,8 +117,9 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     }
   }
 
+  @Override
   public void close(final ManagedObjectSyncContext mosc) {
-    final L2ObjectStateImpl l2State = (L2ObjectStateImpl) this.nodes.get(mosc.getNodeID());
+    final L2ObjectStateImpl l2State = this.nodes.get(mosc.getNodeID());
     if (l2State != null) {
       l2State.close(mosc);
     } else {
@@ -122,10 +127,12 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     }
   }
 
+  @Override
   public Collection getL2ObjectStates() {
     return this.nodes.values();
   }
 
+  @Override
   public void initiateSync(NodeID nodeID, Runnable syncRunnable) {
     ThrottledTaskExecutor throttledTaskExecutor = new ThrottledTaskExecutor(syncMaxPendingMsgs);
     SyncExecutorContext passiveSyncContext = new SyncExecutorContext(throttledTaskExecutor, syncRunnable);
@@ -136,8 +143,9 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     syncPassive(throttledTaskExecutor, syncRunnable);
   }
 
+  @Override
   public void syncMore(NodeID nodeID) {
-    SyncExecutorContext passiveSync = (SyncExecutorContext) this.syncExecutorContextMap.get(nodeID);
+    SyncExecutorContext passiveSync = this.syncExecutorContextMap.get(nodeID);
     if (passiveSync != null) {
       syncPassive(passiveSync.getExecutor(), passiveSync.getRunnable());
     } else {
@@ -149,8 +157,9 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     executor.offer(syncRunnable);
   }
 
+  @Override
   public void ackSync(NodeID nodeID) {
-    SyncExecutorContext passiveSync = (SyncExecutorContext) this.syncExecutorContextMap.get(nodeID);
+    SyncExecutorContext passiveSync = this.syncExecutorContextMap.get(nodeID);
     if (passiveSync != null) {
       passiveSync.getExecutor().receiveFeedback();
     } else {
@@ -228,6 +237,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
         this.state = IN_SYNC_PENDING_NOTIFY;
         L2ObjectStateManagerImpl.this.transactionManager
             .callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
+              @Override
               public void onCompletion() {
                 moveToInSyncState();
               }
@@ -311,6 +321,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       return missingCount;
     }
 
+    @Override
     public NodeID getNodeID() {
       return this.nodeID;
     }
