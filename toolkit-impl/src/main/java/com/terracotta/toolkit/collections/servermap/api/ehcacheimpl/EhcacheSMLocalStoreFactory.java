@@ -35,17 +35,15 @@ public class EhcacheSMLocalStoreFactory implements ServerMapLocalStoreFactory {
     return (ServerMapLocalStore<K, V>) new EhcacheSMLocalStore(localStoreCache);
   }
 
-  private InternalEhcache getOrCreateEhcacheLocalCache(ServerMapLocalStoreConfig config) {
+  private synchronized InternalEhcache getOrCreateEhcacheLocalCache(ServerMapLocalStoreConfig config) {
     InternalEhcache ehcache;
     CacheManager cacheManager = getOrCreateCacheManager(config);
-    synchronized (cacheManager) {
-      final String localCacheName = "local_shadow_cache_for_" + cacheManager.getName() + "_"
-                                    + config.getLocalStoreName();
-      ehcache = (InternalEhcache) cacheManager.getEhcache(localCacheName);
-      if (ehcache == null) {
-        ehcache = createCache(localCacheName, config);
-        new EhcacheInitializationHelper(cacheManager).initializeEhcache(ehcache);
-      }
+    final String localCacheName = "local_shadow_cache_for_" + cacheManager.getName() + "_"
+                                  + config.getLocalStoreName();
+    ehcache = (InternalEhcache) cacheManager.getEhcache(localCacheName);
+    if (ehcache == null) {
+      ehcache = createCache(localCacheName, config);
+      new EhcacheInitializationHelper(cacheManager).initializeEhcache(ehcache);
     }
     ehcache.setStatisticsEnabled(false);
     return ehcache;
