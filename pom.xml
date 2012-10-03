@@ -155,6 +155,30 @@
         <module>devwork/quartz-ee</module>
       </modules>
     </profile>     
+ 
+    <profile>
+      <id>management-core</id>
+      <activation>
+        <file>
+          <exists>devwork/management-core</exists>
+        </file>
+      </activation>      
+      <modules>
+        <module>devwork/management-core</module>
+      </modules>
+    </profile>     
+ 
+   <profile>
+      <id>management-apps</id>
+      <activation>
+        <file>
+          <exists>devwork/management-apps</exists>
+        </file>
+      </activation>      
+      <modules>
+        <module>devwork/management-apps</module>
+      </modules>
+    </profile>     
   </profiles>
   
   <repositories>
