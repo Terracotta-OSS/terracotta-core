@@ -3,11 +3,11 @@
  */
 package com.terracotta.toolkit.meta;
 
-import org.terracotta.toolkit.internal.meta.MetaData;
 
 import com.tc.object.bytecode.PlatformService;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.terracottatech.search.NVPair;
+import com.terracottatech.search.SearchMetaData;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -28,79 +28,80 @@ public class MetaDataImpl implements MetaData {
   }
 
   @Override
-  public void add(String name, Object value) {
-    mdd.add(name, value);
+  public void add(SearchMetaData name, Object value) {
+    mdd.add(name.toString(), value);
   }
 
   @Override
-  public void add(String name, boolean value) {
-    mdd.add(name, value);
+  public void add(SearchMetaData name, boolean value) {
+    mdd.add(name.toString(), value);
   }
 
   @Override
-  public void add(String name, byte value) {
-    mdd.add(name, value);
+  public void add(SearchMetaData name, byte value) {
+    mdd.add(name.toString(), value);
   }
 
   @Override
-  public void add(String name, char value) {
-    mdd.add(name, value);
+  public void add(SearchMetaData name, char value) {
+    mdd.add(name.toString(), value);
   }
 
   @Override
-  public void add(String name, double value) {
-    mdd.add(name, value);
+  public void add(SearchMetaData name, double value) {
+    mdd.add(name.toString(), value);
   }
 
   @Override
-  public void add(String name, float value) {
-    mdd.add(name, value);
+  public void add(SearchMetaData name, float value) {
+    mdd.add(name.toString(), value);
   }
 
   @Override
-  public void add(String name, int value) {
-    mdd.add(name, value);
+  public void add(SearchMetaData name, int value) {
+    mdd.add(name.toString(), value);
   }
 
   @Override
-  public void add(String name, long value) {
-    mdd.add(name, value);
+  public void add(SearchMetaData name, long value) {
+    mdd.add(name.toString(), value);
   }
 
   @Override
-  public void add(String name, short value) {
-    mdd.add(name, value);
+  public void add(SearchMetaData name, short value) {
+    mdd.add(name.toString(), value);
   }
 
   @Override
-  public void add(String name, String value) {
-    mdd.add(name, value);
+  public void add(SearchMetaData name, SearchMetaData value) {
+    mdd.add(name.toString(), value);
   }
 
   @Override
-  public void add(String name, byte[] value) {
-    mdd.add(name, value);
+  public void add(SearchMetaData name, byte[] value) {
+    mdd.add(name.toString(), value);
   }
 
   @Override
-  public void add(String name, Enum value) {
-    mdd.add(name, value);
+  public void add(SearchMetaData name, Enum value) {
+    mdd.add(name.toString(), value);
   }
 
   @Override
-  public void add(String name, Date value) {
-    mdd.add(name, value);
+  public void add(SearchMetaData name, Date value) {
+    mdd.add(name.toString(), value);
   }
 
   @Override
-  public void add(String name, java.sql.Date value) {
-    mdd.add(name, value);
+  public void add(SearchMetaData name, java.sql.Date value) {
+    mdd.add(name.toString(), value);
   }
 
   @Override
-  public void set(String name, Object newValue) {
-    mdd.set(name, newValue);
+  public void set(SearchMetaData name, Object newValue) {
+    mdd.set(name.toString(), newValue);
   }
+
 
   MetaDataDescriptor getInternalMetaDataDescriptor() {
     return mdd;
@@ -115,6 +116,11 @@ public class MetaDataImpl implements MetaData {
       rv.put(next.getName(), next.getObjectValue());
     }
     return rv;
+  }
+
+  @Override
+  public void add(String name, Object val) {
+    mdd.add(name, val);
   }
 
 }

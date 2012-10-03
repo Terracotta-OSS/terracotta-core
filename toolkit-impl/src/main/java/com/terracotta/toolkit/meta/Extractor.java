@@ -3,7 +3,6 @@
  */
 package com.terracotta.toolkit.meta;
 
-import org.terracotta.toolkit.internal.meta.MetaData;
 
 import com.tc.object.bytecode.PlatformService;
 import com.tc.object.metadata.MetaDataDescriptor;
