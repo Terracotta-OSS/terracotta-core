@@ -485,7 +485,7 @@
             <executions>
               <execution>
                 <id>generate-install-xml</id>
-                <phase>prepare-package</phase>
+                <phase>package</phase>
                 <goals>
                   <goal>execute</goal>
                 </goals>
