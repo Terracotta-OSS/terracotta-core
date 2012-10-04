@@ -168,7 +168,7 @@
       </modules>
     </profile>     
  
-   <profile>
+    <profile>
       <id>management-apps</id>
       <activation>
         <file>
@@ -177,6 +177,18 @@
       </activation>      
       <modules>
         <module>devwork/management-apps</module>
+      </modules>
+    </profile>     
+
+    <profile>
+      <id>search</id>
+      <activation>
+        <file>
+          <exists>devwork/search</exists>
+        </file>
+      </activation>      
+      <modules>
+        <module>devwork/search</module>
       </modules>
     </profile>     
   </profiles>
