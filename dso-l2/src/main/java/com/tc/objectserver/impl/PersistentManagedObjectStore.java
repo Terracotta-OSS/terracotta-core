@@ -9,6 +9,7 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ShutdownError;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
@@ -72,6 +73,11 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
   public boolean containsObject(final ObjectID id) {
     assertNotInShutdown();
     return this.objectPersistor.containsObject(id);
+  }
+
+  @Override
+  public ManagedObject createObject(final ObjectID id) {
+    return new ManagedObjectImpl(id, objectPersistor);
   }
 
   public void addNewObject(final ManagedObject managed) {

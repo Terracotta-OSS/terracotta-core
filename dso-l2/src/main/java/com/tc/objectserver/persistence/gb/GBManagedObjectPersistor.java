@@ -1,19 +1,21 @@
 package com.tc.objectserver.persistence.gb;
 
-import com.tc.gbapi.GBMapFactory;
-import com.tc.gbapi.impl.GBOnHeapMapConfig;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
-import com.tc.object.ObjectID;
-import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.gbapi.GBManager;
 import com.tc.gbapi.GBMap;
 import com.tc.gbapi.GBMapConfig;
+import com.tc.gbapi.impl.GBOnHeapMapConfig;
+import com.tc.object.ObjectID;
+import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.util.ObjectIDSet;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
 
 /**
  * @author tim
@@ -24,26 +26,21 @@ public class GBManagedObjectPersistor implements ManagedObjectPersistor {
   private final GBMap<String, ObjectID> rootMap;
   private final GBMap<ObjectID, ManagedObject> objectMap;
   private final GBSequence objectIDSequence;
-  private final GBMapFactory factory;
-  private final GBManager manager;
 
   private final GBObjectIDSetMaintainer oidSetMaintainer = new GBObjectIDSetMaintainer();
 
-  public GBManagedObjectPersistor(GBMap<String, ObjectID> rootMap, GBMap<ObjectID, ManagedObject> objectMap, GBSequence objectIDSequence, final GBMapFactory factory, final GBManager manager) {
+  public GBManagedObjectPersistor(GBMap<String, ObjectID> rootMap, GBMap<Long, byte[]> objectMap, GBSequence objectIDSequence) {
     this.rootMap = rootMap;
-    this.objectMap = objectMap;
+    this.objectMap = new GBObjectMap(this, objectMap);
     this.objectIDSequence = objectIDSequence;
-    this.factory = factory;
-    this.manager = manager;
   }
 
   public static GBMapConfig<String, ObjectID> rootMapConfig() {
     return new GBOnHeapMapConfig<String, ObjectID>(String.class, ObjectID.class);
   }
 
-  public static GBMapConfig<ObjectID, ManagedObject> objectConfig(GBManager gbManager) {
-    return new GBOnHeapMapConfig<ObjectID, ManagedObject>(ObjectID.class,
-                                                          ManagedObject.class);
+  public static GBMapConfig<Long, byte[]> objectConfig(GBManager gbManager) {
+    return GBObjectMap.getConfig();
   }
 
   @Override
@@ -52,7 +49,7 @@ public class GBManagedObjectPersistor implements ManagedObjectPersistor {
 
   @Override
   public Set loadRoots() {
-    return new HashSet(rootMap.values());
+    return new HashSet<ObjectID>(rootMap.values());
   }
 
   @Override
@@ -94,7 +91,6 @@ public class GBManagedObjectPersistor implements ManagedObjectPersistor {
   @Override
   public void saveObject(PersistenceTransaction tx, ManagedObject managedObject) {
     objectMap.put(managedObject.getID(), managedObject);
-    managedObject.setIsDirty(false);
   }
 
   @Override
@@ -162,20 +158,4 @@ public class GBManagedObjectPersistor implements ManagedObjectPersistor {
     // Only appears to be used in tests, probably get rid of this.
     return oidSetMaintainer.mapObjectIDSetSnapshot();
   }
-
-  public GBMap<Object, Object> createMap(ObjectID objectID) {
-    GBMap<Object, Object> map = factory.createMap(new GBOnHeapMapConfig<Object, Object>(Object.class, Object.class));
-    manager.attachMap(objectID.toString(), map, Object.class, Object.class);
-    return map;
-  }
-
-  public GBMap<Object, Object> getMap(ObjectID objectID) {
-    GBMap<Object, Object> map = manager.getMap(objectID.toString(), Object.class, Object.class);
-    if (map == null) {
-      throw new AssertionError("Could not find map for oid " + objectID);
-    }
-    return map;
-  }
-
-
 }

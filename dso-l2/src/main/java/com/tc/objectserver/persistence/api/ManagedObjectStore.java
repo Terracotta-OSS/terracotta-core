@@ -21,6 +21,8 @@ import java.util.SortedSet;
 public interface ManagedObjectStore extends ManagedObjectStoreStats, ManagedObjectProvider, ObjectIDSequence,
     PrettyPrintable {
 
+  public ManagedObject createObject(ObjectID id);
+
   public void addNewObject(ManagedObject managed);
 
   public void commitObject(PersistenceTransaction tx, ManagedObject object);

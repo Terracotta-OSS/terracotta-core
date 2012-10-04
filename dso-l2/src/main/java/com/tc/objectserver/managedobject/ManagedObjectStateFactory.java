@@ -116,27 +116,8 @@ public class ManagedObjectStateFactory {
 
   public ManagedObjectState readManagedObjectStateFrom(final ObjectInput in, final byte type) {
     try {
-      switch (type) {
-        case ManagedObjectState.PHYSICAL_TYPE:
-          return PhysicalManagedObjectState.readFrom(in);
-        case ManagedObjectState.MAP_TYPE:
-          return MapManagedObjectState.readFrom(in);
-        case ManagedObjectState.PARTIAL_MAP_TYPE:
-          return PartialMapManagedObjectState.readFrom(in);
-        case ManagedObjectState.ARRAY_TYPE:
-          return ArrayManagedObjectState.readFrom(in);
-        case ManagedObjectState.LITERAL_TYPE:
-          return LiteralTypesManagedObjectState.readFrom(in);
-        case ManagedObjectState.LIST_TYPE:
-          return ListManagedObjectState.readFrom(in);
-        case ManagedObjectState.SET_TYPE:
-          return SetManagedObjectState.readFrom(in);
-        case ManagedObjectState.QUEUE_TYPE:
-          return QueueManagedObjectState.readFrom(in);
-      }
-
       Factory factory = ManagedObjectStateStaticConfig.Factory.getFactoryForType(type);
-      if (factory != null) { return factory.readFrom(in); }
+      if (factory != null) { return factory.readFrom(in, objectFactory); }
 
       // Unreachable!
       throw new AssertionError("Unknown type : " + type + " : Dont know how to deserialize this type !");
@@ -147,10 +128,5 @@ public class ManagedObjectStateFactory {
     } catch (final ClassNotFoundException e) {
       throw new TCRuntimeException(e);
     }
-  }
-
-  public ManagedObjectState recreateState(final ObjectID id, final ObjectID pid, final String className,
-                                          final DNACursor cursor, final ManagedObjectState oldState) {
-    throw new UnsupportedOperationException();
   }
 }

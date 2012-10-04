@@ -106,14 +106,14 @@ public enum ManagedObjectStateStaticConfig {
       }
 
       @Override
-      public ManagedObjectState readFrom(ObjectInput objectInput) throws IOException {
-        return ToolkitTypeRootManagedObjectState.readFrom(objectInput);
+      public ManagedObjectState readFrom(ObjectInput objectInput, GBPersistentObjectFactory factory) throws IOException {
+        return ToolkitTypeRootManagedObjectState.readFrom(objectInput, factory);
       }
 
       @Override
       public ManagedObjectState newInstance(ObjectID oid, long classId,
                                             GBPersistentObjectFactory persistentCollectionFactory) {
-        return new ToolkitTypeRootManagedObjectState(classId, persistentCollectionFactory.createMap(oid));
+        return new ToolkitTypeRootManagedObjectState(classId, oid, persistentCollectionFactory);
       }
 
     },
@@ -125,14 +125,14 @@ public enum ManagedObjectStateStaticConfig {
       }
 
       @Override
-      public ManagedObjectState readFrom(ObjectInput objectInput) throws IOException, ClassNotFoundException {
-        return MapManagedObjectState.readFrom(objectInput);
+      public ManagedObjectState readFrom(ObjectInput objectInput, GBPersistentObjectFactory factory) throws IOException, ClassNotFoundException {
+        return MapManagedObjectState.readFrom(objectInput, factory);
       }
 
       @Override
       public ManagedObjectState newInstance(ObjectID oid, long classId,
                                             GBPersistentObjectFactory persistentCollectionFactory) {
-        return new MapManagedObjectState(classId, persistentCollectionFactory.createMap(oid));
+        return new MapManagedObjectState(classId, oid, persistentCollectionFactory);
       }
 
     },
@@ -144,7 +144,7 @@ public enum ManagedObjectStateStaticConfig {
       }
 
       @Override
-      public ManagedObjectState readFrom(ObjectInput objectInput) throws IOException, ClassNotFoundException {
+      public ManagedObjectState readFrom(ObjectInput objectInput, GBPersistentObjectFactory factory) throws IOException, ClassNotFoundException {
         return ListManagedObjectState.readFrom(objectInput);
       }
 
@@ -158,7 +158,7 @@ public enum ManagedObjectStateStaticConfig {
     SERIALIZED_CLUSTERED_OBJECT_FACTORY() {
 
       @Override
-      public ManagedObjectState readFrom(ObjectInput objectInput) throws IOException {
+      public ManagedObjectState readFrom(ObjectInput objectInput, GBPersistentObjectFactory factory) throws IOException {
         return SerializedClusterObjectState.readFrom(objectInput);
       }
 
@@ -172,7 +172,7 @@ public enum ManagedObjectStateStaticConfig {
     TOOLKIT_OBJECT_STRIPE_TYPE_FACTORY() {
 
       @Override
-      public ManagedObjectState readFrom(ObjectInput objectInput) throws IOException, ClassNotFoundException {
+      public ManagedObjectState readFrom(ObjectInput objectInput, GBPersistentObjectFactory factory) throws IOException, ClassNotFoundException {
         return ToolkitObjectStripeState.readFrom(objectInput);
       }
 
@@ -186,22 +186,20 @@ public enum ManagedObjectStateStaticConfig {
     SERVER_MAP_TYPE_FACTORY() {
 
       @Override
-      public ManagedObjectState readFrom(ObjectInput objectInput) throws IOException {
-        return ConcurrentDistributedServerMapManagedObjectState.readFrom(objectInput);
+      public ManagedObjectState readFrom(ObjectInput objectInput, GBPersistentObjectFactory factory) throws IOException {
+        return ConcurrentDistributedServerMapManagedObjectState.readFrom(objectInput, factory);
       }
 
       @Override
       public ManagedObjectState newInstance(ObjectID oid, long classId,
                                             GBPersistentObjectFactory persistentCollectionFactory) {
-        return new ConcurrentDistributedServerMapManagedObjectState(classId,
-                                                                    persistentCollectionFactory
-                                                                        .createMap(oid));
+        return new ConcurrentDistributedServerMapManagedObjectState(classId, oid, persistentCollectionFactory);
       }
     },
     TOOLKIT_NOTIFIER_TYPE_FACTORY() {
 
       @Override
-      public ManagedObjectState readFrom(ObjectInput objectInput) throws IOException {
+      public ManagedObjectState readFrom(ObjectInput objectInput, GBPersistentObjectFactory factory) throws IOException {
         return ToolkitNotifierManagedObjectState.readFrom(objectInput);
       }
 
@@ -219,7 +217,7 @@ public enum ManagedObjectStateStaticConfig {
       }
 
       @Override
-      public ManagedObjectState readFrom(ObjectInput objectInput) throws IOException {
+      public ManagedObjectState readFrom(ObjectInput objectInput, GBPersistentObjectFactory factory) throws IOException {
         return TDCSerializedEntryManagedObjectState.readFrom(objectInput);
       }
 
@@ -237,7 +235,7 @@ public enum ManagedObjectStateStaticConfig {
       }
 
       @Override
-      public ManagedObjectState readFrom(ObjectInput objectInput) throws IOException {
+      public ManagedObjectState readFrom(ObjectInput objectInput, GBPersistentObjectFactory factory) throws IOException {
         return TDCCustomLifespanSerializedEntryManagedObjectState.readFrom(objectInput);
       }
 
@@ -255,7 +253,7 @@ public enum ManagedObjectStateStaticConfig {
       }
 
       @Override
-      public ManagedObjectState readFrom(ObjectInput objectInput) throws IOException, ClassNotFoundException {
+      public ManagedObjectState readFrom(ObjectInput objectInput, GBPersistentObjectFactory factory) throws IOException, ClassNotFoundException {
         return SetManagedObjectState.readFrom(objectInput);
       }
 
@@ -292,7 +290,7 @@ public enum ManagedObjectStateStaticConfig {
       return implicitStateObjectType;
     }
 
-    public abstract ManagedObjectState readFrom(ObjectInput objectInput) throws IOException, ClassNotFoundException;
+    public abstract ManagedObjectState readFrom(ObjectInput objectInput, GBPersistentObjectFactory factory) throws IOException, ClassNotFoundException;
 
     public abstract ManagedObjectState newInstance(ObjectID oid, long classId,
                                                    GBPersistentObjectFactory persistentObjectFactory);

@@ -40,6 +40,11 @@ public class InMemoryManagedObjectStore implements ManagedObjectStore {
     return this.managed.containsKey(id);
   }
 
+  @Override
+  public ManagedObject createObject(final ObjectID id) {
+    throw new UnsupportedOperationException("Implement me!");
+  }
+
   public synchronized void addNewObject(final ManagedObject managedObject) {
     assertNotInShutdown();
     localPut(managedObject);

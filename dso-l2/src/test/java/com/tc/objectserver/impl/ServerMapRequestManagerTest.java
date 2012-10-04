@@ -3,12 +3,6 @@
  */
 package com.tc.objectserver.impl;
 
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.atMost;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
@@ -17,7 +11,6 @@ import com.tc.async.api.AddPredicate;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.exception.ImplementMe;
-import com.tc.gbapi.GBMap;
 import com.tc.invalidation.Invalidations;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -57,6 +50,12 @@ import java.util.Map;
 import java.util.Set;
 
 import junit.framework.TestCase;
+
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class ServerMapRequestManagerTest extends TestCase {
 
@@ -246,7 +245,7 @@ public class ServerMapRequestManagerTest extends TestCase {
                                                                                Collections.singleton(portableKey1));
     serverMapRequestManager.requestValues(clientID, mapID, Collections.singletonList(mapGetValueRequest));
 
-    ConcurrentDistributedServerMapManagedObjectState managedObjectState = new TestCDSMManagedObjectState(0, map);
+    ConcurrentDistributedServerMapManagedObjectState managedObjectState = new TestCDSMManagedObjectState(0);
     ManagedObject managedObject = Mockito.mock(ManagedObject.class);
     Mockito.when(managedObject.getManagedObjectState()).thenReturn(managedObjectState);
     serverMapRequestManager.sendResponseFor(mapID, managedObject);
@@ -323,55 +322,8 @@ public class ServerMapRequestManagerTest extends TestCase {
 
   private static class TestCDSMManagedObjectState extends ConcurrentDistributedServerMapManagedObjectState {
 
-    protected TestCDSMManagedObjectState(long classId, final Map m) {
-      super(classId, new GBMap<Object, Object>() {
-        @Override
-        public Set<Object> keySet() {
-          return m.keySet();
-        }
-
-        @Override
-        public Collection<Object> values() {
-          return m.values();
-        }
-
-        @Override
-        public long size() {
-          return m.size();
-        }
-
-        @Override
-        public void put(final Object key, final Object value) {
-          m.put(key, value);
-        }
-
-        @Override
-        public Object get(final Object key) {
-          return m.get(key);
-        }
-
-        @Override
-        public boolean remove(final Object key) {
-          return m.remove(key) != null;
-        }
-
-        @Override
-        public void removeAll(final Collection<Object> keys) {
-          for (Object key : keys) {
-            m.remove(key);
-          }
-        }
-
-        @Override
-        public boolean containsKey(final Object key) {
-          return m.containsKey(key);
-        }
-
-        @Override
-        public void clear() {
-          m.clear();
-        }
-      });
+    protected TestCDSMManagedObjectState(long classId) {
+      super(classId, ObjectID.NULL_ID, null);
     }
 
   }

@@ -4,8 +4,8 @@
  */
 package com.tc.objectserver.managedobject;
 
-import com.tc.gbapi.GBMap;
 import com.tc.object.ObjectID;
+import com.tc.objectserver.persistence.gb.GBPersistentObjectFactory;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -17,12 +17,12 @@ import java.io.ObjectInput;
  */
 public class PartialMapManagedObjectState extends MapManagedObjectState {
 
-  protected PartialMapManagedObjectState(final long classID, final GBMap<Object, Object> map) {
-    super(classID, map);
+  protected PartialMapManagedObjectState(final long classID, ObjectID id, GBPersistentObjectFactory factory) {
+    super(classID, id, factory);
   }
 
-  protected PartialMapManagedObjectState(final ObjectInput in) throws IOException {
-    super(in);
+  protected PartialMapManagedObjectState(final ObjectInput in, GBPersistentObjectFactory factory) throws IOException {
+    super(in, factory);
   }
 
   @Override
@@ -42,12 +42,7 @@ public class PartialMapManagedObjectState extends MapManagedObjectState {
     return PARTIAL_MAP_TYPE;
   }
 
-  static MapManagedObjectState readFrom(final ObjectInput in) throws IOException, ClassNotFoundException {
-    if (false) {
-      // This is added to make the compiler happy. For some reason if I have readFrom() method throw
-      // ClassNotFoundException in LinkedHashMapManagedObjectState, it shows as an error !!
-      throw new ClassNotFoundException();
-    }
-    return new PartialMapManagedObjectState(in);
+  static MapManagedObjectState readFrom(final ObjectInput in, GBPersistentObjectFactory factory) throws IOException, ClassNotFoundException {
+    return new PartialMapManagedObjectState(in, factory);
   }
 }

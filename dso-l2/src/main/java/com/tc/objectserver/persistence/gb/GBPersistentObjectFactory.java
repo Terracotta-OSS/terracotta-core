@@ -23,4 +23,12 @@ public class GBPersistentObjectFactory {
     gbManager.attachMap(objectID.toString(), map, Object.class, Object.class);
     return map;
   }
+
+  public GBMap<Object, Object> getMap(final ObjectID id) {
+    return gbManager.getMap(id.toString(), Object.class, Object.class);
+  }
+
+  public void destroyMap(ObjectID oid) {
+    gbManager.detachMap(oid.toString());
+  }
 }

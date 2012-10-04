@@ -1,10 +1,9 @@
 package com.tc.objectserver.persistence.gb;
 
-import com.tc.object.ObjectID;
-import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
 import com.tc.gbapi.GBMapMutationListener;
 import com.tc.gbapi.GBRetriever;
+import com.tc.object.ObjectID;
+import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Map;
@@ -12,7 +11,7 @@ import java.util.Map;
 /**
  * @author tim
  */
-public class GBObjectIDSetMaintainer implements GBMapMutationListener<ObjectID, ManagedObject> {
+public class GBObjectIDSetMaintainer implements GBMapMutationListener<Long, byte[]> {
 
   private final ObjectIDSet extantObjectIDSet = new ObjectIDSet();
   private final ObjectIDSet evictableObjectIDSet = new ObjectIDSet();
@@ -35,10 +34,9 @@ public class GBObjectIDSetMaintainer implements GBMapMutationListener<ObjectID, 
   }
 
   @Override
-  public void added(GBRetriever<ObjectID> key, GBRetriever<ManagedObject> value, Map<? extends Enum, Object> metadata) {
-//    byte type = (Byte) metadata.get(ObjectMetadataEnum.TYPE);
-    byte type  = value.retrieve().getManagedObjectState().getType();
-    ObjectID k = key.retrieve();
+  public void added(GBRetriever<Long> key, GBRetriever<byte[]> value, Map<? extends Enum, Object> metadata) {
+    byte type  = value.retrieve()[8]; // TODO: Make this less hard coded
+    ObjectID k = new ObjectID(key.retrieve());
     if (PersistentCollectionsUtil.isEvictableMapType(type)) {
       evictableObjectIDSet.add(k);
     }
@@ -49,10 +47,9 @@ public class GBObjectIDSetMaintainer implements GBMapMutationListener<ObjectID, 
   }
 
   @Override
-  public void removed(GBRetriever<ObjectID> key, GBRetriever<ManagedObject> value, Map<? extends Enum, Object> metadata) {
-//    byte type = (Byte) metadata.get(ObjectMetadataEnum.TYPE);
-    byte type  = value.retrieve().getManagedObjectState().getType();
-    ObjectID k = key.retrieve();
+  public void removed(GBRetriever<Long> key, GBRetriever<byte[]> value, Map<? extends Enum, Object> metadata) {
+    byte type  = value.retrieve()[8];
+    ObjectID k = new ObjectID(key.retrieve());
     if (PersistentCollectionsUtil.isEvictableMapType(type)) {
       evictableObjectIDSet.remove(k);
     }

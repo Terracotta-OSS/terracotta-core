@@ -12,8 +12,8 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.persistence.db.PersistableCollection;
 import com.tc.objectserver.persistence.db.TCDestroyable;
+import com.tc.objectserver.persistence.gb.GBPersistentObjectFactory;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 
@@ -28,16 +28,23 @@ import java.util.Set;
  * state for maps
  */
 public class MapManagedObjectState extends LogicalManagedObjectState implements PrettyPrintable,
-    PersistableObjectState, TCDestroyable {
-  protected GBMap<Object, Object> references;
+    TCDestroyable {
+  private final ObjectID id;
+  protected final GBMap<Object, Object> references;
+  private final GBPersistentObjectFactory factory;
 
-  protected MapManagedObjectState(final long classID, final GBMap<Object, Object> map) {
+  protected MapManagedObjectState(final long classID, ObjectID id, GBPersistentObjectFactory factory) {
     super(classID);
-    this.references = map;
+    this.factory = factory;
+    this.id = id;
+    this.references = factory.createMap(id);
   }
 
-  protected MapManagedObjectState(final ObjectInput in) throws IOException {
+  protected MapManagedObjectState(final ObjectInput in, GBPersistentObjectFactory factory) throws IOException {
     super(in);
+    this.factory = factory;
+    this.id = new ObjectID(in.readLong());
+    this.references = factory.getMap(id);
   }
 
   @Override
@@ -174,26 +181,17 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
 
   @Override
   protected void basicWriteTo(final ObjectOutput out) throws IOException {
-    // CollectionsPersistor will save retrieve data in references map.
-    if (false) { throw new IOException(); }
+    out.writeLong(id.toLong());
   }
 
-  public void setMap(final Map map) {
-    throw new UnsupportedOperationException();
-  }
 //
 //  public Map getMap() {
 //    return this.references;
 //  }
 
   // CollectionsPersistor will save retrieve data in references map.
-  static MapManagedObjectState readFrom(final ObjectInput in) throws IOException, ClassNotFoundException {
-    if (false) {
-      // This is added to make the compiler happy. For some reason if I have readFrom() method throw
-      // ClassNotFoundException in LinkedHashMapManagedObjectState, it shows as an error !!
-      throw new ClassNotFoundException();
-    }
-    return new MapManagedObjectState(in);
+  static MapManagedObjectState readFrom(final ObjectInput in, GBPersistentObjectFactory factory) throws IOException, ClassNotFoundException {
+    return new MapManagedObjectState(in, factory);
   }
 
   @Override
@@ -208,17 +206,6 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
   }
 
   @Override
-  public PersistableCollection getPersistentCollection() {
-//    return (PersistableCollection) getMap();
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setPersistentCollection(final PersistableCollection collection) {
-    setMap((Map) collection);
-  }
-
-  @Override
   public int hashCode() {
     final int prime = 31;
     int result = 1;
@@ -228,8 +215,10 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
 
   @Override
   public void destroy() {
-    if (this.references instanceof TCDestroyable) {
-      ((TCDestroyable) this.references).destroy();
-    }
+    factory.destroyMap(id);
+  }
+
+  public Map getPersistentCollection() {
+    throw new UnsupportedClassVersionError();
   }
 }

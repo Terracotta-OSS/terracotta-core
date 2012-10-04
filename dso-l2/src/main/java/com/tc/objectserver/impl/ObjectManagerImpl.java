@@ -24,7 +24,6 @@ import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.impl.NullGarbageCollector;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
-import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
@@ -521,7 +520,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public void createNewObjects(final Set<ObjectID> newObjectIDs) {
     for (final ObjectID oid : newObjectIDs) {
-      final ManagedObject mo = new ManagedObjectImpl(oid, objectStore);
+      final ManagedObject mo = objectStore.createObject(oid);
       createObject(mo);
     }
   }

@@ -1,5 +1,7 @@
 package com.tc.objectserver.persistence.gb;
 
+import com.tc.gbapi.GBManager;
+import com.tc.gbapi.GBManagerConfiguration;
 import com.tc.gbapi.GBMapConfig;
 import com.tc.gbapi.GBMapFactory;
 import com.tc.gbapi.impl.GBOnHeapMapFactory;
@@ -8,11 +10,13 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.persistence.api.PersistentMapStore;
-import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
-import com.tc.objectserver.persistence.api.*;
-import com.tc.gbapi.GBManager;
-import com.tc.gbapi.GBManagerConfiguration;
+import com.tc.objectserver.persistence.api.ClassPersistor;
+import com.tc.objectserver.persistence.api.ClientStatePersistor;
+import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
+import com.tc.objectserver.persistence.api.PersistentCollectionFactory;
+import com.tc.objectserver.persistence.api.Persistor;
+import com.tc.objectserver.persistence.api.TransactionPersistor;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.util.sequence.MutableSequence;
 
@@ -64,7 +68,7 @@ public class GBPersistor implements Persistor {
                                                                        GlobalTransactionDescriptor.class));
     persistentMapStore = new GBPersistentMapStore(gbManager.getMap(STATE_MAP, String.class, String.class));
     clientStatePersistor = new GBClientStatePersistor(sequenceManager.getSequence(CLIENT_STATE_SEQUENCE), gbManager.getMap(CLIENT_STATES, ChannelID.class, Boolean.class));
-    managedObjectPersistor = new GBManagedObjectPersistor(gbManager.getMap(ROOT_DB, String.class, ObjectID.class), gbManager.getMap(OBJECT_DB, ObjectID.class, ManagedObject.class), sequenceManager.getSequence(OBJECT_ID_SEQUENCE), mapFactory, gbManager);
+    managedObjectPersistor = new GBManagedObjectPersistor(gbManager.getMap(ROOT_DB, String.class, ObjectID.class), gbManager.getMap(OBJECT_DB, Long.class, byte[].class), sequenceManager.getSequence(OBJECT_ID_SEQUENCE));
     gidSequence = sequenceManager.getSequence(GLOBAL_TRANSACTION_ID_SEQUENCE);
     persistenceTransactionProvider = new GBPersistenceTransactionProvider(gbManager);
     persistentObjectFactory = new GBPersistentObjectFactory(gbManager, mapFactory);
@@ -83,7 +87,7 @@ public class GBPersistor implements Persistor {
       configuration.mapConfig().put(SEQUENCE_MAP, GBSequence.config());
     }
 
-    ((GBMapConfig<ObjectID, ManagedObject>) configuration.mapConfig().get(OBJECT_DB)).addListener(objectIDSetMaintainer);
+    ((GBMapConfig<Long, byte[]>) configuration.mapConfig().get(OBJECT_DB)).addListener(objectIDSetMaintainer);
   }
 
   @Override

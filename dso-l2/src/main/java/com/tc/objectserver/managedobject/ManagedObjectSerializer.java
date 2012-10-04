@@ -8,6 +8,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.io.serializer.api.Serializer;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObjectState;
+import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -15,9 +16,15 @@ import java.io.ObjectOutput;
 
 public class ManagedObjectSerializer implements Serializer {
   private final ManagedObjectStateSerializer serializer;
+  private final ManagedObjectPersistor persistor;
 
   public ManagedObjectSerializer(final ManagedObjectStateSerializer serializer) {
+    throw new UnsupportedOperationException();
+  }
+
+  public ManagedObjectSerializer(ManagedObjectStateSerializer serializer, ManagedObjectPersistor persistor) {
     this.serializer = serializer;
+    this.persistor = persistor;
   }
 
   public void serializeTo(final Object mo, final ObjectOutput out) {
@@ -43,7 +50,7 @@ public class ManagedObjectSerializer implements Serializer {
       final ManagedObjectState state = (ManagedObjectState) this.serializer.deserializeFrom(in);
 
       // populate managed object...
-      final ManagedObjectImpl rv = new ManagedObjectImpl(id);
+      final ManagedObjectImpl rv = new ManagedObjectImpl(id, persistor);
       rv.setDeserializedState(version, state);
       return rv;
     } catch (final Exception e) {

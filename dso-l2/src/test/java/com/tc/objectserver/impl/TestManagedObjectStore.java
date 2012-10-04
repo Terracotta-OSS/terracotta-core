@@ -31,6 +31,11 @@ public class TestManagedObjectStore implements ManagedObjectStore {
     return this.containsKey;
   }
 
+  @Override
+  public ManagedObject createObject(final ObjectID id) {
+    throw new UnsupportedOperationException("Implement me!");
+  }
+
   public void addNewObject(final ManagedObject managed) {
     this.addNewWasCalled = true;
     this.count++;

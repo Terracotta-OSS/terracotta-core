@@ -3,7 +3,6 @@
  */
 package com.tc.objectserver.managedobject;
 
-import com.tc.gbapi.GBMap;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
@@ -16,6 +15,7 @@ import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
+import com.tc.objectserver.persistence.gb.GBPersistentObjectFactory;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 
@@ -75,8 +75,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   private boolean        compressionEnabled;
   private boolean        copyOnReadEnabled;
 
-  protected ConcurrentDistributedServerMapManagedObjectState(final ObjectInput in) throws IOException {
-    super(in);
+  protected ConcurrentDistributedServerMapManagedObjectState(final ObjectInput in, GBPersistentObjectFactory factory) throws IOException {
+    super(in, factory);
     this.dsoLockType = in.readInt();
     this.maxTTISeconds = in.readInt();
     this.maxTTLSeconds = in.readInt();
@@ -88,8 +88,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     this.copyOnReadEnabled = in.readBoolean();
   }
 
-  protected ConcurrentDistributedServerMapManagedObjectState(final long classId, final GBMap<Object, Object> map) {
-    super(classId, map);
+  protected ConcurrentDistributedServerMapManagedObjectState(final long classId, ObjectID id, GBPersistentObjectFactory factory) {
+    super(classId, id, factory);
   }
 
   @Override
@@ -329,9 +329,9 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
            && this.compressionEnabled == mmo.compressionEnabled && this.copyOnReadEnabled == mmo.copyOnReadEnabled;
   }
 
-  static MapManagedObjectState readFrom(final ObjectInput in) throws IOException {
+  static MapManagedObjectState readFrom(final ObjectInput in, GBPersistentObjectFactory factory) throws IOException {
     final ConcurrentDistributedServerMapManagedObjectState cdmMos = new ConcurrentDistributedServerMapManagedObjectState(
-                                                                                                                         in);
+                                                                                                                         in, factory);
     return cdmMos;
   }
 
