@@ -152,6 +152,52 @@
       <id>kit</id>
       <build>
         <plugins>      
+          <!-- clean up -->
+          <plugin>
+            <groupId>org.codehaus.gmaven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+            <version>${gmaven-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>clean-up</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+                <configuration>
+                  <source>
+                    ant.delete(dir: project.properties['rootDir'])
+                  </source>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>                
+          
+          <!-- put tc.jar dependencies in /lib -->
+          <!-- we use this plugin for this task because it can rewrite timestamp files to -SNAPSHOT -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <version>2.3</version>
+            <executions>
+              <execution>
+                <id>tc-jar-depedencies-to-lib</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+                <configuration>
+                  <finalName>${kit.name}/lib</finalName>
+                  <descriptors>
+                    <descriptor>${basedir}/src/assemble/lib.xml</descriptor>
+                  </descriptors>
+                  <appendAssemblyId>false</appendAssemblyId>
+                  <attach>false</attach>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          
           <plugin>
             <groupId>com.github.goldin</groupId>
             <artifactId>copy-maven-plugin</artifactId>
@@ -170,16 +216,7 @@
                   </groovyConfig>        
                   <verbose>false</verbose>
                   <resources>
-                    <!-- prepare skeleton structure of the kit -->
-                    <resource>
-                      <runIf>{{ new File( project.build.directory, "${kit.name}" ).isDirectory() }}</runIf>
-                      <directory>${rootDir}</directory>
-                      <includes>
-                        <include>**/**</include>
-                      </includes>
-                      <clean>true</clean>
-                      <cleanEmptyDirectories>true</cleanEmptyDirectories>
-                    </resource>            
+                    <!-- prepare skeleton structure of the kit -->            
                     <resource>
                       <targetPath>${rootDir}</targetPath>
                       <directory>${basedir}/src/packaging/opensource</directory>
@@ -214,18 +251,6 @@
                       <preservePath>true</preservePath>
                       <dependenciesAtM2>true</dependenciesAtM2>
                     </resource>            
-
-                    <!-- populate lib folder -->
-                    <resource>
-                      <targetPath>${rootDir}/lib</targetPath>
-                      <dependency>
-                        <excludeScope>provided</excludeScope>
-                        <excludeArtifactIds>${terracotta.artifactId},build-data,stax-api,native-tool,ant,mockito-all,ant-launcher,junit,linked-child-process
-                        </excludeArtifactIds>
-                      </dependency>
-                      <dependenciesAtM2>true</dependenciesAtM2>
-                    </resource>
-
 
                     <!-- build data -->
                     <resource>
