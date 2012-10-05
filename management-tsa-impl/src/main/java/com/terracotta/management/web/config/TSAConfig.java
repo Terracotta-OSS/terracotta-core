@@ -1,4 +1,7 @@
-package com.terracotta.management.security.web.config;
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ */
+package com.terracotta.management.web.config;
 
 import com.terracotta.management.security.KeyChainAccessor;
 import com.terracotta.management.security.KeychainInitializationException;

@@ -1,0 +1,34 @@
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ */
+package com.terracotta.management.service;
+
+import org.terracotta.management.ServiceExecutionException;
+
+import com.terracotta.management.resource.ClientEntity;
+import com.terracotta.management.resource.TopologyEntity;
+
+import java.util.Collection;
+
+/**
+ * An interface for service implementations providing TSA topology querying facilities.
+
+ * @author Ludovic Orban
+ */
+public interface TopologyService {
+
+  /**
+   * Get the topology of the current TSA server
+   * @return the topology
+   * @throws ServiceExecutionException
+   */
+  TopologyEntity getTopology() throws ServiceExecutionException;
+
+  /**
+   * Get the connected clients of the current TSA server
+   * @return a collection of currently connected clients
+   * @throws ServiceExecutionException
+   */
+  Collection<ClientEntity> getClients() throws ServiceExecutionException;
+
+}

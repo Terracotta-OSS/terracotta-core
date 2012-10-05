@@ -3,11 +3,11 @@
  * notice. All rights reserved.
  */
 
-package com.terracotta.management.security.web.shiro;
+package com.terracotta.management.web.shiro;
 
 import org.apache.shiro.web.servlet.ShiroFilter;
 
-import com.terracotta.management.security.web.config.TSAConfig;
+import com.terracotta.management.web.config.TSAConfig;
 
 /**
  * @author brandony

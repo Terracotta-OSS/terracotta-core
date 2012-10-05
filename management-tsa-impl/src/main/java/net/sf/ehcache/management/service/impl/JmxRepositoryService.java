@@ -18,7 +18,7 @@ import org.terracotta.management.resource.Representable;
 import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.RequestTicketMonitor;
 import com.terracotta.management.security.UserService;
-import com.terracotta.management.security.web.config.TSAConfig;
+import com.terracotta.management.web.config.TSAConfig;
 import com.terracotta.management.user.UserInfo;
 
 import java.io.ByteArrayInputStream;

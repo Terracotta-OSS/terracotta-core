@@ -6,12 +6,12 @@
   <display-name>Terracotta Management Web Application and Aggregator Web Service</display-name>
 
   <listener>
-    <listener-class>com.terracotta.management.security.web.shiro.TSAEnvironmentLoaderListener</listener-class>
+    <listener-class>com.terracotta.management.web.shiro.TSAEnvironmentLoaderListener</listener-class>
   </listener>
 
   <filter>
     <filter-name>securityFilter</filter-name>
-    <filter-class>com.terracotta.management.security.web.shiro.TSASecurityFilter</filter-class>
+    <filter-class>com.terracotta.management.web.shiro.TSASecurityFilter</filter-class>
   </filter>
 
   <filter-mapping>
