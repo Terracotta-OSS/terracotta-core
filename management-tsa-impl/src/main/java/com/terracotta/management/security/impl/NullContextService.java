@@ -1,3 +1,6 @@
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ */
 package com.terracotta.management.security.impl;
 
 import com.terracotta.management.security.ContextService;
