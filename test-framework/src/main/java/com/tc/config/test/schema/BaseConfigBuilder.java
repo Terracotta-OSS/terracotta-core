@@ -200,7 +200,7 @@ public abstract class BaseConfigBuilder {
     return out;
   }
 
-  protected String element(String tagName, String propertyName) {
+  protected final String element(String tagName, String propertyName) {
     Assert.assertNotBlank(tagName);
     Assert.assertNotBlank(propertyName);
 

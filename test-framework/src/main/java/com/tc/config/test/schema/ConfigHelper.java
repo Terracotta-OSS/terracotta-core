@@ -153,12 +153,6 @@ public class ConfigHelper {
       // set offheap props
       l2ConfigBuilders[serverIndex].setOffHeapEnabled(l2Config.isOffHeapEnabled());
       l2ConfigBuilders[serverIndex].setOffHeapMaxDataSize(l2Config.getMaxOffHeapDataSize() + "m");
-
-      final boolean secured = l2Config.isSecured();
-      l2ConfigBuilders[serverIndex].setSecurityEnabled(secured);
-      if(secured) {
-        // config
-      }
     }
 
     return l2ConfigBuilders;

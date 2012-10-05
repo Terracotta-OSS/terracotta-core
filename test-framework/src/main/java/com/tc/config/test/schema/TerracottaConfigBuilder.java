@@ -4,8 +4,6 @@
  */
 package com.tc.config.test.schema;
 
-import com.tc.util.Assert;
-
 /**
  * Allows you to build valid config for the entire system. This class <strong>MUST NOT</strong> invoke the actual XML
  * beans to do its work; one of its purposes is, in fact, to test that those beans are set up correctly.
@@ -76,26 +74,6 @@ public class TerracottaConfigBuilder extends BaseConfigBuilder {
     out.setSystem(system);
     out.setServers(l2s);
     return out;
-  }
-
-  protected final String element(String tagName, String propertyName) {
-    Assert.assertNotBlank(tagName);
-    Assert.assertNotBlank(propertyName);
-
-    if (isSet(propertyName)) {
-//      return openElement(tagName) + getProperty(propertyName) + closeElement(tagName);
-      System.out.println("  => " + propertyName + " = " + getRawProperty(propertyName).getClass().getName());
-      final Object rawProperty = getRawProperty(propertyName);
-      return indent() + "<" + tagName + secured(rawProperty) + ">" + getProperty(propertyName) + "</" + tagName + ">";
-    }
-    else return "";
-  }
-
-  private String secured(final Object property) {
-    if(property instanceof L2SConfigBuilder && ((L2SConfigBuilder) property).isSecurityEnabled()) {
-      return " secure=\"true\"";
-    }
-    return "";
   }
 
   public static void main(String[] args) {

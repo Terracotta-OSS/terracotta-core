@@ -87,7 +87,4 @@ public class L2SConfigBuilder extends BaseConfigBuilder {
     return out;
   }
 
-  public boolean isSecurityEnabled() {
-    return l2s[0].isSecurityEnabled();
-  }
 }
