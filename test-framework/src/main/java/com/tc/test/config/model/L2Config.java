@@ -31,6 +31,7 @@ public class L2Config {
   private int                     proxyWaitTime         = 20 * 1000;
   private int                     proxyDownTime         = 100;
   private final BytemanConfig     bytemanConfig         = new BytemanConfig();
+  private boolean                 secured               = false;
 
   /**
    * Creates a l2 config with these defaults <br>
@@ -265,5 +266,13 @@ public class L2Config {
 
   public BytemanConfig getBytemanConfig() {
     return bytemanConfig;
+  }
+
+  public boolean isSecured() {
+    return secured;
+  }
+
+  public void setSecured(final boolean secured) {
+    this.secured = secured;
   }
 }
