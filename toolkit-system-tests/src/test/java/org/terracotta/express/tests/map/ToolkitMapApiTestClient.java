@@ -38,6 +38,7 @@ public class ToolkitMapApiTestClient extends ClientBase {
     this.toolKit = toolkit;
 
     checkIsEmpty();
+    checkPutIfAbsent();
     checkPut();
     checkGet();
     checkRemove();
@@ -68,6 +69,7 @@ public class ToolkitMapApiTestClient extends ClientBase {
       index = barrier.await();
       final AtomicReference<Throwable> atomicRef = new AtomicReference();
       Thread thread1 = new Thread(new Runnable() {
+        @Override
         public void run() {
 
           try {
@@ -97,6 +99,7 @@ public class ToolkitMapApiTestClient extends ClientBase {
       );
 
       Thread thread2 = new Thread(new Runnable() {
+        @Override
         public void run() {
           try {
             System.out.println("Starting Thread 2");
@@ -390,6 +393,25 @@ public class ToolkitMapApiTestClient extends ClientBase {
       Assert.assertTrue(map.containsValue("value2"));
       Assert.assertFalse(map.containsValue("value1"));
 
+    } finally {
+      tearDown();
+    }
+  }
+
+  private void checkPutIfAbsent() throws InterruptedException, BrokenBarrierException {
+    setUp();
+    try {
+      this.index = barrier.await();
+      if (index == 0) {
+        map.putIfAbsent("key1", "value1");
+      }
+      barrier.await();
+      Assert.assertEquals("value1", map.get("key1"));
+      if (index == 0) {
+        map.putIfAbsent("key1", "value2");
+      }
+      barrier.await();
+      Assert.assertEquals("value1", map.get("key1"));
     } finally {
       tearDown();
     }
