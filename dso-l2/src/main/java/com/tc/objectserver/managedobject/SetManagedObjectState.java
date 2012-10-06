@@ -11,28 +11,35 @@ import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.persistence.db.TCDestroyable;
+import com.tc.objectserver.persistence.gb.GBPersistentObjectFactory;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
  * ManagedObjectState for sets.
  */
 public class SetManagedObjectState extends LogicalManagedObjectState implements TCDestroyable {
-  protected GBMap<Object, Object> references;
+  protected final GBMap<Object, Object> references;
+  private final ObjectID oid;
 
-  SetManagedObjectState(long classID, GBMap<Object, Object> set) {
+  SetManagedObjectState(long classID, ObjectID oid, GBPersistentObjectFactory objectFactory) {
     super(classID);
-    this.references = set;
+    this.oid = oid;
+    this.references = objectFactory.createMap(oid);
   }
 
-  protected SetManagedObjectState(ObjectInput in) throws IOException {
+  protected SetManagedObjectState(ObjectInput in, GBPersistentObjectFactory objectFactory) throws IOException {
     super(in);
+    this.oid = new ObjectID(in.readLong());
+    this.references = objectFactory.getMap(oid);
   }
 
   public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo includeIDs) throws IOException {
@@ -91,23 +98,22 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
   }
 
   public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit) {
-    throw new UnsupportedOperationException();
-//    final int size = references.size();
-//
-//    if (limit < 0) {
-//      limit = size;
-//    } else {
-//      limit = Math.min(limit, size);
-//    }
-//
-//    Object[] data = new Object[limit];
-//
-//    int index = 0;
-//    for (Iterator iter = references.iterator(); iter.hasNext() && index < limit; index++) {
-//      data[index] = iter.next();
-//    }
-//
-//    return LogicalManagedObjectFacade.createSetInstance(objectID, className, data, size);
+    final int size = (int) references.size();
+
+    if (limit < 0) {
+      limit = size;
+    } else {
+      limit = Math.min(limit, size);
+    }
+
+    Object[] data = new Object[limit];
+
+    int index = 0;
+    for (Iterator iter = references.keySet().iterator(); iter.hasNext() && index < limit; index++) {
+      data[index] = iter.next();
+    }
+
+    return LogicalManagedObjectFacade.createSetInstance(objectID, className, data, size);
   }
 
   public byte getType() {
@@ -116,8 +122,7 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
 
   @Override
   protected void basicWriteTo(ObjectOutput out) throws IOException {
-    // for removing warning
-    if (false) throw new IOException();
+    out.writeLong(oid.toLong());
   }
 
   @Override
@@ -126,13 +131,8 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
     return references.equals(mo.references);
   }
 
-  static SetManagedObjectState readFrom(ObjectInput in) throws IOException, ClassNotFoundException {
-    if (false) {
-      // This is added to make the compiler happy. For some reason if I have readFrom() method throw
-      // ClassNotFoundException in LinkedHashMapManagedObjectState, it shows as an error !!
-      throw new ClassNotFoundException();
-    }
-    return new SetManagedObjectState(in);
+  static SetManagedObjectState readFrom(ObjectInput in, GBPersistentObjectFactory objectFactory) throws IOException {
+    return new SetManagedObjectState(in, objectFactory);
   }
 
   @Override
