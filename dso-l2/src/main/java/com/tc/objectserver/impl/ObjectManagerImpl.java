@@ -533,10 +533,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     postRelease();
   }
 
-  public void releaseAndCommit(final PersistenceTransaction persistenceTransaction, final ManagedObject object) {
-    if (this.config.paranoid()) {
-      flushAndCommit(persistenceTransaction, object);
-    }
+  public void release(final ManagedObject object) {
     basicRelease(object);
     postRelease();
 
@@ -562,8 +559,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
    * may be re-applied in the clients when it should not have re-applied. To avoid this we now commit in-line before
    * releasing the objects.
    */
-  public void releaseAllAndCommit(final PersistenceTransaction persistenceTransaction,
-                                  final Collection<ManagedObject> managedObjects) {
+  public void releaseAll(final Collection<ManagedObject> managedObjects) {
 //    flushAllAndCommit(persistenceTransaction, managedObjects);
     for (final ManagedObject managedObject : managedObjects) {
       basicRelease(managedObject);

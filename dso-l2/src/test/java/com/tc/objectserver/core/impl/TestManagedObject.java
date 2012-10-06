@@ -185,38 +185,6 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return getID();
   }
 
-  public void markAccessed() {
-    throw new ImplementMe();
-  }
-
-  public void clearAccessed() {
-    throw new ImplementMe();
-  }
-
-  public boolean recentlyAccessed() {
-    throw new ImplementMe();
-  }
-
-  public int accessCount(final int accessed) {
-    throw new ImplementMe();
-  }
-
-  public TLinkable getNext() {
-    return this.next;
-  }
-
-  public TLinkable getPrevious() {
-    return this.previous;
-  }
-
-  public void setNext(final TLinkable linkable) {
-    this.next = linkable;
-  }
-
-  public void setPrevious(final TLinkable linkable) {
-    this.previous = linkable;
-  }
-
   public ManagedObjectState getManagedObjectState() {
     return this.noReferences ? new NullNoReferencesManagedObjectState() : new NullManagedObjectState();
   }
@@ -224,14 +192,6 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
   @Override
   public String toString() {
     return "TestManagedObject[" + this.id + "]";
-  }
-
-  public boolean canEvict() {
-    return true;
-  }
-
-  public boolean isCacheManaged() {
-    return true;
   }
 
   public void addObjectReferencesTo(final ManagedObjectTraverser traverser) {

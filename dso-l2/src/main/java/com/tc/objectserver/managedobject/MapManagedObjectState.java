@@ -11,7 +11,11 @@ import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.objectserver.mgmt.FacadeUtil;
+import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
+import com.tc.objectserver.mgmt.MapEntryFacade;
+import com.tc.objectserver.mgmt.MapEntryFacadeImpl;
 import com.tc.objectserver.persistence.db.TCDestroyable;
 import com.tc.objectserver.persistence.gb.GBPersistentObjectFactory;
 import com.tc.text.PrettyPrintable;
@@ -21,6 +25,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -155,28 +160,27 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
 
   @Override
   public ManagedObjectFacade createFacade(final ObjectID objectID, final String className, int limit) {
-    throw new UnsupportedOperationException();
-//
-//    final int size = (int)this.references.size();
-//
-//    if (limit < 0) {
-//      limit = size;
-//    } else {
-//      limit = Math.min(limit, size);
-//    }
-//
-//    final MapEntryFacade[] data = new MapEntryFacade[0];
-//
-//    int index = 0;
-////
-////    for (final Iterator i = this.references.entrySet().iterator(); i.hasNext() && index < limit; index++) {
-////      final Entry entry = (Entry) i.next();
-////      final Object key = FacadeUtil.processValue(entry.getKey());
-////      final Object value = FacadeUtil.processValue(entry.getValue());
-////      data[index] = new MapEntryFacadeImpl(key, value);
-////    }
-//
-//    return LogicalManagedObjectFacade.createMapInstance(objectID, className, data, size);
+
+    final int size = (int)this.references.size();
+
+    if (limit < 0) {
+      limit = size;
+    } else {
+      limit = Math.min(limit, size);
+    }
+
+    final MapEntryFacade[] data = new MapEntryFacade[limit];
+
+    int index = 0;
+
+    for (final Iterator<Object> i = references.keySet().iterator(); i.hasNext() && index < limit; index++) {
+      Object rawKey = i.next();
+      final Object key = FacadeUtil.processValue(rawKey);
+      final Object value = FacadeUtil.processValue(references.get(rawKey));
+      data[index] = new MapEntryFacadeImpl(key, value);
+    }
+
+    return LogicalManagedObjectFacade.createMapInstance(objectID, className, data, size);
   }
 
   @Override

@@ -91,6 +91,7 @@ public class GBManagedObjectPersistor implements ManagedObjectPersistor {
   @Override
   public void saveObject(PersistenceTransaction tx, ManagedObject managedObject) {
     objectMap.put(managedObject.getID(), managedObject);
+    managedObject.setIsDirty(false);
   }
 
   @Override

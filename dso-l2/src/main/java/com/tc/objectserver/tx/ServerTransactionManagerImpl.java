@@ -32,7 +32,6 @@ import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.TransactionStore;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.stats.counter.Counter;
 import com.tc.text.PrettyPrintable;
@@ -407,7 +406,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 //    final PersistenceTransaction ptx = ptxp.newTransaction();
 //    this.gtxm.commitAll(ptx, appliedServerTransactionIDs);
     // This call commits the transaction too.
-    this.objectManager.releaseAllAndCommit(null, objects);
+    this.objectManager.releaseAll(objects);
     this.garbageCollectionManager.deleteObjects(deletedObjects);
     fireRootCreatedEvents(newRoots);
     committed(appliedServerTransactionIDs);

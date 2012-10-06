@@ -15,11 +15,10 @@ import com.tc.object.locks.LockID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
-import com.tc.objectserver.context.ApplyCompleteEventContext;
 import com.tc.objectserver.context.ApplyTransactionContext;
-import com.tc.objectserver.context.CommitTransactionContext;
 import com.tc.objectserver.context.LookupEventContext;
 import com.tc.objectserver.context.RecallObjectsContext;
+import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.core.impl.TestManagedObject;
@@ -125,28 +124,14 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     assertNotNull(args);
 
     // Apply and commit complete for the first transaction
-    this.txObjectManager.applyTransactionComplete(new ApplyTransactionInfo(stxn1.isActiveTxn(), stxn1
-        .getServerTransactionID(), false));
-    ApplyCompleteEventContext acec = (ApplyCompleteEventContext) this.coordinator.applyCompleteSink.queue.take();
-    assertNotNull(acec);
-    assertTrue(this.coordinator.applyCompleteSink.queue.isEmpty());
-
-    this.txObjectManager.processApplyComplete();
-    CommitTransactionContext ctc = (CommitTransactionContext) this.coordinator.commitSink.queue.take();
-    assertNotNull(ctc);
-    assertTrue(this.coordinator.commitSink.queue.isEmpty());
-
-    this.txObjectManager.commitTransactionsComplete(ctc);
-    Collection applied = ctc.getAppliedServerTransactionIDs();
-    assertTrue(applied.size() == 1);
-    assertEquals(stxn1.getServerTransactionID(), applied.iterator().next());
-    Collection objects = ctc.getObjects();
-    assertTrue(objects.size() == 2);
+    ApplyTransactionInfo applyTxnInfo = new ApplyTransactionInfo(stxn1.isActiveTxn(), stxn1
+        .getServerTransactionID(), false);
+    this.txObjectManager.applyTransactionComplete(applyTxnInfo);
 
     Set recd = new HashSet();
     TestManagedObject tmo;
-    for (Iterator i = objects.iterator(); i.hasNext();) {
-      tmo = (TestManagedObject) i.next();
+    for (final ManagedObject managedObject : applyTxnInfo.getObjectsToRelease()) {
+      tmo = (TestManagedObject) managedObject;
       recd.add(tmo.getID());
     }
 
@@ -274,28 +259,14 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     assertNotNull(args);
 
     // Apply and commit complete for the first transaction
-    this.txObjectManager.applyTransactionComplete(new ApplyTransactionInfo(stxn1.isActiveTxn(), stxn1
-        .getServerTransactionID(), false));
-    ApplyCompleteEventContext acec = (ApplyCompleteEventContext) this.coordinator.applyCompleteSink.queue.take();
-    assertNotNull(acec);
-    assertTrue(this.coordinator.applyCompleteSink.queue.isEmpty());
-
-    this.txObjectManager.processApplyComplete();
-    CommitTransactionContext ctc = (CommitTransactionContext) this.coordinator.commitSink.queue.take();
-    assertNotNull(ctc);
-    assertTrue(this.coordinator.commitSink.queue.isEmpty());
-
-    this.txObjectManager.commitTransactionsComplete(ctc);
-    Collection applied = ctc.getAppliedServerTransactionIDs();
-    assertTrue(applied.size() == 1);
-    assertEquals(stxn1.getServerTransactionID(), applied.iterator().next());
-    Collection objects = ctc.getObjects();
-    assertTrue(objects.size() == 2);
+    ApplyTransactionInfo applyTransactionInfo = new ApplyTransactionInfo(stxn1.isActiveTxn(), stxn1
+        .getServerTransactionID(), false);
+    this.txObjectManager.applyTransactionComplete(applyTransactionInfo);
 
     Set recd = new HashSet();
     TestManagedObject tmo;
-    for (Iterator i = objects.iterator(); i.hasNext();) {
-      tmo = (TestManagedObject) i.next();
+    for (final ManagedObject managedObject : applyTransactionInfo.getObjectsToRelease()) {
+      tmo = (TestManagedObject)managedObject;
       recd.add(tmo.getID());
     }
 
@@ -384,27 +355,13 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     assertNotNull(args);
 
     // Apply and commit complete for the 3'rd transaction
-    this.txObjectManager.applyTransactionComplete(new ApplyTransactionInfo(stxn3.isActiveTxn(), stxn3
-        .getServerTransactionID(), false));
-    acec = (ApplyCompleteEventContext) this.coordinator.applyCompleteSink.queue.take();
-    assertNotNull(acec);
-    assertTrue(this.coordinator.applyCompleteSink.queue.isEmpty());
-
-    this.txObjectManager.processApplyComplete();
-    ctc = (CommitTransactionContext) this.coordinator.commitSink.queue.take();
-    assertNotNull(ctc);
-    assertTrue(this.coordinator.commitSink.queue.isEmpty());
-
-    this.txObjectManager.commitTransactionsComplete(ctc);
-    applied = ctc.getAppliedServerTransactionIDs();
-    assertTrue(applied.size() == 1);
-    assertEquals(stxn3.getServerTransactionID(), applied.iterator().next());
-    objects = ctc.getObjects();
-    assertTrue(objects.size() == 1);
+    ApplyTransactionInfo applyTransactionInfo1 = new ApplyTransactionInfo(stxn3.isActiveTxn(), stxn3
+        .getServerTransactionID(), false);
+    this.txObjectManager.applyTransactionComplete(applyTransactionInfo1);
 
     recd = new HashSet();
-    for (Iterator i = objects.iterator(); i.hasNext();) {
-      tmo = (TestManagedObject) i.next();
+    for (final ManagedObject managedObject : applyTransactionInfo1.getObjectsToRelease()) {
+      tmo = (TestManagedObject)managedObject;
       recd.add(tmo.getID());
     }
 

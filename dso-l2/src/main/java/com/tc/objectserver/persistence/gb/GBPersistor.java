@@ -92,6 +92,7 @@ public class GBPersistor implements Persistor {
 
   @Override
   public void close() {
+    gbManager.shutdown();
   }
 
   @Override

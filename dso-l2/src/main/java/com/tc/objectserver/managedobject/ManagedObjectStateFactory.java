@@ -56,7 +56,7 @@ public class ManagedObjectStateFactory {
                                                                       final GBPersistor persistor) {
     if (singleton != null && !disableAssertions) {
       // not good !!
-      throw new AssertionError("This class is singleton. It is not to be instanciated more than once. " + singleton);
+      throw new AssertionError("This class is singleton. It is not to be instantiated more than once. " + singleton);
     }
     singleton = new ManagedObjectStateFactory(listenerProvider, persistor.getPersistentObjectFactory());
     return singleton;
@@ -74,10 +74,7 @@ public class ManagedObjectStateFactory {
 
   // for tests like ObjectMangerTest and ManagedObjectStateSerializationTest
   public static void enableLegacyTypes() {
-    // XXX: remove when possible
-    classNameToStateMap.put("java.util.HashMap", Byte.valueOf(ManagedObjectState.MAP_TYPE));
-    classNameToStateMap.put("java.util.ArrayList", Byte.valueOf(ManagedObjectState.LIST_TYPE));
-    classNameToStateMap.put("java.util.HashSet", Byte.valueOf(ManagedObjectState.SET_TYPE));
+    throw new UnsupportedOperationException("Legacy types not supported");
   }
 
   // This is provided only for testing
@@ -87,7 +84,7 @@ public class ManagedObjectStateFactory {
   }
 
   /**
-   * This method is not synchronized as the creation and access happens sequencially and this is a costly method to
+   * This method is not synchronized as the creation and access happens sequentially and this is a costly method to
    * synchronize and singleton is a volatile variable
    */
   public static ManagedObjectStateFactory getInstance() {
@@ -102,6 +99,9 @@ public class ManagedObjectStateFactory {
   public ManagedObjectState createState(final ObjectID oid, final ObjectID parentID, final String className,
                                         final DNACursor cursor) {
     ManagedObjectStateStaticConfig config = ManagedObjectStateStaticConfig.getConfigForClientClassName(className);
+    if (config == null) {
+      throw new IllegalArgumentException("'" + className + "' is not a supported managed object type.");
+    }
     return config.getFactory().newInstance(oid, config.ordinal(), objectFactory);
   }
 

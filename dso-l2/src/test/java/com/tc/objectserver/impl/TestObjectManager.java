@@ -21,7 +21,6 @@ import com.tc.objectserver.core.impl.TestManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
@@ -120,7 +119,7 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
 
   public final LinkedQueue releaseContextQueue = new LinkedQueue();
 
-  public void releaseAndCommit(PersistenceTransaction tx, ManagedObject object) {
+  public void release(ManagedObject object) {
     try {
       releaseContextQueue.put(object);
     } catch (InterruptedException e) {
@@ -138,7 +137,7 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
 
   public final LinkedQueue releaseAllQueue = new LinkedQueue();
 
-  public void releaseAllAndCommit(PersistenceTransaction tx, Collection collection) {
+  public void releaseAll(Collection collection) {
     try {
       releaseAllQueue.put(collection);
     } catch (InterruptedException e) {
@@ -161,7 +160,7 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
   }
 
   public void releaseAllReadOnly(Collection objects) {
-    releaseAllAndCommit(null, objects);
+    releaseAll(objects);
   }
 
   public int getCheckedOutCount() {

@@ -66,7 +66,6 @@ import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.db.CustomSerializationAdapterFactory;
 import com.tc.objectserver.persistence.db.DBPersistorImpl;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
@@ -906,7 +905,7 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
-    public void releaseAndCommit(final PersistenceTransaction tx, final ManagedObject object) {
+    public void release(final ManagedObject object) {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
@@ -948,7 +947,7 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
-    public void releaseAllAndCommit(final PersistenceTransaction tx, final Collection<ManagedObject> collection) {
+    public void releaseAll(final Collection<ManagedObject> collection) {
       throw new NotImplementedException(TestObjectManager.class);
     }
 

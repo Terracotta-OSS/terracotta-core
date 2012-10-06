@@ -3,8 +3,6 @@
  */
 package com.tc.objectserver.handler;
 
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
-
 import org.junit.Assert;
 import org.mockito.Mockito;
 
@@ -36,7 +34,6 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.l1.impl.ClientStateManagerImpl;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.tx.TestServerTransactionManager;
 import com.tc.objectserver.tx.TxnsInSystemCompletionListener;
 import com.tc.properties.TCPropertiesConsts;
@@ -54,6 +51,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public class GarbageCollectHandlerTest extends TCTestCase {
   {
@@ -303,7 +302,7 @@ public class GarbageCollectHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void releaseAndCommit(PersistenceTransaction tx, ManagedObject object) {
+    public void release(ManagedObject object) {
       throw new ImplementMe();
     }
 
@@ -316,7 +315,7 @@ public class GarbageCollectHandlerTest extends TCTestCase {
 
     }
 
-    public void releaseAllAndCommit(PersistenceTransaction tx, Collection<ManagedObject> collection) {
+    public void releaseAll(Collection<ManagedObject> collection) {
       throw new ImplementMe();
     }
 
