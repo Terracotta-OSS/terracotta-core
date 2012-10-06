@@ -11,10 +11,13 @@ import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.object.metadata.NVPairSerializer;
 import com.terracottatech.search.AbstractNVPair;
+import com.terracottatech.search.AbstractNVPair.EnumNVPair;
 import com.terracottatech.search.AbstractNVPair.IntNVPair;
 import com.terracottatech.search.AbstractNVPair.StringNVPair;
 import com.terracottatech.search.AbstractNVPair.ValueIdNVPair;
 import com.terracottatech.search.NVPair;
+import com.terracottatech.search.SearchCommand;
+import com.terracottatech.search.SearchMetaData;
 import com.terracottatech.search.ValueID;
 
 import java.util.Date;
@@ -159,8 +162,10 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
       out.writeLong(oid.toLong());
       out.writeInt(numberOfNvPairs());
 
-      NVPAIR_SERIALIZER.serialize(new StringNVPair("CACHENAME@", cacheName), out, serializer);
-      NVPAIR_SERIALIZER.serialize(new StringNVPair("COMMAND@", "REMOVE_IF_VALUE_EQUAL"), out, serializer);
+      NVPAIR_SERIALIZER.serialize(new StringNVPair(SearchMetaData.CACHENAME.toString(), cacheName), out, serializer);
+      NVPAIR_SERIALIZER
+          .serialize(new EnumNVPair(SearchMetaData.COMMAND.toString(), SearchCommand.REMOVE_IF_VALUE_EQUAL), out,
+                     serializer);
       NVPAIR_SERIALIZER.serialize(new IntNVPair("", (numberOfNvPairs() - 3) / 2), out, serializer);
 
       for (Object o : candidates.entrySet()) {
@@ -230,10 +235,11 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
         if (count <= 3) {
           switch (count) {
             case 1:
-              return new AbstractNVPair.StringNVPair("CACHENAME@", cacheName);
+              return new AbstractNVPair.StringNVPair(SearchMetaData.CACHENAME.toString(), cacheName);
             case 2:
               next = toRemove.next();
-              return new AbstractNVPair.StringNVPair("COMMAND@", "REMOVE_IF_VALUE_EQUAL");
+              return new AbstractNVPair.EnumNVPair(SearchMetaData.COMMAND.toString(),
+                                                   SearchCommand.REMOVE_IF_VALUE_EQUAL);
             case 3:
               return new AbstractNVPair.IntNVPair("", (numberOfNvPairs - 3) / 2);
             default:
