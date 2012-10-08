@@ -222,6 +222,25 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     factory.destroyMap(id);
   }
 
+  /*
+   * These methods are used only for ServerClusterMetaDataManagerImpl, might be good to get rid of them
+   * and do this in a less leaky way.
+   */
+  @Deprecated
+  public Set<Object> keySet() {
+    return references.keySet();
+  }
+
+  @Deprecated
+  public Object get(Object key) {
+    return references.get(key);
+  }
+
+  @Deprecated
+  public boolean containsKey(Object key) {
+    return references.containsKey(key);
+  }
+
   public Map getPersistentCollection() {
     throw new UnsupportedClassVersionError();
   }

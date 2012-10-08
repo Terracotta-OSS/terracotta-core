@@ -25,6 +25,7 @@ import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.l1.api.ClientStateManager;
+import com.tc.objectserver.managedobject.MapManagedObjectState;
 import com.tc.objectserver.managedobject.PartialMapManagedObjectState;
 
 import java.io.ByteArrayOutputStream;
@@ -83,26 +84,25 @@ public class ServerClusterMetaDataManagerImpl implements ServerClusterMetaDataMa
         final ManagedObjectState state = managedMap.getManagedObjectState();
         if (state instanceof PartialMapManagedObjectState) {
           final Set<NodeID> connectedClients = clientStateManager.getConnectedClientIDs();
-
-//          Map realMap = ((PartialMapManagedObjectState) state).getMap();
-//          for (Object key : message.getKeys()) {
-//            UTF8ByteDataHolder holder = new UTF8ByteDataHolder(key.toString());
-//            if(realMap.containsKey(holder)) {
-//            Object value = realMap.get(holder);
-//              if(value instanceof ObjectID) {
-//                Set<NodeID> nodeIDSet = resultMap.get(key);
-//                if(nodeIDSet == null) {
-//                  nodeIDSet = new HashSet<NodeID>();
-//                  resultMap.put(holder, nodeIDSet);
-//                }
-//                for (NodeID nodeID : connectedClients) {
-//                  if (clientStateManager.hasReference(nodeID, (ObjectID) value)) {
-//                    nodeIDSet.add(nodeID);
-//                  }
-//                }
-//              }
-//            }
-//          }
+          MapManagedObjectState mos = (MapManagedObjectState) state;
+          for (Object key : message.getKeys()) {
+            UTF8ByteDataHolder holder = new UTF8ByteDataHolder(key.toString());
+            if(mos.containsKey(holder)) {
+              Object value = mos.get(holder);
+              if(value instanceof ObjectID) {
+                Set<NodeID> nodeIDSet = resultMap.get(key);
+                if(nodeIDSet == null) {
+                  nodeIDSet = new HashSet<NodeID>();
+                  resultMap.put(holder, nodeIDSet);
+                }
+                for (NodeID nodeID : connectedClients) {
+                  if (clientStateManager.hasReference(nodeID, (ObjectID) value)) {
+                    nodeIDSet.add(nodeID);
+                  }
+                }
+              }
+            }
+          }
           responseMessage.initialize(message.getThreadID(), resultMap);
         } else {
           logger.error("Received nodes for keys message for object '" + message.getMapObjectID()
@@ -132,23 +132,24 @@ public class ServerClusterMetaDataManagerImpl implements ServerClusterMetaDataMa
         if (state instanceof PartialMapManagedObjectState) {
           final Set<NodeID> connectedClients = clientStateManager.getConnectedClientIDs();
 
-//          Map realMap = ((PartialMapManagedObjectState) state).getMap();
-//          for (Map.Entry entry : (Set<Map.Entry>) realMap.entrySet()) {
-//            if (entry.getValue() instanceof ObjectID) {
-//              boolean isOrphan = true;
-//
-//              for (NodeID nodeID : connectedClients) {
-//                if (clientStateManager.hasReference(nodeID, (ObjectID) entry.getValue())) {
-//                  isOrphan = false;
-//                  break;
-//                }
-//              }
-//
-//              if (isOrphan) {
-//                response.add(entry.getKey());
-//              }
-//            }
-//          }
+          MapManagedObjectState mos = (MapManagedObjectState)state;
+          for (Object key : mos.keySet()) {
+            Object value = mos.get(key);
+            if (value instanceof ObjectID) {
+              boolean isOrphan = true;
+
+              for (NodeID nodeID : connectedClients) {
+                if (clientStateManager.hasReference(nodeID, (ObjectID)value)) {
+                  isOrphan = false;
+                  break;
+                }
+              }
+
+              if (isOrphan) {
+                response.add(key);
+              }
+            }
+          }
         } else {
           logger.error("Received keys for orphaned values message for object '" + message.getMapObjectID()
                        + "' whose managed state isn't a partial map, returning an empty set.");

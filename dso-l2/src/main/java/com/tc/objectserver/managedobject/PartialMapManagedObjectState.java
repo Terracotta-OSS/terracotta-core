@@ -34,7 +34,6 @@ public class PartialMapManagedObjectState extends MapManagedObjectState {
   @Override
   protected void addBackReferenceForValue(final ApplyTransactionInfo includeIDs, final ObjectID value, final ObjectID map) {
     // Not adding to the backreference so the we dont force the server to do a prefetch on apply
-    return;
   }
 
   @Override
