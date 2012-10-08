@@ -55,7 +55,7 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
   }
 
   @Override
-  public Collection<ClientEntity> getConnectedClients(@Context UriInfo info) {
+  public Collection<ClientEntity> getConnectedClients(UriInfo info) {
     LOG.info(String.format("Invoking TopologyServiceImpl.getConnectedClients: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
