@@ -10,7 +10,6 @@ import org.terracotta.toolkit.cache.ToolkitCache;
 import org.terracotta.toolkit.cache.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
-import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.store.ToolkitStore;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
 
@@ -29,7 +28,7 @@ public class ToolkitCacheApiKeyValGrClient extends ToolkitStoreApiKeyValGrClient
   private static final int TWO_SECS                 = 2;
   private long             endTime;
   private long             startTime;
-  private final static int SOME_RANDOM_INDEX        = END - 20;
+  private final static int SOME_RANDOM_INDEX        = END_INDEX - 20;
   private final static int MAX_NO_OF_ELEMENTS       = 10;
   private static final int ONE_SEC                  = 1;
   private final int[]      keys;
@@ -41,7 +40,7 @@ public class ToolkitCacheApiKeyValGrClient extends ToolkitStoreApiKeyValGrClient
     super(args);
     keys = new int[MAX_NO_OF_ELEMENTS];
     values = new int[MAX_NO_OF_ELEMENTS];
-    for (int i = START; i < MAX_NO_OF_ELEMENTS; i++) {
+    for (int i = START_INDEX; i < MAX_NO_OF_ELEMENTS; i++) {
       keys[i] = i;
       values[i] = i;
     }
@@ -56,38 +55,76 @@ public class ToolkitCacheApiKeyValGrClient extends ToolkitStoreApiKeyValGrClient
     setStrongDs(toolkit, NAME_OF_DS);
     setKeyValGeneratorAndRunTest();
     // eventual cache with LiteralKeyLiteralValueGenerator
-    index = barrier.await();
-    if (index == 0) {
-      clearDs();
+    clientIndex = waitForAllClientsToReachHere();
+    if (clientIndex == 0) {
+      destroyDs();
     }
-    barrier.await();
+    waitForAllClientsToReachHere();
     setEventualDs(toolkit, NAME_OF_DS);
     setKeyValGeneratorAndRunTest();
 
   }
 
-  private void clearDs() {
+  @Override
+  protected void checkIsDestroyed() throws InterruptedException, BrokenBarrierException {
+    log("Entering check is destroyed");
+    waitForAllClientsToReachHere();
+    try {
+      clientIndex = waitForAllClientsToReachHere();
+      if (clientIndex == 0) {
+        ToolkitCache tmpCache = toolkit.getCache("tempCache", String.class);
+        Assert.assertFalse(tmpCache.isDestroyed());
+        tmpCache.destroy();
+        Assert.assertTrue(tmpCache.isDestroyed());
+      }
+      waitForAllClientsToReachHere();
+      log("getting out of check is destroyed");
+    } finally {
+      clearDs();
+    }
+  }
+
+  @Override
+  protected void checkDestroy() throws InterruptedException, BrokenBarrierException {
+    log("Entering checkDestroy");
+    waitForAllClientsToReachHere();
+    try {
+      clientIndex = waitForAllClientsToReachHere();
+      if (clientIndex == 0) {
+        ToolkitCache tmpCache = super.toolkit.getCache("tempCache", String.class);
+        Assert.assertFalse(tmpCache.isDestroyed());
+        tmpCache.destroy();
+        Assert.assertTrue(tmpCache.isDestroyed());
+      }
+      waitForAllClientsToReachHere();
+      log("getting out of checkDestroyed");
+    } finally {
+      clearDs();
+    }
+  }
+
+  private void destroyDs() {
     log("&&&&&&&&&&&&&&&&&&&DESTROYING CACHE&&&&&&&&&&&&&&");
     cache.destroy();
     log("Destroyed");
   }
 
-  private void setKeyValGeneratorAndRunTest() throws Exception, InterruptedException, BrokenBarrierException {
+  private void setKeyValGeneratorAndRunTest() throws Throwable {
     keyValueGenerator = new LiteralKeyLiteralValueGenerator();
     runTest();
-    barrier.await();
+    waitForAllClientsToReachHere();
 
     keyValueGenerator = new LiteralKeyNonLiteralValueGenerator();
     runTest();
-    barrier.await();
+    waitForAllClientsToReachHere();
   }
 
 
-  private void runTest() throws Exception, InterruptedException, BrokenBarrierException {
+  private void runTest() throws Throwable {
     System.err
 .println("#$#$#$#$#$#$#$#$#$#$#$#$$#$#$#$#$#$Calling Super.test^&*^&^*&^*&^*&^*&^*&^*&^*&^&*^&*^*^&*&");
     super.test();
-    barrier.await();
+    waitForAllClientsToReachHere();
     log("#$#$#$#$#$#$#$#$#$#$#$#$$#$#$#$#$#$ calling this.test&*^&^*&^*&^*&^*&^*&^*&^*&^&*^&*^*^&*&");
     this.test();
   }
@@ -107,11 +144,13 @@ public class ToolkitCacheApiKeyValGrClient extends ToolkitStoreApiKeyValGrClient
   }
 
   private void testRemoveListener() throws InterruptedException, BrokenBarrierException {
-    log("Entering  testRemoveListener");
-    setUp();
+    String methodName = "testRemoveListener";
+    clientIndex = waitForAllClientsToReachHere();
+    log("Entering " + methodName + " with clientIndex = " + clientIndex);
+
     try {
-      index = barrier.await();
-      if (index == 0) {
+      clientIndex = waitForAllClientsToReachHere();
+      if (clientIndex == 0) {
         log("Client 0 adding listener");
         ToolkitCacheListener speciallListener = getSpecialListener();
         cache.addListener(speciallListener);
@@ -119,13 +158,13 @@ public class ToolkitCacheApiKeyValGrClient extends ToolkitStoreApiKeyValGrClient
         cache.removeListener(speciallListener);
         log("listener removed");
         log("now doing puts");
-        doSomePuts(START, END);
+        putValues(START_INDEX, END_INDEX, methodName);
         log("DOne with puts");
       }
-      barrier.await();
-      log("Exiting testRemoveListener, all tests passed successfully ");
+      waitForAllClientsToReachHere();
+      log("Exiting " + methodName + " with clientIndex = " + clientIndex);
     } finally {
-      tearDown();
+      clearDs();
     }
   }
 
@@ -146,23 +185,25 @@ public class ToolkitCacheApiKeyValGrClient extends ToolkitStoreApiKeyValGrClient
   }
 
   private void testAddListener() throws InterruptedException, BrokenBarrierException {
-    log("Entering testAddListener");
-    setUp();
+    String methodName = "testAddListener";
+    clientIndex = waitForAllClientsToReachHere();
+    log("Entering " + methodName + " with clientIndex = " + clientIndex);
+
     try {
-      index = barrier.await();
+      clientIndex = waitForAllClientsToReachHere();
       cache.setConfigField(ToolkitCacheConfigFields.MAX_COUNT_LOCAL_HEAP_FIELD_NAME, MAX_NO_OF_ELEMENTS);
-      if (index == 0) {
+      if (clientIndex == 0) {
         log("client 0 adding listener tp cache");
         addListenerToCache();
         log("client 0 doing some puts");
-        doSomePuts(START, END);
+        putValues(START_INDEX, END_INDEX, methodName);
         log("client 0 done putting");
-        Assert.assertTrue(checkForAllKeysPut(START, END));
+        Assert.assertTrue(checkForAllKeysPut(START_INDEX, END_INDEX));
       }
-      barrier.await();
-      log("Getting out of testAddListener");
+      waitForAllClientsToReachHere();
+      log("Exiting " + methodName + " with clientIndex = " + clientIndex);
     } finally {
-      tearDown();
+      clearDs();
     }
   }
 
@@ -200,51 +241,56 @@ public class ToolkitCacheApiKeyValGrClient extends ToolkitStoreApiKeyValGrClient
   }
 
   private void testUnpinAll() throws InterruptedException, BrokenBarrierException {
-    log("entering unpinall");
-    setUp();
+    String methodName = "testUnpinAll";
+    clientIndex = waitForAllClientsToReachHere();
+    log("Entering " + methodName + " with clientIndex = " + clientIndex);
+
     try {
-      index = barrier.await();
-      if (index == 0) {
+      clientIndex = waitForAllClientsToReachHere();
+      if (clientIndex == 0) {
         log("client 0 pinning keys");
-        pinKeys(START, END);
+        pinKeys(START_INDEX, END_INDEX);
         log("client 0 has pinned all keys");
         log("asserting that keys are pinned");
-        Assert.assertTrue(checkKeysPinned(START, END));
+        Assert.assertTrue(checkKeysPinned(START_INDEX, END_INDEX));
         log("Unpinn keys");
         cache.unpinAll();
         log("Asserting that none of the keys is pinned");
-        Assert.assertTrue(checkKeysNotPinned(START, END));
+        Assert.assertTrue(checkKeysNotPinned(START_INDEX, END_INDEX));
       }
-      barrier.await();
-      log("Exiting testUnpinall");
+      waitForAllClientsToReachHere();
+      log("Exiting " + methodName + " with clientIndex = " + clientIndex);
     } finally {
-      tearDown();
+      clearDs();
     }
   }
 
   private void testIsPinned() throws InterruptedException, BrokenBarrierException {
-    log("Entering testIsPinned");
-    setUp();
+    String methodName = "testIsPinned";
+    clientIndex = waitForAllClientsToReachHere();
+    log("Entering " + methodName + " with clientIndex = " + clientIndex);
+
     try {
-      index = barrier.await();
-      if (index == 0) {
+      clientIndex = waitForAllClientsToReachHere();
+      if (clientIndex == 0) {
         log("Client 0 checking that no key should be pinned rightnow!!");
-        Assert.assertTrue(checkKeysNotPinned(START, END));
+        Assert.assertTrue(checkKeysNotPinned(START_INDEX, END_INDEX));
         log("no keys found pinned");
-        log("Client 0 pinning keys from " + keyValueGenerator.getKey(START) + " to "
+        log("Client 0 pinning keys from " + keyValueGenerator.getKey(START_INDEX) + " to "
             + keyValueGenerator.getKey(SOME_RANDOM_INDEX));
-      pinKeys(START, SOME_RANDOM_INDEX);
+        pinKeys(START_INDEX, SOME_RANDOM_INDEX);
         log("Done pinning");
-        log("asserting that keys from " + keyValueGenerator.getKey(START) + " to excluding "
+        log("asserting that keys from " + keyValueGenerator.getKey(START_INDEX) + " to excluding "
             + keyValueGenerator.getKey(SOME_RANDOM_INDEX) + " are actually pinned");
-        Assert.assertTrue(checkKeysPinned(START, SOME_RANDOM_INDEX));
+        Assert.assertTrue(checkKeysPinned(START_INDEX, SOME_RANDOM_INDEX));
         log("Asserting that keys not pinned are not actually pinned");
-        Assert.assertTrue(checkKeysNotPinned(SOME_RANDOM_INDEX + 4, END));
+        Assert.assertTrue(checkKeysNotPinned(SOME_RANDOM_INDEX + 4, END_INDEX));
         cache.unpinAll();
       }
-      barrier.await();
+      waitForAllClientsToReachHere();
+      log("Exiting " + methodName + " with clientIndex = " + clientIndex);
     } finally {
-      tearDown();
+      clearDs();
     }
   }
 
@@ -265,46 +311,33 @@ public class ToolkitCacheApiKeyValGrClient extends ToolkitStoreApiKeyValGrClient
   }
 
   private void testSetPinned() throws InterruptedException, BrokenBarrierException {
-    log("Entering testSetPinned");
-    setUp();
+    String methodName = "testSetPinned";
+    clientIndex = waitForAllClientsToReachHere();
+    log("Entering " + methodName + " with clientIndex = " + clientIndex);
+
     try {
       
-      if (index == 0) {
-        for (int i = START; i < END; i++) {
+      if (clientIndex == 0) {
+        for (int i = START_INDEX; i < END_INDEX; i++) {
           cache.setPinned(keyValueGenerator.getKey(i), true);
           cache.put(keyValueGenerator.getKey(i), keyValueGenerator.getValue(i));
 
           Assert.assertTrue(cache.isPinned(keyValueGenerator.getKey(i)));
         }
-        int noOfElementsPut = END - START;
+        int noOfElementsPut = END_INDEX - START_INDEX;
         Assert.assertEquals(noOfElementsPut, cache.size());
 
-        for (int i = START; i < END; i++) {
+        for (int i = START_INDEX; i < END_INDEX; i++) {
           Assert.assertNotNull(cache.get(keyValueGenerator.getKey(i)));
           Assert.assertEquals(cache.get(keyValueGenerator.getKey(i)), keyValueGenerator.getValue(i));
         }
         }
       
       cache.unpinAll();
-      /*
-       * cache.setConfigField(ToolkitCacheConfigFields.MAX_COUNT_LOCAL_HEAP_FIELD_NAME, MAX_NO_OF_ELEMENTS); index =
-       * barrier.await(); if (index == 0) { log("client 0 pinning keys"); pinKeys(START, END); log("keys pinned");
-       * log("doing puts"); doSomePuts(START, END); log("Done with puts");
-       * log("Asserting that allkeys are present locally"); Assert.assertTrue(checkAllKeysPresentLocaly(START, END));
-       * cache.unpinAll(); } barrier.await(); log("Exiting testSetPinned");
-       */} finally {
-      tearDown();
-//    cache.setConfigField(ToolkitCacheConfigFields.MAX_COUNT_LOCAL_HEAP_FIELD_NAME,
-      // ToolkitCacheConfigFields.DEFAULT_MAX_BYTES_LOCAL_HEAP);
+      log("Exiting " + methodName + " with clientIndex = " + clientIndex);
+    } finally {
+      clearDs();
     }
-  }
-
-
-  private boolean checkAllKeysPresentLocaly(int start, int end) {
-    for (int keyIndex = start; keyIndex < end; keyIndex++) {
-      if (((ToolkitCacheInternal) cache).unsafeLocalGet(keyValueGenerator.getKey(KEY_ONE)) == null) { return false; }
-    }
-    return true;
   }
 
   private void pinKeys(int start, int end) {
@@ -317,18 +350,20 @@ public class ToolkitCacheApiKeyValGrClient extends ToolkitStoreApiKeyValGrClient
   }
 
   private void testPutIfAbsent() throws Exception {
-    log("Entering testPutIfAbsent");
-    setUp();
+    String methodName = "testPutIfAbsent";
+    clientIndex = waitForAllClientsToReachHere();
+    log("Entering " + methodName + " with clientIndex = " + clientIndex);
+
     try {
-      index = barrier.await();
-      if (index == 0) {
+      clientIndex = waitForAllClientsToReachHere();
+      if (clientIndex == 0) {
         log("Client 0 doing putIfAbsent");
         cache.putIfAbsent(keyValueGenerator.getKey(KEY_ONE), keyValueGenerator.getValue(VALUE_ONE),
                           someRandomPastTime(), TWO_SECS, TWO_SECS);
         log("Client 0 Done with putIfAbsent");
       }
-      barrier.await();
-      if (index == 1) {
+      waitForAllClientsToReachHere();
+      if (clientIndex == 1) {
         log("Client Entering WaitUtil");
         WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
           @Override
@@ -339,51 +374,51 @@ public class ToolkitCacheApiKeyValGrClient extends ToolkitStoreApiKeyValGrClient
         });
         log("Client Exiting WaitUtil");
       }
-      log("Getting out of putIfAbsent");
-
+      log("Exiting " + methodName + " with clientIndex = " + clientIndex);
     } finally {
-      tearDown();
+      clearDs();
     }
 
   }
 
 
 
-  private boolean checkMapShouldContainKeyValuePairs(Map tempMap, int start, int someRandomIndex, int end) {
+  private boolean checkMapShouldContainKeyValuePairs(Map tmap, int start, int someRandomIndex, int end) {
     /*
      * we had put in cache from start to someRandomIndex, so the tempMap should have a valid mapping for keys from start
      * to someRandomIndex and mapping should map to null for keys from someRandomIndex to end
      */
     for (int key = start; key < someRandomIndex; key++) {
-      if (tempMap.get(keyValueGenerator.getKey(key)) == null) {
+      if (tmap.get(keyValueGenerator.getKey(key)) == null) {
         return false;
       }
     }
     for (int key = someRandomIndex; key < end; key++) {
-      if (tempMap.containsKey(keyValueGenerator.getKey(key)) && tempMap.get(keyValueGenerator.getKey(key)) != null) { return false; }
+      if (tmap.containsKey(keyValueGenerator.getKey(key)) && tmap.get(keyValueGenerator.getKey(key)) != null) { return false; }
     }
     return true;
   }
 
-  private Boolean checkCacheShouldNotContainKeyValuePairs(ToolkitCache cache, Set keys) {
-    for (Object key : keys) {
-      cache.get(key);
-      if (cache.get(key) == null) {
-        log("Not found for : " + key + " value found is :" + cache.get(key));
+  private Boolean checkCacheShouldNotContainKeyValuePairs(ToolkitCache toolkitCache, Set setOfKeys) {
+    for (Object key : setOfKeys) {
+      toolkitCache.get(key);
+      if (toolkitCache.get(key) == null) {
+        log("Not found for : " + key + " value found is :" + toolkitCache.get(key));
         continue;
       }
-      log("found entry for : " + key.toString() + " value = " + cache.get(key));
+      log("found entry for : " + key.toString() + " value = " + toolkitCache.get(key));
       return false;
     }
     return true;
   }
 
   private void testGetQuiet() throws Exception {
-    System.err.println("Entering GetQuiet");
-    setUp();
+    String methodName = "testGetQuiet";
+    clientIndex = waitForAllClientsToReachHere();
+    log("Entering " + methodName + " with clientIndex = " + clientIndex);
     try {
-      index = barrier.await();
-      if (index == 0) {
+      clientIndex = waitForAllClientsToReachHere();
+      if (clientIndex == 0) {
         log("Client 0 doing puts");
         cache.put(keyValueGenerator.getKey(KEY_ONE), keyValueGenerator.getValue(KEY_ONE));
         log("client 0 done with puts");
@@ -406,29 +441,30 @@ public class ToolkitCacheApiKeyValGrClient extends ToolkitStoreApiKeyValGrClient
         });
 
       }
-      barrier.await();
-      log("coming out of checkGetQuiet() method");
+      waitForAllClientsToReachHere();
+      log("Exiting " + methodName + " with clientIndex = " + clientIndex);
     } finally {
-      tearDown();
+      clearDs();
     }
   }
 
   private void testGetAllQuiet() throws Exception {
-    System.err.println("Entering checkGetAllQuiet");
-    setUp();
+    String methodName = "testGetAllQuiet";
+    clientIndex = waitForAllClientsToReachHere();
+    log("Entering " + methodName + " with clientIndex = " + clientIndex);
+
     try {
-      index = barrier.await();
-      if (index == 0) {
+      if (clientIndex == 0) {
         log("client 0 will perform some puts");
-        doSomePuts(START, SOME_RANDOM_INDEX);
+        putValues(START_INDEX, SOME_RANDOM_INDEX, methodName);
         log("Client 0 done putting values");
 
         startTime = System.currentTimeMillis();
         endTime = startTime;
         log("Now Client 0 will perform getALlQuiet on cache for some time");
         while (timeElapsedInSecs() < MAX_TIME_TO_IDLE_IN_SECS - ONE_SEC) {
-          tempMap = cache.getAllQuiet(getKeySet(START, SOME_RANDOM_INDEX));
-          Assert.assertTrue(checkMapShouldContainKeyValuePairs(tempMap, START, SOME_RANDOM_INDEX, END));
+          tempMap = cache.getAllQuiet(getKeySet(START_INDEX, SOME_RANDOM_INDEX));
+          Assert.assertTrue(checkMapShouldContainKeyValuePairs(tempMap, START_INDEX, SOME_RANDOM_INDEX, END_INDEX));
           endTime = System.currentTimeMillis();
         }
         log("CLient 0 done with doing getALLQuiet on cache");
@@ -436,28 +472,25 @@ public class ToolkitCacheApiKeyValGrClient extends ToolkitStoreApiKeyValGrClient
 
           @Override
           public Boolean call() throws Exception {
-            return checkCacheShouldNotContainKeyValuePairs(cache, getKeySet(SOME_RANDOM_INDEX, END));
+            return checkCacheShouldNotContainKeyValuePairs(cache, getKeySet(SOME_RANDOM_INDEX, END_INDEX));
           }
 
         });
       }
-      barrier.await();
-      log("Exiting getAllQuiet");
+      waitForAllClientsToReachHere();
+      log("Exiting " + methodName + " with clientIndex = " + clientIndex);
     } finally {
-      tearDown();
+      clearDs();
     }
   }
 
-  private void log(String string) {
-    System.err.println(string);
-  }
-
   private void testPutNoReturn() throws Exception {
-    log("Entering testPutNoReturn");
-    setUp();
+    String methodName = "testPutNoReturn";
+    clientIndex = waitForAllClientsToReachHere();
+    log("Entering " + methodName + " with clientIndex = " + clientIndex);
+
     try {
-      index = barrier.await();
-      if (index == 0) {
+      if (clientIndex == 0) {
         log("Client 0 would do putNoReturn now ");
         log("time : " + someRandomPastTime());
         cache.putNoReturn(keyValueGenerator.getKey(KEY_ONE), keyValueGenerator.getValue(VALUE_ONE),
@@ -478,11 +511,11 @@ public class ToolkitCacheApiKeyValGrClient extends ToolkitStoreApiKeyValGrClient
           return !cache.containsKey(keyValueGenerator.getKey(KEY_ONE));
           }
         });
-      log("getting out of testPutNoReturn");
-      barrier.await();
+      log("Exiting " + methodName + " with clientIndex = " + clientIndex);
+      waitForAllClientsToReachHere();
 
     } finally {
-      tearDown();
+      clearDs();
     }
   
   }
@@ -498,24 +531,26 @@ public class ToolkitCacheApiKeyValGrClient extends ToolkitStoreApiKeyValGrClient
 
   @Override
   public void setEventualDs(Toolkit toolkit, String name) {
+    super.toolkit = toolkit;
     barrier = toolkit.getBarrier("myBarrier", 2);
-    map = cache = toolkit.getCache(name, String.class);
+    map = chm = cache = toolkit.getCache(name, String.class);
     cache.setConfigField(ToolkitCacheConfigFields.MAX_TTI_SECONDS_FIELD_NAME, MAX_TIME_TO_IDLE_IN_SECS);
-    store = (ToolkitStore) map;
+    store = (ToolkitStore) chm;
   }
 
   @Override
   public void setStrongDs(Toolkit toolkit, String name) {
+    super.toolkit = toolkit;
     barrier = toolkit.getBarrier("myBarrier", 2);
     ToolkitCacheConfigBuilder configBuilder = new ToolkitCacheConfigBuilder().consistency(Consistency.STRONG);
-    map = cache = toolkit.getCache(name, configBuilder.build(), String.class);
-    store = (ToolkitStore) map;
+    map = chm = cache = toolkit.getCache(name, configBuilder.build(), String.class);
+    store = (ToolkitStore) chm;
   }
   @Override
-  protected void doSomePuts(int start, int end) {
+  protected void putValues(int start, int end, String callingMethodName) {
     for (int iterator = start; iterator < end; iterator++) {
       keysPutUntilNow.add(keyValueGenerator.getKey(iterator));
-      super.doSomePuts(iterator, iterator + 1);
+      super.putValues(iterator, iterator + 1, callingMethodName);
     }
   }
 
