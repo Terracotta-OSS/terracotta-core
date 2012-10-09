@@ -1,9 +1,5 @@
 package com.tc.objectserver.persistence.gb;
 
-import com.tc.gbapi.GBManager;
-import com.tc.gbapi.GBMap;
-import com.tc.gbapi.GBMapConfig;
-import com.tc.gbapi.impl.GBOnHeapMapConfig;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
@@ -17,30 +13,34 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 
+import org.terracotta.corestorage.KeyValueStorage;
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.heap.KeyValueStorageConfigImpl;
+
 /**
  * @author tim
  */
 public class GBManagedObjectPersistor implements ManagedObjectPersistor {
 
   // This should be persistent
-  private final GBMap<String, ObjectID> rootMap;
-  private final GBMap<ObjectID, ManagedObject> objectMap;
+  private final KeyValueStorage<String, ObjectID> rootMap;
+  private final KeyValueStorage<ObjectID, ManagedObject> objectMap;
   private final GBSequence objectIDSequence;
 
   private final GBObjectIDSetMaintainer oidSetMaintainer;
 
-  public GBManagedObjectPersistor(GBMap<String, ObjectID> rootMap, GBMap<Long, byte[]> objectMap, GBSequence objectIDSequence, final GBObjectIDSetMaintainer oidSetMaintainer) {
+  public GBManagedObjectPersistor(KeyValueStorage<String, ObjectID> rootMap, KeyValueStorage<Long, byte[]> objectMap, GBSequence objectIDSequence, final GBObjectIDSetMaintainer oidSetMaintainer) {
     this.rootMap = rootMap;
     this.oidSetMaintainer = oidSetMaintainer;
     this.objectMap = new GBObjectMap(this, objectMap);
     this.objectIDSequence = objectIDSequence;
   }
 
-  public static GBMapConfig<String, ObjectID> rootMapConfig() {
-    return new GBOnHeapMapConfig<String, ObjectID>(String.class, ObjectID.class);
+  public static KeyValueStorageConfig<String, ObjectID> rootMapConfig() {
+    return new KeyValueStorageConfigImpl<String, ObjectID>(String.class, ObjectID.class);
   }
 
-  public static GBMapConfig<Long, byte[]> objectConfig(GBManager gbManager) {
+  public static KeyValueStorageConfig<Long, byte[]> objectConfig() {
     return GBObjectMap.getConfig();
   }
 
@@ -112,7 +112,7 @@ public class GBManagedObjectPersistor implements ManagedObjectPersistor {
     return asJdkMap(rootMap);
   }
 
-  private <K, V> Map<K, V> asJdkMap(GBMap<K, V> map) {
+  private <K, V> Map<K, V> asJdkMap(KeyValueStorage<K, V> map) {
     Map<K, V> m = new HashMap<K, V>();
     for (K k : map.keySet()) {
       m.put(k, map.get(k));

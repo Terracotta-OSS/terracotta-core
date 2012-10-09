@@ -1,34 +1,30 @@
 package com.tc.objectserver.persistence.gb;
 
-import com.tc.gbapi.GBManager;
-import com.tc.gbapi.GBMap;
-import com.tc.gbapi.GBMapFactory;
-import com.tc.gbapi.impl.GBOnHeapMapConfig;
 import com.tc.object.ObjectID;
+import org.terracotta.corestorage.KeyValueStorage;
+import org.terracotta.corestorage.KeyValueStorageFactory;
+import org.terracotta.corestorage.StorageManager;
+import org.terracotta.corestorage.heap.KeyValueStorageConfigImpl;
 
 /**
  * @author tim
  */
 public class GBPersistentObjectFactory {
-  private final GBManager gbManager;
-  private final GBMapFactory factory;
+  private final StorageManager gbManager;
 
-  public GBPersistentObjectFactory(final GBManager gbManager, final GBMapFactory factory) {
+  public GBPersistentObjectFactory(final StorageManager gbManager) {
     this.gbManager = gbManager;
-    this.factory = factory;
   }
 
-  public GBMap<Object, Object> createMap(ObjectID objectID) {
-    GBMap<Object, Object> map = factory.createMap(new GBOnHeapMapConfig<Object, Object>(Object.class, Object.class));
-    gbManager.attachMap(objectID.toString(), map, Object.class, Object.class);
-    return map;
+  public KeyValueStorage<Object, Object> createMap(ObjectID objectID) {
+    return gbManager.createKeyValueStorage(objectID.toString(), new KeyValueStorageConfigImpl<Object, Object>(Object.class, Object.class));
   }
 
-  public GBMap<Object, Object> getMap(final ObjectID id) {
-    return gbManager.getMap(id.toString(), Object.class, Object.class);
+  public KeyValueStorage<Object, Object> getMap(final ObjectID id) {
+    return gbManager.getKeyValueStorage(id.toString(), Object.class, Object.class);
   }
 
   public void destroyMap(ObjectID oid) {
-    gbManager.detachMap(oid.toString());
+    gbManager.destroyKeyValueStorage(oid.toString());
   }
 }

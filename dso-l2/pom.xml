@@ -27,6 +27,14 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
+      <artifactId>core-storage-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>heap-core-storage</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
       <artifactId>dso-l2-common</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -85,11 +93,6 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-all</artifactId>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>gb</artifactId>
-      <version>${project.version}</version>
     </dependency>
   </dependencies>
    

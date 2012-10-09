@@ -54,8 +54,6 @@
     <module>toolkit-express-impl</module>
     <module>toolkit-runtime</module>
     <module>toolkit-system-tests</module>
-
-    <module>gb</module>
   </modules>
   
   <profiles>
@@ -85,7 +83,6 @@
         <module>../ent-deploy</module>
         <module>../ent-system-tests</module>
         <module>../ent-active-active-tests</module>
-        <module>../gb-offheap</module>
         <module>../terracotta-ee</module>
         <module>../terracotta-l1-ee</module>         
         <module>../toolkit-impl-ee</module>

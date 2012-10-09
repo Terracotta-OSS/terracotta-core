@@ -1,31 +1,30 @@
 package com.tc.objectserver.persistence.gb;
 
-import com.tc.gbapi.impl.GBOnHeapMapConfig;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.objectserver.persistence.api.ClientStatePersistor;
-import com.tc.gbapi.GBMap;
-import com.tc.gbapi.GBMapConfig;
-import com.tc.gbapi.GBMapMutationListener;
-import com.tc.gbapi.GBSerializer;
 import com.tc.objectserver.persistence.inmemory.ClientNotFoundException;
 import com.tc.util.sequence.MutableSequence;
 
 import java.util.Set;
+
+import org.terracotta.corestorage.KeyValueStorage;
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.heap.KeyValueStorageConfigImpl;
 
 /**
  * @author tim
  */
 public class GBClientStatePersistor implements ClientStatePersistor {
   private final GBSequence clientIDSequence;
-  private final GBMap<ChannelID, Boolean> clients;
+  private final KeyValueStorage<ChannelID, Boolean> clients;
 
-  public GBClientStatePersistor(GBSequence clientIDSequence, GBMap<ChannelID, Boolean> clients) {
+  public GBClientStatePersistor(GBSequence clientIDSequence, KeyValueStorage<ChannelID, Boolean> clients) {
     this.clientIDSequence = clientIDSequence;
     this.clients = clients;
   }
 
-  public static GBMapConfig<ChannelID, Boolean> config() {
-    return new GBOnHeapMapConfig<ChannelID, Boolean>(ChannelID.class, Boolean.class);
+  public static KeyValueStorageConfig<ChannelID, Boolean> config() {
+    return new KeyValueStorageConfigImpl<ChannelID, Boolean>(ChannelID.class, Boolean.class);
   }
 
   @Override

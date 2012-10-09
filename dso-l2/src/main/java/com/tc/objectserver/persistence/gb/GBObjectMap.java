@@ -1,8 +1,5 @@
 package com.tc.objectserver.persistence.gb;
 
-import com.tc.gbapi.GBMap;
-import com.tc.gbapi.GBMapConfig;
-import com.tc.gbapi.impl.GBOnHeapMapConfig;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.managedobject.ManagedObjectSerializer;
@@ -19,20 +16,24 @@ import java.io.ObjectOutputStream;
 import java.util.Collection;
 import java.util.Set;
 
+import org.terracotta.corestorage.KeyValueStorage;
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.heap.KeyValueStorageConfigImpl;
+
 /**
  * @author tim
  */
-class GBObjectMap implements GBMap<ObjectID, ManagedObject> {
-  private final GBMap<Long, byte[]> backingMap;
+class GBObjectMap implements KeyValueStorage<ObjectID, ManagedObject> {
+  private final KeyValueStorage<Long, byte[]> backingMap;
   private final ManagedObjectSerializer serializer;
 
-  GBObjectMap(ManagedObjectPersistor persistor, final GBMap<Long, byte[]> backingMap) {
+  GBObjectMap(ManagedObjectPersistor persistor, final KeyValueStorage<Long, byte[]> backingMap) {
     this.backingMap = backingMap;
     this.serializer = new ManagedObjectSerializer(new ManagedObjectStateSerializer(), persistor);
   }
 
-  public static GBMapConfig<Long, byte[]> getConfig() {
-    return new GBOnHeapMapConfig<Long, byte[]>(Long.class, byte[].class);
+  public static KeyValueStorageConfig<Long, byte[]> getConfig() {
+    return new KeyValueStorageConfigImpl<Long, byte[]>(Long.class, byte[].class);
   }
 
   @Override

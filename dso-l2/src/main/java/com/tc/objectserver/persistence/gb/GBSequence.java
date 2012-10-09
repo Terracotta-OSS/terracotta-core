@@ -1,19 +1,19 @@
 package com.tc.objectserver.persistence.gb;
 
-import com.tc.gbapi.GBMap;
-import com.tc.gbapi.GBMapConfig;
-import com.tc.gbapi.impl.GBOnHeapMapConfig;
 import com.tc.util.sequence.MutableSequence;
+import org.terracotta.corestorage.KeyValueStorage;
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.heap.KeyValueStorageConfigImpl;
 
 /**
  * @author tim
  */
 public class GBSequence implements MutableSequence {
 
-  private final GBMap<String, Long> sequenceMap;
+  private final KeyValueStorage<String, Long> sequenceMap;
   private final String name;
 
-  GBSequence(GBMap<String, Long> sequenceMap, String name) {
+  GBSequence(KeyValueStorage<String, Long> sequenceMap, String name) {
     this.name = name;
     this.sequenceMap = sequenceMap;
     Long current = sequenceMap.get(name);
@@ -23,8 +23,8 @@ public class GBSequence implements MutableSequence {
     }
   }
 
-  public static GBMapConfig<String, Long> config() {
-    return new GBOnHeapMapConfig<String, Long>(String.class, Long.class);
+  public static KeyValueStorageConfig<String, Long> config() {
+    return new KeyValueStorageConfigImpl<String, Long>(String.class, Long.class);
   }
 
   @Override

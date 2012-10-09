@@ -1,17 +1,17 @@
 package com.tc.objectserver.persistence.gb;
 
-import com.tc.gbapi.GBMapMutationListener;
-import com.tc.gbapi.GBRetriever;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Map;
+import org.terracotta.corestorage.KeyValueStorageMutationListener;
+import org.terracotta.corestorage.Retriever;
 
 /**
  * @author tim
  */
-public class GBObjectIDSetMaintainer implements GBMapMutationListener<Long, byte[]> {
+public class GBObjectIDSetMaintainer implements KeyValueStorageMutationListener<Long, byte[]> {
 
   private final ObjectIDSet extantObjectIDSet = new ObjectIDSet();
   private final ObjectIDSet evictableObjectIDSet = new ObjectIDSet();
@@ -34,8 +34,9 @@ public class GBObjectIDSetMaintainer implements GBMapMutationListener<Long, byte
   }
 
   @Override
-  public synchronized void added(GBRetriever<Long> key, GBRetriever<byte[]> value, Map<? extends Enum, Object> metadata) {
-    byte type  = value.retrieve()[8]; // TODO: Make this less hard coded
+  public synchronized void added(Retriever<? extends Long> key, Retriever<? extends byte[]> value, Map<? extends Enum, Object> metadata) {
+    byte[] array = value.retrieve();
+    byte type  = array[8];
     ObjectID k = new ObjectID(key.retrieve());
     if (PersistentCollectionsUtil.isEvictableMapType(type)) {
       evictableObjectIDSet.add(k);
@@ -47,7 +48,9 @@ public class GBObjectIDSetMaintainer implements GBMapMutationListener<Long, byte
   }
 
   @Override
-  public synchronized void removed(GBRetriever<Long> key, GBRetriever<byte[]> value, Map<? extends Enum, Object> metadata) {
+  public synchronized void removed(Retriever<? extends Long> key, Retriever<? extends byte[]> value, Map<? extends Enum, Object> metadata) {
+    byte[] array = value.retrieve();
+    byte type  = array[8];
     ObjectID k = new ObjectID(key.retrieve());
     evictableObjectIDSet.remove(k);
     mapObjectIDSet.remove(k);

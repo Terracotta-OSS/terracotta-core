@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.managedobject;
 
-import com.tc.gbapi.GBMap;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNA.DNAType;
@@ -29,13 +28,15 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.terracotta.corestorage.KeyValueStorage;
+
 /**
  * state for maps
  */
 public class MapManagedObjectState extends LogicalManagedObjectState implements PrettyPrintable,
     TCDestroyable {
   private final ObjectID id;
-  protected final GBMap<Object, Object> references;
+  protected final KeyValueStorage<Object, Object> references;
   private final GBPersistentObjectFactory factory;
 
   protected MapManagedObjectState(final long classID, ObjectID id, GBPersistentObjectFactory factory) {

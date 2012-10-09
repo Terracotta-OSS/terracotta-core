@@ -1,10 +1,8 @@
 package com.tc.objectserver.persistence.gb;
 
-import com.tc.gbapi.GBManager;
-import com.tc.gbapi.GBMap;
-
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import org.terracotta.corestorage.KeyValueStorage;
 
 /**
  * @author tim
@@ -13,9 +11,9 @@ public class GBSequenceManager {
 
   private final ConcurrentMap<String, GBSequence> createdSequences =
           new ConcurrentHashMap<String, GBSequence>();
-  private final GBMap<String, Long> sequenceMap;
+  private final KeyValueStorage<String, Long> sequenceMap;
 
-  public GBSequenceManager(GBMap<String, Long> sequenceMap) {
+  public GBSequenceManager(KeyValueStorage<String, Long> sequenceMap) {
     this.sequenceMap = sequenceMap;
   }
 

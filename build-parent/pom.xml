@@ -25,6 +25,8 @@
     <group>unit</group>
     
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <core-storage-api.version>1.0-SNAPSHOT</core-storage-api.version>
+    <heap-core-storage.version>1.0.0-SNAPSHOT</heap-core-storage.version>
     <jetty.version>6.1.8</jetty.version>
     <slf4j.version>1.6.4</slf4j.version>
     <offheap-store.version>1.0.10-SNAPSHOT</offheap-store.version>
@@ -83,6 +85,16 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>org.terracotta.internal</groupId>
+        <artifactId>core-storage-api</artifactId>
+        <version>${core-storage-api.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta.internal</groupId>
+        <artifactId>heap-core-storage</artifactId>
+        <version>${heap-core-storage.version}</version>
+      </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>linked-child-process</artifactId>

@@ -221,6 +221,7 @@
               <includes>**/*.class</includes>
               <excludes>**/**TestApp*.class,**/**Test$*class</excludes>
               <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+              <failOnMissingClassifierArtifact>false</failOnMissingClassifierArtifact>
             </configuration>
           </execution>
           <execution>
@@ -235,6 +236,7 @@
               <classifier>test-sources</classifier>
               <excludes>**/**TestApp.java</excludes>
               <outputDirectory>${project.build.directory}/sources</outputDirectory>
+              <failOnMissingClassifierArtifact>false</failOnMissingClassifierArtifact>
             </configuration>
           </execution>
         </executions>

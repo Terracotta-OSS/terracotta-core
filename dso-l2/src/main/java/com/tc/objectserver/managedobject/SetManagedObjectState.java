@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.managedobject;
 
-import com.tc.gbapi.GBMap;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNA.DNAType;
@@ -23,11 +22,13 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.terracotta.corestorage.KeyValueStorage;
+
 /**
  * ManagedObjectState for sets.
  */
 public class SetManagedObjectState extends LogicalManagedObjectState implements TCDestroyable {
-  protected final GBMap<Object, Object> references;
+  protected final KeyValueStorage<Object, Object> references;
   private final ObjectID oid;
 
   SetManagedObjectState(long classID, ObjectID oid, GBPersistentObjectFactory objectFactory) {
