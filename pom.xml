@@ -179,6 +179,40 @@
         <module>devwork/management-apps</module>
       </modules>
     </profile>     
+   
+    <profile>
+      <id>core-storage-api</id>
+      <activation>
+        <file>
+          <exists>devwork/core-storage-api</exists>
+        </file>
+      </activation>      
+      <modules>
+        <module>devwork/core-storage-api</module>
+      </modules>
+    </profile>     
+    <profile>
+      <id>heap-core-storage</id>
+      <activation>
+        <file>
+          <exists>devwork/heap-core-storage</exists>
+        </file>
+      </activation>      
+      <modules>
+        <module>devwork/heap-core-storage</module>
+      </modules>
+    </profile>     
+    <profile>
+      <id>bigmemory-core-storage</id>
+      <activation>
+        <file>
+          <exists>devwork/bigmemory-core-storage</exists>
+        </file>
+      </activation>      
+      <modules>
+        <module>devwork/bigmemory-core-storage</module>
+      </modules>
+    </profile>     
   </profiles>
   
   <repositories>
