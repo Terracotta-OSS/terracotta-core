@@ -102,7 +102,7 @@ public class TopologyServiceImpl implements TopologyService {
       Collection<ClientEntity> clientEntities = new HashSet<ClientEntity>();
 
 
-      Set<ObjectName> dsoClientObjectNames = mBeanServer.queryNames(new ObjectName("org.terracotta:clients=Clients,name=L1 Info Bean,type=DSO Client"), null);
+      Set<ObjectName> dsoClientObjectNames = mBeanServer.queryNames(new ObjectName("org.terracotta:clients=Clients,name=L1 Info Bean,type=DSO Client,node=*"), null);
       ObjectName[] clientObjectNames = (ObjectName[])mBeanServer.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
 
       Iterator<ObjectName> it = dsoClientObjectNames.iterator();
