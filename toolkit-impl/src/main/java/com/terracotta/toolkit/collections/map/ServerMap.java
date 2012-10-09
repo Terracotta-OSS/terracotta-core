@@ -31,7 +31,6 @@ import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
-import com.tc.util.concurrent.SetOnceRef;
 import com.terracotta.toolkit.TerracottaProperties;
 import com.terracotta.toolkit.concurrent.locks.LockingUtils;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
@@ -54,6 +53,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ServerMap<K, V> extends AbstractTCToolkitObject implements InternalToolkitMap<K, V>, NotClearable {
   private static final TCLogger                                 LOGGER                   = TCLogging
@@ -85,7 +85,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private final String                                          name;
   private final Consistency                                     consistency;
   private final ToolkitCacheMetaDataCallback                    metaDataCallback;
-  private final SetOnceRef<ToolkitMap<String, ToolkitAttributeType>> attributeSchema     = new SetOnceRef<ToolkitMap<String, ToolkitAttributeType>>();
+  private final AtomicReference<ToolkitMap<String, ToolkitAttributeType>> attributeSchema     = new AtomicReference<ToolkitMap<String, ToolkitAttributeType>>();
   private volatile ToolkitAttributeExtractor                    attrExtractor            = ToolkitAttributeExtractor.NULL_EXTRACTOR;
 
   public ServerMap(Configuration config, String name) {
@@ -1109,7 +1109,10 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   
   void setSearchAttributeTypes(ToolkitMap<String, ToolkitAttributeType> schema)
   {
-    this.attributeSchema.set(schema);
+    Map<String, ToolkitAttributeType> prev = this.attributeSchema.getAndSet(schema);
+    if (prev != null) {
+      LOGGER.info(String.format("Resetting search attribute schema on map %s", getName()));
+    }
   }
 
   public void recalculateLocalCacheSize(Object key) {
