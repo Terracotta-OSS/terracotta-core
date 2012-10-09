@@ -1110,7 +1110,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   void setSearchAttributeTypes(ToolkitMap<String, ToolkitAttributeType> schema)
   {
     if (!this.attributeSchema.compareAndSet(null, schema) && schema != attributeSchema.get()) {
-      LOGGER.debug(String.format("Ignoring attempt to reset search attribute schema on map %s", getName()));
+      LOGGER.warn(String.format("Ignoring attempt to reset search attribute schema on map %s", getName()));
     }
   }
 
