@@ -19,7 +19,6 @@ import java.util.Collections;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -47,10 +46,10 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
 
     try {
       return Collections.singleton(topologyService.getTopology());
-    } catch (ServiceExecutionException e) {
-      LOG.error("Failed to get TSA topologies.", e.getCause());
+    } catch (ServiceExecutionException see) {
+      LOG.error("Failed to get TSA topologies.", see.getCause());
       throw new WebApplicationException(
-          Response.status(Response.Status.BAD_REQUEST).entity(e.getCause().getMessage()).build());
+          Response.status(Response.Status.BAD_REQUEST).entity(see.getCause().getMessage()).build());
     }
   }
 
@@ -62,10 +61,10 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
 
     try {
       return topologyService.getClients();
-    } catch (ServiceExecutionException e) {
-      LOG.error("Failed to get TSA clients.", e.getCause());
+    } catch (ServiceExecutionException see) {
+      LOG.error("Failed to get TSA clients.", see.getCause());
       throw new WebApplicationException(
-          Response.status(Response.Status.BAD_REQUEST).entity(e.getCause().getMessage()).build());
+          Response.status(Response.Status.BAD_REQUEST).entity(see.getCause().getMessage()).build());
     }
   }
 

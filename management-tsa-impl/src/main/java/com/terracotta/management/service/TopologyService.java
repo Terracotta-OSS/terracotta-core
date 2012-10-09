@@ -18,14 +18,14 @@ import java.util.Collection;
 public interface TopologyService {
 
   /**
-   * Get the topology of the current TSA server
+   * Get the topology of the current TSA
    * @return the topology
    * @throws ServiceExecutionException
    */
   TopologyEntity getTopology() throws ServiceExecutionException;
 
   /**
-   * Get the connected clients of the current TSA server
+   * Get the connected clients of the current TSA
    * @return a collection of currently connected clients
    * @throws ServiceExecutionException
    */
