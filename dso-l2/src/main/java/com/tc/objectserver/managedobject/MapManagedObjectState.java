@@ -87,7 +87,8 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
         }
         break;
       case SerializationUtil.REMOVE:
-        old = this.references.remove(params[0]);
+        old = this.references.get(params[0]);
+        this.references.remove(params[0]);
         if (old instanceof ObjectID) {
           removedValueFromMap(objectID, applyInfo, (ObjectID) old);
         }

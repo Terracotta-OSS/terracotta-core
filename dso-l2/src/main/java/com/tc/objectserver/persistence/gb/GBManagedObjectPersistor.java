@@ -27,10 +27,11 @@ public class GBManagedObjectPersistor implements ManagedObjectPersistor {
   private final GBMap<ObjectID, ManagedObject> objectMap;
   private final GBSequence objectIDSequence;
 
-  private final GBObjectIDSetMaintainer oidSetMaintainer = new GBObjectIDSetMaintainer();
+  private final GBObjectIDSetMaintainer oidSetMaintainer;
 
-  public GBManagedObjectPersistor(GBMap<String, ObjectID> rootMap, GBMap<Long, byte[]> objectMap, GBSequence objectIDSequence) {
+  public GBManagedObjectPersistor(GBMap<String, ObjectID> rootMap, GBMap<Long, byte[]> objectMap, GBSequence objectIDSequence, final GBObjectIDSetMaintainer oidSetMaintainer) {
     this.rootMap = rootMap;
+    this.oidSetMaintainer = oidSetMaintainer;
     this.objectMap = new GBObjectMap(this, objectMap);
     this.objectIDSequence = objectIDSequence;
   }

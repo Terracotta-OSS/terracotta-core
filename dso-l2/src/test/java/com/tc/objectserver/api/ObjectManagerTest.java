@@ -64,7 +64,6 @@ import com.tc.objectserver.persistence.api.Persistor;
 import com.tc.objectserver.persistence.db.CustomSerializationAdapterFactory;
 import com.tc.objectserver.persistence.db.SerializationAdapterFactory;
 import com.tc.objectserver.persistence.gb.GBPersistor;
-import com.tc.objectserver.persistence.impl.TestPersistenceTransaction;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransactionProvider;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
@@ -103,6 +102,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.mockito.Mockito.mock;
+
 /**
  * @author steve
  */
@@ -118,10 +119,7 @@ public class ObjectManagerTest extends TCTestCase {
   private TCLogger                           logger;
   private ObjectManagerStatsImpl             stats;
   private SampledCounter                     newObjectCounter;
-  private SampledCounterImpl                 objectfaultCounter;
-  private SampledCounterImpl                 objectflushCounter;
   private TestPersistenceTransactionProvider persistenceTransactionProvider;
-  private TestPersistenceTransaction         NULL_TRANSACTION;
   private TestTransactionalStageCoordinator  coordinator;
   private TestGlobalTransactionManager       gtxMgr;
   private TransactionalObjectManagerImpl     txObjectManager;
@@ -148,11 +146,9 @@ public class ObjectManagerTest extends TCTestCase {
     ManagedObjectStateFactory.disableSingleton(true);
     ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), persistor);
     this.newObjectCounter = new SampledCounterImpl(new SampledCounterConfig(1, 1, true, 0L));
-    this.objectfaultCounter = new SampledCounterImpl(new SampledCounterConfig(1, 1, true, 0L));
-    this.objectflushCounter = new SampledCounterImpl(new SampledCounterConfig(1, 1, true, 0L));
-    this.stats = new ObjectManagerStatsImpl(this.newObjectCounter, this.objectfaultCounter, this.objectflushCounter);
+    this.stats = new ObjectManagerStatsImpl(this.newObjectCounter, mock(SampledCounter.class),
+        mock(SampledCounter.class));
     this.persistenceTransactionProvider = new TestPersistenceTransactionProvider();
-    this.NULL_TRANSACTION = TestPersistenceTransaction.NULL_TRANSACTION;
   }
 
   private void initObjectManager() {

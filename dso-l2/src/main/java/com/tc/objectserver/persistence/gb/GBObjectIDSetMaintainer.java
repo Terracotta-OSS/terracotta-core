@@ -21,20 +21,20 @@ public class GBObjectIDSetMaintainer implements GBMapMutationListener<Long, byte
     TYPE
   }
 
-  public ObjectIDSet objectIDSnapshot() {
+  public synchronized ObjectIDSet objectIDSnapshot() {
     return new ObjectIDSet(extantObjectIDSet);
   }
 
-  public ObjectIDSet evictableObjectIDSetSnapshot() {
+  public synchronized ObjectIDSet evictableObjectIDSetSnapshot() {
     return new ObjectIDSet(evictableObjectIDSet);
   }
 
-  public ObjectIDSet mapObjectIDSetSnapshot() {
+  public synchronized ObjectIDSet mapObjectIDSetSnapshot() {
     return new ObjectIDSet(mapObjectIDSet);
   }
 
   @Override
-  public void added(GBRetriever<Long> key, GBRetriever<byte[]> value, Map<? extends Enum, Object> metadata) {
+  public synchronized void added(GBRetriever<Long> key, GBRetriever<byte[]> value, Map<? extends Enum, Object> metadata) {
     byte type  = value.retrieve()[8]; // TODO: Make this less hard coded
     ObjectID k = new ObjectID(key.retrieve());
     if (PersistentCollectionsUtil.isEvictableMapType(type)) {
@@ -47,15 +47,10 @@ public class GBObjectIDSetMaintainer implements GBMapMutationListener<Long, byte
   }
 
   @Override
-  public void removed(GBRetriever<Long> key, GBRetriever<byte[]> value, Map<? extends Enum, Object> metadata) {
-    byte type  = value.retrieve()[8];
+  public synchronized void removed(GBRetriever<Long> key, GBRetriever<byte[]> value, Map<? extends Enum, Object> metadata) {
     ObjectID k = new ObjectID(key.retrieve());
-    if (PersistentCollectionsUtil.isEvictableMapType(type)) {
-      evictableObjectIDSet.remove(k);
-    }
-    if (PersistentCollectionsUtil.isPersistableCollectionType(type)) {
-      mapObjectIDSet.remove(k);
-    }
+    evictableObjectIDSet.remove(k);
+    mapObjectIDSet.remove(k);
     extantObjectIDSet.remove(k);
   }
 

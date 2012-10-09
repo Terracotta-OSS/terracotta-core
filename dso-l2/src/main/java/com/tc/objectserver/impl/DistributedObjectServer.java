@@ -4,11 +4,7 @@
  */
 package com.tc.objectserver.impl;
 
-import com.tc.objectserver.persistence.gb.GBPersistor;
 import org.apache.commons.io.FileUtils;
-
-import bsh.EvalError;
-import bsh.Interpreter;
 
 import com.tc.async.api.PostInit;
 import com.tc.async.api.SEDA;
@@ -105,11 +101,6 @@ import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.net.utils.L2Utils;
 import com.tc.object.cache.CacheConfig;
 import com.tc.object.cache.CacheConfigImpl;
-import com.tc.object.cache.CacheManager;
-import com.tc.object.cache.EvictionPolicy;
-import com.tc.object.cache.LFUConfigImpl;
-import com.tc.object.cache.LFUEvictionPolicy;
-import com.tc.object.cache.LRUEvictionPolicy;
 import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.object.msg.AcknowledgeTransactionMessageImpl;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessageImpl;
@@ -178,14 +169,12 @@ import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
 import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManagerImpl;
-import com.tc.objectserver.handler.ApplyCompleteTransactionHandler;
 import com.tc.objectserver.handler.ApplyTransactionChangeHandler;
 import com.tc.objectserver.handler.BroadcastChangeHandler;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handler.ClientChannelOperatorEventlistener;
 import com.tc.objectserver.handler.ClientHandshakeHandler;
 import com.tc.objectserver.handler.ClientLockStatisticsHandler;
-import com.tc.objectserver.handler.CommitTransactionChangeHandler;
 import com.tc.objectserver.handler.GarbageCollectHandler;
 import com.tc.objectserver.handler.GarbageDisposeHandler;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
@@ -230,17 +219,15 @@ import com.tc.objectserver.persistence.api.Persistor;
 import com.tc.objectserver.persistence.api.TransactionPersistor;
 import com.tc.objectserver.persistence.api.TransactionStore;
 import com.tc.objectserver.persistence.db.ConnectionIDFactoryImpl;
-import com.tc.objectserver.persistence.db.CustomSerializationAdapterFactory;
 import com.tc.objectserver.persistence.db.DBException;
 import com.tc.objectserver.persistence.db.DBSequenceKeys;
 import com.tc.objectserver.persistence.db.DatabaseDirtyException;
-import com.tc.objectserver.persistence.db.SerializationAdapterFactory;
 import com.tc.objectserver.persistence.db.TransactionStoreImpl;
+import com.tc.objectserver.persistence.gb.GBPersistor;
 import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.SearchEventHandler;
 import com.tc.objectserver.search.SearchQueryRequestMessageHandler;
 import com.tc.objectserver.search.SearchRequestManager;
-import com.tc.objectserver.storage.api.DBEnvironment;
 import com.tc.objectserver.storage.api.DBFactory;
 import com.tc.objectserver.storage.api.OffheapStats;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
@@ -344,6 +331,9 @@ import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import javax.management.remote.JMXConnectorServer;
 
+import bsh.EvalError;
+import bsh.Interpreter;
+
 /**
  * Startup and shutdown point. Builds and starts the server
  */
@@ -382,8 +372,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private Persistor                              persistor;
   private ServerTransactionManagerImpl           transactionManager;
 
-  private CacheManager                           cacheManager;
-
   private L2Management                           l2Management;
   private L2Coordinator                          l2Coordinator;
 
@@ -404,7 +392,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private GroupManager                           groupCommManager;
   private Stage                                  hydrateStage;
   private StripeIDStateManagerImpl               stripeIDStateManager;
-  private DBEnvironment                          dbenv;
   private IndexHACoordinator                     indexHACoordinator;
   private MetaDataManager                        metaDataManager;
   private SearchRequestManager                   searchRequestManager;
@@ -572,7 +559,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(stageManager));
 
-    EvictionPolicy swapCache;
     final ClientStatePersistor clientStateStore;
     final TransactionPersistor transactionPersistor;
     final Sequence globalTransactionIDSequence;
@@ -583,10 +569,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.sampledCounterManager = new CounterManagerImpl();
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
     final SampledCounter l2FaultFromDisk = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
-    final SampledCounter l2FaultFromOffheap = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
-    final SampledCounter l2FlushFromOffheap = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
 
     final File dbhome = new File(this.configSetupManager.commonl2Config().dataPath(), L2DSOConfig.OBJECTDB_DIRNAME);
@@ -608,14 +590,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final CallbackOnExitHandler dirtydbHandler = new CallbackDatabaseDirtyAlertAdapter(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(DatabaseDirtyException.class, dirtydbHandler);
 
-    this.dbenv = this.serverBuilder.createDBEnvironment(persistent, dbhome, l2DSOConfig, this, stageManager,
-                                                        l2FaultFromDisk, l2FaultFromOffheap, l2FlushFromOffheap,
-                                                        dbFactory, offHeapConfig.getEnabled());
-    final SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
-
-    sraForDbEnv = this.dbenv.getSRAs();
-
-    // Setting the DB environment for the bean which takes backup of the active server
     this.persistor = new GBPersistor(dbhome);
 
 
@@ -624,27 +598,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.serverBuilder
         .registerForOperatorEvents(this.l2Management, this.operatorEventHistoryProvider, getMBeanServer());
 
-    final String cachePolicy = this.l2Properties.getProperty("objectmanager.cachePolicy").toUpperCase();
-    if (cachePolicy.equals("LRU")) {
-      swapCache = new LRUEvictionPolicy(-1);
-    } else if (cachePolicy.equals("LFU")) {
-      swapCache = new LFUEvictionPolicy(-1, new LFUConfigImpl(this.l2Properties.getPropertiesFor("lfu")));
-    } else {
-      throw new AssertionError("Unknown Cache Policy : " + cachePolicy
-                               + " Accepted Values are : <LRU>/<LFU> Please check tc.properties");
-    }
     final int gcDeleteThreads = this.l2Properties.getInt("seda.gcdeletestage.threads");
     final Sink gcDisposerSink = stageManager.createStage(ServerConfigurationContext.GC_DELETE_FROM_DISK_STAGE,
                                                          new GarbageDisposeHandler(gcPublisher), gcDeleteThreads,
                                                          maxStageSize).getSink();
 
     this.objectStore = new PersistentManagedObjectStore(this.persistor.getManagedObjectPersistor(), gcDisposerSink);
-
-    /**
-     * CachedDBEnvironment passes the object store stats to Offheap Event Manager which triggers Operator Event based on
-     * object cached % in offheap
-     */
-    this.dbenv.initObjectStoreStats(this.objectStore);
 
     this.threadGroup
         .addCallbackOnExitExceptionHandler(CleanDirtyDatabaseException.class,
@@ -1197,7 +1156,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     // populate the statistics retrieval register
     populateStatisticsRetrievalRegistry(serverStats, this.seda.getStageManager(), mm, this.transactionManager,
-                                        serverTransactionSequencerImpl.getStats(), sraForDbEnv);
+                                        serverTransactionSequencerImpl.getStats());
 
     // XXX: yucky casts
     this.managementContext = new ServerManagementContext(this.transactionManager, this.objectRequestManager,
@@ -1405,8 +1364,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                    final StageManager stageManager,
                                                    final MessageMonitor messageMonitor,
                                                    final ServerTransactionManager txnManager,
-                                                   final ServerTransactionSequencerStats serverTransactionSequencerStats,
-                                                   final StatisticRetrievalAction[] srasForDbEnv) {
+                                                   final ServerTransactionSequencerStats serverTransactionSequencerStats) {
     if (this.statisticsAgentSubSystem.isActive()) {
       final StatisticsRetrievalRegistry registry = this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry();
       registry.registerActionInstance(new SRAL2ToL1FaultRate(serverStats));
@@ -1434,9 +1392,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       registry.registerActionInstance(new SRAL2ServerMapGetSizeRequestsRate(serverStats));
       registry.registerActionInstance(new SRAL2ServerMapGetValueRequestsCount(serverStats));
       registry.registerActionInstance(new SRAL2ServerMapGetValueRequestsRate(serverStats));
-      for (final StatisticRetrievalAction sraForDbEnv : srasForDbEnv) {
-        registry.registerActionInstance(sraForDbEnv);
-      }
 
       this.serverBuilder.populateAdditionalStatisticsRetrivalRegistry(registry);
     }
@@ -1684,7 +1639,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   public OffheapStats getOffheapStats() {
-    return this.dbenv.getOffheapStats();
+    return OffheapStats.NULL_OFFHEAP_STATS;
   }
 
   public ReconnectConfig getL1ReconnectProperties() {
