@@ -24,7 +24,6 @@ import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import gnu.trove.TLinkable;
@@ -92,10 +91,6 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
 
   public void toDNA(final TCByteBufferOutputStream out, final ObjectStringSerializer serializer, final DNAType dnaType) {
     throw new ImplementMe();
-  }
-
-  public void setObjectStore(final ManagedObjectStore store) {
-    return;
   }
 
   public ManagedObjectFacade createFacade(final int limit) {

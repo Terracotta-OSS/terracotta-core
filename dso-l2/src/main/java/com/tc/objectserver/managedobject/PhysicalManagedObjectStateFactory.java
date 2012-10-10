@@ -12,10 +12,10 @@ import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.objectserver.api.ClassPersistor;
 import com.tc.objectserver.managedobject.bytecode.ClassSpec;
 import com.tc.objectserver.managedobject.bytecode.FieldType;
 import com.tc.objectserver.managedobject.bytecode.PhysicalStateClassLoader;
-import com.tc.objectserver.persistence.api.ClassPersistor;
 import com.tc.util.Assert;
 
 import java.io.ByteArrayInputStream;

@@ -27,6 +27,7 @@ import com.tc.object.tx.TxnType;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.context.TransactionLookupContext;
 import com.tc.objectserver.gtx.TestGlobalTransactionManager;
+import com.tc.objectserver.impl.NullTransactionProvider;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
 import com.tc.objectserver.impl.TestGarbageCollectionManager;
 import com.tc.objectserver.impl.TestObjectManager;
@@ -36,7 +37,6 @@ import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.metadata.NullMetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.impl.TestTransactionStore;
-import com.tc.objectserver.persistence.inmemory.NullPersistenceTransactionProvider;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.CounterImpl;
 import com.tc.util.ObjectIDSet;
@@ -69,7 +69,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
   private TestChannelStats                   channelStats;
   private TestGlobalTransactionManager       gtxm;
   private ObjectInstanceMonitor              imo;
-  private NullPersistenceTransactionProvider ptxp;
+  private NullTransactionProvider ptxp;
 
   @Override
   protected void setUp() throws Exception {
@@ -84,7 +84,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     this.gtxm = new TestGlobalTransactionManager();
     this.imo = new ObjectInstanceMonitorImpl();
     newTransactionManager();
-    this.ptxp = new NullPersistenceTransactionProvider();
+    this.ptxp = new NullTransactionProvider();
   }
 
   @Override
@@ -93,7 +93,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
   }
 
   private void newTransactionManager() {
-    this.transactionManager = new ServerTransactionManagerImpl(this.gtxm, this.transactionStore, this.lockManager,
+    this.transactionManager = new ServerTransactionManagerImpl(this.gtxm, this.lockManager,
                                                                this.clientStateManager, this.objectManager,
                                                                new TestTransactionalObjectManager(), this.action,
                                                                this.transactionRateCounter, this.channelStats,

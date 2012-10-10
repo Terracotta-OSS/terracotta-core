@@ -22,8 +22,8 @@ import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.locks.ServerLock;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
+import com.tc.objectserver.api.TransactionProvider;
+import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
@@ -53,14 +53,14 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
 
   private int                            count                           = 0;
   private GlobalTransactionID            lowWaterMark                    = GlobalTransactionID.NULL_ID;
-  private final PersistenceTransactionProvider persistenceTransactionProvider;
+  private final TransactionProvider persistenceTransactionProvider;
 
   public ApplyTransactionChangeHandler(final ObjectInstanceMonitor instanceMonitor, final GlobalTransactionManager gtxm) {
     throw new AssertionError();
   }
 
   public ApplyTransactionChangeHandler(final ObjectInstanceMonitor instanceMonitor, final GlobalTransactionManager gtxm,
-                                       PersistenceTransactionProvider persistenceTransactionProvider) {
+                                       TransactionProvider persistenceTransactionProvider) {
     this.instanceMonitor = instanceMonitor;
     this.gtxm = gtxm;
     this.persistenceTransactionProvider = persistenceTransactionProvider;
@@ -77,7 +77,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     final ApplyTransactionInfo applyInfo = new ApplyTransactionInfo(txn.isActiveTxn(), stxnID, txn.isSearchEnabled());
 
     if (atc.needsApply()) {
-      PersistenceTransaction tx = persistenceTransactionProvider.newTransaction();
+      Transaction tx = persistenceTransactionProvider.newTransaction();
       this.transactionManager.apply(txn, atc.getObjects(), applyInfo, this.instanceMonitor);
       tx.commit();
       this.txnObjectMgr.applyTransactionComplete(applyInfo);

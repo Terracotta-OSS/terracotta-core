@@ -6,7 +6,7 @@ package com.tc.l2.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.EventHandler;
-import com.tc.objectserver.persistence.db.TCDestroyable;
+import com.tc.objectserver.api.Destroyable;
 
 public class DestroyableMapHandler extends AbstractEventHandler implements EventHandler {
   @Override
@@ -16,13 +16,13 @@ public class DestroyableMapHandler extends AbstractEventHandler implements Event
   }
 
   public static class DestroyableMapContext implements EventContext {
-    private final TCDestroyable destroyable;
+    private final Destroyable destroyable;
 
-    public DestroyableMapContext(TCDestroyable destroyable) {
+    public DestroyableMapContext(Destroyable destroyable) {
       this.destroyable = destroyable;
     }
 
-    public TCDestroyable getDestroyable() {
+    public Destroyable getDestroyable() {
       return destroyable;
     }
   }

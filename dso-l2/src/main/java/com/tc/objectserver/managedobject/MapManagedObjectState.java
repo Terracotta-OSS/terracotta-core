@@ -15,7 +15,7 @@ import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.MapEntryFacade;
 import com.tc.objectserver.mgmt.MapEntryFacadeImpl;
-import com.tc.objectserver.persistence.db.TCDestroyable;
+import com.tc.objectserver.api.Destroyable;
 import com.tc.objectserver.persistence.gb.GBPersistentObjectFactory;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
@@ -34,7 +34,7 @@ import org.terracotta.corestorage.KeyValueStorage;
  * state for maps
  */
 public class MapManagedObjectState extends LogicalManagedObjectState implements PrettyPrintable,
-    TCDestroyable {
+    Destroyable {
   private final ObjectID id;
   protected final KeyValueStorage<Object, Object> references;
   private final GBPersistentObjectFactory factory;

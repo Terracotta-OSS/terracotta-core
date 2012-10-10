@@ -31,8 +31,8 @@ import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.locks.ServerLock;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
+import com.tc.objectserver.api.Transaction;
+import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionImpl;
 import com.tc.objectserver.tx.ServerTransactionManager;
@@ -66,8 +66,8 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
   public void setUp() throws Exception {
     this.lockManager = mock(LockManager.class);
     this.notifiedWaitersArgumentCaptor = ArgumentCaptor.forClass(NotifiedWaiters.class);
-    PersistenceTransactionProvider persistenceTransactionProvider = mock(PersistenceTransactionProvider.class);
-    PersistenceTransaction persistenceTransaction = mock(PersistenceTransaction.class);
+    TransactionProvider persistenceTransactionProvider = mock(TransactionProvider.class);
+    Transaction persistenceTransaction = mock(Transaction.class);
     when(persistenceTransactionProvider.newTransaction()).thenReturn(persistenceTransaction);
 
     this.handler = new ApplyTransactionChangeHandler(new ObjectInstanceMonitorImpl(), mock(ServerGlobalTransactionManager.class),

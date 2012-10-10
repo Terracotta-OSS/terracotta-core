@@ -9,9 +9,8 @@ import com.tc.net.ClientID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
-import com.tc.objectserver.persistence.api.TransactionPersistor;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
@@ -20,7 +19,7 @@ import java.util.SortedSet;
 /**
  * @author tim
  */
-public class GBTransactionPersistor implements TransactionPersistor {
+public class GBTransactionPersistor {
   private final KeyValueStorage<GlobalTransactionID, GlobalTransactionDescriptor> committed;
 
   public GBTransactionPersistor(KeyValueStorage<GlobalTransactionID, GlobalTransactionDescriptor> committed) {
@@ -34,18 +33,15 @@ public class GBTransactionPersistor implements TransactionPersistor {
     return config;
   }
 
-  @Override
   public Collection<GlobalTransactionDescriptor> loadAllGlobalTransactionDescriptors() {
     return committed.values();
   }
 
-  @Override
-  public void saveGlobalTransactionDescriptor(PersistenceTransaction tx, GlobalTransactionDescriptor gtx) {
+  public void saveGlobalTransactionDescriptor(Transaction tx, GlobalTransactionDescriptor gtx) {
     committed.put(gtx.getGlobalTransactionID(), gtx);
   }
 
-  @Override
-  public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx, SortedSet<GlobalTransactionID> globalTransactionIDs) {
+  public void deleteAllGlobalTransactionDescriptors(Transaction tx, SortedSet<GlobalTransactionID> globalTransactionIDs) {
     committed.removeAll(globalTransactionIDs);
   }
 

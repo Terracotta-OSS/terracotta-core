@@ -9,12 +9,11 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.api.Transaction;
+import com.tc.objectserver.api.TransactionStore;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
-import com.tc.objectserver.persistence.api.TransactionPersistor;
-import com.tc.objectserver.persistence.api.TransactionStore;
-import com.tc.objectserver.persistence.db.TransactionStoreImpl;
+import com.tc.objectserver.persistence.gb.GBTransactionPersistor;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransaction;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.test.TCTestCase;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.sequence.Sequence;
@@ -29,6 +28,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.concurrent.atomic.AtomicLong;
+import org.mockito.AdditionalAnswers;
+import org.mockito.Mockito;
 
 public class TransactionStoreTest extends TCTestCase {
 
@@ -37,7 +39,8 @@ public class TransactionStoreTest extends TCTestCase {
 
   public void testDeleteByGlobalTransactionID() throws Exception {
     persistor = new TestTransactionPersistor();
-    store = new TransactionStoreImpl(persistor, persistor);
+    store = new TransactionStoreImpl(Mockito.mock(GBTransactionPersistor.class, AdditionalAnswers.delegatesTo(persistor)),persistor);
+    
     List<GlobalTransactionDescriptor> gtxs = new LinkedList();
     for (int i = 0; i < 100; i++) {
       ServerTransactionID sid1 = new ServerTransactionID(new ClientID(i), new TransactionID(i));
@@ -82,7 +85,7 @@ public class TransactionStoreTest extends TCTestCase {
   public void testLeastGlobalTransactionID() throws Exception {
 
     persistor = new TestTransactionPersistor();
-    store = new TransactionStoreImpl(persistor, persistor);
+    store = new TransactionStoreImpl(Mockito.mock(GBTransactionPersistor.class, AdditionalAnswers.delegatesTo(persistor)),persistor);
 
     assertEquals(GlobalTransactionID.NULL_ID, store.getLeastGlobalTransactionID());
 
@@ -153,7 +156,7 @@ public class TransactionStoreTest extends TCTestCase {
   public void testLeastGlobalTransactionIDInPassiveServer() throws Exception {
 
     persistor = new TestTransactionPersistor();
-    store = new TransactionStoreImpl(persistor, persistor);
+    store = new TransactionStoreImpl(Mockito.mock(GBTransactionPersistor.class, AdditionalAnswers.delegatesTo(persistor)),persistor);
 
     assertEquals(GlobalTransactionID.NULL_ID, store.getLeastGlobalTransactionID());
 
@@ -262,7 +265,7 @@ public class TransactionStoreTest extends TCTestCase {
                                                                         new GlobalTransactionID(persistor.next()));
       persistor.persisted.put(gtx.getGlobalTransactionID(), gtx);
     }
-    store = new TransactionStoreImpl(persistor, persistor);
+    store = new TransactionStoreImpl(Mockito.mock(GBTransactionPersistor.class, AdditionalAnswers.delegatesTo(persistor)),persistor);
     GlobalTransactionID lowmk1 = store.getLeastGlobalTransactionID();
 
     // create more
@@ -299,7 +302,7 @@ public class TransactionStoreTest extends TCTestCase {
                                                                         new GlobalTransactionID(persistor.next()));
       persistor.persisted.put(gtx.getGlobalTransactionID(), gtx);
     }
-    store = new TransactionStoreImpl(persistor, persistor);
+    store = new TransactionStoreImpl(Mockito.mock(GBTransactionPersistor.class, AdditionalAnswers.delegatesTo(persistor)),persistor);
 
     // make sure that the persisted transaction ids get loaded in the
     // constructor.
@@ -326,7 +329,7 @@ public class TransactionStoreTest extends TCTestCase {
     GlobalTransactionDescriptor gtx2 = store.getOrCreateTransactionDescriptor(stxid2);
     assertEquals(gtx2, store.getTransactionDescriptor(stxid2));
 
-    PersistenceTransaction ptx = new TestPersistenceTransaction();
+    Transaction ptx = new TestPersistenceTransaction();
     store.commitTransactionDescriptor(ptx, stxid1);
     Object[] args = (Object[]) persistor.storeQueue.poll(1);
     assertTrue(persistor.storeQueue.isEmpty());
@@ -345,7 +348,7 @@ public class TransactionStoreTest extends TCTestCase {
     int initialMax = 300;
     int laterMax = 400;
     persistor = new TestTransactionPersistor();
-    store = new TransactionStoreImpl(persistor, persistor);
+    store = new TransactionStoreImpl(Mockito.mock(GBTransactionPersistor.class, AdditionalAnswers.delegatesTo(persistor)),persistor);
     Map<ServerTransactionID, GlobalTransactionDescriptor> sid2Gid = new HashMap<ServerTransactionID, GlobalTransactionDescriptor>();
     for (int i = initialMin; i < initialMax; i++) {
       ServerTransactionID stxid = new ServerTransactionID(new ClientID(i % 2), new TransactionID(i));
@@ -356,7 +359,7 @@ public class TransactionStoreTest extends TCTestCase {
     }
 
     // RESTART
-    store = new TransactionStoreImpl(persistor, persistor);
+    store = new TransactionStoreImpl(Mockito.mock(GBTransactionPersistor.class, AdditionalAnswers.delegatesTo(persistor)),persistor);
 
     // test if we get the same gid
     GlobalTransactionID maxID = GlobalTransactionID.NULL_ID;
@@ -379,7 +382,7 @@ public class TransactionStoreTest extends TCTestCase {
     }
   }
 
-  private static final class TestTransactionPersistor implements TransactionPersistor, Sequence {
+  private static final class TestTransactionPersistor implements Sequence {
 
     public final NoExceptionLinkedQueue                                          deleteQueue = new NoExceptionLinkedQueue();
     public final LinkedHashMap<GlobalTransactionID, GlobalTransactionDescriptor> persisted   = new LinkedHashMap<GlobalTransactionID, GlobalTransactionDescriptor>();
@@ -398,7 +401,7 @@ public class TransactionStoreTest extends TCTestCase {
       return newList;
     }
 
-    public void saveGlobalTransactionDescriptor(PersistenceTransaction tx, GlobalTransactionDescriptor gtx) {
+    public void saveGlobalTransactionDescriptor(Transaction tx, GlobalTransactionDescriptor gtx) {
       storeQueue.put(new Object[] { tx, gtx });
       persisted.put(gtx.getGlobalTransactionID(), gtx);
     }
@@ -411,7 +414,7 @@ public class TransactionStoreTest extends TCTestCase {
       return sequence;
     }
 
-    public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx, SortedSet<GlobalTransactionID> toDelete) {
+    public void deleteAllGlobalTransactionDescriptors(Transaction tx, SortedSet<GlobalTransactionID> toDelete) {
       deleteQueue.put(toDelete);
       for (GlobalTransactionID sid : toDelete) {
         persisted.remove(sid);

@@ -9,7 +9,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.managedobject.ManagedObjectStateStaticConfig.Factory;
-import com.tc.objectserver.persistence.api.Persistor;
+import com.tc.objectserver.persistence.gb.GBManagedObjectPersistor;
 import com.tc.objectserver.persistence.gb.GBPersistentObjectFactory;
 import com.tc.objectserver.persistence.gb.GBPersistor;
 import com.tc.util.Assert;
@@ -63,7 +63,7 @@ public class ManagedObjectStateFactory {
   }
 
   public static synchronized ManagedObjectStateFactory createInstance(final ManagedObjectChangeListenerProvider listenerProvider,
-                                                                      final Persistor persistor) {
+                                                                      final GBManagedObjectPersistor persistor) {
     throw new AssertionError();
   }
 

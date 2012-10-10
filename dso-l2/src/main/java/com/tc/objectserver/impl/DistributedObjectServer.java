@@ -213,25 +213,12 @@ import com.tc.objectserver.managedobject.ManagedObjectChangeListenerProviderImpl
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
-import com.tc.objectserver.persistence.api.ClientStatePersistor;
-import com.tc.objectserver.persistence.api.ManagedObjectStore;
-import com.tc.objectserver.persistence.api.Persistor;
-import com.tc.objectserver.persistence.api.TransactionPersistor;
-import com.tc.objectserver.persistence.api.TransactionStore;
-import com.tc.objectserver.persistence.db.ConnectionIDFactoryImpl;
-import com.tc.objectserver.persistence.db.DBException;
-import com.tc.objectserver.persistence.db.DBSequenceKeys;
-import com.tc.objectserver.persistence.db.DatabaseDirtyException;
-import com.tc.objectserver.persistence.db.TransactionStoreImpl;
 import com.tc.objectserver.persistence.gb.GBPersistor;
 import com.tc.objectserver.persistence.gb.StorageManagerFactory;
 import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.SearchEventHandler;
 import com.tc.objectserver.search.SearchQueryRequestMessageHandler;
 import com.tc.objectserver.search.SearchRequestManager;
-import com.tc.objectserver.storage.api.DBFactory;
-import com.tc.objectserver.storage.api.OffheapStats;
-import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.tx.CommitTransactionMessageRecycler;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.ServerTransactionManagerConfig;
@@ -333,6 +320,13 @@ import javax.management.remote.JMXConnectorServer;
 
 import bsh.EvalError;
 import bsh.Interpreter;
+import com.tc.objectserver.api.SequenceNames;
+import com.tc.objectserver.api.TransactionStore;
+import com.tc.objectserver.persistence.gb.GBClientStatePersistor;
+import com.tc.objectserver.persistence.gb.GBObjectIDSequence;
+import com.tc.objectserver.persistence.gb.GBPersistenceTransactionProvider;
+import com.tc.objectserver.persistence.gb.GBTransactionPersistor;
+import com.tc.objectserver.storage.api.OffheapStats;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -367,9 +361,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private ServerManagementContext                managementContext;
   private StartupLock                            startupLock;
   private ClientStateManager                     clientStateManager;
-  private ManagedObjectStore                     objectStore;
+  private PersistentManagedObjectStore                     objectStore;
   private GarbageCollectionManager               garbageCollectionManager;
-  private Persistor                              persistor;
+  private GBPersistor                              persistor;
   private ServerTransactionManagerImpl           transactionManager;
 
   private L2Management                           l2Management;
@@ -526,13 +520,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final boolean persistent = (persistenceMode == PersistenceMode.PERMANENT_STORE);
 
     final Offheap offHeapConfig = l2DSOConfig.offHeapConfig();
-
-    final DBFactory dbFactory = DBFactory.getInstance();
-
     // start the JMX server
     try {
       startJMXServer(jmxBind, this.configSetupManager.commonl2Config().jmxPort().getIntValue(),
-                     new RemoteJMXProcessor(), dbFactory.getServerDBBackupMBean(this.configSetupManager));
+                     new RemoteJMXProcessor(), null);
     } catch (final Exception e) {
       final String msg = "Unable to start the JMX server. Do you have another Terracotta Server instance running?";
       consoleLogger.error(msg);
@@ -559,8 +550,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(stageManager));
 
-    final ClientStatePersistor clientStateStore;
-    final TransactionPersistor transactionPersistor;
     final Sequence globalTransactionIDSequence;
     final GarbageCollectionInfoPublisher gcPublisher = new GarbageCollectionInfoPublisherImpl();
     final ManagedObjectChangeListenerProviderImpl managedObjectChangeListenerProvider = new ManagedObjectChangeListenerProviderImpl();
@@ -587,7 +576,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     logger.debug("persistence database home: " + dbhome);
 
     final CallbackOnExitHandler dirtydbHandler = new CallbackDatabaseDirtyAlertAdapter(logger, consoleLogger);
-    this.threadGroup.addCallbackOnExitExceptionHandler(DatabaseDirtyException.class, dirtydbHandler);
 
     StorageManagerFactory storageManagerFactory = serverBuilder.createStorageManagerFactory(persistent, dbhome,
         configSetupManager.dsoL2Config(), offHeapConfig.getEnabled());
@@ -622,9 +610,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                      this.persistor
                                                                                          .getPersistentStateStore()));
 
-    PersistenceTransactionProvider transactionStorePTP = this.persistor.getPersistenceTransactionProvider();
+    GBPersistenceTransactionProvider transactionStorePTP = this.persistor.getPersistenceTransactionProvider();
     MutableSequence gidSequence;
-    transactionPersistor = this.persistor.getTransactionPersistor();
+    GBTransactionPersistor transactionPersistor = this.persistor.getTransactionPersistor();
     gidSequence = this.persistor.getGlobalTransactionIDSequence();
 
     final GlobalTransactionIDBatchRequestHandler gidSequenceProvider = new GlobalTransactionIDBatchRequestHandler(
@@ -635,7 +623,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     gidSequenceProvider.setRequestBatchSink(requestBatchStage.getSink());
     globalTransactionIDSequence = new BatchSequence(gidSequenceProvider, 10000);
 
-    clientStateStore = this.persistor.getClientStatePersistor();
+    GBClientStatePersistor clientStateStore = this.persistor.getClientStatePersistor();
 
     ManagedObjectStateFactory.createInstance(managedObjectChangeListenerProvider, (GBPersistor) this.persistor);
 
@@ -875,7 +863,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.metaDataManager = this.serverBuilder.createMetaDataManager(searchEventSink);
 
-    this.transactionManager = new ServerTransactionManagerImpl(gtxm, transactionStore, this.lockManager,
+    this.transactionManager = new ServerTransactionManagerImpl(gtxm, this.lockManager,
                                                                this.clientStateManager, this.objectManager,
                                                                this.txnObjectManager, taa, globalTxnCounter,
                                                                channelStats,
@@ -995,7 +983,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                               stageManager, maxStageSize, this);
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.objectRequestManager));
     final Stage oidRequest = stageManager.createStage(ServerConfigurationContext.OBJECT_ID_BATCH_REQUEST_STAGE,
-                                                      new RequestObjectIDBatchHandler(this.objectStore), 1,
+                                                      new RequestObjectIDBatchHandler(new GBObjectIDSequence(persistor.getManagedObjectPersistor())), 1,
                                                       maxStageSize);
     final Stage transactionAck = stageManager.createStage(ServerConfigurationContext.TRANSACTION_ACKNOWLEDGEMENT_STAGE,
                                                           new TransactionAcknowledgementHandler(), 1, maxStageSize);
@@ -1070,7 +1058,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.groupCommManager));
     // initialize the garbage collector
-    final MutableSequence dgcSequence = ((GBPersistor) persistor).getSequenceManager().getSequence(DBSequenceKeys.DGC_SEQUENCE_NAME);
+    final MutableSequence dgcSequence = ((GBPersistor) persistor).getSequenceManager().getSequence(SequenceNames.DGC_SEQUENCE_NAME.getName());
     final DGCSequenceProvider dgcSequenceProvider = new DGCSequenceProvider(dgcSequence);
     final GarbageCollector gc = this.serverBuilder.createGarbageCollector(toInit, objectManagerConfig,
                                                                           this.objectManager, this.clientStateManager,
@@ -1525,7 +1513,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     try {
       this.persistor.close();
-    } catch (final DBException e) {
+    } catch (final Exception e) {
       logger.warn(e);
     }
 
@@ -1570,7 +1558,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return this.connectionIdFactory;
   }
 
-  public ManagedObjectStore getManagedObjectStore() {
+  public PersistentManagedObjectStore getManagedObjectStore() {
     return this.objectStore;
   }
 

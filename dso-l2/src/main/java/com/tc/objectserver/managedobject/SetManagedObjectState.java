@@ -12,7 +12,7 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.persistence.db.TCDestroyable;
+import com.tc.objectserver.api.Destroyable;
 import com.tc.objectserver.persistence.gb.GBPersistentObjectFactory;
 
 import java.io.IOException;
@@ -27,7 +27,7 @@ import org.terracotta.corestorage.KeyValueStorage;
 /**
  * ManagedObjectState for sets.
  */
-public class SetManagedObjectState extends LogicalManagedObjectState implements TCDestroyable {
+public class SetManagedObjectState extends LogicalManagedObjectState implements Destroyable {
   protected final KeyValueStorage<Object, Object> references;
   private final ObjectID oid;
 
@@ -145,8 +145,8 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
   }
 
   public void destroy() {
-    if (this.references instanceof TCDestroyable) {
-      ((TCDestroyable) this.references).destroy();
+    if (this.references instanceof Destroyable) {
+      ((Destroyable) this.references).destroy();
     }
   }
 }

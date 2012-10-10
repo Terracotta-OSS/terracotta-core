@@ -22,6 +22,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.api.ObjectManager;
+import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.gtx.GlobalTransactionIDLowWaterMarkProvider;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
@@ -31,8 +32,6 @@ import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
-import com.tc.objectserver.persistence.api.TransactionStore;
-import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.stats.counter.Counter;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
@@ -102,7 +101,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   private final MetaDataManager                         metaDataManager;
 
   public ServerTransactionManagerImpl(final ServerGlobalTransactionManager gtxm,
-                                      final TransactionStore transactionStore, final LockManager lockManager,
+                                      final LockManager lockManager,
                                       final ClientStateManager stateManager, final ObjectManager objectManager,
                                       final TransactionalObjectManager txnObjectManager,
                                       final TransactionAcknowledgeAction action, final Counter transactionRateCounter,
@@ -399,7 +398,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
    *
    */
   @Override
-  public void commit(final PersistenceTransactionProvider ptxp, final Collection<ManagedObject> objects,
+  public void commit(final TransactionProvider ptxp, final Collection<ManagedObject> objects,
                      final Map<String, ObjectID> newRoots,
                      final Collection<ServerTransactionID> appliedServerTransactionIDs,
                      final SortedSet<ObjectID> deletedObjects) {

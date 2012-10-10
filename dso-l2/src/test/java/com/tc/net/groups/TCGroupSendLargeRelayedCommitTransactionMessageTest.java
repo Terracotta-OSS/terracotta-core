@@ -29,7 +29,8 @@ import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
-import com.tc.objectserver.persistence.inmemory.InMemoryPersistor;
+import com.tc.objectserver.persistence.gb.GBPersistor;
+import com.tc.objectserver.persistence.gb.StorageManagerFactory;
 import com.tc.objectserver.tx.TestCommitTransactionMessage;
 import com.tc.objectserver.tx.TestCommitTransactionMessageFactory;
 import com.tc.objectserver.tx.TestServerTransaction;
@@ -43,7 +44,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.StorageManager;
+import org.terracotta.corestorage.heap.HeapStorageManager;
 
 /*
  * This test is to verify fix for DEV-2149 reallocating big memory. After test, grep "large" to see if big memory block
@@ -59,7 +64,13 @@ public class TCGroupSendLargeRelayedCommitTransactionMessageTest extends TCTestC
 
   public void baseTestSendingReceivingMessagesStatic(int batchSize) throws Exception {
     System.out.println("Test batch data size " + batchSize);
-    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), new InMemoryPersistor());
+    GBPersistor persistor = new GBPersistor(new StorageManagerFactory() {
+      @Override
+      public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap) {
+        return new HeapStorageManager(configMap);
+      }
+    });
+    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), persistor);
     PortChooser pc = new PortChooser();
     final int p1 = pc.chooseRandom2Port();
     final int p2 = pc.chooseRandom2Port();

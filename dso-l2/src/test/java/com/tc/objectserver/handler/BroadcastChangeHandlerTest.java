@@ -49,12 +49,14 @@ import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerTest.TestDateDNA;
 import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.api.ServerMapRequestManager;
+import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManager;
 import com.tc.objectserver.context.BroadcastChangeContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
+import com.tc.objectserver.impl.PersistentManagedObjectStore;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.api.InvalidateObjectManager;
 import com.tc.objectserver.l1.api.ObjectReferenceAddListener;
@@ -63,10 +65,8 @@ import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
-import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.search.IndexManager;
 import com.tc.objectserver.search.SearchRequestManager;
-import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionListener;
 import com.tc.objectserver.tx.ServerTransactionManager;
@@ -308,7 +308,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
 
     @Override
-    public ManagedObjectStore getObjectStore() {
+    public PersistentManagedObjectStore getObjectStore() {
       throw new ImplementMe();
     }
 
@@ -879,7 +879,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
 
     @Override
-    public void commit(final PersistenceTransactionProvider ptxp, final Collection<ManagedObject> objects,
+    public void commit(final TransactionProvider ptxp, final Collection<ManagedObject> objects,
                        final Map<String, ObjectID> newRoots,
                        final Collection<ServerTransactionID> appliedServerTransactionIDs,
                        final SortedSet<ObjectID> deletedObjects) {
@@ -960,5 +960,6 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     public void processMetaData(ServerTransaction txn, ApplyTransactionInfo applyInfo) {
       //
     }
+
   }
 }

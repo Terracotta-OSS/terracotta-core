@@ -34,7 +34,8 @@ import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
-import com.tc.objectserver.persistence.inmemory.InMemoryPersistor;
+import com.tc.objectserver.persistence.gb.GBPersistor;
+import com.tc.objectserver.persistence.gb.StorageManagerFactory;
 import com.tc.test.TCTestCase;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.PortChooser;
@@ -46,7 +47,11 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.StorageManager;
+import org.terracotta.corestorage.heap.HeapStorageManager;
 
 public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
   private final static String LOCALHOST   = "localhost";
@@ -58,7 +63,13 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
 
   public void baseTestSendingReceivingMessagesStatic(final long oidsCount) throws Exception {
     System.out.println("Test with ObjectIDs size " + oidsCount);
-    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), new InMemoryPersistor());
+    GBPersistor persistor = new GBPersistor(new StorageManagerFactory() {
+      @Override
+      public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap) {
+        return new HeapStorageManager(configMap);
+      }
+    });
+    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), persistor);
     final PortChooser pc = new PortChooser();
     final int p1 = pc.chooseRandom2Port();
     final int p2 = pc.chooseRandom2Port();

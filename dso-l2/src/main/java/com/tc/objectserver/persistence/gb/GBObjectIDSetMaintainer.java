@@ -4,7 +4,6 @@ import org.terracotta.corestorage.KeyValueStorageMutationListener;
 import org.terracotta.corestorage.Retriever;
 
 import com.tc.object.ObjectID;
-import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Map;

@@ -64,9 +64,8 @@ import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
-import com.tc.objectserver.persistence.db.CustomSerializationAdapterFactory;
-import com.tc.objectserver.persistence.db.DBPersistorImpl;
-import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
+import com.tc.objectserver.persistence.gb.GBPersistor;
+import com.tc.objectserver.persistence.gb.StorageManagerFactory;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
@@ -87,6 +86,9 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import junit.framework.TestCase;
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.StorageManager;
+import org.terracotta.corestorage.heap.HeapStorageManager;
 
 public class ObjectRequestManagerTest extends TestCase {
 
@@ -95,9 +97,13 @@ public class ObjectRequestManagerTest extends TestCase {
     super.setUp();
 
     ManagedObjectStateFactory.disableSingleton(true);
-    final DBPersistorImpl persistor = new DBPersistorImpl(TCLogging.getLogger(ObjectRequestManagerTest.class),
-                                                          new BerkeleyDBEnvironment(true, new File(".")),
-                                                          new CustomSerializationAdapterFactory());
+    GBPersistor persistor = new GBPersistor(new StorageManagerFactory() {
+
+          @Override
+          public StorageManager createStorageManager(Map<String, KeyValueStorageConfig<?, ?>> configMap) {
+              return new HeapStorageManager();
+          }
+      });
 
     final ManagedObjectChangeListenerProviderImpl moclp = new ManagedObjectChangeListenerProviderImpl();
     moclp.setListener(new ManagedObjectChangeListener() {

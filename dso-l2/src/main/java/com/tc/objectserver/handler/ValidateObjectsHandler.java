@@ -9,8 +9,8 @@ import com.tc.async.api.EventHandler;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.ValidateObjectsRequestContext;
+import com.tc.objectserver.impl.PersistentManagedObjectStore;
 import com.tc.objectserver.l1.api.InvalidateObjectManager;
-import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Set;
@@ -18,11 +18,11 @@ import java.util.Set;
 public class ValidateObjectsHandler extends AbstractEventHandler implements EventHandler {
 
   private final InvalidateObjectManager invalidateObjMgr;
-  private final ManagedObjectStore      objectStore;
+  private final PersistentManagedObjectStore      objectStore;
   private final ObjectManager           objectManager;
 
   public ValidateObjectsHandler(InvalidateObjectManager invalidateObjMgr, ObjectManager objectManager,
-                                ManagedObjectStore objectStore) {
+                                PersistentManagedObjectStore objectStore) {
     this.invalidateObjMgr = invalidateObjMgr;
     this.objectManager = objectManager;
     this.objectStore = objectStore;

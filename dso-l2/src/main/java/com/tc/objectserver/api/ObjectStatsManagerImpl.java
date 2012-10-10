@@ -6,16 +6,16 @@ package com.tc.objectserver.api;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
+import com.tc.objectserver.impl.PersistentManagedObjectStore;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.persistence.api.ManagedObjectStore;
 
 public class ObjectStatsManagerImpl implements ObjectStatsManager {
   private final ObjectManagerMBean objectManager;
-  private final ManagedObjectStore objectStore;
+  private final PersistentManagedObjectStore objectStore;
 
   protected final static TCLogger  logger = TCLogging.getLogger(ObjectStatsManagerImpl.class);
 
-  public ObjectStatsManagerImpl(ObjectManagerMBean manager, ManagedObjectStore store) {
+  public ObjectStatsManagerImpl(ObjectManagerMBean manager, PersistentManagedObjectStore store) {
     this.objectManager = manager;
     this.objectStore = store;
   }

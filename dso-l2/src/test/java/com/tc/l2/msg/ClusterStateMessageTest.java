@@ -4,7 +4,6 @@
  */
 package com.tc.l2.msg;
 
-import com.tc.async.impl.MockSink;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.ha.ClusterState;
@@ -16,20 +15,22 @@ import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.gtx.GlobalTransactionIDSequenceProvider;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
-import com.tc.objectserver.impl.PersistentManagedObjectStore;
-import com.tc.objectserver.impl.TestManagedObjectPersistor;
-import com.tc.objectserver.persistence.api.Persistor;
-import com.tc.objectserver.persistence.db.ConnectionIDFactoryImpl;
+import com.tc.objectserver.impl.ConnectionIDFactoryImpl;
+import com.tc.objectserver.persistence.gb.GBObjectIDSequence;
+import com.tc.objectserver.persistence.gb.GBPersistor;
+import com.tc.objectserver.persistence.gb.StorageManagerFactory;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
-import com.tc.objectserver.persistence.inmemory.InMemoryPersistor;
 import com.tc.util.State;
 import com.tc.util.sequence.DGCSequenceProvider;
 import com.tc.util.sequence.ObjectIDSequence;
 
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import junit.framework.TestCase;
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.StorageManager;
+import org.terracotta.corestorage.heap.HeapStorageManager;
 
 public class ClusterStateMessageTest extends TestCase {
   private static final int CLUSTER_STATE_1 = 1;
@@ -51,10 +52,14 @@ public class ClusterStateMessageTest extends TestCase {
   }
 
   private void resetClusterState(int clusterState) {
-    Persistor persistor = new InMemoryPersistor();
+    GBPersistor persistor =  new GBPersistor(new StorageManagerFactory() {
+      @Override
+      public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap) {
+        return new HeapStorageManager(configMap);
+      }
+    });
     PersistentMapStore clusterStateStore = persistor.getPersistentStateStore();
-    ObjectIDSequence oidSequence = new PersistentManagedObjectStore(new TestManagedObjectPersistor(new HashMap()),
-                                                                    new MockSink());
+    ObjectIDSequence oidSequence = new GBObjectIDSequence(persistor.getManagedObjectPersistor());
     ConnectionIDFactory connectionIdFactory = new ConnectionIDFactoryImpl(persistor.getClientStatePersistor());
     GlobalTransactionIDSequenceProvider gidSequenceProvider = new GlobalTransactionIDBatchRequestHandler(
                                                                                                          new TestMutableSequence());

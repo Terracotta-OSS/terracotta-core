@@ -5,19 +5,18 @@
 package com.tc.objectserver.persistence.impl;
 
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
-
 import com.tc.exception.TCRuntimeException;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
+import com.tc.objectserver.api.Transaction;
+import com.tc.objectserver.api.TransactionProvider;
 
-public final class TestPersistenceTransactionProvider implements PersistenceTransactionProvider {
+public final class TestPersistenceTransactionProvider implements TransactionProvider {
 
   public final LinkedQueue nullTransactionContexts = new LinkedQueue();
   public final LinkedQueue newTransactions         = new LinkedQueue();
 
-  public PersistenceTransaction newTransaction() {
+  public Transaction newTransaction() {
     try {
-      PersistenceTransaction rv = new TestPersistenceTransaction();
+      Transaction rv = new TestPersistenceTransaction();
       newTransactions.put(rv);
       return rv;
     } catch (Exception e) {

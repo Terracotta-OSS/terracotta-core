@@ -6,8 +6,7 @@ import org.terracotta.corestorage.Serializer;
 import org.terracotta.corestorage.heap.KeyValueStorageConfigImpl;
 
 import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.objectserver.persistence.api.ClientStatePersistor;
-import com.tc.objectserver.persistence.inmemory.ClientNotFoundException;
+import com.tc.objectserver.api.ClientNotFoundException;
 import com.tc.util.sequence.MutableSequence;
 
 import java.nio.ByteBuffer;
@@ -16,7 +15,7 @@ import java.util.Set;
 /**
  * @author tim
  */
-public class GBClientStatePersistor implements ClientStatePersistor {
+public class GBClientStatePersistor {
   private final GBSequence clientIDSequence;
   private final KeyValueStorage<ChannelID, Boolean> clients;
 
@@ -32,27 +31,22 @@ public class GBClientStatePersistor implements ClientStatePersistor {
     return config;
   }
 
-  @Override
   public MutableSequence getConnectionIDSequence() {
     return clientIDSequence;
   }
 
-  @Override
   public Set loadClientIDs() {
     return clients.keySet();
   }
 
-  @Override
   public boolean containsClient(ChannelID id) {
     return clients.containsKey(id);
   }
 
-  @Override
   public void saveClientState(ChannelID channelID) {
     clients.put(channelID, true);
   }
 
-  @Override
   public void deleteClientState(ChannelID id) throws ClientNotFoundException {
     if (!clients.remove(id)) {
       throw new ClientNotFoundException();

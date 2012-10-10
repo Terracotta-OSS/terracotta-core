@@ -7,9 +7,9 @@ package com.tc.objectserver.gtx;
 import com.tc.net.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
-import com.tc.objectserver.persistence.api.TransactionStore;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
+import com.tc.objectserver.api.TransactionProvider;
+import com.tc.objectserver.api.Transaction;
+import com.tc.objectserver.api.TransactionStore;
 import com.tc.util.SequenceValidator;
 import com.tc.util.sequence.Sequence;
 
@@ -17,15 +17,14 @@ import java.util.Collection;
 import java.util.Set;
 
 public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransactionManager {
-
   private final TransactionStore                    transactionStore;
-  private final PersistenceTransactionProvider      persistenceTransactionProvider;
+  private final TransactionProvider      persistenceTransactionProvider;
   private final SequenceValidator                   sequenceValidator;
   private final GlobalTransactionIDSequenceProvider gidSequenceProvider;
   private final Sequence                            globalTransactionIDSequence;
 
   public ServerGlobalTransactionManagerImpl(SequenceValidator sequenceValidator, TransactionStore transactionStore,
-                                            PersistenceTransactionProvider ptxp,
+                                            TransactionProvider ptxp,
                                             GlobalTransactionIDSequenceProvider gidSequenceProvider,
                                             Sequence globalTransactionIDSequence) {
     this.sequenceValidator = sequenceValidator;
@@ -37,13 +36,13 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
 
   public void shutdownNode(NodeID nodeID) {
     this.sequenceValidator.remove(nodeID);
-    PersistenceTransaction tx = this.persistenceTransactionProvider.newTransaction();
+    Transaction tx = this.persistenceTransactionProvider.newTransaction();
     transactionStore.shutdownNode(tx, nodeID);
     tx.commit();
   }
 
   public void shutdownAllClientsExcept(Set cids) {
-    PersistenceTransaction tx = this.persistenceTransactionProvider.newTransaction();
+    Transaction tx = this.persistenceTransactionProvider.newTransaction();
     transactionStore.shutdownAllClientsExcept(tx, cids);
     tx.commit();
   }
@@ -54,22 +53,22 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
   }
 
   public void clearCommitedTransactionsBelowLowWaterMark(ServerTransactionID sid) {
-    PersistenceTransaction tx = this.persistenceTransactionProvider.newTransaction();
+    Transaction tx = this.persistenceTransactionProvider.newTransaction();
     transactionStore.clearCommitedTransactionsBelowLowWaterMark(tx, sid);
     tx.commit();
   }
 
   public void clearCommitedTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
-    PersistenceTransaction tx = this.persistenceTransactionProvider.newTransaction();
+    Transaction tx = this.persistenceTransactionProvider.newTransaction();
     transactionStore.clearCommitedTransactionsBelowLowWaterMark(tx, lowGlobalTransactionIDWatermark);
     tx.commit();
   }
 
-  public void commit(PersistenceTransaction persistenceTransaction, ServerTransactionID stxID) {
+  public void commit(Transaction persistenceTransaction, ServerTransactionID stxID) {
     transactionStore.commitTransactionDescriptor(persistenceTransaction, stxID);
   }
 
-  public void commitAll(PersistenceTransaction persistenceTransaction, Collection stxIDs) {
+  public void commitAll(Transaction persistenceTransaction, Collection stxIDs) {
     transactionStore.commitAllTransactionDescriptor(persistenceTransaction, stxIDs);
   }
 

@@ -11,7 +11,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
-import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
+import com.tc.objectserver.api.TransactionProvider;
 
 import java.util.Collection;
 import java.util.Map;
@@ -71,7 +71,7 @@ public interface ServerTransactionManager {
    * Commits all the changes in objects and releases the objects This could potentially trigger an acknowledgment to the
    * originating client.
    */
-  public void commit(PersistenceTransactionProvider ptxp, Collection<ManagedObject> objects,
+  public void commit(TransactionProvider ptxp, Collection<ManagedObject> objects,
                      Map<String, ObjectID> newRoots, Collection<ServerTransactionID> appliedServerTransactionIDs,
                      SortedSet<ObjectID> deletedObjects);
 

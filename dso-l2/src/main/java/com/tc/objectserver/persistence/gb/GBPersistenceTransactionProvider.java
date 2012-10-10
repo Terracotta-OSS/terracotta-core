@@ -1,13 +1,13 @@
 package com.tc.objectserver.persistence.gb;
 
-import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
+import com.tc.objectserver.api.Transaction;
+import com.tc.objectserver.api.TransactionProvider;
 import org.terracotta.corestorage.StorageManager;
 
 /**
  * @author tim
  */
-public class GBPersistenceTransactionProvider implements PersistenceTransactionProvider {
+public class GBPersistenceTransactionProvider implements TransactionProvider {
 
   private final StorageManager manager;
 
@@ -15,13 +15,12 @@ public class GBPersistenceTransactionProvider implements PersistenceTransactionP
     this.manager = manager;
   }
 
-  @Override
-  public PersistenceTransaction newTransaction() {
+  public Transaction newTransaction() {
     return new GBTransaction();
   }
 
 
-  private class GBTransaction implements PersistenceTransaction {
+  private class GBTransaction implements Transaction {
     private final Thread t;
 
     private GBTransaction() {
@@ -29,12 +28,6 @@ public class GBPersistenceTransactionProvider implements PersistenceTransactionP
       manager.begin();
     }
 
-    @Override
-    public Object getTransaction() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
     public void commit() {
       if (Thread.currentThread() != t) {
         throw new IllegalStateException("Begin and commit threads don't match.");
@@ -42,7 +35,6 @@ public class GBPersistenceTransactionProvider implements PersistenceTransactionP
       manager.commit();
     }
 
-    @Override
     public void abort() {
       throw new UnsupportedOperationException();
     }

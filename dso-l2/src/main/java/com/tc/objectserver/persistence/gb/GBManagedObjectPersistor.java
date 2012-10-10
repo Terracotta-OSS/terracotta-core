@@ -5,9 +5,8 @@ import org.terracotta.corestorage.KeyValueStorageConfig;
 import org.terracotta.corestorage.heap.KeyValueStorageConfigImpl;
 
 import com.tc.object.ObjectID;
+import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
@@ -20,7 +19,7 @@ import java.util.SortedSet;
 /**
  * @author tim
  */
-public class GBManagedObjectPersistor implements ManagedObjectPersistor {
+public class GBManagedObjectPersistor  {
 
   // This should be persistent
   private final KeyValueStorage<String, ObjectID> rootMap;
@@ -47,70 +46,57 @@ public class GBManagedObjectPersistor implements ManagedObjectPersistor {
     return GBObjectMap.getConfig();
   }
 
-  @Override
   public void close() {
   }
 
-  @Override
   public Set loadRoots() {
     return new HashSet<ObjectID>(rootMap.values());
   }
 
-  @Override
   public Set loadRootNames() {
     return rootMap.keySet();
   }
 
-  @Override
   public ObjectID loadRootID(String name) {
     ObjectID id = rootMap.get(name);
     return id == null ? ObjectID.NULL_ID : id;
   }
 
-  @Override
-  public void addRoot(PersistenceTransaction tx, String name, ObjectID id) {
+  public void addRoot(Transaction tx, String name, ObjectID id) {
     rootMap.put(name, id);
   }
 
-  @Override
   public ManagedObject loadObjectByID(ObjectID id) {
     return objectMap.get(id);
   }
 
-  @Override
   public long nextObjectIDBatch(int batchSize) {
     return objectIDSequence.nextBatch(batchSize);
   }
 
-  @Override
   public long currentObjectIDValue() {
     return objectIDSequence.current();
   }
 
-  @Override
   public void setNextAvailableObjectID(long startID) {
     objectIDSequence.setNext(startID);
   }
 
-  @Override
-  public void saveObject(PersistenceTransaction tx, ManagedObject managedObject) {
+  public void saveObject(Transaction tx, ManagedObject managedObject) {
     objectMap.put(managedObject.getID(), managedObject);
     managedObject.setIsDirty(false);
   }
 
-  @Override
-  public void saveAllObjects(PersistenceTransaction tx, Collection managed) {
+  public void saveAllObjects(Transaction tx, Collection managed) {
     for (ManagedObject managedObject : (Collection<ManagedObject> ) managed) {
       saveObject(tx, managedObject);
     }
   }
 
-  @Override
   public void deleteAllObjects(SortedSet<ObjectID> ids) {
     objectMap.removeAll(ids);
   }
 
-  @Override
   public Map loadRootNamesToIDs() {
     return asJdkMap(rootMap);
   }
@@ -123,44 +109,20 @@ public class GBManagedObjectPersistor implements ManagedObjectPersistor {
     return m;
   }
 
-  @Override
   public int getObjectCount() {
     return (int) objectMap.size();
   }
 
-  @Override
-  @Deprecated
-  public boolean addNewObject(ManagedObject managed) {
-    // This populates the evictable, map type, extant object id sets. They're maintained via our
-    // mutation listener.
-    return true;
-  }
-
-  @Override
   public boolean containsObject(ObjectID id) {
     return objectMap.containsKey(id);
   }
 
-  @Override
-  @Deprecated
-  public void removeAllObjectIDs(SortedSet<ObjectID> ids) {
-    // Handled by the mutation listener like addNewObject();
-  }
-
-  @Override
   public ObjectIDSet snapshotObjectIDs() {
     return oidSetMaintainer.objectIDSnapshot();
   }
 
-  @Override
   public ObjectIDSet snapshotEvictableObjectIDs() {
     return oidSetMaintainer.evictableObjectIDSetSnapshot();
   }
 
-  @Override
-  @Deprecated
-  public ObjectIDSet snapshotMapTypeObjectIDs() {
-    // Only appears to be used in tests, probably get rid of this.
-    return oidSetMaintainer.mapObjectIDSetSnapshot();
-  }
 }

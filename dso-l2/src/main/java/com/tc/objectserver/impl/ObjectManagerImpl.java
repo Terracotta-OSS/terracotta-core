@@ -11,6 +11,7 @@ import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
+import com.tc.objectserver.api.Destroyable;
 import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
@@ -26,10 +27,8 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.persistence.api.ManagedObjectStore;
-import com.tc.objectserver.persistence.db.TCDestroyable;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
+import com.tc.objectserver.api.TransactionProvider;
+import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.tx.NullTransactionalObjectManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.text.PrettyPrintable;
@@ -88,7 +87,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
                                                                                     .getLogger(ObjectManager.class);
 
 
-  private final ManagedObjectStore                              objectStore;
+  private final PersistentManagedObjectStore                              objectStore;
   private final ConcurrentMap<ObjectID, ManagedObjectReference> references;
   private final Counter                                         flushInProgress = new Counter();
   private final AtomicInteger                                   checkedOutCount = new AtomicInteger();
@@ -106,14 +105,14 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private final ClientStateManager                              stateManager;
   private final ObjectManagerConfig                             config;
-  private final PersistenceTransactionProvider                  persistenceTransactionProvider;
+  private final TransactionProvider                  persistenceTransactionProvider;
 
   // TODO: Flip this around to ReferencesIDStore? It's highly probable that we'll have more objects with no references
   private final NoReferencesIDStore                             noReferencesIDStore;
   private final Sink                                            destroyableMapSink;
 
   public ObjectManagerImpl(final ObjectManagerConfig config, final ClientStateManager stateManager,
-                           final ManagedObjectStore objectStore, final PersistenceTransactionProvider persistenceTransactionProvider,
+                           final PersistentManagedObjectStore objectStore, final TransactionProvider persistenceTransactionProvider,
                            Sink destroyableMapSink) {
     Assert.assertNotNull(objectStore);
     this.config = config;
@@ -156,7 +155,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
           toFlush.add(obj);
         }
       }
-      final PersistenceTransaction tx = newTransaction();
+      final Transaction tx = newTransaction();
       flushAllAndCommit(tx, toFlush);
     } finally {
       this.lock.writeLock().unlock();
@@ -719,8 +718,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     final ManagedObjectReference removed = this.references.remove(oid);
     if (removed != null && removed.getObject() != null) {
       ManagedObjectState removedManagedObjectState = removed.getObject().getManagedObjectState();
-      if (removedManagedObjectState instanceof TCDestroyable) {
-        destroyableMapSink.add(new DestroyableMapContext((TCDestroyable) removedManagedObjectState));
+      if (removedManagedObjectState instanceof Destroyable) {
+        destroyableMapSink.add(new DestroyableMapContext((Destroyable) removedManagedObjectState));
       }
     }
     return removed;
@@ -788,12 +787,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     processPendingLookups();
   }
 
-  private void flushAndCommit(final PersistenceTransaction persistenceTransaction, final ManagedObject managedObject) {
+  private void flushAndCommit(final Transaction persistenceTransaction, final ManagedObject managedObject) {
     this.objectStore.commitObject(persistenceTransaction, managedObject);
     persistenceTransaction.commit();
   }
 
-  private void flushAllAndCommit(final PersistenceTransaction persistenceTransaction, final Collection managedObjects) {
+  private void flushAllAndCommit(final Transaction persistenceTransaction, final Collection managedObjects) {
     this.objectStore.commitAllObjects(persistenceTransaction, managedObjects);
     persistenceTransaction.commit();
   }
@@ -819,7 +818,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     this.collector.notifyObjectCreated(id);
   }
 
-  public ManagedObjectStore getObjectStore() {
+  public PersistentManagedObjectStore getObjectStore() {
     return this.objectStore;
   }
 
@@ -829,7 +828,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public void createRoot(final String rootName, final ObjectID id) {
     assertNotInShutdown();
-    final PersistenceTransaction tx = newTransaction();
+    final Transaction tx = newTransaction();
     this.objectStore.addNewRoot(tx, rootName, id);
     tx.commit();
     this.stats.newObjectCreated();
@@ -837,7 +836,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     changed(null, null, id);
   }
 
-  private PersistenceTransaction newTransaction() {
+  private Transaction newTransaction() {
     return this.persistenceTransactionProvider.newTransaction();
   }
 
@@ -874,7 +873,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   public void flushAndEvict(final List objects2Flush) {
-    final PersistenceTransaction tx = newTransaction();
+    final Transaction tx = newTransaction();
     final int size = objects2Flush.size();
     flushAllAndCommit(tx, objects2Flush);
     evicted(objects2Flush);

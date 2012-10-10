@@ -8,6 +8,7 @@ import com.tc.async.impl.MockSink;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.impl.TestManagedObject;
+import com.tc.objectserver.persistence.gb.GBManagedObjectPersistor;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransaction;
 
 import java.util.ArrayList;
@@ -18,6 +19,8 @@ import java.util.Map;
 import java.util.TreeSet;
 
 import junit.framework.TestCase;
+import org.mockito.AdditionalAnswers;
+import org.mockito.Mockito;
 
 public class PersistentManagedObjectStoreTest extends TestCase {
 
@@ -29,13 +32,13 @@ public class PersistentManagedObjectStoreTest extends TestCase {
     super.setUp();
     map = new HashMap();
     persistor = new TestManagedObjectPersistor(map);
-    objectStore = new PersistentManagedObjectStore(persistor, new MockSink());
+    objectStore = new PersistentManagedObjectStore(Mockito.mock(GBManagedObjectPersistor.class,AdditionalAnswers.delegatesTo(persistor)), new MockSink());
   }
 
   public void testGetObjectByID() throws Exception {
     ObjectID objectID = new ObjectID(1);
     TestManagedObject mo = new TestManagedObject(objectID);
-    persistor.map.put(objectID, mo);
+    map.put(objectID, mo);
     objectStore.getObjectByID(objectID);
     assertEquals(objectID, persistor.loadByObjectIDCalls.poll(0));
   }

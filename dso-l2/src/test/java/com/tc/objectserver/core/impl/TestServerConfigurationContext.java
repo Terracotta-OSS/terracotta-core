@@ -19,10 +19,10 @@ import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
+import com.tc.objectserver.impl.PersistentManagedObjectStore;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.metadata.MetaDataManager;
-import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.search.IndexManager;
 import com.tc.objectserver.search.SearchRequestManager;
 import com.tc.objectserver.tx.ServerTransactionManager;
@@ -41,7 +41,7 @@ public class TestServerConfigurationContext implements ServerConfigurationContex
   public DSOChannelManager              channelManager;
   public ClientStateManager             clientStateManager;
   public ServerTransactionManager       transactionManager;
-  public ManagedObjectStore             objectStore;
+  public PersistentManagedObjectStore             objectStore;
   public ServerClientHandshakeManager   clientHandshakeManager;
   public Map                            stages = new HashMap();
   public ChannelStats                   channelStats;
@@ -68,6 +68,11 @@ public class TestServerConfigurationContext implements ServerConfigurationContex
     this.objectRequestManager = objectRequestManager;
   }
 
+    @Override
+    public PersistentManagedObjectStore getObjectStore() {
+        return this.objectStore;
+    }
+
   public LockManager getLockManager() {
     return this.lockManager;
   }
@@ -82,10 +87,6 @@ public class TestServerConfigurationContext implements ServerConfigurationContex
 
   public ServerTransactionManager getTransactionManager() {
     return this.transactionManager;
-  }
-
-  public ManagedObjectStore getObjectStore() {
-    return this.objectStore;
   }
 
   public ServerClientHandshakeManager getClientHandshakeManager() {

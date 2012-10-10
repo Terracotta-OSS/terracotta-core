@@ -9,7 +9,6 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.managedobject.ManagedObjectSerializer;
 import com.tc.objectserver.managedobject.ManagedObjectStateSerializer;
-import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -30,7 +29,7 @@ class GBObjectMap implements KeyValueStorage<ObjectID, ManagedObject> {
   private final KeyValueStorage<Long, byte[]> backingMap;
   private final ManagedObjectSerializer serializer;
 
-  GBObjectMap(ManagedObjectPersistor persistor, final KeyValueStorage<Long, byte[]> backingMap) {
+  GBObjectMap(GBManagedObjectPersistor persistor, final KeyValueStorage<Long, byte[]> backingMap) {
     this.backingMap = backingMap;
     this.serializer = new ManagedObjectSerializer(new ManagedObjectStateSerializer(), persistor);
   }

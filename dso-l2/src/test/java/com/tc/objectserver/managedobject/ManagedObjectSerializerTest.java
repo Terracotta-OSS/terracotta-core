@@ -14,12 +14,17 @@ import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
-import com.tc.objectserver.persistence.inmemory.InMemoryPersistor;
+import com.tc.objectserver.persistence.gb.GBPersistor;
+import com.tc.objectserver.persistence.gb.StorageManagerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.Map;
 
 import junit.framework.TestCase;
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.StorageManager;
+import org.terracotta.corestorage.heap.HeapStorageManager;
 
 public class ManagedObjectSerializerTest extends TestCase {
 
@@ -28,8 +33,15 @@ public class ManagedObjectSerializerTest extends TestCase {
 
   public void test() throws Exception {
     ManagedObjectStateFactory.disableSingleton(true);
-    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), new InMemoryPersistor());
+    GBPersistor persistor = new GBPersistor(new StorageManagerFactory() {
 
+          @Override
+          public StorageManager createStorageManager(Map<String, KeyValueStorageConfig<?, ?>> configMap) {
+              return new HeapStorageManager();
+          }
+      });
+    
+    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), persistor);
     this.stateSerializer = new ManagedObjectStateSerializer();
     this.id = new ObjectID(1);
 

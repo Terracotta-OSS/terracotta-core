@@ -8,11 +8,6 @@ import com.tc.object.ObjectID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
-import com.tc.objectserver.persistence.api.ClientStatePersistor;
-import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
-import com.tc.objectserver.persistence.api.Persistor;
-import com.tc.objectserver.persistence.api.TransactionPersistor;
-import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.util.sequence.MutableSequence;
 
 import java.util.HashMap;
@@ -21,7 +16,7 @@ import java.util.Map;
 /**
  * @author tim
  */
-public class GBPersistor implements Persistor {
+public class GBPersistor {
 
   private static final String TRANSACTION = "transaction";
   private static final String CLIENT_STATES = "client_states";
@@ -45,6 +40,7 @@ public class GBPersistor implements Persistor {
   private final GBPersistenceTransactionProvider persistenceTransactionProvider;
   private final GBObjectIDSetMaintainer objectIDSetMaintainer;
   private final GBPersistentObjectFactory persistentObjectFactory;
+  private final GBClassPersistorImpl classPersistor;
 
   public GBPersistor(StorageManagerFactory storageManagerFactory) {
     objectIDSetMaintainer = new GBObjectIDSetMaintainer();
@@ -65,6 +61,7 @@ public class GBPersistor implements Persistor {
     gidSequence = sequenceManager.getSequence(GLOBAL_TRANSACTION_ID_SEQUENCE);
     persistenceTransactionProvider = new GBPersistenceTransactionProvider(gbManager);
     persistentObjectFactory = new GBPersistentObjectFactory(gbManager);
+    classPersistor = new GBClassPersistorImpl(gbManager);
   }
 
   private Map<String, KeyValueStorageConfig<?, ?>> getCoreStorageConfig() {
@@ -80,37 +77,34 @@ public class GBPersistor implements Persistor {
     return configs;
   }
 
-  @Override
   public void close() {
     gbManager.shutdown();
   }
+  
+  public GBClassPersistorImpl getClassPersistor() {
+      return classPersistor;
+  }
 
-  @Override
-  public PersistenceTransactionProvider getPersistenceTransactionProvider() {
+  public GBPersistenceTransactionProvider getPersistenceTransactionProvider() {
     return persistenceTransactionProvider;
   }
 
-  @Override
-  public ClientStatePersistor getClientStatePersistor() {
+  public GBClientStatePersistor getClientStatePersistor() {
     return clientStatePersistor;
   }
 
-  @Override
-  public ManagedObjectPersistor getManagedObjectPersistor() {
+  public GBManagedObjectPersistor getManagedObjectPersistor() {
     return managedObjectPersistor;
   }
 
-  @Override
-  public TransactionPersistor getTransactionPersistor() {
+  public GBTransactionPersistor getTransactionPersistor() {
     return transactionPersistor;
   }
 
-  @Override
   public MutableSequence getGlobalTransactionIDSequence() {
     return gidSequence;
   }
 
-  @Override
   public PersistentMapStore getPersistentStateStore() {
     return persistentMapStore;
   }

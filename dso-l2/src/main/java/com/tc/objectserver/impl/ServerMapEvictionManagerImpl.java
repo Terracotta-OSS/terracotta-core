@@ -23,8 +23,7 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
-import com.tc.objectserver.persistence.api.ManagedObjectStore;
-import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
+import com.tc.objectserver.persistence.gb.PersistentCollectionsUtil;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.TransactionBatchContext;
 import com.tc.objectserver.tx.TransactionBatchManager;
@@ -82,7 +81,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
   public static final long                    DEFAULT_SLEEP_TIME              = 15 * 60000;
 
   private final ObjectManager                 objectManager;
-  private final ManagedObjectStore            objectStore;
+  private final PersistentManagedObjectStore            objectStore;
   private final ServerTransactionFactory      serverTransactionFactory;
   private final long                          evictionSleepTime;
   private final Set<ObjectID>                 currentlyEvicting               = Collections
@@ -99,7 +98,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
   private final ServerMapEvictionStatsManager evictionStats;
   private final ClientObjectReferenceSet      clientObjectReferenceSet;
 
-  public ServerMapEvictionManagerImpl(final ObjectManager objectManager, final ManagedObjectStore objectStore,
+  public ServerMapEvictionManagerImpl(final ObjectManager objectManager, final PersistentManagedObjectStore objectStore,
                                       final ClientObjectReferenceSet clientObjectReferenceSet,
                                       final ServerTransactionFactory serverTransactionFactory,
                                       final long evictionSleepTime) {

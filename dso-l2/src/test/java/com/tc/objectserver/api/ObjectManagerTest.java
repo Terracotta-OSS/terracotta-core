@@ -43,7 +43,6 @@ import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.context.RecallObjectsContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.core.impl.TestManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
@@ -61,17 +60,10 @@ import com.tc.objectserver.managedobject.ManagedObjectStateStaticConfig;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.MapEntryFacade;
-import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
-import com.tc.objectserver.persistence.api.ManagedObjectStore;
-import com.tc.objectserver.persistence.api.Persistor;
-import com.tc.objectserver.persistence.db.CustomSerializationAdapterFactory;
-import com.tc.objectserver.persistence.db.SerializationAdapterFactory;
+import com.tc.objectserver.persistence.gb.GBPersistenceTransactionProvider;
 import com.tc.objectserver.persistence.gb.GBPersistor;
 import com.tc.objectserver.persistence.gb.StorageManagerFactory;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransactionProvider;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
-import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionImpl;
 import com.tc.objectserver.tx.ServerTransactionSequencer;
@@ -119,7 +111,7 @@ public class ObjectManagerTest extends TCTestCase {
   private ObjectManagerImpl                  objectManager;
   private TestObjectManagerConfig            config;
   private ClientStateManager                 clientStateManager;
-  private ManagedObjectStore                 objectStore;
+  private PersistentManagedObjectStore                 objectStore;
   private TCLogger                           logger;
   private ObjectManagerStatsImpl             stats;
   private SampledCounter                     newObjectCounter;
@@ -174,7 +166,7 @@ public class ObjectManagerTest extends TCTestCase {
   }
 
   private void initObjectManager(final ThreadGroup threadGroup,
-                                 final ManagedObjectStore store) {
+                                 final PersistentManagedObjectStore store) {
     this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, store,
                                                this.persistenceTransactionProvider, Mockito.mock(Sink.class));
   }
@@ -530,167 +522,13 @@ public class ObjectManagerTest extends TCTestCase {
     }
   }
 
-  private SerializationAdapterFactory newSleepycatSerializationAdapterFactory(final BerkeleyDBEnvironment dbEnv) {
-    return new CustomSerializationAdapterFactory();
-    // return new SleepycatSerializationAdapterFactory(dbEnv);
-  }
-
-  private SerializationAdapterFactory newCustomSerializationAdapterFactory() {
-    return new CustomSerializationAdapterFactory();
-  }
-
-  public void testLookupInPersistentContext() throws Exception {
-//    boolean paranoid = false;
-//    // sleepycat serializer, not paranoid
-//    BerkeleyDBEnvironment dbEnv = newDBEnvironment(paranoid);
-//    SerializationAdapterFactory saf = newSleepycatSerializationAdapterFactory(dbEnv);
-//    Persistor persistor = newPersistor(dbEnv, saf);
-//
-//    testLookupInPersistentContext(persistor, paranoid, new NullPersistenceTransactionProvider());
-//
-//    // custom serializer, not paranoid
-//    dbEnv = newDBEnvironment(paranoid);
-//    saf = newCustomSerializationAdapterFactory();
-//    persistor = newPersistor(dbEnv, saf);
-//    testLookupInPersistentContext(persistor, paranoid, new NullPersistenceTransactionProvider());
-//
-//    // sleepycat serializer, paranoid
-//    paranoid = true;
-//    dbEnv = newDBEnvironment(paranoid);
-//    saf = newSleepycatSerializationAdapterFactory(dbEnv);
-//    persistor = newPersistor(dbEnv, saf);
-//    testLookupInPersistentContext(persistor, paranoid, persistor.getPersistenceTransactionProvider());
-//
-//    // custom serializer, paranoid
-//    dbEnv = newDBEnvironment(paranoid);
-//    saf = newCustomSerializationAdapterFactory();
-//    persistor = newPersistor(dbEnv, saf);
-//    testLookupInPersistentContext(persistor, paranoid, persistor.getPersistenceTransactionProvider());
-  }
-
-  private void testLookupInPersistentContext(final Persistor persistor, final boolean paranoid,
-                                             final PersistenceTransactionProvider ptp) throws Exception {
-    final ManagedObjectPersistor mop = persistor.getManagedObjectPersistor();
-    final PersistentManagedObjectStore store = new PersistentManagedObjectStore(mop, new MockSink());
-    final TestSink faultSink = new TestSink();
-    final TestSink flushSink = new TestSink();
-    this.config.paranoid = paranoid;
-    this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, store,
-                                               this.persistenceTransactionProvider, Mockito.mock(Sink.class));
-
-    final ObjectID id = new ObjectID(1);
-    final ObjectIDSet ids = new ObjectIDSet();
-    ids.add(id);
-    final ClientID key = new ClientID(0);
-
-    this.objectManager.createNewObjects(ids);
-    TestResultsContext responseContext = new TestResultsContext(ids, ids);
-    Map<ObjectID, ManagedObject> lookedUpObjects = responseContext.objects;
-
-    this.objectManager.lookupObjectsFor(key, responseContext);
-
-    ManagedObject lookedUpViaLookupObjectsForCreateIfNecessary = lookedUpObjects.get(id);
-
-    final String fieldName = "myField";
-    final ObjectID valueOid = new ObjectID(100);
-    final AtomicReference<ObjectID> oidHoler = new AtomicReference<ObjectID>(valueOid);
-
-    final DNACursor cursor = new DNACursor() {
-      boolean hasNext = true;
-
-      public LogicalAction getLogicalAction() {
-        return new LogicalAction(SerializationUtil.PUT, new Object[] { fieldName, oidHoler.get() });
-      }
-
-      @Override
-      public PhysicalAction getPhysicalAction() {
-        return null;
-      }
-
-      @Override
-      public boolean next() {
-        if (hasNext) {
-          hasNext = false;
-          return true;
-        }
-        return false;
-      }
-
-      @Override
-      public boolean next(final DNAEncoding encoding) {
-        throw new ImplementMe();
-      }
-
-      @Override
-      public Object getAction() {
-        throw new ImplementMe();
-      }
-
-      @Override
-      public int getActionCount() {
-        return 1;
-      }
-
-      @Override
-      public void reset() throws UnsupportedOperationException {
-        hasNext = true;
-      }
-    };
-
-    TestDNA dna = new TestDNA(cursor);
-    dna.version = 5;
-
-    final ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
-    lookedUpViaLookupObjectsForCreateIfNecessary.apply(dna, new TransactionID(1), new ApplyTransactionInfo(), imo,
-                                                       false);
-
-    PersistenceTransaction tx = ptp.newTransaction();
-    this.objectManager.release(lookedUpViaLookupObjectsForCreateIfNecessary);
-
-    ManagedObject lookedUpViaLookup = this.objectManager.getObjectByID(id);
-    assertEquals(1, lookedUpViaLookupObjectsForCreateIfNecessary.getObjectReferences().size());
-    assertEquals(lookedUpViaLookup.getObjectReferences(),
-                 lookedUpViaLookupObjectsForCreateIfNecessary.getObjectReferences());
-
-    tx = ptp.newTransaction();
-    this.objectManager.release(lookedUpViaLookup);
-
-    // now do another lookup, change, and commit cycle
-    responseContext = new TestResultsContext(ids, new ObjectIDSet());
-    lookedUpObjects = responseContext.objects;
-
-    this.objectManager.lookupObjectsFor(key, responseContext);
-    lookedUpViaLookupObjectsForCreateIfNecessary = lookedUpObjects.get(id);
-    final ObjectID newReferenceID = new ObjectID(9324);
-    oidHoler.set(newReferenceID);
-    cursor.reset();
-
-    dna = new TestDNA(cursor);
-    dna.version = 10;
-    dna.isDelta = true;
-    lookedUpViaLookupObjectsForCreateIfNecessary.apply(dna, new TransactionID(2), new ApplyTransactionInfo(), imo,
-                                                       false);
-    // lookedUpViaLookupObjectsForCreateIfNecessary.commit();
-    tx = ptp.newTransaction();
-    this.objectManager.release(lookedUpViaLookupObjectsForCreateIfNecessary);
-
-    lookedUpViaLookup = this.objectManager.getObjectByID(id);
-    assertEquals(1, lookedUpViaLookupObjectsForCreateIfNecessary.getObjectReferences().size());
-    assertTrue(lookedUpViaLookupObjectsForCreateIfNecessary.getObjectReferences().contains(newReferenceID));
-
-    assertEquals(lookedUpViaLookup.getObjectReferences(),
-                 lookedUpViaLookupObjectsForCreateIfNecessary.getObjectReferences());
-
-    close(persistor, store);
-  }
-
-  private static void close(final Persistor persistor, final PersistentManagedObjectStore store) {
+  private static void close(final GBPersistor persistor, final PersistentManagedObjectStore store) {
     // to work around timing problem with this test, calling snapshot
     // this should block this thread until transaction reading all object IDs from BDB completes,
     // at which point, it's OK to close the DB
     persistor.getManagedObjectPersistor().snapshotObjectIDs();
     persistor.getManagedObjectPersistor().snapshotEvictableObjectIDs();
-    persistor.getManagedObjectPersistor().snapshotMapTypeObjectIDs();
+//    persistor.getManagedObjectPersistor().snapshotMapTypeObjectIDs();
     try {
       store.shutdown();
       persistor.close();
@@ -913,7 +751,7 @@ public class ObjectManagerTest extends TCTestCase {
    * recall in TransactionalObjectManager in persistence mode
    */
   public void testRecallNewObjects() throws Exception {
-    final PersistenceTransactionProvider ptp = persistor.getPersistenceTransactionProvider();
+    final GBPersistenceTransactionProvider ptp = persistor.getPersistenceTransactionProvider();
     final PersistentManagedObjectStore persistentMOStore = new PersistentManagedObjectStore(
                                                                                             persistor
                                                                                                 .getManagedObjectPersistor(),
@@ -1056,7 +894,7 @@ public class ObjectManagerTest extends TCTestCase {
      */
 
     // Now check back Object 1
-    PersistenceTransaction dbtxn = ptp.newTransaction();
+    Transaction dbtxn = ptp.newTransaction();
     this.objectManager.releaseAll(applyTxnInfo1.getObjectsToRelease());
 
     // Lookup context should have been fired

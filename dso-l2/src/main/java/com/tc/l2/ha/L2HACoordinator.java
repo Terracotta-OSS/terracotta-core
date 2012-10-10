@@ -73,6 +73,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.sequence.DGCSequenceProvider;
+import com.tc.util.sequence.ObjectIDSequenceProvider;
 import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorListener;
@@ -143,7 +144,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
     final int MAX_STAGE_SIZE = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
 
-    final ClusterState clusterState = new ClusterState(persistentStateStore, this.server.getManagedObjectStore(),
+    final ClusterState clusterState = new ClusterState(persistentStateStore, new ObjectIDSequenceProvider(0),
                                                        this.server.getConnectionIdFactory(),
                                                        gtxm.getGlobalTransactionIDSequenceProvider(), this.thisGroupID,
                                                        stripeIDStateManager, dgcSequenceProvider);

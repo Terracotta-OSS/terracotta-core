@@ -14,10 +14,14 @@ import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
-import com.tc.objectserver.persistence.inmemory.InMemoryPersistor;
+import com.tc.objectserver.persistence.gb.GBPersistor;
+import com.tc.objectserver.persistence.gb.StorageManagerFactory;
 import com.tc.test.TCTestCase;
 
 import java.util.Map;
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.StorageManager;
+import org.terracotta.corestorage.heap.HeapStorageManager;
 
 public class ManagedObjectTest extends TCTestCase {
 
@@ -25,7 +29,13 @@ public class ManagedObjectTest extends TCTestCase {
     final ObjectInstanceMonitor instanceMonitor = new ObjectInstanceMonitorImpl();
     final ObjectID objectID = new ObjectID(1);
     ManagedObjectStateFactory.disableSingleton(true);
-    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), new InMemoryPersistor());
+    GBPersistor persistor = new GBPersistor(new StorageManagerFactory() {
+      @Override
+      public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap) {
+        return new HeapStorageManager(configMap);
+      }
+    });
+    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), persistor);
 
     final ManagedObjectImpl mo = new ManagedObjectImpl(objectID);
 
@@ -82,7 +92,13 @@ public class ManagedObjectTest extends TCTestCase {
     final ObjectInstanceMonitor instanceMonitor = new ObjectInstanceMonitorImpl();
     final ObjectID objectID = new ObjectID(1);
     ManagedObjectStateFactory.disableSingleton(true);
-    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), new InMemoryPersistor());
+    GBPersistor persistor = new GBPersistor(new StorageManagerFactory() {
+      @Override
+      public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap) {
+        return new HeapStorageManager(configMap);
+      }
+    });
+    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), persistor);
 
     final ManagedObjectImpl mo = new ManagedObjectImpl(objectID);
 

@@ -5,8 +5,12 @@
 package com.tc.objectserver.impl;
 
 import com.tc.object.ObjectID;
+import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.impl.TestManagedObject;
+import com.tc.objectserver.persistence.gb.GBManagedObjectPersistor;
+import com.tc.objectserver.persistence.gb.GBPersistor;
+import com.tc.objectserver.persistence.gb.StorageManagerFactory;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransaction;
 import com.tc.test.TCTestCase;
 
@@ -15,15 +19,24 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.StorageManager;
+import org.terracotta.corestorage.heap.HeapStorageManager;
 
 public class InMemoryManagedObjectStoreTest extends TCTestCase {
 
-  private InMemoryManagedObjectStore os;
+  private PersistentManagedObjectStore os;
   private Map                        managed;
 
   public void setUp() throws Exception {
     managed = new HashMap();
-    os = new InMemoryManagedObjectStore(managed);
+    os = new PersistentManagedObjectStore(new GBPersistor(new StorageManagerFactory() {
+
+          @Override
+          public StorageManager createStorageManager(Map<String, KeyValueStorageConfig<?, ?>> configMap) {
+              return new HeapStorageManager();
+          }
+      }).getManagedObjectPersistor(),new TestSink());
   }
 
   public void testReleaseAll() {

@@ -17,10 +17,10 @@ import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
+import com.tc.objectserver.impl.PersistentManagedObjectStore;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.metadata.MetaDataManager;
-import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.search.IndexManager;
 import com.tc.objectserver.search.SearchRequestManager;
 import com.tc.objectserver.tx.ServerTransactionManager;
@@ -42,7 +42,7 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
   private final DSOChannelManager              channelManager;
   private final ClientStateManager             clientStateManager;
   private final ServerTransactionManager       transactionManager;
-  private final ManagedObjectStore             objectStore;
+  private final PersistentManagedObjectStore             persistor;
   private final ServerClientHandshakeManager   clientHandshakeManager;
   private final ChannelStats                   channelStats;
   private final TransactionBatchReaderFactory  transactionBatchReaderFactory;
@@ -59,7 +59,7 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
   public ServerConfigurationContextImpl(final StageManager stageManager, final ObjectManager objectManager,
                                         final ObjectRequestManager objectRequestManager,
                                         final ServerMapRequestManager serverTCMapRequestManager,
-                                        final ManagedObjectStore objectStore, final LockManager lockManager,
+                                        final PersistentManagedObjectStore objectStore, final LockManager lockManager,
                                         final DSOChannelManager channelManager,
                                         final ClientStateManager clientStateManager,
                                         final ServerTransactionManager transactionManager,
@@ -77,7 +77,7 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
     this.objectManager = objectManager;
     this.objectRequestManager = objectRequestManager;
     this.serverMapRequestManager = serverTCMapRequestManager;
-    this.objectStore = objectStore;
+    this.persistor = objectStore;
     this.lockManager = lockManager;
     this.channelManager = channelManager;
     this.clientStateManager = clientStateManager;
@@ -132,8 +132,8 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
     return txnObjectManager;
   }
 
-  public ManagedObjectStore getObjectStore() {
-    return this.objectStore;
+  public PersistentManagedObjectStore getObjectStore() {
+    return this.persistor;
   }
 
   public ServerClientHandshakeManager getClientHandshakeManager() {
