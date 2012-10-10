@@ -6,12 +6,12 @@ package com.tc.cli;
 
 import com.tc.cli.command.BaseCommand;
 import com.tc.cli.command.Command;
-import com.tc.cli.command.DBDiffCommand;
-import com.tc.cli.command.DBUsageCommand;
-import com.tc.cli.command.FastLoadOidLogAnalysisCommand;
-import com.tc.cli.command.ManagedObjectReportCommand;
-import com.tc.cli.command.ReviveClassFilesCommand;
-import com.tc.cli.command.SetDbCleanCommand;
+//import com.tc.cli.command.DBDiffCommand;
+//import com.tc.cli.command.DBUsageCommand;
+//import com.tc.cli.command.FastLoadOidLogAnalysisCommand;
+//import com.tc.cli.command.ManagedObjectReportCommand;
+//import com.tc.cli.command.ReviveClassFilesCommand;
+//import com.tc.cli.command.SetDbCleanCommand;
 import com.tc.util.ProductInfo;
 
 import java.io.IOException;
@@ -45,12 +45,12 @@ public class CommandLineMain {
   }
 
   private void initialize() {
-    registerCommand(new ManagedObjectReportCommand(writer));
-    registerCommand(new FastLoadOidLogAnalysisCommand(writer));
-    registerCommand(new ReviveClassFilesCommand(writer));
-    registerCommand(new DBUsageCommand(writer));
-    registerCommand(new DBDiffCommand(writer));
-    registerCommand(new SetDbCleanCommand(writer));
+//    registerCommand(new ManagedObjectReportCommand(writer));
+//    registerCommand(new FastLoadOidLogAnalysisCommand(writer));
+//    registerCommand(new ReviveClassFilesCommand(writer));
+//    registerCommand(new DBUsageCommand(writer));
+//    registerCommand(new DBDiffCommand(writer));
+//    registerCommand(new SetDbCleanCommand(writer));
   }
 
   void registerCommand(Command command) {
