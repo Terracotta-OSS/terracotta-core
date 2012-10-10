@@ -34,6 +34,17 @@ public interface MonitoringResourceService {
 
   /**
    * Get a {@code Collection} of {@link StatisticsEntity} objects representing the
+   * DGC statistics of each iteration provided by the associated monitorable entity's agent given the request path.
+   *
+   * @return a a collection of {@link StatisticsEntity} objects.
+   */
+  @GET
+  @Path("/dgc")
+  @Produces(MediaType.APPLICATION_JSON)
+  Collection<StatisticsEntity> getDgcStatistics(@Context UriInfo info);
+
+  /**
+   * Get a {@code Collection} of {@link StatisticsEntity} objects representing the
    * client(s) statistics provided by the associated monitorable entity's agent given the request path.
    *
    * @return a a collection of {@link StatisticsEntity} objects.

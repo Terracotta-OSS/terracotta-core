@@ -4,6 +4,7 @@ import org.terracotta.management.ServiceExecutionException;
 
 import com.terracotta.management.resource.StatisticsEntity;
 
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -43,5 +44,13 @@ public interface MonitoringService {
    * @throws ServiceExecutionException
    */
   StatisticsEntity getServerStatistics(String serverName) throws ServiceExecutionException;
+
+  /**
+   * Get the DGC statistics.
+   * @return a {@link Collection} object of {@link StatisticsEntity} objects representing the DGC statistics,
+   * one {@link StatisticsEntity} per DGC iteration.
+   * @throws ServiceExecutionException
+   */
+  Collection<StatisticsEntity> getDgcStatistics() throws ServiceExecutionException;
 
 }

@@ -72,6 +72,23 @@ public class MonitoringResourceServiceImpl implements MonitoringResourceService 
   }
 
   @Override
+  public Collection<StatisticsEntity> getDgcStatistics(UriInfo info) {
+    LOG.info(String.format("Invoking MonitoringResourceServiceImpl.getDgcStatistics: %s", info.getRequestUri()));
+
+    requestValidator.validateSafe(info);
+
+    try {
+      return monitoringService.getDgcStatistics();
+    } catch (ServiceExecutionException see) {
+      LOG.error("Failed to get TSA statistics.", see.getCause());
+      throw new WebApplicationException(
+          Response.status(Response.Status.BAD_REQUEST)
+              .entity("Failed to get TSA statistics: " + see.getCause().getClass().getName() + ": " + see.getCause()
+                  .getMessage()).build());
+    }
+  }
+
+  @Override
   public Collection<StatisticsEntity> getClientStatistics(UriInfo info) {
     LOG.info(String.format("Invoking MonitoringResourceServiceImpl.getClientStatistics: %s", info.getRequestUri()));
 
