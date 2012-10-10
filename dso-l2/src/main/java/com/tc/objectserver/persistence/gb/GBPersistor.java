@@ -1,5 +1,8 @@
 package com.tc.objectserver.persistence.gb;
 
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.StorageManager;
+
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -12,15 +15,8 @@ import com.tc.objectserver.persistence.api.TransactionPersistor;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.util.sequence.MutableSequence;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.KeyValueStorageFactory;
-import org.terracotta.corestorage.StorageManager;
-import org.terracotta.corestorage.heap.HeapKeyValueStorageFactory;
-import org.terracotta.corestorage.heap.HeapStorageManager;
 
 /**
  * @author tim
@@ -50,9 +46,9 @@ public class GBPersistor implements Persistor {
   private final GBObjectIDSetMaintainer objectIDSetMaintainer;
   private final GBPersistentObjectFactory persistentObjectFactory;
 
-  public GBPersistor(File path) {
+  public GBPersistor(StorageManagerFactory storageManagerFactory) {
     objectIDSetMaintainer = new GBObjectIDSetMaintainer();
-    gbManager = new HeapStorageManager(getCoreStorageConfig());
+    gbManager = storageManagerFactory.createStorageManager(getCoreStorageConfig());
     try {
       gbManager.start().get();
     } catch (Exception e) {

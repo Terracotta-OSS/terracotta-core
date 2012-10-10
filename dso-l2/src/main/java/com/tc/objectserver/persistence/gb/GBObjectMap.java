@@ -1,5 +1,10 @@
 package com.tc.objectserver.persistence.gb;
 
+import org.terracotta.corestorage.KeyValueStorage;
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.Serializer;
+import org.terracotta.corestorage.heap.KeyValueStorageConfigImpl;
+
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.managedobject.ManagedObjectSerializer;
@@ -13,12 +18,10 @@ import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
-
-import org.terracotta.corestorage.KeyValueStorage;
-import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.heap.KeyValueStorageConfigImpl;
 
 /**
  * @author tim
@@ -33,7 +36,10 @@ class GBObjectMap implements KeyValueStorage<ObjectID, ManagedObject> {
   }
 
   public static KeyValueStorageConfig<Long, byte[]> getConfig() {
-    return new KeyValueStorageConfigImpl<Long, byte[]>(Long.class, byte[].class);
+    KeyValueStorageConfig<Long, byte[]> config = new KeyValueStorageConfigImpl<Long, byte[]>(Long.class, byte[].class);
+    config.setKeySerializer(LongSerializer.INSTANCE);
+    config.setValueSerializer(ByteArraySerializer.INSTANCE);
+    return config;
   }
 
   @Override
@@ -101,5 +107,30 @@ class GBObjectMap implements KeyValueStorage<ObjectID, ManagedObject> {
   @Override
   public void clear() {
     backingMap.clear();
+  }
+
+  private static class ByteArraySerializer implements Serializer<byte[]> {
+    static final ByteArraySerializer INSTANCE = new ByteArraySerializer();
+
+    @Override
+    public byte[] deserialize(final ByteBuffer buffer) {
+      byte[] a = new byte[buffer.remaining()];
+      buffer.get(a);
+      return a;
+    }
+
+    @Override
+    public ByteBuffer serialize(final byte[] bytes) {
+      return ByteBuffer.wrap(bytes);
+    }
+
+    @Override
+    public boolean equals(final ByteBuffer left, final Object right) {
+      if (right instanceof byte[]) {
+        return Arrays.equals(deserialize(left), (byte[]) right);
+      } else {
+        return false;
+      }
+    }
   }
 }

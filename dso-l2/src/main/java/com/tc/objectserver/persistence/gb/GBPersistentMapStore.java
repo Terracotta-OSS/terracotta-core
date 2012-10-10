@@ -1,10 +1,10 @@
 package com.tc.objectserver.persistence.gb;
 
-import com.tc.object.persistence.api.PersistentMapStore;
-
 import org.terracotta.corestorage.KeyValueStorage;
 import org.terracotta.corestorage.KeyValueStorageConfig;
 import org.terracotta.corestorage.heap.KeyValueStorageConfigImpl;
+
+import com.tc.object.persistence.api.PersistentMapStore;
 
 /**
  * @author tim
@@ -17,7 +17,10 @@ public class GBPersistentMapStore implements PersistentMapStore {
   }
 
   public static KeyValueStorageConfig<String, String> config() {
-    return new KeyValueStorageConfigImpl<String, String>(String.class, String.class);
+    KeyValueStorageConfig<String, String> config = new KeyValueStorageConfigImpl<String, String>(String.class, String.class);
+    config.setKeySerializer(StringSerializer.INSTANCE);
+    config.setValueSerializer(StringSerializer.INSTANCE);
+    return config;
   }
 
   @Override

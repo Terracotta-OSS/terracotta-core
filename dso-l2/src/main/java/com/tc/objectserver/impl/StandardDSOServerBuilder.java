@@ -3,6 +3,10 @@
  */
 package com.tc.objectserver.impl;
 
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.StorageManager;
+import org.terracotta.corestorage.heap.HeapStorageManager;
+
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.Sink;
@@ -64,13 +68,12 @@ import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.metadata.NullMetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
+import com.tc.objectserver.persistence.gb.StorageManagerFactory;
 import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.IndexManager;
 import com.tc.objectserver.search.NullIndexHACoordinator;
 import com.tc.objectserver.search.NullSearchRequestManager;
 import com.tc.objectserver.search.SearchRequestManager;
-import com.tc.objectserver.storage.api.DBEnvironment;
-import com.tc.objectserver.storage.api.DBFactory;
 import com.tc.objectserver.tx.CommitTransactionMessageToTransactionBatchReader;
 import com.tc.objectserver.tx.PassThruTransactionFilter;
 import com.tc.objectserver.tx.ServerTransactionManager;
@@ -87,7 +90,6 @@ import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
-import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.BlockingStartupLock;
 import com.tc.util.NonBlockingStartupLock;
 import com.tc.util.StartupLock;
@@ -99,6 +101,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.List;
+import java.util.Map;
 
 import javax.management.MBeanServer;
 
@@ -311,15 +314,6 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     tcEventLogger.registerEventCallback(new TerracottaOperatorEventCallbackLogger());
   }
 
-  public DBEnvironment createDBEnvironment(final boolean persistent, final File dbhome, final L2DSOConfig l2DSOConfig,
-                                           final DumpHandlerStore dumpHandlerStore, final StageManager stageManager,
-                                           final SampledCounter l2FaultFromDisk,
-                                           final SampledCounter l2FaultFromOffheap,
-                                           final SampledCounter l2FlushFromOffheap, final DBFactory factory,
-                                           final boolean offheapEnabled) throws IOException {
-    return factory.createEnvironment(persistent, dbhome, l2FaultFromDisk, offheapEnabled);
-  }
-
   public LongGCLogger createLongGCLogger(long gcTimeOut) {
     return new LongGCLogger(gcTimeOut);
   }
@@ -332,5 +326,15 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     } else {
       throw new AssertionError("Invalid HA mode");
     }
+  }
+
+  @Override
+  public StorageManagerFactory createStorageManagerFactory(final boolean persistent, final File dbhome, final L2DSOConfig l2DSOConfig, final boolean offheapEnabled) {
+    return new StorageManagerFactory() {
+      @Override
+      public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap) {
+        return new HeapStorageManager(configMap);
+      }
+    };
   }
 }

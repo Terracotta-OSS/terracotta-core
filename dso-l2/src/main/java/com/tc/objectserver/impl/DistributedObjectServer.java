@@ -224,6 +224,7 @@ import com.tc.objectserver.persistence.db.DBSequenceKeys;
 import com.tc.objectserver.persistence.db.DatabaseDirtyException;
 import com.tc.objectserver.persistence.db.TransactionStoreImpl;
 import com.tc.objectserver.persistence.gb.GBPersistor;
+import com.tc.objectserver.persistence.gb.StorageManagerFactory;
 import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.SearchEventHandler;
 import com.tc.objectserver.search.SearchQueryRequestMessageHandler;
@@ -256,7 +257,6 @@ import com.tc.runtime.logging.LongGCLogger;
 import com.tc.runtime.logging.MemoryOperatorEventListener;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.server.TCServer;
-import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.StatisticsSystemType;
@@ -564,7 +564,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Sequence globalTransactionIDSequence;
     final GarbageCollectionInfoPublisher gcPublisher = new GarbageCollectionInfoPublisherImpl();
     final ManagedObjectChangeListenerProviderImpl managedObjectChangeListenerProvider = new ManagedObjectChangeListenerProviderImpl();
-    StatisticRetrievalAction[] sraForDbEnv = null;
 
     this.sampledCounterManager = new CounterManagerImpl();
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
@@ -590,7 +589,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final CallbackOnExitHandler dirtydbHandler = new CallbackDatabaseDirtyAlertAdapter(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(DatabaseDirtyException.class, dirtydbHandler);
 
-    this.persistor = new GBPersistor(dbhome);
+    StorageManagerFactory storageManagerFactory = serverBuilder.createStorageManagerFactory(persistent, dbhome,
+        configSetupManager.dsoL2Config(), offHeapConfig.getEnabled());
+
+    this.persistor = new GBPersistor(storageManagerFactory);
 
 
     // register the terracotta operator event logger

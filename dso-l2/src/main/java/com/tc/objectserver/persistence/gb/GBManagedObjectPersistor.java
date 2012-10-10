@@ -1,5 +1,9 @@
 package com.tc.objectserver.persistence.gb;
 
+import org.terracotta.corestorage.KeyValueStorage;
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.heap.KeyValueStorageConfigImpl;
+
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
@@ -12,10 +16,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
-
-import org.terracotta.corestorage.KeyValueStorage;
-import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.heap.KeyValueStorageConfigImpl;
 
 /**
  * @author tim
@@ -37,7 +37,10 @@ public class GBManagedObjectPersistor implements ManagedObjectPersistor {
   }
 
   public static KeyValueStorageConfig<String, ObjectID> rootMapConfig() {
-    return new KeyValueStorageConfigImpl<String, ObjectID>(String.class, ObjectID.class);
+    KeyValueStorageConfig<String, ObjectID> config = new KeyValueStorageConfigImpl<String, ObjectID>(String.class, ObjectID.class);
+    config.setKeySerializer(StringSerializer.INSTANCE);
+    config.setValueSerializer(ObjectIDSerializer.INSTANCE);
+    return config;
   }
 
   public static KeyValueStorageConfig<Long, byte[]> objectConfig() {

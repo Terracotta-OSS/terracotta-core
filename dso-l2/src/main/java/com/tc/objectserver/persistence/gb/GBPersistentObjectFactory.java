@@ -1,15 +1,23 @@
 package com.tc.objectserver.persistence.gb;
 
-import com.tc.object.ObjectID;
 import org.terracotta.corestorage.KeyValueStorage;
-import org.terracotta.corestorage.KeyValueStorageFactory;
+import org.terracotta.corestorage.KeyValueStorageConfig;
 import org.terracotta.corestorage.StorageManager;
 import org.terracotta.corestorage.heap.KeyValueStorageConfigImpl;
+
+import com.tc.object.ObjectID;
 
 /**
  * @author tim
  */
 public class GBPersistentObjectFactory {
+  private static final KeyValueStorageConfig<Object, Object> mapConfig;
+  static {
+    mapConfig = new KeyValueStorageConfigImpl<Object, Object>(Object.class, Object.class);
+    mapConfig.setKeySerializer(LiteralSerializer.INSTANCE);
+    mapConfig.setValueSerializer(LiteralSerializer.INSTANCE);
+  }
+
   private final StorageManager gbManager;
 
   public GBPersistentObjectFactory(final StorageManager gbManager) {
@@ -17,7 +25,7 @@ public class GBPersistentObjectFactory {
   }
 
   public KeyValueStorage<Object, Object> createMap(ObjectID objectID) {
-    return gbManager.createKeyValueStorage(objectID.toString(), new KeyValueStorageConfigImpl<Object, Object>(Object.class, Object.class));
+    return gbManager.createKeyValueStorage(objectID.toString(), mapConfig);
   }
 
   public KeyValueStorage<Object, Object> getMap(final ObjectID id) {
