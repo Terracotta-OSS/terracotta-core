@@ -7,11 +7,11 @@ package com.tc.objectserver.impl;
 import com.tc.async.api.Sink;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ShutdownError;
+import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.persistence.gb.GBManagedObjectPersistor;
-import com.tc.objectserver.api.Transaction;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
 
@@ -75,11 +75,6 @@ public class PersistentManagedObjectStore {
 
   public ManagedObject createObject(final ObjectID id) {
     return new ManagedObjectImpl(id, objectPersistor);
-  }
-
-  public void addNewObject(final ManagedObject managed) {
-    assertNotInShutdown();
-    throw new UnsupportedOperationException();
   }
 
   public void commitObject(final Transaction tx, final ManagedObject managed) {

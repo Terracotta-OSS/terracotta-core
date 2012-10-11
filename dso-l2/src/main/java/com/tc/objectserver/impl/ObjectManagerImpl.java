@@ -17,6 +17,8 @@ import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.objectserver.api.ObjectManagerStatsListener;
 import com.tc.objectserver.api.ShutdownError;
+import com.tc.objectserver.api.Transaction;
+import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -27,8 +29,6 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.api.TransactionProvider;
-import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.tx.NullTransactionalObjectManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.text.PrettyPrintable;
@@ -688,7 +688,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private void updateNewFlagAndCreateIfNecessary(final ManagedObject object) {
     if (object.isNew()) {
-      this.objectStore.addNewObject(object);
       this.noReferencesIDStore.addToNoReferences(object);
       object.setIsNew(false);
       fireNewObjectinitialized(object.getID());

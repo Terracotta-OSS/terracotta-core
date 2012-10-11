@@ -40,7 +40,6 @@ public class GBPersistor {
   private final GBPersistenceTransactionProvider persistenceTransactionProvider;
   private final GBObjectIDSetMaintainer objectIDSetMaintainer;
   private final GBPersistentObjectFactory persistentObjectFactory;
-  private final GBClassPersistorImpl classPersistor;
 
   public GBPersistor(StorageManagerFactory storageManagerFactory) {
     objectIDSetMaintainer = new GBObjectIDSetMaintainer();
@@ -61,7 +60,6 @@ public class GBPersistor {
     gidSequence = sequenceManager.getSequence(GLOBAL_TRANSACTION_ID_SEQUENCE);
     persistenceTransactionProvider = new GBPersistenceTransactionProvider(gbManager);
     persistentObjectFactory = new GBPersistentObjectFactory(gbManager);
-    classPersistor = new GBClassPersistorImpl(gbManager);
   }
 
   private Map<String, KeyValueStorageConfig<?, ?>> getCoreStorageConfig() {
@@ -79,10 +77,6 @@ public class GBPersistor {
 
   public void close() {
     gbManager.shutdown();
-  }
-  
-  public GBClassPersistorImpl getClassPersistor() {
-      return classPersistor;
   }
 
   public GBPersistenceTransactionProvider getPersistenceTransactionProvider() {

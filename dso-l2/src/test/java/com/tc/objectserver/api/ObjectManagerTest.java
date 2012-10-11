@@ -677,7 +677,6 @@ public class ObjectManagerTest extends TCTestCase {
 
       objects.add(mo);
       this.objectManager.createObject(mo);
-      this.objectStore.addNewObject(mo);
     }
     return oidSet;
   }
