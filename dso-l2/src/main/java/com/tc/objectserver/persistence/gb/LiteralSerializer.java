@@ -5,11 +5,6 @@ import org.terracotta.corestorage.Serializer;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,14 +18,19 @@ public class LiteralSerializer implements Serializer<Object> {
   private static enum Type {
     LONG {
       @Override
-      public Long deserialize(final ObjectInputStream objectInputStream) throws IOException {
-        return objectInputStream.readLong();
+      public Long deserialize(final ByteBuffer buffer) {
+        if (buffer.get() != ordinal()) {
+          throw new AssertionError();
+        }
+        return buffer.getLong();
       }
 
       @Override
-      void serialize(final ObjectOutputStream objectOutputStream, final Object object) throws IOException {
+      ByteBuffer serialize(final Object object) {
         if (object instanceof Long) {
-          objectOutputStream.writeLong((Long)object);
+          ByteBuffer buffer = ByteBuffer.allocate(1 + Long.SIZE / Byte.SIZE);
+          buffer.put((byte) ordinal()).putLong((Long)object).flip();
+          return buffer;
         } else {
           throw new AssertionError();
         }
@@ -42,14 +42,19 @@ public class LiteralSerializer implements Serializer<Object> {
       }
     }, INT {
       @Override
-      public Integer deserialize(final ObjectInputStream objectInputStream) throws IOException {
-        return objectInputStream.readInt();
+      public Integer deserialize(final ByteBuffer buffer) {
+        if (buffer.get() != ordinal()) {
+          throw new AssertionError();
+        }
+        return buffer.getInt();
       }
 
       @Override
-      void serialize(final ObjectOutputStream objectOutputStream, final Object object) throws IOException {
+      ByteBuffer serialize(final Object object) {
         if (object instanceof Integer) {
-          objectOutputStream.writeInt((Integer)object);
+          ByteBuffer buffer = ByteBuffer.allocate(1 + Integer.SIZE / Byte.SIZE);
+          buffer.put((byte) ordinal()).putInt((Integer)object).flip();
+          return buffer;
         } else {
           throw new AssertionError();
         }
@@ -61,14 +66,19 @@ public class LiteralSerializer implements Serializer<Object> {
       }
     }, SHORT {
       @Override
-      public Short deserialize(final ObjectInputStream objectInputStream) throws IOException {
-        return objectInputStream.readShort();
+      public Short deserialize(final ByteBuffer buffer) {
+        if (buffer.get() != ordinal()) {
+          throw new AssertionError();
+        }
+        return buffer.getShort();
       }
 
       @Override
-      void serialize(final ObjectOutputStream objectOutputStream, final Object object) throws IOException {
+      ByteBuffer serialize(final Object object) {
         if (object instanceof Short) {
-          objectOutputStream.writeShort((Short)object);
+          ByteBuffer buffer = ByteBuffer.allocate(1 + Short.SIZE / Byte.SIZE);
+          buffer.put((byte) ordinal()).putShort((Short)object).flip();
+          return buffer;
         } else {
           throw new AssertionError();
         }
@@ -80,14 +90,19 @@ public class LiteralSerializer implements Serializer<Object> {
       }
     }, BYTE {
       @Override
-      public Byte deserialize(final ObjectInputStream objectInputStream) throws IOException {
-        return objectInputStream.readByte();
+      public Byte deserialize(final ByteBuffer buffer) {
+        if (buffer.get() != ordinal()) {
+          throw new AssertionError();
+        }
+        return buffer.get();
       }
 
       @Override
-      void serialize(final ObjectOutputStream objectOutputStream, final Object object) throws IOException {
-        if (object instanceof Byte) {
-          objectOutputStream.writeByte((Byte) object);
+      ByteBuffer serialize(final Object object) {
+        if (object instanceof Short) {
+          ByteBuffer buffer = ByteBuffer.allocate(2);
+          buffer.put((byte) ordinal()).put((Byte)object).flip();
+          return buffer;
         } else {
           throw new AssertionError();
         }
@@ -99,14 +114,22 @@ public class LiteralSerializer implements Serializer<Object> {
       }
     }, STRING {
       @Override
-      public String deserialize(final ObjectInputStream objectInputStream) throws IOException {
-        return objectInputStream.readUTF();
+      public String deserialize(final ByteBuffer buffer) {
+        if (buffer.get() != ordinal()) {
+          throw new AssertionError();
+        }
+        return buffer.asCharBuffer().toString();
       }
 
       @Override
-      void serialize(final ObjectOutputStream objectOutputStream, final Object object) throws IOException {
+      ByteBuffer serialize(final Object object) {
         if (object instanceof String) {
-          objectOutputStream.writeUTF((String)object);
+          String s = (String) object;
+          ByteBuffer buffer = ByteBuffer.allocate(1 + s.length() * 2);
+          buffer.put((byte)ordinal());
+          buffer.position(buffer.position() + buffer.asCharBuffer().put(s).position() * 2);
+          buffer.flip();
+          return buffer;
         } else {
           throw new AssertionError();
         }
@@ -118,14 +141,19 @@ public class LiteralSerializer implements Serializer<Object> {
       }
     }, OBJECTID {
       @Override
-      public ObjectID deserialize(final ObjectInputStream objectInputStream) throws IOException {
-        return new ObjectID(objectInputStream.readLong());
+      public ObjectID deserialize(final ByteBuffer buffer) {
+        if (buffer.get() != ordinal()) {
+          throw new AssertionError();
+        }
+        return new ObjectID(buffer.getLong());
       }
 
       @Override
-      void serialize(final ObjectOutputStream objectOutputStream, final Object object) throws IOException {
+      ByteBuffer serialize(final Object object) {
         if (object instanceof ObjectID) {
-          objectOutputStream.writeLong(((ObjectID)object).toLong());
+          ByteBuffer buffer = ByteBuffer.allocate(1 + Long.SIZE / Byte.SIZE);
+          buffer.put((byte)ordinal()).putLong(((ObjectID)object).toLong()).flip();
+          return buffer;
         } else {
           throw new AssertionError();
         }
@@ -137,18 +165,22 @@ public class LiteralSerializer implements Serializer<Object> {
       }
     }, UTF8BYTES {
       @Override
-      Object deserialize(final ObjectInputStream objectInputStream) throws IOException {
-        byte[] bytes = new byte[objectInputStream.readInt()];
-        objectInputStream.read(bytes);
+      Object deserialize(final ByteBuffer buffer) {
+        if (buffer.get() != ordinal()) {
+          throw new AssertionError();
+        }
+        byte[] bytes = new byte[buffer.getInt()];
+        buffer.get(bytes);
         return new UTF8ByteDataHolder(bytes);
       }
 
       @Override
-      void serialize(final ObjectOutputStream objectOutputStream, final Object object) throws IOException {
+      ByteBuffer serialize(final Object object) {
         if (object instanceof UTF8ByteDataHolder) {
           byte[] bytes = ((UTF8ByteDataHolder)object).getBytes();
-          objectOutputStream.writeInt(bytes.length);
-          objectOutputStream.write(bytes);
+          ByteBuffer buffer = ByteBuffer.allocate(1 + Integer.SIZE / Byte.SIZE + bytes.length);
+          buffer.put((byte)ordinal()).putInt(bytes.length).put(bytes).flip();
+          return buffer;
         } else {
           throw new AssertionError();
         }
@@ -160,9 +192,9 @@ public class LiteralSerializer implements Serializer<Object> {
       }
     };
 
-    abstract Object deserialize(ObjectInputStream objectInputStream) throws IOException;
+    abstract Object deserialize(ByteBuffer buffer);
 
-    abstract void serialize(ObjectOutputStream objectOutputStream, Object object) throws IOException;
+    abstract ByteBuffer serialize(Object object);
 
     abstract Class<?> toClass();
   }
@@ -178,56 +210,22 @@ public class LiteralSerializer implements Serializer<Object> {
 
   @Override
   public Object deserialize(final ByteBuffer buffer) {
-    ByteBufferInputStream byteBufferInputStream = new ByteBufferInputStream(buffer);
-    try {
-      ObjectInputStream ois = new ObjectInputStream(byteBufferInputStream);
-      byte t = (byte) ois.read();
-      return Type.values()[t].deserialize(ois);
-    } catch (IOException e) {
-      throw new AssertionError(e);
-    }
+    return Type.values()[buffer.duplicate().get()].deserialize(buffer);
   }
 
   @Override
   public ByteBuffer serialize(final Object o) {
-    if (o == null || !classToType.containsKey(o.getClass())) {
+    if (o == null) {
+      throw new IllegalArgumentException("Serializing a null is not supported.");
+    }
+    if (!classToType.containsKey(o.getClass())) {
       throw new IllegalArgumentException("Unknown type " + o + " class " + o.getClass());
     }
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    try {
-      ObjectOutputStream oos = new ObjectOutputStream(baos);
-      try {
-        Type t = classToType.get(o.getClass());
-        oos.writeByte((byte) t.ordinal());
-        t.serialize(oos, o);
-      } finally {
-        oos.close();
-      }
-    } catch (IOException e) {
-      throw new AssertionError(e);
-    }
-    return ByteBuffer.wrap(baos.toByteArray());
+    return classToType.get(o.getClass()).serialize(o);
   }
 
   @Override
   public boolean equals(final ByteBuffer left, final Object right) {
     return deserialize(left).equals(right);
-  }
-
-  private class ByteBufferInputStream extends InputStream {
-    final ByteBuffer buffer;
-
-    private ByteBufferInputStream(final ByteBuffer buffer) {
-      this.buffer = buffer;
-    }
-
-    @Override
-    public int read() throws IOException {
-      if (buffer.hasRemaining()) {
-        return buffer.get() & 0xFF;
-      } else {
-        return -1;
-      }
-    }
   }
 }
