@@ -18,16 +18,24 @@ public class ToolkitMapApiKeyValGrClient extends AbstractToolkitApiTestClientUti
     this.toolkit = toolKit;
     // this consistency is not used while creating map so pass null here
     setDs(toolkit, NAME_OF_DS, null);
-
+    log("Testing ToolkitMap with LiteralKeyLiteralValueGenerator");
     keyValueGenerator = new LiteralKeyLiteralValueGenerator();
     super.test(toolkit);
     this.test();
 
+    log("Testing ToolkitMap with NonLiteralKeyLiteralValueGenerator");
     keyValueGenerator = new NonLiteralKeyLiteralValueGenerator();
     super.test(toolkit);
     this.test();
+
+    log("Testing ToolkitMap with NonLiteralKeyNonLiteralValueGenerator");
     keyValueGenerator = new NonLiteralKeyNonLiteralValueGenerator();
     super.test(toolkit);
+    this.test();
+
+    log("Testing ToolkitMap with LiteralKeyNonLiteralValueGenerator");
+    keyValueGenerator = new LiteralKeyNonLiteralValueGenerator();
+    super.test();
     this.test();
   }
 
@@ -39,7 +47,6 @@ public class ToolkitMapApiKeyValGrClient extends AbstractToolkitApiTestClientUti
   public ToolkitMapApiKeyValGrClient(String[] args) {
     super(args);
   }
-
 
   @Override
   public void setDs(Toolkit toolkit, String name, String strongOrEventualDs) {
@@ -58,6 +65,5 @@ public class ToolkitMapApiKeyValGrClient extends AbstractToolkitApiTestClientUti
       clearDs();
     }
   }
-
 
 }
