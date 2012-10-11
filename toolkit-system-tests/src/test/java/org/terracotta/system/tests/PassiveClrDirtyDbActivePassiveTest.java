@@ -16,10 +16,10 @@ import org.terracotta.toolkit.collections.ToolkitMap;
 import EDU.oswego.cs.dl.util.concurrent.BoundedBuffer;
 
 import com.sleepycat.je.DatabaseException;
-import com.tc.objectserver.storage.util.SetDbClean;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.config.model.PersistenceMode;
 import com.tc.test.config.model.TestConfig;
+import com.tc.objectserver.persistence.util.SetDbClean;
 
 import gnu.trove.TLongObjectHashMap;
 

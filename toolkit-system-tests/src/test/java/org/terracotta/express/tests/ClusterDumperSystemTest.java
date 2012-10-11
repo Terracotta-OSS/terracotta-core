@@ -29,7 +29,7 @@ public class ClusterDumperSystemTest extends AbstractToolkitTestBase {
     return null;
   }
 
-  @Override
+  @Override 
   protected void evaluateClientOutput(String clientName, int exitCode, File output) throws Throwable {
     super.evaluateClientOutput(clientName, exitCode, output);
     // Check for LOCK Info in Dump in terracotta-client.log files
