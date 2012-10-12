@@ -1,3 +1,6 @@
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ */
 package com.terracotta.management.service;
 
 import org.terracotta.management.ServiceExecutionException;
