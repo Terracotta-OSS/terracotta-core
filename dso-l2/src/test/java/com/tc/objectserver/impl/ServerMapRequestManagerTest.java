@@ -5,7 +5,8 @@ package com.tc.objectserver.impl;
 
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
-import org.mockito.Mockito;
+import org.terracotta.corestorage.KeyValueStorage;
+import org.terracotta.corestorage.heap.HeapKeyValueStorage;
 
 import com.tc.async.api.AddPredicate;
 import com.tc.async.api.EventContext;
@@ -35,6 +36,7 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.api.ObjectReferenceAddListener;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ConcurrentDistributedServerMapManagedObjectState;
+import com.tc.objectserver.persistence.gb.GBPersistentObjectFactory;
 import com.tc.stats.Stats;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.util.Assert;
@@ -226,8 +228,10 @@ public class ServerMapRequestManagerTest extends TestCase {
     final ObjectID mapID = new ObjectID(1);
     final Object portableKey1 = "key1";
     final ObjectID portableValue1ObjID = new ObjectID(1001);
-    HashMap map = new HashMap();
-    map.put(portableKey1, portableValue1ObjID);
+    KeyValueStorage<Object, Object> references = new HeapKeyValueStorage<Object, Object>();
+    references.put(portableKey1, portableValue1ObjID);
+    GBPersistentObjectFactory persistentObjectFactory = mock(GBPersistentObjectFactory.class);
+    when(persistentObjectFactory.createMap(mapID)).thenReturn(references);
 
     final Sink respondToServerMapSink = mock(Sink.class);
     final TestSink managedObjectRequestSink = new TestSink();
@@ -245,9 +249,9 @@ public class ServerMapRequestManagerTest extends TestCase {
                                                                                Collections.singleton(portableKey1));
     serverMapRequestManager.requestValues(clientID, mapID, Collections.singletonList(mapGetValueRequest));
 
-    ConcurrentDistributedServerMapManagedObjectState managedObjectState = new TestCDSMManagedObjectState(0);
-    ManagedObject managedObject = Mockito.mock(ManagedObject.class);
-    Mockito.when(managedObject.getManagedObjectState()).thenReturn(managedObjectState);
+    ConcurrentDistributedServerMapManagedObjectState managedObjectState = new TestCDSMManagedObjectState(0, mapID, persistentObjectFactory);
+    ManagedObject managedObject = mock(ManagedObject.class);
+    when(managedObject.getManagedObjectState()).thenReturn(managedObjectState);
     serverMapRequestManager.sendResponseFor(mapID, managedObject);
 
     ObjectRequestServerContextImpl context = (ObjectRequestServerContextImpl) managedObjectRequestSink.lastAdded;
@@ -322,8 +326,8 @@ public class ServerMapRequestManagerTest extends TestCase {
 
   private static class TestCDSMManagedObjectState extends ConcurrentDistributedServerMapManagedObjectState {
 
-    protected TestCDSMManagedObjectState(long classId) {
-      super(classId, ObjectID.NULL_ID, null);
+    protected TestCDSMManagedObjectState(long classId, ObjectID id, GBPersistentObjectFactory persistentObjectFactory) {
+      super(classId, id, persistentObjectFactory);
     }
 
   }

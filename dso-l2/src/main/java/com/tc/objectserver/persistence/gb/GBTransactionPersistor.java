@@ -38,7 +38,7 @@ public class GBTransactionPersistor {
   }
 
   public void saveGlobalTransactionDescriptor(Transaction tx, GlobalTransactionDescriptor gtx) {
-    committed.put(gtx.getGlobalTransactionID(), gtx);
+    committed.put(gtx.getGlobalTransactionID(), new GlobalTransactionDescriptor(gtx.getServerTransactionID(), gtx.getGlobalTransactionID()));
   }
 
   public void deleteAllGlobalTransactionDescriptors(Transaction tx, SortedSet<GlobalTransactionID> globalTransactionIDs) {
@@ -65,9 +65,7 @@ public class GBTransactionPersistor {
     public GlobalTransactionDescriptor deserialize(final ByteBuffer buffer) {
       GlobalTransactionID gid = new GlobalTransactionID(buffer.getLong());
       ServerTransactionID sid = new ServerTransactionID(new ClientID(buffer.getLong()), new TransactionID(buffer.getLong()));
-      GlobalTransactionDescriptor gtd = new GlobalTransactionDescriptor(sid, gid);
-      gtd.commitComplete();
-      return gtd;
+      return new GlobalTransactionDescriptor(sid, gid);
     }
 
     @Override

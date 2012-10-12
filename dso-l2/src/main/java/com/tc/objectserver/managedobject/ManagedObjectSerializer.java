@@ -18,10 +18,6 @@ public class ManagedObjectSerializer implements Serializer {
   private final ManagedObjectStateSerializer serializer;
   private final GBManagedObjectPersistor persistor;
 
-  public ManagedObjectSerializer(final ManagedObjectStateSerializer serializer) {
-    throw new UnsupportedOperationException();
-  }
-
   public ManagedObjectSerializer(ManagedObjectStateSerializer serializer, GBManagedObjectPersistor persistor) {
     this.serializer = serializer;
     this.persistor = persistor;
