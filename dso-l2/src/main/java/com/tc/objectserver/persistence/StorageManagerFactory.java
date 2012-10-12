@@ -1,4 +1,4 @@
-package com.tc.objectserver.persistence.gb;
+package com.tc.objectserver.persistence;
 
 import org.terracotta.corestorage.KeyValueStorageConfig;
 import org.terracotta.corestorage.StorageManager;

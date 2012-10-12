@@ -1,4 +1,4 @@
-package com.tc.objectserver.persistence.gb;
+package com.tc.objectserver.persistence;
 
 import org.terracotta.corestorage.KeyValueStorage;
 import org.terracotta.corestorage.KeyValueStorageConfig;
@@ -15,11 +15,11 @@ import java.util.Set;
 /**
  * @author tim
  */
-public class GBClientStatePersistor {
+public class ClientStatePersistor {
   private final MutableSequence clientIDSequence;
   private final KeyValueStorage<ChannelID, Boolean> clients;
 
-  public GBClientStatePersistor(MutableSequence clientIDSequence, KeyValueStorage<ChannelID, Boolean> clients) {
+  public ClientStatePersistor(MutableSequence clientIDSequence, KeyValueStorage<ChannelID, Boolean> clients) {
     this.clientIDSequence = clientIDSequence;
     this.clients = clients;
   }

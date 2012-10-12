@@ -15,7 +15,7 @@ import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
-import com.tc.objectserver.persistence.gb.GBPersistentObjectFactory;
+import com.tc.objectserver.persistence.PersistentObjectFactory;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 
@@ -75,7 +75,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   private boolean        compressionEnabled;
   private boolean        copyOnReadEnabled;
 
-  protected ConcurrentDistributedServerMapManagedObjectState(final ObjectInput in, GBPersistentObjectFactory factory) throws IOException {
+  protected ConcurrentDistributedServerMapManagedObjectState(final ObjectInput in, PersistentObjectFactory factory) throws IOException {
     super(in, factory);
     this.dsoLockType = in.readInt();
     this.maxTTISeconds = in.readInt();
@@ -88,7 +88,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     this.copyOnReadEnabled = in.readBoolean();
   }
 
-  protected ConcurrentDistributedServerMapManagedObjectState(final long classId, ObjectID id, GBPersistentObjectFactory factory) {
+  protected ConcurrentDistributedServerMapManagedObjectState(final long classId, ObjectID id, PersistentObjectFactory factory) {
     super(classId, id, factory);
   }
 
@@ -329,7 +329,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
            && this.compressionEnabled == mmo.compressionEnabled && this.copyOnReadEnabled == mmo.copyOnReadEnabled;
   }
 
-  static MapManagedObjectState readFrom(final ObjectInput in, GBPersistentObjectFactory factory) throws IOException {
+  static MapManagedObjectState readFrom(final ObjectInput in, PersistentObjectFactory factory) throws IOException {
     final ConcurrentDistributedServerMapManagedObjectState cdmMos = new ConcurrentDistributedServerMapManagedObjectState(
                                                                                                                          in, factory);
     return cdmMos;

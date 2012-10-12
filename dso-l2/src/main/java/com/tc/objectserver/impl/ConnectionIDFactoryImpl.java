@@ -12,7 +12,7 @@ import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.api.ClientNotFoundException;
-import com.tc.objectserver.persistence.gb.GBClientStatePersistor;
+import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.util.Assert;
 import com.tc.util.sequence.MutableSequence;
 
@@ -24,12 +24,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelManagerEventListener {
 
-  private final GBClientStatePersistor clientStateStore;
+  private final ClientStatePersistor clientStateStore;
   private final MutableSequence      connectionIDSequence;
   private String                     uid;
   private final List                 listeners = new CopyOnWriteArrayList();
 
-  public ConnectionIDFactoryImpl(GBClientStatePersistor clientStateStore) {
+  public ConnectionIDFactoryImpl(ClientStatePersistor clientStateStore) {
     this.clientStateStore = clientStateStore;
     this.connectionIDSequence = clientStateStore.getConnectionIDSequence();
     this.uid = connectionIDSequence.getUID();

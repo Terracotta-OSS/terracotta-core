@@ -1,4 +1,4 @@
-package com.tc.objectserver.persistence.gb;
+package com.tc.objectserver.persistence;
 
 import org.terracotta.corestorage.KeyValueStorageMutationListener;
 import org.terracotta.corestorage.Retriever;
@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * @author tim
  */
-public class GBObjectIDSetMaintainer implements KeyValueStorageMutationListener<Long, byte[]> {
+public class ObjectIDSetMaintainer implements KeyValueStorageMutationListener<Long, byte[]> {
 
   private final ObjectIDSet extantObjectIDSet = new ObjectIDSet();
   private final ObjectIDSet evictableObjectIDSet = new ObjectIDSet();

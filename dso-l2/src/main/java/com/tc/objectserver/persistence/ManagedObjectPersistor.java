@@ -1,4 +1,4 @@
-package com.tc.objectserver.persistence.gb;
+package com.tc.objectserver.persistence;
 
 import org.terracotta.corestorage.KeyValueStorage;
 import org.terracotta.corestorage.KeyValueStorageConfig;
@@ -20,19 +20,19 @@ import java.util.SortedSet;
 /**
  * @author tim
  */
-public class GBManagedObjectPersistor  {
+public class ManagedObjectPersistor {
 
   // This should be persistent
   private final KeyValueStorage<String, ObjectID> rootMap;
   private final KeyValueStorage<ObjectID, ManagedObject> objectMap;
   private final MutableSequence objectIDSequence;
 
-  private final GBObjectIDSetMaintainer oidSetMaintainer;
+  private final ObjectIDSetMaintainer oidSetMaintainer;
 
-  public GBManagedObjectPersistor(KeyValueStorage<String, ObjectID> rootMap, KeyValueStorage<Long, byte[]> objectMap, MutableSequence objectIDSequence, final GBObjectIDSetMaintainer oidSetMaintainer) {
+  public ManagedObjectPersistor(KeyValueStorage<String, ObjectID> rootMap, KeyValueStorage<Long, byte[]> objectMap, MutableSequence objectIDSequence, final ObjectIDSetMaintainer oidSetMaintainer) {
     this.rootMap = rootMap;
     this.oidSetMaintainer = oidSetMaintainer;
-    this.objectMap = new GBObjectMap(this, objectMap);
+    this.objectMap = new ObjectMap(this, objectMap);
     this.objectIDSequence = objectIDSequence;
   }
 
@@ -44,7 +44,7 @@ public class GBManagedObjectPersistor  {
   }
 
   public static KeyValueStorageConfig<Long, byte[]> objectConfig() {
-    return GBObjectMap.getConfig();
+    return ObjectMap.getConfig();
   }
 
   public void close() {

@@ -36,7 +36,7 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.api.ObjectReferenceAddListener;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ConcurrentDistributedServerMapManagedObjectState;
-import com.tc.objectserver.persistence.gb.GBPersistentObjectFactory;
+import com.tc.objectserver.persistence.PersistentObjectFactory;
 import com.tc.stats.Stats;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.util.Assert;
@@ -230,7 +230,7 @@ public class ServerMapRequestManagerTest extends TestCase {
     final ObjectID portableValue1ObjID = new ObjectID(1001);
     KeyValueStorage<Object, Object> references = new HeapKeyValueStorage<Object, Object>();
     references.put(portableKey1, portableValue1ObjID);
-    GBPersistentObjectFactory persistentObjectFactory = mock(GBPersistentObjectFactory.class);
+    PersistentObjectFactory persistentObjectFactory = mock(PersistentObjectFactory.class);
     when(persistentObjectFactory.createMap(mapID)).thenReturn(references);
 
     final Sink respondToServerMapSink = mock(Sink.class);
@@ -326,7 +326,7 @@ public class ServerMapRequestManagerTest extends TestCase {
 
   private static class TestCDSMManagedObjectState extends ConcurrentDistributedServerMapManagedObjectState {
 
-    protected TestCDSMManagedObjectState(long classId, ObjectID id, GBPersistentObjectFactory persistentObjectFactory) {
+    protected TestCDSMManagedObjectState(long classId, ObjectID id, PersistentObjectFactory persistentObjectFactory) {
       super(classId, id, persistentObjectFactory);
     }
 

@@ -16,9 +16,9 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.api.TransactionStore;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
-import com.tc.objectserver.persistence.gb.GBPersistor;
-import com.tc.objectserver.persistence.gb.GBTransactionPersistor;
-import com.tc.objectserver.persistence.gb.StorageManagerFactory;
+import com.tc.objectserver.persistence.Persistor;
+import com.tc.objectserver.persistence.StorageManagerFactory;
+import com.tc.objectserver.persistence.TransactionPersistor;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransaction;
 import com.tc.test.TCTestCase;
 import com.tc.util.sequence.Sequence;
@@ -38,19 +38,19 @@ import static org.mockito.Mockito.verify;
 
 public class TransactionStoreTest extends TCTestCase {
 
-  private GBTransactionPersistor transactionPersistor;
+  private TransactionPersistor transactionPersistor;
   private Sequence gidSequence;
   private TransactionStore store;
 
   public void setUp() {
-    GBPersistor gbPersistor = new GBPersistor(new StorageManagerFactory() {
+    Persistor persistor = new Persistor(new StorageManagerFactory() {
       @Override
       public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap) {
         return new HeapStorageManager(configMap);
       }
     });
-    transactionPersistor = spy(gbPersistor.getTransactionPersistor());
-    gidSequence = spy(gbPersistor.getGlobalTransactionIDSequence());
+    transactionPersistor = spy(persistor.getTransactionPersistor());
+    gidSequence = spy(persistor.getGlobalTransactionIDSequence());
     store = new TransactionStoreImpl(transactionPersistor, gidSequence);
   }
 

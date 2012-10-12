@@ -15,8 +15,8 @@ import com.tc.object.TestDNACursor;
 import com.tc.object.TestDNAWriter;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.core.api.ManagedObjectState;
-import com.tc.objectserver.persistence.gb.GBPersistor;
-import com.tc.objectserver.persistence.gb.StorageManagerFactory;
+import com.tc.objectserver.persistence.Persistor;
+import com.tc.objectserver.persistence.StorageManagerFactory;
 import com.tc.util.Assert;
 
 import java.io.ByteArrayInputStream;
@@ -34,7 +34,7 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
     super.setUp();
     this.listenerProvider = new NullManagedObjectChangeListenerProvider();
     ManagedObjectStateFactory.disableSingleton(true);
-    GBPersistor persistor = new GBPersistor(new StorageManagerFactory() {
+    Persistor persistor = new Persistor(new StorageManagerFactory() {
 
           @Override
           public StorageManager createStorageManager(Map<String, KeyValueStorageConfig<?, ?>> configMap) {

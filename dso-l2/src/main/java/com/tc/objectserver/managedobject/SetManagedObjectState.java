@@ -4,16 +4,18 @@
  */
 package com.tc.objectserver.managedobject;
 
+import org.terracotta.corestorage.KeyValueStorage;
+
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.objectserver.api.Destroyable;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.api.Destroyable;
-import com.tc.objectserver.persistence.gb.GBPersistentObjectFactory;
+import com.tc.objectserver.persistence.PersistentObjectFactory;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -22,8 +24,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.terracotta.corestorage.KeyValueStorage;
-
 /**
  * ManagedObjectState for sets.
  */
@@ -31,13 +31,13 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
   protected final KeyValueStorage<Object, Object> references;
   private final ObjectID oid;
 
-  SetManagedObjectState(long classID, ObjectID oid, GBPersistentObjectFactory objectFactory) {
+  SetManagedObjectState(long classID, ObjectID oid, PersistentObjectFactory objectFactory) {
     super(classID);
     this.oid = oid;
     this.references = objectFactory.createMap(oid);
   }
 
-  protected SetManagedObjectState(ObjectInput in, GBPersistentObjectFactory objectFactory) throws IOException {
+  protected SetManagedObjectState(ObjectInput in, PersistentObjectFactory objectFactory) throws IOException {
     super(in);
     this.oid = new ObjectID(in.readLong());
     this.references = objectFactory.getMap(oid);
@@ -132,7 +132,7 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
     return references.equals(mo.references);
   }
 
-  static SetManagedObjectState readFrom(ObjectInput in, GBPersistentObjectFactory objectFactory) throws IOException {
+  static SetManagedObjectState readFrom(ObjectInput in, PersistentObjectFactory objectFactory) throws IOException {
     return new SetManagedObjectState(in, objectFactory);
   }
 

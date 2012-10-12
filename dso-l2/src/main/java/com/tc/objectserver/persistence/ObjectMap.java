@@ -1,4 +1,4 @@
-package com.tc.objectserver.persistence.gb;
+package com.tc.objectserver.persistence;
 
 import org.terracotta.corestorage.KeyValueStorage;
 import org.terracotta.corestorage.KeyValueStorageConfig;
@@ -25,11 +25,11 @@ import java.util.Set;
 /**
  * @author tim
  */
-class GBObjectMap implements KeyValueStorage<ObjectID, ManagedObject> {
+class ObjectMap implements KeyValueStorage<ObjectID, ManagedObject> {
   private final KeyValueStorage<Long, byte[]> backingMap;
   private final ManagedObjectSerializer serializer;
 
-  GBObjectMap(GBManagedObjectPersistor persistor, final KeyValueStorage<Long, byte[]> backingMap) {
+  ObjectMap(ManagedObjectPersistor persistor, final KeyValueStorage<Long, byte[]> backingMap) {
     this.backingMap = backingMap;
     this.serializer = new ManagedObjectSerializer(new ManagedObjectStateSerializer(), persistor);
   }

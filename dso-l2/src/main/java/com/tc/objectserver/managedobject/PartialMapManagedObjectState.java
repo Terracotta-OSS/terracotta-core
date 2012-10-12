@@ -5,7 +5,7 @@
 package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
-import com.tc.objectserver.persistence.gb.GBPersistentObjectFactory;
+import com.tc.objectserver.persistence.PersistentObjectFactory;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -17,11 +17,11 @@ import java.io.ObjectInput;
  */
 public class PartialMapManagedObjectState extends MapManagedObjectState {
 
-  protected PartialMapManagedObjectState(final long classID, ObjectID id, GBPersistentObjectFactory factory) {
+  protected PartialMapManagedObjectState(final long classID, ObjectID id, PersistentObjectFactory factory) {
     super(classID, id, factory);
   }
 
-  protected PartialMapManagedObjectState(final ObjectInput in, GBPersistentObjectFactory factory) throws IOException {
+  protected PartialMapManagedObjectState(final ObjectInput in, PersistentObjectFactory factory) throws IOException {
     super(in, factory);
   }
 
@@ -41,7 +41,7 @@ public class PartialMapManagedObjectState extends MapManagedObjectState {
     return PARTIAL_MAP_TYPE;
   }
 
-  static MapManagedObjectState readFrom(final ObjectInput in, GBPersistentObjectFactory factory) throws IOException, ClassNotFoundException {
+  static MapManagedObjectState readFrom(final ObjectInput in, PersistentObjectFactory factory) throws IOException, ClassNotFoundException {
     return new PartialMapManagedObjectState(in, factory);
   }
 }

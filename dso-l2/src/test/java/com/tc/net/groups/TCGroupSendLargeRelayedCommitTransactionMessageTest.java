@@ -5,6 +5,10 @@
 
 package com.tc.net.groups;
 
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.StorageManager;
+import org.terracotta.corestorage.heap.HeapStorageManager;
+
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.ConfigurationContextImpl;
@@ -29,8 +33,8 @@ import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
-import com.tc.objectserver.persistence.gb.GBPersistor;
-import com.tc.objectserver.persistence.gb.StorageManagerFactory;
+import com.tc.objectserver.persistence.Persistor;
+import com.tc.objectserver.persistence.StorageManagerFactory;
 import com.tc.objectserver.tx.TestCommitTransactionMessage;
 import com.tc.objectserver.tx.TestCommitTransactionMessageFactory;
 import com.tc.objectserver.tx.TestServerTransaction;
@@ -46,9 +50,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.StorageManager;
-import org.terracotta.corestorage.heap.HeapStorageManager;
 
 /*
  * This test is to verify fix for DEV-2149 reallocating big memory. After test, grep "large" to see if big memory block
@@ -64,7 +65,7 @@ public class TCGroupSendLargeRelayedCommitTransactionMessageTest extends TCTestC
 
   public void baseTestSendingReceivingMessagesStatic(int batchSize) throws Exception {
     System.out.println("Test batch data size " + batchSize);
-    GBPersistor persistor = new GBPersistor(new StorageManagerFactory() {
+    Persistor persistor = new Persistor(new StorageManagerFactory() {
       @Override
       public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap) {
         return new HeapStorageManager(configMap);

@@ -4,6 +4,10 @@
  */
 package com.tc.l2.msg;
 
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.StorageManager;
+import org.terracotta.corestorage.heap.HeapStorageManager;
+
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.ha.ClusterState;
@@ -16,9 +20,9 @@ import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.gtx.GlobalTransactionIDSequenceProvider;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
 import com.tc.objectserver.impl.ConnectionIDFactoryImpl;
-import com.tc.objectserver.persistence.gb.GBObjectIDSequence;
-import com.tc.objectserver.persistence.gb.GBPersistor;
-import com.tc.objectserver.persistence.gb.StorageManagerFactory;
+import com.tc.objectserver.persistence.ObjectIDSequenceImpl;
+import com.tc.objectserver.persistence.Persistor;
+import com.tc.objectserver.persistence.StorageManagerFactory;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
 import com.tc.util.State;
 import com.tc.util.sequence.DGCSequenceProvider;
@@ -28,9 +32,6 @@ import java.util.Iterator;
 import java.util.Map;
 
 import junit.framework.TestCase;
-import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.StorageManager;
-import org.terracotta.corestorage.heap.HeapStorageManager;
 
 public class ClusterStateMessageTest extends TestCase {
   private static final int CLUSTER_STATE_1 = 1;
@@ -52,14 +53,14 @@ public class ClusterStateMessageTest extends TestCase {
   }
 
   private void resetClusterState(int clusterState) {
-    GBPersistor persistor =  new GBPersistor(new StorageManagerFactory() {
+    Persistor persistor =  new Persistor(new StorageManagerFactory() {
       @Override
       public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap) {
         return new HeapStorageManager(configMap);
       }
     });
     PersistentMapStore clusterStateStore = persistor.getPersistentStateStore();
-    ObjectIDSequence oidSequence = new GBObjectIDSequence(persistor.getManagedObjectPersistor());
+    ObjectIDSequence oidSequence = new ObjectIDSequenceImpl(persistor.getManagedObjectPersistor());
     ConnectionIDFactory connectionIdFactory = new ConnectionIDFactoryImpl(persistor.getClientStatePersistor());
     GlobalTransactionIDSequenceProvider gidSequenceProvider = new GlobalTransactionIDBatchRequestHandler(
                                                                                                          new TestMutableSequence());

@@ -5,6 +5,9 @@
 package com.tc.objectserver.impl;
 
 import org.apache.commons.lang.NotImplementedException;
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.StorageManager;
+import org.terracotta.corestorage.heap.HeapStorageManager;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
@@ -12,7 +15,6 @@ import com.tc.async.api.Sink;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.ImplementMe;
 import com.tc.invalidation.Invalidations;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
@@ -64,8 +66,8 @@ import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
-import com.tc.objectserver.persistence.gb.GBPersistor;
-import com.tc.objectserver.persistence.gb.StorageManagerFactory;
+import com.tc.objectserver.persistence.Persistor;
+import com.tc.objectserver.persistence.StorageManagerFactory;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
@@ -73,7 +75,6 @@ import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -86,9 +87,6 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import junit.framework.TestCase;
-import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.StorageManager;
-import org.terracotta.corestorage.heap.HeapStorageManager;
 
 public class ObjectRequestManagerTest extends TestCase {
 
@@ -97,7 +95,7 @@ public class ObjectRequestManagerTest extends TestCase {
     super.setUp();
 
     ManagedObjectStateFactory.disableSingleton(true);
-    GBPersistor persistor = new GBPersistor(new StorageManagerFactory() {
+    Persistor persistor = new Persistor(new StorageManagerFactory() {
 
           @Override
           public StorageManager createStorageManager(Map<String, KeyValueStorageConfig<?, ?>> configMap) {

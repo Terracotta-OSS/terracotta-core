@@ -6,9 +6,8 @@ package com.tc.objectserver.impl;
 
 import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
-import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.api.Transaction;
-import com.tc.objectserver.persistence.gb.GBManagedObjectPersistor;
+import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SyncObjectIdSet;
 import com.tc.util.SyncObjectIdSetImpl;

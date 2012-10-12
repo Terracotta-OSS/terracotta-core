@@ -1,4 +1,4 @@
-package com.tc.objectserver.persistence.gb;
+package com.tc.objectserver.persistence;
 
 import org.terracotta.corestorage.KeyValueStorage;
 import org.terracotta.corestorage.KeyValueStorageConfig;
@@ -19,10 +19,10 @@ import java.util.SortedSet;
 /**
  * @author tim
  */
-public class GBTransactionPersistor {
+public class TransactionPersistor {
   private final KeyValueStorage<GlobalTransactionID, GlobalTransactionDescriptor> committed;
 
-  public GBTransactionPersistor(KeyValueStorage<GlobalTransactionID, GlobalTransactionDescriptor> committed) {
+  public TransactionPersistor(KeyValueStorage<GlobalTransactionID, GlobalTransactionDescriptor> committed) {
     this.committed = committed;
   }
 

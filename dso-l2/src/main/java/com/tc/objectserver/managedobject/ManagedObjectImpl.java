@@ -23,7 +23,7 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.impl.ManagedObjectReference;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.persistence.gb.GBManagedObjectPersistor;
+import com.tc.objectserver.persistence.ManagedObjectPersistor;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
@@ -63,13 +63,13 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   // TODO::Split this flag into two so that concurrency is maintained
   private volatile transient byte          flags                    = INITIAL_FLAG_VALUE;
 
-  private final GBManagedObjectPersistor persistor;
+  private final ManagedObjectPersistor persistor;
 
   public ManagedObjectImpl(final ObjectID id) {
     throw new UnsupportedOperationException();
   }
 
-  public ManagedObjectImpl(final ObjectID id, GBManagedObjectPersistor persistor) {
+  public ManagedObjectImpl(final ObjectID id, ManagedObjectPersistor persistor) {
     Assert.assertNotNull(id);
     this.id = id;
     this.persistor = persistor;

@@ -5,6 +5,10 @@
 
 package com.tc.net.groups;
 
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.StorageManager;
+import org.terracotta.corestorage.heap.HeapStorageManager;
+
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.ConfigurationContextImpl;
@@ -34,8 +38,8 @@ import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
-import com.tc.objectserver.persistence.gb.GBPersistor;
-import com.tc.objectserver.persistence.gb.StorageManagerFactory;
+import com.tc.objectserver.persistence.Persistor;
+import com.tc.objectserver.persistence.StorageManagerFactory;
 import com.tc.test.TCTestCase;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.PortChooser;
@@ -49,9 +53,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.StorageManager;
-import org.terracotta.corestorage.heap.HeapStorageManager;
 
 public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
   private final static String LOCALHOST   = "localhost";
@@ -63,7 +64,7 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
 
   public void baseTestSendingReceivingMessagesStatic(final long oidsCount) throws Exception {
     System.out.println("Test with ObjectIDs size " + oidsCount);
-    GBPersistor persistor = new GBPersistor(new StorageManagerFactory() {
+    Persistor persistor = new Persistor(new StorageManagerFactory() {
       @Override
       public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap) {
         return new HeapStorageManager(configMap);

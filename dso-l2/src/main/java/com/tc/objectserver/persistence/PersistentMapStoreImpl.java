@@ -1,4 +1,4 @@
-package com.tc.objectserver.persistence.gb;
+package com.tc.objectserver.persistence;
 
 import org.terracotta.corestorage.KeyValueStorage;
 import org.terracotta.corestorage.KeyValueStorageConfig;
@@ -9,10 +9,10 @@ import com.tc.object.persistence.api.PersistentMapStore;
 /**
  * @author tim
  */
-public class GBPersistentMapStore implements PersistentMapStore {
+public class PersistentMapStoreImpl implements PersistentMapStore {
   private final KeyValueStorage<String, String> stateMap;
 
-  public GBPersistentMapStore(KeyValueStorage<String, String> stateMap) {
+  public PersistentMapStoreImpl(KeyValueStorage<String, String> stateMap) {
     this.stateMap = stateMap;
   }
 

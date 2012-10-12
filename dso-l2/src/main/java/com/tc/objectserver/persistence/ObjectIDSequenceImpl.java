@@ -1,7 +1,7 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-package com.tc.objectserver.persistence.gb;
+package com.tc.objectserver.persistence;
 
 import com.tc.util.sequence.ObjectIDSequence;
 
@@ -9,11 +9,11 @@ import com.tc.util.sequence.ObjectIDSequence;
  *
  * @author mscott
  */
-public class GBObjectIDSequence implements ObjectIDSequence {
+public class ObjectIDSequenceImpl implements ObjectIDSequence {
     
-    final GBManagedObjectPersistor persistor;
+    final ManagedObjectPersistor persistor;
 
-    public GBObjectIDSequence(GBManagedObjectPersistor persistor) {
+    public ObjectIDSequenceImpl(ManagedObjectPersistor persistor) {
         this.persistor = persistor;
     }
     

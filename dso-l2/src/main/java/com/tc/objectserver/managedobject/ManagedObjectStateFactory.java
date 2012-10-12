@@ -9,9 +9,9 @@ import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.managedobject.ManagedObjectStateStaticConfig.Factory;
-import com.tc.objectserver.persistence.gb.GBManagedObjectPersistor;
-import com.tc.objectserver.persistence.gb.GBPersistentObjectFactory;
-import com.tc.objectserver.persistence.gb.GBPersistor;
+import com.tc.objectserver.persistence.ManagedObjectPersistor;
+import com.tc.objectserver.persistence.PersistentObjectFactory;
+import com.tc.objectserver.persistence.Persistor;
 import com.tc.util.Assert;
 
 import java.io.IOException;
@@ -33,9 +33,9 @@ public class ManagedObjectStateFactory {
   // this is present for tests
   private static boolean                            disableAssertions   = false;
 
-  private final GBPersistentObjectFactory objectFactory;
+  private final PersistentObjectFactory objectFactory;
 
-  private ManagedObjectStateFactory(final ManagedObjectChangeListenerProvider listenerProvider, GBPersistentObjectFactory objectFactory) {
+  private ManagedObjectStateFactory(final ManagedObjectChangeListenerProvider listenerProvider, PersistentObjectFactory objectFactory) {
     this.listenerProvider = listenerProvider;
     this.objectFactory = objectFactory;
   }
@@ -44,7 +44,7 @@ public class ManagedObjectStateFactory {
    * @see comments above
    */
   public static synchronized ManagedObjectStateFactory createInstance(final ManagedObjectChangeListenerProvider listenerProvider,
-                                                                      final GBPersistor persistor) {
+                                                                      final Persistor persistor) {
     if (singleton != null && !disableAssertions) {
       // not good !!
       throw new AssertionError("This class is singleton. It is not to be instantiated more than once. " + singleton);
@@ -54,7 +54,7 @@ public class ManagedObjectStateFactory {
   }
 
   public static synchronized ManagedObjectStateFactory createInstance(final ManagedObjectChangeListenerProvider listenerProvider,
-                                                                      final GBManagedObjectPersistor persistor) {
+                                                                      final ManagedObjectPersistor persistor) {
     throw new AssertionError();
   }
 

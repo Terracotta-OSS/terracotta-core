@@ -1,4 +1,4 @@
-package com.tc.objectserver.persistence.gb;
+package com.tc.objectserver.persistence;
 
 import org.terracotta.corestorage.KeyValueStorage;
 import org.terracotta.corestorage.KeyValueStorageConfig;
@@ -10,7 +10,7 @@ import com.tc.object.ObjectID;
 /**
  * @author tim
  */
-public class GBPersistentObjectFactory {
+public class PersistentObjectFactory {
   private static final KeyValueStorageConfig<Object, Object> mapConfig;
   static {
     mapConfig = new KeyValueStorageConfigImpl<Object, Object>(Object.class, Object.class);
@@ -20,7 +20,7 @@ public class GBPersistentObjectFactory {
 
   private final StorageManager gbManager;
 
-  public GBPersistentObjectFactory(final StorageManager gbManager) {
+  public PersistentObjectFactory(final StorageManager gbManager) {
     this.gbManager = gbManager;
   }
 

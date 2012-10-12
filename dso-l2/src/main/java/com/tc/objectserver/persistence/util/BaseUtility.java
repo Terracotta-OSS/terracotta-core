@@ -4,27 +4,24 @@
  */
 package com.tc.objectserver.persistence.util;
 
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.StorageManager;
+import org.terracotta.corestorage.heap.HeapStorageManager;
+
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListenerProvider;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListener;
-import com.tc.objectserver.persistence.gb.GBPersistor;
-import com.tc.objectserver.persistence.gb.StorageManagerFactory;
-import com.tc.properties.TCProperties;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
+import com.tc.objectserver.persistence.Persistor;
+import com.tc.objectserver.persistence.StorageManagerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
-import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
-import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.StorageManager;
-import org.terracotta.corestorage.heap.HeapStorageManager;
 
 public abstract class BaseUtility {
 
@@ -50,9 +47,9 @@ public abstract class BaseUtility {
     }
   }
 
-  private GBPersistor createPersistor(int id) throws Exception {
+  private Persistor createPersistor(int id) throws Exception {
     final TestManagedObjectChangeListenerProvider managedObjectChangeListenerProvider = new TestManagedObjectChangeListenerProvider();
-    GBPersistor persistor = new GBPersistor(new StorageManagerFactory() {
+    Persistor persistor = new Persistor(new StorageManagerFactory() {
 
           @Override
           public StorageManager createStorageManager(Map<String, KeyValueStorageConfig<?, ?>> configMap) {
@@ -63,8 +60,8 @@ public abstract class BaseUtility {
     return persistor;
   }
 
-  protected GBPersistor getPersistor(int id) {
-    return (GBPersistor) dbPersistorsMap.get(Integer.valueOf(id));
+  protected Persistor getPersistor(int id) {
+    return (Persistor) dbPersistorsMap.get(Integer.valueOf(id));
   }
 
   protected File getDatabaseDir(int id) {

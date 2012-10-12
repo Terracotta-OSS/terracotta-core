@@ -1,17 +1,18 @@
-package com.tc.objectserver.persistence.gb;
+package com.tc.objectserver.persistence;
+
+import org.terracotta.corestorage.StorageManager;
 
 import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.api.TransactionProvider;
-import org.terracotta.corestorage.StorageManager;
 
 /**
  * @author tim
  */
-public class GBPersistenceTransactionProvider implements TransactionProvider {
+public class PersistenceTransactionProvider implements TransactionProvider {
 
   private final StorageManager manager;
 
-  public GBPersistenceTransactionProvider(StorageManager manager) {
+  public PersistenceTransactionProvider(StorageManager manager) {
     this.manager = manager;
   }
 

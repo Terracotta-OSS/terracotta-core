@@ -13,7 +13,7 @@ import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.api.TransactionStore;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 import com.tc.objectserver.gtx.ServerTransactionIDBookKeeper;
-import com.tc.objectserver.persistence.gb.GBTransactionPersistor;
+import com.tc.objectserver.persistence.TransactionPersistor;
 import com.tc.util.sequence.Sequence;
 
 import java.util.ArrayList;
@@ -33,10 +33,10 @@ public class TransactionStoreImpl implements TransactionStore {
 
   private final ServerTransactionIDBookKeeper sids   = new ServerTransactionIDBookKeeper();
   private final SortedMap                     ids    = Collections.synchronizedSortedMap(new TreeMap());
-  private final GBTransactionPersistor         persistor;
+  private final TransactionPersistor persistor;
   private final Sequence                      globalIDSequence;
 
-  public TransactionStoreImpl(GBTransactionPersistor persistor, Sequence globalIDSequence) {
+  public TransactionStoreImpl(TransactionPersistor persistor, Sequence globalIDSequence) {
     this.persistor = persistor;
     this.globalIDSequence = globalIDSequence;
     // We don't want to hit the DB (globalIDsequence) until all the stages are started.

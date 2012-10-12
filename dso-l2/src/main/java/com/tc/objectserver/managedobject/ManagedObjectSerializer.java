@@ -8,7 +8,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.io.serializer.api.Serializer;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObjectState;
-import com.tc.objectserver.persistence.gb.GBManagedObjectPersistor;
+import com.tc.objectserver.persistence.ManagedObjectPersistor;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -16,9 +16,9 @@ import java.io.ObjectOutput;
 
 public class ManagedObjectSerializer implements Serializer {
   private final ManagedObjectStateSerializer serializer;
-  private final GBManagedObjectPersistor persistor;
+  private final ManagedObjectPersistor persistor;
 
-  public ManagedObjectSerializer(ManagedObjectStateSerializer serializer, GBManagedObjectPersistor persistor) {
+  public ManagedObjectSerializer(ManagedObjectStateSerializer serializer, ManagedObjectPersistor persistor) {
     this.serializer = serializer;
     this.persistor = persistor;
   }

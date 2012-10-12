@@ -11,7 +11,7 @@ import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
-import com.tc.objectserver.persistence.gb.GBManagedObjectPersistor;
+import com.tc.objectserver.persistence.ManagedObjectPersistor;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
 
@@ -22,11 +22,11 @@ import java.util.SortedSet;
 
 public class PersistentManagedObjectStore {
 
-  private final GBManagedObjectPersistor objectPersistor;
+  private final ManagedObjectPersistor objectPersistor;
   private final Sink                   gcDisposerSink;
   private volatile boolean             inShutdown;
 
-  public PersistentManagedObjectStore(final GBManagedObjectPersistor persistor, final Sink gcDisposerSink) {
+  public PersistentManagedObjectStore(final ManagedObjectPersistor persistor, final Sink gcDisposerSink) {
     this.objectPersistor = persistor;
     this.gcDisposerSink = gcDisposerSink;
   }

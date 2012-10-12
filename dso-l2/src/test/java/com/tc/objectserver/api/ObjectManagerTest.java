@@ -60,9 +60,9 @@ import com.tc.objectserver.managedobject.ManagedObjectStateStaticConfig;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.MapEntryFacade;
-import com.tc.objectserver.persistence.gb.GBPersistenceTransactionProvider;
-import com.tc.objectserver.persistence.gb.GBPersistor;
-import com.tc.objectserver.persistence.gb.StorageManagerFactory;
+import com.tc.objectserver.persistence.PersistenceTransactionProvider;
+import com.tc.objectserver.persistence.Persistor;
+import com.tc.objectserver.persistence.StorageManagerFactory;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransactionProvider;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionImpl;
@@ -120,7 +120,7 @@ public class ObjectManagerTest extends TCTestCase {
   private TestGlobalTransactionManager       gtxMgr;
   private TransactionalObjectManagerImpl     txObjectManager;
   private long                               version = 0;
-  private GBPersistor persistor;
+  private Persistor persistor;
 
   /**
    * Constructor for ObjectManagerTest.
@@ -135,7 +135,7 @@ public class ObjectManagerTest extends TCTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    this.persistor = new GBPersistor(new StorageManagerFactory() {
+    this.persistor = new Persistor(new StorageManagerFactory() {
       @Override
       public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap) {
         return new HeapStorageManager(configMap);
@@ -522,7 +522,7 @@ public class ObjectManagerTest extends TCTestCase {
     }
   }
 
-  private static void close(final GBPersistor persistor, final PersistentManagedObjectStore store) {
+  private static void close(final Persistor persistor, final PersistentManagedObjectStore store) {
     // to work around timing problem with this test, calling snapshot
     // this should block this thread until transaction reading all object IDs from BDB completes,
     // at which point, it's OK to close the DB
@@ -750,7 +750,7 @@ public class ObjectManagerTest extends TCTestCase {
    * recall in TransactionalObjectManager in persistence mode
    */
   public void testRecallNewObjects() throws Exception {
-    final GBPersistenceTransactionProvider ptp = persistor.getPersistenceTransactionProvider();
+    final PersistenceTransactionProvider ptp = persistor.getPersistenceTransactionProvider();
     final PersistentManagedObjectStore persistentMOStore = new PersistentManagedObjectStore(
                                                                                             persistor
                                                                                                 .getManagedObjectPersistor(),

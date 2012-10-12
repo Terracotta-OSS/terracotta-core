@@ -8,7 +8,7 @@ import com.tc.async.api.Sink;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
-import com.tc.objectserver.persistence.gb.GBManagedObjectPersistor;
+import com.tc.objectserver.persistence.ManagedObjectPersistor;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Arrays;
@@ -24,14 +24,14 @@ public class PersistentManagedObjectStoreTest extends TestCase {
 
   private Map                          map;
   private Sink                         gcSink;
-  private GBManagedObjectPersistor     persistor;
+  private ManagedObjectPersistor persistor;
   private PersistentManagedObjectStore objectStore;
 
   protected void setUp() throws Exception {
     super.setUp();
     map = new HashMap();
     gcSink = mock(Sink.class);
-    persistor = mock(GBManagedObjectPersistor.class);
+    persistor = mock(ManagedObjectPersistor.class);
     objectStore = new PersistentManagedObjectStore(persistor, gcSink);
   }
 

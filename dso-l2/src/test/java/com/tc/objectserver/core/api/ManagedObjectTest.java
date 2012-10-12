@@ -4,6 +4,10 @@
  */
 package com.tc.objectserver.core.api;
 
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.StorageManager;
+import org.terracotta.corestorage.heap.HeapStorageManager;
+
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TestDNACursor;
@@ -14,14 +18,11 @@ import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
-import com.tc.objectserver.persistence.gb.GBPersistor;
-import com.tc.objectserver.persistence.gb.StorageManagerFactory;
+import com.tc.objectserver.persistence.Persistor;
+import com.tc.objectserver.persistence.StorageManagerFactory;
 import com.tc.test.TCTestCase;
 
 import java.util.Map;
-import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.StorageManager;
-import org.terracotta.corestorage.heap.HeapStorageManager;
 
 public class ManagedObjectTest extends TCTestCase {
 
@@ -29,7 +30,7 @@ public class ManagedObjectTest extends TCTestCase {
     final ObjectInstanceMonitor instanceMonitor = new ObjectInstanceMonitorImpl();
     final ObjectID objectID = new ObjectID(1);
     ManagedObjectStateFactory.disableSingleton(true);
-    GBPersistor persistor = new GBPersistor(new StorageManagerFactory() {
+    Persistor persistor = new Persistor(new StorageManagerFactory() {
       @Override
       public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap) {
         return new HeapStorageManager(configMap);
@@ -92,7 +93,7 @@ public class ManagedObjectTest extends TCTestCase {
     final ObjectInstanceMonitor instanceMonitor = new ObjectInstanceMonitorImpl();
     final ObjectID objectID = new ObjectID(1);
     ManagedObjectStateFactory.disableSingleton(true);
-    GBPersistor persistor = new GBPersistor(new StorageManagerFactory() {
+    Persistor persistor = new Persistor(new StorageManagerFactory() {
       @Override
       public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap) {
         return new HeapStorageManager(configMap);

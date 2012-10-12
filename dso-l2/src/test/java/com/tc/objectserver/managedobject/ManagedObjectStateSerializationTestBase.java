@@ -23,9 +23,9 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.impl.PersistentManagedObjectStore;
-import com.tc.objectserver.persistence.gb.GBManagedObjectPersistor;
-import com.tc.objectserver.persistence.gb.GBPersistor;
-import com.tc.objectserver.persistence.gb.StorageManagerFactory;
+import com.tc.objectserver.persistence.ManagedObjectPersistor;
+import com.tc.objectserver.persistence.Persistor;
+import com.tc.objectserver.persistence.StorageManagerFactory;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.runtime.ThreadDumpUtil;
@@ -39,8 +39,8 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
   private final TCLogger                 logger   = TCLogging.getTestingLogger(getClass());
   private ObjectID                       objectID = new ObjectID(2000);
 
-  private GBManagedObjectPersistor     managedObjectPersistor;
-  private GBPersistor persistor;
+  private ManagedObjectPersistor managedObjectPersistor;
+  private Persistor persistor;
   private TransactionProvider ptp;
   private PersistentManagedObjectStore store;
 
@@ -48,7 +48,7 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
   public void setUp() throws Exception {
     super.setUp();
 
-    this.persistor = new GBPersistor(new StorageManagerFactory() {
+    this.persistor = new Persistor(new StorageManagerFactory() {
 
           @Override
           public StorageManager createStorageManager(Map<String, KeyValueStorageConfig<?, ?>> configMap) {

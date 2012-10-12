@@ -4,19 +4,21 @@
  */
 package com.tc.objectserver.managedobject;
 
+import org.terracotta.corestorage.KeyValueStorage;
+
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.objectserver.api.Destroyable;
 import com.tc.objectserver.mgmt.FacadeUtil;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.MapEntryFacade;
 import com.tc.objectserver.mgmt.MapEntryFacadeImpl;
-import com.tc.objectserver.api.Destroyable;
-import com.tc.objectserver.persistence.gb.GBPersistentObjectFactory;
+import com.tc.objectserver.persistence.PersistentObjectFactory;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 
@@ -28,8 +30,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.terracotta.corestorage.KeyValueStorage;
-
 /**
  * state for maps
  */
@@ -37,16 +37,16 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     Destroyable {
   private final ObjectID id;
   protected final KeyValueStorage<Object, Object> references;
-  private final GBPersistentObjectFactory factory;
+  private final PersistentObjectFactory factory;
 
-  protected MapManagedObjectState(final long classID, ObjectID id, GBPersistentObjectFactory factory) {
+  protected MapManagedObjectState(final long classID, ObjectID id, PersistentObjectFactory factory) {
     super(classID);
     this.factory = factory;
     this.id = id;
     this.references = factory.createMap(id);
   }
 
-  protected MapManagedObjectState(final ObjectInput in, GBPersistentObjectFactory factory) throws IOException {
+  protected MapManagedObjectState(final ObjectInput in, PersistentObjectFactory factory) throws IOException {
     super(in);
     this.factory = factory;
     this.id = new ObjectID(in.readLong());
@@ -196,7 +196,7 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
 //  }
 
   // CollectionsPersistor will save retrieve data in references map.
-  static MapManagedObjectState readFrom(final ObjectInput in, GBPersistentObjectFactory factory) throws IOException, ClassNotFoundException {
+  static MapManagedObjectState readFrom(final ObjectInput in, PersistentObjectFactory factory) throws IOException, ClassNotFoundException {
     return new MapManagedObjectState(in, factory);
   }
 
