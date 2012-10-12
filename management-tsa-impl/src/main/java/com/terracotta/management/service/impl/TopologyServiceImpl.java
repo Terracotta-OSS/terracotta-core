@@ -13,6 +13,7 @@ import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.ServerEntity;
 import com.terracotta.management.resource.ServerGroupEntity;
 import com.terracotta.management.resource.TopologyEntity;
+import com.terracotta.management.service.JmxClientService;
 import com.terracotta.management.service.TopologyService;
 
 import java.lang.management.ManagementFactory;
@@ -29,6 +30,12 @@ import javax.management.ObjectName;
  */
 public class TopologyServiceImpl implements TopologyService {
 
+  private final JmxClientService jmxClientService;
+
+  public TopologyServiceImpl(JmxClientService jmxClientService) {
+    this.jmxClientService = jmxClientService;
+  }
+
   @Override
   public TopologyEntity getTopology() throws ServiceExecutionException {
     return buildTopologyEntity();
@@ -38,13 +45,6 @@ public class TopologyServiceImpl implements TopologyService {
   private TopologyEntity buildTopologyEntity() throws ServiceExecutionException {
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     try {
-      //TODO: these attributes are taken from the local L2. They should be identical on all servers in theory but in practice it sometimes is a different story
-      final String version = (String)mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "Version");
-      final String buildId = (String)mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "BuildID");
-      final String descriptionOfCapabilities = (String)mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "DescriptionOfCapabilities");
-      final String persistenceMode = (String)mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "PersistenceMode");
-      final String failoverMode = (String)mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "FailoverMode");
-
       ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
 
       TopologyEntity topologyEntity = new TopologyEntity();
@@ -62,24 +62,22 @@ public class TopologyServiceImpl implements TopologyService {
 
         L2Info[] members = serverGroupInfo.members();
         for (L2Info member : members) {
-          ServerEntity serverEntity = new ServerEntity();
-
-          serverEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
-          serverEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-
-          serverEntity.getAttributes().put("Version", version);
-          serverEntity.getAttributes().put("BuildID", buildId);
-          serverEntity.getAttributes().put("DescriptionOfCapabilities", descriptionOfCapabilities);
-          serverEntity.getAttributes().put("PersistenceMode", persistenceMode);
-          serverEntity.getAttributes().put("FailoverMode", failoverMode);
-
-          serverEntity.getAttributes().put("Name", member.name());
-          serverEntity.getAttributes().put("Host", member.host());
-          serverEntity.getAttributes().put("JmxPort", member.jmxPort());
-          serverEntity.getAttributes().put("HostAddress", member.safeGetHostAddress());
-          //TODO: add missing DSO port
-
-          serverGroupEntity.getServers().add(serverEntity);
+          try {
+            ServerEntity serverEntity = jmxClientService.buildServerEntity(member);
+            serverEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+            serverEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+            serverGroupEntity.getServers().add(serverEntity);
+          } catch (ServiceExecutionException see) {
+            // unable to contact an L2, add a server entity with minimal info
+            ServerEntity serverEntity = new ServerEntity();
+            serverEntity.getAttributes().put("Name", member.name());
+            serverEntity.getAttributes().put("Host", member.host());
+            serverEntity.getAttributes().put("JmxPort", member.jmxPort());
+            serverEntity.getAttributes().put("HostAddress", member.safeGetHostAddress());
+            serverEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+            serverEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+            serverGroupEntity.getServers().add(serverEntity);
+          }
         }
 
         topologyEntity.getServerGroupEntities().add(serverGroupEntity);
