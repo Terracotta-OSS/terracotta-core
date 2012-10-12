@@ -1,8 +1,6 @@
 package com.tc.objectserver.persistence.gb;
 
 import org.terracotta.corestorage.KeyValueStorage;
-import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.heap.KeyValueStorageConfigImpl;
 
 import com.tc.util.sequence.MutableSequence;
 
@@ -22,13 +20,6 @@ public class GBSequence implements MutableSequence {
       current = 0L;
       sequenceMap.put(name, current);
     }
-  }
-
-  public static KeyValueStorageConfig<String, Long> config() {
-    KeyValueStorageConfig<String, Long> config = new KeyValueStorageConfigImpl<String, Long>(String.class, Long.class);
-    config.setKeySerializer(StringSerializer.INSTANCE);
-    config.setValueSerializer(com.tc.objectserver.persistence.gb.LongSerializer.INSTANCE);
-    return config;
   }
 
   @Override

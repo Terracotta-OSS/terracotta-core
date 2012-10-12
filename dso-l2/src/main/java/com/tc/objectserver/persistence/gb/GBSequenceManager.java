@@ -1,8 +1,11 @@
 package com.tc.objectserver.persistence.gb;
 
+import org.terracotta.corestorage.KeyValueStorage;
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.heap.KeyValueStorageConfigImpl;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import org.terracotta.corestorage.KeyValueStorage;
 
 /**
  * @author tim
@@ -27,5 +30,12 @@ public class GBSequenceManager {
       }
     }
     return sequence;
+  }
+
+  public static KeyValueStorageConfig<String, Long> config() {
+    KeyValueStorageConfig<String, Long> config = new KeyValueStorageConfigImpl<String, Long>(String.class, Long.class);
+    config.setKeySerializer(StringSerializer.INSTANCE);
+    config.setValueSerializer(LongSerializer.INSTANCE);
+    return config;
   }
 }

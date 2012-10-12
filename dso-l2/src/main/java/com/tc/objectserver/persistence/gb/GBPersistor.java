@@ -52,11 +52,12 @@ public class GBPersistor {
 
     sequenceManager = new GBSequenceManager(gbManager.getKeyValueStorage(SEQUENCE_MAP, String.class, Long.class));
     transactionPersistor = new GBTransactionPersistor(gbManager.getKeyValueStorage(TRANSACTION,
-                                                                       GlobalTransactionID.class,
-                                                                       GlobalTransactionDescriptor.class));
+        GlobalTransactionID.class,
+        GlobalTransactionDescriptor.class));
     persistentMapStore = new GBPersistentMapStore(gbManager.getKeyValueStorage(STATE_MAP, String.class, String.class));
     clientStatePersistor = new GBClientStatePersistor(sequenceManager.getSequence(CLIENT_STATE_SEQUENCE), gbManager.getKeyValueStorage(CLIENT_STATES, ChannelID.class, Boolean.class));
-    managedObjectPersistor = new GBManagedObjectPersistor(gbManager.getKeyValueStorage(ROOT_DB, String.class, ObjectID.class), gbManager.getKeyValueStorage(OBJECT_DB, Long.class, byte[].class), sequenceManager.getSequence(OBJECT_ID_SEQUENCE), objectIDSetMaintainer);
+    managedObjectPersistor = new GBManagedObjectPersistor(gbManager.getKeyValueStorage(ROOT_DB, String.class, ObjectID.class), gbManager
+        .getKeyValueStorage(OBJECT_DB, Long.class, byte[].class), sequenceManager.getSequence(OBJECT_ID_SEQUENCE), objectIDSetMaintainer);
     gidSequence = sequenceManager.getSequence(GLOBAL_TRANSACTION_ID_SEQUENCE);
     persistenceTransactionProvider = new GBPersistenceTransactionProvider(gbManager);
     persistentObjectFactory = new GBPersistentObjectFactory(gbManager);
@@ -68,7 +69,7 @@ public class GBPersistor {
     configs.put(CLIENT_STATES, GBClientStatePersistor.config());
     configs.put(ROOT_DB, GBManagedObjectPersistor.rootMapConfig());
     configs.put(STATE_MAP, GBPersistentMapStore.config());
-    configs.put(SEQUENCE_MAP, GBSequence.config());
+    configs.put(SEQUENCE_MAP, GBSequenceManager.config());
     KeyValueStorageConfig<Long, byte[]> objectDbConfig = GBManagedObjectPersistor.objectConfig();
     objectDbConfig.addListener(objectIDSetMaintainer);
     configs.put(OBJECT_DB, objectDbConfig);
