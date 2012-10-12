@@ -14,7 +14,6 @@ import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.objectserver.api.EvictableMap;
-import com.tc.objectserver.impl.PersistentManagedObjectStore;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.persistence.gb.GBPersistentObjectFactory;
 import com.tc.properties.TCPropertiesConsts;
@@ -108,7 +107,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     if (type == DNAType.L2_SYNC) {
       // Write entire state info
       dehydrateFields(objectID, writer);
-      super.dehydrate(objectID, writer, type);
+    super.dehydrate(objectID, writer, type);
     } else if (type == DNAType.L1_FAULT) {
       // Don't fault the references
       dehydrateFields(objectID, writer);

@@ -16,15 +16,12 @@ import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Creates state for managed objects
  */
 public class ManagedObjectStateFactory {
 
-  private static final Map                          classNameToStateMap = new ConcurrentHashMap();
   private final ManagedObjectChangeListenerProvider listenerProvider;
 
   /**
@@ -37,12 +34,6 @@ public class ManagedObjectStateFactory {
   private static boolean                            disableAssertions   = false;
 
   private final GBPersistentObjectFactory objectFactory;
-
-  static {
-    // XXX: Support for terracotta toolkit
-    classNameToStateMap.put("org.terracotta.collections.quartz.DistributedSortedSet$Storage",
-                            Byte.valueOf(ManagedObjectState.SET_TYPE));
-  }
 
   private ManagedObjectStateFactory(final ManagedObjectChangeListenerProvider listenerProvider, GBPersistentObjectFactory objectFactory) {
     this.listenerProvider = listenerProvider;
@@ -107,11 +98,6 @@ public class ManagedObjectStateFactory {
 
   public String getClassName(final long classID) {
     return ManagedObjectStateStaticConfig.values()[((int) classID)].getClientClassName();
-  }
-
-  public PhysicalManagedObjectState createPhysicalState(final ObjectID parentID, final int classId)
-      throws ClassNotFoundException {
-    throw new UnsupportedOperationException();
   }
 
   public ManagedObjectState readManagedObjectStateFrom(final ObjectInput in, final byte type) {

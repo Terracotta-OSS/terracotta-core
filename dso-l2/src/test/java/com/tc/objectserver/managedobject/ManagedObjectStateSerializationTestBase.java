@@ -4,6 +4,11 @@
  */
 package com.tc.objectserver.managedobject;
 
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.StorageManager;
+import org.terracotta.corestorage.heap.HeapStorageManager;
+
+import com.tc.async.api.Sink;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
@@ -17,16 +22,17 @@ import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.core.api.TestDNA;
+import com.tc.objectserver.impl.PersistentManagedObjectStore;
 import com.tc.objectserver.persistence.gb.GBManagedObjectPersistor;
 import com.tc.objectserver.persistence.gb.GBPersistor;
 import com.tc.objectserver.persistence.gb.StorageManagerFactory;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.runtime.ThreadDumpUtil;
+
 import java.util.Map;
-import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.StorageManager;
-import org.terracotta.corestorage.heap.HeapStorageManager;
+
+import static org.mockito.Mockito.mock;
 
 
 public class ManagedObjectStateSerializationTestBase extends TCTestCase {
@@ -36,6 +42,7 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
   private GBManagedObjectPersistor     managedObjectPersistor;
   private GBPersistor persistor;
   private TransactionProvider ptp;
+  private PersistentManagedObjectStore store;
 
   @Override
   public void setUp() throws Exception {
@@ -45,21 +52,17 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
 
           @Override
           public StorageManager createStorageManager(Map<String, KeyValueStorageConfig<?, ?>> configMap) {
-              return new HeapStorageManager();
+              return new HeapStorageManager(configMap);
           }
       });
 
     this.ptp = persistor.getPersistenceTransactionProvider();
     this.managedObjectPersistor = persistor.getManagedObjectPersistor();
     
-    final NullManagedObjectChangeListenerProvider listenerProvider = new NullManagedObjectChangeListenerProvider();
     ManagedObjectStateFactory.disableSingleton(true);
-    ManagedObjectStateFactory.createInstance(listenerProvider, persistor);
+    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), persistor);
 
-    // wait for completion of daemon threads launched by getAllObjectIDs() & getAllMapsObjectIDs()
-    this.managedObjectPersistor.snapshotObjectIDs();
-    this.managedObjectPersistor.snapshotEvictableObjectIDs();
-//    this.managedObjectPersistor.snapshotMapTypeObjectIDs();
+    store = new PersistentManagedObjectStore(persistor.getManagedObjectPersistor(), mock(Sink.class));
   }
 
   @Override
@@ -77,7 +80,7 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
 
   protected ManagedObjectState applyValidation(final String className, final DNACursor dnaCursor) throws Exception {
     this.objectID = new ObjectID(this.objectID.toLong() + 1);
-    final ManagedObject mo = new ManagedObjectImpl(this.objectID);
+    final ManagedObject mo = store.createObject(objectID);
 
     final TestDNA dna = new TestDNA(dnaCursor);
     dna.typeName = className;
