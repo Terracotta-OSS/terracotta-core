@@ -60,7 +60,7 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
       JmxClientService jmxClientService = new ClearTextJmxClientServiceImpl();
       serviceLocator.loadService(JmxClientService.class, jmxClientService);
       serviceLocator.loadService(TopologyService.class, new TopologyServiceImpl(jmxClientService));
-      serviceLocator.loadService(MonitoringService.class, new MonitoringServiceImpl());
+      serviceLocator.loadService(MonitoringService.class, new MonitoringServiceImpl(jmxClientService));
       serviceLocator.loadService(DiagnosticsService.class, new DiagnosticsServiceImpl(jmxClientService));
 
       // The following services are for forwarding REST calls to L1s, using security or not

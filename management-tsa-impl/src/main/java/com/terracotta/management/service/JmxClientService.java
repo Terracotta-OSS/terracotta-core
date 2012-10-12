@@ -8,9 +8,11 @@ import org.terracotta.management.ServiceExecutionException;
 import com.tc.config.schema.L2Info;
 import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.ServerEntity;
+import com.terracotta.management.resource.StatisticsEntity;
 import com.terracotta.management.resource.ThreadDumpEntity;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author Ludovic Orban
@@ -25,4 +27,7 @@ public interface JmxClientService {
 
   Collection<ClientEntity> buildClientEntities() throws ServiceExecutionException;
 
+  StatisticsEntity getClientStatistics(String clientId) throws ServiceExecutionException;
+
+  Set<String> getAllClientIds() throws ServiceExecutionException;
 }
