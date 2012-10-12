@@ -12,7 +12,9 @@ import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.l1.L1InfoMBean;
+import com.tc.net.ClientID;
 import com.tc.util.Conversion;
+import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.ServerEntity;
 import com.terracotta.management.resource.ThreadDumpEntity;
 import com.terracotta.management.service.JmxClientService;
@@ -24,6 +26,8 @@ import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.zip.ZipInputStream;
 
@@ -175,6 +179,60 @@ public class ClearTextJmxClientServiceImpl implements JmxClientService {
       return serverEntity;
     } catch (Exception e) {
       throw new ServiceExecutionException("", e);
+    } finally {
+      if (jmxConnector != null) {
+        try {
+          jmxConnector.close();
+        } catch (IOException ioe) {
+          LOG.warn("error closing JMX connection", ioe);
+        }
+      }
+    }
+  }
+
+  @Override
+  public Collection<ClientEntity> buildClientEntities() throws ServiceExecutionException {
+    JMXConnector jmxConnector = null;
+    try {
+      MBeanServerConnection mBeanServerConnection;
+
+      // find the server where L1 Info MBeans are registered
+      if (localServerContainsL1MBeans()) {
+        mBeanServerConnection = ManagementFactory.getPlatformMBeanServer();
+      } else {
+        jmxConnector = findServerContainingL1MBeans();
+        if (jmxConnector == null) {
+          // there is no connected client
+          return Collections.emptyList();
+        }
+        mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+      }
+
+      Collection<ClientEntity> clientEntities = new HashSet<ClientEntity>();
+
+      Set<ObjectName> dsoClientObjectNames = mBeanServerConnection.queryNames(new ObjectName("org.terracotta:clients=Clients,name=L1 Info Bean,type=DSO Client,node=*"), null);
+      ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
+
+      Iterator<ObjectName> it = dsoClientObjectNames.iterator();
+      for (ObjectName clientObjectName : clientObjectNames) {
+        ObjectName dsoClientObjectName = it.next();
+
+        ClientEntity clientEntity = new ClientEntity();
+        clientEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+
+        clientEntity.getAttributes().put("RemoteAddress", mBeanServerConnection.getAttribute(clientObjectName, "RemoteAddress"));
+        ClientID clientId = (ClientID)mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
+        clientEntity.getAttributes().put("ClientID", "" + clientId.toLong());
+
+        clientEntity.getAttributes().put("Version", mBeanServerConnection.getAttribute(dsoClientObjectName, "Version"));
+        clientEntity.getAttributes().put("BuildID", mBeanServerConnection.getAttribute(dsoClientObjectName, "BuildID"));
+
+        clientEntities.add(clientEntity);
+      }
+
+      return clientEntities;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error making JMX call", e);
     } finally {
       if (jmxConnector != null) {
         try {
