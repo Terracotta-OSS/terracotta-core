@@ -8,6 +8,7 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.util.ObjectIDSet;
+import com.tc.util.sequence.MutableSequence;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,11 +25,11 @@ public class GBManagedObjectPersistor  {
   // This should be persistent
   private final KeyValueStorage<String, ObjectID> rootMap;
   private final KeyValueStorage<ObjectID, ManagedObject> objectMap;
-  private final GBSequence objectIDSequence;
+  private final MutableSequence objectIDSequence;
 
   private final GBObjectIDSetMaintainer oidSetMaintainer;
 
-  public GBManagedObjectPersistor(KeyValueStorage<String, ObjectID> rootMap, KeyValueStorage<Long, byte[]> objectMap, GBSequence objectIDSequence, final GBObjectIDSetMaintainer oidSetMaintainer) {
+  public GBManagedObjectPersistor(KeyValueStorage<String, ObjectID> rootMap, KeyValueStorage<Long, byte[]> objectMap, MutableSequence objectIDSequence, final GBObjectIDSetMaintainer oidSetMaintainer) {
     this.rootMap = rootMap;
     this.oidSetMaintainer = oidSetMaintainer;
     this.objectMap = new GBObjectMap(this, objectMap);

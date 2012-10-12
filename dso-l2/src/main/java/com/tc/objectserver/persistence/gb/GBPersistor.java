@@ -33,7 +33,7 @@ public class GBPersistor {
 
   private final GBTransactionPersistor transactionPersistor;
   private final GBManagedObjectPersistor managedObjectPersistor;
-  private final GBSequence gidSequence;
+  private final MutableSequence gidSequence;
   private final GBClientStatePersistor clientStatePersistor;
   private final GBPersistentMapStore persistentMapStore;
   private final GBSequenceManager sequenceManager;

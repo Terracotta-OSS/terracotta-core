@@ -16,10 +16,10 @@ import java.util.Set;
  * @author tim
  */
 public class GBClientStatePersistor {
-  private final GBSequence clientIDSequence;
+  private final MutableSequence clientIDSequence;
   private final KeyValueStorage<ChannelID, Boolean> clients;
 
-  public GBClientStatePersistor(GBSequence clientIDSequence, KeyValueStorage<ChannelID, Boolean> clients) {
+  public GBClientStatePersistor(MutableSequence clientIDSequence, KeyValueStorage<ChannelID, Boolean> clients) {
     this.clientIDSequence = clientIDSequence;
     this.clients = clients;
   }
