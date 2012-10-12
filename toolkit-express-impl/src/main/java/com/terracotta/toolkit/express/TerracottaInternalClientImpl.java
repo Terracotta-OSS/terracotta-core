@@ -64,7 +64,7 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
       // XXX: It's be nice to not use Object here, but exposing the necessary type (DSOContext) seems wrong too)
       if (isUrlConfig && isRequestingSecuredEnv(tcConfig)) {
         if (env != null) {
-          env.put("com.terracotta.SecretProvider", // replaces old instance if rejoin
+          env.put("com.terracotta.SecretProvider",
                   newSecretProviderDelegate(clusteredStateLoader, env.get(TerracottaInternalClientImpl.SECRET_PROVIDER)));
         }
       }

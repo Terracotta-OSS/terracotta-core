@@ -46,7 +46,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   private static final boolean                                                   FAULT_INVALIDATED_PINNED_ENTRIES     = TCPropertiesImpl
                                                                                                                           .getProperties()
                                                                                                                           .getBoolean(TCPropertiesConsts.L1_SERVERMAPMANAGER_FAULT_INVALIDATED_PINNED_ENTRIES,
-                                                                                                                                      false);
+                                                                                                                                      true);
   /**
    * For invalidations
    */

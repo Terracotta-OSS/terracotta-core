@@ -1,5 +1,11 @@
-package com.terracotta.management.security.web.shiro;
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ */
+package com.terracotta.management.web.shiro;
 
+import com.terracotta.management.resource.services.validator.TSARequestValidator;
+import com.terracotta.management.service.MonitoringService;
+import com.terracotta.management.service.TopologyService;
 import net.sf.ehcache.management.resource.services.validator.impl.JmxEhcacheRequestValidator;
 import net.sf.ehcache.management.service.AgentService;
 import net.sf.ehcache.management.service.CacheManagerService;
@@ -26,7 +32,9 @@ import com.terracotta.management.security.impl.NullRequestTicketMonitor;
 import com.terracotta.management.security.impl.NullUserService;
 import com.terracotta.management.security.impl.RelayingJerseyIdentityAssertionServiceClient;
 import com.terracotta.management.security.impl.TSAIdentityAsserter;
-import com.terracotta.management.security.web.config.TSAConfig;
+import com.terracotta.management.service.impl.MonitoringServiceImpl;
+import com.terracotta.management.web.config.TSAConfig;
+import com.terracotta.management.service.impl.TopologyServiceImpl;
 
 import java.lang.management.ManagementFactory;
 
@@ -43,6 +51,12 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
     try {
       ServiceLocator serviceLocator = new ServiceLocator();
 
+      // The following services are for monitoring the TSA itself
+      serviceLocator.loadService(TSARequestValidator.class, new TSARequestValidator());
+      serviceLocator.loadService(TopologyService.class, new TopologyServiceImpl());
+      serviceLocator.loadService(MonitoringService.class, new MonitoringServiceImpl());
+
+      // The following services are for forwarding REST calls to L1s, using security or not
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       boolean sslEnabled = TSAConfig.isSslEnabled();
       KeyChainAccessor kcAccessor = TSAConfig.getKeyChain();

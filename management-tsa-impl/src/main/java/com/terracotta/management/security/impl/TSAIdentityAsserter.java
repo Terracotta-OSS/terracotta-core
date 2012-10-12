@@ -2,6 +2,9 @@
  * All content copyright (c) 2003-2012 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ */
 
 package com.terracotta.management.security.impl;
 

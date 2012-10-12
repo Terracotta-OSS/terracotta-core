@@ -1,11 +1,10 @@
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ */
 package com.terracotta.management.security.impl;
 
 import com.terracotta.management.security.UserService;
 import com.terracotta.management.user.UserInfo;
-
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Ludovic Orban

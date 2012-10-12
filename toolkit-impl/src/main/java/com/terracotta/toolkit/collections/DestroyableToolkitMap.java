@@ -38,14 +38,17 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
     map.destroy();
   }
 
+  @Override
   public ToolkitReadWriteLock getReadWriteLock() {
     return map.getReadWriteLock();
   }
 
+  @Override
   public int size() {
     return map.size();
   }
 
+  @Override
   public boolean isEmpty() {
     return map.isEmpty();
   }
@@ -202,8 +205,8 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
   }
 
   @Override
-  public V putIfAbsent(K arg0, V arg1) {
-    return null;
+  public V putIfAbsent(K key, V value) {
+    return map.putIfAbsent(key, value);
   }
 
   @Override

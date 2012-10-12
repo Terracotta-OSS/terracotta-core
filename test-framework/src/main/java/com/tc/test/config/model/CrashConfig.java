@@ -10,6 +10,21 @@ public class CrashConfig {
   private int             maxCrashCount            = Integer.MAX_VALUE;
   private ServerCrashMode crashMode                = ServerCrashMode.NO_CRASH;
   private boolean         shouldCleanDbOnCrash     = true;
+  private long            initialDelayInSeconds    = 0;
+
+  /**
+   * Get the initial delay time before starting to crash servers
+   */
+  public long getInitialDelayInSeconds() {
+    return initialDelayInSeconds;
+  }
+
+  /**
+   * Set the initial delay time before starting to crash servers
+   */
+  public void setInitialDelayInSeconds(long initialDelayInSeconds) {
+    this.initialDelayInSeconds = initialDelayInSeconds;
+  }
 
   /**
    * Wait time in seconds before a server is crahsed in a group

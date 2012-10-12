@@ -1075,6 +1075,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
   }
 
   public void internalClear() {
+    pendingChanges.clear();
     keyValueHolder.clear();
   }
 }

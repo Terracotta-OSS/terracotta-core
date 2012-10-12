@@ -142,6 +142,7 @@
             <filter>
               <artifact>*:*</artifact>
               <excludes>
+                <exclude>**/META-INF/maven/org.terracotta.toolkit/**</exclude>
                 <exclude>**/META-INF/maven/org.terracotta.internal/**</exclude>
               </excludes>
             </filter>		  
@@ -213,23 +214,7 @@
       <plugin>
         <groupId>org.codehaus.gmaven</groupId>
         <artifactId>gmaven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>prepare-pom-xml</id>
-            <configuration>
-              <scriptpath>
-                <element>${basedir}/src/scripts</element>
-              </scriptpath>
-              <source>
-                import Util
-                Util.preparePom(project)
-              </source>
-            </configuration>            
-            <phase>package</phase>
-            <goals>
-              <goal>execute</goal>
-            </goals>
-          </execution>        
+        <executions>   
           <execution>
             <id>inject-correct-pom-to-jar</id>
             <phase>package</phase>

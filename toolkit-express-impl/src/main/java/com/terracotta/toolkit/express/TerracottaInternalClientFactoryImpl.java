@@ -107,7 +107,7 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
 
     Map<String, Object> env = createEnvIfAbsent(tcConfig);
     TerracottaInternalClient client = new TerracottaInternalClientImpl(tcConfig, isUrlConfig, getClass()
-        .getClassLoader(), this, rejoinClient, tunneledMBeanDomains, env);
+        .getClassLoader(), this, rejoinClient, tunneledMBeanDomains, new ConcurrentHashMap<String, Object>(env));
     return client;
   }
 
@@ -122,11 +122,17 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
   private Map<String, Object> createEnvIfAbsent(final String tcConfig) {
     Map<String, Object> env = envByUrl.get(tcConfig);
     if (env == null) {
-      env = createNewEnv();
-    }
-    final Map<String, Object> previous = envByUrl.putIfAbsent(tcConfig, env);
-    if (previous != null) {
-      env = previous;
+      synchronized (envByUrl) {
+        env = envByUrl.get(tcConfig);
+        if (env != null) {
+          return env;
+        }
+        env = createNewEnv();
+        final Map<String, Object> previous = envByUrl.putIfAbsent(tcConfig, env);
+        if (previous != null) {
+          throw new IllegalStateException("Some environment map was already present for config " + tcConfig);
+        }
+      }
     }
     return env;
   }

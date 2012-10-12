@@ -20,7 +20,7 @@ import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
 import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -64,7 +64,7 @@ public class ToolkitNotifierFactoryImpl extends
     int maxNotifierThreadCount = new TerracottaProperties(platformService).getInteger("maxToolkitNotifierThreadCount",
                                                                                       20);
     final ExecutorService notifierService = new ThreadPoolExecutor(0, maxNotifierThreadCount, 60L, TimeUnit.SECONDS,
-                                                                   new SynchronousQueue<Runnable>(),
+                                                                   new LinkedBlockingDeque<Runnable>(),
                                                                    new ThreadFactory() {
                                                                      private final AtomicInteger count = new AtomicInteger();
 

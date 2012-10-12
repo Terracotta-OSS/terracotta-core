@@ -5,20 +5,9 @@
 
 package com.terracotta.management.security.impl;
 
-import com.terracotta.management.keychain.URIKeyName;
-import com.terracotta.management.security.HMACBuilder;
-import com.terracotta.management.security.IACredentials;
 import com.terracotta.management.security.InvalidIAInteractionException;
-import com.terracotta.management.security.InvalidRequestTicketException;
-import com.terracotta.management.security.KeyChainAccessor;
 import com.terracotta.management.security.RequestIdentityAsserter;
-import com.terracotta.management.security.RequestTicketMonitor;
-import com.terracotta.management.security.UserService;
 import com.terracotta.management.user.UserInfo;
-
-import java.net.URISyntaxException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

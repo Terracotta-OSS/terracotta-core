@@ -19,8 +19,8 @@ import java.util.concurrent.CyclicBarrier;
 import junit.framework.Assert;
 
 public class ToolkitStoreApiKeyValGrClient extends AbstractToolkitApiTestClientUtil {
+
   protected ToolkitStore store;
-  protected Toolkit    toolkit;
 
   public ToolkitStoreApiKeyValGrClient(String[] args) {
     super(args);
@@ -30,15 +30,15 @@ public class ToolkitStoreApiKeyValGrClient extends AbstractToolkitApiTestClientU
   protected void test(Toolkit toolKit) throws Throwable {
     this.toolkit = toolKit;
     testWithStrongStore(toolKit);
-    index = barrier.await();
-    if (index == 0) {
-      clearDs();
+    clientIndex = barrier.await();
+    if (clientIndex == 0) {
+      destroyDs();
     }
-    barrier.await();
+    waitForAllClientsToReachHere();
     testWithEventualStore(toolKit);
   }
 
-  private void clearDs() {
+  private void destroyDs() {
     System.err.println("^^^^^^^^^DESTROYING STORE^^^^^^^^^^^^");
     store.destroy();
     System.err.println("Destroyed");
@@ -46,7 +46,7 @@ public class ToolkitStoreApiKeyValGrClient extends AbstractToolkitApiTestClientU
 
   private void testWithStrongStore(Toolkit toolKit) throws Throwable {
     this.toolkit = toolKit;
-    setStrongDs(toolkit, NAME_OF_DS);
+    setDs(toolkit, NAME_OF_DS, super.STRONG);
 
     keyValueGenerator = new LiteralKeyLiteralValueGenerator();
     this.test();
@@ -57,7 +57,7 @@ public class ToolkitStoreApiKeyValGrClient extends AbstractToolkitApiTestClientU
 
   private void testWithEventualStore(Toolkit toolKit) throws Throwable {
     this.toolkit = toolKit;
-    setEventualDs(toolkit, NAME_OF_DS);
+    setDs(toolkit, NAME_OF_DS, super.EVENTUAL);
     keyValueGenerator = new LiteralKeyLiteralValueGenerator();
     this.test();
 
@@ -66,7 +66,8 @@ public class ToolkitStoreApiKeyValGrClient extends AbstractToolkitApiTestClientU
   }
 
   @Override
-  protected void test() throws Exception {
+  protected void test() throws Throwable {
+    super.chm = store;
     super.test();
     checkDestroy();
     checkGetName();
@@ -83,17 +84,18 @@ public class ToolkitStoreApiKeyValGrClient extends AbstractToolkitApiTestClientU
         .equals(ToolkitStoreConfigFields.Consistency.EVENTUAL.toString())) {
       System.err
           .println("*************************Need not checkCreateLockForKey for Eventual Store************************");
- return;
+      return;
     }
-    setUp();
-
+    String methodName = "checkCreateLockForKey";
+    clientIndex = waitForAllClientsToReachHere();
+    log("Entering " + methodName + " for clientIndex = " + clientIndex);
     try {
-      index = barrier.await();
-      if (index == 0) {
-        doSomePuts(START, END);
+      clientIndex = barrier.await();
+      if (clientIndex == 0) {
+        putValues(START_INDEX, END_INDEX, methodName);
       }
-      index = barrier.await();
-      barrier.await();
+      clientIndex = barrier.await();
+      waitForAllClientsToReachHere();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
       Thread thread1 = new Thread(new Runnable() {
         @Override
@@ -138,8 +140,7 @@ public class ToolkitStoreApiKeyValGrClient extends AbstractToolkitApiTestClientU
             System.err.println("THread2 got the value");
             long diff = System.currentTimeMillis() - now;
             System.err.println("waited for : " + diff);
-            Assert.assertTrue("CreateLock not working Properly " + diff + "MilliSecs",
- diff >= 4000);
+            Assert.assertTrue("CreateLock not working Properly " + diff + "MilliSecs", diff >= 4000);
 
           } catch (Throwable t) {
             System.err.println("Exception in thread2,Stack Trace :");
@@ -148,8 +149,8 @@ public class ToolkitStoreApiKeyValGrClient extends AbstractToolkitApiTestClientU
           }
         }
       });
-      index = barrier.await();
-      if (index == 0) {
+      clientIndex = barrier.await();
+      if (clientIndex == 0) {
         System.err.println("Starting Threads");
         thread1.start();
         thread2.start();
@@ -159,51 +160,56 @@ public class ToolkitStoreApiKeyValGrClient extends AbstractToolkitApiTestClientU
         thread2.join();
         System.err.println("Joined Threads");
       }
+      log("Exiting " + methodName + " for clientIndex = " + clientIndex);
     } finally {
-      tearDown();
+      clearDs();
     }
   }
 
   private void checkRemoveNoReturn() throws InterruptedException, BrokenBarrierException {
-    setUp();
     try {
-      index = barrier.await();
-      if (index == 0) {
+      String methodName = "checkRemoveNoReturn";
+      clientIndex = waitForAllClientsToReachHere();
+      log("Entering " + methodName + " for clientIndex = " + clientIndex);
+      if (clientIndex == 0) {
         store.put(keyValueGenerator.getKey(1), keyValueGenerator.getValue(1));
       }
-      barrier.await();
+      waitForAllClientsToReachHere();
       Assert.assertTrue(store.containsKey(keyValueGenerator.getKey(1)));
-      index = barrier.await();
-      if (index == 0) {
+      clientIndex = barrier.await();
+      if (clientIndex == 0) {
         store.removeNoReturn(keyValueGenerator.getKey(1));
       }
-      barrier.await();
+      waitForAllClientsToReachHere();
       Assert.assertFalse(store.containsKey(keyValueGenerator.getKey(1)));
 
+      log("Exiting " + methodName + " for clientIndex = " + clientIndex);
     } finally {
-      tearDown();
+      clearDs();
     }
   }
 
   private void checkPutNoReturn() throws InterruptedException, BrokenBarrierException {
-    setUp();
+    String methodName = "checkPutNoReturn";
+    clientIndex = waitForAllClientsToReachHere();
+    log("Entering " + methodName + " with clientIndex = " + clientIndex);
     try {
-      this.index = barrier.await();
-      if (index == 0) {
+      if (clientIndex == 0) {
         store.putNoReturn(keyValueGenerator.getKey(1), keyValueGenerator.getValue(1));
       }
-      barrier.await();
+      waitForAllClientsToReachHere();
       Assert.assertEquals(keyValueGenerator.getValue(1), store.get(keyValueGenerator.getKey(1)));
 
-      this.index = barrier.await();
-      if (index == 0) {
+      this.clientIndex = barrier.await();
+      if (clientIndex == 0) {
         store.putNoReturn(keyValueGenerator.getKey(1), keyValueGenerator.getValue(2));
       }
-      barrier.await();
+      waitForAllClientsToReachHere();
       Assert.assertEquals(keyValueGenerator.getValue(2), store.get(keyValueGenerator.getKey(1)));
       Assert.assertFalse(keyValueGenerator.getValue(1).equals(store.get(keyValueGenerator.getKey(1))));
+      log("Exiting " + methodName + " for clientIndex = " + clientIndex);
     } finally {
-      tearDown();
+      clearDs();
     }
   }
 
@@ -216,87 +222,105 @@ public class ToolkitStoreApiKeyValGrClient extends AbstractToolkitApiTestClientU
   }
 
   private void checkGetAll() throws InterruptedException, BrokenBarrierException {
-    setUp();
+    String methodName = "checkGetAll";
+    clientIndex = waitForAllClientsToReachHere();
+    log("Entering " + methodName + " with clientIndex = " + clientIndex);
     try {
-      index = barrier.await();
-      if (index == 0) {
-        doSomePuts(START, END);
+      if (clientIndex == 0) {
+        putValues(START_INDEX, END_INDEX, methodName);
       }
-      index = barrier.await();
-      if (index == 0) {
-        Set keys = getKeySet(START, END);
+      clientIndex = barrier.await();
+      if (clientIndex == 0) {
+        Set keys = getKeySet(START_INDEX, END_INDEX);
         tempMap = store.getAll(keys);
-        Assert.assertTrue(checkKeyValuePairs(START, END));
+        Assert.assertTrue(allKeyValuePairsArePresent(START_INDEX, END_INDEX, methodName));
       }
-      barrier.await();
+      waitForAllClientsToReachHere();
+      log("Exiting " + methodName + " for clientIndex = " + clientIndex);
     } finally {
-      tearDown();
+      clearDs();
     }
 
   }
 
-
-  @Override
   protected void setStrongDs(Toolkit toolkit, String name) {
+    super.toolkit = toolkit;
     barrier = toolkit.getBarrier("mybarr", 2);
     ToolkitStoreConfigBuilder configBuilder = new ToolkitStoreConfigBuilder().consistency(Consistency.STRONG);
     Configuration config = configBuilder.build();
-    map = store = toolkit.getStore(name, config, String.class);
+    chm = store = toolkit.getStore(name, config, String.class);
 
   }
 
-  @Override
   protected void setEventualDs(Toolkit toolkit, String name) {
+    super.toolkit = toolkit;
     barrier = toolkit.getBarrier("mybarr", 2);
     ToolkitStoreConfigBuilder configBuilder = new ToolkitStoreConfigBuilder().consistency(Consistency.EVENTUAL);
     Configuration config = configBuilder.build();
-    map = store = toolkit.getStore(name, config, String.class);
+    chm = store = toolkit.getStore(name, config, String.class);
 
   }
 
   @Override
   protected void checkGetName() throws InterruptedException, BrokenBarrierException {
-    setUp();
+    String methodName = "checkGetName";
+    clientIndex = waitForAllClientsToReachHere();
+    log("Entering " + methodName + " with clientIndex = " + clientIndex);
     try {
       Assert.assertEquals(NAME_OF_DS, store.getName());
+      log("Exiting " + methodName + " for clientIndex = " + clientIndex);
     } finally {
-      tearDown();
+      clearDs();
     }
   }
 
   @Override
   protected void checkIsDestroyed() throws InterruptedException, BrokenBarrierException {
-    setUp();
+    String methodName = "checkIsDestroyed";
+    clientIndex = waitForAllClientsToReachHere();
+    log("Entering " + methodName + " with clientIndex = " + clientIndex);
     try {
-      index = barrier.await();
-      if (index == 0) {
+      if (clientIndex == 0) {
         ToolkitStore toolkitStore = toolkit.getStore("tempStore", null);
         Assert.assertFalse(toolkitStore.isDestroyed());
         toolkitStore.destroy();
         Assert.assertTrue(toolkitStore.isDestroyed());
       }
-      barrier.await();
+      waitForAllClientsToReachHere();
+      log("Exiting " + methodName + " for clientIndex = " + clientIndex);
     } finally {
-      tearDown();
+      clearDs();
     }
   }
 
   @Override
   protected void checkDestroy() throws InterruptedException, BrokenBarrierException {
-    setUp();
+    String methodName = "checkDestroy";
+    clientIndex = waitForAllClientsToReachHere();
+    log("Entering " + methodName + " for clientIndex = " + clientIndex);
     try {
-      index = barrier.await();
-      new Exception("" + index).printStackTrace();
-      if (index == 0) {
+      new Exception("" + clientIndex).printStackTrace();
+      if (clientIndex == 0) {
         ToolkitStore toolkitStore = toolkit.getStore("tempStore", null);
         Assert.assertFalse(toolkitStore.isDestroyed());
         toolkitStore.destroy();
         Assert.assertTrue(toolkitStore.isDestroyed());
-        new Exception("" + index).printStackTrace();
+        new Exception("" + clientIndex).printStackTrace();
       }
-      barrier.await();
+      waitForAllClientsToReachHere();
+      log("Exiting " + methodName + " for clientIndex = " + clientIndex);
+      log("Exiting " + methodName + " for clientIndex = " + clientIndex);
     } finally {
-      tearDown();
+      clearDs();
+    }
+  }
+
+  @Override
+  public void setDs(Toolkit toolkit, String name, String strongOrEventual) {
+    if (strongOrEventual.equals(super.STRONG)) {
+      setStrongDs(toolkit, name);
+    } else {
+      setEventualDs(toolkit, name);
     }
   }
 }
