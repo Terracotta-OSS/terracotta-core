@@ -7,6 +7,7 @@ package com.tc.objectserver.managedobject;
 import com.tc.exception.TCRuntimeException;
 import com.tc.io.serializer.api.Serializer;
 import com.tc.object.ObjectID;
+import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.persistence.ManagedObjectPersistor;
 
@@ -25,14 +26,11 @@ public class ManagedObjectSerializer implements Serializer {
 
   public void serializeTo(final Object mo, final ObjectOutput out) {
     try {
-      if (!(mo instanceof ManagedObjectImpl)) {
-        //
-        throw new AssertionError("Attempt to serialize an unknown type: " + mo);
+      if (mo instanceof ManagedObject) {
+        ((ManagedObject)mo).serializeTo(out, serializer);
+      } else {
+        throw new IllegalArgumentException("Trying to serialize a non-ManagedObject " + mo);
       }
-      final ManagedObjectImpl moi = (ManagedObjectImpl) mo;
-      out.writeLong(moi.getVersion());
-      out.writeLong(moi.getObjectID().toLong());
-      this.serializer.serializeTo(moi.getManagedObjectState(), out);
     } catch (final IOException e) {
       throw new TCRuntimeException(e);
     }

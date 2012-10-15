@@ -32,6 +32,7 @@ import com.tc.util.Conversion;
 import com.tc.util.TCCollections;
 
 import java.io.IOException;
+import java.io.ObjectOutput;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Set;
@@ -308,4 +309,10 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     setIsNew(false);
   }
 
+  @Override
+  public void serializeTo(final ObjectOutput out, final ManagedObjectStateSerializer stateSerializer) throws IOException {
+    out.writeLong(getVersion());
+    out.writeLong(getObjectID().toLong());
+    stateSerializer.serializeTo(getManagedObjectState(), out);
+  }
 }

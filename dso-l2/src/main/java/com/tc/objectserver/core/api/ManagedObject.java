@@ -14,9 +14,12 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.impl.ManagedObjectReference;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
+import com.tc.objectserver.managedobject.ManagedObjectStateSerializer;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 
+import java.io.IOException;
+import java.io.ObjectOutput;
 import java.util.Set;
 
 public interface ManagedObject {
@@ -53,4 +56,6 @@ public interface ManagedObject {
   public void addObjectReferencesTo(ManagedObjectTraverser traverser);
 
   public long getVersion();
+
+  public void serializeTo(ObjectOutput out, ManagedObjectStateSerializer stateSerializer) throws IOException;
 }

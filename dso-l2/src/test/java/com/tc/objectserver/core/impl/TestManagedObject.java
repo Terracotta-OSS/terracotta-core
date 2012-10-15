@@ -22,12 +22,14 @@ import com.tc.objectserver.impl.ObjectManagerImpl;
 import com.tc.objectserver.managedobject.AbstractManagedObjectState;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
+import com.tc.objectserver.managedobject.ManagedObjectStateSerializer;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import gnu.trove.TLinkable;
 
+import java.io.IOException;
 import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -199,11 +201,18 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
   }
 
   public long getVersion() {
-    throw new ImplementMe();
+    return 0;
   }
 
   public void setIsNew(final boolean newFlag) {
     this.isNew = newFlag;
+  }
+
+  @Override
+  public void serializeTo(final ObjectOutput out, final ManagedObjectStateSerializer stateSerializer) throws IOException {
+    out.writeLong(getVersion());
+    out.writeLong(getObjectID().toLong());
+    stateSerializer.serializeTo(getManagedObjectState(), out);
   }
 
   private class NullNoReferencesManagedObjectState extends NullManagedObjectState {
@@ -251,7 +260,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     }
 
     public void writeTo(final ObjectOutput o) {
-      throw new UnsupportedOperationException();
+      // Nothing to write, it's null.
     }
 
     @Override
