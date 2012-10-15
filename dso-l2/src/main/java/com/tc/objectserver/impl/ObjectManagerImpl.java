@@ -4,8 +4,6 @@
  */
 package com.tc.objectserver.impl;
 
-import com.tc.async.api.Sink;
-import com.tc.l2.handler.DestroyableMapHandler.DestroyableMapContext;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
@@ -109,11 +107,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   // TODO: Flip this around to ReferencesIDStore? It's highly probable that we'll have more objects with no references
   private final NoReferencesIDStore                             noReferencesIDStore;
-  private final Sink                                            destroyableMapSink;
 
   public ObjectManagerImpl(final ObjectManagerConfig config, final ClientStateManager stateManager,
-                           final PersistentManagedObjectStore objectStore, final TransactionProvider persistenceTransactionProvider,
-                           Sink destroyableMapSink) {
+                           final PersistentManagedObjectStore objectStore, final TransactionProvider persistenceTransactionProvider) {
     Assert.assertNotNull(objectStore);
     this.config = config;
     this.stateManager = stateManager;
@@ -121,7 +117,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     this.persistenceTransactionProvider = persistenceTransactionProvider;
     this.references = new ConcurrentHashMap<ObjectID, ManagedObjectReference>(16384, 0.75f, 256);
     this.noReferencesIDStore = new NoReferencesIDStoreImpl(config.doGC());
-    this.destroyableMapSink = destroyableMapSink;
   }
 
   public void setTransactionalObjectManager(final TransactionalObjectManager txnObjectManager) {
@@ -718,7 +713,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     if (removed != null && removed.getObject() != null) {
       ManagedObjectState removedManagedObjectState = removed.getObject().getManagedObjectState();
       if (removedManagedObjectState instanceof Destroyable) {
-        destroyableMapSink.add(new DestroyableMapContext((Destroyable) removedManagedObjectState));
+        ((Destroyable)removedManagedObjectState).destroy();
       }
     }
     return removed;

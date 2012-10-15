@@ -168,7 +168,7 @@ public class ObjectManagerTest extends TCTestCase {
   private void initObjectManager(final ThreadGroup threadGroup,
                                  final PersistentManagedObjectStore store) {
     this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, store,
-                                               this.persistenceTransactionProvider, Mockito.mock(Sink.class));
+                                               this.persistenceTransactionProvider);
   }
 
   private void initTransactionObjectManager() {
