@@ -39,6 +39,8 @@ public class MonitoringServiceImpl implements MonitoringService {
       "OffheapObjectAllocatedMemory", "OffheapObjectCachedCount", "OffheapTotalAllocatedSize", "OnHeapFaultRate",
       "OnHeapFlushRate", "PendingTransactionsCount", "TransactionRate", "TransactionSizeRate" };
 
+  private static final int MAX_DGC_STATS_ENTRIES = 1000;
+
   private final JmxClientService jmxClientService;
 
   public MonitoringServiceImpl(JmxClientService jmxClientService) {
@@ -112,6 +114,7 @@ public class MonitoringServiceImpl implements MonitoringService {
     try {
       GCStats[] attributes = (GCStats[])mBeanServer.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "GarbageCollectorStats");
 
+      int count = 0;
       for (GCStats gcStat : attributes) {
         StatisticsEntity statisticsEntity = new StatisticsEntity();
         statisticsEntity.setSourceId("DGC");
@@ -132,6 +135,10 @@ public class MonitoringServiceImpl implements MonitoringService {
         statisticsEntity.getStatistics().put("Type", gcStat.getType());
 
         statisticsEntities.add(statisticsEntity);
+        count++;
+        if (count >= MAX_DGC_STATS_ENTRIES) {
+          break;
+        }
       }
 
       return statisticsEntities;
