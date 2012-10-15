@@ -12,6 +12,7 @@ import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.l1.L1InfoMBean;
+import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 import com.tc.net.ClientID;
 import com.tc.util.Conversion;
 import com.terracotta.management.resource.ClientEntity;
@@ -34,12 +35,16 @@ import java.util.zip.ZipInputStream;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
+import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.JMException;
 import javax.management.JMX;
+import javax.management.MBeanException;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
+import javax.management.ReflectionException;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
@@ -337,6 +342,55 @@ public class ClearTextJmxClientServiceImpl implements JmxClientService {
     }
   }
 
+  @Override
+  public boolean runDgc() throws ServiceExecutionException {
+    JMXConnector jmxConnector = null;
+
+    try {
+      MBeanServerConnection mBeanServerConnection;
+      if (isLocalNodeActive()) {
+        mBeanServerConnection = ManagementFactory.getPlatformMBeanServer();
+      } else {
+        jmxConnector = findActiveServer();
+        if (jmxConnector == null) {
+          // no active node at the moment, DGC cannot run
+          return false;
+        }
+        mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+      }
+      ObjectManagementMonitorMBean objectManagementMonitorMBean = JMX.newMBeanProxy(mBeanServerConnection, new ObjectName("org.terracotta:type=Terracotta Server,subsystem=Object Management,name=ObjectManagement"), ObjectManagementMonitorMBean.class);
+
+      return objectManagementMonitorMBean.runGC();
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error making JMX call", e);
+    } finally {
+      if (jmxConnector != null) {
+        try {
+          jmxConnector.close();
+        } catch (IOException ioe) {
+          LOG.warn("error closing JMX connection", ioe);
+        }
+      }
+    }
+  }
+
+  private JMXConnector findActiveServer() throws JMException, ReflectionException, AttributeNotFoundException, MBeanException, IOException {
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    L2Info[] l2Infos = (L2Info[])mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "L2Info");
+
+    for (L2Info l2Info : l2Infos) {
+      String jmxHost = l2Info.host();
+      int jmxPort = l2Info.jmxPort();
+
+      JMXConnector jmxConnector = JMXConnectorFactory.connect(new JMXServiceURL("service:jmx:jmxmp://" + jmxHost + ":" + jmxPort), null);
+
+      MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+      if (serverIsActive(mBeanServerConnection)) {
+        return jmxConnector;
+      }
+    }
+    return null; // no server has any client in the cluster at the moment
+  }
 
   private ThreadDumpEntity threadDump(TCServerInfoMBean tcServerInfoMBean) throws IOException {
     byte[] bytes = tcServerInfoMBean.takeCompressedThreadDump(10000L);
@@ -393,4 +447,16 @@ public class ClearTextJmxClientServiceImpl implements JmxClientService {
     Set<ObjectName> dsoClientObjectNames = mBeanServerConnection.queryNames(new ObjectName("org.terracotta:clients=Clients,name=L1 Info Bean,type=DSO Client,node=*"), null);
     return !dsoClientObjectNames.isEmpty();
   }
+
+  private boolean isLocalNodeActive() throws MalformedObjectNameException, InstanceNotFoundException, ReflectionException, AttributeNotFoundException, MBeanException, IOException {
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    return serverIsActive(mBeanServer);
+  }
+
+  private boolean serverIsActive(MBeanServerConnection mBeanServerConnection) throws MalformedObjectNameException, InstanceNotFoundException, IOException, ReflectionException, AttributeNotFoundException, MBeanException {
+    Object state = mBeanServerConnection.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "State");
+    return "ACTIVE-COORDINATOR".equals(state);
+  }
+
+
 }

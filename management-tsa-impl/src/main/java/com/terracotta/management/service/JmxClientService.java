@@ -30,4 +30,6 @@ public interface JmxClientService {
   StatisticsEntity getClientStatistics(String clientId) throws ServiceExecutionException;
 
   Set<String> getAllClientIds() throws ServiceExecutionException;
+
+  boolean runDgc() throws ServiceExecutionException;
 }

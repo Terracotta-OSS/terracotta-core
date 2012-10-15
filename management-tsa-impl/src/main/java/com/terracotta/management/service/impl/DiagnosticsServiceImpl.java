@@ -4,23 +4,13 @@
 package com.terracotta.management.service.impl;
 
 import org.terracotta.management.ServiceExecutionException;
-import org.terracotta.management.ServiceLocator;
-import org.terracotta.management.resource.AgentEntity;
 
-import com.tc.util.Conversion;
 import com.terracotta.management.resource.ThreadDumpEntity;
 import com.terracotta.management.service.DiagnosticsService;
 import com.terracotta.management.service.JmxClientService;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.zip.ZipInputStream;
-
-import javax.management.MalformedObjectNameException;
 
 /**
  * @author Ludovic Orban
@@ -45,6 +35,11 @@ public class DiagnosticsServiceImpl implements DiagnosticsService {
     } catch (Exception e) {
       throw new ServiceExecutionException("error making JMX call", e);
     }
+  }
+
+  @Override
+  public boolean runDgc() throws ServiceExecutionException {
+    return jmxClientService.runDgc();
   }
 
 }

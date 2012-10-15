@@ -17,4 +17,6 @@ public interface DiagnosticsService {
 
   Collection<ThreadDumpEntity> getClusterThreadDump() throws ServiceExecutionException;
 
+  boolean runDgc() throws ServiceExecutionException;
+
 }

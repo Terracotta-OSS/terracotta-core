@@ -53,4 +53,21 @@ public class DiagnosticsResourceServiceImpl implements DiagnosticsResourceServic
                   .getMessage()).build());
     }
   }
+
+  @Override
+  public boolean runDgc(UriInfo info) {
+    LOG.info(String.format("Invoking DiagnosticsResourceServiceImpl.runDgc: %s", info.getRequestUri()));
+
+    requestValidator.validateSafe(info);
+
+    try {
+      return diagnosticsService.runDgc();
+    } catch (ServiceExecutionException see) {
+      LOG.error("Failed to perform TSA diagnostics.", see.getCause());
+      throw new WebApplicationException(
+          Response.status(Response.Status.BAD_REQUEST)
+              .entity("Failed to perform TSA diagnostics: " + see.getCause().getClass().getName() + ": " + see.getCause()
+                  .getMessage()).build());
+    }
+  }
 }
