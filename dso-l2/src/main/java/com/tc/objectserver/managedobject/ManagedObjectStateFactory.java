@@ -9,7 +9,6 @@ import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.managedobject.ManagedObjectStateStaticConfig.Factory;
-import com.tc.objectserver.persistence.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.PersistentObjectFactory;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.util.Assert;
@@ -45,17 +44,20 @@ public class ManagedObjectStateFactory {
    */
   public static synchronized ManagedObjectStateFactory createInstance(final ManagedObjectChangeListenerProvider listenerProvider,
                                                                       final Persistor persistor) {
+    return createInstance(listenerProvider, persistor.getPersistentObjectFactory());
+  }
+
+  /*
+  * @see comments above
+  */
+  public static synchronized ManagedObjectStateFactory createInstance(final ManagedObjectChangeListenerProvider listenerProvider,
+                                                                      final PersistentObjectFactory persistentObjectFactory) {
     if (singleton != null && !disableAssertions) {
       // not good !!
       throw new AssertionError("This class is singleton. It is not to be instantiated more than once. " + singleton);
     }
-    singleton = new ManagedObjectStateFactory(listenerProvider, persistor.getPersistentObjectFactory());
+    singleton = new ManagedObjectStateFactory(listenerProvider, persistentObjectFactory);
     return singleton;
-  }
-
-  public static synchronized ManagedObjectStateFactory createInstance(final ManagedObjectChangeListenerProvider listenerProvider,
-                                                                      final ManagedObjectPersistor persistor) {
-    throw new AssertionError();
   }
 
   // This is provided only for testing

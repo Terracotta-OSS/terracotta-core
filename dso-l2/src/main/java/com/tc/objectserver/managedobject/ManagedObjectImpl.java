@@ -65,10 +65,6 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
 
   private final ManagedObjectPersistor persistor;
 
-  public ManagedObjectImpl(final ObjectID id) {
-    throw new UnsupportedOperationException();
-  }
-
   public ManagedObjectImpl(final ObjectID id, ManagedObjectPersistor persistor) {
     Assert.assertNotNull(id);
     this.id = id;

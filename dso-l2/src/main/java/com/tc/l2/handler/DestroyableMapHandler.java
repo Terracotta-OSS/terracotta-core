@@ -25,5 +25,22 @@ public class DestroyableMapHandler extends AbstractEventHandler implements Event
     public Destroyable getDestroyable() {
       return destroyable;
     }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final DestroyableMapContext that = (DestroyableMapContext)o;
+
+      // Do a reference equality instead of equals() here. It won't make sense to have two instances of the same
+      // object to destroy.
+      return that.destroyable == destroyable;
+    }
+
+    @Override
+    public int hashCode() {
+      return destroyable != null ? System.identityHashCode(destroyable) : 0;
+    }
   }
 }

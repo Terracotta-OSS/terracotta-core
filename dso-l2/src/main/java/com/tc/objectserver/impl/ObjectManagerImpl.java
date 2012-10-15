@@ -780,8 +780,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   public void deleteObjects(final DGCResultContext gcResult) {
     Assert.assertTrue(this.collector.isDelete());
     final Set<ObjectID> toDelete = gcResult.getGarbageIDs();
+    Transaction t = persistenceTransactionProvider.newTransaction();
     removeAllObjectsByID(toDelete);
     this.objectStore.removeAllObjectsByID(gcResult);
+    t.commit();
     // Process pending, since we disabled process pending while GC pause was initiate.
     processPendingLookups();
   }
