@@ -26,19 +26,27 @@ import java.util.Map;
 
 public class ManagedObjectTest extends TCTestCase {
 
-  public void testBasics() throws Exception {
-    final ObjectInstanceMonitor instanceMonitor = new ObjectInstanceMonitorImpl();
-    final ObjectID objectID = new ObjectID(1);
+  static {
     ManagedObjectStateFactory.disableSingleton(true);
-    Persistor persistor = new Persistor(new StorageManagerFactory() {
+  }
+
+  private Persistor persistor;
+
+  @Override
+  public void setUp() {
+    persistor = new Persistor(new StorageManagerFactory() {
       @Override
       public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap) {
         return new HeapStorageManager(configMap);
       }
     });
     ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), persistor);
+  }
 
-    final ManagedObjectImpl mo = new ManagedObjectImpl(objectID);
+  public void testBasics() throws Exception {
+    final ObjectInstanceMonitor instanceMonitor = new ObjectInstanceMonitorImpl();
+    final ObjectID objectID = new ObjectID(1);
+    final ManagedObjectImpl mo = new ManagedObjectImpl(objectID, persistor.getManagedObjectPersistor());
 
     assertTrue(mo.isDirty());
     assertTrue(mo.isNew());
@@ -65,7 +73,7 @@ public class ManagedObjectTest extends TCTestCase {
   public void testIsNewToDB() throws Exception {
     final ObjectID objectID = new ObjectID(1);
 
-    final ManagedObjectImpl mo = new ManagedObjectImpl(objectID);
+    final ManagedObjectImpl mo = new ManagedObjectImpl(objectID, persistor.getManagedObjectPersistor());
 
     assertTrue(mo.isDirty());
     assertTrue(mo.isNew());
@@ -92,16 +100,8 @@ public class ManagedObjectTest extends TCTestCase {
   public void testApplyDNASameOrLowerVersion() throws Exception {
     final ObjectInstanceMonitor instanceMonitor = new ObjectInstanceMonitorImpl();
     final ObjectID objectID = new ObjectID(1);
-    ManagedObjectStateFactory.disableSingleton(true);
-    Persistor persistor = new Persistor(new StorageManagerFactory() {
-      @Override
-      public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap) {
-        return new HeapStorageManager(configMap);
-      }
-    });
-    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), persistor);
 
-    final ManagedObjectImpl mo = new ManagedObjectImpl(objectID);
+    final ManagedObjectImpl mo = new ManagedObjectImpl(objectID, persistor.getManagedObjectPersistor());
 
     final TestDNACursor cursor = new TestDNACursor();
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { Integer.valueOf(10), "King Kong" });
