@@ -10,7 +10,7 @@ import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.objectserver.api.GCStats;
 import com.terracotta.management.resource.StatisticsEntity;
-import com.terracotta.management.service.JmxClientService;
+import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.service.MonitoringService;
 
 import java.lang.management.ManagementFactory;
@@ -41,15 +41,15 @@ public class MonitoringServiceImpl implements MonitoringService {
 
   private static final int MAX_DGC_STATS_ENTRIES = 1000;
 
-  private final JmxClientService jmxClientService;
+  private final TsaManagementClientService tsaManagementClientService;
 
-  public MonitoringServiceImpl(JmxClientService jmxClientService) {
-    this.jmxClientService = jmxClientService;
+  public MonitoringServiceImpl(TsaManagementClientService tsaManagementClientService) {
+    this.tsaManagementClientService = tsaManagementClientService;
   }
 
   @Override
   public Set<String> getAllClientIds() throws ServiceExecutionException {
-    return jmxClientService.getAllClientIds();
+    return tsaManagementClientService.getAllClientIds();
   }
 
   @Override
@@ -77,7 +77,7 @@ public class MonitoringServiceImpl implements MonitoringService {
 
   @Override
   public StatisticsEntity getClientStatistics(String clientId) throws ServiceExecutionException {
-    return jmxClientService.getClientStatistics(clientId);
+    return tsaManagementClientService.getClientStatistics(clientId);
   }
 
   @Override

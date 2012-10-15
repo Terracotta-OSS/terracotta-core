@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author Ludovic Orban
  */
-public interface JmxClientService {
+public interface TsaManagementClientService {
 
   Collection<ThreadDumpEntity> clientsThreadDump() throws ServiceExecutionException;
 

@@ -19,7 +19,7 @@ import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.ServerEntity;
 import com.terracotta.management.resource.StatisticsEntity;
 import com.terracotta.management.resource.ThreadDumpEntity;
-import com.terracotta.management.service.JmxClientService;
+import com.terracotta.management.service.TsaManagementClientService;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -52,9 +52,9 @@ import javax.management.remote.JMXServiceURL;
 /**
  * @author Ludovic Orban
  */
-public class ClearTextJmxClientServiceImpl implements JmxClientService {
+public class ClearTextTsaManagementClientServiceImpl implements TsaManagementClientService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ClearTextJmxClientServiceImpl.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ClearTextTsaManagementClientServiceImpl.class);
 
   private static final int ZIP_BUFFER_SIZE = 2048;
   private static final String[] SERVER_ENTITY_ATTRIBUTE_NAMES = new String[] {

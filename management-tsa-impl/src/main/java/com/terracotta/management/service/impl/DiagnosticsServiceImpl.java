@@ -7,7 +7,7 @@ import org.terracotta.management.ServiceExecutionException;
 
 import com.terracotta.management.resource.ThreadDumpEntity;
 import com.terracotta.management.service.DiagnosticsService;
-import com.terracotta.management.service.JmxClientService;
+import com.terracotta.management.service.TsaManagementClientService;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,10 +17,10 @@ import java.util.Collection;
  */
 public class DiagnosticsServiceImpl implements DiagnosticsService {
 
-  private final JmxClientService jmxClientService;
+  private final TsaManagementClientService tsaManagementClientService;
 
-  public DiagnosticsServiceImpl(JmxClientService jmxClientService) {
-    this.jmxClientService = jmxClientService;
+  public DiagnosticsServiceImpl(TsaManagementClientService tsaManagementClientService) {
+    this.tsaManagementClientService = tsaManagementClientService;
   }
 
   @Override
@@ -28,8 +28,8 @@ public class DiagnosticsServiceImpl implements DiagnosticsService {
     try {
       Collection<ThreadDumpEntity> threadDumpEntities = new ArrayList<ThreadDumpEntity>();
 
-      threadDumpEntities.addAll(jmxClientService.serversThreadDump());
-      threadDumpEntities.addAll(jmxClientService.clientsThreadDump());
+      threadDumpEntities.addAll(tsaManagementClientService.serversThreadDump());
+      threadDumpEntities.addAll(tsaManagementClientService.clientsThreadDump());
 
       return threadDumpEntities;
     } catch (Exception e) {
@@ -39,7 +39,7 @@ public class DiagnosticsServiceImpl implements DiagnosticsService {
 
   @Override
   public boolean runDgc() throws ServiceExecutionException {
-    return jmxClientService.runDgc();
+    return tsaManagementClientService.runDgc();
   }
 
 }

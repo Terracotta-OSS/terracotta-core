@@ -12,7 +12,7 @@ import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.ServerEntity;
 import com.terracotta.management.resource.ServerGroupEntity;
 import com.terracotta.management.resource.TopologyEntity;
-import com.terracotta.management.service.JmxClientService;
+import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.service.TopologyService;
 
 import java.lang.management.ManagementFactory;
@@ -26,10 +26,10 @@ import javax.management.ObjectName;
  */
 public class TopologyServiceImpl implements TopologyService {
 
-  private final JmxClientService jmxClientService;
+  private final TsaManagementClientService tsaManagementClientService;
 
-  public TopologyServiceImpl(JmxClientService jmxClientService) {
-    this.jmxClientService = jmxClientService;
+  public TopologyServiceImpl(TsaManagementClientService tsaManagementClientService) {
+    this.tsaManagementClientService = tsaManagementClientService;
   }
 
   @Override
@@ -59,7 +59,7 @@ public class TopologyServiceImpl implements TopologyService {
         L2Info[] members = serverGroupInfo.members();
         for (L2Info member : members) {
           try {
-            ServerEntity serverEntity = jmxClientService.buildServerEntity(member);
+            ServerEntity serverEntity = tsaManagementClientService.buildServerEntity(member);
             serverEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
             serverEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
             serverGroupEntity.getServers().add(serverEntity);
@@ -87,7 +87,7 @@ public class TopologyServiceImpl implements TopologyService {
 
   @Override
   public Collection<ClientEntity> getClients() throws ServiceExecutionException {
-    return jmxClientService.buildClientEntities();
+    return tsaManagementClientService.buildClientEntities();
   }
 
 }
