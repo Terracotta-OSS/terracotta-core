@@ -111,7 +111,7 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
   }
 
   @Override
-  public Iterator iterator() {
+  public Iterator<ObjectID> iterator() {
     return this.oidSet.iterator();
   }
 
