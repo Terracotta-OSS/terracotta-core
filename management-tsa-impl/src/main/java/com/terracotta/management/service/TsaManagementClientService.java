@@ -15,6 +15,8 @@ import java.util.Collection;
 import java.util.Set;
 
 /**
+ * An interface for service implementations providing an abstraction of the TSA capabilities.
+ *
  * @author Ludovic Orban
  */
 public interface TsaManagementClientService {
@@ -29,7 +31,14 @@ public interface TsaManagementClientService {
 
   StatisticsEntity getClientStatistics(String clientId) throws ServiceExecutionException;
 
+  StatisticsEntity getServerStatistics(String serverName) throws ServiceExecutionException;
+
   Set<String> getAllClientIds() throws ServiceExecutionException;
 
+  Set<String> getAllServerNames() throws ServiceExecutionException;
+
   boolean runDgc() throws ServiceExecutionException;
+
+  Collection<StatisticsEntity> getDgcStatistics(int maxDgcStatsEntries) throws ServiceExecutionException;
+
 }

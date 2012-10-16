@@ -14,6 +14,7 @@ import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 import com.tc.net.ClientID;
+import com.tc.objectserver.api.GCStats;
 import com.tc.util.Conversion;
 import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.ServerEntity;
@@ -64,6 +65,17 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
       "ObjectFaultRate", "ObjectFlushRate", "PendingTransactionsCount", "TransactionRate",
       "ServerMapGetSizeRequestsCount", "ServerMapGetSizeRequestsRate", "ServerMapGetValueRequestsCount",
       "ServerMapGetValueRequestsRate" };
+
+  private static final String[] SERVER_STATS_MBEAN_ATTRIBUTE_NAMES = new String[] {
+      "BroadcastRate", "CacheHitRatio", "CachedObjectCount", "ExactOffheapObjectCachedCount",
+      "GlobalLockRecallRate", "GlobalServerMapGetSizeRequestsCount", "GlobalServerMapGetSizeRequestsRate",
+      "GlobalServerMapGetValueRequestsCount", "GlobalServerMapGetValueRequestsRate", "L2DiskFaultRate",
+      "LastCollectionElapsedTime", "LastCollectionGarbageCount", "LiveObjectCount", "ObjectFaultRate",
+      "ObjectFlushRate", "OffHeapFaultRate", "OffHeapFlushRate", "OffheapMapAllocatedMemory", "OffheapMaxDataSize",
+      "OffheapObjectAllocatedMemory", "OffheapObjectCachedCount", "OffheapTotalAllocatedSize", "OnHeapFaultRate",
+      "OnHeapFlushRate", "PendingTransactionsCount", "TransactionRate", "TransactionSizeRate" };
+
+
 
   @Override
   public Collection<ThreadDumpEntity> clientsThreadDump() throws ServiceExecutionException {
@@ -127,7 +139,8 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
 
     try {
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-      ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
+      ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
 
       for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
         L2Info[] members = serverGroupInfo.members();
@@ -139,7 +152,8 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
           try {
             MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
 
-            TCServerInfoMBean tcServerInfoMBean = JMX.newMBeanProxy(mBeanServerConnection, new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), TCServerInfoMBean.class);
+            TCServerInfoMBean tcServerInfoMBean = JMX.newMBeanProxy(mBeanServerConnection,
+                new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), TCServerInfoMBean.class);
             ThreadDumpEntity threadDumpEntity = threadDump(tcServerInfoMBean);
 
             threadDumpEntity.setSourceId(jmxHost + ":" + jmxPort);
@@ -181,7 +195,8 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
       MBeanServerConnection mBeanServer = jmxConnector.getMBeanServerConnection();
 
 
-      AttributeList attributes = mBeanServer.getAttributes(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), SERVER_ENTITY_ATTRIBUTE_NAMES);
+      AttributeList attributes = mBeanServer.getAttributes(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), SERVER_ENTITY_ATTRIBUTE_NAMES);
       for (Object attributeObj : attributes) {
         Attribute attribute = (Attribute)attributeObj;
         serverEntity.getAttributes().put(attribute.getName(), attribute.getValue());
@@ -221,7 +236,8 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
 
       Collection<ClientEntity> clientEntities = new HashSet<ClientEntity>();
 
-      Set<ObjectName> dsoClientObjectNames = mBeanServerConnection.queryNames(new ObjectName("org.terracotta:clients=Clients,name=L1 Info Bean,type=DSO Client,node=*"), null);
+      Set<ObjectName> dsoClientObjectNames = mBeanServerConnection.queryNames(
+          new ObjectName("org.terracotta:clients=Clients,name=L1 Info Bean,type=DSO Client,node=*"), null);
       ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
 
       Iterator<ObjectName> it = dsoClientObjectNames.iterator();
@@ -302,6 +318,58 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
   }
 
   @Override
+  public StatisticsEntity getServerStatistics(String serverName) throws ServiceExecutionException {
+    JMXConnector jmxConnector = null;
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    try {
+      StatisticsEntity statisticsEntity = new StatisticsEntity();
+      statisticsEntity.setSourceId(serverName);
+      statisticsEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+      statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+
+      L2Info targetServer = null;
+      L2Info[] l2Infos = (L2Info[])mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "L2Info");
+
+      for (L2Info l2Info : l2Infos) {
+        if (serverName.equals(l2Info.name())) {
+          targetServer = l2Info;
+          break;
+        }
+      }
+
+      if (targetServer == null) {
+        throw new ServiceExecutionException("server with name " + serverName + " not found");
+      }
+
+      jmxConnector = JMXConnectorFactory.connect(new JMXServiceURL("service:jmx:jmxmp://" + targetServer.host() + ":" + targetServer
+          .jmxPort()), null);
+      MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+      AttributeList attributes = mBeanServerConnection.getAttributes(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"),
+          SERVER_STATS_MBEAN_ATTRIBUTE_NAMES);
+      for (Object attributeObj : attributes) {
+        Attribute attribute = (Attribute)attributeObj;
+        statisticsEntity.getStatistics().put(attribute.getName(), attribute.getValue());
+      }
+
+      return statisticsEntity;
+    } catch (InstanceNotFoundException infe) {
+      return null;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error making JMX call", e);
+    } finally {
+      if (jmxConnector != null) {
+        try {
+          jmxConnector.close();
+        } catch (IOException ioe) {
+          LOG.warn("error closing JMX connection", ioe);
+        }
+      }
+    }
+  }
+
+  @Override
   public Set<String> getAllClientIds() throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
@@ -314,14 +382,15 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
         jmxConnector = findServerContainingL1MBeans();
         if (jmxConnector == null) {
           // there is no connected client
-          return null;
+          return Collections.emptySet();
         }
         mBeanServerConnection = jmxConnector.getMBeanServerConnection();
       }
 
       Set<String> clientNames = new HashSet<String>();
 
-      ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
+      ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(
+          new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
 
       for (ObjectName clientObjectName : clientObjectNames) {
         ClientID clientID = (ClientID)mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
@@ -343,6 +412,25 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
   }
 
   @Override
+  public Set<String> getAllServerNames() throws ServiceExecutionException {
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    try {
+      Set<String> serverNames = new HashSet<String>();
+
+      L2Info[] l2Infos = (L2Info[])mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "L2Info");
+
+      for (L2Info l2Info : l2Infos) {
+        serverNames.add(l2Info.name());
+      }
+
+      return serverNames;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error making JMX call", e);
+    }
+  }
+
+  @Override
   public boolean runDgc() throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
 
@@ -358,7 +446,8 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
         }
         mBeanServerConnection = jmxConnector.getMBeanServerConnection();
       }
-      ObjectManagementMonitorMBean objectManagementMonitorMBean = JMX.newMBeanProxy(mBeanServerConnection, new ObjectName("org.terracotta:type=Terracotta Server,subsystem=Object Management,name=ObjectManagement"), ObjectManagementMonitorMBean.class);
+      ObjectManagementMonitorMBean objectManagementMonitorMBean = JMX.newMBeanProxy(mBeanServerConnection,
+          new ObjectName("org.terracotta:type=Terracotta Server,subsystem=Object Management,name=ObjectManagement"), ObjectManagementMonitorMBean.class);
 
       return objectManagementMonitorMBean.runGC();
     } catch (Exception e) {
@@ -374,9 +463,53 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
     }
   }
 
-  private JMXConnector findActiveServer() throws JMException, ReflectionException, AttributeNotFoundException, MBeanException, IOException {
+  @Override
+  public Collection<StatisticsEntity> getDgcStatistics(int maxDgcStatsEntries) throws ServiceExecutionException {
+
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-    L2Info[] l2Infos = (L2Info[])mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "L2Info");
+
+    Collection<StatisticsEntity> statisticsEntities = new ArrayList<StatisticsEntity>();
+
+    try {
+      GCStats[] attributes = (GCStats[])mBeanServer.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "GarbageCollectorStats");
+
+      int count = 0;
+      for (GCStats gcStat : attributes) {
+        StatisticsEntity statisticsEntity = new StatisticsEntity();
+        statisticsEntity.setSourceId("DGC");
+        statisticsEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+        statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+
+        statisticsEntity.getStatistics().put("Iteration", gcStat.getIteration());
+        statisticsEntity.getStatistics().put("ActualGarbageCount", gcStat.getActualGarbageCount());
+        statisticsEntity.getStatistics().put("BeginObjectCount", gcStat.getBeginObjectCount());
+        statisticsEntity.getStatistics().put("CandidateGarbageCount", gcStat.getCandidateGarbageCount());
+        statisticsEntity.getStatistics().put("DeleteStageTime", gcStat.getDeleteStageTime());
+        statisticsEntity.getStatistics().put("ElapsedTime", gcStat.getElapsedTime());
+        statisticsEntity.getStatistics().put("EndObjectCount", gcStat.getEndObjectCount());
+        statisticsEntity.getStatistics().put("MarkStageTime", gcStat.getMarkStageTime());
+        statisticsEntity.getStatistics().put("PausedStageTime", gcStat.getPausedStageTime());
+        statisticsEntity.getStatistics().put("StartTime", gcStat.getStartTime());
+        statisticsEntity.getStatistics().put("Status", gcStat.getStatus());
+        statisticsEntity.getStatistics().put("Type", gcStat.getType());
+
+        statisticsEntities.add(statisticsEntity);
+        count++;
+        if (count >= maxDgcStatsEntries) {
+          break;
+        }
+      }
+
+      return statisticsEntities;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error making JMX call", e);
+    }
+  }
+
+  private JMXConnector findActiveServer() throws JMException, IOException {
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    L2Info[] l2Infos = (L2Info[])mBeanServer.getAttribute(
+        new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "L2Info");
 
     for (L2Info l2Info : l2Infos) {
       String jmxHost = l2Info.host();
@@ -444,19 +577,21 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
   }
 
   private boolean serverContainsL1MBeans(MBeanServerConnection mBeanServerConnection) throws JMException, IOException {
-    Set<ObjectName> dsoClientObjectNames = mBeanServerConnection.queryNames(new ObjectName("org.terracotta:clients=Clients,name=L1 Info Bean,type=DSO Client,node=*"), null);
+    Set<ObjectName> dsoClientObjectNames = mBeanServerConnection.queryNames(
+        new ObjectName("org.terracotta:clients=Clients,name=L1 Info Bean,type=DSO Client,node=*"), null);
     return !dsoClientObjectNames.isEmpty();
   }
 
-  private boolean isLocalNodeActive() throws MalformedObjectNameException, InstanceNotFoundException, ReflectionException, AttributeNotFoundException, MBeanException, IOException {
+  private boolean isLocalNodeActive() throws MalformedObjectNameException, InstanceNotFoundException, ReflectionException,
+      AttributeNotFoundException, MBeanException, IOException {
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     return serverIsActive(mBeanServer);
   }
 
-  private boolean serverIsActive(MBeanServerConnection mBeanServerConnection) throws MalformedObjectNameException, InstanceNotFoundException, IOException, ReflectionException, AttributeNotFoundException, MBeanException {
+  private boolean serverIsActive(MBeanServerConnection mBeanServerConnection) throws MalformedObjectNameException,
+      InstanceNotFoundException, IOException, ReflectionException, AttributeNotFoundException, MBeanException {
     Object state = mBeanServerConnection.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "State");
     return "ACTIVE-COORDINATOR".equals(state);
   }
-
 
 }
