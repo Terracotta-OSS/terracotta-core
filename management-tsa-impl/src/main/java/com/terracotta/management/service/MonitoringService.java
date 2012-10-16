@@ -27,6 +27,7 @@ public interface MonitoringService {
 
   /**
    * Get a set of all known server names currently connected.
+   *
    * @return a set of all known server names currently connected.
    * @throws ServiceExecutionException
    */
@@ -34,6 +35,7 @@ public interface MonitoringService {
 
   /**
    * Get the statistics of the specified client.
+   *
    * @param clientId the client ID.
    * @return a {@link StatisticsEntity} object representing the client statistics.
    * @throws ServiceExecutionException
@@ -42,6 +44,7 @@ public interface MonitoringService {
 
   /**
    * Get the statistics of the specified server.
+   *
    * @param serverName the server name.
    * @return a {@link StatisticsEntity} object representing the server statistics.
    * @throws ServiceExecutionException
@@ -50,6 +53,7 @@ public interface MonitoringService {
 
   /**
    * Get the DGC statistics.
+   *
    * @return a {@link Collection} object of {@link StatisticsEntity} objects representing the DGC statistics,
    * one {@link StatisticsEntity} per DGC iteration.
    * @throws ServiceExecutionException
