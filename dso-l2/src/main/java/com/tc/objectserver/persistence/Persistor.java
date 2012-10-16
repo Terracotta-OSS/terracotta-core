@@ -6,6 +6,7 @@ import org.terracotta.corestorage.StorageManager;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
 import com.tc.object.gtx.GlobalTransactionID;
+import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 import com.tc.util.sequence.MutableSequence;
 
@@ -69,9 +70,7 @@ public class Persistor {
     configs.put(ROOT_DB, ManagedObjectPersistor.rootMapConfig());
     configs.put(STATE_MAP, PersistentMapStoreImpl.config());
     configs.put(SEQUENCE_MAP, SequenceManager.config());
-    KeyValueStorageConfig<Long, byte[]> objectDbConfig = ManagedObjectPersistor.objectConfig();
-    objectDbConfig.addListener(objectIDSetMaintainer);
-    configs.put(OBJECT_DB, objectDbConfig);
+    configs.put(OBJECT_DB, ManagedObjectPersistor.objectConfig(objectIDSetMaintainer));
     return configs;
   }
 
@@ -99,7 +98,7 @@ public class Persistor {
     return gidSequence;
   }
 
-  public com.tc.object.persistence.api.PersistentMapStore getPersistentStateStore() {
+  public PersistentMapStore getPersistentStateStore() {
     return persistentMapStore;
   }
 

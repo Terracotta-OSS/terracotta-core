@@ -1,7 +1,5 @@
 package com.tc.objectserver.persistence;
 
-import org.terracotta.corestorage.Serializer;
-
 import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.UTF8ByteCompressedDataHolder;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
@@ -10,10 +8,12 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.terracotta.corestorage.Serializer;
+
 /**
  * @author tim
  */
-public class LiteralSerializer implements Serializer<Object> {
+public class LiteralSerializer extends Serializer<Object> {
   public static final LiteralSerializer INSTANCE = new LiteralSerializer();
 
   private static enum Type {
@@ -239,12 +239,12 @@ public class LiteralSerializer implements Serializer<Object> {
 
 
   @Override
-  public Object deserialize(final ByteBuffer buffer) {
+  public Object recover(final ByteBuffer buffer) {
     return Type.values()[buffer.duplicate().get()].deserialize(buffer);
   }
 
   @Override
-  public ByteBuffer serialize(final Object o) {
+  public ByteBuffer transform(final Object o) {
     if (o == null) {
       throw new IllegalArgumentException("Serializing a null is not supported.");
     }
@@ -255,7 +255,7 @@ public class LiteralSerializer implements Serializer<Object> {
   }
 
   @Override
-  public boolean equals(final ByteBuffer left, final Object right) {
-    return deserialize(left).equals(right);
+  public boolean equals(final Object left, final ByteBuffer right) {
+    return left.equals(recover(right));
   }
 }

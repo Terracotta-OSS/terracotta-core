@@ -1,9 +1,9 @@
 package com.tc.objectserver.persistence;
 
+import org.terracotta.corestorage.ImmutableKeyValueStorageConfig;
 import org.terracotta.corestorage.KeyValueStorage;
 import org.terracotta.corestorage.KeyValueStorageConfig;
 import org.terracotta.corestorage.Serializer;
-import org.terracotta.corestorage.heap.KeyValueStorageConfigImpl;
 
 import com.tc.net.ClientID;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -27,10 +27,7 @@ public class TransactionPersistor {
   }
 
   public static KeyValueStorageConfig<GlobalTransactionID, GlobalTransactionDescriptor> config() {
-    KeyValueStorageConfig<GlobalTransactionID, GlobalTransactionDescriptor> config = new KeyValueStorageConfigImpl<GlobalTransactionID, GlobalTransactionDescriptor>(GlobalTransactionID.class, GlobalTransactionDescriptor.class);
-    config.setKeySerializer(GlobalTransactionIDSerializer.INSTANCE);
-    config.setValueSerializer(GlobalTransactionDescriptorSerializer.INSTANCE);
-    return config;
+    return new ImmutableKeyValueStorageConfig<GlobalTransactionID, GlobalTransactionDescriptor>(GlobalTransactionID.class, GlobalTransactionDescriptor.class, TransactionPersistor.GlobalTransactionIDSerializer.INSTANCE, TransactionPersistor.GlobalTransactionDescriptorSerializer.INSTANCE);
   }
 
   public Collection<GlobalTransactionDescriptor> loadAllGlobalTransactionDescriptors() {
@@ -38,14 +35,14 @@ public class TransactionPersistor {
   }
 
   public void saveGlobalTransactionDescriptor(Transaction tx, GlobalTransactionDescriptor gtx) {
-    committed.put(gtx.getGlobalTransactionID(), new GlobalTransactionDescriptor(gtx.getServerTransactionID(), gtx.getGlobalTransactionID()));
+    committed.put(gtx.getGlobalTransactionID(), gtx);
   }
 
   public void deleteAllGlobalTransactionDescriptors(Transaction tx, SortedSet<GlobalTransactionID> globalTransactionIDs) {
     committed.removeAll(globalTransactionIDs);
   }
 
-  private static class GlobalTransactionIDSerializer extends AbstractIdentifierSerializer<GlobalTransactionID> {
+  private static class GlobalTransactionIDSerializer extends AbstractIdentifierTransformer<GlobalTransactionID> {
     static final GlobalTransactionIDSerializer INSTANCE = new GlobalTransactionIDSerializer();
 
     GlobalTransactionIDSerializer() {
@@ -58,18 +55,18 @@ public class TransactionPersistor {
     }
   }
 
-  private static class GlobalTransactionDescriptorSerializer implements Serializer<GlobalTransactionDescriptor> {
+  private static class GlobalTransactionDescriptorSerializer extends Serializer<GlobalTransactionDescriptor> {
     static final GlobalTransactionDescriptorSerializer INSTANCE = new GlobalTransactionDescriptorSerializer();
 
     @Override
-    public GlobalTransactionDescriptor deserialize(final ByteBuffer buffer) {
+    public GlobalTransactionDescriptor recover(final ByteBuffer buffer) {
       GlobalTransactionID gid = new GlobalTransactionID(buffer.getLong());
       ServerTransactionID sid = new ServerTransactionID(new ClientID(buffer.getLong()), new TransactionID(buffer.getLong()));
       return new GlobalTransactionDescriptor(sid, gid);
     }
 
     @Override
-    public ByteBuffer serialize(final GlobalTransactionDescriptor globalTransactionDescriptor) {
+    public ByteBuffer transform(final GlobalTransactionDescriptor globalTransactionDescriptor) {
       ByteBuffer buffer = ByteBuffer.allocate(Long.SIZE / Byte.SIZE * 3);
       buffer.putLong(globalTransactionDescriptor.getGlobalTransactionID().toLong());
       buffer.putLong(((ClientID) globalTransactionDescriptor.getServerTransactionID().getSourceID()).toLong());
@@ -79,12 +76,8 @@ public class TransactionPersistor {
     }
 
     @Override
-    public boolean equals(final ByteBuffer left, final Object right) {
-      if (right instanceof GlobalTransactionDescriptor) {
-        return deserialize(left).equals(right);
-      } else {
-        return false;
-      }
+    public boolean equals(final GlobalTransactionDescriptor left, final ByteBuffer right) {
+      return left.equals(recover(right));
     }
   }
 }

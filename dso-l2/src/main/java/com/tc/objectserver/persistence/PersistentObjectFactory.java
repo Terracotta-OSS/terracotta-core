@@ -1,22 +1,17 @@
 package com.tc.objectserver.persistence;
 
+import com.tc.object.ObjectID;
+
+import org.terracotta.corestorage.ImmutableKeyValueStorageConfig;
 import org.terracotta.corestorage.KeyValueStorage;
 import org.terracotta.corestorage.KeyValueStorageConfig;
 import org.terracotta.corestorage.StorageManager;
-import org.terracotta.corestorage.heap.KeyValueStorageConfigImpl;
-
-import com.tc.object.ObjectID;
 
 /**
  * @author tim
  */
 public class PersistentObjectFactory {
-  private static final KeyValueStorageConfig<Object, Object> mapConfig;
-  static {
-    mapConfig = new KeyValueStorageConfigImpl<Object, Object>(Object.class, Object.class);
-    mapConfig.setKeySerializer(LiteralSerializer.INSTANCE);
-    mapConfig.setValueSerializer(LiteralSerializer.INSTANCE);
-  }
+  private static final KeyValueStorageConfig<Object, Object> mapConfig = new ImmutableKeyValueStorageConfig<Object, Object>(Object.class, Object.class, LiteralSerializer.INSTANCE, LiteralSerializer.INSTANCE);
 
   private final StorageManager gbManager;
 

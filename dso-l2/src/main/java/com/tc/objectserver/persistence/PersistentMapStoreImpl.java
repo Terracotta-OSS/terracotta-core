@@ -2,9 +2,9 @@ package com.tc.objectserver.persistence;
 
 import org.terracotta.corestorage.KeyValueStorage;
 import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.heap.KeyValueStorageConfigImpl;
 
 import com.tc.object.persistence.api.PersistentMapStore;
+import org.terracotta.corestorage.ImmutableKeyValueStorageConfig;
 
 /**
  * @author tim
@@ -17,10 +17,7 @@ public class PersistentMapStoreImpl implements PersistentMapStore {
   }
 
   public static KeyValueStorageConfig<String, String> config() {
-    KeyValueStorageConfig<String, String> config = new KeyValueStorageConfigImpl<String, String>(String.class, String.class);
-    config.setKeySerializer(StringSerializer.INSTANCE);
-    config.setValueSerializer(StringSerializer.INSTANCE);
-    return config;
+    return new ImmutableKeyValueStorageConfig<String, String>(String.class, String.class);
   }
 
   @Override

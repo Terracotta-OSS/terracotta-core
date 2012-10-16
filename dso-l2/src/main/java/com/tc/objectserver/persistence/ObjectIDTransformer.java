@@ -5,10 +5,10 @@ import com.tc.object.ObjectID;
 /**
  * @author tim
  */
-public class ObjectIDSerializer extends AbstractIdentifierSerializer<ObjectID> {
-  public static final ObjectIDSerializer INSTANCE = new ObjectIDSerializer();
+public class ObjectIDTransformer extends AbstractIdentifierTransformer<ObjectID> {
+  public static final ObjectIDTransformer INSTANCE = new ObjectIDTransformer();
 
-  public ObjectIDSerializer() {
+  public ObjectIDTransformer() {
     super(ObjectID.class);
   }
 

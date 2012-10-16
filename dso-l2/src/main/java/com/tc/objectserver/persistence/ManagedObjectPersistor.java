@@ -2,7 +2,6 @@ package com.tc.objectserver.persistence;
 
 import org.terracotta.corestorage.KeyValueStorage;
 import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.heap.KeyValueStorageConfigImpl;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.Transaction;
@@ -16,11 +15,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import org.terracotta.corestorage.ImmutableKeyValueStorageConfig;
+import org.terracotta.corestorage.KeyValueStorageMutationListener;
 
 /**
  * @author tim
  */
-public class ManagedObjectPersistor {
+public class ManagedObjectPersistor  {
 
   // This should be persistent
   private final KeyValueStorage<String, ObjectID> rootMap;
@@ -37,14 +38,11 @@ public class ManagedObjectPersistor {
   }
 
   public static KeyValueStorageConfig<String, ObjectID> rootMapConfig() {
-    KeyValueStorageConfig<String, ObjectID> config = new KeyValueStorageConfigImpl<String, ObjectID>(String.class, ObjectID.class);
-    config.setKeySerializer(StringSerializer.INSTANCE);
-    config.setValueSerializer(ObjectIDSerializer.INSTANCE);
-    return config;
+    return new ImmutableKeyValueStorageConfig<String, ObjectID>(String.class, ObjectID.class, null, ObjectIDTransformer.INSTANCE);
   }
 
-  public static KeyValueStorageConfig<Long, byte[]> objectConfig() {
-    return ObjectMap.getConfig();
+  public static KeyValueStorageConfig<Long, byte[]> objectConfig(KeyValueStorageMutationListener<Long, byte[]> listener) {
+    return ObjectMap.getConfig(listener);
   }
 
   public void close() {
