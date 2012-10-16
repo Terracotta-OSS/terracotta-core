@@ -6,6 +6,6 @@ package com.tc.objectserver.persistence.api;
 import java.util.Map;
 
 public interface StringIndexPersistor {
-  public Map<Long, Object> loadMappingsInto(Map<Long, Object> target);
+  public Map<Long, String> loadMappingsInto(Map<Long, String> target);
   public void saveMapping(long index, String string);
 }

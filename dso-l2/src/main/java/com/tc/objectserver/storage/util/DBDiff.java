@@ -156,8 +156,8 @@ public class DBDiff extends BaseUtility {
 
   private void diffStringIndexer(final StringIndexImpl stringIndex1, final StringIndexImpl stringIndex2) {
     log("Diffing StringIndexes...");
-    final Map<Object, Long> map1 = stringIndex1.getString2LongMappings();
-    final Map<Object, Long> map2 = stringIndex2.getString2LongMappings();
+    final Map<String, Long> map1 = stringIndex1.getString2LongMappings();
+    final Map<String, Long> map2 = stringIndex2.getString2LongMappings();
     if (!map1.equals(map2)) {
       log("*** [1] containing " + map1.size() + " mapping differs from [2] containing " + map2.size() + " mapping");
       this.diffStringIndexer = true;

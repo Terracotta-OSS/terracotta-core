@@ -34,7 +34,7 @@ public class TCLongToStringDatabaseTest extends AbstractDatabaseTest {
       Assert.assertEquals(Status.SUCCESS, status);
     }
 
-    Map<Long, Object> map = new HashMap<Long, Object>();
+    Map<Long, String> map = new HashMap<Long, String>();
     PersistenceTransaction tx = newTransaction();
     map = database.loadMappingsInto(map, tx);
 

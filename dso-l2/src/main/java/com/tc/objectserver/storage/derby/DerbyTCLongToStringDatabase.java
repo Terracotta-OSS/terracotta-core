@@ -35,7 +35,7 @@ class DerbyTCLongToStringDatabase extends AbstractDerbyTCDatabase implements TCL
   }
 
   @Override
-  public Map<Long, Object> loadMappingsInto(Map<Long, Object> target, PersistenceTransaction tx) {
+  public Map<Long, String> loadMappingsInto(Map<Long, String> target, PersistenceTransaction tx) {
     ResultSet rs = null;
     try {
       // "SELECT " + KEY + "," + VALUE + " FROM " + tableName

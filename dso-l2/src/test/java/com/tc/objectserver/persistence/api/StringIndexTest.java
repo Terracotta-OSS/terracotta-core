@@ -63,11 +63,11 @@ public class StringIndexTest extends TestCase {
   
   private static final class TestStringIndexPersistor implements StringIndexPersistor {
 
-    public Map<Long, Object>      target    = new HashMap<Long, Object>();
+    public Map<Long, String>      target    = new HashMap<Long, String>();
     public NoExceptionLinkedQueue loadCalls = new NoExceptionLinkedQueue();
     
     @Override
-    public Map<Long, Object> loadMappingsInto(Map<Long, Object> theTarget) {
+    public Map<Long, String> loadMappingsInto(Map<Long, String> theTarget) {
       loadCalls.put(theTarget);
       theTarget.putAll(target);
       return theTarget;

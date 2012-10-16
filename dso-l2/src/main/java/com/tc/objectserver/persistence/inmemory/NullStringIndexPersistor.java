@@ -10,7 +10,7 @@ import java.util.Map;
 public class NullStringIndexPersistor implements StringIndexPersistor {
 
   @Override
-  public Map<Long, Object> loadMappingsInto(Map<Long, Object> target) {
+  public Map<Long, String> loadMappingsInto(Map<Long, String> target) {
     return target;
   }
 

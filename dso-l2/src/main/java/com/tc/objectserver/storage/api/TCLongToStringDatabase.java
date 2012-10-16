@@ -11,7 +11,7 @@ public interface TCLongToStringDatabase {
   /**
    * returns the Map with <long, String> key value pairs.
    */
-  public Map<Long, Object> loadMappingsInto(Map<Long, Object> target, PersistenceTransaction tx);
+  public Map<Long, String> loadMappingsInto(Map<Long, String> target, PersistenceTransaction tx);
 
   /**
    * puts a <long, String> key value pair to the db.

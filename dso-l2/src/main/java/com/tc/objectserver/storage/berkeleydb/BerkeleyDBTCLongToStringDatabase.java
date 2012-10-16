@@ -30,7 +30,7 @@ public class BerkeleyDBTCLongToStringDatabase extends AbstractBerkeleyDatabase i
   }
 
   @Override
-  public Map<Long, Object> loadMappingsInto(Map<Long, Object> target, PersistenceTransaction tx) {
+  public Map<Long, String> loadMappingsInto(Map<Long, String> target, PersistenceTransaction tx) {
     Cursor cursor = null;
     try {
       DatabaseEntry key = new DatabaseEntry(), value = new DatabaseEntry();
