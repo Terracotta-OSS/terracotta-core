@@ -40,9 +40,7 @@
     <!-- version of ehcache embedded inside toolkit -->
     <ehcache.version>2.7.0-SNAPSHOT</ehcache.version>
     <maven-forge-plugin.version>1.0.6-SNAPSHOT</maven-forge-plugin.version>
-    <derby.version>10.8.2.2</derby.version>
     <tcconfig.version>3.8.0-SNAPSHOT</tcconfig.version>
-    <sleepycat.version>5.0.55</sleepycat.version>
     <linked-child-process.version>1.0.8</linked-child-process.version>
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
     <copy-maven-plugin.version>0.2.3.8</copy-maven-plugin.version>
@@ -191,16 +189,6 @@
         <groupId>trove</groupId>
         <artifactId>trove</artifactId>
         <version>1.1-beta-5</version>
-      </dependency>
-      <dependency>
-        <groupId>com.sleepycat</groupId>
-        <artifactId>je</artifactId>
-        <version>${sleepycat.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.derby</groupId>
-        <artifactId>derby</artifactId>
-        <version>${derby.version}</version>
       </dependency>
       <dependency>
         <groupId>jline</groupId>
