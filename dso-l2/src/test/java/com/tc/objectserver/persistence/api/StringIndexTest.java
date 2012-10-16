@@ -7,8 +7,9 @@ import com.tc.io.serializer.api.StringIndex;
 import com.tc.objectserver.persistence.inmemory.StringIndexImpl;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
-import gnu.trove.TLongObjectHashMap;
-import gnu.trove.TLongObjectIterator;
+import java.util.HashMap;
+import java.util.Map;
+
 import junit.framework.TestCase;
 
 public class StringIndexTest extends TestCase {
@@ -16,6 +17,7 @@ public class StringIndexTest extends TestCase {
   private TestStringIndexPersistor persistor;
   private StringIndex index;
   
+  @Override
   public void setUp() throws Exception {
     persistor = new TestStringIndexPersistor();
   }
@@ -41,7 +43,7 @@ public class StringIndexTest extends TestCase {
     // load up the persistor
     int max = 100;
     for (int i=1; i<max; i++) {
-      persistor.target.put(i, "" + i);
+      persistor.target.put((long) i, "" + i);
     }
     index = new StringIndexImpl(persistor);
     
@@ -61,18 +63,17 @@ public class StringIndexTest extends TestCase {
   
   private static final class TestStringIndexPersistor implements StringIndexPersistor {
 
-    public TLongObjectHashMap target = new TLongObjectHashMap();
+    public Map<Long, Object>      target    = new HashMap<Long, Object>();
     public NoExceptionLinkedQueue loadCalls = new NoExceptionLinkedQueue();
     
-    public TLongObjectHashMap loadMappingsInto(TLongObjectHashMap theTarget) {
+    @Override
+    public Map<Long, Object> loadMappingsInto(Map<Long, Object> theTarget) {
       loadCalls.put(theTarget);
-      for (TLongObjectIterator i = target.iterator(); i.hasNext();) {
-        i.advance();
-        theTarget.put(i.key(), i.value());
-      }
+      theTarget.putAll(target);
       return theTarget;
     }
 
+    @Override
     public void saveMapping(long index, String string) {
       target.put(index, string);
     }

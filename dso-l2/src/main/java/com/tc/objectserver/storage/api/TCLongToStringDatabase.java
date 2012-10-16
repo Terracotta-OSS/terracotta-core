@@ -5,13 +5,13 @@ package com.tc.objectserver.storage.api;
 
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 
-import gnu.trove.TLongObjectHashMap;
+import java.util.Map;
 
 public interface TCLongToStringDatabase {
   /**
    * returns the Map with <long, String> key value pairs.
    */
-  public TLongObjectHashMap loadMappingsInto(TLongObjectHashMap target, PersistenceTransaction tx);
+  public Map<Long, Object> loadMappingsInto(Map<Long, Object> target, PersistenceTransaction tx);
 
   /**
    * puts a <long, String> key value pair to the db.

@@ -4,8 +4,7 @@
  */
 package com.tc.object.tx;
 
-import gnu.trove.TLinkable;
-import gnu.trove.TLinkedList;
+import com.tc.object.dna.impl.TCLinkable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -20,7 +19,7 @@ import java.util.TreeMap;
 public class TransactionBatchAccounting {
 
   private final SortedMap   batchesByTransaction = new TreeMap();
-  private final TLinkedList batches              = new TLinkedList();
+  private final LinkedList batches              = new LinkedList();
   private boolean           stopped              = false;
   private TransactionID     highWaterMark        = TransactionID.NULL_ID;
 
@@ -28,6 +27,7 @@ public class TransactionBatchAccounting {
     return this.toString();
   }
 
+  @Override
   public String toString() {
     return "TransactionBatchAccounting[batchesByTransaction=" + batchesByTransaction + "]";
   }
@@ -116,18 +116,19 @@ public class TransactionBatchAccounting {
     batchesByTransaction.clear();
   }
 
-  private static final class BatchDescriptor implements TLinkable {
+  private static final class BatchDescriptor implements TCLinkable {
     private final TxnBatchID batchID;
     private final Set        transactionIDs = new HashSet();
 
-    private TLinkable        next;
-    private TLinkable        previous;
+    private TCLinkable       next;
+    private TCLinkable       previous;
 
     public BatchDescriptor(TxnBatchID batchID, Collection txIDs) {
       this.batchID = batchID;
       transactionIDs.addAll(txIDs);
     }
 
+    @Override
     public String toString() {
       return "BatchDescriptor[" + batchID + ", transactionIDs=" + transactionIDs + "]";
     }
@@ -137,19 +138,23 @@ public class TransactionBatchAccounting {
       return transactionIDs.size();
     }
 
-    public TLinkable getNext() {
+    @Override
+    public TCLinkable getNext() {
       return next;
     }
 
-    public TLinkable getPrevious() {
+    @Override
+    public TCLinkable getPrevious() {
       return previous;
     }
 
-    public void setNext(TLinkable linkable) {
+    @Override
+    public void setNext(TCLinkable linkable) {
       next = linkable;
     }
 
-    public void setPrevious(TLinkable linkable) {
+    @Override
+    public void setPrevious(TCLinkable linkable) {
       previous = linkable;
     }
 

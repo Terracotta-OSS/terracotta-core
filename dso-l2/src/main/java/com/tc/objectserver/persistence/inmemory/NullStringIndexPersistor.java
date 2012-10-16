@@ -5,14 +5,16 @@ package com.tc.objectserver.persistence.inmemory;
 
 import com.tc.objectserver.persistence.api.StringIndexPersistor;
 
-import gnu.trove.TLongObjectHashMap;
+import java.util.Map;
 
 public class NullStringIndexPersistor implements StringIndexPersistor {
 
-  public TLongObjectHashMap loadMappingsInto(TLongObjectHashMap target) {
+  @Override
+  public Map<Long, Object> loadMappingsInto(Map<Long, Object> target) {
     return target;
   }
 
+  @Override
   public void saveMapping(long index, String string) {
     return;
   }

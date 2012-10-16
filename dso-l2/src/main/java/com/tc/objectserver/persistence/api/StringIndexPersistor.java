@@ -3,9 +3,9 @@
  */
 package com.tc.objectserver.persistence.api;
 
-import gnu.trove.TLongObjectHashMap;
+import java.util.Map;
 
 public interface StringIndexPersistor {
-  public TLongObjectHashMap loadMappingsInto(TLongObjectHashMap target);
+  public Map<Long, Object> loadMappingsInto(Map<Long, Object> target);
   public void saveMapping(long index, String string);
 }

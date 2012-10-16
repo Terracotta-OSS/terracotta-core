@@ -3,9 +3,8 @@
  */
 package com.tc.object;
 
-import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntIterator;
-
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -132,7 +131,7 @@ public class SerializationUtil {
   public final static String      FIELD_CHANGED_SIGNATURE              = "fieldChanged()V";
   public final static String      INT_FIELD_CHANGED_SIGNATURE          = "intFieldChanged(Ljava/lang/String;I)V";
 
-  private final TObjectIntHashMap mappings                             = new TObjectIntHashMap();
+  private final Map<String, Integer> mappings                             = new HashMap<String, Integer>();
 
   public SerializationUtil() {
     mappings.put(SET_ELEMENT_SIGNATURE, SET_ELEMENT);
@@ -181,13 +180,7 @@ public class SerializationUtil {
   }
 
   public String[] getSignatures() {
-    String[] rv = new String[this.mappings.size()];
-    int index = 0;
-    for (TObjectIntIterator i = mappings.iterator(); i.hasNext(); index++) {
-      i.advance();
-      rv[index] = (String) i.key();
-    }
-    return rv;
+    return mappings.keySet().toArray(new String[0]);
   }
 
   public int methodToID(String name) {

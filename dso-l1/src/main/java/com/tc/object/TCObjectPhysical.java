@@ -10,8 +10,6 @@ import com.tc.object.field.TCField;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
 
-import gnu.trove.THashMap;
-
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -27,7 +25,7 @@ public class TCObjectPhysical extends TCObjectImpl {
   private Map getReferences() {
     synchronized (getResolveLock()) {
       if (references == null) {
-        references = new THashMap(0);
+        references = new HashMap(0);
       }
       return references;
     }
@@ -156,6 +154,7 @@ public class TCObjectPhysical extends TCObjectImpl {
     }
   }
 
+  @Override
   public void logicalInvoke(int method, String methodSignature, Object[] params) {
     throw new UnsupportedOperationException();
   }
@@ -255,6 +254,7 @@ public class TCObjectPhysical extends TCObjectImpl {
     return cleared;
   }
 
+  @Override
   public void unresolveReference(String fieldName) {
     TCField field = tcClazz.getField(fieldName);
     if (field == null) { throw new IllegalArgumentException("No such field: " + fieldName); }

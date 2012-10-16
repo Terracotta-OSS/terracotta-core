@@ -22,6 +22,7 @@ import com.tc.net.groups.GroupMessage;
 import com.tc.net.groups.GroupMessageListener;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.impl.TCLinkable;
 import com.tc.object.dna.impl.VersionizedDNAWrapper;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.msg.MessageRecycler;
@@ -31,9 +32,6 @@ import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 
-import gnu.trove.TLinkable;
-import gnu.trove.TLinkedList;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,6 +39,7 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -80,6 +79,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     this.objectSyncAckManager = objectSyncAckManager;
   }
 
+  @Override
   public synchronized void init(Set knownObjectIDs) {
     if (delegate == passiveUninitTxnMgr) {
       passiveUninitTxnMgr.addKnownObjectIDs(knownObjectIDs);
@@ -88,22 +88,27 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     }
   }
 
+  @Override
   public synchronized void clearTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
     delegate.clearTransactionsBelowLowWaterMark(lowGlobalTransactionIDWatermark);
   }
 
+  @Override
   public synchronized void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns, Recyclable message) {
     delegate.addCommitedTransactions(nodeID, txnIDs, txns, message);
   }
 
+  @Override
   public synchronized void addObjectSyncTransaction(ServerTransaction txn) {
     delegate.addObjectSyncTransaction(txn);
   }
 
+  @Override
   public void messageReceived(final NodeID fromNode, GroupMessage msg) {
     ObjectSyncResetMessage osr = (ObjectSyncResetMessage) msg;
     Assert.assertTrue(osr.getType() == ObjectSyncResetMessage.REQUEST_RESET);
     objectsSyncSink.setAddPredicate(new AddPredicate() {
+      @Override
       public boolean accept(EventContext context) {
         GroupMessage gp = (GroupMessage) context;
         return fromNode.equals(gp.messageFrom());
@@ -132,12 +137,14 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     }
   }
 
+  @Override
   public void publishResetRequest(NodeID nodeID) throws GroupException {
     ObjectSyncResetMessage osr = (ObjectSyncResetMessage) groupManager
         .sendToAndWaitForResponse(nodeID, ObjectSyncResetMessageFactory.createObjectSyncResetRequestMessage());
     validateResponse(nodeID, osr);
   }
 
+  @Override
   public synchronized void l2StateChanged(StateChangedEvent sce) {
     if (sce.getCurrentState().equals(StateManager.ACTIVE_COORDINATOR)) {
       passiveUninitTxnMgr.clear(); // Release Memory
@@ -154,15 +161,18 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
   private static final class NullPassiveTransactionManager implements PassiveTransactionManager {
 
+    @Override
     public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns, Recyclable message) {
       // There could still be some messages in the queue that arrives after the node becomes ACTIVE
       logger.warn("NullPassiveTransactionManager :: Ignoring commit Txn Messages from " + nodeID);
     }
 
+    @Override
     public void addObjectSyncTransaction(ServerTransaction txn) {
       throw new AssertionError("Recd. ObjectSyncTransaction while in ACTIVE state : " + txn);
     }
 
+    @Override
     public void clearTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
       // There could still be some messages in the queue that arrives after the node becomes ACTIVE
       logger.warn("Ignoring LowWaterMark recd. while in ACTIVE state : " + lowGlobalTransactionIDWatermark);
@@ -172,11 +182,13 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
   private final class PassiveStandbyTransactionManager implements PassiveTransactionManager {
 
+    @Override
     public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns, Recyclable message) {
       recycler.addMessage(message, txnIDs);
       addIncommingTransactions(nodeID, txnIDs, txns);
     }
 
+    @Override
     public void addObjectSyncTransaction(ServerTransaction txn) {
       // XXX::NOTE:: This is possible when there are 2 or more passive servers in standby and when the active crashes.
       // One of them will become passive and it is possible that the one became active has some objects that is missing
@@ -188,6 +200,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
       objectSyncAckManager.ackObjectSyncTxn(txn.getServerTransactionID());
     }
 
+    @Override
     public void clearTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
       gtxm.clearCommitedTransactionsBelowLowWaterMark(lowGlobalTransactionIDWatermark);
     }
@@ -200,6 +213,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
     // NOTE::XXX:: MEssages are not REcylced in Passive Uninitialized state because of complicated pruning
     // code. Messages may have to live longer than Txn acks.
+    @Override
     public void addCommitedTransactions(NodeID nodeID, Set txnIDs, Collection txns, Recyclable message) {
       Assert.assertEquals(txnIDs.size(), txns.size());
       LinkedHashMap prunedTransactionsMap = pruneTransactions(txns);
@@ -207,6 +221,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
       addIncommingTransactions(nodeID, prunedTransactionsMap.keySet(), prunedTxns);
     }
 
+    @Override
     public void clearTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
       pca.clearTransactionsBelowLowWaterMark(lowGlobalTransactionIDWatermark);
       gtxm.clearCommitedTransactionsBelowLowWaterMark(lowGlobalTransactionIDWatermark);
@@ -272,6 +287,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
       }
     }
 
+    @Override
     public void addObjectSyncTransaction(ServerTransaction txn) {
       ServerTransaction newTxn = createCompoundTransactionFrom(txn);
       if (newTxn != null) {
@@ -341,7 +357,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     public void addToPending(ServerTransaction st, DNA dna) {
       PendingRecord pr = new PendingRecord(dna, st.getGlobalTransactionID());
       ObjectID oid = dna.getObjectID();
-      TLinkedList pendingChangesForOid = getOrCreatePendingChangesListFor(oid);
+      LinkedList pendingChangesForOid = (LinkedList) getOrCreatePendingChangesListFor(oid);
       pendingChangesForOid.addLast(pr);
       IdentityHashMap pendingChangesForTxn = getOrCreatePendingChangesSetFor(st.getGlobalTransactionID());
       pendingChangesForTxn.put(pr, pr);
@@ -358,7 +374,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
         IdentityHashMap pendingChangesForTxn = (IdentityHashMap) i.next();
         for (Iterator j = pendingChangesForTxn.keySet().iterator(); j.hasNext();) {
           PendingRecord pr = (PendingRecord) j.next();
-          TLinkedList pendingChangesForOid = getPendingChangesListFor(pr.getChange().getObjectID());
+          LinkedList pendingChangesForOid = getPendingChangesListFor(pr.getChange().getObjectID());
           pendingChangesForOid.remove(pr);
         }
         i.remove();
@@ -383,12 +399,12 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
       return (IdentityHashMap) gid2Changes.get(gid);
     }
 
-    private TLinkedList getPendingChangesListFor(ObjectID objectID) {
-      return (TLinkedList) oid2Changes.get(objectID);
+    private LinkedList getPendingChangesListFor(ObjectID objectID) {
+      return (LinkedList) oid2Changes.get(objectID);
     }
 
-    private TLinkedList removePendingChangesFor(ObjectID oid) {
-      return (TLinkedList) oid2Changes.remove(oid);
+    private LinkedList removePendingChangesFor(ObjectID oid) {
+      return (LinkedList) oid2Changes.remove(oid);
     }
 
     private IdentityHashMap getOrCreatePendingChangesSetFor(GlobalTransactionID gid) {
@@ -400,10 +416,10 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
       return m;
     }
 
-    private TLinkedList getOrCreatePendingChangesListFor(ObjectID oid) {
-      TLinkedList l = (TLinkedList) oid2Changes.get(oid);
+    private List getOrCreatePendingChangesListFor(ObjectID oid) {
+      List l = (LinkedList) oid2Changes.get(oid);
       if (l == null) {
-        l = new TLinkedList();
+        l = new LinkedList();
         oid2Changes.put(oid, l);
       }
       return l;
@@ -411,10 +427,10 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
   }
 
-  private static final class PendingRecord implements TLinkable {
+  private static final class PendingRecord implements TCLinkable {
 
-    private TLinkable                 prev;
-    private TLinkable                 next;
+    private TCLinkable                prev;
+    private TCLinkable                next;
 
     private final DNA                 dna;
     private final GlobalTransactionID gid;
@@ -432,19 +448,23 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
       return this.gid;
     }
 
-    public TLinkable getNext() {
+    @Override
+    public TCLinkable getNext() {
       return next;
     }
 
-    public TLinkable getPrevious() {
+    @Override
+    public TCLinkable getPrevious() {
       return prev;
     }
 
-    public void setNext(TLinkable n) {
+    @Override
+    public void setNext(TCLinkable n) {
       this.next = n;
     }
 
-    public void setPrevious(TLinkable p) {
+    @Override
+    public void setPrevious(TCLinkable p) {
       this.prev = p;
     }
 

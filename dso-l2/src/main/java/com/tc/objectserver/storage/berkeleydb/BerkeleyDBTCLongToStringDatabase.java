@@ -13,11 +13,11 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.tc.objectserver.persistence.db.DBException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.TCLongToStringDatabase;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
+import com.tc.objectserver.storage.api.TCLongToStringDatabase;
 import com.tc.util.Conversion;
 
-import gnu.trove.TLongObjectHashMap;
+import java.util.Map;
 
 public class BerkeleyDBTCLongToStringDatabase extends AbstractBerkeleyDatabase implements TCLongToStringDatabase {
   private final CursorConfig  cursorConfig = new CursorConfig();
@@ -29,7 +29,8 @@ public class BerkeleyDBTCLongToStringDatabase extends AbstractBerkeleyDatabase i
     this.serialBinding = new SerialBinding(catalog, String.class);
   }
 
-  public TLongObjectHashMap loadMappingsInto(TLongObjectHashMap target, PersistenceTransaction tx) {
+  @Override
+  public Map<Long, Object> loadMappingsInto(Map<Long, Object> target, PersistenceTransaction tx) {
     Cursor cursor = null;
     try {
       DatabaseEntry key = new DatabaseEntry(), value = new DatabaseEntry();
@@ -49,6 +50,7 @@ public class BerkeleyDBTCLongToStringDatabase extends AbstractBerkeleyDatabase i
     return target;
   }
 
+  @Override
   public Status insert(long index, String string, PersistenceTransaction tx) {
     DatabaseEntry entryKey = new DatabaseEntry();
     DatabaseEntry entryValue = new DatabaseEntry();

@@ -18,8 +18,6 @@ import com.tc.io.serializer.impl.ShortSerializer;
 import com.tc.io.serializer.impl.StringUTFSerializer;
 import com.tc.object.ObjectID;
 
-import gnu.trove.TIntObjectHashMap;
-
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -30,12 +28,12 @@ import java.util.Map;
 public final class DSOSerializerPolicy implements SerializerPolicy {
 
   private final Map                       class2SerializerDescriptor;
-  private final TIntObjectHashMap         id2Serializer;
+  private final Map<Integer, Object>      id2Serializer;
   private final DSOSerializerPolicy.SDesc objectSerializer;
 
   public DSOSerializerPolicy() {
     class2SerializerDescriptor = new HashMap();
-    id2Serializer = new TIntObjectHashMap();
+    id2Serializer = new HashMap<Integer, Object>();
 
     addSerializerMapping(Object.class, new ObjectSerializer());
     addSerializerMapping(ObjectID.class, new ObjectIDSerializer());
@@ -59,6 +57,7 @@ public final class DSOSerializerPolicy implements SerializerPolicy {
     class2SerializerDescriptor.put(desc.clazz, desc);
   }
 
+  @Override
   public Serializer getSerializerFor(Object o, ObjectOutput out) throws IOException {
     DSOSerializerPolicy.SDesc desc = null;
     if (o != null) {
@@ -73,6 +72,7 @@ public final class DSOSerializerPolicy implements SerializerPolicy {
     return desc.serializer;
   }
 
+  @Override
   public Serializer getSerializerFor(ObjectInput in) throws IOException {
     Serializer rv = (Serializer) id2Serializer.get(in.readByte());
     return rv == null ? objectSerializer.serializer : rv;
