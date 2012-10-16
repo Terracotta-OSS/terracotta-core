@@ -9,48 +9,48 @@ import com.tc.io.TCDataInput;
 import com.tc.io.TCDataOutput;
 import com.tc.util.Assert;
 
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntProcedure;
-
 import java.io.IOException;
 import java.util.Arrays;
-
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 public class ObjectStringSerializerImpl implements ObjectStringSerializer {
   private final double            STRING_LEN_TO_UTF8_RATIO = 1.25;                   // ranges from 1-3 bytes per
                                                                                       // character, since we usually use
                                                                                       // this for field names which are
                                                                                       // ascii, it'll tend towards 1.
-  private final TObjectIntHashMap stringToID               = new TObjectIntHashMap();
-  private final TIntObjectHashMap idToString               = new TIntObjectHashMap();
+  private final Map<Object, Integer> stringToID               = new HashMap<Object, Integer>();
+  private final Map<Integer, Object> idToString               = new HashMap<Integer, Object>();
 
-  private final TObjectIntHashMap bytesToID                = new TObjectIntHashMap();
-  private final TIntObjectHashMap idToBytes                = new TIntObjectHashMap();
+  private final Map<Object, Integer> bytesToID                = new HashMap<Object, Integer>();
+  private final Map<Integer, Object> idToBytes                = new HashMap<Integer, Object>();
 
   private int                     approximateBytesWritten             = 0;
 
-  private static class SerializeProcedure implements TObjectIntProcedure {
+  private static class Serialize {
     private final TCDataOutput out;
 
-    public SerializeProcedure(final TCDataOutput out) {
+    public Serialize(final TCDataOutput out) {
       this.out = out;
     }
 
-    public boolean execute(final Object key, final int value) {
+    public boolean writeToTcDataOutput(final Object key, final int value) {
       this.out.writeString((String) key);
       this.out.writeInt(value);
       return true;
     }
+
+
   }
 
-  private static class BytesSerializeProcedure implements TObjectIntProcedure {
+  private static class BytesSerialize {
     private final TCDataOutput out;
 
-    public BytesSerializeProcedure(final TCDataOutput out) {
+    public BytesSerialize(final TCDataOutput out) {
       this.out = out;
     }
 
-    public boolean execute(final Object key, final int value) {
+    public boolean write(final Object key, final int value) {
       BytesKey bk = (BytesKey) key;
       byte[] b = bk.getBytes();
 
@@ -61,14 +61,22 @@ public class ObjectStringSerializerImpl implements ObjectStringSerializer {
     }
   }
 
+  @Override
   public synchronized void serializeTo(final TCByteBufferOutput serialOutput) {
     serialOutput.writeInt(this.stringToID.size());
-    this.stringToID.forEachEntry(new SerializeProcedure(serialOutput));
+    Serialize serializeProcedure =     new Serialize(serialOutput);
+    for (Entry<Object, Integer> entry : stringToID.entrySet()) {
+      serializeProcedure.writeToTcDataOutput(entry.getKey(), entry.getValue());
+    }
 
     serialOutput.writeInt(this.bytesToID.size());
-    this.bytesToID.forEachEntry(new BytesSerializeProcedure(serialOutput));
+    BytesSerialize bytesSerializeProcedure = new BytesSerialize(serialOutput);
+    for (Entry<Object, Integer> entry : bytesToID.entrySet()) {
+      bytesSerializeProcedure.write(entry.getKey(),entry.getValue());
+      }
   }
 
+  @Override
   public synchronized Object deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
     final int size = serialInput.readInt();
     for (int i = 0; i < size; i++) {
@@ -86,6 +94,7 @@ public class ObjectStringSerializerImpl implements ObjectStringSerializer {
     return this;
   }
 
+  @Override
   public synchronized void writeString(final TCDataOutput out, final String string) {
     int sid = -1;
     if (this.stringToID.containsKey(string)) {
@@ -96,6 +105,7 @@ public class ObjectStringSerializerImpl implements ObjectStringSerializer {
     out.writeInt(sid);
   }
 
+  @Override
   public synchronized void writeStringBytes(TCDataOutput out, byte[] bytes) {
     final int id;
     final BytesKey key = new BytesKey(bytes);
@@ -109,10 +119,12 @@ public class ObjectStringSerializerImpl implements ObjectStringSerializer {
     out.writeInt(id);
   }
 
+  @Override
   public synchronized void writeFieldName(final TCDataOutput out, final String fieldName) {
     writeString(out, fieldName);
   }
 
+  @Override
   public synchronized String readString(final TCDataInput in) throws IOException {
     final int id = in.readInt();
 
@@ -122,6 +134,7 @@ public class ObjectStringSerializerImpl implements ObjectStringSerializer {
     return string;
   }
 
+  @Override
   public synchronized byte[] readStringBytes(TCDataInput input) throws IOException {
     final int id = input.readInt();
 
@@ -134,6 +147,7 @@ public class ObjectStringSerializerImpl implements ObjectStringSerializer {
     return bytes;
   }
 
+  @Override
   public synchronized String readFieldName(final TCDataInput in) throws IOException {
     final int stringID = in.readInt();
 
@@ -184,6 +198,7 @@ public class ObjectStringSerializerImpl implements ObjectStringSerializer {
     return id;
   }
 
+  @Override
   public int getApproximateBytesWritten() {
     return approximateBytesWritten;
   }

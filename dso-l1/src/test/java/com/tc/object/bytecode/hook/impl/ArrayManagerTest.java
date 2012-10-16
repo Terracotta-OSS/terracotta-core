@@ -127,6 +127,7 @@ public class ArrayManagerTest extends TestCase {
     private volatile boolean stop  = false;
     private int              count = 0;
 
+    @Override
     public void run() {
       try {
         while (!this.stop) {
@@ -197,203 +198,253 @@ public class ArrayManagerTest extends TestCase {
 
   private static class FakeTCObject implements TCObject {
 
+    @Override
     public boolean autoLockingDisabled() {
       throw new ImplementMe();
     }
 
+    @Override
     public void booleanFieldChanged(final String classname, final String fieldname, final boolean newValue,
                                     final int index) {
       throw new ImplementMe();
     }
 
+    @Override
     public void byteFieldChanged(final String classname, final String fieldname, final byte newValue, final int index) {
       throw new ImplementMe();
     }
 
+    @Override
     public void charFieldChanged(final String classname, final String fieldname, final char newValue, final int index) {
       throw new ImplementMe();
     }
 
+    @Override
     public void clearReference(final String fieldName) {
       throw new ImplementMe();
     }
 
+    @Override
     public int clearReferences(final int toClear) {
       throw new ImplementMe();
     }
 
+    @Override
     public void disableAutoLocking() {
       throw new ImplementMe();
     }
 
+    @Override
     public void doubleFieldChanged(final String classname, final String fieldname, final double newValue,
                                    final int index) {
       throw new ImplementMe();
     }
 
+    @Override
     public void floatFieldChanged(final String classname, final String fieldname, final float newValue, final int index) {
       throw new ImplementMe();
     }
 
+    @Override
     public String getFieldNameByOffset(final long fieldOffset) {
       throw new ImplementMe();
     }
 
-    public TLinkable getNext() {
-      throw new ImplementMe();
-    }
 
+    @Override
     public ObjectID getObjectID() {
       throw new ImplementMe();
     }
 
+    @Override
     public Object getPeerObject() {
       throw new ImplementMe();
     }
 
+    @Override
     public TLinkable getPrevious() {
       throw new ImplementMe();
     }
 
+    @Override
     public Object getResolveLock() {
       throw new ImplementMe();
     }
 
+    @Override
     public TCClass getTCClass() {
       throw new ImplementMe();
     }
 
+    @Override
     public long getVersion() {
       throw new ImplementMe();
     }
 
+    @Override
     public void hydrate(final DNA from, final boolean force, WeakReference peer) throws DNAException {
       throw new ImplementMe();
     }
 
+    @Override
     public void intFieldChanged(final String classname, final String fieldname, final int newValue, final int index) {
       throw new ImplementMe();
     }
 
+    @Override
     public boolean isNew() {
       throw new ImplementMe();
     }
 
+    @Override
     public boolean isShared() {
       throw new ImplementMe();
     }
 
+    @Override
     public void logicalInvoke(final int method, final String methodSignature, final Object[] params) {
       throw new ImplementMe();
     }
 
+    @Override
     public void longFieldChanged(final String classname, final String fieldname, final long newValue, final int index) {
       throw new ImplementMe();
     }
 
+    @Override
     public void objectFieldChanged(final String classname, final String fieldname, final Object newValue,
                                    final int index) {
       throw new ImplementMe();
     }
 
+    @Override
     public void objectFieldChangedByOffset(final String classname, final long fieldOffset, final Object newValue,
                                            final int index) {
       throw new ImplementMe();
     }
 
+    @Override
     public void resolveAllReferences() {
       throw new ImplementMe();
     }
 
+    @Override
     public void resolveArrayReference(final int index) {
       throw new ImplementMe();
     }
 
+    @Override
     public void resolveReference(final String fieldName) {
       throw new ImplementMe();
     }
 
+    @Override
     public void setNext(final TLinkable link) {
       throw new ImplementMe();
     }
 
+    @Override
     public void setPrevious(final TLinkable link) {
       throw new ImplementMe();
     }
 
+    @Override
     public ObjectID setReference(final String fieldName, final ObjectID id) {
       throw new ImplementMe();
     }
 
+    @Override
     public void setArrayReference(final int index, final ObjectID id) {
       throw new ImplementMe();
     }
 
+    @Override
     public void setValue(final String fieldName, final Object obj) {
       throw new ImplementMe();
     }
 
+    @Override
     public void setVersion(final long version) {
       throw new ImplementMe();
     }
 
+    @Override
     public void shortFieldChanged(final String classname, final String fieldname, final short newValue, final int index) {
       throw new ImplementMe();
     }
 
+    @Override
     public boolean canEvict() {
       throw new ImplementMe();
     }
 
+    @Override
     public void clearAccessed() {
       throw new ImplementMe();
     }
 
+    @Override
     public void markAccessed() {
       throw new ImplementMe();
     }
 
+    @Override
     public boolean recentlyAccessed() {
       throw new ImplementMe();
     }
 
+    @Override
     public void objectArrayChanged(final int startPos, final Object[] array, final int length) {
       throw new ImplementMe();
     }
 
+    @Override
     public void primitiveArrayChanged(final int startPos, final Object array, final int length) {
       throw new ImplementMe();
     }
 
+    @Override
     public int accessCount(final int factor) {
       throw new ImplementMe();
     }
 
+    @Override
     public void literalValueChanged(final Object newValue, final Object oldValue) {
       throw new ImplementMe();
     }
 
+    @Override
     public void setLiteralValue(final Object newValue) {
       throw new ImplementMe();
     }
 
+    @Override
     public ToggleableStrongReference getOrCreateToggleRef() {
       throw new ImplementMe();
     }
 
+    @Override
     public void setNotNew() {
       throw new ImplementMe();
     }
 
+    @Override
     public void dehydrate(final DNAWriter writer) {
       throw new ImplementMe();
     }
 
+    @Override
     public void unresolveReference(final String fieldName) {
       throw new ImplementMe();
     }
 
+    @Override
     public boolean isCacheManaged() {
+      throw new ImplementMe();
+    }
+
+    @Override
+    public TLinkable getNext() {
       throw new ImplementMe();
     }
   }

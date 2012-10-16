@@ -82,7 +82,27 @@
               <failOnMissingClassifierArtifact>true</failOnMissingClassifierArtifact>
               <outputDirectory>${project.build.directory}/sources</outputDirectory>
             </configuration>
-          </execution>        
+          </execution>       
+          <execution>
+            <id>copy-javadoc</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <skip>${skipJavadoc}</skip>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.terracotta.toolkit</groupId>
+                  <artifactId>terracotta-toolkit-api</artifactId>
+                  <version>${toolkit-api.version}</version>
+                  <classifier>javadoc</classifier>
+                  <outputDirectory>${project.build.directory}</outputDirectory>
+                  <destFileName>${project.artifactId}-${project.version}-javadoc.jar</destFileName>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>           
         </executions>
       </plugin>
            
@@ -233,6 +253,32 @@
           </execution>
         </executions>
       </plugin>      
+      
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.7</version>
+        <executions>
+          <execution>
+            <id>attach-javadoc</id>
+            <phase>package</phase>
+            <goals>
+              <goal>attach-artifact</goal>
+            </goals>
+            <configuration>
+              <skipAttach>${skipJavadoc}</skipAttach>
+              <artifacts>
+                <!-- sources artifact attached by default -->
+                <artifact>
+                  <file>${project.build.directory}/${project.artifactId}-${project.version}-javadoc.jar</file>
+                  <type>jar</type>
+                  <classifier>javadoc</classifier>
+                </artifact>                
+              </artifacts>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>       
     </plugins>
   </build>
 

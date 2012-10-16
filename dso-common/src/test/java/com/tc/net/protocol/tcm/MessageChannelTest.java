@@ -27,8 +27,6 @@ import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.Vm;
 
-import gnu.trove.TLongHashSet;
-
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -39,6 +37,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * This is a test case for MessageChannel. XXX: This test could use some work. It's not very coherent and uses sleeps.
@@ -119,6 +118,7 @@ public class MessageChannelTest extends TCTestCase {
     serverComms.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     ((CommunicationsManagerImpl) serverComms).getMessageRouter().routeMessageType(TCMessageType.PING_MESSAGE,
                                                                                   new TCMessageSink() {
+                                                                                    @Override
                                                                                     public void putMessage(TCMessage message)
                                                                                         throws UnsupportedMessageTypeException {
                                                                                       // System.out.println(message);
@@ -143,6 +143,7 @@ public class MessageChannelTest extends TCTestCase {
       lsnr = serverComms.createListener(new NullSessionManager(), new TCSocketAddress(port), false,
                                         new DefaultConnectionIdFactory(), new WireProtocolMessageSink() {
 
+                                          @Override
                                           public void putMessage(WireProtocolMessage message) {
                                             // Thanks for the message.
                                             // But i don't give you back anything
@@ -277,7 +278,8 @@ public class MessageChannelTest extends TCTestCase {
       rv = serverComms1.createListener(new NullSessionManager(), new TCSocketAddress(port), false,
                                        new DefaultConnectionIdFactory(), new WireProtocolMessageSink() {
 
-                                         public void putMessage(WireProtocolMessage message) {
+                                         @Override
+                                        public void putMessage(WireProtocolMessage message) {
                                            // Thanks for the message.
                                            // But i don't give you back anything
                                            // as i am Dumb.
@@ -300,7 +302,8 @@ public class MessageChannelTest extends TCTestCase {
     serverComms1.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     ((CommunicationsManagerImpl) serverComms1).getMessageRouter().routeMessageType(TCMessageType.PING_MESSAGE,
                                                                                    new TCMessageSink() {
-                                                                                     public void putMessage(TCMessage message)
+                                                                                     @Override
+                                                                                    public void putMessage(TCMessage message)
                                                                                          throws UnsupportedMessageTypeException {
                                                                                        // System.out.println(message);
 
@@ -613,6 +616,7 @@ public class MessageChannelTest extends TCTestCase {
     final MessageSendAndReceiveWatcher myServerSenderWatcher = this.serverWatcher;
     ((CommunicationsManagerImpl) clientComms).getMessageRouter().routeMessageType(TCMessageType.PING_MESSAGE,
                                                                                   new TCMessageSink() {
+                                                                                    @Override
                                                                                     public void putMessage(TCMessage message)
                                                                                         throws UnsupportedMessageTypeException {
                                                                                       try {
@@ -641,8 +645,8 @@ public class MessageChannelTest extends TCTestCase {
 
   public static class MessageSendAndReceiveWatcher {
 
-    private final TLongHashSet sentSequences     = new TLongHashSet();
-    private final TLongHashSet receivedSequences = new TLongHashSet();
+    private final Set<Long> sentSequences     = new HashSet<Long>();
+    private final Set<Long> receivedSequences = new HashSet<Long>();
 
     public synchronized void addMessageSent(PingMessage sent) {
       sentSequences.add(sent.getSequence());
@@ -661,7 +665,7 @@ public class MessageChannelTest extends TCTestCase {
     }
 
     public synchronized boolean allReceived() {
-      return receivedSequences.containsAll(sentSequences.toArray());
+      return receivedSequences.containsAll(sentSequences);
     }
   }
 }

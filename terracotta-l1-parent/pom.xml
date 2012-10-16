@@ -92,10 +92,6 @@
       <artifactId>concurrent</artifactId>
     </dependency>
     <dependency>
-      <groupId>trove</groupId>
-      <artifactId>trove</artifactId>
-    </dependency>     
-    <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>google-collections-tc</artifactId>
     </dependency>
