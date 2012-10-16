@@ -328,9 +328,9 @@
         <version>1.0.2</version>
       </dependency>
       <dependency>
-        <groupId>mockit</groupId>
+        <groupId>com.googlecode.jmockit</groupId>
         <artifactId>jmockit</artifactId>
-        <version>0.999.9</version>
+        <version>0.999.17</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
