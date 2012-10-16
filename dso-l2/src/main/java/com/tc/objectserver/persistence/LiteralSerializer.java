@@ -3,6 +3,7 @@ package com.tc.objectserver.persistence;
 import org.terracotta.corestorage.Serializer;
 
 import com.tc.object.ObjectID;
+import com.tc.object.dna.impl.UTF8ByteCompressedDataHolder;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 
 import java.nio.ByteBuffer;
@@ -189,6 +190,35 @@ public class LiteralSerializer implements Serializer<Object> {
       @Override
       Class<?> toClass() {
         return UTF8ByteDataHolder.class;
+      }
+    }, UT8COMPRESSEDBYTES {
+      @Override
+      Object deserialize(final ByteBuffer buffer) {
+        if (buffer.get() != ordinal()) {
+          throw new AssertionError();
+        }
+        byte[] bytes = new byte[buffer.getInt()];
+        buffer.get(bytes);
+        return new UTF8ByteCompressedDataHolder(bytes, buffer.getInt(), buffer.getInt(), buffer.getInt());
+      }
+
+      @Override
+      ByteBuffer serialize(final Object object) {
+        if (object instanceof UTF8ByteCompressedDataHolder) {
+          UTF8ByteCompressedDataHolder holder = (UTF8ByteCompressedDataHolder)object;
+          byte[] bytes = holder.getBytes();
+          ByteBuffer buffer = ByteBuffer.allocate(1 + Integer.SIZE / Byte.SIZE + bytes.length + Integer.SIZE / Byte.SIZE * 3);
+          buffer.put((byte)ordinal()).putInt(bytes.length).put(bytes);
+          buffer.putInt(holder.getUncompressedStringLength()).putInt(holder.getStringLength()).putInt(holder.getStringHash()).flip();
+          return buffer;
+        } else {
+          throw new AssertionError();
+        }
+      }
+
+      @Override
+      Class<?> toClass() {
+        return UTF8ByteCompressedDataHolder.class;
       }
     };
 
