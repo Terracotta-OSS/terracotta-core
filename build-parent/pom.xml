@@ -144,7 +144,7 @@
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>jmxremote_optional-tc</artifactId>
-        <version>1.0.2</version>
+        <version>1.0.3</version>
       </dependency>
       <dependency>
         <groupId>org.beanshell</groupId>
@@ -346,9 +346,9 @@
         <version>1.0.2</version>
       </dependency>
       <dependency>
-        <groupId>mockit</groupId>
+        <groupId>com.googlecode.jmockit</groupId>
         <artifactId>jmockit</artifactId>
-        <version>0.999.9</version>
+        <version>0.999.17</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
