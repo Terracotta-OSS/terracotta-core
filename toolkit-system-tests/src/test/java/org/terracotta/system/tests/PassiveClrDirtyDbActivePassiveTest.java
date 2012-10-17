@@ -15,11 +15,10 @@ import org.terracotta.toolkit.collections.ToolkitMap;
 
 import EDU.oswego.cs.dl.util.concurrent.BoundedBuffer;
 
-import com.sleepycat.je.DatabaseException;
+import com.tc.objectserver.persistence.util.SetDbClean;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.config.model.PersistenceMode;
 import com.tc.test.config.model.TestConfig;
-import com.tc.objectserver.persistence.util.SetDbClean;
 
 import gnu.trove.TLongObjectHashMap;
 
@@ -49,7 +48,6 @@ public class PassiveClrDirtyDbActivePassiveTest extends AbstractExpressActivePas
     List<String> extraJars = new ArrayList<String>();
     extraJars.add(TestBaseUtil.jarFor(BoundedBuffer.class));
     extraJars.add(TestBaseUtil.jarFor(ParseException.class));
-    extraJars.add(TestBaseUtil.jarFor(DatabaseException.class));
     extraJars.add(TestBaseUtil.jarFor(FileUtils.class));
     extraJars.add(TestBaseUtil.jarFor(TLongObjectHashMap.class));
     extraJars.add(TestBaseUtil.jarFor(StringUtils.class));
