@@ -11,6 +11,7 @@ import org.terracotta.toolkit.cache.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.store.ToolkitStore;
+import org.terracotta.toolkit.store.ToolkitStoreConfigFields;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
 
 import java.util.HashSet;
@@ -191,7 +192,7 @@ public class ToolkitCacheApiKeyValGrClient extends ToolkitStoreApiKeyValGrClient
 
     try {
       clientIndex = waitForAllClientsToReachHere();
-      cache.setConfigField(ToolkitCacheConfigFields.MAX_COUNT_LOCAL_HEAP_FIELD_NAME, MAX_NO_OF_ELEMENTS);
+      cache.setConfigField(ToolkitStoreConfigFields.MAX_COUNT_LOCAL_HEAP_FIELD_NAME, MAX_NO_OF_ELEMENTS);
       if (clientIndex == 0) {
         log("client 0 adding listener tp cache");
         addListenerToCache();
@@ -316,7 +317,7 @@ public class ToolkitCacheApiKeyValGrClient extends ToolkitStoreApiKeyValGrClient
     log("Entering " + methodName + " with clientIndex = " + clientIndex);
 
     try {
-      
+
       if (clientIndex == 0) {
         for (int i = START_INDEX; i < END_INDEX; i++) {
           cache.setPinned(keyValueGenerator.getKey(i), true);
@@ -332,7 +333,7 @@ public class ToolkitCacheApiKeyValGrClient extends ToolkitStoreApiKeyValGrClient
           Assert.assertEquals(cache.get(keyValueGenerator.getKey(i)), keyValueGenerator.getValue(i));
         }
         }
-      
+
       cache.unpinAll();
       log("Exiting " + methodName + " with clientIndex = " + clientIndex);
     } finally {
@@ -517,7 +518,7 @@ public class ToolkitCacheApiKeyValGrClient extends ToolkitStoreApiKeyValGrClient
     } finally {
       clearDs();
     }
-  
+
   }
 
   private long someRandomPastTime() {

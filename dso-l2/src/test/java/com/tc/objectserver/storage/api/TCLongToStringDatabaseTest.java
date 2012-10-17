@@ -41,7 +41,7 @@ public class TCLongToStringDatabaseTest extends AbstractDatabaseTest {
     Assert.assertEquals(keys.length, map.size());
 
     for (int i = 0; i < keys.length; i++) {
-      String str = (String) map.get(keys[i]);
+      String str = map.get(keys[i]);
       Assert.assertEquals(values[i], str);
     }
   }

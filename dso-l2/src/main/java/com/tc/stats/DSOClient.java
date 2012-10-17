@@ -214,10 +214,12 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     isListeningForTunneledBeans = false;
   }
 
+  @Override
   public boolean isTunneledBeansRegistered() {
     return !isListeningForTunneledBeans;
   }
 
+  @Override
   public void reset() {
     // nothing to reset
   }
@@ -231,6 +233,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     }
   }
 
+  @Override
   public ClientID getClientID() {
     return clientID;
   }
@@ -238,96 +241,119 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   /**
    * This method returns the same String as the parameter to thisNodeConnected() call in cluster JMX event.
    */
+  @Override
   public String getNodeID() {
     return clientID.toString();
   }
 
+  @Override
   public ObjectName getL1InfoBeanName() {
     return l1InfoBeanName;
   }
 
+  @Override
   public L1InfoMBean getL1InfoBean() {
     return l1InfoBean;
   }
 
+  @Override
   public ObjectName getL1DumperBeanName() {
     return this.l1DumperBeanName;
   }
 
+  @Override
   public ObjectName getInstrumentationLoggingBeanName() {
     return instrumentationLoggingBeanName;
   }
 
+  @Override
   public InstrumentationLoggingMBean getInstrumentationLoggingBean() {
     return instrumentationLoggingBean;
   }
 
+  @Override
   public ObjectName getRuntimeLoggingBeanName() {
     return runtimeLoggingBeanName;
   }
 
+  @Override
   public RuntimeLoggingMBean getRuntimeLoggingBean() {
     return runtimeLoggingBean;
   }
 
+  @Override
   public ObjectName getRuntimeOutputOptionsBeanName() {
     return runtimeOutputOptionsBeanName;
   }
 
+  @Override
   public RuntimeOutputOptionsMBean getRuntimeOutputOptionsBean() {
     return runtimeOutputOptionsBean;
   }
 
+  @Override
   public ObjectName getL1OperatorEventsBeanName() {
     return l1OperatorEventsBeanName;
   }
 
+  @Override
   public TerracottaOperatorEventsMBean getL1OperatorEventsBean() {
     return l1OperatorEventsBean;
   }
 
+  @Override
   public ChannelID getChannelID() {
     return channel.getChannelID();
   }
 
+  @Override
   public String getRemoteAddress() {
     TCSocketAddress addr = channel.getRemoteAddress();
     if (addr == null) { return "not connected"; }
     return addr.getCanonicalStringForm();
   }
 
+  @Override
   public long getTransactionRate() {
     return txnRate.getMostRecentSample().getCounterValue();
   }
 
+  @Override
   public long getObjectFaultRate() {
     return faultRate.getMostRecentSample().getCounterValue();
   }
 
+  @Override
   public long getObjectFlushRate() {
     return flushRate.getMostRecentSample().getCounterValue();
   }
 
+  @Override
   public long getPendingTransactionsCount() {
     return pendingTransactions.getValue();
   }
 
+  @Override
   public long getServerMapGetSizeRequestsCount() {
     return serverMapGetSizeRequestsCounter.getCumulativeValue();
   }
 
+  @Override
   public long getServerMapGetSizeRequestsRate() {
     return serverMapGetSizeRequestsCounter.getMostRecentSample().getCounterValue();
   }
 
+  @Override
   public long getServerMapGetValueRequestsCount() {
     return serverMapGetValueRequestsCounter.getCumulativeValue();
   }
 
+  @Override
   public long getServerMapGetValueRequestsRate() {
     return serverMapGetValueRequestsCounter.getMostRecentSample().getCounterValue();
   }
 
+  @Override
   public Number[] getStatistics(final String[] names) {
     int count = names.length;
     Number[] result = new Number[count];
@@ -345,36 +371,35 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     return result;
   }
 
+  @Override
   public void killClient() {
     logger.warn("Killing Client on JMX Request :" + channel);
     channel.close();
   }
 
   private void setupL1InfoBean() {
-    l1InfoBean = (L1InfoMBean) MBeanServerInvocationHandler.newProxyInstance(mbeanServer, l1InfoBeanName,
-                                                                             L1InfoMBean.class, false);
+    l1InfoBean = MBeanServerInvocationHandler.newProxyInstance(mbeanServer, l1InfoBeanName, L1InfoMBean.class, false);
   }
 
   private void setupL1OperatorEventsBean() {
-    this.l1OperatorEventsBean = (TerracottaOperatorEventsMBean) MBeanServerInvocationHandler
-        .newProxyInstance(mbeanServer, l1OperatorEventsBeanName, TerracottaOperatorEventsMBean.class, false);
+    this.l1OperatorEventsBean = MBeanServerInvocationHandler.newProxyInstance(mbeanServer, l1OperatorEventsBeanName,
+                                                                              TerracottaOperatorEventsMBean.class,
+                                                                              false);
   }
 
   private void setupInstrumentationLoggingBean() {
-    instrumentationLoggingBean = (InstrumentationLoggingMBean) MBeanServerInvocationHandler
+    instrumentationLoggingBean = MBeanServerInvocationHandler
         .newProxyInstance(mbeanServer, instrumentationLoggingBeanName, InstrumentationLoggingMBean.class, false);
   }
 
   private void setupRuntimeLoggingBean() {
-    runtimeLoggingBean = (RuntimeLoggingMBean) MBeanServerInvocationHandler.newProxyInstance(mbeanServer,
-                                                                                             runtimeLoggingBeanName,
-                                                                                             RuntimeLoggingMBean.class,
-                                                                                             false);
+    runtimeLoggingBean = MBeanServerInvocationHandler.newProxyInstance(mbeanServer, runtimeLoggingBeanName,
+                                                                       RuntimeLoggingMBean.class, false);
   }
 
   private void setupRuntimeOutputOptionsBean() {
-    runtimeOutputOptionsBean = (RuntimeOutputOptionsMBean) MBeanServerInvocationHandler
-        .newProxyInstance(mbeanServer, runtimeOutputOptionsBeanName, RuntimeOutputOptionsMBean.class, false);
+    runtimeOutputOptionsBean = MBeanServerInvocationHandler.newProxyInstance(mbeanServer, runtimeOutputOptionsBeanName,
+                                                                             RuntimeOutputOptionsMBean.class, false);
   }
 
   private boolean haveAllTunneledBeans() {
@@ -430,6 +455,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     }
   }
 
+  @Override
   public void handleNotification(Notification notification, Object handback) {
     String type = notification.getType();
 
@@ -475,10 +501,12 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     return l1InfoBean.takeThreadDump(requestMillis);
   }
 
+  @Override
   public int getLiveObjectCount() {
     return stateManager.getReferenceCount(clientID);
   }
 
+  @Override
   public boolean isResident(ObjectID oid) {
     return stateManager.hasReference(clientID, oid);
   }
@@ -488,6 +516,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     return Arrays.asList(NOTIFICATION_INFO).toArray(EMPTY_NOTIFICATION_INFO);
   }
 
+  @Override
   public ObjectName getEnterpriseTCClientBeanName() {
     return enterpriseMBeanName;
   }

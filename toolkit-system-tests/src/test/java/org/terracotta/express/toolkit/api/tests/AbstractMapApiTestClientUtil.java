@@ -39,7 +39,7 @@ public abstract class AbstractMapApiTestClientUtil extends ClientBase {
   }
 
   @Override
-  protected void test(Toolkit toolkit) throws Throwable {
+  protected void test(Toolkit tk) throws Throwable {
     checkGet();
     checkIsEmpty();
     checkClear();
@@ -87,16 +87,16 @@ public abstract class AbstractMapApiTestClientUtil extends ClientBase {
     }
   }
 
-  private boolean entrySetEqualsMap(Map map, Set entrySet) {
+  private boolean entrySetEqualsMap(Map m, Set entrySet) {
     Iterator iterator = entrySet.iterator();
     while (iterator.hasNext()) {
       Map.Entry mapEntry = (Map.Entry) iterator.next();
-      if (!map.containsKey(mapEntry.getKey())) {
+      if (!m.containsKey(mapEntry.getKey())) {
         System.err.println("Key " + mapEntry.getKey() + "not present");
         return false;
       }
-      if (!mapEntry.getValue().equals(map.get(mapEntry.getKey()))) {
-        System.err.println("mismatch : mapentry : " + mapEntry.getValue() + " map.get : " + map.get(mapEntry.getKey())
+      if (!mapEntry.getValue().equals(m.get(mapEntry.getKey()))) {
+        System.err.println("mismatch : mapentry : " + mapEntry.getValue() + " map.get : " + m.get(mapEntry.getKey())
                            + " for key :" + mapEntry.getKey());
         return false;
       }

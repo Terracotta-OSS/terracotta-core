@@ -34,6 +34,7 @@ public class StringIndexImpl implements StringIndex {
     }
   }
 
+  @Override
   public synchronized long getOrCreateIndexFor(String string) {
     if (string == null) return NULL;
     Long rv = stringToIndex.get(string);
@@ -46,13 +47,15 @@ public class StringIndexImpl implements StringIndex {
     return rv;
   }
 
+  @Override
   public synchronized String getStringFor(long index) {
     if (index == NULL) return null;
-    String rv = (String) indexToString.get(index);
+    String rv = indexToString.get(index);
     if (rv == null) throw new AssertionError("Unknown index: " + index);
     return rv;
   }
 
+  @Override
   public synchronized String toString() {
     StringBuffer rv = new StringBuffer();
     rv.append("[");
@@ -64,7 +67,7 @@ public class StringIndexImpl implements StringIndex {
     rv.append("]");
     return rv.toString();
   }
-  
+
   // For Testing
   public Map<String, Long> getString2LongMappings() {
     return stringToIndex;
