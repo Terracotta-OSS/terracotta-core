@@ -10,6 +10,7 @@ import net.sf.ehcache.management.service.AgentService;
 import net.sf.ehcache.management.service.CacheManagerService;
 import net.sf.ehcache.management.service.CacheService;
 import net.sf.ehcache.management.service.EntityResourceFactory;
+
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.resource.AgentEntity;
 import org.terracotta.management.resource.AgentMetadataEntity;
@@ -18,8 +19,8 @@ import org.terracotta.management.resource.Representable;
 import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.RequestTicketMonitor;
 import com.terracotta.management.security.UserService;
-import com.terracotta.management.web.config.TSAConfig;
 import com.terracotta.management.user.UserInfo;
+import com.terracotta.management.web.config.TSAConfig;
 
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
@@ -82,7 +83,7 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
   }
 
   @Override
-  public void updateCacheManager(String cacheManagerName, CacheManagerEntity resource) throws ServiceExecutionException {
+  public void updateCacheManager(String cacheManagerName, CacheManagerEntity resource) {
     ObjectName repositoryService = getRepositoryServiceName(requestValidator.getValidatedNode());
 
     String ticket = ticketMonitor.issueRequestTicket();
@@ -104,7 +105,7 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
   }
 
   @Override
-  public void createOrUpdateCache(String cacheManagerName, String cacheName, CacheEntity resource) throws ServiceExecutionException {
+  public void createOrUpdateCache(String cacheManagerName, String cacheName, CacheEntity resource) {
     ObjectName repositoryService = getRepositoryServiceName(requestValidator.getValidatedNode());
 
     String ticket = ticketMonitor.issueRequestTicket();
@@ -208,7 +209,7 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
 
       DfltSamplerRepositoryServiceMBean mbean = JMX.newMBeanProxy(mBeanServerConnection, repositoryService, DfltSamplerRepositoryServiceMBean.class);
       byte[] bytes = mbean.invoke(ticket, token, TSAConfig.getSecurityCallbackUrl(), "getAgentsMetadata", new Class<?>[] { Set.class }, new Object[] { Collections.emptySet() });
-      Collection<AgentMetadataEntity> resp = deserialize(bytes); 
+      Collection<AgentMetadataEntity> resp = deserialize(bytes);
       for(AgentMetadataEntity ame :  resp) {
         ame.setAgentId(id);
       }

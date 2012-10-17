@@ -7,8 +7,6 @@ package net.sf.ehcache.management.resource.services.validator.impl;
 
 import net.sf.ehcache.management.resource.services.validator.AbstractEhcacheRequestValidator;
 
-import org.terracotta.management.resource.services.Utils;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -50,7 +48,7 @@ public final class JmxEhcacheRequestValidator extends AbstractEhcacheRequestVali
   @Override
   protected void validateAgentSegment(List<PathSegment> pathSegments) {
     String ids = pathSegments.get(0).getMatrixParameters().getFirst("ids");
-    
+
     if (ids != null) {
       if (ids.split(",").length > 1) {
         throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)

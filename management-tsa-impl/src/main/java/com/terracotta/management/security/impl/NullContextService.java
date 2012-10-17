@@ -18,5 +18,6 @@ public class NullContextService implements ContextService {
 
   @Override
   public void putUserInfo(UserInfo userInfo) {
+    //
   }
 }
