@@ -28,12 +28,12 @@ import java.util.Map;
 public final class DSOSerializerPolicy implements SerializerPolicy {
 
   private final Map                       class2SerializerDescriptor;
-  private final Map<Integer, Object>      id2Serializer;
+  private final Map<Byte, Object>         id2Serializer;
   private final DSOSerializerPolicy.SDesc objectSerializer;
 
   public DSOSerializerPolicy() {
     class2SerializerDescriptor = new HashMap();
-    id2Serializer = new HashMap<Integer, Object>();
+    id2Serializer = new HashMap<Byte, Object>();
 
     addSerializerMapping(Object.class, new ObjectSerializer());
     addSerializerMapping(ObjectID.class, new ObjectIDSerializer());
@@ -87,7 +87,7 @@ public final class DSOSerializerPolicy implements SerializerPolicy {
       this.serializer = serializer;
     }
 
-    int getID() {
+    byte getID() {
       return serializer.getSerializerID();
     }
   }
