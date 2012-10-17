@@ -10,6 +10,7 @@ import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.ServerEntity;
 import com.terracotta.management.resource.StatisticsEntity;
 import com.terracotta.management.resource.ThreadDumpEntity;
+import com.terracotta.management.resource.TopologyEntity;
 
 import java.util.Collection;
 import java.util.Set;
@@ -28,6 +29,8 @@ public interface TsaManagementClientService {
   ServerEntity buildServerEntity(L2Info l2Info) throws ServiceExecutionException;
 
   Collection<ClientEntity> buildClientEntities() throws ServiceExecutionException;
+
+  TopologyEntity getTopology() throws ServiceExecutionException;
 
   StatisticsEntity getClientStatistics(String clientId) throws ServiceExecutionException;
 
