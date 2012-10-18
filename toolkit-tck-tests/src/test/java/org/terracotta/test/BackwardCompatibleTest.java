@@ -48,6 +48,7 @@ public class BackwardCompatibleTest {
     File signatureDir = new File(baseDir, "src/signatures");
     File[] apiDirs = signatureDir.listFiles();
     for (File apiDir : apiDirs) {
+      if (apiDir.getName().equals(".svn")) continue;
       String apiVersion = apiDir.getName();
       File signatureFile = new File(apiDir, "reference-" + jdkVersion + ".sig");
       if (!signatureFile.exists()) {
