@@ -31,6 +31,7 @@ import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
+import com.tc.properties.TCPropertiesConsts;
 import com.terracotta.toolkit.TerracottaProperties;
 import com.terracotta.toolkit.concurrent.locks.LockingUtils;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
@@ -161,6 +162,13 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   @Override
   public boolean isEventual() {
     return this.consistency == Consistency.EVENTUAL;
+  }
+
+  @Override
+  public boolean invalidateOnChange() {
+    return isEventual()
+           || new TerracottaProperties(platformService)
+               .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_INVALIDATE_STRONG_CACHE_ENABLED, true);
   }
 
   @Override

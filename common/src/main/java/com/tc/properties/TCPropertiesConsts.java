@@ -128,6 +128,7 @@ public interface TCPropertiesConsts {
    * dgc.inline.maxObjects          - Maximum inline dgc batch size
    * dgc.inline.cleanup.delaySeconds - Seconds to delay the start of inline dgc cleanup after a server becomes active
    * l2.data.backup.throttle.timeInMillis - time to sleep between copying of each file from the db while taking backup
+   * l2.objectmanager.invalidate.strong.cache.enabled - Enable/disable invalidations for strong cache
    * </code>
    ********************************************************************************************************************/
 
@@ -164,6 +165,7 @@ public interface TCPropertiesConsts {
   public static final String L2_OBJECTMANAGER_LOADOBJECTID_MAPDB_LONGS_PERDISKENTRY         = "l2.objectmanager.loadObjectID.mapsdatabase.longsPerDiskEntry";
   public static final String L2_OBJECTMANAGER_LOADOBJECTID_MEASURE_PERF                     = "l2.objectmanager.loadObjectID.measure.performance";
   public static final String L2_OBJECTMANAGER_LOADOBJECTID_CHECKPOINT_MAXSLEEP              = "l2.objectmanager.loadObjectID.checkpoint.maxsleep";
+  public static final String L2_OBJECTMANAGER_INVALIDATE_STRONG_CACHE_ENABLED               = "l2.objectmanager.invalidateStrongCache.enabled";
 
   /*********************************************************************************************************************
    * <code>
