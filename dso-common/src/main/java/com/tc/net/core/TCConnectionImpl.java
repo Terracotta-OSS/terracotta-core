@@ -235,6 +235,12 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
           }
         }
       }
+
+      @Override
+      public synchronized void close() throws IOException {
+        super.close();
+        TCConnectionImpl.this.channel.socket().close();
+      }
     };
     return pipeSocket;
   }

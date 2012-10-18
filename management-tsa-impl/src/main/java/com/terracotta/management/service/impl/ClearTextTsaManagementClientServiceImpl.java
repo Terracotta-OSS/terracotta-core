@@ -18,8 +18,10 @@ import com.tc.objectserver.api.GCStats;
 import com.tc.util.Conversion;
 import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.ServerEntity;
+import com.terracotta.management.resource.ServerGroupEntity;
 import com.terracotta.management.resource.StatisticsEntity;
 import com.terracotta.management.resource.ThreadDumpEntity;
+import com.terracotta.management.resource.TopologyEntity;
 import com.terracotta.management.service.TsaManagementClientService;
 
 import java.io.ByteArrayInputStream;
@@ -97,17 +99,17 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
 
       Collection<ThreadDumpEntity> threadDumpEntities = new ArrayList<ThreadDumpEntity>();
 
-      Set<ObjectName> dsoClientObjectNames = mBeanServerConnection.queryNames(new ObjectName("org.terracotta:name=DSO,type=Terracotta Server,channelID=*"), null);
+      Set<ObjectName> dsoClientObjectNames = mBeanServerConnection.queryNames(
+          new ObjectName("org.terracotta:clients=Clients,name=L1 Info Bean,type=DSO Client,node=*"), null);
       for (ObjectName dsoClientObjectName : dsoClientObjectNames) {
         try {
-          String remoteAddress = (String)mBeanServerConnection.getAttribute(dsoClientObjectName, "RemoteAddress");
-          L1InfoMBean l1InfoMBean = (L1InfoMBean)mBeanServerConnection.getAttribute(dsoClientObjectName, "L1InfoBean");
-
-          mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:name=DSO,type=Terracotta Server,channelID="), "RemoteAddress");
+          L1InfoMBean l1InfoMBean = JMX.newMBeanProxy(mBeanServerConnection, dsoClientObjectName, L1InfoMBean.class);
 
           byte[] bytes = l1InfoMBean.takeCompressedThreadDump(10000L);
           ThreadDumpEntity threadDumpEntity = unzipThreadDump(bytes);
-          threadDumpEntity.setSourceId(remoteAddress);
+          threadDumpEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+          threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+          threadDumpEntity.setSourceId(dsoClientObjectName.getKeyProperty("node"));
           threadDumpEntities.add(threadDumpEntity);
         } catch (Exception e) {
           ThreadDumpEntity threadDumpEntity = new ThreadDumpEntity();
@@ -148,8 +150,9 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
           int jmxPort = member.jmxPort();
           String jmxHost = member.host();
 
-          JMXConnector jmxConnector = JMXConnectorFactory.connect(new JMXServiceURL("service:jmx:jmxmp://" + jmxHost + ":" + jmxPort), null);
+          JMXConnector jmxConnector = null;
           try {
+            jmxConnector = JMXConnectorFactory.connect(new JMXServiceURL("service:jmx:jmxmp://" + jmxHost + ":" + jmxPort), null);
             MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
 
             TCServerInfoMBean tcServerInfoMBean = JMX.newMBeanProxy(mBeanServerConnection,
@@ -169,7 +172,9 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
             threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
             threadDumpEntities.add(threadDumpEntity);
           } finally {
-            jmxConnector.close();
+            if (jmxConnector != null) {
+              jmxConnector.close();
+            }
           }
         }
       }
@@ -246,6 +251,7 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
 
         ClientEntity clientEntity = new ClientEntity();
         clientEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+        clientEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
 
         clientEntity.getAttributes().put("RemoteAddress", mBeanServerConnection.getAttribute(clientObjectName, "RemoteAddress"));
         ClientID clientId = (ClientID)mBeanServerConnection.getAttribute(clientObjectName, "ClientID");
@@ -268,6 +274,54 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
           LOG.warn("error closing JMX connection", ioe);
         }
       }
+    }
+  }
+
+  @Override
+  public TopologyEntity getTopology() throws ServiceExecutionException {
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    try {
+      ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
+
+      TopologyEntity topologyEntity = new TopologyEntity();
+      topologyEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+      topologyEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+
+      for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
+        ServerGroupEntity serverGroupEntity = new ServerGroupEntity();
+
+        serverGroupEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+        serverGroupEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+        serverGroupEntity.setName(serverGroupInfo.name());
+        serverGroupEntity.setId(serverGroupInfo.id());
+
+
+        L2Info[] members = serverGroupInfo.members();
+        for (L2Info member : members) {
+          try {
+            ServerEntity serverEntity = buildServerEntity(member);
+            serverEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+            serverEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+            serverGroupEntity.getServers().add(serverEntity);
+          } catch (ServiceExecutionException see) {
+            // unable to contact an L2, add a server entity with minimal info
+            ServerEntity serverEntity = new ServerEntity();
+            serverEntity.getAttributes().put("Name", member.name());
+            serverEntity.getAttributes().put("Host", member.host());
+            serverEntity.getAttributes().put("JmxPort", member.jmxPort());
+            serverEntity.getAttributes().put("HostAddress", member.safeGetHostAddress());
+            serverEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+            serverEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+            serverGroupEntity.getServers().add(serverEntity);
+          }
+        }
+
+        topologyEntity.getServerGroupEntities().add(serverGroupEntity);
+      }
+
+      return topologyEntity;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error making JMX call", e);
     }
   }
 
@@ -355,6 +409,8 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
 
       return statisticsEntity;
     } catch (InstanceNotFoundException infe) {
+      return null;
+    } catch (IOException ioe) {
       return null;
     } catch (Exception e) {
       throw new ServiceExecutionException("error making JMX call", e);
@@ -553,7 +609,7 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
     return threadDumpEntity;
   }
 
-  private JMXConnector findServerContainingL1MBeans() throws JMException, IOException {
+  private JMXConnector findServerContainingL1MBeans() throws JMException {
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     L2Info[] l2Infos = (L2Info[])mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "L2Info");
 
@@ -561,11 +617,15 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
       String jmxHost = l2Info.host();
       int jmxPort = l2Info.jmxPort();
 
-      JMXConnector jmxConnector = JMXConnectorFactory.connect(new JMXServiceURL("service:jmx:jmxmp://" + jmxHost + ":" + jmxPort), null);
+      try {
+        JMXConnector jmxConnector = JMXConnectorFactory.connect(new JMXServiceURL("service:jmx:jmxmp://" + jmxHost + ":" + jmxPort), null);
 
-      MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
-      if (serverContainsL1MBeans(mBeanServerConnection)) {
-        return jmxConnector;
+        MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+        if (serverContainsL1MBeans(mBeanServerConnection)) {
+          return jmxConnector;
+        }
+      } catch (IOException ioe) {
+        // cannot connect to this L2, it might be down, just skip it
       }
     }
     return null; // no server has any client in the cluster at the moment

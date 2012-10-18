@@ -13,7 +13,9 @@ import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.management.remote.jmxmp.JMXMPConnector;
@@ -120,7 +122,7 @@ public class TestClientManager {
 
     System.err.println("\nStarting client with jvmArgs: " + jvmArgs);
     System.err.println("\nLinkedJavaProcess main method arguments: " + clientMainArgs);
-    System.err.println("\nLinkedJavaProcess classpath: " + classPath + "\n");
+    System.err.println("\nLinkedJavaProcess classpath: " + scrubClassPath(classPath) + "\n");
 
     clientProcess.setDirectory(workDir);
 
@@ -144,6 +146,21 @@ public class TestClientManager {
         throw new AssertionError(t);
       }
     }
+  }
+
+  private String scrubClassPath(String classPath) {
+    Set<String> cp = new LinkedHashSet<String>();
+    for (String entry : classPath.split(File.pathSeparator)) {
+      entry = entry.trim();
+      if (entry.length() > 0) {
+        if (entry.contains(".m2") && entry.endsWith(".jar")) {
+          cp.add(new File(entry).getName());
+        } else {
+          cp.add(entry);
+        }
+      }
+    }
+    return cp.toString();
   }
 
   private boolean shouldDebugClient(int debugPortOffset) {

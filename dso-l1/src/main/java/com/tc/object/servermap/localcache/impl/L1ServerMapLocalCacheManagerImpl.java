@@ -194,26 +194,24 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
 
     if (ObjectID.NULL_ID.equals(mapID)) {
       for (ServerMapLocalCache cache : localCacheToPinnedEntryFaultCallback.keySet()) {
-        for (ObjectID id : set) {
-          boolean success = cache.removeEntriesForObjectId(id);
-          if (!success) {
-            invalidationsFailed.add(id);
-          }
-        }
+        removeFromCache(set, invalidationsFailed, cache);
       }
     } else {
       ServerMapLocalCache cache = mapIdTolocalCache.get(mapID);
       if (cache != null) {
-        for (ObjectID id : set) {
-          boolean success = cache.removeEntriesForObjectId(id);
-          if (!success) {
-            invalidationsFailed.add(id);
-          }
-        }
+        removeFromCache(set, invalidationsFailed, cache);
       }
     }
-
     return invalidationsFailed;
+  }
+
+  private void removeFromCache(Set<ObjectID> set, ObjectIDSet invalidationsFailed, ServerMapLocalCache cache) {
+    for (ObjectID id : set) {
+      boolean success = cache.removeEntriesForObjectId(id);
+      if (!success) {
+        invalidationsFailed.add(id);
+      }
+    }
   }
 
   /**

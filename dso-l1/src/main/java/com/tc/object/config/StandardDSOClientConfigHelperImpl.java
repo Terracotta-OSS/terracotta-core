@@ -179,20 +179,24 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     logger.debug("distributed-methods: " + this.distributedMethods);
   }
 
+  @Override
   public String rawConfigText() {
     return configSetupManager.rawConfigText();
   }
 
+  @Override
   public Portability getPortability() {
     return this.portability;
   }
 
+  @Override
   public void addAutoLockExcludePattern(final String expression) {
     String executionExpression = ExpressionHelper.expressionPattern2ExecutionExpression(expression);
     ExpressionVisitor visitor = expressionHelper.createExpressionVisitor(executionExpression);
     autoLockExcludes.add(visitor);
   }
 
+  @Override
   public void addPermanentExcludePattern(final String pattern) {
     permanentExcludesMatcher.add(new ClassExpressionMatcherImpl(expressionHelper, pattern));
   }
@@ -201,6 +205,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     return new LockDefinitionImpl(name, level);
   }
 
+  @Override
   public void addNonportablePattern(final String pattern) {
     nonportablesMatcher.add(new ClassExpressionMatcherImpl(expressionHelper, pattern));
   }
@@ -212,19 +217,23 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
   }
 
   // This is used only for tests right now
+  @Override
   public void addIncludePattern(final String expression) {
     addIncludePattern(expression, false, false, false);
   }
 
+  @Override
   public CommonL1Config getNewCommonL1Config() {
     return configSetupManager.commonL1Config();
   }
 
   // This is used only for tests right now
+  @Override
   public void addIncludePattern(final String expression, final boolean honorTransient) {
     addIncludePattern(expression, honorTransient, false, false);
   }
 
+  @Override
   public void addIncludePattern(final String expression, final boolean honorTransient,
                                 final boolean oldStyleCallConstructorOnLoad, final boolean honorVolatile) {
     IncludeOnLoad onLoad = new IncludeOnLoad();
@@ -236,10 +245,12 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     clearAdaptableCache();
   }
 
+  @Override
   public void addIncludePattern(String expression, boolean honorTransient, String methodToCallOnLoad) {
     addIncludePattern(expression, honorTransient, methodToCallOnLoad, false);
   }
 
+  @Override
   public void addIncludePattern(String expression, boolean honorTransient, String methodToCallOnLoad,
                                 boolean honorVolatile) {
     IncludeOnLoad onLoad = new IncludeOnLoad(IncludeOnLoad.METHOD, methodToCallOnLoad);
@@ -248,6 +259,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     clearAdaptableCache();
   }
 
+  @Override
   public void addIncludeAndLockIfRequired(final String expression, final boolean honorTransient,
                                           final boolean oldStyleCallConstructorOnLoad, final boolean honorVolatile,
                                           final String lockExpression, final ClassInfo classInfo) {
@@ -263,30 +275,37 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
   }
 
   // This is used only for tests right now
+  @Override
   public void addExcludePattern(final String expression) {
     addInstrumentationDescriptor(new ExcludedInstrumentedClass(expression));
   }
 
+  @Override
   public void addInstrumentationDescriptor(final InstrumentedClass classDesc) {
     this.instrumentationDescriptors.add(0, newInstrumentationDescriptor(classDesc));
   }
 
+  @Override
   public boolean hasIncludeExcludePatterns() {
     return !this.instrumentationDescriptors.isEmpty();
   }
 
+  @Override
   public boolean hasIncludeExcludePattern(final ClassInfo classInfo) {
     return getInstrumentationDescriptorFor(classInfo) != DEFAULT_INSTRUMENTATION_DESCRIPTOR;
   }
 
+  @Override
   public DSORuntimeLoggingOptions runtimeLoggingOptions() {
     return this.configSetupManager.dsoL1Config().runtimeLoggingOptions();
   }
 
+  @Override
   public DSORuntimeOutputOptions runtimeOutputOptions() {
     return this.configSetupManager.dsoL1Config().runtimeOutputOptions();
   }
 
+  @Override
   public DSOInstrumentationLoggingOptions instrumentationLoggingOptions() {
     return this.configSetupManager.dsoL1Config().instrumentationLoggingOptions();
   }
@@ -303,6 +322,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     spec.setCallConstructorOnLoad(true);
   }
 
+  @Override
   public boolean addClassConfigBasedAdapters(final ClassInfo classInfo) {
     boolean addedAdapters = false;
 
@@ -353,6 +373,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     addCustomAdapter(classInfo.getName(), instrumentation.getClassAdapterFactoryForFieldInjection(fi));
   }
 
+  @Override
   public void addCustomAdapter(final String name, final ClassAdapterFactory factory) {
     synchronized (customAdapters) {
       Collection<ClassAdapterFactory> adapters = customAdapters.get(name);
@@ -364,18 +385,21 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     }
   }
 
+  @Override
   public boolean hasCustomAdapters(final ClassInfo classInfo) {
     synchronized (customAdapters) {
       return customAdapters.containsKey(classInfo.getName());
     }
   }
 
+  @Override
   public Collection<ClassAdapterFactory> getCustomAdapters(final ClassInfo classInfo) {
     synchronized (customAdapters) {
       return customAdapters.get(classInfo.getName());
     }
   }
 
+  @Override
   public Collection<ClassAdapterFactory> getAfterDSOAdapters(ClassInfo classInfo) {
     TransparencyClassSpec spec = getSpec(classInfo.getName());
     if (spec == null) {
@@ -385,6 +409,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     }
   }
 
+  @Override
   public SecurityInfo getSecurityInfo() {
     return configSetupManager.getSecurityInfo();
   }
@@ -401,10 +426,12 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     }
   }
 
+  @Override
   public DSOInstrumentationLoggingOptions getInstrumentationLoggingOptions() {
     return this.configSetupManager.dsoL1Config().instrumentationLoggingOptions();
   }
 
+  @Override
   public Iterator getAllUserDefinedBootSpecs() {
     Collection values = null;
     synchronized (specLock) {
@@ -413,10 +440,12 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     return values.iterator();
   }
 
+  @Override
   public void setFaultCount(final int count) {
     this.faultCount = count;
   }
 
+  @Override
   public boolean isLockMethod(final MemberInfo memberInfo) {
     helperLogger.logIsLockMethodBegin(memberInfo.getModifiers(), memberInfo.getDeclaringType().getName(), //
                                       memberInfo.getName(), memberInfo.getSignature());
@@ -438,10 +467,12 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     return false;
   }
 
+  @Override
   public boolean matches(final Lock lock, final MemberInfo methodInfo) {
     return matches(lock.getMethodJoinPointExpression(), methodInfo);
   }
 
+  @Override
   public boolean matches(final String expression, final MemberInfo methodInfo) {
     String executionExpression = ExpressionHelper.expressionPattern2ExecutionExpression(expression);
     if (logger.isDebugEnabled()) {
@@ -481,6 +512,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
   /**
    * This is a simplified interface from DSOApplicationConfig. This is used for programmatically generating config.
    */
+  @Override
   public void addRoot(final String rootName, final String rootFieldName) {
     ClassSpec classSpec;
     try {
@@ -491,6 +523,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     addRoot(new Root(classSpec.getFullyQualifiedClassName(), classSpec.getShortFieldName(), rootName), false);
   }
 
+  @Override
   public void addRoot(final Root root, final boolean addSpecForClass) {
     if (addSpecForClass) {
       this.getOrCreateSpec(root.getClassName());
@@ -499,16 +532,19 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     roots.add(root);
   }
 
+  @Override
   public String rootNameFor(final FieldInfo fi) {
     Root r = findMatchingRootDefinition(fi);
     if (r != null) { return r.getRootName(fi); }
     throw Assert.failure("No such root for fieldName " + fi.getName() + " in class " + fi.getDeclaringType().getName());
   }
 
+  @Override
   public boolean isRoot(final FieldInfo fi) {
     return findMatchingRootDefinition(fi) != null;
   }
 
+  @Override
   public boolean isRootDSOFinal(final FieldInfo fi) {
     Root r = findMatchingRootDefinition(fi);
     if (r != null) { return r.isDsoFinal(fi.getType().isPrimitive()); }
@@ -532,6 +568,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     return false;
   }
 
+  @Override
   public String[] getMissingRootDeclarations(final ClassInfo classInfo) {
     final List missingRoots = new ArrayList();
     for (final Iterator i = roots.iterator(); i.hasNext();) {
@@ -558,6 +595,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     return (String[]) missingRoots.toArray(new String[0]);
   }
 
+  @Override
   public LockDefinition[] lockDefinitionsFor(final MemberInfo memberInfo) {
     final boolean isAutoLocksExcluded = matchesAutoLockExcludes(memberInfo);
     boolean foundMatchingAutoLock = false;
@@ -594,6 +632,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     return false;
   }
 
+  @Override
   public int getFaultCount() {
     return faultCount < 0 ? this.configSetupManager.dsoL1Config().faultCount() : faultCount;
   }
@@ -611,47 +650,57 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     this.adaptableCache.clear();
   }
 
+  @Override
   public void addWriteAutolock(final String methodPattern) {
     addAutolock(methodPattern, ConfigLockLevel.WRITE);
   }
 
+  @Override
   public void addWriteAutolock(final String methodPattern, final String lockContextInfo) {
     addAutolock(methodPattern, ConfigLockLevel.WRITE, lockContextInfo);
   }
 
+  @Override
   public void addSynchronousWriteAutolock(final String methodPattern) {
     addAutolock(methodPattern, ConfigLockLevel.SYNCHRONOUS_WRITE);
   }
 
+  @Override
   public void addReadAutolock(final String methodPattern) {
     addAutolock(methodPattern, ConfigLockLevel.READ);
   }
 
+  @Override
   public void addAutolock(final String methodPattern, final ConfigLockLevel type) {
     LockDefinition lockDefinition = new LockDefinitionImpl(LockDefinition.TC_AUTOLOCK_NAME, type);
     lockDefinition.commit();
     addLock(methodPattern, lockDefinition);
   }
 
+  @Override
   public void addAutolock(final String methodPattern, final ConfigLockLevel type, final String configurationText) {
     LockDefinition lockDefinition = new LockDefinitionImpl(LockDefinition.TC_AUTOLOCK_NAME, type, configurationText);
     lockDefinition.commit();
     addLock(methodPattern, lockDefinition);
   }
 
+  @Override
   public void addReadAutoSynchronize(final String methodPattern) {
     addAutolock(methodPattern, ConfigLockLevel.AUTO_SYNCHRONIZED_READ);
   }
 
+  @Override
   public void addWriteAutoSynchronize(final String methodPattern) {
     addAutolock(methodPattern, ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE);
   }
 
+  @Override
   public void addLock(final String methodPattern, final LockDefinition lockDefinition) {
     // keep the list in reverse order of add
     locks.add(0, new Lock(methodPattern, lockDefinition));
   }
 
+  @Override
   public boolean shouldBeAdapted(final ClassInfo classInfo) {
     // now check if class is adaptable
     String fullClassName = classInfo.getName();
@@ -688,6 +737,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     return fullClassName.startsWith("com.tc.") || fullClassName.startsWith("com.terracottatech.");
   }
 
+  @Override
   public boolean isNeverAdaptable(final ClassInfo classInfo) {
     return isTCPatternMatchingHack(classInfo) || permanentExcludesMatcher.match(classInfo)
            || nonportablesMatcher.match(classInfo);
@@ -706,6 +756,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     return indexOfInner < 0 ? fullName : fullName.substring(0, indexOfInner);
   }
 
+  @Override
   public boolean isTransient(final int modifiers, final ClassInfo classInfo, final String field) {
     if (ByteCodeUtil.isParent(field)) return true;
     if (ClassAdapterBase.isDelegateFieldName(field)) { return false; }
@@ -716,6 +767,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     return transients.contains(className + "." + field);
   }
 
+  @Override
   public String getInjectedFieldType(final ClassInfo classInfo, final String field) {
     if (ByteCodeUtil.isParent(field)) return null;
     if (ClassAdapterBase.isDelegateFieldName(field)) { return null; }
@@ -724,6 +776,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     return injectedFields.get(fullyQualifiedFieldName);
   }
 
+  @Override
   public boolean isVolatile(final int modifiers, final ClassInfo classInfo, final String field) {
     return Modifier.isVolatile(modifiers) && isHonorJavaVolatile(classInfo);
   }
@@ -740,12 +793,14 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     return getInstrumentationDescriptorFor(classInfo).isHonorVolatile();
   }
 
+  @Override
   public boolean isCallConstructorOnLoad(final ClassInfo classInfo) {
     TransparencyClassSpec spec = getSpec(classInfo.getName());
     if (spec != null && spec.isCallConstructorSet()) { return spec.isCallConstructorOnLoad(); }
     return getInstrumentationDescriptorFor(classInfo).isCallConstructorOnLoad();
   }
 
+  @Override
   public String getPreCreateMethodIfDefined(final String className) {
     TransparencyClassSpec spec = getSpec(className);
     if (spec != null) {
@@ -755,6 +810,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     }
   }
 
+  @Override
   public String getPostCreateMethodIfDefined(final String className) {
     TransparencyClassSpec spec = getSpec(className);
     if (spec != null) {
@@ -764,6 +820,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     }
   }
 
+  @Override
   public boolean hasOnLoadInjection(final ClassInfo classInfo) {
     TransparencyClassSpec spec = getSpec(classInfo.getName());
     if (spec != null) { return spec.hasOnLoadInjection(); }
@@ -772,18 +829,21 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     return false;
   }
 
+  @Override
   public String getOnLoadScriptIfDefined(final ClassInfo classInfo) {
     TransparencyClassSpec spec = getSpec(classInfo.getName());
     if (spec != null && spec.isExecuteScriptOnLoadSet()) { return spec.getOnLoadExecuteScript(); }
     return getInstrumentationDescriptorFor(classInfo).getOnLoadScriptIfDefined();
   }
 
+  @Override
   public String getOnLoadMethodIfDefined(final ClassInfo classInfo) {
     TransparencyClassSpec spec = getSpec(classInfo.getName());
     if (spec != null && spec.isCallMethodOnLoadSet()) { return spec.getOnLoadMethod(); }
     return getInstrumentationDescriptorFor(classInfo).getOnLoadMethodIfDefined();
   }
 
+  @Override
   public TransparencyClassAdapter createDsoClassAdapterFor(final ClassVisitor writer, final ClassInfo classInfo,
                                                            final InstrumentationLogger lgr, final ClassLoader caller,
                                                            final boolean forcePortable, final boolean honorTransient) {
@@ -803,11 +863,13 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
                                         portability);
   }
 
+  @Override
   public ClassAdapter createClassAdapterFor(final ClassWriter writer, final ClassInfo classInfo,
                                             final InstrumentationLogger lgr, final ClassLoader caller) {
     return this.createClassAdapterFor(writer, classInfo, lgr, caller, false);
   }
 
+  @Override
   public ClassAdapter createClassAdapterFor(final ClassWriter writer, final ClassInfo classInfo,
                                             final InstrumentationLogger lgr, final ClassLoader caller,
                                             final boolean forcePortable) {
@@ -851,10 +913,12 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     }
   }
 
+  @Override
   public TransparencyClassSpec getOrCreateSpec(final String className) {
     return basicGetOrCreateSpec(className, null, true);
   }
 
+  @Override
   public TransparencyClassSpec getOrCreateSpec(final String className, final String applicator) {
     if (applicator == null) throw new AssertionError();
     return basicGetOrCreateSpec(className, applicator, true);
@@ -868,11 +932,13 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     }
   }
 
+  @Override
   public boolean isLogical(final String className) {
     TransparencyClassSpec spec = getSpec(className);
     return spec != null && spec.isLogical();
   }
 
+  @Override
   public Class getChangeApplicator(final Class clazz) {
     ChangeApplicatorSpec applicatorSpec = null;
     TransparencyClassSpec spec = getSpec(clazz.getName());
@@ -885,6 +951,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
   }
 
   // TODO: Need to optimize this by identifying the module to query instead of querying all the modules.
+  @Override
   public boolean isUseNonDefaultConstructor(final Class clazz) {
     String className = clazz.getName();
     if (LiteralValues.isLiteral(className)) { return true; }
@@ -893,6 +960,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     return false;
   }
 
+  @Override
   public boolean addTunneledMBeanDomain(final String tunneledMBeanDomain) {
     return this.tunneledMBeanDomains.add(tunneledMBeanDomain);
   }
@@ -915,12 +983,14 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
    * FutureTask to the java.util.concurrent package. In order to change the different adapter together, we need to
    * create a spec with our package and remove the spec after the instrumentation is done.
    */
+  @Override
   public void removeSpec(String className) {
     className = className.replace('/', '.');
     classSpecs.remove(className);
     userDefinedBootSpecs.remove(className);
   }
 
+  @Override
   public TransparencyClassSpec getSpec(String className) {
     synchronized (specLock) {
       // NOTE: This method doesn't create a spec for you. If you want that use getOrCreateSpec()
@@ -952,10 +1022,12 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     return (TransparencyClassSpec[]) rv.toArray(new TransparencyClassSpec[rv.size()]);
   }
 
+  @Override
   public TransparencyClassSpec[] getAllSpecs() {
     return getAllSpecs(false);
   }
 
+  @Override
   public void addDistributedMethodCall(final DistributedMethodSpec dms) {
     this.distributedMethods.add(dms);
   }
@@ -965,6 +1037,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     addDistributedMethodCall(new DistributedMethodSpec(expression, false));
   }
 
+  @Override
   public DistributedMethodSpec getDmiSpec(final MemberInfo memberInfo) {
     if (Modifier.isStatic(memberInfo.getModifiers()) || "<init>".equals(memberInfo.getName())
         || "<clinit>".equals(memberInfo.getName())) { return null; }
@@ -975,6 +1048,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     return null;
   }
 
+  @Override
   public void addTransient(final String className, final String fieldName) {
     if (null == className || null == fieldName) {
       //
@@ -983,6 +1057,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     transients.add(className + "." + fieldName);
   }
 
+  @Override
   public void addInjectedField(final String className, final String fieldName, final String instanceType) {
     if (null == className || null == fieldName) { throw new IllegalArgumentException("class " + className
                                                                                      + ", field = " + fieldName); }
@@ -995,6 +1070,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     }
   }
 
+  @Override
   public boolean isInjectedField(final String className, final String fieldName) {
     if (null == className || null == fieldName) { throw new IllegalArgumentException("class " + className
                                                                                      + ", field = " + fieldName); }
@@ -1008,6 +1084,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     return "<StandardDSOClientConfigHelperImpl: " + configSetupManager + ">";
   }
 
+  @Override
   public void addAspectModule(final String classNamePrefix, final String moduleName) {
     synchronized (aspectModules) {
       List modules = (List) this.aspectModules.get(classNamePrefix);
@@ -1019,22 +1096,26 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     }
   }
 
+  @Override
   public Map getAspectModules() {
     return this.aspectModules;
   }
 
+  @Override
   public String getLogicalExtendingClassName(final String className) {
     TransparencyClassSpec spec = getSpec(className);
     if (spec == null || !spec.isLogical()) { return null; }
     return spec.getLogicalExtendingClassName();
   }
 
+  @Override
   public void addUserDefinedBootSpec(final String className, final TransparencyClassSpec spec) {
     synchronized (specLock) {
       userDefinedBootSpecs.put(className, spec);
     }
   }
 
+  @Override
   public void validateGroupInfo(final PwProvider pwProvider) throws ConfigurationSetupException {
     PreparedComponentsFromL2Connection connectionComponents = new PreparedComponentsFromL2Connection(configSetupManager, pwProvider);
     ServerGroups serverGroupsFromL2 = new ConfigInfoFromL2Impl(configSetupManager, pwProvider).getServerGroupsFromL2()
@@ -1124,7 +1205,8 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
         address = InetAddress.getLocalHost();
       }
     } catch (UnknownHostException e) {
-      throw new ConfigurationSetupException(e.getMessage());
+      throw new ConfigurationSetupException("Unknown Host Exception!!Could not resolve IpAddress for this hostName: '"
+                                            + e.getMessage() + "'");
     }
     return address.getHostAddress();
   }
@@ -1145,6 +1227,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
                                                        l1ReconnectMaxdelayedacks, l1ReconnectSendwindow);
   }
 
+  @Override
   public synchronized ReconnectConfig getL1ReconnectProperties(final PwProvider securityManager) throws ConfigurationSetupException {
     if (l1ReconnectConfig == null) {
       setupL1ReconnectProperties(securityManager);
@@ -1152,16 +1235,19 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     return l1ReconnectConfig;
   }
 
+  @Override
   public boolean useResolveLockWhenClearing(final Class clazz) {
     // If this condition ever needs to be true for any other classes besides ConcurrentHashMap, this setting should be
     // move into the TransparencyClassSpec (as opposed to growing the list of classes here)
     return !clazz.getName().equals("java.util.concurrent.ConcurrentHashMap");
   }
 
+  @Override
   public UUID getUUID() {
     return id;
   }
 
+  @Override
   public String[] getTunneledDomains() {
     synchronized (tunneledMBeanDomains) {
       String[] result = new String[tunneledMBeanDomains.size()];
@@ -1181,11 +1267,13 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     addCustomAdapter(type, new AddInterfacesAdapter(new String[] { iface }));
   }
 
+  @Override
   public L1ConfigurationSetupManager reloadServersConfiguration() throws ConfigurationSetupException {
     configSetupManager.reloadServersConfiguration();
     return configSetupManager;
   }
 
+  @Override
   public String[] processArguments() {
     return configSetupManager.processArguments();
   }
