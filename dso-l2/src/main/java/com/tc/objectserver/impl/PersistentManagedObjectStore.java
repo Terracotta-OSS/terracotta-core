@@ -35,19 +35,6 @@ public class PersistentManagedObjectStore {
     return this.objectPersistor.getObjectCount();
   }
 
-  public long nextObjectIDBatch(final int batchSize) {
-    final long rv = this.objectPersistor.nextObjectIDBatch(batchSize);
-    return rv;
-  }
-
-  public long currentObjectIDValue() {
-    return this.objectPersistor.currentObjectIDValue();
-  }
-
-  public void setNextAvailableObjectID(final long startID) {
-    this.objectPersistor.setNextAvailableObjectID(startID);
-  }
-
   public void addNewRoot(final Transaction tx, final String rootName, final ObjectID id) {
     this.objectPersistor.addRoot(tx, rootName, id);
   }
