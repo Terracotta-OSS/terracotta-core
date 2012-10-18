@@ -53,6 +53,7 @@
     <module>toolkit-impl</module>
     <module>toolkit-express-impl</module>
     <module>toolkit-runtime</module>
+    <module>toolkit-tck-tests</module>
     <module>toolkit-system-tests</module>
   </modules>
   
