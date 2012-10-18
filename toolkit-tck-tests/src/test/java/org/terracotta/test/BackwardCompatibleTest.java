@@ -50,7 +50,9 @@ public class BackwardCompatibleTest {
     for (File apiDir : apiDirs) {
       String apiVersion = apiDir.getName();
       File signatureFile = new File(apiDir, "reference-" + jdkVersion + ".sig");
-      Assert.assertTrue(signatureFile.exists());
+      if (!signatureFile.exists()) {
+    	  throw new AssertionError("Signature file not found: " + signatureFile);
+      }
       ToolkitSignatureTestConfig config = setupConfig(apiVersion, signatureFile);
       config.packages("org.terracotta.toolkit");
       ToolkitSignatureTest tst = new ToolkitSignatureTest(config.getArguments());
