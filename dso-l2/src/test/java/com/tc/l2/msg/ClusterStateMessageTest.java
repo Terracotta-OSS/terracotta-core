@@ -20,7 +20,6 @@ import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.gtx.GlobalTransactionIDSequenceProvider;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
 import com.tc.objectserver.impl.ConnectionIDFactoryImpl;
-import com.tc.objectserver.persistence.ObjectIDSequenceImpl;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.StorageManagerFactory;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
@@ -60,7 +59,7 @@ public class ClusterStateMessageTest extends TestCase {
       }
     });
     PersistentMapStore clusterStateStore = persistor.getPersistentStateStore();
-    ObjectIDSequence oidSequence = new ObjectIDSequenceImpl(persistor.getManagedObjectPersistor());
+    ObjectIDSequence oidSequence = persistor.getManagedObjectPersistor().getObjectIDSequence();
     ConnectionIDFactory connectionIdFactory = new ConnectionIDFactoryImpl(persistor.getClientStatePersistor());
     GlobalTransactionIDSequenceProvider gidSequenceProvider = new GlobalTransactionIDBatchRequestHandler(
                                                                                                          new TestMutableSequence());
