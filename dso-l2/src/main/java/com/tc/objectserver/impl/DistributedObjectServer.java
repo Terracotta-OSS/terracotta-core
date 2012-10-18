@@ -215,7 +215,6 @@ import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.ClientStatePersistor;
-import com.tc.objectserver.persistence.ObjectIDSequenceImpl;
 import com.tc.objectserver.persistence.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.StorageManagerFactory;
@@ -302,6 +301,7 @@ import com.tc.util.runtime.ThreadIDMap;
 import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.DGCSequenceProvider;
 import com.tc.util.sequence.MutableSequence;
+import com.tc.util.sequence.ObjectIDSequence;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.startuplock.FileNotCreatedException;
@@ -978,8 +978,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                               this.objectStatsRecorder, toInit,
                                                                               stageManager, maxStageSize, this);
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.objectRequestManager));
+
+    final ObjectIDSequence objectIDSequence = persistor.getManagedObjectPersistor().getObjectIDSequence();
     final Stage oidRequest = stageManager.createStage(ServerConfigurationContext.OBJECT_ID_BATCH_REQUEST_STAGE,
-                                                      new RequestObjectIDBatchHandler(new ObjectIDSequenceImpl(persistor.getManagedObjectPersistor())), 1,
+                                                      new RequestObjectIDBatchHandler(objectIDSequence), 1,
                                                       maxStageSize);
     final Stage transactionAck = stageManager.createStage(ServerConfigurationContext.TRANSACTION_ACKNOWLEDGEMENT_STAGE,
                                                           new TransactionAcknowledgementHandler(), 1, maxStageSize);
@@ -1109,7 +1111,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                     this.configSetupManager, recycler,
                                                                     this.stripeIDStateManager,
                                                                     serverTransactionFactory, dgcSequenceProvider,
-                                                                    indexSequenceGenerator);
+                                                                    indexSequenceGenerator, objectIDSequence);
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.indexHACoordinator);
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2Coordinator);

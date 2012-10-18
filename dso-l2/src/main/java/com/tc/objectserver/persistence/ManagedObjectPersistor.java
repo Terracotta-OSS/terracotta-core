@@ -1,13 +1,16 @@
 package com.tc.objectserver.persistence;
 
+import org.terracotta.corestorage.ImmutableKeyValueStorageConfig;
 import org.terracotta.corestorage.KeyValueStorage;
 import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.KeyValueStorageMutationListener;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.sequence.MutableSequence;
+import com.tc.util.sequence.ObjectIDSequence;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -15,8 +18,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
-import org.terracotta.corestorage.ImmutableKeyValueStorageConfig;
-import org.terracotta.corestorage.KeyValueStorageMutationListener;
 
 /**
  * @author tim
@@ -26,7 +27,7 @@ public class ManagedObjectPersistor  {
   // This should be persistent
   private final KeyValueStorage<String, ObjectID> rootMap;
   private final KeyValueStorage<ObjectID, ManagedObject> objectMap;
-  private final MutableSequence objectIDSequence;
+  private final ObjectIDSequence objectIDSequence;
 
   private final ObjectIDSetMaintainer oidSetMaintainer;
 
@@ -34,7 +35,7 @@ public class ManagedObjectPersistor  {
     this.rootMap = rootMap;
     this.oidSetMaintainer = oidSetMaintainer;
     this.objectMap = new ObjectMap(this, objectMap);
-    this.objectIDSequence = objectIDSequence;
+    this.objectIDSequence = new ObjectIDSequenceImpl(objectIDSequence);
   }
 
   public static KeyValueStorageConfig<String, ObjectID> rootMapConfig() {
@@ -67,18 +68,6 @@ public class ManagedObjectPersistor  {
 
   public ManagedObject loadObjectByID(ObjectID id) {
     return objectMap.get(id);
-  }
-
-  public long nextObjectIDBatch(int batchSize) {
-    return objectIDSequence.nextBatch(batchSize);
-  }
-
-  public long currentObjectIDValue() {
-    return objectIDSequence.current();
-  }
-
-  public void setNextAvailableObjectID(long startID) {
-    objectIDSequence.setNext(startID);
   }
 
   public void saveObject(Transaction tx, ManagedObject managedObject) {
@@ -124,4 +113,7 @@ public class ManagedObjectPersistor  {
     return oidSetMaintainer.evictableObjectIDSetSnapshot();
   }
 
+  public ObjectIDSequence getObjectIDSequence() {
+    return objectIDSequence;
+  }
 }

@@ -66,6 +66,7 @@ import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.util.StartupLock;
 import com.tc.util.sequence.DGCSequenceProvider;
+import com.tc.util.sequence.ObjectIDSequence;
 import com.tc.util.sequence.SequenceGenerator;
 
 import java.io.File;
@@ -163,7 +164,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                       L2ConfigurationSetupManager configurationSetupManager, MessageRecycler recycler,
                                       StripeIDStateManager stripeStateManager,
                                       ServerTransactionFactory serverTransactionFactory,
-                                      DGCSequenceProvider dgcSequenceProvider, SequenceGenerator indexSequenceGenerator);
+                                      DGCSequenceProvider dgcSequenceProvider, SequenceGenerator indexSequenceGenerator, ObjectIDSequence objectIDSequence);
 
   L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean, LockStatisticsMonitor lockStatisticsMBean,
                                   StatisticsAgentSubSystemImpl statisticsAgentSubSystem,

@@ -94,6 +94,7 @@ import com.tc.util.NonBlockingStartupLock;
 import com.tc.util.StartupLock;
 import com.tc.util.runtime.ThreadDumpUtil;
 import com.tc.util.sequence.DGCSequenceProvider;
+import com.tc.util.sequence.ObjectIDSequence;
 import com.tc.util.sequence.SequenceGenerator;
 
 import java.io.File;
@@ -284,12 +285,12 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                              final StripeIDStateManager stripeStateManager,
                                              final ServerTransactionFactory serverTransactionFactory,
                                              final DGCSequenceProvider dgcSequenceProvider,
-                                             final SequenceGenerator indexSequenceGenerator) {
+                                             final SequenceGenerator indexSequenceGenerator, final ObjectIDSequence objectIDSequence) {
     return new L2HACoordinator(consoleLogger, server, stageManager, groupCommsManager, persistentMapStore,
                                objectManager, indexHACoordinator, l2PassiveSyncStateManager, l2ObjectStateManager,
                                l2IndexStateManager, transactionManager, gtxm, weightGeneratorFactory,
                                configurationSetupManager, recycler, this.thisGroupID, stripeStateManager,
-                               serverTransactionFactory, dgcSequenceProvider, indexSequenceGenerator);
+                               serverTransactionFactory, dgcSequenceProvider, indexSequenceGenerator, objectIDSequence);
   }
 
   public L2Management createL2Management(final TCServerInfoMBean tcServerInfoMBean,

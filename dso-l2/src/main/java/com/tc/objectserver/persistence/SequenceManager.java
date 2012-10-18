@@ -14,8 +14,8 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class SequenceManager {
 
-  private final ConcurrentMap<String, GBSequence> createdSequences =
-          new ConcurrentHashMap<String, GBSequence>();
+  private final ConcurrentMap<String, Sequence> createdSequences =
+          new ConcurrentHashMap<String, Sequence>();
   private final KeyValueStorage<String, Long> sequenceMap;
 
   public SequenceManager(KeyValueStorage<String, Long> sequenceMap) {
@@ -23,10 +23,10 @@ public class SequenceManager {
   }
 
   public MutableSequence getSequence(String name) {
-    GBSequence sequence = createdSequences.get(name);
+    Sequence sequence = createdSequences.get(name);
     if (sequence == null) {
-      sequence = new GBSequence(sequenceMap, name);
-      GBSequence racer = createdSequences.putIfAbsent(name, sequence);
+      sequence = new Sequence(sequenceMap, name);
+      Sequence racer = createdSequences.putIfAbsent(name, sequence);
       if (racer != null) {
         sequence = racer;
       }
@@ -38,12 +38,12 @@ public class SequenceManager {
     return new ImmutableKeyValueStorageConfig<String, Long>(String.class, Long.class);
   }
 
-  private static class GBSequence implements MutableSequence {
+  private static class Sequence implements MutableSequence {
 
     private final KeyValueStorage<String, Long> sequenceMap;
     private final String name;
 
-    GBSequence(KeyValueStorage<String, Long> sequenceMap, String name) {
+    Sequence(KeyValueStorage<String, Long> sequenceMap, String name) {
       this.name = name;
       this.sequenceMap = sequenceMap;
       Long current = sequenceMap.get(name);
