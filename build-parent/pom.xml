@@ -327,11 +327,6 @@
         <artifactId>native-tool</artifactId>
         <version>1.0.2</version>
       </dependency>
-      <dependency>
-        <groupId>com.googlecode.jmockit</groupId>
-        <artifactId>jmockit</artifactId>
-        <version>0.999.17</version>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 
