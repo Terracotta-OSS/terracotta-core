@@ -824,9 +824,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public void createRoot(final String rootName, final ObjectID id) {
     assertNotInShutdown();
-    final Transaction tx = newTransaction();
-    this.objectStore.addNewRoot(tx, rootName, id);
-    tx.commit();
+    this.objectStore.addNewRoot(null, rootName, id);
     this.stats.newObjectCreated();
     // This change needs to be notified so that new roots are not missed out
     changed(null, null, id);

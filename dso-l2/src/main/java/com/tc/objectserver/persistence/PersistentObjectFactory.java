@@ -1,17 +1,19 @@
 package com.tc.objectserver.persistence;
 
-import com.tc.object.ObjectID;
-
 import org.terracotta.corestorage.ImmutableKeyValueStorageConfig;
 import org.terracotta.corestorage.KeyValueStorage;
 import org.terracotta.corestorage.KeyValueStorageConfig;
 import org.terracotta.corestorage.StorageManager;
 
+import com.tc.object.ObjectID;
+
+import java.io.Serializable;
+
 /**
  * @author tim
  */
 public class PersistentObjectFactory {
-  private static final KeyValueStorageConfig<Object, Object> mapConfig = new ImmutableKeyValueStorageConfig<Object, Object>(Object.class, Object.class, LiteralSerializer.INSTANCE, LiteralSerializer.INSTANCE);
+  private static final KeyValueStorageConfig<Serializable, Serializable> mapConfig = new ImmutableKeyValueStorageConfig<Serializable, Serializable>(Serializable.class, Serializable.class);
 
   private final StorageManager gbManager;
 
@@ -20,11 +22,11 @@ public class PersistentObjectFactory {
   }
 
   public KeyValueStorage<Object, Object> createMap(ObjectID objectID) {
-    return gbManager.createKeyValueStorage(objectID.toString(), mapConfig);
+    return (KeyValueStorage) gbManager.createKeyValueStorage(objectID.toString(), mapConfig);
   }
 
   public KeyValueStorage<Object, Object> getMap(final ObjectID id) {
-    return gbManager.getKeyValueStorage(id.toString(), Object.class, Object.class);
+    return (KeyValueStorage) gbManager.getKeyValueStorage(id.toString(), Serializable.class, Serializable.class);
   }
 
   public void destroyMap(ObjectID oid) {

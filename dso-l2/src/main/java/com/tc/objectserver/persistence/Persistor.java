@@ -43,8 +43,8 @@ public class Persistor {
 
   public Persistor(StorageManagerFactory storageManagerFactory) {
     objectIDSetMaintainer = new ObjectIDSetMaintainer();
-    storageManager = storageManagerFactory.createStorageManager(getCoreStorageConfig());
     try {
+      storageManager = storageManagerFactory.createStorageManager(getCoreStorageConfig());
       storageManager.start().get();
     } catch (Exception e) {
       throw new AssertionError(e);

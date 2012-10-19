@@ -12,7 +12,6 @@ import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.logging.TCLogging;
 import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;
-import com.tc.test.config.model.PersistenceMode;
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.jmx.TestHandler;
 import com.tc.test.jmx.TestHandlerMBean;
@@ -87,10 +86,6 @@ public abstract class AbstractTestBase extends TCTestCase {
   @Override
   @Before
   public void setUp() throws Exception {
-    if (testConfig.getL2Config().getPersistenceMode() == PersistenceMode.PERMANENT_STORE) {
-      System.out.println("============== Disabling all permanent store tests temporarily. ===============");
-      disableTest();
-    }
 
     if (AbstractTestBase.class.getResource("/terracotta-license.key") != null) {
       if (!testConfig.getL2Config().isOffHeapEnabled()) {
