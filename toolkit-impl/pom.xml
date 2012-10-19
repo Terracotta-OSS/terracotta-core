@@ -39,18 +39,6 @@
       <artifactId>terracotta-toolkit-api-internal</artifactId>
       <version>${toolkit-api.version}</version>
     </dependency>
-    <!--dependency>
-      <groupId>org.terracotta.modules</groupId>
-      <artifactId>tim-util</artifactId>
-      <version>${tim-util.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>simulated-api</artifactId>
-      <version>${simulated-api.version}</version>
-      <scope>test</scope>
-    </dependency-->
     <!-- Use ehcache-core to avoid a dependency cycle with 'ehcache' -->
     <dependency>
       <groupId>net.sf.ehcache.internal</groupId>
