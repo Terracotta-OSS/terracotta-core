@@ -76,6 +76,17 @@ public interface TCObjectServerMap<L> extends TCObject {
                                           final Object newValue);
 
   /**
+   * Does a logic replace. The cached item is not associated to a lock.
+   * 
+   * @param map ServerTCMap
+   * @param key Key Object
+   * @param value Object in the mapping
+   * @return true if operation changed the clustered state
+   */
+  public boolean doLogicalReplaceUnlocked(final TCServerMap map, final Object key,
+                                          final Object newValue);
+
+  /**
    * Does a logical put and updates the local cache
    * 
    * @param map ServerTCMap
