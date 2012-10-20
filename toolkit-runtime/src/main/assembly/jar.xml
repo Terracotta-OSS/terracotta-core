@@ -40,7 +40,7 @@
     <dependencySet>
       <outputDirectory>ehcache</outputDirectory>
       <useTransitiveDependencies>false</useTransitiveDependencies>
-      <useTransitiveFiltering>true</useTransitiveFiltering>
+      <useTransitiveFiltering>false</useTransitiveFiltering>
       <useProjectArtifact>false</useProjectArtifact>
       <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
       <includes>
