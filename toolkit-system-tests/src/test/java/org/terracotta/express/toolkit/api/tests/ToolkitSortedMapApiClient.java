@@ -22,13 +22,40 @@ public class ToolkitSortedMapApiClient extends AbstractMapApiTestClientUtil {
 
   @Override
   protected void test(Toolkit toolKit) throws Throwable {
-    log("***This.Test started***");
-    setDs(toolKit, NAME_OF_DS, null);
+    log("Started test for ToolkitSortedMap");
+    setDsAndRunTest(toolKit);
+  }
+
+  private void setDsAndRunTest(Toolkit toolkit) throws Throwable {
+    setDs(toolkit, NAME_OF_DS, null);
+    log("Testing ToolkitMap with IntIntKeyValueGenerator");
     keyValueGenerator = new IntIntKeyValueGenerator();
     log("***Calling super.test***");
-    super.toolkit = toolKit;
-    super.test(toolKit);
-    log("***calling this.Test***");
+    super.test(toolkit);
+    this.test();
+
+    log("Testing ToolkitMap with IntKeyNonLiteralValueGenerator");
+    keyValueGenerator = new IntKeyNonLiteralValueGenerator();
+    log("***Calling super.test***");
+    super.test(toolkit);
+    this.test();
+
+    log("Testing ToolkitMap with NonLiteralKeyNonLiteralValueGenerator");
+    keyValueGenerator = new NonLiteralKeyNonLiteralValueGenerator();
+    log("***Calling super.test***");
+    super.test(toolkit);
+    this.test();
+
+    log("Testing ToolkitMap with NonLiteralKeyLiteralValueGenerator");
+    keyValueGenerator = new NonLiteralKeyLiteralValueGenerator();
+    log("***Calling super.test***");
+    super.test(toolkit);
+    this.test();
+
+  }
+
+  protected void test() throws Throwable {
+    log("***This.Test started***");
 
     checkDestroy();
     checkIsDestroyed();
@@ -53,7 +80,8 @@ public class ToolkitSortedMapApiClient extends AbstractMapApiTestClientUtil {
       }
       waitForAllClientsToReachHere();
       if (clientIndex == 1) {
-        Map subMap = sortedMap.subMap(START_INDEX, MID_INDEX);
+        Map subMap = sortedMap.subMap(keyValueGenerator.getKey(START_INDEX), keyValueGenerator.getKey(MID_INDEX));
+        Assert.assertTrue("subMap not created properly", subMap.size() > 0);
         Assert.assertTrue(sortedMapContains(subMap));
         removeFromMap(START_INDEX, MID_INDEX);
         Assert.assertTrue(mapShouldNotContainKeysValueInRange(subMap, START_INDEX, MID_INDEX));
@@ -99,7 +127,8 @@ public class ToolkitSortedMapApiClient extends AbstractMapApiTestClientUtil {
       }
       waitForAllClientsToReachHere();
       if (clientIndex == 1) {
-        Map tailMap = sortedMap.tailMap(MID_INDEX);
+        Map tailMap = sortedMap.tailMap(keyValueGenerator.getKey(MID_INDEX));
+        Assert.assertTrue("tailMap not created properly", tailMap.size() > 0);
         Assert.assertTrue(sortedMapContains(tailMap));
         removeFromMap(MID_INDEX, END_INDEX);
         Assert.assertTrue(mapShouldNotContainKeysValueInRange(tailMap, MID_INDEX, END_INDEX));
@@ -158,7 +187,8 @@ public class ToolkitSortedMapApiClient extends AbstractMapApiTestClientUtil {
       }
       waitForAllClientsToReachHere();
       if (clientIndex == 1) {
-        Map headMap = sortedMap.headMap(MID_INDEX);
+        Map headMap = sortedMap.headMap(keyValueGenerator.getKey(MID_INDEX));
+        Assert.assertTrue("headMap not created properly", headMap.size() > 0);
         Assert.assertTrue(sortedMapContains(headMap));
         removeFromMap(START_INDEX, MID_INDEX);
         Assert.assertTrue(mapShouldNotContainKeysValueInRange(headMap, START_INDEX, MID_INDEX));
@@ -166,7 +196,7 @@ public class ToolkitSortedMapApiClient extends AbstractMapApiTestClientUtil {
         removeFromMap(headMap, START_INDEX, MID_INDEX, methodName);
         Assert.assertTrue(theseKeysInGivenRangeAreNotPresentInMap(START_INDEX, MID_INDEX, methodName));
         Assert.assertTrue(theseKeysInGivenRangeArePresentInMap(MID_INDEX, END_INDEX, methodName));
-        try{
+        try {
           headMap.put(keyValueGenerator.getKey(MID_INDEX + 2), keyValueGenerator.getValue(MID_INDEX + 2));
           Assert.fail();
         } catch (IllegalArgumentException iae) {
@@ -174,7 +204,6 @@ public class ToolkitSortedMapApiClient extends AbstractMapApiTestClientUtil {
         }
       }
       waitForAllClientsToReachHere();
-
       log("Exiting " + methodName + " with clientIndex = " + clientIndex);
     } finally {
       clearDs();

@@ -20,7 +20,7 @@ public class NetstatTest extends TestCase {
           return "tcp        0      0 10.2.0.108:52464        76.14.32.185:22         ESTABLISHED\n";
         }
       };
-      List<SocketConnection> connections = netstat.listEstablishedTcpConnections();
+      List<SocketConnection> connections = netstat.listTcpConnections("ESTABLISHED");
       assertEquals(1, connections.size());
       SocketConnection conn = connections.iterator().next();
       assertEquals("10.2.0.108", conn.getLocalAddr().getHostAddress());
@@ -37,7 +37,7 @@ public class NetstatTest extends TestCase {
           return "tcp        0      0 ::ffff:127.0.0.1:19977      ::ffff:127.0.0.1:54047      ESTABLISHED\n";
         }
       };
-      List<SocketConnection> connections = netstat.listEstablishedTcpConnections();
+      List<SocketConnection> connections = netstat.listTcpConnections("ESTABLISHED");
       assertEquals(1, connections.size());
       SocketConnection conn = connections.iterator().next();
       assertEquals("127.0.0.1", conn.getLocalAddr().getHostAddress());
@@ -54,7 +54,7 @@ public class NetstatTest extends TestCase {
           return "  TCP    10.2.0.107:53628       10.2.0.108:445         ESTABLISHED\n";
         }
       };
-      List<SocketConnection> connections = netstat.listEstablishedTcpConnections();
+      List<SocketConnection> connections = netstat.listTcpConnections("ESTABLISHED");
       assertEquals(1, connections.size());
       SocketConnection conn = connections.iterator().next();
       assertEquals("10.2.0.107", conn.getLocalAddr().getHostAddress());
@@ -71,7 +71,7 @@ public class NetstatTest extends TestCase {
           return "tcp4       0     52  192.168.1.10.22        12.116.106.202.50590   ESTABLISHED\n";
         }
       };
-      List<SocketConnection> connections = netstat.listEstablishedTcpConnections();
+      List<SocketConnection> connections = netstat.listTcpConnections("ESTABLISHED");
       assertEquals(1, connections.size());
       SocketConnection conn = connections.iterator().next();
       assertEquals("192.168.1.10", conn.getLocalAddr().getHostAddress());
@@ -88,7 +88,7 @@ public class NetstatTest extends TestCase {
           return "127.0.0.1.39969      127.0.0.1.4624       49152      0 49152      0 ESTABLISHED\n";
         }
       };
-      List<SocketConnection> connections = netstat.listEstablishedTcpConnections();
+      List<SocketConnection> connections = netstat.listTcpConnections("ESTABLISHED");
       assertEquals(1, connections.size());
       SocketConnection conn = connections.iterator().next();
       assertEquals("127.0.0.1", conn.getLocalAddr().getHostAddress());

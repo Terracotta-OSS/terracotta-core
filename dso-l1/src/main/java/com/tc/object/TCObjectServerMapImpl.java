@@ -171,14 +171,24 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   @Override
   public boolean doLogicalReplaceUnlocked(TCServerMap map, Object key, Object current, Object newValue) {
     synchronized (localLock) {
-      AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
-      if (item != null && current != item.getValueObject()) {
-        // Item already present but not equal. We are doing reference equality because equals() is called at higher
-        // layer
-        // and because of DEV-5462
-        return false;
-      }
+
       ObjectID valueObjectID = invokeLogicalReplace(map, key, current, newValue);
+
+      if (!invalidateOnChange) {
+        addIncoherentValueToCache(key, newValue, valueObjectID, MapOperationType.PUT);
+      } else {
+        addEventualValueToCache(key, newValue, valueObjectID, MapOperationType.PUT);
+      }
+
+      return true;
+    }
+  }
+
+  @Override
+  public boolean doLogicalReplaceUnlocked(TCServerMap map, Object key, Object newValue) {
+    synchronized (localLock) {
+
+      ObjectID valueObjectID = invokeLogicalReplace(map, key, newValue);
 
       if (!invalidateOnChange) {
         addIncoherentValueToCache(key, newValue, valueObjectID, MapOperationType.PUT);
@@ -724,6 +734,18 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     ObjectID valueObjectID = shareObject(newValue);
 
     logicalInvoke(SerializationUtil.REPLACE_IF_VALUE_EQUAL, SerializationUtil.REPLACE_IF_VALUE_EQUAL_SIGNATURE,
+                  parameters);
+    return valueObjectID;
+  }
+
+  private ObjectID invokeLogicalReplace(final TCServerMap map, final Object key,
+                                        final Object newValue) {
+    final Object[] parameters = new Object[] { key, newValue };
+
+    shareObject(key);
+    ObjectID valueObjectID = shareObject(newValue);
+
+    logicalInvoke(SerializationUtil.REPLACE, SerializationUtil.REPLACE_SIGNATURE,
                   parameters);
     return valueObjectID;
   }

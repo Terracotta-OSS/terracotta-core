@@ -46,7 +46,7 @@ public class ToolkitStoreApiKeyValGrClient extends AbstractToolkitApiTestClientU
 
   private void testWithStrongStore(Toolkit toolKit) throws Throwable {
     this.toolkit = toolKit;
-    setDs(toolkit, NAME_OF_DS, super.STRONG);
+    setDs(toolkit, NAME_OF_DS, STRONG);
 
     keyValueGenerator = new LiteralKeyLiteralValueGenerator();
     this.test();
@@ -57,7 +57,7 @@ public class ToolkitStoreApiKeyValGrClient extends AbstractToolkitApiTestClientU
 
   private void testWithEventualStore(Toolkit toolKit) throws Throwable {
     this.toolkit = toolKit;
-    setDs(toolkit, NAME_OF_DS, super.EVENTUAL);
+    setDs(toolkit, NAME_OF_DS, EVENTUAL);
     keyValueGenerator = new LiteralKeyLiteralValueGenerator();
     this.test();
 
@@ -317,7 +317,7 @@ public class ToolkitStoreApiKeyValGrClient extends AbstractToolkitApiTestClientU
 
   @Override
   public void setDs(Toolkit toolkit, String name, String strongOrEventual) {
-    if (strongOrEventual.equals(super.STRONG)) {
+    if (strongOrEventual.equals(STRONG)) {
       setStrongDs(toolkit, name);
     } else {
       setEventualDs(toolkit, name);

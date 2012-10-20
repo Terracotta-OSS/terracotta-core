@@ -1,12 +1,12 @@
 package org.terracotta.express.tests.map;
 
 import org.terracotta.express.tests.base.ClientBase;
+import org.terracotta.express.toolkit.api.tests.MyInt;
 import org.terracotta.toolkit.Toolkit;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.ToolkitBarrier;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -609,35 +609,4 @@ public class ToolkitMapApiTestClient extends ClientBase {
 
   }
 
-  private static class MyInt implements Serializable {
-    private final int i;
-
-    public MyInt(int i) {
-      this.i = i;
-    }
-
-    @Override
-    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + i;
-      return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) return true;
-      if (obj == null) return false;
-      if (getClass() != obj.getClass()) return false;
-      MyInt other = (MyInt) obj;
-      if (i != other.i) return false;
-      return true;
-    }
-
-    @Override
-    public String toString() {
-      return "MyInt [i=" + i + "]";
-    }
-
   }
-}

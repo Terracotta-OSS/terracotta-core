@@ -7,8 +7,9 @@ import com.tc.io.serializer.api.StringIndex;
 import com.tc.objectserver.persistence.inmemory.StringIndexImpl;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
-import gnu.trove.TLongObjectHashMap;
-import gnu.trove.TLongObjectIterator;
+import java.util.HashMap;
+import java.util.Map;
+
 import junit.framework.TestCase;
 
 public class StringIndexTest extends TestCase {
@@ -16,6 +17,7 @@ public class StringIndexTest extends TestCase {
   private TestStringIndexPersistor persistor;
   private StringIndex index;
   
+  @Override
   public void setUp() throws Exception {
     persistor = new TestStringIndexPersistor();
   }
@@ -26,27 +28,27 @@ public class StringIndexTest extends TestCase {
     assertNotNull(persistor.loadCalls.poll(0));
 
     // make sure index 0 returns null;
-    assertNull(index.getStringFor(0));
+    assertNull(index.getStringFor(0L));
     
     // make sure it assigns the index as expected
     String testString = ":SLDKFJSD";
-    assertEquals(1, index.getOrCreateIndexFor(testString));
+    assertEquals(1L, index.getOrCreateIndexFor(testString));
     
     // make sure it save the mapping as expected
-    assertEquals(testString, persistor.target.get(1));
+    assertEquals(testString, persistor.target.get(1L));
     
     // clear the map
     persistor.target.clear();
     
     // load up the persistor
     int max = 100;
-    for (int i=1; i<max; i++) {
-      persistor.target.put(i, "" + i);
+    for (long i=1; i<max; i++) {
+      persistor.target.put( i, "" + i);
     }
     index = new StringIndexImpl(persistor);
     
     // make sure the mappings are loaded as expected
-    for (int i=1; i<max; i++) {
+    for (long i=1; i<max; i++) {
       String string = "" + i;
       assertEquals(string, index.getStringFor(i));
       assertEquals(i, index.getOrCreateIndexFor(string));
@@ -56,23 +58,22 @@ public class StringIndexTest extends TestCase {
     testString = "lksdfkljdfkjl";
     assertEquals(max, index.getOrCreateIndexFor(testString));
     
-    assertNull(index.getStringFor(0));
+    assertNull(index.getStringFor(0L));
   }
   
   private static final class TestStringIndexPersistor implements StringIndexPersistor {
 
-    public TLongObjectHashMap target = new TLongObjectHashMap();
+    public Map<Long, String>      target    = new HashMap<Long, String>();
     public NoExceptionLinkedQueue loadCalls = new NoExceptionLinkedQueue();
     
-    public TLongObjectHashMap loadMappingsInto(TLongObjectHashMap theTarget) {
+    @Override
+    public Map<Long, String> loadMappingsInto(Map<Long, String> theTarget) {
       loadCalls.put(theTarget);
-      for (TLongObjectIterator i = target.iterator(); i.hasNext();) {
-        i.advance();
-        theTarget.put(i.key(), i.value());
-      }
+      theTarget.putAll(target);
       return theTarget;
     }
 
+    @Override
     public void saveMapping(long index, String string) {
       target.put(index, string);
     }

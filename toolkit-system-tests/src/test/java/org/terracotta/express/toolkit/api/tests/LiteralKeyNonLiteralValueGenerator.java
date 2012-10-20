@@ -3,7 +3,6 @@
  */
 package org.terracotta.express.toolkit.api.tests;
 
-import org.terracotta.express.tests.map.ClusteredMapDiffSetTest.MyInt;
 
 public class LiteralKeyNonLiteralValueGenerator implements KeyValueGenerator {
 

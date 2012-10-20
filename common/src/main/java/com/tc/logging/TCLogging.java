@@ -194,8 +194,7 @@ public class TCLogging {
           stream.close();
         }
       } else {
-        for (int pos = 0; pos < devLoggingLocations.length; ++pos) {
-          File propFile = devLoggingLocations[pos];
+        for (File propFile : devLoggingLocations) {
           if (propFile.isFile() && propFile.canRead()) {
             devLog4JPropsFilePresent = true;
             InputStream in = new FileInputStream(propFile);
@@ -495,6 +494,7 @@ public class TCLogging {
       }
 
       writeVersion();
+      writePID();
     } catch (Exception e) {
       reportLoggingError(e);
     } finally {
@@ -521,8 +521,8 @@ public class TCLogging {
   }
 
   public static void addToAllLoggers(Appender appender) {
-    for (int i = 0; i < allLoggers.length; ++i)
-      allLoggers[i].addAppender(appender);
+    for (Logger allLogger : allLoggers)
+      allLogger.addAppender(appender);
   }
 
   private static void writeVersion() {
@@ -537,6 +537,16 @@ public class TCLogging {
     if (info.isPatched()) {
       String longPatchString = info.toLongPatchString();
       consoleLogger.info(longPatchString);
+    }
+  }
+
+  private static void writePID() {
+    try {
+      String processName = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
+      long pid = Long.parseLong(processName.split("@")[0]);
+      getLogger(TCLogging.class).info("PID is " + pid);
+    } catch (Throwable t) {
+      // ignore, not fatal if this doesn't work for some reason
     }
   }
 
@@ -578,8 +588,7 @@ public class TCLogging {
 
       String[] sortedKeys = (String[]) keys.toArray(new String[keys.size()]);
       Arrays.sort(sortedKeys);
-      for (int i = 0; i < sortedKeys.length; ++i) {
-        String key = sortedKeys[i];
+      for (String key : sortedKeys) {
         data.append(StringUtils.rightPad(key, maxKeyLength));
         data.append(": ");
         data.append(properties.get(key));

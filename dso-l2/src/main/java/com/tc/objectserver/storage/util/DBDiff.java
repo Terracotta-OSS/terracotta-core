@@ -20,8 +20,6 @@ import com.tc.objectserver.persistence.inmemory.StringIndexImpl;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 
-import gnu.trove.TObjectLongHashMap;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -58,6 +56,7 @@ public class DBDiff extends BaseUtility {
     final ManagedObjectChangeListenerProviderImpl moclp = new ManagedObjectChangeListenerProviderImpl();
     moclp.setListener(new ManagedObjectChangeListener() {
 
+      @Override
       public void changed(final ObjectID changedObject, final ObjectID oldReference, final ObjectID newReference) {
         // NOP
       }
@@ -157,8 +156,8 @@ public class DBDiff extends BaseUtility {
 
   private void diffStringIndexer(final StringIndexImpl stringIndex1, final StringIndexImpl stringIndex2) {
     log("Diffing StringIndexes...");
-    final TObjectLongHashMap map1 = stringIndex1.getString2LongMappings();
-    final TObjectLongHashMap map2 = stringIndex2.getString2LongMappings();
+    final Map<String, Long> map1 = stringIndex1.getString2LongMappings();
+    final Map<String, Long> map2 = stringIndex2.getString2LongMappings();
     if (!map1.equals(map2)) {
       log("*** [1] containing " + map1.size() + " mapping differs from [2] containing " + map2.size() + " mapping");
       this.diffStringIndexer = true;

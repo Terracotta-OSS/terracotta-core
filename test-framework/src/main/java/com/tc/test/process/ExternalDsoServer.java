@@ -218,4 +218,8 @@ public class ExternalDsoServer {
   public boolean isInitialized() {
     return this.inited;
   }
+
+  public int waitForExit() throws Exception {
+    return serverProc.waitFor();
+  }
 }

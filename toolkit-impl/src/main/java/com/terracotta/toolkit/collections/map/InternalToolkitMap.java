@@ -26,6 +26,8 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
 
   boolean isEventual();
 
+  boolean invalidateOnChange();
+
   boolean isLocalCacheEnabled();
 
   int getMaxTTISeconds();

@@ -50,7 +50,7 @@ public class ServerMapApplicator extends PartialHashMapApplicator {
                         final Object pojo) {
     InternalToolkitMap serverMap = (InternalToolkitMap) pojo;
     writer.addPhysicalAction(CACHE_NAME_FIELDNAME, serverMap.getName());
-    writer.addPhysicalAction(INVALIDATE_ON_CHANGE_FIELDNAME, serverMap.isEventual());
+    writer.addPhysicalAction(INVALIDATE_ON_CHANGE_FIELDNAME, serverMap.invalidateOnChange());
     writer.addPhysicalAction(LOCK_TYPE_FIELDNAME, LockingUtils.translate(serverMap.getLockType()).toInt());
     writer.addPhysicalAction(LOCAL_CACHE_ENABLED_FIELDNAME, serverMap.isLocalCacheEnabled());
     writer.addPhysicalAction(MAX_TTI_SECONDS_FIELDNAME, serverMap.getMaxTTISeconds());
@@ -67,14 +67,13 @@ public class ServerMapApplicator extends PartialHashMapApplicator {
 
       UnclusteredConfiguration config = new UnclusteredConfiguration();
       String name = null;
-      boolean isEventual = true;
       ToolkitLockTypeInternal lockType = null;
       while (cursor.next(encoding)) {
         PhysicalAction physicalAction = cursor.getPhysicalAction();
         if (CACHE_NAME_FIELDNAME.equals(physicalAction.getFieldName())) {
           name = (String) physicalAction.getObject();
         } else if (INVALIDATE_ON_CHANGE_FIELDNAME.equals(physicalAction.getFieldName())) {
-          isEventual = ((Boolean) physicalAction.getObject()).booleanValue();
+          // ignore this physical action
         } else if (LOCK_TYPE_FIELDNAME.equals(physicalAction.getFieldName())) {
           lockType = LockingUtils.translate(LockLevel.fromInt((Integer) physicalAction.getObject()));
         } else if (LOCAL_CACHE_ENABLED_FIELDNAME.equals(physicalAction.getFieldName())) {
@@ -97,12 +96,18 @@ public class ServerMapApplicator extends PartialHashMapApplicator {
         }
       }
       Consistency consistency;
-      if (isEventual) {
-        consistency = Consistency.EVENTUAL;
-      } else if (ToolkitLockTypeInternal.SYNCHRONOUS_WRITE == lockType) {
-        consistency = Consistency.SYNCHRONOUS_STRONG;
-      } else {
-        consistency = Consistency.STRONG;
+      switch(lockType) {
+        case CONCURRENT:
+          consistency = Consistency.EVENTUAL;
+          break;
+        case SYNCHRONOUS_WRITE:
+          consistency = Consistency.SYNCHRONOUS_STRONG;
+          break;
+        case WRITE:
+          consistency = Consistency.STRONG;
+          break;
+        default:
+          consistency = null;
       }
       config.setString(ToolkitStoreConfigFields.CONSISTENCY_FIELD_NAME, consistency.name());
       return new ServerMap(config, name);

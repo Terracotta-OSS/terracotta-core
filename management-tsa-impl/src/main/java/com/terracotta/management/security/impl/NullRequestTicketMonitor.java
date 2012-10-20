@@ -5,7 +5,6 @@
 
 package com.terracotta.management.security.impl;
 
-import com.terracotta.management.security.InvalidRequestTicketException;
 import com.terracotta.management.security.RequestTicketMonitor;
 
 /**
@@ -18,6 +17,7 @@ public final class NullRequestTicketMonitor implements RequestTicketMonitor {
   }
 
   @Override
-  public void redeemRequestTicket(String ticket) throws InvalidRequestTicketException {
+  public void redeemRequestTicket(String ticket) {
+    //
   }
 }

@@ -6,15 +6,14 @@ package com.tc.objectserver.storage.derby;
 import com.tc.objectserver.persistence.db.DBException;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.TCLongToStringDatabase;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
-
-import gnu.trove.TLongObjectHashMap;
+import com.tc.objectserver.storage.api.TCLongToStringDatabase;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
 
 class DerbyTCLongToStringDatabase extends AbstractDerbyTCDatabase implements TCLongToStringDatabase {
   private final String loadMappingsIntoQuery;
@@ -35,7 +34,8 @@ class DerbyTCLongToStringDatabase extends AbstractDerbyTCDatabase implements TCL
     executeQuery(connection, query);
   }
 
-  public TLongObjectHashMap loadMappingsInto(TLongObjectHashMap target, PersistenceTransaction tx) {
+  @Override
+  public Map<Long, String> loadMappingsInto(Map<Long, String> target, PersistenceTransaction tx) {
     ResultSet rs = null;
     try {
       // "SELECT " + KEY + "," + VALUE + " FROM " + tableName
@@ -54,6 +54,7 @@ class DerbyTCLongToStringDatabase extends AbstractDerbyTCDatabase implements TCL
     }
   }
 
+  @Override
   public Status insert(long id, String b, PersistenceTransaction tx) {
     try {
       // "INSERT INTO " + tableName + " VALUES (?, ?)"

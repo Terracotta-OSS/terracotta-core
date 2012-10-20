@@ -6,7 +6,8 @@ package com.tc.objectserver.storage.api;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 import com.tc.util.Assert;
 
-import gnu.trove.TLongObjectHashMap;
+import java.util.HashMap;
+import java.util.Map;
 
 public class TCLongToStringDatabaseTest extends AbstractDatabaseTest {
   private TCLongToStringDatabase database;
@@ -33,14 +34,14 @@ public class TCLongToStringDatabaseTest extends AbstractDatabaseTest {
       Assert.assertEquals(Status.SUCCESS, status);
     }
 
-    TLongObjectHashMap map = new TLongObjectHashMap();
+    Map<Long, String> map = new HashMap<Long, String>();
     PersistenceTransaction tx = newTransaction();
     map = database.loadMappingsInto(map, tx);
 
     Assert.assertEquals(keys.length, map.size());
 
     for (int i = 0; i < keys.length; i++) {
-      String str = (String) map.get(keys[i]);
+      String str = map.get(keys[i]);
       Assert.assertEquals(values[i], str);
     }
   }

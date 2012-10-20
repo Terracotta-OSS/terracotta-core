@@ -11,23 +11,24 @@ import com.tc.objectserver.persistence.db.TCCollectionsSerializer;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.TCMapsDatabase;
 
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 public class InMemoryCollectionFactory implements PersistentCollectionFactory {
 
+  @Override
   public Map createPersistentMap(ObjectID id) {
     return new InMemoryPersistableMap();
   }
 
+  @Override
   public Set createPersistentSet(ObjectID id) {
     return new InMemoryPersistableSet();
   }
 
-  private static class InMemoryPersistableMap extends THashMap implements PersistableCollection {
+  private static class InMemoryPersistableMap extends HashMap implements PersistableCollection {
     public InMemoryPersistableMap() {
       super(0);
     }
@@ -45,7 +46,7 @@ public class InMemoryCollectionFactory implements PersistentCollectionFactory {
 
   }
 
-  private static class InMemoryPersistableSet extends THashSet implements PersistableCollection {
+  private static class InMemoryPersistableSet extends HashSet implements PersistableCollection {
     public InMemoryPersistableSet() {
       super(0);
     }

@@ -4,6 +4,8 @@
 package com.terracotta.management.web.shiro;
 
 import com.terracotta.management.resource.services.validator.TSARequestValidator;
+import com.terracotta.management.service.DiagnosticsService;
+import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.service.MonitoringService;
 import com.terracotta.management.service.TopologyService;
 import net.sf.ehcache.management.resource.services.validator.impl.JmxEhcacheRequestValidator;
@@ -32,6 +34,8 @@ import com.terracotta.management.security.impl.NullRequestTicketMonitor;
 import com.terracotta.management.security.impl.NullUserService;
 import com.terracotta.management.security.impl.RelayingJerseyIdentityAssertionServiceClient;
 import com.terracotta.management.security.impl.TSAIdentityAsserter;
+import com.terracotta.management.service.impl.ClearTextTsaManagementClientServiceImpl;
+import com.terracotta.management.service.impl.DiagnosticsServiceImpl;
 import com.terracotta.management.service.impl.MonitoringServiceImpl;
 import com.terracotta.management.web.config.TSAConfig;
 import com.terracotta.management.service.impl.TopologyServiceImpl;
@@ -53,8 +57,11 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
 
       // The following services are for monitoring the TSA itself
       serviceLocator.loadService(TSARequestValidator.class, new TSARequestValidator());
-      serviceLocator.loadService(TopologyService.class, new TopologyServiceImpl());
-      serviceLocator.loadService(MonitoringService.class, new MonitoringServiceImpl());
+      TsaManagementClientService tsaManagementClientService = new ClearTextTsaManagementClientServiceImpl();
+      serviceLocator.loadService(TsaManagementClientService.class, tsaManagementClientService);
+      serviceLocator.loadService(TopologyService.class, new TopologyServiceImpl(tsaManagementClientService));
+      serviceLocator.loadService(MonitoringService.class, new MonitoringServiceImpl(tsaManagementClientService));
+      serviceLocator.loadService(DiagnosticsService.class, new DiagnosticsServiceImpl(tsaManagementClientService));
 
       // The following services are for forwarding REST calls to L1s, using security or not
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
@@ -110,6 +117,7 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
 
       ServiceLocator.load(serviceLocator);
     } catch (Exception e) {
+      e.printStackTrace();
       throw new RuntimeException("Error initializing TSAEnvironmentLoaderListener", e);
     }
 

@@ -10,8 +10,7 @@ import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.storage.api.TCLongToStringDatabase;
 
-import gnu.trove.TLongObjectHashMap;
-
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class StringIndexPersistorImpl extends DBPersistorBase implements StringIndexPersistor {
@@ -25,7 +24,7 @@ public final class StringIndexPersistorImpl extends DBPersistorBase implements S
     this.stringIndexDatabase = stringIndexDatabase;
   }
 
-  public TLongObjectHashMap loadMappingsInto(TLongObjectHashMap target) {
+  public Map<Long, String> loadMappingsInto(Map<Long, String> target) {
     if (initialized.getAndSet(true)) throw new AssertionError("Attempt to use more than once.");
     PersistenceTransaction tx = ptp.newTransaction();
     return stringIndexDatabase.loadMappingsInto(target, tx);

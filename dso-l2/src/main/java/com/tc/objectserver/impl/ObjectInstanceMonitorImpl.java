@@ -7,47 +7,52 @@ package com.tc.objectserver.impl;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.api.ObjectInstanceMonitorMBean;
 
-import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntProcedure;
-
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 public class ObjectInstanceMonitorImpl implements ObjectInstanceMonitor, ObjectInstanceMonitorMBean {
 
-  private final TObjectIntHashMap instanceCounts = new TObjectIntHashMap();
+  private final Map<String, Integer> instanceCounts = new HashMap<String, Integer>();
 
   public ObjectInstanceMonitorImpl() {
     //
   }
 
+  @Override
   public synchronized void instanceCreated(String type) {
     if (type == null) { throw new IllegalArgumentException(); }
 
-    if (!instanceCounts.increment(type)) {
+    Integer value = instanceCounts.get(type);
+    if (value == null) {
       instanceCounts.put(type, 1);
+    } else {
+      instanceCounts.put(type, value + 1);
     }
+
   }
 
+  @Override
   public synchronized void instanceDestroyed(String type) {
     if (type == null) { throw new IllegalArgumentException(); }
-
-    if (!instanceCounts.adjustValue(type, -1)) { throw new IllegalStateException("No count available for type " + type); }
-
-    if (instanceCounts.get(type) <= 0) {
-      instanceCounts.remove(type);
+    Integer value = instanceCounts.get(type);
+    if (value == null) {
+      throw new IllegalStateException("No count available for type " + type);
+    } else {
+      instanceCounts.put(type, value - 1);
+      if (instanceCounts.get(type) <= 0) {
+        instanceCounts.remove(type);
+      }
     }
+
   }
 
+  @Override
   public synchronized Map getInstanceCounts() {
     final Map rv = new HashMap();
-
-    instanceCounts.forEachEntry(new TObjectIntProcedure() {
-      public boolean execute(Object key, int value) {
-        rv.put(key, Integer.valueOf(value));
-        return true;
-      }
-    });
+    for (Entry<String, Integer> entry : instanceCounts.entrySet()) {
+      rv.put(entry.getKey(), entry.getValue());
+    }
 
     return rv;
   }

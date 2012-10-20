@@ -8,8 +8,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.Util;
 
-import gnu.trove.TIntObjectHashMap;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
@@ -141,7 +139,7 @@ public final class TCMessageType {
   public static final TCMessageType INVALIDATE_OBJECTS_MESSAGE                        = new TCMessageType();
 
   public static TCMessageType getInstance(final int i) {
-    return (TCMessageType) typeMap.get(i);
+    return typeMap.get(i);
   }
 
   public static TCMessageType[] getAllMessageTypes() {
@@ -167,7 +165,7 @@ public final class TCMessageType {
   //
   // //////////////////////////////////////////////////////
   private static final TCLogger          logger     = TCLogging.getLogger(TCMessageType.class);
-  private static final TIntObjectHashMap typeMap    = new TIntObjectHashMap();
+  private static final Map<Integer, TCMessageType> typeMap    = new HashMap<Integer, TCMessageType>();
   private static final TCMessageType[]   allTypes;
   private static final String            typePrefix = "TYPE_";
 
@@ -291,13 +289,13 @@ public final class TCMessageType {
       throw new RuntimeException("TCMessageType: Unused integer constants (please remove): " + unused);
     }
 
-    final TCMessageType[] rv = new TCMessageType[typeMap.size()];
-    System.arraycopy(typeMap.getValues(), 0, rv, 0, rv.length);
-
-    Arrays.sort(rv, new Comparator() {
-      public int compare(final Object o1, final Object o2) {
-        final int i1 = ((TCMessageType) o1).getType();
-        final int i2 = ((TCMessageType) o2).getType();
+    final TCMessageType[] rv = typeMap.values().toArray(new TCMessageType[0]);
+    
+    Arrays.sort(rv, new Comparator<TCMessageType>() {
+      @Override
+      public int compare(TCMessageType o1, TCMessageType o2) {
+        final int i1 = o1.getType();
+        final int i2 = o2.getType();
 
         if (i1 < i2) {
           return -1;

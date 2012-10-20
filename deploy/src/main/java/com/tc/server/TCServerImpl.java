@@ -853,7 +853,7 @@ public class TCServerImpl extends SEDA implements TCServer {
       try {
         securityHostname = InetAddress.getLocalHost().getHostName();
       } catch (UnknownHostException e) {
-        securityHostname = null;
+        // ignore
       }
     }
     return securityHostname;

@@ -17,12 +17,12 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 
-import gnu.trove.TObjectIntHashMap;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.zip.InflaterInputStream;
 
 /**
@@ -96,10 +96,12 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
     this.classProvider = classProvider;
   }
 
+  @Override
   public void encode(Object value, final TCDataOutput output) {
     encode(value, output, NULL_SERIALIZER);
   }
 
+  @Override
   public void encode(Object value, final TCDataOutput output, final ObjectStringSerializer serializer) {
     if (value == null) {
       // Normally Null values should have already been converted to null ObjectID, but this is not true when there are
@@ -238,7 +240,6 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
     // write string metadata so we can avoid decompression on later L1s
     output.writeInt(string.length());
     output.writeInt(string.hashCode());
-
     if (STRING_COMPRESSION_LOGGING_ENABLED) {
       logger.info("Compressed String of size : " + string.length() + " bytes : " + uncompressed.length
                   + " to  bytes : " + compressed.length);
@@ -272,10 +273,12 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
     return array;
   }
 
+  @Override
   public Object decode(final TCDataInput input) throws IOException, ClassNotFoundException {
     return decode(input, NULL_SERIALIZER);
   }
 
+  @Override
   public Object decode(final TCDataInput input, final ObjectStringSerializer serializer) throws IOException,
       ClassNotFoundException {
     final byte type = input.readByte();
@@ -334,10 +337,12 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
   // return array;
   // }
 
+  @Override
   public void encodeArray(final Object value, final TCDataOutput output) {
     encodeArray(value, output, value == null ? -1 : Array.getLength(value));
   }
 
+  @Override
   public void encodeArray(final Object value, final TCDataOutput output, final int length) {
     output.writeByte(TYPE_ID_ARRAY);
 
@@ -349,7 +354,6 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
     }
 
     final Class type = value.getClass().getComponentType();
-
     if (type.isPrimitive()) {
       output.writeByte(ARRAY_TYPE_PRIMITIVE);
       switch (primitiveClassMap.get(type)) {
@@ -660,8 +664,7 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
     }
   }
 
-  private static final TObjectIntHashMap primitiveClassMap = new TObjectIntHashMap();
-
+  private static final Map<Object, Byte> primitiveClassMap = new HashMap<Object, Byte>();
   static {
     primitiveClassMap.put(java.lang.Boolean.TYPE, TYPE_ID_BOOLEAN);
     primitiveClassMap.put(java.lang.Byte.TYPE, TYPE_ID_BYTE);

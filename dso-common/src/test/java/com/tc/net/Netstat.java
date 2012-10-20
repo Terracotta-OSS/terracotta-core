@@ -27,11 +27,19 @@ public class Netstat {
 
   private static final Netstat INSTANCE = new Netstat();
 
+  private static final String  ESTABLISHED = "ESTABLISHED";
+  private static final String  CLOSE_WAIT  = "CLOSE_WAIT";
+
   public static List<SocketConnection> getEstablishedTcpConnections() {
-    return INSTANCE.listEstablishedTcpConnections();
+    return INSTANCE.listTcpConnections(ESTABLISHED);
   }
 
-  List<SocketConnection> listEstablishedTcpConnections() {
+  // Used by tests
+  public static List<SocketConnection> getCloseWaitTcpConnections() {
+    return INSTANCE.listTcpConnections(CLOSE_WAIT);
+  }
+
+  List<SocketConnection> listTcpConnections(String connectionState) {
     List<SocketConnection> connections = new ArrayList<Netstat.SocketConnection>();
 
     try {
@@ -44,7 +52,7 @@ public class Netstat {
           continue;
         }
 
-        if (line.endsWith("ESTABLISHED")) {
+        if (line.endsWith(connectionState)) {
           Matcher matcher = PATTERN.matcher(line);
           if (matcher.matches()) {
             String localAddr = matcher.group(1);
