@@ -68,7 +68,7 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
   }
 
   @Override
-  public void updateCacheManager(String cacheManagerName, CacheManagerEntity resource) {
+  public void updateCacheManager(String cacheManagerName, CacheManagerEntity resource) throws ServiceExecutionException {
     String ticket = ticketMonitor.issueRequestTicket();
     String token = userService.putUserInfo(contextService.getUserInfo());
 
@@ -86,7 +86,7 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
   }
 
   @Override
-  public void createOrUpdateCache(String cacheManagerName, String cacheName, CacheEntity resource) {
+  public void createOrUpdateCache(String cacheManagerName, String cacheName, CacheEntity resource) throws ServiceExecutionException {
     String ticket = ticketMonitor.issueRequestTicket();
     String token = userService.putUserInfo(contextService.getUserInfo());
 
