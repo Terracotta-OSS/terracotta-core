@@ -326,6 +326,7 @@ import javax.management.remote.JMXConnectorServer;
 
 import bsh.EvalError;
 import bsh.Interpreter;
+import org.terracotta.corestorage.monitoring.MonitoredResource;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -951,14 +952,18 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.serverMapRequestManager));
 
     final ServerTransactionFactory serverTransactionFactory = new ServerTransactionFactory();
-    this.serverMapEvictor = new ServerMapEvictionManagerImpl(
-                                                             this.objectManager,
-                                                             this.objectStore,
-                                                             clientObjectReferenceSet,
-                                                             serverTransactionFactory,
-                                                             objectManagerConfig.gcThreadSleepTime() > 0 ? ((objectManagerConfig
-                                                                 .gcThreadSleepTime() + 1) / 2)
-                                                                 : ServerMapEvictionManagerImpl.DEFAULT_SLEEP_TIME);
+//    this.serverMapEvictor = new ServerMapEvictionManagerImpl(
+//                                                             this.objectManager,
+//                                                             this.objectStore,
+//                                                             clientObjectReferenceSet,
+//                                                             serverTransactionFactory,
+//                                                             objectManagerConfig.gcThreadSleepTime() > 0 ? ((objectManagerConfig
+//                                                                 .gcThreadSleepTime() + 1) / 2)
+//                                                                 : ServerMapEvictionManagerImpl.DEFAULT_SLEEP_TIME);
+    this.serverMapEvictor = new ProgressiveEvictionManager(objectManager, 
+            persistor.getMonitoredResource(), 
+            objectStore, clientObjectReferenceSet, serverTransactionFactory, threadGroup);
+    
     toInit.add(this.serverMapEvictor);
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.serverMapEvictor));
     stageManager.createStage(ServerConfigurationContext.SERVER_MAP_EVICTION_BROADCAST_STAGE,

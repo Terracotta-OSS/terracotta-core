@@ -62,4 +62,11 @@ public class ServerMapEvictionContext implements EventContext {
   public String getCacheName() {
     return this.cacheName;
   }
+
+    @Override
+    public String toString() {
+        return "ServerMapEvictionContext{" + "oid=" + oid + ", targetMaxTotalCount=" + targetMaxTotalCount + ", samples=" + samples.size() + ", overshoot=" + overshoot + ", className=" + className + ", cacheName=" + cacheName + '}';
+    }
+  
+  
 }

@@ -204,12 +204,16 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
       }
     }
   }
+  
+  boolean isLogging() {
+      return EVICTOR_LOGGING;
+  }
 
-  private boolean markEvictionInProgress(final ObjectID oid) {
+  boolean markEvictionInProgress(final ObjectID oid) {
     return this.currentlyEvicting.add(oid);
   }
 
-  private void markEvictionDone(final ObjectID oid) {
+  void markEvictionDone(final ObjectID oid) {
     this.currentlyEvicting.remove(oid);
   }
 
@@ -271,11 +275,11 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
   private boolean isInterestedInTTIOrTTL(final int tti, final int ttl) {
     return (tti > 0 || ttl > 0 || ELEMENT_BASED_TTI_TTL_ENABLED);
   }
-
-  public void evict(final ObjectID oid, final Map samples, final int targetMaxTotalCount, final int ttiSeconds,
-                    final int ttlSeconds, final int overshoot, final String className, final String cacheName) {
+  
+  Map filter(final ObjectID oid, final Map samples, final int ttiSeconds,
+                    final int ttlSeconds, final int overshoot, String cacheName, boolean evictUnexpired) {
     final HashMap candidates = new HashMap(samples.size());
-    final ArrayList likelyCandidates = new ArrayList(samples.size());
+    final ArrayList likelyCandidates = ( evictUnexpired ) ? new ArrayList(samples.size()) : null;
     int expired = 0;
     final int now = (int) (System.currentTimeMillis() / 1000);
     for (final Iterator iterator = samples.entrySet().iterator(); candidates.size() < overshoot && iterator.hasNext();) {
@@ -285,11 +289,18 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
         // Element already expired
         candidates.put(e.getKey(), e.getValue());
         expired++;
-      } else if (EVICT_UNEXPIRED_ENTRIES_ENABLED) {
+      } else if (likelyCandidates != null) {
         likelyCandidates.add(new ExpiryKey(expiresIn, e));
       }
     }
-    if (candidates.size() < overshoot) {
+    
+    if (EVICTOR_LOGGING) {
+      logger.info("Server Map Eviction : " + oid + " [" + cacheName + "] : Filtering : " + samples.size()
+                  + " of which expired or eternal : " + expired + " alive : " + (samples.size() - expired)
+                  + " Samples : " + samples.size());
+    }  
+    
+    if (candidates.size() < overshoot && likelyCandidates != null ) {
       Collections.sort(likelyCandidates); // Is this costly ?
       int lastExpiresIn = Integer.MIN_VALUE;
       for (final Iterator i = likelyCandidates.iterator(); candidates.size() < overshoot && i.hasNext();) {
@@ -301,18 +312,16 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
         candidates.put(e.getKey(), e.getValue());
       }
     }
-    if (EVICTOR_LOGGING) {
-      logger.info("Server Map Eviction : " + oid + " [" + cacheName + "] : Evicting " + candidates.size()
-                  + " of which expired or eternal : " + expired + " alive : " + (candidates.size() - expired)
-                  + " Samples : " + samples.size());
-    }
-    if (candidates.size() > 0) {
-      evictFrom(oid, Collections.unmodifiableMap(candidates), className, cacheName);
-      broadcastEvictedEntries(oid, candidates);
-    } else {
-      notifyEvictionCompletedFor(oid);
-    }
-    evictionStats.entriesEvicted(oid, overshoot, samples.size(), candidates.size());
+    return candidates;
+  }
+
+  public void evict(final ObjectID oid, Map samples, final int targetMaxTotalCount, final int ttiSeconds,
+                    final int ttlSeconds, final int overshoot, final String className, final String cacheName) {
+
+    samples = filter(oid,samples,ttiSeconds,ttlSeconds,overshoot,cacheName,EVICT_UNEXPIRED_ENTRIES_ENABLED);
+
+    evictFrom(oid, Collections.unmodifiableMap(samples), className, cacheName);
+    evictionStats.entriesEvicted(oid, overshoot, samples.size(), samples.size());
   }
 
   private void notifyEvictionCompletedFor(ObjectID oid) {
@@ -327,16 +336,21 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     }
   }
 
-  private void broadcastEvictedEntries(final ObjectID oid, final HashMap candidates) {
+  private void broadcastEvictedEntries(final ObjectID oid, final Map candidates) {
     // maybe we can batch up the broadcasts
     this.evictionBroadcastSink.add(new ServerMapEvictionBroadcastContext(oid, Collections.unmodifiableSet(candidates
         .keySet())));
   }
 
-  private void evictFrom(final ObjectID oid, final Map candidates, final String className, final String cacheName) {
+  void evictFrom(final ObjectID oid, final Map candidates, final String className, final String cacheName) {
     if (EVICTOR_LOGGING) {
       logger.info("Server Map Eviction  : Evicting " + oid + " [" + cacheName + "] Candidates : " + candidates.size());
     }
+    if ( candidates.isEmpty() ) {
+      broadcastEvictedEntries(oid, candidates);
+      return;
+    } 
+    
     final NodeID localNodeID = this.groupManager.getLocalNodeID();
     final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     final ServerTransaction txn = this.serverTransactionFactory.createServerMapEvictionTransactionFor(localNodeID, oid,
@@ -351,6 +365,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     if (EVICTOR_LOGGING) {
       logger.info("Server Map Eviction  : Evicted " + candidates.size() + " from " + oid + " [" + cacheName + "]");
     }
+    notifyEvictionCompletedFor(oid);
   }
 
   /**
@@ -364,7 +379,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     if ((!(value instanceof ObjectID)) || !isInterestedInTTIOrTTL(ttiSeconds, ttlSeconds)) {
       // When tti/ttl == 0 here, then cache is set to eternal (by default or in config explicitly), so all entries can
       // be evicted if maxInDisk size is reached.
-      return 0;
+      return Integer.MIN_VALUE;
     }
     final ObjectID oid = (ObjectID) value;
     final ManagedObject mo = this.objectManager.getObjectByIDOrNull(oid);
@@ -374,7 +389,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
       if (ev != null) {
         return ev.expiresIn(now, ttiSeconds, ttlSeconds);
       } else {
-        return 0;
+        return Integer.MIN_VALUE;
       }
     } finally {
       this.objectManager.releaseReadOnly(mo);

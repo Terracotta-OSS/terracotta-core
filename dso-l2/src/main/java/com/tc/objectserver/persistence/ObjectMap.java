@@ -2,13 +2,10 @@ package com.tc.objectserver.persistence;
 
 import org.terracotta.corestorage.KeyValueStorage;
 import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.Serializer;
-
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.managedobject.ManagedObjectSerializer;
 import com.tc.objectserver.managedobject.ManagedObjectStateSerializer;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -26,32 +23,32 @@ import org.terracotta.corestorage.KeyValueStorageMutationListener;
  * @author tim
  */
 class ObjectMap implements KeyValueStorage<ObjectID, ManagedObject> {
-  private final KeyValueStorage<Long, byte[]> backingMap;
-  private final ManagedObjectSerializer serializer;
+    private final KeyValueStorage<Long, byte[]> backingMap;
+    private final ManagedObjectSerializer serializer;
 
-  ObjectMap(ManagedObjectPersistor persistor, final KeyValueStorage<Long, byte[]> backingMap) {
-    this.backingMap = backingMap;
-    this.serializer = new ManagedObjectSerializer(new ManagedObjectStateSerializer(), persistor);
-  }
+    ObjectMap(ManagedObjectPersistor persistor, final KeyValueStorage<Long, byte[]> backingMap) {
+        this.backingMap = backingMap;
+        this.serializer = new ManagedObjectSerializer(new ManagedObjectStateSerializer(), persistor);
+    }
 
-  public static KeyValueStorageConfig<Long, byte[]> getConfig(KeyValueStorageMutationListener<Long, byte[]> listener) {
-    return new ImmutableKeyValueStorageConfig<Long, byte[]>(Long.class, byte[].class, Collections.<KeyValueStorageMutationListener<? super Long, ? super byte[]>>singletonList(listener));
-  }
+    public static KeyValueStorageConfig<Long, byte[]> getConfig(KeyValueStorageMutationListener<Long, byte[]> listener) {
+        return new ImmutableKeyValueStorageConfig<Long, byte[]>(Long.class, byte[].class, Collections.<KeyValueStorageMutationListener<? super Long, ? super byte[]>>singletonList(listener));
+    }
 
-  @Override
-  public Set<ObjectID> keySet() {
-    throw new UnsupportedOperationException("Implement me!");
-  }
+    @Override
+    public Set<ObjectID> keySet() {
+        throw new UnsupportedOperationException("Implement me!");
+    }
 
-  @Override
-  public Collection<ManagedObject> values() {
-    throw new UnsupportedOperationException("Implement me!");
-  }
+    @Override
+    public Collection<ManagedObject> values() {
+        throw new UnsupportedOperationException("Implement me!");
+    }
 
-  @Override
-  public long size() {
-    return backingMap.size();
-  }
+    @Override
+    public long size() {
+        return backingMap.size();
+    }
 
   @Override
   public void put(final ObjectID key, final ManagedObject value) {
@@ -74,39 +71,39 @@ class ObjectMap implements KeyValueStorage<ObjectID, ManagedObject> {
     backingMap.put(key.toLong(), byteArrayOutputStream.toByteArray(), metadata);
   }
   
-  @Override
-  public ManagedObject get(final ObjectID key) {
-    byte[] data = backingMap.get(key.toLong());
-    if (data == null) {
-      return null;
+    @Override
+    public ManagedObject get(final ObjectID key) {
+        byte[] data = backingMap.get(key.toLong());
+        if (data == null) {
+            return null;
+        }
+        try {
+            ObjectInput oi = new ObjectInputStream(new ByteArrayInputStream(data));
+            return (ManagedObject) serializer.deserializeFrom(oi);
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
     }
-    try {
-      ObjectInput oi = new ObjectInputStream(new ByteArrayInputStream(data));
-      return (ManagedObject) serializer.deserializeFrom(oi);
-    } catch (IOException e) {
-      throw new AssertionError(e);
+
+    @Override
+    public boolean remove(final ObjectID key) {
+        return backingMap.remove(key.toLong());
     }
-  }
 
-  @Override
-  public boolean remove(final ObjectID key) {
-    return backingMap.remove(key.toLong());
-  }
-
-  @Override
-  public void removeAll(final Collection<ObjectID> keys) {
-    for (ObjectID key : keys) {
-      remove(key);
+    @Override
+    public void removeAll(final Collection<ObjectID> keys) {
+        for (ObjectID key : keys) {
+            remove(key);
+        }
     }
-  }
 
-  @Override
-  public boolean containsKey(final ObjectID key) {
-    return backingMap.containsKey(key.toLong());
-  }
+    @Override
+    public boolean containsKey(final ObjectID key) {
+        return backingMap.containsKey(key.toLong());
+    }
 
-  @Override
-  public void clear() {
-    backingMap.clear();
-  }
+    @Override
+    public void clear() {
+        backingMap.clear();
+    }
 }

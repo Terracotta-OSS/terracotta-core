@@ -9,9 +9,12 @@ import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 import com.tc.util.sequence.MutableSequence;
+import java.util.Collection;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import org.terracotta.corestorage.monitoring.MonitoredResource;
 
 /**
  * @author tim
@@ -76,6 +79,16 @@ public class Persistor {
 
   public void close() {
     storageManager.shutdown();
+  }
+  
+  public MonitoredResource getMonitoredResource() {
+      Collection<MonitoredResource> list = storageManager.getMonitoredResources();
+      for ( MonitoredResource rsrc : list ) {
+          if ( rsrc.getType() == MonitoredResource.Type.OFFHEAP || rsrc.getType() == MonitoredResource.Type.HEAP ) {
+              return rsrc;
+          }
+      }
+      return null;
   }
 
   public PersistenceTransactionProvider getPersistenceTransactionProvider() {
