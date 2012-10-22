@@ -12,6 +12,7 @@ import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.logging.TCLogging;
 import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;
+import com.tc.test.config.model.PersistenceMode;
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.jmx.TestHandler;
 import com.tc.test.jmx.TestHandlerMBean;
@@ -86,13 +87,17 @@ public abstract class AbstractTestBase extends TCTestCase {
   @Override
   @Before
   public void setUp() throws Exception {
-
-    if (AbstractTestBase.class.getResource("/terracotta-license.key") != null) {
+    if (System.getProperty("com.tc.productkey.path") != null) {
       if (!testConfig.getL2Config().isOffHeapEnabled()) {
         System.out.println("============= Offheap is turned off, switching it off to avoid OOMEs! ==============");
         testConfig.getL2Config().setOffHeapEnabled(true);
         testConfig.getL2Config().setDirectMemorySize(1024);
         testConfig.getL2Config().setMaxOffHeapDataSize(512);
+      }
+    } else {
+      if (testConfig.getL2Config().getPersistenceMode() == PersistenceMode.PERMANENT_STORE) {
+        System.out.println("============== Disabling opensource persistent mode tests ===============");
+        disableTest();
       }
     }
 
