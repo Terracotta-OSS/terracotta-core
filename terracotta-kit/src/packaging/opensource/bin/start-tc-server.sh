@@ -60,7 +60,7 @@ do
 ${JAVA_COMMAND} -Xms512m -Xmx512m -XX:+HeapDumpOnOutOfMemoryError \
    -Dcom.sun.management.jmxremote \
    -Dtc.install-root="${TC_INSTALL_DIR}" \
-   -Dsun.rmi.dgc.server.gcInterval=31536000 \
+   -Dsun.rmi.dgc.server.gcInterval=31536000000\
    ${JAVA_OPTS} \
    -cp "${TC_INSTALL_DIR}/lib/tc.jar" \
    com.tc.server.TCServerMain "$@"
