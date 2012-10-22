@@ -3,11 +3,11 @@
  */
 package com.terracotta.management.service;
 
+import net.sf.ehcache.management.service.impl.DfltSamplerRepositoryServiceMBean;
 import org.terracotta.management.ServiceExecutionException;
+import org.terracotta.management.resource.Representable;
 
-import com.tc.config.schema.L2Info;
 import com.terracotta.management.resource.ClientEntity;
-import com.terracotta.management.resource.ServerEntity;
 import com.terracotta.management.resource.StatisticsEntity;
 import com.terracotta.management.resource.ThreadDumpEntity;
 import com.terracotta.management.resource.TopologyEntity;
@@ -26,9 +26,7 @@ public interface TsaManagementClientService {
 
   Collection<ThreadDumpEntity> serversThreadDump() throws ServiceExecutionException;
 
-  ServerEntity buildServerEntity(L2Info l2Info) throws ServiceExecutionException;
-
-  Collection<ClientEntity> buildClientEntities() throws ServiceExecutionException;
+  Collection<ClientEntity> getClientEntities() throws ServiceExecutionException;
 
   TopologyEntity getTopology() throws ServiceExecutionException;
 
@@ -43,5 +41,14 @@ public interface TsaManagementClientService {
   boolean runDgc() throws ServiceExecutionException;
 
   Collection<StatisticsEntity> getDgcStatistics(int maxDgcStatsEntries) throws ServiceExecutionException;
+
+  Set<String> getL1Nodes() throws ServiceExecutionException;
+
+  Collection<Representable> getSimpleTopology() throws ServiceExecutionException;
+
+  boolean isEnterpriseEdition() throws ServiceExecutionException;
+
+  byte[] invokeMethod(String validatedNode, Class<DfltSamplerRepositoryServiceMBean> clazz, String ticket, String token,
+                      String securityCallbackUrl, String methodName, Class<?>[] paramClasses, Object[] params) throws ServiceExecutionException;
 
 }

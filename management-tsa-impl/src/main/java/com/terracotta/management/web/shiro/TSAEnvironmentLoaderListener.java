@@ -37,6 +37,7 @@ import com.terracotta.management.security.impl.TSAIdentityAsserter;
 import com.terracotta.management.service.impl.ClearTextTsaManagementClientServiceImpl;
 import com.terracotta.management.service.impl.DiagnosticsServiceImpl;
 import com.terracotta.management.service.impl.MonitoringServiceImpl;
+import com.terracotta.management.service.impl.TsaAgentServiceImpl;
 import com.terracotta.management.web.config.TSAConfig;
 import com.terracotta.management.service.impl.TopologyServiceImpl;
 
@@ -71,6 +72,9 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
       String securityServiceLocation = TSAConfig.getSecurityServiceLocation();
       Integer securityTimeout = TSAConfig.getSecurityTimeout();
 
+      JmxEhcacheRequestValidator requestValidator = new JmxEhcacheRequestValidator(tsaManagementClientService);
+      AgentService l1Agent;
+
       if (sslEnabled) {
         ContextService contextService = new DfltContextService();
         UserService userService = new DfltUserService();
@@ -78,8 +82,8 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
         RequestTicketMonitor requestTicketMonitor = new DfltRequestTicketMonitor();
         TSAIdentityAsserter identityAsserter = new TSAIdentityAsserter(requestTicketMonitor, userService, kcAccessor);
 
-        JmxEhcacheRequestValidator requestValidator = new JmxEhcacheRequestValidator(mBeanServer);
-        JmxRepositoryService repoSvc = new JmxRepositoryService(mBeanServer, requestValidator, requestTicketMonitor, contextService, userService);
+        JmxRepositoryService repoSvc = new JmxRepositoryService(tsaManagementClientService, requestValidator, requestTicketMonitor, contextService, userService);
+        l1Agent = repoSvc;
 
         serviceLocator.loadService(RequestTicketMonitor.class, requestTicketMonitor);
         serviceLocator.loadService(RequestIdentityAsserter.class, identityAsserter);
@@ -92,15 +96,14 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
         serviceLocator.loadService(CacheManagerService.class, repoSvc);
         serviceLocator.loadService(CacheService.class, repoSvc);
         serviceLocator.loadService(EntityResourceFactory.class, repoSvc);
-        serviceLocator.loadService(AgentService.class, repoSvc);
       } else {
         ContextService contextService = new NullContextService();
         UserService userService = new NullUserService();
         RequestTicketMonitor requestTicketMonitor = new NullRequestTicketMonitor();
         RequestIdentityAsserter identityAsserter = new NullIdentityAsserter();
 
-        JmxEhcacheRequestValidator requestValidator = new JmxEhcacheRequestValidator(mBeanServer);
-        JmxRepositoryService repoSvc = new JmxRepositoryService(mBeanServer, requestValidator, requestTicketMonitor, contextService, userService);
+        JmxRepositoryService repoSvc = new JmxRepositoryService(tsaManagementClientService, requestValidator, requestTicketMonitor, contextService, userService);
+        l1Agent = repoSvc;
 
         serviceLocator.loadService(RequestTicketMonitor.class, requestTicketMonitor);
         serviceLocator.loadService(RequestIdentityAsserter.class, identityAsserter);
@@ -112,8 +115,9 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
         serviceLocator.loadService(CacheManagerService.class, repoSvc);
         serviceLocator.loadService(CacheService.class, repoSvc);
         serviceLocator.loadService(EntityResourceFactory.class, repoSvc);
-        serviceLocator.loadService(AgentService.class, repoSvc);
       }
+
+      serviceLocator.loadService(AgentService.class, new TsaAgentServiceImpl(tsaManagementClientService, l1Agent));
 
       ServiceLocator.load(serviceLocator);
     } catch (Exception e) {

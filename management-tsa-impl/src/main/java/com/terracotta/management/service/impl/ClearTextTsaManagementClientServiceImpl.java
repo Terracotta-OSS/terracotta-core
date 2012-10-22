@@ -3,10 +3,12 @@
  */
 package com.terracotta.management.service.impl;
 
+import net.sf.ehcache.management.service.impl.DfltSamplerRepositoryServiceMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.resource.AgentEntity;
+import org.terracotta.management.resource.Representable;
 
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
@@ -185,8 +187,7 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
     }
   }
 
-  @Override
-  public ServerEntity buildServerEntity(L2Info l2Info) throws ServiceExecutionException {
+  private ServerEntity buildServerEntity(L2Info l2Info) throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
       ServerEntity serverEntity = new ServerEntity();
@@ -222,7 +223,7 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
   }
 
   @Override
-  public Collection<ClientEntity> buildClientEntities() throws ServiceExecutionException {
+  public Collection<ClientEntity> getClientEntities() throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
       MBeanServerConnection mBeanServerConnection;
@@ -562,6 +563,130 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
     }
   }
 
+  @Override
+  public Set<String> getL1Nodes() throws ServiceExecutionException {
+    JMXConnector jmxConnector = null;
+    try {
+      MBeanServerConnection mBeanServerConnection;
+
+      // find the server where L1 Info MBeans are registered
+      if (localServerContainsEhcacheMBeans()) {
+        mBeanServerConnection = ManagementFactory.getPlatformMBeanServer();
+      } else {
+        jmxConnector = findServerContainingEhcacheMBeans();
+        if (jmxConnector == null) {
+          // there is no connected client
+          return Collections.emptySet();
+        }
+        mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+      }
+
+      Set<String> nodes = new HashSet<String>();
+      Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("net.sf.ehcache:type=RepositoryService,*"), null);
+      for (ObjectName objectName : objectNames) {
+        String node = objectName.getKeyProperty("node");
+        nodes.add(node);
+      }
+      return nodes;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error making JMX call", e);
+    } finally {
+      if (jmxConnector != null) {
+        try {
+          jmxConnector.close();
+        } catch (IOException ioe) {
+          LOG.warn("error closing JMX connection", ioe);
+        }
+      }
+    }
+  }
+
+  @Override
+  public Collection<Representable> getSimpleTopology() throws ServiceExecutionException {
+    try {
+      Collection<Representable> serverEntities = new ArrayList<Representable>();
+
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      L2Info[] l2Infos = (L2Info[])mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "L2Info");
+
+      for (L2Info l2Info : l2Infos) {
+        ServerEntity serverEntity = new ServerEntity();
+        serverEntity.getAttributes().put("Name", l2Info.name());
+        serverEntity.getAttributes().put("Host", l2Info.host());
+        serverEntity.getAttributes().put("JmxPort", l2Info.jmxPort());
+        serverEntity.getAttributes().put("HostAddress", l2Info.safeGetHostAddress());
+        serverEntities.add(serverEntity);
+      }
+
+      return serverEntities;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error making JMX call", e);
+    }
+  }
+
+  @Override
+  public boolean isEnterpriseEdition() throws ServiceExecutionException {
+    try {
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Enterprise Terracotta Server"), "Enabled");
+      return true;
+    } catch (InstanceNotFoundException infe) {
+      return false;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error making JMX call", e);
+    }
+  }
+
+  @Override
+  public byte[] invokeMethod(String nodeName, Class<DfltSamplerRepositoryServiceMBean> clazz, String ticket, String token,
+                              String securityCallbackUrl, String methodName, Class<?>[] paramClasses, Object[] params) throws ServiceExecutionException {
+    JMXConnector jmxConnector = null;
+    try {
+      MBeanServerConnection mBeanServerConnection;
+
+      // find the server where L1 Info MBeans are registered
+      if (localServerContainsEhcacheMBeans()) {
+        mBeanServerConnection = ManagementFactory.getPlatformMBeanServer();
+      } else {
+        jmxConnector = findServerContainingEhcacheMBeans();
+        if (jmxConnector == null) {
+          // there is no connected client
+          return null;
+        }
+        mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+      }
+
+      ObjectName objectName = null;
+      Set<ObjectName> objectNames = mBeanServerConnection.queryNames(new ObjectName("net.sf.ehcache:type=RepositoryService,*"), null);
+      for (ObjectName on : objectNames) {
+        String node = on.getKeyProperty("node");
+        if (node.equals(nodeName)) {
+          objectName = on;
+          break;
+        }
+      }
+      if (objectName == null) {
+        throw new ServiceExecutionException("Cannot find node : " + nodeName);
+      }
+
+      DfltSamplerRepositoryServiceMBean proxy = JMX.newMBeanProxy(mBeanServerConnection, objectName, clazz);
+      return proxy.invoke(ticket, token, securityCallbackUrl, methodName, paramClasses, params);
+    } catch (ServiceExecutionException see) {
+      throw see;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error making JMX call", e);
+    } finally {
+      if (jmxConnector != null) {
+        try {
+          jmxConnector.close();
+        } catch (IOException ioe) {
+          LOG.warn("error closing JMX connection", ioe);
+        }
+      }
+    }
+  }
+
   private JMXConnector findActiveServer() throws JMException, IOException {
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     L2Info[] l2Infos = (L2Info[])mBeanServer.getAttribute(
@@ -607,6 +732,37 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
     ThreadDumpEntity threadDumpEntity = new ThreadDumpEntity();
     threadDumpEntity.setDump(Conversion.bytes2String(uncompressedBytes));
     return threadDumpEntity;
+  }
+
+  private JMXConnector findServerContainingEhcacheMBeans() throws JMException {
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    L2Info[] l2Infos = (L2Info[])mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "L2Info");
+
+    for (L2Info l2Info : l2Infos) {
+      String jmxHost = l2Info.host();
+      int jmxPort = l2Info.jmxPort();
+
+      try {
+        JMXConnector jmxConnector = JMXConnectorFactory.connect(new JMXServiceURL("service:jmx:jmxmp://" + jmxHost + ":" + jmxPort), null);
+
+        MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+        if (serverContainsEhcacheMBeans(mBeanServerConnection)) {
+          return jmxConnector;
+        }
+      } catch (IOException ioe) {
+        // cannot connect to this L2, it might be down, just skip it
+      }
+    }
+    return null; // no server has any client in the cluster at the moment
+  }
+
+  private boolean serverContainsEhcacheMBeans(MBeanServerConnection mBeanServerConnection) throws JMException, IOException {
+    return !mBeanServerConnection.queryNames(new ObjectName("net.sf.ehcache:type=RepositoryService,*"), null).isEmpty();
+  }
+
+  private boolean localServerContainsEhcacheMBeans() throws MalformedObjectNameException {
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    return !mBeanServer.queryNames(new ObjectName("net.sf.ehcache:type=RepositoryService,*"), null).isEmpty();
   }
 
   private JMXConnector findServerContainingL1MBeans() throws JMException {
