@@ -105,6 +105,31 @@
           </execution>           
         </executions>
       </plugin>
+      
+      <plugin>
+        <groupId>org.codehaus.gmaven</groupId>
+        <artifactId>gmaven-plugin</artifactId>
+        <executions>   
+          <execution>
+            <id>shouldSkipAssembly</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+            <configuration>
+              <source>
+                def toolkitContentFile = new File(project.build.outputDirectory, "toolkit-content.txt")
+                if (toolkitContentFile.exists()) {
+                  println("Setting skipInternalJars=true");
+                  project.properties.setProperty('skipInternalJars', 'true')
+                } else {
+                  project.properties.setProperty('skipInternalJars', 'false')
+                } 
+              </source>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>        
            
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -114,6 +139,7 @@
           <execution>
             <id>package-L1-and-TIMs</id>
             <configuration>
+              <skipAssembly>${skipInternalJars}</skipAssembly>
               <finalName>classes</finalName>
               <appendAssemblyId>false</appendAssemblyId>
               <descriptors>
@@ -201,7 +227,7 @@
       <plugin>
         <groupId>org.codehaus.gmaven</groupId>
         <artifactId>gmaven-plugin</artifactId>
-        <executions>   
+        <executions>
           <execution>
             <id>inject-correct-pom-to-jar</id>
             <phase>package</phase>
