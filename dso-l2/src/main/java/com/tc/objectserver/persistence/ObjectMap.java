@@ -55,6 +55,11 @@ class ObjectMap implements KeyValueStorage<ObjectID, ManagedObject> {
 
   @Override
   public void put(final ObjectID key, final ManagedObject value) {
+    put(key, value, (byte) 0);
+  }
+
+  @Override
+  public void put(final ObjectID key, final ManagedObject value, byte metadata) {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     try {
       ObjectOutput oo = new ObjectOutputStream(byteArrayOutputStream);
@@ -66,9 +71,9 @@ class ObjectMap implements KeyValueStorage<ObjectID, ManagedObject> {
     } catch (IOException e) {
       throw new AssertionError(e);
     }
-    backingMap.put(key.toLong(), byteArrayOutputStream.toByteArray());
+    backingMap.put(key.toLong(), byteArrayOutputStream.toByteArray(), metadata);
   }
-
+  
   @Override
   public ManagedObject get(final ObjectID key) {
     byte[] data = backingMap.get(key.toLong());

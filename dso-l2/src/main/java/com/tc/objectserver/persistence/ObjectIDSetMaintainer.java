@@ -6,8 +6,6 @@ import org.terracotta.corestorage.Retriever;
 import com.tc.object.ObjectID;
 import com.tc.util.ObjectIDSet;
 
-import java.util.Map;
-
 /**
  * @author tim
  */
@@ -34,21 +32,19 @@ public class ObjectIDSetMaintainer implements KeyValueStorageMutationListener<Lo
   }
 
   @Override
-  public synchronized void added(Retriever<? extends Long> key, Retriever<? extends byte[]> value, Map<? extends Enum, Object> metadata) {
-    byte[] array = value.retrieve();
-    byte type = array[8];
+  public synchronized void added(Retriever<? extends Long> key, Retriever<? extends byte[]> value, byte metadata) {
     ObjectID k = new ObjectID(key.retrieve());
-    if (PersistentCollectionsUtil.isEvictableMapType(type)) {
+    if (PersistentCollectionsUtil.isEvictableMapType(metadata)) {
       evictableObjectIDSet.add(k);
     }
-    if (PersistentCollectionsUtil.isPersistableCollectionType(type)) {
+    if (PersistentCollectionsUtil.isPersistableCollectionType(metadata)) {
       mapObjectIDSet.add(k);
     }
     extantObjectIDSet.add(k);
   }
 
   @Override
-  public synchronized void removed(Retriever<? extends Long> key, Retriever<? extends byte[]> value, Map<? extends Enum, Object> metadata) {
+  public synchronized void removed(Retriever<? extends Long> key, Retriever<? extends byte[]> value) {
     ObjectID k = new ObjectID(key.retrieve());
     evictableObjectIDSet.remove(k);
     mapObjectIDSet.remove(k);

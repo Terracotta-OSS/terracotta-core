@@ -71,7 +71,7 @@ public class ManagedObjectPersistor  {
   }
 
   public void saveObject(Transaction tx, ManagedObject managedObject) {
-    objectMap.put(managedObject.getID(), managedObject);
+    objectMap.put(managedObject.getID(), managedObject, managedObject.getManagedObjectState().getType());
     managedObject.setIsDirty(false);
   }
 
