@@ -18,6 +18,7 @@
     <terracotta-l1.artifactId>terracotta-l1</terracotta-l1.artifactId>
     <archive>${project.build.directory}/${project.artifactId}-${project.version}.jar</archive>
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
+    <toolkitContentFilename>toolkit-content.txt</toolkitContentFilename>
   </properties>
 
   <dependencies>
@@ -118,7 +119,7 @@
             </goals>
             <configuration>
               <source>
-                def toolkitContentFile = new File(project.build.outputDirectory, "toolkit-content.txt")
+                def toolkitContentFile = new File(project.build.outputDirectory, project.properties['toolkitContentFilename'])
                 if (toolkitContentFile.exists()) {
                   println("Setting skipInternalJars=true");
                   project.properties.setProperty('skipInternalJars', 'true')
@@ -181,6 +182,7 @@
             <configuration>
               <packagingDir>${project.build.outputDirectory}</packagingDir>
               <privateClassSuffix>.class_terracotta</privateClassSuffix>
+              <toolkitContentFilename>${toolkitContentFilename}</toolkitContentFilename>
             </configuration>            
           </execution>
         </executions>
