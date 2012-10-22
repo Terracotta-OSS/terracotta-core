@@ -18,6 +18,7 @@
     <terracotta-l1.artifactId>terracotta-l1</terracotta-l1.artifactId>
     <archive>${project.build.directory}/${project.artifactId}-${project.version}.jar</archive>
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
+    <toolkitContentFilename>toolkit-content.txt</toolkitContentFilename>
   </properties>
 
   <dependencies>
@@ -105,6 +106,31 @@
           </execution>           
         </executions>
       </plugin>
+      
+      <plugin>
+        <groupId>org.codehaus.gmaven</groupId>
+        <artifactId>gmaven-plugin</artifactId>
+        <executions>   
+          <execution>
+            <id>shouldSkipAssembly</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+            <configuration>
+              <source>
+                def toolkitContentFile = new File(project.build.outputDirectory, project.properties['toolkitContentFilename'])
+                if (toolkitContentFile.exists()) {
+                  println("Setting skipInternalJars=true");
+                  project.properties.setProperty('skipInternalJars', 'true')
+                } else {
+                  project.properties.setProperty('skipInternalJars', 'false')
+                } 
+              </source>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>        
            
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -114,6 +140,7 @@
           <execution>
             <id>package-L1-and-TIMs</id>
             <configuration>
+              <skipAssembly>${skipInternalJars}</skipAssembly>
               <finalName>classes</finalName>
               <appendAssemblyId>false</appendAssemblyId>
               <descriptors>
@@ -133,10 +160,6 @@
               <descriptors>
                 <descriptor>${basedir}/src/main/assembly/sources.xml</descriptor>
               </descriptors>
-              <archive>
-                <!-- pick up MANIFEST.MF created by maven-forge-plugin -->
-                <manifestFile>${project.build.directory}/MANIFEST.MF</manifestFile>
-              </archive>
             </configuration>          
             <phase>package</phase>
             <goals>
@@ -146,6 +169,26 @@
         </executions>
       </plugin>
 
+      <plugin>
+        <groupId>org.terracotta</groupId>
+        <artifactId>maven-forge-plugin</artifactId>
+        <executions>         
+          <execution>
+            <id>process-toolkit-embeddedjars</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>parepareToolkitContent</goal>
+            </goals>
+            <configuration>
+              <packagingDir>${project.build.outputDirectory}</packagingDir>
+              <privateClassSuffix>.class_terracotta</privateClassSuffix>
+              <toolkitContentFilename>${toolkitContentFilename}</toolkitContentFilename>
+            </configuration>            
+          </execution>
+        </executions>
+      </plugin>      
+ 
+ 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
@@ -169,16 +212,7 @@
           </filters>    
           <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
           <keepDependenciesWithProvidedScope>false</keepDependenciesWithProvidedScope>
-          <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>           
-          <transformers>
-            <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
-              <resource>MANIFEST.MF</resource>
-            </transformer>          
-            <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
-              <resource>META-INF/MANIFEST.MF</resource>
-              <file>${project.build.directory}/MANIFEST.MF</file>
-            </transformer>          
-          </transformers>            
+          <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>                      
         </configuration>
         <executions>
           <execution>
@@ -192,52 +226,12 @@
       </plugin>    
 
       <plugin>
-        <groupId>org.terracotta</groupId>
-        <artifactId>maven-forge-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>create-manifest</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>manifest</goal>
-            </goals>
-            <configuration>
-              <rootPath>${basedir}/..</rootPath>
-              <manifestFile>${project.build.directory}/MANIFEST.MF</manifestFile>
-              <manifestEntries>
-                <Terracotta-Category>Product</Terracotta-Category>
-                <Terracotta-DownloadPath>../../common</Terracotta-DownloadPath>
-                <Terracotta-ArtifactCoordinates>${project.groupId}:${project.artifactId}:${project.version}</Terracotta-ArtifactCoordinates>
-                <Terracotta-RequireVersion>${project.version}</Terracotta-RequireVersion>
-                <Terracotta-ProjectStatus>Supported</Terracotta-ProjectStatus>
-                <Terracotta-InternalTIM>false</Terracotta-InternalTIM>
-                <Terracotta-Name>${project.artifactId}</Terracotta-Name>
-                <Terracotta-Description>${project.description}</Terracotta-Description>
-                <Terracotta-Kit>open source</Terracotta-Kit>
-              </manifestEntries>
-            </configuration>            
-          </execution>        
-          <execution>
-            <id>process-toolkit-embeddedjars</id>
-            <phase>package</phase>
-            <goals>
-              <goal>processToolkit</goal>
-            </goals>
-            <configuration>
-              <zipFile>${archive}</zipFile>
-              <privateClassSuffix>.class_terracotta</privateClassSuffix>
-            </configuration>            
-          </execution>
-        </executions>
-      </plugin>      
-      
-      <plugin>
         <groupId>org.codehaus.gmaven</groupId>
         <artifactId>gmaven-plugin</artifactId>
-        <executions>   
+        <executions>
           <execution>
             <id>inject-correct-pom-to-jar</id>
-            <phase>package</phase>
+            <phase>verify</phase>
             <goals>
               <goal>execute</goal>
             </goals>

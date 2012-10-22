@@ -214,6 +214,9 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       case SerializationUtil.REPLACE_IF_VALUE_EQUAL:
         applyReplaceIfValueEqual(objectID, applyInfo, params);
         break;
+      case SerializationUtil.REPLACE:
+        applyReplace(objectID, applyInfo, params);
+        break;
       case SerializationUtil.EVICTION_COMPLETED:
         evictionCompleted();
         break;
@@ -232,6 +235,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
       applyInfo.initiateEvictionFor(objectID);
     }
   }
+
+
 
   @Override
   protected void removedValueFromMap(final ObjectID mapID, ApplyTransactionInfo applyInfo, ObjectID old) {
@@ -285,6 +290,18 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     } else if (newValue instanceof ObjectID) {
       // Invalidate the newValue so that the VM that initiated this call can remove it from the local cache.
       removedValueFromMap(mapID, applyInfo, (ObjectID) newValue);
+    }
+  }
+
+  private void applyReplace(final ObjectID mapID, ApplyTransactionInfo applyInfo, Object[] params) {
+    final Object key = params[0];
+    final Object newValue = params[1];
+    final Object valueInMap = this.references.get(key);
+    if (valueInMap != null) {
+      this.references.put(key, newValue);
+    }
+    if (valueInMap instanceof ObjectID) {
+      removedValueFromMap(mapID, applyInfo, (ObjectID) valueInMap);
     }
   }
 

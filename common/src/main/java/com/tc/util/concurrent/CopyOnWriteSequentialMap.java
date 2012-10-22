@@ -34,6 +34,7 @@ public class CopyOnWriteSequentialMap<K, V> extends LinkedHashMap<K, V> {
 
   private volatile Map<K, V> _snapshot;
   private final TypedArrayFactory _factory;
+  private boolean                        inPutAll                    = false;
 
   private final static TypedArrayFactory DEFAULT_TYPED_ARRAY_FACTORY = new TypedArrayFactory() {
 
@@ -167,11 +168,25 @@ public class CopyOnWriteSequentialMap<K, V> extends LinkedHashMap<K, V> {
     return _snapshot.hashCode();
   }
 
+  @Override
+  public synchronized void putAll(Map<? extends K, ? extends V> m) {
+    inPutAll = true;
+    try {
+      super.putAll(m);
+    } finally {
+      inPutAll = false;
+      takeSnapshot();
+    }
+  }
+
   private void takeSnapshot() {
+    // Defer taking snapshot until putAll() is finished. Needed because super.putAll() does a bunch of put()'s
+    if (inPutAll) return;
     Map<K, V> temp = new LinkedHashMap<K, V>();
     for (Map.Entry<K, V> e : super.entrySet())
       temp.put(e.getKey(), e.getValue());
     _snapshot = Collections.unmodifiableMap(temp);
   }
+
 
 }

@@ -29,7 +29,7 @@
     <heap-core-storage.version>1.0.0-SNAPSHOT</heap-core-storage.version>
     <bigmemory-core-storage.version>1.0.0-SNAPSHOT</bigmemory-core-storage.version>
     <jetty.version>6.1.8</jetty.version>
-    <slf4j.version>1.6.4</slf4j.version>
+    <slf4j.version>1.6.6</slf4j.version>
     <offheap-store.version>1.0.10-SNAPSHOT</offheap-store.version>
     <search.version>1.1.0-SNAPSHOT</search.version>
     <security-core-version>1.1.0-SNAPSHOT</security-core-version>
@@ -332,11 +332,6 @@
         <groupId>org.terracotta</groupId>
         <artifactId>native-tool</artifactId>
         <version>1.0.2</version>
-      </dependency>
-      <dependency>
-        <groupId>com.googlecode.jmockit</groupId>
-        <artifactId>jmockit</artifactId>
-        <version>0.999.17</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
