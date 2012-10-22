@@ -133,10 +133,6 @@
               <descriptors>
                 <descriptor>${basedir}/src/main/assembly/sources.xml</descriptor>
               </descriptors>
-              <archive>
-                <!-- pick up MANIFEST.MF created by maven-forge-plugin -->
-                <manifestFile>${project.build.directory}/MANIFEST.MF</manifestFile>
-              </archive>
             </configuration>          
             <phase>package</phase>
             <goals>
@@ -146,6 +142,44 @@
         </executions>
       </plugin>
 
+      <plugin>
+        <groupId>org.terracotta</groupId>
+        <artifactId>maven-forge-plugin</artifactId>
+        <executions> 
+          <execution>
+            <id>create-manifest</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>manifest</goal>
+            </goals>
+            <configuration>
+              <rootPath>${basedir}/..</rootPath>
+              <manifestFile>${project.build.directory}/MANIFEST.MF</manifestFile>
+              <manifestEntries>
+                <Terracotta-ArtifactCoordinates>${project.groupId}:${project.artifactId}:${project.version}</Terracotta-ArtifactCoordinates>
+                <Terracotta-RequireVersion>${project.version}</Terracotta-RequireVersion>
+                <Terracotta-ProjectStatus>Supported</Terracotta-ProjectStatus>
+                <Terracotta-Name>${project.artifactId}</Terracotta-Name>
+                <Terracotta-Description>${project.description}</Terracotta-Description>
+                <Terracotta-Kit>open source</Terracotta-Kit>
+              </manifestEntries>
+            </configuration>            
+          </execution>         
+          <execution>
+            <id>process-toolkit-embeddedjars</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>parepareToolkitContent</goal>
+            </goals>
+            <configuration>
+              <packagingDir>${project.build.outputDirectory}</packagingDir>
+              <privateClassSuffix>.class_terracotta</privateClassSuffix>
+            </configuration>            
+          </execution>
+        </executions>
+      </plugin>      
+ 
+ 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
@@ -191,46 +225,7 @@
         </executions>
       </plugin>    
 
-      <plugin>
-        <groupId>org.terracotta</groupId>
-        <artifactId>maven-forge-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>create-manifest</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>manifest</goal>
-            </goals>
-            <configuration>
-              <rootPath>${basedir}/..</rootPath>
-              <manifestFile>${project.build.directory}/MANIFEST.MF</manifestFile>
-              <manifestEntries>
-                <Terracotta-Category>Product</Terracotta-Category>
-                <Terracotta-DownloadPath>../../common</Terracotta-DownloadPath>
-                <Terracotta-ArtifactCoordinates>${project.groupId}:${project.artifactId}:${project.version}</Terracotta-ArtifactCoordinates>
-                <Terracotta-RequireVersion>${project.version}</Terracotta-RequireVersion>
-                <Terracotta-ProjectStatus>Supported</Terracotta-ProjectStatus>
-                <Terracotta-InternalTIM>false</Terracotta-InternalTIM>
-                <Terracotta-Name>${project.artifactId}</Terracotta-Name>
-                <Terracotta-Description>${project.description}</Terracotta-Description>
-                <Terracotta-Kit>open source</Terracotta-Kit>
-              </manifestEntries>
-            </configuration>            
-          </execution>        
-          <execution>
-            <id>process-toolkit-embeddedjars</id>
-            <phase>package</phase>
-            <goals>
-              <goal>processToolkit</goal>
-            </goals>
-            <configuration>
-              <zipFile>${archive}</zipFile>
-              <privateClassSuffix>.class_terracotta</privateClassSuffix>
-            </configuration>            
-          </execution>
-        </executions>
-      </plugin>      
-      
+     
       <plugin>
         <groupId>org.codehaus.gmaven</groupId>
         <artifactId>gmaven-plugin</artifactId>
