@@ -224,6 +224,9 @@ public class ServerStackProviderTest extends TCTestCase {
     connectNewClient(this.provider, "jvm4", false);
     Assert.assertEquals(2, connectionPolicy.clientConnected);
 
+    // But Client1 still can connect (even though max connections are reached)
+    connectNewClient(this.provider, "jvm1", true);
+
     // client1 disconencted
     provider.notifyTransportDisconnected(serverTxForClietn1, false);
     Assert.assertEquals(1, connectionPolicy.clientConnected);
