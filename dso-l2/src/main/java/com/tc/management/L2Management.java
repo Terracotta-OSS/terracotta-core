@@ -36,6 +36,7 @@ import com.tc.util.concurrent.TCExceptionResultException;
 import com.tc.util.concurrent.TCFuture;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.List;
@@ -103,7 +104,9 @@ public class L2Management extends TerracottaManagement {
     }
 
     final List jmxServers = MBeanServerFactory.findMBeanServer(null);
-    if (jmxServers != null && !jmxServers.isEmpty()) {
+    if (Boolean.getBoolean("com.tc.management.bindMBeansToPlatformMBeanServer")) {
+      mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    } else if (jmxServers != null && !jmxServers.isEmpty()) {
       mBeanServer = (MBeanServer) jmxServers.get(0);
     } else {
       mBeanServer = MBeanServerFactory.createMBeanServer();
