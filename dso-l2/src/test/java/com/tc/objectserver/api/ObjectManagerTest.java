@@ -20,6 +20,7 @@ import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
+import com.tc.object.TestDNACursor;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
@@ -92,7 +93,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -1072,6 +1077,38 @@ public class ObjectManagerTest extends TCTestCase {
     assertFalse(fail.get());
   }
 
+  public void testConcurrentLookupRemoveOnReleaseEntryTest() throws Exception {
+    final ObjectID oid = new ObjectID(1);
+    initObjectManager();
+
+    ManagedObject mo = objectStore.createObject(oid);
+    mo.apply(new TestSerialziedEntryDNA(oid), new TransactionID(1), new ApplyTransactionInfo(), mock(ObjectInstanceMonitor.class), true);
+
+    Assert.assertNotNull(mo = objectManager.getObjectByID(oid));
+    objectManager.releaseReadOnly(mo);
+
+    ExecutorService executorService = Executors.newCachedThreadPool();
+    List<Callable<Void>> runnables = new ArrayList<Callable<Void>>(5);
+    for (int i = 0; i < 5; i++) {
+      runnables.add(new Callable<Void>() {
+        public Void call() {
+          for (int i = 0; i < 1000; i++) {
+            ManagedObject mo = objectManager.getObjectByID(oid);
+            Assert.assertNotNull(mo);
+            objectManager.releaseReadOnly(mo);
+          }
+          return null;
+        }
+      });
+    }
+
+    for (Future<?> future : executorService.invokeAll(runnables)) {
+      future.get();
+    }
+
+    executorService.shutdown();
+  }
+
   private ApplyTransactionInfo applyTxn(final ApplyTransactionContext aoc) {
     final ServerTransaction txn = aoc.getTxn();
     final Map managedObjects = aoc.getObjects();
@@ -1085,6 +1122,56 @@ public class ObjectManagerTest extends TCTestCase {
           false);
     }
     return applyTxnInfo;
+  }
+
+  private static class TestSerialziedEntryDNA implements DNA {
+    private final ObjectID oid;
+
+    private TestSerialziedEntryDNA(final ObjectID oid) {
+      this.oid = oid;
+    }
+
+    @Override
+    public long getVersion() {
+      return 0L;
+    }
+
+    @Override
+    public boolean hasLength() {
+      return false;
+    }
+
+    @Override
+    public int getArraySize() {
+      return 0;
+    }
+
+    @Override
+    public boolean isDelta() {
+      return false;
+    }
+
+    @Override
+    public String getTypeName() {
+      return ManagedObjectStateStaticConfig.SERIALIZED_MAP_VALUE.getClientClassName();
+    }
+
+    @Override
+    public ObjectID getObjectID() throws DNAException {
+      return oid;
+    }
+
+    @Override
+    public ObjectID getParentObjectID() throws DNAException {
+      return ObjectID.NULL_ID;
+    }
+
+    @Override
+    public DNACursor getCursor() {
+      TestDNACursor cursor = new TestDNACursor();
+      cursor.addPhysicalAction("value", new byte[1], false);
+      return cursor;
+    }
   }
 
   private static class TestListSetDNA implements DNA {

@@ -306,9 +306,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         context.missingObject(id);
         return null;
       } else {
-        // TODO: Maybe check for serialized entry here and flip the remove on release flag?
-        addNewReference(mo, false);
-        rv = mo.getReference();
+        rv = addNewReference(mo, false);
       }
     }
     return rv;
@@ -343,14 +341,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private ManagedObjectReference addNewReference(final ManagedObjectReference newReference,
                                                  final boolean removeOnRelease, final ManagedObjectReference expectedOld) {
-    final Object oldRef = this.references.put(newReference.getObjectID(), newReference);
-    if (oldRef != expectedOld) { throw new AssertionError("Object was not as expected. Reference was not equal to : = "
-                                                          + expectedOld + " but was : " + oldRef + " : new = "
-                                                          + newReference); }
+    final ManagedObjectReference ref = this.references.putIfAbsent(newReference.getObjectID(), newReference);
     if (removeOnRelease) {
       newReference.setRemoveOnRelease(removeOnRelease);
     }
-    return newReference;
+    return ref == null ? newReference : ref;
   }
 
   private ManagedObjectReference addFaultedReference(final ManagedObject obj, final boolean isRemoveOnRelease,
