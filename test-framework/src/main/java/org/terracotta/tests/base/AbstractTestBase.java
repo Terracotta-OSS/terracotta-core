@@ -53,6 +53,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   private TestClientManager           clientRunner;
   protected TestJMXServerManager      jmxServerManager;
   private Thread                      duringRunningClusterThread;
+  private volatile Thread             testExecutionThread;
   private static final String         log4jPrefix          = "log4j.logger.";
   private final Map<String, LogLevel> tcLoggingConfigs     = new HashMap<String, LogLevel>();
 
@@ -110,7 +111,7 @@ public abstract class AbstractTestBase extends TCTestCase {
         setJavaHome();
         clientRunner = new TestClientManager(tempDir, this, this.testConfig);
         if (!testConfig.isStandAloneTest()) {
-          testServerManager = new TestServerManager(this.testConfig, this.tempDir, this.tcConfigFile, this.javaHome);
+          testServerManager = new TestServerManager(this.testConfig, this.tempDir, this.tcConfigFile, this.javaHome, new FailTestCallback());
           startServers();
         }
         TestHandlerMBean testHandlerMBean = new TestHandler(testServerManager, testConfig);
@@ -146,15 +147,32 @@ public abstract class AbstractTestBase extends TCTestCase {
   final public void runTest() throws Throwable {
     if (!testWillRun) return;
 
-    Throwable testException = null;
-    try {
-      startClients();
-      postClientVerification();
-    } catch (Throwable t) {
-      testException = t;
-    }
+    final AtomicReference<Throwable> testException = new AtomicReference<Throwable>();
+    testExecutionThread = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          startClients();
+          postClientVerification();
+        } catch (Throwable throwable) {
+          testException.set(throwable);
+        }
+      }
+    });
+    testExecutionThread.setDaemon(true);
+    testExecutionThread.start();
+    testExecutionThread.join();
 
-    tcTestCaseTearDown(testException);
+    tcTestCaseTearDown(testException.get());
+  }
+
+  private class FailTestCallback implements Runnable {
+    @Override
+    public void run() {
+      if (testExecutionThread != null) {
+        testExecutionThread.interrupt();
+      }
+    }
   }
 
   /**
@@ -419,4 +437,7 @@ public abstract class AbstractTestBase extends TCTestCase {
     this.clientRunner.stopClient(index);
   }
 
+  protected void stopAllClients() {
+    clientRunner.stopAllClients();
+  }
 }
