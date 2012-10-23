@@ -4,7 +4,6 @@
 package com.terracotta.toolkit.express;
 
 import org.apache.xmlbeans.XmlException;
-import org.terracotta.license.LicenseConstants;
 
 import com.google.common.collect.MapMaker;
 import com.tc.config.schema.beanfactory.TerracottaDomainConfigurationDocumentBeanFactory;
@@ -13,7 +12,6 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.ConfigurationSpec;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory.ConfigMode;
 import com.tc.config.schema.setup.StandardXMLFileConfigurationCreator;
-import com.tc.license.LicenseManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
@@ -154,14 +152,6 @@ public class StandaloneL1Boot implements Callable<Object> {
 
   @Override
   public Object call() throws Exception {
-    // load license via normal methods before attempt to load it from application resource
-    if (LicenseManager.getLicense() == null) {
-      String licenseLocation = LicenseConstants.LICENSE_KEY_FILENAME;
-      LicenseManager.loadLicenseFromStream(appLevelTimLoader.getResourceAsStream(licenseLocation), "resource "
-                                                                                                   + licenseLocation);
-
-    }
-
     TCSecurityManager securityManager = null;
 
     if (securityInfo.isSecure()) {
