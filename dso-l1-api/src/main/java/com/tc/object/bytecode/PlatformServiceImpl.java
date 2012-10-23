@@ -3,6 +3,7 @@
  */
 package com.tc.object.bytecode;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.cluster.DsoCluster;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
@@ -49,33 +50,35 @@ public class PlatformServiceImpl implements PlatformService {
   }
 
   @Override
-  public void beginLock(final Object lockID, final LockLevel level) {
+  public void beginLock(final Object lockID, final LockLevel level) throws AbortedOperationException {
     ManagerUtil.beginLock(lockID, level);
   }
 
   @Override
-  public void beginLockInterruptibly(Object obj, LockLevel level) throws InterruptedException {
+  public void beginLockInterruptibly(Object obj, LockLevel level) throws InterruptedException,
+      AbortedOperationException {
     ManagerUtil.beginLockInterruptibly(obj, level);
   }
 
   @Override
-  public void commitLock(final Object lockID, final LockLevel level) {
+  public void commitLock(final Object lockID, final LockLevel level) throws AbortedOperationException {
     ManagerUtil.commitLock(lockID, level);
   }
 
   @Override
-  public boolean tryBeginLock(final Object lockID, final LockLevel level) {
+  public boolean tryBeginLock(final Object lockID, final LockLevel level) throws AbortedOperationException {
     return ManagerUtil.tryBeginLock(lockID, level);
   }
 
   @Override
   public boolean tryBeginLock(final Object lockID, final LockLevel level, final long timeout, TimeUnit timeUnit)
-      throws InterruptedException {
+      throws InterruptedException, AbortedOperationException {
     return ManagerUtil.tryBeginLock(lockID, level, timeout, timeUnit);
   }
 
   @Override
-  public void lockIDWait(Object lockID, long timeout, TimeUnit timeUnit) throws InterruptedException {
+  public void lockIDWait(Object lockID, long timeout, TimeUnit timeUnit) throws InterruptedException,
+      AbortedOperationException {
     ManagerUtil.lockIDWait(lockID, timeout, timeUnit);
   }
 

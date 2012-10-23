@@ -17,6 +17,7 @@ import org.terracotta.toolkit.search.attribute.ToolkitAttributeType;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -33,6 +34,7 @@ import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.properties.TCPropertiesConsts;
 import com.terracotta.toolkit.TerracottaProperties;
+import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.concurrent.locks.LockingUtils;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.config.cache.InternalCacheConfigurationType;
@@ -190,11 +192,19 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private void commitLock(final Long lockId, final ToolkitLockTypeInternal type) {
-    platformService.commitLock(lockId, LockingUtils.translate(type));
+    try {
+      platformService.commitLock(lockId, LockingUtils.translate(type));
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   private void beginLock(final Long lockId, final ToolkitLockTypeInternal type) {
-    platformService.beginLock(lockId, LockingUtils.translate(type));
+    try {
+      platformService.beginLock(lockId, LockingUtils.translate(type));
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   private V doGet(Object key, GetType getType, boolean quiet) {

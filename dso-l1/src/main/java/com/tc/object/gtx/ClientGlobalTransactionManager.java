@@ -4,6 +4,7 @@
  */
 package com.tc.object.gtx;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.net.NodeID;
 import com.tc.object.locks.LockFlushCallback;
 import com.tc.object.locks.LockID;
@@ -24,5 +25,5 @@ public interface ClientGlobalTransactionManager extends GlobalTransactionManager
 
   public boolean asyncFlush(LockID lockID, LockFlushCallback callback, boolean noLocksLeftOnClient);
 
-  public void waitForServerToReceiveTxnsForThisLock(LockID lock);
+  public void waitForServerToReceiveTxnsForThisLock(LockID lock) throws AbortedOperationException;
 }

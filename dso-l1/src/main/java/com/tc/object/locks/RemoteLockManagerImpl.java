@@ -3,6 +3,7 @@
  */
 package com.tc.object.locks;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.ClientLockStatManager;
@@ -52,22 +53,27 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     this.statManager = statManager;
   }
 
+  @Override
   public ClientID getClientID() {
     return this.clientIdProvider.getClientID();
   }
 
+  @Override
   public void flush(final LockID lock, boolean noLocksLeftOnClient) {
     this.globalTxManager.flush(lock, noLocksLeftOnClient);
   }
 
+  @Override
   public boolean asyncFlush(final LockID lock, final LockFlushCallback callback, boolean noLocksLeftOnClient) {
     return this.globalTxManager.asyncFlush(lock, callback, noLocksLeftOnClient);
   }
 
-  public void waitForServerToReceiveTxnsForThisLock(final LockID lock) {
+  @Override
+  public void waitForServerToReceiveTxnsForThisLock(final LockID lock) throws AbortedOperationException {
     this.globalTxManager.waitForServerToReceiveTxnsForThisLock(lock);
   }
 
+  @Override
   public void interrupt(final LockID lock, final ThreadID thread) {
     sendPendingRecallCommits();
 
@@ -76,6 +82,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     sendMessage(msg);
   }
 
+  @Override
   public void lock(final LockID lock, final ThreadID thread, final ServerLockLevel level) {
     sendPendingRecallCommits();
 
@@ -86,6 +93,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     sendMessage(msg);
   }
 
+  @Override
   public void query(final LockID lock, final ThreadID thread) {
     sendPendingRecallCommits();
 
@@ -94,6 +102,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     sendMessage(msg);
   }
 
+  @Override
   public void tryLock(final LockID lock, final ThreadID thread, final ServerLockLevel level, final long timeout) {
     sendPendingRecallCommits();
 
@@ -104,6 +113,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     sendMessage(msg);
   }
 
+  @Override
   public void unlock(final LockID lock, final ThreadID thread, final ServerLockLevel level) {
     sendPendingRecallCommits();
 
@@ -112,6 +122,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     sendMessage(msg);
   }
 
+  @Override
   public void wait(final LockID lock, final ThreadID thread, final long waitTime) {
     sendPendingRecallCommits();
 
@@ -131,6 +142,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     sendMessage(msg);
   }
 
+  @Override
   public void recallCommit(final LockID lock, final Collection<ClientServerExchangeLockContext> lockState, boolean batch) {
     if (!batch) {
       recallCommit(lock, lockState);
@@ -153,6 +165,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     }
   }
 
+  @Override
   public void shutdown() {
     synchronized (queue) {
       shutdown = true;
@@ -160,6 +173,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     }
   }
 
+  @Override
   public boolean isShutdown() {
     synchronized (queue) {
       return this.shutdown;

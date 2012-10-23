@@ -4,6 +4,7 @@
  */
 package com.tc.object.bytecode;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.cluster.DsoCluster;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
@@ -168,8 +169,10 @@ public interface Manager extends TerracottaLocking {
    * @param lockObject The lock object
    * @param methodName The method to call
    * @param params The parameters to the method
+   * @throws AbortedOperationException
    */
-  public void logicalInvokeWithTransaction(Object object, Object lockObject, String methodName, Object[] params);
+  public void logicalInvokeWithTransaction(Object object, Object lockObject, String methodName, Object[] params)
+      throws AbortedOperationException;
 
   /**
    * Perform distributed method call
@@ -333,8 +336,10 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Used by instrumented code to perform a clustered <code>monitorenter</code>.
+   * 
+   * @throws AbortedOperationException
    */
-  public void monitorEnter(LockID lock, LockLevel level);
+  public void monitorEnter(LockID lock, LockLevel level) throws AbortedOperationException;
 
   /**
    * Used by instrumented code to perform a clustered <code>monitorexit</code>.
@@ -382,7 +387,7 @@ public interface Manager extends TerracottaLocking {
 
   public GroupID[] getGroupIDs();
 
-  void lockIDWait(final LockID lock, final long timeout) throws InterruptedException;
+  void lockIDWait(final LockID lock, final long timeout) throws InterruptedException, AbortedOperationException;
 
   void lockIDNotifyAll(final LockID lock);
 

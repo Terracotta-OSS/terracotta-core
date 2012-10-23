@@ -10,6 +10,7 @@ import EDU.oswego.cs.dl.util.concurrent.Latch;
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.exception.TCRuntimeException;
 import com.tc.handler.LockInfoDumpHandler;
@@ -70,7 +71,7 @@ public class ClientLockManagerTest extends TCTestCase {
     rmtLockManager.setClientLockManager(lockManager);
   }
 
-  public void testRunGC() {
+  public void testRunGC() throws Exception {
     NullClientLockManagerConfig testClientLockManagerConfig = new NullClientLockManagerConfig(100);
 
     final ClientLockManagerImpl clientLockManagerImpl = new ClientLockManagerImpl(
@@ -87,6 +88,7 @@ public class ClientLockManagerTest extends TCTestCase {
 
     rmtLockManager.lockResponder = new LockResponder() {
 
+      @Override
       public void respondToLockRequest(final LockID lock, final ThreadID thread, final ServerLockLevel level) {
         new Thread() {
           @Override
@@ -115,7 +117,7 @@ public class ClientLockManagerTest extends TCTestCase {
     assertEquals(1, clientLockManagerImpl.runLockGc());
   }
 
-  public void testRunGCWithAHeldLock() {
+  public void testRunGCWithAHeldLock() throws Exception {
     NullClientLockManagerConfig testClientLockManagerConfig = new NullClientLockManagerConfig(100);
 
     final ClientLockManagerImpl clientLockManagerImpl = new ClientLockManagerImpl(
@@ -133,6 +135,7 @@ public class ClientLockManagerTest extends TCTestCase {
 
     rmtLockManager.lockResponder = new LockResponder() {
 
+      @Override
       public void respondToLockRequest(final LockID lock, final ThreadID thread, final ServerLockLevel level) {
         new Thread() {
           @Override
@@ -204,7 +207,7 @@ public class ClientLockManagerTest extends TCTestCase {
 
   }
 
-  public void testNestedSynchronousWrite() {
+  public void testNestedSynchronousWrite() throws Exception {
     final LockID lockID_1 = new StringLockID("1");
     final LockID lockID_2 = new StringLockID("2");
     final ThreadID threadID_1 = new ThreadID(1);
@@ -254,7 +257,7 @@ public class ClientLockManagerTest extends TCTestCase {
     rmtLockManager.makeLocksNotGreedy();
   }
 
-  public void testSynchronousWriteUnlock() {
+  public void testSynchronousWriteUnlock() throws Exception {
     final LockID lockID_1 = new StringLockID("1");
     final LockID lockID_2 = new StringLockID("2");
     final ThreadID threadID_1 = new ThreadID(1);
@@ -284,7 +287,7 @@ public class ClientLockManagerTest extends TCTestCase {
     rmtLockManager.makeLocksNotGreedy();
   }
 
-  public void testSynchronousWriteWait() {
+  public void testSynchronousWriteWait() throws Exception {
 
     final LockID lockID_1 = new StringLockID("1");
     final LockID lockID_2 = new StringLockID("2");
@@ -387,6 +390,7 @@ public class ClientLockManagerTest extends TCTestCase {
     final ThreadID txID = new ThreadID(1);
 
     Thread t1 = new Thread(new Runnable() {
+      @Override
       public void run() {
         try {
           requestBarrier.barrier();
@@ -405,10 +409,12 @@ public class ClientLockManagerTest extends TCTestCase {
       lockManager.tryLock(lockID1, LockLevel.WRITE, 0L);
     } catch (InterruptedException e) {
       throw new AssertionError(e);
+    } catch (AbortedOperationException e) {
+      throw new RuntimeException(e);
     }
   }
 
-  public void testGreedyLockRequest() {
+  public void testGreedyLockRequest() throws Exception {
     final LockID lockID1 = new StringLockID("1");
     final ThreadID tx1 = new ThreadID(1);
     final ThreadID tx2 = new ThreadID(2);
@@ -416,6 +422,7 @@ public class ClientLockManagerTest extends TCTestCase {
 
     rmtLockManager.lockResponder = new LockResponder() {
 
+      @Override
       public void respondToLockRequest(final LockID lock, final ThreadID thread, final ServerLockLevel level) {
         queue.put(new Object[] { lock, thread, level });
         new Thread() {
@@ -766,6 +773,7 @@ public class ClientLockManagerTest extends TCTestCase {
     final List lockerException = new ArrayList();
 
     rmtLockManager.lockResponder = new LockResponder() {
+      @Override
       public void respondToLockRequest(final LockID lock, final ThreadID thread, final ServerLockLevel level) {
         new Thread() {
           @Override
@@ -868,7 +876,11 @@ public class ClientLockManagerTest extends TCTestCase {
       @Override
       public void run() {
         threadManager.setThreadID(tid1);
-        lockManager.lock(lid0, LockLevel.WRITE);
+        try {
+          lockManager.lock(lid0, LockLevel.WRITE);
+        } catch (AbortedOperationException e) {
+          throw new RuntimeException(e);
+        }
         System.out.println("Got lock0 for tx1");
         done[0] = true;
       }
@@ -901,6 +913,7 @@ public class ClientLockManagerTest extends TCTestCase {
 
     final LockInfoDumpHandler lockInfoDumpHandler = new LockInfoDumpHandler() {
 
+      @Override
       public void addAllLocksTo(final LockInfoByThreadID lockInfo) {
         for (ClientServerExchangeLockContext c : clientLockManager.getAllLockContexts()) {
           switch (c.getState().getType()) {
@@ -919,6 +932,7 @@ public class ClientLockManagerTest extends TCTestCase {
         }
       }
 
+      @Override
       public ThreadIDMap getThreadIDMap() {
         return threadIDMap;
       }
@@ -951,33 +965,41 @@ public class ClientLockManagerTest extends TCTestCase {
     Thread t1 = new Thread("yahoo_thread") {
       @Override
       public void run() {
-        clientLockManager.lock(lid3, LockLevel.WRITE);
-        System.out.println("XXX YAHOO Thread : Got WRITE lock3 for tx1");
-
-        clientLockManager.lock(lid0, LockLevel.WRITE);
-        System.out.println("XXX YAHOO Thread : Got WRITE lock0 for tx1");
-
         try {
-          txnBarrier.barrier();
-        } catch (Exception e) {
-          throw new AssertionError(e);
+          clientLockManager.lock(lid3, LockLevel.WRITE);
+          System.out.println("XXX YAHOO Thread : Got WRITE lock3 for tx1");
+
+          clientLockManager.lock(lid0, LockLevel.WRITE);
+          System.out.println("XXX YAHOO Thread : Got WRITE lock0 for tx1");
+
+          try {
+            txnBarrier.barrier();
+          } catch (Exception e) {
+            throw new AssertionError(e);
+          }
+
+          /*
+           * threadLockManager.unlock(lid0); System.out.println("XXX YAHOO Thread : Released WRITE lock0 for tx1");
+           */
+
+          clientLockManager.unlock(lid3, LockLevel.WRITE);
+          System.out.println("XXX YAHOO Thread : Released WRITE lock3 for tx1");
+
+          done[1].release();
+        } catch (AbortedOperationException e) {
+          throw new RuntimeException(e);
         }
-
-        /*
-         * threadLockManager.unlock(lid0); System.out.println("XXX YAHOO Thread : Released WRITE lock0 for tx1");
-         */
-
-        clientLockManager.unlock(lid3, LockLevel.WRITE);
-        System.out.println("XXX YAHOO Thread : Released WRITE lock3 for tx1");
-
-        done[1].release();
       }
     };
 
     Thread t2 = new Thread("google_thread") {
       @Override
       public void run() {
-        clientLockManager.lock(lid2, LockLevel.WRITE);
+        try {
+          clientLockManager.lock(lid2, LockLevel.WRITE);
+        } catch (AbortedOperationException e1) {
+          throw new RuntimeException(e1);
+        }
         System.out.println("XXX GOOGL Thread : Got WRITE lock2 for tx2");
 
         try {
@@ -986,7 +1008,11 @@ public class ClientLockManagerTest extends TCTestCase {
           throw new AssertionError(e);
         }
 
-        clientLockManager.lock(lid1, LockLevel.WRITE);
+        try {
+          clientLockManager.lock(lid1, LockLevel.WRITE);
+        } catch (AbortedOperationException e) {
+          throw new RuntimeException(e);
+        }
         System.out.println("XXX GOOGL Thread : Got WRITE lock1 for tx2");
         done[2].release();
       }
@@ -1062,9 +1088,13 @@ public class ClientLockManagerTest extends TCTestCase {
 
       @Override
       public void run() {
-        clientLockManager.lock(lid0, LockLevel.WRITE);
-        clientLockManager.unlock(lid0, LockLevel.WRITE);
-        success[0] = true;
+        try {
+          clientLockManager.lock(lid0, LockLevel.WRITE);
+          clientLockManager.unlock(lid0, LockLevel.WRITE);
+          success[0] = true;
+        } catch (AbortedOperationException e) {
+          throw new RuntimeException(e);
+        }
       }
     };
 
@@ -1080,9 +1110,13 @@ public class ClientLockManagerTest extends TCTestCase {
 
       @Override
       public void run() {
+        try {
         clientLockManager.lock(lid0, LockLevel.WRITE);
         clientLockManager.unlock(lid0, LockLevel.WRITE);
         success[1] = true;
+        } catch (AbortedOperationException e) {
+          throw new RuntimeException(e);
+        }
       }
     };
 
@@ -1187,7 +1221,7 @@ public class ClientLockManagerTest extends TCTestCase {
     assertEquals(1, rmtLockManager.getUnlockRequestCount());
   }
 
-  public void testTryLockIfServerTakesTime() {
+  public void testTryLockIfServerTakesTime() throws Exception {
     assertEquals(0, rmtLockManager.getLockRequestCount());
     assertEquals(0, rmtLockManager.getUnlockRequestCount());
     ThreadID tid0 = new ThreadID(0);
@@ -1264,6 +1298,7 @@ public class ClientLockManagerTest extends TCTestCase {
       ThreadUtil.reallySleep(2000);
     }
 
+    @Override
     public void handleWaitEvent() {
       preWaitSignalQueue.put(new Object());
     }
@@ -1287,7 +1322,11 @@ public class ClientLockManagerTest extends TCTestCase {
     @Override
     public void run() {
       threadManager.setThreadID(tid);
-      lockManager.lock(lid, lockType);
+      try {
+        lockManager.lock(lid, lockType);
+      } catch (AbortedOperationException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 }

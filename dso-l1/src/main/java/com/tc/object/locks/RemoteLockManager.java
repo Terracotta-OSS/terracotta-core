@@ -3,6 +3,7 @@
  */
 package com.tc.object.locks;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.net.ClientID;
 
 import java.util.Collection;
@@ -28,7 +29,7 @@ public interface RemoteLockManager {
 
   public void query(LockID lock, ThreadID thread);
 
-  public void waitForServerToReceiveTxnsForThisLock(LockID lock);
+  public void waitForServerToReceiveTxnsForThisLock(LockID lock) throws AbortedOperationException;
 
   public void shutdown();
 

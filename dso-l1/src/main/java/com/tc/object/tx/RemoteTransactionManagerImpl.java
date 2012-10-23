@@ -4,6 +4,7 @@
  */
 package com.tc.object.tx;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.LossyTCLogger;
 import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
@@ -107,6 +108,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     this.outstandingBatchesCounter = outstandingBatchesCounter;
   }
 
+  @Override
   public void shutdown() {
     this.lockAccounting.shutdown();
     this.isShutdown = true;
@@ -116,6 +118,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     }
   }
 
+  @Override
   public void pause(final NodeID remote, final int disconnected) {
     if (this.isShutdown) { return; }
     synchronized (this.lock) {
@@ -126,6 +129,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     }
   }
 
+  @Override
   public void unpause(final NodeID remote, final int disconnected) {
     if (this.isShutdown) { return; }
     synchronized (this.lock) {
@@ -137,6 +141,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     }
   }
 
+  @Override
   public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                   final ClientHandshakeMessage handshakeMessage) {
     if (this.isShutdown) { return; }
@@ -167,11 +172,13 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     return MAX_OUTSTANDING_BATCHES;
   }
 
+  @Override
   public void stopProcessing() {
     this.sequencer.shutdown();
     this.channel.close();
   }
 
+  @Override
   public void stop() {
     final long start = System.currentTimeMillis();
     this.logger.debug("stop() is called on " + System.identityHashCode(this));
@@ -208,6 +215,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     this.logger.info("stop(): took " + (System.currentTimeMillis() - start) + " millis to complete");
   }
 
+  @Override
   public void flush(final LockID lockID) {
     final long start = System.currentTimeMillis();
     long lastPrinted = 0;
@@ -235,7 +243,8 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     }
   }
 
-  public void waitForServerToReceiveTxnsForThisLock(final LockID lockId) {
+  @Override
+  public void waitForServerToReceiveTxnsForThisLock(final LockID lockId) throws AbortedOperationException {
     // wait for transactions to get acked here from the server
     final long start = System.currentTimeMillis();
     long lastPrinted = 0;
@@ -252,6 +261,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
               lastPrinted = now;
             }
           } catch (final InterruptedException e) {
+            handleInterruptedException();
             isInterrupted = true;
           }
         }
@@ -261,10 +271,19 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     }
   }
 
+  private void handleInterruptedException() throws AbortedOperationException {
+    if (isAborted()) { throw new AbortedOperationException(); }
+  }
+
+  private boolean isAborted() {
+    return false;
+  }
+
   /**
    * This method will be called when the server receives a batch. This should ideally be called only when a batch
    * contains a sync write transaction.
    */
+  @Override
   public void batchReceived(final TxnBatchID batchId, final Set<TransactionID> syncTxnSet, final NodeID nid) {
     // This batch id was received by the server
     // so notify the locks waiting for this transaction
@@ -276,6 +295,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   }
 
   /* This does not block unlike flush() */
+  @Override
   public boolean asyncFlush(final LockID lockID, final LockFlushCallback callback) {
     synchronized (this.lock) {
 
@@ -298,6 +318,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     }
   }
 
+  @Override
   public void commit(final ClientTransaction txn) {
     if (!txn.hasChangesOrNotifies() && txn.getDmiDescriptors().isEmpty() && txn.getNewRoots().isEmpty()) {
       //
@@ -420,6 +441,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   }
 
   // XXX:: Currently server always sends NULL BatchID
+  @Override
   public void receivedBatchAcknowledgement(final TxnBatchID txnBatchID, final NodeID remoteNode) {
     synchronized (this.lock) {
       if (isStoppingOrStopped()) {
@@ -436,6 +458,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     }
   }
 
+  @Override
   public TransactionBuffer receivedAcknowledgement(final SessionID sessionID, final TransactionID txID,
                                                    final NodeID remoteNode) {
     TransactionBuffer tb = null;
@@ -482,6 +505,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     }
   }
 
+  @Override
   public void waitForAllCurrentTransactionsToComplete() {
     this.lockAccounting.waitAllCurrentTxnCompleted();
   }
@@ -579,6 +603,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     }
   }
 
+  @Override
   public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     synchronized (this.lock) {
       out.indent().print("incompleteBatches count: ").print(Integer.valueOf(this.incompleteBatches.size())).flush();

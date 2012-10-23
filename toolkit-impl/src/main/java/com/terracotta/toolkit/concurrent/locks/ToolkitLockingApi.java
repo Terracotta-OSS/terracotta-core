@@ -5,8 +5,10 @@ package com.terracotta.toolkit.concurrent.locks;
 
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.object.ObjectID;
 import com.tc.object.bytecode.PlatformService;
+import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.object.ToolkitObjectType;
 
 import java.util.concurrent.TimeUnit;
@@ -50,25 +52,45 @@ public class ToolkitLockingApi {
   }
 
   public static void lock(ToolkitLockDetail lockDetail, PlatformService service) {
-    service.beginLock(lockDetail.getLockId(), lockDetail.getLockLevel());
+    try {
+      service.beginLock(lockDetail.getLockId(), lockDetail.getLockLevel());
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   public static void unlock(ToolkitLockDetail lockDetail, PlatformService service) {
-    service.commitLock(lockDetail.getLockId(), lockDetail.getLockLevel());
+    try {
+      service.commitLock(lockDetail.getLockId(), lockDetail.getLockLevel());
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   public static void lockInterruptibly(ToolkitLockDetail lockDetail, PlatformService service)
       throws InterruptedException {
-    service.beginLockInterruptibly(lockDetail.getLockId(), lockDetail.getLockLevel());
+    try {
+      service.beginLockInterruptibly(lockDetail.getLockId(), lockDetail.getLockLevel());
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   public static boolean tryLock(ToolkitLockDetail lockDetail, PlatformService service) {
-    return service.tryBeginLock(lockDetail.getLockId(), lockDetail.getLockLevel());
+    try {
+      return service.tryBeginLock(lockDetail.getLockId(), lockDetail.getLockLevel());
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   public static boolean tryLock(ToolkitLockDetail lockDetail, long time, TimeUnit unit, PlatformService service)
       throws InterruptedException {
-    return service.tryBeginLock(lockDetail.getLockId(), lockDetail.getLockLevel(), time, unit);
+    try {
+      return service.tryBeginLock(lockDetail.getLockId(), lockDetail.getLockLevel(), time, unit);
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   public static boolean isHeldByCurrentThread(ToolkitLockDetail lockDetail, PlatformService service) {
@@ -77,13 +99,21 @@ public class ToolkitLockingApi {
 
   public static void lockIdWait(ToolkitLockDetail lockDetail, PlatformService service) throws InterruptedException {
     // 0 timeout means infinite wait
-    service.lockIDWait(lockDetail.getLockId(), 0, TimeUnit.MILLISECONDS);
+    try {
+      service.lockIDWait(lockDetail.getLockId(), 0, TimeUnit.MILLISECONDS);
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   public static void lockIdWait(ToolkitLockDetail lockDetail, long time, TimeUnit unit, PlatformService service)
       throws InterruptedException {
     // 0 timeout means infinite wait
-    service.lockIDWait(lockDetail.getLockId(), time, unit);
+    try {
+      service.lockIDWait(lockDetail.getLockId(), time, unit);
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   public static void lockIdNotify(ToolkitLockDetail lockDetail, PlatformService service) {
@@ -121,11 +151,19 @@ public class ToolkitLockingApi {
   }
 
   private static void doBeginLock(Object lockId, ToolkitLockTypeInternal lockType, PlatformService service) {
-    service.beginLock(lockId, LockingUtils.translate(lockType));
+    try {
+      service.beginLock(lockId, LockingUtils.translate(lockType));
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   private static void doCommitLock(Object lockId, ToolkitLockTypeInternal lockType, PlatformService service) {
-    service.commitLock(lockId, LockingUtils.translate(lockType));
+    try {
+      service.commitLock(lockId, LockingUtils.translate(lockType));
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   private static String generateStringLockId(String stringLockName) {

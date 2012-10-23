@@ -3,6 +3,7 @@
  */
 package com.tc.object.locks;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.logging.TCLogger;
 import com.tc.management.ClientLockStatManager;
 import com.tc.net.GroupID;
@@ -52,50 +53,63 @@ public class ClientLockManagerGroupImpl implements ClientLockManager {
     return lockManagers.get(group);
   }
 
-  public void lock(LockID lock, LockLevel level) {
+  @Override
+  public void lock(LockID lock, LockLevel level) throws AbortedOperationException {
     getClientLockManagerFor(lock).lock(lock, level);
   }
 
-  public boolean tryLock(LockID lock, LockLevel level) {
+  @Override
+  public boolean tryLock(LockID lock, LockLevel level) throws AbortedOperationException {
     return getClientLockManagerFor(lock).tryLock(lock, level);
   }
 
-  public boolean tryLock(LockID lock, LockLevel level, long timeout) throws InterruptedException {
+  @Override
+  public boolean tryLock(LockID lock, LockLevel level, long timeout) throws InterruptedException,
+      AbortedOperationException {
     return getClientLockManagerFor(lock).tryLock(lock, level, timeout);
   }
 
-  public void lockInterruptibly(LockID lock, LockLevel level) throws InterruptedException {
+  @Override
+  public void lockInterruptibly(LockID lock, LockLevel level) throws InterruptedException, AbortedOperationException {
     getClientLockManagerFor(lock).lockInterruptibly(lock, level);
   }
 
-  public void unlock(LockID lock, LockLevel level) {
+  @Override
+  public void unlock(LockID lock, LockLevel level) throws AbortedOperationException {
     getClientLockManagerFor(lock).unlock(lock, level);
   }
 
+  @Override
   public Notify notify(LockID lock, Object waitObject) {
     return getClientLockManagerFor(lock).notify(lock, null);
   }
 
+  @Override
   public Notify notifyAll(LockID lock, Object waitObject) {
     return getClientLockManagerFor(lock).notifyAll(lock, null);
   }
 
-  public void wait(LockID lock, Object waitObject) throws InterruptedException {
+  @Override
+  public void wait(LockID lock, Object waitObject) throws InterruptedException, AbortedOperationException {
     getClientLockManagerFor(lock).wait(lock, waitObject);
   }
 
-  public void wait(LockID lock, Object waitObject, long timeout) throws InterruptedException {
+  @Override
+  public void wait(LockID lock, Object waitObject, long timeout) throws InterruptedException, AbortedOperationException {
     getClientLockManagerFor(lock).wait(lock, waitObject, timeout);
   }
 
+  @Override
   public boolean isLocked(LockID lock, LockLevel level) {
     return getClientLockManagerFor(lock).isLocked(lock, level);
   }
 
+  @Override
   public boolean isLockedByCurrentThread(LockID lock, LockLevel level) {
     return getClientLockManagerFor(lock).isLockedByCurrentThread(lock, level);
   }
 
+  @Override
   public boolean isLockedByCurrentThread(LockLevel level) {
     for (ClientLockManager clm : lockManagers.values()) {
       if (clm.isLockedByCurrentThread(level)) { return true; }
@@ -103,74 +117,92 @@ public class ClientLockManagerGroupImpl implements ClientLockManager {
     return false;
   }
 
+  @Override
   public int localHoldCount(LockID lock, LockLevel level) {
     return getClientLockManagerFor(lock).localHoldCount(lock, level);
   }
 
+  @Override
   public int globalHoldCount(LockID lock, LockLevel level) {
     return getClientLockManagerFor(lock).globalHoldCount(lock, level);
   }
 
+  @Override
   public int globalPendingCount(LockID lock) {
     return getClientLockManagerFor(lock).globalPendingCount(lock);
   }
 
+  @Override
   public int globalWaitingCount(LockID lock) {
     return getClientLockManagerFor(lock).globalWaitingCount(lock);
   }
 
+  @Override
   public void notified(LockID lock, ThreadID thread) {
     getClientLockManagerFor(lock).notified(lock, thread);
   }
 
+  @Override
   public void recall(NodeID node, SessionID session, LockID lock, ServerLockLevel level, int lease) {
     getClientLockManagerFor(lock).recall(node, session, lock, level, lease);
   }
 
+  @Override
   public void recall(NodeID node, SessionID session, LockID lock, ServerLockLevel level, int lease, boolean batch) {
     getClientLockManagerFor(lock).recall(node, session, lock, level, lease, batch);
   }
 
+  @Override
   public void award(NodeID node, SessionID session, LockID lock, ThreadID thread, ServerLockLevel level) {
     getClientLockManagerFor(lock).award(node, session, lock, thread, level);
   }
 
+  @Override
   public void refuse(NodeID node, SessionID session, LockID lock, ThreadID thread, ServerLockLevel level) {
     getClientLockManagerFor(lock).refuse(node, session, lock, thread, level);
   }
 
+  @Override
   public void info(LockID lock, ThreadID requestor, Collection<ClientServerExchangeLockContext> contexts) {
     getClientLockManagerFor(lock).info(lock, requestor, contexts);
   }
 
+  @Override
   public void pinLock(LockID lock) {
     getClientLockManagerFor(lock).pinLock(lock);
   }
 
+  @Override
   public void unpinLock(LockID lock) {
     getClientLockManagerFor(lock).unpinLock(lock);
   }
 
+  @Override
   public LockID generateLockIdentifier(String str) {
     throw new AssertionError(getClass().getSimpleName() + " does not generate lock identifiers");
   }
 
+  @Override
   public LockID generateLockIdentifier(long l) {
     throw new AssertionError(getClass().getSimpleName() + " does not generate lock identifiers");
   }
 
+  @Override
   public LockID generateLockIdentifier(Object obj) {
     throw new AssertionError(getClass().getSimpleName() + " does not generate lock identifiers");
   }
 
+  @Override
   public LockID generateLockIdentifier(Object obj, String field) {
     throw new AssertionError(getClass().getSimpleName() + " does not generate lock identifiers");
   }
 
+  @Override
   public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
     getClientLockManagerFor((GroupID) remoteNode).initializeHandshake(thisNode, remoteNode, handshakeMessage);
   }
 
+  @Override
   public void pause(NodeID remoteNode, int disconnected) {
     if (remoteNode.equals(GroupID.ALL_GROUPS)) {
       for (ClientLockManager clm : lockManagers.values()) {
@@ -184,6 +216,7 @@ public class ClientLockManagerGroupImpl implements ClientLockManager {
     }
   }
 
+  @Override
   public void unpause(NodeID remoteNode, int disconnected) {
     if (remoteNode.equals(GroupID.ALL_GROUPS)) {
       for (ClientLockManager clm : lockManagers.values()) {
@@ -197,12 +230,14 @@ public class ClientLockManagerGroupImpl implements ClientLockManager {
     }
   }
 
+  @Override
   public void shutdown() {
     for (ClientLockManager clm : lockManagers.values()) {
       clm.shutdown();
     }
   }
 
+  @Override
   public Collection<ClientServerExchangeLockContext> getAllLockContexts() {
     Collection<ClientServerExchangeLockContext> contexts = new ArrayList<ClientServerExchangeLockContext>();
     for (ClientLockManager clm : lockManagers.values()) {
@@ -211,6 +246,7 @@ public class ClientLockManagerGroupImpl implements ClientLockManager {
     return contexts;
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.indent().print(ClientLockManagerGroupImpl.class.getSimpleName()).flush();
     for (ClientLockManager clm : lockManagers.values()) {

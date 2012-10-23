@@ -4,6 +4,7 @@
  */
 package com.tc.object.bytecode;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.asm.Type;
 import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.FieldInfo;
@@ -353,7 +354,7 @@ public class ManagerImpl implements Manager {
 
   @Override
   public void logicalInvokeWithTransaction(final Object object, final Object lockObject, final String methodName,
-                                           final Object[] params) {
+                                           final Object[] params) throws AbortedOperationException {
     final LockID lock = generateLockIdentifier(lockObject);
     lock(lock, LockLevel.WRITE);
     try {
@@ -836,7 +837,7 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void lock(final LockID lock, final LockLevel level) {
+  public void lock(final LockID lock, final LockLevel level) throws AbortedOperationException {
     if (clusteredLockingEnabled(lock)) {
       this.lockManager.lock(lock, level);
       this.txManager.begin(lock, level);
@@ -848,7 +849,8 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void lockInterruptibly(final LockID lock, final LockLevel level) throws InterruptedException {
+  public void lockInterruptibly(final LockID lock, final LockLevel level) throws InterruptedException,
+      AbortedOperationException {
     if (clusteredLockingEnabled(lock)) {
       this.lockManager.lockInterruptibly(lock, level);
       this.txManager.begin(lock, level);
@@ -880,7 +882,7 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public boolean tryLock(final LockID lock, final LockLevel level) {
+  public boolean tryLock(final LockID lock, final LockLevel level) throws AbortedOperationException {
     if (clusteredLockingEnabled(lock)) {
       if (this.lockManager.tryLock(lock, level)) {
         this.txManager.begin(lock, level);
@@ -897,7 +899,8 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public boolean tryLock(final LockID lock, final LockLevel level, final long timeout) throws InterruptedException {
+  public boolean tryLock(final LockID lock, final LockLevel level, final long timeout) throws InterruptedException,
+      AbortedOperationException {
     if (clusteredLockingEnabled(lock)) {
       if (this.lockManager.tryLock(lock, level, timeout)) {
         this.txManager.begin(lock, level);
@@ -914,7 +917,7 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void unlock(final LockID lock, final LockLevel level) {
+  public void unlock(final LockID lock, final LockLevel level) throws AbortedOperationException {
     if (clusteredLockingEnabled(lock)) {
       try {
         this.txManager.commit(lock, level);
@@ -925,7 +928,7 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void wait(final LockID lock, final Object waitObject) throws InterruptedException {
+  public void wait(final LockID lock, final Object waitObject) throws InterruptedException, AbortedOperationException {
     if (clusteredLockingEnabled(lock) && (lock instanceof DsoLockID)) {
       try {
         this.txManager.commit(lock, LockLevel.WRITE);
@@ -944,7 +947,8 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void wait(final LockID lock, final Object waitObject, final long timeout) throws InterruptedException {
+  public void wait(final LockID lock, final Object waitObject, final long timeout) throws InterruptedException,
+      AbortedOperationException {
     if (clusteredLockingEnabled(lock) && (lock instanceof DsoLockID)) {
       try {
         this.txManager.commit(lock, LockLevel.WRITE);
@@ -983,7 +987,7 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void monitorEnter(final LockID lock, final LockLevel level) {
+  public void monitorEnter(final LockID lock, final LockLevel level) throws AbortedOperationException {
     lock(lock, level);
   }
 
@@ -1094,7 +1098,7 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void lockIDWait(final LockID lock, final long timeout) throws InterruptedException {
+  public void lockIDWait(final LockID lock, final long timeout) throws InterruptedException, AbortedOperationException {
     try {
       this.txManager.commit(lock, LockLevel.WRITE);
     } catch (final UnlockedSharedObjectException e) {
@@ -1133,6 +1137,7 @@ public class ManagerImpl implements Manager {
     return expectedType.cast(registeredObjects.get(name));
   }
 
+  @Override
   public void addTransactionCompleteListener(TransactionCompleteListener listener) {
     txManager.getCurrentTransaction().addTransactionCompleteListener(listener);
   }

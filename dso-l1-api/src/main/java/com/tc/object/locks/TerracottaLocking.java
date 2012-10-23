@@ -3,6 +3,7 @@
  */
 package com.tc.object.locks;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 
 public interface TerracottaLocking {
@@ -11,9 +12,10 @@ public interface TerracottaLocking {
    * 
    * @param lock lock to act upon
    * @param level level at which to lock
+   * @throws AbortedOperationException
    * @throws TCLockUpgradeNotSupportedError on attempting to read&rarr;write upgrade
    */
-  public void lock(LockID lock, LockLevel level);
+  public void lock(LockID lock, LockLevel level) throws AbortedOperationException;
 
   /**
    * Try to acquire a Terracotta lock.
@@ -24,9 +26,10 @@ public interface TerracottaLocking {
    * @param lock lock to act upon
    * @param level level at which to lock
    * @return <code>true</code> if locked
+   * @throws AbortedOperationException
    * @throws TCLockUpgradeNotSupportedError on attempting to read&rarr;write upgrade
    */
-  public boolean tryLock(LockID lock, LockLevel level);
+  public boolean tryLock(LockID lock, LockLevel level) throws AbortedOperationException;
 
   /**
    * Timed acquire of a Terracotta lock.
@@ -35,27 +38,31 @@ public interface TerracottaLocking {
    * @param level level at which to lock
    * @param timeout maximum time to wait in milliseconds
    * @return <code>true</code> if locked
+   * @throws AbortedOperationException
    * @throws TCLockUpgradeNotSupportedError on attempting to read&rarr;write upgrade
    */
-  public boolean tryLock(LockID lock, LockLevel level, long timeout) throws InterruptedException;
+  public boolean tryLock(LockID lock, LockLevel level, long timeout) throws InterruptedException,
+      AbortedOperationException;
 
   /**
    * Interruptible acquire of a Terracotta lock.
    * 
    * @param lock lock to act upon
    * @param level level at which to lock
+   * @throws AbortedOperationException
    * @throws TCLockUpgradeNotSupportedError on attempting to read&rarr;write upgrade
    */
-  public void lockInterruptibly(LockID lock, LockLevel level) throws InterruptedException;
+  public void lockInterruptibly(LockID lock, LockLevel level) throws InterruptedException, AbortedOperationException;
 
   /**
    * Blocking unlock of a Terracotta lock.
    * 
    * @param lock lock to act upon
    * @param level at which to unlock
+   * @throws AbortedOperationException
    * @throws IllegalMonitorStateException if there is no matching lock hold
    */
-  public void unlock(LockID lock, LockLevel level);
+  public void unlock(LockID lock, LockLevel level) throws AbortedOperationException;
 
   /**
    * Notify a single thread waiting on the given lock.
@@ -80,9 +87,10 @@ public interface TerracottaLocking {
    * 
    * @param lock lock to act upon
    * @param waitObject local vm object to wait on
+   * @throws AbortedOperationException
    * @throws IllegalMonitorStateException if the current thread does not hold a write lock
    */
-  public void wait(LockID lock, Object waitObject) throws InterruptedException;
+  public void wait(LockID lock, Object waitObject) throws InterruptedException, AbortedOperationException;
 
   /**
    * Move the current thread to wait on the given lock with timeout.
@@ -90,9 +98,10 @@ public interface TerracottaLocking {
    * @param lock lock to act upon
    * @param waitObject local vm object to wait on
    * @param timeout maximum time to remain waiting
+   * @throws AbortedOperationException
    * @throws IllegalMonitorStateException if the current thread does not hold a write lock
    */
-  public void wait(LockID lock, Object waitObject, long timeout) throws InterruptedException;
+  public void wait(LockID lock, Object waitObject, long timeout) throws InterruptedException, AbortedOperationException;
 
   /**
    * Return true if the given lock is held by any thread at the given lock level.

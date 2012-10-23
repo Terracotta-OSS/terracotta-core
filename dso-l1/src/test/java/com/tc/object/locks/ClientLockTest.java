@@ -40,6 +40,7 @@ public class ClientLockTest extends TestCase {
   }
 
   private static final WaitListener          NULL_WAIT_LISTENER = new WaitListener() {
+                                                                  @Override
                                                                   public void handleWaitEvent() {
                                                                     //
                                                                   }
@@ -49,7 +50,7 @@ public class ClientLockTest extends TestCase {
     return new ClientLockImpl(LOCK_ID);
   }
 
-  public void testBasicLockFunctionality() {
+  public void testBasicLockFunctionality() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -66,7 +67,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testBasicTryLockFunctionality() {
+  public void testBasicTryLockFunctionality() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -84,7 +85,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testBasicTryLockWithTimeoutFunctionality() {
+  public void testBasicTryLockWithTimeoutFunctionality() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -104,7 +105,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testBasicLockInterruptiblyFunctionality() {
+  public void testBasicLockInterruptiblyFunctionality() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -123,7 +124,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testLockExclusionProperties() {
+  public void testLockExclusionProperties() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -173,7 +174,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testLockNestingProperties() {
+  public void testLockNestingProperties() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -220,7 +221,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testTimeoutOfTryLock() {
+  public void testTimeoutOfTryLock() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -255,7 +256,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testPreInterruptingTimedTryLock() {
+  public void testPreInterruptingTimedTryLock() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -291,7 +292,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testInterruptingTimedTryLock() {
+  public void testInterruptingTimedTryLock() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -339,7 +340,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testPreInterruptingInterruptibleLock() {
+  public void testPreInterruptingInterruptibleLock() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -376,7 +377,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testInterruptingInterruptibleLock() {
+  public void testInterruptingInterruptibleLock() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -424,7 +425,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testIllegalLockUnlockSequences() {
+  public void testIllegalLockUnlockSequences() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -461,7 +462,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testGreedyReadFunctionality() {
+  public void testGreedyReadFunctionality() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -498,7 +499,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testGreedyWriteFunctionality() {
+  public void testGreedyWriteFunctionality() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -529,7 +530,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testWaitNotifyTimesOut() {
+  public void testWaitNotifyTimesOut() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -549,7 +550,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testWaitNotifyWhenGreedyTimesOut() {
+  public void testWaitNotifyWhenGreedyTimesOut() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -567,7 +568,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testWaitNotifyIsNotifiable() {
+  public void testWaitNotifyIsNotifiable() throws Exception {
     final ClientLock lock = getFreshClientLock();
 
     try {
@@ -605,7 +606,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testNestedWaitNotifyIsNotifiable() {
+  public void testNestedWaitNotifyIsNotifiable() throws Exception {
     final ClientLock lock = getFreshClientLock();
 
     try {
@@ -651,7 +652,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testGreedyWaitNotifyIsNotifiable() {
+  public void testGreedyWaitNotifyIsNotifiable() throws Exception {
     final ClientLock lock = getFreshClientLock();
 
     try {
@@ -693,7 +694,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testWaitIllegalMonitorState() {
+  public void testWaitIllegalMonitorState() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -731,7 +732,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testNotifyIllegalMonitorState() {
+  public void testNotifyIllegalMonitorState() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -765,7 +766,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testNotifyAllIllegalMonitorState() {
+  public void testNotifyAllIllegalMonitorState() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -799,7 +800,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testLockGarbageCollection() {
+  public void testLockGarbageCollection() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -845,7 +846,7 @@ public class ClientLockTest extends TestCase {
     Assert.assertTrue(lock.tryMarkAsGarbage(new AssertingRemoteLockManager(lock)));
   }
 
-  public void testGreedyWriteOnReadRecall() {
+  public void testGreedyWriteOnReadRecall() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -869,7 +870,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  public void testBatchedRecalls() {
+  public void testBatchedRecalls() throws Exception {
     ClientLock lock = getFreshClientLock();
 
     try {
@@ -939,6 +940,7 @@ public class ClientLockTest extends TestCase {
     @Override
     protected void awardLock(final ThreadID thread, final ServerLockLevel level) {
       executor.execute(new Runnable() {
+        @Override
         public void run() {
           try {
             target.award(AssertingGreedyRemoteLockManager.this, ThreadID.VM_ID, level);
@@ -965,28 +967,34 @@ public class ClientLockTest extends TestCase {
       Assert.assertTrue(legal.contains(RemoteOperation.FLUSH));
     }
 
+    @Override
     public ClientID getClientID() {
       return ClientID.NULL_ID;
     }
 
+    @Override
     public void interrupt(LockID lock, ThreadID thread) {
       Assert.assertTrue(legal.contains(RemoteOperation.INTERRUPT));
     }
 
+    @Override
     public boolean asyncFlush(LockID lock, LockFlushCallback callback, boolean noLocksLeftOnClient) {
       Assert.assertTrue(legal.contains(RemoteOperation.TXN_FLUSHED));
       return true;
     }
 
+    @Override
     public void lock(final LockID lock, final ThreadID thread, final ServerLockLevel level) {
       Assert.assertTrue(legal.contains(RemoteOperation.LOCK));
       awardLock(thread, level);
     }
 
+    @Override
     public void query(LockID lock, ThreadID thread) {
       Assert.assertTrue(legal.contains(RemoteOperation.QUERY));
     }
 
+    @Override
     public void recallCommit(LockID lock, Collection<ClientServerExchangeLockContext> lockState, boolean batch) {
       Assert.assertTrue(legal.contains(RemoteOperation.RECALL_COMMIT));
       for (ClientServerExchangeLockContext c : lockState) {
@@ -1000,9 +1008,11 @@ public class ClientLockTest extends TestCase {
       }
     }
 
+    @Override
     public void tryLock(final LockID lock, final ThreadID thread, final ServerLockLevel level, final long timeout) {
       Assert.assertTrue(legal.contains(RemoteOperation.TRY_LOCK));
       executor.execute(new Runnable() {
+        @Override
         public void run() {
           try {
             target.award(AssertingRemoteLockManager.this, thread, level);
@@ -1013,10 +1023,12 @@ public class ClientLockTest extends TestCase {
       });
     }
 
+    @Override
     public void unlock(LockID lock, ThreadID thread, ServerLockLevel level) {
       Assert.assertTrue(legal.contains(RemoteOperation.UNLOCK));
     }
 
+    @Override
     public void wait(LockID lock, ThreadID thread, long waitTime) {
       Assert.assertTrue(legal.contains(RemoteOperation.WAIT));
 
@@ -1034,6 +1046,7 @@ public class ClientLockTest extends TestCase {
 
     protected void awardLock(final ThreadID thread, final ServerLockLevel level) {
       executor.execute(new Runnable() {
+        @Override
         public void run() {
           try {
             target.award(AssertingRemoteLockManager.this, thread, level);
@@ -1046,20 +1059,24 @@ public class ClientLockTest extends TestCase {
 
     protected void notifyLock(final ThreadID thread) {
       executor.execute(new Runnable() {
+        @Override
         public void run() {
           target.notified(thread);
         }
       });
     }
 
+    @Override
     public void waitForServerToReceiveTxnsForThisLock(LockID lock) {
       //
     }
 
+    @Override
     public void shutdown() {
       //
     }
 
+    @Override
     public boolean isShutdown() {
       return false;
     }

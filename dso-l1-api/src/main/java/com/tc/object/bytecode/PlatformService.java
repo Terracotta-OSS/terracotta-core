@@ -3,6 +3,7 @@
  */
 package com.tc.object.bytecode;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.cluster.DsoCluster;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
@@ -34,18 +35,19 @@ public interface PlatformService {
 
   boolean isHeldByCurrentThread(Object lockID, LockLevel level);
 
-  void beginLock(final Object lockID, final LockLevel level);
+  void beginLock(final Object lockID, final LockLevel level) throws AbortedOperationException;
 
-  void beginLockInterruptibly(Object obj, LockLevel level) throws InterruptedException;
+  void beginLockInterruptibly(Object obj, LockLevel level) throws InterruptedException, AbortedOperationException;
 
-  void commitLock(final Object lockID, final LockLevel level);
+  void commitLock(final Object lockID, final LockLevel level) throws AbortedOperationException;
 
-  boolean tryBeginLock(Object lockID, LockLevel level);
+  boolean tryBeginLock(Object lockID, LockLevel level) throws AbortedOperationException;
 
   public boolean tryBeginLock(final Object lockID, final LockLevel level, final long timeout, TimeUnit timeUnit)
-      throws InterruptedException;
+      throws InterruptedException, AbortedOperationException;
 
-  void lockIDWait(Object lockID, long timeout, TimeUnit timeUnit) throws InterruptedException;
+  void lockIDWait(Object lockID, long timeout, TimeUnit timeUnit) throws InterruptedException,
+      AbortedOperationException;
 
   void lockIDNotify(Object lockID);
 

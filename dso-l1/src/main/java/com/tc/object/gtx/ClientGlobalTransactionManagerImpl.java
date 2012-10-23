@@ -4,6 +4,7 @@
  */
 package com.tc.object.gtx;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
@@ -42,6 +43,7 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
   }
 
   // For testing
+  @Override
   public synchronized int size() {
     return this.applied.size();
   }
@@ -51,6 +53,7 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
     return ALLOWED_LWM_DELTA;
   }
 
+  @Override
   public synchronized boolean startApply(final NodeID committerID, final TransactionID transactionID,
                                          final GlobalTransactionID gtxID, final NodeID remoteGroupID) {
     if (gtxID.lessThan(getLowGlobalTransactionIDWatermark())) {
@@ -63,10 +66,12 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
     return this.applied.add(serverTransactionID);
   }
 
+  @Override
   public synchronized GlobalTransactionID getLowGlobalTransactionIDWatermark() {
     return this.lowWatermark;
   }
 
+  @Override
   public synchronized void setLowWatermark(final GlobalTransactionID lowWatermark, final NodeID nodeID) {
     if (this.lowWatermark.toLong() > lowWatermark.toLong()) {
       // XXX::This case is possible when the server crashes, Eventually the server will catch up
@@ -94,6 +99,7 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
     }
   }
 
+  @Override
   public void flush(final LockID lockID, boolean noLocksLeftOnClient) {
     if (noLocksLeftOnClient) {
       preTransactionFlushCallback.preTransactionFlush(lockID);
@@ -101,10 +107,12 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
     this.remoteTransactionManager.flush(lockID);
   }
 
-  public void waitForServerToReceiveTxnsForThisLock(final LockID lock) {
+  @Override
+  public void waitForServerToReceiveTxnsForThisLock(final LockID lock) throws AbortedOperationException {
     this.remoteTransactionManager.waitForServerToReceiveTxnsForThisLock(lock);
   }
 
+  @Override
   public boolean asyncFlush(final LockID lockID, final LockFlushCallback callback, boolean noLocksLeftOnClient) {
     if (noLocksLeftOnClient) {
       preTransactionFlushCallback.preTransactionFlush(lockID);
