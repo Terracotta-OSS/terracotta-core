@@ -14,6 +14,8 @@ import com.tc.object.gtx.GlobalTransactionManager;
 import com.tc.object.locks.Notify;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
+import com.tc.objectserver.api.Transaction;
+import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.BroadcastChangeContext;
 import com.tc.objectserver.context.ServerMapEvictionInitiateContext;
@@ -22,14 +24,11 @@ import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.locks.ServerLock;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
-import com.tc.objectserver.api.TransactionProvider;
-import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -55,17 +54,12 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
   private GlobalTransactionID            lowWaterMark                    = GlobalTransactionID.NULL_ID;
   private final TransactionProvider persistenceTransactionProvider;
 
-  public ApplyTransactionChangeHandler(final ObjectInstanceMonitor instanceMonitor, final GlobalTransactionManager gtxm) {
-    throw new AssertionError();
-  }
-
   public ApplyTransactionChangeHandler(final ObjectInstanceMonitor instanceMonitor, final GlobalTransactionManager gtxm,
                                        TransactionProvider persistenceTransactionProvider) {
     this.instanceMonitor = instanceMonitor;
     this.gtxm = gtxm;
     this.persistenceTransactionProvider = persistenceTransactionProvider;
   }
-
 
   @Override
   public void handleEvent(final EventContext context) {
@@ -90,12 +84,12 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
 
     this.transactionManager.processMetaData(txn, atc.needsApply() ? applyInfo : null);
 
-    for (final Iterator i = txn.getNotifies().iterator(); i.hasNext();) {
-      final Notify notify = (Notify) i.next();
+    for (final Object o : txn.getNotifies()) {
+      final Notify notify = (Notify)o;
       final ServerLock.NotifyAction allOrOne = notify.getIsAll() ? ServerLock.NotifyAction.ALL
           : ServerLock.NotifyAction.ONE;
-      notifiedWaiters = this.lockManager.notify(notify.getLockID(), (ClientID) txn.getSourceID(), notify.getThreadID(),
-                                                allOrOne, notifiedWaiters);
+      notifiedWaiters = this.lockManager.notify(notify.getLockID(), (ClientID)txn.getSourceID(), notify.getThreadID(),
+          allOrOne, notifiedWaiters);
     }
 
     if (txn.isActiveTxn()) {
