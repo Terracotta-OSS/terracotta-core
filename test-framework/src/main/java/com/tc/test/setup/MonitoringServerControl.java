@@ -52,7 +52,7 @@ public class MonitoringServerControl implements ServerControl {
   }
 
   @Override
-  public void startWithoutWait() throws Exception {
+  public synchronized void startWithoutWait() throws Exception {
     serverControl.startWithoutWait();
     startMonitoring();
   }

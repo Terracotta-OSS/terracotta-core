@@ -158,7 +158,7 @@ public abstract class AbstractTestBase extends TCTestCase {
           testException.set(throwable);
         }
       }
-    });
+    }, "Test execution thread");
     testExecutionThread.setDaemon(true);
     testExecutionThread.start();
     testExecutionThread.join();
@@ -170,6 +170,7 @@ public abstract class AbstractTestBase extends TCTestCase {
     @Override
     public void run() {
       if (testExecutionThread != null) {
+        doDumpServerDetails();
         testExecutionThread.interrupt();
       }
     }
@@ -435,9 +436,5 @@ public abstract class AbstractTestBase extends TCTestCase {
 
   protected void stopClient(final int index) {
     this.clientRunner.stopClient(index);
-  }
-
-  protected void stopAllClients() {
-    clientRunner.stopAllClients();
   }
 }

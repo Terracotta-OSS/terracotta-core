@@ -147,7 +147,7 @@ public class GroupServerManager {
     return DEBUG_SERVER || Boolean.getBoolean(DEBUG_SERVER_PROPERTY + "." + debugPortOffset);
   }
 
-  private ServerControl getServerControl(int dsoPort, int jmxPort, String serverName, List<String> jvmArgs) {
+  private ServerControl getServerControl(final int dsoPort, final int jmxPort, final String serverName, List<String> jvmArgs) {
     File workingDir = new File(this.tempDir, serverName);
     workingDir.mkdirs();
     File verboseGcOutputFile = new File(workingDir, "verboseGC.log");
@@ -160,6 +160,7 @@ public class GroupServerManager {
                                          jvmArgs, javaHome, true, workingDir), new MonitoringServerControl.MonitoringServerControlExitCallback() {
       @Override
       public boolean onExit(final int exitCode) {
+        System.out.println("*** Server '" + serverName + "' with dso-port " + dsoPort + " exited unexpectedly. ***");
         testFailureCallback.run();
         return false;
       }
