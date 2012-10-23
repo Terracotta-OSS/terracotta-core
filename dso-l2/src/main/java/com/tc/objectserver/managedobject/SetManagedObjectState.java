@@ -34,13 +34,13 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
   SetManagedObjectState(long classID, ObjectID oid, PersistentObjectFactory objectFactory) {
     super(classID);
     this.oid = oid;
-    this.references = objectFactory.createMap(oid);
+    this.references = objectFactory.getMap(oid, true);
   }
 
   protected SetManagedObjectState(ObjectInput in, PersistentObjectFactory objectFactory) throws IOException {
     super(in);
     this.oid = new ObjectID(in.readLong());
-    this.references = objectFactory.getMap(oid);
+    this.references = objectFactory.getMap(oid, false);
   }
 
   public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo includeIDs) throws IOException {

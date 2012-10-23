@@ -13,23 +13,27 @@ import java.io.Serializable;
  * @author tim
  */
 public class PersistentObjectFactory {
-  private static final KeyValueStorageConfig<Serializable, Serializable> mapConfig = new ImmutableKeyValueStorageConfig<Serializable, Serializable>(Serializable.class, Serializable.class);
+  private static final KeyValueStorageConfig<Serializable, Serializable> MAP_CONFIG = new ImmutableKeyValueStorageConfig<Serializable, Serializable>(Serializable.class, Serializable.class);
 
-  private final StorageManager gbManager;
+  private final StorageManager storageManager;
 
-  public PersistentObjectFactory(final StorageManager gbManager) {
-    this.gbManager = gbManager;
+  public PersistentObjectFactory(final StorageManager storageManager) {
+    this.storageManager = storageManager;
   }
 
-  public KeyValueStorage<Object, Object> createMap(ObjectID objectID) {
-    return (KeyValueStorage) gbManager.createKeyValueStorage(objectID.toString(), mapConfig);
+  public synchronized KeyValueStorage<Object, Object> getMap(ObjectID objectID, final boolean create) {
+    KeyValueStorage map = storageManager.getKeyValueStorage(objectID.toString(), Serializable.class, Serializable.class);
+    if (map == null) {
+      if (create) {
+        map = (KeyValueStorage) storageManager.createKeyValueStorage(objectID.toString(), MAP_CONFIG);
+      } else {
+        throw new AssertionError("Map for object id " + objectID + " not found.");
+      }
+    }
+    return map;
   }
 
-  public KeyValueStorage<Object, Object> getMap(final ObjectID id) {
-    return (KeyValueStorage) gbManager.getKeyValueStorage(id.toString(), Serializable.class, Serializable.class);
-  }
-
-  public void destroyMap(ObjectID oid) {
-    gbManager.destroyKeyValueStorage(oid.toString());
+  public synchronized void destroyMap(ObjectID oid) {
+    storageManager.destroyKeyValueStorage(oid.toString());
   }
 }
