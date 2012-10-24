@@ -50,26 +50,45 @@ public final class JmxEhcacheRequestValidator extends AbstractEhcacheRequestVali
   protected void validateAgentSegment(List<PathSegment> pathSegments) {
     String ids = pathSegments.get(0).getMatrixParameters().getFirst("ids");
 
-    if (ids == null) {
-      throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
-          .entity(String.format("Only a single agent id can be used.")).build());
-    } else {
-      if (ids.split(",").length > 1) {
-        throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
-          .entity(String.format("Only a single agent id can be used.")).build());
-      }
-
-      try {
-        Set<String> nodes = tsaManagementClientService.getL1Nodes();
-        if (!nodes.contains(ids) && !AgentEntity.EMBEDDED_AGENT_ID.equals(ids)) {
-          throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
-              .entity(String.format("Agent ID must be in '%s'.", nodes)).build());
+    if (pathSegments.size() > 1 && pathSegments.get(1).getPath().equals("info")) {
+      if (ids != null) {
+        try {
+          Set<String> nodes = tsaManagementClientService.getL1Nodes();
+          String[] idsArray = ids.split("\\,");
+          for (String id : idsArray) {
+            if (!nodes.contains(id) && !AgentEntity.EMBEDDED_AGENT_ID.equals(id)) {
+              throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
+                  .entity(String.format("Agent ID must be in '%s' or '%s'.", nodes, AgentEntity.EMBEDDED_AGENT_ID)).build());
+            }
+          }
+        } catch (ServiceExecutionException see) {
+          throw new RuntimeException(see);
         }
-      } catch (ServiceExecutionException see) {
-        throw new RuntimeException(see);
-      }
 
-      setValidatedNode(ids);
+        setValidatedNode(ids);
+      }
+    } else {
+      if (ids == null) {
+        throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
+            .entity(String.format("Only a single agent id can be used.")).build());
+      } else {
+        if (ids.split(",").length > 1) {
+          throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
+              .entity(String.format("Only a single agent id can be used.")).build());
+        }
+
+        try {
+          Set<String> nodes = tsaManagementClientService.getL1Nodes();
+          if (!nodes.contains(ids) && !AgentEntity.EMBEDDED_AGENT_ID.equals(ids)) {
+            throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
+                .entity(String.format("Agent ID must be in '%s'.", nodes)).build());
+          }
+        } catch (ServiceExecutionException see) {
+          throw new RuntimeException(see);
+        }
+
+        setValidatedNode(ids);
+      }
     }
   }
 
