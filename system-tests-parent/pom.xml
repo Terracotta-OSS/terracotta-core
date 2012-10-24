@@ -26,16 +26,14 @@
     <terracotta.core.version>3.8.0-SNAPSHOT</terracotta.core.version>
     <tc.core.artifactId>terracotta</tc.core.artifactId>
     <ee.license/>
-    <productKeyPath>${user.home}/.tc/terracotta-license.key</productKeyPath>
+    <productKeyPath></productKeyPath>
     <container-test-framework.version>1.4.0-SNAPSHOT</container-test-framework.version>
-    <tc-maven-plugin.version>1.10.0-SNAPSHOT</tc-maven-plugin.version>
 
     <tc.tests.configuration.properties.file>${project.build.testOutputDirectory}/tc.tests.properties</tc.tests.configuration.properties.file>
     <tc.system.tests.properties>${project.build.testOutputDirectory}/com/tc/properties/tests.properties</tc.system.tests.properties>
 
-    <surefire.version>2.10</surefire.version>
+    <surefire.version>2.12.4</surefire.version>
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
-    <maven.project.version>2.0.9</maven.project.version>
     <cargo-maven2-plugin.version>1.0.3</cargo-maven2-plugin.version>
     <tc.linked-child-process.version>1.0.8</tc.linked-child-process.version>
     <maven-appserver-plugin.version>1.0.4</maven-appserver-plugin.version>
@@ -98,11 +96,6 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>${tc.core.artifactId}</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.test</groupId>
-      <artifactId>container-test-framework</artifactId>
-      <version>${container-test-framework.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
@@ -320,7 +313,6 @@
       </activation>
       <properties>
         <localMavenRepository>C:\DOCUME~1\${user.name}\.m2\repository</localMavenRepository>
-        <productKeyPath>C:\temp\tc\terracotta-license.key</productKeyPath>
       </properties>
     </profile>
 
@@ -389,11 +381,6 @@
                 <exclude>**/Abstract*.java</exclude>
               </excludes>
             </configuration>
-          </plugin>
-          <plugin>
-            <groupId>org.terracotta.maven.plugins</groupId>
-            <artifactId>tc-maven-plugin</artifactId>
-            <version>${tc-maven-plugin.version}</version>
           </plugin>
         </plugins>
       </build>
@@ -477,11 +464,6 @@
                 <include>**/${testGroup}/*Test.java</include>
               </includes>
             </configuration>
-          </plugin>
-          <plugin>
-            <groupId>org.terracotta.maven.plugins</groupId>
-            <artifactId>tc-maven-plugin</artifactId>
-            <version>${tc-maven-plugin.version}</version>
           </plugin>
         </plugins>
       </build>
