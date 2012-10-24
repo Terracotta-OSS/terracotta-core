@@ -20,6 +20,7 @@
   <name>toolkit-system-tests</name>
 
   <properties>
+    <group>dso2</group>
     <checkstyle-suppressions-file>${basedir}/../checkstyle-toolkit/suppressions.xml</checkstyle-suppressions-file>
   </properties>
 
