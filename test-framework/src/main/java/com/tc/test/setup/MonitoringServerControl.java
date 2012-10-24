@@ -93,6 +93,9 @@ public class MonitoringServerControl implements ServerControl {
           while (exitCallback.onExit(serverControl.waitFor())) {
             serverControl.start();
           }
+          monitoringThread = null;
+        } catch (InterruptedException e) {
+          // Ignore interrupted exception, it comes on shutdown.
         } catch (Exception e) {
           e.printStackTrace();
         }

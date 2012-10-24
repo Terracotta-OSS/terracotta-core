@@ -160,8 +160,10 @@ public class GroupServerManager {
                                          jvmArgs, javaHome, true, workingDir), new MonitoringServerControl.MonitoringServerControlExitCallback() {
       @Override
       public boolean onExit(final int exitCode) {
-        System.out.println("*** Server '" + serverName + "' with dso-port " + dsoPort + " exited unexpectedly. ***");
-        testFailureCallback.run();
+        System.out.println("*** Server '" + serverName + "' with dso-port " + dsoPort + " exited unexpectedly with exit code " + exitCode +". ***");
+        if (!testConfig.getCrashConfig().shouldIgnoreUnexpectedL2Crash()) {
+          testFailureCallback.run();
+        }
         return false;
       }
     });
