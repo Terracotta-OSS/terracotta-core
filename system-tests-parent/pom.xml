@@ -188,6 +188,9 @@
                 <workingDirectory>${project.build.directory}</workingDirectory>
                 <__TC_skipToolkitResolve>true</__TC_skipToolkitResolve>
                 <argLine>${surefire.argLine}</argLine>
+                <excludes>
+                  <exclude>**/Abstract*.java</exclude>
+                </excludes>
               </configuration>
             </execution>
             <execution>
