@@ -147,6 +147,7 @@ public abstract class AbstractMapApiTestClientUtil extends ClientBase {
       if (clientIndex == 0) {
         putValues(START_INDEX, MID_INDEX, methodName);
       }
+      waitForAllClientsToReachHere();
       Assert.assertTrue(values.containsAll(getArrayListForRange(START_INDEX, END_INDEX, VALUES)));
       waitForAllClientsToReachHere();
       if (clientIndex == 1) {
