@@ -14,8 +14,6 @@ public class WaitForAllCurrentTransactionsToCompleteTest extends AbstractToolkit
     super(testConfig, WaitForAllCurrentTransactionsToCompleteTestApp.class,
           WaitForAllCurrentTransactionsToCompleteTestApp.class, WaitForAllCurrentTransactionsToCompleteTestApp.class,
           WaitForAllCurrentTransactionsToCompleteTestApp.class);
-
-    timebombTest("2012-10-30");
   }
 
 }
