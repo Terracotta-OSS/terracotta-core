@@ -30,6 +30,17 @@ public class ServerMapEvictionContext implements EventContext {
     this.className = className;
     this.cacheName = cacheName;
   }
+  
+   public ServerMapEvictionContext(final ObjectID oid, final Map samples, final String className, final String cacheName) {
+    this.oid = oid;
+    this.targetMaxTotalCount = 0;
+    this.tti = 0;
+    this.ttl = 0;
+    this.samples = samples;
+    this.overshoot = 0;
+    this.className = className;
+    this.cacheName = cacheName;
+  } 
 
   public ObjectID getOid() {
     return this.oid;

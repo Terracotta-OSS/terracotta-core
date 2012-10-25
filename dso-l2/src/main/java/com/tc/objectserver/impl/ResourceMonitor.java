@@ -21,7 +21,6 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
 
   private final List            listeners     = new CopyOnWriteArrayList();
 
-  private final int             leastCount;
   private final long            sleepInterval;
 
   private MemoryMonitor             monitor;
@@ -29,20 +28,17 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
 
   private final TCThreadGroup   threadGroup;
 
-  public ResourceMonitor(MonitoredResource rsrc, long sleepInterval, int leastCount,  TCThreadGroup threadGroup) {
+  public ResourceMonitor(MonitoredResource rsrc, long maxSleepTime, TCThreadGroup threadGroup) {
     this.threadGroup = threadGroup;
-    verifyInput(sleepInterval, leastCount);
-    this.leastCount = leastCount;
-    this.sleepInterval = sleepInterval;
+    this.sleepInterval = maxSleepTime;
     this.resource = rsrc;
   }
 
-  private void verifyInput(long sleep, int lc) {
-    if (sleep <= 0) { throw new AssertionError("Sleep Interval cannot be <= 0 : sleep Interval = " + sleep); }
-    if (lc <= 0 || lc >= 100) { throw new AssertionError("Least Count should be > 0 && < 100 : " + lc
-                                                         + " Outside range"); }
-  }
 
+  public MonitoredResource getMonitoredResource() {
+      return resource;
+  }
+  
   public void registerForMemoryEvents(MemoryEventsListener listener) {
     listeners.add(listener);
     startMonitorIfNecessary();
@@ -89,7 +85,6 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
   public class MemoryMonitor implements Runnable {
 
     private volatile boolean       run = true;
-    private int                    lastUsed;
     private long                   sleepTime;
 
     public MemoryMonitor(long sleepInterval) {
@@ -109,9 +104,26 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
           final long thisCount = counter++;
           
           MemoryUsage mu = new MemoryUsage() {
+              long cacheMax = -1;
+              long cacheUsed = -1;
+              
+              private long checkUsed() {
+                  if ( cacheUsed < 0 ) {
+                      cacheUsed = resource.getUsed();
+                  }
+                  return cacheUsed;
+              }
+              
+              private long checkMax() {
+                  if ( cacheMax < 0 ) {
+                      cacheMax = resource.getTotal();
+                  }
+                  return cacheMax;
+              }              
+              
                 @Override
                 public long getFreeMemory() {
-                    return resource.getTotal() - resource.getReserved();
+                    return checkMax() - checkUsed();
                 }
 
                 @Override
@@ -121,18 +133,18 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
 
                 @Override
                 public long getMaxMemory() {
-                    return resource.getTotal();
+                    return checkMax();
                 }
 
                 @Override
                 public long getUsedMemory() {
-                    return resource.getReserved();
+                    return checkUsed();
                 }
 
                 @Override
                 public int getUsedPercentage() {
-                    float num = resource.getUsed();
-                    float denom = resource.getTotal();
+                    float num = checkUsed();
+                    float denom = checkMax();
                     return Math.round((num/denom)*100f);
                 }
 
@@ -161,24 +173,8 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
     }
 
     private void adjust(MemoryUsage mu) {
-      int usedPercentage = mu.getUsedPercentage();
-      try {
-        if (lastUsed != 0 && lastUsed < usedPercentage) {
-          int diff = usedPercentage - lastUsed;
-          long l_sleep = this.sleepTime;
-          if (diff > leastCount * 1.5 && l_sleep > 1) {
-            // decrease sleep time
-            this.sleepTime = Math.max(1, l_sleep * leastCount / diff);
-            logger.info("Sleep time changed to : " + this.sleepTime);
-          } else if (diff < leastCount * 0.5 && l_sleep < sleepInterval) {
-            // increase sleep time
-            this.sleepTime = Math.min(sleepInterval, l_sleep * leastCount / diff);
-            logger.info("Sleep time changed to : " + this.sleepTime);
-          }
-        }
-      } finally {
-        lastUsed = usedPercentage;
-      }
+      int remove = Math.round(sleepInterval * (mu.getUsedMemory()*1f / mu.getMaxMemory()));
+      sleepTime = sleepInterval - remove;
     }
   }
 

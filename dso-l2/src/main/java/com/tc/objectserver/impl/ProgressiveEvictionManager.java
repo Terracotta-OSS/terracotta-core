@@ -23,7 +23,11 @@ import com.tc.runtime.MemoryEventsListener;
 import com.tc.runtime.MemoryUsage;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import org.terracotta.corestorage.monitoring.MonitoredResource;
 
 /**
@@ -37,82 +41,19 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
     private final ResourceMonitor trigger;
     private final PersistentManagedObjectStore store;
     private final ObjectManager  objectManager;
-    private static final int EVICT_NOW_TTL_TTI = 0;
-//    private final ClientObjectReferenceSet clientObjectReferenceSet = new ClientObjectReferenceSet(new ClientStateManager() {
-//
-//        @Override
-//        public boolean startupNode(NodeID nodeID) {
-//            throw new UnsupportedOperationException("Not supported yet.");
-//        }
-//
-//        @Override
-//        public void shutdownNode(NodeID deadNode) {
-//            throw new UnsupportedOperationException("Not supported yet.");
-//        }
-//
-//        @Override
-//        public void addReference(NodeID nodeID, ObjectID objectID) {
-//            throw new UnsupportedOperationException("Not supported yet.");
-//        }
-//
-//        @Override
-//        public void removeReferences(NodeID nodeID, Set<ObjectID> removed, Set<ObjectID> requested) {
-//            throw new UnsupportedOperationException("Not supported yet.");
-//        }
-//
-//        @Override
-//        public boolean hasReference(NodeID nodeID, ObjectID objectID) {
-//            throw new UnsupportedOperationException("Not supported yet.");
-//        }
-//
-//        @Override
-//        public List<DNA> createPrunedChangesAndAddObjectIDTo(Collection<DNA> changes, ApplyTransactionInfo references, NodeID clientID, Set<ObjectID> objectIDs, Invalidations invalidationsForClient) {
-//            throw new UnsupportedOperationException("Not supported yet.");
-//        }
-//
-//        @Override
-//        public Set<ObjectID> addAllReferencedIdsTo(Set<ObjectID> rescueIds) {
-//            return rescueIds;
-//        }
-//
-//        @Override
-//        public void removeReferencedFrom(NodeID nodeID, Set<ObjectID> secondPass) {
-//            throw new UnsupportedOperationException("Not supported yet.");
-//        }
-//
-//        @Override
-//        public Set<ObjectID> addReferences(NodeID nodeID, Set<ObjectID> oids) {
-//            throw new UnsupportedOperationException("Not supported yet.");
-//        }
-//
-//        @Override
-//        public int getReferenceCount(NodeID nodeID) {
-//            throw new UnsupportedOperationException("Not supported yet.");
-//        }
-//
-//        @Override
-//        public Set<NodeID> getConnectedClientIDs() {
-//            throw new UnsupportedOperationException("Not supported yet.");
-//        }
-//
-//        @Override
-//        public void registerObjectReferenceAddListener(ObjectReferenceAddListener listener) {
-//        }
-//
-//        @Override
-//        public void unregisterObjectReferenceAddListener(ObjectReferenceAddListener listener) {
-//        }
-//    });
-    
     private final ClientObjectReferenceSet clientObjectReferenceSet;
+    private static final long SLEEP_TIME = 1000 * 60;
+    private long lastEmergency = 0;
   private Sink                                evictorSink;
+  private final Timer                               expiry = new Timer("Expiry Timer", true);
+  private final Set<ObjectID>                         expirySet = new ObjectIDSet();
   
     public ProgressiveEvictionManager(ObjectManager mgr, MonitoredResource monitored, PersistentManagedObjectStore store, ClientObjectReferenceSet clients, ServerTransactionFactory trans, TCThreadGroup grp) {
         this.objectManager = mgr;
         this.store = store;
         this.clientObjectReferenceSet = clients;
         this.evictor = new ServerMapEvictionManagerImpl(mgr, store, clients, trans,1000 * 60 * 60 * 24); //  periodic is once a day
-        this.trigger = new ResourceMonitor(monitored, 1000 * 10 *1 /*  10 sec initial sleep time */, 10 /* 10% change is happy place */ , grp);
+        this.trigger = new ResourceMonitor(monitored, SLEEP_TIME , grp);
     }
     
     
@@ -127,6 +68,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
     public void startEvictor() {
         evictor.startEvictor();
         trigger.registerForMemoryEvents(new Responder());
+        runEvictor();
     }
 
     @Override
@@ -137,42 +79,47 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
       doEvictionOn(mapID, true);
     }
   }
-
+/*
+ * return of false means the map is gone
+ */
 
     @Override
-    public void doEvictionOn(ObjectID oid, boolean periodicEvictorRun) {
-    
-    final ManagedObject mo = this.objectManager.getObjectByIDOrNull(oid);
-    ServerMapEvictionContext context = null;
-    if (mo == null) { return; }
-    
-    evictor.markEvictionInProgress(oid);
-    final ManagedObjectState state = mo.getManagedObjectState();
-    final String className = state.getClassName();
+    public boolean doEvictionOn(ObjectID oid, boolean periodicEvictorRun) {
+        if ( !evictor.markEvictionInProgress(oid) ) {
+            return true;
+        }
+        final ManagedObject mo = this.objectManager.getObjectByIDOrNull(oid);
+        ServerMapEvictionContext context = null;
+        EvictableMap ev = null;
+        if (mo == null) { return false; }
+        try {
+            final ManagedObjectState state = mo.getManagedObjectState();
+            final String className = state.getClassName();
 
-    EvictableMap ev = null;
-    try {
-      ev = getEvictableMapFrom(mo.getID(), state);
-      context = doEviction(oid, ev, className, ev.getCacheName());
-    } finally {
-      if (context == null) {
-        ev.evictionCompleted();
-        this.objectManager.releaseReadOnly(mo);
-      } else {
-        // Reason for releasing the checked-out object before adding the context to the sink is that we can block on add
-        // to the sink because the sink reached max capacity and blocking
-        // with a checked-out object will result in a deadlock. @see DEV-5207
-        this.objectManager.releaseReadOnly(mo);
-        this.evictorSink.add(context);
-      }
-      evictor.markEvictionDone(oid);
+          ev = getEvictableMapFrom(mo.getID(), state);
+          context = doEviction(oid, ev, className, ev.getCacheName(),periodicEvictorRun);
+        } finally {
+          if (context == null) {
+            ev.evictionCompleted();
+            this.objectManager.releaseReadOnly(mo);
+          } else {
+            // Reason for releasing the checked-out object before adding the context to the sink is that we can block on add
+            // to the sink because the sink reached max capacity and blocking
+            // with a checked-out object will result in a deadlock. @see DEV-5207
+            this.objectManager.releaseReadOnly(mo);
+            this.evictorSink.add(context);
+          }
+          evictor.markEvictionDone(oid);
+        }
+        return true;
     }
-    }
-    
+        
     private int calculateSampleCount(EvictableMap ev,boolean emergency) {
         int samples = ev.getMaxTotalCount();
         samples = ( emergency ) ? samples/50:samples/10;
-        if ( samples < 100 ) {
+        if ( samples == 0 ) { // zero has special meaning, it's either pinned or a store
+            return 0;
+        } else if ( samples < 100 ) {
             samples = 100;
         } else if ( samples > 10000 ) {
             samples = 10000;
@@ -180,61 +127,100 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
         return samples;
     }
     
-      /**
-   * Collects random samples and initiates eviction
-   * 
-   * @return true, if eviction is initiated, false otherwise
-   */
+    private void scheduleExpiry(final ObjectID oid,final int ttl,final int tti) {
+        synchronized ( expirySet ) {
+            if ( !expirySet.contains(oid) ) {
+                expirySet.add(oid);
+                expiry.schedule(new TimerTask() {
+
+                      @Override
+                      public void run() {
+                          if ( doEvictionOn(oid, true) ) {
+                              expiry.schedule(this, (ttl < tti ? ttl : tti) * 1000);
+                          }
+                          expirySet.remove(oid);
+                      }
+
+                    },(ttl < tti ? ttl : tti) * 1000);
+            }
+        }
+    }
+    
   private ServerMapEvictionContext doEviction(final ObjectID oid, final EvictableMap ev,
                                               final String className,
-                                              final String cacheName) {
-    final int targetMaxTotalCount = ev.getMaxTotalCount();
+                                              final String cacheName,boolean periodic) {
     final int currentSize = ev.getSize();
+    
     if (currentSize == 0) {
       return null;
     }
 
+    final int sampleCount = ( periodic ) ? calculateSampleCount(ev,false) : currentSize - ev.getMaxTotalCount();
+    
+    if ( sampleCount <= 0 ) {
+        return null;
+    }
+    
     final int ttl = ev.getTTLSeconds();
     final int tti = ev.getTTISeconds();
 
-    final Map samples = ev.getRandomSamples(calculateSampleCount(ev,false), clientObjectReferenceSet);
+    scheduleExpiry(oid,ttl,tti);
+
+    Map samples = ev.getRandomSamples(sampleCount, clientObjectReferenceSet);
 
     if (samples.isEmpty()) {
       return null;
     } else {
-      return new ServerMapEvictionContext(oid, targetMaxTotalCount, tti, ttl, samples, samples.size(), className, cacheName);
+       samples = evictor.filter(oid, samples, tti, ttl, sampleCount, cacheName, !periodic);
+      return new ServerMapEvictionContext(oid, samples, className, cacheName);
     }
   }
   
   void emergencyEviction() {
     final ObjectIDSet evictableObjects = store.getAllEvictableObjectIDs();
-    
-    for (final ObjectID mapID : evictableObjects) {
-      if ( emergencyEviction(mapID) > 0 ) {
-          // do nothing
-      }; 
+    boolean handled = false;
+    boolean blowout = ( lastEmergency> 0 && lastEmergency - System.currentTimeMillis() < SLEEP_TIME );  // if the last emergency is less than the default sleep time, blow it out
+    while ( !handled ) {
+        for (final ObjectID mapID : evictableObjects) {
+          if ( emergencyEviction(mapID,blowout) > 0 || blowout ) {
+              handled = true;
+          }; 
+        }
+        blowout = true;
     }
+    lastEmergency = System.currentTimeMillis();
   }
   
-  int emergencyEviction(final ObjectID oid) {
+  int emergencyEviction(final ObjectID oid, boolean blowout) {
      final ManagedObject mo = this.objectManager.getObjectByIDOrNull(oid);
    EvictableMap ev = null;
    Map samples = null; 
    String cacheName = null;
    String className = null;
    try {
-       objectManager.start();
         final ManagedObjectState state = mo.getManagedObjectState();
         className = state.getClassName();
 
         ev = getEvictableMapFrom(mo.getID(), state);
+
+        int overshoot =  ev.getSize() - ev.getMaxTotalCount();
+        int sampleCount = calculateSampleCount(ev, blowout);
+        
+        if ( sampleCount == 0 ) {
+            return 0;
+        }
+
+        if ( overshoot > sampleCount ) {
+            sampleCount = overshoot;
+        }
+                
         cacheName = ev.getCacheName();
 
-        samples = ev.getRandomSamples(calculateSampleCount(ev, true), clientObjectReferenceSet);
+        samples = ev.getRandomSamples(sampleCount, clientObjectReferenceSet);
         if ( samples == null || samples.isEmpty() ) {
             return 0;
         }
-        samples = evictor.filter(oid, samples, ev.getTTISeconds(), ev.getTTLSeconds(), ev.getMaxTotalCount(), cacheName, true);
+        samples = evictor.filter(oid, samples, ev.getTTISeconds(), ev.getTTLSeconds(), sampleCount, cacheName, blowout);
     } finally {
       ev.evictionCompleted();
       this.objectManager.releaseReadOnly(mo);
@@ -259,11 +245,10 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
   }
   
     @Override
-    public void evict(ObjectID oid, Map samples, int targetMaxTotalCount, int ttiSeconds, int ttlSeconds, int overshoot, String className, String cacheName) {
-        samples = evictor.filter(oid, samples, ttiSeconds, ttlSeconds, overshoot, cacheName, false);
+    public void evict(ObjectID oid, Map samples, String className, String cacheName) {
         evictor.evictFrom(oid, samples, className, cacheName);
         if ( evictor.isLogging() &&!samples.isEmpty() ) {
-            log("evicted: " + samples.size());
+            log("Evicted: " + samples.size() + " from: " + className + "/" + cacheName);
         }
     }
 
