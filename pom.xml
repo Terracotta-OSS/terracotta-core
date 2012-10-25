@@ -29,9 +29,7 @@
     <module>dso-statistics-api</module>
     <module>dso-l1-api</module>
     <module>dso-common</module>
-    <module>management</module>
-    <module>management-tsa-impl</module>
-    <module>dso-l2-common</module> 
+    <module>dso-l2-common</module>
     <module>dso-statistics</module>
     <module>dso-l1</module>
     <module>dso-l2</module>
@@ -54,6 +52,10 @@
     <module>toolkit-express-impl</module>
     <module>toolkit-runtime</module>
     <module>toolkit-system-tests</module>
+
+    <module>management</module>
+    <module>management-tsa-impl</module>
+    <module>management-system-tests</module>
   </modules>
   
   <profiles>

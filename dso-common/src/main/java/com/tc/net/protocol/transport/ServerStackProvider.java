@@ -93,6 +93,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     }
   }
 
+  @Override
   public MessageTransport attachNewConnection(ConnectionID connectionId, TCConnection connection)
       throws StackNotFoundException, IllegalReconnectException {
     Assert.assertNotNull(connection);
@@ -136,6 +137,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
 
   private TransportHandshakeErrorHandler createHandshakeErrorHandler() {
     return new TransportHandshakeErrorHandler() {
+      @Override
       public void handleHandshakeError(TransportHandshakeErrorContext thec) {
         logger.info(thec.getMessage());
       }
@@ -149,6 +151,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   /*********************************************************************************************************************
    * MessageTransportListener methods.
    */
+  @Override
   public void notifyTransportConnected(MessageTransport transport) {
     // don't care
   }
@@ -156,6 +159,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   /**
    * A client disconnected.
    */
+  @Override
   public void notifyTransportDisconnected(MessageTransport transport, final boolean forcedDisconnect) {
     /*
      * Even for temporary disconnects, we need to keep proper accounting. Otherwise, the same client reconnect may fail.
@@ -170,6 +174,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
                                                         + connectionId); }
   }
 
+  @Override
   public void notifyTransportConnectAttempt(MessageTransport transport) {
     // don't care
   }
@@ -178,12 +183,14 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
    * The connection was closed. The client is never allowed to reconnect. Removes stack associated with the given
    * transport from the map of managed stacks.
    */
+  @Override
   public void notifyTransportClosed(MessageTransport transport) {
     close(transport.getConnectionId());
     if (!transport.getConnectionId().isJvmIDNull()) this.connectionPolicy.clientDisconnected(transport
         .getConnectionId());
   }
 
+  @Override
   public void notifyTransportReconnectionRejected(MessageTransport transport) {
     // NOP
   }
@@ -192,6 +199,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
    * ProtocolAdaptorFactory interface
    */
 
+  @Override
   public TCProtocolAdaptor getInstance() {
     if (wireProtoMsgsink != null) {
       return this.wireProtocolAdaptorFactory.newWireProtocolAdaptor(wireProtoMsgsink);
@@ -217,6 +225,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
       this.commsManagerName = commsMgrName;
     }
 
+    @Override
     public void putMessage(WireProtocolMessage message) {
       if (!isSynReceived) {
         synchronized (this) {
@@ -289,7 +298,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
        */
       licenseLock.lock();
       try {
-        if (connectionId.isNewConnection() && connectionPolicy.isMaxConnectionsReached()) {
+        if (connectionId.isNewConnection() && !connectionPolicy.isConnectAllowed(connectionId)) {
           isMaxConnectionReached = true;
           this.transport = messageTransportFactory.createNewTransport(connectionId, syn.getSource(),
                                                                       createHandshakeErrorHandler(),

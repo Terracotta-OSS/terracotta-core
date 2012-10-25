@@ -88,5 +88,8 @@ public class ConnectionPolicyTest extends TestCase {
 
     boolean client11 = policy.connectClient(new ConnectionID("jvm11", 11));
     Assert.assertFalse(client11);
+
+    client11 = policy.isConnectAllowed(new ConnectionID("jvm11", 11));
+    Assert.assertFalse(client11);
   }
 }

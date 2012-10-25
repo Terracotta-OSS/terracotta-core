@@ -20,7 +20,6 @@
   <properties>
     <ehcache.version>2.7.0-SNAPSHOT</ehcache.version>
     <quartz.version>3.0.0-SNAPSHOT</quartz.version>
-    <management-tsa.version>1.1.0-SNAPSHOT</management-tsa.version>
     <toolkit-api.version>2.0-SNAPSHOT</toolkit-api.version>
 
     <skip.deploy>true</skip.deploy>
@@ -295,7 +294,7 @@
                       <dependency>
                         <groupId>org.terracotta</groupId>
                         <artifactId>management-tsa-impl</artifactId>
-                        <version>${management-tsa.version}</version>
+                        <version>${project.version}</version>
                         <type>war</type>
                       </dependency>
                       <dependenciesAtM2>true</dependenciesAtM2>
