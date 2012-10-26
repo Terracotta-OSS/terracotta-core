@@ -121,8 +121,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
             return 0;
         } else if ( samples < 100 ) {
             samples = 100;
-        } else if ( samples > 10000 ) {
-            samples = 10000;
+        } else if ( samples > 1000000 ) {
+            samples = 1000000;
         }
         return samples;
     }
@@ -135,10 +135,11 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
 
                       @Override
                       public void run() {
-                          if ( doEvictionOn(oid, true) ) {
-                              expiry.schedule(this, (ttl < tti ? ttl : tti) * 1000);
-                          }
+                          boolean exists = doEvictionOn(oid, true);
                           expirySet.remove(oid);
+                          if ( exists ) {
+                              scheduleExpiry(oid, ttl, tti);
+                          }
                       }
 
                     },(ttl < tti ? ttl : tti) * 1000);

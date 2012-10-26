@@ -59,12 +59,12 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     LOGGER.info("Eviction overshoot threshold is " + OVERSHOOT);
   }
 
-  enum EvictionStatus {
-    NOT_INITIATED, INITIATED, SAMPLED
-  }
+//  enum EvictionStatus {
+//    NOT_INITIATED, INITIATED, SAMPLED
+//  }
 
   // This is a transient field tracking the status of the eviction for this CDSM
-  private EvictionStatus evictionStatus = EvictionStatus.NOT_INITIATED;
+//  private EvictionStatus evictionStatus = EvictionStatus.NOT_INITIATED;
 
   private boolean        invalidateOnChange;
   private int            maxTTISeconds;
@@ -229,9 +229,9 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         super.applyMethod(objectID, applyInfo, method, params);
     }
     if (applyInfo.isActiveTxn() && method == SerializationUtil.PUT && this.targetMaxTotalCount > 0
-        && this.evictionStatus == EvictionStatus.NOT_INITIATED
+//        && this.evictionStatus == EvictionStatus.NOT_INITIATED
         && this.references.size() > this.targetMaxTotalCount * (1D + (OVERSHOOT / 100D))) {
-      this.evictionStatus = EvictionStatus.INITIATED;
+//      this.evictionStatus = EvictionStatus.INITIATED;
       applyInfo.initiateEvictionFor(objectID);
     }
   }
@@ -382,19 +382,19 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
   @Override
   public void evictionCompleted() {
-    this.evictionStatus = EvictionStatus.NOT_INITIATED;
+//    this.evictionStatus = EvictionStatus.NOT_INITIATED;
   }
 
   // TODO:: This implementation could be better, could use LinkedHashMap to increase the chances of getting the
   // right samples, also should it return a sorted Map ? Are objects with lower OIDs having more changes to be evicted ?
   @Override
   public Map getRandomSamples(final int count, final ClientObjectReferenceSet serverMapEvictionClientObjectRefSet) {
-    if (evictionStatus == EvictionStatus.SAMPLED) {
-      // There is already a random sample that is yet to be processed, so returning empty collection. This can happen if
-      // both period and capacity Evictors are working at the same object one after the other.
-      return Collections.EMPTY_MAP;
-    }
-    this.evictionStatus = EvictionStatus.SAMPLED;
+//    if (evictionStatus == EvictionStatus.SAMPLED) {
+//      // There is already a random sample that is yet to be processed, so returning empty collection. This can happen if
+//      // both period and capacity Evictors are working at the same object one after the other.
+//      return Collections.EMPTY_MAP;
+//    }
+//    this.evictionStatus = EvictionStatus.SAMPLED;
     final Map samples = new HashMap(count);
     final Set<Object> ignored = new HashSet<Object>(count);
     final Random r = new Random();
@@ -435,7 +435,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     final int prime = 31;
     int result = super.hashCode();
     result = prime * result + ((cacheName == null) ? 0 : cacheName.hashCode());
-    result = prime * result + ((evictionStatus == null) ? 0 : evictionStatus.hashCode());
+//    result = prime * result + ((evictionStatus == null) ? 0 : evictionStatus.hashCode());
     result = prime * result + (invalidateOnChange ? 1231 : 1237);
     result = prime * result + (localCacheEnabled ? 1231 : 1237);
     result = prime * result + maxTTISeconds;
