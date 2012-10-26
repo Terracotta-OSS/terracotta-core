@@ -91,8 +91,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
         final ManagedObject mo = this.objectManager.getObjectByIDOrNull(oid);
         ServerMapEvictionContext context = null;
         EvictableMap ev = null;
-        if (mo == null) { return false; }
         try {
+            if (mo == null) { return false; }
             final ManagedObjectState state = mo.getManagedObjectState();
             final String className = state.getClassName();
 
@@ -142,7 +142,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
                           }
                       }
 
-                    },(ttl < tti ? ttl : tti) * 1000);
+                    },(ttl < tti ? ttl : tti) * 1000 * 2);
             }
         }
     }
@@ -162,6 +162,10 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
         return null;
     }
     
+    if ( !ev.startEviction() ) {
+        return null;
+    }
+    
     final int ttl = ev.getTTLSeconds();
     final int tti = ev.getTTISeconds();
 
@@ -170,6 +174,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
     Map samples = ev.getRandomSamples(sampleCount, clientObjectReferenceSet);
 
     if (samples.isEmpty()) {
+        ev.evictionCompleted();
       return null;
     } else {
        samples = evictor.filter(oid, samples, tti, ttl, sampleCount, cacheName, !periodic);
@@ -193,6 +198,9 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
   }
   
   int emergencyEviction(final ObjectID oid, boolean blowout) {
+      if ( !evictor.markEvictionInProgress(oid) ) {
+            return 0;
+        }
      final ManagedObject mo = this.objectManager.getObjectByIDOrNull(oid);
    EvictableMap ev = null;
    Map samples = null; 
@@ -211,6 +219,10 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
             return 0;
         }
 
+        if ( ev.startEviction() ) {
+            return 0;
+        }
+
         if ( overshoot > sampleCount ) {
             sampleCount = overshoot;
         }
@@ -219,12 +231,13 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
 
         samples = ev.getRandomSamples(sampleCount, clientObjectReferenceSet);
         if ( samples == null || samples.isEmpty() ) {
+            ev.evictionCompleted();
             return 0;
         }
         samples = evictor.filter(oid, samples, ev.getTTISeconds(), ev.getTTLSeconds(), sampleCount, cacheName, blowout);
     } finally {
-      ev.evictionCompleted();
       this.objectManager.releaseReadOnly(mo);
+      evictor.markEvictionDone(oid);
     }
     evictor.evictFrom(oid, samples, className, cacheName);
     if ( evictor.isLogging() && !samples.isEmpty() ) {
@@ -269,7 +282,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
                     log("Percent usage:" + percent + " time:" + ((current-last)/1000) + " sec");
                 }
                 last = current;
-                if ( percent > 80 ) {
+                if ( percent > 90 ) {
                     emergencyEviction();
                 } else if ( percent > 10 ) {  /*  at 10% usage, run the evictor */
                     runEvictor();

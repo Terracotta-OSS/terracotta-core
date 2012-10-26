@@ -59,12 +59,12 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     LOGGER.info("Eviction overshoot threshold is " + OVERSHOOT);
   }
 
-//  enum EvictionStatus {
-//    NOT_INITIATED, INITIATED, SAMPLED
-//  }
+  enum EvictionStatus {
+    NOT_INITIATED, INITIATED, SAMPLED
+  }
 
   // This is a transient field tracking the status of the eviction for this CDSM
-//  private EvictionStatus evictionStatus = EvictionStatus.NOT_INITIATED;
+  private EvictionStatus evictionStatus = EvictionStatus.NOT_INITIATED;
 
   private boolean        invalidateOnChange;
   private int            maxTTISeconds;
@@ -229,10 +229,10 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         super.applyMethod(objectID, applyInfo, method, params);
     }
     if (applyInfo.isActiveTxn() && method == SerializationUtil.PUT && this.targetMaxTotalCount > 0
-//        && this.evictionStatus == EvictionStatus.NOT_INITIATED
         && this.references.size() > this.targetMaxTotalCount * (1D + (OVERSHOOT / 100D))) {
-//      this.evictionStatus = EvictionStatus.INITIATED;
-      applyInfo.initiateEvictionFor(objectID);
+        if ( startEviction() ) {
+          applyInfo.initiateEvictionFor(objectID);
+        }
     }
   }
 
@@ -379,10 +379,19 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   public int getTTLSeconds() {
     return this.maxTTLSeconds;
   }
-
+ //  locked by ManagedObject checkout 
+  @Override
+  public boolean startEviction() {
+    if ( this.evictionStatus != EvictionStatus.NOT_INITIATED ) {
+        return false;
+    }
+    this.evictionStatus = EvictionStatus.INITIATED;
+    return true;
+  }    
+ //  locked by ManagedObject checkout 
   @Override
   public void evictionCompleted() {
-//    this.evictionStatus = EvictionStatus.NOT_INITIATED;
+    this.evictionStatus = EvictionStatus.NOT_INITIATED;
   }
 
   // TODO:: This implementation could be better, could use LinkedHashMap to increase the chances of getting the
@@ -395,6 +404,12 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 //      return Collections.EMPTY_MAP;
 //    }
 //    this.evictionStatus = EvictionStatus.SAMPLED;
+      if ( this.evictionStatus != EvictionStatus.INITIATED ) {
+          throw new AssertionError("not evicting");
+      } else {
+ //     it's locked.  go for it
+        this.evictionStatus = EvictionStatus.SAMPLED;
+      }
     final Map samples = new HashMap(count);
     final Set<Object> ignored = new HashSet<Object>(count);
     final Random r = new Random();

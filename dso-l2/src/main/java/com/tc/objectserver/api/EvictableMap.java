@@ -19,6 +19,8 @@ public interface EvictableMap {
 
   public Map getRandomSamples(int count, ClientObjectReferenceSet serverMapEvictionClientObjectRefSet);
 
+  public boolean startEviction();
+
   public void evictionCompleted();
 
   public String getCacheName();

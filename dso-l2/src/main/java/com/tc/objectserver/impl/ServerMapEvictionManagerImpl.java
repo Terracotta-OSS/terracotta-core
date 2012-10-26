@@ -347,26 +347,30 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     if (EVICTOR_LOGGING) {
       logger.info("Server Map Eviction  : Evicting " + oid + " [" + cacheName + "] Candidates : " + candidates.size());
     }
-    if ( candidates.isEmpty() ) {
-      broadcastEvictedEntries(oid, candidates);
-      return;
-    } 
     
-    final NodeID localNodeID = this.groupManager.getLocalNodeID();
-    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
-    final ServerTransaction txn = this.serverTransactionFactory.createServerMapEvictionTransactionFor(localNodeID, oid,
-                                                                                                      className,
-                                                                                                      candidates,
-                                                                                                      serializer,
-                                                                                                      cacheName);
-    final TransactionBatchContext batchContext = new ServerMapEvictionTransactionBatchContext(localNodeID, txn,
-                                                                                              serializer);
-    this.transactionBatchManager.processTransactions(batchContext);
+    try {
+        if ( candidates.isEmpty() ) {
+          broadcastEvictedEntries(oid, candidates);
+          return;
+        } 
 
-    if (EVICTOR_LOGGING) {
-      logger.info("Server Map Eviction  : Evicted " + candidates.size() + " from " + oid + " [" + cacheName + "]");
+        final NodeID localNodeID = this.groupManager.getLocalNodeID();
+        final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
+        final ServerTransaction txn = this.serverTransactionFactory.createServerMapEvictionTransactionFor(localNodeID, oid,
+                                                                                                          className,
+                                                                                                          candidates,
+                                                                                                          serializer,
+                                                                                                          cacheName);
+        final TransactionBatchContext batchContext = new ServerMapEvictionTransactionBatchContext(localNodeID, txn,
+                                                                                                  serializer);
+        this.transactionBatchManager.processTransactions(batchContext);
+
+        if (EVICTOR_LOGGING) {
+          logger.info("Server Map Eviction  : Evicted " + candidates.size() + " from " + oid + " [" + cacheName + "]");
+        }
+    } finally {
+        notifyEvictionCompletedFor(oid);
     }
-    notifyEvictionCompletedFor(oid);
   }
 
   /**
