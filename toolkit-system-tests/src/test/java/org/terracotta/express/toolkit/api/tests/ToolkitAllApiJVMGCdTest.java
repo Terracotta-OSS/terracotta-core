@@ -11,7 +11,5 @@ public class ToolkitAllApiJVMGCdTest extends AbstractToolkitTestBase {
 
   public ToolkitAllApiJVMGCdTest(TestConfig testConfig) {
     super(testConfig, ToolkitAllApiJVMGCdTestClient.class);
-
-    timebombTest("2012-10-30");
   }
 }
