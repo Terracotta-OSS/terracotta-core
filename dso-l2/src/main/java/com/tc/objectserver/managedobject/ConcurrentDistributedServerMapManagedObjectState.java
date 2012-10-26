@@ -218,7 +218,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         applyReplace(objectID, applyInfo, params);
         break;
       case SerializationUtil.EVICTION_COMPLETED:
-        evictionCompleted();
+//        evictionCompleted();
         break;
       case SerializationUtil.CLEAR_LOCAL_CACHE:
         break;
@@ -391,6 +391,9 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
  //  locked by ManagedObject checkout 
   @Override
   public void evictionCompleted() {
+      if ( this.evictionStatus != EvictionStatus.SAMPLED && this.evictionStatus != EvictionStatus.INITIATED ) {
+          throw new AssertionError("not sampled");
+      }
     this.evictionStatus = EvictionStatus.NOT_INITIATED;
   }
 
@@ -398,12 +401,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   // right samples, also should it return a sorted Map ? Are objects with lower OIDs having more changes to be evicted ?
   @Override
   public Map getRandomSamples(final int count, final ClientObjectReferenceSet serverMapEvictionClientObjectRefSet) {
-//    if (evictionStatus == EvictionStatus.SAMPLED) {
-//      // There is already a random sample that is yet to be processed, so returning empty collection. This can happen if
-//      // both period and capacity Evictors are working at the same object one after the other.
-//      return Collections.EMPTY_MAP;
-//    }
-//    this.evictionStatus = EvictionStatus.SAMPLED;
       if ( this.evictionStatus != EvictionStatus.INITIATED ) {
           throw new AssertionError("not evicting");
       } else {

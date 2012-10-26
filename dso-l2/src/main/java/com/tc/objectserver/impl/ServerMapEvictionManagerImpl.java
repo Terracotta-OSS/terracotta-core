@@ -269,10 +269,11 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
       evictionStats.evictionRequested(oid, ev, targetMaxTotalCount, overshoot, samples.size());
     }
 
+    samples = filter(oid,samples,tti,ttl,overshoot,cacheName,EVICT_UNEXPIRED_ENTRIES_ENABLED);
+
     if (samples.isEmpty()) {
       return null;
     } else {
-      samples = filter(oid,samples,tti,ttl,overshoot,cacheName,EVICT_UNEXPIRED_ENTRIES_ENABLED);
       return new ServerMapEvictionContext(oid, targetMaxTotalCount, tti, ttl, samples, overshoot, className, cacheName);
     }
   }

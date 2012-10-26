@@ -88,30 +88,38 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
         if ( !evictor.markEvictionInProgress(oid) ) {
             return true;
         }
-        final ManagedObject mo = this.objectManager.getObjectByIDOrNull(oid);
-        ServerMapEvictionContext context = null;
-        EvictableMap ev = null;
+        
         try {
-            if (mo == null) { return false; }
-            final ManagedObjectState state = mo.getManagedObjectState();
-            final String className = state.getClassName();
-
-          ev = getEvictableMapFrom(mo.getID(), state);
-          context = doEviction(oid, ev, className, ev.getCacheName(),periodicEvictorRun);
-        } finally {
-          if (context == null) {
-            ev.evictionCompleted();
-            this.objectManager.releaseReadOnly(mo);
-          } else {
-            // Reason for releasing the checked-out object before adding the context to the sink is that we can block on add
-            // to the sink because the sink reached max capacity and blocking
-            // with a checked-out object will result in a deadlock. @see DEV-5207
-            this.objectManager.releaseReadOnly(mo);
-            this.evictorSink.add(context);
+          final ManagedObject mo = this.objectManager.getObjectByIDOrNull(oid);
+          if (mo == null) { 
+              return false; 
           }
+
+          final ManagedObjectState state = mo.getManagedObjectState();
+          final String className = state.getClassName();
+
+          EvictableMap ev = getEvictableMapFrom(mo.getID(), state);
+          if ( periodicEvictorRun && !ev.startEviction() ) {
+              this.objectManager.releaseReadOnly(mo);
+              return true;
+          }
+
+          ServerMapEvictionContext context = doEviction(oid, ev, className, ev.getCacheName(),periodicEvictorRun);
+          if (context == null) {
+              ev.evictionCompleted();
+          }
+        // Reason for releasing the checked-out object before adding the context to the sink is that we can block on add
+        // to the sink because the sink reached max capacity and blocking
+        // with a checked-out object will result in a deadlock. @see DEV-5207
+          this.objectManager.releaseReadOnly(mo);
+          if ( context != null ) {
+              this.evictorSink.add(context);
+          }
+      } finally {
           evictor.markEvictionDone(oid);
-        }
-        return true;
+      }
+
+      return true;
     }
         
     private int calculateSampleCount(EvictableMap ev,boolean emergency) {
@@ -157,12 +165,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
     }
 
     final int sampleCount = ( periodic ) ? calculateSampleCount(ev,false) : currentSize - ev.getMaxTotalCount();
-    
     if ( sampleCount <= 0 ) {
-        return null;
-    }
-    
-    if ( !ev.startEviction() ) {
         return null;
     }
     
@@ -172,12 +175,16 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
     scheduleExpiry(oid,ttl,tti);
 
     Map samples = ev.getRandomSamples(sampleCount, clientObjectReferenceSet);
+    int before = samples.size();
+    samples = evictor.filter(oid, samples, tti, ttl, sampleCount, cacheName, !periodic);
+    if ( !periodic ) {
+        System.out.println(cacheName + " " + currentSize + " " + ev.getMaxTotalCount() + " " + before + " " + samples.size());
+    }
 
     if (samples.isEmpty()) {
-        ev.evictionCompleted();
-      return null;
+        return null;
     } else {
-       samples = evictor.filter(oid, samples, tti, ttl, sampleCount, cacheName, !periodic);
+
       return new ServerMapEvictionContext(oid, samples, className, cacheName);
     }
   }
@@ -239,10 +246,13 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
       this.objectManager.releaseReadOnly(mo);
       evictor.markEvictionDone(oid);
     }
-    evictor.evictFrom(oid, samples, className, cacheName);
-    if ( evictor.isLogging() && !samples.isEmpty() ) {
-        log("emergency evicted: " + samples.size());
+    if ( !samples.isEmpty() ) {
+        evictor.evictFrom(oid, samples, className, cacheName);
+        if ( evictor.isLogging() ) {
+            log("emergency evicted: " + samples.size());
+        }
     }
+
     return samples.size();
   }
     
