@@ -219,7 +219,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
             return 0;
         }
 
-        if ( ev.startEviction() ) {
+        if ( !ev.startEviction() ) {
             return 0;
         }
 
