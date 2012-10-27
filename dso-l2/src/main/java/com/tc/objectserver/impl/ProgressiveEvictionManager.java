@@ -47,6 +47,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
   private Sink                                evictorSink;
   private final Timer                               expiry = new Timer("Expiry Timer", true);
   private final Set<ObjectID>                         expirySet = new ObjectIDSet();
+  private int                                   serverSizeHint = 256;
   
     public ProgressiveEvictionManager(ObjectManager mgr, MonitoredResource monitored, PersistentManagedObjectStore store, ClientObjectReferenceSet clients, ServerTransactionFactory trans, TCThreadGroup grp) {
         this.objectManager = mgr;
@@ -74,7 +75,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
     @Override
   public void runEvictor() {
     final ObjectIDSet evictableObjects = store.getAllEvictableObjectIDs();
-    
+    serverSizeHint = evictableObjects.size();
     for (final ObjectID mapID : evictableObjects) {
       doEvictionOn(mapID, true);
     }
@@ -136,6 +137,10 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
     }
     
     private void scheduleExpiry(final ObjectID oid,final int ttl,final int tti) {
+        if ( ttl <= 0 && tti <= 0 ) {
+            return;
+        }
+        
         synchronized ( expirySet ) {
             if ( !expirySet.contains(oid) ) {
                 expirySet.add(oid);
@@ -150,7 +155,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
                           }
                       }
 
-                    },(ttl < tti ? ttl : tti) * 1000 * 2);
+                    },(ttl > tti ? ttl : tti) * 1000 * 4);
             }
         }
     }
@@ -163,11 +168,18 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
     if (currentSize == 0) {
       return null;
     }
-
-    final int sampleCount = ( periodic ) ? calculateSampleCount(ev,false) : currentSize - ev.getMaxTotalCount();
+    
+    int sampleCount = calculateSampleCount(ev,false);
     if ( sampleCount <= 0 ) {
         return null;
     }
+    
+    int overflow = currentSize - ev.getMaxTotalCount();
+    if ( overflow > sampleCount ) {
+        sampleCount = overflow;
+        periodic = false;
+    }
+
     
     final int ttl = ev.getTTLSeconds();
     final int tti = ev.getTTISeconds();
