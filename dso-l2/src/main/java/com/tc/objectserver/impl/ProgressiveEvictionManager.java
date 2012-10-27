@@ -177,9 +177,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
     Map samples = ev.getRandomSamples(sampleCount, clientObjectReferenceSet);
     int before = samples.size();
     samples = evictor.filter(oid, samples, tti, ttl, sampleCount, cacheName, !periodic);
-    if ( !periodic ) {
-        System.out.println(cacheName + " " + currentSize + " " + ev.getMaxTotalCount() + " " + before + " " + samples.size());
-    }
 
     if (samples.isEmpty()) {
         return null;

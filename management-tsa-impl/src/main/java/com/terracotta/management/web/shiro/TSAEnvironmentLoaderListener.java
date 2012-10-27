@@ -37,6 +37,7 @@ import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.service.impl.ClearTextTsaManagementClientServiceImpl;
 import com.terracotta.management.service.impl.DiagnosticsServiceImpl;
 import com.terracotta.management.service.impl.MonitoringServiceImpl;
+import com.terracotta.management.service.impl.TopologyServiceImpl;
 import com.terracotta.management.service.impl.TsaAgentServiceImpl;
 import com.terracotta.management.web.config.TSAConfig;
 
