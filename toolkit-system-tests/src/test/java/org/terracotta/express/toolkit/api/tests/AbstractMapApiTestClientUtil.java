@@ -40,6 +40,8 @@ public abstract class AbstractMapApiTestClientUtil extends ClientBase {
 
   @Override
   protected void test(Toolkit tk) throws Throwable {
+    clearDs();
+    waitForAllClientsToReachHere();
     checkGet();
     checkIsEmpty();
     checkClear();
@@ -117,6 +119,9 @@ public abstract class AbstractMapApiTestClientUtil extends ClientBase {
       waitForAllClientsToReachHere();
 
       if (clientIndex == 1) {
+        values.remove(keyValueGenerator.getValue(START_INDEX));
+        Assert.assertFalse(values.contains(keyValueGenerator.getValue(START_INDEX)));
+        Assert.assertFalse(map.containsKey(keyValueGenerator.getKey(START_INDEX)));
         try {
           values.removeAll(getArrayListForRange(START_INDEX, MID_INDEX, VALUES));
           if (map instanceof ToolkitMap || map instanceof ToolkitSortedMap) {
@@ -127,18 +132,6 @@ public abstract class AbstractMapApiTestClientUtil extends ClientBase {
           }
         } catch (UnsupportedOperationException uoe) {
           log("verified that removeAll is no supported on collection returned by map.values");
-        }
-
-        try {
-          values.remove(keyValueGenerator.getValue(START_INDEX));
-          if (map instanceof ToolkitMap || map instanceof ToolkitSortedMap) {
-            // remove on collection returned by map.values() is not supported
-            Assert.fail();
-          } else {
-            Assert.assertFalse(values.contains(keyValueGenerator.getValue(START_INDEX)));
-          }
-        } catch (UnsupportedOperationException uoe) {
-          log("verified that remove is no supported on collection returned by map.values");
         }
 
       }
