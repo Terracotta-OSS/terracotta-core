@@ -132,7 +132,7 @@ public abstract class AbstractMapApiTestClientUtil extends ClientBase {
         try {
           values.remove(keyValueGenerator.getValue(START_INDEX));
           if (map instanceof ToolkitMap || map instanceof ToolkitSortedMap) {
-            // removeAll on collection returned by map.values() is not supported
+            // remove on collection returned by map.values() is not supported
             Assert.fail();
           } else {
             Assert.assertFalse(values.contains(keyValueGenerator.getValue(START_INDEX)));
@@ -513,7 +513,9 @@ public abstract class AbstractMapApiTestClientUtil extends ClientBase {
 
   protected void clearDs() throws InterruptedException, BrokenBarrierException {
     waitForAllClientsToReachHere();
-    map.clear();
+    if (clientIndex == 0) {
+      map.clear();
+    }
   }
 
   protected int waitForAllClientsToReachHere() throws InterruptedException, BrokenBarrierException {

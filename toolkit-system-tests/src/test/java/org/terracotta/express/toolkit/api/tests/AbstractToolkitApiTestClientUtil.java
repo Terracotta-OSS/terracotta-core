@@ -22,6 +22,7 @@ public abstract class AbstractToolkitApiTestClientUtil extends AbstractMapApiTes
 
   @Override
   protected void test(Toolkit toolKit) throws Throwable {
+    super.test(toolKit);
     this.test();
   }
 
@@ -61,6 +62,8 @@ public abstract class AbstractToolkitApiTestClientUtil extends AbstractMapApiTes
     waitForAllClientsToReachHere();
     try {
       clientIndex = barrier.await();
+      System.err.println("****In Method checkReplaceThreeArgs****");
+      System.err.println("******clientIndex = " + clientIndex + "******");
       if (clientIndex == 0) {
         chm.put(keyValueGenerator.getKey(1), keyValueGenerator.getValue(1));
       }
@@ -80,7 +83,7 @@ public abstract class AbstractToolkitApiTestClientUtil extends AbstractMapApiTes
       waitForAllClientsToReachHere();
       Assert.assertFalse(chm.get(keyValueGenerator.getKey(1)).equals(keyValueGenerator.getValue(1)));
       Assert.assertTrue(chm.get(keyValueGenerator.getKey(1)).equals(keyValueGenerator.getValue(2)));
-
+      System.err.println("******Exiting checkReplaceThreeArgs*****");
     } finally {
       clearDs();
     }
