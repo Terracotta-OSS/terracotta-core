@@ -290,14 +290,18 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     final int now = (int) (System.currentTimeMillis() / 1000);
     for (final Iterator iterator = samples.entrySet().iterator(); candidates.size() < overshoot && iterator.hasNext();) {
       final Entry e = (Entry) iterator.next();
-      int expiresIn = expiresIn(now, e.getValue(), ttiSeconds, ttlSeconds);
-      if (expiresIn <= 0) {
-        // Element already expired
+      if ( isInterestedInTTIOrTTL(ttiSeconds, ttlSeconds) ) {
+          int expiresIn = expiresIn(now, e.getValue(), ttiSeconds, ttlSeconds);
+        if ( expiresIn <= 0 ) {
+            // Element already expired
+            candidates.put(e.getKey(), e.getValue());
+            expired++;
+          } else if (likelyCandidates != null) {
+            likelyCandidates.add(new ExpiryKey(expiresIn, e));
+          }
+      } else if ( evictUnexpired ) {
         candidates.put(e.getKey(), e.getValue());
-        expired++;
-      } else if (likelyCandidates != null) {
-        likelyCandidates.add(new ExpiryKey(expiresIn, e));
-      }
+      } 
     }
     
     if (EVICTOR_LOGGING) {
@@ -382,7 +386,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
    * @return when values is going to expire relative to "now", a negative number or zero indicates the value is expired.
    */
   private int expiresIn(final int now, final Object value, final int ttiSeconds, final int ttlSeconds) {
-    if ((!(value instanceof ObjectID)) || !isInterestedInTTIOrTTL(ttiSeconds, ttlSeconds)) {
+    if (!(value instanceof ObjectID)) {
       // When tti/ttl == 0 here, then cache is set to eternal (by default or in config explicitly), so all entries can
       // be evicted if maxInDisk size is reached.
       return Integer.MIN_VALUE;
