@@ -19,7 +19,7 @@ import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
 public class ToolkitSortedMapFactoryImpl extends
     AbstractPrimaryToolkitObjectFactory<ToolkitSortedMap, ToolkitSortedMapImpl> {
 
-  private static final MapIsolatedTypeFactory FACTORY = new MapIsolatedTypeFactory();
+  private static final SortedMapIsolatedTypeFactory FACTORY = new SortedMapIsolatedTypeFactory();
 
   public ToolkitSortedMapFactoryImpl(ToolkitInternal toolkit, ToolkitTypeRootsFactory rootsFactory,
                                      PlatformService platformService) {
@@ -32,7 +32,7 @@ public class ToolkitSortedMapFactoryImpl extends
     return ToolkitObjectType.SORTED_MAP;
   }
 
-  private static class MapIsolatedTypeFactory implements
+  private static class SortedMapIsolatedTypeFactory implements
       IsolatedToolkitTypeFactory<ToolkitSortedMap, ToolkitSortedMapImpl> {
 
     @Override

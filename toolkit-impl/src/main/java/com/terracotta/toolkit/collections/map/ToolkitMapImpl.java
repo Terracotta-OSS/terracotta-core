@@ -745,7 +745,7 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
 
     @Override
     public boolean remove(Object o) {
-      throw new UnsupportedOperationException();
+      return values.remove(o);
     }
 
     @Override

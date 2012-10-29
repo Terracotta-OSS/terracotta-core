@@ -3,10 +3,8 @@
  */
 package com.terracotta.toolkit.collections.map;
 
-import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 import net.sf.ehcache.pool.SizeOfEngine;
 import net.sf.ehcache.pool.impl.DefaultSizeOfEngine;
-
 import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
@@ -54,6 +52,7 @@ import com.terracotta.toolkit.search.SearchBuilderFactory;
 import com.terracotta.toolkit.type.DistributedToolkitType;
 
 import java.io.Serializable;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -66,6 +65,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 
 public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
     ToolkitCacheListener<K>, ToolkitCacheInternal<K, V>, ConfigChangeListener, ValuesResolver<K, V> {
@@ -120,8 +121,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     this.platformService = platformService;
     this.clusterInfo = new TerracottaClusterInfo(platformService);
     this.bulkOpsKbSize = getTerracottaProperty(EHCACHE_BULKOPS_MAX_KB_SIZE_PROPERTY,
-                                               DEFAULT_EHCACHE_BULKOPS_MAX_KB_SIZE)
-                       * KB;
+                                               DEFAULT_EHCACHE_BULKOPS_MAX_KB_SIZE) * KB;
     this.getAllBatchSize = getTerracottaProperty(EHCACHE_GETALL_BATCH_SIZE_PROPERTY, DEFAULT_GETALL_BATCH_SIZE);
     this.eventualBulkOpsConcurrentLock = ToolkitLockingApi
         .createConcurrentTransactionLock("bulkops-static-eventual-concurrent-lock", platformService);
@@ -794,20 +794,27 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
 
   private static class PinnedEntryFaultCallbackImpl implements PinnedEntryFaultCallback {
 
-    private final AggregateServerMap serverMap;
+    private final WeakReference<AggregateServerMap> serverMap;
 
     public PinnedEntryFaultCallbackImpl(AggregateServerMap serverMap) {
-      this.serverMap = serverMap;
+      this.serverMap = new WeakReference<AggregateServerMap>(serverMap);
     }
 
     @Override
     public void unlockedGet(Object key) {
-      serverMap.unlockedGet(key, true);
+      AggregateServerMap serverMapLocal = serverMap.get();
+      if (serverMapLocal != null) {
+        serverMapLocal.unlockedGet(key, true);
+      }
+
     }
 
     @Override
     public void get(Object key) {
-      serverMap.get(key);
+      AggregateServerMap serverMapLocal = serverMap.get();
+      if (serverMapLocal != null) {
+        serverMapLocal.get(key);
+      }
     }
   }
 }

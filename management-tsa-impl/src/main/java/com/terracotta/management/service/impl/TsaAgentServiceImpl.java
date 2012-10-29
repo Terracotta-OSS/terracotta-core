@@ -21,6 +21,8 @@ import java.util.Set;
  */
 public class TsaAgentServiceImpl implements AgentService {
 
+  private static final String AGENCY = "TSA";
+
   private final TsaManagementClientService tsaManagementClientService;
   private final AgentService l1Agent;
 
@@ -110,7 +112,7 @@ public class TsaAgentServiceImpl implements AgentService {
     AgentMetadataEntity ame = new AgentMetadataEntity();
 
     ame.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
-    ame.setAgencyOf("TSA");
+    ame.setAgencyOf(AGENCY);
     ame.setVersion(this.getClass().getPackage().getImplementationVersion());
     ame.setAvailable(true);
 
@@ -124,6 +126,7 @@ public class TsaAgentServiceImpl implements AgentService {
   private AgentEntity buildAgentEntity() throws ServiceExecutionException {
     AgentEntity e = new AgentEntity();
     e.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+    e.setAgencyOf(AGENCY);
     e.setRootRepresentables(tsaManagementClientService.getSimpleTopology());
     return e;
   }

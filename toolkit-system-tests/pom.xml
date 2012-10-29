@@ -20,7 +20,7 @@
   <name>toolkit-system-tests</name>
 
   <properties>
-    <group>dso2</group>
+    <group>dso1</group>
     <checkstyle-suppressions-file>${basedir}/../checkstyle-toolkit/suppressions.xml</checkstyle-suppressions-file>
   </properties>
 
@@ -29,12 +29,6 @@
       <groupId>org.terracotta</groupId>
       <artifactId>terracotta-toolkit-runtime</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.7</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>javax.transaction</groupId>

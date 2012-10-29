@@ -4,7 +4,6 @@
 package com.terracotta.toolkit;
 
 import net.sf.ehcache.CacheManager;
-
 import org.terracotta.toolkit.cache.ToolkitCache;
 import org.terracotta.toolkit.cache.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.cluster.ClusterInfo;
@@ -50,8 +49,10 @@ import com.terracotta.toolkit.factory.impl.ToolkitBarrierFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitBlockingQueueFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitCacheFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitListFactoryImpl;
+import com.terracotta.toolkit.factory.impl.ToolkitLockFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitMapFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitNotifierFactoryImpl;
+import com.terracotta.toolkit.factory.impl.ToolkitReadWriteLockFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitSetFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitSortedMapFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitSortedSetFactoryImpl;
@@ -84,6 +85,8 @@ public class TerracottaToolkit implements ToolkitInternal {
   private final ToolkitObjectFactory<ToolkitBlockingQueueImpl> clusteredBlockingQueueFactory;
   private final ToolkitObjectFactory<ToolkitSortedSetImpl>     clusteredSortedSetFactory;
   private final ToolkitObjectFactory<ToolkitSetImpl>           clusteredSetFactory;
+  private final ToolkitObjectFactory<ToolkitLockImpl>          lockFactory;
+  private final ToolkitObjectFactory<ToolkitReadWriteLockImpl> rwLockFactory;
   private final ServerMapLocalStoreFactory                     serverMapLocalStoreFactory;
   private final CacheManager                                   defaultToolkitCacheManager;
   private final TerracottaL1Instance                           tcClient;
@@ -107,12 +110,12 @@ public class TerracottaToolkit implements ToolkitInternal {
         throw new AssertionError("Another object registered instead of serialization strategy - " + old);
       }
     }
-
     defaultToolkitCacheManager = createDefaultToolkitCacheManager();
     serverMapLocalStoreFactory = new EhcacheSMLocalStoreFactory(defaultToolkitCacheManager);
-
     ToolkitTypeRootsStaticFactory toolkitTypeRootsFactory = new ToolkitTypeRootsStaticFactory(weakValueMapManager);
 
+    lockFactory = new ToolkitLockFactoryImpl(weakValueMapManager, platformService);
+    rwLockFactory = new ToolkitReadWriteLockFactoryImpl(weakValueMapManager, platformService);
     clusteredNotifierFactory = new ToolkitNotifierFactoryImpl(this, toolkitTypeRootsFactory, platformService);
     clusteredListFactory = new ToolkitListFactoryImpl(this, toolkitTypeRootsFactory, platformService);
     // create set factory before map factory, as map uses set internally
@@ -129,12 +132,12 @@ public class TerracottaToolkit implements ToolkitInternal {
     ToolkitStore atomicLongs = clusteredStoreFactory.getOrCreate(ToolkitTypeConstants.TOOLKIT_ATOMIC_LONG_MAP_NAME,
                                                                  new ToolkitStoreConfigBuilder()
                                                                      .consistency(Consistency.STRONG).build());
-    clusteredAtomicLongFactory = new ToolkitAtomicLongFactoryImpl(atomicLongs);
+    clusteredAtomicLongFactory = new ToolkitAtomicLongFactoryImpl(atomicLongs, weakValueMapManager);
 
     ToolkitStore barriers = clusteredStoreFactory.getOrCreate(ToolkitTypeConstants.TOOLKIT_BARRIER_MAP_NAME,
                                                               new ToolkitStoreConfigBuilder()
                                                                   .consistency(Consistency.STRONG).build());
-    clusteredBarrierFactory = new ToolkitBarrierFactoryImpl(barriers);
+    clusteredBarrierFactory = new ToolkitBarrierFactoryImpl(barriers, weakValueMapManager);
 
     clusteredSortedSetFactory = new ToolkitSortedSetFactoryImpl(this, toolkitTypeRootsFactory, platformService);
   }
@@ -192,17 +195,22 @@ public class TerracottaToolkit implements ToolkitInternal {
 
   @Override
   public ToolkitLock getLock(String name) {
-    return getLock(name, ToolkitLockTypeInternal.WRITE);
+    return getOrCreateLock(name, ToolkitLockTypeInternal.WRITE);
   }
 
   @Override
   public ToolkitLock getLock(String name, ToolkitLockTypeInternal internalLockType) {
-    return new ToolkitLockImpl(platformService, name, internalLockType);
+    return getOrCreateLock(name, internalLockType);
+  }
+
+  private ToolkitLock getOrCreateLock(String name, ToolkitLockTypeInternal internalLockType) {
+    return lockFactory.getOrCreate(name, new UnclusteredConfiguration()
+        .setString(ToolkitLockFactoryImpl.INTERNAL_LOCK_TYPE, internalLockType.name()));
   }
 
   @Override
   public ToolkitReadWriteLock getReadWriteLock(String name) {
-    return new ToolkitReadWriteLockImpl(platformService, name);
+    return rwLockFactory.getOrCreate(name, null);
   }
 
   @Override
