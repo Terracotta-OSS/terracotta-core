@@ -359,7 +359,6 @@
       <id>ee</id>
       <properties>
         <tc.core.artifactId>terracotta-ee</tc.core.artifactId>
-        <ee.license>-Dcom.tc.productkey.path=${productKeyPath}</ee.license>
         <skipTests>false</skipTests>
       </properties>
     </profile>
