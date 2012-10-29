@@ -183,7 +183,7 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
 
   private static class StubKeyValueStorage<K, V> extends HeapKeyValueStorage<K, V> {
     @Override
-    public void put(final K key, final V value) {
+    public void put(final K key, final V value, byte metadata) {
       // Ignore it
     }
   }

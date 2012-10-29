@@ -347,7 +347,9 @@ public class TransactionStoreTest extends TCTestCase {
     for (int i = initialMin; i < initialMax; i++) {
       ServerTransactionID stxid = new ServerTransactionID(new ClientID(i % 2), new TransactionID(i));
       GlobalTransactionDescriptor desc = store.getOrCreateTransactionDescriptor(stxid);
-      store.commitTransactionDescriptor(null, stxid);
+      // We're using an in-memory map of transactions, so we need to avoid marking the global transaction descriptors as
+      // committed up front.
+      transactionPersistor.saveGlobalTransactionDescriptor(null, desc);
       assertEquals(stxid, desc.getServerTransactionID());
       sid2Gid.put(stxid, desc);
     }
