@@ -255,11 +255,12 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
         cacheName = ev.getCacheName();
 
         samples = ev.getRandomSamples(sampleCount, clientObjectReferenceSet);
+        samples = evictor.filter(oid, samples, ev.getTTISeconds(), ev.getTTLSeconds(), sampleCount, cacheName, blowout);
+
         if ( samples == null || samples.isEmpty() ) {
             ev.evictionCompleted();
             return 0;
         }
-        samples = evictor.filter(oid, samples, ev.getTTISeconds(), ev.getTTLSeconds(), sampleCount, cacheName, blowout);
     } finally {
       this.objectManager.releaseReadOnly(mo);
       evictor.markEvictionDone(oid);

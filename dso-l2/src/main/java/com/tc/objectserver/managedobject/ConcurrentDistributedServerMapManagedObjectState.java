@@ -218,7 +218,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         applyReplace(objectID, applyInfo, params);
         break;
       case SerializationUtil.EVICTION_COMPLETED:
-//        evictionCompleted();
+        evictionCompleted();
         break;
       case SerializationUtil.CLEAR_LOCAL_CACHE:
         break;

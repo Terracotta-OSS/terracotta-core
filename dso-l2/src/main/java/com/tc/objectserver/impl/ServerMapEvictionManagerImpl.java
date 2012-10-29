@@ -355,7 +355,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     
     try {
         if ( candidates.isEmpty() ) {
-          broadcastEvictedEntries(oid, candidates);
+          notifyEvictionCompletedFor(oid);
           return;
         } 
 
@@ -374,7 +374,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
           logger.info("Server Map Eviction  : Evicted " + candidates.size() + " from " + oid + " [" + cacheName + "]");
         }
     } finally {
-        notifyEvictionCompletedFor(oid);
+        broadcastEvictedEntries(oid, candidates);
     }
   }
 
