@@ -4,6 +4,7 @@
  */
 package com.tctest.statistics;
 
+import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.cluster.DsoClusterImpl;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
@@ -60,7 +61,9 @@ abstract public class AbstractAgentSRACorrectnessTestCase extends BaseDSOTestCas
                                                                  new PreparedComponentsFromL2Connection(manager),
                                                                  NullManager.getInstance(),
                                                                  new StatisticsAgentSubSystemImpl(),
-                                                                 new DsoClusterImpl(), new NullRuntimeLogger());
+                                                                 new DsoClusterImpl(),
+                                                                 new NullRuntimeLogger(),
+                                                                 new NullAbortableOperationManager());
     client.start();
     return client;
   }
@@ -96,6 +99,7 @@ abstract public class AbstractAgentSRACorrectnessTestCase extends BaseDSOTestCas
       return server;
     }
 
+    @Override
     public void execute() throws Throwable {
       ManagedObjectStateFactory.disableSingleton(true);
       TestConfigurationSetupManagerFactory factory = AbstractAgentSRACorrectnessTestCase.this.configFactory();

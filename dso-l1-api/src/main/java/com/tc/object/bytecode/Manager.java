@@ -4,6 +4,7 @@
  */
 package com.tc.object.bytecode;
 
+import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.cluster.DsoCluster;
 import com.tc.exception.TCClassNotFoundException;
@@ -412,4 +413,6 @@ public interface Manager extends TerracottaLocking {
   <T> T lookupRegisteredObjectByName(String name, Class<T> expectedType);
 
   void addTransactionCompleteListener(TransactionCompleteListener listener);
+
+  AbortableOperationManager getAbortableOperationManager();
 }

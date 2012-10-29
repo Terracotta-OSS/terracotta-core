@@ -3,6 +3,7 @@
  */
 package com.tc.object;
 
+import com.tc.abortable.AbortableOperationManager;
 import com.tc.async.api.Sink;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
@@ -125,7 +126,8 @@ public interface DSOClientBuilder {
                                       final LockRequestMessageFactory lockRequestMessageFactory,
                                       final ThreadIDManager threadManager,
                                       final ClientGlobalTransactionManager clientGlobalTransactionManager,
-                                      final ClientLockManagerConfig clientLockManagerConfig);
+                                      final ClientLockManagerConfig clientLockManagerConfig,
+                                      final AbortableOperationManager abortableOperationManager);
 
   @Deprecated
   ClientLockStatManager createLockStatsManager();

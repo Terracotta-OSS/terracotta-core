@@ -4,6 +4,7 @@
  */
 package com.tctest.jdk15;
 
+import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.cluster.DsoClusterImpl;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.lang.TCThreadGroup;
@@ -85,7 +86,9 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
                                                                  new MockClassProvider(), components,
                                                                  NullManager.getInstance(),
                                                                  new StatisticsAgentSubSystemImpl(),
-                                                                 new DsoClusterImpl(), new NullRuntimeLogger());
+                                                                 new DsoClusterImpl(),
+                                                                 new NullRuntimeLogger(),
+                                                                 new NullAbortableOperationManager());
     client.setCreateDedicatedMBeanServer(true);
     client.start();
 

@@ -4,6 +4,7 @@
  */
 package com.tc.client;
 
+import com.tc.abortable.AbortableOperationManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.DistributedObjectClient;
@@ -26,9 +27,11 @@ public class StandardClientFactory extends AbstractClientFactory {
                                               final Manager manager,
                                               final StatisticsAgentSubSystem statisticsAgentSubSystem,
                                               final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger,
-                                              final ClientMode clientMode, final TCSecurityManager securityManager) {
+                                              final ClientMode clientMode, final TCSecurityManager securityManager,
+                                              AbortableOperationManager abortableOperationManager) {
     return new DistributedObjectClient(config, threadGroup, classProvider, connectionComponents, manager,
-                                       statisticsAgentSubSystem, dsoCluster, runtimeLogger, clientMode, securityManager);
+                                       statisticsAgentSubSystem, dsoCluster, runtimeLogger, clientMode,
+                                       securityManager, abortableOperationManager);
   }
 
   @Override

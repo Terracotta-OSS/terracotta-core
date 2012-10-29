@@ -7,6 +7,7 @@ package com.tctest.jdk15;
 import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 
 import com.tc.abortable.AbortedOperationException;
+import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
 import com.tc.async.impl.MockStage;
@@ -87,7 +88,8 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     threadManager = new ManualThreadIDManager();
     clientLockManager = new ClientLockManagerImpl(logger, new NullSessionManager(), rmtLockManager, threadManager,
                                                   new NullClientLockManagerConfig(),
-                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER);
+                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
+                                                  new NullAbortableOperationManager());
 
     AbstractEventHandler serverLockUnlockHandler = new RequestLockUnLockHandler();
 

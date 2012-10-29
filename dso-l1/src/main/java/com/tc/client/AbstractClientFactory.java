@@ -4,6 +4,7 @@
  */
 package com.tc.client;
 
+import com.tc.abortable.AbortableOperationManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.DistributedObjectClient;
@@ -32,7 +33,8 @@ public abstract class AbstractClientFactory extends AbstractFactory {
                                                        Manager manager,
                                                        StatisticsAgentSubSystem statisticsAgentSubSystem,
                                                        DsoClusterInternal dsoCluster, RuntimeLogger runtimeLogger,
-                                                       ClientMode clientMode, TCSecurityManager securityManager);
+                                                       ClientMode clientMode, TCSecurityManager securityManager,
+                                                       AbortableOperationManager abortableOperationManager);
 
   public abstract TCSecurityManager createClientSecurityManager(Map<String, Object> env);
 }

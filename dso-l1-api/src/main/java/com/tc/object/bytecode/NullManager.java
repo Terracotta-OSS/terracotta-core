@@ -4,6 +4,7 @@
  */
 package com.tc.object.bytecode;
 
+import com.tc.abortable.AbortableOperationManager;
 import com.tc.cluster.DsoCluster;
 import com.tc.exception.ImplementMe;
 import com.tc.logging.NullTCLogger;
@@ -479,6 +480,11 @@ public class NullManager implements Manager {
   @Override
   public void addTransactionCompleteListener(TransactionCompleteListener listener) {
     //
+  }
+
+  @Override
+  public AbortableOperationManager getAbortableOperationManager() {
+    return null;
   }
 
 }

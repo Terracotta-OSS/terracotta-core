@@ -4,6 +4,8 @@
  */
 package com.tc.object.bytecode;
 
+import com.tc.abortable.AbortableOperationManager;
+import com.tc.abortable.AbortableOperationManagerImpl;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.asm.Type;
 import com.tc.aspectwerkz.reflect.ClassInfo;
@@ -124,6 +126,7 @@ public class ManagerImpl implements Manager {
 
   private final MethodDisplayNames                 methodDisplay       = new MethodDisplayNames(this.serializer);
   private final ConcurrentHashMap<String, Object>  registeredObjects = new ConcurrentHashMap<String, Object>();
+  private final AbortableOperationManager          abortableOperationManager = new AbortableOperationManagerImpl();
 
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
                      final TCSecurityManager securityManager) {
@@ -253,7 +256,9 @@ public class ManagerImpl implements Manager {
                                                           ManagerImpl.this.connectionComponents, ManagerImpl.this,
                                                           ManagerImpl.this.statisticsAgentSubSystem,
                                                           ManagerImpl.this.dsoCluster, ManagerImpl.this.runtimeLogger,
-                                                          ManagerImpl.this.clientMode, ManagerImpl.this.securityManager);
+                                                          ManagerImpl.this.clientMode,
+                                                          ManagerImpl.this.securityManager,
+                                                          ManagerImpl.this.abortableOperationManager);
 
         if (forTests) {
           ManagerImpl.this.dso.setCreateDedicatedMBeanServer(true);
@@ -1140,5 +1145,10 @@ public class ManagerImpl implements Manager {
   @Override
   public void addTransactionCompleteListener(TransactionCompleteListener listener) {
     txManager.getCurrentTransaction().addTransactionCompleteListener(listener);
+  }
+
+  @Override
+  public AbortableOperationManager getAbortableOperationManager() {
+    return abortableOperationManager;
   }
 }

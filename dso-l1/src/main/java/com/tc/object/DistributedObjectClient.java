@@ -7,6 +7,7 @@ package com.tc.object;
 import bsh.EvalError;
 import bsh.Interpreter;
 
+import com.tc.abortable.AbortableOperationManager;
 import com.tc.aspectwerkz.reflect.ClassInfoRepository;
 import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfoRepository;
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfoRepository;
@@ -280,13 +281,16 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private L1ServerMapLocalCacheManager               globalLocalCacheManager;
   private final TCSecurityManager                    securityManager;
 
+  private final AbortableOperationManager            abortableOperationManager;
+
   public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
                                  final ClassProvider classProvider,
                                  final PreparedComponentsFromL2Connection connectionComponents, final Manager manager,
                                  final StatisticsAgentSubSystem statisticsAgentSubSystem,
-                                 final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger) {
+                                 final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger,
+                                 AbortableOperationManager abortableOperationManager) {
     this(config, threadGroup, classProvider, connectionComponents, manager, statisticsAgentSubSystem, dsoCluster,
-         runtimeLogger, ClientMode.DSO_MODE, null);
+         runtimeLogger, ClientMode.DSO_MODE, null, abortableOperationManager);
   }
 
   public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
@@ -294,10 +298,12 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                  final PreparedComponentsFromL2Connection connectionComponents, final Manager manager,
                                  final StatisticsAgentSubSystem statisticsAgentSubSystem,
                                  final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger,
-                                 final ClientMode clientMode, final TCSecurityManager securityManager) {
+                                 final ClientMode clientMode, final TCSecurityManager securityManager,
+                                 final AbortableOperationManager abortableOperationManager) {
     super(threadGroup);
     Assert.assertNotNull(config);
     this.clientMode = clientMode;
+    this.abortableOperationManager = abortableOperationManager;
     this.config = config;
     this.securityManager = securityManager;
     this.classProvider = classProvider;
@@ -685,7 +691,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                            new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
                                .getLogger(ClientLockManager.class)), sessionManager, lockStatManager, this.channel
                                .getLockRequestMessageFactory(), this.threadIDManager, gtxManager,
-                           new ClientLockManagerConfigImpl(this.l1Properties.getPropertiesFor("lockmanager")));
+                           new ClientLockManagerConfigImpl(this.l1Properties.getPropertiesFor("lockmanager")),
+                           abortableOperationManager);
     this.globalLocalCacheManager.setLockManager(this.lockManager);
     final CallbackDumpAdapter lockDumpAdapter = new CallbackDumpAdapter(this.lockManager);
     this.threadGroup.addCallbackOnExitDefaultHandler(lockDumpAdapter);

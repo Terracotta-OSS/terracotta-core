@@ -10,7 +10,9 @@ import EDU.oswego.cs.dl.util.concurrent.Latch;
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
+import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
+import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.exception.TCRuntimeException;
 import com.tc.handler.LockInfoDumpHandler;
@@ -47,12 +49,14 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class ClientLockManagerTest extends TCTestCase {
-  private ClientLockManagerImpl lockManager;
-  private TestRemoteLockManager rmtLockManager;
-  private TestSessionManager    sessionManager;
-  private ManualThreadIDManager threadManager;
+  private ClientLockManagerImpl                  lockManager;
+  private TestRemoteLockManager                  rmtLockManager;
+  private TestSessionManager                     sessionManager;
+  private ManualThreadIDManager                  threadManager;
 
-  private final GroupID         gid = new GroupID(0);
+  private static final AbortableOperationManager ABORTABLE_OPERATION_MANAGER = new NullAbortableOperationManager();
+
+  private final GroupID                          gid                       = new GroupID(0);
 
   public ClientLockManagerTest() {
     //
@@ -67,7 +71,8 @@ public class ClientLockManagerTest extends TCTestCase {
 
     lockManager = new ClientLockManagerImpl(new NullTCLogger(), sessionManager, rmtLockManager, threadManager,
                                             new NullClientLockManagerConfig(),
-                                            ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER);
+                                            ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
+                                            ABORTABLE_OPERATION_MANAGER);
     rmtLockManager.setClientLockManager(lockManager);
   }
 
@@ -80,7 +85,8 @@ public class ClientLockManagerTest extends TCTestCase {
                                                                                   rmtLockManager,
                                                                                   threadManager,
                                                                                   testClientLockManagerConfig,
-                                                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER);
+                                                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
+                                                                                  ABORTABLE_OPERATION_MANAGER);
     rmtLockManager.setClientLockManager(clientLockManagerImpl);
 
     final LockID lockID1 = new StringLockID("1");
@@ -126,7 +132,8 @@ public class ClientLockManagerTest extends TCTestCase {
                                                                                   rmtLockManager,
                                                                                   threadManager,
                                                                                   testClientLockManagerConfig,
-                                                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER);
+                                                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
+                                                                                  ABORTABLE_OPERATION_MANAGER);
     rmtLockManager.setClientLockManager(clientLockManagerImpl);
 
     final LockID lockID1 = new StringLockID("1");
@@ -360,7 +367,7 @@ public class ClientLockManagerTest extends TCTestCase {
                                       final RemoteLockManager remoteLockManager, final ThreadIDManager threadManager,
                                       final CyclicBarrier awardBarrier) {
         super(logger, sessionManager, remoteLockManager, threadManager, new NullClientLockManagerConfig(),
-              ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER);
+              ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER, ABORTABLE_OPERATION_MANAGER);
         this.awardBarrier = awardBarrier;
       }
 
@@ -908,7 +915,8 @@ public class ClientLockManagerTest extends TCTestCase {
                                                                           remote,
                                                                           new ThreadIDManagerImpl(threadIDMap),
                                                                           new NullClientLockManagerConfig(),
-                                                                          ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER);
+                                                                          ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
+                                                                          ABORTABLE_OPERATION_MANAGER);
     remote.setClientLockManager(clientLockManager);
 
     final LockInfoDumpHandler lockInfoDumpHandler = new LockInfoDumpHandler() {
@@ -1074,7 +1082,8 @@ public class ClientLockManagerTest extends TCTestCase {
                                                                           remote,
                                                                           new ThreadIDManagerImpl(threadIDMap),
                                                                           new NullClientLockManagerConfig(),
-                                                                          ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER);
+                                                                          ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
+                                                                          ABORTABLE_OPERATION_MANAGER);
     remote.setClientLockManager(clientLockManager);
 
     final LockID lid0 = new StringLockID("Locky0");
@@ -1111,9 +1120,9 @@ public class ClientLockManagerTest extends TCTestCase {
       @Override
       public void run() {
         try {
-        clientLockManager.lock(lid0, LockLevel.WRITE);
-        clientLockManager.unlock(lid0, LockLevel.WRITE);
-        success[1] = true;
+          clientLockManager.lock(lid0, LockLevel.WRITE);
+          clientLockManager.unlock(lid0, LockLevel.WRITE);
+          success[1] = true;
         } catch (AbortedOperationException e) {
           throw new RuntimeException(e);
         }

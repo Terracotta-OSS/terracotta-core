@@ -7,6 +7,7 @@ package com.tc.object.locks;
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.abortable.AbortedOperationException;
+import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.logging.NullTCLogger;
 import com.tc.management.ClientLockStatManager;
 import com.tc.object.locks.ServerLockContext.Type;
@@ -45,7 +46,8 @@ public class ClientServerLockManagerTest extends TestCase {
     threadManager = new ManualThreadIDManager();
     clientLockManager = new ClientLockManagerImpl(new NullTCLogger(), sessionManager, glue, threadManager,
                                                   new NullClientLockManagerConfig(),
-                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER);
+                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
+                                                  new NullAbortableOperationManager());
 
     serverLockManager = new LockManagerImpl(sink, new NullChannelManager(), new NonGreedyLockPolicyFactory());
     glue.set(clientLockManager, serverLockManager);

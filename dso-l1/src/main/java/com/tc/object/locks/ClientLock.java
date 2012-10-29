@@ -3,6 +3,7 @@
  */
 package com.tc.object.locks;
 
+import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.net.ClientID;
@@ -20,7 +21,8 @@ public interface ClientLock {
    * @throws TCLockUpgradeNotSupportedError on attempting to read&rarr;write upgrade
    * @throws GarbageLockException if this state has been marked as garbage
    */
-  public void lock(RemoteLockManager remote, ThreadID thread, LockLevel level) throws GarbageLockException,
+  public void lock(AbortableOperationManager abortableOperationManager, RemoteLockManager remote,
+                   ThreadID thread, LockLevel level) throws GarbageLockException,
       AbortedOperationException;
 
   /**
@@ -37,7 +39,8 @@ public interface ClientLock {
    * @throws GarbageLockException if this state has been marked as garbage
    * @throws AbortedOperationException
    */
-  public boolean tryLock(RemoteLockManager remote, ThreadID thread, LockLevel level) throws GarbageLockException,
+  public boolean tryLock(AbortableOperationManager abortableOperationManager, RemoteLockManager remote,
+                         ThreadID thread, LockLevel level) throws GarbageLockException,
       AbortedOperationException;
   
   /**
@@ -52,7 +55,8 @@ public interface ClientLock {
    * @throws GarbageLockException if this state has been marked as garbage
    * @throws AbortedOperationException
    */
-  public boolean tryLock(RemoteLockManager remote, ThreadID thread, LockLevel level, long timeout)
+  public boolean tryLock(AbortableOperationManager abortableOperationManager, RemoteLockManager remote,
+                         ThreadID thread, LockLevel level, long timeout)
       throws InterruptedException, GarbageLockException, AbortedOperationException;
   
   /**
@@ -65,7 +69,8 @@ public interface ClientLock {
    * @throws GarbageLockException if this state has been marked as garbage
    * @throws AbortedOperationException
    */
-  public void lockInterruptibly(RemoteLockManager remote, ThreadID thread, LockLevel level)
+  public void lockInterruptibly(AbortableOperationManager abortableOperationManager, RemoteLockManager remote,
+                                ThreadID thread, LockLevel level)
       throws InterruptedException, GarbageLockException, AbortedOperationException;
 
   /**
@@ -111,7 +116,8 @@ public interface ClientLock {
    * @throws AbortedOperationException
    * @throws IllegalMonitorStateException if the current thread does not hold a write lock
    */
-  public void wait(RemoteLockManager remote, WaitListener listener, ThreadID thread, Object waitObject)
+  public void wait(final AbortableOperationManager abortableOperationManager, RemoteLockManager remote,
+                   WaitListener listener, ThreadID thread, Object waitObject)
       throws InterruptedException, AbortedOperationException;
   
   /**
@@ -125,7 +131,8 @@ public interface ClientLock {
    * @throws AbortedOperationException
    * @throws IllegalMonitorStateException if the current thread does not hold a write lock
    */
-  public void wait(RemoteLockManager remote, WaitListener listener, ThreadID thread, Object waitObject, long timeout)
+  public void wait(AbortableOperationManager abortableOperationManager, RemoteLockManager remote,
+                   WaitListener listener, ThreadID thread, Object waitObject, long timeout)
       throws InterruptedException, AbortedOperationException;
 
   /**

@@ -4,6 +4,7 @@
  */
 package com.tc.net.protocol.tcm;
 
+import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.cluster.DsoClusterImpl;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
@@ -129,6 +130,7 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
   private class PingMessageSink implements TCMessageSink {
     Queue<PingMessage> queue = new LinkedBlockingQueue<PingMessage>();
 
+    @Override
     public void putMessage(final TCMessage message) throws UnsupportedMessageTypeException {
 
       PingMessage ping = (PingMessage) message;
@@ -170,7 +172,9 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
                                                                  new PreparedComponentsFromL2Connection(manager),
                                                                  NullManager.getInstance(),
                                                                  new StatisticsAgentSubSystemImpl(),
-                                                                 new DsoClusterImpl(), new NullRuntimeLogger());
+                                                                 new DsoClusterImpl(),
+                                                                 new NullRuntimeLogger(),
+                                                                 new NullAbortableOperationManager());
     client.start();
     return client;
   }
@@ -201,6 +205,7 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
       return server;
     }
 
+    @Override
     public void execute() throws Throwable {
       ManagedObjectStateFactory.disableSingleton(true);
       TestConfigurationSetupManagerFactory factory = configFactory();

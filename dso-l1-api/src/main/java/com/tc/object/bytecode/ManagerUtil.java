@@ -6,6 +6,7 @@ package com.tc.object.bytecode;
 
 // import com.partitions.TCNoPartitionError;
 
+import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
@@ -1388,5 +1389,10 @@ public class ManagerUtil {
   protected static void addTransactionCompleteListener(TransactionCompleteListener listener) {
     Manager mgr = getManager();
     mgr.addTransactionCompleteListener(listener);
+  }
+
+  protected static AbortableOperationManager getAbortableOperationManager() {
+    Manager mgr = getManager();
+    return mgr.getAbortableOperationManager();
   }
 }

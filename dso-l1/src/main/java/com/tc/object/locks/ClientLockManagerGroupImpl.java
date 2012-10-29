@@ -3,6 +3,7 @@
  */
 package com.tc.object.locks;
 
+import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.logging.TCLogger;
 import com.tc.management.ClientLockStatManager;
@@ -31,7 +32,8 @@ public class ClientLockManagerGroupImpl implements ClientLockManager {
                                     LockDistributionStrategy lockDistribution, SessionManager sessionManager,
                                     ThreadIDManager threadManager, LockRequestMessageFactory messageFactory,
                                     ClientGlobalTransactionManager globalTxManager, ClientLockManagerConfig config,
-                                    ClientLockStatManager statManager) {
+                                    ClientLockStatManager statManager,
+                                    AbortableOperationManager abortableOperationManager) {
     distribution = lockDistribution;
     lockManagers = new HashMap<GroupID, ClientLockManager>();
 
@@ -41,7 +43,7 @@ public class ClientLockManagerGroupImpl implements ClientLockManager {
                                                                                                       messageFactory,
                                                                                                       globalTxManager,
                                                                                                       statManager),
-                                                    threadManager, config, statManager));
+                                                    threadManager, config, statManager, abortableOperationManager));
     }
   }
 

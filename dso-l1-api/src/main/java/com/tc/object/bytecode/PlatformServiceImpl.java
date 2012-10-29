@@ -3,6 +3,7 @@
  */
 package com.tc.object.bytecode;
 
+import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.cluster.DsoCluster;
 import com.tc.logging.TCLogger;
@@ -189,5 +190,10 @@ public class PlatformServiceImpl implements PlatformService {
   @Override
   public void verifyCapability(String capability) {
     ManagerUtil.verifyCapability(capability);
+  }
+
+  @Override
+  public AbortableOperationManager getAbortableOperationManager() {
+    return ManagerUtil.getAbortableOperationManager();
   }
 }

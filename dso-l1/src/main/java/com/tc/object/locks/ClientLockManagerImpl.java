@@ -3,6 +3,7 @@
  */
 package com.tc.object.locks;
 
+import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
@@ -58,13 +59,17 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   @Deprecated
   private final ClientLockStatManager             statManager;
 
+  private final AbortableOperationManager         abortableOperationManager;
+
   public ClientLockManagerImpl(final TCLogger logger, final SessionManager sessionManager,
                                final RemoteLockManager remoteManager, final ThreadIDManager threadManager,
-                               final ClientLockManagerConfig config, final ClientLockStatManager statManager) {
+                               final ClientLockManagerConfig config, final ClientLockStatManager statManager,
+                               AbortableOperationManager abortableOperationManager) {
     this.logger = logger;
     this.remoteManager = remoteManager;
     this.threadManager = threadManager;
     this.sessionManager = sessionManager;
+    this.abortableOperationManager = abortableOperationManager;
 
     this.statManager = statManager;
     this.locks = new ConcurrentHashMap<LockID, ClientLock>(config.getStripedCount());
@@ -102,7 +107,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     while (true) {
       final ClientLock lockState = getOrCreateClientLockState(lock);
       try {
-        lockState.lock(this.remoteManager, this.threadManager.getThreadID(), level);
+        lockState.lock(this.abortableOperationManager, this.remoteManager, this.threadManager.getThreadID(), level);
         break;
       } catch (final GarbageLockException e) {
         // ignorable - thrown when operating on a garbage collected lock
@@ -123,7 +128,8 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     while (true) {
       final ClientLock lockState = getOrCreateClientLockState(lock);
       try {
-        if (lockState.tryLock(this.remoteManager, this.threadManager.getThreadID(), level)) {
+        if (lockState.tryLock(this.abortableOperationManager, this.remoteManager, this.threadManager.getThreadID(),
+                              level)) {
           fireLockSucceeded(lock);
           return true;
         } else {
@@ -149,7 +155,8 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     while (true) {
       final ClientLock lockState = getOrCreateClientLockState(lock);
       try {
-        if (lockState.tryLock(this.remoteManager, this.threadManager.getThreadID(), level, timeout)) {
+        if (lockState.tryLock(this.abortableOperationManager, this.remoteManager, this.threadManager.getThreadID(),
+                              level, timeout)) {
           fireLockSucceeded(lock);
           return true;
         } else {
@@ -173,7 +180,8 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     while (true) {
       final ClientLock lockState = getOrCreateClientLockState(lock);
       try {
-        lockState.lockInterruptibly(this.remoteManager, this.threadManager.getThreadID(), level);
+        lockState.lockInterruptibly(this.abortableOperationManager, this.remoteManager,
+                                    this.threadManager.getThreadID(), level);
         break;
       } catch (final GarbageLockException e) {
         // ignorable - thrown when operating on a garbage collected lock
@@ -582,7 +590,8 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     if (logger.isDebugEnabled()) {
       logger.debug(this.threadManager.getThreadID() + " waiting on log " + lock);
     }
-    lockState.wait(this.remoteManager, listener, this.threadManager.getThreadID(), waitObject);
+    lockState.wait(this.abortableOperationManager, this.remoteManager, listener, this.threadManager.getThreadID(),
+                   waitObject);
   }
 
   @Override
@@ -593,7 +602,8 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     if (logger.isDebugEnabled()) {
       logger.debug(this.threadManager.getThreadID() + " waiting on log " + lock);
     }
-    lockState.wait(this.remoteManager, listener, this.threadManager.getThreadID(), waitObject, timeout);
+    lockState.wait(this.abortableOperationManager, this.remoteManager, listener, this.threadManager.getThreadID(),
+                   waitObject, timeout);
   }
 
   /***********************************/
