@@ -65,67 +65,83 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     this.clientIDProvider = new ClientIDProviderImpl(theChannel.getChannelIDProvider());
   }
 
+  @Override
   public ClientIDProvider getClientIDProvider() {
     return this.clientIDProvider;
   }
 
+  @Override
   public void addListener(final ChannelEventListener listener) {
     this.channel.addListener(listener);
   }
 
+  @Override
   public ClientMessageChannel channel() {
     return this.channel;
   }
 
+  @Override
   public void open(final char[] pw) throws TCTimeoutException, UnknownHostException, IOException, MaxConnectionsExceededException,
       CommStackMismatchException {
     this.channel.open(pw);
   }
 
+  @Override
   public void close() {
     this.channel.close();
   }
 
+  @Override
   public LockRequestMessage newLockRequestMessage(final NodeID nodeID) {
     return (LockRequestMessage) this.channel.createMessage(TCMessageType.LOCK_REQUEST_MESSAGE);
   }
 
+  @Override
   public LockRequestMessageFactory getLockRequestMessageFactory() {
     return this;
   }
 
+  @Override
   public RequestRootMessage newRequestRootMessage(final NodeID nodeID) {
     return (RequestRootMessage) this.channel.createMessage(TCMessageType.REQUEST_ROOT_MESSAGE);
   }
 
+  @Override
   public RequestRootMessageFactory getRequestRootMessageFactory() {
     return this;
   }
 
+  @Override
   public RequestManagedObjectMessage newRequestManagedObjectMessage(final NodeID nodeID) {
     return (RequestManagedObjectMessage) this.channel.createMessage(TCMessageType.REQUEST_MANAGED_OBJECT_MESSAGE);
   }
 
+  @Override
   public RequestManagedObjectMessageFactory getRequestManagedObjectMessageFactory() {
     return this;
   }
 
+  @Override
   public ServerMapMessageFactory getServerMapMessageFactory() {
     return this;
   }
 
+  @Override
   public SearchRequestMessageFactory getSearchRequestMessageFactory() {
     return this;
   }
 
+  @Override
   public AcknowledgeTransactionMessageFactory getAcknowledgeTransactionMessageFactory() {
     return this;
   }
 
+  @Override
   public AcknowledgeTransactionMessage newAcknowledgeTransactionMessage(final NodeID remoteNode) {
     return (AcknowledgeTransactionMessage) this.channel.createMessage(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE);
   }
 
+  @Override
   public ClientHandshakeMessage newClientHandshakeMessage(NodeID remoteNode, String clientVersion,
                                                           boolean isEnterpriseClient) {
     final ClientHandshakeMessage rv = (ClientHandshakeMessage) this.channel
@@ -135,91 +151,113 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return rv;
   }
 
+  @Override
   public ClientHandshakeMessageFactory getClientHandshakeMessageFactory() {
     return this;
   }
 
+  @Override
   public NodesWithObjectsMessageFactory getNodesWithObjectsMessageFactory() {
     return this;
   }
 
+  @Override
   public KeysForOrphanedValuesMessageFactory getKeysForOrphanedValuesMessageFactory() {
     return this;
   }
 
+  @Override
   public NodeMetaDataMessageFactory getNodeMetaDataMessageFactory() {
     return this;
   }
 
+  @Override
   public NodesWithKeysMessageFactory getNodesWithKeysMessageFactory() {
     return this;
   }
 
+  @Override
   public ObjectIDBatchRequestMessage newObjectIDBatchRequestMessage() {
     return (ObjectIDBatchRequestMessage) this.channel.createMessage(TCMessageType.OBJECT_ID_BATCH_REQUEST_MESSAGE);
   }
 
+  @Override
   public JMXMessage getJMXMessage() {
     return (JMXMessage) this.channel.createMessage(TCMessageType.JMX_MESSAGE);
   }
 
+  @Override
   public CompletedTransactionLowWaterMarkMessage newCompletedTransactionLowWaterMarkMessage(final NodeID remoteID) {
     return (CompletedTransactionLowWaterMarkMessage) this.channel
         .createMessage(TCMessageType.COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE);
   }
 
+  @Override
   public ObjectIDBatchRequestMessageFactory getObjectIDBatchRequestMessageFactory() {
     return this;
   }
 
+  @Override
   public CommitTransactionMessage newCommitTransactionMessage(final NodeID remoteNode) {
     return (CommitTransactionMessage) this.channel.createMessage(TCMessageType.COMMIT_TRANSACTION_MESSAGE);
   }
 
+  @Override
   public CommitTransactionMessageFactory getCommitTransactionMessageFactory() {
     return this;
   }
 
+  @Override
   public NodesWithObjectsMessage newNodesWithObjectsMessage(final NodeID nodeID) {
     return (NodesWithObjectsMessage) this.channel.createMessage(TCMessageType.NODES_WITH_OBJECTS_MESSAGE);
   }
 
+  @Override
   public KeysForOrphanedValuesMessage newKeysForOrphanedValuesMessage(final NodeID nodeID) {
     return (KeysForOrphanedValuesMessage) this.channel.createMessage(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE);
   }
 
+  @Override
   public ServerMapRequestMessage newServerMapRequestMessage(final NodeID nodeID, final ServerMapRequestType type) {
     return type.createRequestMessage(this.channel);
   }
 
+  @Override
   public SearchQueryRequestMessage newSearchQueryRequestMessage(final NodeID remoteID) {
     return (SearchQueryRequestMessage) this.channel.createMessage(TCMessageType.SEARCH_QUERY_REQUEST_MESSAGE);
   }
 
+  @Override
   public NodeMetaDataMessage newNodeMetaDataMessage() {
     return (NodeMetaDataMessage) this.channel.createMessage(TCMessageType.NODE_META_DATA_MESSAGE);
   }
 
+  @Override
   public boolean isConnected() {
     return this.channel.isConnected();
   }
 
+  @Override
   public CompletedTransactionLowWaterMarkMessageFactory getCompletedTransactionLowWaterMarkMessageFactory() {
     return this;
   }
 
+  @Override
   public LockStatisticsResponseMessage newLockStatisticsResponseMessage(final NodeID remoteID) {
     return (LockStatisticsResponseMessage) this.channel.createMessage(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE);
   }
 
+  @Override
   public LockStatisticsReponseMessageFactory getLockStatisticsReponseMessageFactory() {
     return this;
   }
 
+  @Override
   public GroupID[] getGroupIDs() {
     return this.groups;
   }
 
+  @Override
   public NodesWithKeysMessage newNodesWithKeysMessage(final NodeID nodeID) {
     return (NodesWithKeysMessage) this.channel.createMessage(TCMessageType.NODES_WITH_KEYS_MESSAGE);
   }
