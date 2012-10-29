@@ -12,19 +12,48 @@ import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.ToolkitObjectType;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
 import com.terracotta.toolkit.util.ToolkitIDGeneratorImpl;
+import com.terracotta.toolkit.util.collections.WeakValueMap;
+import com.terracotta.toolkit.util.collections.WeakValueMapManager;
+
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ToolkitAtomicLongFactoryImpl implements ToolkitObjectFactory<ToolkitAtomicLong> {
   private final ToolkitStore           atomicLongs;
   private final ToolkitIDGeneratorImpl longIdGenerator;
+  private final WeakValueMap<ToolkitAtomicLong> localCache;
+  private final Lock                            lock;
 
-  public ToolkitAtomicLongFactoryImpl(ToolkitStore atomicLongs) {
+  public ToolkitAtomicLongFactoryImpl(ToolkitStore atomicLongs, WeakValueMapManager manager) {
     this.atomicLongs = atomicLongs;
-    longIdGenerator = new ToolkitIDGeneratorImpl(ToolkitTypeConstants.TOOLKIT_LONG_UID_NAME, atomicLongs);
+    this.longIdGenerator = new ToolkitIDGeneratorImpl(ToolkitTypeConstants.TOOLKIT_LONG_UID_NAME, atomicLongs);
+    this.localCache = manager.createWeakValueMap();
+    this.lock = new ReentrantLock();
   }
 
   @Override
   public ToolkitAtomicLong getOrCreate(String name, Configuration config) {
-    return new ToolkitAtomicLongImpl(name, atomicLongs, longIdGenerator);
+    ToolkitAtomicLong atomicLong = null;
+    lock.lock();
+    try {
+      atomicLong = localCache.get(name);
+      if (atomicLong == null) {
+        atomicLong = createToolkitType(name);
+      } else {
+        if (atomicLong.isDestroyed()) {
+          atomicLong = createToolkitType(name);
+        }
+      }
+    } finally {
+      lock.unlock();
+    }
+    return atomicLong;
+  }
+
+  private ToolkitAtomicLong createToolkitType(String name) {
+    ToolkitAtomicLong atomicLong = new ToolkitAtomicLongImpl(name, atomicLongs, longIdGenerator);
+    localCache.put(name, atomicLong);
+    return atomicLong;
   }
 
   @Override

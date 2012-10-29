@@ -17,6 +17,7 @@ import com.terracotta.toolkit.object.serialization.SerializedClusterObjectFactor
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public abstract class AbstractTCToolkitObject implements TCToolkitObject {
 
@@ -25,7 +26,7 @@ public abstract class AbstractTCToolkitObject implements TCToolkitObject {
 
   protected volatile GroupID                     gid;
   protected volatile TCObject                    tcObject;
-  private volatile DestroyApplicator             applyDestroyCallback;
+  private final Collection<DestroyApplicator>          applyDestroyCallbacks;
   private volatile boolean                       destroyed = false;
   protected final PlatformService                platformService;
 
@@ -41,6 +42,7 @@ public abstract class AbstractTCToolkitObject implements TCToolkitObject {
     }
     this.strategy = registeredSerializer;
     this.serializedClusterObjectFactory = new SerializedClusterObjectFactoryImpl(platformService, strategy);
+    this.applyDestroyCallbacks = new CopyOnWriteArrayList<DestroyApplicator>();
   }
 
   @Override
@@ -73,14 +75,19 @@ public abstract class AbstractTCToolkitObject implements TCToolkitObject {
   public final void applyDestroy() {
     destroyed = true;
     cleanupOnDestroy();
-    if (applyDestroyCallback != null) {
+    for (DestroyApplicator applyDestroyCallback : applyDestroyCallbacks) {
       applyDestroyCallback.applyDestroy();
     }
+    applyDestroyCallbacks.clear();
   }
 
   @Override
   public void setApplyDestroyCallback(DestroyApplicator callback) {
-    this.applyDestroyCallback = callback;
+    if (callback != null) {
+      applyDestroyCallbacks.add(callback);
+    } else {
+      throw new AssertionError("DestroyApplicator callback is null");
+    }
   }
 
   @Override
