@@ -128,10 +128,11 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
         
     private int calculateSampleCount(EvictableMap ev,boolean emergency) {
         int samples = ev.getMaxTotalCount();
-        samples = ( emergency ) ? samples/50:samples/10;
-        if ( samples == 0 ) { // zero has special meaning, it's either pinned or a store
+        if ( samples == 0 ) {// zero has special meaning, it's either pinned or a store
             return 0;
-        } else if ( samples < 100 ) {
+        }
+        samples = ( emergency ) ? samples/50:samples/10;
+        if ( samples < 100 ) {
             samples = 100;
         } else if ( samples > 1000000 ) {
             samples = 1000000;
@@ -170,12 +171,13 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
     final int currentSize = ev.getSize();
     
     if (currentSize == 0) {
+        log("Map size is zero nothing to evict " + oid);
       return null;
     }
     
     int sampleCount = calculateSampleCount(ev,false);
     if ( sampleCount <= 0 ) {
-        log("Zero apacity count on " + oid + " " + cacheName + " it's a store or pinned");
+        log("Zero capacity count on " + oid + " " + cacheName + " it's a store or pinned");
         return null;
     }
     
