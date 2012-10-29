@@ -93,6 +93,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
         try {
           final ManagedObject mo = this.objectManager.getObjectByIDOrNull(oid);
           if (mo == null) { 
+              log("Managed object gone : " + oid);
               return false; 
           }
 
@@ -102,12 +103,14 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
           EvictableMap ev = getEvictableMapFrom(mo.getID(), state);
           if ( periodicEvictorRun && !ev.startEviction() ) {
               this.objectManager.releaseReadOnly(mo);
+              log("Already evicting on " + ev.getCacheName() + " periodic mode " + periodicEvictorRun);
               return true;
           }
 
           ServerMapEvictionContext context = doEviction(oid, ev, className, ev.getCacheName(),periodicEvictorRun);
           if (context == null) {
               ev.evictionCompleted();
+              log("Nothing to evict " + ev.getCacheName() + " periodic mode " + periodicEvictorRun);
           }
         // Reason for releasing the checked-out object before adding the context to the sink is that we can block on add
         // to the sink because the sink reached max capacity and blocking
@@ -144,6 +147,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
         synchronized ( expirySet ) {
             if ( !expirySet.contains(oid) ) {
                 expirySet.add(oid);
+                log("Scheduling eviction on " + oid + " in " + ((ttl > tti ? ttl : tti) * 1000 * 4) + " with tti/ttl:" + tti + "/" + ttl);
                 expiry.schedule(new TimerTask() {
 
                       @Override
@@ -171,11 +175,13 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
     
     int sampleCount = calculateSampleCount(ev,false);
     if ( sampleCount <= 0 ) {
+        log("Zero apacity count on " + oid + " " + cacheName + " it's a store or pinned");
         return null;
     }
     
     int overflow = currentSize - ev.getMaxTotalCount();
     if ( overflow > sampleCount ) {
+        log("Overflow on " + oid + " " + cacheName + " evicting " + overflow);
         sampleCount = overflow;
         periodic = false;
     }
@@ -187,13 +193,14 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
     scheduleExpiry(oid,ttl,tti);
 
     Map samples = ev.getRandomSamples(sampleCount, clientObjectReferenceSet);
+    log("Sampled " + oid + " " + cacheName + " " + samples.size());
 
     samples = evictor.filter(oid, samples, tti, ttl, sampleCount, cacheName, !periodic);
+    log("Filtered " + oid + " " + cacheName + " " + samples.size());
 
     if (samples.isEmpty()) {
         return null;
     } else {
-
       return new ServerMapEvictionContext(oid, samples, className, cacheName);
     }
   }
