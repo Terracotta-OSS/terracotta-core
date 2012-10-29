@@ -660,17 +660,23 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     if (tcInstallDir != null && TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.MANAGEMENT_REST_ENABLED, true)) {
       // register REST webapp
-      File managementDir = new File(tcInstallDir, "management");
+      String warFile = System.getProperty("com.tc.management.war");
+      if (warFile == null) {
+        File managementDir = new File(tcInstallDir, "management");
 
-      String[] files = managementDir.list(new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-          return name.endsWith(".war");
+        String[] files = managementDir.list(new FilenameFilter() {
+          @Override
+          public boolean accept(File dir, String name) {
+            return name.endsWith(".war");
+          }
+        });
+
+        if (files != null && files.length > 0) {
+          warFile = managementDir.getPath() + File.separator + files[0];
         }
-      });
+      }
 
-      if (files != null && files.length > 0) {
-        String warFile = files[0];
+      if (warFile != null) {
         logger.info("deploying management REST services from archive " + warFile);
         WebAppContext restContext = new WebAppContext();
 
@@ -680,7 +686,7 @@ public class TCServerImpl extends SEDA implements TCServer {
         restContext.setSystemClasses(systemClasses.toArray(new String[systemClasses.size()]));
 
         restContext.setContextPath("/tc-management-api");
-        restContext.setWar(managementDir.getPath() + File.separator + warFile);
+        restContext.setWar(warFile);
         contextHandlerCollection.addHandler(restContext);
 
         if (contextHandlerCollection.isStarted()) {

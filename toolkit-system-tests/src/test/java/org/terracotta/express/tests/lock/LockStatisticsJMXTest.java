@@ -29,6 +29,7 @@ public class LockStatisticsJMXTest extends AbstractToolkitTestBase {
     testConfig.addTcProperty("l1.lock.stacktrace.defaultDepth", "1");
     testConfig.addTcProperty("l1.lock.collectFrequency", "10");
 
+    disableTest();
   }
 
 }

@@ -22,7 +22,7 @@ import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
 public class ToolkitSortedSetFactoryImpl extends
     AbstractPrimaryToolkitObjectFactory<ToolkitSortedSetImpl, ToolkitSortedMapImpl> {
 
-  private static final SetIsolatedTypeFactory FACTORY = new SetIsolatedTypeFactory();
+  private static final SortedSetIsolatedTypeFactory FACTORY = new SortedSetIsolatedTypeFactory();
 
   public ToolkitSortedSetFactoryImpl(ToolkitInternal toolkit, ToolkitTypeRootsFactory rootsFactory,
                                      PlatformService platformService) {
@@ -35,7 +35,7 @@ public class ToolkitSortedSetFactoryImpl extends
     return ToolkitObjectType.SORTED_SET;
   }
 
-  private static class SetIsolatedTypeFactory implements
+  private static class SortedSetIsolatedTypeFactory implements
       IsolatedToolkitTypeFactory<ToolkitSortedSetImpl, ToolkitSortedMapImpl> {
 
     @Override

@@ -30,7 +30,7 @@ public class TopologyServiceImpl implements TopologyService {
 
   @Override
   public Collection<ClientEntity> getClients() throws ServiceExecutionException {
-    return tsaManagementClientService.buildClientEntities();
+    return tsaManagementClientService.getClientEntities();
   }
 
 }

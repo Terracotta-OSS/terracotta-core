@@ -47,6 +47,9 @@
         <include>net.sf.ehcache:ehcache</include>
         <include>org.slf4j:slf4j-api</include>
       </includes>
+      <excludes>
+        <exclude>net.sf.ehcache.internal:*</exclude>
+      </excludes>        
       <scope>provided</scope>
     </dependencySet>
 

@@ -41,9 +41,10 @@ public class ToolkitLockingApi {
   }
 
   // RWLsocks created for toolkitObject - used for ToolkitReadWriteLock
-  public static UnnamedToolkitReadWriteLock createUnnamedReadWriteLock(ToolkitObjectType type, String name,
+  public static UnnamedToolkitReadWriteLock createUnnamedReadWriteLock(ToolkitObjectType toolkitObjectType,
+                                                                       String name,
                                                                        PlatformService service) {
-    return new UnnamedToolkitReadWriteLock(service, generateStringLockId(type, name));
+    return new UnnamedToolkitReadWriteLock(service, generateStringLockId(toolkitObjectType, name));
   }
 
   // used for servermap keys

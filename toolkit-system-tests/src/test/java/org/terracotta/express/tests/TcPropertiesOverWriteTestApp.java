@@ -8,6 +8,8 @@ import org.terracotta.toolkit.Toolkit;
 
 import com.tc.properties.TCPropertiesConsts;
 
+import java.lang.reflect.Method;
+
 import junit.framework.Assert;
 
 public class TcPropertiesOverWriteTestApp extends ClientBase {
@@ -47,7 +49,9 @@ public class TcPropertiesOverWriteTestApp extends ClientBase {
     try {
       ClassLoader cl = getClusteringToolkit().getMap("testMap", null, null).getClass().getClassLoader();
       Class managerUtil = cl.loadClass(MANAGER_UTIL_CLASS_NAME);
-      Object tcProps = managerUtil.getMethod(MANAGER_UTIL_getTCProperties_METHOD).invoke(null);
+      Method getTCPropertiesMethod = managerUtil.getDeclaredMethod(MANAGER_UTIL_getTCProperties_METHOD);
+      getTCPropertiesMethod.setAccessible(true);
+      Object tcProps = getTCPropertiesMethod.invoke(null);
 
       return (String) tcProps.getClass().getMethod(TCPROPERTIES_getProperty_METHOD, String.class).invoke(tcProps, key);
     } catch (Exception e) {

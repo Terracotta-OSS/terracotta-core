@@ -26,12 +26,23 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
   }
 
   @Override
+  public synchronized boolean isConnectAllowed(ConnectionID connID) {
+    HashSet<ConnectionID> jvmClients = clientsByJvm.get(connID.getJvmID());
+
+    if (jvmClients == null && isMaxConnectionsReached()) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
   public synchronized String toString() {
     return "ConnectionPolicy[maxConnections=" + maxConnections + ", connectedJvmCount=" + clientsByJvm.size() + "]";
   }
 
+  @Override
   public synchronized boolean connectClient(ConnectionID connID) {
-
     HashSet<ConnectionID> jvmClients = clientsByJvm.get(connID.getJvmID());
 
     if (isMaxConnectionsReached() && jvmClients == null) {
@@ -54,6 +65,7 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
     return true;
   }
 
+  @Override
   public synchronized void clientDisconnected(ConnectionID connID) {
     // not all times clientSet has connID client disconnect removes the connID. after reconnect timeout, for close event
     // we get here again.
@@ -72,18 +84,22 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
     }
   }
 
+  @Override
   public synchronized boolean isMaxConnectionsReached() {
     return (clientsByJvm.size() >= maxConnections);
   }
 
+  @Override
   public synchronized int getMaxConnections() {
     return maxConnections;
   }
 
+  @Override
   public synchronized int getNumberOfActiveConnections() {
     return clientsByJvm.size();
   }
 
+  @Override
   public synchronized int getConnectionHighWatermark() {
     return maxReached;
   }

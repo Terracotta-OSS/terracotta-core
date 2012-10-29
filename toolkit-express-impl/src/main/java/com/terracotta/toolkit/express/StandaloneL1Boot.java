@@ -150,6 +150,7 @@ public class StandaloneL1Boot implements Callable<Object> {
     return TcConfigDocument.Factory.parse(configText).getTcConfig();
   }
 
+  @Override
   public Object call() throws Exception {
     TCSecurityManager securityManager = null;
 

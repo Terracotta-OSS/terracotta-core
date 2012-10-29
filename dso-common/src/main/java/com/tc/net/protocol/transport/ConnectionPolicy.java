@@ -17,4 +17,5 @@ public interface ConnectionPolicy {
 
   public int getConnectionHighWatermark();
 
+  public boolean isConnectAllowed(ConnectionID connID);
 }

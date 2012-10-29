@@ -64,7 +64,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   private final RemoteServerMapManager        serverMapManager;
   private final Manager                       manager;
   private volatile ServerMapLocalCache        cache;
-  private volatile boolean                    invalidateOnChange;
+  private volatile boolean                    isEventual;
   private volatile boolean                    localCacheEnabled;
 
   private volatile L1ServerMapLocalCacheStore serverMapLocalStore;
@@ -90,8 +90,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
   @Override
   public void initialize(final int maxTTISeconds, final int maxTTLSeconds, final int targetMaxTotalCount,
-                         final boolean invalidateOnChangeFlag, final boolean localCacheEnabledFlag) {
-    this.invalidateOnChange = invalidateOnChangeFlag;
+                         final boolean isCacheEventual, final boolean localCacheEnabledFlag) {
+    this.isEventual = isCacheEventual;
     this.localCacheEnabled = localCacheEnabledFlag;
     // if tcobject is being faulted in, the TCO is created and the peer is hydrated afterwards
     // meaning initialize is called after the cache has been already created, need to update
@@ -136,7 +136,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     synchronized (localLock) {
       ObjectID valueObjectID = invokeLogicalPut(map, key, value);
 
-      if (!invalidateOnChange) {
+      if (!isEventual) {
         addIncoherentValueToCache(key, value, valueObjectID, MapOperationType.PUT);
       } else {
         addEventualValueToCache(key, value, valueObjectID, MapOperationType.PUT);
@@ -159,7 +159,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
     ObjectID valueObjectID = invokeLogicalPutIfAbsent(map, key, value);
 
-    if (!invalidateOnChange) {
+    if (!isEventual) {
       addIncoherentValueToCache(key, value, valueObjectID, MapOperationType.PUT);
     } else {
       addEventualValueToCache(key, value, valueObjectID, MapOperationType.PUT);
@@ -174,7 +174,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
       ObjectID valueObjectID = invokeLogicalReplace(map, key, current, newValue);
 
-      if (!invalidateOnChange) {
+      if (!isEventual) {
         addIncoherentValueToCache(key, newValue, valueObjectID, MapOperationType.PUT);
       } else {
         addEventualValueToCache(key, newValue, valueObjectID, MapOperationType.PUT);
@@ -190,7 +190,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
       ObjectID valueObjectID = invokeLogicalReplace(map, key, newValue);
 
-      if (!invalidateOnChange) {
+      if (!isEventual) {
         addIncoherentValueToCache(key, newValue, valueObjectID, MapOperationType.PUT);
       } else {
         addEventualValueToCache(key, newValue, valueObjectID, MapOperationType.PUT);
@@ -227,7 +227,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     synchronized (localLock) {
       invokeLogicalRemove(map, key);
 
-      if (!invalidateOnChange) {
+      if (!isEventual) {
         addIncoherentValueToCache(key, null, ObjectID.NULL_ID, MapOperationType.REMOVE);
       } else {
         addEventualValueToCache(key, null, ObjectID.NULL_ID, MapOperationType.REMOVE);
@@ -254,7 +254,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
       invokeLogicalRemove(map, key, value);
 
-      if (!invalidateOnChange) {
+      if (!isEventual) {
         addIncoherentValueToCache(key, null, ObjectID.NULL_ID, MapOperationType.REMOVE);
       } else {
         addEventualValueToCache(key, null, ObjectID.NULL_ID, MapOperationType.REMOVE);
@@ -295,7 +295,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   private void updateLocalCacheIfNecessary(final Object key, final Object value) {
-    if (invalidateOnChange) {
+    if (isEventual) {
       // Null values (i.e. cache misses) & literal values are not cached locally
       if (value != null && !LiteralValues.isLiteralInstance(value)) {
         //

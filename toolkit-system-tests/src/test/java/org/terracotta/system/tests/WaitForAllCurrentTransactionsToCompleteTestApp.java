@@ -49,13 +49,12 @@ public class WaitForAllCurrentTransactionsToCompleteTestApp extends ClientBase {
   @Override
   protected void test(Toolkit toolkit) throws Throwable {
     int index = waitForAllClients();
-
     for (int i = 0; i < numOfLoop; i++) {
       if (index == 0) {
         doPut();
         Assert.assertEquals(numOfPut + getParticipantCount() - 1, queue.size());
         info("XXX Txns in the system");
-        getPendingTransactionsCount(toolkit);
+        getPendingTransactionsCountForAllClients(toolkit);
       }
       waitForAllClients();
       waitTxnComplete(toolkit);
@@ -63,7 +62,7 @@ public class WaitForAllCurrentTransactionsToCompleteTestApp extends ClientBase {
       if (index == 0) {
         Thread.sleep(1000);
         info("XXX Txns in the system, after txn complete");
-        Assert.assertEquals(0, getPendingTransactionsCount(toolkit));
+        Assert.assertEquals(0, getPendingTransactionsCountForAllClients(toolkit));
       }
       waitForAllClients();
       if (index != 0) {
@@ -79,11 +78,10 @@ public class WaitForAllCurrentTransactionsToCompleteTestApp extends ClientBase {
   private void waitTxnComplete(Toolkit toolkit) {
     long now = System.currentTimeMillis();
     waitForAllCurrentTransactionsToComplete(toolkit);
-    info("XXX Client-" + getClientUUID(toolkit) + " waitForAllCurrentTransactionsToComplete took "
-         + (System.currentTimeMillis() - now) + "ms");
+    info("XXX waitForAllCurrentTransactionsToComplete took " + (System.currentTimeMillis() - now) + "ms");
   }
 
-  private long getPendingTransactionsCount(Toolkit toolkit) {
+  private long getPendingTransactionsCountForAllClients(Toolkit toolkit) {
     MBeanServerConnection mbsc;
     int jmxPort = getTestControlMbean().getGroupsData()[0].getJmxPort(0);
     try {
@@ -95,16 +93,15 @@ public class WaitForAllCurrentTransactionsToCompleteTestApp extends ClientBase {
     DSOMBean dsoMBean = MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO, DSOMBean.class, false);
     Map<ObjectName, Long> map = dsoMBean.getAllPendingTransactionsCount();
 
-    long l = -1;
+    long totalPendingTxns = 0;
     for (ObjectName o : map.keySet()) {
       info("Pending Tranaction count for " + o + " size: " + map.get(o));
       String cid = o.getKeyProperty("channelID");
-      if (cid.equals(getClientUUID(toolkit))) {
-        l = map.get(o);
-        info("XXX Pending Tranaction count for channleID=" + cid + " size: " + l);
-      }
+      long l = map.get(o);
+      info("XXX Pending Tranaction count for channleID=" + cid + " size: " + l);
+      totalPendingTxns += l;
     }
-    return l;
+    return totalPendingTxns;
   }
 
   private void doGet() throws Exception {

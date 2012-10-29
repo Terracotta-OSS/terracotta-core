@@ -53,6 +53,7 @@ public class ToolkitMapApiKeyValGrClient extends AbstractToolkitApiTestClientUti
     super.toolkit = toolkit;
     barrier = toolkit.getBarrier("myBarrier", 2);
     super.chm = toolkit.getMap(name, String.class, String.class);
+    super.map = super.chm;
     toolkitMap = (ToolkitMap) super.chm;
   }
 
