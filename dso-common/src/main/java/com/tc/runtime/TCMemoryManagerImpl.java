@@ -7,7 +7,6 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.protocol.transport.ReconnectionRejectedCallback;
 import com.tc.util.runtime.Os;
 
 import java.lang.management.GarbageCollectorMXBean;
@@ -16,7 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class TCMemoryManagerImpl implements TCMemoryManager, ReconnectionRejectedCallback {
+public class TCMemoryManagerImpl implements TCMemoryManager {
 
   private static final TCLogger logger        = TCLogging.getLogger(TCMemoryManagerImpl.class);
   private final String          CMS_NAME      = "ConcurrentMarkSweep";
@@ -44,6 +43,7 @@ public class TCMemoryManagerImpl implements TCMemoryManager, ReconnectionRejecte
   }
 
   // CDV-1181 warn if using CMS
+  @Override
   public void checkGarbageCollectors() {
     List<GarbageCollectorMXBean> gcmbeans = ManagementFactory.getGarbageCollectorMXBeans();
     boolean foundCMS = false;
@@ -65,11 +65,13 @@ public class TCMemoryManagerImpl implements TCMemoryManager, ReconnectionRejecte
                                                          + " Outside range"); }
   }
 
+  @Override
   public void registerForMemoryEvents(MemoryEventsListener listener) {
     listeners.add(listener);
     startMonitorIfNecessary();
   }
 
+  @Override
   public void unregisterForMemoryEvents(MemoryEventsListener listener) {
     listeners.remove(listener);
     stopMonitorIfNecessary();
@@ -113,6 +115,7 @@ public class TCMemoryManagerImpl implements TCMemoryManager, ReconnectionRejecte
     }
   }
 
+  @Override
   public synchronized boolean isMonitorOldGenOnly() {
     return monitor.monitorOldGenOnly();
   }
@@ -135,6 +138,7 @@ public class TCMemoryManagerImpl implements TCMemoryManager, ReconnectionRejecte
       run = false;
     }
 
+    @Override
     public void run() {
       logger.debug("Starting Memory Monitor - sleep interval - " + sleepTime);
       final boolean _oldGen = oldGen;
@@ -182,6 +186,7 @@ public class TCMemoryManagerImpl implements TCMemoryManager, ReconnectionRejecte
     }
   }
 
+  @Override
   public synchronized void shutdown() {
     stopMonitorThread();
   }

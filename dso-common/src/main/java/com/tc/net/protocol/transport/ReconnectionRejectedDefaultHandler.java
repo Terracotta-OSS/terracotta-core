@@ -7,6 +7,7 @@ import com.tc.net.ReconnectionRejectedException;
 
 public class ReconnectionRejectedDefaultHandler implements ReconnectionRejectedHandler {
 
+  @Override
   public void reconnectionRejected(ReconnectionRejectedCleanupAction cleanup) throws ReconnectionRejectedException {
     throw new ReconnectionRejectedException("Reconnection rejected due to stack not found. Default Behaviour.");
   }

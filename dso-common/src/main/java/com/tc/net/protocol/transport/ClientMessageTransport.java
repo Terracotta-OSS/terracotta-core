@@ -131,6 +131,7 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
     this.status.reset();
   }
 
+  @Override
   public void reconnectionRejectedCleanupAction() {
     Assert.eval("Client Message Transport :" + this.status, this.status.isSynSent());
     cleanConnectionWithoutNotifyListeners();
@@ -341,6 +342,7 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
 
   TCProtocolAdaptor getProtocolAdapter() {
     return this.wireProtocolAdaptorFactory.newWireProtocolAdaptor(new WireProtocolMessageSink() {
+      @Override
       public void putMessage(WireProtocolMessage message) {
         receiveTransportMessage(message);
       }
