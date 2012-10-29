@@ -182,7 +182,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
     }
     
     int overflow = currentSize - ev.getMaxTotalCount();
-    if ( overflow > sampleCount ) {
+    if ( overflow > 0 ) {
         log("Overflow on " + oid + " " + cacheName + " evicting " + overflow);
         sampleCount = overflow;
         periodic = false;
