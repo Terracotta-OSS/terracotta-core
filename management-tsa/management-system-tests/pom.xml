@@ -37,7 +37,7 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>management-tsa-impl</artifactId>
+      <artifactId>management-tsa-war</artifactId>
       <version>${project.version}</version>
       <type>war</type>
       <scope>test</scope>
