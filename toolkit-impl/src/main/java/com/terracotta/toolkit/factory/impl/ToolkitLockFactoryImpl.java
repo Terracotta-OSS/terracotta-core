@@ -34,14 +34,14 @@ public class ToolkitLockFactoryImpl implements ToolkitObjectFactory<ToolkitLockI
     lock.lock();
     try {
       toolkitLock = localCache.get(name);
-      if (lock == null) {
+      if (toolkitLock == null) {
         ToolkitLockTypeInternal internalLockType = ToolkitLockTypeInternal
             .valueOf(config.getString(INTERNAL_LOCK_TYPE));
         toolkitLock = new ToolkitLockImpl(platformService, name, internalLockType);
         localCache.put(name, toolkitLock);
       }
     } finally {
-      lock.lock();
+      lock.unlock();
     }
     return toolkitLock;
   }

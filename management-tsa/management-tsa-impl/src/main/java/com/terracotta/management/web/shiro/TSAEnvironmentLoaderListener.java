@@ -3,6 +3,11 @@
  */
 package com.terracotta.management.web.shiro;
 
+import com.terracotta.management.resource.services.validator.TSARequestValidator;
+import com.terracotta.management.service.DiagnosticsService;
+import com.terracotta.management.service.TsaManagementClientService;
+import com.terracotta.management.service.MonitoringService;
+import com.terracotta.management.service.TopologyService;
 import net.sf.ehcache.management.resource.services.validator.impl.JmxEhcacheRequestValidator;
 import net.sf.ehcache.management.service.AgentService;
 import net.sf.ehcache.management.service.CacheManagerService;
@@ -13,7 +18,6 @@ import org.apache.shiro.web.env.EnvironmentLoaderListener;
 import org.terracotta.management.ServiceLocator;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
-import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.IdentityAssertionServiceClient;
 import com.terracotta.management.security.KeyChainAccessor;
@@ -30,16 +34,12 @@ import com.terracotta.management.security.impl.NullRequestTicketMonitor;
 import com.terracotta.management.security.impl.NullUserService;
 import com.terracotta.management.security.impl.RelayingJerseyIdentityAssertionServiceClient;
 import com.terracotta.management.security.impl.TSAIdentityAsserter;
-import com.terracotta.management.service.DiagnosticsService;
-import com.terracotta.management.service.MonitoringService;
-import com.terracotta.management.service.TopologyService;
-import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.service.impl.ClearTextTsaManagementClientServiceImpl;
 import com.terracotta.management.service.impl.DiagnosticsServiceImpl;
 import com.terracotta.management.service.impl.MonitoringServiceImpl;
-import com.terracotta.management.service.impl.TopologyServiceImpl;
 import com.terracotta.management.service.impl.TsaAgentServiceImpl;
 import com.terracotta.management.web.config.TSAConfig;
+import com.terracotta.management.service.impl.TopologyServiceImpl;
 
 import java.lang.management.ManagementFactory;
 

@@ -5,7 +5,7 @@
     <groupId>org.terracotta</groupId>
     <artifactId>system-tests-parent</artifactId>
     <version>3.8.0-SNAPSHOT</version>
-    <relativePath>../system-tests-parent</relativePath>
+    <relativePath>../../system-tests-parent</relativePath>
   </parent>
 
   <groupId>org.terracotta.internal</groupId>
@@ -37,7 +37,7 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>management-tsa-impl</artifactId>
+      <artifactId>management-tsa-war</artifactId>
       <version>${project.version}</version>
       <type>war</type>
       <scope>test</scope>
