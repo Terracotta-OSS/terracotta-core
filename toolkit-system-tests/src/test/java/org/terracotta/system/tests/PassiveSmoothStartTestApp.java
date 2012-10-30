@@ -28,6 +28,8 @@ public class PassiveSmoothStartTestApp extends ClientBase {
 
   @Override
   protected void test(Toolkit toolkit) throws Throwable {
+    getTestControlMbean().waitUntilPassiveStandBy(0);
+
     // crate some data to populate db
 
     ToolkitMap<Integer, Serializable> map = toolkit.getMap("testMap", null, null);
