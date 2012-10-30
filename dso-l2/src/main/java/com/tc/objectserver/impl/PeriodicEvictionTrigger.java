@@ -157,11 +157,11 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
 
     @Override
     public String toString() {
-        String flag = ( expired + overflow > 0 ) ? "ELEMENTS_EVICTED" : "";
+        String flag = ( expired + overflow > 0 ) ? ", ELEMENTS_EVICTED" : "";
         return "PeriodicEvictionTrigger{" 
-                + "name=" + cacheName 
-                + "over capacity=" + dumpLive 
-                + "ELEMENT_BASED_TTI_TTL_ENABLED=" + ELEMENT_BASED_TTI_TTL_ENABLED
+                + ", name=" + cacheName 
+                + ", over capacity=" + dumpLive 
+                + ", ELEMENT_BASED_TTI_TTL_ENABLED=" + ELEMENT_BASED_TTI_TTL_ENABLED
                 + ", over capacity=" + dumpLive 
                 + ", count=" + sampled
                 + ", overflow=" + overflow 
