@@ -26,6 +26,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     private int alive = 0;
     private int expired = 0;
     private int overflow = 0;
+    private String cacheName;
     private final ObjectManager  mgr;
 
     public PeriodicEvictionTrigger(ObjectManager mgr, ObjectID oid, boolean ELEMENT_BASED_TTI_TTL_ENABLED) {
@@ -36,6 +37,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
 
     @Override
     public boolean startEviction(EvictableMap map) {
+        cacheName = map.getCacheName();
         if ( map.getTTISeconds() > 0 || 
                 map.getTTLSeconds() > 0 || 
                 ELEMENT_BASED_TTI_TTL_ENABLED ||
@@ -75,7 +77,6 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
    private Map filter(final Map samples, final int ttiSeconds,
                     final int ttlSeconds, int targetCount) {
     final HashMap candidates = new HashMap(samples.size());
-    int expired = 0;
     final int now = (int) (System.currentTimeMillis() / 1000);
     for (final Iterator iterator = samples.entrySet().iterator(); candidates.size() < targetCount && iterator.hasNext();) {
       final Map.Entry e = (Map.Entry) iterator.next();
@@ -156,11 +157,18 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
 
     @Override
     public String toString() {
-        return "PeriodicEvictionTrigger{" + "ELEMENT_BASED_TTI_TTL_ENABLED=" 
+        String flag = ( expired + overflow > 0 ) ? "ELEMENTS_EVICTED" : "";
+        return "PeriodicEvictionTrigger{" 
+                + "name=" + cacheName 
+                + "over capacity=" + dumpLive 
+                + "ELEMENT_BASED_TTI_TTL_ENABLED=" + ELEMENT_BASED_TTI_TTL_ENABLED
                 + ", over capacity=" + dumpLive 
-                + ELEMENT_BASED_TTI_TTL_ENABLED + ", count=" + sampled
+                + ", count=" + sampled
                 + ", overflow=" + overflow 
-                + ", expired=" + expired + ", alive=" + alive + '}';
+                + ", expired=" + expired 
+                + ", alive=" + alive 
+                + flag
+                + '}';
     }
   
   
