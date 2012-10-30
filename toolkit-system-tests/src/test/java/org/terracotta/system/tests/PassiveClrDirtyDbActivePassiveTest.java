@@ -7,6 +7,7 @@ package org.terracotta.system.tests;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.derby.iapi.error.DerbySQLException;
 import org.terracotta.express.tests.base.AbstractExpressActivePassiveTest;
 import org.terracotta.express.tests.base.ClientBase;
 import org.terracotta.test.util.TestBaseUtil;
@@ -53,6 +54,7 @@ public class PassiveClrDirtyDbActivePassiveTest extends AbstractExpressActivePas
     extraJars.add(TestBaseUtil.jarFor(FileUtils.class));
     extraJars.add(TestBaseUtil.jarFor(TLongObjectHashMap.class));
     extraJars.add(TestBaseUtil.jarFor(StringUtils.class));
+    extraJars.add(TestBaseUtil.jarFor(DerbySQLException.class));
     return extraJars;
   }
 
