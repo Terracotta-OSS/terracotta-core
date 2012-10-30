@@ -90,6 +90,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
 
     final AtomicBoolean done = new AtomicBoolean(false);
     new Thread(new Runnable() {
+      @Override
       public void run() {
         ClientHandshakeManagerTest.this.mgr.waitForHandshake();
         done.set(true);
@@ -148,6 +149,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
 
     final AtomicBoolean done = new AtomicBoolean(false);
     new Thread(new Runnable() {
+      @Override
       public void run() {
         ClientHandshakeManagerTest.this.mgr.waitForHandshake();
         done.set(true);
@@ -201,6 +203,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
 
     final AtomicBoolean done = new AtomicBoolean(false);
     new Thread(new Runnable() {
+      @Override
       public void run() {
         ClientHandshakeManagerTest.this.mgr.waitForHandshake();
         done.set(true);
@@ -265,6 +268,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     public TestClientHandshakeMessage   message;
     public final NoExceptionLinkedQueue newMessageQueue = new NoExceptionLinkedQueue();
 
+    @Override
     public ClientHandshakeMessage newClientHandshakeMessage(NodeID remoteNode, String clVersion,
                                                             boolean isEnterpriseClient) {
       this.newMessageQueue.put(this.message);
@@ -277,6 +281,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
 
     long sequence = 1;
 
+    @Override
     public synchronized void requestBatch(final BatchSequenceReceiver receiver, final int size) {
       receiver.setNextBatch(this.sequence, this.sequence + size);
       this.sequence += size;
@@ -291,24 +296,34 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     AtomicInteger initiateHandshake = new AtomicInteger();
     int           disconnected;
 
+    @Override
     public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                     final ClientHandshakeMessage handshakeMessage) {
       this.initiateHandshake.incrementAndGet();
     }
 
+    @Override
     public void pause(final NodeID remoteNode, final int disconnectedCount) {
       this.paused.incrementAndGet();
       this.disconnected = disconnectedCount;
     }
 
+    @Override
     public void unpause(final NodeID remoteNode, final int disconnectedCount) {
       this.unpaused.incrementAndGet();
       this.disconnected = disconnectedCount;
     }
 
+    @Override
     public void shutdown() {
       // NOP
     }
+
+    @Override
+    public void cleanup() {
+      //
+    }
+
   }
 
   private class TestSessionManager implements SessionManager, SessionProvider {
@@ -316,10 +331,12 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     private SessionID           nextSessionID = SessionID.NULL_ID;
     private final AtomicInteger counter       = new AtomicInteger(-1);
 
+    @Override
     public SessionID getSessionID(NodeID nid) {
       return sessionID;
     }
 
+    @Override
     public SessionID nextSessionID(NodeID nid) {
       if (nextSessionID == SessionID.NULL_ID) {
         nextSessionID = new SessionID(counter.incrementAndGet());
@@ -327,6 +344,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
       return (nextSessionID);
     }
 
+    @Override
     public void newSession(NodeID nid) {
       if (nextSessionID != SessionID.NULL_ID) {
         sessionID = nextSessionID;
@@ -336,14 +354,17 @@ public class ClientHandshakeManagerTest extends TCTestCase {
       }
     }
 
+    @Override
     public boolean isCurrentSession(NodeID nid, SessionID sessID) {
       return sessID.equals(sessionID);
     }
 
+    @Override
     public void initProvider(NodeID nid) {
       return;
     }
 
+    @Override
     public void resetSessionProvider() {
       throw new ImplementMe();
     }

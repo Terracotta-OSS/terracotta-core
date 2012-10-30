@@ -39,14 +39,14 @@ public class RejoinManagerImpl implements RejoinManager {
     if (!rejoinEnabled) { throw new AssertionError("Trying to do rejoin when its disabled"); }
   }
 
-  private void notifyRejoinStart() {
+  public void notifyRejoinStart() {
     assertRejoinEnabled();
     for (RejoinLifecycleListener listener : listeners) {
       listener.onRejoinStart();
     }
   }
 
-  private void notifyRejoinComplete() {
+  public void notifyRejoinComplete() {
     assertRejoinEnabled();
     for (RejoinLifecycleListener listener : listeners) {
       listener.onRejoinComplete();

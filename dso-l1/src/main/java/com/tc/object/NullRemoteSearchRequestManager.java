@@ -22,6 +22,7 @@ import java.util.Set;
  */
 public class NullRemoteSearchRequestManager implements RemoteSearchRequestManager {
 
+  @Override
   public SearchQueryResults query(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                   Set<String> attributeSet, List<NVPair> sortAttributeMap, List<NVPair> aggregators,
                                   int maxResults, int batchSize) {
@@ -35,22 +36,32 @@ public class NullRemoteSearchRequestManager implements RemoteSearchRequestManage
     return null;
   }
 
+  @Override
+  public void cleanup() {
+    //
+  }
+
+  @Override
   public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
     //
   }
 
+  @Override
   public void pause(NodeID remoteNode, int disconnected) {
     //
   }
 
+  @Override
   public void shutdown() {
     //
   }
 
+  @Override
   public void unpause(NodeID remoteNode, int disconnected) {
     //
   }
 
+  @Override
   public void addResponseForQuery(final SessionID sessionID, final SearchRequestID requestID,
                                   final GroupID groupIDFrom, final List<IndexQueryResult> queryResults,
                                   final List<Aggregator> aggregators, final NodeID nodeID,
@@ -58,6 +69,7 @@ public class NullRemoteSearchRequestManager implements RemoteSearchRequestManage
     //
   }
 
+  @Override
   public void addErrorResponseForQuery(SessionID sessionID, SearchRequestID requestID, GroupID groupIDFrom,
                                        String errorMessage, NodeID nodeID) {
     //

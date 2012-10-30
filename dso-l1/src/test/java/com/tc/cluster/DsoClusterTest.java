@@ -54,6 +54,7 @@ public class DsoClusterTest extends TestCase {
     Mockito.when(mockStage.getSink()).thenReturn(mockSink);
     Mockito.doAnswer(new Answer<Void>() {
 
+      @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {
         Object[] arguments = invocation.getArguments();
         ClusterInternalEventsContext ce = (ClusterInternalEventsContext) arguments[0];
@@ -67,51 +68,68 @@ public class DsoClusterTest extends TestCase {
 
   private final static class MockClusterMetaDataManager implements ClusterMetaDataManager {
 
+    @Override
+    public void cleanup() {
+      //
+    }
+
+    @Override
     public DNAEncoding getEncoding() {
       return null;
     }
 
+    @Override
     public Set<?> getKeysForOrphanedValues(TCMap tcMap) {
       return null;
     }
 
+    @Override
     public Set<NodeID> getNodesWithObject(ObjectID id) {
       return null;
     }
 
+    @Override
     public Map<ObjectID, Set<NodeID>> getNodesWithObjects(Collection<ObjectID> ids) {
       return null;
     }
 
+    @Override
     public DsoNodeMetaData retrieveMetaDataForDsoNode(DsoNodeInternal node) {
       return null;
     }
 
+    @Override
     public void setResponse(ThreadID threadId, Object response) {
       // no-op
     }
 
+    @Override
     public <K> Map<K, Set<NodeID>> getNodesWithKeys(final TCMap tcMap, final Collection<? extends K> keys) {
       return null;
     }
 
+    @Override
     public <K> Map<K, Set<NodeID>> getNodesWithKeys(final TCServerMap tcMap, final Collection<? extends K> keys) {
       return null;
     }
 
+    @Override
     public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
       // no-op
 
     }
 
+    @Override
     public void pause(NodeID remoteNode, int disconnected) {
       // no-op
     }
 
+    @Override
     public void shutdown() {
       // no-op
     }
 
+    @Override
     public void unpause(NodeID remoteNode, int disconnected) {
       // no-op
     }
@@ -366,21 +384,25 @@ public class DsoClusterTest extends TestCase {
       return events;
     }
 
+    @Override
     public synchronized void nodeJoined(final DsoClusterEvent event) {
       check();
       events.add(event.getNode().getId() + " JOINED");
     }
 
+    @Override
     public synchronized void nodeLeft(final DsoClusterEvent event) {
       check();
       events.add(event.getNode().getId() + " LEFT");
     }
 
+    @Override
     public synchronized void operationsEnabled(final DsoClusterEvent event) {
       check();
       events.add(event.getNode().getId() + " ENABLED");
     }
 
+    @Override
     public synchronized void operationsDisabled(final DsoClusterEvent event) {
       check();
       events.add(event.getNode().getId() + " DISABLED");
@@ -397,18 +419,22 @@ public class DsoClusterTest extends TestCase {
 
   private static class TestEventListenerWithExceptions implements DsoClusterListener {
 
+    @Override
     public void nodeJoined(final DsoClusterEvent event) {
       throw new RuntimeException("nodeJoined");
     }
 
+    @Override
     public void nodeLeft(final DsoClusterEvent event) {
       throw new RuntimeException("nodeLeft");
     }
 
+    @Override
     public void operationsDisabled(final DsoClusterEvent event) {
       throw new RuntimeException("operationsDisabled");
     }
 
+    @Override
     public void operationsEnabled(final DsoClusterEvent event) {
       throw new RuntimeException("operationsEnabled");
     }
@@ -439,6 +465,7 @@ public class DsoClusterTest extends TestCase {
       System.out.println(Thread.currentThread().getName() + ": target runnable finished");
     }
 
+    @Override
     public void run() {
       long start = System.currentTimeMillis();
       this.startLatch.release();
@@ -466,6 +493,7 @@ public class DsoClusterTest extends TestCase {
 
     private final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
 
+    @Override
     public boolean useOutOfBandNotification(DsoClusterEventType type, DsoClusterEvent event) {
       return true;
     }

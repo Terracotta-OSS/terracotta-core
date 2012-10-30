@@ -88,10 +88,17 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     this.nwkmFactory = nwkmFactory;
   }
 
+  @Override
+  public void cleanup() {
+    //
+  }
+
+  @Override
   public DNAEncoding getEncoding() {
     return encoding;
   }
 
+  @Override
   public Set<NodeID> getNodesWithObject(final ObjectID objectID) {
     waitUntilRunning();
 
@@ -110,6 +117,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     return response.get(objectID);
   }
 
+  @Override
   public Map<ObjectID, Set<NodeID>> getNodesWithObjects(final Collection<ObjectID> objectIDs) {
     waitUntilRunning();
 
@@ -129,6 +137,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     return response;
   }
 
+  @Override
   public Set<?> getKeysForOrphanedValues(final TCMap tcMap) {
     waitUntilRunning();
 
@@ -149,6 +158,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     return response;
   }
 
+  @Override
   public DsoNodeMetaData retrieveMetaDataForDsoNode(final DsoNodeInternal node) {
     waitUntilRunning();
 
@@ -239,6 +249,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     return response;
   }
 
+  @Override
   public void setResponse(final ThreadID threadID, final Object response) {
     final WaitForResponse waitObject;
     synchronized (waitObjects) {
@@ -258,6 +269,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     }
   }
 
+  @Override
   public <K> Map<K, Set<NodeID>> getNodesWithKeys(final TCMap tcMap, final Collection<? extends K> keys) {
     waitUntilRunning();
 
@@ -279,6 +291,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     return result;
   }
 
+  @Override
   public <K> Map<K, Set<NodeID>> getNodesWithKeys(final TCServerMap tcMap, final Collection<? extends K> keys) {
     waitUntilRunning();
 
@@ -313,6 +326,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     }
   }
 
+  @Override
   public void shutdown() {
     isShutdown = true;
     synchronized (this) {
@@ -320,6 +334,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     }
   }
 
+  @Override
   public void pause(final NodeID remote, final int disconnected) {
     if (isShutdown) return;
     synchronized (this) {
@@ -329,6 +344,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     }
   }
 
+  @Override
   public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                   final ClientHandshakeMessage handshakeMessage) {
     if (isShutdown) return;
@@ -338,6 +354,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     }
   }
 
+  @Override
   public void unpause(final NodeID remote, final int disconnected) {
     if (isShutdown) return;
     synchronized (this) {

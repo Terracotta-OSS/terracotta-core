@@ -24,6 +24,12 @@ public class ObjectIDClientHandshakeRequester implements ClientHandshakeCallback
     this.requestTo = requestTo;
   }
 
+  @Override
+  public void cleanup() {
+    //
+  }
+
+  @Override
   public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
     if (GroupID.ALL_GROUPS.equals(requestTo) || remoteNode.equals(requestTo)) {
       handshakeMessage.setIsObjectIDsRequested(sequence.isBatchRequestPending());
@@ -32,14 +38,17 @@ public class ObjectIDClientHandshakeRequester implements ClientHandshakeCallback
     }
   }
 
+  @Override
   public void pause(NodeID remoteNode, int disconnected) {
     // NOP
   }
 
+  @Override
   public void unpause(NodeID remoteNode, int disconnected) {
     // NOP
   }
 
+  @Override
   public void shutdown() {
     // NOP
   }

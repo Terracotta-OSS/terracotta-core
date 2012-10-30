@@ -14,6 +14,8 @@ public interface ClientHandshakeCallback {
 
   public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage);
   
+  public void cleanup();
+
   public void shutdown();
 
 }

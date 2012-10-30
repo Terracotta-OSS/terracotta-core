@@ -47,6 +47,11 @@ public class ClientLockManagerGroupImpl implements ClientLockManager {
     }
   }
 
+  @Override
+  public void cleanup() {
+    //
+  }
+
   private ClientLockManager getClientLockManagerFor(LockID lock) {
     return lockManagers.get(distribution.getGroupIDFor(lock));
   }

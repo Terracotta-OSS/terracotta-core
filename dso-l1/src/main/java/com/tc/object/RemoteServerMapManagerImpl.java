@@ -85,6 +85,11 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     this.reInvalidateHandler = new ReInvalidateHandler(globalLocalCacheManager);
   }
 
+  @Override
+  public void cleanup() {
+    //
+  }
+
   /**
    * TODO: Maybe change to getValue()
    */

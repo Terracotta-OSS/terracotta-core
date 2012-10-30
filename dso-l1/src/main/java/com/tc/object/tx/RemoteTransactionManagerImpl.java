@@ -109,6 +109,11 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   }
 
   @Override
+  public void cleanup() {
+    //
+  }
+
+  @Override
   public void shutdown() {
     this.lockAccounting.shutdown();
     this.isShutdown = true;

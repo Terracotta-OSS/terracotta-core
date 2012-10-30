@@ -53,6 +53,11 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
     sentReadyMessage = false;
   }
 
+  @Override
+  public void cleanup() {
+    //
+  }
+
   public MessageChannel getMessageChannel() {
     return channel;
   }
@@ -168,10 +173,12 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
 
   }
 
+  @Override
   public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
     // Ignore
   }
 
+  @Override
   public void pause(NodeID remoteNode, int disconnected) {
     if (remoteNode.equals(channel.getRemoteNodeID())) {
       reset();
@@ -181,6 +188,7 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
     }
   }
 
+  @Override
   public void unpause(NodeID remoteNode, int disconnected) {
     if (remoteNode.equals(channel.getRemoteNodeID())) {
       synchronized (jmxReadyLock) {
@@ -192,6 +200,7 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
     }
   }
 
+  @Override
   public void shutdown() {
     // Ignore
   }

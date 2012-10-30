@@ -110,6 +110,12 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
                                      CLEANUP_UNUSED_DNA_TIMER);
   }
 
+  @Override
+  public void cleanup() {
+    //
+  }
+
+  @Override
   public synchronized void shutdown() {
     this.state = State.STOPPED;
     this.objectRequestTimer.cancel();
@@ -120,6 +126,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     return this.state == State.STOPPED;
   }
 
+  @Override
   public synchronized void pause(final NodeID remote, final int disconnected) {
     if (isStopped()) { return; }
     assertNotPaused("Attempt to pause while PAUSED");
@@ -131,6 +138,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     notifyAll();
   }
 
+  @Override
   public synchronized void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                                final ClientHandshakeMessage handshakeMessage) {
     if (isStopped()) { return; }
@@ -138,6 +146,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     this.state = State.STARTING;
   }
 
+  @Override
   public synchronized void unpause(final NodeID remote, final int disconnected) {
     if (isStopped()) { return; }
     assertNotRunning("Attempt to unpause while not PAUSED");
@@ -146,6 +155,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     notifyAll();
   }
 
+  @Override
   public synchronized void clear(GroupID gid) {
     this.lru.clear();
     this.dnaCache.clear();
@@ -195,6 +205,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     }
   }
 
+  @Override
   public synchronized void preFetchObject(final ObjectID id) {
     waitUntilRunning();
     if (this.dnaCache.containsKey(id) || this.objectLookupStates.containsKey(id)) { return; }
@@ -203,14 +214,17 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     sendRequest(ols);
   }
 
+  @Override
   public DNA retrieve(final ObjectID id) {
     return basicRetrieve(id, this.defaultDepth, ObjectID.NULL_ID);
   }
 
+  @Override
   public DNA retrieveWithParentContext(final ObjectID id, final ObjectID parentContext) {
     return basicRetrieve(id, this.defaultDepth, parentContext);
   }
 
+  @Override
   public DNA retrieve(final ObjectID id, final int depth) {
     return basicRetrieve(id, depth, ObjectID.NULL_ID);
   }
@@ -372,6 +386,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     return rmom;
   }
 
+  @Override
   public synchronized ObjectID retrieveRootID(final String name, GroupID gid) {
 
     waitUntilRunning();
@@ -406,6 +421,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     return rrm;
   }
 
+  @Override
   public synchronized void addRoot(final String name, final ObjectID id, final NodeID nodeID) {
     waitUntilRunning();
     if (id.isNull()) {
@@ -416,6 +432,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     notifyAll();
   }
 
+  @Override
   public synchronized void addAllObjects(final SessionID sessionID, final long batchID, final Collection dnas,
                                          final NodeID nodeID) {
     waitUntilRunning();
@@ -438,6 +455,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     notifyAll();
   }
 
+  @Override
   public synchronized void objectsNotFoundFor(final SessionID sessionID, final long batchID, final Set missingOIDs,
                                               final NodeID nodeID) {
     waitUntilRunning();
@@ -495,6 +513,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
    * cause deadlocks on restarts. Since you are not allowed to wait here (waitUntilRunning) don't send any messages to
    * the server from this method too as it can end-up in the server even before the connection is fully handshaked.
    */
+  @Override
   public synchronized void removed(final ObjectID id) {
 
     if (isStopped()) { return; }
@@ -522,6 +541,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     }
   }
 
+  @Override
   public synchronized boolean isInDNACache(final ObjectID id) {
     return this.dnaCache.get(id) != null;
   }
@@ -723,6 +743,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     }
   }
 
+  @Override
   public synchronized PrettyPrinter prettyPrint(final PrettyPrinter out) {
     out.duplicateAndIndent().indent().print(getClass().getSimpleName()).flush();
     out.duplicateAndIndent().indent().print(this.groupID).flush();

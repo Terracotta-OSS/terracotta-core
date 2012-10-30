@@ -77,6 +77,11 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     this.gcTimer.schedule(new LockGcTimerTask(), gcPeriod, gcPeriod);
   }
 
+  @Override
+  public void cleanup() {
+    //
+  }
+
   private ClientLock getOrCreateClientLockState(final LockID lock) {
     ClientLock lockState = this.locks.get(lock);
     if (lockState == null) {

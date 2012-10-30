@@ -67,7 +67,7 @@ public abstract class AbstractTsaAgentTest extends AbstractTestBase {
   }
 
   @Override
-  protected String createClassPath(Class client) throws IOException {
+  protected String createClassPath(Class client) {
     String expressRuntime = TestBaseUtil.jarFor(ToolkitFactory.class);
     String clientBase = TestBaseUtil.jarFor(AbstractTsaAgentTest.class);
     String l2Mbean = TestBaseUtil.jarFor(L2MBeanNames.class);

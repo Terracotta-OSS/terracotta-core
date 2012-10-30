@@ -38,103 +38,133 @@ public class MockClientLockManager implements ClientLockManager {
     begins.clear();
   }
 
+  @Override
+  public void cleanup() {
+    //
+  }
+
+  @Override
   public void award(NodeID node, SessionID session, LockID lock, ThreadID thread, ServerLockLevel level) {
     throw new ImplementMe();
   }
 
+  @Override
   public void info(LockID lock, ThreadID requestor, Collection<ClientServerExchangeLockContext> contexts) {
     throw new ImplementMe();
 
   }
 
+  @Override
   public void notified(LockID lock, ThreadID thread) {
     throw new ImplementMe();
   }
 
+  @Override
   public void recall(NodeID node, SessionID session, LockID lock, ServerLockLevel level, int lease) {
     throw new ImplementMe();
   }
 
+  @Override
   public void recall(NodeID node, SessionID session, LockID lock, ServerLockLevel level, int lease, boolean batch) {
     recallList.add(lock);
   }
 
+  @Override
   public void refuse(NodeID node, SessionID session, LockID lock, ThreadID thread, ServerLockLevel level) {
     throw new ImplementMe();
   }
 
+  @Override
   public LockID generateLockIdentifier(String str) {
     throw new ImplementMe();
   }
 
+  @Override
   public LockID generateLockIdentifier(long l) {
     throw new ImplementMe();
   }
 
+  @Override
   public LockID generateLockIdentifier(Object obj) {
     throw new ImplementMe();
   }
 
+  @Override
   public LockID generateLockIdentifier(Object obj, String field) {
     throw new ImplementMe();
   }
 
+  @Override
   public int globalHoldCount(LockID lock, LockLevel level) {
     throw new ImplementMe();
   }
 
+  @Override
   public int globalPendingCount(LockID lock) {
     throw new ImplementMe();
   }
 
+  @Override
   public int globalWaitingCount(LockID lock) {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isLocked(LockID lock, LockLevel level) {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isLockedByCurrentThread(LockID lock, LockLevel level) {
     throw new ImplementMe();
   }
 
+  @Override
   public int localHoldCount(LockID lock, LockLevel level) {
     throw new ImplementMe();
   }
 
+  @Override
   public void lock(LockID lock, LockLevel level) {
     this.begins.add(new Begin(lock, level));
   }
 
+  @Override
   public void lockInterruptibly(LockID lock, LockLevel level) {
     throw new ImplementMe();
   }
 
+  @Override
   public Notify notify(LockID lock, Object waitObject) {
     throw new ImplementMe();
   }
 
+  @Override
   public Notify notifyAll(LockID lock, Object waitObject) {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean tryLock(LockID lock, LockLevel level) {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean tryLock(LockID lock, LockLevel level, long timeout) {
     throw new ImplementMe();
   }
 
+  @Override
   public void unlock(LockID lock, LockLevel level) {
     this.unlockCount++;
   }
 
+  @Override
   public void wait(LockID lock, Object waitObject) {
     throw new ImplementMe();
   }
 
+  @Override
   public void wait(LockID lock, Object waitObject, long timeout) {
     throw new ImplementMe();
   }
@@ -147,18 +177,22 @@ public class MockClientLockManager implements ClientLockManager {
     throw new ImplementMe();
   }
 
+  @Override
   public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
     throw new ImplementMe();
   }
 
+  @Override
   public void pause(NodeID remoteNode, int disconnected) {
     throw new ImplementMe();
   }
 
+  @Override
   public void shutdown() {
     throw new ImplementMe();
   }
 
+  @Override
   public void unpause(NodeID remoteNode, int disconnected) {
     throw new ImplementMe();
   }
@@ -173,6 +207,7 @@ public class MockClientLockManager implements ClientLockManager {
     }
   }
 
+  @Override
   public Collection<ClientServerExchangeLockContext> getAllLockContexts() {
     throw new ImplementMe();
   }
@@ -181,18 +216,22 @@ public class MockClientLockManager implements ClientLockManager {
     throw new ImplementMe();
   }
 
+  @Override
   public void pinLock(LockID lock) {
     //
   }
 
+  @Override
   public void unpinLock(LockID lock) {
     //
   }
 
+  @Override
   public boolean isLockedByCurrentThread(LockLevel level) {
     return false;
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     throw new ImplementMe();
   }

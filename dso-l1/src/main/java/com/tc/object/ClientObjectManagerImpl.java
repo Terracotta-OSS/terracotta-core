@@ -185,6 +185,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     ensureKeyClassesLoaded();
   }
 
+  @Override
+  public void cleanup() {
+    //
+  }
+
   private void ensureKeyClassesLoaded() {
     // load LocalLookupContext early to avoid ClassCircularityError: DEV-1386
     new LocalLookupContext();
