@@ -66,7 +66,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
             samples = 1000000;
         }
         
-        if ( max > 0 && count - max > samples ) {
+        if ( max > 0 && count - max > 0 ) {
             samples = count - max;
             dumpLive = true;
         }
@@ -158,10 +158,10 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     @Override
     public String toString() {
         String flag = ( expired + overflow > 0 ) ? ", ELEMENTS_EVICTED" : "";
+        String element = ( ELEMENT_BASED_TTI_TTL_ENABLED ) ? ", ELEMENT_BASED_TTI_TTL_ENABLED" : "";
         return "PeriodicEvictionTrigger{" 
                 + ", name=" + cacheName 
-                + ", over capacity=" + dumpLive 
-                + ", ELEMENT_BASED_TTI_TTL_ENABLED=" + ELEMENT_BASED_TTI_TTL_ENABLED
+                + element
                 + ", over capacity=" + dumpLive 
                 + ", count=" + sampled
                 + ", overflow=" + overflow 

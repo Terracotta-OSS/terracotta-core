@@ -117,7 +117,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
                   scheduleExpiry(trigger.getId(), 5, 0);
               }
               
-              ev.evictionCompleted();
+              trigger.completeEviction(ev);
           }
 
         // Reason for releasing the checked-out object before adding the context to the sink is that we can block on add
