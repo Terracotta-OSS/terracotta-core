@@ -1,7 +1,7 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-package com.tc.object.bytecode;
+package com.tc.platform;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;

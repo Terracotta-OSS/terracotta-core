@@ -14,11 +14,9 @@ import com.tc.object.TCObjectSelf;
 import com.tc.object.TCObjectSelfImpl;
 import com.tc.object.TCObjectServerMap;
 import com.tc.object.bytecode.Manageable;
-import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.bytecode.PlatformService;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
+import com.tc.platform.StaticPlatformApi;
 import com.tc.util.FindbugsSuppressWarnings;
-import com.terracotta.toolkit.TerracottaToolkit;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 
 import java.io.Externalizable;
@@ -37,9 +35,8 @@ public class SerializedMapValue<T> extends TCObjectSelfImpl implements Externali
 
   private static final ToolkitLock   UPDATE_LAST_ACCESSED_TIME_CONCURRENT_LOCK = ToolkitLockingApi
                                                                                    .createConcurrentTransactionLock("servermap-update-last-accessed-time-concurrent-lock",
-                                                                                                                    ManagerUtil
-                                                                                                                        .lookupRegisteredObjectByName(TerracottaToolkit.PLATFORM_SERVICE_REGISTRATION_NAME,
-                                                                                                                                                      PlatformService.class));
+                                                                                                                    StaticPlatformApi
+                                                                                                                        .getPlatformService());
 
   private static final int           NEVER_EXPIRE                              = Integer.MAX_VALUE;
   /**

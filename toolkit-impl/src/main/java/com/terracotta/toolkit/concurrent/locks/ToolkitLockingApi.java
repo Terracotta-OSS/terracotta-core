@@ -7,7 +7,7 @@ import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
 import com.tc.abortable.AbortedOperationException;
 import com.tc.object.ObjectID;
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.object.ToolkitObjectType;
 

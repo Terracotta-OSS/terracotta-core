@@ -6,7 +6,7 @@ package com.terracotta.toolkit.type;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.TCToolkitObject;
 import com.terracotta.toolkit.object.ToolkitObjectStripe;

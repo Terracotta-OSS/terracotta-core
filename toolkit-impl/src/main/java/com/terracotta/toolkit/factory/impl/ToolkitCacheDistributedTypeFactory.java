@@ -12,7 +12,7 @@ import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeType;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields;
 
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.collections.map.AggregateServerMap;
 import com.terracotta.toolkit.collections.map.InternalToolkitMap;
 import com.terracotta.toolkit.collections.map.ServerMap;

@@ -31,9 +31,8 @@ import org.terracotta.toolkit.store.ToolkitStoreConfigBuilder;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
 
 import com.tc.net.GroupID;
-import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.bytecode.PlatformService;
-import com.tc.object.bytecode.PlatformServiceImpl;
+import com.tc.platform.PlatformService;
+import com.tc.platform.StaticPlatformApi;
 import com.terracotta.toolkit.cluster.TerracottaClusterInfo;
 import com.terracotta.toolkit.collections.ToolkitBlockingQueueImpl;
 import com.terracotta.toolkit.collections.ToolkitSetImpl;
@@ -74,7 +73,6 @@ import java.util.UUID;
 public class TerracottaToolkit implements ToolkitInternal {
 
   public static final String                                   TOOLKIT_SERIALIZER_REGISTRATION_NAME = "TOOLKIT_SERIALIZER";
-  public static final String                                   PLATFORM_SERVICE_REGISTRATION_NAME   = "PLATFORM_SERVICE";
   private final ToolkitObjectFactory<ToolkitList>              clusteredListFactory;
   private final ToolkitObjectFactory<ToolkitCache>             clusteredCacheFactory;
   private final ToolkitObjectFactory<ToolkitMap>               clusteredMapFactory;
@@ -99,8 +97,7 @@ public class TerracottaToolkit implements ToolkitInternal {
 
   public TerracottaToolkit(TerracottaL1Instance tcClient) {
     this.tcClient = tcClient;
-    platformService = ManagerUtil.registerObjectByNameIfAbsent(PLATFORM_SERVICE_REGISTRATION_NAME,
-                                                               new PlatformServiceImpl());
+    platformService = StaticPlatformApi.getPlatformService();
     clusterInfoInstance = new TerracottaClusterInfo(platformService);
     SerializationStrategy strategy = createSerializationStrategy();
     Object old = platformService.registerObjectByNameIfAbsent(TOOLKIT_SERIALIZER_REGISTRATION_NAME, strategy);

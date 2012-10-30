@@ -7,7 +7,7 @@ import org.terracotta.toolkit.collections.ToolkitBlockingQueue;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.collections.DestroyableToolkitList;
 import com.terracotta.toolkit.collections.ToolkitBlockingQueueImpl;
 import com.terracotta.toolkit.collections.ToolkitListImpl;

@@ -7,7 +7,7 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLockType;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.object.ToolkitObjectType;
 
 import java.util.concurrent.TimeUnit;

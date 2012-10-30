@@ -5,6 +5,9 @@ package com.tc.net.protocol.transport;
 
 import com.tc.net.ReconnectionRejectedException;
 
+/**
+ * TODO: REMOVE THIS CLASS
+ */
 public class ReconnectionRejectedDefaultHandler implements ReconnectionRejectedHandler {
 
   @Override

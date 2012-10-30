@@ -8,7 +8,7 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitLockType;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
 
 public final class UnnamedToolkitReadWriteLock implements ToolkitReadWriteLock {
   private final ToolkitLock writeLock;

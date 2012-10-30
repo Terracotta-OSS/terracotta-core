@@ -6,7 +6,7 @@ package com.terracotta.toolkit.roots.impl;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
 import com.tc.net.GroupID;
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 
 public final class RootsUtil {

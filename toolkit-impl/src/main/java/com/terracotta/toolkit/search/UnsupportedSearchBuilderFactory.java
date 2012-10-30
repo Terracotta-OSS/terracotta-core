@@ -5,7 +5,7 @@ package com.terracotta.toolkit.search;
 
 import org.terracotta.toolkit.internal.search.SearchBuilder;
 
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.collections.map.ValuesResolver;
 
 public class UnsupportedSearchBuilderFactory implements SearchBuilderFactory {

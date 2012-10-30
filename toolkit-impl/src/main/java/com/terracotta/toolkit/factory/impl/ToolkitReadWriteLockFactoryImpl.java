@@ -5,7 +5,7 @@ package com.terracotta.toolkit.factory.impl;
 
 import org.terracotta.toolkit.config.Configuration;
 
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLockImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.ToolkitObjectType;

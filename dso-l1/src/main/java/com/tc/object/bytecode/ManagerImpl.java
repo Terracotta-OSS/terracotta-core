@@ -64,6 +64,7 @@ import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.operatorevent.TerracottaOperatorEventImpl;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
+import com.tc.platform.PlatformService;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -92,6 +93,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.management.MBeanServer;
 
@@ -127,6 +129,7 @@ public class ManagerImpl implements Manager {
   private final MethodDisplayNames                 methodDisplay       = new MethodDisplayNames(this.serializer);
   private final ConcurrentHashMap<String, Object>  registeredObjects = new ConcurrentHashMap<String, Object>();
   private final AbortableOperationManager          abortableOperationManager = new AbortableOperationManagerImpl();
+  private final AtomicReference<PlatformService>   platformServiceRef        = new AtomicReference<PlatformService>();
 
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
                      final TCSecurityManager securityManager) {
@@ -190,6 +193,7 @@ public class ManagerImpl implements Manager {
     if (this.startClient) {
       if (this.clientStarted.attemptSet()) {
         startClient(forTests, testStartLatch);
+        this.platformServiceRef.set(new PlatformServiceImpl(this));
       }
     }
   }
@@ -1150,5 +1154,12 @@ public class ManagerImpl implements Manager {
   @Override
   public AbortableOperationManager getAbortableOperationManager() {
     return abortableOperationManager;
+  }
+
+  @Override
+  public PlatformService getPlatformService() {
+    PlatformService platformService = platformServiceRef.get();
+    if (platformService == null) { throw new AssertionError(); }
+    return platformService;
   }
 }

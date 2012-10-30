@@ -5,7 +5,7 @@ package com.terracotta.toolkit;
 
 import org.terracotta.toolkit.internal.ToolkitProperties;
 
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
 import com.tc.properties.TCProperties;
 
 public class TerracottaProperties implements ToolkitProperties {

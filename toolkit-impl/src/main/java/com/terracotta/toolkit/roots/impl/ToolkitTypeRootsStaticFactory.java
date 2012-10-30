@@ -6,7 +6,7 @@ package com.terracotta.toolkit.roots.impl;
 import org.terracotta.toolkit.object.ToolkitObject;
 
 import com.tc.net.GroupID;
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.object.TCToolkitObject;
 import com.terracotta.toolkit.object.ToolkitObjectStripe;
 import com.terracotta.toolkit.roots.AggregateToolkitTypeRoot;

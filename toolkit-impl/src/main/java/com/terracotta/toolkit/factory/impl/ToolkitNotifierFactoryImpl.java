@@ -9,7 +9,7 @@ import org.terracotta.toolkit.internal.ToolkitInternal;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.TerracottaProperties;
 import com.terracotta.toolkit.events.DestroyableToolkitNotifier;
 import com.terracotta.toolkit.events.ToolkitNotifierImpl;

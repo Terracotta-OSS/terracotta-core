@@ -7,8 +7,8 @@ import com.tc.net.GroupID;
 import com.tc.object.LiteralValues;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
-import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
+import com.tc.platform.StaticPlatformApi;
 import com.terracotta.toolkit.TerracottaToolkit;
 import com.terracotta.toolkit.object.serialization.SerializationStrategy;
 import com.terracotta.toolkit.object.serialization.SerializedClusterObject;
@@ -31,8 +31,7 @@ public abstract class AbstractTCToolkitObject implements TCToolkitObject {
   protected final PlatformService                platformService;
 
   public AbstractTCToolkitObject() {
-    platformService = ManagerUtil
-        .lookupRegisteredObjectByName(TerracottaToolkit.PLATFORM_SERVICE_REGISTRATION_NAME, PlatformService.class);
+    platformService = StaticPlatformApi.getPlatformService();
     SerializationStrategy registeredSerializer = platformService
         .lookupRegisteredObjectByName(TerracottaToolkit.TOOLKIT_SERIALIZER_REGISTRATION_NAME,
                                       SerializationStrategy.class);

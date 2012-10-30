@@ -24,6 +24,7 @@ import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
+import com.tc.platform.PlatformService;
 import com.tc.properties.NullTCProperties;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
@@ -484,6 +485,11 @@ public class NullManager implements Manager {
 
   @Override
   public AbortableOperationManager getAbortableOperationManager() {
+    return null;
+  }
+
+  @Override
+  public PlatformService getPlatformService() {
     return null;
   }
 

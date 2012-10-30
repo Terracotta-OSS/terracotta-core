@@ -22,6 +22,7 @@ import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
+import com.tc.platform.PlatformService;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.tc.statistics.StatisticRetrievalAction;
@@ -415,4 +416,6 @@ public interface Manager extends TerracottaLocking {
   void addTransactionCompleteListener(TransactionCompleteListener listener);
 
   AbortableOperationManager getAbortableOperationManager();
+
+  PlatformService getPlatformService();
 }

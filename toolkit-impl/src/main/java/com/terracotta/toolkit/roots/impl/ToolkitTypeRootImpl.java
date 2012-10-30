@@ -8,10 +8,9 @@ import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.NotClearable;
-import com.tc.object.bytecode.PlatformService;
-import com.terracotta.toolkit.TerracottaToolkit;
+import com.tc.platform.PlatformService;
+import com.tc.platform.StaticPlatformApi;
 import com.terracotta.toolkit.object.TCToolkitObject;
 import com.terracotta.toolkit.roots.ToolkitTypeRoot;
 
@@ -27,8 +26,7 @@ public class ToolkitTypeRootImpl<T extends TCToolkitObject> implements ToolkitTy
   private final PlatformService                 platformService;
 
   public ToolkitTypeRootImpl() {
-    platformService = ManagerUtil.lookupRegisteredObjectByName(TerracottaToolkit.PLATFORM_SERVICE_REGISTRATION_NAME,
-                                                               PlatformService.class);
+    platformService = StaticPlatformApi.getPlatformService();
   }
 
   @Override

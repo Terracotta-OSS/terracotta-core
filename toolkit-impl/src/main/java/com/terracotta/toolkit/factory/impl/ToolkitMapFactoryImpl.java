@@ -7,7 +7,7 @@ import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.collections.DestroyableToolkitMap;
 import com.terracotta.toolkit.collections.map.ToolkitMapImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
