@@ -1,7 +1,7 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-package com.tc.object.bytecode;
+package com.tc.platform;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
@@ -11,13 +11,15 @@ import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
+import com.tc.object.bytecode.Manager;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
-import com.tc.platform.PlatformService;
+import com.tc.platform.rejoin.RejoinLifecycleListener;
+import com.tc.platform.rejoin.RejoinManager;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.tcclient.cluster.DsoNode;
@@ -29,10 +31,23 @@ import java.util.concurrent.TimeUnit;
 
 public class PlatformServiceImpl implements PlatformService {
   private final Manager manager;
+  private final RejoinManager rejoinManager;
 
-  public PlatformServiceImpl(Manager manager) {
+  public PlatformServiceImpl(Manager manager, RejoinManager rejoinManager) {
     this.manager = manager;
+    this.rejoinManager = rejoinManager;
   }
+
+  @Override
+  public void addRejoinLifecycleListener(RejoinLifecycleListener listener) {
+    rejoinManager.addListener(listener);
+  }
+
+  @Override
+  public void removeRejoinLifecycleListener(RejoinLifecycleListener listener) {
+    rejoinManager.removeListener(listener);
+  }
+
 
   @Override
   public <T> T lookupRegisteredObjectByName(String name, Class<T> expectedType) {

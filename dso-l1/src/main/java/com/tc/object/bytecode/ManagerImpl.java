@@ -65,6 +65,8 @@ import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.operatorevent.TerracottaOperatorEventImpl;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.platform.PlatformService;
+import com.tc.platform.PlatformServiceImpl;
+import com.tc.platform.RejoinAwarePlatformService;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -193,8 +195,16 @@ public class ManagerImpl implements Manager {
     if (this.startClient) {
       if (this.clientStarted.attemptSet()) {
         startClient(forTests, testStartLatch);
-        this.platformServiceRef.set(new PlatformServiceImpl(this));
+        this.platformServiceRef.set(createPlatformService());
       }
+    }
+  }
+
+  private PlatformService createPlatformService() {
+    if (clientMode.isExpressRejoinClient()) {
+      return new RejoinAwarePlatformService(this, this.dso.getRejoinManager());
+    } else {
+      return new PlatformServiceImpl(this, this.dso.getRejoinManager());
     }
   }
 

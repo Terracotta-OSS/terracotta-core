@@ -147,9 +147,6 @@ import com.tc.object.msg.SearchQueryResponseMessageImpl;
 import com.tc.object.msg.ServerMapEvictionBroadcastMessageImpl;
 import com.tc.object.msg.SyncWriteTransactionReceivedMessage;
 import com.tc.object.net.DSOClientMessageChannel;
-import com.tc.object.rejoin.ClientChannelEventController;
-import com.tc.object.rejoin.RejoinManager;
-import com.tc.object.rejoin.RejoinManagerImpl;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 import com.tc.object.servermap.localcache.impl.L1ServerMapCapacityEvictionHandler;
 import com.tc.object.servermap.localcache.impl.L1ServerMapLocalCacheManagerImpl;
@@ -167,6 +164,9 @@ import com.tc.object.tx.ClientTransactionManagerImpl;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.TransactionIDGenerator;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
+import com.tc.platform.rejoin.ClientChannelEventController;
+import com.tc.platform.rejoin.RejoinManager;
+import com.tc.platform.rejoin.RejoinManagerImpl;
 import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
@@ -281,6 +281,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private final TCSecurityManager                    securityManager;
 
   private final AbortableOperationManager            abortableOperationManager;
+
+  private RejoinManager rejoinManager;
 
   public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
                                  final ClassProvider classProvider,
@@ -490,7 +492,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     // reconnectionRejectedHandler = new ReconnectionRejectedDefaultHandler();
     // }
 
-    RejoinManager rejoinManager = new RejoinManagerImpl(clientMode.isExpressRejoinClient());
+    rejoinManager = new RejoinManagerImpl(clientMode.isExpressRejoinClient());
 
     this.communicationsManager = this.dsoClientBuilder
         .createCommunicationsManager(mm,
@@ -1405,5 +1407,9 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   public GroupID[] getGroupIDs() {
     return this.connectionComponents.getGroupIDs();
+  }
+
+  public RejoinManager getRejoinManager() {
+    return rejoinManager;
   }
 }

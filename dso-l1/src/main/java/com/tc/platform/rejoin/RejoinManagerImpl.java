@@ -1,10 +1,11 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-package com.tc.object.rejoin;
+package com.tc.platform.rejoin;
 
 import com.tc.net.ReconnectionRejectedException;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
+import com.tc.platform.rejoin.RejoinLifecycleListener;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;

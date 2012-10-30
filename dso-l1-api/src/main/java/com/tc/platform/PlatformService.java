@@ -15,6 +15,7 @@ import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
+import com.tc.platform.rejoin.RejoinLifecycleListener;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.tcclient.cluster.DsoNode;
@@ -95,5 +96,10 @@ public interface PlatformService {
   void verifyCapability(String capability);
 
   AbortableOperationManager getAbortableOperationManager();
+
+  void addRejoinLifecycleListener(RejoinLifecycleListener listener);
+
+  void removeRejoinLifecycleListener(RejoinLifecycleListener listener);
+
 
 }
