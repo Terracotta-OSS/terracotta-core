@@ -6,6 +6,7 @@ package com.tc.objectserver.impl;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -27,11 +28,14 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger {
         if ( !map.isEvicting() ) {
             throw new AssertionError("map is not in evicting state");
         }
-        if ( map.getSize() > map.getMaxTotalCount() ) {
+        int max = map.getMaxTotalCount();
+        
+        if ( max != 0 && map.getSize() > map.getMaxTotalCount() ) {
             return true;
         } else {
             map.evictionCompleted();
         }
+        
         aboveCapacity = false;
         return false;
     }
@@ -39,7 +43,11 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger {
     @Override
     public Map collectEvictonCandidates(EvictableMap map, ClientObjectReferenceSet clients) {
    // lets try and get smarter about this in the future but for now, just bring it back to capacity
-        Map samples = map.getRandomSamples(map.getSize() - map.getMaxTotalCount(), clients);
+        int max = map.getMaxTotalCount();
+        if ( max == 0 ) {
+            return Collections.emptyMap();
+        }
+        Map samples = map.getRandomSamples(map.getSize() - max, clients);
         count = samples.size();
         return samples;
     }

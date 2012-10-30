@@ -66,7 +66,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
             samples = 1000000;
         }
         
-        if ( count - max > samples ) {
+        if ( max > 0 && count - max > samples ) {
             samples = count - max;
             dumpLive = true;
         }
