@@ -25,8 +25,8 @@
   <properties>
     <terracotta.core.version>3.8.0-SNAPSHOT</terracotta.core.version>
     <tc.core.artifactId>terracotta</tc.core.artifactId>
-    <ee.license/>
     <productKeyPath></productKeyPath>
+    <ee.license>-Dcom.tc.productkey.path=${productKeyPath}</ee.license>
     <container-test-framework.version>1.4.0-SNAPSHOT</container-test-framework.version>
 
     <tc.tests.configuration.properties.file>${project.build.testOutputDirectory}/tc.tests.properties</tc.tests.configuration.properties.file>
@@ -359,7 +359,6 @@
       <id>ee</id>
       <properties>
         <tc.core.artifactId>terracotta-ee</tc.core.artifactId>
-        <ee.license>-Dcom.tc.productkey.path=${productKeyPath}</ee.license>
         <skipTests>false</skipTests>
       </properties>
     </profile>
