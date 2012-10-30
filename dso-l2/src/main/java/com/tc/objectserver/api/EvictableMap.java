@@ -20,6 +20,8 @@ public interface EvictableMap {
   public Map getRandomSamples(int count, ClientObjectReferenceSet serverMapEvictionClientObjectRefSet);
 
   public boolean startEviction();
+  
+  public boolean isEvicting();
 
   public void evictionCompleted();
 

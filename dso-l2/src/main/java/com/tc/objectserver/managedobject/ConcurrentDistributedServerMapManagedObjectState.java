@@ -388,6 +388,10 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     this.evictionStatus = EvictionStatus.INITIATED;
     return true;
   }    
+  
+  public boolean isEvicting() {
+      return this.evictionStatus != EvictionStatus.NOT_INITIATED;
+  }
  //  locked by ManagedObject checkout 
   @Override
   public void evictionCompleted() {

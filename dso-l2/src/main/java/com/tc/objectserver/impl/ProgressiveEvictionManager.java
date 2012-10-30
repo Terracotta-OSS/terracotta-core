@@ -3,6 +3,7 @@
  */
 package com.tc.objectserver.impl;
 
+import com.tc.objectserver.api.EvictionTrigger;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.Sink;
 import com.tc.l2.objectserver.ServerTransactionFactory;
@@ -23,7 +24,6 @@ import com.tc.runtime.MemoryEventsListener;
 import com.tc.runtime.MemoryUsage;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
@@ -37,7 +37,7 @@ import org.terracotta.corestorage.monitoring.MonitoredResource;
 public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
       private static final TCLogger               logger                          = TCLogging
                                                                                   .getLogger(ProgressiveEvictionManager.class);
-    private final ServerMapEvictionManagerImpl evictor;
+    private final ServerMapEvictionEngine evictor;
     private final ResourceMonitor trigger;
     private final PersistentManagedObjectStore store;
     private final ObjectManager  objectManager;
@@ -53,7 +53,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
         this.objectManager = mgr;
         this.store = store;
         this.clientObjectReferenceSet = clients;
-        this.evictor = new ServerMapEvictionManagerImpl(mgr, store, clients, trans,1000 * 60 * 60 * 24); //  periodic is once a day
+        this.evictor = new ServerMapEvictionEngine(mgr, store, clients, trans,1000 * 60 * 60 * 24); //  periodic is once a day
         this.trigger = new ResourceMonitor(monitored, SLEEP_TIME , grp);
     }
     
@@ -77,7 +77,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
     final ObjectIDSet evictableObjects = store.getAllEvictableObjectIDs();
     serverSizeHint = evictableObjects.size();
     for (final ObjectID mapID : evictableObjects) {
-      doEvictionOn(mapID, true);
+      doEvictionOn(new PeriodicEvictionTrigger(objectManager, mapID, evictor.isElementBasedTTIorTTL()));
     }
   }
 /*
@@ -85,7 +85,9 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
  */
 
     @Override
-    public boolean doEvictionOn(ObjectID oid, boolean periodicEvictorRun) {
+    public boolean doEvictionOn(final EvictionTrigger trigger) {
+        ObjectID  oid = trigger.getId();
+        
         if ( !evictor.markEvictionInProgress(oid) ) {
             return true;
         }
@@ -93,7 +95,9 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
         try {
           final ManagedObject mo = this.objectManager.getObjectByIDOrNull(oid);
           if (mo == null) { 
-              log("Managed object gone : " + oid);
+              if ( evictor.isLogging() ) {
+                log("Managed object gone : " + oid);
+              }
               return false; 
           }
 
@@ -101,17 +105,21 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
           final String className = state.getClassName();
 
           EvictableMap ev = getEvictableMapFrom(mo.getID(), state);
-          if ( periodicEvictorRun && !ev.startEviction() ) {
+          if ( !trigger.startEviction(ev) ) {
               this.objectManager.releaseReadOnly(mo);
-              log("Already evicting on " + ev.getCacheName() + " periodic mode " + periodicEvictorRun);
               return true;
           }
 
-          ServerMapEvictionContext context = doEviction(oid, ev, className, ev.getCacheName(),periodicEvictorRun);
+          ServerMapEvictionContext context = doEviction(trigger, ev, className, ev.getCacheName());
           if (context == null) {
+              if ( ev.getSize() > ev.getMaxTotalCount() ) {
+   //  looks like capacity eviction didn't work, schedule another run just in case
+                  scheduleExpiry(trigger.getId(), 5, 0);
+              }
+              
               ev.evictionCompleted();
-              log("Nothing to evict " + ev.getCacheName() + " periodic mode " + periodicEvictorRun);
           }
+
         // Reason for releasing the checked-out object before adding the context to the sink is that we can block on add
         // to the sink because the sink reached max capacity and blocking
         // with a checked-out object will result in a deadlock. @see DEV-5207
@@ -121,23 +129,12 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
           }
       } finally {
           evictor.markEvictionDone(oid);
+          if ( evictor.isLogging() ) {
+              log("Evictor results " + trigger);
+          }
       }
 
       return true;
-    }
-        
-    private int calculateSampleCount(EvictableMap ev,boolean emergency) {
-        int samples = ev.getMaxTotalCount();
-        if ( samples == 0 ) {// zero has special meaning, it's either pinned or a store
-            return 0;
-        }
-        samples = ( emergency ) ? samples/50:samples/10;
-        if ( samples < 100 ) {
-            samples = 100;
-        } else if ( samples > 1000000 ) {
-            samples = 1000000;
-        }
-        return samples;
     }
     
     private void scheduleExpiry(final ObjectID oid,final int ttl,final int tti) {
@@ -148,62 +145,40 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
         synchronized ( expirySet ) {
             if ( !expirySet.contains(oid) ) {
                 expirySet.add(oid);
-                log("Scheduling eviction on " + oid + " in " + ((ttl > tti ? ttl : tti) * 1000 * 4) + " with tti/ttl:" + tti + "/" + ttl);
+                if ( evictor.isLogging() ) {
+                    log("Scheduling eviction on " + oid + " in " + ((ttl > tti ? ttl : tti) * 1000 * 2) + " with tti/ttl:" + tti + "/" + ttl);
+                }
                 expiry.schedule(new TimerTask() {
 
                       @Override
                       public void run() {
-                          boolean exists = doEvictionOn(oid, true);
+                          boolean exists = doEvictionOn(new PeriodicEvictionTrigger(objectManager, oid, evictor.isElementBasedTTIorTTL()));
                           expirySet.remove(oid);
                           if ( exists ) {
                               scheduleExpiry(oid, ttl, tti);
                           }
                       }
 
-                    },(ttl > tti ? ttl : tti) * 1000 * 4);
+                    },(ttl > tti ? ttl : tti) * 1000 * 2);
             }
         }
     }
     
-  private ServerMapEvictionContext doEviction(final ObjectID oid, final EvictableMap ev,
+  private ServerMapEvictionContext doEviction(final EvictionTrigger trigger, final EvictableMap ev,
                                               final String className,
-                                              final String cacheName,boolean periodic) {
+                                              final String cacheName) {
     final int currentSize = ev.getSize();
     
     if (currentSize == 0) {
-        log("Map size is zero nothing to evict " + oid);
       return null;
     }
     
-    int sampleCount = calculateSampleCount(ev,false);
-    if ( sampleCount <= 0 ) {
-        log("Zero capacity count on " + oid + " " + cacheName + " it's a store or pinned");
-        return null;
-    }
+    Map samples = trigger.collectEvictonCandidates(ev,clientObjectReferenceSet);
     
-    int overflow = currentSize - ev.getMaxTotalCount();
-    if ( overflow > 0 ) {
-        log("Overflow on " + oid + " " + cacheName + " evicting " + overflow);
-        sampleCount = overflow;
-        periodic = false;
-    }
-
-    
-    final int ttl = ev.getTTLSeconds();
-    final int tti = ev.getTTISeconds();
-
-    scheduleExpiry(oid,ttl,tti);
-
-    Map samples = ev.getRandomSamples(sampleCount, clientObjectReferenceSet);
-    log("Sampled " + oid + " " + cacheName + " " + samples.size());
-
-    samples = evictor.filter(oid, samples, tti, ttl, sampleCount, cacheName, !periodic);
-    log("Filtered " + oid + " " + cacheName + " " + samples.size());
-
     if (samples.isEmpty()) {
         return null;
     } else {
-      return new ServerMapEvictionContext(oid, samples, className, cacheName);
+      return new ServerMapEvictionContext(trigger, samples, className, cacheName);
     }
   }
   
@@ -213,66 +188,15 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
     boolean blowout = ( lastEmergency> 0 && lastEmergency - System.currentTimeMillis() < SLEEP_TIME );  // if the last emergency is less than the default sleep time, blow it out
     while ( !handled ) {
         for (final ObjectID mapID : evictableObjects) {
-          if ( emergencyEviction(mapID,blowout) > 0 || blowout ) {
+            EmergencyEvictionTrigger trigger = new EmergencyEvictionTrigger(objectManager,mapID,blowout);
+            doEvictionOn(trigger);
+          if ( trigger.getSampleCount() > 0 || blowout ) {
               handled = true;
           }; 
         }
         blowout = true;
     }
     lastEmergency = System.currentTimeMillis();
-  }
-  
-  int emergencyEviction(final ObjectID oid, boolean blowout) {
-      if ( !evictor.markEvictionInProgress(oid) ) {
-            return 0;
-        }
-     final ManagedObject mo = this.objectManager.getObjectByIDOrNull(oid);
-   EvictableMap ev = null;
-   Map samples = null; 
-   String cacheName = null;
-   String className = null;
-   try {
-        final ManagedObjectState state = mo.getManagedObjectState();
-        className = state.getClassName();
-
-        ev = getEvictableMapFrom(mo.getID(), state);
-
-        int overshoot =  ev.getSize() - ev.getMaxTotalCount();
-        int sampleCount = calculateSampleCount(ev, blowout);
-        
-        if ( sampleCount == 0 ) {
-            return 0;
-        }
-
-        if ( !ev.startEviction() ) {
-            return 0;
-        }
-
-        if ( overshoot > sampleCount ) {
-            sampleCount = overshoot;
-        }
-                
-        cacheName = ev.getCacheName();
-
-        samples = ev.getRandomSamples(sampleCount, clientObjectReferenceSet);
-        samples = evictor.filter(oid, samples, ev.getTTISeconds(), ev.getTTLSeconds(), sampleCount, cacheName, blowout);
-
-        if ( samples == null || samples.isEmpty() ) {
-            ev.evictionCompleted();
-            return 0;
-        }
-    } finally {
-      this.objectManager.releaseReadOnly(mo);
-      evictor.markEvictionDone(oid);
-    }
-    if ( !samples.isEmpty() ) {
-        evictor.evictFrom(oid, samples, className, cacheName);
-        if ( evictor.isLogging() ) {
-            log("emergency evicted: " + samples.size());
-        }
-    }
-
-    return samples.size();
   }
     
   private EvictableMap getEvictableMapFrom(final ObjectID id, final ManagedObjectState state) {

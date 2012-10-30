@@ -5,12 +5,13 @@ package com.tc.objectserver.context;
 
 import com.tc.async.api.EventContext;
 import com.tc.object.ObjectID;
+import com.tc.objectserver.api.EvictionTrigger;
 
 import java.util.Map;
 
 public class ServerMapEvictionContext implements EventContext {
 
-  private final ObjectID oid;
+  private final EvictionTrigger trigger;
   private final int      targetMaxTotalCount;
   private final int      tti;
   private final int      ttl;
@@ -19,9 +20,9 @@ public class ServerMapEvictionContext implements EventContext {
   private final String   className;
   private final String   cacheName;
 
-  public ServerMapEvictionContext(final ObjectID oid, final int targetMaxTotalCount, final int tti, final int ttl,
+  public ServerMapEvictionContext(final EvictionTrigger trigger, final int targetMaxTotalCount, final int tti, final int ttl,
                                   final Map samples, final int overshoot, final String className, final String cacheName) {
-    this.oid = oid;
+    this.trigger = trigger;
     this.targetMaxTotalCount = targetMaxTotalCount;
     this.tti = tti;
     this.ttl = ttl;
@@ -31,8 +32,8 @@ public class ServerMapEvictionContext implements EventContext {
     this.cacheName = cacheName;
   }
   
-   public ServerMapEvictionContext(final ObjectID oid, final Map samples, final String className, final String cacheName) {
-    this.oid = oid;
+   public ServerMapEvictionContext(final EvictionTrigger trigger, final Map samples, final String className, final String cacheName) {
+    this.trigger = trigger;
     this.targetMaxTotalCount = 0;
     this.tti = 0;
     this.ttl = 0;
@@ -43,7 +44,7 @@ public class ServerMapEvictionContext implements EventContext {
   } 
 
   public ObjectID getOid() {
-    return this.oid;
+    return this.trigger.getId();
   }
 
   public int getTargetMaxTotalCount() {
@@ -76,8 +77,6 @@ public class ServerMapEvictionContext implements EventContext {
 
     @Override
     public String toString() {
-        return "ServerMapEvictionContext{" + "oid=" + oid + ", targetMaxTotalCount=" + targetMaxTotalCount + ", samples=" + samples.size() + ", overshoot=" + overshoot + ", className=" + className + ", cacheName=" + cacheName + '}';
+        return "ServerMapEvictionContext{" + "oid=" + trigger + ", targetMaxTotalCount=" + targetMaxTotalCount + ", samples=" + samples.size() + ", overshoot=" + overshoot + ", className=" + className + ", cacheName=" + cacheName + '}';
     }
-  
-  
 }
