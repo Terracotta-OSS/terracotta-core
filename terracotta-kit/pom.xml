@@ -293,7 +293,7 @@
                       <targetPath>${rootDir}/management</targetPath>
                       <dependency>
                         <groupId>org.terracotta</groupId>
-                        <artifactId>management-tsa-impl</artifactId>
+                        <artifactId>management-tsa-war</artifactId>
                         <version>${project.version}</version>
                         <type>war</type>
                       </dependency>
