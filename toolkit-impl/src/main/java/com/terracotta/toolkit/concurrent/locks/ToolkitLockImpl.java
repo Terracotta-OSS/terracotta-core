@@ -3,12 +3,12 @@
  */
 package com.terracotta.toolkit.concurrent.locks;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLockType;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
 import com.tc.platform.PlatformService;
-import com.terracotta.toolkit.object.ToolkitObjectType;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;

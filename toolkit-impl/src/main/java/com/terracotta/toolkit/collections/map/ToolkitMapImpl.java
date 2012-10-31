@@ -3,6 +3,7 @@
  */
 package com.terracotta.toolkit.collections.map;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 
@@ -16,7 +17,6 @@ import com.tc.object.bytecode.Manageable;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.object.AbstractTCToolkitObject;
-import com.terracotta.toolkit.object.ToolkitObjectType;
 import com.terracotta.toolkit.object.serialization.SerializedClusterObject;
 
 import java.util.ArrayList;

@@ -3,6 +3,7 @@
  */
 package com.terracotta.toolkit.factory.impl;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.collections.ToolkitBlockingQueue;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
@@ -14,7 +15,6 @@ import com.terracotta.toolkit.collections.ToolkitListImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.ToolkitObjectStripe;
 import com.terracotta.toolkit.object.ToolkitObjectStripeImpl;
-import com.terracotta.toolkit.object.ToolkitObjectType;
 import com.terracotta.toolkit.roots.ToolkitTypeRootsFactory;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
 import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;

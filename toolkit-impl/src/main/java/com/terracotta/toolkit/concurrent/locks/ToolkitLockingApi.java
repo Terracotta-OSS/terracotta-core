@@ -3,13 +3,13 @@
  */
 package com.terracotta.toolkit.concurrent.locks;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
 import com.tc.abortable.AbortedOperationException;
 import com.tc.object.ObjectID;
 import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
-import com.terracotta.toolkit.object.ToolkitObjectType;
 
 import java.util.concurrent.TimeUnit;
 

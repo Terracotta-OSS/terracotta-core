@@ -3,12 +3,12 @@
  */
 package com.terracotta.toolkit.factory.impl;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.config.Configuration;
 
 import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLockImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
-import com.terracotta.toolkit.object.ToolkitObjectType;
 import com.terracotta.toolkit.util.collections.WeakValueMap;
 import com.terracotta.toolkit.util.collections.WeakValueMapManager;
 

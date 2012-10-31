@@ -3,11 +3,11 @@
  */
 package com.terracotta.toolkit.concurrent.locks;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 
 import com.tc.platform.PlatformService;
-import com.terracotta.toolkit.object.ToolkitObjectType;
 
 public class ToolkitReadWriteLockImpl implements ToolkitReadWriteLock {
   private final String                      name;

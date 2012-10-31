@@ -3,6 +3,7 @@
  */
 package com.terracotta.toolkit.factory.impl;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.object.ToolkitObject;
@@ -10,7 +11,6 @@ import org.terracotta.toolkit.object.ToolkitObject;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.object.TCToolkitObject;
-import com.terracotta.toolkit.object.ToolkitObjectType;
 import com.terracotta.toolkit.roots.AggregateToolkitTypeRoot;
 
 public abstract class AbstractPrimaryToolkitObjectFactory<T extends ToolkitObject, S extends TCToolkitObject>

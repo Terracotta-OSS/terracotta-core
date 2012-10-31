@@ -3,6 +3,7 @@
  */
 package com.terracotta.toolkit.factory.impl;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.cache.ToolkitCache;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
@@ -10,7 +11,6 @@ import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.collections.map.ServerMap;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreFactory;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
-import com.terracotta.toolkit.object.ToolkitObjectType;
 import com.terracotta.toolkit.roots.ToolkitTypeRootsFactory;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
 import com.terracotta.toolkit.search.SearchBuilderFactory;
