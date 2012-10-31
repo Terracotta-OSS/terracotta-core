@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.resource.AgentEntity;
-import org.terracotta.management.resource.Representable;
 
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
@@ -564,6 +563,26 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
   }
 
   @Override
+  public Set<String> getL2Urls() throws ServiceExecutionException {
+    try {
+      HashSet<String> urls = new HashSet<String>();
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+
+      L2Info[] l2Infos = (L2Info[])mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "L2Info");
+
+      for (L2Info l2Info : l2Infos) {
+        ServerEntity serverEntity = buildServerEntity(l2Info);
+        urls.add("http://" + l2Info.safeGetHostAddress() + ":" + serverEntity.getAttributes().get("DSOGroupPort") + "/tc-management-api");
+      }
+
+      return urls;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error making JMX call", e);
+    }
+  }
+
+  @Override
   public Set<String> getL1Nodes() throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
@@ -598,30 +617,6 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
           LOG.warn("error closing JMX connection", ioe);
         }
       }
-    }
-  }
-
-  @Override
-  public Collection<Representable> getSimpleTopology() throws ServiceExecutionException {
-    try {
-      Collection<Representable> serverEntities = new ArrayList<Representable>();
-
-      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-      L2Info[] l2Infos = (L2Info[])mBeanServer.getAttribute(
-          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "L2Info");
-
-      for (L2Info l2Info : l2Infos) {
-        ServerEntity serverEntity = new ServerEntity();
-        serverEntity.getAttributes().put("Name", l2Info.name());
-        serverEntity.getAttributes().put("Host", l2Info.host());
-        serverEntity.getAttributes().put("JmxPort", l2Info.jmxPort());
-        serverEntity.getAttributes().put("HostAddress", l2Info.safeGetHostAddress());
-        serverEntities.add(serverEntity);
-      }
-
-      return serverEntities;
-    } catch (Exception e) {
-      throw new ServiceExecutionException("error making JMX call", e);
     }
   }
 

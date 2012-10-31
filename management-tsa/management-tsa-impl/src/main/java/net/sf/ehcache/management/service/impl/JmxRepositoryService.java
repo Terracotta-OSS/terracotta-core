@@ -10,11 +10,9 @@ import net.sf.ehcache.management.service.AgentService;
 import net.sf.ehcache.management.service.CacheManagerService;
 import net.sf.ehcache.management.service.CacheService;
 import net.sf.ehcache.management.service.EntityResourceFactory;
-
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.resource.AgentEntity;
 import org.terracotta.management.resource.AgentMetadataEntity;
-import org.terracotta.management.resource.Representable;
 
 import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.RequestTicketMonitor;
@@ -26,10 +24,8 @@ import com.terracotta.management.web.config.TSAConfig;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -37,7 +33,7 @@ import java.util.Set;
  */
 public class JmxRepositoryService implements EntityResourceFactory, CacheManagerService, CacheService, AgentService {
 
-  private final static Set<String> DFLT_ATTRS = new HashSet<String>(Arrays.asList(new String[] { "Name" }));
+  private static final String AGENCY = "Ehcache";
 
   private final TsaManagementClientService tsaManagementClientService;
   private final JmxEhcacheRequestValidator requestValidator;
@@ -200,12 +196,7 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
 
       AgentEntity e = new AgentEntity();
       e.setAgentId(id);
-
-      Collection<Representable> reps = new HashSet<Representable>();
-      requestValidator.setValidatedNode(id);
-      reps.addAll(createCacheManagerEntities(null, DFLT_ATTRS));
-      e.setRootRepresentables(reps);
-
+      e.setAgencyOf(AGENCY);
       result.add(e);
     }
 
