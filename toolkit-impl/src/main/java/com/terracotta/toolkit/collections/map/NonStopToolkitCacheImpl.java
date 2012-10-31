@@ -9,10 +9,10 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.internal.search.SearchBuilder;
+import org.terracotta.toolkit.nonstop.NonStopConfig;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
 import com.tc.object.ObjectID;
-import com.terracotta.toolkit.abortable.NonStopConfig;
 import com.terracotta.toolkit.abortable.NonStopManager;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.type.DistributedToolkitType;
