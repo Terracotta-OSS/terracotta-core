@@ -86,6 +86,11 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
     }
   }
 
+  void reopen() {
+    //
+  }
+
+  @Override
   public ChannelID getChannelID() {
     final ChannelStatus status = getStatus();
     synchronized (status) {
@@ -96,10 +101,12 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
     }
   }
 
+  @Override
   public int getConnectCount() {
     return this.connectCount;
   }
 
+  @Override
   public int getConnectAttemptCount() {
     return this.connectAttemptCount;
   }
@@ -142,6 +149,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
     //
   }
 
+  @Override
   public ChannelIDProvider getChannelIDProvider() {
     return this.cidProvider;
   }
@@ -154,6 +162,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
       this.channelID = channelID;
     }
 
+    @Override
     public synchronized ChannelID getChannelID() {
       return this.channelID;
     }

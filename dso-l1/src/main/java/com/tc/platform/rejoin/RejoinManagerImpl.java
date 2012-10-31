@@ -3,15 +3,18 @@
  */
 package com.tc.platform.rejoin;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.ReconnectionRejectedException;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
-import com.tc.platform.rejoin.RejoinLifecycleListener;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class RejoinManagerImpl implements RejoinManager {
+public class RejoinManagerImpl implements RejoinManagerInternal {
 
+  private static final TCLogger               logger    = TCLogging.getLogger(RejoinManagerImpl.class);
   private final List<RejoinLifecycleListener> listeners = new CopyOnWriteArrayList<RejoinLifecycleListener>();
   private final boolean                       rejoinEnabled;
   private final ReconnectionRejectedHandler   reconnectionRejectedHandler;
@@ -40,18 +43,41 @@ public class RejoinManagerImpl implements RejoinManager {
     if (!rejoinEnabled) { throw new AssertionError("Trying to do rejoin when its disabled"); }
   }
 
-  public void notifyRejoinStart() {
+  private void notifyRejoinStart() {
     assertRejoinEnabled();
     for (RejoinLifecycleListener listener : listeners) {
       listener.onRejoinStart();
     }
   }
 
-  public void notifyRejoinComplete() {
+  private void notifyRejoinComplete() {
     assertRejoinEnabled();
     for (RejoinLifecycleListener listener : listeners) {
       listener.onRejoinComplete();
     }
+  }
+
+  @Override
+  public void doRejoin(MessageChannel channel) {
+    logger.info("Going to initiate rejoin for channel: " + channel);
+    notifyRejoinStart();
+    try {
+      while (true) {
+        try {
+          reestablishComms(channel);
+          break;
+        } catch (Throwable t) {
+          logger.error("Got error while reestablishing comms, going to retry...", t);
+        }
+      }
+    } finally {
+      notifyRejoinComplete();
+    }
+
+  }
+
+  private void reestablishComms(MessageChannel channel) {
+    //
   }
 
   @Override

@@ -12,13 +12,13 @@ import java.lang.reflect.Proxy;
  */
 public class InterceptedProxy {
 
-  public static interface Interceptor {
-    void intercept(Object proxy, Method method, Object[] args) throws Exception;
+  public static interface Interceptor<T> {
+    Object intercept(T actualDelegate, Method method, Object[] args) throws Exception;
   }
 
   /**
    * Returns an intercepted proxy. All method invocations on the proxy is intercepted and goes through the
-   * interceptor.intercept() method. The method is then delegated to the actual delegate
+   * interceptor.intercept() method
    */
   public static <T> T createInterceptedProxy(final T actualDelegate, Class<T> interfaceClass,
                                                       final Interceptor interceptor) {
@@ -26,8 +26,7 @@ public class InterceptedProxy {
 
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        interceptor.intercept(proxy, method, args);
-        return method.invoke(actualDelegate, args);
+        return interceptor.intercept(actualDelegate, method, args);
       }
     };
     return (T) Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class[] { interfaceClass }, handler);

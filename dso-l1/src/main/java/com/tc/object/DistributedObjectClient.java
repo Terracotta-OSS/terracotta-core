@@ -167,6 +167,7 @@ import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.platform.rejoin.ClientChannelEventController;
 import com.tc.platform.rejoin.RejoinManager;
 import com.tc.platform.rejoin.RejoinManagerImpl;
+import com.tc.platform.rejoin.RejoinManagerInternal;
 import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
@@ -282,7 +283,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   private final AbortableOperationManager            abortableOperationManager;
 
-  private RejoinManager rejoinManager;
+  private RejoinManagerInternal                      rejoinManager;
 
   public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
                                  final ClassProvider classProvider,

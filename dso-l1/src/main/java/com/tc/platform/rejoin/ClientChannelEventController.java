@@ -25,14 +25,15 @@ public class ClientChannelEventController {
   private static final TCLogger             DSO_LOGGER     = CustomerLogging.getDSOGenericLogger();
   private static final TCLogger             CONSOLE_LOGGER = CustomerLogging.getConsoleLogger();
 
-  private final RejoinManager               rejoinManager;
+  private final RejoinManagerInternal       rejoinManager;
   private final ClientHandshakeManager      clientHandshakeManager;
   private final TCMemoryManager             tcMemManager;
   private final Sink                        pauseSink;
   private final DsoClusterInternalEventsGun dsoClusterEventsGun;
   private final AtomicBoolean               shutdown       = new AtomicBoolean(false);
 
-  public ClientChannelEventController(DSOClientMessageChannel channel, Sink pauseSink, RejoinManager rejoinManager,
+  public ClientChannelEventController(DSOClientMessageChannel channel, Sink pauseSink,
+                                      RejoinManagerInternal rejoinManager,
                                       ClientHandshakeManager clientHandshakeManager,
                                       DsoClusterInternalEventsGun dsoClusterEventsGun, TCMemoryManager tcMemManager) {
     this.pauseSink = pauseSink;
@@ -84,12 +85,8 @@ public class ClientChannelEventController {
         oldRejoinBehavior(event);
         return;
       }
-      doRejoin(event);
+      rejoinManager.doRejoin(event.getChannel());
     }
-  }
-
-  private void doRejoin(ChannelEvent event) {
-    //
   }
 
   private void oldRejoinBehavior(ChannelEvent event) {

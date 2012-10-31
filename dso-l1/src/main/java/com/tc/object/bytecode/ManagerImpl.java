@@ -202,7 +202,7 @@ public class ManagerImpl implements Manager {
 
   private PlatformService createPlatformService() {
     if (clientMode.isExpressRejoinClient()) {
-      return new RejoinAwarePlatformService(this, this.dso.getRejoinManager());
+      return new RejoinAwarePlatformService(this, this.dso.getRejoinManager(), this.dso.getClientHandshakeManager());
     } else {
       return new PlatformServiceImpl(this);
     }

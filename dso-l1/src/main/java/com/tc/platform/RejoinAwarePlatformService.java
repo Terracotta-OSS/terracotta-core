@@ -11,12 +11,12 @@ import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manager;
+import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
-import com.tc.platform.InterceptedProxy.Interceptor;
 import com.tc.platform.rejoin.RejoinLifecycleListener;
 import com.tc.platform.rejoin.RejoinManager;
 import com.tc.properties.TCProperties;
@@ -24,24 +24,21 @@ import com.tc.search.SearchQueryResults;
 import com.tcclient.cluster.DsoNode;
 import com.terracottatech.search.NVPair;
 
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RejoinAwarePlatformService implements PlatformService {
 
-  private final Status                         status                          = new Status();
-  private final RejoinLifecycleEventController rejoinLifecycleEventsController = new RejoinLifecycleEventController(
-                                                                                                                    status);
+  private final RejoinLifecycleEventController rejoinLifecycleEventsController;
   private final PlatformService                interceptedProxy;
 
-  public RejoinAwarePlatformService(Manager manager, RejoinManager rejoinManager) {
-    final Interceptor statusCheckInterceptor = new StatusCheckInterceptor(status);
+  public RejoinAwarePlatformService(Manager manager, RejoinManager rejoinManager,
+                                    ClientHandshakeManager clientHandshakeManager) {
+    this.rejoinLifecycleEventsController = new RejoinLifecycleEventController(clientHandshakeManager);
     this.interceptedProxy = InterceptedProxy.createInterceptedProxy(new PlatformServiceImpl(manager),
-                                                                    PlatformService.class, statusCheckInterceptor);
+                                                                    PlatformService.class,
+                                                                    rejoinLifecycleEventsController);
     rejoinManager.addListener(rejoinLifecycleEventsController);
 
   }
@@ -231,87 +228,4 @@ public class RejoinAwarePlatformService implements PlatformService {
     return interceptedProxy.getAbortableOperationManager();
   }
 
-  private static class StatusCheckInterceptor implements Interceptor {
-    private final Status status;
-
-    public StatusCheckInterceptor(Status status) {
-      this.status = status;
-    }
-
-    @Override
-    public void intercept(Object proxy, Method method, Object[] args) throws Exception {
-      // always check for status before proceeding
-      status.waitIfRejoinInProgress();
-    }
-  }
-
-  private static class Status {
-
-    private final Object        monitor          = new Object();
-    private final AtomicBoolean rejoinInProgress = new AtomicBoolean(false);
-
-    public void markRejoinInProgress() {
-      synchronized (monitor) {
-        rejoinInProgress.set(true);
-        monitor.notifyAll();
-      }
-    }
-
-    public void markRejoinComplete() {
-      synchronized (monitor) {
-        rejoinInProgress.set(false);
-        monitor.notifyAll();
-      }
-    }
-
-    public void waitIfRejoinInProgress() throws AbortedOperationException {
-      while (rejoinInProgress.get()) {
-        synchronized (monitor) {
-          try {
-            monitor.wait();
-          } catch (InterruptedException e) {
-            // return with aborted exception if interrrupted during wait
-            // todo: consult abortableManager here? or throw for every interrupt?
-            throw new AbortedOperationException("Interrupted while waiting for rejoin to complete", e);
-          }
-        }
-      }
-    }
-
-  }
-
-  private static class RejoinLifecycleEventController implements RejoinLifecycleListener {
-
-    private final Status                                       status;
-    private final CopyOnWriteArraySet<RejoinLifecycleListener> upperLayerListeners = new CopyOnWriteArraySet<RejoinLifecycleListener>();
-
-    public RejoinLifecycleEventController(Status status) {
-      this.status = status;
-    }
-
-    private void addUpperLayerListener(RejoinLifecycleListener listener) {
-      upperLayerListeners.add(listener);
-    }
-
-    private void removeUpperLayerListener(RejoinLifecycleListener listener) {
-      upperLayerListeners.remove(listener);
-    }
-
-    @Override
-    public void onRejoinStart() {
-      status.markRejoinInProgress();
-      for (RejoinLifecycleListener listener : upperLayerListeners) {
-        listener.onRejoinStart();
-      }
-    }
-
-    @Override
-    public void onRejoinComplete() {
-      status.markRejoinComplete();
-      for (RejoinLifecycleListener listener : upperLayerListeners) {
-        listener.onRejoinComplete();
-      }
-    }
-
-  }
 }

@@ -258,6 +258,13 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     }
   }
 
+  @Override
+  public void reset() {
+    for (ClientHandshakeCallback c : callBacks) {
+      c.cleanup();
+    }
+  }
+
   private void pauseCallbacks(final NodeID remote, final int disconnectedCount) {
     for (ClientHandshakeCallback c : this.callBacks) {
       c.pause(remote, disconnectedCount);
