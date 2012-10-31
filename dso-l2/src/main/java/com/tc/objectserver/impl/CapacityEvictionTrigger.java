@@ -70,11 +70,12 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             private int sampleCount = 0;
             private boolean wasOver = true;
             private int clientSet = 0;
-      
+
             @Override
             public Map collectEvictonCandidates(EvictableMap map, ClientObjectReferenceSet clients) {
                 if ( map.getSize() <= map.getMaxTotalCount() ) {
                     wasOver = false;
+                    clients.removeReferenceSetChangeListener(CapacityEvictionTrigger.this);
                     return Collections.emptyMap();
                 }
                 final int grab = map.getSize() - map.getMaxTotalCount();
@@ -83,7 +84,6 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
                 clientSet = clients.size();
                 if ( sampleCount == grab) {
                     clients.removeReferenceSetChangeListener(CapacityEvictionTrigger.this);
-
                 }
                 return sample;
             }
