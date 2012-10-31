@@ -1,7 +1,7 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-package com.terracotta.toolkit.abortable;
+package com.terracotta.toolkit.nonstop;
 
 public interface NonStopManager {
 

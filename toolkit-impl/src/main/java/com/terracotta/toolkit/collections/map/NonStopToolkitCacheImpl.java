@@ -13,8 +13,9 @@ import org.terracotta.toolkit.nonstop.NonStopConfig;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
 import com.tc.object.ObjectID;
-import com.terracotta.toolkit.abortable.NonStopManager;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
+import com.terracotta.toolkit.nonstop.NonStopManager;
+import com.terracotta.toolkit.nonstop.NonstopTimeoutBehaviorResolver;
 import com.terracotta.toolkit.type.DistributedToolkitType;
 
 import java.io.Serializable;
@@ -31,13 +32,14 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     //
   }
 
-  private final NonStopManager              nonStopManager;
-  private final ToolkitCacheInterface<K, V> delegate;
-  private final ToolkitCacheInterface<K, V> timeoutResolver;
-  private final NonStopConfig               nonStopConfig;
+  private final NonStopManager                                              nonStopManager;
+  private final ToolkitCacheInterface<K, V>                                 delegate;
+  private final NonstopTimeoutBehaviorResolver<ToolkitCacheInterface<K, V>> timeoutResolver;
+  private final NonStopConfig                                               nonStopConfig;
 
   public NonStopToolkitCacheImpl(NonStopManager nonStopManager, ToolkitCacheInterface<K, V> delegate,
-                                 ToolkitCacheInterface<K, V> timeoutResolver, NonStopConfig nonStopConfig) {
+                                 NonstopTimeoutBehaviorResolver<ToolkitCacheInterface<K, V>> timeoutResolver,
+                                 NonStopConfig nonStopConfig) {
     this.nonStopManager = nonStopManager;
     this.delegate = delegate;
     this.timeoutResolver = timeoutResolver;
@@ -51,7 +53,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.getName();
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.getName();
+      return timeoutResolver.resolveTimeoutBehavior().getName();
     } finally {
       nonStopManager.finish();
     }
@@ -64,7 +66,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.isDestroyed();
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.isDestroyed();
+      return timeoutResolver.resolveTimeoutBehavior().isDestroyed();
     } finally {
       nonStopManager.finish();
     }
@@ -77,7 +79,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       delegate.destroy();
     } catch (ToolkitAbortableOperationException e) {
-      timeoutResolver.destroy();
+      timeoutResolver.resolveTimeoutBehavior().destroy();
     } finally {
       nonStopManager.finish();
     }
@@ -90,7 +92,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.iterator();
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.iterator();
+      return timeoutResolver.resolveTimeoutBehavior().iterator();
     } finally {
       nonStopManager.finish();
     }
@@ -103,7 +105,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.getQuiet(key);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.getQuiet(key);
+      return timeoutResolver.resolveTimeoutBehavior().getQuiet(key);
     } finally {
       nonStopManager.finish();
     }
@@ -116,7 +118,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.getAllQuiet(keys);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.getAllQuiet(keys);
+      return timeoutResolver.resolveTimeoutBehavior().getAllQuiet(keys);
     } finally {
       nonStopManager.finish();
     }
@@ -129,7 +131,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       delegate.putNoReturn(key, value, createTimeInSecs, maxTTISeconds, maxTTLSeconds);
     } catch (ToolkitAbortableOperationException e) {
-      timeoutResolver.putNoReturn(key, value, createTimeInSecs, maxTTISeconds, maxTTLSeconds);
+      timeoutResolver.resolveTimeoutBehavior().putNoReturn(key, value, createTimeInSecs, maxTTISeconds, maxTTLSeconds);
     } finally {
       nonStopManager.finish();
     }
@@ -142,7 +144,8 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.putIfAbsent(key, value, createTimeInSecs, maxTTISeconds, maxTTLSeconds);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.putIfAbsent(key, value, createTimeInSecs, maxTTISeconds, maxTTLSeconds);
+      return timeoutResolver.resolveTimeoutBehavior().putIfAbsent(key, value, createTimeInSecs, maxTTISeconds,
+                                                                  maxTTLSeconds);
     } finally {
       nonStopManager.finish();
     }
@@ -155,7 +158,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       delegate.addListener(listener);
     } catch (ToolkitAbortableOperationException e) {
-      timeoutResolver.addListener(listener);
+      timeoutResolver.resolveTimeoutBehavior().addListener(listener);
     } finally {
       nonStopManager.finish();
     }
@@ -168,7 +171,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       delegate.removeListener(listener);
     } catch (ToolkitAbortableOperationException e) {
-      timeoutResolver.removeListener(listener);
+      timeoutResolver.resolveTimeoutBehavior().removeListener(listener);
     } finally {
       nonStopManager.finish();
     }
@@ -181,7 +184,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       delegate.unpinAll();
     } catch (ToolkitAbortableOperationException e) {
-      timeoutResolver.unpinAll();
+      timeoutResolver.resolveTimeoutBehavior().unpinAll();
     } finally {
       nonStopManager.finish();
     }
@@ -194,7 +197,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.isPinned(key);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.isPinned(key);
+      return timeoutResolver.resolveTimeoutBehavior().isPinned(key);
     } finally {
       nonStopManager.finish();
     }
@@ -207,7 +210,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       delegate.setPinned(key, pinned);
     } catch (ToolkitAbortableOperationException e) {
-      timeoutResolver.setPinned(key, pinned);
+      timeoutResolver.resolveTimeoutBehavior().setPinned(key, pinned);
     } finally {
       nonStopManager.finish();
     }
@@ -220,7 +223,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       delegate.removeNoReturn(key);
     } catch (ToolkitAbortableOperationException e) {
-      timeoutResolver.removeNoReturn(key);
+      timeoutResolver.resolveTimeoutBehavior().removeNoReturn(key);
     } finally {
       nonStopManager.finish();
     }
@@ -233,7 +236,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       delegate.putNoReturn(key, value);
     } catch (ToolkitAbortableOperationException e) {
-      timeoutResolver.putNoReturn(key, value);
+      timeoutResolver.resolveTimeoutBehavior().putNoReturn(key, value);
     } finally {
       nonStopManager.finish();
     }
@@ -246,7 +249,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.getAll(keys);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.getAll(keys);
+      return timeoutResolver.resolveTimeoutBehavior().getAll(keys);
     } finally {
       nonStopManager.finish();
     }
@@ -259,7 +262,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.getConfiguration();
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.getConfiguration();
+      return timeoutResolver.resolveTimeoutBehavior().getConfiguration();
     } finally {
       nonStopManager.finish();
     }
@@ -272,7 +275,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       delegate.setConfigField(name, value);
     } catch (ToolkitAbortableOperationException e) {
-      timeoutResolver.setConfigField(name, value);
+      timeoutResolver.resolveTimeoutBehavior().setConfigField(name, value);
     } finally {
       nonStopManager.finish();
     }
@@ -285,7 +288,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.containsValue(value);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.containsValue(value);
+      return timeoutResolver.resolveTimeoutBehavior().containsValue(value);
     } finally {
       nonStopManager.finish();
     }
@@ -298,7 +301,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.createLockForKey(key);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.createLockForKey(key);
+      return timeoutResolver.resolveTimeoutBehavior().createLockForKey(key);
     } finally {
       nonStopManager.finish();
     }
@@ -311,7 +314,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       delegate.setAttributeExtractor(attrExtractor);
     } catch (ToolkitAbortableOperationException e) {
-      timeoutResolver.setAttributeExtractor(attrExtractor);
+      timeoutResolver.resolveTimeoutBehavior().setAttributeExtractor(attrExtractor);
     } finally {
       nonStopManager.finish();
     }
@@ -324,7 +327,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.putIfAbsent(key, value);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.putIfAbsent(key, value);
+      return timeoutResolver.resolveTimeoutBehavior().putIfAbsent(key, value);
     } finally {
       nonStopManager.finish();
     }
@@ -337,7 +340,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.remove(key, value);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.remove(key, value);
+      return timeoutResolver.resolveTimeoutBehavior().remove(key, value);
     } finally {
       nonStopManager.finish();
     }
@@ -350,7 +353,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.replace(key, value);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.replace(key, value);
+      return timeoutResolver.resolveTimeoutBehavior().replace(key, value);
     } finally {
       nonStopManager.finish();
     }
@@ -363,7 +366,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.replace(key, oldValue, newValue);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.replace(key, oldValue, newValue);
+      return timeoutResolver.resolveTimeoutBehavior().replace(key, oldValue, newValue);
     } finally {
       nonStopManager.finish();
     }
@@ -376,7 +379,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       delegate.clear();
     } catch (ToolkitAbortableOperationException e) {
-      timeoutResolver.clear();
+      timeoutResolver.resolveTimeoutBehavior().clear();
     } finally {
       nonStopManager.finish();
     }
@@ -389,7 +392,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.containsKey(key);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.containsKey(key);
+      return timeoutResolver.resolveTimeoutBehavior().containsKey(key);
     } finally {
       nonStopManager.finish();
     }
@@ -402,7 +405,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.entrySet();
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.entrySet();
+      return timeoutResolver.resolveTimeoutBehavior().entrySet();
     } finally {
       nonStopManager.finish();
     }
@@ -415,7 +418,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.get(key);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.get(key);
+      return timeoutResolver.resolveTimeoutBehavior().get(key);
     } finally {
       nonStopManager.finish();
     }
@@ -428,7 +431,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.isEmpty();
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.isEmpty();
+      return timeoutResolver.resolveTimeoutBehavior().isEmpty();
     } finally {
       nonStopManager.finish();
     }
@@ -441,7 +444,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.keySet();
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.keySet();
+      return timeoutResolver.resolveTimeoutBehavior().keySet();
     } finally {
       nonStopManager.finish();
     }
@@ -454,7 +457,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.put(key, value);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.put(key, value);
+      return timeoutResolver.resolveTimeoutBehavior().put(key, value);
     } finally {
       nonStopManager.finish();
     }
@@ -467,7 +470,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       delegate.putAll(map);
     } catch (ToolkitAbortableOperationException e) {
-      timeoutResolver.putAll(map);
+      timeoutResolver.resolveTimeoutBehavior().putAll(map);
     } finally {
       nonStopManager.finish();
     }
@@ -480,7 +483,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.remove(key);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.remove(key);
+      return timeoutResolver.resolveTimeoutBehavior().remove(key);
     } finally {
       nonStopManager.finish();
     }
@@ -493,7 +496,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.size();
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.size();
+      return timeoutResolver.resolveTimeoutBehavior().size();
     } finally {
       nonStopManager.finish();
     }
@@ -506,7 +509,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.values();
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.values();
+      return timeoutResolver.resolveTimeoutBehavior().values();
     } finally {
       nonStopManager.finish();
     }
@@ -519,7 +522,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.getNodesWithKeys(portableKeys);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.getNodesWithKeys(portableKeys);
+      return timeoutResolver.resolveTimeoutBehavior().getNodesWithKeys(portableKeys);
     } finally {
       nonStopManager.finish();
     }
@@ -532,7 +535,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       delegate.unlockedPutNoReturn(k, v, createTime, customTTI, customTTL);
     } catch (ToolkitAbortableOperationException e) {
-      timeoutResolver.unlockedPutNoReturn(k, v, createTime, customTTI, customTTL);
+      timeoutResolver.resolveTimeoutBehavior().unlockedPutNoReturn(k, v, createTime, customTTI, customTTL);
     } finally {
       nonStopManager.finish();
     }
@@ -545,7 +548,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       delegate.unlockedRemoveNoReturn(k);
     } catch (ToolkitAbortableOperationException e) {
-      timeoutResolver.unlockedRemoveNoReturn(k);
+      timeoutResolver.resolveTimeoutBehavior().unlockedRemoveNoReturn(k);
     } finally {
       nonStopManager.finish();
     }
@@ -558,7 +561,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.unlockedGet(k, quiet);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.unlockedGet(k, quiet);
+      return timeoutResolver.resolveTimeoutBehavior().unlockedGet(k, quiet);
     } finally {
       nonStopManager.finish();
     }
@@ -571,7 +574,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       delegate.clearLocalCache();
     } catch (ToolkitAbortableOperationException e) {
-      timeoutResolver.clearLocalCache();
+      timeoutResolver.resolveTimeoutBehavior().clearLocalCache();
     } finally {
       nonStopManager.finish();
     }
@@ -584,7 +587,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.unsafeLocalGet(key);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.unsafeLocalGet(key);
+      return timeoutResolver.resolveTimeoutBehavior().unsafeLocalGet(key);
     } finally {
       nonStopManager.finish();
     }
@@ -597,7 +600,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.containsLocalKey(key);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.containsLocalKey(key);
+      return timeoutResolver.resolveTimeoutBehavior().containsLocalKey(key);
     } finally {
       nonStopManager.finish();
     }
@@ -610,7 +613,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.localSize();
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.localSize();
+      return timeoutResolver.resolveTimeoutBehavior().localSize();
     } finally {
       nonStopManager.finish();
     }
@@ -623,7 +626,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.localKeySet();
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.localKeySet();
+      return timeoutResolver.resolveTimeoutBehavior().localKeySet();
     } finally {
       nonStopManager.finish();
     }
@@ -636,7 +639,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.localOnHeapSizeInBytes();
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.localOnHeapSizeInBytes();
+      return timeoutResolver.resolveTimeoutBehavior().localOnHeapSizeInBytes();
     } finally {
       nonStopManager.finish();
     }
@@ -649,7 +652,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.localOffHeapSizeInBytes();
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.localOffHeapSizeInBytes();
+      return timeoutResolver.resolveTimeoutBehavior().localOffHeapSizeInBytes();
     } finally {
       nonStopManager.finish();
     }
@@ -662,7 +665,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.localOnHeapSize();
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.localOnHeapSize();
+      return timeoutResolver.resolveTimeoutBehavior().localOnHeapSize();
     } finally {
       nonStopManager.finish();
     }
@@ -675,7 +678,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.localOffHeapSize();
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.localOffHeapSize();
+      return timeoutResolver.resolveTimeoutBehavior().localOffHeapSize();
     } finally {
       nonStopManager.finish();
     }
@@ -688,7 +691,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.containsKeyLocalOnHeap(key);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.containsKeyLocalOnHeap(key);
+      return timeoutResolver.resolveTimeoutBehavior().containsKeyLocalOnHeap(key);
     } finally {
       nonStopManager.finish();
     }
@@ -701,7 +704,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.containsKeyLocalOffHeap(key);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.containsKeyLocalOffHeap(key);
+      return timeoutResolver.resolveTimeoutBehavior().containsKeyLocalOffHeap(key);
     } finally {
       nonStopManager.finish();
     }
@@ -714,7 +717,8 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.put(key, value, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.put(key, value, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
+      return timeoutResolver.resolveTimeoutBehavior().put(key, value, createTimeInSecs, customMaxTTISeconds,
+                                                          customMaxTTLSeconds);
     } finally {
       nonStopManager.finish();
     }
@@ -727,7 +731,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       delegate.disposeLocally();
     } catch (ToolkitAbortableOperationException e) {
-      timeoutResolver.disposeLocally();
+      timeoutResolver.resolveTimeoutBehavior().disposeLocally();
     } finally {
       nonStopManager.finish();
     }
@@ -740,7 +744,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       delegate.removeAll(keys);
     } catch (ToolkitAbortableOperationException e) {
-      timeoutResolver.removeAll(keys);
+      timeoutResolver.resolveTimeoutBehavior().removeAll(keys);
     } finally {
       nonStopManager.finish();
     }
@@ -753,7 +757,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.createSearchBuilder();
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.createSearchBuilder();
+      return timeoutResolver.resolveTimeoutBehavior().createSearchBuilder();
     } finally {
       nonStopManager.finish();
     }
@@ -766,7 +770,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     try {
       return delegate.get(key, valueOid);
     } catch (ToolkitAbortableOperationException e) {
-      return timeoutResolver.get(key, valueOid);
+      return timeoutResolver.resolveTimeoutBehavior().get(key, valueOid);
     } finally {
       nonStopManager.finish();
     }
