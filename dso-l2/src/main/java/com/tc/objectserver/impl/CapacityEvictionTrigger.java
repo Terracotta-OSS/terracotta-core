@@ -73,14 +73,18 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
       
             @Override
             public Map collectEvictonCandidates(EvictableMap map, ClientObjectReferenceSet clients) {
-                clients.removeReferenceSetChangeListener(CapacityEvictionTrigger.this);
                 if ( map.getSize() <= map.getMaxTotalCount() ) {
                     wasOver = false;
                     return Collections.emptyMap();
                 }
-                Map sample = map.getRandomSamples(map.getSize() - map.getMaxTotalCount(), clients);
+                final int grab = map.getSize() - map.getMaxTotalCount();
+                Map sample = map.getRandomSamples(grab, clients);
                 sampleCount = sample.size();
                 clientSet = clients.size();
+                if ( sampleCount == grab) {
+                    clients.removeReferenceSetChangeListener(CapacityEvictionTrigger.this);
+
+                }
                 return sample;
             }
 
