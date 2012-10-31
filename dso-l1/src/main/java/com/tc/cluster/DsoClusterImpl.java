@@ -4,10 +4,12 @@
  */
 package com.tc.cluster;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.cluster.exceptions.UnclusteredObjectException;
 import com.tc.exception.TCNotRunningException;
+import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
@@ -67,6 +69,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
 
   private Sink                                   eventsProcessorSink;
 
+  @Override
   public void init(final ClusterMetaDataManager metaDataManager, final ClientObjectManager objectManager,
                    final Stage dsoClusterEventsStage) {
     this.clusterMetaDataManager = metaDataManager;
@@ -79,10 +82,12 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     outOfBandNotifier.start();
   }
 
+  @Override
   public void shutdown() {
     this.outOfBandNotifier.shutdown();
   }
 
+  @Override
   public void addClusterListener(final DsoClusterListener listener) {
 
     stateWriteLock.lock();
@@ -105,6 +110,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     }
   }
 
+  @Override
   public void removeClusterListener(final DsoClusterListener listener) {
     stateWriteLock.lock();
     try {
@@ -114,6 +120,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     }
   }
 
+  @Override
   public DsoNode getCurrentNode() {
     stateReadLock.lock();
     try {
@@ -123,10 +130,12 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     }
   }
 
+  @Override
   public DsoClusterTopology getClusterTopology() {
     return topology;
   }
 
+  @Override
   public Set<DsoNode> getNodesWithObject(final Object object) throws UnclusteredObjectException {
     Assert.assertNotNull(clusterMetaDataManager);
 
@@ -152,6 +161,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     throw new UnclusteredObjectException(object);
   }
 
+  @Override
   public Map<?, Set<DsoNode>> getNodesWithObjects(final Object... objects) throws UnclusteredObjectException {
     Assert.assertNotNull(clusterMetaDataManager);
 
@@ -160,6 +170,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     return getNodesWithObjects(Arrays.asList(objects));
   }
 
+  @Override
   public <K> Map<K, Set<DsoNode>> getNodesWithKeys(final Map<K, ?> map, final Collection<? extends K> keys)
       throws UnclusteredObjectException {
     Assert.assertNotNull(clusterMetaDataManager);
@@ -193,6 +204,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     return result;
   }
 
+  @Override
   public Map<?, Set<DsoNode>> getNodesWithObjects(final Collection<?> objects) throws UnclusteredObjectException {
     Assert.assertNotNull(clusterMetaDataManager);
 
@@ -239,6 +251,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     return result;
   }
 
+  @Override
   public <K> Set<K> getKeysForOrphanedValues(final Map<K, ?> map) throws UnclusteredObjectException {
     Assert.assertNotNull(clusterMetaDataManager);
 
@@ -255,6 +268,8 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
               result.add((K) clientObjectManager.lookupObject((ObjectID) key));
             } catch (ClassNotFoundException e) {
               Assert.fail("Unexpected ClassNotFoundException for key '" + key + "' : " + e.getMessage());
+            } catch (AbortedOperationException e) {
+              throw new TCRuntimeException(e);
             }
           } else {
             result.add((K) key);
@@ -268,6 +283,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     return Collections.emptySet();
   }
 
+  @Override
   public <K> Set<K> getKeysForLocalValues(final Map<K, ?> map) throws UnclusteredObjectException {
     if (null == map) { return Collections.emptySet(); }
 
@@ -292,11 +308,13 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     return map.keySet();
   }
 
+  @Override
   public DsoNodeMetaData retrieveMetaDataForDsoNode(final DsoNodeInternal node) {
     Assert.assertNotNull(clusterMetaDataManager);
     return clusterMetaDataManager.retrieveMetaDataForDsoNode(node);
   }
 
+  @Override
   public boolean isNodeJoined() {
     stateReadLock.lock();
     try {
@@ -306,6 +324,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     }
   }
 
+  @Override
   public boolean areOperationsEnabled() {
     stateReadLock.lock();
     try {
@@ -315,6 +334,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     }
   }
 
+  @Override
   public DsoNode waitUntilNodeJoinsCluster() {
     /*
      * It might be nice to throw InterruptedException here, but since the method is defined inside tim-api, we can't so
@@ -345,6 +365,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     }
   }
 
+  @Override
   public void fireThisNodeJoined(final NodeID nodeId, final NodeID[] clusterMembers) {
     stateWriteLock.lock();
     try {
@@ -376,6 +397,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
 
   }
 
+  @Override
   public void fireThisNodeLeft() {
     boolean fireOperationsDisabled = false;
     stateWriteLock.lock();
@@ -400,6 +422,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     fireNodeLeft(new ClientID(currentNode.getChannelId()));
   }
 
+  @Override
   public void fireNodeJoined(final NodeID nodeId) {
     if (topology.containsDsoNode(nodeId)) { return; }
 
@@ -417,6 +440,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     fireEvent(DsoClusterEventType.NODE_JOIN, event, listener);
   }
 
+  @Override
   public void fireNodeLeft(final NodeID nodeId) {
     DsoNodeInternal node = topology.getAndRemoveDsoNode(nodeId);
     if (node == null) { return; }
@@ -427,6 +451,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     }
   }
 
+  @Override
   public void fireOperationsEnabled() {
     if (currentNode != null) {
       stateWriteLock.lock();
@@ -445,6 +470,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     }
   }
 
+  @Override
   public void fireOperationsDisabled() {
     stateWriteLock.lock();
     try {
@@ -473,6 +499,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
      */
     if (useOOBNotification(eventType, event, listener)) {
       outOfBandNotifier.submit(new Runnable() {
+        @Override
         public void run() {
           notifyDsoClusterListener(eventType, event, listener);
         }
@@ -490,6 +517,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     }
   }
 
+  @Override
   public void notifyDsoClusterListener(DsoClusterEventType eventType, DsoClusterEvent event, DsoClusterListener listener) {
     try {
       switch (eventType) {
@@ -582,6 +610,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     private void start() {
       Thread outOfBandNotifierThread = new Thread(new Runnable() {
 
+        @Override
         public void run() {
 
           Runnable taskToExecute;
@@ -615,6 +644,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     public void shutdown() {
       this.shutdown = true;
       this.taskQueue.add(new Runnable() {
+        @Override
         public void run() {
           // dummy task to notify other thread
         }

@@ -6,6 +6,8 @@ package com.tc.object.tx;
 
 import EDU.oswego.cs.dl.util.concurrent.Latch;
 
+import com.tc.abortable.AbortableOperationManager;
+import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.locks.LockID;
@@ -28,6 +30,11 @@ public class LockAccounting {
   private final Map<LockID, Set<TransactionIDWrapper>>   lock2Txs                       = new HashMap();
   private final Map<TransactionID, TransactionIDWrapper> tid2wrap                       = new HashMap();
   private volatile boolean                               shutdown                       = false;
+  private final AbortableOperationManager                abortableOperationManager;
+
+  public LockAccounting(AbortableOperationManager abortableOperationManager) {
+    this.abortableOperationManager = abortableOperationManager;
+  }
 
   public synchronized Object dump() {
     return toString();
@@ -130,7 +137,7 @@ public class LockAccounting {
     return tx2Locks.isEmpty() && lock2Txs.isEmpty();
   }
 
-  public void waitAllCurrentTxnCompleted() {
+  public void waitAllCurrentTxnCompleted() throws AbortedOperationException {
     TxnRemovedListener listener;
     Latch latch = new Latch();
     Set currentTxnSet = null;
@@ -147,6 +154,7 @@ public class LockAccounting {
         if (shutdown) { throw new TCNotRunningException(); }
       } while (!latch.attempt(WAIT_FOR_TRANSACTIONS_INTERVAL));
     } catch (InterruptedException e) {
+      handleInterruptedException();
       throw new TCRuntimeException(e);
     } finally {
       listeners.remove(listener);
@@ -252,6 +260,19 @@ public class LockAccounting {
   // for testing purpose only
   int sizeOfIDWrapMap() {
     return tid2wrap.size();
+  }
+
+  private void handleInterruptedException()
+      throws AbortedOperationException {
+    if (abortableOperationManager.isAborted()) {
+      throw new AbortedOperationException();
+    } else {
+      checkIfShutDownOnInterruptedException();
+    }
+  }
+
+  private void checkIfShutDownOnInterruptedException() {
+    // TODO: to be handled during rejoin
   }
 
 }

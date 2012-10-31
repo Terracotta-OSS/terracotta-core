@@ -3,6 +3,7 @@
  */
 package com.tc.object;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.dna.api.DNA;
@@ -18,11 +19,11 @@ import java.util.Set;
  */
 public interface RemoteObjectManager extends ClientHandshakeCallback, PrettyPrintable {
 
-  public DNA retrieve(ObjectID id);
+  public DNA retrieve(ObjectID id) throws AbortedOperationException;
 
-  public DNA retrieve(ObjectID id, int depth);
+  public DNA retrieve(ObjectID id, int depth) throws AbortedOperationException;
 
-  public DNA retrieveWithParentContext(ObjectID id, ObjectID parentContext);
+  public DNA retrieveWithParentContext(ObjectID id, ObjectID parentContext) throws AbortedOperationException;
 
   public ObjectID retrieveRootID(String name, GroupID gid);
 
@@ -38,6 +39,6 @@ public interface RemoteObjectManager extends ClientHandshakeCallback, PrettyPrin
 
   public boolean isInDNACache(ObjectID id);
 
-  public void preFetchObject(ObjectID id);
+  public void preFetchObject(ObjectID id) throws AbortedOperationException;
 
 }

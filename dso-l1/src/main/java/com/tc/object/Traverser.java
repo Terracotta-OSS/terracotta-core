@@ -4,6 +4,7 @@
  */
 package com.tc.object;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.net.GroupID;
 import com.tc.object.appevent.NonPortableEventContext;
@@ -67,12 +68,12 @@ public class Traverser {
   }
 
   // package protected - used for tests only
-  void traverse(Object object, TraversalAction action) {
+  void traverse(Object object, TraversalAction action) throws AbortedOperationException {
     traverse(object, NULL_TEST, null, action, GroupID.NULL_ID);
   }
 
   public void traverse(Object object, TraverseTest traverseTest, NonPortableEventContext ctx, TraversalAction action,
-                       GroupID gid) {
+                       GroupID gid) throws AbortedOperationException {
     Map visited = new IdentityHashMap();
     List toAdd = new ArrayList();
 

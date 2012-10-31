@@ -3,6 +3,7 @@
  */
 package com.tc.object;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
@@ -122,10 +123,12 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param key Key Object : Note currently only literal keys or shared keys are supported. Even if the key is portable,
    *        but not shared, it is not supported.
    * @return value Object in the mapping, null if no mapping present.
+   * @throws AbortedOperationException
    */
-  public Object getValueUnlocked(final TCServerMap map, final Object key);
+  public Object getValueUnlocked(final TCServerMap map, final Object key) throws AbortedOperationException;
 
-  public Map<Object, Object> getAllValuesUnlocked(final Map<ObjectID, Set<Object>> mapIdToKeysMap);
+  public Map<Object, Object> getAllValuesUnlocked(final Map<ObjectID, Set<Object>> mapIdToKeysMap)
+      throws AbortedOperationException;
 
   /**
    * Returns a snapshot of keys for the giver TCServerMap
@@ -143,8 +146,9 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param key Key Object : Note currently only literal keys or shared keys are supported. Even if the key is portable,
    *        but not shared, it is not supported.
    * @return value Object in the mapping, null if no mapping present.
+   * @throws AbortedOperationException
    */
-  public Object getValue(final TCServerMap map, final L lockID, final Object key);
+  public Object getValue(final TCServerMap map, final L lockID, final Object key) throws AbortedOperationException;
 
   /**
    * Returns total size of an array of ServerTCMap.

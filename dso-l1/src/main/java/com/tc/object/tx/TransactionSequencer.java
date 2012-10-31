@@ -4,6 +4,8 @@
  */
 package com.tc.object.tx;
 
+import com.tc.abortable.AbortableOperationManager;
+import com.tc.abortable.AbortedOperationException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
@@ -59,11 +61,13 @@ public class TransactionSequencer {
 
   private final GroupID                                     groupID;
   private final TransactionIDGenerator                      transactionIDGenerator;
+  private final AbortableOperationManager                   abortableOperationManager;
 
   public TransactionSequencer(GroupID groupID, TransactionIDGenerator transactionIDGenerator,
                               TransactionBatchFactory batchFactory, LockAccounting lockAccounting,
                               Counter pendingBatchesSize, SampledRateCounter transactionSizeCounter,
-                              SampledRateCounter transactionsPerBatchCounter) {
+                              SampledRateCounter transactionsPerBatchCounter,
+                              AbortableOperationManager abortableOperationManager) {
 
     this.groupID = groupID;
     this.transactionIDGenerator = transactionIDGenerator;
@@ -78,6 +82,7 @@ public class TransactionSequencer {
     this.transactionSizeCounter = transactionSizeCounter;
     this.transactionsPerBatchCounter = transactionsPerBatchCounter;
     this.pendingBatchesSize = pendingBatchesSize;
+    this.abortableOperationManager = abortableOperationManager;
   }
 
   private void log_settings() {
@@ -102,7 +107,7 @@ public class TransactionSequencer {
 
     try {
       addTxnInternal(txn);
-    } catch (Throwable t) {
+    } catch (final Throwable t) {
       // logging of exceptions is done at a higher level
       this.shutdown = true;
       if (t instanceof Error) { throw (Error) t; }
@@ -111,15 +116,21 @@ public class TransactionSequencer {
     }
   }
 
+  public void throttleIfNecesary() throws AbortedOperationException {
+    waitIfNecessary();
+  }
+
   public synchronized void shutdown() {
     this.shutdown = true;
   }
 
   /**
    * XXX::Note : There is automatic throttling built in by adding to a BoundedLinkedQueue from within a synch block
+   * 
+   * @throws AbortedOperationException Only when the Transaction is not written to the batch.
    */
   private void addTxnInternal(ClientTransaction txn) {
-    waitIfNecessary();
+    // waitIfNecessary();
 
     this.txnsPerBatch++;
     final int numTransactionsDelta = 1;
@@ -158,7 +169,7 @@ public class TransactionSequencer {
     this.transactionsPerBatchCounter.increment(numTransactionsDelta, numBatchesDelta);
   }
 
-  private void waitIfNecessary() {
+  private void waitIfNecessary() throws AbortedOperationException {
     boolean isInterrupted = false;
     try {
       do {
@@ -168,6 +179,7 @@ public class TransactionSequencer {
           try {
             wait(sleepTime);
           } catch (InterruptedException e) {
+            handleInterruptedException();
             isInterrupted = true;
           }
         }
@@ -186,6 +198,7 @@ public class TransactionSequencer {
     try {
       while (true) {
         try {
+          // Unbounded Queue should not block here.
           this.pendingBatches.put(batch);
           break;
         } catch (InterruptedException e) {
@@ -264,6 +277,19 @@ public class TransactionSequencer {
       SequenceID currentSequenceID = new SequenceID(this.sequence.getCurrentSequence());
       return currentSequenceID.next();
     }
+  }
+
+  private void handleInterruptedException()
+      throws AbortedOperationException {
+    if (abortableOperationManager.isAborted()) {
+      throw new AbortedOperationException();
+    } else {
+      checkIfShutDownOnInterruptedException();
+    }
+  }
+
+  private void checkIfShutDownOnInterruptedException() {
+    // TODO: to be handled during rejoin
   }
 
 }

@@ -8,6 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
+import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.async.impl.MockSink;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCNotRunningException;
@@ -82,7 +83,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
                                            this.runtimeLogger, new ClientIDProviderImpl(new TestChannelIDProvider()),
                                            this.classProvider, this.classFactory, this.objectFactory,
                                            new PortabilityImpl(this.clientConfiguration), null, null,
-                                           this.tcObjectSelfStore);
+                                           this.tcObjectSelfStore, new NullAbortableOperationManager());
     this.mgr.setTransactionManager(new MockTransactionManager());
   }
 
@@ -191,7 +192,8 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
                                                                                     testMutualReferenceObjectFactory,
                                                                                     new PortabilityImpl(
                                                                                                         this.clientConfiguration),
-                                                                                    null, null, this.tcObjectSelfStore);
+                                                                                    null, null, this.tcObjectSelfStore,
+                                                                                    new NullAbortableOperationManager());
     this.mgr = clientObjectManager;
     final MockTransactionManager mockTransactionManager = new MockTransactionManager();
     this.mgr.setTransactionManager(mockTransactionManager);

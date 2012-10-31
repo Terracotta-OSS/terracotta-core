@@ -6,6 +6,8 @@ package com.tc.object;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
+import com.tc.abortable.AbortedOperationException;
+import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.logging.NullTCLogger;
@@ -61,7 +63,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     this.threadGroup = new ThreadGroup(getClass().getName());
     this.groupID = new GroupID(0);
     this.manager = new RemoteObjectManagerImpl(this.groupID, new NullTCLogger(), this.rrmf, this.rmomf, 500,
-                                               new NullSessionManager());
+                                               new NullSessionManager(), new NullAbortableOperationManager());
     this.rt = new RetrieverThreads(Thread.currentThread().getThreadGroup(), this.manager);
   }
 
@@ -96,7 +98,12 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
       this.manager.addAllObjects(new SessionID(i), i, dnas, this.groupID);
     }
     assertEquals(dnaCollectionCount, this.manager.getDNACacheSize());
-    final DNA dna = this.manager.retrieve(new ObjectID(0));
+    DNA dna;
+    try {
+      dna = this.manager.retrieve(new ObjectID(0));
+    } catch (AbortedOperationException e) {
+      throw new AssertionError(e);
+    }
     assertNotNull(dna);
     assertEquals(dnaCollectionCount - 1, this.manager.getDNACacheSize());
     this.manager.clear(GroupID.ALL_GROUPS);
@@ -154,9 +161,13 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
       public void run() {
         System.err.println("Doing a bogus lookup");
         try {
-          RemoteObjectManagerImplTest.this.manager.retrieve(new ObjectID(ObjectID.MAX_ID,
-                                                                         RemoteObjectManagerImplTest.this.groupID
-                                                                             .toInt()));
+          try {
+            RemoteObjectManagerImplTest.this.manager.retrieve(new ObjectID(ObjectID.MAX_ID,
+                                                                           RemoteObjectManagerImplTest.this.groupID
+                                                                               .toInt()));
+          } catch (AbortedOperationException e) {
+            throw new AssertionError(e);
+          }
           System.err.println("Didnt throw TCObjectNotFoundException : Not calling barrier()");
         } catch (final TCObjectNotFoundException e) {
           System.err.println("Got TCObjectNotFoundException as expected : " + e);
@@ -489,6 +500,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     public Thread startNewRootRetriever(final String rootID) {
       final Thread t = new Thread(this.tg, new Runnable() {
 
+        @Override
         public void run() {
           log("Starting .. " + rootID);
           RetrieverThreads.this.manager.retrieveRootID(rootID, new GroupID(0));
@@ -512,8 +524,13 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     public Thread startNewObjectRetriever(final ObjectID id) {
       final Thread t = new Thread(this.tg, new Runnable() {
 
+        @Override
         public void run() {
-          RetrieverThreads.this.manager.retrieve(id);
+          try {
+            RetrieverThreads.this.manager.retrieve(id);
+          } catch (AbortedOperationException e) {
+            throw new AssertionError(e);
+          }
           synchronized (RetrieverThreads.this.inProgress) {
             if (!RetrieverThreads.this.inProgress.remove(Thread.currentThread())) { throw new RuntimeException(
                                                                                                                "Thread not removed!"); }
@@ -533,6 +550,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     public final NoExceptionLinkedQueue newMessageQueue = new NoExceptionLinkedQueue();
     public TestRequestRootMessage       message;
 
+    @Override
     public RequestRootMessage newRequestRootMessage(final NodeID nodeID) {
       this.newMessageQueue.put(this.message);
       return this.message;
@@ -543,10 +561,12 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
 
     public final NoExceptionLinkedQueue sendQueue = new NoExceptionLinkedQueue();
 
+    @Override
     public String getRootName() {
       throw new ImplementMe();
     }
 
+    @Override
     public void initialize(final String name) {
       return;
     }
@@ -561,6 +581,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
       this.sendQueue.put(new Object());
     }
 
+    @Override
     public void recycle() {
       return;
     }
@@ -573,6 +594,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
 
     public TestRequestManagedObjectMessage message;
 
+    @Override
     public RequestManagedObjectMessage newRequestManagedObjectMessage(final NodeID nodeID) {
       this.newMessageQueue.put(this.message);
       return this.message;
@@ -585,56 +607,69 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     public final NoExceptionLinkedQueue sendQueue       = new NoExceptionLinkedQueue();
     public Set                          objectIDs;
 
+    @Override
     public ObjectRequestID getRequestID() {
       throw new ImplementMe();
     }
 
+    @Override
     public ObjectIDSet getRequestedObjectIDs() {
       throw new ImplementMe();
     }
 
+    @Override
     public ObjectIDSet getRemoved() {
       throw new ImplementMe();
     }
 
+    @Override
     public void initialize(final ObjectRequestID requestID, final Set<ObjectID> requestedObjectIDs,
                            final int requestDepth, final ObjectIDSet removeObjects) {
       this.objectIDs = requestedObjectIDs;
       this.initializeQueue.put(new Object[] { requestID, requestedObjectIDs, removeObjects });
     }
 
+    @Override
     public void send() {
       this.sendQueue.put(new Object());
     }
 
+    @Override
     public MessageChannel getChannel() {
       throw new ImplementMe();
     }
 
+    @Override
     public NodeID getSourceNodeID() {
       throw new ImplementMe();
     }
 
+    @Override
     public int getRequestDepth() {
       return 400;
     }
 
+    @Override
     public void recycle() {
       return;
     }
 
+    @Override
     public String getRequestingThreadName() {
       return "TestThreadDummy";
     }
 
+    @Override
     public LOOKUP_STATE getLookupState() {
       return LOOKUP_STATE.CLIENT;
     }
 
+    @Override
     public ClientID getClientID() {
       throw new ImplementMe();
     }
 
+    @Override
     public Object getKey() {
       return new ClientID(1);
     }

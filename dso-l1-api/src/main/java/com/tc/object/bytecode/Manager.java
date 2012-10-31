@@ -41,9 +41,9 @@ import javax.management.MBeanServer;
 public interface Manager extends TerracottaLocking {
 
   /** This class's class path: com/tc/object/bytecode/Manager */
-  public static final String CLASS                       = "com/tc/object/bytecode/Manager";
+  public static final String CLASS = "com/tc/object/bytecode/Manager";
   /** Bytecode type definition for this class */
-  public static final String TYPE                        = "L" + CLASS + ";";
+  public static final String TYPE  = "L" + CLASS + ";";
 
   /**
    * Determine whether this class is physically instrumented
@@ -69,6 +69,7 @@ public interface Manager extends TerracottaLocking {
    * @param name Root name
    * @param object Root object to use if none exists yet
    * @return The root object actually used, may or may not == object
+   * @throws AbortedOperationException
    */
   public Object lookupOrCreateRoot(String name, Object object);
 
@@ -79,6 +80,7 @@ public interface Manager extends TerracottaLocking {
    * @param object Root object to use if none exists yet
    * @param gid group id
    * @return The root object actually used, may or may not == object
+   * @throws AbortedOperationException
    */
   public Object lookupOrCreateRoot(final String name, final Object object, GroupID gid);
 
@@ -89,6 +91,7 @@ public interface Manager extends TerracottaLocking {
    * @param object Root object to use if none exists yet
    * @param gid group id
    * @return The root object actually used, may or may not == object
+   * @throws AbortedOperationException
    */
   public Object lookupRoot(final String name, GroupID gid);
 
@@ -98,8 +101,9 @@ public interface Manager extends TerracottaLocking {
    * @param name Root name
    * @param obj Root object to use if none exists yet
    * @return The root object actually used, may or may not == object
+   * @throws AbortedOperationException
    */
-  public Object lookupOrCreateRootNoDepth(String name, Object obj);
+  public Object lookupOrCreateRootNoDepth(String name, Object obj) throws AbortedOperationException;
 
   /**
    * Create or replace root, typically used for replaceable roots.
@@ -107,24 +111,27 @@ public interface Manager extends TerracottaLocking {
    * @param rootName Root name
    * @param object Root object
    * @return Root object used
+   * @throws AbortedOperationException
    */
-  public Object createOrReplaceRoot(String rootName, Object object);
+  public Object createOrReplaceRoot(String rootName, Object object) throws AbortedOperationException;
 
   /**
    * Look up object by ID, faulting into the JVM if necessary
    * 
    * @param id Object identifier
    * @return The actual object
+   * @throws AbortedOperationException
    */
-  public Object lookupObject(ObjectID id) throws ClassNotFoundException;
+  public Object lookupObject(ObjectID id) throws ClassNotFoundException, AbortedOperationException;
 
   /**
    * Prefetch object by ID, faulting into the JVM if necessary, Async lookup and will not cause ObjectNotFoundException
    * like lookupObject. Non-existent objects are ignored by the server.
    * 
    * @param id Object identifier
+   * @throws AbortedOperationException
    */
-  public void preFetchObject(ObjectID id);
+  public void preFetchObject(ObjectID id) throws AbortedOperationException;
 
   /**
    * Look up object by ID, faulting into the JVM if necessary, This method also passes the parent Object context so that
@@ -133,9 +140,11 @@ public interface Manager extends TerracottaLocking {
    * @param id Object identifier of the object we are looking up
    * @param parentContext Object identifier of the parent object
    * @return The actual object
+   * @throws AbortedOperationException
    * @throws TCClassNotFoundException If a class is not found during faulting
    */
-  public Object lookupObject(ObjectID id, ObjectID parentContext) throws ClassNotFoundException;
+  public Object lookupObject(ObjectID id, ObjectID parentContext) throws ClassNotFoundException,
+      AbortedOperationException;
 
   /**
    * Find managed object, which may be null
@@ -196,8 +205,9 @@ public interface Manager extends TerracottaLocking {
    * 
    * @param name Name of root
    * @return Root object
+   * @throws AbortedOperationException
    */
-  public Object lookupRoot(String name);
+  public Object lookupRoot(String name) throws AbortedOperationException;
 
   /**
    * Check whether current context has write access
@@ -359,8 +369,10 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Used by BulkLoad to wait for all current transactions completed
+   * 
+   * @throws AbortedOperationException
    */
-  public void waitForAllCurrentTransactionsToComplete();
+  public void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException;
 
   /**
    * Registers a hook that will be called before shutting down this client
@@ -371,11 +383,13 @@ public interface Manager extends TerracottaLocking {
 
   public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                          Set<String> attributeSet, List<NVPair> sortAttributes,
-                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn);
+                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn)
+      throws AbortedOperationException;
 
   public SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
                                          Set<String> groupByAttribues, List<NVPair> sortAttributes,
-                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn);
+                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn)
+      throws AbortedOperationException;
 
   public NVPair createNVPair(String name, Object value);
 

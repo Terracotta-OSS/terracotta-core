@@ -65,7 +65,7 @@ public class PlatformServiceImpl implements PlatformService {
   }
 
   @Override
-  public void waitForAllCurrentTransactionsToComplete() {
+  public void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException {
     manager.waitForAllCurrentTransactionsToComplete();
   }
 
@@ -147,7 +147,7 @@ public class PlatformServiceImpl implements PlatformService {
   }
 
   @Override
-  public Object lookupObject(final ObjectID id) {
+  public Object lookupObject(final ObjectID id) throws AbortedOperationException {
     try {
       return manager.lookupObject(id);
     } catch (ClassNotFoundException e) {
@@ -205,7 +205,8 @@ public class PlatformServiceImpl implements PlatformService {
   public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys,
                                                 boolean includeValues, Set<String> attributeSet,
                                                 List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults,
-                                                int batchSize, boolean waitForTxn) {
+ int batchSize, boolean waitForTxn)
+      throws AbortedOperationException {
     return manager.executeQuery(cachename, queryStack, includeKeys, includeValues, attributeSet, sortAttributes,
                                     aggregators, maxResults, batchSize, waitForTxn);
   }
@@ -214,13 +215,14 @@ public class PlatformServiceImpl implements PlatformService {
   public SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
                                                 Set<String> groupByAttributes, List<NVPair> sortAttributes,
                                                 List<NVPair> aggregators, int maxResults, int batchSize,
-                                                boolean waitForTxn) {
+ boolean waitForTxn)
+      throws AbortedOperationException {
     return manager.executeQuery(cachename, queryStack, attributeSet, groupByAttributes, sortAttributes,
                                     aggregators, maxResults, batchSize, waitForTxn);
   }
 
   @Override
-  public void preFetchObject(final ObjectID id) {
+  public void preFetchObject(final ObjectID id) throws AbortedOperationException {
     manager.preFetchObject(id);
   }
 

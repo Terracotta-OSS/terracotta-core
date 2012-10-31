@@ -3,6 +3,7 @@
  */
 package com.tc.object;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -272,9 +273,10 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    *        but not shared, it is not supported.
    * @param lockID Lock under which this call is made
    * @return value Object in the mapping, null if no mapping present.
+   * @throws AbortedOperationException
    */
   @Override
-  public Object getValue(final TCServerMap map, final L lockID, final Object key) {
+  public Object getValue(final TCServerMap map, final L lockID, final Object key) throws AbortedOperationException {
     if (!isCacheInitialized()) { return null; }
     AbstractLocalCacheStoreValue item = this.cache.getLocalValueStrong(key);
     if (item != null) { return item.getValueObject(); }
@@ -313,9 +315,10 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @param key Key Object : Note currently only literal keys or shared keys are supported. Even if the key is portable,
    *        but not shared, it is not supported.
    * @return value Object in the mapping, null if no mapping present.
+   * @throws AbortedOperationException
    */
   @Override
-  public Object getValueUnlocked(TCServerMap map, Object key) {
+  public Object getValueUnlocked(TCServerMap map, Object key) throws AbortedOperationException {
     AbstractLocalCacheStoreValue item = getValueUnlockedFromCache(key);
     if (item != null) { return item.getValueObject(); }
 
@@ -334,7 +337,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   @Override
-  public Map<Object, Object> getAllValuesUnlocked(final Map<ObjectID, Set<Object>> mapIdToKeysMap) {
+  public Map<Object, Object> getAllValuesUnlocked(final Map<ObjectID, Set<Object>> mapIdToKeysMap)
+      throws AbortedOperationException {
     synchronized (localLock) {
       Map<Object, Object> rv = new HashMap<Object, Object>();
       for (Iterator<Entry<ObjectID, Set<Object>>> iterator = mapIdToKeysMap.entrySet().iterator(); iterator.hasNext();) {
@@ -415,7 +419,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
   }
 
-  private Object getValueForKeyFromServer(final TCServerMap map, final Object key, final boolean retry) {
+  private Object getValueForKeyFromServer(final TCServerMap map, final Object key, final boolean retry)
+      throws AbortedOperationException {
     final TCObject tcObject = map.__tc_managed();
     if (tcObject == null) { throw new UnsupportedOperationException(
                                                                     "getValueForKeyInMap is not supported in a non-shared ServerMap"); }
@@ -463,7 +468,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     return portableKey;
   }
 
-  private Object lookupValue(final Object value) throws TCObjectNotFoundException {
+  private Object lookupValue(final Object value) throws TCObjectNotFoundException, AbortedOperationException {
     if (value instanceof ObjectID) {
       try {
         return this.objectManager.lookupObjectQuiet((ObjectID) value);
@@ -476,7 +481,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
   }
 
-  private TCObjectServerMapImpl lookupTCObjectServerMapImpl(final ObjectID mapID) {
+  private TCObjectServerMapImpl lookupTCObjectServerMapImpl(final ObjectID mapID) throws AbortedOperationException {
     try {
       return (TCObjectServerMapImpl) this.objectManager.lookup(mapID);
     } catch (ClassNotFoundException e) {
@@ -492,7 +497,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     return portableKeys;
   }
 
-  private void getAllValuesForKeyFromServer(final Map<ObjectID, Set<Object>> mapIdToKeysMap, Map<Object, Object> rv) {
+  private void getAllValuesForKeyFromServer(final Map<ObjectID, Set<Object>> mapIdToKeysMap, Map<Object, Object> rv)
+      throws AbortedOperationException {
     final Map<ObjectID, Set<Object>> mapIdsToLookup = new HashMap<ObjectID, Set<Object>>();
     for (Entry<ObjectID, Set<Object>> entry : mapIdToKeysMap.entrySet()) {
       // converting Map from <mapID, key> to <mapID, portableKey>

@@ -40,13 +40,13 @@ public class ToolkitTypeRootsStaticFactory implements ToolkitTypeRootsFactory {
   }
 
   private static ToolkitTypeRoot lookupOrCreateRootInGroup(PlatformService platformService, GroupID gid, String name) {
-    return RootsUtil.lookupOrCreateRootInGroup(platformService, gid, name,
-                                               new RootObjectCreator<ToolkitTypeRootImpl>() {
-      @Override
-      public ToolkitTypeRootImpl create() {
-        return new ToolkitTypeRootImpl();
-      }
-    });
+      return RootsUtil.lookupOrCreateRootInGroup(platformService, gid, name,
+                                                 new RootObjectCreator<ToolkitTypeRootImpl>() {
+                                                   @Override
+                                                   public ToolkitTypeRootImpl create() {
+                                                     return new ToolkitTypeRootImpl();
+                                                   }
+                                                 });
   }
 
   @Override

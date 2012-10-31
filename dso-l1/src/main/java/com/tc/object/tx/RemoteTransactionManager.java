@@ -28,7 +28,7 @@ public interface RemoteTransactionManager extends ClientHandshakeCallback, Prett
 
   public boolean asyncFlush(LockID lockID, LockFlushCallback callback);
 
-  public void commit(ClientTransaction transaction);
+  public void commit(ClientTransaction transaction) throws AbortedOperationException;
 
   public TransactionBuffer receivedAcknowledgement(SessionID sessionID, TransactionID txID, NodeID nodeID);
 
@@ -36,9 +36,10 @@ public interface RemoteTransactionManager extends ClientHandshakeCallback, Prett
 
   public void stopProcessing();
 
-  public void waitForAllCurrentTransactionsToComplete();
+  public void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException;
 
   public void waitForServerToReceiveTxnsForThisLock(LockID lock) throws AbortedOperationException;
 
   public void batchReceived(TxnBatchID batchId, Set<TransactionID> set, NodeID nid);
+  
 }

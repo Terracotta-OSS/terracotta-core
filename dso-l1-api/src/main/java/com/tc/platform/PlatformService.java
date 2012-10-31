@@ -33,7 +33,7 @@ public interface PlatformService {
 
   void logicalInvoke(final Object object, final String methodName, final Object[] params);
 
-  void waitForAllCurrentTransactionsToComplete();
+  void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException;
 
   boolean isHeldByCurrentThread(Object lockID, LockLevel level);
 
@@ -63,7 +63,7 @@ public interface PlatformService {
 
   TCObject lookupOrCreate(final Object obj, GroupID gid);
 
-  Object lookupObject(final ObjectID id);
+  Object lookupObject(final ObjectID id) throws AbortedOperationException;
 
   GroupID[] getGroupIDs();
 
@@ -85,13 +85,13 @@ public interface PlatformService {
 
   SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                   Set<String> attributeSet, List<NVPair> sortAttributes, List<NVPair> aggregators,
-                                  int maxResults, int batchSize, boolean waitForTxn);
+                                  int maxResults, int batchSize, boolean waitForTxn) throws AbortedOperationException;
 
   SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
                                   Set<String> groupByAttributes, List<NVPair> sortAttributes, List<NVPair> aggregators,
-                                  int maxResults, int batchSize, boolean waitForTxn);
+                                  int maxResults, int batchSize, boolean waitForTxn) throws AbortedOperationException;
 
-  void preFetchObject(final ObjectID id);
+  void preFetchObject(final ObjectID id) throws AbortedOperationException;
 
   void verifyCapability(String capability);
 

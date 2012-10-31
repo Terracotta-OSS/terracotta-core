@@ -5,6 +5,8 @@ package com.tc.object.tx;
 
 import org.mockito.Mockito;
 
+import com.tc.abortable.AbortableOperationManager;
+import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.ImplementMe;
 import com.tc.net.GroupID;
@@ -37,10 +39,12 @@ public class TransactionSequencerTest extends TestCase {
     TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXPENDING_BATCHES,
                                                  MAX_PENDING_BATCHES + "");
     this.txnSequencer = new TransactionSequencer(GroupID.NULL_ID, new TransactionIDGenerator(),
-                                                 new TestTransactionBatchFactory(), new TestLockAccounting(),
+                                                 new TestTransactionBatchFactory(),
+                                                 new TestLockAccounting(new NullAbortableOperationManager()),
                                                  new CounterImpl(),
                                                  new SampledRateCounterImpl(new SampledRateCounterConfig(1, 1, false)),
-                                                 new SampledRateCounterImpl(new SampledRateCounterConfig(1, 1, false)));
+                                                 new SampledRateCounterImpl(new SampledRateCounterConfig(1, 1, false)),
+                                                 new NullAbortableOperationManager());
   }
 
   // checkout DEV-5872 to know why this test was written
@@ -93,6 +97,7 @@ public class TransactionSequencerTest extends TestCase {
 
     System.out.println("Waiting for the thread to get into a wait state.");
     CallableWaiter.waitOnCallable(new Callable<Boolean>() {
+      @Override
       public Boolean call() throws Exception {
         return waiter.getState() != State.RUNNABLE;
       }
@@ -114,11 +119,12 @@ public class TransactionSequencerTest extends TestCase {
       this.txnSequencer = txnSequencer;
     }
 
+    @Override
     public void run() {
       System.out.println("producer started");
       long startTime = System.currentTimeMillis();
       while (System.currentTimeMillis() - startTime < TIME_TO_RUN) {
-        this.txnSequencer.addTransaction(new TestClientTransaction());
+          this.txnSequencer.addTransaction(new TestClientTransaction());
       }
       System.out.println("producer finished");
     }
@@ -131,6 +137,7 @@ public class TransactionSequencerTest extends TestCase {
       this.txnSequencer = txnSequencer;
     }
 
+    @Override
     public void run() {
       System.out.println("consumer started");
       long startTime = System.currentTimeMillis();
@@ -144,6 +151,7 @@ public class TransactionSequencerTest extends TestCase {
   private final class TestTransactionBatchFactory implements TransactionBatchFactory {
     private long idSequence;
 
+    @Override
     public ClientTransactionBatch nextBatch(GroupID groupID) {
       ClientTransactionBatch rv = new TestTransactionBatch(new TxnBatchID(++this.idSequence));
       return rv;
@@ -159,18 +167,22 @@ public class TransactionSequencerTest extends TestCase {
       this.batchID = batchID;
     }
 
+    @Override
     public synchronized boolean isEmpty() {
       return true;
     }
 
+    @Override
     public synchronized int numberOfTxnsBeforeFolding() {
       return 0;
     }
 
+    @Override
     public boolean isNull() {
       return false;
     }
 
+    @Override
     public synchronized FoldedInfo addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator,
                                                   TransactionIDGenerator transactionIDGenerator) {
       txn.setSequenceID(new SequenceID(sequenceGenerator.getNextSequence()));
@@ -178,42 +190,52 @@ public class TransactionSequencerTest extends TestCase {
       return new FoldedInfo(null, false);
     }
 
+    @Override
     public TransactionBuffer removeTransaction(TransactionID txID) {
       return Mockito.mock(TransactionBuffer.class);
     }
 
+    @Override
     public synchronized Collection addTransactionIDsTo(Collection c) {
       throw new ImplementMe();
     }
 
+    @Override
     public void send() {
       //
     }
 
+    @Override
     public TCByteBuffer[] getData() {
       return null;
     }
 
+    @Override
     public TxnBatchID getTransactionBatchID() {
       return this.batchID;
     }
 
+    @Override
     public SequenceID getMinTransactionSequence() {
       throw new ImplementMe();
     }
 
+    @Override
     public void recycle() {
       return;
     }
 
+    @Override
     public synchronized Collection addTransactionSequenceIDsTo(Collection sequenceIDs) {
       throw new ImplementMe();
     }
 
+    @Override
     public String dump() {
       return "TestTransactionBatch";
     }
 
+    @Override
     public int byteSize() {
       return 640000;
     }
@@ -221,6 +243,11 @@ public class TransactionSequencerTest extends TestCase {
   }
 
   private class TestLockAccounting extends LockAccounting {
+
+    public TestLockAccounting(AbortableOperationManager abortableOperationManager) {
+      super(abortableOperationManager);
+    }
+
     @Override
     public synchronized void add(TransactionID txID, Collection lockIDs) {
       // do nothing

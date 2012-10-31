@@ -4,6 +4,8 @@
  */
 package com.tc.object;
 
+import com.tc.abortable.AbortableOperationManager;
+import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.logging.TCLogger;
@@ -95,11 +97,13 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   private long                                     objectRequestIDCounter   = 0;
   private long                                     hit                      = 0;
   private long                                     miss                     = 0;
+  private final AbortableOperationManager          abortableOperationManager;
 
   public RemoteObjectManagerImpl(final GroupID groupID, final TCLogger logger,
                                  final RequestRootMessageFactory rrmFactory,
                                  final RequestManagedObjectMessageFactory rmomFactory, final int defaultDepth,
-                                 final SessionManager sessionManager) {
+                                 final SessionManager sessionManager,
+                                 AbortableOperationManager abortableOperationManager) {
     this.groupID = groupID;
     this.logger = logger;
     this.rrmFactory = rrmFactory;
@@ -108,6 +112,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     this.sessionManager = sessionManager;
     this.objectRequestTimer.schedule(new CleanupUnusedDNATimerTask(), CLEANUP_UNUSED_DNA_TIMER,
                                      CLEANUP_UNUSED_DNA_TIMER);
+    this.abortableOperationManager = abortableOperationManager;
   }
 
   @Override
@@ -162,6 +167,23 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     this.removeObjects.clear();
   }
 
+  private void waitUntilRunningAbortable() throws AbortedOperationException {
+    boolean isInterrupted = false;
+    try {
+      while (this.state != State.RUNNING) {
+        if (isStopped()) { throw new TCNotRunningException(); }
+        try {
+          wait();
+        } catch (final InterruptedException e) {
+          handleInterruptedException();
+          isInterrupted = true;
+        }
+      }
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
+    }
+  }
+
   private void waitUntilRunning() {
     boolean isInterrupted = false;
     try {
@@ -206,8 +228,8 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   }
 
   @Override
-  public synchronized void preFetchObject(final ObjectID id) {
-    waitUntilRunning();
+  public synchronized void preFetchObject(final ObjectID id) throws AbortedOperationException {
+    waitUntilRunningAbortable();
     if (this.dnaCache.containsKey(id) || this.objectLookupStates.containsKey(id)) { return; }
     final ObjectLookupState ols = new ObjectLookupState(getNextRequestID(), id, this.defaultDepth, ObjectID.NULL_ID);
     ols.makePrefetchRequest();
@@ -215,21 +237,23 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   }
 
   @Override
-  public DNA retrieve(final ObjectID id) {
+  public DNA retrieve(final ObjectID id) throws AbortedOperationException {
     return basicRetrieve(id, this.defaultDepth, ObjectID.NULL_ID);
   }
 
   @Override
-  public DNA retrieveWithParentContext(final ObjectID id, final ObjectID parentContext) {
+  public DNA retrieveWithParentContext(final ObjectID id, final ObjectID parentContext)
+      throws AbortedOperationException {
     return basicRetrieve(id, this.defaultDepth, parentContext);
   }
 
   @Override
-  public DNA retrieve(final ObjectID id, final int depth) {
+  public DNA retrieve(final ObjectID id, final int depth) throws AbortedOperationException {
     return basicRetrieve(id, depth, ObjectID.NULL_ID);
   }
 
-  public synchronized DNA basicRetrieve(final ObjectID id, final int depth, final ObjectID parentContext) {
+  public synchronized DNA basicRetrieve(final ObjectID id, final int depth, final ObjectID parentContext)
+      throws AbortedOperationException {
     boolean isInterrupted = false;
     if (id.getGroupID() != this.groupID.toInt()) { throw new AssertionError("Looking up in the wrong Remote Manager : "
                                                                             + this.groupID + " id : " + id
@@ -242,7 +266,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     DNA dna;
     try {
       while ((dna = this.dnaCache.remove(id)) == null) {
-        waitUntilRunning();
+        waitUntilRunningAbortable();
         ObjectLookupState ols = this.objectLookupStates.get(id);
         if (ols == null) {
           ols = new ObjectLookupState(getNextRequestID(), id, depth, parentContext);
@@ -266,12 +290,13 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
         try {
           wait(RETRIEVE_WAIT_INTERVAL);
         } catch (final InterruptedException e) {
+          handleInterruptedException();
           isInterrupted = true;
         }
       }
+    } finally {
       this.objectLookupStates.remove(id);
       this.lru.remove(id);
-    } finally {
       Util.selfInterruptIfNeeded(isInterrupted);
     }
     increamentStatsAndLogIfNecessary(inMemory);
@@ -751,5 +776,17 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     // printing this.objectLookupStates.toString() as PrettyPrinter prints the size of the map otherwise
     out.duplicateAndIndent().indent().print("lookupstates:").print(this.objectLookupStates.toString()).flush();
     return out;
+  }
+
+  private void handleInterruptedException() throws AbortedOperationException {
+    if (abortableOperationManager.isAborted()) {
+      throw new AbortedOperationException();
+    } else {
+      checkIfShutDownOnInterruptedException();
+    }
+  }
+
+  private void checkIfShutDownOnInterruptedException() {
+    // TODO: to be handled during rejoin
   }
 }

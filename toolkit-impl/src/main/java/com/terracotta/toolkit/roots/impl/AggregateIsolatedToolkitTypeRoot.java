@@ -7,8 +7,9 @@ import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.object.ToolkitObject;
-
+import com.tc.abortable.AbortedOperationException;
 import com.tc.platform.PlatformService;
+import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
@@ -60,7 +61,11 @@ public class AggregateIsolatedToolkitTypeRoot<T extends ToolkitObject, S extends
 
     } finally {
       unlock(type, name);
-      platformService.waitForAllCurrentTransactionsToComplete();
+      try {
+        platformService.waitForAllCurrentTransactionsToComplete();
+      } catch (AbortedOperationException e) {
+        throw new ToolkitAbortableOperationException(e);
+      }
     }
   }
 

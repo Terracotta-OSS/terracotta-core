@@ -152,6 +152,7 @@ public class ManagerUtil {
    * @param name Root name
    * @param object Root object to use if none exists yet
    * @return The root object actually used, may or may not == object
+   * @throws AbortedOperationException
    */
   protected static Object lookupOrCreateRoot(final String name, final Object object) {
     return getManager().lookupOrCreateRoot(name, object);
@@ -159,6 +160,8 @@ public class ManagerUtil {
 
   /**
    * Look up or create a new root object in the particular group id
+   * 
+   * @throws AbortedOperationException
    */
   protected static Object lookupOrCreateRoot(final String name, final Object object, GroupID gid) {
     return getManager().lookupOrCreateRoot(name, object, gid);
@@ -166,6 +169,8 @@ public class ManagerUtil {
 
   /**
    * Look up or create a new root object in the particular group id
+   * 
+   * @throws AbortedOperationException
    */
   protected static Object lookupRoot(final String name, GroupID gid) {
     return getManager().lookupRoot(name, gid);
@@ -177,8 +182,10 @@ public class ManagerUtil {
    * @param name Root name
    * @param obj Root object to use if none exists yet
    * @return The root object actually used, may or may not == object
+   * @throws AbortedOperationException
    */
-  protected static Object lookupOrCreateRootNoDepth(final String name, final Object obj) {
+  protected static Object lookupOrCreateRootNoDepth(final String name, final Object obj)
+      throws AbortedOperationException {
     return getManager().lookupOrCreateRootNoDepth(name, obj);
   }
 
@@ -188,8 +195,10 @@ public class ManagerUtil {
    * @param rootName Root name
    * @param object Root object
    * @return Root object used
+   * @throws AbortedOperationException
    */
-  protected static Object createOrReplaceRoot(final String rootName, final Object object) {
+  protected static Object createOrReplaceRoot(final String rootName, final Object object)
+      throws AbortedOperationException {
     return getManager().createOrReplaceRoot(rootName, object);
   }
 
@@ -415,8 +424,9 @@ public class ManagerUtil {
    * 
    * @param name Name of root
    * @return Root object
+   * @throws AbortedOperationException
    */
-  protected static Object lookupRoot(final String name) {
+  protected static Object lookupRoot(final String name) throws AbortedOperationException {
     return getManager().lookupRoot(name);
   }
 
@@ -425,9 +435,10 @@ public class ManagerUtil {
    * 
    * @param id Object identifier
    * @return The actual object
+   * @throws AbortedOperationException
    * @throws TCClassNotFoundException If a class is not found during faulting
    */
-  protected static Object lookupObject(final ObjectID id) {
+  protected static Object lookupObject(final ObjectID id) throws AbortedOperationException {
     try {
       return getManager().lookupObject(id);
     } catch (ClassNotFoundException e) {
@@ -440,8 +451,9 @@ public class ManagerUtil {
    * like lookupObject. Non-existent objects are ignored by the server.
    * 
    * @param id Object identifier
+   * @throws AbortedOperationException
    */
-  protected static void preFetchObject(final ObjectID id) {
+  protected static void preFetchObject(final ObjectID id) throws AbortedOperationException {
     getManager().preFetchObject(id);
   }
 
@@ -452,9 +464,11 @@ public class ManagerUtil {
    * @param id Object identifier of the object we are looking up
    * @param parentContext Object identifier of the parent object
    * @return The actual object
+   * @throws AbortedOperationException
    * @throws TCClassNotFoundException If a class is not found during faulting
    */
-  protected static Object lookupObjectWithParentContext(final ObjectID id, final ObjectID parentContext) {
+  protected static Object lookupObjectWithParentContext(final ObjectID id, final ObjectID parentContext)
+      throws AbortedOperationException {
     try {
       return getManager().lookupObject(id, parentContext);
     } catch (ClassNotFoundException e) {
@@ -827,8 +841,7 @@ public class ManagerUtil {
    * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
    */
   protected static void setImpl(final Object array, final int index, final Object value)
-      throws IllegalArgumentException,
-      ArrayIndexOutOfBoundsException {
+      throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
     set(array, index, value);
   }
 
@@ -887,8 +900,7 @@ public class ManagerUtil {
    * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
    */
   protected static void setBoolean(final Object array, final int index, final boolean z)
-      throws IllegalArgumentException,
-      ArrayIndexOutOfBoundsException {
+      throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
     if (array == null) { throw new NullPointerException(); }
 
     if (array instanceof boolean[]) {
@@ -1146,7 +1158,7 @@ public class ManagerUtil {
    * @throws NullPointerException If src or dest is null
    */
   protected static void arraycopy(final Object src, final int srcPos, final Object dest, final int destPos,
-                               final int length) {
+                                  final int length) {
     ArrayManager.arraycopy(src, srcPos, dest, destPos, length);
   }
 
@@ -1171,7 +1183,7 @@ public class ManagerUtil {
    * @param tco TCObject for dest array
    */
   protected static void charArrayCopy(final char[] src, final int srcPos, final char[] dest, final int destPos,
-                                   final int length, final TCObject tco) {
+                                      final int length, final TCObject tco) {
     ArrayManager.charArrayCopy(src, srcPos, dest, destPos, length, tco);
   }
 
@@ -1210,7 +1222,7 @@ public class ManagerUtil {
   // getManager().registerMBean(bean, name);
   // }
 
-  protected static void waitForAllCurrentTransactionsToComplete() {
+  protected static void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException {
     getManager().waitForAllCurrentTransactionsToComplete();
   }
 
@@ -1219,17 +1231,18 @@ public class ManagerUtil {
   }
 
   protected static SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys,
-                                                boolean includeValues, Set<String> attributeSet,
-                                                List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults,
-                                                int batchSize, boolean waitForTxn) {
+                                                   boolean includeValues, Set<String> attributeSet,
+                                                   List<NVPair> sortAttributes, List<NVPair> aggregators,
+                                                   int maxResults, int batchSize, boolean waitForTxn)
+      throws AbortedOperationException {
     return getManager().executeQuery(cachename, queryStack, includeKeys, includeValues, attributeSet, sortAttributes,
                                      aggregators, maxResults, batchSize, waitForTxn);
   }
 
   protected static SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
-                                                Set<String> groupByAttributes, List<NVPair> sortAttributes,
-                                                List<NVPair> aggregators, int maxResults, int batchSize,
-                                                boolean waitForTxn) {
+                                                   Set<String> groupByAttributes, List<NVPair> sortAttributes,
+                                                   List<NVPair> aggregators, int maxResults, int batchSize,
+                                                   boolean waitForTxn) throws AbortedOperationException {
     return getManager().executeQuery(cachename, queryStack, attributeSet, groupByAttributes, sortAttributes,
                                      aggregators, maxResults, batchSize, waitForTxn);
   }
@@ -1344,7 +1357,7 @@ public class ManagerUtil {
   }
 
   protected static void fireOperatorEvent(EventType coreOperatorEventLevel, EventSubsystem coreEventSubsytem,
-                                       String eventMessage) {
+                                          String eventMessage) {
     getManager().fireOperatorEvent(coreOperatorEventLevel, coreEventSubsytem, eventMessage);
   }
 

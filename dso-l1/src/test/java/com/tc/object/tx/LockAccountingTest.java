@@ -4,6 +4,7 @@
  */
 package com.tc.object.tx;
 
+import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.exception.TCRuntimeException;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
@@ -37,8 +38,9 @@ public class LockAccountingTest extends TestCase {
   private Collection     lock3Txs;
   private Collection     lock4Txs;
 
+  @Override
   public void setUp() {
-    la = new LockAccounting();
+    la = new LockAccounting(new NullAbortableOperationManager());
   }
 
   public void tests() throws Exception {
@@ -129,6 +131,7 @@ public class LockAccountingTest extends TestCase {
     final AtomicBoolean interrupted = new AtomicBoolean(false);
     final Thread current = Thread.currentThread();
     TimerTask task = new TimerTask() {
+      @Override
       public void run() {
         current.interrupt();
         interrupted.set(true);
@@ -181,6 +184,7 @@ public class LockAccountingTest extends TestCase {
     final AtomicBoolean interrupted = new AtomicBoolean(false);
     final Thread current = Thread.currentThread();
     TimerTask task = new TimerTask() {
+      @Override
       public void run() {
         current.interrupt();
         interrupted.set(true);
@@ -240,6 +244,7 @@ public class LockAccountingTest extends TestCase {
     final AtomicBoolean interrupted = new AtomicBoolean(false);
     final Thread current = Thread.currentThread();
     TimerTask task = new TimerTask() {
+      @Override
       public void run() {
         current.interrupt();
         interrupted.set(true);
@@ -249,6 +254,7 @@ public class LockAccountingTest extends TestCase {
     timer.schedule(task, 5000);
 
     TimerTask rmTask = new TimerTask() {
+      @Override
       public void run() {
         la.acknowledge(txID1);
         la.acknowledge(txID2);
@@ -348,6 +354,7 @@ public class LockAccountingTest extends TestCase {
       super(threadGroup, "ToStringThread");
     }
 
+    @Override
     public void run() {
       for (int i = 0; i < 20; ++i) {
         try {
@@ -367,12 +374,13 @@ public class LockAccountingTest extends TestCase {
   }
 
   private class AddTxnThread extends Thread {
-    private boolean success = true;
+    private final boolean success = true;
 
     public AddTxnThread(ThreadGroup threadGroup) {
       super(threadGroup, "AddTxnThread");
     }
 
+    @Override
     public void run() {
       for (int i = 0; i < 500; ++i) {
         LockID lockID = new StringLockID("lock" + i);

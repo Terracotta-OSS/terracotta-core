@@ -416,11 +416,19 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private Object doLogicalGetValueLocked(Object key, final Long lockID) {
-    return this.tcObjectServerMap.getValue(this, lockID, key);
+    try {
+      return this.tcObjectServerMap.getValue(this, lockID, key);
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   private Object doLogicalGetValueUnlocked(Object key) {
-    return this.tcObjectServerMap.getValueUnlocked(this, key);
+    try {
+      return this.tcObjectServerMap.getValueUnlocked(this, key);
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   private void doLogicalPutLocked(final Long lockID, K key, final V value, int createTimeInSecs,
@@ -529,7 +537,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
         platformService.logicalInvoke(this, SerializationUtil.CLEAR_LOCAL_CACHE_SIGNATURE, NO_ARGS);
       } finally {
         commitLock(getInstanceDsoLockName(), this.lockType);
-        platformService.waitForAllCurrentTransactionsToComplete();
+        try {
+          platformService.waitForAllCurrentTransactionsToComplete();
+        } catch (AbortedOperationException e) {
+          throw new ToolkitAbortableOperationException(e);
+        }
         internalClearLocalCache();
       }
     }
@@ -1007,7 +1019,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
       unlockedClear();
     } finally {
       commitLock(getInstanceDsoLockName(), this.lockType);
-      platformService.waitForAllCurrentTransactionsToComplete();
+      try {
+        platformService.waitForAllCurrentTransactionsToComplete();
+      } catch (AbortedOperationException e) {
+        throw new ToolkitAbortableOperationException(e);
+      }
       internalClearLocalCache();
     }
   }

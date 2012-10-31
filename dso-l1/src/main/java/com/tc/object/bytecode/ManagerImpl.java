@@ -100,9 +100,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.management.MBeanServer;
 
 public class ManagerImpl implements Manager {
-  private static final TCLogger                    logger              = TCLogging.getLogger(Manager.class);
-  private final SetOnceFlag                        clientStarted       = new SetOnceFlag();
-  private final SetOnceFlag                        clientStopped       = new SetOnceFlag();
+  private static final TCLogger                    logger                    = TCLogging.getLogger(Manager.class);
+  private final SetOnceFlag                        clientStarted             = new SetOnceFlag();
+  private final SetOnceFlag                        clientStopped             = new SetOnceFlag();
   private final DSOClientConfigHelper              config;
   private final ClassProvider                      classProvider;
   private final boolean                            startClient;
@@ -126,10 +126,10 @@ public class ManagerImpl implements Manager {
   private DistributedObjectClient                  dso;
   private DmiManager                               methodCallManager;
 
-  private final SerializationUtil                  serializer          = new SerializationUtil();
+  private final SerializationUtil                  serializer                = new SerializationUtil();
 
-  private final MethodDisplayNames                 methodDisplay       = new MethodDisplayNames(this.serializer);
-  private final ConcurrentHashMap<String, Object>  registeredObjects = new ConcurrentHashMap<String, Object>();
+  private final MethodDisplayNames                 methodDisplay             = new MethodDisplayNames(this.serializer);
+  private final ConcurrentHashMap<String, Object>  registeredObjects         = new ConcurrentHashMap<String, Object>();
   private final AbortableOperationManager          abortableOperationManager = new AbortableOperationManagerImpl();
   private final AtomicReference<PlatformService>   platformServiceRef        = new AtomicReference<PlatformService>();
 
@@ -460,7 +460,6 @@ public class ManagerImpl implements Manager {
       return this.objectManager.lookupOrCreateRoot(rootName, object, true);
     } catch (final Throwable t) {
       Util.printLogAndRethrowError(t, logger);
-
       // shouldn't get here
       throw new AssertionError();
     }
@@ -530,17 +529,18 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public Object lookupObject(final ObjectID id) throws ClassNotFoundException {
+  public Object lookupObject(final ObjectID id) throws ClassNotFoundException, AbortedOperationException {
     return this.objectManager.lookupObject(id);
   }
 
   @Override
-  public void preFetchObject(final ObjectID id) {
+  public void preFetchObject(final ObjectID id) throws AbortedOperationException {
     this.objectManager.preFetchObject(id);
   }
 
   @Override
-  public Object lookupObject(final ObjectID id, final ObjectID parentContext) throws ClassNotFoundException {
+  public Object lookupObject(final ObjectID id, final ObjectID parentContext) throws ClassNotFoundException,
+      AbortedOperationException {
     return this.objectManager.lookupObject(id, parentContext);
   }
 
@@ -1055,7 +1055,7 @@ public class ManagerImpl implements Manager {
                                                              + "to prevent the calling thread from entering an infinite loop the client JVM will now be terminated.";
 
   @Override
-  public void waitForAllCurrentTransactionsToComplete() {
+  public void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException {
     this.txManager.waitForAllCurrentTransactionsToComplete();
   }
 
@@ -1067,7 +1067,8 @@ public class ManagerImpl implements Manager {
   @Override
   public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                          Set<String> attributeSet, List<NVPair> sortAttributes,
-                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn) {
+                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn)
+      throws AbortedOperationException {
     if (shouldWaitForTxn(waitForTxn)) {
       waitForAllCurrentTransactionsToComplete();
     }
@@ -1078,7 +1079,8 @@ public class ManagerImpl implements Manager {
   @Override
   public SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
                                          Set<String> groupByAttribues, List<NVPair> sortAttributes,
-                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn) {
+                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn)
+      throws AbortedOperationException {
     if (shouldWaitForTxn(waitForTxn)) {
       waitForAllCurrentTransactionsToComplete();
     }

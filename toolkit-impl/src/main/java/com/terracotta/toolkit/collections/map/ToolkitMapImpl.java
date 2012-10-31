@@ -6,12 +6,14 @@ package com.terracotta.toolkit.collections.map;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.net.GroupID;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
+import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.object.AbstractTCToolkitObject;
 import com.terracotta.toolkit.object.ToolkitObjectType;
@@ -94,7 +96,11 @@ public class ToolkitMapImpl<K, V> extends AbstractTCToolkitObject implements Too
     if (oidKey == null) {
       return createTCCompatibleObject(key);
     } else {
-      return platformService.lookupObject(oidKey);
+      try {
+        return platformService.lookupObject(oidKey);
+      } catch (AbortedOperationException e) {
+        throw new ToolkitAbortableOperationException(e);
+      }
     }
   }
 

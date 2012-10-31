@@ -5,6 +5,8 @@ package com.tc.object;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
+import com.tc.abortable.AbortedOperationException;
+import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.logging.NullTCLogger;
@@ -53,7 +55,8 @@ public class DEV6342Test extends TestCase {
     newRrm(rrmf);
 
     groupID = new GroupID(0);
-    manager = new RemoteObjectManagerImpl(groupID, new NullTCLogger(), rrmf, rmomf, 500, new NullSessionManager());
+    manager = new RemoteObjectManagerImpl(groupID, new NullTCLogger(), rrmf, rmomf, 500, new NullSessionManager(),
+                                          new NullAbortableOperationManager());
 
     final CyclicBarrier barrier = new CyclicBarrier(2);
     final Thread thread = new Thread("Test Thread Saro") {
@@ -61,7 +64,11 @@ public class DEV6342Test extends TestCase {
       public void run() {
         System.err.println("Doing a bogus lookup");
         try {
-          manager.retrieve(new ObjectID(ObjectID.MAX_ID, groupID.toInt()));
+          try {
+            manager.retrieve(new ObjectID(ObjectID.MAX_ID, groupID.toInt()));
+          } catch (AbortedOperationException e) {
+            throw new AssertionError(e);
+          }
           System.err.println("Didnt throw TCObjectNotFoundException : Not calling barrier()");
         } catch (final TCObjectNotFoundException e) {
           System.err.println("Got TCObjectNotFoundException as expected : " + e);
@@ -98,6 +105,7 @@ public class DEV6342Test extends TestCase {
     public final NoExceptionLinkedQueue newMessageQueue = new NoExceptionLinkedQueue();
     public TestRequestRootMessage       message;
 
+    @Override
     public RequestRootMessage newRequestRootMessage(final NodeID nodeID) {
       this.newMessageQueue.put(this.message);
       return this.message;
@@ -108,10 +116,12 @@ public class DEV6342Test extends TestCase {
 
     public final NoExceptionLinkedQueue sendQueue = new NoExceptionLinkedQueue();
 
+    @Override
     public String getRootName() {
       throw new ImplementMe();
     }
 
+    @Override
     public void initialize(final String name) {
       return;
     }
@@ -126,6 +136,7 @@ public class DEV6342Test extends TestCase {
       this.sendQueue.put(new Object());
     }
 
+    @Override
     public void recycle() {
       return;
     }
@@ -138,6 +149,7 @@ public class DEV6342Test extends TestCase {
 
     public TestRequestManagedObjectMessage message;
 
+    @Override
     public RequestManagedObjectMessage newRequestManagedObjectMessage(final NodeID nodeID) {
       this.newMessageQueue.put(this.message);
       return this.message;
@@ -149,55 +161,68 @@ public class DEV6342Test extends TestCase {
     public final NoExceptionLinkedQueue initializeQueue = new NoExceptionLinkedQueue();
     public final NoExceptionLinkedQueue sendQueue       = new NoExceptionLinkedQueue();
 
+    @Override
     public ObjectRequestID getRequestID() {
       throw new ImplementMe();
     }
 
+    @Override
     public ObjectIDSet getRequestedObjectIDs() {
       throw new ImplementMe();
     }
 
+    @Override
     public ObjectIDSet getRemoved() {
       throw new ImplementMe();
     }
 
+    @Override
     public void initialize(final ObjectRequestID requestID, final Set<ObjectID> requestedObjectIDs,
                            final int requestDepth, final ObjectIDSet removeObjects) {
       this.initializeQueue.put(new Object[] { requestID, requestedObjectIDs, removeObjects });
     }
 
+    @Override
     public void send() {
       this.sendQueue.put(new Object());
     }
 
+    @Override
     public MessageChannel getChannel() {
       throw new ImplementMe();
     }
 
+    @Override
     public NodeID getSourceNodeID() {
       throw new ImplementMe();
     }
 
+    @Override
     public int getRequestDepth() {
       return 400;
     }
 
+    @Override
     public void recycle() {
       return;
     }
 
+    @Override
     public String getRequestingThreadName() {
       return "TestThreadDummy";
     }
 
+    @Override
     public LOOKUP_STATE getLookupState() {
       return LOOKUP_STATE.CLIENT;
     }
 
+    @Override
     public ClientID getClientID() {
       throw new ImplementMe();
     }
 
+    @Override
     public Object getKey() {
       return new ClientID(1);
     }

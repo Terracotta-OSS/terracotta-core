@@ -3,6 +3,7 @@
  */
 package com.terracotta.toolkit.roots.impl;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
@@ -11,6 +12,7 @@ import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.NotClearable;
 import com.tc.platform.PlatformService;
 import com.tc.platform.StaticPlatformApi;
+import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.object.TCToolkitObject;
 import com.terracotta.toolkit.roots.ToolkitTypeRoot;
 
@@ -65,7 +67,11 @@ public class ToolkitTypeRootImpl<T extends TCToolkitObject> implements ToolkitTy
   }
 
   private T faultValue(ObjectID value) {
-    return (T) platformService.lookupObject(value);
+    try {
+      return (T) platformService.lookupObject(value);
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   @Override

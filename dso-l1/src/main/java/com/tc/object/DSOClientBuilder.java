@@ -94,7 +94,8 @@ public interface DSOClientBuilder {
                                                                       final PreTransactionFlushCallback preTransactionFlushCallback);
 
   RemoteObjectManager createRemoteObjectManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
-                                                final int faultCount, final SessionManager sessionManager);
+                                                final int faultCount, final SessionManager sessionManager,
+                                                AbortableOperationManager abortableOperationManager);
 
   RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
                                                       final SessionManager sessionManager,
@@ -119,7 +120,8 @@ public interface DSOClientBuilder {
                                               final TCClassFactory classFactory, final TCObjectFactory objectFactory,
                                               final Portability portability, final DSOClientMessageChannel dsoChannel,
                                               final ToggleableReferenceManager toggleRefMgr,
-                                              TCObjectSelfStore tcObjectSelfStore);
+                                              TCObjectSelfStore tcObjectSelfStore,
+                                              AbortableOperationManager abortableOperationManager);
 
   ClientLockManager createLockManager(final DSOClientMessageChannel dsoChannel, final ClientIDLogger clientIDLogger,
                                       final SessionManager sessionManager, final ClientLockStatManager lockStatManager,
@@ -141,7 +143,8 @@ public interface DSOClientBuilder {
                                                           final Counter outstandingBatchesCounter,
                                                           final Counter pendingBatchesSize,
                                                           SampledRateCounter transactionSizeCounter,
-                                                          SampledRateCounter transactionPerBatchCounter);
+                                                          SampledRateCounter transactionPerBatchCounter,
+                                                          AbortableOperationManager abortableOperationManager);
 
   ObjectIDClientHandshakeRequester getObjectIDClientHandshakeRequester(final BatchSequenceReceiver sequence);
 

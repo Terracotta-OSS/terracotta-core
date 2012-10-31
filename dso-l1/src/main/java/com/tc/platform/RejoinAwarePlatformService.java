@@ -77,7 +77,7 @@ public class RejoinAwarePlatformService implements PlatformService {
   }
 
   @Override
-  public void waitForAllCurrentTransactionsToComplete() {
+  public void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException {
     interceptedProxy.waitForAllCurrentTransactionsToComplete();
   }
 
@@ -150,7 +150,7 @@ public class RejoinAwarePlatformService implements PlatformService {
   }
 
   @Override
-  public Object lookupObject(ObjectID id) {
+  public Object lookupObject(ObjectID id) throws AbortedOperationException {
     return interceptedProxy.lookupObject(id);
   }
 
@@ -202,7 +202,8 @@ public class RejoinAwarePlatformService implements PlatformService {
   @Override
   public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
                                          Set<String> attributeSet, List<NVPair> sortAttributes,
-                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn) {
+                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn)
+      throws AbortedOperationException {
     return interceptedProxy.executeQuery(cachename, queryStack, includeKeys, includeValues, attributeSet,
                                          sortAttributes, aggregators, maxResults, batchSize, waitForTxn);
   }
@@ -210,13 +211,14 @@ public class RejoinAwarePlatformService implements PlatformService {
   @Override
   public SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
                                          Set<String> groupByAttributes, List<NVPair> sortAttributes,
-                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn) {
+                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn)
+      throws AbortedOperationException {
     return interceptedProxy.executeQuery(cachename, queryStack, attributeSet, groupByAttributes, sortAttributes,
                                          aggregators, maxResults, batchSize, waitForTxn);
   }
 
   @Override
-  public void preFetchObject(ObjectID id) {
+  public void preFetchObject(ObjectID id) throws AbortedOperationException {
     interceptedProxy.preFetchObject(id);
   }
 

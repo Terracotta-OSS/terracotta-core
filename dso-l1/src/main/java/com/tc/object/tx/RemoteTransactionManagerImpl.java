@@ -4,6 +4,7 @@
  */
 package com.tc.object.tx;
 
+import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.LossyTCLogger;
@@ -70,7 +71,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
 
   private final Counter                           outstandingBatchesCounter;
   private final TransactionBatchAccounting        batchAccounting             = new TransactionBatchAccounting();
-  private final LockAccounting                    lockAccounting              = new LockAccounting();
+  private final LockAccounting                    lockAccounting;
   private final TCLogger                          logger;
   private final long                              ackOnExitTimeout;
 
@@ -86,6 +87,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
 
   private final GroupID                           groupID;
   private volatile boolean                        isShutdown                  = false;
+  private final AbortableOperationManager         abortableOperationManager;
 
   public RemoteTransactionManagerImpl(final GroupID groupID, final TCLogger logger,
                                       final TransactionBatchFactory batchFactory,
@@ -94,7 +96,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
                                       final Counter outstandingBatchesCounter, final Counter pendingBatchesSize,
                                       final SampledRateCounter transactionSizeCounter,
                                       final SampledRateCounter transactionsPerBatchCounter,
-                                      final long ackOnExitTimeoutMs) {
+                                      final long ackOnExitTimeoutMs, AbortableOperationManager abortableOperationManager) {
     this.groupID = groupID;
     this.logger = logger;
     this.sessionManager = sessionManager;
@@ -102,10 +104,13 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     this.status = RUNNING;
     this.ackOnExitTimeout = ackOnExitTimeoutMs;
     this.sequencer = new TransactionSequencer(groupID, transactionIDGenerator, batchFactory, this.lockAccounting,
-                                              pendingBatchesSize, transactionSizeCounter, transactionsPerBatchCounter);
+                                              pendingBatchesSize, transactionSizeCounter, transactionsPerBatchCounter,
+                                              abortableOperationManager);
     this.remoteTxManagerTimerTask = new RemoteTransactionManagerTimerTask();
     this.timer.schedule(this.remoteTxManagerTimerTask, COMPLETED_ACK_FLUSH_TIMEOUT, COMPLETED_ACK_FLUSH_TIMEOUT);
     this.outstandingBatchesCounter = outstandingBatchesCounter;
+    this.abortableOperationManager = abortableOperationManager;
+    this.lockAccounting = new LockAccounting(abortableOperationManager);
   }
 
   @Override
@@ -276,14 +281,6 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     }
   }
 
-  private void handleInterruptedException() throws AbortedOperationException {
-    if (isAborted()) { throw new AbortedOperationException(); }
-  }
-
-  private boolean isAborted() {
-    return false;
-  }
-
   /**
    * This method will be called when the server receives a batch. This should ideally be called only when a batch
    * contains a sync write transaction.
@@ -324,7 +321,16 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   }
 
   @Override
-  public void commit(final ClientTransaction txn) {
+  public void commit(final ClientTransaction txn) throws AbortedOperationException {
+    throttleIfNecessary();
+    commitWithoutThrottling(txn);
+  }
+
+  void throttleIfNecessary() throws AbortedOperationException {
+    this.sequencer.throttleIfNecesary();
+  }
+
+  void commitWithoutThrottling(final ClientTransaction txn) {
     if (!txn.hasChangesOrNotifies() && txn.getDmiDescriptors().isEmpty() && txn.getNewRoots().isEmpty()) {
       //
       throw new AssertionError("Attempt to commit an empty transaction.");
@@ -345,7 +351,13 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
         // Send now if stop is requested
         sendBatches(true, "commit() : Stop initiated.");
       } else {
-        waitUntilRunning();
+        try {
+          waitUntilRunningAbortable();
+        } catch (AbortedOperationException e) {
+          logger
+              .debug("Ignoring Aborted Operation Exception since the transaction is already written to the sequencer.");
+          return;
+        }
         sendBatches(false);
       }
     }
@@ -511,7 +523,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   }
 
   @Override
-  public void waitForAllCurrentTransactionsToComplete() {
+  public void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException {
     this.lockAccounting.waitAllCurrentTxnCompleted();
   }
 
@@ -552,6 +564,9 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     return callbacks;
   }
 
+  /**
+   * waits until the Transaction manager is in running state.
+   */
   private void waitUntilRunning() {
     boolean isInterrupted = false;
     try {
@@ -560,6 +575,28 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
         try {
           this.lock.wait();
         } catch (final InterruptedException e) {
+          isInterrupted = true;
+        }
+      }
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
+    }
+  }
+
+  /**
+   * waits until the Transaction manager is in running state.
+   * 
+   * @throws AbortedOperationException If the Operation is aborted.
+   */
+  private void waitUntilRunningAbortable() throws AbortedOperationException {
+    boolean isInterrupted = false;
+    try {
+      while (this.status != RUNNING) {
+        if (isShutdown) { throw new TCNotRunningException(); }
+        try {
+          this.lock.wait();
+        } catch (final InterruptedException e) {
+
           isInterrupted = true;
         }
       }
@@ -622,5 +659,17 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   // for testing
   public boolean isShutdown() {
     return this.isShutdown;
+  }
+
+  private void handleInterruptedException() throws AbortedOperationException {
+    if (abortableOperationManager.isAborted()) {
+      throw new AbortedOperationException();
+    } else {
+      checkIfShutDownOnInterruptedException();
+    }
+  }
+
+  private void checkIfShutDownOnInterruptedException() {
+    // TODO: to be handled during rejoin
   }
 }

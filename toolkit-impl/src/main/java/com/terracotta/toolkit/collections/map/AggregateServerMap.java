@@ -21,6 +21,7 @@ import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeType;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -32,6 +33,7 @@ import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.platform.PlatformService;
 import com.tc.util.FindbugsSuppressWarnings;
+import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.cluster.TerracottaClusterInfo;
 import com.terracotta.toolkit.collections.map.ServerMap.GetType;
 import com.terracotta.toolkit.collections.map.ToolkitMapAggregateSet.ClusteredMapAggregateEntrySet;
@@ -213,7 +215,11 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   @Override
   public int size() {
     // wait and then tell me more accurate size
-    platformService.waitForAllCurrentTransactionsToComplete();
+    try {
+      platformService.waitForAllCurrentTransactionsToComplete();
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
     long sum = getAnyTCObjectServerMap().getAllSize(serverMaps);
     // copy the way CHM does if overflow integer
     if (sum > Integer.MAX_VALUE) {
@@ -426,6 +432,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     } catch (TCNotRunningException e) {
       LOGGER.info("Ignoring " + TCNotRunningException.class.getName()
                   + " while waiting for all current txns to complete");
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
     } finally {
       try {
         getAnyServerMap().disposeLocally();
@@ -569,7 +577,12 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     final Map<ObjectID, Set<K>> mapIdToKeysMap = new HashMap<ObjectID, Set<K>>();
     divideKeysIntoServerMaps(keys, mapIdToKeysMap);
     TCObjectServerMap tcObjectServerMap = getAnyTCObjectServerMap();
-    Map<K, V> rv = tcObjectServerMap.getAllValuesUnlocked(mapIdToKeysMap);
+    Map<K, V> rv;
+    try {
+      rv = tcObjectServerMap.getAllValuesUnlocked(mapIdToKeysMap);
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
     for (Entry<K, V> entry : rv.entrySet()) {
       V nonExpiredValue = getServerMapForKey(entry.getKey()).checkAndGetNonExpiredValue(entry.getKey(),
                                                                                         entry.getValue(),

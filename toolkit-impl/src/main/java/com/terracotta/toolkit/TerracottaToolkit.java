@@ -31,9 +31,11 @@ import org.terracotta.toolkit.store.ToolkitStore;
 import org.terracotta.toolkit.store.ToolkitStoreConfigBuilder;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.net.GroupID;
 import com.tc.platform.PlatformService;
 import com.tc.platform.StaticPlatformApi;
+import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.cluster.TerracottaClusterInfo;
 import com.terracotta.toolkit.collections.ToolkitBlockingQueueImpl;
 import com.terracotta.toolkit.collections.ToolkitSetImpl;
@@ -283,7 +285,11 @@ public class TerracottaToolkit implements ToolkitInternal {
 
   @Override
   public void waitUntilAllTransactionsComplete() {
-    platformService.waitForAllCurrentTransactionsToComplete();
+    try {
+      platformService.waitForAllCurrentTransactionsToComplete();
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   protected SearchBuilderFactory createSearchBuilderFactory() {
