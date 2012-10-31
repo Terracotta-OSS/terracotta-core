@@ -42,9 +42,9 @@ public interface TsaManagementClientService {
 
   Collection<StatisticsEntity> getDgcStatistics(int maxDgcStatsEntries) throws ServiceExecutionException;
 
-  Set<String> getL1Nodes() throws ServiceExecutionException;
+  Set<String> getL2Urls() throws ServiceExecutionException;
 
-  Collection<Representable> getSimpleTopology() throws ServiceExecutionException;
+  Set<String> getL1Nodes() throws ServiceExecutionException;
 
   boolean isEnterpriseEdition() throws ServiceExecutionException;
 

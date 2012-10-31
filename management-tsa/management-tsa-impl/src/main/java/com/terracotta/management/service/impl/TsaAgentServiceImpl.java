@@ -127,8 +127,22 @@ public class TsaAgentServiceImpl implements AgentService {
     AgentEntity e = new AgentEntity();
     e.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
     e.setAgencyOf(AGENCY);
-    e.setRootRepresentables(tsaManagementClientService.getSimpleTopology());
+    e.getRootRepresentables().put("urls", createL2Urls());
     return e;
+  }
+
+  private String createL2Urls() throws ServiceExecutionException {
+    StringBuilder sb = new StringBuilder();
+
+    Set<String> l2Urls = tsaManagementClientService.getL2Urls();
+    for (String l2Url : l2Urls) {
+      sb.append(l2Url).append(",");
+    }
+    if (sb.indexOf(",") > - 1) {
+      sb.deleteCharAt(sb.length() - 1);
+    }
+
+    return sb.toString();
   }
 
 }
