@@ -34,7 +34,7 @@ public abstract class AbstractTsaAgentTest extends AbstractTestBase {
     String m2Root = System.getProperty("user.home") + "/.m2/repository".replace('/', File.separatorChar);
     String version = guessVersion();
 
-    String agentDir = m2Root + "/org/terracotta/management-tsa-impl/".replace('/', File.separatorChar) + version;
+    String agentDir = m2Root + "/org/terracotta/management-tsa-war/".replace('/', File.separatorChar) + version;
 
     List<String> files = Arrays.asList(new File(agentDir).list(new FilenameFilter() {
       @Override
