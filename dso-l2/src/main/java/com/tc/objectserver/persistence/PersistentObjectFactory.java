@@ -13,7 +13,7 @@ import java.io.Serializable;
  * @author tim
  */
 public class PersistentObjectFactory {
-  private static final KeyValueStorageConfig<Serializable, Serializable> MAP_CONFIG = new ImmutableKeyValueStorageConfig<Serializable, Serializable>(Serializable.class, Serializable.class);
+  private static final KeyValueStorageConfig<Serializable, Serializable> MAP_CONFIG = new ImmutableKeyValueStorageConfig<Serializable, Serializable>(Serializable.class, Serializable.class, 1);
 
   private final StorageManager storageManager;
 
