@@ -22,16 +22,20 @@ public class SequenceManager {
     this.sequenceMap = sequenceMap;
   }
 
-  public MutableSequence getSequence(String name) {
+  public MutableSequence getSequence(String name, long initialValue) {
     Sequence sequence = createdSequences.get(name);
     if (sequence == null) {
-      sequence = new Sequence(sequenceMap, name);
+      sequence = new Sequence(sequenceMap, name, initialValue);
       Sequence racer = createdSequences.putIfAbsent(name, sequence);
       if (racer != null) {
         sequence = racer;
       }
     }
     return sequence;
+  }
+
+  public MutableSequence getSequence(String name) {
+    return getSequence(name, 0L);
   }
 
   public static KeyValueStorageConfig<String, Long> config() {
@@ -43,12 +47,12 @@ public class SequenceManager {
     private final KeyValueStorage<String, Long> sequenceMap;
     private final String name;
 
-    Sequence(KeyValueStorage<String, Long> sequenceMap, String name) {
+    Sequence(KeyValueStorage<String, Long> sequenceMap, String name, long initialValue) {
       this.name = name;
       this.sequenceMap = sequenceMap;
       Long current = sequenceMap.get(name);
       if (current == null) {
-        current = 0L;
+        current = initialValue;
         sequenceMap.put(name, current);
       }
     }

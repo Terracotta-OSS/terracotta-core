@@ -326,7 +326,6 @@ import javax.management.remote.JMXConnectorServer;
 
 import bsh.EvalError;
 import bsh.Interpreter;
-import org.terracotta.corestorage.monitoring.MonitoredResource;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -1061,7 +1060,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.groupCommManager));
     // initialize the garbage collector
-    final MutableSequence dgcSequence = ((Persistor) persistor).getSequenceManager().getSequence(SequenceNames.DGC_SEQUENCE_NAME.getName());
+    final MutableSequence dgcSequence = persistor.getSequenceManager().getSequence(SequenceNames.DGC_SEQUENCE_NAME.getName(), 1L);
     final DGCSequenceProvider dgcSequenceProvider = new DGCSequenceProvider(dgcSequence);
     final GarbageCollector gc = this.serverBuilder.createGarbageCollector(toInit, objectManagerConfig,
                                                                           this.objectManager, this.clientStateManager,
