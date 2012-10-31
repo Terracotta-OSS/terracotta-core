@@ -3,11 +3,6 @@
  */
 package com.terracotta.management.web.shiro;
 
-import com.terracotta.management.resource.services.validator.TSARequestValidator;
-import com.terracotta.management.service.DiagnosticsService;
-import com.terracotta.management.service.TsaManagementClientService;
-import com.terracotta.management.service.MonitoringService;
-import com.terracotta.management.service.TopologyService;
 import net.sf.ehcache.management.resource.services.validator.impl.JmxEhcacheRequestValidator;
 import net.sf.ehcache.management.service.AgentService;
 import net.sf.ehcache.management.service.CacheManagerService;
@@ -18,6 +13,7 @@ import org.apache.shiro.web.env.EnvironmentLoaderListener;
 import org.terracotta.management.ServiceLocator;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
+import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.security.ContextService;
 import com.terracotta.management.security.IdentityAssertionServiceClient;
 import com.terracotta.management.security.KeyChainAccessor;
@@ -34,16 +30,17 @@ import com.terracotta.management.security.impl.NullRequestTicketMonitor;
 import com.terracotta.management.security.impl.NullUserService;
 import com.terracotta.management.security.impl.RelayingJerseyIdentityAssertionServiceClient;
 import com.terracotta.management.security.impl.TSAIdentityAsserter;
+import com.terracotta.management.service.DiagnosticsService;
+import com.terracotta.management.service.MonitoringService;
+import com.terracotta.management.service.TopologyService;
+import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.service.impl.ClearTextTsaManagementClientServiceImpl;
 import com.terracotta.management.service.impl.DiagnosticsServiceImpl;
 import com.terracotta.management.service.impl.MonitoringServiceImpl;
+import com.terracotta.management.service.impl.TopologyServiceImpl;
 import com.terracotta.management.service.impl.TsaAgentServiceImpl;
 import com.terracotta.management.web.config.TSAConfig;
-import com.terracotta.management.service.impl.TopologyServiceImpl;
 
-import java.lang.management.ManagementFactory;
-
-import javax.management.MBeanServer;
 import javax.servlet.ServletContextEvent;
 
 /**
@@ -65,17 +62,17 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
       serviceLocator.loadService(DiagnosticsService.class, new DiagnosticsServiceImpl(tsaManagementClientService));
 
       // The following services are for forwarding REST calls to L1s, using security or not
-      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       boolean sslEnabled = TSAConfig.isSslEnabled();
-      KeyChainAccessor kcAccessor = TSAConfig.getKeyChain();
-      SSLContextFactory sslCtxtFactory = TSAConfig.getSSLContextFactory();
-      String securityServiceLocation = TSAConfig.getSecurityServiceLocation();
-      Integer securityTimeout = TSAConfig.getSecurityTimeout();
 
       JmxEhcacheRequestValidator requestValidator = new JmxEhcacheRequestValidator(tsaManagementClientService);
       AgentService l1Agent;
 
       if (sslEnabled) {
+        KeyChainAccessor kcAccessor = TSAConfig.getKeyChain();
+        String securityServiceLocation = TSAConfig.getSecurityServiceLocation();
+        Integer securityTimeout = TSAConfig.getSecurityTimeout();
+        SSLContextFactory sslCtxtFactory = TSAConfig.getSSLContextFactory();
+
         ContextService contextService = new DfltContextService();
         UserService userService = new DfltUserService();
         IdentityAssertionServiceClient identityAssertionServiceClient = new RelayingJerseyIdentityAssertionServiceClient(kcAccessor, sslCtxtFactory, securityServiceLocation, securityTimeout, contextService);
@@ -92,7 +89,6 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
         serviceLocator.loadService(IdentityAssertionServiceClient.class, identityAssertionServiceClient);
         serviceLocator.loadService(RequestValidator.class, requestValidator);
         serviceLocator.loadService(KeyChainAccessor.class, kcAccessor);
-        serviceLocator.loadService(SSLContextFactory.class, sslCtxtFactory);
         serviceLocator.loadService(CacheManagerService.class, repoSvc);
         serviceLocator.loadService(CacheService.class, repoSvc);
         serviceLocator.loadService(EntityResourceFactory.class, repoSvc);
@@ -110,8 +106,6 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
         serviceLocator.loadService(ContextService.class, contextService);
         serviceLocator.loadService(UserService.class, userService);
         serviceLocator.loadService(RequestValidator.class, requestValidator);
-        serviceLocator.loadService(KeyChainAccessor.class, kcAccessor);
-        serviceLocator.loadService(SSLContextFactory.class, sslCtxtFactory);
         serviceLocator.loadService(CacheManagerService.class, repoSvc);
         serviceLocator.loadService(CacheService.class, repoSvc);
         serviceLocator.loadService(EntityResourceFactory.class, repoSvc);
