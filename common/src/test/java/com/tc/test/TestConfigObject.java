@@ -393,10 +393,7 @@ public class TestConfigObject {
   }
 
   public String linkedChildProcessPath() {
-    String out = this.properties.getProperty(LINKED_CHILD_PROCESS_CLASSPATH);
-    if (out == null) {
-      out = TestConfigUtil.jarFor(LinkedJavaProcess.class);
-    }
+    String out = TestConfigUtil.jarFor(LinkedJavaProcess.class);
     Assert.assertNotBlank(out);
     assertValidClasspath(out);
     return out;
