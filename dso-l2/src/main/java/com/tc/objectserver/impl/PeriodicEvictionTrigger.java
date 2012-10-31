@@ -160,7 +160,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
         String flag = ( expired + overflow > 0 ) ? ", ELEMENTS_EVICTED" : "";
         String element = ( ELEMENT_BASED_TTI_TTL_ENABLED ) ? ", ELEMENT_BASED_TTI_TTL_ENABLED" : "";
         return "PeriodicEvictionTrigger{" 
-                + ", name=" + cacheName 
+                + "name=" + cacheName + " - " + getId()
                 + element
                 + ", over capacity=" + dumpLive 
                 + ", count=" + sampled

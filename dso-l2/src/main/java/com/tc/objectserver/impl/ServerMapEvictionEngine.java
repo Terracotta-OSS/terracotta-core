@@ -61,9 +61,6 @@ public class ServerMapEvictionEngine {
   private static final boolean                ELEMENT_BASED_TTI_TTL_ENABLED   = TCPropertiesImpl
                                                                                   .getProperties()
                                                                                   .getBoolean(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERELEMENT_TTI_TTL_ENABLED);
-  private static final boolean                EVICT_UNEXPIRED_ENTRIES_ENABLED = TCPropertiesImpl
-                                                                                  .getProperties()
-                                                                                  .getBoolean(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_EVICT_UNEXPIRED_ENTRIES_ENABLED);
 
   private final static boolean                PERIODIC_EVICTOR_ENABLED        = TCPropertiesImpl
                                                                                   .getProperties()
@@ -73,35 +70,25 @@ public class ServerMapEvictionEngine {
   public static final long                    DEFAULT_SLEEP_TIME              = 15 * 60000;
 
   private final ObjectManager                 objectManager;
-  private final PersistentManagedObjectStore            objectStore;
   private final ServerTransactionFactory      serverTransactionFactory;
-  private final long                          evictionSleepTime;
   private final Set<ObjectID>                 currentlyEvicting               = Collections
                                                                                   .synchronizedSet(new HashSet());
   private final AtomicBoolean                 isStarted                       = new AtomicBoolean(false);
 
-  private Sink                                evictorSink;
   private Sink                                evictionBroadcastSink;
   private GroupManager                        groupManager;
   private TransactionBatchManager             transactionBatchManager;
   private final ServerMapEvictionStatsManager evictionStats;
-  private final ClientObjectReferenceSet      clientObjectReferenceSet;
 
-  public ServerMapEvictionEngine(final ObjectManager objectManager, final PersistentManagedObjectStore objectStore,
-                                      final ClientObjectReferenceSet clientObjectReferenceSet,
-                                      final ServerTransactionFactory serverTransactionFactory,
-                                      final long evictionSleepTime) {
+  public ServerMapEvictionEngine(final ObjectManager objectManager,
+                                      final ServerTransactionFactory serverTransactionFactory) {
     this.objectManager = objectManager;
-    this.objectStore = objectStore;
     this.serverTransactionFactory = serverTransactionFactory;
-    this.evictionSleepTime = evictionSleepTime;
     this.evictionStats = new ServerMapEvictionStatsManager();
-    this.clientObjectReferenceSet = clientObjectReferenceSet;
   }
 
   public void initializeContext(final ConfigurationContext context) {
     final ServerConfigurationContext scc = (ServerConfigurationContext) context;
-    this.evictorSink = scc.getStage(ServerConfigurationContext.SERVER_MAP_EVICTION_PROCESSOR_STAGE).getSink();
     this.evictionBroadcastSink = scc.getStage(ServerConfigurationContext.SERVER_MAP_EVICTION_BROADCAST_STAGE).getSink();
     this.groupManager = scc.getL2Coordinator().getGroupManager();
     this.transactionBatchManager = scc.getTransactionBatchManager();

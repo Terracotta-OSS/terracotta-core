@@ -53,7 +53,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
         this.objectManager = mgr;
         this.store = store;
         this.clientObjectReferenceSet = clients;
-        this.evictor = new ServerMapEvictionEngine(mgr, store, clients, trans,1000 * 60 * 60 * 24); //  periodic is once a day
+        this.evictor = new ServerMapEvictionEngine(mgr, trans); 
         this.trigger = new ResourceMonitor(monitored, SLEEP_TIME , grp);
     }
     
@@ -70,6 +70,13 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
         evictor.startEvictor();
         trigger.registerForMemoryEvents(new Responder());
         runEvictor();
+        expiry.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                runEvictor();
+            }
+        }, ServerMapEvictionEngine.DEFAULT_SLEEP_TIME, ServerMapEvictionEngine.DEFAULT_SLEEP_TIME
+        );
     }
 
     @Override
@@ -112,11 +119,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
 
           ServerMapEvictionContext context = doEviction(trigger, ev, className, ev.getCacheName());
           if (context == null) {
-              if ( ev.getSize() > ev.getMaxTotalCount() ) {
-   //  looks like capacity eviction didn't work, schedule another run just in case
-                  scheduleExpiry(trigger.getId(), 5, 0);
-              }
-              
               trigger.completeEviction(ev);
           }
 
@@ -174,7 +176,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
     }
     
     Map samples = trigger.collectEvictonCandidates(ev,clientObjectReferenceSet);
-    
+
     if (samples.isEmpty()) {
         return null;
     } else {
@@ -239,9 +241,13 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
                     emergencyEviction();
                 } else if ( percent > 10 ) {  /*  at 10% usage, run the evictor */
                     runEvictor();
+                } else {
+             // polling this force refresh and trigger any capacity evictors that didn't finish there job
+                    clientObjectReferenceSet.size();
                 }
             } catch ( UnsupportedOperationException us ) {
                 runEvictor();
+                log(us.toString());
             }
         }
         

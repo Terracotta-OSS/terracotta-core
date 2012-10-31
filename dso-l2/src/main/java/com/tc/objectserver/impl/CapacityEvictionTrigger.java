@@ -5,7 +5,9 @@ package com.tc.objectserver.impl;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.EvictableMap;
+import com.tc.objectserver.api.ServerMapEvictionManager;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
+import com.tc.objectserver.l1.impl.ClientObjectReferenceSetChangedListener;
 import java.util.Collections;
 import java.util.Map;
 
@@ -13,13 +15,16 @@ import java.util.Map;
  *
  * @author mscott
  */
-public class CapacityEvictionTrigger extends AbstractEvictionTrigger {
+public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements ClientObjectReferenceSetChangedListener {
     
     private boolean aboveCapacity = true;
     private int count = 0;
+    private int clientSet = 0;
+    private final ServerMapEvictionManager mgr;
 
-    public CapacityEvictionTrigger(ObjectID oid) {
+    public CapacityEvictionTrigger(ServerMapEvictionManager mgr, ObjectID oid) {
         super(oid);
+        this.mgr = mgr;
     }
 
     @Override
@@ -30,7 +35,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger {
         }
         int max = map.getMaxTotalCount();
         
-        if ( max != 0 && map.getSize() > map.getMaxTotalCount() ) {
+        if ( max != 0 && map.getSize() > max ) {
             return true;
         } else {
             map.evictionCompleted();
@@ -41,20 +46,62 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger {
     }
 
     @Override
-    public Map collectEvictonCandidates(EvictableMap map, ClientObjectReferenceSet clients) {
+    public Map collectEvictonCandidates(final EvictableMap map, final ClientObjectReferenceSet clients) {
    // lets try and get smarter about this in the future but for now, just bring it back to capacity
-        int max = map.getMaxTotalCount();
-        if ( max == 0 ) {
+        final int max = map.getMaxTotalCount();
+        final int size = map.getSize();
+        final int sample = size - max;
+        if ( max == 0 || sample <= 0 ) {
             return Collections.emptyMap();
         }
-        Map samples = map.getRandomSamples(map.getSize() - max, clients);
+        Map samples = map.getRandomSamples(sample, clients);
         count = samples.size();
+ // didn't get the sample count we wanted.  wait for a clientobjectidset refresh, only once and try it again
+        if ( count < sample ) {
+            clients.addReferenceSetChangeListener(this);
+            clientSet = clients.size();
+        }
         return samples;
-    }
+    } 
+    
+     @Override
+    public void notifyReferenceSetChanged() {
+       mgr.doEvictionOn(new AbstractEvictionTrigger(getId()) {
+            private int sampleCount = 0;
+            private boolean wasOver = true;
+            private int clientSet = 0;
+      
+            @Override
+            public Map collectEvictonCandidates(EvictableMap map, ClientObjectReferenceSet clients) {
+                clients.removeReferenceSetChangeListener(CapacityEvictionTrigger.this);
+                if ( map.getSize() <= map.getMaxTotalCount() ) {
+                    wasOver = false;
+                    return Collections.emptyMap();
+                }
+                Map sample = map.getRandomSamples(map.getSize() - map.getMaxTotalCount(), clients);
+                sampleCount = sample.size();
+                clientSet = clients.size();
+                return sample;
+            }
 
+            @Override
+            public String toString() {
+                return "ClientReferenceSetRefreshCapacityEvictor{wasover="  + wasOver 
+                        + " count=" + sampleCount
+                        + " clientset=" + clientSet + "}";
+            }
+            
+            
+
+        });
+    }
+                 
     @Override
     public String toString() {
-        return "CapacityEvictionTrigger{count=" + count + ", was above capacity=" + aboveCapacity + '}';
+        return "CapacityEvictionTrigger{count=" 
+                + count + ", was above capacity=" 
+                + aboveCapacity + ", client set=" 
+                + clientSet + '}';
     }
 
 }

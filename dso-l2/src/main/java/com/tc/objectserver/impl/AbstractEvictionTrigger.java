@@ -33,5 +33,9 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     public void completeEviction(EvictableMap map) {
         map.evictionCompleted();
     }    
-    
+
+    @Override
+    public String toString() {
+        return "AbstractEvictionTrigger{" + "oid=" + oid + '}';
+    }
 }

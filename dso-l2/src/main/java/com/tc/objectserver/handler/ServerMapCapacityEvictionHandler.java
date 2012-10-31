@@ -23,7 +23,7 @@ public class ServerMapCapacityEvictionHandler extends AbstractEventHandler imple
   public void handleEvent(final EventContext context) {
     final ServerMapEvictionInitiateContext smec = (ServerMapEvictionInitiateContext) context;
     for (final ObjectID id : smec.getObjectIDs()) {
-      this.serverMapEvictor.doEvictionOn(new CapacityEvictionTrigger(id));
+      this.serverMapEvictor.doEvictionOn(new CapacityEvictionTrigger(serverMapEvictor,id));
     }
   }
 
