@@ -40,10 +40,9 @@ public class RejoinAwarePlatformService implements PlatformService {
 
   public RejoinAwarePlatformService(Manager manager, RejoinManager rejoinManager) {
     final Interceptor statusCheckInterceptor = new StatusCheckInterceptor(status);
-    final PlatformService actualDelegate = new PlatformServiceImpl(manager, rejoinManager);
-    this.interceptedProxy = InterceptedProxy.createInterceptedProxy(actualDelegate, PlatformService.class,
-                                                                    statusCheckInterceptor);
-    actualDelegate.addRejoinLifecycleListener(rejoinLifecycleEventsController);
+    this.interceptedProxy = InterceptedProxy.createInterceptedProxy(new PlatformServiceImpl(manager),
+                                                                    PlatformService.class, statusCheckInterceptor);
+    rejoinManager.addListener(rejoinLifecycleEventsController);
 
   }
 

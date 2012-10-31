@@ -79,14 +79,27 @@ public class ClientChannelEventController {
 
   private void initiateRejoin(ChannelEvent event) {
     if (rejoinManager.isRejoinEnabled()) {
-      logRejoinStatusMessages(event);
-      // MNK-2771: stop memory monitor before firing node left
-      tcMemManager.shutdown();
-      clientHandshakeManager.shutdown();
-
-      if (!this.shutdown.get()) {
-        this.dsoClusterEventsGun.fireThisNodeLeft();
+      if (true) {
+        // TODO: remove me
+        oldRejoinBehavior(event);
+        return;
       }
+      doRejoin(event);
+    }
+  }
+
+  private void doRejoin(ChannelEvent event) {
+    //
+  }
+
+  private void oldRejoinBehavior(ChannelEvent event) {
+    logRejoinStatusMessages(event);
+    // MNK-2771: stop memory monitor before firing node left
+    tcMemManager.shutdown();
+    clientHandshakeManager.shutdown();
+
+    if (!this.shutdown.get()) {
+      this.dsoClusterEventsGun.fireThisNodeLeft();
     }
   }
 

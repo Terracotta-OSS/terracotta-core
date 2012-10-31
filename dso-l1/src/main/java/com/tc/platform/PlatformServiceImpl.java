@@ -19,7 +19,6 @@ import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.platform.rejoin.RejoinLifecycleListener;
-import com.tc.platform.rejoin.RejoinManager;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.tcclient.cluster.DsoNode;
@@ -31,23 +30,24 @@ import java.util.concurrent.TimeUnit;
 
 public class PlatformServiceImpl implements PlatformService {
   private final Manager manager;
-  private final RejoinManager rejoinManager;
 
-  public PlatformServiceImpl(Manager manager, RejoinManager rejoinManager) {
+  public PlatformServiceImpl(Manager manager) {
     this.manager = manager;
-    this.rejoinManager = rejoinManager;
+  }
+
+  private RuntimeException newRejoinUnawareException() {
+    throw new RuntimeException("This platform service is not aware of rejoin!");
   }
 
   @Override
   public void addRejoinLifecycleListener(RejoinLifecycleListener listener) {
-    rejoinManager.addListener(listener);
+    throw newRejoinUnawareException();
   }
 
   @Override
   public void removeRejoinLifecycleListener(RejoinLifecycleListener listener) {
-    rejoinManager.removeListener(listener);
+    throw newRejoinUnawareException();
   }
-
 
   @Override
   public <T> T lookupRegisteredObjectByName(String name, Class<T> expectedType) {
@@ -176,8 +176,7 @@ public class PlatformServiceImpl implements PlatformService {
   }
 
   @Override
-  public void fireOperatorEvent(EventType coreOperatorEventLevel, EventSubsystem coreEventSubsytem,
-                                       String eventMessage) {
+  public void fireOperatorEvent(EventType coreOperatorEventLevel, EventSubsystem coreEventSubsytem, String eventMessage) {
     manager.fireOperatorEvent(coreOperatorEventLevel, coreEventSubsytem, eventMessage);
   }
 
@@ -202,23 +201,21 @@ public class PlatformServiceImpl implements PlatformService {
   }
 
   @Override
-  public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys,
-                                                boolean includeValues, Set<String> attributeSet,
-                                                List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults,
- int batchSize, boolean waitForTxn)
+  public SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys, boolean includeValues,
+                                         Set<String> attributeSet, List<NVPair> sortAttributes,
+                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn)
       throws AbortedOperationException {
     return manager.executeQuery(cachename, queryStack, includeKeys, includeValues, attributeSet, sortAttributes,
-                                    aggregators, maxResults, batchSize, waitForTxn);
+                                aggregators, maxResults, batchSize, waitForTxn);
   }
 
   @Override
   public SearchQueryResults executeQuery(String cachename, List queryStack, Set<String> attributeSet,
-                                                Set<String> groupByAttributes, List<NVPair> sortAttributes,
-                                                List<NVPair> aggregators, int maxResults, int batchSize,
- boolean waitForTxn)
+                                         Set<String> groupByAttributes, List<NVPair> sortAttributes,
+                                         List<NVPair> aggregators, int maxResults, int batchSize, boolean waitForTxn)
       throws AbortedOperationException {
-    return manager.executeQuery(cachename, queryStack, attributeSet, groupByAttributes, sortAttributes,
-                                    aggregators, maxResults, batchSize, waitForTxn);
+    return manager.executeQuery(cachename, queryStack, attributeSet, groupByAttributes, sortAttributes, aggregators,
+                                maxResults, batchSize, waitForTxn);
   }
 
   @Override
