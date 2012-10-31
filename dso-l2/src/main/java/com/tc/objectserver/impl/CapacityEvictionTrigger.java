@@ -19,8 +19,9 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     
     private boolean aboveCapacity = true;
     private int count = 0;
-    private int clientSet = 0;
+    private int clientSetCount = 0;
     private final ServerMapEvictionManager mgr;
+    private ClientObjectReferenceSet clientSet;
 
     public CapacityEvictionTrigger(ServerMapEvictionManager mgr, ObjectID oid) {
         super(oid);
@@ -59,7 +60,8 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
  // didn't get the sample count we wanted.  wait for a clientobjectidset refresh, only once and try it again
         if ( count < sample ) {
             clients.addReferenceSetChangeListener(this);
-            clientSet = clients.size();
+            clientSetCount = clients.size();
+            clientSet = clients;
         }
         return samples;
     } 
@@ -69,20 +71,31 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
        mgr.doEvictionOn(new AbstractEvictionTrigger(getId()) {
             private int sampleCount = 0;
             private boolean wasOver = true;
-            private int clientSet = 0;
+            private int clientSetCount = 0;
+
+            @Override
+            public boolean startEviction(EvictableMap map) {
+                if ( map.getSize() <= map.getMaxTotalCount() ) {
+                    wasOver = false;
+                    clientSet.removeReferenceSetChangeListener(CapacityEvictionTrigger.this);
+                    return false;
+                } else {
+                    return super.startEviction(map);
+                }
+            }
 
             @Override
             public Map collectEvictonCandidates(EvictableMap map, ClientObjectReferenceSet clients) {
-                if ( map.getSize() <= map.getMaxTotalCount() ) {
-                    wasOver = false;
-                    clients.removeReferenceSetChangeListener(CapacityEvictionTrigger.this);
-                    return Collections.emptyMap();
-                }
                 final int grab = map.getSize() - map.getMaxTotalCount();
-                Map sample = map.getRandomSamples(grab, clients);
+                Map sample;
+                if ( grab > 0 ) {
+                    sample = map.getRandomSamples(grab, clients);
+                    clientSetCount = clients.size();
+                } else {
+                    sample = Collections.emptyMap();
+                }
                 sampleCount = sample.size();
-                clientSet = clients.size();
-                if ( sampleCount == grab) {
+                if ( sampleCount >= grab) {
                     clients.removeReferenceSetChangeListener(CapacityEvictionTrigger.this);
                 }
                 return sample;
