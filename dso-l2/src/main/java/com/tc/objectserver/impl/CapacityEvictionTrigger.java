@@ -118,7 +118,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
         return "CapacityEvictionTrigger{count=" 
                 + count + ", was above capacity=" 
                 + aboveCapacity + ", client set=" 
-                + clientSet + '}';
+                + clientSetCount + '}';
     }
 
 }
