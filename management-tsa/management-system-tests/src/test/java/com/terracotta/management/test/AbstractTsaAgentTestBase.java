@@ -20,9 +20,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class AbstractTsaAgentTest extends AbstractTestBase {
+public abstract class AbstractTsaAgentTestBase extends AbstractTestBase {
 
-  public AbstractTsaAgentTest(TestConfig testConfig) {
+  public AbstractTsaAgentTestBase(TestConfig testConfig) {
     super(testConfig);
 
     String war = guessWarLocation();
@@ -73,7 +73,7 @@ public abstract class AbstractTsaAgentTest extends AbstractTestBase {
   @Override
   protected String createClassPath(Class client) throws IOException {
     String expressRuntime = TestBaseUtil.jarFor(ToolkitFactory.class);
-    String clientBase = TestBaseUtil.jarFor(AbstractTsaAgentTest.class);
+    String clientBase = TestBaseUtil.jarFor(AbstractTsaAgentTestBase.class);
     String l2Mbean = TestBaseUtil.jarFor(L2MBeanNames.class);
     String jsonParser = TestBaseUtil.jarFor(JSONValue.class);
     return makeClasspath(expressRuntime, clientBase, l2Mbean, jsonParser);

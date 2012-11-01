@@ -7,7 +7,7 @@ import org.json.simple.JSONValue;
 import com.tc.config.test.schema.ConfigHelper;
 import com.tc.test.config.model.TestConfig;
 
-public class TopologyTest extends AbstractTsaAgentTest {
+public class TopologyTest extends AbstractTsaAgentTestBase {
   public TopologyTest(TestConfig testConfig) {
     super(testConfig);
 
