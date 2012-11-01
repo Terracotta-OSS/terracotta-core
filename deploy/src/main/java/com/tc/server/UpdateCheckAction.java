@@ -135,7 +135,7 @@ class UpdateCheckAction extends TimerTask {
           showMessage("Update Checker: " + propVal);
         }
 
-        propVal = props.getProperty(version + ".notice");
+        propVal = props.getProperty(version + ".notices");
         if (propVal != null && (propVal = propVal.trim()) != null && propVal.length() > 0) {
           showMessage("Update Checker: " + propVal);
         }
