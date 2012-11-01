@@ -14,8 +14,6 @@ public class TopologyTest extends AbstractTsaAgentTestBase {
     testConfig.getGroupConfig().setMemberCount(2);
 
     testConfig.getClientConfig().setClientClasses(new Class[] { TopologyTestClient.class });
-
-    timebombTest("2012-11-05");
   }
 
   public static class TopologyTestClient extends AbstractTsaClient {
