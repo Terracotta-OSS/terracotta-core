@@ -19,7 +19,7 @@ public class TestServerManager {
   private final ConfigHelper         configHelper;
   private static final boolean       DEBUG = Boolean.getBoolean("test.framework.debug");
 
-  public TestServerManager(TestConfig testConfig, File tempDir, File tcConfigFile, File javaHome) throws Exception {
+  public TestServerManager(TestConfig testConfig, File tempDir, File tcConfigFile, File javaHome, Runnable failureCallback) throws Exception {
     this.testConfig = testConfig;
     portChooser = new PortChooser();
 
@@ -31,7 +31,7 @@ public class TestServerManager {
 
     for (int groupIndex = 0; groupIndex < this.groups.length; groupIndex++) {
       this.groups[groupIndex] = new GroupServerManager(configHelper.getGroupData(groupIndex), testConfig, tempDir,
-                                                       javaHome, tcConfigFile);
+                                                       javaHome, tcConfigFile, failureCallback);
     }
   }
 

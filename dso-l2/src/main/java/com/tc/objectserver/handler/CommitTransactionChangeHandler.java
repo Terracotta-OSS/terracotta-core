@@ -9,17 +9,17 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.objectserver.context.CommitTransactionContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
+import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 
 public class CommitTransactionChangeHandler extends AbstractEventHandler {
 
   private ServerTransactionManager             transactionManager;
-  private final PersistenceTransactionProvider ptxp;
+  private final TransactionProvider ptxp;
   private TransactionalObjectManager           txnObjectManager;
 
-  public CommitTransactionChangeHandler(final PersistenceTransactionProvider ptxp) {
+  public CommitTransactionChangeHandler(final TransactionProvider ptxp) {
     this.ptxp = ptxp;
   }
 

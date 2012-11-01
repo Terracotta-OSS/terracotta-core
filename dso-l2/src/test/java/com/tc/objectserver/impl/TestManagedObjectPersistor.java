@@ -6,9 +6,8 @@ package com.tc.objectserver.impl;
 
 import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
+import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SyncObjectIdSet;
 import com.tc.util.SyncObjectIdSetImpl;
@@ -20,7 +19,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 
-public class TestManagedObjectPersistor implements ManagedObjectPersistor {
+public class TestManagedObjectPersistor {
 
   public final NoExceptionLinkedQueue loadByObjectIDCalls = new NoExceptionLinkedQueue();
   public final Map                    map;
@@ -65,15 +64,15 @@ public class TestManagedObjectPersistor implements ManagedObjectPersistor {
     return null;
   }
 
-  public void addRoot(final PersistenceTransaction tx, final String name, final ObjectID id) {
+  public void addRoot(final Transaction tx, final String name, final ObjectID id) {
     return;
   }
 
-  public void saveObject(final PersistenceTransaction tx, final ManagedObject managedObject) {
+  public void saveObject(final Transaction tx, final ManagedObject managedObject) {
     this.map.put(managedObject.getID(), managedObject);
   }
 
-  public void saveAllObjects(final PersistenceTransaction tx, final Collection managed) {
+  public void saveAllObjects(final Transaction tx, final Collection managed) {
     for (final Iterator i = managed.iterator(); i.hasNext();) {
       saveObject(tx, (ManagedObject) i.next());
     }

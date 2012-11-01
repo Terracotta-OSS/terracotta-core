@@ -19,8 +19,6 @@ public class TransactionalStagesCoordinatorImpl implements TransactionalStageCoo
 
   private Sink               lookupSink;
   private Sink               applySink;
-  private Sink               commitSink;
-  private Sink               applyCompleteSink;
   private Sink               recallSink;
 
   private final StageManager stageManager;
@@ -33,8 +31,6 @@ public class TransactionalStagesCoordinatorImpl implements TransactionalStageCoo
     this.lookupSink = stageManager.getStage(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE).getSink();
     this.recallSink = stageManager.getStage(ServerConfigurationContext.RECALL_OBJECTS_STAGE).getSink();
     this.applySink = stageManager.getStage(ServerConfigurationContext.APPLY_CHANGES_STAGE).getSink();
-    this.applyCompleteSink = stageManager.getStage(ServerConfigurationContext.APPLY_COMPLETE_STAGE).getSink();
-    this.commitSink = stageManager.getStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE).getSink();
   }
 
   public void addToApplyStage(ApplyTransactionContext context) {
@@ -43,14 +39,6 @@ public class TransactionalStagesCoordinatorImpl implements TransactionalStageCoo
 
   public void initiateLookup() {
     lookupSink.addLossy(new LookupEventContext());
-  }
-
-  public void initiateApplyComplete() {
-    applyCompleteSink.addLossy(new ApplyCompleteEventContext());
-  }
-
-  public void initiateCommit() {
-    commitSink.addLossy(new CommitTransactionContext());
   }
 
   public void initiateRecallAll() {

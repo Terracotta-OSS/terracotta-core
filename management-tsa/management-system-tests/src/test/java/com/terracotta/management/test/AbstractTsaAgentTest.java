@@ -32,6 +32,10 @@ public abstract class AbstractTsaAgentTest extends AbstractTestBase {
 
   private String guessWarLocation() {
     String m2Root = System.getProperty("user.home") + "/.m2/repository".replace('/', File.separatorChar);
+    if (System.getProperty("maven.repo.local") != null) {
+      m2Root = System.getProperty("maven.repo.local");
+      System.out.println("Found maven.repo.local defined as a system property! Using m2root=" + m2Root);
+    }
     String version = guessVersion();
 
     String agentDir = m2Root + "/org/terracotta/management-tsa-war/".replace('/', File.separatorChar) + version;

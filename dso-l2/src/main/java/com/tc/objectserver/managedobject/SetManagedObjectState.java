@@ -4,16 +4,18 @@
  */
 package com.tc.objectserver.managedobject;
 
+import org.terracotta.corestorage.KeyValueStorage;
+
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.objectserver.api.Destroyable;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.persistence.db.PersistableCollection;
-import com.tc.objectserver.persistence.db.TCDestroyable;
+import com.tc.objectserver.persistence.PersistentObjectFactory;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -25,16 +27,20 @@ import java.util.Set;
 /**
  * ManagedObjectState for sets.
  */
-public class SetManagedObjectState extends LogicalManagedObjectState implements PersistableObjectState, TCDestroyable {
-  protected Set references;
+public class SetManagedObjectState extends LogicalManagedObjectState implements Destroyable {
+  protected final KeyValueStorage<Object, Object> references;
+  private final ObjectID oid;
 
-  SetManagedObjectState(long classID, Set set) {
+  SetManagedObjectState(long classID, ObjectID oid, PersistentObjectFactory objectFactory) {
     super(classID);
-    this.references = set;
+    this.oid = oid;
+    this.references = objectFactory.getMap(oid, true);
   }
 
-  protected SetManagedObjectState(ObjectInput in) throws IOException {
+  protected SetManagedObjectState(ObjectInput in, PersistentObjectFactory objectFactory) throws IOException {
     super(in);
+    this.oid = new ObjectID(in.readLong());
+    this.references = objectFactory.getMap(oid, false);
   }
 
   public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo includeIDs) throws IOException {
@@ -51,7 +57,7 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
       case SerializationUtil.ADD:
         Object v = params[0];
         addChangeToCollector(objectID, v, includeIDs);
-        references.add(v);
+        references.put(v, true);
         break;
       case SerializationUtil.REMOVE:
         references.remove(params[0]);
@@ -78,19 +84,22 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
   }
 
   public void dehydrate(ObjectID objectID, DNAWriter writer, DNAType type) {
-    for (Iterator i = references.iterator(); i.hasNext();) {
-      Object value = i.next();
-      writer.addLogicalAction(SerializationUtil.ADD, new Object[] { value });
+    for (Object o : references.keySet()) {
+      writer.addLogicalAction(SerializationUtil.ADD, new Object[] { o });
     }
   }
 
   @Override
   protected void addAllObjectReferencesTo(Set refs) {
-    addAllObjectReferencesFromIteratorTo(this.references.iterator(), refs);
+    for (Object o : references.keySet()) {
+      if (o instanceof ObjectID) {
+        refs.add(o);
+      }
+    }
   }
 
   public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit) {
-    final int size = references.size();
+    final int size = (int) references.size();
 
     if (limit < 0) {
       limit = size;
@@ -101,7 +110,7 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
     Object[] data = new Object[limit];
 
     int index = 0;
-    for (Iterator iter = references.iterator(); iter.hasNext() && index < limit; index++) {
+    for (Iterator iter = references.keySet().iterator(); iter.hasNext() && index < limit; index++) {
       data[index] = iter.next();
     }
 
@@ -114,8 +123,7 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
 
   @Override
   protected void basicWriteTo(ObjectOutput out) throws IOException {
-    // for removing warning
-    if (false) throw new IOException();
+    out.writeLong(oid.toLong());
   }
 
   @Override
@@ -124,27 +132,8 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
     return references.equals(mo.references);
   }
 
-  public void setSet(Set set) {
-    if (this.references != null) { throw new AssertionError("The references map is already set ! " + references); }
-    this.references = set;
-  }
-
-  public PersistableCollection getPersistentCollection() {
-    return (PersistableCollection) references;
-  }
-
-  public void setPersistentCollection(PersistableCollection collection) {
-    if (this.references != null) { throw new AssertionError("The references map is already set ! " + references); }
-    this.references = (Set) collection;
-  }
-
-  static SetManagedObjectState readFrom(ObjectInput in) throws IOException, ClassNotFoundException {
-    if (false) {
-      // This is added to make the compiler happy. For some reason if I have readFrom() method throw
-      // ClassNotFoundException in LinkedHashMapManagedObjectState, it shows as an error !!
-      throw new ClassNotFoundException();
-    }
-    return new SetManagedObjectState(in);
+  static SetManagedObjectState readFrom(ObjectInput in, PersistentObjectFactory objectFactory) throws IOException {
+    return new SetManagedObjectState(in, objectFactory);
   }
 
   @Override
@@ -156,8 +145,8 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
   }
 
   public void destroy() {
-    if (this.references instanceof TCDestroyable) {
-      ((TCDestroyable) this.references).destroy();
+    if (this.references instanceof Destroyable) {
+      ((Destroyable) this.references).destroy();
     }
   }
 }

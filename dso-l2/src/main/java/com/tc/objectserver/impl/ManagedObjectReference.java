@@ -4,10 +4,12 @@
  */
 package com.tc.objectserver.impl;
 
-import com.tc.object.cache.Cacheable;
+import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 
-public interface ManagedObjectReference extends Cacheable {
+public interface ManagedObjectReference {
+
+  public ObjectID getObjectID();
 
   public void setRemoveOnRelease(boolean removeOnRelease);
 

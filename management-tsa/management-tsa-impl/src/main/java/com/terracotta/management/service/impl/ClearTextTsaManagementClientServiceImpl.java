@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.resource.AgentEntity;
-import org.terracotta.management.resource.Representable;
 
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;

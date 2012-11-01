@@ -22,13 +22,14 @@ import com.tc.objectserver.impl.ObjectManagerImpl;
 import com.tc.objectserver.managedobject.AbstractManagedObjectState;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
+import com.tc.objectserver.managedobject.ManagedObjectStateSerializer;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import gnu.trove.TLinkable;
 
+import java.io.IOException;
 import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -92,10 +93,6 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
 
   public void toDNA(final TCByteBufferOutputStream out, final ObjectStringSerializer serializer, final DNAType dnaType) {
     throw new ImplementMe();
-  }
-
-  public void setObjectStore(final ManagedObjectStore store) {
-    return;
   }
 
   public ManagedObjectFacade createFacade(final int limit) {
@@ -185,38 +182,6 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return getID();
   }
 
-  public void markAccessed() {
-    throw new ImplementMe();
-  }
-
-  public void clearAccessed() {
-    throw new ImplementMe();
-  }
-
-  public boolean recentlyAccessed() {
-    throw new ImplementMe();
-  }
-
-  public int accessCount(final int accessed) {
-    throw new ImplementMe();
-  }
-
-  public TLinkable getNext() {
-    return this.next;
-  }
-
-  public TLinkable getPrevious() {
-    return this.previous;
-  }
-
-  public void setNext(final TLinkable linkable) {
-    this.next = linkable;
-  }
-
-  public void setPrevious(final TLinkable linkable) {
-    this.previous = linkable;
-  }
-
   public ManagedObjectState getManagedObjectState() {
     return this.noReferences ? new NullNoReferencesManagedObjectState() : new NullManagedObjectState();
   }
@@ -224,14 +189,6 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
   @Override
   public String toString() {
     return "TestManagedObject[" + this.id + "]";
-  }
-
-  public boolean canEvict() {
-    return true;
-  }
-
-  public boolean isCacheManaged() {
-    return true;
   }
 
   public void addObjectReferencesTo(final ManagedObjectTraverser traverser) {
@@ -244,11 +201,18 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
   }
 
   public long getVersion() {
-    throw new ImplementMe();
+    return 0;
   }
 
   public void setIsNew(final boolean newFlag) {
     this.isNew = newFlag;
+  }
+
+  @Override
+  public void serializeTo(final ObjectOutput out, final ManagedObjectStateSerializer stateSerializer) throws IOException {
+    out.writeLong(getVersion());
+    out.writeLong(getObjectID().toLong());
+    stateSerializer.serializeTo(getManagedObjectState(), out);
   }
 
   private class NullNoReferencesManagedObjectState extends NullManagedObjectState {
@@ -296,7 +260,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     }
 
     public void writeTo(final ObjectOutput o) {
-      throw new UnsupportedOperationException();
+      // Nothing to write, it's null.
     }
 
     @Override

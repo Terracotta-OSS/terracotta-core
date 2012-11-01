@@ -195,7 +195,7 @@ public class TestClientManager {
     }
   }
 
-  private synchronized void stopAllClients() {
+  synchronized void stopAllClients() {
     if (stopped.attemptSet()) {
       for (LinkedJavaProcess client : runningClients) {
         client.destroy();

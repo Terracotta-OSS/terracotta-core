@@ -8,7 +8,7 @@ import com.tc.net.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.gtx.GlobalTransactionIDGenerator;
 import com.tc.object.tx.ServerTransactionID;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
+import com.tc.objectserver.api.Transaction;
 import com.tc.util.sequence.Sequence;
 
 import java.util.Collection;
@@ -25,12 +25,12 @@ public interface ServerGlobalTransactionManager extends GlobalTransactionIDGener
   /**
    * Commits the state of the transaciton.
    */
-  public void commit(PersistenceTransaction persistenceTransaction, ServerTransactionID stxID);
+  public void commit(Transaction persistenceTransaction, ServerTransactionID stxID);
 
   /**
    * Commits all the state of the all the transacitons.
    */
-  public void commitAll(PersistenceTransaction persistenceTransaction, Collection gtxIDs);
+  public void commitAll(Transaction persistenceTransaction, Collection gtxIDs);
 
   /**
    * Notifies the transaction manager that the ServerTransactionIDs in the given collection are no longer active (i.e.,

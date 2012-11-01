@@ -4,7 +4,7 @@
 package com.tc.util;
 
 import com.tc.object.ObjectID;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
+import com.tc.objectserver.api.Transaction;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -37,7 +37,7 @@ public class OidBitsArrayMapImpl implements OidBitsArrayMap {
     return map.get(oidIndex(oid));
   }
 
-  private OidLongArray getOrLoadBitsArray(long oid, PersistenceTransaction tx) {
+  private OidLongArray getOrLoadBitsArray(long oid, Transaction tx) {
     Long mapIndex = oidIndex(oid);
     OidLongArray longAry;
     longAry = map.get(mapIndex);
@@ -46,7 +46,7 @@ public class OidBitsArrayMapImpl implements OidBitsArrayMap {
     return longAry;
   }
 
-  protected OidLongArray loadArray(long oid, int lPerDiskUnit, long mapIndex, PersistenceTransaction tx) {
+  protected OidLongArray loadArray(long oid, int lPerDiskUnit, long mapIndex, Transaction tx) {
     return new OidLongArray(lPerDiskUnit, mapIndex);
   }
 
@@ -54,7 +54,7 @@ public class OidBitsArrayMapImpl implements OidBitsArrayMap {
     return (int) (Math.abs(oid) % bitsLength);
   }
 
-  private OidLongArray getAndModify(long oid, boolean doSet, PersistenceTransaction tx) {
+  private OidLongArray getAndModify(long oid, boolean doSet, Transaction tx) {
     OidLongArray longAry = getOrLoadBitsArray(oid, tx);
     int oidInArray = arrayOffset(oid);
     if (doSet) {
@@ -65,11 +65,11 @@ public class OidBitsArrayMapImpl implements OidBitsArrayMap {
     return (longAry);
   }
 
-  public OidLongArray getAndSet(ObjectID id, PersistenceTransaction tx) {
+  public OidLongArray getAndSet(ObjectID id, Transaction tx) {
     return (getAndModify(id.toLong(), true, tx));
   }
 
-  public OidLongArray getAndClr(ObjectID id, PersistenceTransaction tx) {
+  public OidLongArray getAndClr(ObjectID id, Transaction tx) {
     return (getAndModify(id.toLong(), false, tx));
   }
 

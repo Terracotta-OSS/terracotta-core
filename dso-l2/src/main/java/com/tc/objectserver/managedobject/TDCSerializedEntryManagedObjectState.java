@@ -113,7 +113,7 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     }
   }
 
-  private String getString(Object param) {
+  private static String getString(Object param) {
     if (param instanceof UTF8ByteDataHolder) {
       return ((UTF8ByteDataHolder) param).asString();
     } else if (param instanceof String) {
@@ -218,7 +218,13 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     final int length = in.readInt();
     if (length >= 0) {
       final byte[] data = new byte[length];
-      in.read(data, 0, length);
+      for (int pos = 0; pos < length;) {
+        int read = in.read(data, pos, length - pos);
+        if (read == -1) {
+          break;
+        }
+        pos += read;
+      }
       this.value = data;
     }
   }
@@ -232,5 +238,15 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     result = prime * result + lastAccessedTime;
     result = prime * result + Arrays.hashCode(value);
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "TDCSerializedEntryManagedObjectState{" +
+           "classID=" + classID +
+           ", value=" + Arrays.toString(value) +
+           ", createTime=" + createTime +
+           ", lastAccessedTime=" + lastAccessedTime +
+           '}';
   }
 }

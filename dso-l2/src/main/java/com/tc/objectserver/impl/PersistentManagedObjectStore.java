@@ -7,13 +7,12 @@ package com.tc.objectserver.impl;
 import com.tc.async.api.Sink;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ShutdownError;
+import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
-import com.tc.objectserver.persistence.api.ManagedObjectStore;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
+import com.tc.objectserver.managedobject.ManagedObjectImpl;
+import com.tc.objectserver.persistence.ManagedObjectPersistor;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
@@ -21,7 +20,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 
-public class PersistentManagedObjectStore implements ManagedObjectStore {
+public class PersistentManagedObjectStore {
 
   private final ManagedObjectPersistor objectPersistor;
   private final Sink                   gcDisposerSink;
@@ -36,20 +35,7 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
     return this.objectPersistor.getObjectCount();
   }
 
-  public long nextObjectIDBatch(final int batchSize) {
-    final long rv = this.objectPersistor.nextObjectIDBatch(batchSize);
-    return rv;
-  }
-
-  public long currentObjectIDValue() {
-    return this.objectPersistor.currentObjectIDValue();
-  }
-
-  public void setNextAvailableObjectID(final long startID) {
-    this.objectPersistor.setNextAvailableObjectID(startID);
-  }
-
-  public void addNewRoot(final PersistenceTransaction tx, final String rootName, final ObjectID id) {
+  public void addNewRoot(final Transaction tx, final String rootName, final ObjectID id) {
     this.objectPersistor.addRoot(tx, rootName, id);
   }
 
@@ -74,18 +60,16 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
     return this.objectPersistor.containsObject(id);
   }
 
-  public void addNewObject(final ManagedObject managed) {
-    assertNotInShutdown();
-    final boolean result = this.objectPersistor.addNewObject(managed);
-    Assert.eval(result);
+  public ManagedObject createObject(final ObjectID id) {
+    return new ManagedObjectImpl(id, objectPersistor);
   }
 
-  public void commitObject(final PersistenceTransaction tx, final ManagedObject managed) {
+  public void commitObject(final Transaction tx, final ManagedObject managed) {
     assertNotInShutdown();
     this.objectPersistor.saveObject(tx, managed);
   }
 
-  public void commitAllObjects(final PersistenceTransaction tx, final Collection managed) {
+  public void commitAllObjects(final Transaction tx, final Collection managed) {
     assertNotInShutdown();
     this.objectPersistor.saveAllObjects(tx, managed);
   }
@@ -102,7 +86,7 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
     assertNotInShutdown();
     // NOTE:: Calling removeAllObjectIDs to remove the object IDs in-line so that the next DGC cycle doesn't pick up
     // the same GCed object IDs again if the delete stage is falling behind.
-    this.objectPersistor.removeAllObjectIDs(dgcResultContext.getGarbageIDs());
+    this.objectPersistor.deleteAllObjects(dgcResultContext.getGarbageIDs());
     this.gcDisposerSink.add(dgcResultContext);
   }
 
@@ -118,7 +102,8 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
 
   public ObjectIDSet getAllMapTypeObjectIDs() {
     assertNotInShutdown();
-    return this.objectPersistor.snapshotMapTypeObjectIDs();
+    throw new UnsupportedOperationException();
+//    return this.objectPersistor.snapshotObjectIDs();
   }
 
   public ManagedObject getObjectByID(final ObjectID id) {

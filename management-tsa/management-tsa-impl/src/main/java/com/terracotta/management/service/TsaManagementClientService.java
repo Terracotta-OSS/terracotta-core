@@ -5,7 +5,6 @@ package com.terracotta.management.service;
 
 import net.sf.ehcache.management.service.impl.DfltSamplerRepositoryServiceMBean;
 import org.terracotta.management.ServiceExecutionException;
-import org.terracotta.management.resource.Representable;
 
 import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.StatisticsEntity;

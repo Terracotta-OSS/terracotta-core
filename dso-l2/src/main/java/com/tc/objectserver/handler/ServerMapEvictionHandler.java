@@ -20,9 +20,7 @@ public class ServerMapEvictionHandler extends AbstractEventHandler implements Ev
   @Override
   public void handleEvent(final EventContext context) {
     final ServerMapEvictionContext smec = (ServerMapEvictionContext) context;
-    this.serverMapEvictor.evict(smec.getOid(), smec.getRandomSamples(), smec.getTargetMaxTotalCount(),
-                                smec.getTTISeconds(), smec.getTTLSeconds(), smec.getOvershoot(), smec.getClassName(),
-                                smec.getCacheName());
+    this.serverMapEvictor.evict(smec.getOid(), smec.getRandomSamples(), smec.getClassName(), smec.getCacheName());
   }
 
 }

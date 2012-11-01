@@ -45,7 +45,7 @@
       <artifactId>ehcache-core</artifactId>
       <version>${ehcache.version}</version>
       <scope>provided</scope>
-    </dependency>  
+    </dependency>
   </dependencies>
 
   <reporting>

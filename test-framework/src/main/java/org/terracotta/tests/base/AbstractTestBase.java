@@ -12,6 +12,7 @@ import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.logging.TCLogging;
 import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;
+import com.tc.test.config.model.PersistenceMode;
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.jmx.TestHandler;
 import com.tc.test.jmx.TestHandlerMBean;
@@ -52,6 +53,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   private TestClientManager           clientRunner;
   protected TestJMXServerManager      jmxServerManager;
   private Thread                      duringRunningClusterThread;
+  private volatile Thread             testExecutionThread;
   private static final String         log4jPrefix          = "log4j.logger.";
   private final Map<String, LogLevel> tcLoggingConfigs     = new HashMap<String, LogLevel>();
 
@@ -86,6 +88,20 @@ public abstract class AbstractTestBase extends TCTestCase {
   @Override
   @Before
   public void setUp() throws Exception {
+    if (System.getProperty("com.tc.productkey.path") != null) {
+      if (!testConfig.getL2Config().isOffHeapEnabled()) {
+        System.out.println("============= Offheap is turned off, switching it off to avoid OOMEs! ==============");
+        testConfig.getL2Config().setOffHeapEnabled(true);
+        testConfig.getL2Config().setDirectMemorySize(1024);
+        testConfig.getL2Config().setMaxOffHeapDataSize(512);
+      }
+    } else {
+      if (testConfig.getL2Config().getPersistenceMode() == PersistenceMode.PERMANENT_STORE) {
+        System.out.println("============== Disabling opensource persistent mode tests ===============");
+        disableTest();
+      }
+    }
+
     tcTestCaseSetup();
 
     if (testWillRun) {
@@ -95,7 +111,7 @@ public abstract class AbstractTestBase extends TCTestCase {
         setJavaHome();
         clientRunner = new TestClientManager(tempDir, this, this.testConfig);
         if (!testConfig.isStandAloneTest()) {
-          testServerManager = new TestServerManager(this.testConfig, this.tempDir, this.tcConfigFile, this.javaHome);
+          testServerManager = new TestServerManager(this.testConfig, this.tempDir, this.tcConfigFile, this.javaHome, new FailTestCallback());
           startServers();
         }
         TestHandlerMBean testHandlerMBean = new TestHandler(testServerManager, testConfig);
@@ -131,15 +147,33 @@ public abstract class AbstractTestBase extends TCTestCase {
   final public void runTest() throws Throwable {
     if (!testWillRun) return;
 
-    Throwable testException = null;
-    try {
-      startClients();
-      postClientVerification();
-    } catch (Throwable t) {
-      testException = t;
-    }
+    final AtomicReference<Throwable> testException = new AtomicReference<Throwable>();
+    testExecutionThread = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          startClients();
+          postClientVerification();
+        } catch (Throwable throwable) {
+          testException.set(throwable);
+        }
+      }
+    }, "Test execution thread");
+    testExecutionThread.setDaemon(true);
+    testExecutionThread.start();
+    testExecutionThread.join();
 
-    tcTestCaseTearDown(testException);
+    tcTestCaseTearDown(testException.get());
+  }
+
+  private class FailTestCallback implements Runnable {
+    @Override
+    public void run() {
+      if (testExecutionThread != null) {
+        doDumpServerDetails();
+        testExecutionThread.interrupt();
+      }
+    }
   }
 
   /**
@@ -403,5 +437,4 @@ public abstract class AbstractTestBase extends TCTestCase {
   protected void stopClient(final int index) {
     this.clientRunner.stopClient(index);
   }
-
 }

@@ -6,6 +6,7 @@ package com.tc.objectserver.dgc.api;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GarbageCollectionManager;
+import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.core.impl.GCTestObjectManager;
 import com.tc.objectserver.core.impl.GarbageCollectionID;
 import com.tc.objectserver.core.impl.TestManagedObject;
@@ -13,12 +14,11 @@ import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
 import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
 import com.tc.objectserver.dgc.impl.MarkAndSweepGarbageCollector;
+import com.tc.objectserver.impl.NullTransactionProvider;
 import com.tc.objectserver.impl.ObjectManagerConfig;
 import com.tc.objectserver.impl.TestGarbageCollectionManager;
 import com.tc.objectserver.l1.api.TestClientStateManager;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
-import com.tc.objectserver.persistence.inmemory.NullPersistenceTransactionProvider;
-import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.sequence.DGCSequenceProvider;
@@ -38,7 +38,7 @@ public class GCStatsEventPublisherTest extends TestCase {
   protected Set                            lookedUp;
   protected Set                            released;
   protected GCTestObjectManager            objectManager;
-  protected PersistenceTransactionProvider transactionProvider = new NullPersistenceTransactionProvider();
+  protected TransactionProvider transactionProvider = new NullTransactionProvider();
   protected GarbageCollectionManager       garbageCollectionManager;
 
   public GCStatsEventPublisherTest(String arg0) {

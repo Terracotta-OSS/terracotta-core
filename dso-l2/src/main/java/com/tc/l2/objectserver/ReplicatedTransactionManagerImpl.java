@@ -31,7 +31,6 @@ import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

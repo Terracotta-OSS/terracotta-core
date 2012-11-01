@@ -4,6 +4,10 @@
  */
 package com.tc.objectserver.managedobject;
 
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.StorageManager;
+import org.terracotta.corestorage.heap.HeapStorageManager;
+
 import com.tc.io.serializer.TCObjectInputStream;
 import com.tc.io.serializer.TCObjectOutputStream;
 import com.tc.object.ObjectID;
@@ -14,10 +18,12 @@ import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
-import com.tc.objectserver.persistence.inmemory.InMemoryPersistor;
+import com.tc.objectserver.persistence.Persistor;
+import com.tc.objectserver.persistence.StorageManagerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.Map;
 
 import junit.framework.TestCase;
 
@@ -28,13 +34,20 @@ public class ManagedObjectSerializerTest extends TestCase {
 
   public void test() throws Exception {
     ManagedObjectStateFactory.disableSingleton(true);
-    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), new InMemoryPersistor());
+    Persistor persistor = new Persistor(new StorageManagerFactory() {
 
+          @Override
+          public StorageManager createStorageManager(Map<String, KeyValueStorageConfig<?, ?>> configMap) {
+              return new HeapStorageManager(configMap);
+          }
+      });
+    
+    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), persistor);
     this.stateSerializer = new ManagedObjectStateSerializer();
     this.id = new ObjectID(1);
 
-    final ManagedObjectSerializer mos = new ManagedObjectSerializer(this.stateSerializer);
-    final ManagedObjectImpl mo = new ManagedObjectImpl(this.id);
+    final ManagedObjectSerializer mos = new ManagedObjectSerializer(this.stateSerializer, persistor.getManagedObjectPersistor());
+    final ManagedObjectImpl mo = new ManagedObjectImpl(this.id, persistor.getManagedObjectPersistor());
     assertTrue(mo.isDirty());
     assertTrue(mo.isNew());
     final TestDNA dna = newDNA(1);

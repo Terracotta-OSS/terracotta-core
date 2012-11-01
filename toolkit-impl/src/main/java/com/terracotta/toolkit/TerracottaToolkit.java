@@ -4,7 +4,6 @@
 package com.terracotta.toolkit;
 
 import net.sf.ehcache.CacheManager;
-
 import org.terracotta.toolkit.cache.ToolkitCache;
 import org.terracotta.toolkit.cache.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.cluster.ClusterInfo;

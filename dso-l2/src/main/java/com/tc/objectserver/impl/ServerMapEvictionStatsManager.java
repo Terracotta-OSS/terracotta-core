@@ -57,7 +57,8 @@ public class ServerMapEvictionStatsManager {
     totalSamplesRequested.addAndGet(samplesSize);
   }
 
-  public void entriesEvicted(ObjectID oid, int overshoot, int samplesSize, int numEvictedEntries) {
+  public void entriesEvicted(ObjectID oid, int samplesSize, int numEvictedEntries) {
+    log(oid + " sampled:" + samplesSize + " evicted:" + numEvictedEntries);
     segmentsWithEvictionCount.incrementAndGet();
     evictedEntriesCount.addAndGet(numEvictedEntries);
   }

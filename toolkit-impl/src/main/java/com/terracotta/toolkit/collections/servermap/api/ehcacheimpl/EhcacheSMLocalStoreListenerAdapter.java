@@ -18,30 +18,37 @@ public class EhcacheSMLocalStoreListenerAdapter implements CacheEventListener {
     this.serverMapListener = serverMapListener;
   }
 
+  @Override
   public void notifyElementEvicted(Ehcache cache, Element element) {
     serverMapListener.notifyElementEvicted(element.getObjectKey(), element.getObjectValue());
   }
 
+  @Override
   public void notifyElementExpired(Ehcache cache, Element element) {
-    serverMapListener.notifyElementExpired(element.getObjectKey(), element.getObjectValue());
+    // no-op
   }
 
+  @Override
   public void notifyElementRemoved(Ehcache cache, Element element) throws CacheException {
     // no-op
   }
 
+  @Override
   public void notifyElementPut(Ehcache cache, Element element) throws CacheException {
     // no-op
   }
 
+  @Override
   public void notifyElementUpdated(Ehcache cache, Element element) throws CacheException {
     // no-op
   }
 
+  @Override
   public void notifyRemoveAll(Ehcache cache) {
     // no-op
   }
 
+  @Override
   public void dispose() {
     // no-op
   }

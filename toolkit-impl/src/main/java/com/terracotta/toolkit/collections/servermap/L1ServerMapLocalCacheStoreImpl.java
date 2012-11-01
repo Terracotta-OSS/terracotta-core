@@ -11,7 +11,6 @@ import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreFullE
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreListener;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class L1ServerMapLocalCacheStoreImpl<K, V> implements L1ServerMapLocalCacheStore<K, V> {
@@ -69,20 +68,6 @@ public class L1ServerMapLocalCacheStoreImpl<K, V> implements L1ServerMapLocalCac
     public void notifyElementEvicted(K key, V value) {
       for (L1ServerMapLocalCacheStoreListener<K, V> l : listeners) {
         l.notifyElementEvicted(key, value);
-      }
-    }
-
-    @Override
-    public void notifyElementsEvicted(Map<K, V> evictedElements) {
-      for (L1ServerMapLocalCacheStoreListener<K, V> l : listeners) {
-        l.notifyElementsEvicted(evictedElements);
-      }
-    }
-
-    @Override
-    public void notifyElementExpired(K key, V value) {
-      for (L1ServerMapLocalCacheStoreListener<K, V> l : listeners) {
-        l.notifyElementExpired(key, value);
       }
     }
   }

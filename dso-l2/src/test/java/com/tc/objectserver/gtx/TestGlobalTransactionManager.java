@@ -8,7 +8,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.net.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
+import com.tc.objectserver.api.Transaction;
 import com.tc.util.sequence.Sequence;
 
 import java.util.Collection;
@@ -25,7 +25,7 @@ public final class TestGlobalTransactionManager implements ServerGlobalTransacti
     return !commitedSIDs.contains(stxID);
   }
 
-  public void commit(PersistenceTransaction persistenceTransaction, ServerTransactionID stxID) {
+  public void commit(Transaction persistenceTransaction, ServerTransactionID stxID) {
     commitedSIDs.add(stxID);
   }
 
@@ -41,7 +41,7 @@ public final class TestGlobalTransactionManager implements ServerGlobalTransacti
     return;
   }
 
-  public void commitAll(PersistenceTransaction persistenceTransaction, Collection stxIDs) {
+  public void commitAll(Transaction persistenceTransaction, Collection stxIDs) {
     for (Iterator iter = stxIDs.iterator(); iter.hasNext();) {
       commit(persistenceTransaction, (ServerTransactionID) iter.next());
     }

@@ -7,9 +7,12 @@ package com.tc.objectserver.managedobject;
 import com.tc.invalidation.Invalidations;
 import com.tc.object.ObjectID;
 import com.tc.object.tx.ServerTransactionID;
+import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,6 +29,8 @@ public class ApplyTransactionInfo {
   private Set<ObjectID>             ignoreBroadcasts   = Collections.EMPTY_SET;
   private Set<ObjectID>             initiateEviction   = Collections.EMPTY_SET;
   private SortedSet<ObjectID>       deleteObjects      = TCCollections.EMPTY_SORTED_SET;
+  // TODO: This is probably not the place to pass releaseable objects...
+  private Collection<ManagedObject> objectsToRelease = Collections.EMPTY_SET;
   private Invalidations             invalidate         = null;
   private final boolean             isSearchEnabled;
   private final ObjectIDSet         keyPresentForValue = new ObjectIDSet();
@@ -182,5 +187,17 @@ public class ApplyTransactionInfo {
 
   public boolean isSearchEnabled() {
     return isSearchEnabled;
+  }
+
+  public void addObjectsToBeReleased(Collection<ManagedObject> objects) {
+    if (objectsToRelease == Collections.EMPTY_SET) {
+      objectsToRelease = new ArrayList<ManagedObject>(objects);
+    } else {
+      objectsToRelease.addAll(objects);
+    }
+  }
+
+  public Collection<ManagedObject> getObjectsToRelease() {
+    return objectsToRelease;
   }
 }

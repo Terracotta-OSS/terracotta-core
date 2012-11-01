@@ -15,6 +15,7 @@ import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
+import com.tc.objectserver.persistence.PersistentObjectFactory;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 
@@ -27,7 +28,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
@@ -75,8 +75,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   private boolean        compressionEnabled;
   private boolean        copyOnReadEnabled;
 
-  protected ConcurrentDistributedServerMapManagedObjectState(final ObjectInput in) throws IOException {
-    super(in);
+  protected ConcurrentDistributedServerMapManagedObjectState(final ObjectInput in, PersistentObjectFactory factory) throws IOException {
+    super(in, factory);
     this.dsoLockType = in.readInt();
     this.maxTTISeconds = in.readInt();
     this.maxTTLSeconds = in.readInt();
@@ -88,8 +88,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     this.copyOnReadEnabled = in.readBoolean();
   }
 
-  protected ConcurrentDistributedServerMapManagedObjectState(final long classId, final Map map) {
-    super(classId, map);
+  protected ConcurrentDistributedServerMapManagedObjectState(final long classId, ObjectID id, PersistentObjectFactory factory) {
+    super(classId, id, factory);
   }
 
   @Override
@@ -107,7 +107,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     if (type == DNAType.L2_SYNC) {
       // Write entire state info
       dehydrateFields(objectID, writer);
-      super.dehydrate(objectID, writer, type);
+    super.dehydrate(objectID, writer, type);
     } else if (type == DNAType.L1_FAULT) {
       // Don't fault the references
       dehydrateFields(objectID, writer);
@@ -229,10 +229,10 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         super.applyMethod(objectID, applyInfo, method, params);
     }
     if (applyInfo.isActiveTxn() && method == SerializationUtil.PUT && this.targetMaxTotalCount > 0
-        && this.evictionStatus == EvictionStatus.NOT_INITIATED
         && this.references.size() > this.targetMaxTotalCount * (1D + (OVERSHOOT / 100D))) {
-      this.evictionStatus = EvictionStatus.INITIATED;
-      applyInfo.initiateEvictionFor(objectID);
+        if ( startEviction() ) {
+          applyInfo.initiateEvictionFor(objectID);
+        }
     }
   }
 
@@ -346,9 +346,9 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
            && this.compressionEnabled == mmo.compressionEnabled && this.copyOnReadEnabled == mmo.copyOnReadEnabled;
   }
 
-  static MapManagedObjectState readFrom(final ObjectInput in) throws IOException {
+  static MapManagedObjectState readFrom(final ObjectInput in, PersistentObjectFactory factory) throws IOException {
     final ConcurrentDistributedServerMapManagedObjectState cdmMos = new ConcurrentDistributedServerMapManagedObjectState(
-                                                                                                                         in);
+                                                                                                                         in, factory);
     return cdmMos;
   }
 
@@ -363,7 +363,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
 
   @Override
   public int getSize() {
-    return this.references.size();
+    return (int)this.references.size();
   }
 
   public Set getAllKeys() {
@@ -379,7 +379,20 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   public int getTTLSeconds() {
     return this.maxTTLSeconds;
   }
-
+ //  locked by ManagedObject checkout 
+  @Override
+  public boolean startEviction() {
+    if ( this.evictionStatus != EvictionStatus.NOT_INITIATED ) {
+        return false;
+    }
+    this.evictionStatus = EvictionStatus.INITIATED;
+    return true;
+  }    
+  
+  public boolean isEvicting() {
+      return this.evictionStatus != EvictionStatus.NOT_INITIATED;
+  }
+ //  locked by ManagedObject checkout 
   @Override
   public void evictionCompleted() {
     this.evictionStatus = EvictionStatus.NOT_INITIATED;
@@ -389,33 +402,37 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   // right samples, also should it return a sorted Map ? Are objects with lower OIDs having more changes to be evicted ?
   @Override
   public Map getRandomSamples(final int count, final ClientObjectReferenceSet serverMapEvictionClientObjectRefSet) {
-    if (evictionStatus == EvictionStatus.SAMPLED) {
-      // There is already a random sample that is yet to be processed, so returning empty collection. This can happen if
-      // both period and capacity Evictors are working at the same object one after the other.
-      return Collections.EMPTY_MAP;
-    }
-    this.evictionStatus = EvictionStatus.SAMPLED;
+      if ( this.evictionStatus != EvictionStatus.INITIATED ) {
+          throw new AssertionError("not evicting");
+      } else {
+ //     it's locked.  go for it
+        this.evictionStatus = EvictionStatus.SAMPLED;
+      }
     final Map samples = new HashMap(count);
-    final Map ignored = new HashMap(count);
+    final Set<Object> ignored = new HashSet<Object>(count);
     final Random r = new Random();
     final int size = getSize();
     final int chance = count > size ? 100 : Math.max(10, (count / size) * 100);
-    for (final Iterator i = this.references.entrySet().iterator(); samples.size() < count && i.hasNext();) {
-      final Entry e = (Entry) i.next();
-      Object value = e.getValue();
-      if (serverMapEvictionClientObjectRefSet.contains(value)) {
-        continue;
-      }
+    for (final Iterator<Object> i = this.references.keySet().iterator(); samples.size() < count && i.hasNext();) {
+      final Object k = i.next();
       if (r.nextInt(100) < chance) {
-        samples.put(e.getKey(), value);
+        Object value = references.get(k);
+        if (serverMapEvictionClientObjectRefSet.contains(value)) {
+          continue;
+        }
+        samples.put(k, value);
       } else {
-        ignored.put(e.getKey(), value);
+        ignored.add(k);
       }
     }
     if (samples.size() < count) {
-      for (final Iterator i = ignored.entrySet().iterator(); samples.size() < count && i.hasNext();) {
-        final Entry e = (Entry) i.next();
-        samples.put(e.getKey(), e.getValue());
+      for (final Iterator<Object> i = ignored.iterator(); samples.size() < count && i.hasNext();) {
+        final Object k = i.next();
+        final Object v = references.get(k);
+        if (serverMapEvictionClientObjectRefSet.contains(v)) {
+          continue;
+        }
+        samples.put(k, v);
       }
     }
     return samples;
@@ -431,7 +448,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     final int prime = 31;
     int result = super.hashCode();
     result = prime * result + ((cacheName == null) ? 0 : cacheName.hashCode());
-    result = prime * result + ((evictionStatus == null) ? 0 : evictionStatus.hashCode());
+//    result = prime * result + ((evictionStatus == null) ? 0 : evictionStatus.hashCode());
     result = prime * result + (invalidateOnChange ? 1231 : 1237);
     result = prime * result + (localCacheEnabled ? 1231 : 1237);
     result = prime * result + maxTTISeconds;

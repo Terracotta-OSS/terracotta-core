@@ -5,6 +5,9 @@
 
 package com.tc.net.groups;
 
+import org.terracotta.corestorage.KeyValueStorage;
+import org.terracotta.corestorage.heap.HeapKeyValueStorage;
+
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.ConfigurationContextImpl;
@@ -33,8 +36,11 @@ import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
+import com.tc.objectserver.managedobject.ManagedObjectStateStaticConfig;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
-import com.tc.objectserver.persistence.inmemory.InMemoryPersistor;
+import com.tc.objectserver.persistence.ManagedObjectPersistor;
+import com.tc.objectserver.persistence.ObjectIDSetMaintainer;
+import com.tc.objectserver.persistence.PersistentObjectFactory;
 import com.tc.test.TCTestCase;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.PortChooser;
@@ -42,23 +48,28 @@ import com.tc.util.TCCollections;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.sequence.MutableSequence;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.mockito.Mockito.mock;
+
 public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
   private final static String LOCALHOST   = "localhost";
   private static final long   millionOids = 1024 * 1024;
 
-  public TCGroupSendLargeObjectSyncMessageTest() {
-    //
+  private ManagedObjectPersistor managedObjectPersistor;
+
+  public void setUp() {
+    managedObjectPersistor = new ManagedObjectPersistor(mock(KeyValueStorage.class), new StubKeyValueStorage<Long, byte[]>() , mock(MutableSequence.class), mock(ObjectIDSetMaintainer.class));
+    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), mock(PersistentObjectFactory.class));
   }
 
   public void baseTestSendingReceivingMessagesStatic(final long oidsCount) throws Exception {
     System.out.println("Test with ObjectIDs size " + oidsCount);
-    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), new InMemoryPersistor());
     final PortChooser pc = new PortChooser();
     final int p1 = pc.chooseRandom2Port();
     final int p2 = pc.chooseRandom2Port();
@@ -120,9 +131,10 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
     for (long i = 0; i < oidsCount; ++i) {
       ObjectID oid = new ObjectID(i);
       oidSet.add(oid);
-      final ManagedObject m = new ManagedObjectImpl(oid);
-      m.apply(new TestDNA(new TestDNACursor()), new TransactionID(i), new ApplyTransactionInfo(),
-              new NullObjectInstanceMonitor(), true);
+      final ManagedObject m = new ManagedObjectImpl(oid, managedObjectPersistor);
+      m.apply(new TestDNA(new TestDNACursor(), ManagedObjectStateStaticConfig.SERIALIZED_MAP_VALUE
+          .getClientClassName()), new TransactionID(i), new ApplyTransactionInfo(),
+          new NullObjectInstanceMonitor(), true);
       m.toDNA(out, objectStringSerializer, DNAType.L2_SYNC);
     }
     managedObjectSyncContext.setDehydratedBytes(oidSet, TCCollections.EMPTY_OBJECT_ID_SET, out.toArray(),
@@ -166,6 +178,13 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
 
     public GroupMessage take() {
       return (GroupMessage) this.queue.take();
+    }
+  }
+
+  private static class StubKeyValueStorage<K, V> extends HeapKeyValueStorage<K, V> {
+    @Override
+    public void put(final K key, final V value, byte metadata) {
+      // Ignore it
     }
   }
 }

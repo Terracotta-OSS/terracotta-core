@@ -49,12 +49,10 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
-import com.tc.objectserver.persistence.api.ManagedObjectStore;
+import com.tc.objectserver.persistence.StorageManagerFactory;
 import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.IndexManager;
 import com.tc.objectserver.search.SearchRequestManager;
-import com.tc.objectserver.storage.api.DBEnvironment;
-import com.tc.objectserver.storage.api.DBFactory;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchManagerImpl;
 import com.tc.objectserver.tx.TransactionFilter;
@@ -66,9 +64,9 @@ import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
-import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.StartupLock;
 import com.tc.util.sequence.DGCSequenceProvider;
+import com.tc.util.sequence.ObjectIDSequence;
 import com.tc.util.sequence.SequenceGenerator;
 
 import java.io.File;
@@ -130,7 +128,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
   ServerConfigurationContext createServerConfigurationContext(StageManager stageManager, ObjectManager objMgr,
                                                               ObjectRequestManager objRequestMgr,
                                                               ServerMapRequestManager serverTCMapRequestManager,
-                                                              ManagedObjectStore objStore, LockManager lockMgr,
+                                                              PersistentManagedObjectStore objStore, LockManager lockMgr,
                                                               DSOChannelManager channelManager,
                                                               ClientStateManager clientStateMgr,
                                                               ServerTransactionManager txnMgr,
@@ -166,7 +164,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                       L2ConfigurationSetupManager configurationSetupManager, MessageRecycler recycler,
                                       StripeIDStateManager stripeStateManager,
                                       ServerTransactionFactory serverTransactionFactory,
-                                      DGCSequenceProvider dgcSequenceProvider, SequenceGenerator indexSequenceGenerator);
+                                      DGCSequenceProvider dgcSequenceProvider, SequenceGenerator indexSequenceGenerator, ObjectIDSequence objectIDSequence);
 
   L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean, LockStatisticsMonitor lockStatisticsMBean,
                                   StatisticsAgentSubSystemImpl statisticsAgentSubSystem,
@@ -180,11 +178,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                  TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider,
                                  MBeanServer l2MbeanServer);
 
-  DBEnvironment createDBEnvironment(final boolean persistent, final File dbhome, final L2DSOConfig l2DSOCofig,
-                                    DumpHandlerStore dumpHandlerStore, final StageManager stageManager,
-                                    SampledCounter l2FaultFromDisk, SampledCounter l2FaultFromOffheap,
-                                    SampledCounter l2FlushFromOffheap, DBFactory factory, boolean offheapEnabled)
-      throws IOException;
+  StorageManagerFactory createStorageManagerFactory(final boolean persistent, final File dbhome, final L2DSOConfig l2DSOConfig, boolean offheapEnabled);
 
   LongGCLogger createLongGCLogger(long gcTimeOut);
 

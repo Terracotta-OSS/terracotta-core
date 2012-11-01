@@ -15,8 +15,8 @@ import com.tc.objectserver.context.ManagedObjectFaultingContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.impl.PersistentManagedObjectStore;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
-import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -32,7 +32,7 @@ public class ManagedObjectFaultHandler extends AbstractEventHandler {
                                                                      TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED);
 
   private ObjectManager             objectManager;
-  private ManagedObjectStore        objectStore;
+  private PersistentManagedObjectStore        objectStore;
   private final ObjectStatsRecorder objectStatsRecorder;
   // TODO::Remove this counter, its not needed if you remove the logging @see below
   private final AtomicLong          faultsCounter;

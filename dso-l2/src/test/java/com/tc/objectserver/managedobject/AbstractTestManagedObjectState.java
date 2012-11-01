@@ -4,6 +4,10 @@
  */
 package com.tc.objectserver.managedobject;
 
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.StorageManager;
+import org.terracotta.corestorage.heap.HeapStorageManager;
+
 import com.tc.io.serializer.TCObjectInputStream;
 import com.tc.io.serializer.TCObjectOutputStream;
 import com.tc.object.ObjectID;
@@ -11,14 +15,12 @@ import com.tc.object.TestDNACursor;
 import com.tc.object.TestDNAWriter;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.core.api.ManagedObjectState;
-import com.tc.objectserver.persistence.inmemory.InMemoryPersistor;
+import com.tc.objectserver.persistence.Persistor;
+import com.tc.objectserver.persistence.StorageManagerFactory;
 import com.tc.util.Assert;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.TestCase;
@@ -32,7 +34,14 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
     super.setUp();
     this.listenerProvider = new NullManagedObjectChangeListenerProvider();
     ManagedObjectStateFactory.disableSingleton(true);
-    ManagedObjectStateFactory.createInstance(this.listenerProvider, new InMemoryPersistor());
+    Persistor persistor = new Persistor(new StorageManagerFactory() {
+
+          @Override
+          public StorageManager createStorageManager(Map<String, KeyValueStorageConfig<?, ?>> configMap) {
+              return new HeapStorageManager(configMap);
+          }
+      });
+    ManagedObjectStateFactory.createInstance(this.listenerProvider, persistor);
     this.objectID = new ObjectID(2000);
   }
 
@@ -44,14 +53,14 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
     this.listenerProvider = null;
   }
 
-  protected ManagedObjectState createManagedObjectState(final String className, final TestDNACursor cursor)
-      throws Exception {
-    return createManagedObjectState(className, cursor, ObjectID.NULL_ID);
+  protected ManagedObjectState createManagedObjectState(final String className, final TestDNACursor cursor,
+                                                        final ObjectID id) throws Exception {
+    return createManagedObjectState(className, cursor, ObjectID.NULL_ID, id);
   }
 
   protected ManagedObjectState createManagedObjectState(final String className, final TestDNACursor cursor,
-                                                        final ObjectID parentID) throws Exception {
-    final ManagedObjectState state = ManagedObjectStateFactory.getInstance().createState(new ObjectID(1), parentID,
+                                                        final ObjectID parentID, final ObjectID id) throws Exception {
+    final ManagedObjectState state = ManagedObjectStateFactory.getInstance().createState(id, parentID,
                                                                                          className, cursor);
     return state;
   }
@@ -63,7 +72,7 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
 
   public void basicTestUnit(final String className, final byte type, final TestDNACursor cursor, final int objCount,
                             final boolean verifyReadWrite) throws Exception {
-    final ManagedObjectState state = createManagedObjectState(className, cursor);
+    final ManagedObjectState state = createManagedObjectState(className, cursor, new ObjectID(1), new ObjectID(2));
     state.apply(this.objectID, cursor, new ApplyTransactionInfo());
 
     // API verification
@@ -107,35 +116,4 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
     Assert.assertTrue(state.equals(state2));
   }
 
-  public interface MyProxyInf1 {
-    public int getValue();
-
-    public void setValue(int i);
-  }
-
-  public interface MyProxyInf2 {
-    public String getStringValue();
-
-    public void setStringValue(String str);
-  }
-
-  public static class MyInvocationHandler implements InvocationHandler {
-    private final Map values       = new HashMap();
-    private final Map stringValues = new HashMap();
-
-    public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
-      if (method.getName().equals("getValue")) {
-        return this.values.get(proxy);
-      } else if (method.getName().equals("setValue")) {
-        this.values.put(proxy, args[0]);
-        return null;
-      } else if (method.getName().equals("setStringValue")) {
-        this.stringValues.put(proxy, args[0]);
-        return null;
-      } else if (method.getName().equals("getStringValue")) {
-        return this.stringValues.get(proxy);
-      } else if (method.getName().equals("hashCode")) { return Integer.valueOf(System.identityHashCode(proxy)); }
-      return null;
-    }
-  }
 }

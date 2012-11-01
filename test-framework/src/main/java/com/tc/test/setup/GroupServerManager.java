@@ -72,9 +72,12 @@ public class GroupServerManager {
                                                        }
                                                      });
 
-  public GroupServerManager(GroupsData groupData, TestConfig testConfig, File tempDir, File javaHome, File tcConfigFile)
+  private final Runnable           testFailureCallback;
+
+  public GroupServerManager(GroupsData groupData, TestConfig testConfig, File tempDir, File javaHome, File tcConfigFile, final Runnable testFailureCallback)
       throws Exception {
     this.groupData = groupData;
+    this.testFailureCallback = testFailureCallback;
     this.serverControl = new ServerControl[groupData.getServerCount()];
     this.javaHome = javaHome;
     this.testConfig = testConfig;
@@ -144,7 +147,7 @@ public class GroupServerManager {
     return DEBUG_SERVER || Boolean.getBoolean(DEBUG_SERVER_PROPERTY + "." + debugPortOffset);
   }
 
-  private ServerControl getServerControl(int dsoPort, int jmxPort, String serverName, List<String> jvmArgs) {
+  private ServerControl getServerControl(final int dsoPort, final int jmxPort, final String serverName, List<String> jvmArgs) {
     File workingDir = new File(this.tempDir, serverName);
     workingDir.mkdirs();
     File verboseGcOutputFile = new File(workingDir, "verboseGC.log");
@@ -153,8 +156,17 @@ public class GroupServerManager {
                                  testConfig.getL2Config().getDirectMemorySize());
     TestBaseUtil.removeDuplicateJvmArgs(jvmArgs);
     testConfig.getL2Config().getBytemanConfig().addTo(jvmArgs, tempDir);
-    return new ExtraProcessServerControl(HOST, dsoPort, jmxPort, tcConfigFile.getAbsolutePath(), true, serverName,
-                                         jvmArgs, javaHome, true, workingDir);
+    return new MonitoringServerControl(new ExtraProcessServerControl(HOST, dsoPort, jmxPort, tcConfigFile.getAbsolutePath(), true, serverName,
+                                         jvmArgs, javaHome, true, workingDir), new MonitoringServerControl.MonitoringServerControlExitCallback() {
+      @Override
+      public boolean onExit(final int exitCode) {
+        System.out.println("*** Server '" + serverName + "' with dso-port " + dsoPort + " exited unexpectedly with exit code " + exitCode +". ***");
+        if (!testConfig.getCrashConfig().shouldIgnoreUnexpectedL2Crash()) {
+          testFailureCallback.run();
+        }
+        return false;
+      }
+    });
   }
 
   public void startAllServers() throws Exception {
@@ -432,10 +444,6 @@ public class GroupServerManager {
       }
     }
     return mbeans;
-  }
-
-  public ServerControl[] getServerControls() {
-    return serverControl;
   }
 
   public GroupsData getGroupData() {

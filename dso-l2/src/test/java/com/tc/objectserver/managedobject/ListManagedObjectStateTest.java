@@ -14,10 +14,6 @@ import com.tc.util.Assert;
 
 public class ListManagedObjectStateTest extends AbstractTestManagedObjectState {
 
-  static {
-    ManagedObjectStateFactory.enableLegacyTypes();
-  }
-
   // override due to difference on dehydrate
   @Override
   protected void basicDehydrate(final TestDNACursor cursor, final int objCount, final ManagedObjectState state) {
@@ -27,7 +23,7 @@ public class ListManagedObjectStateTest extends AbstractTestManagedObjectState {
   }
 
   public void testObjectList1() throws Exception {
-    final String className = "java.util.ArrayList";
+    final String className = ManagedObjectStateStaticConfig.TOOLKIT_LIST.getClientClassName();
     final TestDNACursor cursor = new TestDNACursor();
 
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2002) });
@@ -38,7 +34,7 @@ public class ListManagedObjectStateTest extends AbstractTestManagedObjectState {
   }
 
   public void testObjectList2() throws Exception {
-    final String className = "java.util.ArrayList";
+    final String className = ManagedObjectStateStaticConfig.TOOLKIT_LIST.getClientClassName();
     final TestDNACursor cursor = new TestDNACursor();
 
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2002) });
@@ -50,7 +46,7 @@ public class ListManagedObjectStateTest extends AbstractTestManagedObjectState {
   }
 
   public void testObjectList3() throws Exception {
-    final String className = "java.util.ArrayList";
+    final String className = ManagedObjectStateStaticConfig.TOOLKIT_LIST.getClientClassName();
     final TestDNACursor cursor = new TestDNACursor();
 
     for (int i = 0; i < 1000; ++i) {
@@ -62,7 +58,7 @@ public class ListManagedObjectStateTest extends AbstractTestManagedObjectState {
   }
 
   public void testObjectList4() throws Exception {
-    final String className = "java.util.ArrayList";
+    final String className = ManagedObjectStateStaticConfig.TOOLKIT_LIST.getClientClassName();
     final TestDNACursor cursor = new TestDNACursor();
 
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2002) });

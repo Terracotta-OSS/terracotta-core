@@ -9,11 +9,11 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransactionProvider;
 import com.tc.objectserver.persistence.impl.TestTransactionStore;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.util.SequenceValidator;
 import com.tc.util.sequence.SimpleSequence;
 
@@ -139,7 +139,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     assertFalse(gtxm.initiateApply(stxid2));
 
     ServerTransactionID stxid3 = new ServerTransactionID(stxid2.getSourceID(), stxid2.getClientTransactionID().next());
-    PersistenceTransaction txn = ptxp.newTransaction();
+    Transaction txn = ptxp.newTransaction();
     gtxm.clearCommitedTransactionsBelowLowWaterMark(stxid3);
     txn.commit();
   }

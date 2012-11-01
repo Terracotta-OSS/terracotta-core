@@ -3,10 +3,8 @@
  */
 package com.terracotta.toolkit.collections.map;
 
-import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 import net.sf.ehcache.pool.SizeOfEngine;
 import net.sf.ehcache.pool.impl.DefaultSizeOfEngine;
-
 import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
@@ -67,6 +65,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 
 public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
     ToolkitCacheListener<K>, ToolkitCacheInternal<K, V>, ConfigChangeListener, ValuesResolver<K, V> {
