@@ -573,7 +573,7 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
 
       for (L2Info l2Info : l2Infos) {
         ServerEntity serverEntity = buildServerEntity(l2Info);
-        urls.add("http://" + l2Info.safeGetHostAddress() + ":" + serverEntity.getAttributes().get("DSOGroupPort") + "/tc-management-api");
+        urls.add("http://" + l2Info.safeGetHostAddress() + ":" + serverEntity.getAttributes().get("DSOGroupPort"));
       }
 
       return urls;
