@@ -44,6 +44,13 @@ public class ToolkitBarrierFactoryImpl implements ToolkitObjectFactory<ToolkitBa
       } else {
         if (barrier.isDestroyed()) {
           barrier = createToolkitType(name, parties);
+        } else if (barrier.getParties() != parties) {
+          throw new IllegalArgumentException(
+            "ClusteredBarrier already exists for name '"
+            + name
+            + "' with different number of parties - "
+            + "requested:" + parties + " existing:"
+            + barrier.getParties());
         }
       }
     } finally {
