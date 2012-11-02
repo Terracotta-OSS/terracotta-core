@@ -54,7 +54,7 @@
     <module>toolkit-system-tests</module>
 
     <module>management</module>
-    <module>management-tsa</module>
+    <module>management-agent</module>
   </modules>
   
   <profiles>
