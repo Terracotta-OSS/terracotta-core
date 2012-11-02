@@ -10,6 +10,7 @@ import net.sf.ehcache.management.service.AgentService;
 import net.sf.ehcache.management.service.CacheManagerService;
 import net.sf.ehcache.management.service.CacheService;
 import net.sf.ehcache.management.service.EntityResourceFactory;
+
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.resource.AgentEntity;
 import org.terracotta.management.resource.AgentMetadataEntity;
@@ -103,10 +104,16 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
   public Collection<CacheManagerEntity> createCacheManagerEntities(Set<String> cacheManagerNames, Set<String> attributes) throws ServiceExecutionException {
     String ticket = ticketMonitor.issueRequestTicket();
     String token = userService.putUserInfo(contextService.getUserInfo());
+    String node = requestValidator.getValidatedNode();
 
-    byte[] bytes = tsaManagementClientService.invokeMethod(requestValidator.getValidatedNode(), DfltSamplerRepositoryServiceMBean.class, ticket, token, TSAConfig
+    byte[] bytes = tsaManagementClientService.invokeMethod(node, DfltSamplerRepositoryServiceMBean.class, ticket,
+                                                           token, TSAConfig
         .getSecurityCallbackUrl(), "createCacheManagerEntities", new Class<?>[] { Set.class, Set.class }, new Object[] { cacheManagerNames, attributes });
-    return deserialize(bytes);
+    Collection<CacheManagerEntity> result = deserialize(bytes);
+    for (CacheManagerEntity cme : result) {
+      cme.setAgentId(node);
+    }
+    return result;
   }
 
   @Override
@@ -123,10 +130,16 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
   public Collection<CacheEntity> createCacheEntities(Set<String> cacheManagerNames, Set<String> cacheNames, Set<String> attributes) throws ServiceExecutionException {
     String ticket = ticketMonitor.issueRequestTicket();
     String token = userService.putUserInfo(contextService.getUserInfo());
+    String node = requestValidator.getValidatedNode();
 
-    byte[] bytes = tsaManagementClientService.invokeMethod(requestValidator.getValidatedNode(), DfltSamplerRepositoryServiceMBean.class, ticket, token, TSAConfig
+    byte[] bytes = tsaManagementClientService.invokeMethod(node, DfltSamplerRepositoryServiceMBean.class, ticket,
+                                                           token, TSAConfig
         .getSecurityCallbackUrl(), "createCacheEntities", new Class<?>[] { Set.class, Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames, attributes });
-    return deserialize(bytes);
+    Collection<CacheEntity> result = deserialize(bytes);
+    for (CacheEntity ce : result) {
+      ce.setAgentId(node);
+    }
+    return result;
   }
 
   @Override
@@ -143,10 +156,16 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
   public Collection<CacheStatisticSampleEntity> createCacheStatisticSampleEntity(Set<String> cacheManagerNames, Set<String> cacheNames, Set<String> statNames) throws ServiceExecutionException {
     String ticket = ticketMonitor.issueRequestTicket();
     String token = userService.putUserInfo(contextService.getUserInfo());
+    String node = requestValidator.getValidatedNode();
 
-    byte[] bytes = tsaManagementClientService.invokeMethod(requestValidator.getValidatedNode(), DfltSamplerRepositoryServiceMBean.class, ticket, token, TSAConfig
+    byte[] bytes = tsaManagementClientService.invokeMethod(node, DfltSamplerRepositoryServiceMBean.class, ticket,
+                                                           token, TSAConfig
         .getSecurityCallbackUrl(), "createCacheStatisticSampleEntity", new Class<?>[] { Set.class, Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames, statNames });
-    return deserialize(bytes);
+    Collection<CacheStatisticSampleEntity> result = deserialize(bytes);
+    for (CacheStatisticSampleEntity csse : result) {
+      csse.setAgentId(node);
+    }
+    return result;
   }
 
   @Override
