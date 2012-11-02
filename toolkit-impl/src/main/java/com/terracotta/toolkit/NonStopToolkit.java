@@ -27,6 +27,7 @@ import org.terracotta.toolkit.nonstop.NonStopConfigRegistry;
 import org.terracotta.toolkit.object.ToolkitObject;
 import org.terracotta.toolkit.store.ToolkitStore;
 
+import com.tc.abortable.AbortableOperationManager;
 import com.tc.exception.ImplementMe;
 import com.terracotta.toolkit.collections.map.NonStopToolkitCacheImpl;
 import com.terracotta.toolkit.nonstop.NonStopConfigRegistryImpl;
@@ -41,14 +42,22 @@ public class NonStopToolkit implements ToolkitInternal {
   private final ToolkitInternal                                                        toolkitDelegate;
   private final NonStopManager                                                         nonStopManager;
 
-  private final NonStopConfigRegistryImpl                                                   nonStopConfigManager          = new NonStopConfigRegistryImpl();
+  private final NonStopConfigRegistryImpl                                              nonStopConfigManager          = new NonStopConfigRegistryImpl();
   private final NonstopTimeoutBehaviorResolverFactory                                  nonstopTimeoutBehaviorFactory = new NonstopTimeoutBehaviorResolverFactory();
 
   private final ConcurrentMap<ToolkitObjectType, ConcurrentMap<String, ToolkitObject>> toolkitObjects                = new ConcurrentHashMap<ToolkitObjectType, ConcurrentMap<String, ToolkitObject>>();
 
-  public NonStopToolkit(TerracottaToolkit toolkitDelegate) {
+  public NonStopToolkit(ToolkitInternal toolkitDelegate) {
     this.toolkitDelegate = toolkitDelegate;
-    this.nonStopManager = new NonStopManagerImpl(toolkitDelegate.getAbortableOperationManager());
+    if (toolkitDelegate instanceof TerracottaToolkit) { throw new RuntimeException(
+                                                                                   "Wrong Toolkit Initialized, toolkit should be instance of "
+                                                                                       + TerracottaToolkit.class
+                                                                                       + " but is "
+                                                                                       + toolkitDelegate.getClass()); }
+
+    AbortableOperationManager abortableOperationManager = ((TerracottaToolkit) toolkitDelegate)
+        .getAbortableOperationManager();
+    this.nonStopManager = new NonStopManagerImpl(abortableOperationManager);
 
     for (ToolkitObjectType objectType : ToolkitObjectType.values()) {
       toolkitObjects.put(objectType, new ConcurrentHashMap<String, ToolkitObject>());

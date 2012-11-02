@@ -14,28 +14,34 @@ public class TerracottaToolkitCreator {
   private static final String            TOOLKIT_IMPL_CLASSNAME            = "com.terracotta.toolkit.TerracottaToolkit";
   private static final String            ENTERPRISE_TOOLKIT_IMPL_CLASSNAME = "com.terracotta.toolkit.EnterpriseTerracottaToolkit";
 
+  private static final String            NON_STOP_TOOLKIT_IMPL_CLASSNAME   = "com.terracotta.toolkit.NonStopToolkit";
+
   private final TerracottaInternalClient internalClient;
   private final boolean                  enterprise;
+  private final TerracottaClientConfig   config;
 
   public TerracottaToolkitCreator(TerracottaClientConfig config, boolean enterprise) {
     this.enterprise = enterprise;
     if (config == null) { throw new NullPointerException("terracottaClientConfig cannot be null"); }
-    internalClient = createInternalClient(config);
+    this.config = config;
+    internalClient = createInternalClient();
   }
 
   public ToolkitInternal createToolkit() {
     try {
+      ToolkitInternal toolkitInternal = null;
       if (enterprise) {
-        return instantiateToolkit(ENTERPRISE_TOOLKIT_IMPL_CLASSNAME);
+        toolkitInternal = instantiateToolkit(ENTERPRISE_TOOLKIT_IMPL_CLASSNAME);
       } else {
-        return instantiateToolkit(TOOLKIT_IMPL_CLASSNAME);
+        toolkitInternal = instantiateToolkit(TOOLKIT_IMPL_CLASSNAME);
       }
+      return config.isNonStopEnabled() ? instantiateNonStopToolkit(toolkitInternal) : toolkitInternal;
     } catch (Exception e) {
       throw new RuntimeException("Unable to create toolkit.", e);
     }
   }
 
-  private TerracottaInternalClient createInternalClient(TerracottaClientConfig config) {
+  private TerracottaInternalClient createInternalClient() {
     try {
       return TerracottaInternalClientStaticFactory.getOrCreateTerracottaInternalClient(config);
     } catch (Exception e) {
@@ -46,6 +52,11 @@ public class TerracottaToolkitCreator {
   private ToolkitInternal instantiateToolkit(String toolkitImplClassName) throws Exception {
     return internalClient.instantiate(toolkitImplClassName, new Class[] { TerracottaL1Instance.class },
                                       new Object[] { getTerracottaL1Instance() });
+  }
+
+  private ToolkitInternal instantiateNonStopToolkit(ToolkitInternal toolkitInternal) throws Exception {
+    return internalClient.instantiate(NON_STOP_TOOLKIT_IMPL_CLASSNAME, new Class[] { ToolkitInternal.class },
+                                      new Object[] { toolkitInternal });
   }
 
   private TerracottaL1Instance getTerracottaL1Instance() {
