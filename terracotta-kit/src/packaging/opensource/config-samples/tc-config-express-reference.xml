@@ -14,8 +14,8 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
   marked with a (REQUIRED) notation.
 -->
 <tc:tc-config xmlns:tc="http://www.terracotta.org/config"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-6.xsd">
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    >
 
   <tc-properties>
 
@@ -243,29 +243,17 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
 
         <!-- Information about how DSO should persist shared data to disk. -->
         <persistence>
-          <!-- How should DSO persist shared data to disk? This can be one
-             of two values:
+          <!-- Configure whether or not the L2 should be restartable.
 
-             'temporary-swap-only' causes the DSO server to use the
-             disk as a temporary backing store. Data is not
-             preserved across server restarts. This mode is somewhat
-             faster than 'permanent-store' mode.
+             enabled=true, the L2 will persist its state to disk.
 
-             'permanent-store' causes the DSO server to write data
-             immediately and permanently to disk. Upon server restart,
-             data will be restored, meaning data underneath roots
-             in your program will be restored to the exact state it
-             was in when the server shut down.
+             enabled=false, the L2 will not persist state to disk.
 
-             Note that if you are using clustered DSO servers
-             (you have more than one <server> element defined,
-             below), then 'permanent-store' mode is recommended.
-             This helps ensure proper operation of the DSO
-             failover mechanism.
+             Note: the L2 will keep everything in memory regardless of the restartable setting.
 
-             Default: 'temporary-swap-only'
+             Default: enabled=false
           -->
-          <mode>temporary-swap-only</mode>
+          <restartable enabled="false"/>
         </persistence>
 
         <!-- Information about how DSO should perform distributed
@@ -320,7 +308,7 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
 
       <dso>
         <persistence>
-          <mode>permanent-store</mode>
+          <restartable enabled="false"/>
         </persistence>
 
         <garbage-collection>

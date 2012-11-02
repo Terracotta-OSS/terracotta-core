@@ -12,7 +12,6 @@ import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.logging.TCLogging;
 import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;
-import com.tc.test.config.model.PersistenceMode;
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.jmx.TestHandler;
 import com.tc.test.jmx.TestHandlerMBean;
@@ -96,8 +95,8 @@ public abstract class AbstractTestBase extends TCTestCase {
         testConfig.getL2Config().setMaxOffHeapDataSize(512);
       }
     } else {
-      if (testConfig.getL2Config().getPersistenceMode() == PersistenceMode.PERMANENT_STORE) {
-        System.out.println("============== Disabling opensource persistent mode tests ===============");
+      if (testConfig.getL2Config().getRestartable()) {
+        System.out.println("============== Disabling opensource restartable tests ===============");
         disableTest();
       }
     }

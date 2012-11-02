@@ -11,7 +11,6 @@ import com.tc.objectserver.control.ServerControl;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.stats.api.DGCMBean;
 import com.tc.stats.api.DSOMBean;
-import com.tc.test.config.model.PersistenceMode;
 import com.tc.test.config.model.ServerCrashMode;
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.proxy.ProxyConnectManager;
@@ -349,7 +348,7 @@ public class GroupServerManager {
   }
 
   private void cleanupServerDB(int index) throws Exception {
-    if (testConfig.getL2Config().getPersistenceMode().equals(PersistenceMode.PERMANENT_STORE)) {
+    if (testConfig.getL2Config().getRestartable()) {
       System.out.println("Deleting data directory for server=[" + serverControl[index].getDsoPort() + "]");
       deleteDirectory(groupData.getDataDirectoryPath(index));
     }

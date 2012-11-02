@@ -43,7 +43,7 @@ import com.tc.server.ServerConnectionValidator;
 import com.tc.util.Assert;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.MirrorGroups;
-import com.terracottatech.config.PersistenceMode;
+import com.terracottatech.config.Persistence;
 import com.terracottatech.config.Security;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
@@ -78,7 +78,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
   private static final TCLogger             logger = TCLogging.getLogger(L2ConfigurationSetupManagerImpl.class);
 
-  private final Map                         l2ConfigData;
+  private final Map<String, L2ConfigData>   l2ConfigData;
   private final HaConfigSchema              haConfig;
   private final UpdateCheckConfig           updateCheckConfig;
   private final String                      thisL2Identifier;
@@ -96,7 +96,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
                                          XmlObjectComparator xmlObjectComparator,
                                          IllegalConfigurationChangeHandler illegalConfigChangeHandler)
       throws ConfigurationSetupException {
-    this((String[]) null, configurationCreator, thisL2Identifier, defaultValueProvider, xmlObjectComparator,
+    this(null, configurationCreator, thisL2Identifier, defaultValueProvider, xmlObjectComparator,
          illegalConfigChangeHandler);
   }
 
@@ -111,7 +111,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     Assert.assertNotNull(xmlObjectComparator);
 
     this.systemConfig = null;
-    this.l2ConfigData = new HashMap();
+    this.l2ConfigData = new HashMap<String, L2ConfigData>();
 
     this.localInetAddresses = getAllLocalInetAddresses();
 
@@ -428,8 +428,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
           return l2Array[0];
         }
       } else {
-        for (int i = 0; i < l2Array.length; ++i) {
-          if (this.name.trim().equals(l2Array[i].getName().trim())) { return l2Array[i]; }
+        for (final Server aL2Array : l2Array) {
+          if (this.name.trim().equals(aL2Array.getName().trim())) { return aL2Array; }
         }
       }
 
@@ -503,7 +503,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   }
 
   private synchronized L2ConfigData configDataFor(String name) throws ConfigurationSetupException {
-    L2ConfigData out = (L2ConfigData) this.l2ConfigData.get(name);
+    L2ConfigData out = this.l2ConfigData.get(name);
 
     if (out == null) {
       out = new L2ConfigData(name);
@@ -551,7 +551,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   private L2ConfigData setupConfigDataForL2(final String l2Identifier) throws ConfigurationSetupException {
     this.systemConfig = new SystemConfigObject(createContext(systemBeanRepository(), configurationCreator()
         .directoryConfigurationLoadedFrom()));
-    L2ConfigData serverConfigData = configDataFor(this.thisL2Identifier);
+    L2ConfigData serverConfigData = configDataFor(l2Identifier);
     LogSettingConfigItemListener listener = new LogSettingConfigItemListener(TCLogging.PROCESS_TYPE_L2);
     listener.valueChanged(null, serverConfigData.commonL2Config().logsPath());
     return serverConfigData;
@@ -572,7 +572,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
     if (super.serversBeanRepository().bean() != null) {
       Server[] servers = ((Servers) super.serversBeanRepository().bean()).getServerArray();
-      Set badServers = new HashSet();
+      Set<String> badServers = new HashSet<String>();
 
       if (servers != null && servers.length > 1) {
         // We have clustered DSO; they must all be in permanent-store
@@ -583,7 +583,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
           Assert.assertNotNull(data);
           boolean isNwAP = serversToMode.get(name);
-          if (!isNwAP && (data.dsoL2Config().getPersistence().getMode() != PersistenceMode.PERMANENT_STORE)) {
+          if (!isNwAP && (!isRestartable(data.dsoL2Config().getPersistence()))) {
             badServers.add(name);
           }
         }
@@ -592,13 +592,11 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
       if (badServers.size() > 0) {
         // formatting
         throw new ConfigurationSetupException(
-                                              "At least one server defined in the Terracotta configuration file is in \n'"
-                                                  + PersistenceMode.TEMPORARY_SWAP_ONLY
-                                                  + "' persistence mode. (Servers in this mode: \n"
+                                              "At least one server defined in the Terracotta configuration file is\n"
+                                                  + "not restartable. (Servers in this mode:\n"
                                                   + badServers
                                                   + ".) \n\n"
-                                                  + "If even one server has persistence mode set to  "
-                                                  + PersistenceMode.TEMPORARY_SWAP_ONLY
+                                                  + "If even one server is not restartable"
                                                   + ", \nthen High Availability mode must be set to 'networked-active-passive'"
                                                   + "\n\nFor servers in a mirror group, High Availability mode can be set per"
                                                   + "\nmirror group. A mirror-group High Availability setting overrides the main"
@@ -614,10 +612,10 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     for (ActiveServerGroupConfig group : groupArray) {
       String[] members = group.getMembers().getMemberArray();
       if (members.length > 1) {
-        PersistenceMode.Enum baseMode = configDataFor(members[0]).dsoL2Config.getPersistence().getMode();
+        boolean isRestartable = isRestartable(configDataFor(members[0]).dsoL2Config().getPersistence());
         for (int i = 1; i < members.length; i++) {
           L2ConfigData memberData = configDataFor(members[i]);
-          if (memberData.dsoL2Config.getPersistence().getMode() != baseMode) {
+          if (isRestartable(memberData.dsoL2Config.getPersistence()) != isRestartable) {
             StringBuilder msg = new StringBuilder();
             msg.append("The persistence mode of the servers in the group ").append(group.getGroupName())
                 .append(" with servers {");
@@ -631,6 +629,10 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
       }
     }
 
+  }
+
+  private static boolean isRestartable(Persistence persistence) {
+    return persistence.getRestartable().getEnabled();
   }
 
   public void validateHaConfiguration() throws ConfigurationSetupException {

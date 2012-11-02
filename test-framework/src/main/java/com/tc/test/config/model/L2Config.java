@@ -19,7 +19,7 @@ public class L2Config {
   private boolean                 dgcEnabled            = false;
   private int                     dgcIntervalInSec      = 3600;
   private boolean                 offHeapEnabled        = false;
-  private PersistenceMode         persistenceMode       = PersistenceMode.TEMPORARY_SWAP_ONLY;
+  private boolean                 restartable           = false;
   private int                     clientReconnectWindow = 15;
   private int                     maxOffHeapDataSize    = 128;
   private final ArrayList<String> extraServerJvmArgs;
@@ -98,17 +98,17 @@ public class L2Config {
   /**
    * Persistence mode for the L2
    */
-  public PersistenceMode getPersistenceMode() {
-    return persistenceMode;
+  public boolean getRestartable() {
+    return restartable;
   }
 
   /**
-   * Sets the persistence mode for each L2
+   * Sets whether the L2 should be restartable
    * 
-   * @param persistenceMode persistence Mode
+   * @param restartable true to enable restartable
    */
-  public void setPersistenceMode(PersistenceMode persistenceMode) {
-    this.persistenceMode = persistenceMode;
+  public void setRestartable(boolean restartable) {
+    this.restartable = restartable;
   }
 
   /**

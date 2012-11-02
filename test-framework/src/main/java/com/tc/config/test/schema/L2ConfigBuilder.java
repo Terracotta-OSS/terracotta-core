@@ -26,6 +26,7 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
   private String            security_secretProviderImpl;
   private String            security_authUrl;
   private String            security_authImpl;
+  private boolean           restartable = false;
 
   public L2ConfigBuilder() {
     super(3, ALL_PROPERTIES);
@@ -109,11 +110,9 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     setProperty("access-file", data);
   }
 
-  public static final String PERSISTENCE_MODE_TEMPORARY_SWAP_ONLY = "temporary-swap-only";
-  public static final String PERSISTENCE_MODE_PERMANENT_STORE     = "permanent-store";
-
-  public void setPersistenceMode(String data) {
-    setProperty("mode", data);
+  public void setRestartable(boolean data) {
+    setProperty("restartable", data);
+    restartable = data;
   }
 
   public void setGCEnabled(boolean data) {
@@ -186,8 +185,8 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
 
   private static final String[] L2                   = new String[] { "data", "logs", "data-backup", "statistics" };
 
-  private static final String[] DSO_PERSISTENCE_MODE = new String[] { "mode" };
-  private static final String[] DSO_PERSISTENCE      = concat(new Object[] { DSO_PERSISTENCE_MODE });
+  private static final String[] DSO_PERSISTENCE_RESTARTABLE = new String[] { "restartable" };
+  private static final String[] DSO_PERSISTENCE      = concat(new Object[] { DSO_PERSISTENCE_RESTARTABLE });
 
   private static final String[] DSO_RECONNECTWINDOW  = new String[] { "client-reconnect-window" };
   private static final String[] DSO_GC               = new String[] { "enabled", "verbose", "interval" };
@@ -206,12 +205,16 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
 
     out += elements(L2) + getPortsConfig() + elementGroup("authentication", AUTHENTICATION) + openElement("dso", DSO)
            + elements(DSO_RECONNECTWINDOW) + openElement("persistence", DSO_PERSISTENCE)
-           + elements(DSO_PERSISTENCE_MODE) + getOffHeapConfig() + closeElement("persistence", DSO_PERSISTENCE)
+           + getRestartable() + getOffHeapConfig() + closeElement("persistence", DSO_PERSISTENCE)
            + elementGroup("garbage-collection", DSO_GC) + closeElement("dso", DSO) + getSecurityConfig();
 
     out += closeElement("server");
 
     return out;
+  }
+
+  private String getRestartable() {
+    return "\n<restartable enabled=\"" + restartable + "\"/>\n";
   }
 
   private String getOffHeapConfig() {

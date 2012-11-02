@@ -95,7 +95,7 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
 
   Integer getDSOGroupPort();
 
-  String getPersistenceMode();
+  boolean getRestartable();
 
   String getFailoverMode();
 

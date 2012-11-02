@@ -6,10 +6,10 @@ package com.tc.config;
 import org.apache.commons.io.IOUtils;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
-import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
@@ -27,7 +27,7 @@ public class HaConfigTest extends TCTestCase {
       String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
                       + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "\n<servers>"
                       + "\n      <server name=\"server1\">" + "\n      <dso>" + "\n        <persistence>"
-                      + "\n          <mode>permanent-store</mode>" + "\n        </persistence>" + "\n      </dso>"
+                      + "\n        </persistence>" + "\n      </dso>"
                       + "\n      </server>" + "\n</servers>" + "\n</tc:tc-config>";
       writeConfigFile(config);
 

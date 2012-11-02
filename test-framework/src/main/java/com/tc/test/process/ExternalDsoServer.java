@@ -174,7 +174,7 @@ public class ExternalDsoServer {
     l2.setLogs(workingDir + File.separator + "logs");
     l2.setStatistics(workingDir + File.separator + "stats");
     if (persistentMode) {
-      l2.setPersistenceMode("permanent-store");
+      l2.setRestartable(true);
     }
 
     String configAsString = builder.toString();

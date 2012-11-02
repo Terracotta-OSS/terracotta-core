@@ -103,7 +103,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   protected final LogListener                     logListener                          = new LogListener();
   protected long                                  startTime;
   protected long                                  activateTime;
-  protected String                                persistenceMode;
+  protected boolean                               restartable;
   protected String                                failoverMode;
   protected Integer                               jmxPort;
   protected Integer                               dsoListenPort;
@@ -528,20 +528,13 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return dsoGroupPort;
   }
 
-  public synchronized String getPersistenceMode() {
-    if (persistenceMode == null) {
+  public synchronized boolean getRestartable() {
       try {
         TCServerInfoMBean theServerInfoBean = getServerInfoBean();
-        if (theServerInfoBean != null) {
-          persistenceMode = theServerInfoBean.getPersistenceMode();
-        } else {
-          persistenceMode = "unknown";
-        }
+        return theServerInfoBean != null && theServerInfoBean.getRestartable();
       } catch (UndeclaredThrowableException edte) {
-        persistenceMode = "unknown";
+        return false;
       }
-    }
-    return persistenceMode;
   }
 
   public synchronized String getFailoverMode() {

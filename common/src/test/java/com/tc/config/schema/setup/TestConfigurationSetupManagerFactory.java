@@ -32,7 +32,6 @@ import com.terracottatech.config.Members;
 import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.MirrorGroups;
 import com.terracottatech.config.Offheap;
-import com.terracottatech.config.PersistenceMode;
 import com.terracottatech.config.Property;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
@@ -175,7 +174,7 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
   private boolean                               offHeapEnabled          = false;
   private boolean                               securityEnabled         = false;
   private String                                maxOffHeapDataSize      = "-1m";
-  private PersistenceMode.Enum                  persistenceMode         = PersistenceMode.TEMPORARY_SWAP_ONLY;
+  private boolean                               restartable             = false;
   private final L1ConfigurationSetupManagerImpl sampleL1Manager;
   private final L2ConfigurationSetupManagerImpl sampleL2Manager;
 
@@ -575,9 +574,12 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     l2DSOConfig().garbageCollection().setInterval(val);
   }
 
-  public void setPersistenceMode(PersistenceMode.Enum val) {
-    persistenceMode = val;
-    l2DSOConfig().getPersistence().setMode(val);
+  public void setRestartable(boolean val) {
+    restartable = val;
+    if (!l2DSOConfig().getPersistence().isSetRestartable()) {
+      l2DSOConfig().getPersistence().addNewRestartable();
+    }
+    l2DSOConfig().getPersistence().getRestartable().setEnabled(val);
   }
 
   public boolean isOffHeapEnabled() {
@@ -628,8 +630,8 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     return gcIntervalInSec;
   }
 
-  public PersistenceMode.Enum getPersistenceMode() {
-    return persistenceMode;
+  public boolean getRestartableEnabled() {
+    return restartable;
   }
 
   public CommonL2Config l2CommonConfig() {

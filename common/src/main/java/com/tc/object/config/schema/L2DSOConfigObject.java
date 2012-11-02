@@ -27,8 +27,7 @@ import com.terracottatech.config.GarbageCollection;
 import com.terracottatech.config.Keychain;
 import com.terracottatech.config.Offheap;
 import com.terracottatech.config.Persistence;
-import com.terracottatech.config.PersistenceMode;
-import com.terracottatech.config.PersistenceMode.Enum;
+import com.terracottatech.config.Restartable;
 import com.terracottatech.config.Security;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
@@ -67,9 +66,6 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     Server server = (Server) this.context.bean();
     this.dso = server.getDso();
     this.persistence = server.getDso().getPersistence();
-
-    Assert.assertTrue((this.persistence.getMode() == PersistenceMode.PERMANENT_STORE)
-                      || (this.persistence.getMode() == PersistenceMode.TEMPORARY_SWAP_ONLY));
 
     this.garbageCollection = server.getDso().getGarbageCollection();
 
@@ -378,11 +374,11 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     DsoServerData dso = server.getDso();
     Assert.assertNotNull(dso);
 
-    initializePersistenceMode(server, defaultValueProvider);
+    initializeRestartable(server, defaultValueProvider);
     initializeOffHeap(server, defaultValueProvider);
   }
 
-  private static void initializePersistenceMode(Server server, DefaultValueProvider defaultValueProvider)
+  private static void initializeRestartable(Server server, DefaultValueProvider defaultValueProvider)
       throws XmlException {
     DsoServerData dso = server.getDso();
     Assert.assertNotNull(dso);
@@ -394,9 +390,12 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     Persistence persistence = dso.getPersistence();
     Assert.assertNotNull(persistence);
 
-    if (!persistence.isSetMode()) {
-      persistence.setMode(getDefaultPersistence(server, defaultValueProvider));
+    if (!persistence.isSetRestartable()) {
+      persistence.addNewRestartable();
     }
+
+    Restartable restartable = persistence.getRestartable();
+    Assert.assertNotNull(restartable);
   }
 
   private static void initializeOffHeap(Server server, DefaultValueProvider defaultValueProvider) throws XmlException {
@@ -436,16 +435,6 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     if (!gc.isSetInterval()) {
       gc.setInterval(getDefaultGarbageCollectionInterval(server, defaultValueProvider));
     }
-  }
-
-  private static Enum getDefaultPersistence(Server server, DefaultValueProvider defaultValueProvider)
-      throws XmlException {
-    XmlString xmlObject = (XmlString) defaultValueProvider.defaultFor(server.schemaType(), "dso/persistence/mode");
-    Assert.assertNotNull(xmlObject);
-    Assert.assertTrue(xmlObject.getStringValue().equals(PersistenceMode.PERMANENT_STORE.toString())
-                      || xmlObject.getStringValue().equals(PersistenceMode.TEMPORARY_SWAP_ONLY.toString()));
-    if (xmlObject.getStringValue().equals(PersistenceMode.PERMANENT_STORE.toString())) return PersistenceMode.PERMANENT_STORE;
-    return PersistenceMode.TEMPORARY_SWAP_ONLY;
   }
 
   private static boolean getDefaultOffHeapEnabled(Server server, DefaultValueProvider defaultValueProvider)

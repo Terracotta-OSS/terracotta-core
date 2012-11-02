@@ -307,7 +307,6 @@ import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.startuplock.FileNotCreatedException;
 import com.tc.util.startuplock.LocationNotCreatedException;
 import com.terracottatech.config.Offheap;
-import com.terracottatech.config.PersistenceMode;
 
 import java.io.File;
 import java.io.IOException;
@@ -513,10 +512,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     NIOWorkarounds.solaris10Workaround();
     ConcurrentDistributedServerMapManagedObjectState.init();
     this.l2Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l2");
-    final PersistenceMode.Enum persistenceMode = l2DSOConfig.getPersistence().getMode();
     final TCProperties objManagerProperties = this.l2Properties.getPropertiesFor("objectmanager");
     this.l1ReconnectConfig = new L1ReconnectConfigImpl();
-    final boolean persistent = (persistenceMode == PersistenceMode.PERMANENT_STORE);
+    final boolean restartable = l2DSOConfig.getPersistence().getRestartable().getEnabled();
 
     final Offheap offHeapConfig = l2DSOConfig.offHeapConfig();
     // start the JMX server
@@ -536,7 +534,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     if (!this.startupLock.canProceed(new TCRandomFileAccessImpl())) {
       consoleLogger.error("Another L2 process is using the directory " + location + " as data directory.");
-      if (!persistent) {
+      if (!restartable) {
         consoleLogger.error("This is not allowed with persistence mode set to temporary-swap-only.");
       }
       consoleLogger.error("Exiting...");
@@ -559,8 +557,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         .createCounter(sampledCounterConfig);
 
     final File dbhome = new File(this.configSetupManager.commonl2Config().dataPath(), L2DSOConfig.OBJECTDB_DIRNAME);
-    logger.debug("persistent: " + persistent);
-    if (!persistent) {
+    logger.debug("persistent: " + restartable);
+    if (!restartable) {
       if (dbhome.exists()) {
         logger.info("deleting persistence database: " + dbhome.getAbsolutePath());
         FileUtils.cleanDirectory(dbhome);
@@ -576,7 +574,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     final CallbackOnExitHandler dirtydbHandler = new CallbackDatabaseDirtyAlertAdapter(logger, consoleLogger);
 
-    StorageManagerFactory storageManagerFactory = serverBuilder.createStorageManagerFactory(persistent, dbhome,
+    StorageManagerFactory storageManagerFactory = serverBuilder.createStorageManagerFactory(restartable, dbhome,
         configSetupManager.dsoL2Config(), offHeapConfig.getEnabled());
 
     this.persistor = new Persistor(storageManagerFactory);
@@ -692,7 +690,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final long youngGenDGCFrequency = youngDGCProperties.getLong("frequencyInMillis");
 
     final ObjectManagerConfig objectManagerConfig = new ObjectManagerConfig(gcInterval * 1000, gcEnabled, verboseGC,
-                                                                            persistent, enableYoungGenDGC,
+                                                                            restartable, enableYoungGenDGC,
                                                                             youngGenDGCFrequency,
                                                                             enterpriseMarkStageInterval);
     final boolean networkedHA = this.haConfig.isNetworkedActivePassive();
@@ -719,7 +717,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.dumpHandler.registerForDump(objMgrDumpAdapter);
 
     final TCProperties cacheManagerProperties = this.l2Properties.getPropertiesFor("cachemanager");
-    final CacheConfig cacheConfig = new CacheConfigImpl(cacheManagerProperties, persistent, offHeapConfig.getEnabled());
+    final CacheConfig cacheConfig = new CacheConfigImpl(cacheManagerProperties, restartable, offHeapConfig.getEnabled());
     final TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(cacheConfig.getSleepInterval(),
                                                                      cacheConfig.getLeastCount(),
                                                                      cacheConfig.isOnlyOldGenMonitored(),
@@ -1051,7 +1049,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                            "Reconnect timer",
                                                                                                            true),
                                                                                                  reconnectTimeout,
-                                                                                                 persistent,
+                                                                                                 restartable,
                                                                                                  consoleLogger);
 
     this.groupCommManager = this.serverBuilder.createGroupCommManager(networkedHA, this.configSetupManager,
