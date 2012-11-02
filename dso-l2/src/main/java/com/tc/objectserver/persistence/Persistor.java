@@ -2,6 +2,7 @@ package com.tc.objectserver.persistence;
 
 import org.terracotta.corestorage.KeyValueStorageConfig;
 import org.terracotta.corestorage.StorageManager;
+import org.terracotta.corestorage.monitoring.MonitoredResource;
 
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
@@ -9,12 +10,10 @@ import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 import com.tc.util.sequence.MutableSequence;
-import java.util.Collection;
 
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import org.terracotta.corestorage.monitoring.MonitoredResource;
 
 /**
  * @author tim
@@ -27,6 +26,7 @@ public class Persistor {
   private static final String ROOT_DB = "root_db";
   private static final String STATE_MAP = "state_map";
   private static final String SEQUENCE_MAP = "sequence_map";
+  private static final String SEQUENCE_UUID_MAP = "sequence_uuid_map";
 
   private static final String CLIENT_STATE_SEQUENCE = "client_state_sequence";
   private static final String OBJECT_ID_SEQUENCE = "object_id_sequence";
@@ -53,7 +53,8 @@ public class Persistor {
       throw new AssertionError(e);
     }
 
-    sequenceManager = new SequenceManager(storageManager.getKeyValueStorage(SEQUENCE_MAP, String.class, Long.class));
+    sequenceManager = new SequenceManager(storageManager.getKeyValueStorage(SEQUENCE_MAP, String.class, Long.class),
+        storageManager.getKeyValueStorage(SEQUENCE_UUID_MAP, String.class, String.class));
     transactionPersistor = new TransactionPersistor(storageManager.getKeyValueStorage(TRANSACTION,
         GlobalTransactionID.class,
         GlobalTransactionDescriptor.class));
@@ -72,7 +73,8 @@ public class Persistor {
     configs.put(CLIENT_STATES, ClientStatePersistor.config());
     configs.put(ROOT_DB, ManagedObjectPersistor.rootMapConfig());
     configs.put(STATE_MAP, PersistentMapStoreImpl.config());
-    configs.put(SEQUENCE_MAP, SequenceManager.config());
+    configs.put(SEQUENCE_MAP, SequenceManager.sequenceMapConfig());
+    configs.put(SEQUENCE_UUID_MAP, SequenceManager.uuidMapConfig());
     configs.put(OBJECT_DB, ManagedObjectPersistor.objectConfig(objectIDSetMaintainer));
     return configs;
   }
