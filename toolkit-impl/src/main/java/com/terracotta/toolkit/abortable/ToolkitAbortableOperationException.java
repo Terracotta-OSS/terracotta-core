@@ -5,6 +5,10 @@ package com.terracotta.toolkit.abortable;
  */
 
 public class ToolkitAbortableOperationException extends RuntimeException {
+  public ToolkitAbortableOperationException() {
+    //
+  }
+
   public ToolkitAbortableOperationException(Exception e) {
     super(e);
   }

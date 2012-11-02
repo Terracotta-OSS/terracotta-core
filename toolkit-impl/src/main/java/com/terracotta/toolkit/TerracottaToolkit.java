@@ -31,6 +31,7 @@ import org.terracotta.toolkit.store.ToolkitStore;
 import org.terracotta.toolkit.store.ToolkitStoreConfigBuilder;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
 
+import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.net.GroupID;
 import com.tc.platform.PlatformService;
@@ -322,5 +323,9 @@ public class TerracottaToolkit implements ToolkitInternal {
   @Override
   public NonStopConfigRegistry getNonStopToolkitRegistry() {
     throw new UnsupportedOperationException();
+  }
+
+  AbortableOperationManager getAbortableOperationManager() {
+    return platformService.getAbortableOperationManager();
   }
 }
