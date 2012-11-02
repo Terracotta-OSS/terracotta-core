@@ -51,6 +51,8 @@ public interface TCPropertiesConsts {
   public static final String L2_CACHEMANAGER_THRESHOLD                                      = "l2.cachemanager.threshold";
   public static final String L2_CACHEMANAGER_MONITOROLDGENONLY                              = "l2.cachemanager.monitorOldGenOnly";
   public static final String L2_CACHEMANAGER_CRITICALOBJECTTHRESHOLD                        = "l2.cachemanager.criticalObjectThreshold";
+  public static final String L2_CACHEMANAGER_RESOURCEPOLLINGINTERVAL                        = "l2.cachemanager.resourcePollInterval";
+
 
   /*********************************************************************************************************************
    * <code>

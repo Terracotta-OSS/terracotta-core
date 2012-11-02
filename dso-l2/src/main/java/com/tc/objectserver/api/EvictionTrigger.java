@@ -37,10 +37,11 @@ public interface EvictionTrigger {
     /**
      * Produce the map of evictable items contained in the map
      * 
+     * @param targetMax max on the map segment
      * @param map       target map
      * @param clients   the client object id reference set
      * @return          a map of evictable items
      */
-    Map       collectEvictonCandidates(EvictableMap map, ClientObjectReferenceSet clients);
+    Map       collectEvictonCandidates(int targetMax, EvictableMap map, ClientObjectReferenceSet clients);
 
 }

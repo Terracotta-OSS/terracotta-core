@@ -24,8 +24,8 @@ public class EmergencyEvictionTrigger extends PeriodicEvictionTrigger {
     }
 
     @Override
-    protected int calculateSampleCount(EvictableMap ev) {
-        return super.calculateSampleCount(ev) * 5;
+    protected long calculateSampleCount(long max, EvictableMap ev) {
+        return super.calculateSampleCount(max, ev) * 5;
     }
 
     @Override
@@ -34,8 +34,8 @@ public class EmergencyEvictionTrigger extends PeriodicEvictionTrigger {
     }
 
     @Override
-    public Map collectEvictonCandidates(EvictableMap map, ClientObjectReferenceSet clients) {
-        Map sampled = super.collectEvictonCandidates(map, clients);
+    public Map collectEvictonCandidates(int max, EvictableMap map, ClientObjectReferenceSet clients) {
+        Map sampled = super.collectEvictonCandidates( max, map, clients);
         sampleCount = sampled.size();
         return sampled;
     }

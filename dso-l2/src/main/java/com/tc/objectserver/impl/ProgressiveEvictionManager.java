@@ -20,6 +20,8 @@ import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.persistence.PersistentCollectionsUtil;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.MemoryEventsListener;
 import com.tc.runtime.MemoryUsage;
 import com.tc.text.PrettyPrinter;
@@ -35,26 +37,31 @@ import org.terracotta.corestorage.monitoring.MonitoredResource;
  * @author mscott
  */
 public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
-      private static final TCLogger               logger                          = TCLogging
+    private static final TCLogger               logger                          = TCLogging
                                                                                   .getLogger(ProgressiveEvictionManager.class);
-    private final ServerMapEvictionEngine evictor;
-    private final ResourceMonitor trigger;
-    private final PersistentManagedObjectStore store;
-    private final ObjectManager  objectManager;
-    private final ClientObjectReferenceSet clientObjectReferenceSet;
-    private static final long SLEEP_TIME = 1000 * 60;
-    private long lastEmergency = 0;
-  private Sink                                evictorSink;
-  private final Timer                               expiry = new Timer("Expiry Timer", true);
-  private final Set<ObjectID>                         expirySet = new ObjectIDSet();
-  private int                                   serverSizeHint = 256;
+    
+    private static final int                    SLEEP_TIME = 60;
+    private static final int                    L2_CACHEMANAGER_RESOURCEPOLLINGINTERVAL = TCPropertiesImpl
+                                                                                  .getProperties()
+                                                                                  .getInt(TCPropertiesConsts.L2_CACHEMANAGER_RESOURCEPOLLINGINTERVAL,SLEEP_TIME);              
+              
+    private final ServerMapEvictionEngine       evictor;
+    private final ResourceMonitor               trigger;
+    private final PersistentManagedObjectStore  store;
+    private final ObjectManager                 objectManager;
+    private final ClientObjectReferenceSet      clientObjectReferenceSet;
+    private long                                lastEmergency = 0;
+    private Sink                                evictorSink;
+    private final Timer                         expiry = new Timer("Expiry Timer", true);
+    private final Set<ObjectID>                 expirySet = new ObjectIDSet();
+    private int                                 serverSizeHint = 256;
   
     public ProgressiveEvictionManager(ObjectManager mgr, MonitoredResource monitored, PersistentManagedObjectStore store, ClientObjectReferenceSet clients, ServerTransactionFactory trans, TCThreadGroup grp) {
         this.objectManager = mgr;
         this.store = store;
         this.clientObjectReferenceSet = clients;
         this.evictor = new ServerMapEvictionEngine(mgr, trans); 
-        this.trigger = new ResourceMonitor(monitored, SLEEP_TIME , grp);
+        this.trigger = new ResourceMonitor(monitored, L2_CACHEMANAGER_RESOURCEPOLLINGINTERVAL * 1000, grp);
     }
     
     
@@ -170,12 +177,25 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager  {
                                               final String className,
                                               final String cacheName) {
     final int currentSize = ev.getSize();
+    int max = ev.getMaxTotalCount();
     
     if (currentSize == 0) {
       return null;
     }
     
-    Map samples = trigger.collectEvictonCandidates(ev,clientObjectReferenceSet);
+    if ( max == 0 ) {
+        if ( evictor.isLogging() ) {
+            log(ev.getCacheName() + " is pinned or a store");
+        }
+        return null;
+    }
+    
+    if ( max < 0 ) {
+//  cache has no count capacity max is MAX_VALUE;
+        max = Integer.MAX_VALUE;
+    }
+    
+    Map samples = trigger.collectEvictonCandidates(max, ev,clientObjectReferenceSet);
 
     if (samples.isEmpty()) {
         return null;

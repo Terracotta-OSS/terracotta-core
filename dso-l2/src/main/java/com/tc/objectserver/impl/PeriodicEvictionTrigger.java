@@ -48,18 +48,17 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     }
     
     @Override
-    public Map collectEvictonCandidates(EvictableMap map, ClientObjectReferenceSet clients) {
-        int samples = calculateSampleCount(map);
+    public Map collectEvictonCandidates(int max, EvictableMap map, ClientObjectReferenceSet clients) {
+        long samples = calculateSampleCount(max, map);
         Map s = filter(map.getRandomSamples(Math.round(samples * 1.5f), clients),map.getTTISeconds(),map.getTTLSeconds(),samples);
         sampled = s.size();
         return s;
     }
       
-    protected int calculateSampleCount(EvictableMap ev) {
-        int max = ev.getMaxTotalCount();
+    protected long calculateSampleCount(long max, EvictableMap ev) {
         int count = ev.getSize();
 
-        int samples = max/10;
+        long samples = max/10;
         if ( samples < 100 ) {
             samples = 100;
         } else if ( samples > 1000000 ) {
@@ -75,7 +74,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     }
     
    private Map filter(final Map samples, final int ttiSeconds,
-                    final int ttlSeconds, int targetCount) {
+                    final int ttlSeconds, long targetCount) {
     final HashMap candidates = new HashMap(samples.size());
     final int now = (int) (System.currentTimeMillis() / 1000);
     for (final Iterator iterator = samples.entrySet().iterator(); candidates.size() < targetCount && iterator.hasNext();) {

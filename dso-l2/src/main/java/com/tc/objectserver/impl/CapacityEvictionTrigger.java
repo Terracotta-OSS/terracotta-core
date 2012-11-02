@@ -47,12 +47,14 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     }
 
     @Override
-    public Map collectEvictonCandidates(final EvictableMap map, final ClientObjectReferenceSet clients) {
+    public Map collectEvictonCandidates(final int max, final EvictableMap map, final ClientObjectReferenceSet clients) {
    // lets try and get smarter about this in the future but for now, just bring it back to capacity
-        final int max = map.getMaxTotalCount();
         final int size = map.getSize();
         final int sample = size - max;
-        if ( max == 0 || sample <= 0 ) {
+        if ( max == 0 ) {
+            throw new AssertionError("triggers should never start evicting a pinned cache or store");
+        }
+        if ( sample <= 0 ) {
             return Collections.emptyMap();
         }
         Map samples = map.getRandomSamples(sample, clients);
@@ -85,8 +87,8 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             }
 
             @Override
-            public Map collectEvictonCandidates(EvictableMap map, ClientObjectReferenceSet clients) {
-                final int grab = map.getSize() - map.getMaxTotalCount();
+            public Map collectEvictonCandidates(int max, EvictableMap map, ClientObjectReferenceSet clients) {
+                final int grab = map.getSize() - max;
                 Map sample;
                 if ( grab > 0 ) {
                     sample = map.getRandomSamples(grab, clients);
