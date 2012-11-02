@@ -18,6 +18,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>management-tsa-intf</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>com.terracotta</groupId>
       <artifactId>security-REST</artifactId>
       <version>${management.apps.parent.version}</version>

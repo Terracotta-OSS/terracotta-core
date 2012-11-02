@@ -11,6 +11,7 @@
   </parent>
 
   <modules>
+    <module>management-tsa-intf</module>
     <module>management-tsa-impl</module>
     <module>management-tsa-war</module>
     <module>management-system-tests</module>
