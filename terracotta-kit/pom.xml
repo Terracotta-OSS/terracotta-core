@@ -526,9 +526,15 @@
     <profile>
       <id>bigmemory-max</id>
       <properties>
+        <bigmemory.version>3.8.0-SNAPSHOT</bigmemory.version>
         <tmc.version>1.1.0-SNAPSHOT</tmc.version>
       </properties>
       <dependencies>
+        <dependency>
+          <groupId>org.terracotta.bigmemory</groupId>
+          <artifactId>bigmemory</artifactId>
+          <version>${bigmemory.version}</version>
+        </dependency>
         <dependency>
           <groupId>org.terracotta.toolkit</groupId>
           <artifactId>terracotta-toolkit-api</artifactId>

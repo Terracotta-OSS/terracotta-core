@@ -52,6 +52,24 @@
       <directory>${project.build.directory}/tmc-${tmc.version}</directory>
       <outputDirectory>/tools/tmc</outputDirectory>
     </fileSet>
+    <fileSet>
+      <directory>${project.build.directory}/${kit.name}/bin</directory>
+      <outputDirectory>/common/bin</outputDirectory>
+      <includes>
+        <include>keychain.*</include>
+        <include>management-cli-common.*</include>
+        <include>add-tc-agent.*</include>
+        <include>usermanagement.*</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <directory>${project.build.directory}/${kit.name}/bin</directory>
+      <outputDirectory>/server/bin</outputDirectory>
+    </fileSet>
+    <fileSet>
+      <directory>${project.build.directory}/${kit.name}/lib</directory>
+      <outputDirectory>/server/lib</outputDirectory>
+    </fileSet>
     <!--
     <fileSet>
       <directory>${ehcache-core.config.dir}</directory>
@@ -77,6 +95,15 @@
   </files>
 
   <dependencySets>
+    <dependencySet>
+      <outputDirectory>/common/lib</outputDirectory>
+      <includes>
+        <include>org.terracotta*:*bigmemory*:jar</include>
+      </includes>
+      <excludes>
+        <exclude>*:*:jar:javadoc</exclude>
+      </excludes>
+    </dependencySet>
     <dependencySet>
       <outputDirectory>/apis/toolkit/lib</outputDirectory>
       <includes>
