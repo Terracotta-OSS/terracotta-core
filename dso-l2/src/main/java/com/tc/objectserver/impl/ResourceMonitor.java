@@ -100,7 +100,6 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
       long counter = 0;
       while (run) {
         try {
-          Thread.sleep(sleepTime);
           final long thisCount = counter++;
           
           MemoryUsage mu = new MemoryUsage() {
@@ -160,6 +159,7 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
             };
           fireMemoryEvent(mu);
           adjust(mu);
+          Thread.sleep(sleepTime);
         } catch (Throwable t) {
           // for debugging pupose
           StackTraceElement[] trace = t.getStackTrace();
