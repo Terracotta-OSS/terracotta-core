@@ -33,7 +33,8 @@ public class SearchCapabilityDisabledTest extends AbstractToolkitTestBase {
       Assert.assertTrue(cache instanceof ToolkitCacheInternal);
       ToolkitCacheInternal cmd = (ToolkitCacheInternal) cache;
       try {
-        cmd.createSearchBuilder();
+        cmd.createSearchExecutor();
+        fail();
       } catch (UnsupportedOperationException e) {
         // expected
         debug("Caught expected exception - " + e);
