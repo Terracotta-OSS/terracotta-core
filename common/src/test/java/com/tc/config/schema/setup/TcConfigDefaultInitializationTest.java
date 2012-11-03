@@ -15,6 +15,7 @@ import com.terracottatech.config.Authentication;
 import com.terracottatech.config.HttpAuthentication;
 import com.terracottatech.config.License;
 import com.terracottatech.config.Offheap;
+import com.terracottatech.config.Restartable;
 import com.terracottatech.config.Security;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 import com.terracottatech.config.TcProperties;
@@ -24,7 +25,7 @@ import java.lang.reflect.Method;
 
 public class TcConfigDefaultInitializationTest extends TCTestCase {
   private static Class[] exemptedElements = { License.class, TcProperties.class, Authentication.class,
-      HttpAuthentication.class, Offheap.class, Security.class };
+      HttpAuthentication.class, Offheap.class, Security.class, Restartable.class };
   private TcConfig       config;
 
   @Override

@@ -214,6 +214,7 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
   }
 
   private String getRestartable() {
+    if (!restartable) return "\n";
     return "\n<restartable enabled=\"" + restartable + "\"/>\n";
   }
 
