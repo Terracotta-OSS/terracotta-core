@@ -4,41 +4,58 @@
  */
 package com.tc.objectserver.impl;
 
+import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.StorageManager;
+import org.terracotta.corestorage.heap.HeapStorageManager;
+
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.api.Transaction;
+import com.tc.objectserver.api.TransactionStore;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
-import com.tc.objectserver.persistence.api.TransactionPersistor;
-import com.tc.objectserver.persistence.api.TransactionStore;
-import com.tc.objectserver.persistence.db.TransactionStoreImpl;
+import com.tc.objectserver.persistence.Persistor;
+import com.tc.objectserver.persistence.StorageManagerFactory;
+import com.tc.objectserver.persistence.TransactionPersistor;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransaction;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.test.TCTestCase;
-import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.sequence.Sequence;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
+import java.util.TreeSet;
+
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 public class TransactionStoreTest extends TCTestCase {
 
-  private TestTransactionPersistor persistor;
-  private TransactionStore         store;
+  private TransactionPersistor transactionPersistor;
+  private Sequence gidSequence;
+  private TransactionStore store;
+
+  public void setUp() {
+    Persistor persistor = new Persistor(new StorageManagerFactory() {
+      @Override
+      public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap) {
+        return new HeapStorageManager(configMap);
+      }
+    });
+    transactionPersistor = spy(persistor.getTransactionPersistor());
+    gidSequence = spy(persistor.getGlobalTransactionIDSequence());
+    store = new TransactionStoreImpl(transactionPersistor, gidSequence);
+  }
 
   public void testDeleteByGlobalTransactionID() throws Exception {
-    persistor = new TestTransactionPersistor();
-    store = new TransactionStoreImpl(persistor, persistor);
-    List<GlobalTransactionDescriptor> gtxs = new LinkedList();
+    List<GlobalTransactionDescriptor> gtxs = new LinkedList<GlobalTransactionDescriptor>();
     for (int i = 0; i < 100; i++) {
       ServerTransactionID sid1 = new ServerTransactionID(new ClientID(i), new TransactionID(i));
       store.getOrCreateTransactionDescriptor(sid1);
@@ -53,12 +70,10 @@ public class TransactionStoreTest extends TCTestCase {
 
     // create a set of transactions to delete
     Collection<GlobalTransactionDescriptor> toDelete = new HashSet<GlobalTransactionDescriptor>();
-    Collection<GlobalTransactionID> toDeleteIDs = new HashSet<GlobalTransactionID>();
     for (int i = 0; i < 10; i++) {
 
       GlobalTransactionDescriptor o = gtxs.remove(0);
       toDelete.add(o);
-      toDeleteIDs.add(o.getGlobalTransactionID());
     }
     assertFalse(originalMin == gtxs.get(0));
 
@@ -76,14 +91,10 @@ public class TransactionStoreTest extends TCTestCase {
     }
 
     // make sure the persistor is told to delete them all
-    assertEquals(deletedGids, new HashSet((Collection) persistor.deleteQueue.poll(1)));
+    verify(transactionPersistor).deleteAllGlobalTransactionDescriptors(null, new TreeSet<GlobalTransactionID>(deletedGids));
   }
 
   public void testLeastGlobalTransactionID() throws Exception {
-
-    persistor = new TestTransactionPersistor();
-    store = new TransactionStoreImpl(persistor, persistor);
-
     assertEquals(GlobalTransactionID.NULL_ID, store.getLeastGlobalTransactionID());
 
     ServerTransactionID stx1 = new ServerTransactionID(new ClientID(1), new TransactionID(1));
@@ -97,7 +108,7 @@ public class TransactionStoreTest extends TCTestCase {
 
     int min = 10;
     int max = 20;
-    List gds = new ArrayList();
+    List<GlobalTransactionDescriptor> gds = new ArrayList<GlobalTransactionDescriptor>();
     for (int i = min; i < max; i++) {
       ServerTransactionID stxid = new ServerTransactionID(new ClientID(2), new TransactionID(i));
       GlobalTransactionDescriptor gd = store.getOrCreateTransactionDescriptor(stxid);
@@ -108,7 +119,7 @@ public class TransactionStoreTest extends TCTestCase {
     // Still the least Global Txn ID is the same
     assertEquals(getGlobalTransactionID(gtx1), store.getLeastGlobalTransactionID());
 
-    store.clearCommitedTransactionsBelowLowWaterMark(null, ((GlobalTransactionDescriptor) gds.get(0))
+    store.clearCommitedTransactionsBelowLowWaterMark(null, (gds.get(0))
         .getServerTransactionID());
 
     // Still the least Global Txn ID is the same, since CLIENT(1) is still holding the low water mark
@@ -123,7 +134,7 @@ public class TransactionStoreTest extends TCTestCase {
     GlobalTransactionID currentLWM = store.getLeastGlobalTransactionID();
 
     // send LWM of the next txn
-    store.clearCommitedTransactionsBelowLowWaterMark(null, ((GlobalTransactionDescriptor) gds.get(1))
+    store.clearCommitedTransactionsBelowLowWaterMark(null, (gds.get(1))
         .getServerTransactionID());
 
     // least Global Txn ID is not the same
@@ -132,7 +143,7 @@ public class TransactionStoreTest extends TCTestCase {
     currentLWM = store.getLeastGlobalTransactionID();
 
     // send LWM of the last txn
-    store.clearCommitedTransactionsBelowLowWaterMark(null, ((GlobalTransactionDescriptor) gds.get(gds.size() - 1))
+    store.clearCommitedTransactionsBelowLowWaterMark(null, (gds.get(gds.size() - 1))
         .getServerTransactionID());
 
     // least Global Txn ID is not the same
@@ -141,7 +152,7 @@ public class TransactionStoreTest extends TCTestCase {
     currentLWM = store.getLeastGlobalTransactionID();
 
     // send LWM above the last txn
-    ServerTransactionID sid = ((GlobalTransactionDescriptor) gds.get(gds.size() - 1)).getServerTransactionID();
+    ServerTransactionID sid = (gds.get(gds.size() - 1)).getServerTransactionID();
     sid = new ServerTransactionID(sid.getSourceID(), sid.getClientTransactionID().next());
     store.clearCommitedTransactionsBelowLowWaterMark(null, sid);
 
@@ -151,10 +162,6 @@ public class TransactionStoreTest extends TCTestCase {
   }
 
   public void testLeastGlobalTransactionIDInPassiveServer() throws Exception {
-
-    persistor = new TestTransactionPersistor();
-    store = new TransactionStoreImpl(persistor, persistor);
-
     assertEquals(GlobalTransactionID.NULL_ID, store.getLeastGlobalTransactionID());
 
     ServerTransactionID stx1 = new ServerTransactionID(new ClientID(1), new TransactionID(1));
@@ -168,7 +175,7 @@ public class TransactionStoreTest extends TCTestCase {
 
     int min = 10;
     int max = 20;
-    List gds = new ArrayList();
+    List<GlobalTransactionDescriptor> gds = new ArrayList<GlobalTransactionDescriptor>();
     for (int i = min; i < max; i++) {
       ServerTransactionID stxid = new ServerTransactionID(new ClientID(2), new TransactionID(i));
       GlobalTransactionDescriptor gd = store.getOrCreateTransactionDescriptor(stxid);
@@ -179,7 +186,7 @@ public class TransactionStoreTest extends TCTestCase {
     assertEquals(getGlobalTransactionID(gtx1), store.getLeastGlobalTransactionID());
 
     // No need to send LWM per client in the PASSIVE, Client(1)'s txn is cleared
-    store.clearCommitedTransactionsBelowLowWaterMark(null, ((GlobalTransactionDescriptor) gds.get(0))
+    store.clearCommitedTransactionsBelowLowWaterMark(null, (gds.get(0))
         .getGlobalTransactionID());
 
     // least Global Txn ID is not the same
@@ -188,7 +195,7 @@ public class TransactionStoreTest extends TCTestCase {
     GlobalTransactionID currentLWM = store.getLeastGlobalTransactionID();
 
     // send LWM of the next txn
-    store.clearCommitedTransactionsBelowLowWaterMark(null, ((GlobalTransactionDescriptor) gds.get(1))
+    store.clearCommitedTransactionsBelowLowWaterMark(null, (gds.get(1))
         .getGlobalTransactionID());
 
     // least Global Txn ID is STILL the same, since the transactions are not commited.
@@ -196,14 +203,14 @@ public class TransactionStoreTest extends TCTestCase {
     assertFalse(currentLWM.toLong() < store.getLeastGlobalTransactionID().toLong());
 
     // commit transaction
-    store.commitTransactionDescriptor(null, ((GlobalTransactionDescriptor) gds.get(0)).getServerTransactionID());
+    store.commitTransactionDescriptor(null, (gds.get(0)).getServerTransactionID());
 
     // least Global Txn ID is STILL the same, only when the next LWM msg comes along it clears the data structures.
     assertEquals(currentLWM, store.getLeastGlobalTransactionID());
     assertFalse(currentLWM.toLong() < store.getLeastGlobalTransactionID().toLong());
 
     // send LWM again
-    store.clearCommitedTransactionsBelowLowWaterMark(null, ((GlobalTransactionDescriptor) gds.get(1))
+    store.clearCommitedTransactionsBelowLowWaterMark(null, (gds.get(1))
         .getGlobalTransactionID());
 
     // Now LWM should have moved up
@@ -212,7 +219,7 @@ public class TransactionStoreTest extends TCTestCase {
     currentLWM = store.getLeastGlobalTransactionID();
 
     // send LWM of the last txn
-    store.clearCommitedTransactionsBelowLowWaterMark(null, ((GlobalTransactionDescriptor) gds.get(gds.size() - 1))
+    store.clearCommitedTransactionsBelowLowWaterMark(null, (gds.get(gds.size() - 1))
         .getGlobalTransactionID());
 
     // least Global Txn ID is STILL the same, since the transactions are not commited.
@@ -220,7 +227,7 @@ public class TransactionStoreTest extends TCTestCase {
     assertFalse(currentLWM.toLong() < store.getLeastGlobalTransactionID().toLong());
 
     for (int i = 1; i < gds.size(); i++) {
-      GlobalTransactionDescriptor gd = (GlobalTransactionDescriptor) gds.get(i);
+      GlobalTransactionDescriptor gd = gds.get(i);
       store.commitTransactionDescriptor(null, gd.getServerTransactionID());
     }
 
@@ -229,7 +236,7 @@ public class TransactionStoreTest extends TCTestCase {
     assertFalse(currentLWM.toLong() < store.getLeastGlobalTransactionID().toLong());
 
     // send LWM again
-    store.clearCommitedTransactionsBelowLowWaterMark(null, ((GlobalTransactionDescriptor) gds.get(gds.size() - 1))
+    store.clearCommitedTransactionsBelowLowWaterMark(null, (gds.get(gds.size() - 1))
         .getGlobalTransactionID());
 
     // least Global Txn ID is not the same
@@ -238,7 +245,7 @@ public class TransactionStoreTest extends TCTestCase {
     currentLWM = store.getLeastGlobalTransactionID();
 
     // send LWM above the last txn - we use SID instead of GID here, not a real case in passive
-    ServerTransactionID sid = ((GlobalTransactionDescriptor) gds.get(gds.size() - 1)).getServerTransactionID();
+    ServerTransactionID sid = (gds.get(gds.size() - 1)).getServerTransactionID();
     sid = new ServerTransactionID(sid.getSourceID(), sid.getClientTransactionID().next());
     store.clearCommitedTransactionsBelowLowWaterMark(null, sid);
 
@@ -255,14 +262,13 @@ public class TransactionStoreTest extends TCTestCase {
     int initialMin = 200;
     int initialMax = 300;
     int laterMax = 400;
-    persistor = new TestTransactionPersistor();
     for (int i = initialMin; i < initialMax; i++) {
       ServerTransactionID stxid = new ServerTransactionID(new ClientID(i % 2), new TransactionID(i));
       GlobalTransactionDescriptor gtx = new GlobalTransactionDescriptor(stxid,
-                                                                        new GlobalTransactionID(persistor.next()));
-      persistor.persisted.put(gtx.getGlobalTransactionID(), gtx);
+                                                                        new GlobalTransactionID(gidSequence.next()));
+      transactionPersistor.saveGlobalTransactionDescriptor(null, gtx);
     }
-    store = new TransactionStoreImpl(persistor, persistor);
+    store = new TransactionStoreImpl(transactionPersistor, gidSequence);
     GlobalTransactionID lowmk1 = store.getLeastGlobalTransactionID();
 
     // create more
@@ -292,14 +298,13 @@ public class TransactionStoreTest extends TCTestCase {
   public void tests() throws Exception {
     int initialMin = 200;
     int initialMax = 300;
-    persistor = new TestTransactionPersistor();
     for (int i = initialMin; i < initialMax; i++) {
       ServerTransactionID stxid = new ServerTransactionID(new ClientID(i), new TransactionID(i));
       GlobalTransactionDescriptor gtx = new GlobalTransactionDescriptor(stxid,
-                                                                        new GlobalTransactionID(persistor.next()));
-      persistor.persisted.put(gtx.getGlobalTransactionID(), gtx);
+                                                                        new GlobalTransactionID(gidSequence.next()));
+      transactionPersistor.saveGlobalTransactionDescriptor(null, gtx);
     }
-    store = new TransactionStoreImpl(persistor, persistor);
+    store = new TransactionStoreImpl(transactionPersistor, gidSequence);
 
     // make sure that the persisted transaction ids get loaded in the
     // constructor.
@@ -326,37 +331,31 @@ public class TransactionStoreTest extends TCTestCase {
     GlobalTransactionDescriptor gtx2 = store.getOrCreateTransactionDescriptor(stxid2);
     assertEquals(gtx2, store.getTransactionDescriptor(stxid2));
 
-    PersistenceTransaction ptx = new TestPersistenceTransaction();
+    Transaction ptx = new TestPersistenceTransaction();
     store.commitTransactionDescriptor(ptx, stxid1);
-    Object[] args = (Object[]) persistor.storeQueue.poll(1);
-    assertTrue(persistor.storeQueue.isEmpty());
-    assertSame(ptx, args[0]);
-    assertSame(gtx1, args[1]);
+    verify(transactionPersistor).saveGlobalTransactionDescriptor(ptx, gtx1);
 
     store.commitTransactionDescriptor(ptx, stxid2);
-    args = (Object[]) persistor.storeQueue.poll(1);
-    assertTrue(persistor.storeQueue.isEmpty());
-    assertSame(ptx, args[0]);
-    assertSame(gtx2, args[1]);
+    verify(transactionPersistor).saveGlobalTransactionDescriptor(ptx, gtx2);
   }
 
   public void testSameGIDAssignedOnRestart() throws Exception {
     int initialMin = 200;
     int initialMax = 300;
     int laterMax = 400;
-    persistor = new TestTransactionPersistor();
-    store = new TransactionStoreImpl(persistor, persistor);
     Map<ServerTransactionID, GlobalTransactionDescriptor> sid2Gid = new HashMap<ServerTransactionID, GlobalTransactionDescriptor>();
     for (int i = initialMin; i < initialMax; i++) {
       ServerTransactionID stxid = new ServerTransactionID(new ClientID(i % 2), new TransactionID(i));
       GlobalTransactionDescriptor desc = store.getOrCreateTransactionDescriptor(stxid);
-      store.commitTransactionDescriptor(null, stxid);
+      // We're using an in-memory map of transactions, so we need to avoid marking the global transaction descriptors as
+      // committed up front.
+      transactionPersistor.saveGlobalTransactionDescriptor(null, desc);
       assertEquals(stxid, desc.getServerTransactionID());
       sid2Gid.put(stxid, desc);
     }
 
     // RESTART
-    store = new TransactionStoreImpl(persistor, persistor);
+    store = new TransactionStoreImpl(transactionPersistor, gidSequence);
 
     // test if we get the same gid
     GlobalTransactionID maxID = GlobalTransactionID.NULL_ID;
@@ -376,46 +375,6 @@ public class TransactionStoreTest extends TCTestCase {
       desc = store.getOrCreateTransactionDescriptor(stxid);
       store.commitTransactionDescriptor(null, stxid);
       assertTrue(maxID.toLong() < desc.getGlobalTransactionID().toLong());
-    }
-  }
-
-  private static final class TestTransactionPersistor implements TransactionPersistor, Sequence {
-
-    public final NoExceptionLinkedQueue                                          deleteQueue = new NoExceptionLinkedQueue();
-    public final LinkedHashMap<GlobalTransactionID, GlobalTransactionDescriptor> persisted   = new LinkedHashMap<GlobalTransactionID, GlobalTransactionDescriptor>();
-    public final NoExceptionLinkedQueue                                          storeQueue  = new NoExceptionLinkedQueue();
-    public long                                                                  sequence    = 0;
-
-    public Collection<GlobalTransactionDescriptor> loadAllGlobalTransactionDescriptors() {
-      return getNewGlobalTransactionDescs(persisted.values());
-    }
-
-    private Collection<GlobalTransactionDescriptor> getNewGlobalTransactionDescs(Collection<GlobalTransactionDescriptor> c) {
-      Collection<GlobalTransactionDescriptor> newList = new ArrayList<GlobalTransactionDescriptor>(c.size());
-      for (GlobalTransactionDescriptor oldGD : c) {
-        newList.add(new GlobalTransactionDescriptor(oldGD.getServerTransactionID(), oldGD.getGlobalTransactionID()));
-      }
-      return newList;
-    }
-
-    public void saveGlobalTransactionDescriptor(PersistenceTransaction tx, GlobalTransactionDescriptor gtx) {
-      storeQueue.put(new Object[] { tx, gtx });
-      persisted.put(gtx.getGlobalTransactionID(), gtx);
-    }
-
-    public long next() {
-      return ++sequence;
-    }
-
-    public long current() {
-      return sequence;
-    }
-
-    public void deleteAllGlobalTransactionDescriptors(PersistenceTransaction tx, SortedSet<GlobalTransactionID> toDelete) {
-      deleteQueue.put(toDelete);
-      for (GlobalTransactionID sid : toDelete) {
-        persisted.remove(sid);
-      }
     }
   }
 }

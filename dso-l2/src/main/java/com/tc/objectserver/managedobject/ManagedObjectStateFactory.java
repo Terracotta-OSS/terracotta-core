@@ -5,31 +5,23 @@
 package com.tc.objectserver.managedobject;
 
 import com.tc.exception.TCRuntimeException;
-import com.tc.io.serializer.api.StringIndex;
-import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.loaders.Namespace;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.managedobject.ManagedObjectStateStaticConfig.Factory;
-import com.tc.objectserver.persistence.api.PersistentCollectionFactory;
-import com.tc.objectserver.persistence.api.Persistor;
+import com.tc.objectserver.persistence.PersistentObjectFactory;
+import com.tc.objectserver.persistence.Persistor;
 import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Creates state for managed objects
  */
 public class ManagedObjectStateFactory {
 
-  private static final Map                          classNameToStateMap = new ConcurrentHashMap();
   private final ManagedObjectChangeListenerProvider listenerProvider;
-  private final StringIndex                         stringIndex;
-  private final PhysicalManagedObjectStateFactory   physicalMOFactory;
 
   /**
    * I know singletons are BAD, but this way we save about 16 bytes for every shared object we store in the server and
@@ -40,22 +32,11 @@ public class ManagedObjectStateFactory {
   // this is present for tests
   private static boolean                            disableAssertions   = false;
 
-  private final PersistentCollectionFactory         persistentCollectionFactory;
+  private final PersistentObjectFactory objectFactory;
 
-  static {
-    // XXX: Support for terracotta toolkit
-    classNameToStateMap.put("org.terracotta.collections.quartz.DistributedSortedSet$Storage",
-                            Byte.valueOf(ManagedObjectState.SET_TYPE));
-  }
-
-  private ManagedObjectStateFactory(final ManagedObjectChangeListenerProvider listenerProvider,
-                                    final StringIndex stringIndex,
-                                    final PhysicalManagedObjectStateFactory physicalMOFactory,
-                                    final PersistentCollectionFactory factory) {
+  private ManagedObjectStateFactory(final ManagedObjectChangeListenerProvider listenerProvider, PersistentObjectFactory objectFactory) {
     this.listenerProvider = listenerProvider;
-    this.stringIndex = stringIndex;
-    this.physicalMOFactory = physicalMOFactory;
-    this.persistentCollectionFactory = factory;
+    this.objectFactory = objectFactory;
   }
 
   /*
@@ -63,13 +44,19 @@ public class ManagedObjectStateFactory {
    */
   public static synchronized ManagedObjectStateFactory createInstance(final ManagedObjectChangeListenerProvider listenerProvider,
                                                                       final Persistor persistor) {
+    return createInstance(listenerProvider, persistor.getPersistentObjectFactory());
+  }
+
+  /*
+  * @see comments above
+  */
+  public static synchronized ManagedObjectStateFactory createInstance(final ManagedObjectChangeListenerProvider listenerProvider,
+                                                                      final PersistentObjectFactory persistentObjectFactory) {
     if (singleton != null && !disableAssertions) {
       // not good !!
-      throw new AssertionError("This class is singleton. It is not to be instanciated more than once. " + singleton);
+      throw new AssertionError("This class is singleton. It is not to be instantiated more than once. " + singleton);
     }
-    singleton = new ManagedObjectStateFactory(listenerProvider, persistor.getStringIndex(),
-                                              new PhysicalManagedObjectStateFactory(persistor.getClassPersistor()),
-                                              persistor.getPersistentCollectionFactory());
+    singleton = new ManagedObjectStateFactory(listenerProvider, persistentObjectFactory);
     return singleton;
   }
 
@@ -80,10 +67,7 @@ public class ManagedObjectStateFactory {
 
   // for tests like ObjectMangerTest and ManagedObjectStateSerializationTest
   public static void enableLegacyTypes() {
-    // XXX: remove when possible
-    classNameToStateMap.put("java.util.HashMap", Byte.valueOf(ManagedObjectState.MAP_TYPE));
-    classNameToStateMap.put("java.util.ArrayList", Byte.valueOf(ManagedObjectState.LIST_TYPE));
-    classNameToStateMap.put("java.util.HashSet", Byte.valueOf(ManagedObjectState.SET_TYPE));
+    throw new UnsupportedOperationException("Legacy types not supported");
   }
 
   // This is provided only for testing
@@ -93,16 +77,12 @@ public class ManagedObjectStateFactory {
   }
 
   /**
-   * This method is not synchronized as the creation and access happens sequencially and this is a costly method to
+   * This method is not synchronized as the creation and access happens sequentially and this is a costly method to
    * synchronize and singleton is a volatile variable
    */
   public static ManagedObjectStateFactory getInstance() {
     Assert.assertNotNull(singleton);
     return singleton;
-  }
-
-  public StringIndex getStringIndex() {
-    return this.stringIndex;
   }
 
   public ManagedObjectChangeListener getListener() {
@@ -111,96 +91,21 @@ public class ManagedObjectStateFactory {
 
   public ManagedObjectState createState(final ObjectID oid, final ObjectID parentID, final String className,
                                         final DNACursor cursor) {
-    final byte type = getStateObjectTypeFor(className);
-
-    if (type == ManagedObjectState.LITERAL_TYPE) { return new LiteralTypesManagedObjectState(); }
-
-    final long classID = getClassID(className);
-
-    if (type == ManagedObjectState.PHYSICAL_TYPE) { throw new AssertionError();
-    // physical objects no longer supported
-    // return this.physicalMOFactory.create(classID, oid, parentID, className, cursor);
-    }
-    switch (type) {
-      case ManagedObjectState.ARRAY_TYPE:
-        return new ArrayManagedObjectState(classID);
-      case ManagedObjectState.MAP_TYPE:
-        return new MapManagedObjectState(classID, this.persistentCollectionFactory.createPersistentMap(oid));
-      case ManagedObjectState.PARTIAL_MAP_TYPE:
-        return new PartialMapManagedObjectState(classID, this.persistentCollectionFactory.createPersistentMap(oid));
-      case ManagedObjectState.SET_TYPE:
-        return new SetManagedObjectState(classID, this.persistentCollectionFactory.createPersistentSet(oid));
-      case ManagedObjectState.LIST_TYPE:
-        return new ListManagedObjectState(classID);
-      case ManagedObjectState.QUEUE_TYPE:
-        return new QueueManagedObjectState(classID);
-    }
     ManagedObjectStateStaticConfig config = ManagedObjectStateStaticConfig.getConfigForClientClassName(className);
-    if (config != null) { return config.getFactory().newInstance(oid, classID, persistentCollectionFactory); }
-
-    // Unreachable
-    throw new AssertionError("Type : " + type + " is unknown !");
-  }
-
-  private long getClassID(final String className) {
-    return getStringIndex().getOrCreateIndexFor(className);
+    if (config == null) {
+      throw new IllegalArgumentException("'" + className + "' is not a supported managed object type.");
+    }
+    return config.getFactory().newInstance(oid, config.ordinal(), objectFactory);
   }
 
   public String getClassName(final long classID) {
-    return getStringIndex().getStringFor(classID);
-  }
-
-  private byte getStateObjectTypeFor(String className) {
-    final String logicalExtendingClassName = Namespace.parseLogicalNameIfNeceesary(className);
-    if (logicalExtendingClassName != null) {
-      final Byte t = (Byte) classNameToStateMap.get(logicalExtendingClassName);
-      if (t != null) { return t.byteValue(); }
-
-      className = Namespace.parseClassNameIfNecessary(className);
-    }
-
-    if (className.startsWith("[")) { return ManagedObjectState.ARRAY_TYPE; }
-
-    final Byte type = (Byte) classNameToStateMap.get(className);
-    if (type != null) { return type.byteValue(); }
-    if (LiteralValues.isLiteral(className)) { return ManagedObjectState.LITERAL_TYPE; }
-
-    ManagedObjectStateStaticConfig config = ManagedObjectStateStaticConfig.getConfigForClientClassName(className);
-    if (config != null) { return config.getStateObjectType(); }
-
-    throw new AssertionError("This server doesn't recognize types of '" + className + "'");
-    // physical types no more supported
-    // return ManagedObjectState.PHYSICAL_TYPE;
-  }
-
-  public PhysicalManagedObjectState createPhysicalState(final ObjectID parentID, final int classId)
-      throws ClassNotFoundException {
-    return this.physicalMOFactory.create(parentID, classId);
+    return ManagedObjectStateStaticConfig.values()[((int) classID)].getClientClassName();
   }
 
   public ManagedObjectState readManagedObjectStateFrom(final ObjectInput in, final byte type) {
     try {
-      switch (type) {
-        case ManagedObjectState.PHYSICAL_TYPE:
-          return PhysicalManagedObjectState.readFrom(in);
-        case ManagedObjectState.MAP_TYPE:
-          return MapManagedObjectState.readFrom(in);
-        case ManagedObjectState.PARTIAL_MAP_TYPE:
-          return PartialMapManagedObjectState.readFrom(in);
-        case ManagedObjectState.ARRAY_TYPE:
-          return ArrayManagedObjectState.readFrom(in);
-        case ManagedObjectState.LITERAL_TYPE:
-          return LiteralTypesManagedObjectState.readFrom(in);
-        case ManagedObjectState.LIST_TYPE:
-          return ListManagedObjectState.readFrom(in);
-        case ManagedObjectState.SET_TYPE:
-          return SetManagedObjectState.readFrom(in);
-        case ManagedObjectState.QUEUE_TYPE:
-          return QueueManagedObjectState.readFrom(in);
-      }
-
       Factory factory = ManagedObjectStateStaticConfig.Factory.getFactoryForType(type);
-      if (factory != null) { return factory.readFrom(in); }
+      if (factory != null) { return factory.readFrom(in, objectFactory); }
 
       // Unreachable!
       throw new AssertionError("Unknown type : " + type + " : Dont know how to deserialize this type !");
@@ -211,12 +116,5 @@ public class ManagedObjectStateFactory {
     } catch (final ClassNotFoundException e) {
       throw new TCRuntimeException(e);
     }
-  }
-
-  public ManagedObjectState recreateState(final ObjectID id, final ObjectID pid, final String className,
-                                          final DNACursor cursor, final ManagedObjectState oldState) {
-    Assert.assertEquals(ManagedObjectState.PHYSICAL_TYPE, oldState.getType());
-    final long classID = getClassID(className);
-    return this.physicalMOFactory.recreate(classID, pid, className, cursor, (PhysicalManagedObjectState) oldState);
   }
 }

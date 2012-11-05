@@ -47,11 +47,6 @@ public class BindAddressSystemTest extends BaseDSOTestCase {
                     + "\n      <dso-port bind=\""
                     + InetAddress.getLocalHost().getHostAddress()
                     + "\">9510</dso-port>"
-                    + "\n      <dso>"
-                    + "\n        <persistence>"
-                    + "\n          <mode>permanent-store</mode>"
-                    + "\n        </persistence>"
-                    + "\n      </dso>"
                     + "\n      </server>"
                     + "\n      <server name=\"server2\" host=\""
                     + TCSocketAddress.LOOPBACK_IP
@@ -59,11 +54,6 @@ public class BindAddressSystemTest extends BaseDSOTestCase {
                     + "\n      <dso-port bind=\""
                     + InetAddress.getLocalHost().getHostAddress()
                     + "\">8510</dso-port>"
-                    + "\n      <dso>"
-                    + "\n        <persistence>"
-                    + "\n          <mode>permanent-store</mode>"
-                    + "\n        </persistence>"
-                    + "\n      </dso>"
                     + "\n      </server>"
                     + "\n      <ha>"
                     + "\n        <mode>networked-active-passive</mode>"
@@ -108,11 +98,6 @@ public class BindAddressSystemTest extends BaseDSOTestCase {
                     + "\n      <l2-group-port bind=\""
                     + InetAddress.getLocalHost().getHostAddress()
                     + "\">9510</l2-group-port>"
-                    + "\n      <dso>"
-                    + "\n        <persistence>"
-                    + "\n          <mode>permanent-store</mode>"
-                    + "\n        </persistence>"
-                    + "\n      </dso>"
                     + "\n      </server>"
                     + "\n      <server name=\"server2\" host=\""
                     + TCSocketAddress.LOOPBACK_IP
@@ -120,11 +105,6 @@ public class BindAddressSystemTest extends BaseDSOTestCase {
                     + "\n      <l2-group-port bind=\""
                     + InetAddress.getLocalHost().getHostAddress()
                     + "\">8510</l2-group-port>"
-                    + "\n      <dso>"
-                    + "\n        <persistence>"
-                    + "\n          <mode>permanent-store</mode>"
-                    + "\n        </persistence>"
-                    + "\n      </dso>"
                     + "\n      </server>"
                     + "\n      <ha>"
                     + "\n        <mode>networked-active-passive</mode>"

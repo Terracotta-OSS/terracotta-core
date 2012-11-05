@@ -1,0 +1,20 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <artifactId>management-agent</artifactId>
+  <packaging>pom</packaging>
+
+  <parent>
+    <groupId>org.terracotta</groupId>
+    <artifactId>build-parent</artifactId>
+    <version>3.8.0-SNAPSHOT</version>
+    <relativePath>../build-parent</relativePath>
+  </parent>
+
+  <modules>
+    <module>management-tsa</module>
+    <module>management-tsa-impl</module>
+    <module>management-tsa-war</module>
+    <module>management-system-tests</module>
+  </modules>
+
+</project>

@@ -4,19 +4,21 @@
  */
 package com.tc.objectserver.managedobject;
 
+import org.terracotta.corestorage.KeyValueStorage;
+
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.objectserver.api.Destroyable;
 import com.tc.objectserver.mgmt.FacadeUtil;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.MapEntryFacade;
 import com.tc.objectserver.mgmt.MapEntryFacadeImpl;
-import com.tc.objectserver.persistence.db.PersistableCollection;
-import com.tc.objectserver.persistence.db.TCDestroyable;
+import com.tc.objectserver.persistence.PersistentObjectFactory;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 
@@ -26,23 +28,29 @@ import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 /**
  * state for maps
  */
 public class MapManagedObjectState extends LogicalManagedObjectState implements PrettyPrintable,
-    PersistableObjectState, TCDestroyable {
-  protected Map references;
+    Destroyable {
+  private final ObjectID id;
+  protected final KeyValueStorage<Object, Object> references;
+  private final PersistentObjectFactory factory;
 
-  protected MapManagedObjectState(final long classID, final Map map) {
+  protected MapManagedObjectState(final long classID, ObjectID id, PersistentObjectFactory factory) {
     super(classID);
-    this.references = map;
+    this.factory = factory;
+    this.id = id;
+    this.references = factory.getMap(id, true);
   }
 
-  protected MapManagedObjectState(final ObjectInput in) throws IOException {
+  protected MapManagedObjectState(final ObjectInput in, PersistentObjectFactory factory) throws IOException {
     super(in);
+    this.factory = factory;
+    this.id = new ObjectID(in.readLong());
+    this.references = factory.getMap(id, false);
   }
 
   @Override
@@ -62,7 +70,8 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
       case SerializationUtil.PUT:
         final Object key = getKey(params);
         final Object value = getValue(params);
-        Object old = this.references.put(key, value);
+        Object old = references.get(key);
+        this.references.put(key, value);
         if (key instanceof ObjectID) {
           final ObjectID v = (ObjectID) key;
           getListener().changed(objectID, null, v);
@@ -79,7 +88,8 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
         }
         break;
       case SerializationUtil.REMOVE:
-        old = this.references.remove(params[0]);
+        old = this.references.get(params[0]);
+        this.references.remove(params[0]);
         if (old instanceof ObjectID) {
           removedValueFromMap(objectID, applyInfo, (ObjectID) old);
         }
@@ -127,25 +137,17 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
 
   @Override
   public void dehydrate(final ObjectID objectID, final DNAWriter writer, final DNAType type) {
-    for (final Iterator i = this.references.entrySet().iterator(); i.hasNext();) {
-      final Entry entry = (Entry) i.next();
-      final Object key = entry.getKey();
-      final Object value = entry.getValue();
+    for (Object key : references.keySet()) {
+      final Object value = references.get(key);
       writer.addLogicalAction(SerializationUtil.PUT, new Object[] { key, value });
     }
   }
 
   @Override
   protected void addAllObjectReferencesTo(final Set refs) {
-    for (final Iterator i = this.references.entrySet().iterator(); i.hasNext();) {
-      final Entry entry = (Entry) i.next();
-      final Object key = entry.getKey();
-      final Object value = entry.getValue();
-      if (key instanceof ObjectID) {
-        refs.add(key);
-      }
-      if (value instanceof ObjectID) {
-        refs.add(value);
+    for (Object o : references.values()) {
+      if (o instanceof ObjectID) {
+        refs.add(o);
       }
     }
   }
@@ -160,7 +162,8 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
 
   @Override
   public ManagedObjectFacade createFacade(final ObjectID objectID, final String className, int limit) {
-    final int size = this.references.size();
+
+    final int size = (int)this.references.size();
 
     if (limit < 0) {
       limit = size;
@@ -172,10 +175,10 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
 
     int index = 0;
 
-    for (final Iterator i = this.references.entrySet().iterator(); i.hasNext() && index < limit; index++) {
-      final Entry entry = (Entry) i.next();
-      final Object key = FacadeUtil.processValue(entry.getKey());
-      final Object value = FacadeUtil.processValue(entry.getValue());
+    for (final Iterator<Object> i = references.keySet().iterator(); i.hasNext() && index < limit; index++) {
+      Object rawKey = i.next();
+      final Object key = FacadeUtil.processValue(rawKey);
+      final Object value = FacadeUtil.processValue(references.get(rawKey));
       data[index] = new MapEntryFacadeImpl(key, value);
     }
 
@@ -184,27 +187,17 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
 
   @Override
   protected void basicWriteTo(final ObjectOutput out) throws IOException {
-    // CollectionsPersistor will save retrieve data in references map.
-    if (false) { throw new IOException(); }
+    out.writeLong(id.toLong());
   }
 
-  public void setMap(final Map map) {
-    if (this.references != null) { throw new AssertionError("The references map is already set ! " + this.references); }
-    this.references = map;
-  }
-
-  public Map getMap() {
-    return this.references;
-  }
+//
+//  public Map getMap() {
+//    return this.references;
+//  }
 
   // CollectionsPersistor will save retrieve data in references map.
-  static MapManagedObjectState readFrom(final ObjectInput in) throws IOException, ClassNotFoundException {
-    if (false) {
-      // This is added to make the compiler happy. For some reason if I have readFrom() method throw
-      // ClassNotFoundException in LinkedHashMapManagedObjectState, it shows as an error !!
-      throw new ClassNotFoundException();
-    }
-    return new MapManagedObjectState(in);
+  static MapManagedObjectState readFrom(final ObjectInput in, PersistentObjectFactory factory) throws IOException, ClassNotFoundException {
+    return new MapManagedObjectState(in, factory);
   }
 
   @Override
@@ -219,16 +212,6 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
   }
 
   @Override
-  public PersistableCollection getPersistentCollection() {
-    return (PersistableCollection) getMap();
-  }
-
-  @Override
-  public void setPersistentCollection(final PersistableCollection collection) {
-    setMap((Map) collection);
-  }
-
-  @Override
   public int hashCode() {
     final int prime = 31;
     int result = 1;
@@ -238,8 +221,29 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
 
   @Override
   public void destroy() {
-    if (this.references instanceof TCDestroyable) {
-      ((TCDestroyable) this.references).destroy();
-    }
+    factory.destroyMap(id);
+  }
+
+  /*
+   * These methods are used only for ServerClusterMetaDataManagerImpl, might be good to get rid of them
+   * and do this in a less leaky way.
+   */
+  @Deprecated
+  public Set<Object> keySet() {
+    return references.keySet();
+  }
+
+  @Deprecated
+  public Object get(Object key) {
+    return references.get(key);
+  }
+
+  @Deprecated
+  public boolean containsKey(Object key) {
+    return references.containsKey(key);
+  }
+
+  public Map getPersistentCollection() {
+    throw new UnsupportedClassVersionError();
   }
 }

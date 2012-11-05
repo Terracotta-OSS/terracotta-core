@@ -10,7 +10,6 @@ import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollector;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
@@ -29,7 +28,7 @@ public interface ObjectManager extends ManagedObjectProvider, ObjectManagerMBean
   /**
    * releases the object and commits the transaction, so that if anyone needs it they can have it
    */
-  public void releaseAndCommit(PersistenceTransaction tx, ManagedObject object);
+  public void release(ManagedObject object);
 
   /**
    * release all objects
@@ -43,10 +42,10 @@ public interface ObjectManager extends ManagedObjectProvider, ObjectManagerMBean
 
   /**
    * Release all objects in the given collection and commits the transaction too.
-   * 
+   *
    * @param collection
    */
-  public void releaseAllAndCommit(PersistenceTransaction tx, Collection<ManagedObject> collection);
+  public void releaseAll(Collection<ManagedObject> collection);
 
   /**
    * Looks up the objects associated with the Object Lookups from the clients. What it does is if all the objects are
@@ -108,7 +107,7 @@ public interface ObjectManager extends ManagedObjectProvider, ObjectManagerMBean
   /**
    * Called by DGC thread (in object manager)
    * 
-   * @param periodicDGCResultContext
+   * @param dgcResultContext
    */
   public void notifyGCComplete(DGCResultContext dgcResultContext);
 

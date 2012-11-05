@@ -3,17 +3,19 @@
  */
 package com.tc.objectserver.managedobject;
 
+import com.tc.object.ObjectID;
+import com.tc.objectserver.persistence.PersistentObjectFactory;
+
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.util.Map;
 
 public class ToolkitTypeRootManagedObjectState extends PartialMapManagedObjectState {
-  public ToolkitTypeRootManagedObjectState(ObjectInput in) throws IOException {
-    super(in);
+  public ToolkitTypeRootManagedObjectState(ObjectInput in, PersistentObjectFactory factory) throws IOException {
+    super(in, factory);
   }
 
-  protected ToolkitTypeRootManagedObjectState(final long classID, final Map map) {
-    super(classID, map);
+  protected ToolkitTypeRootManagedObjectState(final long classID, ObjectID oid, PersistentObjectFactory factory) {
+    super(classID, oid, factory);
   }
 
   @Override
@@ -32,8 +34,8 @@ public class ToolkitTypeRootManagedObjectState extends PartialMapManagedObjectSt
     return super.basicEquals(mo);
   }
 
-  static ToolkitTypeRootManagedObjectState readFrom(final ObjectInput in) throws IOException {
-    ToolkitTypeRootManagedObjectState ttrmo = new ToolkitTypeRootManagedObjectState(in);
+  static ToolkitTypeRootManagedObjectState readFrom(final ObjectInput in, PersistentObjectFactory factory) throws IOException {
+    ToolkitTypeRootManagedObjectState ttrmo = new ToolkitTypeRootManagedObjectState(in, factory);
     return ttrmo;
   }
 

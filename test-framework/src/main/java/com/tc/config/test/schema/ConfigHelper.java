@@ -144,7 +144,7 @@ public class ConfigHelper {
       l2ConfigBuilders[serverIndex].setReconnectWindowForPrevConnectedClients(l2Config.getClientReconnectWindow());
 
       // set persistence
-      l2ConfigBuilders[serverIndex].setPersistenceMode(l2Config.getPersistenceMode().getMode());
+      l2ConfigBuilders[serverIndex].setRestartable(l2Config.getRestartable());
 
       // set DGC props
       l2ConfigBuilders[serverIndex].setGCEnabled(l2Config.isDgcEnabled());

@@ -28,7 +28,6 @@ import com.terracottatech.config.HaMode;
 import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.MirrorGroups;
 import com.terracottatech.config.Persistence;
-import com.terracottatech.config.PersistenceMode;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 
@@ -369,7 +368,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(1, servers.getServerArray().length);
     Server server = servers.getServerArray(0);
 
-    Assert.assertEquals(PersistenceMode.TEMPORARY_SWAP_ONLY, server.getDso().getPersistence().getMode());
+    Assert.assertFalse(server.getDso().getPersistence().getRestartable().getEnabled());
     Assert.assertEquals(120, server.getDso().getClientReconnectWindow());
     Assert.assertEquals(true, server.getDso().getGarbageCollection().getEnabled());
     Assert.assertEquals(false, server.getDso().getGarbageCollection().getVerbose());
@@ -391,16 +390,14 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertTrue(server.isSetDso());
     DsoServerData dsoServerData = server.getDso();
     Assert.assertTrue(dsoServerData.isSetPersistence());
-    Assert.assertEquals(PersistenceMode.TEMPORARY_SWAP_ONLY, dsoServerData.getPersistence().getMode());
     Persistence persistence = dsoServerData.getPersistence();
-    Assert.assertTrue(persistence.isSetMode());
     Assert.assertFalse(persistence.isSetOffheap());
+    Assert.assertFalse(persistence.getRestartable().getEnabled());
   }
 
   public void testDefaultOffHeap() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>" + "<dso>"
-                    + "<persistence>" + "<mode>permanent-store</mode>" + "</persistence>"
                     + "<client-reconnect-window>9876</client-reconnect-window>" + "<garbage-collection>"
                     + "<enabled>false</enabled>" + "<verbose>true</verbose>" + "<interval>1234</interval>"
                     + "</garbage-collection>" + "</dso>" + "</server>" + "</servers>" + "</tc:tc-config>";
@@ -414,7 +411,6 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(1, servers.getServerArray().length);
     Server server = servers.getServerArray(0);
 
-    Assert.assertEquals(PersistenceMode.PERMANENT_STORE, server.getDso().getPersistence().getMode());
     Assert.assertEquals(9876, server.getDso().getClientReconnectWindow());
     Assert.assertEquals(false, server.getDso().getGarbageCollection().getEnabled());
     Assert.assertEquals(true, server.getDso().getGarbageCollection().getVerbose());
@@ -426,7 +422,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
   public void testOffHeap1() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>" + "<dso>"
-                    + "<persistence>" + "<mode>permanent-store</mode>" + "<offheap>" + "<enabled>true</enabled>"
+                    + "<persistence>" + "<offheap>" + "<enabled>true</enabled>"
                     + "<maxDataSize>5628m</maxDataSize>" + "</offheap>" + "</persistence>"
                     + "<client-reconnect-window>9876</client-reconnect-window>" + "<garbage-collection>"
                     + "<enabled>false</enabled>" + "<verbose>true</verbose>" + "<interval>1234</interval>"
@@ -441,7 +437,6 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(1, servers.getServerArray().length);
     Server server = servers.getServerArray(0);
 
-    Assert.assertEquals(PersistenceMode.PERMANENT_STORE, server.getDso().getPersistence().getMode());
     Assert.assertEquals(9876, server.getDso().getClientReconnectWindow());
     Assert.assertEquals(false, server.getDso().getGarbageCollection().getEnabled());
     Assert.assertEquals(true, server.getDso().getGarbageCollection().getVerbose());
@@ -455,7 +450,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
   public void testOffHeap2() throws IOException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>" + "<dso>"
-                    + "<persistence>" + "<mode>permanent-store</mode>" + "<offheap>" + "<enabled>true</enabled>"
+                    + "<persistence>" + "<offheap>" + "<enabled>true</enabled>"
                     + "</offheap>" + "</persistence>" + "<client-reconnect-window>9876</client-reconnect-window>"
                     + "<garbage-collection>" + "<enabled>false</enabled>" + "<verbose>true</verbose>"
                     + "<interval>1234</interval>" + "</garbage-collection>" + "</dso>" + "</server>" + "</servers>"
@@ -475,7 +470,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
   public void testDso() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>" + "<dso>"
-                    + "<persistence>" + "<mode>permanent-store</mode>" + "</persistence>"
+                    + "<persistence>" + "<restartable enabled=\"true\"/>" + "</persistence>"
                     + "<client-reconnect-window>9876</client-reconnect-window>" + "<garbage-collection>"
                     + "<enabled>false</enabled>" + "<verbose>true</verbose>" + "<interval>1234</interval>"
                     + "</garbage-collection>" + "</dso>" + "</server>" + "</servers>" + "</tc:tc-config>";
@@ -489,11 +484,11 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(1, servers.getServerArray().length);
     Server server = servers.getServerArray(0);
 
-    Assert.assertEquals(PersistenceMode.PERMANENT_STORE, server.getDso().getPersistence().getMode());
     Assert.assertEquals(9876, server.getDso().getClientReconnectWindow());
     Assert.assertEquals(false, server.getDso().getGarbageCollection().getEnabled());
     Assert.assertEquals(true, server.getDso().getGarbageCollection().getVerbose());
     Assert.assertEquals(1234, server.getDso().getGarbageCollection().getInterval());
+    Assert.assertTrue(server.getDso().getPersistence().getRestartable().getEnabled());
   }
 
   public void testMirrorGroupDefaults() throws IOException, ConfigurationSetupException {

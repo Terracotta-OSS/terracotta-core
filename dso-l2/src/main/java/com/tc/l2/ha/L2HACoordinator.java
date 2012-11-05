@@ -4,8 +4,6 @@
  */
 package com.tc.l2.ha;
 
-import static com.tc.l2.ha.ClusterStateDBKeyNames.DATABASE_CREATION_TIMESTAMP_KEY;
-
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.OrderedSink;
@@ -73,6 +71,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.sequence.DGCSequenceProvider;
+import com.tc.util.sequence.ObjectIDSequence;
 import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorListener;
@@ -81,6 +80,8 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import static com.tc.l2.ha.ClusterStateDBKeyNames.DATABASE_CREATION_TIMESTAMP_KEY;
 
 public class L2HACoordinator implements L2Coordinator, GroupEventsListener, SequenceGeneratorListener, PrettyPrintable {
 
@@ -116,7 +117,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                          final L2ConfigurationSetupManager configurationSetupManager, final MessageRecycler recycler,
                          final GroupID thisGroupID, final StripeIDStateManager stripeIDStateManager,
                          final ServerTransactionFactory serverTransactionFactory,
-                         DGCSequenceProvider dgcSequenceProvider, SequenceGenerator indexSequenceGenerator) {
+                         DGCSequenceProvider dgcSequenceProvider, SequenceGenerator indexSequenceGenerator, final ObjectIDSequence objectIDSequence) {
     this.consoleLogger = consoleLogger;
     this.server = server;
     this.groupManager = groupCommsManager;
@@ -128,7 +129,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
     init(stageManager, persistentStateStore, l2ObjectStateManager, l2IndexStateManager, objectManager,
          indexHACoordinator, transactionManager, gtxm, weightGeneratorFactory, recycler, stripeIDStateManager,
-         serverTransactionFactory, dgcSequenceProvider);
+         serverTransactionFactory, dgcSequenceProvider, objectIDSequence);
   }
 
   private void init(final StageManager stageManager, final PersistentMapStore persistentStateStore,
@@ -137,13 +138,13 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                     final ServerTransactionManager transactionManager, final ServerGlobalTransactionManager gtxm,
                     final WeightGeneratorFactory weightGeneratorFactory, final MessageRecycler recycler,
                     final StripeIDStateManager stripeIDStateManager,
-                    final ServerTransactionFactory serverTransactionFactory, DGCSequenceProvider dgcSequenceProvider) {
+                    final ServerTransactionFactory serverTransactionFactory, DGCSequenceProvider dgcSequenceProvider, final ObjectIDSequence objectIDSequence) {
 
     isCleanDB = isCleanDB(persistentStateStore);
 
     final int MAX_STAGE_SIZE = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
 
-    final ClusterState clusterState = new ClusterState(persistentStateStore, this.server.getManagedObjectStore(),
+    final ClusterState clusterState = new ClusterState(persistentStateStore, objectIDSequence,
                                                        this.server.getConnectionIdFactory(),
                                                        gtxm.getGlobalTransactionIDSequenceProvider(), this.thisGroupID,
                                                        stripeIDStateManager, dgcSequenceProvider);

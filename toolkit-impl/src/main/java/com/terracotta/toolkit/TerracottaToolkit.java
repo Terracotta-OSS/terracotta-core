@@ -4,7 +4,6 @@
 package com.terracotta.toolkit;
 
 import net.sf.ehcache.CacheManager;
-
 import org.terracotta.toolkit.cache.ToolkitCache;
 import org.terracotta.toolkit.cache.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.cluster.ClusterInfo;
@@ -68,8 +67,8 @@ import com.terracotta.toolkit.roots.impl.RootsUtil;
 import com.terracotta.toolkit.roots.impl.RootsUtil.RootObjectCreator;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeRootsStaticFactory;
-import com.terracotta.toolkit.search.SearchBuilderFactory;
-import com.terracotta.toolkit.search.UnsupportedSearchBuilderFactory;
+import com.terracotta.toolkit.search.SearchFactory;
+import com.terracotta.toolkit.search.UnsupportedSearchFactory;
 import com.terracotta.toolkit.util.collections.WeakValueMapManager;
 
 import java.util.UUID;
@@ -123,12 +122,12 @@ public class TerracottaToolkit implements ToolkitInternal {
     // create set factory before map factory, as map uses set internally
     clusteredSetFactory = new ToolkitSetFactoryImpl(this, toolkitTypeRootsFactory, platformService);
     clusteredCacheFactory = ToolkitCacheFactoryImpl.newToolkitCacheFactory(this, toolkitTypeRootsFactory,
-                                                                           createSearchBuilderFactory(),
+                                                                           createSearchFactory(),
                                                                            serverMapLocalStoreFactory, platformService);
     clusteredMapFactory = new ToolkitMapFactoryImpl(this, toolkitTypeRootsFactory, platformService);
     clusteredSortedMapFactory = new ToolkitSortedMapFactoryImpl(this, toolkitTypeRootsFactory, platformService);
     clusteredStoreFactory = ToolkitCacheFactoryImpl.newToolkitStoreFactory(this, toolkitTypeRootsFactory,
-                                                                           createSearchBuilderFactory(),
+                                                                           createSearchFactory(),
                                                                            serverMapLocalStoreFactory, platformService);
     clusteredBlockingQueueFactory = new ToolkitBlockingQueueFactoryImpl(this, toolkitTypeRootsFactory, platformService);
     ToolkitStore atomicLongs = clusteredStoreFactory.getOrCreate(ToolkitTypeConstants.TOOLKIT_ATOMIC_LONG_MAP_NAME,
@@ -293,8 +292,8 @@ public class TerracottaToolkit implements ToolkitInternal {
     }
   }
 
-  protected SearchBuilderFactory createSearchBuilderFactory() {
-    return UnsupportedSearchBuilderFactory.INSTANCE;
+  protected SearchFactory createSearchFactory() {
+    return UnsupportedSearchFactory.INSTANCE;
   }
 
   @Override

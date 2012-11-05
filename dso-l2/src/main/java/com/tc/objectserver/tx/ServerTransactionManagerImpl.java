@@ -22,6 +22,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.api.ObjectManager;
+import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.gtx.GlobalTransactionIDLowWaterMarkProvider;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
@@ -31,9 +32,6 @@ import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
-import com.tc.objectserver.persistence.api.TransactionStore;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.stats.counter.Counter;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
@@ -103,7 +101,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   private final MetaDataManager                         metaDataManager;
 
   public ServerTransactionManagerImpl(final ServerGlobalTransactionManager gtxm,
-                                      final TransactionStore transactionStore, final LockManager lockManager,
+                                      final LockManager lockManager,
                                       final ClientStateManager stateManager, final ObjectManager objectManager,
                                       final TransactionalObjectManager txnObjectManager,
                                       final TransactionAcknowledgeAction action, final Counter transactionRateCounter,
@@ -334,15 +332,14 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     final ServerTransactionID stxnID = txn.getServerTransactionID();
     final NodeID sourceID = txn.getSourceID();
     final TransactionID txnID = txn.getTransactionID();
-    final List changes = txn.getChanges();
+    final List<DNA> changes = txn.getChanges();
     final boolean isClient = sourceID.getNodeType() == NodeID.CLIENT_NODE_TYPE;
 
     final GlobalTransactionID gtxID = txn.getGlobalTransactionID();
 
     final boolean active = isActive();
 
-    for (final Iterator i = changes.iterator(); i.hasNext();) {
-      final DNA orgDNA = (DNA) i.next();
+    for (DNA orgDNA : changes) {
       long version = orgDNA.getVersion();
       if (version == DNA.NULL_VERSION) {
         Assert.assertFalse(gtxID.isNull());
@@ -364,14 +361,11 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       }
     }
 
-    final Map newRoots = txn.getNewRoots();
+    final Map<String, ObjectID> newRoots = txn.getNewRoots();
 
     if (newRoots.size() > 0) {
-      for (final Iterator i = newRoots.entrySet().iterator(); i.hasNext();) {
-        final Entry entry = (Entry) i.next();
-        final String rootName = (String) entry.getKey();
-        final ObjectID newID = (ObjectID) entry.getValue();
-        this.objectManager.createRoot(rootName, newID);
+      for (Entry<String, ObjectID> entry : newRoots.entrySet()) {
+        this.objectManager.createRoot(entry.getKey(), entry.getValue());
       }
     }
     if (active && isClient) {
@@ -380,6 +374,8 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     this.transactionRateCounter.increment(txn.getNumApplicationTxn());
 
     fireTransactionAppliedEvent(stxnID, txn.getNewObjectIDs());
+
+    this.gtxm.commit(null, stxnID);
   }
 
   @Override
@@ -399,18 +395,17 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
    * imposes a problem. The clients could read an object that has changes but it not committed to the disk yet and If
    * the server crashes then transactions are resent and may be re-applied in the clients when it should not have
    * re-applied. To avoid this we now commit inline before releasing the objects.
-   * 
-   * @see ObjectManagerImpl.releaseAll() for more details.
+   *
    */
   @Override
-  public void commit(final PersistenceTransactionProvider ptxp, final Collection<ManagedObject> objects,
+  public void commit(final TransactionProvider ptxp, final Collection<ManagedObject> objects,
                      final Map<String, ObjectID> newRoots,
                      final Collection<ServerTransactionID> appliedServerTransactionIDs,
                      final SortedSet<ObjectID> deletedObjects) {
-    final PersistenceTransaction ptx = ptxp.newTransaction();
-    this.gtxm.commitAll(ptx, appliedServerTransactionIDs);
+//    final PersistenceTransaction ptx = ptxp.newTransaction();
+//    this.gtxm.commitAll(ptx, appliedServerTransactionIDs);
     // This call commits the transaction too.
-    this.objectManager.releaseAllAndCommit(ptx, objects);
+    this.objectManager.releaseAll(objects);
     this.garbageCollectionManager.deleteObjects(deletedObjects);
     fireRootCreatedEvents(newRoots);
     committed(appliedServerTransactionIDs);

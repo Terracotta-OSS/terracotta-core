@@ -14,13 +14,15 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.util.concurrent.ThreadUtil;
 
+import gnu.trove.TLinkable;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import gnu.trove.TLinkable;
+
 import junit.framework.TestCase;
 
 public class ArrayManagerTest extends TestCase {

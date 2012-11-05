@@ -4,6 +4,17 @@
  */
 package com.tc.test.process;
 
+import org.apache.commons.io.IOUtils;
+
+import com.tc.config.Loader;
+import com.tc.config.test.schema.L2ConfigBuilder;
+import com.tc.config.test.schema.TerracottaConfigBuilder;
+import com.tc.objectserver.control.ExtraProcessServerControl;
+import com.tc.util.PortChooser;
+import com.terracottatech.config.Server;
+import com.terracottatech.config.TcConfigDocument;
+import com.terracottatech.config.TcConfigDocument.TcConfig;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -15,17 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.Assert;
-
-import org.apache.commons.io.IOUtils;
-
-import com.tc.config.Loader;
-import com.tc.config.test.schema.L2ConfigBuilder;
-import com.tc.config.test.schema.TerracottaConfigBuilder;
-import com.tc.objectserver.control.ExtraProcessServerControl;
-import com.tc.util.PortChooser;
-import com.terracottatech.config.Server;
-import com.terracottatech.config.TcConfigDocument;
-import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 /**
  * This class will start a DSO server in Enterprise mode, out of process
@@ -174,7 +174,7 @@ public class ExternalDsoServer {
     l2.setLogs(workingDir + File.separator + "logs");
     l2.setStatistics(workingDir + File.separator + "stats");
     if (persistentMode) {
-      l2.setPersistenceMode("permanent-store");
+      l2.setRestartable(true);
     }
 
     String configAsString = builder.toString();

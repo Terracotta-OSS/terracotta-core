@@ -4,153 +4,152 @@
  */
 package com.tc.objectserver.handler;
 
-import com.tc.async.impl.MockSink;
-import com.tc.async.impl.MockStage;
-import com.tc.l2.ha.L2HADisabledCooridinator;
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
+import org.mockito.ArgumentCaptor;
+
+import com.tc.async.api.EventContext;
+import com.tc.async.api.Sink;
+import com.tc.async.api.Stage;
 import com.tc.net.ClientID;
-import com.tc.net.groups.SingleNodeGroupManager;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.MetaDataReader;
-import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.Notify;
 import com.tc.object.locks.NotifyImpl;
 import com.tc.object.locks.StringLockID;
-import com.tc.object.locks.TestLockManager;
 import com.tc.object.locks.ThreadID;
-import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
-import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.BroadcastChangeContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.TestServerConfigurationContext;
-import com.tc.objectserver.gtx.TestGlobalTransactionManager;
+import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
+import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
-import com.tc.objectserver.tx.NullTransactionalObjectManager;
+import com.tc.objectserver.locks.ServerLock;
+import com.tc.objectserver.api.Transaction;
+import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionImpl;
-import com.tc.objectserver.tx.TestServerTransactionManager;
+import com.tc.objectserver.tx.ServerTransactionManager;
+import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.util.SequenceID;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import junit.framework.TestCase;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 public class ApplyTransactionChangeHandlerTest extends TestCase {
 
-  private ApplyTransactionChangeHandler handler;
-  private ObjectInstanceMonitor         instanceMonitor;
-  private TestServerTransactionManager  transactionManager;
-  private TestGlobalTransactionManager  gtxm;
-  private TestLockManager               lockManager;
-  private MockSink                      broadcastSink;
+  private ApplyTransactionChangeHandler  handler;
+  private LockManager                    lockManager;
+  private Sink                           broadcastSink;
+  private ArgumentCaptor<NotifiedWaiters> notifiedWaitersArgumentCaptor;
 
   @Override
   public void setUp() throws Exception {
-    this.instanceMonitor = new ObjectInstanceMonitorImpl();
-    this.transactionManager = new TestServerTransactionManager();
-    this.lockManager = new TestLockManager();
-    this.gtxm = new TestGlobalTransactionManager();
-    this.handler = new ApplyTransactionChangeHandler(this.instanceMonitor, this.gtxm);
+    this.lockManager = mock(LockManager.class);
+    this.notifiedWaitersArgumentCaptor = ArgumentCaptor.forClass(NotifiedWaiters.class);
+    TransactionProvider persistenceTransactionProvider = mock(TransactionProvider.class);
+    Transaction persistenceTransaction = mock(Transaction.class);
+    when(persistenceTransactionProvider.newTransaction()).thenReturn(persistenceTransaction);
 
-    MockStage stageBo = new MockStage("Bo");
-    MockStage stageCo = new MockStage("Co");
-    MockStage stageCpEv = new MockStage("CpEv");
-    this.broadcastSink = stageBo.sink;
+    this.handler = new ApplyTransactionChangeHandler(new ObjectInstanceMonitorImpl(), mock(ServerGlobalTransactionManager.class),
+        persistenceTransactionProvider);
+
+    this.broadcastSink = mock(Sink.class);
+    Stage broadcastStage = mock(Stage.class);
+    when(broadcastStage.getSink()).thenReturn(broadcastSink);
     TestServerConfigurationContext context = new TestServerConfigurationContext();
-    context.transactionManager = this.transactionManager;
-    context.txnObjectManager = new NullTransactionalObjectManager();
-    context.l2Coordinator = new L2HADisabledCooridinator(new SingleNodeGroupManager(), new TestPersistentMapStore());
-    context.addStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, stageBo);
-    context.addStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE, stageCo);
-    context.addStage(ServerConfigurationContext.SERVER_MAP_CAPACITY_EVICTION_STAGE, stageCpEv);
+    context.transactionManager = mock(ServerTransactionManager.class);
+    context.txnObjectManager = mock(TransactionalObjectManager.class);
+    context.addStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, broadcastStage);
+    context.addStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE, mock(Stage.class));
+    context.addStage(ServerConfigurationContext.SERVER_MAP_CAPACITY_EVICTION_STAGE, mock(Stage.class));
     context.lockManager = this.lockManager;
 
     this.handler.initializeContext(context);
   }
 
-  public void testLockManagerNotifyIsCalled() throws Exception {
-    TxnBatchID batchID = new TxnBatchID(1);
-    TransactionID txID = new TransactionID(1);
-    LockID[] lockIDs = new LockID[] { new StringLockID("1") };
-    ClientID cid = new ClientID(1);
-    List dnas = Collections.unmodifiableList(new LinkedList());
-    ObjectStringSerializer serializer = null;
-    Map newRoots = Collections.unmodifiableMap(new HashMap());
-    TxnType txnType = TxnType.NORMAL;
-    List notifies = new LinkedList();
+  public void testLockManagerNotifyOnNoApply() throws Exception {
+    ServerTransaction tx = createServerTransaction();
+    this.handler.handleEvent(new ApplyTransactionContext(tx));
+    verifyNotifies(tx);
+  }
 
+  public void testLockManagerNotifyOnApply() throws Exception {
+    ServerTransaction tx = createServerTransaction();
+    this.handler.handleEvent(new ApplyTransactionContext(tx, Collections.emptyMap()));
+    verifyNotifies(tx);
+  }
+
+  private void verifyNotifies(ServerTransaction tx) {
+    verify(lockManager, times(tx.getNotifies()
+        .size())).notify(any(LockID.class), any(ClientID.class), any(ThreadID.class), any(ServerLock.NotifyAction.class), any(NotifiedWaiters.class));
+    verify(broadcastSink, atLeastOnce()).add(any(EventContext.class));
+    for (Notify notify : (Collection<Notify>) tx.getNotifies()) {
+      verify(lockManager).notify(eq(notify.getLockID()), eq((ClientID)tx.getSourceID()), eq(notify.getThreadID()),
+          eq(notify.getIsAll() ? ServerLock.NotifyAction.ALL : ServerLock.NotifyAction.ONE),
+          notifiedWaitersArgumentCaptor.capture());
+    }
+
+    verify(broadcastSink).add(argThat(new BroadcastNotifiedWaiterMatcher(notifiedWaitersArgumentCaptor.getValue())));
+  }
+
+  private class BroadcastNotifiedWaiterMatcher extends BaseMatcher<EventContext> {
+    private final NotifiedWaiters notifiedWaiters;
+
+    private BroadcastNotifiedWaiterMatcher(final NotifiedWaiters notifiedWaiters) {
+      this.notifiedWaiters = notifiedWaiters;
+    }
+
+    @Override
+    public boolean matches(final Object o) {
+      if (o instanceof BroadcastChangeContext) {
+        if (notifiedWaiters == null) {
+          return ((BroadcastChangeContext)o).getNewlyPendingWaiters() == null;
+        } else {
+          return notifiedWaiters.equals(((BroadcastChangeContext)o).getNewlyPendingWaiters());
+        }
+      } else {
+        return false;
+      }
+    }
+
+    @Override
+    public void describeTo(final Description description) {
+
+    }
+  }
+
+  private ServerTransaction createServerTransaction() {
+    final ClientID cid = new ClientID(1);
+    LockID[] lockIDs = new LockID[] { new StringLockID("1") };
+
+    List<Notify> notifies = new LinkedList<Notify>();
     for (int i = 0; i < 10; i++) {
       notifies.add(new NotifyImpl(new StringLockID("" + i), new ThreadID(i), i % 2 == 0));
     }
-    SequenceID sequenceID = new SequenceID(1);
-    ServerTransaction tx = new ServerTransactionImpl(batchID, txID, sequenceID, lockIDs, cid, dnas, serializer,
-                                                     newRoots, txnType, notifies, DmiDescriptor.EMPTY_ARRAY,
-                                                     new MetaDataReader[0], 1, new long[0]);
-    // call handleEvent with the global transaction reporting that it doesn't need an apply...
-    assertTrue(this.lockManager.notifyCalls.isEmpty());
-    assertTrue(this.broadcastSink.queue.isEmpty());
-    this.handler.handleEvent(getApplyTxnContext(tx));
-    // even if the transaction has already been applied, the notifies must be applied, since they aren't persistent.
-    assertEquals(notifies.size(), this.lockManager.notifyCalls.size());
-    this.lockManager.notifyCalls.clear();
-    assertNotNull(this.broadcastSink.queue.take());
 
-    // call handleEvent with the global transaction reporting that it DOES need an apply...
-    this.handler.handleEvent(getApplyTxnContext(tx));
-
-    assertEquals(notifies.size(), this.lockManager.notifyCalls.size());
-    NotifiedWaiters notifiedWaiters = null;
-    for (Iterator i = notifies.iterator(); i.hasNext();) {
-      Notify notify = (Notify) i.next();
-      Object[] args = (Object[]) this.lockManager.notifyCalls.remove(0);
-      assertEquals(notify.getLockID(), args[0]);
-      assertEquals(cid, args[1]);
-      assertEquals(notify.getThreadID(), args[2]);
-      assertEquals(Boolean.valueOf(notify.getIsAll()), args[3]);
-      if (notifiedWaiters == null) {
-        notifiedWaiters = (NotifiedWaiters) args[4];
-      }
-      assertNotNull(notifiedWaiters);
-      assertSame(notifiedWaiters, args[4]);
-    }
-
-    // next, check to see that the handler puts the newly pending waiters into the broadcast context.
-    BroadcastChangeContext bctxt = (BroadcastChangeContext) this.broadcastSink.queue.take();
-    assertNotNull(bctxt);
-    assertEquals(notifiedWaiters, bctxt.getNewlyPendingWaiters());
+    return new ServerTransactionImpl(new TxnBatchID(1), new TransactionID(1), new SequenceID(1),
+        lockIDs, cid, Collections.emptyList(), null,
+        Collections.emptyMap(), TxnType.NORMAL, notifies, DmiDescriptor.EMPTY_ARRAY,
+        new MetaDataReader[0], 1, new long[0]);
   }
-
-  private ApplyTransactionContext getApplyTxnContext(ServerTransaction txt) {
-    ApplyTransactionContext atc = new ApplyTransactionContext(txt, new HashMap());
-    return atc;
-  }
-
-  private static class TestPersistentMapStore implements PersistentMapStore {
-    private final ConcurrentHashMap<String, String> store = new ConcurrentHashMap<String, String>();
-
-    public String get(String key) {
-      return store.get(key);
-    }
-
-    public void put(String key, String value) {
-      store.put(key, value);
-    }
-
-    public boolean remove(String key) {
-      return store.remove(key) != null;
-    }
-
-  }
-
 }

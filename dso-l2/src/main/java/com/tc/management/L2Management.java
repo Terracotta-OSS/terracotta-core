@@ -27,8 +27,6 @@ import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ObjectManagementMonitor;
 import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.objectserver.persistence.db.TCDatabaseException;
-import com.tc.objectserver.storage.api.DBEnvironment;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.beans.StatisticsMBeanNames;
 import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
@@ -310,7 +308,4 @@ public class L2Management extends TerracottaManagement {
     }
   }
 
-  public void initBackupMbean(DBEnvironment dbenv) throws TCDatabaseException {
-    if (false) { throw new TCDatabaseException(""); }
-  }
 }

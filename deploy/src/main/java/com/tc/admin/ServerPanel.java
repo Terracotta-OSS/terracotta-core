@@ -398,7 +398,7 @@ public class ServerPanel extends XContainer {
   }
 
   private void testShowRestartInfoItem() {
-    if (!server.getPersistenceMode().equals("permanent-store")) {
+    if (!server.getRestartable()) {
       String warning = appContext.getString("server.non-restartable.warning");
       restartInfoItem.add(new PersistenceModeWarningPanel(appContext, warning));
     } else {

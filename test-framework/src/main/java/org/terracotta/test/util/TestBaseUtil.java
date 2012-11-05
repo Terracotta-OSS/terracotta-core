@@ -4,7 +4,6 @@ import org.apache.commons.io.IOUtils;
 
 import com.tc.config.test.schema.ConfigHelper;
 import com.tc.properties.TCPropertiesConsts;
-import com.tc.test.config.model.PersistenceMode;
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.setup.GroupsData;
 import com.tc.util.runtime.Os;
@@ -146,7 +145,7 @@ public class TestBaseUtil {
     testConfig.getL2Config().setOffHeapEnabled(true);
     testConfig.getL2Config().setDirectMemorySize(maxDirectMemory);
     testConfig.getL2Config().setMaxOffHeapDataSize(offHeapDataSize);
-    testConfig.getL2Config().setPersistenceMode(PersistenceMode.PERMANENT_STORE);
+    testConfig.getL2Config().setRestartable(true);
 
     testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_SKIP_JVMARG_CHECK, "true");
     testConfig.addTcProperty(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_INITIAL_DATASIZE, "1m");

@@ -19,8 +19,7 @@ import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.impl.ManagedObjectReference;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
+import com.tc.objectserver.api.TransactionProvider;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 
@@ -46,10 +45,10 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
 
   protected Set                            lookedUp            = null;
   protected Set                            released            = null;
-  protected PersistenceTransactionProvider transactionProvider = null;
+  protected TransactionProvider transactionProvider = null;
   protected GarbageCollectionInfoPublisher gcPublisher;
 
-  public GCTestObjectManager(Set lookedUp, Set released, PersistenceTransactionProvider transactionProvider) {
+  public GCTestObjectManager(Set lookedUp, Set released, TransactionProvider transactionProvider) {
     this.lookedUp = lookedUp;
     this.released = released;
     this.transactionProvider = transactionProvider;
@@ -72,12 +71,12 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
     return hs;
   }
 
-  public void releaseAndCommit(PersistenceTransaction tx, ManagedObject object) {
+  public void release(ManagedObject object) {
     released.add(object.getID());
     return;
   }
 
-  public void releaseAllAndCommit(PersistenceTransaction tx, Collection c) {
+  public void releaseAll(Collection c) {
     return;
   }
 
@@ -127,7 +126,7 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
   }
 
   public void releaseAllReadOnly(Collection objects) {
-    releaseAllAndCommit(transactionProvider.newTransaction(), objects);
+    releaseAll(objects);
   }
 
   public int getCheckedOutCount() {

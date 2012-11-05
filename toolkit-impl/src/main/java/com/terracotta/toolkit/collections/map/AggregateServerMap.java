@@ -3,10 +3,8 @@
  */
 package com.terracotta.toolkit.collections.map;
 
-import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 import net.sf.ehcache.pool.SizeOfEngine;
 import net.sf.ehcache.pool.impl.DefaultSizeOfEngine;
-
 import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
@@ -16,7 +14,8 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
-import org.terracotta.toolkit.internal.search.SearchBuilder;
+import org.terracotta.toolkit.search.QueryBuilder;
+import org.terracotta.toolkit.search.SearchExecutor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeType;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
@@ -51,7 +50,7 @@ import com.terracotta.toolkit.config.UnclusteredConfiguration;
 import com.terracotta.toolkit.config.cache.InternalCacheConfigurationType;
 import com.terracotta.toolkit.object.DestroyApplicator;
 import com.terracotta.toolkit.object.ToolkitObjectStripe;
-import com.terracotta.toolkit.search.SearchBuilderFactory;
+import com.terracotta.toolkit.search.SearchFactory;
 import com.terracotta.toolkit.type.DistributedToolkitType;
 
 import java.io.Serializable;
@@ -68,6 +67,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 
 public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
     ToolkitCacheListener<K>, ToolkitCacheInternal<K, V>, ConfigChangeListener, ValuesResolver<K, V> {
@@ -99,7 +100,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   private final Consistency                                     consistency;
   private final SizeOfEngine                                    sizeOfEngine;
   private final TimeSource                                      timeSource;
-  private final SearchBuilderFactory                            searchBuilderFactory;
+  private final SearchFactory                            searchBuilderFactory;
   private final ServerMapLocalStoreFactory                      serverMapLocalStoreFactory;
   private final TerracottaClusterInfo                           clusterInfo;
   private final PlatformService                                 platformService;
@@ -114,7 +115,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     }
   }
 
-  public AggregateServerMap(ToolkitObjectType type, SearchBuilderFactory searchBuilderFactory, String name,
+  public AggregateServerMap(ToolkitObjectType type, SearchFactory searchBuilderFactory, String name,
                             ToolkitObjectStripe<ServerMap<K, V>>[] stripeObjects, Configuration config,
                             ToolkitMap<String, ToolkitAttributeType> attributeTypes,
                             ServerMapLocalStoreFactory serverMapLocalStoreFactory, PlatformService platformService) {
@@ -412,8 +413,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   @Override
-  public SearchBuilder createSearchBuilder() {
-    return searchBuilderFactory.createSearchBuilder(this, getAnyServerMap().isEventual(), platformService);
+  public SearchExecutor createSearchExecutor() {
+    return searchBuilderFactory.createSearchExecutor(this, getAnyServerMap().isEventual(), platformService);
   }
 
   public void setApplyDestroyCallback(DestroyApplicator destroyCallback) {
@@ -834,5 +835,10 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         serverMapLocal.get(key);
       }
     }
+  }
+
+  @Override
+  public QueryBuilder createQueryBuilder() {
+    return searchBuilderFactory.createQueryBuilder(this);
   }
 }

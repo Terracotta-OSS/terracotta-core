@@ -9,10 +9,10 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.net.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
+import com.tc.objectserver.api.Transaction;
+import com.tc.objectserver.api.TransactionStore;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 import com.tc.objectserver.gtx.TransactionCommittedError;
-import com.tc.objectserver.persistence.api.TransactionStore;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.Collection;
@@ -61,7 +61,7 @@ public class TestTransactionStore implements TransactionStore {
     map.put(txID.getServerTransactionID(), txID);
   }
 
-  public void commitTransactionDescriptor(PersistenceTransaction transaction, ServerTransactionID stxID) {
+  public void commitTransactionDescriptor(Transaction transaction, ServerTransactionID stxID) {
     GlobalTransactionDescriptor txID = getTransactionDescriptor(stxID);
     if (txID.isCommitted()) { throw new TransactionCommittedError("Already committed : " + txID); }
     try {
@@ -88,7 +88,7 @@ public class TestTransactionStore implements TransactionStore {
     return (GlobalTransactionID) ids.first();
   }
 
-  public void clearCommitedTransactionsBelowLowWaterMark(PersistenceTransaction tx, ServerTransactionID lowWaterMark) {
+  public void clearCommitedTransactionsBelowLowWaterMark(Transaction tx, ServerTransactionID lowWaterMark) {
     for (Iterator iter = volatileMap.entrySet().iterator(); iter.hasNext();) {
       Entry e = (Entry) iter.next();
       ServerTransactionID sid = (ServerTransactionID) e.getKey();
@@ -102,7 +102,7 @@ public class TestTransactionStore implements TransactionStore {
     }
   }
 
-  public void shutdownNode(PersistenceTransaction transaction, NodeID nid) {
+  public void shutdownNode(Transaction transaction, NodeID nid) {
     throw new ImplementMe();
   }
 
@@ -111,18 +111,18 @@ public class TestTransactionStore implements TransactionStore {
     basicPut(volatileMap, rv);
   }
 
-  public void shutdownAllClientsExcept(PersistenceTransaction tx, Set cids) {
+  public void shutdownAllClientsExcept(Transaction tx, Set cids) {
     throw new ImplementMe();
   }
 
-  public void commitAllTransactionDescriptor(PersistenceTransaction persistenceTransaction, Collection stxIDs) {
+  public void commitAllTransactionDescriptor(Transaction persistenceTransaction, Collection stxIDs) {
     for (Iterator i = stxIDs.iterator(); i.hasNext();) {
       ServerTransactionID sid = (ServerTransactionID) i.next();
       commitTransactionDescriptor(persistenceTransaction, sid);
     }
   }
 
-  public void clearCommitedTransactionsBelowLowWaterMark(PersistenceTransaction tx, GlobalTransactionID lowWaterMark) {
+  public void clearCommitedTransactionsBelowLowWaterMark(Transaction tx, GlobalTransactionID lowWaterMark) {
     throw new ImplementMe();
   }
 

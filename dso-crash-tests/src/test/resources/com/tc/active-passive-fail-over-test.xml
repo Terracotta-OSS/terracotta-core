@@ -8,8 +8,8 @@
 	-->
 
 <tc:tc-config xmlns:tc="http://www.terracotta.org/config"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-6.xsd">
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    >
 
 	<servers>
 		<server host="localhost" name="server-1">
@@ -19,11 +19,6 @@
 			<data>server-1-data</data>
 			<logs>server-1-logs</logs>
 			<statistics>server-1-stats</statistics>
-			<dso>
-				<persistence>
-					<mode>permanent-store</mode>
-				</persistence>
-			</dso>
 		</server>
 
 		<server host="localhost" name="server-2">
@@ -33,11 +28,6 @@
 			<data>server-2-data</data>
 			<logs>server-2-logs</logs>
 			<statistics>server-2-stats</statistics>
-			<dso>
-				<persistence>
-					<mode>permanent-store</mode>
-				</persistence>
-			</dso>
 		</server>
 		
 		<mirror-groups>

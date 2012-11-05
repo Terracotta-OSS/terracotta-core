@@ -13,7 +13,7 @@ import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreFacto
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.roots.ToolkitTypeRootsFactory;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
-import com.terracotta.toolkit.search.SearchBuilderFactory;
+import com.terracotta.toolkit.search.SearchFactory;
 
 /**
  * Implementation of {@link ClusteredCacheFactory}
@@ -24,7 +24,7 @@ public class ToolkitCacheFactoryImpl extends AbstractPrimaryToolkitObjectFactory
   private final ToolkitObjectType type;
 
   private ToolkitCacheFactoryImpl(ToolkitInternal toolkit, ToolkitObjectType type,
-                                  ToolkitTypeRootsFactory rootsFactory, SearchBuilderFactory searchBuilderFactory,
+                                  ToolkitTypeRootsFactory rootsFactory, SearchFactory searchBuilderFactory,
                                   ServerMapLocalStoreFactory serverMapLocalStoreFactory, PlatformService platformService) {
     super(toolkit, rootsFactory
         .createAggregateDistributedTypeRoot(getRootNameFor(type),
@@ -36,7 +36,7 @@ public class ToolkitCacheFactoryImpl extends AbstractPrimaryToolkitObjectFactory
 
   public static ToolkitCacheFactoryImpl newToolkitCacheFactory(ToolkitInternal toolkit,
                                                                ToolkitTypeRootsFactory rootsFactory,
-                                                               SearchBuilderFactory searchBuilderFactory,
+                                                               SearchFactory searchBuilderFactory,
                                                                ServerMapLocalStoreFactory serverMapLocalStoreFactory,
                                                                PlatformService platformService) {
     return new ToolkitCacheFactoryImpl(toolkit, ToolkitObjectType.CACHE, rootsFactory, searchBuilderFactory,
@@ -45,7 +45,7 @@ public class ToolkitCacheFactoryImpl extends AbstractPrimaryToolkitObjectFactory
 
   public static ToolkitCacheFactoryImpl newToolkitStoreFactory(ToolkitInternal toolkit,
                                                                ToolkitTypeRootsFactory rootsFactory,
-                                                               SearchBuilderFactory searchBuilderFactory,
+                                                               SearchFactory searchBuilderFactory,
                                                                ServerMapLocalStoreFactory serverMapLocalStoreFactory,
                                                                PlatformService platformService) {
     return new ToolkitCacheFactoryImpl(toolkit, ToolkitObjectType.STORE, rootsFactory, searchBuilderFactory,

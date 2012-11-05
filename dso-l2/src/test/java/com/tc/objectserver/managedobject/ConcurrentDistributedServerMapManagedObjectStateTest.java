@@ -19,7 +19,7 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
     final TestDNACursor cursor = createDNACursor();
 
     final ManagedObjectState state = createManagedObjectState(ManagedObjectStateStaticConfig.ToolkitTypeNames.SERVER_MAP_TYPE,
-                                                              cursor);
+                                                              cursor, new ObjectID(1));
     state.apply(new ObjectID(1), cursor, new ApplyTransactionInfo());
 
     TestDNAWriter dnaWriter = new TestDNAWriter();
@@ -28,8 +28,8 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
 
     final TestDNACursor cursor2 = dnaWriter.getDNACursor();
     final ManagedObjectState state2 = createManagedObjectState(ManagedObjectStateStaticConfig.ToolkitTypeNames.SERVER_MAP_TYPE,
-                                                               cursor2);
-    state2.apply(new ObjectID(1), cursor2, new ApplyTransactionInfo());
+                                                               cursor2, new ObjectID(2));
+    state2.apply(new ObjectID(2), cursor2, new ApplyTransactionInfo());
     assertEquals(state, state2);
 
     dnaWriter = new TestDNAWriter();
@@ -38,9 +38,9 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
 
     final TestDNACursor cursor3 = dnaWriter.getDNACursor();
     final ConcurrentDistributedServerMapManagedObjectState state3 = (ConcurrentDistributedServerMapManagedObjectState) createManagedObjectState(ManagedObjectStateStaticConfig.ToolkitTypeNames.SERVER_MAP_TYPE,
-                                                                                                                                                cursor3);
-    state3.apply(new ObjectID(1), cursor3, new ApplyTransactionInfo());
-    assertTrue(state3.references.isEmpty());
+                                                                                                                                                cursor3, new ObjectID(3));
+    state3.apply(new ObjectID(3), cursor3, new ApplyTransactionInfo());
+    assertTrue(state3.references.size() == 0);
 
   }
 

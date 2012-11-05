@@ -9,6 +9,7 @@ import com.tc.async.api.EventHandler;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ServerMapEvictionManager;
 import com.tc.objectserver.context.ServerMapEvictionInitiateContext;
+import com.tc.objectserver.impl.CapacityEvictionTrigger;
 
 public class ServerMapCapacityEvictionHandler extends AbstractEventHandler implements EventHandler {
 
@@ -22,7 +23,7 @@ public class ServerMapCapacityEvictionHandler extends AbstractEventHandler imple
   public void handleEvent(final EventContext context) {
     final ServerMapEvictionInitiateContext smec = (ServerMapEvictionInitiateContext) context;
     for (final ObjectID id : smec.getObjectIDs()) {
-      this.serverMapEvictor.doEvictionOn(id, false);
+      this.serverMapEvictor.doEvictionOn(new CapacityEvictionTrigger(serverMapEvictor,id));
     }
   }
 

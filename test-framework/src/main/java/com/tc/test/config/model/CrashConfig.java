@@ -11,6 +11,7 @@ public class CrashConfig {
   private ServerCrashMode crashMode                = ServerCrashMode.NO_CRASH;
   private boolean         shouldCleanDbOnCrash     = true;
   private long            initialDelayInSeconds    = 0;
+  private boolean         ignoreUnexpectedL2Crash  = false;
 
   /**
    * Get the initial delay time before starting to crash servers
@@ -86,4 +87,17 @@ public class CrashConfig {
     this.shouldCleanDbOnCrash = shouldCleanDb;
   }
 
+  /**
+   * @param ignoreUnexpectedL2Crash true if the test framework should ignore an initiated L2 crash
+   */
+  public void setShouldIgnoreUnexpectedL2Crash(boolean ignoreUnexpectedL2Crash) {
+    this.ignoreUnexpectedL2Crash = ignoreUnexpectedL2Crash;
+  }
+
+  /**
+   * @return true if the framework should ignore unexpected L2 crashes (i.e. server going OOME).
+   */
+  public boolean shouldIgnoreUnexpectedL2Crash() {
+    return ignoreUnexpectedL2Crash;
+  }
 }

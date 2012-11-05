@@ -14,7 +14,7 @@ import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
-import com.tc.objectserver.persistence.api.ManagedObjectStore;
+import com.tc.objectserver.impl.PersistentManagedObjectStore;
 
 import java.util.SortedSet;
 
@@ -22,7 +22,7 @@ public class GarbageDisposeHandler extends AbstractEventHandler {
   private static final TCLogger                logger = TCLogging.getLogger(GarbageDisposeHandler.class);
 
   private final GarbageCollectionInfoPublisher publisher;
-  private ManagedObjectStore                   objectStore;
+  private PersistentManagedObjectStore                   objectStore;
 
   public GarbageDisposeHandler(final GarbageCollectionInfoPublisher publisher) {
     this.publisher = publisher;

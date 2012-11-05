@@ -51,6 +51,8 @@ public interface TCPropertiesConsts {
   public static final String L2_CACHEMANAGER_THRESHOLD                                      = "l2.cachemanager.threshold";
   public static final String L2_CACHEMANAGER_MONITOROLDGENONLY                              = "l2.cachemanager.monitorOldGenOnly";
   public static final String L2_CACHEMANAGER_CRITICALOBJECTTHRESHOLD                        = "l2.cachemanager.criticalObjectThreshold";
+  public static final String L2_CACHEMANAGER_RESOURCEPOLLINGINTERVAL                        = "l2.cachemanager.resourcePollInterval";
+
 
   /*********************************************************************************************************************
    * <code>
@@ -696,7 +698,6 @@ public interface TCPropertiesConsts {
   public static final String EHCACHE_STORAGESTRATEGY_DCV2_PERELEMENT_TTI_TTL_ENABLED        = "ehcache.storageStrategy.dcv2.perElementTTITTL.enabled";
   public static final String EHCACHE_STORAGESTRATEGY_DCV2_EVICT_UNEXPIRED_ENTRIES_ENABLED   = "ehcache.storageStrategy.dcv2.evictUnexpiredEntries.enabled";
   public static final String EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED          = "ehcache.storageStrategy.dcv2.periodicEviction.enabled";
-  public static final String EHCACHE_STORAGESTRATEGY_DCV2_PINSEGMENTS_ENABLED               = "ehcache.storageStrategy.dcv2.pinSegments.enabled";
   public static final String EHCACHE_STORAGESTRATEGY_DCV2_EVICTION_OVERSHOOT                = "ehcache.storageStrategy.dcv2.eviction.overshoot";
   /*********************************************************************************************************************
    * <code>

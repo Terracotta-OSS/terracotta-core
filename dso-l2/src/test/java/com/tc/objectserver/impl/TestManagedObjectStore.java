@@ -8,8 +8,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.objectserver.persistence.api.ManagedObjectStore;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
+import com.tc.objectserver.api.Transaction;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
 
@@ -19,7 +18,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public class TestManagedObjectStore implements ManagedObjectStore {
+public class TestManagedObjectStore {
 
   public boolean       addNewWasCalled = false;
   public boolean       containsKey;
@@ -29,6 +28,10 @@ public class TestManagedObjectStore implements ManagedObjectStore {
 
   public boolean containsObject(final ObjectID id) {
     return this.containsKey;
+  }
+
+  public ManagedObject createObject(final ObjectID id) {
+    throw new UnsupportedOperationException("Implement me!");
   }
 
   public void addNewObject(final ManagedObject managed) {
@@ -48,11 +51,11 @@ public class TestManagedObjectStore implements ManagedObjectStore {
     return this.managedObject;
   }
 
-  public void commitObject(final PersistenceTransaction tx, final ManagedObject object) {
+  public void commitObject(final Transaction tx, final ManagedObject object) {
     return;
   }
 
-  public void commitAllObjects(final PersistenceTransaction tx, final Collection c) {
+  public void commitAllObjects(final Transaction tx, final Collection c) {
     return;
   }
 
@@ -89,7 +92,7 @@ public class TestManagedObjectStore implements ManagedObjectStore {
     return null;
   }
 
-  public void addNewRoot(final PersistenceTransaction tx, final String rootName, final ObjectID id) {
+  public void addNewRoot(final Transaction tx, final String rootName, final ObjectID id) {
     return;
   }
 

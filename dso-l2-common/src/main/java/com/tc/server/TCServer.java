@@ -36,7 +36,7 @@ public interface TCServer {
 
   String getConfig();
 
-  String getPersistenceMode();
+  boolean getRestartable();
 
   String getFailoverMode();
 

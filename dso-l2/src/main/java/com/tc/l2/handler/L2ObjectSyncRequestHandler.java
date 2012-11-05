@@ -28,7 +28,6 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.ObjectIDSet;
-import com.tc.util.TCCollections;
 import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
 
@@ -96,9 +95,6 @@ public class L2ObjectSyncRequestHandler extends AbstractEventHandler {
   private void doSyncObjectsDehydrate(ManagedObjectSyncContext context) {
     final ManagedObjectSyncContext mosc = context;
     ObjectIDSet oids = mosc.getRequestedObjectIDs();
-
-    // Prefetch objects so they are there for us when we need it.
-    objectManager.preFetchObjectsAndCreate(oids, TCCollections.EMPTY_OBJECT_ID_SET);
 
     try {
       /**

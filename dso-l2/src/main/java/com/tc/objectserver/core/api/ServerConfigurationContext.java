@@ -15,10 +15,10 @@ import com.tc.objectserver.api.ServerMapRequestManager;
 import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManager;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
+import com.tc.objectserver.impl.PersistentManagedObjectStore;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.metadata.MetaDataManager;
-import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.search.IndexManager;
 import com.tc.objectserver.search.SearchRequestManager;
 import com.tc.objectserver.tx.ServerTransactionManager;
@@ -112,7 +112,7 @@ public interface ServerConfigurationContext extends ConfigurationContext {
 
   public TransactionalObjectManager getTransactionalObjectManager();
 
-  public ManagedObjectStore getObjectStore();
+  public PersistentManagedObjectStore getObjectStore();
 
   public ServerClientHandshakeManager getClientHandshakeManager();
 

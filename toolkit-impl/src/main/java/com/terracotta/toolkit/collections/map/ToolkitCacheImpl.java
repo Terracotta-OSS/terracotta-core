@@ -9,7 +9,8 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
-import org.terracotta.toolkit.internal.search.SearchBuilder;
+import org.terracotta.toolkit.search.QueryBuilder;
+import org.terracotta.toolkit.search.SearchExecutor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
 import com.tc.object.ObjectID;
@@ -31,8 +32,6 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   private final AggregateServerMap<K, V>      aggregateServerMap;
   private volatile ToolkitCacheInternal<K, V> activeDelegate;
   private final String                        name;
-
-  // private volatile Map<String, Attribute> searchAttributes = null;
 
   public ToolkitCacheImpl(ToolkitObjectFactory factory, ToolkitInternal toolkit, String name,
                           AggregateServerMap<K, V> delegate) {
@@ -59,8 +58,13 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   }
 
   @Override
-  public SearchBuilder createSearchBuilder() {
-    return aggregateServerMap.createSearchBuilder();
+  public SearchExecutor createSearchExecutor() {
+    return activeDelegate.createSearchExecutor();
+  }
+
+  @Override
+  public QueryBuilder createQueryBuilder() {
+    return activeDelegate.createQueryBuilder();
   }
 
   @Override

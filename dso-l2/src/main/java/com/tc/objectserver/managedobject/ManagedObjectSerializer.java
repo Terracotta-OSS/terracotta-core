@@ -7,7 +7,9 @@ package com.tc.objectserver.managedobject;
 import com.tc.exception.TCRuntimeException;
 import com.tc.io.serializer.api.Serializer;
 import com.tc.object.ObjectID;
+import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
+import com.tc.objectserver.persistence.ManagedObjectPersistor;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -15,21 +17,20 @@ import java.io.ObjectOutput;
 
 public class ManagedObjectSerializer implements Serializer {
   private final ManagedObjectStateSerializer serializer;
+  private final ManagedObjectPersistor persistor;
 
-  public ManagedObjectSerializer(final ManagedObjectStateSerializer serializer) {
+  public ManagedObjectSerializer(ManagedObjectStateSerializer serializer, ManagedObjectPersistor persistor) {
     this.serializer = serializer;
+    this.persistor = persistor;
   }
 
   public void serializeTo(final Object mo, final ObjectOutput out) {
     try {
-      if (!(mo instanceof ManagedObjectImpl)) {
-        //
-        throw new AssertionError("Attempt to serialize an unknown type: " + mo);
+      if (mo instanceof ManagedObject) {
+        ((ManagedObject)mo).serializeTo(out, serializer);
+      } else {
+        throw new IllegalArgumentException("Trying to serialize a non-ManagedObject " + mo);
       }
-      final ManagedObjectImpl moi = (ManagedObjectImpl) mo;
-      out.writeLong(moi.getVersion());
-      out.writeLong(moi.getObjectID().toLong());
-      this.serializer.serializeTo(moi.getManagedObjectState(), out);
     } catch (final IOException e) {
       throw new TCRuntimeException(e);
     }
@@ -43,7 +44,7 @@ public class ManagedObjectSerializer implements Serializer {
       final ManagedObjectState state = (ManagedObjectState) this.serializer.deserializeFrom(in);
 
       // populate managed object...
-      final ManagedObjectImpl rv = new ManagedObjectImpl(id);
+      final ManagedObjectImpl rv = new ManagedObjectImpl(id, persistor);
       rv.setDeserializedState(version, state);
       return rv;
     } catch (final Exception e) {

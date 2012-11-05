@@ -11,7 +11,6 @@ import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XLabel;
 import com.tc.admin.common.XTextArea;
-import com.terracottatech.config.PersistenceMode;
 import com.terracottatech.config.Servers;
 
 import java.awt.GridBagConstraints;
@@ -45,7 +44,7 @@ public class PersistenceModeWarningPanel extends XContainer {
 
     XTextArea configSnippetText = new XTextArea();
     Servers servers = Servers.Factory.newInstance();
-    servers.addNewServer().addNewDso().addNewPersistence().setMode(PersistenceMode.PERMANENT_STORE);
+    servers.addNewServer().addNewDso().addNewPersistence().addNewRestartable().setEnabled(true);
     String configText = servers.xmlText(new XmlOptions().setSavePrettyPrint().setSavePrettyPrintIndent(3));
     configSnippetText.setColumns(maxLineWidth(configText));
     configSnippetText.setEditable(false);

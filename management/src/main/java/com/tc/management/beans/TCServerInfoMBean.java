@@ -64,7 +64,7 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   int getDSOGroupPort();
 
-  String getPersistenceMode();
+  boolean getRestartable();
 
   String getFailoverMode();
 

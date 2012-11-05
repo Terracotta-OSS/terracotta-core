@@ -24,7 +24,7 @@ import com.terracotta.toolkit.config.cache.InternalCacheConfigurationType;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.ToolkitObjectStripe;
 import com.terracotta.toolkit.object.ToolkitObjectStripeImpl;
-import com.terracotta.toolkit.search.SearchBuilderFactory;
+import com.terracotta.toolkit.search.SearchFactory;
 import com.terracotta.toolkit.type.DistributedToolkitTypeFactory;
 
 import java.io.Serializable;
@@ -39,10 +39,10 @@ public class ToolkitCacheDistributedTypeFactory<K extends Serializable, V extend
   private static final Configuration[]     EMPTY_CONFIG_ARRAY     = new Configuration[0];
   private static final String              SEARCH_ATTR_TYPES_MAP_SUFFIX = "searchAttributeTypesMap";
 
-  private final SearchBuilderFactory       searchBuilderFactory;
+  private final SearchFactory       searchBuilderFactory;
   private final ServerMapLocalStoreFactory serverMapLocalStoreFactory;
 
-  public ToolkitCacheDistributedTypeFactory(SearchBuilderFactory searchBuilderFactory,
+  public ToolkitCacheDistributedTypeFactory(SearchFactory searchBuilderFactory,
                                             ServerMapLocalStoreFactory serverMapLocalStoreFactory) {
     this.searchBuilderFactory = searchBuilderFactory;
     this.serverMapLocalStoreFactory = serverMapLocalStoreFactory;

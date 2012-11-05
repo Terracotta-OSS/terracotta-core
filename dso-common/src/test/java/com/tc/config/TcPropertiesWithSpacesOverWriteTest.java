@@ -33,12 +33,7 @@ public class TcPropertiesWithSpacesOverWriteTest extends TCTestCase {
                       + "\n      <dso-port bind=\"127.8.9.0\">6510</dso-port>"
                       + "\n      <jmx-port bind=\"127.8.9.1\">6520</jmx-port>"
                       + "\n      <l2-group-port bind=\"127.8.9.2\">6530</l2-group-port>"  
-                      + "\n      <dso>" 
-                      + "\n        <persistence>"
-                      + "\n          <mode>permanent-store</mode>" 
-                      + "\n        </persistence>" 
-                      + "\n      </dso>"
-                      + "\n      </server>" 
+                      + "\n      </server>"
                       + "\n</servers>" 
                       + "\n</tc:tc-config>";
       writeConfigFile(config);

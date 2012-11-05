@@ -341,8 +341,8 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   @Override
-  public String getPersistenceMode() {
-    return this.configurationSetupManager.dsoL2Config().getPersistence().getMode().toString();
+  public boolean getRestartable() {
+    return configurationSetupManager.dsoL2Config().getPersistence().getRestartable().getEnabled();
   }
 
   @Override

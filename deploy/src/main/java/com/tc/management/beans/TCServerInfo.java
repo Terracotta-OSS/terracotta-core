@@ -380,8 +380,8 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     }
   }
 
-  public String getPersistenceMode() {
-    return server.getPersistenceMode();
+  public boolean getRestartable() {
+    return server.getRestartable();
   }
 
   public String getFailoverMode() {

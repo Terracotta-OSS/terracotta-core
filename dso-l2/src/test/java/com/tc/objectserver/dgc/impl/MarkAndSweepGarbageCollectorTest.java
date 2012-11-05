@@ -16,8 +16,8 @@ import com.tc.objectserver.impl.TestGarbageCollectionManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.api.TestClientStateManager;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
-import com.tc.objectserver.persistence.inmemory.NullPersistenceTransactionProvider;
-import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
+import com.tc.objectserver.impl.NullTransactionProvider;
+import com.tc.objectserver.api.TransactionProvider;
 import com.tc.util.sequence.DGCSequenceProvider;
 
 import java.util.ArrayList;
@@ -36,7 +36,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
   protected GCTestObjectManager            objectManager;
   protected ClientStateManager             stateManager;
   protected GarbageCollectionManager       garbageCollectionManager;
-  protected PersistenceTransactionProvider transactionProvider = new NullPersistenceTransactionProvider();
+  protected TransactionProvider transactionProvider = new NullTransactionProvider();
 
   private final Filter                     filter              = new Filter() {
                                                                  public boolean shouldVisit(ObjectID referencedObject) {
