@@ -21,7 +21,7 @@ public class ToolkitLockFactoryImpl implements ToolkitObjectFactory<ToolkitLockI
   private final WeakValueMap<ToolkitLockImpl> localCache;
   private final PlatformService               platformService;
   private final Lock                          lock;
-
+  private static final String                 DELIMITER          = "|";
   public ToolkitLockFactoryImpl(WeakValueMapManager manager, PlatformService platformService) {
     this.localCache = manager.createWeakValueMap();
     this.platformService = platformService;
@@ -30,19 +30,28 @@ public class ToolkitLockFactoryImpl implements ToolkitObjectFactory<ToolkitLockI
 
   @Override
   public ToolkitLockImpl getOrCreate(String name, Configuration config) {
-    ToolkitLockImpl toolkitLock = null;
+    ToolkitLockImpl cachedLock = null;
     lock.lock();
     try {
-      toolkitLock = localCache.get(name);
-      if (toolkitLock == null) {
-        ToolkitLockTypeInternal internalLockType = ToolkitLockTypeInternal
-            .valueOf(config.getString(INTERNAL_LOCK_TYPE));
-        toolkitLock = new ToolkitLockImpl(platformService, name, internalLockType);
-        localCache.put(name, toolkitLock);
+      ToolkitLockTypeInternal requiredLockType = ToolkitLockTypeInternal.valueOf(config.getString(INTERNAL_LOCK_TYPE));
+      cachedLock = localCache.get(getQualifiedlockName(name, requiredLockType));
+      if (cachedLock == null) {
+        cachedLock = createLock(name, requiredLockType);
       }
     } finally {
       lock.unlock();
     }
+    return cachedLock;
+  }
+
+  private String getQualifiedlockName(String name, ToolkitLockTypeInternal lockType) {
+    return name + DELIMITER + lockType.name();
+  }
+
+  private ToolkitLockImpl createLock(String name, ToolkitLockTypeInternal internalLockType) {
+    ToolkitLockImpl toolkitLock;
+    toolkitLock = new ToolkitLockImpl(platformService, name, internalLockType);
+    localCache.put(getQualifiedlockName(name, internalLockType), toolkitLock);
     return toolkitLock;
   }
 
