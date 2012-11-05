@@ -103,6 +103,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     this.channel = channel;
     this.status = RUNNING;
     this.ackOnExitTimeout = ackOnExitTimeoutMs;
+    this.lockAccounting = new LockAccounting(abortableOperationManager);
     this.sequencer = new TransactionSequencer(groupID, transactionIDGenerator, batchFactory, this.lockAccounting,
                                               pendingBatchesSize, transactionSizeCounter, transactionsPerBatchCounter,
                                               abortableOperationManager);
@@ -110,7 +111,6 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     this.timer.schedule(this.remoteTxManagerTimerTask, COMPLETED_ACK_FLUSH_TIMEOUT, COMPLETED_ACK_FLUSH_TIMEOUT);
     this.outstandingBatchesCounter = outstandingBatchesCounter;
     this.abortableOperationManager = abortableOperationManager;
-    this.lockAccounting = new LockAccounting(abortableOperationManager);
   }
 
   @Override
