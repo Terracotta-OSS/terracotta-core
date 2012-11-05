@@ -10,8 +10,9 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
-import org.terracotta.toolkit.internal.search.SearchBuilder;
 import org.terracotta.toolkit.nonstop.NonStopConfigFields.NonStopTimeoutBehavior;
+import org.terracotta.toolkit.search.QueryBuilder;
+import org.terracotta.toolkit.search.SearchExecutor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
 import com.tc.object.ObjectID;
@@ -19,7 +20,6 @@ import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.nonstop.NonStopConfigRegistryImpl;
 import com.terracotta.toolkit.nonstop.NonStopManager;
 import com.terracotta.toolkit.nonstop.NonstopTimeoutBehaviorResolver;
-import com.terracotta.toolkit.nonstop.NonstopTimeoutBehaviorResolverFactory;
 import com.terracotta.toolkit.type.DistributedToolkitType;
 
 import java.io.Serializable;
@@ -31,9 +31,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
-    ValuesResolver<K, V>, ToolkitCacheInternal<K, V>, NonstopTimeoutBehaviorResolver<ToolkitCacheInternal<K, V>> {
+    ValuesResolver<K, V>, ToolkitCacheInternal<K, V> {
   private final NonStopManager                                                    nonStopManager;
-  private final NonStopConfigRegistryImpl                                          nonStopConfigManager;
+  private final NonStopConfigRegistryImpl                                         nonStopConfigManager;
 
   private final Configuration                                                     actualConfiguration;
   private final String                                                            name;
@@ -43,12 +43,12 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
   private volatile ToolkitCacheInternal<K, V>                                     delegate;
 
   private final ConcurrentMap<NonStopTimeoutBehavior, ToolkitCacheInternal<K, V>> timeoutBehaviorResolvers = new ConcurrentHashMap<NonStopTimeoutBehavior, ToolkitCacheInternal<K, V>>();
-  private final NonstopTimeoutBehaviorResolverFactory                             behaviorResolverFactory;
+  private final NonstopTimeoutBehaviorResolver                                    behaviorResolverFactory;
 
   public NonStopToolkitCacheImpl(String name, Class<V> klazz, Configuration actualConfiguration,
                                  NonStopManager nonStopManager, ToolkitInternal toolkitFutureTask,
                                  NonStopConfigRegistryImpl nonStopConfigManager,
-                                 NonstopTimeoutBehaviorResolverFactory behaviorResolverFactory) {
+                                 NonstopTimeoutBehaviorResolver behaviorResolverFactory) {
     this.name = name;
     this.klazz = klazz;
     this.actualConfiguration = actualConfiguration;
@@ -58,8 +58,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     this.behaviorResolverFactory = behaviorResolverFactory;
   }
 
-  @Override
-  public ToolkitCacheInternal<K, V> resolveTimeoutBehavior() {
+  private ToolkitCacheInternal<K, V> resolveTimeoutBehavior() {
     NonStopTimeoutBehavior nonStopBehavior = nonStopConfigManager.getConfigForInstance(name, getObjectType())
         .getNonStopTimeoutBehavior();
     ToolkitCacheInternal<K, V> resolver = timeoutBehaviorResolvers.get(nonStopBehavior);
@@ -802,26 +801,36 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
   }
 
   @Override
-  public SearchBuilder createSearchBuilder() {
+  public V get(K key, ObjectID valueOid) {
     nonStopManager.begin(getTimeout(getMethod()));
-
     try {
-      return getDelegate().createSearchBuilder();
+      return ((ValuesResolver<K, V>) getDelegate()).get(key, valueOid);
     } catch (ToolkitAbortableOperationException e) {
-      return resolveTimeoutBehavior().createSearchBuilder();
+      return ((ValuesResolver<K, V>) resolveTimeoutBehavior()).get(key, valueOid);
     } finally {
       nonStopManager.finish();
     }
   }
 
   @Override
-  public V get(K key, ObjectID valueOid) {
+  public QueryBuilder createQueryBuilder() {
     nonStopManager.begin(getTimeout(getMethod()));
-
     try {
-      return ((ValuesResolver<K, V>) getDelegate()).get(key, valueOid);
+      return getDelegate().createQueryBuilder();
     } catch (ToolkitAbortableOperationException e) {
-      return ((ValuesResolver<K, V>) resolveTimeoutBehavior()).get(key, valueOid);
+      return resolveTimeoutBehavior().createQueryBuilder();
+    } finally {
+      nonStopManager.finish();
+    }
+  }
+
+  @Override
+  public SearchExecutor createSearchExecutor() {
+    nonStopManager.begin(getTimeout(getMethod()));
+    try {
+      return getDelegate().createSearchExecutor();
+    } catch (ToolkitAbortableOperationException e) {
+      return resolveTimeoutBehavior().createSearchExecutor();
     } finally {
       nonStopManager.finish();
     }

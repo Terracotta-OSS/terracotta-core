@@ -8,7 +8,7 @@ import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.SearchExecutor;
 import org.terracotta.toolkit.store.ToolkitStore;
 
-import com.tc.object.bytecode.PlatformService;
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.collections.map.ValuesResolver;
 
 public interface SearchFactory {

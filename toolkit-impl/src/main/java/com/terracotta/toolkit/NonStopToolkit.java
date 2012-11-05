@@ -33,7 +33,7 @@ import com.terracotta.toolkit.collections.map.NonStopToolkitCacheImpl;
 import com.terracotta.toolkit.nonstop.NonStopConfigRegistryImpl;
 import com.terracotta.toolkit.nonstop.NonStopManager;
 import com.terracotta.toolkit.nonstop.NonStopManagerImpl;
-import com.terracotta.toolkit.nonstop.NonstopTimeoutBehaviorResolverFactory;
+import com.terracotta.toolkit.nonstop.NonstopTimeoutBehaviorResolver;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -43,7 +43,7 @@ public class NonStopToolkit implements ToolkitInternal {
   private final NonStopManager                                                         nonStopManager;
 
   private final NonStopConfigRegistryImpl                                              nonStopConfigManager          = new NonStopConfigRegistryImpl();
-  private final NonstopTimeoutBehaviorResolverFactory                                  nonstopTimeoutBehaviorFactory = new NonstopTimeoutBehaviorResolverFactory();
+  private final NonstopTimeoutBehaviorResolver                                         nonstopTimeoutBehaviorFactory = new NonstopTimeoutBehaviorResolver();
 
   private final ConcurrentMap<ToolkitObjectType, ConcurrentMap<String, ToolkitObject>> toolkitObjects                = new ConcurrentHashMap<ToolkitObjectType, ConcurrentMap<String, ToolkitObject>>();
 
