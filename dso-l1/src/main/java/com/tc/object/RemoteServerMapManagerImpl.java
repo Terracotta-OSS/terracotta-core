@@ -3,6 +3,8 @@
  */
 package com.tc.object;
 
+import com.tc.abortable.AbortableOperationManager;
+import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.invalidation.Invalidations;
@@ -60,6 +62,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   private final Timer                                                    requestTimer                              = new Timer(
                                                                                                                                "RemoteServerMapManager Request Scheduler",
                                                                                                                                true);
+  private final AbortableOperationManager                                abortableOperationManager;
 
   private volatile State                                                 state                                     = State.RUNNING;
   private long                                                           requestIDCounter                          = 0;
@@ -75,7 +78,8 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
 
   public RemoteServerMapManagerImpl(final GroupID groupID, final TCLogger logger,
                                     final ServerMapMessageFactory smmFactory, final SessionManager sessionManager,
-                                    L1ServerMapLocalCacheManager globalLocalCacheManager) {
+                                    L1ServerMapLocalCacheManager globalLocalCacheManager,
+                                    AbortableOperationManager abortableOperationManager) {
     this.groupID = groupID;
     this.logger = logger;
     this.smmFactory = smmFactory;
@@ -83,6 +87,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     // this.ttiTTLEvitionSink = ttiTTLEvitionSink;
     this.globalLocalCacheManager = globalLocalCacheManager;
     this.reInvalidateHandler = new ReInvalidateHandler(globalLocalCacheManager);
+    this.abortableOperationManager = abortableOperationManager;
   }
 
   @Override
@@ -92,11 +97,14 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
 
   /**
    * TODO: Maybe change to getValue()
+   * 
+   * @throws AbortedOperationException
    */
   @Override
-  public synchronized Object getMappingForKey(final ObjectID oid, final Object portableKey) {
+  public synchronized Object getMappingForKey(final ObjectID oid, final Object portableKey)
+      throws AbortedOperationException {
     assertSameGroupID(oid);
-    waitUntilRunning();
+    waitUntilRunningAbortable();
 
     final AbstractServerMapRequestContext context = createLookupValueRequestContext(oid,
                                                                                     Collections.singleton(portableKey));
@@ -107,26 +115,33 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   }
 
   @Override
-  public synchronized void getMappingForAllKeys(final Map<ObjectID, Set<Object>> mapIdToKeysMap, Map<Object, Object> rv) {
+  public synchronized void getMappingForAllKeys(final Map<ObjectID, Set<Object>> mapIdToKeysMap, Map<Object, Object> rv)
+      throws AbortedOperationException {
+    Set<AbstractServerMapRequestContext> contextsToWaitFor = sendRequestForAllKeys(mapIdToKeysMap);
+    waitForResults(contextsToWaitFor, rv);
+  }
+
+  protected Set<AbstractServerMapRequestContext> sendRequestForAllKeys(final Map<ObjectID, Set<Object>> mapIdToKeysMap)
+      throws AbortedOperationException {
     Set<AbstractServerMapRequestContext> contextsToWaitFor = new HashSet<AbstractServerMapRequestContext>();
+    waitUntilRunningAbortable();
     for (Entry<ObjectID, Set<Object>> entry : mapIdToKeysMap.entrySet()) {
       ObjectID mapId = entry.getKey();
       Set<Object> keys = entry.getValue();
       assertSameGroupID(mapId);
-      waitUntilRunning();
       final AbstractServerMapRequestContext context = createLookupValueRequestContext(mapId, keys);
       context.makeLookupRequest();
       contextsToWaitFor.add(context);
       sendRequest(context);
     }
-
-    waitForResults(contextsToWaitFor, rv);
+    return contextsToWaitFor;
   }
 
+
   @Override
-  public synchronized Set getAllKeys(ObjectID mapID) {
+  public synchronized Set getAllKeys(ObjectID mapID) throws AbortedOperationException {
     assertSameGroupID(mapID);
-    waitUntilRunning();
+    waitUntilRunningAbortable();
 
     final AbstractServerMapRequestContext context = createGetAllKeysRequestContext(mapID);
     context.makeLookupRequest();
@@ -143,11 +158,11 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   }
 
   @Override
-  public synchronized long getAllSize(final ObjectID[] mapIDs) {
+  public synchronized long getAllSize(final ObjectID[] mapIDs) throws AbortedOperationException {
     for (ObjectID mapId : mapIDs) {
       assertSameGroupID(mapId);
     }
-    waitUntilRunning();
+    waitUntilRunningAbortable();
 
     final AbstractServerMapRequestContext context = createGetAllSizeRequestContext(mapIDs);
     context.makeLookupRequest();
@@ -157,7 +172,12 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     return (Long) result.get(SIZE_KEY);
   }
 
-  private Map<Object, Object> waitForResult(final AbstractServerMapRequestContext context) {
+  /**
+   * Waits in quantums of {@link #RESULT_WAIT_MAXTIME_MILLIS} until result corresponding to context is available from
+   * the server.
+   */
+  private Map<Object, Object> waitForResult(final AbstractServerMapRequestContext context)
+      throws AbortedOperationException {
     boolean isInterrupted = false;
     try {
       while (true) {
@@ -165,6 +185,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
         try {
           wait(RESULT_WAIT_MAXTIME_MILLIS);
         } catch (final InterruptedException e) {
+          checkIfAbortedAndRemoveContexts(context);
           isInterrupted = true;
         }
         if (context.isMissing()) {
@@ -182,7 +203,12 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     }
   }
 
-  private void waitForResults(Set<AbstractServerMapRequestContext> contextsToWaitFor, Map<Object, Object> rv) {
+  /**
+   * Waits in quantums of {@link #RESULT_WAIT_MAXTIME_MILLIS} until results corresponding to contextsToWaitFor are
+   * available from the server.
+   */
+  protected void waitForResults(Set<AbstractServerMapRequestContext> contextsToWaitFor, Map<Object, Object> rv)
+      throws AbortedOperationException {
     boolean isInterrupted = false;
     try {
       while (true) {
@@ -190,6 +216,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
         try {
           wait(RESULT_WAIT_MAXTIME_MILLIS);
         } catch (final InterruptedException e) {
+          checkIfAbortedAndRemoveContexts(contextsToWaitFor);
           isInterrupted = true;
         }
         for (Iterator<AbstractServerMapRequestContext> iterator = contextsToWaitFor.iterator(); iterator.hasNext();) {
@@ -225,7 +252,6 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     } else {
       scheduleRequestForLater(context);
     }
-
   }
 
   private void scheduleRequestForLater(final AbstractServerMapRequestContext context) {
@@ -397,6 +423,29 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     }
   }
 
+  /**
+   * To be used by methods which are called by the App thread.
+   */
+  private void waitUntilRunningAbortable() throws AbortedOperationException {
+    boolean isInterrupted = false;
+    try {
+      while (this.state != State.RUNNING) {
+        try {
+          if (isStopped()) { throw new TCNotRunningException(); }
+          wait();
+        } catch (final InterruptedException e) {
+          handleInterruptedException();
+          isInterrupted = true;
+        }
+      }
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
+    }
+  }
+
+  /**
+   * To be used by methods which are directly called by the Stage thread.
+   */
   private void waitUntilRunning() {
     boolean isInterrupted = false;
     try {
@@ -411,6 +460,57 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     } finally {
       Util.selfInterruptIfNeeded(isInterrupted);
     }
+  }
+
+  /**
+   * Checks whether the interrupt was due to aborting the operation.
+   * 
+   * @throws AbortedOperationException if the interrupt was due to aborting the operation.
+   */
+  private void handleInterruptedException() throws AbortedOperationException {
+    if (isAborted()) {
+      throw new AbortedOperationException();
+    } else {
+      checkIfShutDownOnInterruptedException();
+    }
+  }
+
+  private void checkIfShutDownOnInterruptedException() {
+    // TODO: to be handled during rejoin
+  }
+
+
+  /**
+   * Checks whether the interrupt was due to aborting the operation. Also removes the context from
+   * {@link #outstandingRequests}
+   * 
+   * @throws AbortedOperationException if the interrupt was due to aborting the operation.
+   */
+  private void checkIfAbortedAndRemoveContexts(AbstractServerMapRequestContext context)
+      throws AbortedOperationException {
+    if (isAborted()) {
+      removeRequestContext(context);
+      handleInterruptedException();
+    }
+  }
+
+  /**
+   * Checks whether the interrupt was due to aborting the operation. Also removes the context from
+   * {@link #outstandingRequests}
+   * 
+   * @throws AbortedOperationException if the interrupt was due to aborting the operation.
+   */
+  private void checkIfAbortedAndRemoveContexts(Set<AbstractServerMapRequestContext> contextsToWaitFor) throws AbortedOperationException {
+    if (isAborted()) {
+      for (AbstractServerMapRequestContext context : contextsToWaitFor) {
+        removeRequestContext(context);
+      }
+      handleInterruptedException();
+    }
+  }
+
+  private boolean isAborted() {
+    return abortableOperationManager.isAborted();
   }
 
   @Override
@@ -468,7 +568,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     return new ServerMapRequestID(this.requestIDCounter++);
   }
 
-  private static abstract class AbstractServerMapRequestContext extends LookupStateTransitionAdaptor {
+  protected static abstract class AbstractServerMapRequestContext extends LookupStateTransitionAdaptor {
 
     // protected final static TCLogger logger = TCLogging.getLogger(AbstractServerMapRequestContext.class);
 

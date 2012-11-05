@@ -593,7 +593,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     searchRequestManager = this.dsoClientBuilder
         .createRemoteSearchRequestManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
-                                              .getLogger(RemoteObjectManager.class)), this.channel, sessionManager);
+                                              .getLogger(RemoteObjectManager.class)), this.channel, sessionManager,
+                                          abortableOperationManager);
 
     final L1ServerMapCapacityEvictionHandler l1ServerMapCapacityEvictionHandler = new L1ServerMapCapacityEvictionHandler();
     final Stage capacityEvictionStage = stageManager.createStage(ClientConfigurationContext.CAPACITY_EVICTION_STAGE,
@@ -621,7 +622,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final RemoteServerMapManager remoteServerMapManager = this.dsoClientBuilder
         .createRemoteServerMapManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
                                           .getLogger(RemoteObjectManager.class)), this.channel, sessionManager,
-                                      globalLocalCacheManager);
+                                      globalLocalCacheManager, abortableOperationManager);
     final CallbackDumpAdapter remoteServerMgrDumpAdapter = new CallbackDumpAdapter(remoteServerMapManager);
     this.threadGroup.addCallbackOnExitDefaultHandler(remoteServerMgrDumpAdapter);
     this.dumpHandler.registerForDump(remoteServerMgrDumpAdapter);

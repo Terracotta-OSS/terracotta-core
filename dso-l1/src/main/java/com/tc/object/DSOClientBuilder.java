@@ -99,11 +99,13 @@ public interface DSOClientBuilder {
 
   RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
                                                       final SessionManager sessionManager,
-                                                      final L1ServerMapLocalCacheManager globalLocalCacheManager);
+                                                      final L1ServerMapLocalCacheManager globalLocalCacheManager,
+                                                      final AbortableOperationManager abortableOperationManager);
 
   RemoteSearchRequestManager createRemoteSearchRequestManager(final TCLogger logger,
                                                               final DSOClientMessageChannel dsoChannel,
-                                                              final SessionManager sessionManager);
+                                                              final SessionManager sessionManager,
+                                                              final AbortableOperationManager abortableOperationManager);
 
   ClusterMetaDataManager createClusterMetaDataManager(final DSOClientMessageChannel dsoChannel,
                                                       final DNAEncoding encoding,

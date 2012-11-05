@@ -136,7 +136,7 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param map TCServerMap
    * @return set Set return snapshot of keys
    */
-  public Set keySet(final TCServerMap map);
+  public Set keySet(final TCServerMap map) throws AbortedOperationException;
 
   /**
    * Returns the value for a particular Key in a ServerTCMap.
@@ -160,7 +160,7 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param maps ServerTCMap[]
    * @return long for size of map.
    */
-  public long getAllSize(final TCServerMap[] maps);
+  public long getAllSize(final TCServerMap[] maps) throws AbortedOperationException;
 
   /**
    * Returns the size of the local cache

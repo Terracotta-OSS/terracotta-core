@@ -359,7 +359,6 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
       // if everything was in local cache
       if (mapIdToKeysMap.isEmpty()) return rv;
-
       getAllValuesForKeyFromServer(mapIdToKeysMap, rv);
 
       return rv;
@@ -554,7 +553,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @return set Set return snapshot of keys
    */
   @Override
-  public Set keySet(final TCServerMap map) {
+  public Set keySet(final TCServerMap map) throws AbortedOperationException {
     final TCObject tcObject = map.__tc_managed();
     if (tcObject == null) { throw new UnsupportedOperationException("keySet is not supported in a non-shared ServerMap"); }
     final ObjectID mapID = tcObject.getObjectID();
@@ -570,9 +569,10 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * 
    * @param maps ServerTCMap[]
    * @return long for size of map.
+   * @throws AbortedOperationException
    */
   @Override
-  public long getAllSize(final TCServerMap[] maps) {
+  public long getAllSize(final TCServerMap[] maps) throws AbortedOperationException {
     final ObjectID[] mapIDs = new ObjectID[maps.length];
     for (int i = 0; i < maps.length; ++i) {
       TCServerMap map = maps[i];

@@ -7,7 +7,6 @@ import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 import net.sf.ehcache.pool.SizeOfEngine;
 import net.sf.ehcache.pool.impl.DefaultSizeOfEngine;
 
-import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
@@ -220,7 +219,12 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     } catch (AbortedOperationException e) {
       throw new ToolkitAbortableOperationException(e);
     }
-    long sum = getAnyTCObjectServerMap().getAllSize(serverMaps);
+    long sum = 0;
+    try {
+      sum = getAnyTCObjectServerMap().getAllSize(serverMaps);
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
     // copy the way CHM does if overflow integer
     if (sum > Integer.MAX_VALUE) {
       return Integer.MAX_VALUE;
@@ -577,12 +581,13 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     final Map<ObjectID, Set<K>> mapIdToKeysMap = new HashMap<ObjectID, Set<K>>();
     divideKeysIntoServerMaps(keys, mapIdToKeysMap);
     TCObjectServerMap tcObjectServerMap = getAnyTCObjectServerMap();
-    Map<K, V> rv;
+    Map<K, V> rv = null;
     try {
       rv = tcObjectServerMap.getAllValuesUnlocked(mapIdToKeysMap);
     } catch (AbortedOperationException e) {
       throw new ToolkitAbortableOperationException(e);
     }
+
     for (Entry<K, V> entry : rv.entrySet()) {
       V nonExpiredValue = getServerMapForKey(entry.getKey()).checkAndGetNonExpiredValue(entry.getKey(),
                                                                                         entry.getValue(),

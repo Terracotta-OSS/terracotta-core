@@ -587,12 +587,24 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public Set<K> keySet() {
-    return new ServerMapKeySet<K, V>(this, tcObjectServerMap.keySet(this));
+    Set keySet = null;
+    try {
+      keySet = tcObjectServerMap.keySet(this);
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
+    return new ServerMapKeySet<K, V>(this, keySet);
   }
 
   @Override
   public Set<Entry<K, V>> entrySet() {
-    return new ServerMapEntrySet<K, V>(this, tcObjectServerMap.keySet(this));
+    Set keySet = null;
+    try {
+      keySet = tcObjectServerMap.keySet(this);
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
+    return new ServerMapEntrySet<K, V>(this, keySet);
   }
 
   private void assertNotNull(final Object value) {
@@ -934,7 +946,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     if (isEventual()) {
       SerializedMapValue<V> oldSerializedMapValue = asSerializedMapValue(doLogicalGetValueUnlocked(key));
       final V old = deserialize(key, oldSerializedMapValue);
-      
+
       MetaData metaData = createPutSearchMetaData(key, newValue);
       if (metaData != null) metaData.set(SearchMetaData.COMMAND, SearchCommand.REPLACE);
 
@@ -945,7 +957,7 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
                                                                               timeSource.nowInSeconds(),
                                                                               ToolkitCacheConfigFields.NO_MAX_TTI_SECONDS,
                                                                               ToolkitCacheConfigFields.NO_MAX_TTL_SECONDS);
-          
+
           this.tcObjectServerMap.doLogicalReplaceUnlocked(this, key, oldSerializedMapValue, newSerializedMapValue);
           return true;
         } finally {
@@ -1065,7 +1077,12 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   @Override
   public int size() {
-    long sum = ((TCObjectServerMap) __tc_managed()).getAllSize(new TCServerMap[] { this });
+    long sum = 0;
+    try {
+      sum = ((TCObjectServerMap) __tc_managed()).getAllSize(new TCServerMap[] { this });
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
     // copy the way CHM does if overflow integer
     if (sum > Integer.MAX_VALUE) {
       return Integer.MAX_VALUE;
