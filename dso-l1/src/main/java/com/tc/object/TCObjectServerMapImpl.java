@@ -580,7 +580,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
   @Override
   public int getLocalSize() {
-    if (!isCacheInitialized()) { return 0; }
+    if (!isCacheInitialized() || !localCacheEnabled) { return 0; }
     return this.cache.size();
   }
 
