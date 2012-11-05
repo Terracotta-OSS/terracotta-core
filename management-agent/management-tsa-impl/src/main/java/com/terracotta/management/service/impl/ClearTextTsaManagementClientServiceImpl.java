@@ -209,7 +209,7 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
 
       return serverEntity;
     } catch (Exception e) {
-      throw new ServiceExecutionException("", e);
+      throw new ServiceExecutionException("error making JMX call", e);
     } finally {
       if (jmxConnector != null) {
         try {
@@ -572,8 +572,12 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
           new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "L2Info");
 
       for (L2Info l2Info : l2Infos) {
-        ServerEntity serverEntity = buildServerEntity(l2Info);
-        urls.add("http://" + l2Info.safeGetHostAddress() + ":" + serverEntity.getAttributes().get("DSOGroupPort"));
+        try {
+          ServerEntity serverEntity = buildServerEntity(l2Info);
+          urls.add("http://" + l2Info.safeGetHostAddress() + ":" + serverEntity.getAttributes().get("DSOGroupPort"));
+        } catch (ServiceExecutionException see) {
+          // ignore that server
+        }
       }
 
       return urls;
