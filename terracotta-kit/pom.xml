@@ -551,6 +551,14 @@
           <version>${project.version}</version>
           <classifier>javadoc</classifier>
         </dependency>
+        <dependency>
+          <groupId>com.terracotta</groupId>
+          <artifactId>bigmemory-max-samples</artifactId>
+          <version>${bigmemory.version}</version>
+          <classifier>distribution</classifier>
+          <type>tar.gz</type>
+        </dependency>
+
       </dependencies>
       <build>
         <plugins>
@@ -576,17 +584,15 @@
                        <overWrite>false</overWrite>
                        <outputDirectory>${project.build.directory}</outputDirectory>
                      </artifactItem>
-                     <!--
                      <artifactItem>
                        <groupId>com.terracotta</groupId>
-                       <artifactId>bigmemory-samples</artifactId>
+                       <artifactId>bigmemory-max-samples</artifactId>
                        <version>${bigmemory.version}</version>
                        <classifier>distribution</classifier>
                        <type>tar.gz</type>
                        <overWrite>false</overWrite>
                        <outputDirectory>${project.build.directory}</outputDirectory>
                      </artifactItem>
-                     -->
                    </artifactItems>
                  </configuration>
                </execution>

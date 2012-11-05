@@ -70,6 +70,10 @@
       <directory>${project.build.directory}/${kit.name}/lib</directory>
       <outputDirectory>/server/lib</outputDirectory>
     </fileSet>
+    <fileSet>
+      <directory>${project.build.directory}/bigmemory-max-samples-${bigmemory.version}</directory>
+      <outputDirectory>/code-samples</outputDirectory>
+    </fileSet>
     <!--
     <fileSet>
       <directory>${ehcache-core.config.dir}</directory>
@@ -84,10 +88,6 @@
         <include>SLF4J-LICENSE.txt</include>
       </includes>
       <outputDirectory>/legal</outputDirectory>
-    </fileSet>
-    <fileSet>
-      <directory>${project.build.directory}/bigmemory-samples-${bigmemory.version}</directory>
-      <outputDirectory>/code-samples</outputDirectory>
     </fileSet>
     -->
   </fileSets>
