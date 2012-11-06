@@ -104,6 +104,9 @@ public class GCLogger {
   }
 
   private void logGC(GarbageCollectionID id, String msg) {
+    if (id.toLong() == -1L) {
+      return; // Ignore logging for Inline DGC which comes in with an iteration id -1.
+    }
     logger.info(prefix + "[ " + id.toLong() + " ] " + msg);
   }
 }
