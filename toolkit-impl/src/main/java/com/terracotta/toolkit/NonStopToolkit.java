@@ -49,11 +49,11 @@ public class NonStopToolkit implements ToolkitInternal {
 
   public NonStopToolkit(ToolkitInternal toolkitDelegate) {
     this.toolkitDelegate = toolkitDelegate;
-    if (toolkitDelegate instanceof TerracottaToolkit) { throw new RuntimeException(
-                                                                                   "Wrong Toolkit Initialized, toolkit should be instance of "
-                                                                                       + TerracottaToolkit.class
-                                                                                       + " but is "
-                                                                                       + toolkitDelegate.getClass()); }
+    if (!(toolkitDelegate instanceof TerracottaToolkit)) { throw new RuntimeException(
+                                                                                      "Wrong Toolkit Initialized, toolkit should be instance of "
+                                                                                          + TerracottaToolkit.class
+                                                                                          + " but is "
+                                                                                          + toolkitDelegate.getClass()); }
 
     AbortableOperationManager abortableOperationManager = ((TerracottaToolkit) toolkitDelegate)
         .getAbortableOperationManager();

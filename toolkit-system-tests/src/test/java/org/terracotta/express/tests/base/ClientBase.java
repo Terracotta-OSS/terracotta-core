@@ -38,10 +38,14 @@ public abstract class ClientBase extends AbstractClientBase {
 
   private Toolkit createToolkit() {
     try {
-      return ToolkitFactory.createToolkit("toolkit:terracotta://" + getTerracottaUrl());
+      return ToolkitFactory.createToolkit(getTerracottaTypeSubType() + getTerracottaUrl());
     } catch (ToolkitInstantiationException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  protected String getTerracottaTypeSubType() {
+    return "toolkit:terracotta://";
   }
 
   protected abstract void test(Toolkit toolkit) throws Throwable;

@@ -5,13 +5,28 @@ package com.terracotta.toolkit.nonstop;
 
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.nonstop.NonStopConfig;
+import org.terracotta.toolkit.nonstop.NonStopConfigFields;
+import org.terracotta.toolkit.nonstop.NonStopConfigFields.NonStopTimeoutBehavior;
 import org.terracotta.toolkit.nonstop.NonStopConfigRegistry;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class NonStopConfigRegistryImpl implements NonStopConfigRegistry {
-  private final ConcurrentMap<NonStopConfigKey, NonStopConfig> allConfigs = new ConcurrentHashMap<NonStopConfigKey, NonStopConfig>();
+  private final ConcurrentMap<NonStopConfigKey, NonStopConfig> allConfigs     = new ConcurrentHashMap<NonStopConfigKey, NonStopConfig>();
+
+  private final NonStopConfig                                  DEFAULT_CONFIG = new NonStopConfig() {
+
+                                                                                @Override
+                                                                                public long getTimeout() {
+                                                                                  return NonStopConfigFields.DEFAULT_TIMEOUT_MILLIS;
+                                                                                }
+
+                                                                                @Override
+                                                                                public NonStopTimeoutBehavior getNonStopTimeoutBehavior() {
+                                                                                  return NonStopConfigFields.DEFAULT_NON_STOP_TIMEOUT_BEHAVIOR;
+                                                                                }
+                                                                              };
 
   @Override
   public void registerForType(NonStopConfig config, ToolkitObjectType... types) {
@@ -45,8 +60,12 @@ public class NonStopConfigRegistryImpl implements NonStopConfigRegistry {
   @Override
   public NonStopConfig getConfigForType(ToolkitObjectType type) {
     NonStopConfigKey nonStopConfigKey = new NonStopConfigKey(null, type, null);
-    // TODO: instead of returning null should we return a default config
-    return allConfigs.get(nonStopConfigKey);
+    NonStopConfig nonStopConfig = allConfigs.get(nonStopConfigKey);
+    if (nonStopConfig != null) {
+      return nonStopConfig;
+    } else {
+      return DEFAULT_CONFIG;
+    }
   }
 
   @Override
