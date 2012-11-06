@@ -42,7 +42,7 @@ import javax.management.MBeanServerConnection;
 
 @RunWith(value = TcTestRunner.class)
 public abstract class AbstractTestBase extends TCTestCase {
-  private static final String         SINGLE_SERVER_CONFIG = "single-server-config";
+  private static final String         DEFAULT_CONFIG       = "default-config";
   protected static final String       SEP                  = File.pathSeparator;
   private final TestConfig            testConfig;
   private final File                  tcConfigFile;
@@ -78,7 +78,7 @@ public abstract class AbstractTestBase extends TCTestCase {
    */
   @Configs
   public static List<TestConfig> getTestConfigs() {
-    TestConfig testConfig = new TestConfig(SINGLE_SERVER_CONFIG);
+    TestConfig testConfig = new TestConfig(DEFAULT_CONFIG);
     testConfig.getGroupConfig().setMemberCount(1);
     TestConfig[] testConfigs = new TestConfig[] { testConfig };
     return Arrays.asList(testConfigs);
@@ -298,7 +298,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   @Override
   protected File getTempDirectory() throws IOException {
     // this is a hack but there is no direct way to know whether a test is going to be run with single config
-    if (testConfig.getConfigName().equals(SINGLE_SERVER_CONFIG)) { return super.getTempDirectory(); }
+    if (testConfig.getConfigName().equals(DEFAULT_CONFIG)) { return super.getTempDirectory(); }
 
     File tempDirectory = new File(super.getTempDirectory(), testConfig.getConfigName());
     return tempDirectory;
