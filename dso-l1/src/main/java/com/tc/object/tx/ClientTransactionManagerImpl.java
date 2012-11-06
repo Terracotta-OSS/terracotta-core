@@ -318,9 +318,9 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     } catch (AbortedOperationException t) {
       throw t;
     } catch (final Throwable t) {
-      this.remoteTxManager.stopProcessing();
       Banner.errorBanner("Terracotta client shutting down due to error " + t);
       logger.error(t);
+      this.remoteTxManager.stopProcessing();
       if (t instanceof Error) { throw (Error) t; }
       if (t instanceof RuntimeException) { throw (RuntimeException) t; }
       throw new RuntimeException(t);
