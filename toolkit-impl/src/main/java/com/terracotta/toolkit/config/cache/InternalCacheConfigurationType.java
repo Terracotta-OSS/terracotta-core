@@ -3,6 +3,20 @@
  */
 package com.terracotta.toolkit.config.cache;
 
+import org.terracotta.toolkit.cache.ToolkitCacheConfigFields.PinningStore;
+import org.terracotta.toolkit.config.Configuration;
+import org.terracotta.toolkit.config.SupportedConfigurationType;
+import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
+
+import com.terracotta.toolkit.config.UnclusteredConfiguration;
+
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import static org.terracotta.toolkit.cache.ToolkitCacheConfigFields.DEFAULT_MAX_TOTAL_COUNT;
 import static org.terracotta.toolkit.cache.ToolkitCacheConfigFields.DEFAULT_MAX_TTI_SECONDS;
 import static org.terracotta.toolkit.cache.ToolkitCacheConfigFields.DEFAULT_MAX_TTL_SECONDS;
@@ -36,20 +50,6 @@ import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.MAX_BYTES_LO
 import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.MAX_BYTES_LOCAL_OFFHEAP_FIELD_NAME;
 import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.MAX_COUNT_LOCAL_HEAP_FIELD_NAME;
 import static org.terracotta.toolkit.store.ToolkitStoreConfigFields.OFFHEAP_ENABLED_FIELD_NAME;
-
-import org.terracotta.toolkit.cache.ToolkitCacheConfigFields.PinningStore;
-import org.terracotta.toolkit.config.Configuration;
-import org.terracotta.toolkit.config.SupportedConfigurationType;
-import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
-
-import com.terracotta.toolkit.config.UnclusteredConfiguration;
-
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 public enum InternalCacheConfigurationType {
   MAX_BYTES_LOCAL_HEAP(LONG, MAX_BYTES_LOCAL_HEAP_FIELD_NAME, DEFAULT_MAX_BYTES_LOCAL_HEAP) {
@@ -198,7 +198,7 @@ public enum InternalCacheConfigurationType {
 
     @Override
     public void validateLegalValue(Object value) {
-      greaterThanOrEqualTo(integer(notNull(value)), 0);
+      greaterThanOrEqualTo(integer(notNull(value)), -1);
     }
   },
   MAX_TTI_SECONDS(INTEGER, MAX_TTI_SECONDS_FIELD_NAME, DEFAULT_MAX_TTI_SECONDS) {
