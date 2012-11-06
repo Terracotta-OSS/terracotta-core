@@ -20,12 +20,12 @@ public class JavaClassInfoRepositoryTest extends TestCase {
       assertTrue(JavaClassInfoRepository.getRepository(loader) == JavaClassInfoRepository.getRepository(loader));
       ClassInfo ci1 = JavaClassInfoRepository.getRepository(loader).getClassInfo(JavaClassInfoRepository.class
                                                                                      .getName());
-      ClassInfo ci2 = JavaClassInfoRepository.getRepository(loader).getClassInfo(JavaClassInfoRepository.class
-                                                                                     .getName());
-      assertTrue(ci1 == ci2);
-      
       System.gc();
-      ThreadUtil.reallySleep(1000L);      
+      ThreadUtil.reallySleep(1000L);
+
+      ClassInfo ci2 = JavaClassInfoRepository.getRepository(loader).getClassInfo(JavaClassInfoRepository.class
+          .getName());
+      assertTrue(ci1 == ci2);
     }
 
     WeakReference<JavaClassInfoRepository> repoRef = new WeakReference<JavaClassInfoRepository>(
@@ -33,12 +33,15 @@ public class JavaClassInfoRepositoryTest extends TestCase {
                                                                                                     .getRepository(loader));
     loader = null;
     for (int i = 0; i < 3; i++) {
+      // we need to exercise the JavaClassInfoRepository's s_repositories guava weak keys map -> make it add a new element
+      JavaClassInfoRepository.getRepository(getClass().getClassLoader());
+
       System.gc();
       ThreadUtil.reallySleep(3000L);
     }
 
     assertNull(repoRef.get());
-    assertEquals(0, JavaClassInfoRepository.repositoriesSize());
+    assertEquals(1, JavaClassInfoRepository.repositoriesSize());
   }
 
   private static class Loader extends URLClassLoader {
