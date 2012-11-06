@@ -33,6 +33,7 @@ public class SerializedClusterObjectImpl<T> implements SerializedClusterObject<T
     this.bytes = bytes;
   }
 
+  @Override
   public synchronized byte[] getBytes() {
     return this.bytes;
   }
@@ -41,10 +42,10 @@ public class SerializedClusterObjectImpl<T> implements SerializedClusterObject<T
    * TODO: Remember to make byte[] null later
    */
   @Override
-  public synchronized T getValue(SerializationStrategy strategy, boolean compression) {
+  public synchronized T getValue(SerializationStrategy strategy, boolean compression, boolean local) {
     if (value != null) { return value; }
     try {
-      value = (T) strategy.deserialize(bytes, compression);
+      value = (T) strategy.deserialize(bytes, compression, local);
       return value;
     } catch (IOException e) {
       throw new ToolkitRuntimeException(e);
@@ -57,6 +58,7 @@ public class SerializedClusterObjectImpl<T> implements SerializedClusterObject<T
     this.bytes = bytesParam;
   }
 
+  @Override
   public void __tc_managed(TCObject tco) {
     this.tcObject = tco;
   }

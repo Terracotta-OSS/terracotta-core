@@ -86,7 +86,7 @@ public class LocalReadsToolkitCacheImpl<K, V> implements DistributedToolkitType<
 
   @Override
   public void unpinAll() {
-    delegate.unpinAll();
+    mutationBehaviourResolver.unpinAll();
   }
 
   @Override
@@ -96,8 +96,7 @@ public class LocalReadsToolkitCacheImpl<K, V> implements DistributedToolkitType<
 
   @Override
   public void setPinned(K key, boolean pinned) {
-    // TODO: discuss
-    delegate.setPinned(key, pinned);
+    mutationBehaviourResolver.setPinned(key, pinned);
   }
 
   @Override

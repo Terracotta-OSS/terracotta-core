@@ -275,9 +275,9 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   private V getNonExpiredValue(Object key, SerializedMapValue serializedMapValue, GetType getType, boolean quiet) {
     if (serializedMapValue == null) { return null; }
 
-    if (getType == GetType.UNSAFE) {
+    if (isUnsafeGet(getType)) {
       // don't touch tc layer when doing unsafe reads
-      return deserialize(key, serializedMapValue);
+      return deserialize(key, serializedMapValue, true);
     }
     serializedMapValue = expireEntryIfNecessary(key, serializedMapValue, getType, quiet);
     return deserialize(key, serializedMapValue);
@@ -286,7 +286,11 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   @Override
   public V checkAndGetNonExpiredValue(K key, Object value, GetType getType, boolean quiet) {
     SerializedMapValue serializedMapValue = asSerializedMapValue(value);
-    return deserialize(key, expireEntryIfNecessary(key, serializedMapValue, getType, quiet));
+    return deserialize(key, expireEntryIfNecessary(key, serializedMapValue, getType, quiet), isUnsafeGet(getType));
+  }
+
+  private boolean isUnsafeGet(GetType getType) {
+    return getType == GetType.UNSAFE;
   }
 
   private SerializedMapValue expireEntryIfNecessary(Object key, SerializedMapValue serializedMapValue, GetType getType,
@@ -319,15 +323,19 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
   }
 
   private V deserialize(Object key, SerializedMapValue serializedMapValue) {
+    return deserialize(key, serializedMapValue, false);
+  }
+
+  private V deserialize(Object key, SerializedMapValue serializedMapValue, boolean local) {
     if (serializedMapValue == null) { return null; }
     try {
       V deserialized = null;
 
       if (copyOnReadEnabled) {
-        deserialized = (V) serializedMapValue.getDeserializedValueCopy(strategy, compressionEnabled);
+        deserialized = (V) serializedMapValue.getDeserializedValueCopy(strategy, compressionEnabled, local);
       } else {
         deserialized = (V) serializedMapValue.getDeserializedValue(strategy, compressionEnabled,
-                                                                   l1ServerMapLocalCacheStore, key);
+                                                                   l1ServerMapLocalCacheStore, key, local);
       }
       return deserialized;
     } catch (Exception e) {
@@ -363,8 +371,8 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
 
   private void expire(Object key, SerializedMapValue serializedMapValue, GetType getType) {
     final boolean notify;
-
-    V deserializedValue = deserialize(key, serializedMapValue);
+    // perform local get for unsafe operations
+    V deserializedValue = deserialize(key, serializedMapValue, isUnsafeGet(getType));
     MetaData metaData = getEvictRemoveMetaData();
 
     if (getType == GetType.LOCKED) {

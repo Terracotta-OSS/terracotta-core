@@ -7,5 +7,5 @@ package com.terracotta.toolkit.object.serialization;
 public interface SerializedClusterObject<T> {
   byte[] getBytes();
 
-  T getValue(SerializationStrategy strategy, boolean compression);
+  T getValue(SerializationStrategy strategy, boolean compression, boolean local);
 }
