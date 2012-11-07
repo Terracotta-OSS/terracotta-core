@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
     ValuesResolver<K, V>, ToolkitCacheInternal<K, V> {
@@ -40,7 +41,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
   private final Class<V>                                                          klazz;
 
   private final ToolkitInternal                                                   toolkit;
-  private volatile ToolkitCacheInternal<K, V>                                     delegate;
+  private final AtomicReference<ToolkitCacheInternal<K, V>>                       delegate                 = new AtomicReference<ToolkitCacheInternal<K, V>>();
 
   private final ConcurrentMap<NonStopTimeoutBehavior, ToolkitCacheInternal<K, V>> timeoutBehaviorResolvers = new ConcurrentHashMap<NonStopTimeoutBehavior, ToolkitCacheInternal<K, V>>();
   private final NonstopTimeoutBehaviorResolver                                    behaviorResolverFactory;
@@ -64,7 +65,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     ToolkitCacheInternal<K, V> resolver = timeoutBehaviorResolvers.get(nonStopBehavior);
     if (resolver == null) {
       // TODO: should getDelegate() be also done asynchronously OR with a timeout?
-      resolver = behaviorResolverFactory.create(getObjectType(), nonStopBehavior, getDelegate());
+      resolver = behaviorResolverFactory.create(getObjectType(), nonStopBehavior, delegate);
       ToolkitCacheInternal<K, V> oldResolver = timeoutBehaviorResolvers.putIfAbsent(nonStopBehavior, resolver);
       resolver = oldResolver != null ? oldResolver : resolver;
     }
@@ -81,15 +82,15 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
   }
 
   private ToolkitCacheInternal<K, V> getDelegate() {
-    if (delegate == null) {
+    if (delegate.get() == null) {
       if (actualConfiguration == null) {
-        delegate = (ToolkitCacheInternal<K, V>) toolkit.getCache(name, klazz);
+        delegate.set((ToolkitCacheInternal<K, V>) toolkit.getCache(name, klazz));
       } else {
-        delegate = (ToolkitCacheInternal<K, V>) toolkit.getCache(name, actualConfiguration, klazz);
+        delegate.set((ToolkitCacheInternal<K, V>) toolkit.getCache(name, actualConfiguration, klazz));
       }
     }
 
-    return delegate;
+    return delegate.get();
   }
 
   private String getMethod() {

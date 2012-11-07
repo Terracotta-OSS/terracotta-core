@@ -22,26 +22,37 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class LocalReadsToolkitCacheImpl<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
     ValuesResolver<K, V>, ToolkitCacheInternal<K, V>, DestroyableToolkitObject {
-  private final ToolkitCacheInternal<K, V> delegate;
-  private final ToolkitCacheInternal<K, V> mutationBehaviourResolver;
+  private final AtomicReference<ToolkitCacheInternal<K, V>> delegate;
+  private final ToolkitCacheInternal<K, V>                  mutationBehaviourResolver;
+  private final ToolkitCacheInternal<K, V>                  noOpBehaviourResolver;
 
-  public LocalReadsToolkitCacheImpl(ToolkitCacheInternal<K, V> delegate,
-                                    ToolkitCacheInternal<K, V> mutationBehaviourResolver) {
+  public LocalReadsToolkitCacheImpl(AtomicReference<ToolkitCacheInternal<K, V>> delegate,
+                                    ToolkitCacheInternal<K, V> mutationBehaviourResolver,
+                                    ToolkitCacheInternal<K, V> noOpBehaviourResolver) {
     this.delegate = delegate;
     this.mutationBehaviourResolver = mutationBehaviourResolver;
+    this.noOpBehaviourResolver = noOpBehaviourResolver;
+  }
+
+  private ToolkitCacheInternal<K, V> getDelegate() {
+    ToolkitCacheInternal<K, V> rv = delegate.get();
+    if (rv == null) { return noOpBehaviourResolver; }
+
+    return rv;
   }
 
   @Override
   public String getName() {
-    return delegate.getName();
+    return getDelegate().getName();
   }
 
   @Override
   public boolean isDestroyed() {
-    return delegate.isDestroyed();
+    return getDelegate().isDestroyed();
   }
 
   @Override
@@ -51,7 +62,7 @@ public class LocalReadsToolkitCacheImpl<K, V> implements DistributedToolkitType<
 
   @Override
   public V getQuiet(Object key) {
-    return delegate.unsafeLocalGet(key);
+    return getDelegate().unsafeLocalGet(key);
   }
 
   @Override
@@ -91,7 +102,7 @@ public class LocalReadsToolkitCacheImpl<K, V> implements DistributedToolkitType<
 
   @Override
   public boolean isPinned(K key) {
-    return delegate.isPinned(key);
+    return getDelegate().isPinned(key);
   }
 
   @Override
@@ -116,7 +127,7 @@ public class LocalReadsToolkitCacheImpl<K, V> implements DistributedToolkitType<
 
   @Override
   public Configuration getConfiguration() {
-    return delegate.getConfiguration();
+    return getDelegate().getConfiguration();
   }
 
   @Override
@@ -133,12 +144,12 @@ public class LocalReadsToolkitCacheImpl<K, V> implements DistributedToolkitType<
   @Override
   public ToolkitReadWriteLock createLockForKey(K key) {
     // TODO: return nonstop lock when supporting nonstop for locks.
-    return delegate.createLockForKey(key);
+    return getDelegate().createLockForKey(key);
   }
 
   @Override
   public void setAttributeExtractor(ToolkitAttributeExtractor attrExtractor) {
-    delegate.setAttributeExtractor(attrExtractor);
+    getDelegate().setAttributeExtractor(attrExtractor);
   }
 
   @Override
@@ -163,12 +174,12 @@ public class LocalReadsToolkitCacheImpl<K, V> implements DistributedToolkitType<
 
   @Override
   public int size() {
-    return delegate.localSize();
+    return getDelegate().localSize();
   }
 
   @Override
   public boolean isEmpty() {
-    return delegate.localSize() == 0;
+    return getDelegate().localSize() == 0;
   }
 
   @Override
@@ -203,7 +214,7 @@ public class LocalReadsToolkitCacheImpl<K, V> implements DistributedToolkitType<
 
   @Override
   public Set<K> keySet() {
-    return delegate.localKeySet();
+    return getDelegate().localKeySet();
   }
 
   @Override
@@ -219,8 +230,8 @@ public class LocalReadsToolkitCacheImpl<K, V> implements DistributedToolkitType<
   }
 
   private Map<K, V> getAllLocalKeyValuesMap() {
-    Map<K, V> allValuesMap = new HashMap<K, V>(delegate.localSize());
-    for (K key : delegate.keySet()) {
+    Map<K, V> allValuesMap = new HashMap<K, V>(getDelegate().localSize());
+    for (K key : getDelegate().keySet()) {
       allValuesMap.put(key, getQuiet(key));
     }
     return allValuesMap;
@@ -256,52 +267,52 @@ public class LocalReadsToolkitCacheImpl<K, V> implements DistributedToolkitType<
 
   @Override
   public V unsafeLocalGet(Object key) {
-    return delegate.unsafeLocalGet(key);
+    return getDelegate().unsafeLocalGet(key);
   }
 
   @Override
   public boolean containsLocalKey(Object key) {
-    return delegate.containsLocalKey(key);
+    return getDelegate().containsLocalKey(key);
   }
 
   @Override
   public int localSize() {
-    return delegate.localSize();
+    return getDelegate().localSize();
   }
 
   @Override
   public Set<K> localKeySet() {
-    return delegate.localKeySet();
+    return getDelegate().localKeySet();
   }
 
   @Override
   public long localOnHeapSizeInBytes() {
-    return delegate.localOnHeapSizeInBytes();
+    return getDelegate().localOnHeapSizeInBytes();
   }
 
   @Override
   public long localOffHeapSizeInBytes() {
-    return delegate.localOffHeapSizeInBytes();
+    return getDelegate().localOffHeapSizeInBytes();
   }
 
   @Override
   public int localOnHeapSize() {
-    return delegate.localOnHeapSize();
+    return getDelegate().localOnHeapSize();
   }
 
   @Override
   public int localOffHeapSize() {
-    return delegate.localOffHeapSize();
+    return getDelegate().localOffHeapSize();
   }
 
   @Override
   public boolean containsKeyLocalOnHeap(Object key) {
-    return delegate.containsKeyLocalOnHeap(key);
+    return getDelegate().containsKeyLocalOnHeap(key);
   }
 
   @Override
   public boolean containsKeyLocalOffHeap(Object key) {
-    return delegate.containsKeyLocalOffHeap(key);
+    return getDelegate().containsKeyLocalOffHeap(key);
   }
 
   @Override
@@ -322,17 +333,17 @@ public class LocalReadsToolkitCacheImpl<K, V> implements DistributedToolkitType<
 
   @Override
   public QueryBuilder createQueryBuilder() {
-    return delegate.createQueryBuilder();
+    return getDelegate().createQueryBuilder();
   }
 
   @Override
   public SearchExecutor createSearchExecutor() {
-    return delegate.createSearchExecutor();
+    return getDelegate().createSearchExecutor();
   }
 
   @Override
   public Iterator<InternalToolkitMap<K, V>> iterator() {
-    return ((DistributedToolkitType<InternalToolkitMap<K, V>>) delegate).iterator();
+    return ((DistributedToolkitType<InternalToolkitMap<K, V>>) getDelegate()).iterator();
   }
 
   @Override
@@ -343,6 +354,6 @@ public class LocalReadsToolkitCacheImpl<K, V> implements DistributedToolkitType<
   @Override
   public V get(K key, ObjectID valueOid) {
     // TODO: discuss change in behavior for search here.
-    return delegate.unsafeLocalGet(key);
+    return getDelegate().unsafeLocalGet(key);
   }
 }
