@@ -312,25 +312,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return rv;
   }
 
-  public void addFaultedObject(final ObjectID oid, final ManagedObject mo, final boolean removeOnRelease) {
-    final ManagedObjectReference mor = this.references.get(oid);
-    if (mor == null || !(mor instanceof FaultingManagedObjectReference) || !oid.equals(mor.getObjectID())) {
-      // Format
-      throw new AssertionError("ManagedObjectReference is not what was expected : " + mor + " oid : " + oid
-                               + " Faulting in : " + mo);
-    }
-    final FaultingManagedObjectReference fmor = (FaultingManagedObjectReference) mor;
-    if (mo == null) {
-      fmor.faultingFailed();
-    } else {
-      Assert.assertEquals(oid, mo.getID());
-      addFaultedReference(mo, removeOnRelease, fmor);
-      this.noReferencesIDStore.addToNoReferences(mo);
-    }
-    makeUnBlocked(oid);
-    postRelease();
-  }
-
   public void preFetchObjectsAndCreate(final Set<ObjectID> oids, final Set<ObjectID> newOids) {
     createNewObjects(newOids);
   }
@@ -346,11 +327,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       newReference.setRemoveOnRelease(removeOnRelease);
     }
     return ref == null ? newReference : ref;
-  }
-
-  private ManagedObjectReference addFaultedReference(final ManagedObject obj, final boolean isRemoveOnRelease,
-                                                     final FaultingManagedObjectReference fr) {
-    return addNewReference(obj.getReference(), isRemoveOnRelease, fr);
   }
 
   private void evicted(final Collection managedObjects) {
@@ -859,14 +835,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private void assertNotInShutdown() {
     if (this.inShutdown.get()) { throw new ShutdownError(); }
-  }
-
-  public void flushAndEvict(final List objects2Flush) {
-    final Transaction tx = newTransaction();
-    final int size = objects2Flush.size();
-    flushAllAndCommit(tx, objects2Flush);
-    evicted(objects2Flush);
-    this.flushInProgress.decrement(size);
   }
 
   // TODO:: May have to Optimize it with an atomic integer since size on CHM with 256 segments is costly

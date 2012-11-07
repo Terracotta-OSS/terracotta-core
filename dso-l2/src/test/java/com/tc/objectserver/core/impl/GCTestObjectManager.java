@@ -11,6 +11,7 @@ import com.tc.object.cache.CacheStats;
 import com.tc.object.cache.Evictable;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerStatsListener;
+import com.tc.objectserver.api.TransactionProvider;
 import com.tc.objectserver.context.DGCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -19,7 +20,6 @@ import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.impl.ManagedObjectReference;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.api.TransactionProvider;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 
@@ -139,20 +139,12 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
     return oids;
   }
 
-  public void addFaultedObject(ObjectID oid, ManagedObject mo, boolean removeOnRelease) {
-    throw new ImplementMe();
-  }
-
   public void waitUntilReadyToGC() {
     gcCollector.notifyReadyToGC();
   }
 
   public Set getRootIDs() {
     return new HashSet(roots);
-  }
-
-  public void flushAndEvict(List objects2Flush) {
-    throw new ImplementMe();
   }
 
   public Map getRootNamesToIDsMap() {

@@ -14,7 +14,6 @@ import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -124,10 +123,6 @@ public interface ObjectManager extends ManagedObjectProvider, ObjectManagerMBean
   public ObjectIDSet getAllObjectIDs();
 
   public ObjectIDSet getObjectIDsInCache();
-
-  public void addFaultedObject(ObjectID oid, ManagedObject mo, boolean removeOnRelease);
-
-  public void flushAndEvict(List objects2Flush);
 
   public void preFetchObjectsAndCreate(Set<ObjectID> oids, Set<ObjectID> newOids);
 

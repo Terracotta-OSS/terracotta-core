@@ -840,15 +840,7 @@ public class ObjectRequestManagerTest extends TestCase {
       this.managedObjectPersistor = managedObjectPersistor;
     }
 
-    public void addFaultedObject(final ObjectID oid, final ManagedObject mo, final boolean removeOnRelease) {
-      throw new NotImplementedException(TestObjectManager.class);
-    }
-
     public void createRoot(final String name, final ObjectID id) {
-      throw new NotImplementedException(TestObjectManager.class);
-    }
-
-    public void flushAndEvict(final List objects2Flush) {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
