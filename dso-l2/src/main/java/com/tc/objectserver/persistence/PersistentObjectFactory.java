@@ -11,8 +11,10 @@ import com.tc.object.ObjectID;
  * @author tim
  */
 public class PersistentObjectFactory {
-  private static final KeyValueStorageConfig<Object, Object> MAP_CONFIG =
-      new ImmutableKeyValueStorageConfig<Object, Object>(Object.class, Object.class, LiteralSerializer.INSTANCE, LiteralSerializer.INSTANCE, 1);
+  private static final KeyValueStorageConfig<Object, Object> MAP_CONFIG = ImmutableKeyValueStorageConfig.builder(Object.class, Object.class)
+      .keyTransformer(LiteralSerializer.INSTANCE)
+      .valueTransformer(LiteralSerializer.INSTANCE)
+      .concurrency(1).build();
 
   private final StorageManager storageManager;
 
