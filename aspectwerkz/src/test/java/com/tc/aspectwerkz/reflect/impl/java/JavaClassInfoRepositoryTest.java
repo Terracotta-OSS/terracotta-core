@@ -8,6 +8,8 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.lang.ref.WeakReference;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.List;
 
 import junit.framework.TestCase;
 
@@ -32,16 +34,21 @@ public class JavaClassInfoRepositoryTest extends TestCase {
                                                                                                 JavaClassInfoRepository
                                                                                                     .getRepository(loader));
     loader = null;
-    for (int i = 0; i < 3; i++) {
-      // we need to exercise the JavaClassInfoRepository's s_repositories guava weak keys map -> make it add a new element
-      JavaClassInfoRepository.getRepository(getClass().getClassLoader());
 
+    // keep hard refs on loaders or they might be collected
+    List<Loader> loaders = new ArrayList<Loader>();
+    for (int i = 0; i < 100; i++) {
       System.gc();
-      ThreadUtil.reallySleep(3000L);
+
+      // we need to exercise the JavaClassInfoRepository's s_repositories guava weak keys map -> make it add a new element
+      // put calls MapMakerInternal.Segment.drainReferenceQueues() in guava 13.0.1 which is what we want to happen
+      Loader l = new Loader();
+      loaders.add(l);
+      JavaClassInfoRepository.getRepository(l);
     }
 
     assertNull(repoRef.get());
-    assertEquals(1, JavaClassInfoRepository.repositoriesSize());
+    assertEquals(100, JavaClassInfoRepository.repositoriesSize());
   }
 
   private static class Loader extends URLClassLoader {
