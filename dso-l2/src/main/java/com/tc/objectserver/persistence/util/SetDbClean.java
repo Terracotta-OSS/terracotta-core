@@ -4,10 +4,6 @@
  */
 package com.tc.objectserver.persistence.util;
 
-import com.tc.l2.ha.ClusterState;
-import com.tc.l2.state.StateManager;
-import com.tc.util.State;
-
 import java.io.File;
 import java.io.OutputStreamWriter;
 import java.io.Writer;

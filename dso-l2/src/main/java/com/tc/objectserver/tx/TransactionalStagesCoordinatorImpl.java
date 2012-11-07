@@ -6,9 +6,7 @@ package com.tc.objectserver.tx;
 
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
-import com.tc.objectserver.context.ApplyCompleteEventContext;
 import com.tc.objectserver.context.ApplyTransactionContext;
-import com.tc.objectserver.context.CommitTransactionContext;
 import com.tc.objectserver.context.LookupEventContext;
 import com.tc.objectserver.context.RecallObjectsContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -33,14 +31,17 @@ public class TransactionalStagesCoordinatorImpl implements TransactionalStageCoo
     this.applySink = stageManager.getStage(ServerConfigurationContext.APPLY_CHANGES_STAGE).getSink();
   }
 
+  @Override
   public void addToApplyStage(ApplyTransactionContext context) {
     applySink.add(context);
   }
 
+  @Override
   public void initiateLookup() {
     lookupSink.addLossy(new LookupEventContext());
   }
 
+  @Override
   public void initiateRecallAll() {
     recallSink.add(new RecallObjectsContext(Collections.EMPTY_LIST, true));
   }

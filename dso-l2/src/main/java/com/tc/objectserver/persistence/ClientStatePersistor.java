@@ -1,16 +1,15 @@
 package com.tc.objectserver.persistence;
 
+import org.terracotta.corestorage.ImmutableKeyValueStorageConfig;
 import org.terracotta.corestorage.KeyValueStorage;
 import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.Serializer;
+import org.terracotta.corestorage.Transformer;
 
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.objectserver.api.ClientNotFoundException;
 import com.tc.util.sequence.MutableSequence;
 
 import java.util.Set;
-import org.terracotta.corestorage.ImmutableKeyValueStorageConfig;
-import org.terracotta.corestorage.Transformer;
 
 /**
  * @author tim
