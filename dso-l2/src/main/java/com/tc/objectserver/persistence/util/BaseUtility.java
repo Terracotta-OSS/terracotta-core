@@ -4,18 +4,14 @@
  */
 package com.tc.objectserver.persistence.util;
 
-import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.StorageManager;
-import org.terracotta.corestorage.heap.HeapStorageManager;
-
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListenerProvider;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListener;
+import com.tc.objectserver.persistence.HeapStorageManagerFactory;
 import com.tc.objectserver.persistence.Persistor;
-import com.tc.objectserver.persistence.StorageManagerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,13 +45,7 @@ public abstract class BaseUtility {
 
   private Persistor createPersistor(int id) throws Exception {
     final TestManagedObjectChangeListenerProvider managedObjectChangeListenerProvider = new TestManagedObjectChangeListenerProvider();
-    Persistor persistor = new Persistor(new StorageManagerFactory() {
-
-          @Override
-          public StorageManager createStorageManager(Map<String, KeyValueStorageConfig<?, ?>> configMap) {
-              return new HeapStorageManager();
-          }
-      });
+    Persistor persistor = new Persistor(HeapStorageManagerFactory.INSTANCE);
     
     return persistor;
   }

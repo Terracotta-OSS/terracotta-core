@@ -122,7 +122,7 @@ public class DsoLiteralLockID implements LockID {
       case ENUM_HOLDER:
         EnumInstance enumInstance = (EnumInstance) literal;
         serialOutput.writeString(enumInstance.getClassInstance().getName().asString());
-        serialOutput.writeString(((UTF8ByteDataHolder) enumInstance.getEnumName()).asString());
+        serialOutput.writeString(enumInstance.getEnumName().asString());
         break;
       case STRING_BYTES:
       case JAVA_LANG_CLASS_HOLDER:

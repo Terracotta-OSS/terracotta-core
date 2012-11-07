@@ -206,7 +206,7 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
 
   private void writeEnumInstance(final EnumInstance value, final TCDataOutput output, ObjectStringSerializer serializer) {
     writeStringBytes(value.getClassInstance().getName().getBytes(), output, serializer);
-    writeStringBytes(((UTF8ByteDataHolder) value.getEnumName()).getBytes(), output, serializer);
+    writeStringBytes(value.getEnumName().getBytes(), output, serializer);
   }
 
   private void writeClassInstance(final ClassInstance value, final TCDataOutput output,

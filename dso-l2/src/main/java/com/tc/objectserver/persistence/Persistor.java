@@ -47,7 +47,8 @@ public class Persistor {
   public Persistor(StorageManagerFactory storageManagerFactory) {
     objectIDSetMaintainer = new ObjectIDSetMaintainer();
     try {
-      storageManager = storageManagerFactory.createStorageManager(getCoreStorageConfig());
+      storageManager = storageManagerFactory.createStorageManager(getCoreStorageConfig(),
+          new SingletonTransformerLookup(Object.class, LiteralSerializer.INSTANCE));
       storageManager.start().get();
     } catch (Exception e) {
       throw new AssertionError(e);
