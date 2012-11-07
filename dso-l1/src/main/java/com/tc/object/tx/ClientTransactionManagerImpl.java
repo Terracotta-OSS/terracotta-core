@@ -272,7 +272,12 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
         setTransaction(tx);
       }
     }
-    if (aborted) { throw new AbortedOperationException(); }
+    if (aborted) {
+      // TODO: reverify this
+      tx.setTransactionContext(peekContext());
+      setTransaction(tx);
+      throw new AbortedOperationException();
+    }
   }
 
   private void createTxAndInitContext() {

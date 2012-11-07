@@ -10,6 +10,7 @@ import org.terracotta.toolkit.cache.ToolkitCache;
 import org.terracotta.toolkit.cache.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.concurrent.ToolkitBarrier;
 import org.terracotta.toolkit.nonstop.NonStopConfigBuilder;
+import org.terracotta.toolkit.nonstop.NonStopException;
 
 import com.tc.test.config.model.TestConfig;
 
@@ -64,7 +65,7 @@ public class NonStopFunctionalityCheckTest extends AbstractToolkitTestBase {
           boolean exceptionOccurred = false;
           try {
             cache.get(i);
-          } catch (Exception e) {
+          } catch (NonStopException e) {
             exceptionOccurred = true;
             e.printStackTrace();
           }
@@ -87,7 +88,7 @@ public class NonStopFunctionalityCheckTest extends AbstractToolkitTestBase {
     private ToolkitCache createCache(Toolkit toolkit) {
       String cacheName = "test-cache";
 
-      new NonStopConfigBuilder().timeoutMillis(2000).apply(toolkit);
+      new NonStopConfigBuilder().timeoutMillis(5000).apply(toolkit);
 
       ToolkitCacheConfigBuilder builder = new ToolkitCacheConfigBuilder();
       builder.maxCountLocalHeap(MAX_ENTRIES_LOCAL_HEAP);

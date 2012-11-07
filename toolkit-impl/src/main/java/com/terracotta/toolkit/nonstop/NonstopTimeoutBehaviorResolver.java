@@ -58,7 +58,7 @@ public class NonstopTimeoutBehaviorResolver {
     switch (objectType) {
       case CACHE:
       case STORE:
-        return (E) Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class[] { delegate.getClass() },
+        return (E) Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class[] { ToolkitCacheInternal.class },
                                           exceptionOnTimeoutInvocationHandler);
       case ATOMIC_LONG:
       case BARRIER:
