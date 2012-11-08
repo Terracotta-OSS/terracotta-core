@@ -326,7 +326,12 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
   }
 
   @Override
-  public StatisticsEntity getClientStatistics(String clientId) throws ServiceExecutionException {
+  public StatisticsEntity getClientStatistics(String clientId, Set<String> attributesToShow) throws ServiceExecutionException {
+    String[] mbeanAttributeNames = CLIENT_STATS_MBEAN_ATTRIBUTE_NAMES;
+    if (attributesToShow != null) {
+      mbeanAttributeNames = new ArrayList<String>(attributesToShow).toArray(new String[attributesToShow.size()]);
+    }
+
     JMXConnector jmxConnector = null;
     try {
       MBeanServerConnection mBeanServerConnection;
@@ -349,7 +354,7 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
       statisticsEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
 
       AttributeList attributes = mBeanServerConnection.getAttributes(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO,channelID=" + clientId),
-          CLIENT_STATS_MBEAN_ATTRIBUTE_NAMES);
+          mbeanAttributeNames);
       for (Object attributeObj : attributes) {
         Attribute attribute = (Attribute)attributeObj;
         statisticsEntity.getStatistics().put(attribute.getName(), attribute.getValue());
@@ -372,7 +377,12 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
   }
 
   @Override
-  public StatisticsEntity getServerStatistics(String serverName) throws ServiceExecutionException {
+  public StatisticsEntity getServerStatistics(String serverName, Set<String> attributesToShow) throws ServiceExecutionException {
+    String[] mbeanAttributeNames = SERVER_STATS_MBEAN_ATTRIBUTE_NAMES;
+    if (attributesToShow != null) {
+      mbeanAttributeNames = new ArrayList<String>(attributesToShow).toArray(new String[attributesToShow.size()]);
+    }
+
     JMXConnector jmxConnector = null;
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     try {
@@ -401,7 +411,7 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
       MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
 
       AttributeList attributes = mBeanServerConnection.getAttributes(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"),
-          SERVER_STATS_MBEAN_ATTRIBUTE_NAMES);
+          mbeanAttributeNames);
       for (Object attributeObj : attributes) {
         Attribute attribute = (Attribute)attributeObj;
         statisticsEntity.getStatistics().put(attribute.getName(), attribute.getValue());

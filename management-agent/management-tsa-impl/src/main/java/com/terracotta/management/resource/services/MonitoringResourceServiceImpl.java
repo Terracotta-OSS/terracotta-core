@@ -17,10 +17,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -53,9 +55,13 @@ public class MonitoringResourceServiceImpl implements MonitoringResourceService 
         serverNames = monitoringService.getAllServerNames();
       }
 
+      MultivaluedMap<String, String> qParams = info.getQueryParameters();
+      List<String> attrs = qParams.get(ATTR_QUERY_KEY);
+      Set<String> tsaAttrs = attrs == null || attrs.isEmpty() ? null : new HashSet<String>(attrs);
+
       Collection<StatisticsEntity> statistics = new ArrayList<StatisticsEntity>();
       for (String serverName : serverNames) {
-        StatisticsEntity entity = monitoringService.getServerStatistics(serverName);
+        StatisticsEntity entity = monitoringService.getServerStatistics(serverName, tsaAttrs);
         if (entity != null) {
           statistics.add(entity);
         }
@@ -101,9 +107,13 @@ public class MonitoringResourceServiceImpl implements MonitoringResourceService 
         clientIds = monitoringService.getAllClientIds();
       }
 
+      MultivaluedMap<String, String> qParams = info.getQueryParameters();
+      List<String> attrs = qParams.get(ATTR_QUERY_KEY);
+      Set<String> tsaAttrs = attrs == null || attrs.isEmpty() ? null : new HashSet<String>(attrs);
+
       Collection<StatisticsEntity> statistics = new ArrayList<StatisticsEntity>();
       for (String clientId : clientIds) {
-        StatisticsEntity entity = monitoringService.getClientStatistics(clientId);
+        StatisticsEntity entity = monitoringService.getClientStatistics(clientId, tsaAttrs);
         if (entity != null) {
           statistics.add(entity);
         }

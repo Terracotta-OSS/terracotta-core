@@ -37,19 +37,21 @@ public interface MonitoringService {
    * Get the statistics of the specified client.
    *
    * @param clientId the client ID.
+   * @param attributes the attributes to include in the response, all know ones will be returned if null.
    * @return a {@link StatisticsEntity} object representing the client statistics.
    * @throws ServiceExecutionException
    */
-  StatisticsEntity getClientStatistics(String clientId) throws ServiceExecutionException;
+  StatisticsEntity getClientStatistics(String clientId, Set<String> attributes) throws ServiceExecutionException;
 
   /**
    * Get the statistics of the specified server.
    *
    * @param serverName the server name.
+   * @param attributes the attributes to include in the response, all know ones will be returned if null.
    * @return a {@link StatisticsEntity} object representing the server statistics.
    * @throws ServiceExecutionException
    */
-  StatisticsEntity getServerStatistics(String serverName) throws ServiceExecutionException;
+  StatisticsEntity getServerStatistics(String serverName, Set<String> attributes) throws ServiceExecutionException;
 
   /**
    * Get the DGC statistics.
