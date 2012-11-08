@@ -10,43 +10,119 @@ import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import java.util.Map;
 
 /**
- *
+ * This trigger is fired by the resource monitor if the monitored resource goes
+ * over the critical threshold of resource (default is 90% but can be set by TC Property
+ * l2.cachemanager.criticalThreshold).  
+ * 
+ * The sample count is defined by the percentage of the mapSize required to achieve
+ * the target critical capacity assuming all elements are the same size.  The sample taken 
+ * is random throughout the map regardless of elements liveliness.  This trigger will continually 
+ * fire until the monitored resource falls below the critical threshold.
+ * 
  * @author mscott
  */
-public class EmergencyEvictionTrigger extends PeriodicEvictionTrigger {
+public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
     
     private final boolean blowout;
     private int sampleCount;
+    private int sizeCount;
+    private final int target;
+    private String name;
 
-    public EmergencyEvictionTrigger(ObjectManager mgr, ObjectID oid, boolean blowout) {
-        super(mgr, oid, true);
+    public EmergencyEvictionTrigger(ObjectManager mgr, ObjectID oid, int targetPercent, boolean blowout) {
+        super(oid);
         this.blowout = blowout;
-    }
-
-    @Override
-    protected long calculateSampleCount(long max, EvictableMap ev) {
-        return super.calculateSampleCount(max, ev) * 5;
+        this.target = targetPercent;
     }
 
     @Override
     public boolean startEviction(EvictableMap map) {
+        name = map.getCacheName();
         return super.startEviction(map);
     }
+    
+    @Override
+    public void completeEviction(EvictableMap map) {
+ //  only if you sampled nothing, complete eviction, else actual eviction stage
+ //  will take care of it.
+        if ( sampleCount == 0 ) {
+            super.completeEviction(map);
+        }
+    }    
 
     @Override
     public Map collectEvictonCandidates(int max, EvictableMap map, ClientObjectReferenceSet clients) {
-        Map sampled = super.collectEvictonCandidates( max, map, clients);
+        sizeCount = map.getSize();
+        int get = sizeCount * (100-target) / 100;
+        Map sampled = map.getRandomSamples(get,clients);
+//        Map sampled = map.getRandomSamples(sizeCount/5,new ClientObjectReferenceSet(new ClientStateManager() {
+//
+//            @Override
+//            public boolean startupNode(NodeID nodeID) {
+//                throw new UnsupportedOperationException("Not supported yet.");
+//            }
+//
+//            @Override
+//            public void shutdownNode(NodeID deadNode) {
+//                throw new UnsupportedOperationException("Not supported yet.");
+//            }
+//
+//            @Override
+//            public void addReference(NodeID nodeID, ObjectID objectID) {
+//                throw new UnsupportedOperationException("Not supported yet.");
+//            }
+//
+//            @Override
+//            public void removeReferences(NodeID nodeID, Set<ObjectID> removed, Set<ObjectID> requested) {
+//                throw new UnsupportedOperationException("Not supported yet.");
+//            }
+//
+//            @Override
+//            public boolean hasReference(NodeID nodeID, ObjectID objectID) {
+//                throw new UnsupportedOperationException("Not supported yet.");
+//            }
+//
+//            @Override
+//            public List<DNA> createPrunedChangesAndAddObjectIDTo(Collection<DNA> changes, ApplyTransactionInfo references, NodeID clientID, Set<ObjectID> objectIDs, Invalidations invalidationsForClient) {
+//                throw new UnsupportedOperationException("Not supported yet.");
+//            }
+//
+//            @Override
+//            public Set<ObjectID> addAllReferencedIdsTo(Set<ObjectID> rescueIds) {
+//                return rescueIds;
+//            }
+//
+//            @Override
+//            public void removeReferencedFrom(NodeID nodeID, Set<ObjectID> secondPass) {
+//            }
+//
+//            @Override
+//            public Set<ObjectID> addReferences(NodeID nodeID, Set<ObjectID> oids) {
+//                return oids;
+//            }
+//
+//            @Override
+//            public int getReferenceCount(NodeID nodeID) {
+//                return 0;
+//            }
+//
+//            @Override
+//            public Set<NodeID> getConnectedClientIDs() {
+//                return Collections.<NodeID>emptySet();
+//            }
+//
+//            @Override
+//            public void registerObjectReferenceAddListener(ObjectReferenceAddListener listener) {
+//
+//            }
+//
+//            @Override
+//            public void unregisterObjectReferenceAddListener(ObjectReferenceAddListener listener) {
+//
+//            }
+//        }));
         sampleCount = sampled.size();
         return sampled;
-    }
-
-    @Override
-    protected int expiresIn(int now, Object value, int ttiSeconds, int ttlSeconds) {
-        if ( blowout ) {
-            return 0;
-        } else {
-            return super.expiresIn(now, value, ttiSeconds, ttlSeconds);
-        }
     }
     
     public int getSampleCount() {
@@ -55,6 +131,6 @@ public class EmergencyEvictionTrigger extends PeriodicEvictionTrigger {
 
     @Override
     public String toString() {
-        return "EmergencyEvictionTrigger{" + "blowout=" + blowout + ", sampleCount=" + sampleCount + '}';
+        return "EmergencyEvictionTrigger{name=" + name + ", blowout=" + blowout + ", sampleCount=" + sampleCount + ", sizeCount=" + sizeCount + '}';
     }
 }

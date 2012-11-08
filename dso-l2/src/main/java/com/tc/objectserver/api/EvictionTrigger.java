@@ -4,6 +4,7 @@
 package com.tc.objectserver.api;
 
 import com.tc.object.ObjectID;
+import com.tc.objectserver.context.ServerMapEvictionContext;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import java.util.Map;
 

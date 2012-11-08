@@ -12,7 +12,11 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- *
+ * This trigger is invoked by a server map with the size of the map goes over 
+ * the max count + some overshoot count ( default is 15% of the max count and is 
+ * set via TCProperty ehcache.storageStrategy.dcv2.eviction.overshoot ) and attempts
+ * to bring the size of the cache to the max capacity
+ * 
  * @author mscott
  */
 public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements ClientObjectReferenceSetChangedListener {
@@ -45,7 +49,16 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
         aboveCapacity = false;
         return false;
     }
-
+    
+    @Override
+    public void completeEviction(EvictableMap map) {
+ //  only if you sampled nothing, complete eviction, else actual eviction stage
+ //  will take care of it.
+        if ( count == 0 ) {
+            super.completeEviction(map);
+        }
+    }
+            
     @Override
     public Map collectEvictonCandidates(final int max, final EvictableMap map, final ClientObjectReferenceSet clients) {
    // lets try and get smarter about this in the future but for now, just bring it back to capacity
@@ -85,7 +98,16 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
                     return super.startEviction(map);
                 }
             }
-
+            
+            @Override
+            public void completeEviction(EvictableMap map) {
+         //  only if you sampled nothing, complete eviction, else actual eviction stage
+         //  will take care of it.
+                if ( sampleCount == 0 ) {
+                    super.completeEviction(map);
+                }
+            }
+            
             @Override
             public Map collectEvictonCandidates(int max, EvictableMap map, ClientObjectReferenceSet clients) {
                 final int grab = map.getSize() - max;

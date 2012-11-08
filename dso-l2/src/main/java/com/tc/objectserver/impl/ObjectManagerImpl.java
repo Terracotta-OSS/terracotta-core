@@ -263,7 +263,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private boolean markReferenced(final ManagedObjectReference reference) {
-    final boolean marked = reference.markReference();
+      final boolean marked = reference.markReference();
     if (marked) {
       if (reference != this.references.get(reference.getObjectID())) {
         // This reference was removed by someone else and then unmarked before this thread got a chance to call
@@ -393,17 +393,20 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       if (reference == null || !available) {
         continue;
       }
-
-      if (isANewObjectIn(reference, newObjectIDs) && markReferenced(reference)) {
+      
+      final boolean isNew = isANewObjectIn(reference, newObjectIDs);
+      final boolean isMarked = markReferenced(reference);
+      
+      if ( isNew && isMarked ) {
         objects.put(id, reference.getObject());
       } else {
-        available = false;
+        available = false;       
         // Setting only the first referenced object to process Pending. If objects are being faulted in, then this
         // will ensure that we don't run processPending multiple times unnecessarily.
         blockedObjectID = id;
       }
     }
-
+    
     if (available) {
       final ObjectIDSet processLater = addReachableObjectsIfNecessary(nodeID, maxReachableObjects, objects,
                                                                       newObjectIDs);
@@ -416,7 +419,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       unmarkReferenced(objects.values());
       // It is OK to not unblock these unmarked references as any request that is blocked by these objects will be
       // processed after this request is (unblocked) and processed
-      return addBlocked(nodeID, context, maxReachableObjects, blockedObjectID);
+      LookupState state = addBlocked(nodeID, context, maxReachableObjects, blockedObjectID);
+        return state;
     }
   }
 
@@ -453,7 +457,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private boolean isANewObjectIn(final ManagedObjectReference reference, final Set<ObjectID> newObjectIDs) {
     // If reference isNew() and not in newObjects, someone (L1) is trying to do a lookup before the object is fully
     // created, make it pending.
-    if (reference.isNew() && !newObjectIDs.contains(reference.getObjectID())) { return false; }
+    if (reference.isNew() && !newObjectIDs.contains(reference.getObjectID())) { 
+        return false; 
+    }
     return true;
   }
 
@@ -938,7 +944,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         try {
           wait();
         } catch (final InterruptedException e) {
-          throw new AssertionError(e);
+//          throw new AssertionError(e);
+            return null;
         }
       }
       return this.result;
@@ -978,7 +985,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
     @Override
     public String toString() {
-      return "WaitForLookupContext [ " + this.lookupID + ", " + this.missingObjects + "]";
+      return "WaitForLookupContext [ " + this.lookupID + ", " + this.missingObjects + ", " + this.resultSet + "]";
     }
 
     public boolean updateStats() {
@@ -1051,7 +1058,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     public void makeUnBlocked(final ObjectID id) {
       final Set<Pending> blockedRequests = this.blocked.removeAll(id);
       if (blockedRequests.isEmpty()) { return; }
-
+      
       for (final Pending pendingRequests : blockedRequests) {
         this.pending.add(pendingRequests);
       }

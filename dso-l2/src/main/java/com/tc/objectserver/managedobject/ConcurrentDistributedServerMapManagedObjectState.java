@@ -401,26 +401,30 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
   // TODO:: This implementation could be better, could use LinkedHashMap to increase the chances of getting the
   // right samples, also should it return a sorted Map ? Are objects with lower OIDs having more changes to be evicted ?
   @Override
-  public Map getRandomSamples(final int count, final ClientObjectReferenceSet serverMapEvictionClientObjectRefSet) {
-      if ( this.evictionStatus != EvictionStatus.INITIATED ) {
-          throw new AssertionError("not evicting");
+  public Map<Object, ObjectID> getRandomSamples(final int count, final ClientObjectReferenceSet serverMapEvictionClientObjectRefSet) {
+      if ( this.evictionStatus == EvictionStatus.NOT_INITIATED ) {
+          throw new AssertionError(this.evictionStatus);
       } else {
  //     it's locked.  go for it
         this.evictionStatus = EvictionStatus.SAMPLED;
       }
-    final Map samples = new HashMap(count);
+    final Map<Object, ObjectID> samples = new HashMap<Object, ObjectID>(count);
     final Set<Object> ignored = new HashSet<Object>(count);
     final Random r = new Random();
     final int size = getSize();
     final int chance = count > size ? 100 : Math.max(10, (count / size) * 100);
     for (final Iterator<Object> i = this.references.keySet().iterator(); samples.size() < count && i.hasNext();) {
+        if ( Thread.currentThread().isInterrupted() ) {
+       //  don't unset flag, it may need to be checked again in an outer loop.
+            return samples;
+        }
       final Object k = i.next();
       if (r.nextInt(100) < chance) {
         Object value = references.get(k);
         if (serverMapEvictionClientObjectRefSet.contains(value)) {
           continue;
         }
-        samples.put(k, value);
+        samples.put(k, (ObjectID)value);
       } else {
         ignored.add(k);
       }
@@ -432,7 +436,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
         if (serverMapEvictionClientObjectRefSet.contains(v)) {
           continue;
         }
-        samples.put(k, v);
+        samples.put(k, (ObjectID)v);
       }
     }
     return samples;

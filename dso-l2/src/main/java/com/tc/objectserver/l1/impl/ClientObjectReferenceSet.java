@@ -37,7 +37,6 @@ public class ClientObjectReferenceSet implements ObjectReferenceAddListener {
   private final AtomicBoolean                                                 objectReferencesRefreshInProgress;
   private final ReentrantReadWriteLock                                        lock;
   private final CopyOnWriteArrayList<ClientObjectReferenceSetChangedListener> listeners;
-  private final ExecutorService                                               notificationExecutor = Executors.newCachedThreadPool();
 
   private volatile long                                                       lastRefreshTime;
 
@@ -152,14 +151,9 @@ public class ClientObjectReferenceSet implements ObjectReferenceAddListener {
       this.lock.writeLock().unlock();
     }
 
-    notificationExecutor.submit(new Runnable() {
-      @Override
-      public void run() {
-        for (ClientObjectReferenceSetChangedListener listener : listeners) {
-          listener.notifyReferenceSetChanged();
-        }
-      }
-    });
+    for (ClientObjectReferenceSetChangedListener listener : listeners) {
+      listener.notifyReferenceSetChanged();
+    }
   }
 
   private void monitorObjectReferenceAddition() {

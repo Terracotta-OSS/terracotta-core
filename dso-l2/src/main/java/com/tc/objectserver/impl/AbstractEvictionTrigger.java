@@ -14,6 +14,7 @@ import com.tc.objectserver.api.EvictionTrigger;
 public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     
     private final ObjectID oid;
+    boolean started = false;
 
     public AbstractEvictionTrigger(ObjectID oid) {
         this.oid = oid;
@@ -26,12 +27,15 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     
     @Override
     public boolean startEviction(EvictableMap map) {
-        return map.startEviction();
+        started = map.startEviction();
+        return started;
     }
     
     @Override
     public void completeEviction(EvictableMap map) {
-        map.evictionCompleted();
+        if ( started ) {
+            map.evictionCompleted();
+        }
     }    
 
     @Override

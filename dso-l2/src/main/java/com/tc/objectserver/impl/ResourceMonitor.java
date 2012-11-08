@@ -26,9 +26,9 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
   private MemoryMonitor             monitor;
   private final MonitoredResource   resource;
 
-  private final TCThreadGroup   threadGroup;
+  private final ThreadGroup   threadGroup;
 
-  public ResourceMonitor(MonitoredResource rsrc, long maxSleepTime, TCThreadGroup threadGroup) {
+  public ResourceMonitor(MonitoredResource rsrc, long maxSleepTime, ThreadGroup threadGroup) {
     this.threadGroup = threadGroup;
     this.sleepInterval = maxSleepTime;
     this.resource = rsrc;
@@ -108,7 +108,7 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
               
               private long checkUsed() {
                   if ( cacheUsed < 0 ) {
-                      cacheUsed = resource.getUsed();
+                      cacheUsed = resource.getReserved();
                   }
                   return cacheUsed;
               }
