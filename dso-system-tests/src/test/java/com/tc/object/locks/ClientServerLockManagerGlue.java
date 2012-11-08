@@ -22,6 +22,7 @@ import com.tc.objectserver.locks.LockResponseContext;
 import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.locks.NullChannelManager;
 import com.tc.objectserver.locks.ServerLock.NotifyAction;
+import com.tc.platform.rejoin.CleanupHelper;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -31,7 +32,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable {
+public class ClientServerLockManagerGlue extends CleanupHelper implements RemoteLockManager, Runnable {
 
   private LockManagerImpl         serverLockManager;
   protected ClientLockManagerImpl clientLockManager;
@@ -51,6 +52,21 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
     this.factory = factory;
   }
 
+  @Override
+  public void clearTimers() {
+    //
+  }
+
+  @Override
+  public void clearInternalDS() {
+    sink.clear();
+  }
+  
+  @Override
+  public void initTimers() {
+    //
+  }
+  
   public void startEventNotifier() {
     startEventNotifier("ClientServerLockManagerGlue");
   }
@@ -61,14 +77,17 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
     eventNotifier.start();
   }
 
+  @Override
   public void lock(LockID lockID, ThreadID threadID, ServerLockLevel level) {
     serverLockManager.lock(lockID, clientID, threadID, level);
   }
 
+  @Override
   public void unlock(LockID lockID, ThreadID threadID, ServerLockLevel level) {
     serverLockManager.unlock(lockID, clientID, threadID);
   }
 
+  @Override
   public void wait(LockID lockID, ThreadID threadID, long timeout) {
     if (timeout > 0) {
       serverLockManager.wait(lockID, clientID, threadID, timeout);
@@ -78,14 +97,17 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
     }
   }
 
+  @Override
   public void recallCommit(LockID lockID, Collection<ClientServerExchangeLockContext> contexts, boolean batch) {
     serverLockManager.recallCommit(lockID, clientID, contexts);
   }
 
+  @Override
   public void flush(LockID lockID, boolean noLocksLeftOnClient) {
     return;
   }
 
+  @Override
   public boolean asyncFlush(LockID lockID, LockFlushCallback callback, boolean noLocksLeftOnClient) {
     return true;
   }
@@ -105,6 +127,7 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
                                                                ObjectStatsManager.NULL_OBJECT_STATS_MANAGER);
   }
 
+  @Override
   public void run() {
     while (!stop) {
       EventContext ec = null;
@@ -155,30 +178,37 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
     eventNotifier.interrupt();
   }
 
+  @Override
   public void query(LockID lockID, ThreadID threadID) {
     serverLockManager.queryLock(lockID, clientID, threadID);
   }
 
+  @Override
   public void interrupt(LockID lockID, ThreadID threadID) {
     serverLockManager.interrupt(lockID, clientID, threadID);
   }
 
+  @Override
   public void tryLock(LockID lockID, ThreadID threadID, ServerLockLevel level, long timeout) {
     serverLockManager.tryLock(lockID, clientID, threadID, level, timeout);
   }
 
+  @Override
   public ClientID getClientID() {
     return ClientID.NULL_ID;
   }
 
+  @Override
   public void waitForServerToReceiveTxnsForThisLock(LockID lock) {
     //
   }
 
+  @Override
   public void shutdown() {
     // no op
   }
 
+  @Override
   public boolean isShutdown() {
     return false;
   }

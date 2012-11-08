@@ -11,6 +11,8 @@ import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.locks.LockID;
+import com.tc.platform.rejoin.ClearableCallback;
+import com.tc.platform.rejoin.InternalDSCleanupHelper;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -21,7 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class LockAccounting {
+public class LockAccounting extends InternalDSCleanupHelper implements ClearableCallback {
   private static final long                              WAIT_FOR_TRANSACTIONS_INTERVAL = 10 * 1000;
 
   private final CopyOnWriteArrayList<TxnRemovedListener> listeners                      = new CopyOnWriteArrayList<TxnRemovedListener>();
@@ -34,6 +36,14 @@ public class LockAccounting {
 
   public LockAccounting(AbortableOperationManager abortableOperationManager) {
     this.abortableOperationManager = abortableOperationManager;
+  }
+
+  @Override
+  public void clearInternalDS() {
+    listeners.clear();
+    tx2Locks.clear();
+    lock2Txs.clear();
+    tid2wrap.clear();
   }
 
   public synchronized Object dump() {

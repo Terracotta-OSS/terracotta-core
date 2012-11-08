@@ -19,6 +19,7 @@ import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
+import com.tc.platform.rejoin.CleanupHelper;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.Counter;
@@ -48,7 +49,7 @@ import java.util.TimerTask;
 /**
  * Sends off committed transactions
  */
-public class RemoteTransactionManagerImpl implements RemoteTransactionManager, PrettyPrintable {
+public class RemoteTransactionManagerImpl extends CleanupHelper implements RemoteTransactionManager, PrettyPrintable {
 
   private static final long                       FLUSH_WAIT_INTERVAL         = 15 * 1000;
 
@@ -66,11 +67,11 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   private static final State                      STOPPED                     = new State("STOPPED");
 
   private final Object                            lock                        = new Object();
-  private final Map                               incompleteBatches           = new HashMap();
-  private final HashMap                           lockFlushCallbacks          = new HashMap();
+  private Map                               incompleteBatches           = new HashMap();
+  private HashMap                           lockFlushCallbacks          = new HashMap();
 
   private final Counter                           outstandingBatchesCounter;
-  private final TransactionBatchAccounting        batchAccounting             = new TransactionBatchAccounting();
+  private TransactionBatchAccounting        batchAccounting             = new TransactionBatchAccounting();
   private final LockAccounting                    lockAccounting;
   private final TCLogger                          logger;
   private final long                              ackOnExitTimeout;
@@ -83,7 +84,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   private final Timer                             timer                       = new Timer(
                                                                                           "RemoteTransactionManager Flusher",
                                                                                           true);
-  private final RemoteTransactionManagerTimerTask remoteTxManagerTimerTask;
+  private RemoteTransactionManagerTimerTask remoteTxManagerTimerTask;
 
   private final GroupID                           groupID;
   private volatile boolean                        isShutdown                  = false;
@@ -114,8 +115,27 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   }
 
   @Override
-  public void cleanup() {
-    //
+  public void clearInternalDS() {
+    incompleteBatches = new HashMap();
+    lockFlushCallbacks = new HashMap();
+    outStandingBatches = 0;
+    outstandingBatchesCounter.setValue(0);
+    batchAccounting = new TransactionBatchAccounting();
+    lockAccounting.cleanup();
+    sequencer.clear();
+  }
+
+  @Override
+  public void clearTimers() {
+    remoteTxManagerTimerTask.cancel();
+    timer.purge();
+    remoteTxManagerTimerTask = null;
+  }
+
+  @Override
+  public void initTimers() {
+    remoteTxManagerTimerTask = new RemoteTransactionManagerTimerTask();
+    timer.schedule(remoteTxManagerTimerTask, COMPLETED_ACK_FLUSH_TIMEOUT, COMPLETED_ACK_FLUSH_TIMEOUT);
   }
 
   @Override

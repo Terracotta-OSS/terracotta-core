@@ -5,10 +5,11 @@ package com.tc.object.locks;
 
 import com.tc.abortable.AbortedOperationException;
 import com.tc.net.ClientID;
+import com.tc.platform.rejoin.ClearableCallback;
 
 import java.util.Collection;
 
-public interface RemoteLockManager {
+public interface RemoteLockManager extends ClearableCallback {
   public ClientID getClientID();
 
   public void lock(LockID lock, ThreadID thread, ServerLockLevel level);
@@ -34,4 +35,5 @@ public interface RemoteLockManager {
   public void shutdown();
 
   public boolean isShutdown();
+
 }

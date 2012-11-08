@@ -18,6 +18,7 @@ import com.tc.object.locks.Notify;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.ClientTransactionManagerImpl.ThreadTransactionLoggingStack;
+import com.tc.platform.rejoin.NullCleanupHelper;
 import com.tc.util.Assert;
 import com.tc.util.Counter;
 
@@ -29,7 +30,7 @@ import java.util.Map;
 /**
  * MockTransactionManager for unit testing.
  */
-public class MockTransactionManager implements ClientTransactionManager {
+public class MockTransactionManager extends NullCleanupHelper implements ClientTransactionManager {
 
   private static final TCLogger logger         = TCLogging.getLogger(MockTransactionManager.class);
 
@@ -57,6 +58,7 @@ public class MockTransactionManager implements ClientTransactionManager {
     return rv;
   }
 
+  @Override
   public void begin(LockID lock, LockLevel lockType) {
     // System.err.println(this + ".begin(" + lock + ")");
 
@@ -71,18 +73,22 @@ public class MockTransactionManager implements ClientTransactionManager {
     return this.commitCount;
   }
 
+  @Override
   public void createObject(TCObject source) {
     throw new ImplementMe();
   }
 
+  @Override
   public void createRoot(String name, ObjectID id) {
     throw new ImplementMe();
   }
 
+  @Override
   public void fieldChanged(TCObject source, String classname, String fieldname, Object newValue, int index) {
     throw new ImplementMe();
   }
 
+  @Override
   public void logicalInvoke(TCObject source, int name, String methodName, Object[] parameters) {
     throw new ImplementMe();
   }
@@ -97,30 +103,37 @@ public class MockTransactionManager implements ClientTransactionManager {
     }
   }
 
+  @Override
   public void notify(Notify notify) throws UnlockedSharedObjectException {
     throw new ImplementMe();
   }
 
+  @Override
   public void receivedBatchAcknowledgement(TxnBatchID batchID, NodeID nodeID) {
     throw new ImplementMe();
   }
 
+  @Override
   public void apply(TxnType txType, List<LockID> lockIDs, Collection objectChanges, Map newRoots) {
     throw new ImplementMe();
   }
 
+  @Override
   public void checkWriteAccess(Object context) {
     //
   }
 
+  @Override
   public void receivedAcknowledgement(SessionID sessionID, TransactionID requestID, NodeID nodeID) {
     throw new ImplementMe();
   }
 
+  @Override
   public void addReference(TCObject tco) {
     throw new ImplementMe();
   }
 
+  @Override
   public ClientIDProvider getClientIDProvider() {
     return null;
   }
@@ -129,6 +142,7 @@ public class MockTransactionManager implements ClientTransactionManager {
     throw new ImplementMe();
   }
 
+  @Override
   public void commit(LockID lock, LockLevel level) throws UnlockedSharedObjectException {
     if (logger.isDebugEnabled()) {
       logger.debug("commit(" + lock + ")");
@@ -148,6 +162,7 @@ public class MockTransactionManager implements ClientTransactionManager {
     throw new ImplementMe();
   }
 
+  @Override
   public void disableTransactionLogging() {
     ThreadTransactionLoggingStack txnStack = (ThreadTransactionLoggingStack) this.txnLogging.get();
     if (txnStack == null) {
@@ -158,6 +173,7 @@ public class MockTransactionManager implements ClientTransactionManager {
     this.loggingCounter.decrement();
   }
 
+  @Override
   public void enableTransactionLogging() {
     ThreadTransactionLoggingStack txnStack = (ThreadTransactionLoggingStack) this.txnLogging.get();
     Assert.assertNotNull(txnStack);
@@ -167,23 +183,28 @@ public class MockTransactionManager implements ClientTransactionManager {
     this.loggingCounter.increment();
   }
 
+  @Override
   public boolean isTransactionLoggingDisabled() {
     Object txnStack = this.txnLogging.get();
     return (txnStack != null) && (((ThreadTransactionLoggingStack) txnStack).get() > 0);
   }
 
+  @Override
   public boolean isObjectCreationInProgress() {
     return false;
   }
 
+  @Override
   public void literalValueChanged(TCObject source, Object newValue, Object oldValue) {
     throw new ImplementMe();
   }
 
+  @Override
   public void arrayChanged(TCObject src, int startPos, Object array, int length) {
     throw new ImplementMe();
   }
 
+  @Override
   public void addDmiDescriptor(DmiDescriptor d) {
     throw new ImplementMe();
   }
@@ -192,18 +213,22 @@ public class MockTransactionManager implements ClientTransactionManager {
     throw new ImplementMe();
   }
 
+  @Override
   public boolean isLockOnTopStack(LockID lock) {
     return false;
   }
 
+  @Override
   public ClientTransaction getCurrentTransaction() {
     throw new ImplementMe();
   }
 
+  @Override
   public void waitForAllCurrentTransactionsToComplete() {
     throw new ImplementMe();
   }
 
+  @Override
   public void addMetaDataDescriptor(TCObject tco, MetaDataDescriptorInternal md) {
     throw new ImplementMe();
 

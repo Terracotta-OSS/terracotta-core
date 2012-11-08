@@ -26,6 +26,7 @@ import com.tc.object.msg.NodesWithKeysMessage;
 import com.tc.object.msg.NodesWithKeysMessageFactory;
 import com.tc.object.msg.NodesWithObjectsMessage;
 import com.tc.object.msg.NodesWithObjectsMessageFactory;
+import com.tc.platform.rejoin.InternalDSCleanupHelper;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.Util;
@@ -40,7 +41,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
+public class ClusterMetaDataManagerImpl extends InternalDSCleanupHelper implements ClusterMetaDataManager {
 
   private static final TCLogger                             LOGGER                                   = TCLogging
                                                                                                          .getLogger(ClusterMetaDataManagerImpl.class);
@@ -64,13 +65,13 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
   private final NodeMetaDataMessageFactory                  nmdmFactory;
   private final NodesWithKeysMessageFactory                 nwkmFactory;
 
-  private final Map<ThreadID, NodesWithObjectsMessage>      outstandingNodesWithObjectsRequests      = new ConcurrentHashMap<ThreadID, NodesWithObjectsMessage>();
-  private final Map<ThreadID, KeysForOrphanedValuesMessage> outstandingKeysForOrphanedValuesRequests = new ConcurrentHashMap<ThreadID, KeysForOrphanedValuesMessage>();
-  private final Map<ThreadID, NodeMetaDataMessage>          outstandingNodeMetaDataRequests          = new ConcurrentHashMap<ThreadID, NodeMetaDataMessage>();
-  private final Map<ThreadID, NodesWithKeysMessage>         outstandingNodesWithKeysRequests         = new ConcurrentHashMap<ThreadID, NodesWithKeysMessage>();
+  private Map<ThreadID, NodesWithObjectsMessage>      outstandingNodesWithObjectsRequests      = new ConcurrentHashMap<ThreadID, NodesWithObjectsMessage>();
+  private Map<ThreadID, KeysForOrphanedValuesMessage> outstandingKeysForOrphanedValuesRequests = new ConcurrentHashMap<ThreadID, KeysForOrphanedValuesMessage>();
+  private Map<ThreadID, NodeMetaDataMessage>          outstandingNodeMetaDataRequests          = new ConcurrentHashMap<ThreadID, NodeMetaDataMessage>();
+  private Map<ThreadID, NodesWithKeysMessage>         outstandingNodesWithKeysRequests         = new ConcurrentHashMap<ThreadID, NodesWithKeysMessage>();
 
-  private final Map<ThreadID, WaitForResponse>              waitObjects                              = new HashMap<ThreadID, WaitForResponse>();
-  private final Map<ThreadID, Object>                       responses                                = new HashMap<ThreadID, Object>();
+  private Map<ThreadID, WaitForResponse>              waitObjects                              = new HashMap<ThreadID, WaitForResponse>();
+  private Map<ThreadID, Object>                       responses                                = new HashMap<ThreadID, Object>();
   private volatile boolean                                  isShutdown                               = false;
 
   public ClusterMetaDataManagerImpl(final GroupID groupID, final DNAEncoding encoding,
@@ -89,8 +90,13 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
   }
 
   @Override
-  public void cleanup() {
-    //
+  public void clearInternalDS() {
+    outstandingNodesWithObjectsRequests = new ConcurrentHashMap<ThreadID, NodesWithObjectsMessage>();
+    outstandingKeysForOrphanedValuesRequests = new ConcurrentHashMap<ThreadID, KeysForOrphanedValuesMessage>();
+    outstandingNodeMetaDataRequests = new ConcurrentHashMap<ThreadID, NodeMetaDataMessage>();
+    outstandingNodesWithKeysRequests = new ConcurrentHashMap<ThreadID, NodesWithKeysMessage>();
+    waitObjects = new HashMap<ThreadID, WaitForResponse>();
+    responses = new HashMap<ThreadID, Object>();
   }
 
   @Override

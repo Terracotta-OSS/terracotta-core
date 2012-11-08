@@ -13,6 +13,7 @@ import com.tc.object.ClientIDProvider;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockRequestMessageFactory;
+import com.tc.platform.rejoin.CleanupHelper;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -21,7 +22,7 @@ import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class RemoteLockManagerImpl implements RemoteLockManager {
+public class RemoteLockManagerImpl extends CleanupHelper implements RemoteLockManager {
   private static final TCLogger                logger                      = TCLogging
                                                                                .getLogger(RemoteLockManagerImpl.class);
 
@@ -29,11 +30,11 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   private final static long                    MAX_TIME_IN_QUEUE           = 1;
 
   private final LockRequestMessageFactory      messageFactory;
-  private final ClientGlobalTransactionManager globalTxManager;
+  private final ClientGlobalTransactionManager clientGlobalTxnManager;
   private final GroupID                        group;
   private final ClientIDProvider               clientIdProvider;
 
-  private final Queue<RecallBatchContext>      queue                       = new LinkedList<RecallBatchContext>();
+  private Queue<RecallBatchContext>            queue                       = new LinkedList<RecallBatchContext>();
   private BatchRecallCommitsTimerTask          batchRecallCommitsTimerTask = null;
   private final Timer                          timer                       = new Timer("Batch Recall Timer", true);
   private boolean                              shutdown                    = false;
@@ -43,14 +44,30 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
 
   public RemoteLockManagerImpl(final ClientIDProvider clientIdProvider, final GroupID group,
                                final LockRequestMessageFactory messageFactory,
-                               final ClientGlobalTransactionManager globalTxManager,
+                               final ClientGlobalTransactionManager clientGlobalTxnManager,
                                final ClientLockStatManager statManager) {
     this.messageFactory = messageFactory;
-    this.globalTxManager = globalTxManager;
+    this.clientGlobalTxnManager = clientGlobalTxnManager;
     this.group = group;
     this.clientIdProvider = clientIdProvider;
-
     this.statManager = statManager;
+  }
+
+  @Override
+  public void clearInternalDS() {
+    clientGlobalTxnManager.cleanup();
+    queue = new LinkedList<RecallBatchContext>();
+  }
+
+  @Override
+  public void clearTimers() {
+    cancelTimerTask();
+    timer.purge();
+  }
+
+  @Override
+  public void initTimers() {
+    // batchRecallCommitsTimerTask is initialized only on recallCommit method call not before that
   }
 
   @Override
@@ -60,17 +77,17 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
 
   @Override
   public void flush(final LockID lock, boolean noLocksLeftOnClient) {
-    this.globalTxManager.flush(lock, noLocksLeftOnClient);
+    this.clientGlobalTxnManager.flush(lock, noLocksLeftOnClient);
   }
 
   @Override
   public boolean asyncFlush(final LockID lock, final LockFlushCallback callback, boolean noLocksLeftOnClient) {
-    return this.globalTxManager.asyncFlush(lock, callback, noLocksLeftOnClient);
+    return this.clientGlobalTxnManager.asyncFlush(lock, callback, noLocksLeftOnClient);
   }
 
   @Override
   public void waitForServerToReceiveTxnsForThisLock(final LockID lock) throws AbortedOperationException {
-    this.globalTxManager.waitForServerToReceiveTxnsForThisLock(lock);
+    this.clientGlobalTxnManager.waitForServerToReceiveTxnsForThisLock(lock);
   }
 
   @Override
@@ -184,7 +201,6 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     if (batchRecallCommitsTimerTask != null) {
       batchRecallCommitsTimerTask.cancel();
     }
-
     batchRecallCommitsTimerTask = null;
   }
 

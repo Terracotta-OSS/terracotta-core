@@ -8,6 +8,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.net.NodeID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
+import com.tc.platform.rejoin.InternalDSCleanupHelper;
 import com.tc.text.PrettyPrinter;
 
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-public class TestLockManager implements ClientLockManager {
+public class TestLockManager extends InternalDSCleanupHelper implements ClientLockManager {
   public final List locks          = new ArrayList();
   public final List lockIDForCalls = new LinkedList();
   public final List waitCalls      = new LinkedList();
@@ -23,8 +24,12 @@ public class TestLockManager implements ClientLockManager {
   public final List unlockCalls    = new LinkedList();
 
   @Override
-  public void cleanup() {
-    //
+  public void clearInternalDS() {
+    locks.clear();
+    lockIDForCalls.clear();
+    waitCalls.clear();
+    notifyCalls.clear();
+    unlockCalls.clear();
   }
 
   @Override

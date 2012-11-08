@@ -14,6 +14,7 @@ import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.Notify;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.object.session.SessionID;
+import com.tc.platform.rejoin.ClearableCallback;
 
 import java.util.Collection;
 import java.util.List;
@@ -22,7 +23,7 @@ import java.util.Map;
 /**
  * ThreadLocal based transaction manager interface. Changes go through here to the transaction for the current thread.
  */
-public interface ClientTransactionManager {
+public interface ClientTransactionManager extends ClearableCallback {
 
   /**
    * Begin a thread local transaction

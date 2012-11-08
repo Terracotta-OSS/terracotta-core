@@ -22,6 +22,7 @@ import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 import com.tc.object.servermap.localcache.impl.ReInvalidateHandler;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
+import com.tc.platform.rejoin.CleanupHelper;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrinter;
@@ -40,7 +41,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
+public class RemoteServerMapManagerImpl extends CleanupHelper implements RemoteServerMapManager {
 
   // TODO::Make its own property
   private static final int                                               MAX_OUTSTANDING_REQUESTS_SENT_IMMEDIATELY = TCPropertiesImpl
@@ -58,10 +59,11 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   private final ServerMapMessageFactory                                  smmFactory;
   private final TCLogger                                                 logger;
   private final SessionManager                                           sessionManager;
-  private final Map<ServerMapRequestID, AbstractServerMapRequestContext> outstandingRequests                       = new HashMap<ServerMapRequestID, AbstractServerMapRequestContext>();
+  private Map<ServerMapRequestID, AbstractServerMapRequestContext> outstandingRequests                       = new HashMap<ServerMapRequestID, AbstractServerMapRequestContext>();
   private final Timer                                                    requestTimer                              = new Timer(
                                                                                                                                "RemoteServerMapManager Request Scheduler",
                                                                                                                                true);
+  private TimerTask                                                      timerTask                                 = new SendPendingRequestsTimer();
   private final AbortableOperationManager                                abortableOperationManager;
 
   private volatile State                                                 state                                     = State.RUNNING;
@@ -70,7 +72,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
 
   // private final Sink ttiTTLEvitionSink;
   private final L1ServerMapLocalCacheManager                             globalLocalCacheManager;
-  private final ReInvalidateHandler                                      reInvalidateHandler;
+  private ReInvalidateHandler                                            reInvalidateHandler;
 
   private static enum State {
     PAUSED, RUNNING, STARTING, STOPPED
@@ -84,15 +86,31 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     this.logger = logger;
     this.smmFactory = smmFactory;
     this.sessionManager = sessionManager;
-    // this.ttiTTLEvitionSink = ttiTTLEvitionSink;
     this.globalLocalCacheManager = globalLocalCacheManager;
     this.reInvalidateHandler = new ReInvalidateHandler(globalLocalCacheManager);
     this.abortableOperationManager = abortableOperationManager;
   }
 
   @Override
-  public void cleanup() {
-    //
+  public void clearInternalDS() {
+    outstandingRequests = new HashMap<ServerMapRequestID, AbstractServerMapRequestContext>();
+    pendingSendTaskScheduled = false;
+    globalLocalCacheManager.cleanup();
+  }
+
+  @Override
+  public void clearTimers() {
+    timerTask.cancel();
+    requestTimer.purge();
+    timerTask = null;
+    reInvalidateHandler.shutdown();
+    reInvalidateHandler = null;
+  }
+
+  @Override
+  public void initTimers() {
+    timerTask = new SendPendingRequestsTimer();
+    reInvalidateHandler = new ReInvalidateHandler(globalLocalCacheManager);
   }
 
   /**
@@ -257,7 +275,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   private void scheduleRequestForLater(final AbstractServerMapRequestContext context) {
     context.makePending();
     if (!this.pendingSendTaskScheduled) {
-      this.requestTimer.schedule(new SendPendingRequestsTimer(), BATCH_LOOKUP_TIME_PERIOD);
+      this.requestTimer.schedule(timerTask, BATCH_LOOKUP_TIME_PERIOD);
       this.pendingSendTaskScheduled = true;
     }
   }
@@ -542,6 +560,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   @Override
   public void shutdown() {
     this.state = State.STOPPED;
+    reInvalidateHandler.shutdown();
     synchronized (this) {
       this.requestTimer.cancel();
       notifyAll();

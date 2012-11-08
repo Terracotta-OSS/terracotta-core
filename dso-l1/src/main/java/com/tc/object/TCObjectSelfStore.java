@@ -6,10 +6,11 @@ import com.tc.invalidation.Invalidations;
 import com.tc.net.NodeID;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
+import com.tc.platform.rejoin.ClearableCallback;
 
 import java.util.Set;
 
-public interface TCObjectSelfStore {
+public interface TCObjectSelfStore extends ClearableCallback {
   void initializeTCObjectSelfStore(TCObjectSelfCallback callback);
 
   Object getById(ObjectID oid);

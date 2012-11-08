@@ -23,6 +23,7 @@ import com.tc.object.net.MockChannel;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
+import com.tc.platform.rejoin.NullCleanupHelper;
 import com.tc.platform.rejoin.RejoinManagerInternal;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -293,7 +294,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
 
   }
 
-  private static final class TestClientHandshakeCallback implements ClientHandshakeCallback {
+  private static final class TestClientHandshakeCallback extends NullCleanupHelper implements ClientHandshakeCallback {
 
     AtomicInteger paused            = new AtomicInteger();
     AtomicInteger unpaused          = new AtomicInteger();

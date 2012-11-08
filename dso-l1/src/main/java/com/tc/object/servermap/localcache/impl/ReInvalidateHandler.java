@@ -12,9 +12,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Map.Entry;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class ReInvalidateHandler {
@@ -31,6 +31,10 @@ public class ReInvalidateHandler {
     this.l1ServerMapLocalCacheManager = l1ServerMapLocalCacheManager;
     timer.schedule(new ExpireSetTimerTask(), EXPIRE_SET_TIMER_PERIOD, EXPIRE_SET_TIMER_PERIOD);
     timer.schedule(new ReInvalidateTimerTask(), RE_INVALIDATE_TIMER_PERIOD, RE_INVALIDATE_TIMER_PERIOD);
+  }
+
+  public void shutdown() {
+    timer.cancel();
   }
 
   public void add(ObjectID mapId, ObjectIDSet set) {

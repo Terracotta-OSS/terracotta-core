@@ -13,6 +13,7 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.MessageTransport;
+import com.tc.platform.rejoin.NullCleanupHelper;
 import com.tc.util.Assert;
 
 import java.util.Iterator;
@@ -23,7 +24,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 /**
  * @author teck
  */
-abstract class AbstractMessageChannel implements MessageChannel, MessageChannelInternal {
+abstract class AbstractMessageChannel extends NullCleanupHelper implements MessageChannel, MessageChannelInternal {
 
   private final Map               attachments    = new ConcurrentReaderHashMap();
   private final Object            attachmentLock = new Object();

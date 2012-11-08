@@ -13,6 +13,7 @@ import com.tc.object.locks.LockID;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
+import com.tc.platform.rejoin.InternalDSCleanupHelper;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -22,14 +23,15 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransactionManager {
+public class ClientGlobalTransactionManagerImpl extends InternalDSCleanupHelper implements
+    ClientGlobalTransactionManager {
 
   private static final TCLogger             logger               = TCLogging
                                                                      .getLogger(ClientGlobalTransactionManagerImpl.class);
 
   private static final int                  ALLOWED_LWM_DELTA    = 100;
-  private final Set                         applied              = new HashSet();
-  private final SortedMap                   globalTransactionIDs = new TreeMap();
+  private Set                               applied              = new HashSet();
+  private SortedMap                         globalTransactionIDs = new TreeMap();
 
   private GlobalTransactionID               lowWatermark         = GlobalTransactionID.NULL_ID;
   private final RemoteTransactionManager    remoteTransactionManager;
@@ -40,6 +42,15 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
                                             final PreTransactionFlushCallback preTransactionFlushCallback) {
     this.remoteTransactionManager = remoteTransactionManager;
     this.preTransactionFlushCallback = preTransactionFlushCallback;
+  }
+
+  @Override
+  public void clearInternalDS() {
+    // remoteTxnManager will be cleanup from clientHandshakeCallbacks
+    applied = new HashSet();
+    globalTransactionIDs = new TreeMap();
+    lowWatermark = GlobalTransactionID.NULL_ID; // need to do this, discuss
+    ignoredCount = 0;
   }
 
   // For testing

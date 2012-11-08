@@ -7,13 +7,14 @@ import com.tc.exception.ImplementMe;
 import com.tc.net.NodeID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
+import com.tc.platform.rejoin.NullCleanupHelper;
 import com.tc.text.PrettyPrinter;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class MockClientLockManager implements ClientLockManager {
+public class MockClientLockManager extends NullCleanupHelper implements ClientLockManager {
 
   private final List begins     = new ArrayList();
   private int        unlockCount;
@@ -36,11 +37,6 @@ public class MockClientLockManager implements ClientLockManager {
   public void resetCounts() {
     unlockCount = 0;
     begins.clear();
-  }
-
-  @Override
-  public void cleanup() {
-    //
   }
 
   @Override

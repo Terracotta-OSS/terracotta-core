@@ -10,6 +10,8 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
 import com.tc.object.tx.ClientTransactionBatchWriter.FoldedInfo;
+import com.tc.platform.rejoin.ClearableCallback;
+import com.tc.platform.rejoin.InternalDSCleanupHelper;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.Counter;
@@ -21,7 +23,7 @@ import com.tc.util.Util;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-public class TransactionSequencer {
+public class TransactionSequencer extends InternalDSCleanupHelper implements ClearableCallback {
 
   private static final TCLogger                             logger         = TCLogging
                                                                                .getLogger(TransactionSequencer.class);
@@ -43,9 +45,9 @@ public class TransactionSequencer {
         .getLong(TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXSLEEPTIME_BEFOREHALT);
   }
 
-  private final SequenceGenerator                           sequence       = new SequenceGenerator(1);
+  private SequenceGenerator                                 sequence       = new SequenceGenerator(1);
   private final TransactionBatchFactory                     batchFactory;
-  private final LinkedBlockingQueue<ClientTransactionBatch> pendingBatches = new LinkedBlockingQueue<ClientTransactionBatch>();
+  private LinkedBlockingQueue<ClientTransactionBatch> pendingBatches = new LinkedBlockingQueue<ClientTransactionBatch>();
 
   private ClientTransactionBatch                            currentBatch;
 
@@ -83,6 +85,14 @@ public class TransactionSequencer {
     this.transactionsPerBatchCounter = transactionsPerBatchCounter;
     this.pendingBatchesSize = pendingBatchesSize;
     this.abortableOperationManager = abortableOperationManager;
+  }
+
+  @Override
+  public void clearInternalDS() {
+    sequence = new SequenceGenerator(1);
+    pendingBatches = new LinkedBlockingQueue<ClientTransactionBatch>();
+    currentBatch = createNewBatch();
+    reconcilePendingSize();
   }
 
   private void log_settings() {

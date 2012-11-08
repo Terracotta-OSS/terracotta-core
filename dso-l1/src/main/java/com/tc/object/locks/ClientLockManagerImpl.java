@@ -14,6 +14,7 @@ import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.operatorevent.LockEventListener;
+import com.tc.platform.rejoin.CleanupHelper;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.FindbugsSuppressWarnings;
@@ -22,17 +23,21 @@ import com.tc.util.runtime.ThreadIDManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class ClientLockManagerImpl implements ClientLockManager, ClientLockManagerTestMethods, PrettyPrintable {
+public class ClientLockManagerImpl extends CleanupHelper implements ClientLockManager, ClientLockManagerTestMethods,
+    PrettyPrintable {
   private static final WaitListener               NULL_LISTENER       = new WaitListener() {
                                                                         @Override
                                                                         public void handleWaitEvent() {
@@ -43,17 +48,22 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   private final Timer                             gcTimer             = new Timer("ClientLockManager LockGC", true);
   private final Timer                             lockLeaseTimer      = new Timer("ClientLockManager Lock Lease Timer",
                                                                                   true);
-  private final ConcurrentMap<LockID, ClientLock> locks;
+  private TimerTask                               gcTimerTask;
+  private Set<TimerTask>                        leaseTimerTaskSet;
+  // this is a weakSet keeps leaseTimers
+  private final long                              gcPeriod;
+  private final ClientLockManagerConfig           config;
+  private ConcurrentMap<LockID, ClientLock>     locks;
   private final ReentrantReadWriteLock            stateGuard          = new ReentrantReadWriteLock();
   private final Condition                         runningCondition    = this.stateGuard.writeLock().newCondition();
   private State                                   state               = State.RUNNING;
 
-  private final RemoteLockManager                 remoteManager;
+  private final RemoteLockManager           remoteLockManager;
   private final ThreadIDManager                   threadManager;
   private final SessionManager                    sessionManager;
   private final TCLogger                          logger;
 
-  private final ConcurrentMap<ThreadID, Object>   inFlightLockQueries = new ConcurrentHashMap<ThreadID, Object>();
+  private ConcurrentMap<ThreadID, Object>   inFlightLockQueries = new ConcurrentHashMap<ThreadID, Object>();
   private final List<LockEventListener>           lockEventListeners  = new CopyOnWriteArrayList<LockEventListener>();
 
   @Deprecated
@@ -62,24 +72,49 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   private final AbortableOperationManager         abortableOperationManager;
 
   public ClientLockManagerImpl(final TCLogger logger, final SessionManager sessionManager,
-                               final RemoteLockManager remoteManager, final ThreadIDManager threadManager,
+                               final RemoteLockManager remoteLockManager, final ThreadIDManager threadManager,
                                final ClientLockManagerConfig config, final ClientLockStatManager statManager,
                                AbortableOperationManager abortableOperationManager) {
     this.logger = logger;
-    this.remoteManager = remoteManager;
+    this.remoteLockManager = remoteLockManager;
     this.threadManager = threadManager;
     this.sessionManager = sessionManager;
     this.abortableOperationManager = abortableOperationManager;
-
     this.statManager = statManager;
+    this.config = config;
     this.locks = new ConcurrentHashMap<LockID, ClientLock>(config.getStripedCount());
-    final long gcPeriod = Math.max(config.getTimeoutInterval(), 100);
-    this.gcTimer.schedule(new LockGcTimerTask(), gcPeriod, gcPeriod);
+    this.gcPeriod = Math.max(config.getTimeoutInterval(), 100);
+    this.leaseTimerTaskSet = Collections.synchronizedSet(Collections
+        .newSetFromMap(new WeakHashMap<TimerTask, Boolean>()));
+    initTimers();
   }
 
   @Override
-  public void cleanup() {
-    //
+  public void clearInternalDS() {
+    // not sure what to do with stateGuard and runningCondition, discuss
+    locks = new ConcurrentHashMap<LockID, ClientLock>(config.getStripedCount());
+    remoteLockManager.cleanup();
+    // sessionManager any method call needed discuss
+    inFlightLockQueries = new ConcurrentHashMap<ThreadID, Object>();
+    leaseTimerTaskSet = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<TimerTask, Boolean>()));
+  }
+
+  @Override
+  public void clearTimers() {
+    gcTimerTask.cancel();
+    gcTimer.purge();
+    gcTimerTask = null;
+    for (TimerTask leaseTimerTask : leaseTimerTaskSet) {
+      leaseTimerTask.cancel();
+    }
+    lockLeaseTimer.purge();
+    leaseTimerTaskSet = null;
+  }
+
+  @Override
+  public void initTimers() {
+    gcTimerTask = new LockGcTimerTask(locks, remoteLockManager);
+    gcTimer.schedule(gcTimerTask, gcPeriod, gcPeriod);
   }
 
   private ClientLock getOrCreateClientLockState(final LockID lock) {
@@ -112,7 +147,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     while (true) {
       final ClientLock lockState = getOrCreateClientLockState(lock);
       try {
-        lockState.lock(this.abortableOperationManager, this.remoteManager, this.threadManager.getThreadID(), level);
+        lockState.lock(this.abortableOperationManager, this.remoteLockManager, this.threadManager.getThreadID(), level);
         break;
       } catch (final GarbageLockException e) {
         // ignorable - thrown when operating on a garbage collected lock
@@ -133,7 +168,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     while (true) {
       final ClientLock lockState = getOrCreateClientLockState(lock);
       try {
-        if (lockState.tryLock(this.abortableOperationManager, this.remoteManager, this.threadManager.getThreadID(),
+        if (lockState.tryLock(this.abortableOperationManager, this.remoteLockManager, this.threadManager.getThreadID(),
                               level)) {
           fireLockSucceeded(lock);
           return true;
@@ -160,7 +195,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     while (true) {
       final ClientLock lockState = getOrCreateClientLockState(lock);
       try {
-        if (lockState.tryLock(this.abortableOperationManager, this.remoteManager, this.threadManager.getThreadID(),
+        if (lockState.tryLock(this.abortableOperationManager, this.remoteLockManager, this.threadManager.getThreadID(),
                               level, timeout)) {
           fireLockSucceeded(lock);
           return true;
@@ -185,7 +220,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     while (true) {
       final ClientLock lockState = getOrCreateClientLockState(lock);
       try {
-        lockState.lockInterruptibly(this.abortableOperationManager, this.remoteManager,
+        lockState.lockInterruptibly(this.abortableOperationManager, this.remoteLockManager,
                                     this.threadManager.getThreadID(), level);
         break;
       } catch (final GarbageLockException e) {
@@ -202,7 +237,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   public void unlock(final LockID lock, final LockLevel level) throws AbortedOperationException {
     waitUntilRunning();
     final ClientLock lockState = getOrCreateClientLockState(lock);
-    lockState.unlock(this.remoteManager, this.threadManager.getThreadID(), level);
+    lockState.unlock(this.remoteLockManager, this.threadManager.getThreadID(), level);
 
     fireUnlock(lock);
   }
@@ -212,7 +247,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     waitUntilRunning();
     final ClientLock lockState = getOrCreateClientLockState(lock);
     final ThreadID thread = this.threadManager.getThreadID();
-    if (lockState.notify(this.remoteManager, thread, null)) {
+    if (lockState.notify(this.remoteLockManager, thread, null)) {
       return new NotifyImpl(lock, thread, false);
     } else {
       return NotifyImpl.NULL;
@@ -224,7 +259,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     waitUntilRunning();
     final ClientLock lockState = getOrCreateClientLockState(lock);
     final ThreadID thread = this.threadManager.getThreadID();
-    if (lockState.notifyAll(this.remoteManager, thread, null)) {
+    if (lockState.notifyAll(this.remoteLockManager, thread, null)) {
       return new NotifyImpl(lock, thread, true);
     } else {
       return NotifyImpl.NULL;
@@ -251,7 +286,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     }
 
     for (final ClientServerExchangeLockContext cselc : queryLock(lock)) {
-      if (this.remoteManager.getClientID().equals(cselc.getNodeID())) {
+      if (this.remoteLockManager.getClientID().equals(cselc.getNodeID())) {
         continue;
       }
 
@@ -314,7 +349,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     }
 
     for (final ClientServerExchangeLockContext cselc : queryLock(lock)) {
-      if (this.remoteManager.getClientID().equals(cselc.getNodeID())) {
+      if (this.remoteLockManager.getClientID().equals(cselc.getNodeID())) {
         continue;
       }
 
@@ -447,7 +482,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
         while (true) {
           final ClientLock lockState = getOrCreateClientLockState(lock);
           try {
-            lockState.award(this.remoteManager, thread, level);
+            lockState.award(this.remoteLockManager, thread, level);
             break;
           } catch (final GarbageLockException e) {
             // ignorable - thrown when operating on a garbage collected lock
@@ -458,12 +493,12 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       } else {
         final ClientLock lockState = getClientLockState(lock);
         if (lockState == null) {
-          this.remoteManager.unlock(lock, thread, level);
+          this.remoteLockManager.unlock(lock, thread, level);
         } else {
           try {
-            lockState.award(this.remoteManager, thread, level);
+            lockState.award(this.remoteLockManager, thread, level);
           } catch (final GarbageLockException e) {
-            this.remoteManager.unlock(lock, thread, level);
+            this.remoteLockManager.unlock(lock, thread, level);
           }
         }
       }
@@ -516,20 +551,11 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
       final ClientLock lockState = getClientLockState(lock);
       if (lockState != null) {
-        if (lockState.recall(this.remoteManager, level, lease, batch)) {
+        if (lockState.recall(this.remoteLockManager, level, lease, batch)) {
           // schedule the greedy lease
-          this.lockLeaseTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-              try {
-                ClientLockManagerImpl.this.recall(node, session, lock, level, -1, batch);
-              } catch (TCNotRunningException e) {
-                logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName()
-                            + " and cancelling timer task");
-                this.cancel();
-              }
-            }
-          }, lease);
+          TimerTask leaseTimerTask = new LeaseTimerTask(node, session, lock, level, batch);
+          leaseTimerTaskSet.add(leaseTimerTask);
+          this.lockLeaseTimer.schedule(leaseTimerTask, lease);
         }
       }
     } finally {
@@ -595,7 +621,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     if (logger.isDebugEnabled()) {
       logger.debug(this.threadManager.getThreadID() + " waiting on log " + lock);
     }
-    lockState.wait(this.abortableOperationManager, this.remoteManager, listener, this.threadManager.getThreadID(),
+    lockState.wait(this.abortableOperationManager, this.remoteLockManager, listener, this.threadManager.getThreadID(),
                    waitObject);
   }
 
@@ -607,7 +633,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     if (logger.isDebugEnabled()) {
       logger.debug(this.threadManager.getThreadID() + " waiting on log " + lock);
     }
-    lockState.wait(this.abortableOperationManager, this.remoteManager, listener, this.threadManager.getThreadID(),
+    lockState.wait(this.abortableOperationManager, this.remoteLockManager, listener, this.threadManager.getThreadID(),
                    waitObject, timeout);
   }
 
@@ -652,7 +678,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       this.state = this.state.shutdown();
       this.gcTimer.cancel();
       this.lockLeaseTimer.cancel();
-      this.remoteManager.shutdown();
+      this.remoteLockManager.shutdown();
       this.runningCondition.signalAll();
       LockStateNode.shutdown();
     } finally {
@@ -848,7 +874,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   public Collection<ClientServerExchangeLockContext> getAllLockContexts() {
     final Collection<ClientServerExchangeLockContext> contexts = new ArrayList<ClientServerExchangeLockContext>();
     for (final ClientLock lock : this.locks.values()) {
-      contexts.addAll(lock.getStateSnapshot(this.remoteManager.getClientID()));
+      contexts.addAll(lock.getStateSnapshot(this.remoteLockManager.getClientID()));
     }
     return contexts;
   }
@@ -857,7 +883,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     final ThreadID current = this.threadManager.getThreadID();
 
     this.inFlightLockQueries.put(current, lock);
-    this.remoteManager.query(lock, this.threadManager.getThreadID());
+    this.remoteLockManager.query(lock, this.threadManager.getThreadID());
 
     boolean interrupted = false;
     try {
@@ -883,19 +909,52 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   private void resubmitInFlightLockQueries() {
     for (final Entry<ThreadID, Object> query : this.inFlightLockQueries.entrySet()) {
       if (query.getValue() instanceof LockID) {
-        this.remoteManager.query((LockID) query.getValue(), query.getKey());
+        this.remoteLockManager.query((LockID) query.getValue(), query.getKey());
+      }
+    }
+  }
+
+  class LeaseTimerTask extends TimerTask {
+    private final NodeID          node;
+    private final SessionID       session;
+    private final LockID          lock;
+    private final ServerLockLevel level;
+    private final boolean         batch;
+
+    public LeaseTimerTask(NodeID node, SessionID session, LockID lock, ServerLockLevel level, boolean batch) {
+      this.node = node;
+      this.session = session;
+      this.lock = lock;
+      this.level = level;
+      this.batch = batch;
+    }
+
+    @Override
+    public void run() {
+      try {
+        ClientLockManagerImpl.this.recall(node, session, lock, level, -1, batch);
+      } catch (TCNotRunningException e) {
+        logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
+        this.cancel();
       }
     }
   }
 
   class LockGcTimerTask extends TimerTask {
     private static final int GCED_LOCK_THRESHOLD = 1000;
+    private final ConcurrentMap<LockID, ClientLock> lockForTimer;
+    private final RemoteLockManager                 remoteManagerForTimer;
+
+    public LockGcTimerTask(ConcurrentMap<LockID, ClientLock> lockForTimer, RemoteLockManager remoteManagerForTimer) {
+      this.lockForTimer = lockForTimer;
+      this.remoteManagerForTimer = remoteManagerForTimer;
+    }
 
     @Override
     public void run() {
       try {
         int gcCount = 0;
-        for (final Entry<LockID, ClientLock> entry : ClientLockManagerImpl.this.locks.entrySet()) {
+        for (final Entry<LockID, ClientLock> entry : lockForTimer.entrySet()) {
           ClientLockManagerImpl.this.stateGuard.readLock().lock();
           try {
             if (ClientLockManagerImpl.this.state != State.RUNNING) { return; }
@@ -906,8 +965,8 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
               continue;
             }
 
-            if (lockState.tryMarkAsGarbage(ClientLockManagerImpl.this.remoteManager)
-                && ClientLockManagerImpl.this.locks.remove(lock, lockState)) {
+            if (lockState.tryMarkAsGarbage(remoteManagerForTimer)
+                && lockForTimer.remove(lock, lockState)) {
               gcCount++;
             }
           } finally {
@@ -932,7 +991,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
   @Override
   public int runLockGc() {
-    new LockGcTimerTask().run();
+    new LockGcTimerTask(locks, remoteLockManager).run();
     return this.locks.size();
   }
 

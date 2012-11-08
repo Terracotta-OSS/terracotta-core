@@ -19,6 +19,7 @@ import com.tc.object.msg.RequestRootMessage;
 import com.tc.object.msg.RequestRootMessageFactory;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
+import com.tc.platform.rejoin.CleanupHelper;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
@@ -43,7 +44,7 @@ import java.util.TimerTask;
 /**
  * This class is responsible for any communications to the server for object retrieval and removal
  */
-public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrintable {
+public class RemoteObjectManagerImpl extends CleanupHelper implements RemoteObjectManager, PrettyPrintable {
 
   private static final long    RETRIEVE_WAIT_INTERVAL                    = 15000;
   private static final int     REMOVE_OBJECTS_THRESHOLD                  = 10000;
@@ -72,10 +73,10 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     NOT_SCHEDULED, SCHEDULED_LATER, SCHEDULED_NOW
   }
 
-  private final HashMap<String, ObjectID>          rootRequests             = new HashMap<String, ObjectID>();
+  private HashMap<String, ObjectID>                rootRequests             = new HashMap<String, ObjectID>();
 
-  private final Map<ObjectID, DNA>                 dnaCache                 = new HashMap<ObjectID, DNA>();
-  private final Map<ObjectID, ObjectLookupState>   objectLookupStates       = new HashMap<ObjectID, ObjectLookupState>();
+  private Map<ObjectID, DNA>                       dnaCache                 = new HashMap<ObjectID, DNA>();
+  private Map<ObjectID, ObjectLookupState>         objectLookupStates       = new HashMap<ObjectID, ObjectLookupState>();
 
   private final Timer                              objectRequestTimer       = new Timer(
                                                                                         "RemoteObjectManager Request Scheduler",
@@ -83,7 +84,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
 
   private final RequestRootMessageFactory          rrmFactory;
   private final RequestManagedObjectMessageFactory rmomFactory;
-  private final LRUCache                           lru                      = new LRUCache();
+  private LRUCache                                 lru                      = new LRUCache();
   private final GroupID                            groupID;
   private final int                                defaultDepth;
   private final SessionManager                     sessionManager;
@@ -91,7 +92,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
 
   private State                                    state                    = State.RUNNING;
   private ObjectIDSet                              removeObjects            = new ObjectIDSet();
-
+  private TimerTask                                timerTask;
   private boolean                                  pendingSendTaskScheduled = false;
   private RemovedObjectsSendState                  removeTaskScheduled      = RemovedObjectsSendState.NOT_SCHEDULED;
   private long                                     objectRequestIDCounter   = 0;
@@ -110,14 +111,33 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     this.rmomFactory = rmomFactory;
     this.defaultDepth = defaultDepth;
     this.sessionManager = sessionManager;
-    this.objectRequestTimer.schedule(new CleanupUnusedDNATimerTask(), CLEANUP_UNUSED_DNA_TIMER,
-                                     CLEANUP_UNUSED_DNA_TIMER);
     this.abortableOperationManager = abortableOperationManager;
+    initTimers();
   }
 
   @Override
-  public void cleanup() {
-    //
+  public void clearInternalDS() {
+    rootRequests = new HashMap<String, ObjectID>();
+    dnaCache = new HashMap<ObjectID, DNA>();
+    objectLookupStates = new HashMap<ObjectID, ObjectLookupState>();
+    lru = new LRUCache(); // used in CleanupUnusedDNATimerTask
+    removeObjects = new ObjectIDSet();
+    // SessionManager any method call needed discuss
+    pendingSendTaskScheduled = false;
+    removeTaskScheduled = RemovedObjectsSendState.NOT_SCHEDULED;
+  }
+
+  @Override
+  public void clearTimers() {
+    timerTask.cancel();
+    objectRequestTimer.purge();
+    timerTask = null;
+  }
+
+  @Override
+  public void initTimers() {
+    timerTask = new CleanupUnusedDNATimerTask();
+    objectRequestTimer.schedule(timerTask, CLEANUP_UNUSED_DNA_TIMER, CLEANUP_UNUSED_DNA_TIMER);
   }
 
   @Override

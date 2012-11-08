@@ -102,8 +102,8 @@ public class RejoinLifecycleEventController implements RejoinLifecycleListener, 
           try {
             monitor.wait();
           } catch (InterruptedException e) {
-            // return with aborted exception if interrrupted during wait
-            // todo: consult abortableManager here? or throw for every interrupt?
+            // return with aborted exception if interrupted during wait
+            // TODO: consult abortableManager here? or throw for every interrupt?
             boolean aborted = true;
             if (aborted) {
               throw new AbortedOperationException("Interrupted while waiting for rejoin to complete", e);

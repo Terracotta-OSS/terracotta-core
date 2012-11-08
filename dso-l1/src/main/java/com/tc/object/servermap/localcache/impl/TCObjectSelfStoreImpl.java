@@ -18,6 +18,7 @@ import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
+import com.tc.platform.rejoin.InternalDSCleanupHelper;
 import com.tc.util.ObjectIDSet;
 
 import java.util.HashMap;
@@ -26,11 +27,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
-  private final TCObjectSelfStoreObjectIDSet                                     tcObjectSelfStoreOids = new TCObjectSelfStoreObjectIDSet();
+public class TCObjectSelfStoreImpl extends InternalDSCleanupHelper implements TCObjectSelfStore {
+  private TCObjectSelfStoreObjectIDSet                                           tcObjectSelfStoreOids = new TCObjectSelfStoreObjectIDSet();
   private final ReentrantReadWriteLock                                           tcObjectStoreLock     = new ReentrantReadWriteLock();
   private volatile TCObjectSelfCallback                                          tcObjectSelfRemovedFromStoreCallback;
-  private final Map<ObjectID, TCObjectSelf>                                      tcObjectSelfTempCache = new HashMap<ObjectID, TCObjectSelf>();
+  private Map<ObjectID, TCObjectSelf>                                            tcObjectSelfTempCache = new HashMap<ObjectID, TCObjectSelf>();
 
   private final ConcurrentHashMap<ServerMapLocalCache, PinnedEntryFaultCallback> localCaches;
 
@@ -41,6 +42,12 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
 
   public TCObjectSelfStoreImpl(ConcurrentHashMap<ServerMapLocalCache, PinnedEntryFaultCallback> localCaches) {
     this.localCaches = localCaches;
+  }
+
+  @Override
+  public void clearInternalDS() {
+    tcObjectSelfStoreOids = new TCObjectSelfStoreObjectIDSet();
+    tcObjectSelfTempCache = new HashMap<ObjectID, TCObjectSelf>();
   }
 
   private void isShutdownThenException() {
