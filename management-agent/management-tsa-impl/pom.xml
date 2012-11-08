@@ -19,7 +19,7 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>management-tsa-intf</artifactId>
+      <artifactId>management-tsa</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
