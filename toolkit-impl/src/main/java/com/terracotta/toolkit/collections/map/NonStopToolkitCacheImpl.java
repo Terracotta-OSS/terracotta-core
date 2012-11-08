@@ -44,7 +44,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
   private final AtomicReference<ToolkitCacheInternal<K, V>>                       delegate                 = new AtomicReference<ToolkitCacheInternal<K, V>>();
 
   private final ConcurrentMap<NonStopTimeoutBehavior, ToolkitCacheInternal<K, V>> timeoutBehaviorResolvers = new ConcurrentHashMap<NonStopTimeoutBehavior, ToolkitCacheInternal<K, V>>();
-  private final NonstopTimeoutBehaviorResolver                                    behaviorResolverFactory;
+  private final NonstopTimeoutBehaviorResolver                                    behaviorResolver;
 
   public NonStopToolkitCacheImpl(String name, Class<V> klazz, Configuration actualConfiguration,
                                  NonStopManager nonStopManager, ToolkitInternal toolkitFutureTask,
@@ -56,7 +56,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     this.nonStopManager = nonStopManager;
     this.toolkit = toolkitFutureTask;
     this.nonStopConfigManager = nonStopConfigManager;
-    this.behaviorResolverFactory = behaviorResolverFactory;
+    this.behaviorResolver = behaviorResolverFactory;
   }
 
   private ToolkitCacheInternal<K, V> resolveTimeoutBehavior() {
@@ -65,7 +65,7 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
     ToolkitCacheInternal<K, V> resolver = timeoutBehaviorResolvers.get(nonStopBehavior);
     if (resolver == null) {
       // TODO: should getDelegate() be also done asynchronously OR with a timeout?
-      resolver = behaviorResolverFactory.create(getObjectType(), nonStopBehavior, delegate);
+      resolver = behaviorResolver.create(getObjectType(), nonStopBehavior, delegate);
       ToolkitCacheInternal<K, V> oldResolver = timeoutBehaviorResolvers.putIfAbsent(nonStopBehavior, resolver);
       resolver = oldResolver != null ? oldResolver : resolver;
     }

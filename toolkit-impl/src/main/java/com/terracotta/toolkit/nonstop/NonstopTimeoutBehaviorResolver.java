@@ -12,12 +12,31 @@ import com.terracotta.toolkit.collections.map.ValuesResolver;
 import com.terracotta.toolkit.type.DistributedToolkitType;
 
 import java.lang.reflect.Proxy;
+import java.util.EnumMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class NonstopTimeoutBehaviorResolver {
 
-  private final NoOpInvocationHandler               noOpInvocationHandler               = new NoOpInvocationHandler();
-  private final ExceptionOnTimeoutInvocationHandler exceptionOnTimeoutInvocationHandler = new ExceptionOnTimeoutInvocationHandler();
+  private final EnumMap<ToolkitObjectType, Object> exceptionOnTimeoutBehaviorMap = new EnumMap<ToolkitObjectType, Object>(
+                                                                                                                          ToolkitObjectType.class);
+  private final EnumMap<ToolkitObjectType, Object> noOpOnTimeoutBehaviorMap      = new EnumMap<ToolkitObjectType, Object>(
+                                                                                                                          ToolkitObjectType.class);
+
+  public NonstopTimeoutBehaviorResolver() {
+    Object cacheExceptionOnTimeOutBehavior = Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class[] {
+                                                                        ToolkitCacheInternal.class,
+                                                                        DistributedToolkitType.class,
+                                                                        ValuesResolver.class },
+                                                                    new ExceptionOnTimeoutInvocationHandler());
+    exceptionOnTimeoutBehaviorMap.put(ToolkitObjectType.CACHE, cacheExceptionOnTimeOutBehavior);
+    exceptionOnTimeoutBehaviorMap.put(ToolkitObjectType.STORE, cacheExceptionOnTimeOutBehavior);
+
+    Object cacheNoOpOnTimeOutBehavior = Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class[] {
+        ToolkitCacheInternal.class, DistributedToolkitType.class, ValuesResolver.class }, new NoOpInvocationHandler());
+    noOpOnTimeoutBehaviorMap.put(ToolkitObjectType.CACHE, cacheNoOpOnTimeOutBehavior);
+    noOpOnTimeoutBehaviorMap.put(ToolkitObjectType.STORE, cacheNoOpOnTimeOutBehavior);
+
+  }
 
   public <E> E create(ToolkitObjectType objectType, NonStopTimeoutBehavior nonStopBehavior, AtomicReference<E> e) {
     switch (nonStopBehavior) {
@@ -36,49 +55,22 @@ public class NonstopTimeoutBehaviorResolver {
   }
 
   private <E> E createNoOpBehaviour(ToolkitObjectType objectType, E e) {
-    switch (objectType) {
-      case CACHE:
-      case STORE:
-        return (E) Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class[] { ToolkitCacheInternal.class,
-            DistributedToolkitType.class, ValuesResolver.class }, noOpInvocationHandler);
-      case ATOMIC_LONG:
-      case BARRIER:
-      case BLOCKING_QUEUE:
-      case LIST:
-      case LOCK:
-      case MAP:
-      case NOTIFIER:
-      case READ_WRITE_LOCK:
-      case SET:
-      case SORTED_MAP:
-      case SORTED_SET:
-        throw new UnsupportedOperationException("NonStop Not Supported for ToolkitType " + objectType);
-    }
-    return null;
+
+    Object noOpOnTimeOutBehavior = noOpOnTimeoutBehaviorMap.get(objectType);
+    if (noOpOnTimeOutBehavior == null) { throw new UnsupportedOperationException(
+                                                                                 "NonStop Not Supported for ToolkitType "
+                                                                                     + objectType); }
+    return (E) noOpOnTimeOutBehavior;
 
   }
 
   private <E> E createExceptionOnTimeOutBehaviour(ToolkitObjectType objectType, E e) {
 
-    switch (objectType) {
-      case CACHE:
-      case STORE:
-        return (E) Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class[] { ToolkitCacheInternal.class,
-            DistributedToolkitType.class, ValuesResolver.class }, exceptionOnTimeoutInvocationHandler);
-      case ATOMIC_LONG:
-      case BARRIER:
-      case BLOCKING_QUEUE:
-      case LIST:
-      case LOCK:
-      case MAP:
-      case NOTIFIER:
-      case READ_WRITE_LOCK:
-      case SET:
-      case SORTED_MAP:
-      case SORTED_SET:
-        throw new UnsupportedOperationException("NonStop Not Supported for ToolkitType " + objectType);
-    }
-    return null;
+    Object exceptionOnTimeOutBehavior = exceptionOnTimeoutBehaviorMap.get(objectType);
+    if (exceptionOnTimeOutBehavior == null) { throw new UnsupportedOperationException(
+                                                                                      "NonStop Not Supported for ToolkitType "
+                                                                                          + objectType); }
+    return (E) exceptionOnTimeOutBehavior;
 
   }
 

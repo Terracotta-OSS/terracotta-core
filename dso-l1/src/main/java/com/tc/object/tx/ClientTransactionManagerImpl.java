@@ -262,7 +262,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
 
     popTransaction(lock);
 
-    if ((!aborted) && peekContext() != null) {
+    if (peekContext() != null) {
       if (hasCommitted) {
         createTxAndInitContext();
       } else {
@@ -273,9 +273,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
       }
     }
     if (aborted) {
-      // TODO: reverify this
-      tx.setTransactionContext(peekContext());
-      setTransaction(tx);
       throw new AbortedOperationException();
     }
   }
