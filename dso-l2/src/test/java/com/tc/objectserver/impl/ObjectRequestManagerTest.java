@@ -111,6 +111,7 @@ public class ObjectRequestManagerTest extends TestCase {
     final ManagedObjectChangeListenerProviderImpl moclp = new ManagedObjectChangeListenerProviderImpl();
     moclp.setListener(new ManagedObjectChangeListener() {
 
+      @Override
       public void changed(final ObjectID changedObject, final ObjectID oldReference, final ObjectID newReference) {
         // NOP
       }
@@ -692,54 +693,67 @@ public class ObjectRequestManagerTest extends TestCase {
    */
   private static class TestDSOChannelManager implements DSOChannelManager {
 
+    @Override
     public void addEventListener(final DSOChannelManagerEventListener listener) {
       throw new NotImplementedException(TestDSOChannelManager.class);
     }
 
+    @Override
     public void closeAll(final Collection channelIDs) {
       throw new NotImplementedException(TestDSOChannelManager.class);
     }
 
+    @Override
     public MessageChannel getActiveChannel(final NodeID id) {
       return new TestMessageChannel(new ChannelID(((ClientID) id).toLong()));
     }
 
+    @Override
     public MessageChannel[] getActiveChannels() {
       throw new NotImplementedException(TestDSOChannelManager.class);
     }
 
+    @Override
     public TCConnection[] getAllActiveClientConnections() {
       throw new NotImplementedException(TestDSOChannelManager.class);
     }
 
+    @Override
     public Set getAllClientIDs() {
       throw new NotImplementedException(TestDSOChannelManager.class);
     }
 
+    @Override
     public String getChannelAddress(final NodeID nid) {
       throw new NotImplementedException(TestDSOChannelManager.class);
     }
 
+    @Override
     public ClientID getClientIDFor(final ChannelID channelID) {
       throw new NotImplementedException(TestDSOChannelManager.class);
     }
 
+    @Override
     public boolean isActiveID(final NodeID nodeID) {
       throw new NotImplementedException(TestDSOChannelManager.class);
     }
 
+    @Override
     public void makeChannelActive(final ClientID clientID, final boolean persistent) {
       throw new NotImplementedException(TestDSOChannelManager.class);
     }
 
+    @Override
     public void makeChannelActiveNoAck(final MessageChannel channel) {
       throw new NotImplementedException(TestDSOChannelManager.class);
     }
 
+    @Override
     public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(final NodeID nid) {
       throw new NotImplementedException(TestDSOChannelManager.class);
     }
 
+    @Override
     public void makeChannelRefuse(ClientID clientID, String message) {
       throw new NotImplementedException(TestDSOChannelManager.class);
     }
@@ -750,26 +764,32 @@ public class ObjectRequestManagerTest extends TestCase {
 
     private final Map<NodeID, Set<ObjectID>> clientStateMap = new HashMap<NodeID, Set<ObjectID>>();
 
+    @Override
     public void addReference(final NodeID nodeID, final ObjectID objectID) {
       throw new NotImplementedException(TestClientStateManager.class);
     }
 
+    @Override
     public boolean hasReference(final NodeID nodeID, final ObjectID objectID) {
       throw new NotImplementedException(TestClientStateManager.class);
     }
 
+    @Override
     public void shutdownNode(final NodeID deadNode) {
       throw new NotImplementedException(TestClientStateManager.class);
     }
 
+    @Override
     public boolean startupNode(final NodeID nodeID) {
       throw new NotImplementedException(TestClientStateManager.class);
     }
 
+    @Override
     public Set<ObjectID> addAllReferencedIdsTo(final Set<ObjectID> rescueIds) {
       throw new NotImplementedException(TestClientStateManager.class);
     }
 
+    @Override
     public Set<ObjectID> addReferences(final NodeID nodeID, final Set<ObjectID> oids) {
 
       Set<ObjectID> refs = this.clientStateMap.get(nodeID);
@@ -793,35 +813,42 @@ public class ObjectRequestManagerTest extends TestCase {
       return newReferences;
     }
 
+    @Override
     public List<DNA> createPrunedChangesAndAddObjectIDTo(final Collection<DNA> changes,
                                                          final ApplyTransactionInfo references, final NodeID clientID,
                                                          final Set<ObjectID> objectIDs, final Invalidations invalidIDs) {
       throw new NotImplementedException(TestClientStateManager.class);
     }
 
+    @Override
     public Set<NodeID> getConnectedClientIDs() {
       throw new NotImplementedException(TestClientStateManager.class);
     }
 
+    @Override
     public int getReferenceCount(final NodeID nodeID) {
       throw new NotImplementedException(TestClientStateManager.class);
     }
 
+    @Override
     public void removeReferencedFrom(final NodeID nodeID, final Set<ObjectID> secondPass) {
       throw new NotImplementedException(TestClientStateManager.class);
     }
 
+    @Override
     public void removeReferences(NodeID nodeID, Set<ObjectID> removed, Set<ObjectID> requested) {
       Set<ObjectID> refs = this.clientStateMap.get(nodeID);
       refs.addAll(requested);
       refs.removeAll(removed);
     }
 
+    @Override
     public void registerObjectReferenceAddListener(ObjectReferenceAddListener listener) {
       throw new ImplementMe();
 
     }
 
+    @Override
     public void unregisterObjectReferenceAddListener(ObjectReferenceAddListener listener) {
       throw new ImplementMe();
 
@@ -844,38 +871,47 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public void createRoot(final String name, final ObjectID id) {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public void flushAndEvict(final List objects2Flush) {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public ObjectIDSet getAllObjectIDs() {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public int getCheckedOutCount() {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public GarbageCollector getGarbageCollector() {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public Set getRootIDs() {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public Map getRootNamesToIDsMap() {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public Iterator getRoots() {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public boolean lookupObjectsAndSubObjectsFor(final NodeID nodeID,
                                                  final ObjectManagerResultsContext responseContext, final int maxCount) {
 
@@ -896,14 +932,17 @@ public class ObjectRequestManagerTest extends TestCase {
       return false;
     }
 
+    @Override
     public boolean lookupObjectsFor(final NodeID nodeID, final ObjectManagerResultsContext context) {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public ObjectID lookupRootID(final String name) {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public void notifyGCComplete(final DGCResultContext dgcResultContext) {
       throw new NotImplementedException(TestObjectManager.class);
     }
@@ -912,38 +951,47 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public void releaseReadOnly(final ManagedObject object) {
       // do nothing, just a test
     }
 
+    @Override
     public void setStatsListener(final ObjectManagerStatsListener listener) {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public void start() {
       // starting...
     }
 
+    @Override
     public void stop() {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public void waitUntilReadyToGC() {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public ManagedObject getObjectByID(final ObjectID id) {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public void createNewObjects(final Set<ObjectID> ids) {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public ObjectIDSet getObjectIDsInCache() {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public void preFetchObjectsAndCreate(final Set<ObjectID> oids, final Set<ObjectID> newOids) {
       throw new NotImplementedException(TestObjectManager.class);
     }
@@ -952,42 +1000,52 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public void releaseAllReadOnly(final Collection<ManagedObject> objects) {
       // To Nothing
     }
 
+    @Override
     public void setGarbageCollector(final GarbageCollector gc) {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public ObjectIDSet getObjectReferencesFrom(final ObjectID id, final boolean cacheOnly) {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public int getLiveObjectCount() {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public int getCachedObjectCount() {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public Iterator getRootNames() {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public ManagedObjectFacade lookupFacade(final ObjectID id, final int limit) {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public ManagedObject getObjectByIDOrNull(final ObjectID id) {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public ManagedObject getQuietObjectByID(ObjectID id) {
       return getObjectByID(id);
     }
 
+    @Override
     public void deleteObjects(final DGCResultContext dgcResultContext) {
       //
     }
@@ -1002,18 +1060,22 @@ public class ObjectRequestManagerTest extends TestCase {
       this.channelID = channelID;
     }
 
+    @Override
     public void addAttachment(final String key, final Object value, final boolean replace) {
       //
     }
 
+    @Override
     public void addListener(final ChannelEventListener listener) {
       //
     }
 
+    @Override
     public void close() {
       //
     }
 
+    @Override
     public TCMessage createMessage(final TCMessageType type) {
       if (TCMessageType.OBJECTS_NOT_FOUND_RESPONSE_MESSAGE.equals(type)) {
         return new TestObjectsNotFoundMessage(this.channelID);
@@ -1024,60 +1086,79 @@ public class ObjectRequestManagerTest extends TestCase {
       }
     }
 
+    @Override
     public Object getAttachment(final String key) {
       return null;
     }
 
+    @Override
     public ChannelID getChannelID() {
       return this.channelID;
     }
 
+    @Override
     public TCSocketAddress getLocalAddress() {
       return null;
     }
 
+    @Override
     public TCSocketAddress getRemoteAddress() {
       return null;
     }
 
+    @Override
     public boolean isClosed() {
       return false;
     }
 
+    @Override
     public boolean isConnected() {
       return false;
     }
 
+    @Override
     public boolean isOpen() {
       return false;
     }
 
+    @Override
     public NetworkStackID open() {
       return null;
     }
 
+    @Override
     public NetworkStackID open(char[] password) {
       return null;
     }
 
+    @Override
     public Object removeAttachment(final String key) {
       return null;
     }
 
+    @Override
     public void send(final TCNetworkMessage message) {
       this.sendQueue.put(message);
     }
 
+    @Override
     public NodeID getLocalNodeID() {
       return null;
     }
 
+    @Override
     public NodeID getRemoteNodeID() {
       return null;
     }
 
+    @Override
     public void setLocalNodeID(final NodeID source) {
       //
+    }
+
+    @Override
+    public void reopen() {
+      throw new ImplementMe();
     }
 
   }
@@ -1097,55 +1178,68 @@ public class ObjectRequestManagerTest extends TestCase {
       return this.channelID;
     }
 
+    @Override
     public long getBatchID() {
       return 0;
     }
 
+    @Override
     public Collection getObjects() {
       return null;
     }
 
+    @Override
     public ObjectStringSerializer getSerializer() {
       return null;
     }
 
+    @Override
     public int getTotal() {
       return 0;
     }
 
+    @Override
     public void initialize(final TCByteBuffer[] dnas, final int count, final ObjectStringSerializer serializer,
                            final long bid, final int tot) {
       //
     }
 
+    @Override
     public void dehydrate() {
       //
     }
 
+    @Override
     public MessageChannel getChannel() {
       return null;
     }
 
+    @Override
     public SessionID getLocalSessionID() {
       return null;
     }
 
+    @Override
     public TCMessageType getMessageType() {
       return null;
     }
 
+    @Override
     public int getTotalLength() {
       return 0;
     }
 
+    @Override
     public void hydrate() {
       //
     }
 
+    @Override
     public void send() {
       sendSet.add(this);
     }
 
+    @Override
     public int compareTo(final Object o) {
       if (this.equals(o)) { return 0; }
       final Long value1 = getChannelID().toLong();
@@ -1173,14 +1267,17 @@ public class ObjectRequestManagerTest extends TestCase {
       return true;
     }
 
+    @Override
     public void doRecycleOnRead() {
       //
     }
 
+    @Override
     public NodeID getDestinationNodeID() {
       return null;
     }
 
+    @Override
     public NodeID getSourceNodeID() {
       return null;
     }
@@ -1201,46 +1298,57 @@ public class ObjectRequestManagerTest extends TestCase {
       return this.channelID;
     }
 
+    @Override
     public long getBatchID() {
       return 0;
     }
 
+    @Override
     public Set getMissingObjectIDs() {
       return null;
     }
 
+    @Override
     public void initialize(final Set missingObjectIDs, final long batchId) {
       //
     }
 
+    @Override
     public void dehydrate() {
       //
     }
 
+    @Override
     public MessageChannel getChannel() {
       return null;
     }
 
+    @Override
     public SessionID getLocalSessionID() {
       return null;
     }
 
+    @Override
     public TCMessageType getMessageType() {
       return null;
     }
 
+    @Override
     public int getTotalLength() {
       return 0;
     }
 
+    @Override
     public void hydrate() {
       //
     }
 
+    @Override
     public void send() {
       sendSet.add(this);
     }
 
+    @Override
     public int compareTo(final Object o) {
       final Long value1 = getChannelID().toLong();
       final Long value2 = ((TestObjectsNotFoundMessage) o).getChannelID().toLong();
@@ -1267,10 +1375,12 @@ public class ObjectRequestManagerTest extends TestCase {
       return true;
     }
 
+    @Override
     public NodeID getDestinationNodeID() {
       return null;
     }
 
+    @Override
     public NodeID getSourceNodeID() {
       return null;
     }

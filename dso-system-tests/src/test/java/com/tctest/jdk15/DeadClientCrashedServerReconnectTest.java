@@ -4,6 +4,8 @@
  */
 package com.tctest.jdk15;
 
+import org.mockito.Mockito;
+
 import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.cluster.DsoClusterImpl;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
@@ -21,6 +23,7 @@ import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.objectserver.control.ServerControl;
+import com.tc.platform.rejoin.RejoinManagerInternal;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -80,15 +83,17 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
 
     DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(manager);
     PreparedComponentsFromL2Connection components = new PreparedComponentsFromL2Connection(manager);
+    RejoinManagerInternal mock = Mockito.mock(RejoinManagerInternal.class);
     DistributedObjectClient client = new DistributedObjectClient(configHelper,
                                                                  new TCThreadGroup(new ThrowableHandler(TCLogging
                                                                      .getLogger(DistributedObjectClient.class))),
                                                                  new MockClassProvider(), components,
                                                                  NullManager.getInstance(),
                                                                  new StatisticsAgentSubSystemImpl(),
-                                                                 new DsoClusterImpl(),
+                                                                 new DsoClusterImpl(mock),
                                                                  new NullRuntimeLogger(),
-                                                                 new NullAbortableOperationManager());
+                                                                 new NullAbortableOperationManager(),
+ mock);
     client.setCreateDedicatedMBeanServer(true);
     client.start();
 

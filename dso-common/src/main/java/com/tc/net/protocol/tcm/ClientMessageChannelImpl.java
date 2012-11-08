@@ -86,8 +86,10 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
     }
   }
 
-  void reopen() {
-    //
+  @Override
+  public void reopen() {
+    // todo: what about passwd?
+    this.sendLayer.reopen();
   }
 
   @Override

@@ -13,6 +13,7 @@ import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.logging.RuntimeLogger;
+import com.tc.platform.rejoin.RejoinManagerInternal;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.util.factory.AbstractFactory;
 import com.tcclient.cluster.DsoClusterInternal;
@@ -34,7 +35,8 @@ public abstract class AbstractClientFactory extends AbstractFactory {
                                                        StatisticsAgentSubSystem statisticsAgentSubSystem,
                                                        DsoClusterInternal dsoCluster, RuntimeLogger runtimeLogger,
                                                        ClientMode clientMode, TCSecurityManager securityManager,
-                                                       AbortableOperationManager abortableOperationManager);
+                                                       AbortableOperationManager abortableOperationManager,
+                                                       RejoinManagerInternal rejoinManager);
 
   public abstract TCSecurityManager createClientSecurityManager(Map<String, Object> env);
 }

@@ -642,6 +642,13 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     public void setLocalNodeID(final NodeID source) {
       throw new ImplementMe();
     }
+
+    @Override
+    public void reopen() {
+      throw new ImplementMe();
+
+    }
+
   }
 
   private static class TestBroadcastMessage implements TCMessage, BroadcastTransactionMessage {

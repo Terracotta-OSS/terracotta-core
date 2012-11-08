@@ -3,20 +3,23 @@
  */
 package com.tcclient.cluster;
 
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 
 public interface DsoClusterInternalEventsGun {
 
-  public void fireThisNodeJoined(NodeID nodeId, NodeID[] clusterMembers);
+  void fireThisNodeJoined(NodeID nodeId, NodeID[] clusterMembers);
 
-  public void fireThisNodeLeft();
+  void fireThisNodeLeft();
 
-  public void fireNodeJoined(NodeID nodeId);
+  void fireNodeJoined(NodeID nodeId);
 
-  public void fireNodeLeft(NodeID nodeId);
+  void fireNodeLeft(NodeID nodeId);
 
-  public void fireOperationsEnabled();
+  void fireOperationsEnabled();
 
-  public void fireOperationsDisabled();
+  void fireOperationsDisabled();
+
+  void fireNodeRejoined(ClientID oldNodeId, ClientID newNodeId);
 
 }

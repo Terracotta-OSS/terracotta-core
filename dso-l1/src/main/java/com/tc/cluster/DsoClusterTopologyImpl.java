@@ -41,6 +41,7 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
     }
   }
 
+  @Override
   public Collection<DsoNode> getNodes() {
     nodesReadLock.lock();
     try {

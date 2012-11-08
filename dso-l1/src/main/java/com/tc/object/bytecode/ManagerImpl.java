@@ -67,6 +67,8 @@ import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.platform.PlatformService;
 import com.tc.platform.PlatformServiceImpl;
 import com.tc.platform.RejoinAwarePlatformService;
+import com.tc.platform.rejoin.RejoinManagerImpl;
+import com.tc.platform.rejoin.RejoinManagerInternal;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -132,6 +134,7 @@ public class ManagerImpl implements Manager {
   private final ConcurrentHashMap<String, Object>  registeredObjects         = new ConcurrentHashMap<String, Object>();
   private final AbortableOperationManager          abortableOperationManager = new AbortableOperationManagerImpl();
   private final AtomicReference<PlatformService>   platformServiceRef        = new AtomicReference<PlatformService>();
+  private final RejoinManagerInternal              rejoinManager;
 
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
                      final TCSecurityManager securityManager) {
@@ -163,7 +166,9 @@ public class ManagerImpl implements Manager {
     this.instrumentationLogger = new InstrumentationLoggerImpl(config.instrumentationLoggingOptions());
     this.startClient = startClient;
     this.connectionComponents = connectionComponents;
-    this.dsoCluster = new DsoClusterImpl();
+    this.rejoinManager = new RejoinManagerImpl(isExpressRejoinMode);
+    this.dsoCluster = new DsoClusterImpl(rejoinManager);
+    this.rejoinManager.init(dsoCluster);
     this.statisticsAgentSubSystem = new StatisticsAgentSubSystemImpl();
     if (shutdownActionRequired) {
       this.shutdownAction = new Thread(new ShutdownAction());
@@ -202,7 +207,7 @@ public class ManagerImpl implements Manager {
 
   private PlatformService createPlatformService() {
     if (clientMode.isExpressRejoinClient()) {
-      return new RejoinAwarePlatformService(this, this.dso.getRejoinManager(), this.dso.getClientHandshakeManager());
+      return new RejoinAwarePlatformService(this, rejoinManager, this.dso.getClientHandshakeManager());
     } else {
       return new PlatformServiceImpl(this);
     }
@@ -272,7 +277,8 @@ public class ManagerImpl implements Manager {
                                                           ManagerImpl.this.dsoCluster, ManagerImpl.this.runtimeLogger,
                                                           ManagerImpl.this.clientMode,
                                                           ManagerImpl.this.securityManager,
-                                                          ManagerImpl.this.abortableOperationManager);
+                                                          ManagerImpl.this.abortableOperationManager,
+                                                          ManagerImpl.this.rejoinManager);
 
         if (forTests) {
           ManagerImpl.this.dso.setCreateDedicatedMBeanServer(true);

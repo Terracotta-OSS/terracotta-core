@@ -28,18 +28,22 @@ public class DsoNodeImpl implements DsoNodeInternal, Comparable {
     this.isLocalNode = isLocalNode;
   }
 
+  @Override
   public String getId() {
     return id;
   }
 
+  @Override
   public long getChannelId() {
     return channelId;
   }
 
+  @Override
   public String getIp() {
     return getOrRetrieveMetaData().getIp();
   }
 
+  @Override
   public String getHostname() {
     return getOrRetrieveMetaData().getHostname();
   }
@@ -72,11 +76,13 @@ public class DsoNodeImpl implements DsoNodeInternal, Comparable {
     return metaData;
   }
 
+  @Override
   public DsoNodeMetaData getOrRetrieveMetaData(DsoClusterInternal cluster) {
     if (metaData != null) { return metaData; }
     return cluster.retrieveMetaDataForDsoNode(this);
   }
 
+  @Override
   public void setMetaData(final DsoNodeMetaData metaData) {
     this.metaData = metaData;
   }
@@ -104,6 +110,7 @@ public class DsoNodeImpl implements DsoNodeInternal, Comparable {
     }
   }
 
+  @Override
   public int compareTo(final Object o) {
     return id.compareTo(((DsoNodeImpl) o).id);
   }

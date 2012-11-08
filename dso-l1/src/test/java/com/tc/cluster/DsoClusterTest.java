@@ -23,6 +23,7 @@ import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.locks.ThreadID;
 import com.tc.object.msg.ClientHandshakeMessage;
+import com.tc.platform.rejoin.RejoinManagerInternal;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tcclient.cluster.ClusterInternalEventsContext;
@@ -48,7 +49,7 @@ public class DsoClusterTest extends TestCase {
 
   @Override
   protected void setUp() throws Exception {
-    cluster = new DsoClusterImpl();
+    cluster = new DsoClusterImpl(Mockito.mock(RejoinManagerInternal.class));
     Stage mockStage = Mockito.mock(Stage.class);
     Sink mockSink = Mockito.mock(Sink.class);
     Mockito.when(mockStage.getSink()).thenReturn(mockSink);
@@ -408,6 +409,12 @@ public class DsoClusterTest extends TestCase {
       events.add(event.getNode().getId() + " DISABLED");
     }
 
+    @Override
+    public void nodeRejoined(DsoNode oldNode, DsoNode newNode) {
+      check();
+      events.add(oldNode.getId() + " REJOINED AS " + newNode.getId());
+    }
+
     public void check() {
       // no-op
     }
@@ -438,6 +445,12 @@ public class DsoClusterTest extends TestCase {
     public void operationsEnabled(final DsoClusterEvent event) {
       throw new RuntimeException("operationsEnabled");
     }
+
+    @Override
+    public void nodeRejoined(DsoNode oldNode, DsoNode newNode) {
+      throw new RuntimeException("rejoined");
+    }
+
   }
 
   private static class TimingRunnable implements Runnable {

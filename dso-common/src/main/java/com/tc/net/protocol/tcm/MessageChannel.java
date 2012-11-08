@@ -75,6 +75,6 @@ public interface MessageChannel {
   
   public NodeID getRemoteNodeID();
 
-  // public void reopen();
+  public void reopen();
   
 }

@@ -4,6 +4,8 @@
  */
 package com.tc.object.handshakemanager;
 
+import org.mockito.Mockito;
+
 import com.tc.async.api.Sink;
 import com.tc.async.impl.NullSink;
 import com.tc.cluster.DsoClusterImpl;
@@ -21,6 +23,7 @@ import com.tc.object.net.MockChannel;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
+import com.tc.platform.rejoin.RejoinManagerInternal;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
@@ -51,7 +54,8 @@ public class ClientHandshakeManagerTest extends TCTestCase {
                                           final SessionManager sessionManager, final Sink nullSink,
                                           final String clientVersion,
                                           final Collection<ClientHandshakeCallback> callbacks) {
-      super(logger, channel, chmf, pauseSink, sessionManager, new DsoClusterImpl(), clientVersion, callbacks);
+      super(logger, channel, chmf, pauseSink, sessionManager,
+            new DsoClusterImpl(Mockito.mock(RejoinManagerInternal.class)), clientVersion, callbacks);
     }
 
     @Override

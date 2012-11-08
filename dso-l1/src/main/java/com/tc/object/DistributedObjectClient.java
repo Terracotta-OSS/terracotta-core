@@ -165,8 +165,6 @@ import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.TransactionIDGenerator;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.platform.rejoin.ClientChannelEventController;
-import com.tc.platform.rejoin.RejoinManager;
-import com.tc.platform.rejoin.RejoinManagerImpl;
 import com.tc.platform.rejoin.RejoinManagerInternal;
 import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
@@ -243,7 +241,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                                                              .getConsoleLogger();
 
   private final DSOClientBuilder                     dsoClientBuilder;
-  private final ClientMode                           clientMode;
   private final DSOClientConfigHelper                config;
   private final ClassProvider                        classProvider;
   private final Manager                              manager;
@@ -283,16 +280,17 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   private final AbortableOperationManager            abortableOperationManager;
 
-  private RejoinManagerInternal                      rejoinManager;
+  private final RejoinManagerInternal                rejoinManager;
 
   public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
                                  final ClassProvider classProvider,
                                  final PreparedComponentsFromL2Connection connectionComponents, final Manager manager,
                                  final StatisticsAgentSubSystem statisticsAgentSubSystem,
                                  final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger,
-                                 AbortableOperationManager abortableOperationManager) {
+                                 final AbortableOperationManager abortableOperationManager,
+                                 final RejoinManagerInternal rejoinManager) {
     this(config, threadGroup, classProvider, connectionComponents, manager, statisticsAgentSubSystem, dsoCluster,
-         runtimeLogger, ClientMode.DSO_MODE, null, abortableOperationManager);
+         runtimeLogger, ClientMode.DSO_MODE, null, abortableOperationManager, rejoinManager);
   }
 
   public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
@@ -301,10 +299,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                  final StatisticsAgentSubSystem statisticsAgentSubSystem,
                                  final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger,
                                  final ClientMode clientMode, final TCSecurityManager securityManager,
-                                 final AbortableOperationManager abortableOperationManager) {
+                                 final AbortableOperationManager abortableOperationManager,
+                                 final RejoinManagerInternal rejoinManager) {
     super(threadGroup);
     Assert.assertNotNull(config);
-    this.clientMode = clientMode;
     this.abortableOperationManager = abortableOperationManager;
     this.config = config;
     this.securityManager = securityManager;
@@ -317,6 +315,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.threadIDMap = new ThreadIDMapImpl();
     this.runtimeLogger = runtimeLogger;
     this.dsoClientBuilder = createClientBuilder();
+    this.rejoinManager = rejoinManager;
   }
 
   protected DSOClientBuilder createClientBuilder() {
@@ -492,8 +491,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     // } else {
     // reconnectionRejectedHandler = new ReconnectionRejectedDefaultHandler();
     // }
-
-    rejoinManager = new RejoinManagerImpl(clientMode.isExpressRejoinClient());
 
     this.communicationsManager = this.dsoClientBuilder
         .createCommunicationsManager(mm,
@@ -1219,6 +1216,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     TCTimerService.getInstance().shutdown();
 
+    if (this.rejoinManager != null) {
+      this.rejoinManager.shutdown();
+    }
+
     if (this.counterManager != null) {
       try {
         this.counterManager.shutdown();
@@ -1412,9 +1413,5 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   public GroupID[] getGroupIDs() {
     return this.connectionComponents.getGroupIDs();
-  }
-
-  public RejoinManager getRejoinManager() {
-    return rejoinManager;
   }
 }

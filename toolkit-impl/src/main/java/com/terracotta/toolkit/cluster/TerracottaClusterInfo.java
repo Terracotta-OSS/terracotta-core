@@ -8,6 +8,7 @@ import org.terracotta.toolkit.cluster.ClusterEvent.Type;
 import org.terracotta.toolkit.cluster.ClusterInfo;
 import org.terracotta.toolkit.cluster.ClusterListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
+import org.terracotta.toolkit.cluster.RejoinClusterEvent;
 import org.terracotta.toolkit.internal.cluster.OutOfBandClusterListener;
 
 import com.tc.cluster.DsoCluster;
@@ -133,6 +134,11 @@ public class TerracottaClusterInfo implements ClusterInfo {
     }
 
     @Override
+    public void nodeRejoined(final DsoNode oldNode, final DsoNode newNode) {
+      listener.onClusterEvent(new RejoinClusterEventImpl(oldNode, newNode));
+    }
+
+    @Override
     public boolean useOutOfBandNotification(DsoClusterEventType type, DsoClusterEvent event) {
       if (listener instanceof OutOfBandClusterListener) {
         return ((OutOfBandClusterListener) listener)
@@ -169,6 +175,42 @@ public class TerracottaClusterInfo implements ClusterInfo {
       } else {
         return false;
       }
+    }
+  }
+
+  private static class RejoinClusterEventImpl implements RejoinClusterEvent {
+    private final ClusterNode beforeRejoinNode;
+    private final ClusterNode afterRejoinNode;
+
+    public RejoinClusterEventImpl(DsoNode oldNode, DsoNode newNode) {
+      this.beforeRejoinNode = new TerracottaNode(oldNode);
+      this.afterRejoinNode = new TerracottaNode(newNode);
+    }
+
+    @Override
+    public Type getType() {
+      return Type.NODE_REJOINED;
+    }
+
+    @Override
+    public ClusterNode getNode() {
+      return getNodeAfterRejoin();
+    }
+
+    @Override
+    public ClusterNode getNodeBeforeRejoin() {
+      return beforeRejoinNode;
+    }
+
+    @Override
+    public ClusterNode getNodeAfterRejoin() {
+      return afterRejoinNode;
+    }
+
+    @Override
+    public String toString() {
+      return "RejoinClusterEvent [beforeRejoinNode: " + beforeRejoinNode + ", afterRejoinNode: " + afterRejoinNode
+             + "]";
     }
   }
 

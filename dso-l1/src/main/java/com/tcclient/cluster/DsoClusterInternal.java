@@ -18,7 +18,7 @@ public interface DsoClusterInternal extends DsoCluster, DsoClusterInternalEvents
 
   public static enum DsoClusterEventType {
     NODE_JOIN("Node Joined"), NODE_LEFT("Node Left"), OPERATIONS_ENABLED("Operations Enabled"), OPERATIONS_DISABLED(
-        "Operations Disabled");
+        "Operations Disabled"), NODE_REJOINED("Node Rejoined");
 
     private final String name;
 

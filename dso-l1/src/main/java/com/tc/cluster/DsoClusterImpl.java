@@ -20,6 +20,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TCMap;
 import com.tc.object.bytecode.TCServerMap;
+import com.tc.platform.rejoin.RejoinManagerInternal;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
@@ -29,6 +30,7 @@ import com.tcclient.cluster.ClusterNodeStatus;
 import com.tcclient.cluster.DsoClusterInternal;
 import com.tcclient.cluster.DsoClusterInternalEventsGun;
 import com.tcclient.cluster.DsoNode;
+import com.tcclient.cluster.DsoNodeImpl;
 import com.tcclient.cluster.DsoNodeInternal;
 import com.tcclient.cluster.DsoNodeMetaData;
 import com.tcclient.cluster.OutOfBandDsoClusterListener;
@@ -68,6 +70,12 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   private ClientObjectManager                    clientObjectManager;
 
   private Sink                                   eventsProcessorSink;
+
+  private final RejoinManagerInternal            rejoinManager;
+
+  public DsoClusterImpl(RejoinManagerInternal rejoinManager) {
+    this.rejoinManager = rejoinManager;
+  }
 
   @Override
   public void init(final ClusterMetaDataManager metaDataManager, final ClientObjectManager objectManager,
@@ -369,11 +377,17 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   public void fireThisNodeJoined(final NodeID nodeId, final NodeID[] clusterMembers) {
     stateWriteLock.lock();
     try {
+      ClientID newNodeId = (ClientID) nodeId;
 
-      // we might get multiple calls in a row, ignore all but the first one
-      if (currentNode != null) { return; }
+      ClientID oldNodeId = currentClientID;
+      rejoinManager.thisNodeJoinedCallback(oldNodeId, newNodeId);
 
-      currentClientID = (ClientID) nodeId;
+      if (currentNode != null) {
+        // we might get multiple calls in a row, ignore all but the first one
+        return;
+      }
+
+      currentClientID = newNodeId;
       currentNode = topology.registerThisDsoNode(nodeId);
       nodeStatus.nodeJoined();
       nodeStatus.operationsEnabled();
@@ -438,6 +452,18 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
       retrieveMetaDataForDsoNode(node);
     }
     fireEvent(DsoClusterEventType.NODE_JOIN, event, listener);
+  }
+
+  @Override
+  public void fireNodeRejoined(ClientID oldNodeId, ClientID newNodeId) {
+    fireRejoinEvent(new DsoNodeImpl(oldNodeId.toString(), oldNodeId.toLong(), false),
+                    new DsoNodeImpl(newNodeId.toString(), newNodeId.toLong(), false));
+  }
+
+  private void fireRejoinEvent(DsoNodeImpl oldNode, DsoNodeImpl newNode) {
+    for (DsoClusterListener l : listeners) {
+      l.nodeRejoined(oldNode, newNode);
+    }
   }
 
   @Override

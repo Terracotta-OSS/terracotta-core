@@ -4,6 +4,8 @@
  */
 package com.tc.net.protocol.tcm;
 
+import org.mockito.Mockito;
+
 import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.cluster.DsoClusterImpl;
 import com.tc.config.schema.setup.ConfigurationSetupException;
@@ -30,6 +32,7 @@ import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
+import com.tc.platform.rejoin.RejoinManagerInternal;
 import com.tc.server.TCServer;
 import com.tc.server.TCServerImpl;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
@@ -165,6 +168,7 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
     configFactory().addServerToL1Config("127.0.0.1", dsoPort, jmxPort);
     L1ConfigurationSetupManager manager = super.createL1ConfigManager();
 
+    RejoinManagerInternal mock = Mockito.mock(RejoinManagerInternal.class);
     DistributedObjectClient client = new DistributedObjectClient(new StandardDSOClientConfigHelperImpl(manager),
                                                                  new TCThreadGroup(new ThrowableHandler(TCLogging
                                                                      .getLogger(DistributedObjectClient.class))),
@@ -172,9 +176,10 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
                                                                  new PreparedComponentsFromL2Connection(manager),
                                                                  NullManager.getInstance(),
                                                                  new StatisticsAgentSubSystemImpl(),
-                                                                 new DsoClusterImpl(),
+                                                                 new DsoClusterImpl(mock),
                                                                  new NullRuntimeLogger(),
-                                                                 new NullAbortableOperationManager());
+                                                                 new NullAbortableOperationManager(),
+ mock);
     client.start();
     return client;
   }

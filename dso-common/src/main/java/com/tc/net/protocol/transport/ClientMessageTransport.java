@@ -43,7 +43,8 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
   private final AtomicBoolean               isOpening                          = new AtomicBoolean(false);
   private final int                         callbackPort;
   private final ReconnectionRejectedHandler reconnectionRejectedHandler;
-  private volatile boolean                  rejoinExpected                     = false;
+
+  // private volatile boolean rejoinExpected = false;
 
   public ClientMessageTransport(ClientConnectionEstablisher clientConnectionEstablisher,
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
@@ -101,6 +102,13 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
     }
   }
 
+  @Override
+  public void reopen() {
+    clearConnection();
+    // do a reconnect
+    this.connectionEstablisher.asyncReconnect(this);
+  }
+
   private void handleHandshakeError(HandshakeResult result) throws IOException, MaxConnectionsExceededException,
       CommStackMismatchException, ReconnectionRejectedException {
     if (result.hasErrorContext()) {
@@ -136,12 +144,12 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
     Assert.eval("Client Message Transport :" + this.status, this.status.isSynSent());
     cleanConnectionWithoutNotifyListeners();
     fireTransportReconnectionRejectedEvent();
-    this.rejoinExpected = true;
+    // this.rejoinExpected = true;
   }
 
-  public boolean isRejoinExpected() {
-    return rejoinExpected;
-  }
+  // public boolean isRejoinExpected() {
+  // return rejoinExpected;
+  // }
 
   /**
    * Returns true if the MessageTransport was ever in an open state.

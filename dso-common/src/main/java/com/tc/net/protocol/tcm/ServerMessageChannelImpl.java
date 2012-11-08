@@ -33,6 +33,7 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
     }
   }
 
+  @Override
   public ChannelID getChannelID() {
     return sessionID;
   }
@@ -45,6 +46,11 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
   @Override
   public NetworkStackID open(char[] password) {
     throw new UnsupportedOperationException("Server channels don't support open()");
+  }
+
+  @Override
+  public void reopen() {
+    throw new UnsupportedOperationException("Server channels don't support reopen()");
   }
 
 }

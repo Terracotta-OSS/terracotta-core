@@ -730,6 +730,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   protected synchronized Set addAllObjectIDs(final Set oids, final NodeID remoteNode) {
+    if (true) return oids;
     return this.objectStore.addAllObjectIDs(oids);
   }
 

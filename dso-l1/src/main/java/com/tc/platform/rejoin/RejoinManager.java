@@ -15,4 +15,5 @@ public interface RejoinManager {
 
   ReconnectionRejectedHandler getReconnectionRejectedHandler();
 
+  void shutdown();
 }
