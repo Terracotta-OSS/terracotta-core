@@ -114,8 +114,12 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
                                                            token, TSAConfig
         .getSecurityCallbackUrl(), "createCacheManagerEntities", new Class<?>[] { Set.class, Set.class }, new Object[] { cacheManagerNames, attributes });
     Collection<CacheManagerEntity> result = deserialize(bytes);
-    for (CacheManagerEntity cme : result) {
-      cme.setAgentId(node);
+    if (result != null) {
+      for (CacheManagerEntity cme : result) {
+        cme.setAgentId(node);
+      }
+    } else {
+      result = Collections.emptySet();
     }
     return result;
   }
@@ -140,8 +144,12 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
                                                            token, TSAConfig
         .getSecurityCallbackUrl(), "createCacheEntities", new Class<?>[] { Set.class, Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames, attributes });
     Collection<CacheEntity> result = deserialize(bytes);
-    for (CacheEntity ce : result) {
-      ce.setAgentId(node);
+    if (result != null) {
+      for (CacheEntity ce : result) {
+        ce.setAgentId(node);
+      }
+    } else {
+      result = Collections.emptySet();
     }
     return result;
   }
@@ -166,8 +174,12 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
                                                            token, TSAConfig
         .getSecurityCallbackUrl(), "createCacheStatisticSampleEntity", new Class<?>[] { Set.class, Set.class, Set.class }, new Object[] { cacheManagerNames, cacheNames, statNames });
     Collection<CacheStatisticSampleEntity> result = deserialize(bytes);
-    for (CacheStatisticSampleEntity csse : result) {
-      csse.setAgentId(node);
+    if (result != null) {
+      for (CacheStatisticSampleEntity csse : result) {
+        csse.setAgentId(node);
+      }
+    } else {
+      result = Collections.emptySet();
     }
     return result;
   }
@@ -194,10 +206,12 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
       byte[] bytes = tsaManagementClientService.invokeMethod(requestValidator.getValidatedNode(), DfltSamplerRepositoryServiceMBean.class, ticket, token, TSAConfig
           .getSecurityCallbackUrl(), "getAgentsMetadata", new Class<?>[] { Set.class }, new Object[] { Collections.emptySet() });
       Collection<AgentMetadataEntity> resp = deserialize(bytes);
-      for(AgentMetadataEntity ame :  resp) {
-        ame.setAgentId(id);
+      if (resp != null) {
+        for(AgentMetadataEntity ame :  resp) {
+          ame.setAgentId(id);
+        }
+        result.addAll(resp);
       }
-      result.addAll(resp);
     }
 
     return result;
