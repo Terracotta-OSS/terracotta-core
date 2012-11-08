@@ -710,6 +710,8 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
       MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
       if (serverIsActive(mBeanServerConnection)) {
         return jmxConnector;
+      } else {
+        jmxConnector.close();
       }
     }
     return null; // no server has any client in the cluster at the moment
@@ -757,6 +759,8 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
         MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
         if (serverContainsEhcacheMBeans(mBeanServerConnection)) {
           return jmxConnector;
+        } else {
+          jmxConnector.close();
         }
       } catch (IOException ioe) {
         // cannot connect to this L2, it might be down, just skip it
@@ -788,6 +792,8 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
         MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
         if (serverContainsL1MBeans(mBeanServerConnection)) {
           return jmxConnector;
+        } else {
+          jmxConnector.close();
         }
       } catch (IOException ioe) {
         // cannot connect to this L2, it might be down, just skip it
