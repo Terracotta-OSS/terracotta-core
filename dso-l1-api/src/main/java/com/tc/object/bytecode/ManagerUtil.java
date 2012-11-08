@@ -152,7 +152,6 @@ public class ManagerUtil {
    * @param name Root name
    * @param object Root object to use if none exists yet
    * @return The root object actually used, may or may not == object
-   * @throws AbortedOperationException
    */
   protected static Object lookupOrCreateRoot(final String name, final Object object) {
     return getManager().lookupOrCreateRoot(name, object);
@@ -160,8 +159,6 @@ public class ManagerUtil {
 
   /**
    * Look up or create a new root object in the particular group id
-   * 
-   * @throws AbortedOperationException
    */
   protected static Object lookupOrCreateRoot(final String name, final Object object, GroupID gid) {
     return getManager().lookupOrCreateRoot(name, object, gid);
@@ -169,8 +166,6 @@ public class ManagerUtil {
 
   /**
    * Look up or create a new root object in the particular group id
-   * 
-   * @throws AbortedOperationException
    */
   protected static Object lookupRoot(final String name, GroupID gid) {
     return getManager().lookupRoot(name, gid);
