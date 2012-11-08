@@ -87,12 +87,12 @@ public class ClientLockManagerGroupImpl implements ClientLockManager {
   }
 
   @Override
-  public Notify notify(LockID lock, Object waitObject) {
+  public Notify notify(LockID lock, Object waitObject) throws AbortedOperationException {
     return getClientLockManagerFor(lock).notify(lock, null);
   }
 
   @Override
-  public Notify notifyAll(LockID lock, Object waitObject) {
+  public Notify notifyAll(LockID lock, Object waitObject) throws AbortedOperationException {
     return getClientLockManagerFor(lock).notifyAll(lock, null);
   }
 
@@ -107,12 +107,12 @@ public class ClientLockManagerGroupImpl implements ClientLockManager {
   }
 
   @Override
-  public boolean isLocked(LockID lock, LockLevel level) {
+  public boolean isLocked(LockID lock, LockLevel level) throws AbortedOperationException {
     return getClientLockManagerFor(lock).isLocked(lock, level);
   }
 
   @Override
-  public boolean isLockedByCurrentThread(LockID lock, LockLevel level) {
+  public boolean isLockedByCurrentThread(LockID lock, LockLevel level) throws AbortedOperationException {
     return getClientLockManagerFor(lock).isLockedByCurrentThread(lock, level);
   }
 
@@ -125,22 +125,22 @@ public class ClientLockManagerGroupImpl implements ClientLockManager {
   }
 
   @Override
-  public int localHoldCount(LockID lock, LockLevel level) {
+  public int localHoldCount(LockID lock, LockLevel level) throws AbortedOperationException {
     return getClientLockManagerFor(lock).localHoldCount(lock, level);
   }
 
   @Override
-  public int globalHoldCount(LockID lock, LockLevel level) {
+  public int globalHoldCount(LockID lock, LockLevel level) throws AbortedOperationException {
     return getClientLockManagerFor(lock).globalHoldCount(lock, level);
   }
 
   @Override
-  public int globalPendingCount(LockID lock) {
+  public int globalPendingCount(LockID lock) throws AbortedOperationException {
     return getClientLockManagerFor(lock).globalPendingCount(lock);
   }
 
   @Override
-  public int globalWaitingCount(LockID lock) {
+  public int globalWaitingCount(LockID lock) throws AbortedOperationException {
     return getClientLockManagerFor(lock).globalWaitingCount(lock);
   }
 

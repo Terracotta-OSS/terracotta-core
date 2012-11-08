@@ -530,8 +530,9 @@ public class ManagerUtil {
    * Check whether dso MonitorExist is required
    * 
    * @return True if required
+   * @throws AbortedOperationException
    */
-  protected static boolean isDsoMonitorEntered(final Object obj) {
+  protected static boolean isDsoMonitorEntered(final Object obj) throws AbortedOperationException {
     return getManager().isDsoMonitorEntered(obj);
   }
 
@@ -559,8 +560,9 @@ public class ManagerUtil {
    * Perform notify on obj
    * 
    * @param obj Instance
+   * @throws AbortedOperationException
    */
-  protected static void objectNotify(final Object obj) {
+  protected static void objectNotify(final Object obj) throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
     mgr.notify(lock, obj);
@@ -570,8 +572,9 @@ public class ManagerUtil {
    * Perform notifyAll on obj
    * 
    * @param obj Instance
+   * @throws AbortedOperationException
    */
-  protected static void objectNotifyAll(final Object obj) {
+  protected static void objectNotifyAll(final Object obj) throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
     mgr.notifyAll(lock, obj);
@@ -684,9 +687,10 @@ public class ManagerUtil {
    * @param obj Lock
    * @param lockLevel Lock level
    * @return True if locked at this level
+   * @throws AbortedOperationException
    * @throws NullPointerException If obj is null
    */
-  protected static boolean isLocked(final Object obj, final LockLevel level) {
+  protected static boolean isLocked(final Object obj, final LockLevel level) throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
     return mgr.isLocked(lock, level);
@@ -750,9 +754,10 @@ public class ManagerUtil {
    * @param obj The lock object
    * @param lockLevel The lock level
    * @return Lock count
+   * @throws AbortedOperationException
    * @throws NullPointerException If obj is null
    */
-  protected static int localHeldCount(final Object obj, final LockLevel level) {
+  protected static int localHeldCount(final Object obj, final LockLevel level) throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
     return mgr.localHoldCount(lock, level);
@@ -764,9 +769,11 @@ public class ManagerUtil {
    * @param obj The lock
    * @param lockLevel The lock level
    * @return True if held by current thread
+   * @throws AbortedOperationException
    * @throws NullPointerException If obj is null
    */
-  protected static boolean isHeldByCurrentThread(final Object obj, final LockLevel level) {
+  protected static boolean isHeldByCurrentThread(final Object obj, final LockLevel level)
+      throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
     return mgr.isLockedByCurrentThread(lock, level);
@@ -778,8 +785,10 @@ public class ManagerUtil {
    * @param lockId The lock ID
    * @param lockLevel The lock level
    * @return True if held by current thread
+   * @throws AbortedOperationException
    */
-  protected static boolean isLockHeldByCurrentThread(final String lockId, final LockLevel level) {
+  protected static boolean isLockHeldByCurrentThread(final String lockId, final LockLevel level)
+      throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockId);
     return mgr.isLockedByCurrentThread(lock, level);
@@ -790,9 +799,10 @@ public class ManagerUtil {
    * 
    * @param obj The object
    * @return Number of waiters
+   * @throws AbortedOperationException
    * @throws NullPointerException If obj is null
    */
-  protected static int queueLength(final Object obj) {
+  protected static int queueLength(final Object obj) throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
     return mgr.globalPendingCount(lock);
@@ -803,9 +813,10 @@ public class ManagerUtil {
    * 
    * @param obj The object
    * @return Number of waiters
+   * @throws AbortedOperationException
    * @throws NullPointerException If obj is null
    */
-  protected static int waitLength(final Object obj) {
+  protected static int waitLength(final Object obj) throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(obj);
     return mgr.globalWaitingCount(lock);
@@ -1345,8 +1356,10 @@ public class ManagerUtil {
    * @param lockId The lock ID
    * @param lockLevel The lock level
    * @return True if held by current thread
+   * @throws AbortedOperationException
    */
-  protected static boolean isLockHeldByCurrentThread(final long lockId, final LockLevel level) {
+  protected static boolean isLockHeldByCurrentThread(final long lockId, final LockLevel level)
+      throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockId);
     return mgr.isLockedByCurrentThread(lock, level);
@@ -1372,13 +1385,13 @@ public class ManagerUtil {
     mgr.lockIDWait(lock, unit.toMillis(time));
   }
 
-  protected static void lockIDNotifyAll(final Object lockID) {
+  protected static void lockIDNotifyAll(final Object lockID) throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockID);
     mgr.lockIDNotifyAll(lock);
   }
 
-  protected static void lockIDNotify(final Object lockID) {
+  protected static void lockIDNotify(final Object lockID) throws AbortedOperationException {
     Manager mgr = getManager();
     LockID lock = mgr.generateLockIdentifier(lockID);
     mgr.lockIDNotify(lock);

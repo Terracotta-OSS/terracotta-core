@@ -78,7 +78,7 @@ public class RejoinAwarePlatformService implements PlatformService {
   }
 
   @Override
-  public boolean isHeldByCurrentThread(Object lockID, LockLevel level) {
+  public boolean isHeldByCurrentThread(Object lockID, LockLevel level) throws AbortedOperationException {
     return interceptedProxy.isHeldByCurrentThread(lockID, level);
   }
 
@@ -116,12 +116,12 @@ public class RejoinAwarePlatformService implements PlatformService {
   }
 
   @Override
-  public void lockIDNotify(Object lockID) {
+  public void lockIDNotify(Object lockID) throws AbortedOperationException {
     interceptedProxy.lockIDNotify(lockID);
   }
 
   @Override
-  public void lockIDNotifyAll(Object lockID) {
+  public void lockIDNotifyAll(Object lockID) throws AbortedOperationException {
     interceptedProxy.lockIDNotifyAll(lockID);
   }
 

@@ -472,7 +472,7 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public boolean isDsoMonitorEntered(final Object o) {
+  public boolean isDsoMonitorEntered(final Object o) throws AbortedOperationException {
     if (this.objectManager.isCreationInProgress()) { return false; }
 
     final LockID lock = generateLockIdentifier(o);
@@ -826,32 +826,32 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public int globalHoldCount(final LockID lock, final LockLevel level) {
+  public int globalHoldCount(final LockID lock, final LockLevel level) throws AbortedOperationException {
     return this.lockManager.globalHoldCount(lock, level);
   }
 
   @Override
-  public int globalPendingCount(final LockID lock) {
+  public int globalPendingCount(final LockID lock) throws AbortedOperationException {
     return this.lockManager.globalPendingCount(lock);
   }
 
   @Override
-  public int globalWaitingCount(final LockID lock) {
+  public int globalWaitingCount(final LockID lock) throws AbortedOperationException {
     return this.lockManager.globalWaitingCount(lock);
   }
 
   @Override
-  public boolean isLocked(final LockID lock, final LockLevel level) {
+  public boolean isLocked(final LockID lock, final LockLevel level) throws AbortedOperationException {
     return this.lockManager.isLocked(lock, level);
   }
 
   @Override
-  public boolean isLockedByCurrentThread(final LockID lock, final LockLevel level) {
+  public boolean isLockedByCurrentThread(final LockID lock, final LockLevel level) throws AbortedOperationException {
     return this.lockManager.isLockedByCurrentThread(lock, level);
   }
 
   @Override
-  public int localHoldCount(final LockID lock, final LockLevel level) {
+  public int localHoldCount(final LockID lock, final LockLevel level) throws AbortedOperationException {
     return this.lockManager.localHoldCount(lock, level);
   }
 
@@ -881,7 +881,7 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public Notify notify(final LockID lock, final Object waitObject) {
+  public Notify notify(final LockID lock, final Object waitObject) throws AbortedOperationException {
     if (clusteredLockingEnabled(lock) && (lock instanceof DsoLockID)) {
       this.txManager.notify(this.lockManager.notify(lock, waitObject));
     } else {
@@ -891,7 +891,7 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public Notify notifyAll(final LockID lock, final Object waitObject) {
+  public Notify notifyAll(final LockID lock, final Object waitObject) throws AbortedOperationException {
     if (clusteredLockingEnabled(lock) && (lock instanceof DsoLockID)) {
       this.txManager.notify(this.lockManager.notifyAll(lock, waitObject));
     } else {
@@ -1134,12 +1134,12 @@ public class ManagerImpl implements Manager {
   }
 
   @Override
-  public void lockIDNotifyAll(final LockID lock) {
+  public void lockIDNotifyAll(final LockID lock) throws AbortedOperationException {
     this.txManager.notify(this.lockManager.notifyAll(lock, null));
   }
 
   @Override
-  public void lockIDNotify(final LockID lock) {
+  public void lockIDNotify(final LockID lock) throws AbortedOperationException {
     this.txManager.notify(this.lockManager.notify(lock, null));
   }
 

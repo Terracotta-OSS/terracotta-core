@@ -249,8 +249,9 @@ public interface Manager extends TerracottaLocking {
    * Check whether dso MonitorExist is required
    * 
    * @return True if required
+   * @throws AbortedOperationException
    */
-  public boolean isDsoMonitorEntered(Object obj);
+  public boolean isDsoMonitorEntered(Object obj) throws AbortedOperationException;
 
   /**
    * Retrieve the customer change applicator that was registered for a particular class.
@@ -405,9 +406,9 @@ public interface Manager extends TerracottaLocking {
 
   void lockIDWait(final LockID lock, final long timeout) throws InterruptedException, AbortedOperationException;
 
-  void lockIDNotifyAll(final LockID lock);
+  void lockIDNotifyAll(final LockID lock) throws AbortedOperationException;
 
-  void lockIDNotify(final LockID lock);
+  void lockIDNotify(final LockID lock) throws AbortedOperationException;
 
   /**
    * Register an object with given name if null is mapped currently to the name. Otherwise returns old mapped object.

@@ -35,7 +35,7 @@ public interface PlatformService {
 
   void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException;
 
-  boolean isHeldByCurrentThread(Object lockID, LockLevel level);
+  boolean isHeldByCurrentThread(Object lockID, LockLevel level) throws AbortedOperationException;
 
   void beginLock(final Object lockID, final LockLevel level) throws AbortedOperationException;
 
@@ -51,9 +51,9 @@ public interface PlatformService {
   void lockIDWait(Object lockID, long timeout, TimeUnit timeUnit) throws InterruptedException,
       AbortedOperationException;
 
-  void lockIDNotify(Object lockID);
+  void lockIDNotify(Object lockID) throws AbortedOperationException;
 
-  void lockIDNotifyAll(Object lockID);
+  void lockIDNotifyAll(Object lockID) throws AbortedOperationException;
 
   TCProperties getTCProperties();
 

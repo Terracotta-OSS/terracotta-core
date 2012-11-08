@@ -70,7 +70,7 @@ public class PlatformServiceImpl implements PlatformService {
   }
 
   @Override
-  public boolean isHeldByCurrentThread(Object lockID, LockLevel level) {
+  public boolean isHeldByCurrentThread(Object lockID, LockLevel level) throws AbortedOperationException {
     LockID lock = manager.generateLockIdentifier(lockID);
     return manager.isLockedByCurrentThread(lock, level);
   }
@@ -115,13 +115,13 @@ public class PlatformServiceImpl implements PlatformService {
   }
 
   @Override
-  public void lockIDNotify(Object lockID) {
+  public void lockIDNotify(Object lockID) throws AbortedOperationException {
     LockID lock = manager.generateLockIdentifier(lockID);
     manager.lockIDNotify(lock);
   }
 
   @Override
-  public void lockIDNotifyAll(Object lockID) {
+  public void lockIDNotifyAll(Object lockID) throws AbortedOperationException {
     LockID lock = manager.generateLockIdentifier(lockID);
     manager.lockIDNotifyAll(lock);
   }

@@ -69,18 +69,20 @@ public interface TerracottaLocking {
    * 
    * @param lock lock to act upon
    * @param waitObject local vm object on which threads are waiting
+   * @throws AbortedOperationException
    * @throws IllegalMonitorStateException if the current thread does not hold a write lock
    */
-  public Notify notify(LockID lock, Object waitObject);
+  public Notify notify(LockID lock, Object waitObject) throws AbortedOperationException;
 
   /**
    * Notify all threads waiting on the given lock.
    * 
    * @param lock lock to act upon
    * @param waitObject local vm object on which threads are waiting
+   * @throws AbortedOperationException
    * @throws IllegalMonitorStateException if the current thread does not hold a write lock
    */
-  public Notify notifyAll(LockID lock, Object waitObject);
+  public Notify notifyAll(LockID lock, Object waitObject) throws AbortedOperationException;
 
   /**
    * Move the current thread to wait on the given lock.
@@ -113,8 +115,9 @@ public interface TerracottaLocking {
    * 
    * @param lock lock to query
    * @param level level to query
+   * @throws AbortedOperationException
    */
-  public boolean isLocked(LockID lock, LockLevel level);
+  public boolean isLocked(LockID lock, LockLevel level) throws AbortedOperationException;
 
   /**
    * Return true if the given lock is held by the current thread at the given lock level.
@@ -123,8 +126,9 @@ public interface TerracottaLocking {
    * 
    * @param lock lock to query
    * @param level level to query
+   * @throws AbortedOperationException
    */
-  public boolean isLockedByCurrentThread(LockID lock, LockLevel level);
+  public boolean isLockedByCurrentThread(LockID lock, LockLevel level) throws AbortedOperationException;
 
   /**
    * Return true if any lock is held by the current thread at the given lock level.
@@ -140,8 +144,9 @@ public interface TerracottaLocking {
    * 
    * @param lock lock to query
    * @param level level to query
+   * @throws AbortedOperationException
    */
-  public int localHoldCount(LockID lock, LockLevel level);
+  public int localHoldCount(LockID lock, LockLevel level) throws AbortedOperationException;
 
   /**
    * Return the count of global (cluster-wide) holders at the given lock level.
@@ -151,8 +156,9 @@ public interface TerracottaLocking {
    * @see TerracottaLocking#isLocked(LockID, LockLevel)
    * @param lock lock to query
    * @param level level to query
+   * @throws AbortedOperationException
    */
-  public int globalHoldCount(LockID lock, LockLevel level);
+  public int globalHoldCount(LockID lock, LockLevel level) throws AbortedOperationException;
 
   /**
    * Return the count of global (cluster-wide) pending holders.
@@ -161,8 +167,9 @@ public interface TerracottaLocking {
    * 
    * @see TerracottaLocking#isLocked(LockID, LockLevel)
    * @param lock lock to query
+   * @throws AbortedOperationException
    */
-  public int globalPendingCount(LockID lock);
+  public int globalPendingCount(LockID lock) throws AbortedOperationException;
 
   /**
    * Return the count of global (cluster-wide) waiting threads.
@@ -171,8 +178,9 @@ public interface TerracottaLocking {
    * 
    * @see TerracottaLocking#isLocked(LockID, LockLevel)
    * @param lock lock to query
+   * @throws AbortedOperationException
    */
-  public int globalWaitingCount(LockID lock);
+  public int globalWaitingCount(LockID lock) throws AbortedOperationException;
 
   public void pinLock(LockID lock);
 

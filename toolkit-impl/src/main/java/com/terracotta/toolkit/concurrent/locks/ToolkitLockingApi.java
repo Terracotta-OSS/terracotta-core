@@ -42,8 +42,7 @@ public class ToolkitLockingApi {
 
   // RWLsocks created for toolkitObject - used for ToolkitReadWriteLock
   public static UnnamedToolkitReadWriteLock createUnnamedReadWriteLock(ToolkitObjectType toolkitObjectType,
-                                                                       String name,
-                                                                       PlatformService service) {
+                                                                       String name, PlatformService service) {
     return new UnnamedToolkitReadWriteLock(service, generateStringLockId(toolkitObjectType, name));
   }
 
@@ -95,7 +94,11 @@ public class ToolkitLockingApi {
   }
 
   public static boolean isHeldByCurrentThread(ToolkitLockDetail lockDetail, PlatformService service) {
-    return service.isHeldByCurrentThread(lockDetail.getLockId(), lockDetail.getLockLevel());
+    try {
+      return service.isHeldByCurrentThread(lockDetail.getLockId(), lockDetail.getLockLevel());
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   public static void lockIdWait(ToolkitLockDetail lockDetail, PlatformService service) throws InterruptedException {
@@ -118,11 +121,19 @@ public class ToolkitLockingApi {
   }
 
   public static void lockIdNotify(ToolkitLockDetail lockDetail, PlatformService service) {
-    service.lockIDNotify(lockDetail.getLockId());
+    try {
+      service.lockIDNotify(lockDetail.getLockId());
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   public static void lockIdNotifyAll(ToolkitLockDetail lockDetail, PlatformService service) {
-    service.lockIDNotifyAll(lockDetail.getLockId());
+    try {
+      service.lockIDNotifyAll(lockDetail.getLockId());
+    } catch (AbortedOperationException e) {
+      throw new ToolkitAbortableOperationException(e);
+    }
   }
 
   public static void lock(long longLockId, ToolkitLockTypeInternal lockType, PlatformService service) {

@@ -208,7 +208,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public Notify notify(final LockID lock, final Object waitObject) {
+  public Notify notify(final LockID lock, final Object waitObject) throws AbortedOperationException {
     waitUntilRunning();
     final ClientLock lockState = getOrCreateClientLockState(lock);
     final ThreadID thread = this.threadManager.getThreadID();
@@ -220,7 +220,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public Notify notifyAll(final LockID lock, final Object waitObject) {
+  public Notify notifyAll(final LockID lock, final Object waitObject) throws AbortedOperationException {
     waitUntilRunning();
     final ClientLock lockState = getOrCreateClientLockState(lock);
     final ThreadID thread = this.threadManager.getThreadID();
@@ -243,7 +243,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public boolean isLocked(final LockID lock, final LockLevel level) {
+  public boolean isLocked(final LockID lock, final LockLevel level) throws AbortedOperationException {
     waitUntilRunning();
     final ClientLock lockState = getClientLockState(lock);
     if (lockState != null) {
@@ -273,7 +273,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public boolean isLockedByCurrentThread(final LockID lock, final LockLevel level) {
+  public boolean isLockedByCurrentThread(final LockID lock, final LockLevel level) throws AbortedOperationException {
     waitUntilRunning();
     final ClientLock lockState = getClientLockState(lock);
     if (lockState == null) {
@@ -293,7 +293,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public int localHoldCount(final LockID lock, final LockLevel level) {
+  public int localHoldCount(final LockID lock, final LockLevel level) throws AbortedOperationException {
     waitUntilRunning();
     final ClientLock lockState = getClientLockState(lock);
     if (lockState == null) {
@@ -304,7 +304,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public int globalHoldCount(final LockID lock, final LockLevel level) {
+  public int globalHoldCount(final LockID lock, final LockLevel level) throws AbortedOperationException {
     waitUntilRunning();
 
     int holdCount = 0;
@@ -342,7 +342,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public int globalPendingCount(final LockID lock) {
+  public int globalPendingCount(final LockID lock) throws AbortedOperationException {
     waitUntilRunning();
 
     int pendingCount = 0;
@@ -365,7 +365,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   @Override
-  public int globalWaitingCount(final LockID lock) {
+  public int globalWaitingCount(final LockID lock) throws AbortedOperationException {
     waitUntilRunning();
 
     int waiterCount = 0;
@@ -676,9 +676,11 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
   /***********************************/
   /* END ClientHandshake METHODS */
-  /***********************************/
+  /**
+   * @throws AbortedOperationException
+   *********************************/
 
-  private void waitUntilRunning() {
+  private void waitUntilRunning() throws AbortedOperationException {
     this.stateGuard.readLock().lock();
     try {
       if (this.state == State.RUNNING) { return; }
@@ -694,6 +696,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
           if (isShutdown()) { throw new TCNotRunningException(); }
           this.runningCondition.await();
         } catch (final InterruptedException e) {
+          handleInterruptedException();
           interrupted = true;
         }
       }
@@ -702,6 +705,19 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       Util.selfInterruptIfNeeded(interrupted);
     }
 
+  }
+
+  private void handleInterruptedException()
+      throws AbortedOperationException {
+    if (abortableOperationManager.isAborted()) {
+      throw new AbortedOperationException();
+    } else {
+      checkIfShutDownOnInterruptedException();
+    }
+  }
+
+  private void checkIfShutDownOnInterruptedException() {
+    //
   }
 
   /**
