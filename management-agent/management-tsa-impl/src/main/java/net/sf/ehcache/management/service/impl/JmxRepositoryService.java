@@ -52,6 +52,10 @@ public class JmxRepositoryService implements EntityResourceFactory, CacheManager
   }
 
   private static <T> T deserialize(byte[] bytes) {
+    if (bytes == null) {
+      return null;
+    }
+
     try {
       ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
       try {
