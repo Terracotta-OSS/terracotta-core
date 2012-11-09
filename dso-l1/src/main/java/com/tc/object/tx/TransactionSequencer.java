@@ -126,7 +126,7 @@ public class TransactionSequencer extends InternalDSCleanupHelper implements Cle
     }
   }
 
-  public void throttleIfNecesary() throws AbortedOperationException {
+  public synchronized void throttleIfNecesary() throws AbortedOperationException {
     waitIfNecessary();
   }
 

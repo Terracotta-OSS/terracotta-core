@@ -71,6 +71,7 @@ public class TransactionSequencerTest extends TestCase {
   public void testInterruptAddTransaction() throws Exception {
     // DEV-5589: Allow interrupting adding to the transaction sequencer.
     for (int i = 0; i < MAX_PENDING_BATCHES; i++) {
+      this.txnSequencer.throttleIfNecesary();
       this.txnSequencer.addTransaction(new TestClientTransaction());
     }
 
@@ -79,6 +80,7 @@ public class TransactionSequencerTest extends TestCase {
       @Override
       public void run() {
         try {
+          txnSequencer.throttleIfNecesary();
           txnSequencer.addTransaction(new TestClientTransaction());
           System.out.println("Transaction added successfully.");
         } catch (Exception e) {
