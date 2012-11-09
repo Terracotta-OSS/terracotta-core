@@ -30,10 +30,6 @@ public class NonStopBasicTest extends AbstractToolkitTestBase {
       super(args);
     }
 
-    public static void main(String[] args) {
-      new NonStopBasicTestClient(args).run();
-    }
-
     @Override
     protected void test(Toolkit toolkit) throws Throwable {
       ToolkitBarrier barrier = toolkit.getBarrier("testBarrier", CLIENT_COUNT);

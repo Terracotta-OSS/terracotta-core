@@ -21,10 +21,6 @@ public class NonStopNoOpTest extends AbstractToolkitTestBase {
       super(args);
     }
 
-    public static void main(String[] args) {
-      new NonStopNoOpTestClient(args).run();
-    }
-
     @Override
     protected NonStopTimeoutBehavior getTimeoutBehavior() {
       return NonStopTimeoutBehavior.NO_OP;

@@ -48,20 +48,20 @@ public abstract class AbstractNonStopTestClient extends NonStopClientBase {
       makeServerDie();
 
       for (int i = 0; i < NUMBER_OF_ELEMENTS; i++) {
-        boolean exceptionOccurred = false;
+        NonStopException exception = null;
         long time = System.currentTimeMillis();
         try {
           Integer intValue = cache.get(i);
           checkOnReturnValue(i, intValue);
         } catch (NonStopException e) {
-          exceptionOccurred = true;
+          exception = e;
         }
 
         time = System.currentTimeMillis() - time;
         Assert.assertTrue((time > (NON_STOP_TIMEOUT_MILLIS - 500)) && (time < (NON_STOP_TIMEOUT_MILLIS + 2000)));
         System.err.println("Time consumed " + time);
 
-        checkNonStopExceptionOnReads(exceptionOccurred);
+        checkNonStopExceptionOnReads(exception);
       }
 
       restartCrashedServer();
@@ -94,15 +94,18 @@ public abstract class AbstractNonStopTestClient extends NonStopClientBase {
     }
   }
 
-  private void checkNonStopExceptionOnReads(boolean exceptionOccurred) {
+  private void checkNonStopExceptionOnReads(NonStopException exception) {
     switch (getTimeoutBehavior()) {
       case EXCEPTION_ON_TIMEOUT:
-        Assert.assertTrue(exceptionOccurred);
+        Assert.assertNotNull(exception);
         break;
       case EXCEPTION_ON_MUTATE_AND_LOCAL_READS:
       case LOCAL_READS:
       case NO_OP:
-        Assert.assertFalse(exceptionOccurred);
+        if (exception != null) {
+          System.err.println(exception);
+          throw new AssertionError("Unexpected NonStop Exception");
+        }
         break;
     }
   }

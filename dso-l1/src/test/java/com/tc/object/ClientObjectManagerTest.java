@@ -364,13 +364,13 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     final LookupRootAgent lookup2 = new LookupRootAgent(barrier, this.mgr, this.rootName, this.object);
 
     // start the first lookup
-    new Thread(lookup1).start();
+    new Thread(lookup1, "lookup1").start();
     // make sure the first caller has called down into the remote object manager.
     this.remoteObjectManager.retrieveRootIDCalls.take();
     assertNull(this.remoteObjectManager.retrieveRootIDCalls.poll(0, TimeUnit.MILLISECONDS));
 
     // now start another lookup and make sure that it doesn't call down into the remote object manager.
-    new Thread(lookup2).start();
+    new Thread(lookup2, "lookup2").start();
     ThreadUtil.reallySleep(5000);
     assertNull(this.remoteObjectManager.retrieveRootIDCalls.poll(0, TimeUnit.MILLISECONDS));
 

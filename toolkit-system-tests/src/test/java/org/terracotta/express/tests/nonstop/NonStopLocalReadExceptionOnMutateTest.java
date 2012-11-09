@@ -22,10 +22,6 @@ public class NonStopLocalReadExceptionOnMutateTest extends AbstractToolkitTestBa
       super(args);
     }
 
-    public static void main(String[] args) {
-      new NonStopLocalReadExceptionOnMutateTestClient(args).run();
-    }
-
     @Override
     protected NonStopTimeoutBehavior getTimeoutBehavior() {
       return NonStopTimeoutBehavior.EXCEPTION_ON_MUTATE_AND_LOCAL_READS;

@@ -22,10 +22,6 @@ public class NonStopLocalReadTest extends AbstractToolkitTestBase {
       super(args);
     }
 
-    public static void main(String[] args) {
-      new NonStopLocalReadTestClient(args).run();
-    }
-
     @Override
     protected NonStopTimeoutBehavior getTimeoutBehavior() {
       return NonStopTimeoutBehavior.LOCAL_READS;

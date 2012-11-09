@@ -1003,8 +1003,7 @@ public class ClientObjectManagerImpl extends CleanupHelper implements ClientObje
     replaceRootIDIfNecessary(rootName, new GroupID(newRootID.getGroupID()), newRootID);
   }
 
-  public synchronized void replaceRootIDIfNecessary(final String rootName, final GroupID gid, final ObjectID newRootID)
- {
+  public synchronized void replaceRootIDIfNecessary(final String rootName, final GroupID gid, final ObjectID newRootID) {
     waitUntilRunning();
 
     final ObjectID oldRootID = this.rootsHolder.getRootIDForName(rootName, gid);
@@ -1058,7 +1057,6 @@ public class ClientObjectManagerImpl extends CleanupHelper implements ClientObje
     retrieveNeeded = lookupInProgress && !replaceRootIfExistWhenCreate;
 
     isNew = retrieveNeeded || (rootID.isNull() && create);
-    try {
       if (retrieveNeeded) {
         rootID = this.remoteObjectManager.retrieveRootID(rootName, gid);
       }
@@ -1075,18 +1073,16 @@ public class ClientObjectManagerImpl extends CleanupHelper implements ClientObje
         }
         rootID = root.getObjectID();
         this.clientTxManager.createRoot(rootName, rootID);
-      }
-    } finally {
-      synchronized (this) {
-        if (isNew && !rootID.isNull()) {
-          this.rootsHolder.addRoot(rootName, rootID);
-        }
-        if (lookupInProgress) {
-          markRootLookupNotInProgress(rootName, gid);
-          notifyAll();
-        }
-      }
     }
+    synchronized (this) {
+      if (isNew && !rootID.isNull()) {
+        this.rootsHolder.addRoot(rootName, rootID);
+      }
+      if (lookupInProgress) {
+        markRootLookupNotInProgress(rootName, gid);
+        notifyAll();
+        }
+      }
 
     try {
       return lookupObject(rootID, null, noDepth, false);
@@ -1659,8 +1655,7 @@ public class ClientObjectManagerImpl extends CleanupHelper implements ClientObje
     this.factory.initClazzIfRequired(tcObjectSelf.getClass(), tcObjectSelf);
   }
 
-  private void handleInterruptedException()
-      throws AbortedOperationException {
+  private void handleInterruptedException() throws AbortedOperationException {
     if (abortableOperationManager.isAborted()) {
       throw new AbortedOperationException();
     } else {

@@ -21,10 +21,6 @@ public class NonStopExceptionOnTimeoutTest extends AbstractToolkitTestBase {
       super(args);
     }
 
-    public static void main(String[] args) {
-      new NonStopExceptionOnTimeoutTestClient(args).run();
-    }
-
     @Override
     protected NonStopTimeoutBehavior getTimeoutBehavior() {
       return NonStopTimeoutBehavior.EXCEPTION_ON_TIMEOUT;
