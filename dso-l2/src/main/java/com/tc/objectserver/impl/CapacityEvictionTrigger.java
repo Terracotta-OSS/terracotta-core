@@ -113,7 +113,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             public String toString() {
                 return "ClientReferenceSetRefreshCapacityEvictor{wasover="  + wasOver 
                         + " count=" + sampleCount
-                        + " clientset=" + clientSet 
+                        + " clientset=" + clientSetCount
                         + " parent=" + super.toString() 
                         + "}";
             }
