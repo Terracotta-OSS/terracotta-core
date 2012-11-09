@@ -43,6 +43,6 @@ public interface EvictionTrigger {
      * @param clients   the client object id reference set
      * @return          a map of evictable items
      */
-    Map       collectEvictonCandidates(int targetMax, EvictableMap map, ClientObjectReferenceSet clients);
+    Map<Object, ObjectID> collectEvictonCandidates(int targetMax, EvictableMap map, ClientObjectReferenceSet clients);
 
 }

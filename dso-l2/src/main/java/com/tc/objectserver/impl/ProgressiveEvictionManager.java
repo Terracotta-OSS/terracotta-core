@@ -155,7 +155,10 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             final String className = state.getClassName();
 
             EvictableMap ev = getEvictableMapFrom(mo.getID(), state);
-            if (!trigger.startEviction(ev)) {
+    // if size is zero or cache is pinned or already evicting, exit false
+            if ( ev.getSize() == 0 ||
+                 ev.getMaxTotalCount() == 0 ||
+                 !trigger.startEviction(ev) ) {
                 this.objectManager.releaseReadOnly(mo);
                 return true;
             }
@@ -165,13 +168,13 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             // to the sink because the sink reached max capacity and blocking
             // with a checked-out object will result in a deadlock. @see DEV-5207
             trigger.completeEviction(ev);
+            if ( context == null && ev.isEvicting() ) {
+                throw new AssertionError(trigger.toString());
+            }
             this.objectManager.releaseReadOnly(mo);
             if (context != null) {
                 this.evictorSink.add(context);
-            }
-        } catch ( Throwable t ) {
-            this.objectManager.releaseReadOnly(mo);
-            logger.warn("uncaught exception",t);
+            } 
         } finally {
             evictor.markEvictionDone(oid);
             if (evictor.isLogging()) {
@@ -185,19 +188,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private ServerMapEvictionContext doEviction(final EvictionTrigger trigger, final EvictableMap ev,
             final String className,
             final String cacheName) {
-        final int currentSize = ev.getSize();
         int max = ev.getMaxTotalCount();
-
-        if (currentSize == 0) {
-            return null;
-        }
-
-        if (max == 0) {
-            if (evictor.isLogging()) {
-                log(ev.getCacheName() + " is pinned or a store");
-            }
-            return null;
-        }
 
         if (max < 0) {
 //  cache has no count capacity max is MAX_VALUE;
@@ -308,7 +299,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 last = current;
                 if (percent > L2_CACHEMANAGER_CRITICALTHRESHOLD) {
                     if ( !isEmergency || currentRun.isDone() ) {
-                        log("Emergency Triggered");
+                        log("Emergency Triggered - " + percent);
                         currentRun.cancel(true);
                         currentRun = emergencyEviction();
                         isEmergency = true;
@@ -318,7 +309,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                     if ( currentRun.isDone() ) {
                         isEmergency = false;
                         currentRun = scheduleEvictionRun();
-                    }
+                    } 
                 }
             } catch (UnsupportedOperationException us) {
                 if ( currentRun.isDone() ) {

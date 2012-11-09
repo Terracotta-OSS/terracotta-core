@@ -32,13 +32,16 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     
     private final boolean runAlways;
     private boolean dumpLive = false;
+    private int count = 0;
     private int sampled = 0;
+    private int filtered = 0;
     private int alive = 0;
     private int expired = 0;
     private int overflow = 0;
     private int excluded = 0;
     private int tti = 0;
     private int ttl = 0;
+    private boolean completed = false;
     private String cacheName;
     private final ObjectManager  mgr;
     private final ProgressiveEvictionManager  evictor;
@@ -75,7 +78,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
         tti = map.getTTISeconds();
         ttl = map.getTTLSeconds();
         if ( tti > 0 || 
-                ttl > 0 || 
+            ttl > 0 || 
                 runAlways ||
                 map.getSize() > map.getMaxTotalCount() ) {
             return super.startEviction(map);
@@ -85,11 +88,8 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
 
     @Override
     public void completeEviction(EvictableMap map) {
- //  only if you sampled nothing, complete eviction, else actual eviction stage
- //  will take care of it.
-        if ( sampled == 0 ) {
-            super.completeEviction(map);
-        }
+        completed = true;
+        super.completeEviction(map);
     }
 
     @Override
@@ -102,26 +102,27 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
             }
             s.putAll(filter(map.getRandomSamples(Math.round((samples-s.size()) * 1.5f), clients),map.getTTISeconds(),map.getTTLSeconds(),samples));
 //        }
-        sampled = s.size();
-        return s;
+        filtered = s.size();
+        
+        return processSample(s);
     }
       
     protected int calculateSampleCount(int max, EvictableMap ev) {
-        int count = ev.getSize();
+        count = ev.getSize();
 
-        int samples = count/10;
-        if ( samples < 100 ) {
-            samples = 100;
-        } else if ( samples > 100000 ) {
-            samples = 100000;
+        sampled = count/10;
+        if ( sampled < 100 ) {
+            sampled = 100;
+        } else if ( sampled > 100000 ) {
+            sampled = 100000;
         }
         
         if ( max > 0 && count - max > 0 ) {
-            samples = count - max;
+            sampled = count - max;
             dumpLive = true;
         }
         
-        return samples;
+        return sampled;
     }
     
    private Map<Object, ObjectID> filter(final Map<Object, ObjectID> samples, final int ttiSeconds,
@@ -223,16 +224,21 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     @Override
     public String toString() {
         String flag = ( expired + overflow > 0 ) ? ", ELEMENTS_EVICTED" : "";
-        String element = ( runAlways ) ? ", RUN_ALWAYS" : "";
+        String element = ( runAlways ) ? "RUN_ALWAYS" : "";
+        String fullRun = ( completed ) ? ", COMPLETED" : "";
         return "PeriodicEvictionTrigger{" 
-                + "name=" + cacheName + " - " + getId()
                 + element
+                + fullRun
                 + ", over capacity=" + dumpLive 
-                + ", count=" + sampled
+                + ", count=" + count
+                + ", sampled=" + sampled
+                + ", filtered=" + filtered
                 + ", overflow=" + overflow 
                 + ", expired=" + expired 
                 + ", excluded=" + excluded 
+                + ", tti/ttl=" + tti + "/" + ttl 
                 + ", alive=" + alive 
+                + ", parent=" + super.toString()
                 + flag
                 + '}';
     }

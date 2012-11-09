@@ -24,6 +24,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     private boolean aboveCapacity = true;
     private int count = 0;
     private int clientSetCount = 0;
+    private String name;
     private final ServerMapEvictionManager mgr;
     private ClientObjectReferenceSet clientSet;
 
@@ -38,9 +39,9 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
         if ( !map.isEvicting() ) {
             throw new AssertionError("map is not in evicting state");
         }
-        int max = map.getMaxTotalCount();
         
-        if ( max != 0 && map.getSize() > max ) {
+        if ( map.getSize() > map.getMaxTotalCount() ) {
+            super.startEviction(map);
             return true;
         } else {
             map.evictionCompleted();
@@ -48,15 +49,6 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
         
         aboveCapacity = false;
         return false;
-    }
-    
-    @Override
-    public void completeEviction(EvictableMap map) {
- //  only if you sampled nothing, complete eviction, else actual eviction stage
- //  will take care of it.
-        if ( count == 0 ) {
-            super.completeEviction(map);
-        }
     }
             
     @Override
@@ -68,7 +60,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             throw new AssertionError("triggers should never start evicting a pinned cache or store");
         }
         if ( sample <= 0 ) {
-            return Collections.emptyMap();
+            return processSample(Collections.<Object,ObjectID>emptyMap());
         }
         Map samples = map.getRandomSamples(sample, clients);
         count = samples.size();
@@ -78,7 +70,8 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             clientSetCount = clients.size();
             clientSet = clients;
         }
-        return samples;
+       
+        return processSample(samples);
     } 
     
      @Override
@@ -100,15 +93,6 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             }
             
             @Override
-            public void completeEviction(EvictableMap map) {
-         //  only if you sampled nothing, complete eviction, else actual eviction stage
-         //  will take care of it.
-                if ( sampleCount == 0 ) {
-                    super.completeEviction(map);
-                }
-            }
-            
-            @Override
             public Map collectEvictonCandidates(int max, EvictableMap map, ClientObjectReferenceSet clients) {
                 final int grab = map.getSize() - max;
                 Map sample;
@@ -122,14 +106,16 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
                 if ( sampleCount >= grab) {
                     clients.removeReferenceSetChangeListener(CapacityEvictionTrigger.this);
                 }
-                return sample;
+                return processSample(sample);
             }
 
             @Override
             public String toString() {
                 return "ClientReferenceSetRefreshCapacityEvictor{wasover="  + wasOver 
                         + " count=" + sampleCount
-                        + " clientset=" + clientSet + "}";
+                        + " clientset=" + clientSet 
+                        + " parent=" + super.toString() 
+                        + "}";
             }
             
             
@@ -139,10 +125,13 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
                  
     @Override
     public String toString() {
-        return "CapacityEvictionTrigger{count=" 
-                + count + ", was above capacity=" 
+        return "CapacityEvictionTrigger{"
+                + ", count=" + count 
+                + ", was above capacity=" 
                 + aboveCapacity + ", client set=" 
-                + clientSetCount + '}';
+                + clientSetCount 
+                + ", parent=" + super.toString()
+                + '}';
     }
 
 }

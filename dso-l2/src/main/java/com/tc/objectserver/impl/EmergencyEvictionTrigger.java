@@ -39,16 +39,7 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
     public boolean startEviction(EvictableMap map) {
         name = map.getCacheName();
         return super.startEviction(map);
-    }
-    
-    @Override
-    public void completeEviction(EvictableMap map) {
- //  only if you sampled nothing, complete eviction, else actual eviction stage
- //  will take care of it.
-        if ( sampleCount == 0 ) {
-            super.completeEviction(map);
-        }
-    }    
+    }  
 
     @Override
     public Map collectEvictonCandidates(int max, EvictableMap map, ClientObjectReferenceSet clients) {
@@ -122,7 +113,7 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
 //            }
 //        }));
         sampleCount = sampled.size();
-        return sampled;
+        return processSample(sampled);
     }
     
     public int getSampleCount() {
@@ -131,6 +122,6 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
 
     @Override
     public String toString() {
-        return "EmergencyEvictionTrigger{name=" + name + ", blowout=" + blowout + ", sampleCount=" + sampleCount + ", sizeCount=" + sizeCount + '}';
+        return "EmergencyEvictionTrigger{name=" + name + ", blowout=" + blowout + ", sampleCount=" + sampleCount + ", sizeCount=" + sizeCount + ", parent=" + super.toString() + '}';
     }
 }
