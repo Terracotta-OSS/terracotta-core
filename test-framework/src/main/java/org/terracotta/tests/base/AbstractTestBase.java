@@ -89,7 +89,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   public void setUp() throws Exception {
     if (System.getProperty("com.tc.productkey.path") != null) {
       if (!testConfig.getL2Config().isOffHeapEnabled()) {
-        System.out.println("============= Offheap is turned off, switching it off to avoid OOMEs! ==============");
+        System.out.println("============= Offheap is turned off, switching it on to avoid OOMEs! ==============");
         testConfig.getL2Config().setOffHeapEnabled(true);
         testConfig.getL2Config().setDirectMemorySize(1024);
         testConfig.getL2Config().setMaxOffHeapDataSize(512);
