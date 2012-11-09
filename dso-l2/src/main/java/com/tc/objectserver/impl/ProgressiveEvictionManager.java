@@ -148,8 +148,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
             });
         } catch ( ShutdownError err ) {
-            //  is probably in shutodown, log and unregister
-            logger.info("object manager probably shutting down", err);
+            //  is probably in shutodown, unregister
             trigger.unregisterForMemoryEvents(responder);
         }
         agent.shutdown();
