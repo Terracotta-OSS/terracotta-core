@@ -74,22 +74,6 @@
       <directory>${project.build.directory}/bigmemory-max-samples-${bigmemory.version}</directory>
       <outputDirectory>/code-samples</outputDirectory>
     </fileSet>
-    <!--
-    <fileSet>
-      <directory>${ehcache-core.config.dir}</directory>
-      <outputDirectory>/config-samples</outputDirectory>
-      <includes>
-        <include>ehcache.xsd</include>
-      </includes>
-    </fileSet>
-    <fileSet>
-      <directory>${ehcache-core.assembly.dir}</directory>
-      <includes>
-        <include>SLF4J-LICENSE.txt</include>
-      </includes>
-      <outputDirectory>/legal</outputDirectory>
-    </fileSet>
-    -->
   </fileSets>
   <files>
   </files>
@@ -120,23 +104,5 @@
       </includes>
       <unpack>true</unpack>
     </dependencySet>
-    <!--
-    <dependencySet>
-      <outputDirectory>javadoc</outputDirectory>
-      <includes>
-        <include>net.sf.ehcache:ehcache-core-ee:jar:javadoc</include>
-      </includes>
-      <unpack>true</unpack>
-    </dependencySet>
-    <dependencySet>
-      <outputDirectory>lib</outputDirectory>
-      <includes>
-        <include>*:*:jar</include>
-      </includes>
-      <excludes>
-        <exclude>*:*:jar:javadoc</exclude>
-      </excludes>
-    </dependencySet>
-    -->
   </dependencySets>
 </assembly>
