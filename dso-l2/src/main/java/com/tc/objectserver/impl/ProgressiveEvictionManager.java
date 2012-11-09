@@ -14,6 +14,7 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ServerMapEvictionManager;
+import com.tc.objectserver.api.ShutdownError;
 import com.tc.objectserver.context.ServerMapEvictionContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
@@ -61,7 +62,37 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private Sink evictorSink;
     private final ExecutorService agent;
     private ThreadGroup        evictionGrp;
+    private final Responder responder =        new Responder();
     private volatile           boolean   isEmergency = false;
+    
+    private final static Future<Void> completedFuture = new Future<Void>() {
+
+            @Override
+            public boolean cancel(boolean bln) {
+                return true;
+            }
+
+            @Override
+            public boolean isCancelled() {
+                return true;
+            }
+
+            @Override
+            public boolean isDone() {
+                return true;
+            }
+
+            @Override
+            public Void get() throws InterruptedException, ExecutionException {
+                return null;
+            }
+
+            @Override
+            public Void get(long l, TimeUnit tu) throws InterruptedException, ExecutionException, TimeoutException {
+                return null;
+            }
+            
+        };
 
     public ProgressiveEvictionManager(ObjectManager mgr, MonitoredResource monitored, PersistentManagedObjectStore store, ClientObjectReferenceSet clients, ServerTransactionFactory trans, final TCThreadGroup grp) {
         this.objectManager = mgr;
@@ -91,30 +122,38 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     @Override
     public void startEvictor() {
         evictor.startEvictor();
-        trigger.registerForMemoryEvents(new Responder());
+        trigger.registerForMemoryEvents(responder);
     }
 
     @Override
     public void runEvictor() {
-        scheduleEvictionRun();
+            scheduleEvictionRun();
     }
     
     private Future<Void> scheduleEvictionRun() {
-        final ObjectIDSet evictableObjects = store.getAllEvictableObjectIDs();
-        return agent.submit(new Callable<Void>() {
+        try{
+            final ObjectIDSet evictableObjects = store.getAllEvictableObjectIDs();
+            return agent.submit(new Callable<Void>() {
 
-            @Override
-            public Void call() throws Exception {
-                for (final ObjectID mapID : evictableObjects) {
-                    if ( Thread.interrupted() ) {
-                        return null;
+                @Override
+                public Void call() throws Exception {
+                    for (final ObjectID mapID : evictableObjects) {
+                        if ( Thread.interrupted() ) {
+                            return null;
+                        }
+                        doEvictionOn(new PeriodicEvictionTrigger(ProgressiveEvictionManager.this, objectManager, mapID, evictor.isElementBasedTTIorTTL()));
                     }
-                    doEvictionOn(new PeriodicEvictionTrigger(ProgressiveEvictionManager.this, objectManager, mapID, evictor.isElementBasedTTIorTTL()));
+                    return null;
                 }
-                return null;
-            }
-            
-        });
+
+            });
+        } catch ( ShutdownError err ) {
+            //  is probably in shutodown, log and unregister
+            logger.info("object manager probably shutting down", err);
+            trigger.unregisterForMemoryEvents(responder);
+        }
+        agent.shutdown();
+        return completedFuture;
     }
     
     public void scheduleEvictionTrigger(final EvictionTrigger trigger) {    
@@ -259,34 +298,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     class Responder implements MemoryEventsListener {
 
         long last = System.currentTimeMillis();
-        Future<Void> currentRun = new Future<Void>() {
-
-            @Override
-            public boolean cancel(boolean bln) {
-                return true;
-            }
-
-            @Override
-            public boolean isCancelled() {
-                return true;
-            }
-
-            @Override
-            public boolean isDone() {
-                return true;
-            }
-
-            @Override
-            public Void get() throws InterruptedException, ExecutionException {
-                return null;
-            }
-
-            @Override
-            public Void get(long l, TimeUnit tu) throws InterruptedException, ExecutionException, TimeoutException {
-                return null;
-            }
-            
-        };
+        Future<Void> currentRun = completedFuture;
 
         @Override
         public void memoryUsed(MemoryUsage usage, boolean recommendOffheap) {

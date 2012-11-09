@@ -27,7 +27,6 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
     private int sampleCount;
     private int sizeCount;
     private final int target;
-    private String name;
 
     public EmergencyEvictionTrigger(ObjectManager mgr, ObjectID oid, int targetPercent, boolean blowout) {
         super(oid);
@@ -37,7 +36,6 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
 
     @Override
     public boolean startEviction(EvictableMap map) {
-        name = map.getCacheName();
         return super.startEviction(map);
     }  
 
@@ -122,6 +120,6 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
 
     @Override
     public String toString() {
-        return "EmergencyEvictionTrigger{name=" + name + ", blowout=" + blowout + ", sampleCount=" + sampleCount + ", sizeCount=" + sizeCount + ", parent=" + super.toString() + '}';
+        return "EmergencyEvictionTrigger{blowout=" + blowout + ", sample=" + sampleCount + ", size=" + sizeCount + ", parent=" + super.toString() + '}';
     }
 }

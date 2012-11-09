@@ -62,7 +62,7 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
         return "AbstractEvictionTrigger{" 
                   + "name=" + name + " - " + getId()
               + ", started=" + started
-                + " ,processed=" + processed
-                + " ,evicting=" + evicting + '}';
+                + ", processed=" + processed
+                + ", evicting=" + evicting + '}';
     }
 }

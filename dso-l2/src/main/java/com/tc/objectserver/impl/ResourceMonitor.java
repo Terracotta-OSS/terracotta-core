@@ -50,7 +50,7 @@ public class ResourceMonitor implements ReconnectionRejectedCallback {
   }
 
   private synchronized void stopMonitorIfNecessary() {
-    if (listeners.size() == 0) {
+    if (listeners.isEmpty() ) {
       stopMonitorThread();
     }
   }
