@@ -12,14 +12,13 @@ import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 
 import com.tc.test.config.model.TestConfig;
 
-import java.util.concurrent.TimeUnit;
-
 import junit.framework.Assert;
 
 public class DEV8287Test extends AbstractToolkitTestBase {
 
   public DEV8287Test(TestConfig testConfig) {
     super(testConfig, DEV8287TestClient.class);
+    timebombTest("2012-12-01");
   }
 
   public static class DEV8287TestClient extends ClientBase {
