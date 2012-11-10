@@ -199,6 +199,7 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
     return setupManager;
   }
 
+  @Override
   public L1ConfigurationSetupManager getL1TVSConfigurationSetupManager(SecurityInfo securityInfo) throws ConfigurationSetupException {
     ConfigurationCreator configurationCreator = new StandardXMLFileConfigurationCreator(this.configurationSpec,
                                                                                         this.beanFactory, this.pwProvider);
@@ -211,6 +212,7 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
     return setupManager;
   }
 
+  @Override
   public L2ConfigurationSetupManager createL2TVSConfigurationSetupManager(String l2Name)
       throws ConfigurationSetupException {
     if (l2Name == null) l2Name = this.defaultL2Identifier;
