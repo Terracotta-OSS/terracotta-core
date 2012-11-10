@@ -61,8 +61,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   private static final Pattern       RESOURCE_PATTERN                     = Pattern.compile("resource://(.*)",
                                                                                             Pattern.CASE_INSENSITIVE);
   private static final Pattern       BASE64_PATTERN                       = Pattern.compile("base64://(.*)",
-                                                                                            Pattern.MULTILINE
-                                                                                                | Pattern.DOTALL);
+                                                                                            Pattern.DOTALL);
   // We require more than one character before the colon so that we don't mistake Windows-style directory paths as URLs.
   private static final Pattern       URL_PATTERN                          = Pattern.compile("[A-Za-z][A-Za-z]+://.*");
   private static final long          GET_CONFIGURATION_ONE_SOURCE_TIMEOUT = TCPropertiesImpl

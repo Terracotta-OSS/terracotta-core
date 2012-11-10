@@ -68,7 +68,8 @@ public class StandaloneL1Boot implements Callable<Object> {
     String configSpec = embeddedTcConfig;
     if (!isURLConfig) {
       // convert to base64 string configuration source
-      configSpec = "base64://" + Base64.encodeBytes(embeddedTcConfig.getBytes("UTF-8"));
+      configSpec = "base64://"
+                   + Base64.encodeBytes(embeddedTcConfig.getBytes("UTF-8"), Base64.GZIP | Base64.DONT_BREAK_LINES);
     }
     DSOContext context = DSOContextImpl.createStandaloneContext(configSpec, appLevelTimLoader,
                                                                 this.rejoin, securityManager, securityInfo);
