@@ -6,7 +6,6 @@ package com.tc.platform.rejoin;
 import com.tc.async.api.Sink;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelEvent;
@@ -23,7 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ClientChannelEventController {
 
-  private static final TCLogger             logger         = TCLogging.getLogger(ClientChannelEventController.class);
+  // private static final TCLogger logger = TCLogging.getLogger(ClientChannelEventController.class);
   private static final TCLogger             DSO_LOGGER     = CustomerLogging.getDSOGenericLogger();
   private static final TCLogger             CONSOLE_LOGGER = CustomerLogging.getConsoleLogger();
 
@@ -123,7 +122,7 @@ public class ClientChannelEventController {
     public void notifyChannelEvent(ChannelEvent event) {
       final NodeID remoteNodeId = event.getChannel().getRemoteNodeID();
       if (GroupID.ALL_GROUPS.equals(remoteNodeId)) { throw new AssertionError("Recd event for Group Channel : " + event); }
-      logger.info("Got channel event - type: " + event.getType() + ", event: " + event, new Exception());
+      // logger.info("Got channel event - type: " + event.getType() + ", event: " + event, new Exception());
       switch (event.getType()) {
         case TRANSPORT_CONNECTED_EVENT:
           controller.channelConnected(event);

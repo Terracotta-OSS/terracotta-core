@@ -36,9 +36,10 @@ public class RejoinAwarePlatformService implements PlatformService {
   public RejoinAwarePlatformService(Manager manager, RejoinManager rejoinManager,
                                     ClientHandshakeManager clientHandshakeManager) {
     this.rejoinLifecycleEventsController = new RejoinLifecycleEventController(clientHandshakeManager);
-    this.interceptedProxy = InterceptedProxy.createInterceptedProxy(new PlatformServiceImpl(manager),
-                                                                    PlatformService.class,
-                                                                    rejoinLifecycleEventsController);
+    // this.interceptedProxy = InterceptedProxy.createInterceptedProxy(new PlatformServiceImpl(manager),
+    // PlatformService.class,
+    // rejoinLifecycleEventsController);
+    this.interceptedProxy = new PlatformServiceImpl(manager);
     rejoinManager.addListener(rejoinLifecycleEventsController);
 
   }
