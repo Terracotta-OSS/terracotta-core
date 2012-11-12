@@ -480,29 +480,7 @@
         <surefire.jvm.mode>-server</surefire.jvm.mode>
       </properties>
     </profile>
-
-    <profile>
-      <!-- Use Berkeley DB for running tests. -->
-      <id>berkeleydb</id>
-      <properties>
-        <surefire.additional-jvm-args>
-          -Dcom.tc.l2.db.factory.name=com.tc.objectserver.storage.berkeleydb.BerkeleyDBFactory
-        </surefire.additional-jvm-args>
-      </properties>
-    </profile>
-    <profile>
-      <!-- Use Derby for running tests. -->
-      <id>derby</id>
-      <properties>
-        <surefire.additional-jvm-args>
-          -Dcom.tc.l2.db.factory.name=com.tc.objectserver.storage.derby.DerbyDBFactory
-          -Dcom.tc.l2.derbydb.derby.storage.logSwitchInterval=10240000
-          -Dcom.tc.l2.derbydb.derby.storage.checkpointInterval=10240000
-        </surefire.additional-jvm-args>
-      </properties>
-    </profile>
-
-
+    
     <profile>
       <id>check</id>
       <build>
