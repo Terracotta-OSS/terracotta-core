@@ -51,10 +51,16 @@
     <fileSet>
       <directory>${project.build.directory}/tmc-${tmc.version}</directory>
       <outputDirectory>/tools/tmc</outputDirectory>
+      <excludes>
+        <exclude>**/keychain.*</exclude>
+        <exclude>**/management-cli-common.*</exclude>
+        <exclude>**/add-tc-agent.*</exclude>
+        <exclude>**/usermanagement.*</exclude>
+      </excludes>
     </fileSet>
     <fileSet>
       <directory>${project.build.directory}/${kit.name}/bin</directory>
-      <outputDirectory>/common/bin</outputDirectory>
+      <outputDirectory>/tools/security/bin</outputDirectory>
       <includes>
         <include>keychain.*</include>
         <include>management-cli-common.*</include>
@@ -65,6 +71,12 @@
     <fileSet>
       <directory>${project.build.directory}/${kit.name}/bin</directory>
       <outputDirectory>/server/bin</outputDirectory>
+      <excludes>
+        <exclude>**/keychain.*</exclude>
+        <exclude>**/management-cli-common.*</exclude>
+        <exclude>**/add-tc-agent.*</exclude>
+        <exclude>**/usermanagement.*</exclude>
+      </excludes>
     </fileSet>
     <fileSet>
       <directory>${project.build.directory}/${kit.name}/lib</directory>
