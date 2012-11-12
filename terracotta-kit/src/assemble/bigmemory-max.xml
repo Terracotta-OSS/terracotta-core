@@ -71,6 +71,10 @@
       <outputDirectory>/server/lib</outputDirectory>
     </fileSet>
     <fileSet>
+      <directory>${project.build.directory}/${kit.name}/management</directory>
+      <outputDirectory>/server/management</outputDirectory>
+    </fileSet>
+    <fileSet>
       <directory>${project.build.directory}/bigmemory-max-samples-${bigmemory.version}</directory>
       <outputDirectory>/code-samples</outputDirectory>
     </fileSet>
