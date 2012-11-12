@@ -39,6 +39,7 @@ import com.terracotta.management.service.impl.DiagnosticsServiceImpl;
 import com.terracotta.management.service.impl.MonitoringServiceImpl;
 import com.terracotta.management.service.impl.TopologyServiceImpl;
 import com.terracotta.management.service.impl.TsaAgentServiceImpl;
+import com.terracotta.management.service.impl.pool.JmxConnectorPool;
 import com.terracotta.management.web.config.TSAConfig;
 
 import javax.servlet.ServletContextEvent;
@@ -48,6 +49,8 @@ import javax.servlet.ServletContextEvent;
  */
 public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
 
+  private volatile JmxConnectorPool jmxConnectorPool;
+
   @Override
   public void contextInitialized(ServletContextEvent sce) {
     try {
@@ -55,7 +58,8 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
 
       // The following services are for monitoring the TSA itself
       serviceLocator.loadService(TSARequestValidator.class, new TSARequestValidator());
-      TsaManagementClientService tsaManagementClientService = new ClearTextTsaManagementClientServiceImpl();
+      jmxConnectorPool = new JmxConnectorPool();
+      TsaManagementClientService tsaManagementClientService = new ClearTextTsaManagementClientServiceImpl(jmxConnectorPool);
       serviceLocator.loadService(TsaManagementClientService.class, tsaManagementClientService);
       serviceLocator.loadService(TopologyService.class, new TopologyServiceImpl(tsaManagementClientService));
       serviceLocator.loadService(MonitoringService.class, new MonitoringServiceImpl(tsaManagementClientService));
@@ -122,4 +126,10 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
     super.contextInitialized(sce);
   }
 
+  @Override
+  public void contextDestroyed(ServletContextEvent sce) {
+    jmxConnectorPool.shutdown();
+
+    super.contextDestroyed(sce);
+  }
 }
