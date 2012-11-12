@@ -15,12 +15,10 @@ import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.api.ServerMapEvictionManager;
 import com.tc.objectserver.context.ServerMapEvictionBroadcastContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.objectserver.persistence.PersistentCollectionsUtil;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.TransactionBatchContext;
@@ -32,8 +30,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**

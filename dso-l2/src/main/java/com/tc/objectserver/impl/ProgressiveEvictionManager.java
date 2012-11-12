@@ -50,6 +50,9 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private static final int L2_CACHEMANAGER_RESOURCEPOLLINGINTERVAL = TCPropertiesImpl
             .getProperties()
             .getInt(TCPropertiesConsts.L2_CACHEMANAGER_RESOURCEPOLLINGINTERVAL, SLEEP_TIME);
+      private final static boolean                PERIODIC_EVICTOR_ENABLED        = TCPropertiesImpl
+                                                                                  .getProperties()
+                                                                                  .getBoolean(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED, true);
     private static final int L2_CACHEMANAGER_CRITICALTHRESHOLD = TCPropertiesImpl
             .getProperties()
             .getInt(TCPropertiesConsts.L2_CACHEMANAGER_CRITICALTHRESHOLD, 90);
@@ -278,7 +281,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     }
 
     private void log(String msg) {
-        logger.info("Resource Monitor Eviction - " + msg);
+        logger.info(msg);
     }
 
     @Override
@@ -317,7 +320,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                     }
                 } else {
                     clientObjectReferenceSet.size();
-                    if ( currentRun.isDone() ) {
+                    if ( PERIODIC_EVICTOR_ENABLED && currentRun.isDone() ) {
                         isEmergency = false;
                         currentRun = scheduleEvictionRun();
                     } 

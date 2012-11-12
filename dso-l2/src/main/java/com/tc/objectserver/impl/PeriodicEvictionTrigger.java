@@ -95,16 +95,17 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     @Override
     public Map<Object, ObjectID> collectEvictonCandidates(int max, EvictableMap map, ClientObjectReferenceSet clients) {
         int samples = calculateSampleCount(max, map);
-        Map<Object, ObjectID> s = new HashMap<Object, ObjectID>(samples*2);
 //        while ( s.size() < samples ) {
             if ( Thread.interrupted() ) {
                 return Collections.<Object, ObjectID>emptyMap();
             }
-            s.putAll(filter(map.getRandomSamples(Math.round((samples-s.size()) * 1.5f), clients),map.getTTISeconds(),map.getTTLSeconds(),samples));
+            Map<Object, ObjectID> grabbed = map.getRandomSamples(Math.round((samples) * 1.5f), clients);
+            sampled = grabbed.size();
+            grabbed = filter(grabbed,map.getTTISeconds(),map.getTTLSeconds(),samples);
 //        }
-        filtered = s.size();
+        filtered = grabbed.size();
         
-        return processSample(s);
+        return processSample(grabbed);
     }
       
     protected int calculateSampleCount(int max, EvictableMap ev) {
@@ -127,7 +128,6 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     
    private Map<Object, ObjectID> filter(final Map<Object, ObjectID> samples, final int ttiSeconds,
                     final int ttlSeconds, long targetCount) {
-    final HashMap<Object, ObjectID> candidates = new HashMap<Object, ObjectID>(samples.size());
     final int now = (int) (System.currentTimeMillis() / 1000);
 //    int freshness = ttlSeconds;
 //    if ( ttiSeconds > ttlSeconds ) {
@@ -135,31 +135,33 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
 //    }
 //    freshness = Math.round(freshness * .66667f);
     
-    for (final Iterator<Map.Entry<Object, ObjectID>> iterator = samples.entrySet().iterator(); candidates.size() < targetCount && iterator.hasNext();) {
+    for (final Iterator<Map.Entry<Object, ObjectID>> iterator = samples.entrySet().iterator(); samples.size() < targetCount && iterator.hasNext();) {
         if ( Thread.currentThread().isInterrupted() ) {
  //  don't unset flag, may need it later
-            return candidates;
+            return samples;
         }
       final Map.Entry<Object, ObjectID> e = iterator.next();
         int expiresIn = expiresIn(now, e.getValue(), ttiSeconds, ttlSeconds);
         if ( expiresIn <= 0 ) {
-            candidates.put(e.getKey(), e.getValue());
+//            candidates.put(e.getKey(), e.getValue());
             expired+=1;
         } else if ( dumpLive ) {
             // Element already expired
-            candidates.put(e.getKey(), e.getValue());
+//            candidates.put(e.getKey(), e.getValue());
             overflow+=1;
         } else if ( exclusionList != null && exclusionList.contains(e.getValue()) ) {
+            iterator.remove();
             excluded += 1;
         } else {
             alive+=1;
  //  know what we have already tested
  //  factor in a freshness value?
-            passList.add(e.getValue());
+           iterator.remove();
+           passList.add(e.getValue());
         }
     }
 
-    return candidates;
+    return samples;
 }   
   /**
    * This method tries to compute when an entry will expire relative to "now". If the value is not an EvictableEntry or
@@ -224,12 +226,11 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     @Override
     public String toString() {
         String flag = ( expired + overflow > 0 ) ? ", ELEMENTS_EVICTED" : "";
-        String element = ( runAlways ) ? "RUN_ALWAYS" : "";
+        String element = ( runAlways ) ? "RUN_ALWAYS" : ", ";
         String fullRun = ( completed ) ? ", COMPLETED" : "";
         return "PeriodicEvictionTrigger{" 
                 + element
-                + fullRun
-                + ", over capacity=" + dumpLive 
+                + "over capacity=" + dumpLive 
                 + ", count=" + count
                 + ", sampled=" + sampled
                 + ", filtered=" + filtered
@@ -239,6 +240,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
                 + ", tti/ttl=" + tti + "/" + ttl 
                 + ", alive=" + alive 
                 + ", parent=" + super.toString()
+                + fullRun
                 + flag
                 + '}';
     }
