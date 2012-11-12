@@ -39,6 +39,7 @@ public class JavaClassInfoRepositoryTest extends TestCase {
     List<Loader> loaders = new ArrayList<Loader>();
     for (int i = 0; i < 100; i++) {
       System.gc();
+      ThreadUtil.reallySleep(100L);
 
       // we need to exercise the JavaClassInfoRepository's s_repositories guava weak keys map -> make it add a new element
       // put calls MapMakerInternal.Segment.drainReferenceQueues() in guava 13.0.1 which is what we want to happen
