@@ -12,6 +12,7 @@ import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manager;
+import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.metadata.MetaDataDescriptor;
@@ -19,6 +20,7 @@ import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.platform.rejoin.RejoinLifecycleListener;
+import com.tc.platform.rejoin.RejoinManager;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.tcclient.cluster.DsoNode;
@@ -30,23 +32,21 @@ import java.util.concurrent.TimeUnit;
 
 public class PlatformServiceImpl implements PlatformService {
   private final Manager manager;
+  private final RejoinLifecycleEventController rejoinEventsController;
 
-  public PlatformServiceImpl(Manager manager) {
+  public PlatformServiceImpl(Manager manager, RejoinManager rejoinManager, ClientHandshakeManager clientHandshakeManager) {
     this.manager = manager;
-  }
-
-  private RuntimeException newRejoinUnawareException() {
-    throw new RuntimeException("This platform service is not aware of rejoin!");
+    rejoinEventsController = new RejoinLifecycleEventController(rejoinManager, clientHandshakeManager);
   }
 
   @Override
   public void addRejoinLifecycleListener(RejoinLifecycleListener listener) {
-    throw newRejoinUnawareException();
+    rejoinEventsController.addUpperLayerListener(listener);
   }
 
   @Override
   public void removeRejoinLifecycleListener(RejoinLifecycleListener listener) {
-    throw newRejoinUnawareException();
+    rejoinEventsController.removeUpperLayerListener(listener);
   }
 
   @Override

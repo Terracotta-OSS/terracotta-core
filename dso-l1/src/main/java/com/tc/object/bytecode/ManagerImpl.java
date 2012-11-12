@@ -66,7 +66,6 @@ import com.tc.operatorevent.TerracottaOperatorEventImpl;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.platform.PlatformService;
 import com.tc.platform.PlatformServiceImpl;
-import com.tc.platform.RejoinAwarePlatformService;
 import com.tc.platform.rejoin.RejoinManagerImpl;
 import com.tc.platform.rejoin.RejoinManagerInternal;
 import com.tc.properties.TCProperties;
@@ -206,11 +205,7 @@ public class ManagerImpl implements Manager {
   }
 
   private PlatformService createPlatformService() {
-    if (clientMode.isExpressRejoinClient()) {
-      return new RejoinAwarePlatformService(this, rejoinManager, this.dso.getClientHandshakeManager());
-    } else {
-      return new PlatformServiceImpl(this);
-    }
+    return new PlatformServiceImpl(this, rejoinManager, this.dso.getClientHandshakeManager());
   }
 
   @Override

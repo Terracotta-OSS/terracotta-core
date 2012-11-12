@@ -57,7 +57,7 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
   }
 
   private void assertRejoinEnabled() {
-    if (!rejoinEnabled) { throw new AssertionError("Trying to do rejoin when its disabled"); }
+    if (!rejoinEnabled) { throw new AssertionError("Rejoin is not enabled"); }
   }
 
   private void notifyRejoinStart() {
