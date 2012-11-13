@@ -20,6 +20,7 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     private boolean  evicting = false;
     boolean processed = false;
     private String name;
+    private boolean pinned;
     
 
     public AbstractEvictionTrigger(ObjectID oid) {
@@ -35,6 +36,7 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     public boolean startEviction(EvictableMap map) {
         started = true;
         name = map.getCacheName();
+        pinned = map.getMaxTotalCount() == 0;
         return map.startEviction();
     }
     
@@ -60,8 +62,8 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     @Override
     public String toString() {
         return "AbstractEvictionTrigger{" 
-                  + "name=" + name + " - " + getId()
-              + ", started=" + started
+                + "name=" + name + " - " + getId() + (( pinned ) ? " - PINNED" : "")
+                + ", started=" + started
                 + ", processed=" + processed
                 + ", evicting=" + evicting + '}';
     }

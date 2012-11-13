@@ -42,9 +42,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     private int tti = 0;
     private int ttl = 0;
     private boolean completed = false;
-    private String cacheName;
     private final ObjectManager  mgr;
-    private final ProgressiveEvictionManager  evictor;
     private final ObjectIDSet exclusionList;
     private final ObjectIDSet passList = new ObjectIDSet();
     
@@ -57,16 +55,12 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
         this.runAlways = runAlways;
         this.mgr = mgr;
         this.exclusionList = exclude;
-        this.evictor = evictor;
     }
     
     public ObjectIDSet getExclusionList() {
         return passList;
     }
     
-    protected String getName() {
-        return cacheName;
-    }
     
     protected ObjectManager getObjectManager() {
         return mgr;
@@ -74,7 +68,6 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
 
     @Override
     public boolean startEviction(EvictableMap map) {
-        cacheName = map.getCacheName();
         tti = map.getTTISeconds();
         ttl = map.getTTLSeconds();
         if ( tti > 0 || 
@@ -96,12 +89,12 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     public Map<Object, ObjectID> collectEvictonCandidates(int max, EvictableMap map, ClientObjectReferenceSet clients) {
         int samples = calculateSampleCount(max, map);
 //        while ( s.size() < samples ) {
-            if ( Thread.interrupted() ) {
+            if ( Thread.currentThread().isInterrupted() ) {
                 return Collections.<Object, ObjectID>emptyMap();
             }
             Map<Object, ObjectID> grabbed = map.getRandomSamples(Math.round((samples) * 1.5f), clients);
             sampled = grabbed.size();
-            grabbed = filter(grabbed,map.getTTISeconds(),map.getTTLSeconds(),samples);
+            grabbed = filter(grabbed,map.getTTISeconds(),map.getTTLSeconds());
 //        }
         filtered = grabbed.size();
         
@@ -127,7 +120,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     }
     
    private Map<Object, ObjectID> filter(final Map<Object, ObjectID> samples, final int ttiSeconds,
-                    final int ttlSeconds, long targetCount) {
+                    final int ttlSeconds) {
     final int now = (int) (System.currentTimeMillis() / 1000);
 //    int freshness = ttlSeconds;
 //    if ( ttiSeconds > ttlSeconds ) {
@@ -135,10 +128,10 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
 //    }
 //    freshness = Math.round(freshness * .66667f);
     
-    for (final Iterator<Map.Entry<Object, ObjectID>> iterator = samples.entrySet().iterator(); samples.size() < targetCount && iterator.hasNext();) {
+    for (final Iterator<Map.Entry<Object, ObjectID>> iterator = samples.entrySet().iterator(); iterator.hasNext();) {
         if ( Thread.currentThread().isInterrupted() ) {
  //  don't unset flag, may need it later
-            return samples;
+            return Collections.<Object, ObjectID>emptyMap();
         }
       final Map.Entry<Object, ObjectID> e = iterator.next();
         int expiresIn = expiresIn(now, e.getValue(), ttiSeconds, ttlSeconds);
@@ -226,7 +219,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     @Override
     public String toString() {
         String flag = ( expired + overflow > 0 ) ? ", ELEMENTS_EVICTED" : "";
-        String element = ( runAlways ) ? "RUN_ALWAYS" : ", ";
+        String element = ( runAlways ) ? "RUN_ALWAYS, " : "";
         String fullRun = ( completed ) ? ", COMPLETED" : "";
         return "PeriodicEvictionTrigger{" 
                 + element

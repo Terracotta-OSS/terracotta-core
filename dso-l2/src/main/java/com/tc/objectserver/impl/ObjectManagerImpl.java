@@ -31,11 +31,13 @@ import com.tc.objectserver.tx.NullTransactionalObjectManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 import com.tc.util.Counter;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
 import com.tc.util.concurrent.TCConcurrentMultiMap;
+import java.io.PrintWriter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -395,12 +397,19 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       }
       
       final boolean isNew = isANewObjectIn(reference, newObjectIDs);
-      final boolean isMarked = markReferenced(reference);
+      boolean isMarked = false;
+      
+      if ( isNew ) {
+          isMarked = markReferenced(reference);
+      }
       
       if ( isNew && isMarked ) {
         objects.put(id, reference.getObject());
       } else {
-        available = false;       
+        available = false;      
+        if ( isMarked ) {
+            unmarkReferenced(reference);
+        }
         // Setting only the first referenced object to process Pending. If objects are being faulted in, then this
         // will ensure that we don't run processPending multiple times unnecessarily.
         blockedObjectID = id;
@@ -826,10 +835,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private void processPendingLookups() {
     if (this.pending.size() == 0) { return; }
     final List<Pending> pendingLookups = this.pending.drain();
-    for (final Pending p : pendingLookups) {
-      basicLookupObjectsFor(p.getNodeID(), p.getRequestContext(), p.getMaxReachableObjects());
+    
+      for (final Pending p : pendingLookups) {
+          basicLookupObjectsFor(p.getNodeID(), p.getRequestContext(), p.getMaxReachableObjects());
+      }
     }
-  }
 
   private void makeUnBlocked(final ObjectID id) {
     this.pending.makeUnBlocked(id);
@@ -920,7 +930,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
   }
 
-  private static class WaitForLookupContext implements ObjectManagerResultsContext {
+  private class WaitForLookupContext implements ObjectManagerResultsContext {
 
     private final ObjectID       lookupID;
     private final ObjectIDSet    lookupIDs = new ObjectIDSet();
@@ -944,7 +954,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         try {
           wait();
         } catch (final InterruptedException e) {
-//          throw new AssertionError(e);
+            resultSet = true;
+            Thread.currentThread().interrupt();
             return null;
         }
       }
@@ -964,6 +975,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     public synchronized void setResults(final ObjectManagerLookupResults results) {
+        if ( this.resultSet ) {
+            unmarkReferenced(results.getObjects().values());
+            return;
+        }
       this.resultSet = true;
       assertMissingObjects(results.getMissingObjectIDs());
       final Map objects = results.getObjects();
@@ -974,7 +989,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       }
       notifyAll();
     }
-
+    
     private void assertMissingObjects(final ObjectIDSet missing) {
       if (this.missingObjects == MissingObjects.NOT_OK && !missing.isEmpty()) { throw new AssertionError(
                                                                                                          "Lookup of non-existing objects : "

@@ -142,6 +142,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 public Void call() throws Exception {
                     for (final ObjectID mapID : evictableObjects) {
                         if ( Thread.interrupted() ) {
+                            log("Eviction Interrupted");
                             return null;
                         }
                         doEvictionOn(new PeriodicEvictionTrigger(ProgressiveEvictionManager.this, objectManager, mapID, evictor.isElementBasedTTIorTTL()));
@@ -213,7 +214,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 throw new AssertionError(trigger.toString());
             }
             this.objectManager.releaseReadOnly(mo);
-            if (context != null) {
+            
+            if (context != null && !Thread.currentThread().isInterrupted()) {
                 this.evictorSink.add(context);
             } 
         } finally {
@@ -255,7 +257,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 while (!handled) {
                     for (final ObjectID mapID : evictableObjects) {
                         if ( Thread.interrupted() ) {
-                            break;
+                            log("Emergency Interrupted");
+                            return null;
                         }
                         EmergencyEvictionTrigger trigger = new EmergencyEvictionTrigger(objectManager, mapID, L2_CACHEMANAGER_CRITICALTHRESHOLD, blowout);
                         doEvictionOn(trigger);
@@ -300,6 +303,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     class Responder implements MemoryEventsListener {
 
         long last = System.currentTimeMillis();
+        int size = 0;
         Future<Void> currentRun = completedFuture;
 
         @Override
@@ -308,9 +312,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 int percent = usage.getUsedPercentage();
                 long current = System.currentTimeMillis();
                 if (evictor.isLogging()) {
-                    log("Percent usage:" + percent + " time:" + (current - last) + " msec");
+                    log("Percent usage:" + percent + " time:" + (current - last) + " msec., size delta:" + (percent - size));
                 }
-                last = current;
                 if (percent > L2_CACHEMANAGER_CRITICALTHRESHOLD) {
                     if ( !isEmergency || currentRun.isDone() ) {
                         log("Emergency Triggered - " + percent);
@@ -320,11 +323,16 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                     }
                 } else {
                     clientObjectReferenceSet.size();
-                    if ( PERIODIC_EVICTOR_ENABLED && currentRun.isDone() ) {
+                    if ( isEmergency ) {
                         isEmergency = false;
+                        currentRun.cancel(true);
+                    }
+                    if ( PERIODIC_EVICTOR_ENABLED && currentRun.isDone() ) {
                         currentRun = scheduleEvictionRun();
                     } 
                 }
+                last = current;
+                size = percent;
             } catch (UnsupportedOperationException us) {
                 if ( currentRun.isDone() ) {
                     currentRun = scheduleEvictionRun();

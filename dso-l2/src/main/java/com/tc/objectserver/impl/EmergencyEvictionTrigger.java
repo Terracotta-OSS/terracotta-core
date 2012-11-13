@@ -42,7 +42,7 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
     @Override
     public Map collectEvictonCandidates(int max, EvictableMap map, ClientObjectReferenceSet clients) {
         sizeCount = map.getSize();
-        int get = sizeCount * (100-target) / 100;
+        int get = sizeCount * (100-target) / 50;
         Map sampled = map.getRandomSamples(get,clients);
 //        Map sampled = map.getRandomSamples(sizeCount/5,new ClientObjectReferenceSet(new ClientStateManager() {
 //
