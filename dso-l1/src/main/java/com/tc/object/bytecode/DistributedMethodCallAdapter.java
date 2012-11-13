@@ -10,7 +10,6 @@ import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.asm.Type;
 import com.tc.aspectwerkz.reflect.MemberInfo;
-import com.tc.object.logging.InstrumentationLogger;
 
 public class DistributedMethodCallAdapter implements MethodAdapter, Opcodes {
   private int                   access;
@@ -20,7 +19,6 @@ public class DistributedMethodCallAdapter implements MethodAdapter, Opcodes {
   private String                description;
   private String[]              exceptions;
   private String                signature;
-  private InstrumentationLogger instrumentationLogger;
 
   private final boolean         runOnAllNodes;
 
@@ -28,6 +26,7 @@ public class DistributedMethodCallAdapter implements MethodAdapter, Opcodes {
     this.runOnAllNodes = runOnAllNodes;
   }
 
+  @Override
   public MethodVisitor adapt(ClassVisitor classVisitor) {
     final String newMethodName = ByteCodeUtil.DMI_METHOD_RENAME_PREFIX + methodName;
     MethodVisitor codeVisitor = classVisitor.visitMethod(access, newMethodName, description, signature, exceptions);
@@ -88,29 +87,26 @@ public class DistributedMethodCallAdapter implements MethodAdapter, Opcodes {
   }
 
   private void addDistributedCall(MethodVisitor mv, String name, String desc) {
-    if (instrumentationLogger.getDistMethodCallInsertion()) {
-      instrumentationLogger.distMethodCallInserted(className, name, desc);
-    }
-
     ByteCodeUtil.pushThis(mv);
     mv.visitLdcInsn(name + desc);
     ByteCodeUtil.createParametersToArrayByteCode(mv, Type.getArgumentTypes(desc));
     if (runOnAllNodes) {
       mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "distributedMethodCall",
-                         "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)Z");      
+                         "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)Z");
     } else {
-      mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "prunedDistributedMethodCall", 
-                         "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)Z");            
+      mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "prunedDistributedMethodCall",
+                         "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)Z");
     }
   }
 
+  @Override
   public boolean doesOriginalNeedAdapting() {
     return true;
   }
 
   public void initialize(int anAccess, String aClassName, String aMethodName,
                          String aOriginalMethodName, String aDescription, String sig, String[] anExceptions,
-                         InstrumentationLogger logger, MemberInfo info) {
+ MemberInfo info) {
     this.access = anAccess;
     this.className = aClassName;
     this.methodName = aMethodName;
@@ -118,7 +114,6 @@ public class DistributedMethodCallAdapter implements MethodAdapter, Opcodes {
     this.description = aDescription;
     this.exceptions = anExceptions;
     this.signature = sig;
-    this.instrumentationLogger = logger;
   }
 
 }

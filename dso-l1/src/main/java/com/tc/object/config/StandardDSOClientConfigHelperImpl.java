@@ -41,14 +41,12 @@ import com.tc.object.bytecode.SafeSerialVersionUIDAdder;
 import com.tc.object.bytecode.TransparencyClassAdapter;
 import com.tc.object.bytecode.aspectwerkz.ExpressionHelper;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
-import com.tc.object.config.schema.DSOInstrumentationLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeOutputOptions;
 import com.tc.object.config.schema.ExcludedInstrumentedClass;
 import com.tc.object.config.schema.IncludeOnLoad;
 import com.tc.object.config.schema.IncludedInstrumentedClass;
 import com.tc.object.config.schema.InstrumentedClass;
-import com.tc.object.logging.InstrumentationLogger;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
 import com.tc.security.PwProvider;
@@ -305,11 +303,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     return this.configSetupManager.dsoL1Config().runtimeOutputOptions();
   }
 
-  @Override
-  public DSOInstrumentationLoggingOptions instrumentationLoggingOptions() {
-    return this.configSetupManager.dsoL1Config().instrumentationLoggingOptions();
-  }
-
   private void doPreInstrumentedAutoconfig() {
     getOrCreateSpec("com.tcclient.object.DistributedMethodCall");
     markAllSpecsPreInstrumented();
@@ -424,11 +417,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
         s.markPreInstrumented();
       }
     }
-  }
-
-  @Override
-  public DSOInstrumentationLoggingOptions getInstrumentationLoggingOptions() {
-    return this.configSetupManager.dsoL1Config().instrumentationLoggingOptions();
   }
 
   @Override
@@ -845,8 +833,8 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
 
   @Override
   public TransparencyClassAdapter createDsoClassAdapterFor(final ClassVisitor writer, final ClassInfo classInfo,
-                                                           final InstrumentationLogger lgr, final ClassLoader caller,
-                                                           final boolean forcePortable, final boolean honorTransient) {
+                                                           final ClassLoader caller, final boolean forcePortable,
+                                                           final boolean honorTransient) {
     String className = classInfo.getName();
     TransparencyClassSpec spec = getOrCreateSpec(className);
     spec.setHonorTransient(honorTransient);
@@ -859,20 +847,19 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
       }
     }
 
-    return new TransparencyClassAdapter(classInfo, basicGetOrCreateSpec(className, null, false), writer, lgr, caller,
+    return new TransparencyClassAdapter(classInfo, basicGetOrCreateSpec(className, null, false), writer, caller,
                                         portability);
   }
 
   @Override
   public ClassAdapter createClassAdapterFor(final ClassWriter writer, final ClassInfo classInfo,
-                                            final InstrumentationLogger lgr, final ClassLoader caller) {
-    return this.createClassAdapterFor(writer, classInfo, lgr, caller, false);
+                                            final ClassLoader caller) {
+    return this.createClassAdapterFor(writer, classInfo, caller, false);
   }
 
   @Override
   public ClassAdapter createClassAdapterFor(final ClassWriter writer, final ClassInfo classInfo,
-                                            final InstrumentationLogger lgr, final ClassLoader caller,
-                                            final boolean forcePortable) {
+                                            final ClassLoader caller, final boolean forcePortable) {
     TransparencyClassSpec spec = getOrCreateSpec(classInfo.getName());
 
     if (forcePortable) {
@@ -883,7 +870,7 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
       }
     }
 
-    ClassAdapter dsoAdapter = new TransparencyClassAdapter(classInfo, spec, writer, lgr, caller, portability);
+    ClassAdapter dsoAdapter = new TransparencyClassAdapter(classInfo, spec, writer, caller, portability);
     List<ClassAdapterFactory> factories = spec.getCustomClassAdapters();
     ClassVisitor cv = dsoAdapter;
     if (factories != null && !factories.isEmpty()) {

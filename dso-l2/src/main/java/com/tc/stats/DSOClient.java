@@ -13,7 +13,6 @@ import com.tc.management.beans.L1MBeanNames;
 import com.tc.management.beans.MBeanNames;
 import com.tc.management.beans.TerracottaOperatorEventsMBean;
 import com.tc.management.beans.l1.L1InfoMBean;
-import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
 import com.tc.net.ClientID;
@@ -55,8 +54,6 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   private ObjectName                           l1InfoBeanName;
   private L1InfoMBean                          l1InfoBean;
   private final ObjectName                     l1DumperBeanName;
-  private ObjectName                           instrumentationLoggingBeanName;
-  private InstrumentationLoggingMBean          instrumentationLoggingBean;
   private ObjectName                           runtimeLoggingBeanName;
   private RuntimeLoggingMBean                  runtimeLoggingBean;
   private ObjectName                           runtimeOutputOptionsBeanName;
@@ -106,7 +103,6 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
         .getCounter(channel, ChannelStats.SERVER_MAP_GET_VALUE_REQUESTS);
 
     this.l1InfoBeanName = getTunneledBeanName(L1MBeanNames.L1INFO_PUBLIC);
-    this.instrumentationLoggingBeanName = getTunneledBeanName(L1MBeanNames.INSTRUMENTATION_LOGGING_PUBLIC);
     this.runtimeLoggingBeanName = getTunneledBeanName(L1MBeanNames.RUNTIME_LOGGING_PUBLIC);
     this.runtimeOutputOptionsBeanName = getTunneledBeanName(L1MBeanNames.RUNTIME_OUTPUT_OPTIONS_PUBLIC);
     this.l1OperatorEventsBeanName = getTunneledBeanName(MBeanNames.OPERATOR_EVENTS_PUBLIC);
@@ -146,11 +142,6 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     if ((beanName = queryClientBean(l1InfoBeanName)) != null) {
       l1InfoBeanName = beanName;
       setupL1InfoBean();
-    }
-
-    if ((beanName = queryClientBean(instrumentationLoggingBeanName)) != null) {
-      instrumentationLoggingBeanName = beanName;
-      setupInstrumentationLoggingBean();
     }
 
     if ((beanName = queryClientBean(runtimeLoggingBeanName)) != null) {
@@ -259,16 +250,6 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   @Override
   public ObjectName getL1DumperBeanName() {
     return this.l1DumperBeanName;
-  }
-
-  @Override
-  public ObjectName getInstrumentationLoggingBeanName() {
-    return instrumentationLoggingBeanName;
-  }
-
-  @Override
-  public InstrumentationLoggingMBean getInstrumentationLoggingBean() {
-    return instrumentationLoggingBean;
   }
 
   @Override
@@ -387,11 +368,6 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
                                                                               false);
   }
 
-  private void setupInstrumentationLoggingBean() {
-    instrumentationLoggingBean = MBeanServerInvocationHandler
-        .newProxyInstance(mbeanServer, instrumentationLoggingBeanName, InstrumentationLoggingMBean.class, false);
-  }
-
   private void setupRuntimeLoggingBean() {
     runtimeLoggingBean = MBeanServerInvocationHandler.newProxyInstance(mbeanServer, runtimeLoggingBeanName,
                                                                        RuntimeLoggingMBean.class, false);
@@ -403,8 +379,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   }
 
   private boolean haveAllTunneledBeans() {
-    return l1InfoBean != null && instrumentationLoggingBean != null && runtimeLoggingBean != null
-           && runtimeOutputOptionsBean != null;
+    return l1InfoBean != null && runtimeLoggingBean != null && runtimeOutputOptionsBean != null;
   }
 
   /**
@@ -426,11 +401,6 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
       if (l1InfoBean == null && matchesClientBeanName(l1InfoBeanName, beanName)) {
         l1InfoBeanName = beanName;
         setupL1InfoBean();
-      }
-
-      if (instrumentationLoggingBean == null && matchesClientBeanName(instrumentationLoggingBeanName, beanName)) {
-        instrumentationLoggingBeanName = beanName;
-        setupInstrumentationLoggingBean();
       }
 
       if (runtimeLoggingBean == null && matchesClientBeanName(runtimeLoggingBeanName, beanName)) {

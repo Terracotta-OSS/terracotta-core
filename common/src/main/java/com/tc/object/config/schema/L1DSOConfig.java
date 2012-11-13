@@ -12,8 +12,6 @@ public interface L1DSOConfig extends Config {
 
   int faultCount();
 
-  DSOInstrumentationLoggingOptions instrumentationLoggingOptions();
-
   DSORuntimeLoggingOptions runtimeLoggingOptions();
 
   DSORuntimeOutputOptions runtimeOutputOptions();

@@ -15,7 +15,6 @@ import com.tc.object.loaders.ClassProvider;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.TerracottaLocking;
-import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
@@ -283,11 +282,6 @@ public interface Manager extends TerracottaLocking {
    * @return The logger
    */
   public TCLogger getLogger(String loggerName);
-
-  /**
-   * Get the instrumentation logger
-   */
-  InstrumentationLogger getInstrumentationLogger();
 
   /**
    * @return TCProperties

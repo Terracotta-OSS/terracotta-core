@@ -7,7 +7,6 @@ package com.tc.stats.api;
 import com.tc.management.TerracottaMBean;
 import com.tc.management.beans.TerracottaOperatorEventsMBean;
 import com.tc.management.beans.l1.L1InfoMBean;
-import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
 import com.tc.net.ClientID;
@@ -31,10 +30,6 @@ public interface DSOClientMBean extends TerracottaMBean {
 
   ObjectName getL1DumperBeanName();
 
-  ObjectName getInstrumentationLoggingBeanName();
-
-  InstrumentationLoggingMBean getInstrumentationLoggingBean();
-
   ObjectName getRuntimeLoggingBeanName();
 
   RuntimeLoggingMBean getRuntimeLoggingBean();
@@ -42,9 +37,9 @@ public interface DSOClientMBean extends TerracottaMBean {
   ObjectName getRuntimeOutputOptionsBeanName();
 
   RuntimeOutputOptionsMBean getRuntimeOutputOptionsBean();
-  
+
   ObjectName getL1OperatorEventsBeanName();
-  
+
   ObjectName getEnterpriseTCClientBeanName();
 
   TerracottaOperatorEventsMBean getL1OperatorEventsBean();
@@ -68,7 +63,7 @@ public interface DSOClientMBean extends TerracottaMBean {
   boolean isResident(ObjectID oid);
 
   void killClient();
-  
+
   long getServerMapGetSizeRequestsCount();
 
   long getServerMapGetValueRequestsCount();

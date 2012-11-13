@@ -11,7 +11,6 @@ import com.tc.asm.Opcodes;
 import com.tc.asm.Type;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.object.config.MethodSpec;
-import com.tc.object.logging.InstrumentationLogger;
 
 import java.lang.reflect.Modifier;
 
@@ -38,9 +37,9 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
     this.instrumentationType = instrumentationType;
   }
 
+  @Override
   public void initialize(int anAccess, String aClassName, String aMethodName, String aOriginalMethodName,
-                         String aDescription, String sig, String[] anExceptions, InstrumentationLogger logger,
-                         MemberInfo info) {
+                         String aDescription, String sig, String[] anExceptions, MemberInfo info) {
     this.ownerSlashes = aClassName.replace('.', '/');
     this.methodName = aMethodName;
     this.originalMethodName = aOriginalMethodName;
@@ -51,11 +50,13 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
     this.signature = sig;
   }
 
+  @Override
   public MethodVisitor adapt(ClassVisitor classVisitor) {
     createWrapperMethod(classVisitor);
     return classVisitor.visitMethod(access, getNewName(), description, signature, exceptions);
   }
 
+  @Override
   public boolean doesOriginalNeedAdapting() {
     return true;
   }

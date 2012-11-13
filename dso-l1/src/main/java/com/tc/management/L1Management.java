@@ -12,8 +12,6 @@ import com.tc.management.beans.L1Dumper;
 import com.tc.management.beans.L1MBeanNames;
 import com.tc.management.beans.MBeanNames;
 import com.tc.management.beans.l1.L1InfoMBean;
-import com.tc.management.beans.logging.InstrumentationLogging;
-import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLogging;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptions;
@@ -22,7 +20,6 @@ import com.tc.management.exposed.TerracottaCluster;
 import com.tc.management.remote.protocol.ProtocolProvider;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.management.remote.protocol.terracotta.TunnelingMessageConnectionServer;
-import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -55,7 +52,6 @@ public class L1Management extends TerracottaManagement {
 
   private final TerracottaCluster        clusterBean;
   private final L1Info                   l1InfoBean;
-  private final InstrumentationLogging   instrumentationLoggingBean;
   private final RuntimeOutputOptions     runtimeOutputOptionsBean;
   private final RuntimeLogging           runtimeLoggingBean;
 
@@ -69,8 +65,7 @@ public class L1Management extends TerracottaManagement {
 
   public L1Management(final TunnelingEventHandler tunnelingHandler,
                       final StatisticsAgentSubSystem statisticsAgentSubSystem, final RuntimeLogger runtimeLogger,
-                      final InstrumentationLogger instrumentationLogger, final String rawConfigText,
-                      final TCClient client) {
+                      final String rawConfigText, final TCClient client) {
     super();
 
     started = new SetOnceFlag();
@@ -81,7 +76,6 @@ public class L1Management extends TerracottaManagement {
       l1InfoBean = new L1Info(client, rawConfigText);
       l1DumpBean = new L1Dumper(client, l1InfoBean);
       clusterBean = new TerracottaCluster();
-      instrumentationLoggingBean = new InstrumentationLogging(instrumentationLogger);
       runtimeOutputOptionsBean = new RuntimeOutputOptions(runtimeLogger);
       runtimeLoggingBean = new RuntimeLogging(runtimeLogger);
     } catch (NotCompliantMBeanException ncmbe) {
@@ -135,6 +129,7 @@ public class L1Management extends TerracottaManagement {
 
       private static final int MAX_ATTEMPTS = 60 * 5;
 
+      @Override
       public void run() {
         try {
           boolean registered = false;
@@ -191,7 +186,6 @@ public class L1Management extends TerracottaManagement {
   @Override
   public Object findMBean(final ObjectName objectName, final Class mBeanInterface) throws IOException {
     if (objectName.equals(L1MBeanNames.L1INFO_PUBLIC)) return l1InfoBean;
-    else if (objectName.equals(L1MBeanNames.INSTRUMENTATION_LOGGING_PUBLIC)) return instrumentationLoggingBean;
     else if (objectName.equals(L1MBeanNames.RUNTIME_OUTPUT_OPTIONS_PUBLIC)) return runtimeOutputOptionsBean;
     else if (objectName.equals(L1MBeanNames.RUNTIME_LOGGING_PUBLIC)) return runtimeLoggingBean;
     else {
@@ -204,10 +198,6 @@ public class L1Management extends TerracottaManagement {
 
   public L1InfoMBean findL1InfoMBean() {
     return l1InfoBean;
-  }
-
-  public InstrumentationLoggingMBean findInstrumentationLoggingMBean() {
-    return instrumentationLoggingBean;
   }
 
   public RuntimeOutputOptionsMBean findRuntimeOutputOptionsMBean() {
@@ -246,7 +236,6 @@ public class L1Management extends TerracottaManagement {
     }
 
     registerMBean(l1InfoBean, L1MBeanNames.L1INFO_PUBLIC);
-    registerMBean(instrumentationLoggingBean, L1MBeanNames.INSTRUMENTATION_LOGGING_PUBLIC);
     registerMBean(runtimeOutputOptionsBean, L1MBeanNames.RUNTIME_OUTPUT_OPTIONS_PUBLIC);
     registerMBean(runtimeLoggingBean, L1MBeanNames.RUNTIME_LOGGING_PUBLIC);
   }

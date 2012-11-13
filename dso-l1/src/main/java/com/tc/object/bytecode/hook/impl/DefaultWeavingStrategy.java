@@ -42,7 +42,6 @@ import com.tc.logging.TCLogging;
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.SafeSerialVersionUIDAdder;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.logging.InstrumentationLogger;
 import com.tc.util.AdaptedClassDumper;
 import com.tc.util.InitialClassDumper;
 
@@ -92,12 +91,9 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
   }
 
   private final DSOClientConfigHelper             m_configHelper;
-  private final InstrumentationLogger             m_instrumentationLogger;
 
-  public DefaultWeavingStrategy(final DSOClientConfigHelper configHelper,
-                                final InstrumentationLogger instrumentationLogger) {
+  public DefaultWeavingStrategy(final DSOClientConfigHelper configHelper) {
     m_configHelper = configHelper;
-    m_instrumentationLogger = instrumentationLogger;
 
     // deploy all system aspect modules
     StandardAspectModuleDeployer.deploy(getClass().getClassLoader());
@@ -112,6 +108,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
    * @param className
    * @param context
    */
+  @Override
   public void transform(final String className, final InstrumentationContext context) {
     ClassKey key = new ClassKey(className, context.getLoader());
     BYTECODE_PROVIDER.put(key, context.getInitialBytecode());
@@ -178,10 +175,6 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       if (!isAdvisable && !isDsoAdaptable && !hasCustomAdapters) {
         context.setCurrentBytecode(context.getInitialBytecode());
         return;
-      }
-
-      if (m_instrumentationLogger.getClassInclusion()) {
-        m_instrumentationLogger.classIncluded(className);
       }
 
       // ------------------------------------------------
@@ -319,7 +312,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       if (isDsoAdaptable) {
         final ClassReader dsoReader = new ClassReader(context.getCurrentBytecode());
         final ClassWriter dsoWriter = new ClassWriter(dsoReader, ClassWriter.COMPUTE_MAXS);
-        ClassVisitor dsoVisitor = m_configHelper.createClassAdapterFor(dsoWriter, classInfo, m_instrumentationLogger,
+        ClassVisitor dsoVisitor = m_configHelper.createClassAdapterFor(dsoWriter, classInfo,
                                                                        loader);
         try {
           dsoReader.accept(dsoVisitor, ClassReader.SKIP_FRAMES);
@@ -327,7 +320,6 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
         } catch (TCLogicalSubclassNotPortableException e) {
           List l = new ArrayList(1);
           l.add(e.getSuperClassName());
-          m_instrumentationLogger.subclassOfLogicallyManagedClasses(e.getClassName(), l);
         }
 
         // CDV-237
@@ -481,6 +473,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       bytes.put(key, bytecode);
     }
 
+    @Override
     public byte[] getBytecode(String className, ClassLoader loader) throws ClassNotFoundException, IOException {
       ClassKey key = new ClassKey(className, loader);
 

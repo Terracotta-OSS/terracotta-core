@@ -16,7 +16,6 @@ import com.tc.util.Assert;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.DsoClientData;
 import com.terracottatech.config.DsoClientDebugging;
-import com.terracottatech.config.InstrumentationLogging;
 import com.terracottatech.config.RuntimeLogging;
 import com.terracottatech.config.RuntimeOutputOptions;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
@@ -29,7 +28,6 @@ public class L1DSOConfigObject extends BaseConfigObject implements L1DSOConfig {
 
   private final int                              faultCount;
 
-  private final DSOInstrumentationLoggingOptions instrumentationLoggingOptions;
   private final DSORuntimeLoggingOptions         runtimeLoggingOptions;
   private final DSORuntimeOutputOptions          runtimeOutputOptions;
 
@@ -40,23 +38,21 @@ public class L1DSOConfigObject extends BaseConfigObject implements L1DSOConfig {
     DsoClientData dsoClientData = (DsoClientData) this.context.bean();
 
     this.faultCount = dsoClientData.getFaultCount();
-    this.instrumentationLoggingOptions = new StandardDSOInstrumentationLoggingOptions(this.context);
     this.runtimeLoggingOptions = new StandardDSORuntimeLoggingOptions(this.context);
     this.runtimeOutputOptions = new StandardDSORuntimeOutputOptions(this.context);
   }
 
-  public DSOInstrumentationLoggingOptions instrumentationLoggingOptions() {
-    return this.instrumentationLoggingOptions;
-  }
-
+  @Override
   public DSORuntimeLoggingOptions runtimeLoggingOptions() {
     return this.runtimeLoggingOptions;
   }
 
+  @Override
   public DSORuntimeOutputOptions runtimeOutputOptions() {
     return this.runtimeOutputOptions;
   }
 
+  @Override
   public int faultCount() {
     return faultCount;
   }
@@ -118,48 +114,8 @@ public class L1DSOConfigObject extends BaseConfigObject implements L1DSOConfig {
     DsoClientDebugging debugging = dso.getDebugging();
     Assert.assertNotNull(debugging);
 
-    initializeInstrumentationLogging(client, defaultValueProvider);
     initializeRunTimeLogging(client, defaultValueProvider);
     initailizeRunTimeOutputOptions(client, defaultValueProvider);
-  }
-
-  private static void initializeInstrumentationLogging(Client client, DefaultValueProvider defaultValueProvider)
-      throws XmlException {
-    DsoClientDebugging debugging = client.getDso().getDebugging();
-    Assert.assertNotNull(debugging);
-
-    if (!debugging.isSetInstrumentationLogging()) {
-      debugging.addNewInstrumentationLogging();
-    }
-
-    InstrumentationLogging instrumentationLogging = debugging.getInstrumentationLogging();
-    Assert.assertNotNull(instrumentationLogging);
-
-    if (!instrumentationLogging.isSetClass1()) {
-      instrumentationLogging.setClass1(getDefaultClassInstrumentationLogging(client, defaultValueProvider));
-    }
-
-    if (!instrumentationLogging.isSetHierarchy()) {
-      instrumentationLogging.setHierarchy(getDefaultHierarchyInstrumentationLogging(client, defaultValueProvider));
-    }
-
-    if (!instrumentationLogging.isSetLocks()) {
-      instrumentationLogging.setLocks(getDefaultLocksInstrumentationLoggings(client, defaultValueProvider));
-    }
-
-    if (!instrumentationLogging.isSetTransientRoot()) {
-      instrumentationLogging.setTransientRoot(getDefaultTransientRootInstrumentationLogging(client,
-                                                                                            defaultValueProvider));
-    }
-
-    if (!instrumentationLogging.isSetRoots()) {
-      instrumentationLogging.setRoots(getDefaultRootsInstrumentationLogging(client, defaultValueProvider));
-    }
-
-    if (!instrumentationLogging.isSetDistributedMethods()) {
-      instrumentationLogging
-          .setDistributedMethods(getDefaultDistributedMethodInstrumentationLogging(client, defaultValueProvider));
-    }
   }
 
   private static void initializeRunTimeLogging(Client client, DefaultValueProvider defaultValueProvider)

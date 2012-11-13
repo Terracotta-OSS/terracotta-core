@@ -53,7 +53,6 @@ import com.tc.object.locks.ClientLockManagerConfig;
 import com.tc.object.locks.ClientLockManagerImpl;
 import com.tc.object.locks.RemoteLockManager;
 import com.tc.object.locks.RemoteLockManagerImpl;
-import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
@@ -89,6 +88,7 @@ import java.util.Map;
 
 public class StandardDSOClientBuilder implements DSOClientBuilder {
 
+  @Override
   public DSOClientMessageChannel createDSOClientMessageChannel(final CommunicationsManager commMgr,
                                                                final PreparedComponentsFromL2Connection connComp,
                                                                final SessionProvider sessionProvider,
@@ -107,6 +107,7 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     return cap;
   }
 
+  @Override
   public CommunicationsManager createCommunicationsManager(final MessageMonitor monitor,
                                                            final TCMessageRouter messageRouter,
                                                            final NetworkStackHarnessFactory stackHarnessFactory,
@@ -123,20 +124,24 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                          messageTypeFactoryMapping, reconnectionRejectediHandler, securityManager);
   }
 
+  @Override
   public TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch, final DSOMBeanConfig config) {
     return new TunnelingEventHandler(ch, config);
   }
 
+  @Override
   public TunneledDomainManager createTunneledDomainManager(final ClientMessageChannel ch, final DSOMBeanConfig config,
                                                            final TunnelingEventHandler teh) {
     return new TunneledDomainManager(ch, config, teh);
   }
 
+  @Override
   public ClientGlobalTransactionManager createClientGlobalTransactionManager(final RemoteTransactionManager remoteTxnMgr,
                                                                              final PreTransactionFlushCallback preTransactionFlushCallback) {
     return new ClientGlobalTransactionManagerImpl(remoteTxnMgr, preTransactionFlushCallback);
   }
 
+  @Override
   public RemoteObjectManagerImpl createRemoteObjectManager(final TCLogger logger,
                                                            final DSOClientMessageChannel dsoChannel,
                                                            final int faultCount, final SessionManager sessionManager) {
@@ -147,6 +152,7 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                        dsoChannel.getRequestManagedObjectMessageFactory(), faultCount, sessionManager);
   }
 
+  @Override
   public ClusterMetaDataManager createClusterMetaDataManager(final DSOClientMessageChannel dsoChannel,
                                                              final DNAEncoding encoding,
                                                              final ThreadIDManager threadIDManager,
@@ -162,6 +168,7 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                           nmdmFactory, nwkmFactory);
   }
 
+  @Override
   public ClientObjectManagerImpl createObjectManager(final RemoteObjectManager remoteObjectManager,
                                                      final DSOClientConfigHelper dsoConfig,
                                                      final ObjectIDProvider idProvider, final RuntimeLogger rtLogger,
@@ -178,6 +185,7 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                        toggleRefMgr, tcObjectSelfStore);
   }
 
+  @Override
   public ClientLockManager createLockManager(final DSOClientMessageChannel dsoChannel,
                                              final ClientIDLogger clientIDLogger, final SessionManager sessionManager,
                                              final ClientLockStatManager lockStatManager,
@@ -195,11 +203,13 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                      lockStatManager);
   }
 
+  @Override
   @Deprecated
   public ClientLockStatManager createLockStatsManager() {
     return new ClientLockStatisticsManagerImpl(null);
   }
 
+  @Override
   public RemoteTransactionManager createRemoteTransactionManager(final ClientIDProvider cidProvider,
                                                                  final DNAEncodingInternal encoding,
                                                                  final FoldingConfig foldingConfig,
@@ -233,26 +243,31 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                 .getLong(TCPropertiesConsts.L1_TRANSACTIONMANAGER_TIMEOUTFORACK_ONEXIT) * 1000);
   }
 
+  @Override
   public ObjectIDClientHandshakeRequester getObjectIDClientHandshakeRequester(final BatchSequenceReceiver sequence) {
     return new ObjectIDClientHandshakeRequester(sequence);
   }
 
+  @Override
   public BatchSequence[] createSequences(final RemoteObjectIDBatchSequenceProvider remoteIDProvider,
                                          final int requestSize) {
     return new BatchSequence[] { new BatchSequence(remoteIDProvider, requestSize) };
   }
 
+  @Override
   public ObjectIDProvider createObjectIdProvider(final BatchSequence[] sequences, final ClientIDProvider cidProvider) {
     Assert.assertTrue(sequences.length == 1);
 
     return new ObjectIDProviderImpl(sequences[0]);
   }
 
+  @Override
   public BatchSequenceReceiver getBatchReceiver(final BatchSequence[] sequences) {
     Assert.assertTrue(sequences.length == 1);
     return sequences[0];
   }
 
+  @Override
   public ClientHandshakeManager createClientHandshakeManager(final TCLogger logger,
                                                              final DSOClientMessageChannel channel,
                                                              final ClientHandshakeMessageFactory chmf,
@@ -264,19 +279,20 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                           clientVersion, callbacks);
   }
 
+  @Override
   public L1Management createL1Management(final TunnelingEventHandler teh,
                                          final StatisticsAgentSubSystem statisticsAgentSubSystem,
-                                         final RuntimeLogger runtimeLogger,
-                                         final InstrumentationLogger instrumentationLogger, final String rawConfigText,
+                                         final RuntimeLogger runtimeLogger, final String rawConfigText,
                                          final DistributedObjectClient distributedObjectClient) {
-    return new L1Management(teh, statisticsAgentSubSystem, runtimeLogger, instrumentationLogger, rawConfigText,
-                            distributedObjectClient);
+    return new L1Management(teh, statisticsAgentSubSystem, runtimeLogger, rawConfigText, distributedObjectClient);
   }
 
+  @Override
   public void registerForOperatorEvents(final L1Management management) {
     // NOP
   }
 
+  @Override
   public TCClassFactory createTCClassFactory(final DSOClientConfigHelper config, final ClassProvider classProvider,
                                              final DNAEncoding dnaEncoding, final Manager manager,
                                              final L1ServerMapLocalCacheManager localCacheManager,
@@ -285,6 +301,7 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                   localCacheManager, remoteServerMapManager);
   }
 
+  @Override
   public RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger,
                                                              final DSOClientMessageChannel dsoChannel,
                                                              final SessionManager sessionManager,
@@ -296,12 +313,14 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                           sessionManager, globalLocalCacheManager);
   }
 
+  @Override
   public RemoteSearchRequestManager createRemoteSearchRequestManager(final TCLogger logger,
                                                                      final DSOClientMessageChannel dsoChannel,
                                                                      final SessionManager sessionManager) {
     return new NullRemoteSearchRequestManager();
   }
 
+  @Override
   public LongGCLogger createLongGCLogger(long gcTimeOut) {
     return new LongGCLogger(gcTimeOut);
   }

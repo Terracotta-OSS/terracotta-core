@@ -7,7 +7,6 @@ package com.tc.object.bytecode;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.MethodVisitor;
 import com.tc.aspectwerkz.reflect.MemberInfo;
-import com.tc.object.logging.InstrumentationLogger;
 
 /**
  * Interface for something that can modify methods
@@ -16,6 +15,7 @@ public interface MethodAdapter {
 
   /**
    * Initialize the method adapter with resources
+   * 
    * @param access Access modifier for method
    * @param owner Owner class name
    * @param methodName Modified method name
@@ -25,12 +25,11 @@ public interface MethodAdapter {
    *        method parameters, return type and exceptions do not use generic
    *        types.
    * @param exceptions Exceptions thrown by the method
-   * @param instrumentationLogger The logger
    * @param memberInfo Member info
    */
   public void initialize(int access, String owner, String methodName,
                          String originalMethodName, String description, String sig, String[] exceptions,
-                         InstrumentationLogger instrumentationLogger, MemberInfo memberInfo);
+ MemberInfo memberInfo);
 
   /**
    * Create a method visitor from the class visitor

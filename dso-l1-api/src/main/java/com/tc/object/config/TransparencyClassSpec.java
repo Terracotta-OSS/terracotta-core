@@ -12,7 +12,6 @@ import com.tc.aspectwerkz.reflect.MethodInfo;
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.MethodAdapter;
 import com.tc.object.bytecode.MethodCreator;
-import com.tc.object.logging.InstrumentationLogger;
 
 import java.util.Collection;
 import java.util.List;
@@ -295,13 +294,11 @@ public interface TransparencyClassSpec {
    * @param description Method description
    * @param signature Method signature
    * @param exceptions Exceptions thrown
-   * @param logger Logger
    * @param memberInfo Method
    * @return Custom adapter
    */
   public MethodAdapter customMethodAdapterFor(int access, String methodName, String origMethodName, String description,
-                                              String signature, String[] exceptions, InstrumentationLogger logger,
-                                              MemberInfo memberInfo);
+                                              String signature, String[] exceptions, MemberInfo memberInfo);
 
   /**
    * @return Change applicator specification

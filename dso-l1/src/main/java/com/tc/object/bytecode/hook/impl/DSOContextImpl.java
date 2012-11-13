@@ -32,7 +32,6 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.ModuleConfiguration;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.loaders.ClassProvider;
-import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.RuntimeLoggerImpl;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
@@ -56,7 +55,6 @@ public class DSOContextImpl implements DSOContext {
 
   private final DSOClientConfigHelper configHelper;
   private final Manager               manager;
-  private final InstrumentationLogger instrumentationLogger;
   private final WeavingStrategy       weavingStrategy;
 
   private final boolean               expressRejoinClient;
@@ -164,8 +162,7 @@ public class DSOContextImpl implements DSOContext {
     this.expressRejoinClient = expressRejoinClient;
     this.configHelper = configHelper;
     this.manager = manager;
-    this.instrumentationLogger = manager.getInstrumentationLogger();
-    this.weavingStrategy = new DefaultWeavingStrategy(configHelper, instrumentationLogger);
+    this.weavingStrategy = new DefaultWeavingStrategy(configHelper);
     logger.info("DSOContext created with expressRejoinClient=" + expressRejoinClient);
   }
 

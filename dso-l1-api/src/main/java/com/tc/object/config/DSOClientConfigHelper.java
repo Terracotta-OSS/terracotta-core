@@ -16,11 +16,9 @@ import com.tc.net.core.SecurityInfo;
 import com.tc.object.Portability;
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.TransparencyClassAdapter;
-import com.tc.object.config.schema.DSOInstrumentationLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeOutputOptions;
 import com.tc.object.config.schema.InstrumentedClass;
-import com.tc.object.logging.InstrumentationLogger;
 import com.tc.properties.ReconnectConfig;
 import com.tc.security.PwProvider;
 
@@ -54,27 +52,24 @@ public interface DSOClientConfigHelper extends DSOMBeanConfig, ModuleConfigurati
 
   boolean isLogical(String theClass);
 
-  DSOInstrumentationLoggingOptions getInstrumentationLoggingOptions();
-
   TransparencyClassSpec[] getAllSpecs();
 
   Iterator getAllUserDefinedBootSpecs();
 
-  TransparencyClassAdapter createDsoClassAdapterFor(ClassVisitor writer, ClassInfo classInfo,
-                                                    InstrumentationLogger lgr, ClassLoader caller,
+  TransparencyClassAdapter createDsoClassAdapterFor(ClassVisitor writer, ClassInfo classInfo, ClassLoader caller,
                                                     final boolean forcePortable, boolean honorTransient);
 
-  ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, InstrumentationLogger lgr,
-                                     ClassLoader caller);
+  ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, ClassLoader caller);
 
-  ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, InstrumentationLogger lgr,
-                                     ClassLoader caller, boolean disableSuperClassTypeChecking);
+  ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, ClassLoader caller,
+                                     boolean disableSuperClassTypeChecking);
 
   boolean isCallConstructorOnLoad(ClassInfo classInfo);
 
   // String getChangeApplicatorClassNameFor(String className);
   Class getChangeApplicator(Class clazz);
 
+  @Override
   boolean addTunneledMBeanDomain(String tunneledMBeanDomain);
 
   // HACK: is also in IStandardDSOClientConfigHelper
@@ -114,10 +109,9 @@ public interface DSOClientConfigHelper extends DSOMBeanConfig, ModuleConfigurati
 
   DSORuntimeOutputOptions runtimeOutputOptions();
 
-  DSOInstrumentationLoggingOptions instrumentationLoggingOptions();
-
   int getFaultCount();
 
+  @Override
   void addWriteAutolock(String methodPattern);
 
   void addWriteAutolock(String methodPattern, String lockContextInfo);
@@ -126,6 +120,7 @@ public interface DSOClientConfigHelper extends DSOMBeanConfig, ModuleConfigurati
 
   void addLock(String methodPattern, LockDefinition lockDefinition);
 
+  @Override
   void addReadAutolock(String methodPattern);
 
   void addAutolock(String methodPattern, ConfigLockLevel type);
@@ -163,11 +158,13 @@ public interface DSOClientConfigHelper extends DSOMBeanConfig, ModuleConfigurati
   boolean isUseNonDefaultConstructor(Class clazz);
 
   // HACK: is also in IStandardDSOClientConfigHelper
+  @Override
   void addIncludePattern(String expression);
 
   CommonL1Config getNewCommonL1Config();
 
   // Used for testing
+  @Override
   void addIncludePattern(String expression, boolean honorTransient);
 
   void addIncludePattern(String expression, boolean honorTransient, boolean oldStyleCallConstructorOnLoad,

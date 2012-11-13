@@ -47,8 +47,6 @@ import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.Notify;
 import com.tc.object.locks.NotifyImpl;
 import com.tc.object.locks.UnclusteredLockID;
-import com.tc.object.logging.InstrumentationLogger;
-import com.tc.object.logging.InstrumentationLoggerImpl;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.logging.RuntimeLoggerImpl;
 import com.tc.object.metadata.MetaDataDescriptor;
@@ -109,8 +107,6 @@ public class ManagerImpl implements Manager {
   private final ClientMode                         clientMode;
   private final TCSecurityManager                  securityManager;
 
-  private final InstrumentationLogger              instrumentationLogger;
-
   private ClientObjectManager                      objectManager;
   private ClientShutdownManager                    shutdownManager;
   private ClientTransactionManager                 txManager;
@@ -151,7 +147,6 @@ public class ManagerImpl implements Manager {
     this.lockManager = lockManager;
     this.searchRequestManager = searchRequestManager;
     this.config = config;
-    this.instrumentationLogger = new InstrumentationLoggerImpl(config.instrumentationLoggingOptions());
     this.startClient = startClient;
     this.connectionComponents = connectionComponents;
     this.dsoCluster = new DsoClusterImpl();
@@ -653,11 +648,6 @@ public class ManagerImpl implements Manager {
     return TCLogging.getLogger(loggerName);
   }
 
-  @Override
-  public InstrumentationLogger getInstrumentationLogger() {
-    return this.instrumentationLogger;
-  }
-
   private static class MethodDisplayNames {
 
     private final Map display = new HashMap();
@@ -1133,6 +1123,7 @@ public class ManagerImpl implements Manager {
     return expectedType.cast(registeredObjects.get(name));
   }
 
+  @Override
   public void addTransactionCompleteListener(TransactionCompleteListener listener) {
     txManager.getCurrentTransaction().addTransactionCompleteListener(listener);
   }

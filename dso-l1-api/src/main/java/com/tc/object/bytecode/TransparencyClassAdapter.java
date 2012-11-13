@@ -19,7 +19,6 @@ import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.LockDefinition;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.locks.LockLevel;
-import com.tc.object.logging.InstrumentationLogger;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
@@ -39,15 +38,12 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
 
   private final Set                        doNotInstrument    = new HashSet();
   private final PhysicalClassAdapterLogger physicalClassLogger;
-  private final InstrumentationLogger      instrumentationLogger;
 
   private boolean                          supportMethodsCreated;
 
   public TransparencyClassAdapter(final ClassInfo classInfo, final TransparencyClassSpec spec, final ClassVisitor cv,
-                                  final InstrumentationLogger instrumentationLogger, final ClassLoader caller,
-                                  final Portability portability) {
+                                  final ClassLoader caller, final Portability portability) {
     super(classInfo, spec, cv, caller, portability);
-    this.instrumentationLogger = instrumentationLogger;
     this.physicalClassLogger = new PhysicalClassAdapterLogger(logger);
   }
 
@@ -94,11 +90,6 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
       FieldInfo fieldInfo = spec.getFieldInfo(fieldName);
       boolean isRoot = fieldInfo == null ? false : getTransparencyClassSpec().isRootInThisClass(fieldInfo);
       boolean isTransient = getTransparencyClassSpec().isTransient(access, spec.getClassInfo(), fieldName);
-      if (isTransient && isRoot) {
-        if (instrumentationLogger.getTransientRootWarning()) {
-          instrumentationLogger.transientRootWarning(this.spec.getClassNameDots(), fieldName);
-        }
-      }
       return isRoot;
     } catch (RuntimeException e) {
       handleInstrumentationException(e);
@@ -219,9 +210,6 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
       int lockLevel = -1;
       if (isAutolock) {
         lockLevel = ld.getLockLevelAsInt();
-        if (instrumentationLogger.getLockInsertion()) {
-          instrumentationLogger.autolockInserted(this.spec.getClassNameDots(), name, desc, ld);
-        }
       }
       boolean isAutoReadLock = isAutolock && (lockLevel == LockLevel.READ.toInt());
 
@@ -244,7 +232,6 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
         Assert.eval(locks.length > 0 || isLockMethod);
         createLockMethod(access, name, desc, signature, exceptions, locks, isAutoReadLock);
 
-        logCustomerLockMethod(name, desc, locks);
         name = ByteCodeUtil.METHOD_RENAME_PREFIX + name;
         access |= ACC_PRIVATE;
         access &= (~ACC_PUBLIC);
@@ -259,8 +246,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
       // Visit the original method by either using a custom adapter or a TransparencyCodeAdapter or both.
       if (getTransparencyClassSpec().hasCustomMethodAdapter(memberInfo)) {
         MethodAdapter ma = getTransparencyClassSpec().customMethodAdapterFor(access, name, originalName, desc,
-                                                                             signature, exceptions,
-                                                                             instrumentationLogger, memberInfo);
+                                                                             signature, exceptions, memberInfo);
         mv = ma.adapt(cv);
 
         if (!ma.doesOriginalNeedAdapting()) return mv;
@@ -298,12 +284,6 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   // exceptions);
   // super.basicVisitEnd();
   // }
-
-  private void logCustomerLockMethod(final String name, final String desc, final LockDefinition[] locks) {
-    if (instrumentationLogger.getLockInsertion()) {
-      instrumentationLogger.lockInserted(this.spec.getClassNameDots(), name, desc, locks);
-    }
-  }
 
   private void createLockMethod(int access, final String name, final String desc, final String signature,
                                 final String[] exceptions, final LockDefinition[] locks, final boolean skipLocalJVMLock) {
@@ -975,9 +955,6 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     try {
       if (isRoot(methodAccess, name)) {
         boolean isStaticRoot = Modifier.isStatic(methodAccess);
-        if (instrumentationLogger.getRootInsertion()) {
-          instrumentationLogger.rootInserted(spec.getClassNameDots(), name, desc, isStaticRoot);
-        }
 
         createRootSetter(methodAccess, name, desc, isStaticRoot);
       } else {

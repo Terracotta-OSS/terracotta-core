@@ -13,7 +13,6 @@ import com.tc.admin.common.XLabel;
 import com.tc.admin.model.IClient;
 import com.tc.admin.model.IClusterModelElement;
 import com.tc.management.beans.l1.L1InfoMBean;
-import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
 
@@ -233,6 +232,7 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
 
     panel.add(verboseGCCheckBox = new XCheckBox("Verbose"), gbc);
     verboseGCCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         client.setVerboseGC(verboseGCCheckBox.isSelected());
       }
@@ -241,6 +241,7 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
 
     panel.add(gcButton = new XButton("Request GC"), gbc);
     gcButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         client.gc();
       }
@@ -257,20 +258,9 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
   }
 
   private void setupTunneledBeans() throws Exception {
-    setupInstrumentationLogging();
     setupRuntimeLogging();
     setupRuntimeOutputOptions();
     setupGCLogging();
-  }
-
-  private void setupInstrumentationLogging() throws Exception {
-    InstrumentationLoggingMBean instrumentationLoggingBean = client.getInstrumentationLoggingBean();
-
-    setupLoggingControl(classCheckBox, instrumentationLoggingBean);
-    setupLoggingControl(locksCheckBox, instrumentationLoggingBean);
-    setupLoggingControl(transientRootCheckBox, instrumentationLoggingBean);
-    setupLoggingControl(rootsCheckBox, instrumentationLoggingBean);
-    setupLoggingControl(distributedMethodsCheckBox, instrumentationLoggingBean);
   }
 
   private void setupRuntimeLogging() throws Exception {
@@ -320,6 +310,7 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
   private class LoggingChangeWorker extends BasicWorker<Void> {
     private LoggingChangeWorker(final Object loggingBean, final String attrName, final boolean enabled) {
       super(new Callable<Void>() {
+        @Override
         public Void call() throws Exception {
           Class beanClass = loggingBean.getClass();
           Method setter = beanClass.getMethod("set" + attrName, new Class[] { Boolean.TYPE });
@@ -339,6 +330,7 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
   }
 
   class LoggingChangeHandler implements ActionListener, Serializable {
+    @Override
     public void actionPerformed(ActionEvent ae) {
       XCheckBox checkBox = (XCheckBox) ae.getSource();
       Object loggingBean = checkBox.getClientProperty(checkBox.getName());
@@ -349,6 +341,7 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
     }
   }
 
+  @Override
   public void handleNotification(Notification notification, Object handback) {
     String type = notification.getType();
 
@@ -366,9 +359,11 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
     }
   }
 
+  @Override
   public void propertyChange(final PropertyChangeEvent evt) {
     final String prop = evt.getPropertyName();
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (IClusterModelElement.PROP_READY.equals(prop)) {
           try {

@@ -38,7 +38,6 @@ import com.tc.object.idprovider.impl.RemoteObjectIDBatchSequenceProvider;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.ClientLockManagerConfig;
-import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
@@ -157,8 +156,8 @@ public interface DSOClientBuilder {
                                                       final Collection<ClientHandshakeCallback> callbacks);
 
   L1Management createL1Management(TunnelingEventHandler teh, StatisticsAgentSubSystem statisticsAgentSubSystem,
-                                  RuntimeLogger runtimeLogger, InstrumentationLogger instrumentationLogger,
-                                  String rawConfigText, DistributedObjectClient distributedObjectClient);
+                                  RuntimeLogger runtimeLogger, String rawConfigText,
+                                  DistributedObjectClient distributedObjectClient);
 
   void registerForOperatorEvents(L1Management management);
 

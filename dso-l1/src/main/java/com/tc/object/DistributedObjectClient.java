@@ -671,7 +671,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     this.l1Management = this.dsoClientBuilder.createL1Management(teh, this.statisticsAgentSubSystem,
                                                                  this.runtimeLogger,
-                                                                 this.manager.getInstrumentationLogger(),
                                                                  this.config.rawConfigText(), this);
     this.l1Management.start(this.createDedicatedMBeanServer);
 
