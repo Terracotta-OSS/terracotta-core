@@ -45,6 +45,6 @@ public class Base64ConfigurationSource implements ConfigurationSource {
 
   @Override
   public String toString() {
-    return "string:\n" + configString;
+    return "string";
   }
 }
