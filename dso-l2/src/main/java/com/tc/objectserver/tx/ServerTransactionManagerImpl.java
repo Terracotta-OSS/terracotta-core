@@ -613,6 +613,11 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     this.resentTxnSequencer.callBackOnResentTxnsInSystemCompletion(l);
   }
 
+  @Override
+  public void callbackOnLowWaterMarkInSystemCompletion(final Runnable r) {
+    gtxm.registerCallbackOnLowWaterMarkReached(r);
+  }
+
   private void fireIncomingTransactionsEvent(final NodeID nodeID, final Set serverTxnIDs) {
     for (final Iterator iter = this.txnEventListeners.iterator(); iter.hasNext();) {
       try {

@@ -4,18 +4,29 @@
  */
 package com.tc.objectserver.gtx;
 
+import org.junit.Assert;
+
+import com.tc.async.api.EventContext;
+import com.tc.async.impl.MockSink;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.Transaction;
+import com.tc.objectserver.context.LowWaterMarkCallbackContext;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransactionProvider;
 import com.tc.objectserver.persistence.impl.TestTransactionStore;
 import com.tc.util.SequenceValidator;
+import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import junit.framework.TestCase;
 
@@ -28,11 +39,12 @@ public class GlobalTransactionManagerImplTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    transactionStore = new TestTransactionStore();
+    Sequence sequence = new SimpleSequence();
+    transactionStore = new TestTransactionStore(sequence);
     ptxp = new TestPersistenceTransactionProvider();
     GlobalTransactionIDSequenceProvider gsp = new GlobalTransactionIDBatchRequestHandler(new TestMutableSequence());
-    gtxm = new ServerGlobalTransactionManagerImpl(new SequenceValidator(0), transactionStore, ptxp, gsp,
-                                                  new SimpleSequence());
+    gtxm = new ServerGlobalTransactionManagerImpl(new SequenceValidator(0), transactionStore, ptxp, gsp, sequence,
+                                                  new LWMCallbackMockSink());
   }
 
   public void testStartAndCommitApply() throws Exception {
@@ -144,6 +156,53 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     txn.commit();
   }
 
+  public void testLWMCallbacks() throws Exception {
+    // Test the empty GlobalTransactionID system case
+    FutureTask<Void> callback = noopFuture();
+    gtxm.registerCallbackOnLowWaterMarkReached(callback);
+    callback.get(10, TimeUnit.SECONDS);
+
+    // Test to see if callbacks get executed right away even when there is a non-null GID
+    gtxm.getOrCreateGlobalTransactionID(newServerTransactionID(1, 1));
+    callback = noopFuture();
+    gtxm.registerCallbackOnLowWaterMarkReached(callback);
+    try {
+      callback.get(10, TimeUnit.SECONDS);
+      Assert.fail("Expecting callback to stay queued");
+    } catch (TimeoutException e) {
+      // expected;
+    }
+    gtxm.clearCommitedTransactionsBelowLowWaterMark(newServerTransactionID(1, 2));
+    callback.get(10, TimeUnit.SECONDS);
+
+    // Test clearing insufficient GID's to execute the callback.
+    callback = noopFuture();
+    gtxm.getOrCreateGlobalTransactionID(newServerTransactionID(1, 3));
+    gtxm.getOrCreateGlobalTransactionID(newServerTransactionID(1, 4));
+    gtxm.registerCallbackOnLowWaterMarkReached(callback);
+    gtxm.clearCommitedTransactionsBelowLowWaterMark(newServerTransactionID(1, 4));
+    try {
+      callback.get(10, TimeUnit.SECONDS);
+      Assert.fail("Expecting callback to stay queued");
+    } catch (TimeoutException e) {
+      // expected;
+    }
+    gtxm.clearCommitedTransactionsBelowLowWaterMark(newServerTransactionID(1, 5));
+    callback.get(10, TimeUnit.SECONDS);
+  }
+
+  private static ServerTransactionID newServerTransactionID(long clientId, long txnId) {
+    return new ServerTransactionID(new ClientID(clientId), new TransactionID(txnId));
+  }
+
+  private static FutureTask<Void> noopFuture() {
+    return new FutureTask<Void>(new Callable<Void>() {
+      public Void call() {
+        return null;
+      }
+    });
+  }
+
   private void assertNextGlobalTXWasCalled(ServerTransactionID stxid) {
     assertEquals(stxid, transactionStore.nextTransactionIDContextQueue.poll(1));
     assertNextGlobalTxNotCalled();
@@ -164,4 +223,14 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     assertGlobalTxWasNotLoaded();
   }
 
+  private class LWMCallbackMockSink extends MockSink {
+    @Override
+    public void add(EventContext context) {
+      if (context instanceof LowWaterMarkCallbackContext) {
+        ((LowWaterMarkCallbackContext) context).run();
+      } else {
+        super.add(context);
+      }
+    }
+  }
 }

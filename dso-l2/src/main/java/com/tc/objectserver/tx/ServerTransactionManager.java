@@ -53,8 +53,6 @@ public interface ServerTransactionManager {
    * potentially trigger an acknowledgment to the originating client.
    * 
    * @param waiter - NodeID of the sender of the message that is waiting for a response
-   * @param requesterID - The id of the request sent by the channel ID that is waiting for a response
-   * @param gtxID - The GlobalTransactionID associated with the transaction.
    * @param waitee - the channelID that waiter is waiting for a response from
    */
   public void acknowledgement(NodeID waiter, TransactionID requestID, NodeID waitee);
@@ -112,4 +110,12 @@ public interface ServerTransactionManager {
   public long getTotalNumOfActiveTransactions();
 
   public void processMetaData(ServerTransaction txn, ApplyTransactionInfo applyInfo);
+
+  /**
+   * Set the given callback to be executed when the Low Water Mark passes the current GID. (i.e. all transactions
+   * currently in the system will no longer be resent).
+   * 
+   * @param r Callback to be executed
+   */
+  public void callbackOnLowWaterMarkInSystemCompletion(Runnable r);
 }

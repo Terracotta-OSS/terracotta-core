@@ -132,4 +132,7 @@ public class TestServerTransactionManager implements ServerTransactionManager {
     //
   }
 
+  public void callbackOnLowWaterMarkInSystemCompletion(Runnable r) {
+    //
+  }
 }

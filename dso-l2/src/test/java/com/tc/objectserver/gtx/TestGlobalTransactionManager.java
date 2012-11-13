@@ -18,8 +18,8 @@ import java.util.Set;
 
 public final class TestGlobalTransactionManager implements ServerGlobalTransactionManager {
 
-  private long idSequence   = 0;
-  private Set  commitedSIDs = new HashSet();
+  private long                           idSequence   = 0;
+  private final Set<ServerTransactionID> commitedSIDs = new HashSet<ServerTransactionID>();
 
   public boolean initiateApply(ServerTransactionID stxID) {
     return !commitedSIDs.contains(stxID);
@@ -77,5 +77,9 @@ public final class TestGlobalTransactionManager implements ServerGlobalTransacti
 
   public void clearCommitedTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
     return;
+  }
+
+  public void registerCallbackOnLowWaterMarkReached(Runnable callback) {
+    //
   }
 }

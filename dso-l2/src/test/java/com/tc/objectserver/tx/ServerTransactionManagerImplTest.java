@@ -43,6 +43,7 @@ import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
 import com.tc.util.TCCollections;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
+import com.tc.util.sequence.SimpleSequence;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -78,7 +79,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     this.clientStateManager = new TestClientStateManager();
     this.lockManager = new TestLockManager();
     this.objectManager = new TestObjectManager();
-    this.transactionStore = new TestTransactionStore();
+    this.transactionStore = new TestTransactionStore(new SimpleSequence());
     this.transactionRateCounter = new CounterImpl();
     this.channelStats = new TestChannelStats();
     this.gtxm = new TestGlobalTransactionManager();
