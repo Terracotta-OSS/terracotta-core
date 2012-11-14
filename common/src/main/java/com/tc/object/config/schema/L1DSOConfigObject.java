@@ -24,8 +24,6 @@ import java.io.File;
 
 public class L1DSOConfigObject extends BaseConfigObject implements L1DSOConfig {
 
-  public static final String                     DSO_INSTRUMENTATION_LOGGING_OPTIONS_SUB_XPATH = "";
-
   private final int                              faultCount;
 
   private final DSORuntimeLoggingOptions         runtimeLoggingOptions;
@@ -190,51 +188,6 @@ public class L1DSOConfigObject extends BaseConfigObject implements L1DSOConfig {
   private static int getDefaultFaultCount(Client client, DefaultValueProvider defaultValueProvider) throws XmlException {
     return ((XmlInteger) defaultValueProvider.defaultFor(client.schemaType(), "dso/fault-count")).getBigIntegerValue()
         .intValue();
-  }
-
-  private static boolean getDefaultClassInstrumentationLogging(Client client, DefaultValueProvider defaultValueProvider)
-      throws XmlException {
-    return ((XmlBoolean) defaultValueProvider.defaultFor(client.schemaType(),
-                                                         "dso/debugging/instrumentation-logging/class"))
-        .getBooleanValue();
-  }
-
-  private static boolean getDefaultHierarchyInstrumentationLogging(Client client,
-                                                                   DefaultValueProvider defaultValueProvider)
-      throws XmlException {
-    return ((XmlBoolean) defaultValueProvider.defaultFor(client.schemaType(),
-                                                         "dso/debugging/instrumentation-logging/hierarchy"))
-        .getBooleanValue();
-  }
-
-  private static boolean getDefaultLocksInstrumentationLoggings(Client client, DefaultValueProvider defaultValueProvider)
-      throws XmlException {
-    return ((XmlBoolean) defaultValueProvider.defaultFor(client.schemaType(),
-                                                         "dso/debugging/instrumentation-logging/locks"))
-        .getBooleanValue();
-  }
-
-  private static boolean getDefaultTransientRootInstrumentationLogging(Client client,
-                                                                       DefaultValueProvider defaultValueProvider)
-      throws XmlException {
-    return ((XmlBoolean) defaultValueProvider.defaultFor(client.schemaType(),
-                                                         "dso/debugging/instrumentation-logging/transient-root"))
-        .getBooleanValue();
-  }
-
-  private static boolean getDefaultRootsInstrumentationLogging(Client client, DefaultValueProvider defaultValueProvider)
-      throws XmlException {
-    return ((XmlBoolean) defaultValueProvider.defaultFor(client.schemaType(),
-                                                         "dso/debugging/instrumentation-logging/roots"))
-        .getBooleanValue();
-  }
-
-  private static boolean getDefaultDistributedMethodInstrumentationLogging(Client client,
-                                                                           DefaultValueProvider defaultValueProvider)
-      throws XmlException {
-    return ((XmlBoolean) defaultValueProvider.defaultFor(client.schemaType(),
-                                                         "dso/debugging/instrumentation-logging/distributed-methods"))
-        .getBooleanValue();
   }
 
   private static boolean getDefaultNonPortableDumpRuntimeLogging(Client client,
