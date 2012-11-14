@@ -14,7 +14,6 @@ import com.tc.object.dna.impl.ProxyInstance;
 import com.tc.object.field.TCField;
 import com.tc.object.field.TCFieldFactory;
 import com.tc.object.loaders.Namespace;
-import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
 import com.tc.util.ReflectionUtil;
 
@@ -55,10 +54,6 @@ public class TCClassImpl implements TCClass {
   private final boolean                  indexed;
   private final boolean                  isNonStaticInner;
   private final boolean                  isLogical;
-  private final boolean                  isCallConstructor;
-  private final boolean                  onLoadInjection;
-  private final String                   onLoadScript;
-  private final String                   onLoadMethod;
   private final ChangeApplicator         applicator;
   private final String                   parentFieldName;
   private final Map                      declaredTCFieldsByName = new HashMap();
@@ -78,8 +73,7 @@ public class TCClassImpl implements TCClass {
 
   TCClassImpl(final TCFieldFactory factory, final TCClassFactory clazzFactory, final ClientObjectManager objectManager,
               final Class peer, final Class logicalSuperClass, final String logicalExtendingClassName,
-              final boolean isLogical, final boolean isCallConstructor, final boolean onLoadInjection,
-              final String onLoadScript, final String onLoadMethod, final boolean useNonDefaultConstructor,
+              final boolean isLogical, final boolean useNonDefaultConstructor,
               final boolean useResolveLockWhileClearing, final String postCreateMethod, final String preCreateMethod) {
     this.clazzFactory = clazzFactory;
     this.objectManager = objectManager;
@@ -94,10 +88,6 @@ public class TCClassImpl implements TCClass {
 
     this.isLogical = isLogical;
     this.isProxyClass = Proxy.isProxyClass(peer) || ProxyInstance.class.getName().equals(peer.getName());
-    this.isCallConstructor = isCallConstructor;
-    this.onLoadInjection = onLoadInjection;
-    this.onLoadScript = onLoadScript;
-    this.onLoadMethod = onLoadMethod;
     this.superclazz = findSuperClass(peer);
     this.isEnum = ClassUtils.isDsoEnum(peer);
     this.logicalExtendingClassName = logicalExtendingClassName;
@@ -136,18 +126,22 @@ public class TCClassImpl implements TCClass {
     return Collections.unmodifiableList(rv);
   }
 
+  @Override
   public Field getParentField() {
     return this.parentField;
   }
 
+  @Override
   public boolean isNotClearable() {
     return this.isNotClearable;
   }
 
+  @Override
   public boolean isNonStaticInner() {
     return this.isNonStaticInner;
   }
 
+  @Override
   public Class getPeerClass() {
     return this.peer;
   }
@@ -170,6 +164,7 @@ public class TCClassImpl implements TCClass {
     return this.clazzFactory.createApplicatorFor(this, this.indexed);
   }
 
+  @Override
   public void hydrate(final TCObject tcObject, final DNA dna, final Object pojo, final boolean force)
       throws IOException, ClassNotFoundException {
     // Okay...long story here The application of the DNA used to be a synchronized(applicator) block. As best as Steve
@@ -192,6 +187,7 @@ public class TCClassImpl implements TCClass {
 
   }
 
+  @Override
   public void dehydrate(final TCObject tcObject, final DNAWriter writer, final Object pojo) {
     try {
       this.applicator.dehydrate(this.objectManager, tcObject, writer, pojo);
@@ -207,20 +203,24 @@ public class TCClassImpl implements TCClass {
     }
   }
 
+  @Override
   public Class getComponentType() {
     return this.peer.getComponentType();
   }
 
+  @Override
   public boolean isEnum() {
     return this.isEnum;
   }
 
+  @Override
   public String getName() {
     if (this.isProxyClass) { return ProxyInstance.class.getName(); }
     if (this.isEnum) { return LiteralValues.ENUM_CLASS_DOTS; }
     return this.peer.getName();
   }
 
+  @Override
   public String getExtendingClassName() {
     String className = getName();
     if (this.logicalExtendingClassName != null) {
@@ -229,10 +229,12 @@ public class TCClassImpl implements TCClass {
     return className;
   }
 
+  @Override
   public TCClass getSuperclass() {
     return this.superclazz;
   }
 
+  @Override
   public synchronized Constructor getConstructor() {
     if (this.constructor == null) {
       // As best as I can tell, the reason for the lazy initialization here is that we don't actually need the cstr
@@ -243,28 +245,10 @@ public class TCClassImpl implements TCClass {
     return this.constructor;
   }
 
-  public boolean hasOnLoadInjection() {
-    return this.onLoadInjection;
-  }
-
-  public boolean hasOnLoadExecuteScript() {
-    return this.onLoadScript != null;
-  }
-
-  public String getOnLoadExecuteScript() {
-    Assert.eval(hasOnLoadExecuteScript());
-    return this.onLoadScript;
-  }
-
-  public String getOnLoadMethod() {
-    Assert.eval(hasOnLoadMethod());
-    return this.onLoadMethod;
-  }
-
   private Constructor findConstructor() {
     Constructor rv = null;
 
-    if (this.isCallConstructor || this.isLogical) {
+    if (this.isLogical) {
       final Constructor[] cons = this.peer.getDeclaredConstructors();
       for (final Constructor con : cons) {
         final Class[] types = con.getParameterTypes();
@@ -281,6 +265,7 @@ public class TCClassImpl implements TCClass {
     return rv;
   }
 
+  @Override
   public String getParentFieldName() {
     return this.parentFieldName;
   }
@@ -309,6 +294,7 @@ public class TCClassImpl implements TCClass {
   /**
    * Expects the field name in the format <classname>. <fieldname>(e.g. com.foo.Bar.baz)
    */
+  @Override
   public TCField getField(final String name) {
     TCField rv = (TCField) this.tcFieldsByName.get(name);
     if (rv == null && this.superclazz != null) {
@@ -317,10 +303,12 @@ public class TCClassImpl implements TCClass {
     return rv;
   }
 
+  @Override
   public TCField[] getPortableFields() {
     return this.portableFields;
   }
 
+  @Override
   public TraversedReferences getPortableObjects(final Object pojo, final TraversedReferences addTo) {
     return this.applicator.getPortableObjects(pojo, addTo);
   }
@@ -340,18 +328,22 @@ public class TCClassImpl implements TCClass {
     return (TCField[]) l.toArray(new TCField[l.size()]);
   }
 
+  @Override
   public boolean isIndexed() {
     return this.indexed;
   }
 
+  @Override
   public boolean isLogical() {
     return this.isLogical;
   }
 
+  @Override
   public ClientObjectManager getObjectManager() {
     return this.objectManager;
   }
 
+  @Override
   public TCObject createTCObject(final ObjectID id, final Object pojo, final boolean isNew) {
     if (pojo instanceof TCObjectSelf) {
       TCObjectSelf self = (TCObjectSelf) pojo;
@@ -364,14 +356,12 @@ public class TCClassImpl implements TCClass {
     }
   }
 
-  public boolean hasOnLoadMethod() {
-    return this.onLoadMethod != null;
-  }
-
+  @Override
   public boolean isUseNonDefaultConstructor() {
     return this.useNonDefaultConstructor;
   }
 
+  @Override
   public Object getNewInstanceFromNonDefaultConstructor(final DNA dna) throws IOException, ClassNotFoundException {
     final Object o = this.applicator.getNewInstance(this.objectManager, dna);
 
@@ -379,22 +369,27 @@ public class TCClassImpl implements TCClass {
     return o;
   }
 
+  @Override
   public boolean isPortableField(final long fieldOffset) {
     throw new AssertionError();
   }
 
+  @Override
   public boolean isProxyClass() {
     return this.isProxyClass;
   }
 
+  @Override
   public boolean useResolveLockWhileClearing() {
     return this.useResolveLockWhileClearing;
   }
 
+  @Override
   public List<Method> getPostCreateMethods() {
     return this.postCreateMethods;
   }
 
+  @Override
   public List<Method> getPreCreateMethods() {
     return this.preCreateMethods;
   }

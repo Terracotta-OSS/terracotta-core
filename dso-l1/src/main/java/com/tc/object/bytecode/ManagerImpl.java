@@ -5,9 +5,6 @@
 package com.tc.object.bytecode;
 
 import com.tc.asm.Type;
-import com.tc.aspectwerkz.reflect.ClassInfo;
-import com.tc.aspectwerkz.reflect.FieldInfo;
-import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.client.AbstractClientFactory;
 import com.tc.client.ClientMode;
 import com.tc.cluster.DsoCluster;
@@ -72,7 +69,6 @@ import com.tc.util.Assert;
 import com.tc.util.FindbugsSuppressWarnings;
 import com.tc.util.Util;
 import com.tc.util.concurrent.SetOnceFlag;
-import com.tc.util.runtime.Vm;
 import com.tcclient.cluster.DsoClusterInternal;
 import com.terracottatech.search.AbstractNVPair;
 import com.terracottatech.search.NVPair;
@@ -604,22 +600,6 @@ public class ManagerImpl implements Manager {
 
   @Override
   public boolean isRoot(final Field field) {
-    final String fName = field.getName();
-    final Class c = field.getDeclaringClass();
-
-    if (Vm.isIBM() && c.getName().startsWith("java.lang.reflect.")) {
-      // This avoids a StackOverFlow on ibm jdk -- it does mean that roots defined in classes in java.lang.reflect.*
-      // won't work right, but there are other chicken/egg reasons why roots there won't work there too
-      return false;
-    }
-
-    final ClassInfo classInfo = JavaClassInfo.getClassInfo(c);
-
-    final FieldInfo[] fields = classInfo.getFields();
-    for (final FieldInfo fieldInfo : fields) {
-      if (fieldInfo.getName().equals(fName)) { return this.config.isRoot(fieldInfo); }
-    }
-
     return false;
   }
 

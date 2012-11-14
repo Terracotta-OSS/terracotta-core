@@ -4,14 +4,6 @@
  */
 package com.tc.object;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-import bsh.ParseException;
-import bsh.TargetError;
-
-import com.tc.injection.DsoClusterInjectionInstrumentation;
-import com.tc.lang.TCThreadGroup;
-import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.bytecode.TransparentAccess;
@@ -49,7 +41,6 @@ public abstract class TCObjectImpl implements TCObject {
   protected final TCClass       tcClazz;
   private WeakReference         peerObject;
   private byte                  flags                     = 0;
-  private static final TCLogger consoleLogger             = CustomerLogging.getConsoleLogger();
 
   protected TCObjectImpl(final ObjectID id, final Object peer, final TCClass clazz, final boolean isNew) {
     this.objectID = id;
@@ -61,6 +52,7 @@ public abstract class TCObjectImpl implements TCObject {
     setFlag(IS_NEW_OFFSET, isNew);
   }
 
+  @Override
   public boolean isShared() {
     return true;
   }
@@ -69,6 +61,7 @@ public abstract class TCObjectImpl implements TCObject {
     return this.peerObject == null || getPeerObject() == null;
   }
 
+  @Override
   public ObjectID getObjectID() {
     return this.objectID;
   }
@@ -77,6 +70,7 @@ public abstract class TCObjectImpl implements TCObject {
     return this.tcClazz.getObjectManager();
   }
 
+  @Override
   public Object getPeerObject() {
     return this.peerObject == null ? null : this.peerObject.get();
   }
@@ -85,10 +79,12 @@ public abstract class TCObjectImpl implements TCObject {
     this.peerObject = pojo;
   }
 
+  @Override
   public TCClass getTCClass() {
     return this.tcClazz;
   }
 
+  @Override
   public void dehydrate(final DNAWriter writer) {
     this.tcClazz.dehydrate(this, writer, getPeerObject());
   }
@@ -102,6 +98,7 @@ public abstract class TCObjectImpl implements TCObject {
    * 
    * @throws ClassNotFoundException
    */
+  @Override
   public void hydrate(final DNA from, final boolean force, final WeakReference peer) throws ClassNotFoundException {
     synchronized (getResolveLock()) {
       if (peer != null) {
@@ -111,10 +108,6 @@ public abstract class TCObjectImpl implements TCObject {
       if (po == null) { return; }
       try {
         this.tcClazz.hydrate(this, from, po, force);
-        if (peer != null) {
-          // This is newly created object, load action
-          performOnLoadActionIfNecessary(po);
-        }
       } catch (final ClassNotFoundException e) {
         logger.warn("Re-throwing Exception: ", e);
         throw e;
@@ -125,73 +118,7 @@ public abstract class TCObjectImpl implements TCObject {
     }
   }
 
-  private void performOnLoadActionIfNecessary(final Object pojo) {
-    final TCClass tcc = getTCClass();
-    if (tcc.hasOnLoadInjection() || tcc.hasOnLoadExecuteScript() || tcc.hasOnLoadMethod()) {
-      String eval = "";
 
-      if (tcc.hasOnLoadInjection()) {
-        eval += "self." + DsoClusterInjectionInstrumentation.TC_INJECTION_METHOD_NAME + "();\n";
-      }
-
-      if (tcc.hasOnLoadExecuteScript()) {
-        eval += tcc.getOnLoadExecuteScript();
-      } else if (tcc.hasOnLoadMethod()) {
-        eval += "self." + tcc.getOnLoadMethod() + "()";
-      }
-
-      resolveAllReferences();
-
-      final ClassLoader prevLoader = Thread.currentThread().getContextClassLoader();
-      final boolean adjustTCL = TCThreadGroup.currentThreadInTCThreadGroup();
-
-      if (adjustTCL) {
-        ClassLoader newTCL = pojo.getClass().getClassLoader();
-        if (newTCL == null) {
-          newTCL = ClassLoader.getSystemClassLoader();
-        }
-        Thread.currentThread().setContextClassLoader(newTCL);
-      }
-
-      try {
-        final Interpreter i = new Interpreter();
-        i.setClassLoader(tcc.getPeerClass().getClassLoader());
-        i.set("self", pojo);
-        try {
-          i.eval("setAccessibility(true)");
-          i.eval(eval);
-        } finally {
-          i.getNameSpace().clear();
-        }
-      } catch (final ParseException e) {
-        // Error Parsing script. Use e.getMessage() instead of e.getErrorText() when there is a ParseException because
-        // expectedTokenSequences in ParseException could be null and thus, may throw a NullPointerException when
-        // calling
-        // e.getErrorText().
-        consoleLogger.error("Unable to parse OnLoad script: " + pojo.getClass() + " error: " + e.getMessage()
-                            + " stack: " + e.getScriptStackTrace());
-      } catch (final EvalError e) {
-        // General Error evaluating script
-        Throwable cause = null;
-        if (e instanceof TargetError) {
-          cause = ((TargetError) e).getTarget();
-        }
-
-        final String errorMsg = "OnLoad execute script failed for: " + pojo.getClass() + " error: " + e.getErrorText()
-                                + " line: " + e.getErrorLineNumber() + "; " + e.getMessage();
-
-        if (cause != null) {
-          consoleLogger.error(errorMsg, cause);
-        } else {
-          consoleLogger.error(errorMsg);
-        }
-      } finally {
-        if (adjustTCL) {
-          Thread.currentThread().setContextClassLoader(prevLoader);
-        }
-      }
-    }
-  }
 
   private synchronized void setFlag(final int offset, final boolean value) {
     this.flags = Conversion.setFlag(this.flags, offset, value);
@@ -209,14 +136,17 @@ public abstract class TCObjectImpl implements TCObject {
     return false;
   }
 
+  @Override
   public ObjectID setReference(final String fieldName, final ObjectID id) {
     throw new AssertionError("shouldn't be called");
   }
 
+  @Override
   public void setArrayReference(final int index, final ObjectID id) {
     throw new AssertionError("shouldn't be called");
   }
 
+  @Override
   public void setValue(final String fieldName, final Object obj) {
     try {
       final TransparentAccess ta = (TransparentAccess) getPeerObject();
@@ -263,6 +193,7 @@ public abstract class TCObjectImpl implements TCObject {
     return obj.getClass().getSimpleName();
   }
 
+  @Override
   public final int clearReferences(final int toClear) {
     if (this.tcClazz.useResolveLockWhileClearing()) {
       synchronized (getResolveLock()) {
@@ -282,10 +213,12 @@ public abstract class TCObjectImpl implements TCObject {
 
   protected abstract int clearReferences(Object pojo, int toClear);
 
+  @Override
   public final Object getResolveLock() {
     return this.objectID; // Save a field by using this one as the lock
   }
 
+  @Override
   public void resolveArrayReference(final int index) {
     throw new AssertionError("shouldn't be called");
   }
@@ -294,30 +227,37 @@ public abstract class TCObjectImpl implements TCObject {
     clearReference(Integer.toString(index));
   }
 
+  @Override
   public void clearReference(final String fieldName) {
     // do nothing
   }
 
+  @Override
   public void resolveReference(final String fieldName) {
     // do nothing
   }
 
+  @Override
   public void resolveAllReferences() {
     // override me
   }
 
+  @Override
   public void literalValueChanged(final Object newValue, final Object oldValue) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void setLiteralValue(final Object newValue) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public synchronized void setVersion(final long version) {
     this.version = version;
   }
 
+  @Override
   public synchronized long getVersion() {
     return this.version;
   }
@@ -328,6 +268,7 @@ public abstract class TCObjectImpl implements TCObject {
            + this.tcClazz + "]";
   }
 
+  @Override
   public void objectFieldChanged(final String classname, final String fieldname, final Object newValue, final int index) {
     try {
       markAccessed();
@@ -343,6 +284,7 @@ public abstract class TCObjectImpl implements TCObject {
     }
   }
 
+  @Override
   public void objectFieldChangedByOffset(final String classname, final long fieldOffset, final Object newValue,
                                          final int index) {
     throw new AssertionError();
@@ -352,43 +294,53 @@ public abstract class TCObjectImpl implements TCObject {
     return this.tcClazz.isPortableField(fieldOffset);
   }
 
+  @Override
   public String getFieldNameByOffset(final long fieldOffset) {
     throw new AssertionError();
   }
 
+  @Override
   public void booleanFieldChanged(final String classname, final String fieldname, final boolean newValue,
                                   final int index) {
     objectFieldChanged(classname, fieldname, Boolean.valueOf(newValue), index);
   }
 
+  @Override
   public void byteFieldChanged(final String classname, final String fieldname, final byte newValue, final int index) {
     objectFieldChanged(classname, fieldname, Byte.valueOf(newValue), index);
   }
 
+  @Override
   public void charFieldChanged(final String classname, final String fieldname, final char newValue, final int index) {
     objectFieldChanged(classname, fieldname, Character.valueOf(newValue), index);
   }
 
+  @Override
   public void doubleFieldChanged(final String classname, final String fieldname, final double newValue, final int index) {
     objectFieldChanged(classname, fieldname, Double.valueOf(newValue), index);
   }
 
+  @Override
   public void floatFieldChanged(final String classname, final String fieldname, final float newValue, final int index) {
     objectFieldChanged(classname, fieldname, Float.valueOf(newValue), index);
   }
 
+  @Override
   public void intFieldChanged(final String classname, final String fieldname, final int newValue, final int index) {
     objectFieldChanged(classname, fieldname, Integer.valueOf(newValue), index);
   }
 
+  @Override
   public void longFieldChanged(final String classname, final String fieldname, final long newValue, final int index) {
     objectFieldChanged(classname, fieldname, Long.valueOf(newValue), index);
   }
 
+  @Override
   public void shortFieldChanged(final String classname, final String fieldname, final short newValue, final int index) {
     objectFieldChanged(classname, fieldname, Short.valueOf(newValue), index);
   }
 
+  @Override
   public void objectArrayChanged(final int startPos, final Object[] array, final int length) {
     markAccessed();
     for (int i = 0; i < length; i++) {
@@ -397,47 +349,58 @@ public abstract class TCObjectImpl implements TCObject {
     getObjectManager().getTransactionManager().arrayChanged(this, startPos, array, length);
   }
 
+  @Override
   public void primitiveArrayChanged(final int startPos, final Object array, final int length) {
     markAccessed();
     getObjectManager().getTransactionManager().arrayChanged(this, startPos, array, length);
   }
 
+  @Override
   public void setNext(final TLinkable link) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void setPrevious(final TLinkable link) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public TLinkable getNext() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public TLinkable getPrevious() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void markAccessed() {
     setFlag(ACCESSED_OFFSET, true);
   }
 
+  @Override
   public void clearAccessed() {
     setFlag(ACCESSED_OFFSET, false);
   }
 
+  @Override
   public boolean recentlyAccessed() {
     return getFlag(ACCESSED_OFFSET);
   }
 
+  @Override
   public int accessCount(final int factor) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public boolean isNew() {
     return getFlag(IS_NEW_OFFSET);
   }
 
+  @Override
   public void setNotNew() {
     // Flipping the "new" flag must occur AFTER dehydrate -- otherwise the client
     // memory manager might start nulling field values! (see canEvict() dependency on isNew() condition)
@@ -447,24 +410,29 @@ public abstract class TCObjectImpl implements TCObject {
   // These autlocking disable methods are checked in ManagerImpl. The one known use case
   // is the Hashtable used to hold sessions. We need local synchronization,
   // but we don't ever want autolocks for that particular instance
+  @Override
   public void disableAutoLocking() {
     setFlag(AUTOLOCKS_DISABLED_OFFSET, true);
   }
 
+  @Override
   public boolean autoLockingDisabled() {
     return getFlag(AUTOLOCKS_DISABLED_OFFSET);
   }
 
+  @Override
   public final synchronized boolean canEvict() {
     return isEvictable() && !this.tcClazz.isNotClearable() && !isNew();
   }
 
+  @Override
   public boolean isCacheManaged() {
     return !this.tcClazz.isNotClearable();
   }
 
   protected abstract boolean isEvictable();
 
+  @Override
   public ToggleableStrongReference getOrCreateToggleRef() {
     final Object peer = getPeerObject();
     if (peer == null) { throw new AssertionError("cannot create a toggle reference if peer object is gone"); }

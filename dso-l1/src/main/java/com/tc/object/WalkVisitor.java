@@ -4,7 +4,6 @@
  */
 package com.tc.object;
 
-import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.appevent.NonPortableFieldSetContext;
 import com.tc.object.appevent.NonPortableObjectState;
@@ -246,6 +245,7 @@ public class WalkVisitor implements Visitor, WalkTest {
     return null;
   }
 
+  @Override
   public void visitMapEntry(int index, int depth) {
     DefaultMutableTreeNode parent = (DefaultMutableTreeNode) getParent(depth);
     DefaultMutableTreeNode childNode = new DefaultMutableTreeNode("mapEntry [" + index + "]");
@@ -256,10 +256,12 @@ public class WalkVisitor implements Visitor, WalkTest {
     parent.add(child);
   }
 
+  @Override
   public void visitRootObject(MemberValue value) {
     addRoot(value);
   }
 
+  @Override
   public void visitValue(MemberValue value, int depth) {
     if (!skipVisit(value)) {
       addField(value, depth);
@@ -267,10 +269,6 @@ public class WalkVisitor implements Visitor, WalkTest {
   }
 
   private boolean isNeverAdaptable(Class type) {
-    while (!type.equals(Object.class)) {
-      if (config.isNeverAdaptable(JavaClassInfo.getClassInfo(type))) return true;
-      type = type.getSuperclass();
-    }
     return false;
   }
 
@@ -280,6 +278,7 @@ public class WalkVisitor implements Visitor, WalkTest {
     return false;
   }
 
+  @Override
   public boolean shouldTraverse(MemberValue value) {
     if (skipVisit(value) || value.isRepeated() || isNeverAdaptable(value) || isTransient(value)) { return false; }
 
@@ -304,12 +303,10 @@ public class WalkVisitor implements Visitor, WalkTest {
   }
 
   private boolean isTransient(MemberValue val) {
-    Field f = val.getSourceField();
-    if (f == null) { return false; }
-
-    return config.isTransient(f.getModifiers(), JavaClassInfo.getClassInfo(f.getDeclaringClass()), f.getName());
+    return false;
   }
 
+  @Override
   public boolean includeFieldsForType(Class type) {
     return !config.isLogical(type.getName());
   }

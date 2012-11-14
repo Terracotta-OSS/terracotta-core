@@ -4,7 +4,6 @@
  */
 package com.tc.util;
 
-import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.exception.ImplementMe;
 import com.tc.object.Portability;
 import com.tc.object.PortabilityImpl;
@@ -93,7 +92,7 @@ public class ClassUtilsTest extends TestCase {
     config = getConfig(Collections.singleton(NotAdaptable.class.getName()));
     p = new PortabilityImpl(config);
     reason = p.getNonPortableReason(NotAdaptable.class);
-    assertEquals(NonPortableReason.CLASS_NOT_ADAPTABLE, reason.getReason());
+    assertEquals(NonPortableReason.CLASS_NOT_INCLUDED_IN_CONFIG, reason.getReason());
     assertEquals(NotAdaptable.class.getName(), reason.getClassName());
     assertEquals(Collections.EMPTY_LIST, reason.getErroneousBootJarSuperClasses());
     assertEquals(Collections.EMPTY_LIST, reason.getErroneousSuperClasses());
@@ -104,7 +103,7 @@ public class ClassUtilsTest extends TestCase {
     config = getConfig(Collections.singleton(NotAdaptable.class.getName()));
     p = new PortabilityImpl(config);
     reason = p.getNonPortableReason(ExtendsNotAdaptable.class);
-    assertEquals(NonPortableReason.SUPER_CLASS_NOT_ADAPTABLE, reason.getReason());
+    assertEquals(NonPortableReason.CLASS_NOT_INCLUDED_IN_CONFIG, reason.getReason());
     assertEquals(ExtendsNotAdaptable.class.getName(), reason.getClassName());
     assertEquals(Collections.EMPTY_LIST, reason.getErroneousBootJarSuperClasses());
     assertEquals(Arrays.asList(new Object[] { NotAdaptable.class.getName() }), reason.getErroneousSuperClasses());
@@ -231,6 +230,7 @@ public class ClassUtilsTest extends TestCase {
 
   private DSOClientConfigHelper getConfig(final Set neverAdaptaed) {
     InvocationHandler handler = new InvocationHandler() {
+      @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         String name = method.getName();
         if ("getNewCommonL1Config".equals(name)) {
@@ -247,8 +247,6 @@ public class ClassUtilsTest extends TestCase {
           return Boolean.FALSE;
         } else if ("getSpec".equals(name)) {
           return null;
-        } else if ("isNeverAdaptable".equals(name)) {
-          return neverAdaptaed.contains(((ClassInfo) args[0]).getName()) ? Boolean.TRUE : Boolean.FALSE;
         } else if ("isLogical".equals(name)) { //
           return ((String) args[0]).startsWith("java.util.") ? Boolean.TRUE : Boolean.FALSE;
         }
@@ -365,18 +363,22 @@ public class ClassUtilsTest extends TestCase {
 
   private static class InstrumentedExtendsBothNotInstrumented extends SubClassOfBootJarClass implements
       TransparentAccess {
+    @Override
     public void __tc_getallfields(Map map) {
       throw new ImplementMe();
     }
 
+    @Override
     public void __tc_setfield(String name, Object value) {
       throw new ImplementMe();
     }
 
+    @Override
     public Object __tc_getmanagedfield(String name) {
       throw new ImplementMe();
     }
 
+    @Override
     public void __tc_setmanagedfield(String name, Object value) {
       throw new ImplementMe();
     }
@@ -389,36 +391,44 @@ public class ClassUtilsTest extends TestCase {
       throw new ImplementMe();
     }
 
+    @Override
     public void __tc_getallfields(Map map) {
       throw new ImplementMe();
     }
 
+    @Override
     public void __tc_setfield(String name, Object value) {
       throw new ImplementMe();
     }
 
+    @Override
     public Object __tc_getmanagedfield(String name) {
       throw new ImplementMe();
     }
 
+    @Override
     public void __tc_setmanagedfield(String name, Object value) {
       throw new ImplementMe();
     }
   }
 
   private static class InstrumentedExtendsRegularNotInstrumented extends Pojo implements TransparentAccess {
+    @Override
     public void __tc_getallfields(Map map) {
       throw new ImplementMe();
     }
 
+    @Override
     public void __tc_setfield(String name, Object value) {
       throw new ImplementMe();
     }
 
+    @Override
     public Object __tc_getmanagedfield(String name) {
       throw new ImplementMe();
     }
 
+    @Override
     public void __tc_setmanagedfield(String name, Object value) {
       throw new ImplementMe();
     }

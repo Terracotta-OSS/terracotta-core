@@ -4,7 +4,6 @@
  */
 package com.tc.object;
 
-import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.logging.TCLogger;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.walker.MemberValue;
@@ -38,6 +37,7 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
                 + ". Lines that start with " + NonPortableWalkVisitor.MARKER + " are non-portable types.");
   }
 
+  @Override
   public void output(String line) {
     logger.warn(buffer.toString() + line);
     buffer = new StringBuffer();
@@ -51,22 +51,26 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
     return sb.toString();
   }
 
+  @Override
   public void visitMapEntry(int index, int depth) {
     buffer.append(PORTABLE);
     delegate.visitMapEntry(index, depth);
   }
 
+  @Override
   public void visitRootObject(MemberValue value) {
     indicatePortability(value);
     delegate.visitRootObject(value);
   }
 
+  @Override
   public void visitValue(MemberValue value, int depth) {
     if (skipVisit(value)) { return; }
     indicatePortability(value);
     delegate.visitValue(value, depth);
   }
 
+  @Override
   public String format(Object value) {
     if (value == null) { return "null"; }
 
@@ -84,18 +88,13 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
     }
   }
 
+  @Override
   public String valueAdornment(MemberValue value) {
     if (isTransient(value)) { return " (transient)"; }
-    Object o = value.getValueObject();
-    if (o != null && config.isNeverAdaptable(JavaClassInfo.getClassInfo(o.getClass()))) { return " (never portable)"; }
     return null;
   }
 
   private boolean isNeverAdaptable(Class type) {
-    while (!type.equals(Object.class)) {
-      if (config.isNeverAdaptable(JavaClassInfo.getClassInfo(type))) return true;
-      type = type.getSuperclass();
-    }
     return false;
   }
 
@@ -122,6 +121,7 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
     return false;
   }
 
+  @Override
   public boolean shouldTraverse(MemberValue value) {
     if (value.isRepeated()) { return true; }
 
@@ -143,12 +143,10 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
   }
 
   private boolean isTransient(MemberValue val) {
-    Field f = val.getSourceField();
-    if (f == null) { return false; }
-
-    return config.isTransient(f.getModifiers(), JavaClassInfo.getClassInfo(f.getDeclaringClass()), f.getName());
+    return false;
   }
 
+  @Override
   public boolean includeFieldsForType(Class type) {
     return !config.isLogical(type.getName());
   }
