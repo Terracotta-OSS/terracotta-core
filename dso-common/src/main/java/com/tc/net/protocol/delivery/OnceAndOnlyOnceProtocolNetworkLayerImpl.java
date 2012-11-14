@@ -38,7 +38,6 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
 
   private final OOOProtocolMessageFactory  messageFactory;
   private final OOOProtocolMessageParser   messageParser;
-  boolean                                  wasConnected     = false;
   private MessageChannelInternal           receiveLayer;
   private MessageTransport                 sendLayer;
   private final GuaranteedDeliveryProtocol delivery;
@@ -385,7 +384,8 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   }
 
   public OOOProtocolMessage createProtocolMessage(long sequence, final TCNetworkMessage msg) {
-    OOOProtocolMessage rv = messageFactory.createNewSendMessage(getSessionId(), sequence, msg);
+    OOOProtocolMessage rv = messageFactory.createNewSendMessage(getSessionId(), sequence, delivery.getReceiver()
+        .ackSequence(), msg);
     final Runnable callback = msg.getSentCallback();
     if (callback != null) {
       rv.setSentCallback(new Runnable() {

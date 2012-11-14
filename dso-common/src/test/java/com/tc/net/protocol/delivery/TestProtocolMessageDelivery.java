@@ -6,8 +6,6 @@ package com.tc.net.protocol.delivery;
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 import com.tc.net.protocol.TCNetworkMessage;
-import com.tc.net.protocol.delivery.OOOProtocolMessage;
-import com.tc.net.protocol.delivery.OOOProtocolMessageDelivery;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.util.Assert;
 
@@ -38,8 +36,10 @@ public class TestProtocolMessageDelivery implements OOOProtocolMessageDelivery {
   }
 
   public OOOProtocolMessage createAckMessage(long sequence) {
-    this.ackCount = sequence;
-    this.sentAck = true;
+    if (sequence > ackCount) {
+      this.ackCount = sequence;
+      this.sentAck = true;
+    }
 
     TestProtocolMessage opm = new TestProtocolMessage(null, 0, sequence);
     opm.isAck = true;
@@ -60,7 +60,7 @@ public class TestProtocolMessageDelivery implements OOOProtocolMessageDelivery {
     Assert.eval(sent >= 0);
     this.tcMessage = tcmsg;
     this.created = true;
-    TestProtocolMessage tpm = new TestProtocolMessage(tcmsg, sent, 0);
+    TestProtocolMessage tpm = new TestProtocolMessage(tcmsg, sent, ackCount);
     tpm.isSend = true;
     return tpm;
   }

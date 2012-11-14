@@ -26,7 +26,7 @@ public class SendStateMachine extends AbstractStateMachine {
   final State                              SENDWINDOW_FULL_STATE = new SendWindowFullState();
 
   private final OOOProtocolMessageDelivery delivery;
-  private final LinkedList                 outstandingMsgs       = new LinkedList();
+  private final LinkedList<OOOProtocolMessage> outstandingMsgs       = new LinkedList<OOOProtocolMessage>();
   private final int                        sendWindow;
   private final boolean                    isClient;
   private final String                     debugId;
@@ -37,7 +37,7 @@ public class SendStateMachine extends AbstractStateMachine {
   private long                             sent                  = -1;
   private long                             acked                 = -1;
   private int                              outstandingCnt        = 0;
-  private LinkedBlockingQueue              sendQueue;
+  private LinkedBlockingQueue<TCNetworkMessage> sendQueue;
 
   public SendStateMachine(OOOProtocolMessageDelivery delivery, ReconnectConfig reconnectConfig, boolean isClient) {
     this.delivery = delivery;
@@ -45,7 +45,7 @@ public class SendStateMachine extends AbstractStateMachine {
     sendWindow = reconnectConfig.getSendWindow();
     int queueCap = reconnectConfig.getSendQueueCapacity();
     this.sendQueueCap = (queueCap == 0) ? Integer.MAX_VALUE : queueCap;
-    this.sendQueue = new LinkedBlockingQueue(this.sendQueueCap);
+    this.sendQueue = new LinkedBlockingQueue<TCNetworkMessage>(this.sendQueueCap);
     this.isClient = isClient;
     this.debugId = (this.isClient) ? "CLIENT" : "SERVER";
   }
@@ -104,8 +104,9 @@ public class SendStateMachine extends AbstractStateMachine {
         return;
       }
       if (ackedSeq < acked) {
-        // this shall not, old ack
-        Assert.failure("Received bad ack: " + ackedSeq + " expected >= " + acked);
+        if (debug) {
+          debugLog("received an old ack: " + ackedSeq + " current " + acked);
+        }
       } else {
         logger.info("SENDER-" + debugId + "-" + delivery.getConnectionId() + "; AckSeq: " + ackedSeq + " Acked: "
                     + acked);
@@ -114,19 +115,18 @@ public class SendStateMachine extends AbstractStateMachine {
           ++acked;
           removeMessage();
         }
-
-        if (outstandingCnt > 0) {
-          // resend those not acked
-          resendOutstandings();
-          if (outstandingCnt >= sendWindow) {
-            switchToState(SENDWINDOW_FULL_STATE);
-          } else {
-            switchToState(MESSAGE_WAIT_STATE);
-          }
+      }
+      if (outstandingCnt > 0) {
+        // resend those not acked
+        resendOutstandings();
+        if (outstandingCnt >= sendWindow) {
+          switchToState(SENDWINDOW_FULL_STATE);
         } else {
-          // all acked, we're good here
           switchToState(MESSAGE_WAIT_STATE);
         }
+      } else {
+        // all acked, we're good here
+        switchToState(MESSAGE_WAIT_STATE);
       }
     }
   }
@@ -148,7 +148,7 @@ public class SendStateMachine extends AbstractStateMachine {
 
     @Override
     public void execute(OOOProtocolMessage protocolMessage) {
-      if ((protocolMessage != null) && protocolMessage.isAck()) {
+      if ((protocolMessage != null)) {
         switchToState(ACK_PROCESSING_STATE);
         getCurrentState().execute(protocolMessage);
       } else {
@@ -172,17 +172,16 @@ public class SendStateMachine extends AbstractStateMachine {
     @Override
     public void execute(OOOProtocolMessage protocolMessage) {
 
-      if (protocolMessage == null || protocolMessage.isSend()) {
+      if (protocolMessage == null) {
         // we can't send data present in the queue until we get an ACK
         return;
       }
 
-      Assert.eval(protocolMessage.isAck());
-
       long ackedSeq = protocolMessage.getAckSequence();
       if (ackedSeq < acked) {
-        Assert.eval("SENDER-" + debugId + "-" + delivery.getConnectionId() + ": AckSeq " + ackedSeq
-                    + " should be greater than " + acked, ackedSeq >= acked);
+        if (debug) {
+          debugLog("received an old ACK " + ackedSeq + " current " + acked);
+        }
       }
 
       while (ackedSeq > acked) {
@@ -211,12 +210,11 @@ public class SendStateMachine extends AbstractStateMachine {
 
     @Override
     public void execute(OOOProtocolMessage protocolMessage) {
-      if (protocolMessage == null || protocolMessage.isSend()) {
-        // waiting for ACK message only
+      if (protocolMessage == null) {
         return;
       }
 
-      if (protocolMessage.isAck()) {
+      if (protocolMessage.isAck() || protocolMessage.isSend()) {
         switchToState(ACK_PROCESSING_STATE);
         getCurrentState().execute(protocolMessage);
       } else {
@@ -250,7 +248,7 @@ public class SendStateMachine extends AbstractStateMachine {
   }
 
   private void removeMessage() {
-    OOOProtocolMessage msg = (OOOProtocolMessage) outstandingMsgs.removeFirst();
+    OOOProtocolMessage msg = outstandingMsgs.removeFirst();
     msg.reallyDoRecycleOnWrite();
     outstandingCnt--;
     Assert.eval(outstandingCnt >= 0);
@@ -266,27 +264,23 @@ public class SendStateMachine extends AbstractStateMachine {
     outstandingCnt = 0;
     outstandingMsgs.clear();
 
-    LinkedBlockingQueue tmpQ = sendQueue;
-    sendQueue = new LinkedBlockingQueue(sendQueueCap);
-    while (!tmpQ.isEmpty()) {
-      dequeue(tmpQ);
-    }
+    LinkedBlockingQueue<TCNetworkMessage> tmpQ = sendQueue;
+    sendQueue = new LinkedBlockingQueue<TCNetworkMessage>(sendQueueCap);
+    tmpQ.clear();
   }
 
-  private static TCNetworkMessage dequeue(LinkedBlockingQueue q) {
+  private static TCNetworkMessage dequeue(LinkedBlockingQueue<TCNetworkMessage> q) {
     boolean interrupted = false;
     try {
       while (true) {
         try {
-          return (TCNetworkMessage) q.take();
+          return q.take();
         } catch (InterruptedException e) {
           interrupted = true;
         }
       }
     } finally {
-      if (interrupted) {
-        Util.selfInterruptIfNeeded(true);
-      }
+      Util.selfInterruptIfNeeded(interrupted);
     }
   }
 

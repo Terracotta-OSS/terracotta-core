@@ -15,15 +15,16 @@ public class OOOProtocolMessageFactory {
                                                                    sessionId));
   }
 
-  public OOOProtocolMessage createNewAckMessage(UUID sessionId, long sequence) {
+  public OOOProtocolMessage createNewAckMessage(UUID sessionId, long ackSequence) {
     return new OOOProtocolMessageImpl(new OOOProtocolMessageHeader(OOOProtocolMessageHeader.VERSION,
-                                                                   OOOProtocolMessageHeader.TYPE_ACK, sequence,
+                                                                   OOOProtocolMessageHeader.TYPE_ACK, 0, ackSequence,
                                                                    sessionId));
   }
 
-  public OOOProtocolMessage createNewSendMessage(UUID sessionId, long sequence, TCNetworkMessage payload) {
+  public OOOProtocolMessage createNewSendMessage(UUID sessionId, long sequence, long ackSequence,
+                                                 TCNetworkMessage payload) {
     return new OOOProtocolMessageImpl(new OOOProtocolMessageHeader(OOOProtocolMessageHeader.VERSION,
-                                                                   OOOProtocolMessageHeader.TYPE_SEND, sequence,
+                                                                   OOOProtocolMessageHeader.TYPE_SEND, sequence, ackSequence,
                                                                    sessionId), payload);
   }
 

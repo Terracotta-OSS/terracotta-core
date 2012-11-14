@@ -6,6 +6,7 @@ package com.tc.net.protocol.delivery;
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.properties.L1ReconnectConfigImpl;
@@ -13,6 +14,8 @@ import com.tc.properties.ReconnectConfig;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.UUID;
+
+import static org.mockito.Mockito.mock;
 
 public class GuaranteedDeliveryProtocolTest extends TCTestCase {
   LinkedQueue                         clientReceiveQueue;
@@ -22,10 +25,6 @@ public class GuaranteedDeliveryProtocolTest extends TCTestCase {
   private GuaranteedDeliveryProtocol  serverGdp;
   private GuaranteedDeliveryProtocol  clientGdp;
   private ReconnectConfig             reconnectConfig;
-
-  public GuaranteedDeliveryProtocolTest() {
-    // disableAllUntil("2010-12-25");
-  }
 
   public void setUp(ReconnectConfig reconnectCfg) {
     clientReceiveQueue = new LinkedQueue();
@@ -127,7 +126,7 @@ public class GuaranteedDeliveryProtocolTest extends TCTestCase {
 
     int sent = 0;
     while (sent < reconnectConfig.getMaxDelayAcks() - 1) {
-      sendMessage(false);
+      sendMessage();
       assertTrue(serverDelivery.ackCount == -1);
       serverDelivery.clear();
       Assert.eval(clientGdp.getSender().getCurrentState() == clientGdp.getSender().MESSAGE_WAIT_STATE);
@@ -135,8 +134,8 @@ public class GuaranteedDeliveryProtocolTest extends TCTestCase {
       sent++;
     }
 
-    sendMessage(true);
-    assertTrue(serverDelivery.ackCount == sent);
+    sendMessage();
+    Assert.assertEquals(sent, serverDelivery.ackCount);
     serverDelivery.clear();
     sent++;
 
@@ -147,12 +146,12 @@ public class GuaranteedDeliveryProtocolTest extends TCTestCase {
 
     while (sent < reconnectConfig.getSendWindow() - 1) {
       if ((sent + 1) % (reconnectConfig.getMaxDelayAcks()) == 0) {
-        sendMessage(true);
+        sendMessage();
         assertTrue(serverDelivery.sentAck);
         assertTrue(serverDelivery.ackCount == sent);
         sendAckToClient();
       } else {
-        sendMessage(false);
+        sendMessage();
         assertFalse(serverDelivery.sentAck);
         assertTrue(serverDelivery.ackCount == (sent / (reconnectConfig.getMaxDelayAcks()))
                                               * (reconnectConfig.getMaxDelayAcks()) - 1);
@@ -166,7 +165,7 @@ public class GuaranteedDeliveryProtocolTest extends TCTestCase {
       sent++;
     }
 
-    sendMessage(true);
+    sendMessage();
     assertTrue(serverDelivery.ackCount == sent);
     serverDelivery.clear();
     sent++;
@@ -214,27 +213,6 @@ public class GuaranteedDeliveryProtocolTest extends TCTestCase {
     assertTrue(serverReceiveQueue.take() == tcMessage);
   }
 
-  private void sendMessage(boolean expectAckSentBack) throws InterruptedException {
-    tcMessage = new PingMessage(new NullMessageMonitor());
-    tcMessage.seal();
-    assertTrue(clientDelivery.msg == null);
-    clientGdp.send(tcMessage);
-    assertTrue(clientDelivery.created);
-    assertTrue(clientDelivery.msg != null);
-
-    pm = (TestProtocolMessage) clientDelivery.msg;
-    pm.setSessionId(sessionId);
-    clientDelivery.clear();
-    pm.isSend = true;
-    serverGdp.receive(pm);
-    assertTrue(serverReceiveQueue.take() == tcMessage);
-    if (expectAckSentBack) {
-      assertTrue(serverDelivery.sentAck);
-    } else {
-      assertFalse(serverDelivery.sentAck);
-    }
-  }
-
   private void sendMessageAndCheckQueued() {
     tcMessage = new PingMessage(new NullMessageMonitor());
     tcMessage.seal();
@@ -267,13 +245,13 @@ public class GuaranteedDeliveryProtocolTest extends TCTestCase {
     serverGdp.receive(msg);
     clientGdp.receive(msg);
 
-    pm = new TestProtocolMessage(msg, 0, 0);
+    pm = new TestProtocolMessage(msg, 0, -1);
     pm.isSend = true;
     serverGdp.receive(pm);
-    pm = new TestProtocolMessage(msg, 1, 1);
+    pm = new TestProtocolMessage(msg, 1, -1);
     pm.isSend = true;
     serverGdp.receive(pm);
-    pm = new TestProtocolMessage(msg, 2, 2);
+    pm = new TestProtocolMessage(msg, 2, -1);
     pm.isSend = true;
     serverGdp.receive(pm);
     assertFalse(receiver.isClean());
@@ -284,4 +262,30 @@ public class GuaranteedDeliveryProtocolTest extends TCTestCase {
     assertTrue(sender.isClean());
     assertTrue(receiver.isClean());
   }
+
+  public void testSendWindowFull() {
+    setUp(new L1ReconnectConfigImpl());
+
+    // both are handshaked
+    TestProtocolMessage msg = new TestProtocolMessage();
+    msg.isHandshakeReplyOk = true;
+    msg.ack = -1;
+    msg.setSessionId(sessionId);
+    serverGdp.receive(msg);
+    clientGdp.receive(msg);
+
+    MessageMonitor messageMonitor = mock(MessageMonitor.class);
+    for (int i = 0; i < reconnectConfig.getSendWindow(); i++) {
+      serverGdp.send(new PingMessage(messageMonitor));
+    }
+
+    Assert.assertEquals(serverGdp.getSender().getCurrentState(), serverGdp.getSender().SENDWINDOW_FULL_STATE);
+
+    TestProtocolMessage tpm = new TestProtocolMessage(new PingMessage(messageMonitor), 0, 8);
+    tpm.isSend = true;
+    serverGdp.receive(tpm);
+
+    Assert.assertFalse(serverGdp.getSender().getCurrentState() == serverGdp.getSender().SENDWINDOW_FULL_STATE);
+  }
+
 }

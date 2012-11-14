@@ -36,7 +36,7 @@ class OOOProtocolMessageImpl extends AbstractTCNetworkMessage implements OOOProt
   }
 
   public long getAckSequence() {
-    return getOOOPHeader().getSequence();
+    return getOOOPHeader().getAckSequence();
   }
 
   public long getSent() {
@@ -72,6 +72,7 @@ class OOOProtocolMessageImpl extends AbstractTCNetworkMessage implements OOOProt
     return getOOOPHeader().isGoodbye();
   }
 
+  @Override
   public void doRecycleOnWrite() {
     // we are disabling this because on ooo layer knows when it's safe to recycle the message
   }
