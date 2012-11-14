@@ -433,18 +433,6 @@
       <debugging>
 
         <!-- This section controls output from the DSO client related to
-           class instrumentation; each individual element controls a different kind
-           of output. -->
-
-        <instrumentation-logging>
-          <class>false</class>
-          <locks>false</locks>
-          <transient-root>true</transient-root>
-          <roots>false</roots>
-          <distributed-methods>false</distributed-methods>
-        </instrumentation-logging>
-
-        <!-- This section controls output from the DSO client related to
            operations occurring at runtime; each individual element controls a
            different kind of output. -->
 
