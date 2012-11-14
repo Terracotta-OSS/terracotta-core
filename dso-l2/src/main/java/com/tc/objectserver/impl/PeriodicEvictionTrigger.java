@@ -88,23 +88,28 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     @Override
     public Map<Object, ObjectID> collectEvictonCandidates(int max, EvictableMap map, ClientObjectReferenceSet clients) {
         int samples = calculateSampleCount(max, map);
-//        while ( s.size() < samples ) {
-            if ( Thread.currentThread().isInterrupted() ) {
-                return Collections.<Object, ObjectID>emptyMap();
-            }
-            Map<Object, ObjectID> grabbed = map.getRandomSamples(Math.round((samples) * 1.5f), clients);
-            sampled = grabbed.size();
-            grabbed = filter(grabbed,map.getTTISeconds(),map.getTTLSeconds());
-//        }
-        filtered = grabbed.size();
+
+        if ( Thread.currentThread().isInterrupted() ) {
+            return Collections.<Object, ObjectID>emptyMap();
+        }
         
+        Map<Object, ObjectID> grabbed = map.getRandomSamples(Math.round(samples), clients);
+        sampled = grabbed.size();
+        
+        if ( dumpLive ) {
+            overflow += grabbed.size();
+        } else {
+            grabbed = filter(grabbed,map.getTTISeconds(),map.getTTLSeconds());
+            filtered += grabbed.size();
+        }
+
         return processSample(grabbed);
     }
       
     protected int calculateSampleCount(int max, EvictableMap ev) {
         count = ev.getSize();
 
-        sampled = count/10;
+        sampled = count/15;
         if ( sampled < 100 ) {
             sampled = 100;
         } else if ( sampled > 100000 ) {
@@ -122,11 +127,6 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
    private Map<Object, ObjectID> filter(final Map<Object, ObjectID> samples, final int ttiSeconds,
                     final int ttlSeconds) {
     final int now = (int) (System.currentTimeMillis() / 1000);
-//    int freshness = ttlSeconds;
-//    if ( ttiSeconds > ttlSeconds ) {
-//        freshness = ttiSeconds;
-//    }
-//    freshness = Math.round(freshness * .66667f);
     
     for (final Iterator<Map.Entry<Object, ObjectID>> iterator = samples.entrySet().iterator(); iterator.hasNext();) {
         if ( Thread.currentThread().isInterrupted() ) {
@@ -138,10 +138,6 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
         if ( expiresIn <= 0 ) {
 //            candidates.put(e.getKey(), e.getValue());
             expired+=1;
-        } else if ( dumpLive ) {
-            // Element already expired
-//            candidates.put(e.getKey(), e.getValue());
-            overflow+=1;
         } else if ( exclusionList != null && exclusionList.contains(e.getValue()) ) {
             iterator.remove();
             excluded += 1;

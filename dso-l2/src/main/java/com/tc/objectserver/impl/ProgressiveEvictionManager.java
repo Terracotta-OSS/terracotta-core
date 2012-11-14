@@ -27,13 +27,20 @@ import com.tc.runtime.MemoryEventsListener;
 import com.tc.runtime.MemoryUsage;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.AbstractExecutorService;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.terracotta.corestorage.monitoring.MonitoredResource;
@@ -105,11 +112,11 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         //  assume 100 MB/sec fill rate and set 0% usage poll rate to the time it would take to fill up.
         this.evictionGrp = new ThreadGroup(grp, "Eviction Group");
         this.trigger = new ResourceMonitor(monitored, (monitored.getTotal() * 1000) / (100 * 1024 * 1024), evictionGrp);      
-        this.agent = Executors.newSingleThreadExecutor(new ThreadFactory() {
-            
+        this.agent = new ThreadPoolExecutor(1, 64, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),new ThreadFactory() {
+            private int count = 1;
             @Override
             public Thread newThread(Runnable r) {
-                return new Thread(evictionGrp, r, "Expiration Thread");
+                return new Thread(evictionGrp, r, "Expiration Thread - " + count++);
             }
         });
         log("critical threshold " + L2_CACHEMANAGER_CRITICALTHRESHOLD);
@@ -142,7 +149,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 public Void call() throws Exception {
                     for (final ObjectID mapID : evictableObjects) {
                         if ( Thread.interrupted() ) {
-                            log("Eviction Interrupted");
                             return null;
                         }
                         doEvictionOn(new PeriodicEvictionTrigger(ProgressiveEvictionManager.this, objectManager, mapID, evictor.isElementBasedTTIorTTL()));
@@ -247,30 +253,24 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         }
     }
 
-    Future<Void> emergencyEviction() {
+    List<Future<Void>> emergencyEviction(final int alter) {
         final ObjectIDSet evictableObjects = store.getAllEvictableObjectIDs();
-        return agent.submit(new Callable<Void>() {
-            public Void call() {
-                boolean handled = false;
-                boolean blowout = (lastEmergency > 0 && lastEmergency - System.currentTimeMillis() < SLEEP_TIME);  // if the last emergency is less than the default sleep time, blow it out
-                lastEmergency = System.currentTimeMillis();
-                while (!handled) {
-                    for (final ObjectID mapID : evictableObjects) {
-                        if ( Thread.interrupted() ) {
-                            log("Emergency Interrupted");
-                            return null;
-                        }
-                        EmergencyEvictionTrigger trigger = new EmergencyEvictionTrigger(objectManager, mapID, L2_CACHEMANAGER_CRITICALTHRESHOLD, blowout);
-                        doEvictionOn(trigger);
-                        if (trigger.getSampleCount() > 0 || blowout) {
-                            handled = true;
-                        };
+        final boolean blowout = (lastEmergency > 0 && lastEmergency - System.currentTimeMillis() < SLEEP_TIME);  // if the last emergency is less than the default sleep time, blow it out
+        lastEmergency = System.currentTimeMillis();
+        ArrayList<Future<Void>> push = new ArrayList<Future<Void>>(evictableObjects.size());
+        for (final ObjectID mapID : evictableObjects) {
+            push.add(agent.submit(new Callable<Void>() {
+                public Void call() {
+                    if ( Thread.interrupted() ) {
+                        return null;
                     }
-                    blowout = true;
+                    EmergencyEvictionTrigger trigger = new EmergencyEvictionTrigger(objectManager, mapID, L2_CACHEMANAGER_CRITICALTHRESHOLD - alter, blowout);
+                    doEvictionOn(trigger);
+                    return null;
                 }
-                return null;
-            }
-        });
+            }));
+        }
+        return push;
     }
 
     private EvictableMap getEvictableMapFrom(final ObjectID id, final ManagedObjectState state) {
@@ -304,7 +304,21 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
         long last = System.currentTimeMillis();
         int size = 0;
-        Future<Void> currentRun = completedFuture;
+        int alter = 0;
+        List<Future<Void>> currentRun = Collections.singletonList(completedFuture);
+        
+        public void cancelCurrentRun(boolean immediate) {
+            for ( Future<Void> n : currentRun ) {
+                n.cancel(immediate);
+            }
+        }
+        
+        public boolean isDone() {
+            for ( Future<Void> n : currentRun ) {
+                if ( !n.isDone() ) return false;
+            }
+            return true;
+        }
 
         @Override
         public void memoryUsed(MemoryUsage usage, boolean recommendOffheap) {
@@ -315,27 +329,34 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                     log("Percent usage:" + percent + " time:" + (current - last) + " msec., size delta:" + (percent - size));
                 }
                 if (percent > L2_CACHEMANAGER_CRITICALTHRESHOLD) {
-                    if ( !isEmergency || currentRun.isDone() ) {
-                        log("Emergency Triggered - " + percent);
-                        currentRun.cancel(true);
-                        currentRun = emergencyEviction();
+                    if ( !isEmergency ) {
+                        alter = (int)((percent-size)/(current-last)*1000);
+                        if ( alter < 0 ) {
+                            alter = 0;
+                        }
+                    }
+                    
+                    if ( !isEmergency || isDone() ) {
+                        log("Emergency Triggered - " + percent + " rate of change: " + alter);
+                        cancelCurrentRun(true);
+                        currentRun = emergencyEviction(alter);
                         isEmergency = true;
                     }
                 } else {
                     clientObjectReferenceSet.size();
                     if ( isEmergency ) {
                         isEmergency = false;
-                        currentRun.cancel(true);
+                        cancelCurrentRun(true);
                     }
-                    if ( PERIODIC_EVICTOR_ENABLED && currentRun.isDone() ) {
-                        currentRun = scheduleEvictionRun();
+                    if ( PERIODIC_EVICTOR_ENABLED && isDone() ) {
+                        currentRun = Collections.singletonList(scheduleEvictionRun());
                     } 
                 }
                 last = current;
                 size = percent;
             } catch (UnsupportedOperationException us) {
-                if ( currentRun.isDone() ) {
-                    currentRun = scheduleEvictionRun();
+                if ( isDone() ) {
+                    currentRun = Collections.singletonList(scheduleEvictionRun());
                 }
                 log(us.toString());
             }

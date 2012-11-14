@@ -24,7 +24,8 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     private boolean aboveCapacity = true;
     private int count = 0;
     private int clientSetCount = 0;
-    private String name;
+    private int max = 0;
+    private int size = 0;
     private final ServerMapEvictionManager mgr;
     private ClientObjectReferenceSet clientSet;
 
@@ -40,7 +41,9 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             throw new AssertionError("map is not in evicting state");
         }
         
-        if ( map.getSize() > map.getMaxTotalCount() ) {
+        max = map.getMaxTotalCount();
+        size = map.getSize();
+        if ( size > max ) {
             super.startEviction(map);
             return true;
         } else {
@@ -78,12 +81,16 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     public void notifyReferenceSetChanged() {
        mgr.doEvictionOn(new AbstractEvictionTrigger(getId()) {
             private int sampleCount = 0;
+            private int size = 0;
+            private int max = 0;
             private boolean wasOver = true;
             private int clientSetCount = 0;
 
             @Override
             public boolean startEviction(EvictableMap map) {
-                if ( map.getSize() <= map.getMaxTotalCount() ) {
+                size = map.getSize();
+                max = map.getMaxTotalCount();
+                if ( size <= max ) {
                     wasOver = false;
                     clientSet.removeReferenceSetChangeListener(CapacityEvictionTrigger.this);
                     return false;
@@ -112,9 +119,11 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             @Override
             public String toString() {
                 return "ClientReferenceSetRefreshCapacityEvictor{wasover="  + wasOver 
-                        + " count=" + sampleCount
-                        + " clientset=" + clientSetCount
-                        + " parent=" + super.toString() 
+                        + ", count=" + sampleCount
+                        + ", size=" + size 
+                        + ", max=" + max 
+                        + ", clientset=" + clientSetCount
+                        + ", parent=" + super.toString() 
                         + "}";
             }
             
@@ -126,7 +135,9 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     @Override
     public String toString() {
         return "CapacityEvictionTrigger{"
-                + ", count=" + count 
+                + "count=" + count 
+                + ", size=" + size 
+                + ", max=" + max 
                 + ", was above capacity=" 
                 + aboveCapacity + ", client set=" 
                 + clientSetCount 
