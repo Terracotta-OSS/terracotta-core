@@ -191,15 +191,13 @@ public class L1ConfigBuilder extends BaseConfigBuilder {
     return moduleElement.toString();
   }
 
-  private static final String[] DSO_INSTRUMENTATION_LOGGING = new String[] { "class", "hierarchy", "locks",
-      "transient-root", "roots", "distributed-methods"     };
   private static final String[] DSO_RUNTIME_LOGGING         = new String[] { "lock-debug", "partial-instrumentation",
       "non-portable-warning", "wait-notify-debug", "distributed-method-debug", "new-object-debug" };
   private static final String[] DSO_RUNTIME_OUTPUT_OPTIONS  = new String[] { "auto-lock-details", "caller",
       "full-stack"                                         };
 
-  private static final String[] DSO_DEBUGGING               = concat(new Object[] { DSO_INSTRUMENTATION_LOGGING,
-      DSO_RUNTIME_LOGGING, DSO_RUNTIME_OUTPUT_OPTIONS      });
+  private static final String[] DSO_DEBUGGING              = concat(new Object[] { DSO_RUNTIME_LOGGING,
+      DSO_RUNTIME_OUTPUT_OPTIONS                          });
   private static final String[] DSO                         = concat(new Object[] { "fault-count",
       DSO_DEBUGGING                                        });
   private static final String[] MODULE_ATTRIBUTES           = new String[] { "name", "group-id", "version" };
@@ -210,7 +208,6 @@ public class L1ConfigBuilder extends BaseConfigBuilder {
     return  addModuleElement()
         + element("logs") + openElement("dso", DSO) + element("fault-count")
         + openElement("debugging", DSO_DEBUGGING)
-        + elementGroup("instrumentation-logging", DSO_INSTRUMENTATION_LOGGING)
         + elementGroup("runtime-logging", DSO_RUNTIME_LOGGING)
         + elementGroup("runtime-output-options", DSO_RUNTIME_OUTPUT_OPTIONS) + closeElement("debugging", DSO_DEBUGGING)
         + closeElement("dso", DSO);
