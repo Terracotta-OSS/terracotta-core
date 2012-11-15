@@ -42,15 +42,16 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     private int tti = 0;
     private int ttl = 0;
     private boolean completed = false;
+    private volatile boolean stop = false;
     private final ObjectManager  mgr;
     private final ObjectIDSet exclusionList;
     private final ObjectIDSet passList = new ObjectIDSet();
     
-    public PeriodicEvictionTrigger(ProgressiveEvictionManager evictor, ObjectManager mgr, ObjectID oid, boolean runAlways) {
-        this(evictor, mgr,oid,new ObjectIDSet(),runAlways);
+    public PeriodicEvictionTrigger(ObjectManager mgr, ObjectID oid, boolean runAlways) {
+        this(mgr,oid,new ObjectIDSet(),runAlways);
     }
     
-    public PeriodicEvictionTrigger(ProgressiveEvictionManager evictor, ObjectManager mgr, ObjectID oid, ObjectIDSet exclude, boolean runAlways) {
+    public PeriodicEvictionTrigger(ObjectManager mgr, ObjectID oid, ObjectIDSet exclude, boolean runAlways) {
         super(oid);
         this.runAlways = runAlways;
         this.mgr = mgr;
@@ -84,12 +85,16 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
         completed = true;
         super.completeEviction(map);
     }
+    
+    public void stop() {
+        stop = true;
+    }
 
     @Override
     public Map<Object, ObjectID> collectEvictonCandidates(int max, EvictableMap map, ClientObjectReferenceSet clients) {
         int samples = calculateSampleCount(max, map);
 
-        if ( Thread.currentThread().isInterrupted() ) {
+        if ( stop ) {
             return Collections.<Object, ObjectID>emptyMap();
         }
         
@@ -129,7 +134,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     final int now = (int) (System.currentTimeMillis() / 1000);
     
     for (final Iterator<Map.Entry<Object, ObjectID>> iterator = samples.entrySet().iterator(); iterator.hasNext();) {
-        if ( Thread.currentThread().isInterrupted() ) {
+        if ( stop ) {
  //  don't unset flag, may need it later
             return Collections.<Object, ObjectID>emptyMap();
         }

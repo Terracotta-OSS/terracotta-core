@@ -954,9 +954,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         try {
           wait();
         } catch (final InterruptedException e) {
-            resultSet = true;
-            Thread.currentThread().interrupt();
-            return null;
+            throw new AssertionError(e);
         }
       }
       return this.result;
@@ -975,10 +973,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     public synchronized void setResults(final ObjectManagerLookupResults results) {
-        if ( this.resultSet ) {
-            unmarkReferenced(results.getObjects().values());
-            return;
-        }
       this.resultSet = true;
       assertMissingObjects(results.getMissingObjectIDs());
       final Map objects = results.getObjects();

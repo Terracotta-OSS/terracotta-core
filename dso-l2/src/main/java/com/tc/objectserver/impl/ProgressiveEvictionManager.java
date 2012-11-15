@@ -29,7 +29,6 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -71,11 +70,10 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private final ExecutorService agent;
     private ThreadGroup        evictionGrp;
     private final Responder responder =        new Responder();
-    private volatile           boolean   isEmergency = false;
     
     private final static Future<Void> completedFuture = new Future<Void>() {
 
-            @Override
+        @Override
             public boolean cancel(boolean bln) {
                 return true;
             }
@@ -86,10 +84,10 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             }
 
             @Override
-            public boolean isDone() {
-                return true;
-            }
-
+        public boolean isDone() {
+            return true;
+        }
+        
             @Override
             public Void get() throws InterruptedException, ExecutionException {
                 return null;
@@ -100,8 +98,9 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 return null;
             }
             
-        };
-
+    };
+            
+            
     public ProgressiveEvictionManager(ObjectManager mgr, MonitoredResource monitored, PersistentManagedObjectStore store, ClientObjectReferenceSet clients, ServerTransactionFactory trans, final TCThreadGroup grp) {
         this.objectManager = mgr;
         this.store = store;
@@ -141,20 +140,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private Future<Void> scheduleEvictionRun() {
         try{
             final ObjectIDSet evictableObjects = store.getAllEvictableObjectIDs();
-            return agent.submit(new Callable<Void>() {
-
-                @Override
-                public Void call() throws Exception {
-                    for (final ObjectID mapID : evictableObjects) {
-                        if ( Thread.interrupted() ) {
-                            return null;
-                        }
-                        doEvictionOn(new PeriodicEvictionTrigger(ProgressiveEvictionManager.this, objectManager, mapID, evictor.isElementBasedTTIorTTL()));
-                    }
-                    return null;
-                }
-
-            });
+            return new FutureCallable<Void>(agent, new PeriodicCallable(this,objectManager,evictableObjects,evictor.isElementBasedTTIorTTL()));
         } catch ( ShutdownError err ) {
             //  is probably in shutodown, unregister
             trigger.unregisterForMemoryEvents(responder);
@@ -219,7 +205,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             }
             this.objectManager.releaseReadOnly(mo);
             
-            if (context != null && !Thread.currentThread().isInterrupted()) {
+            if (context != null) {
                 this.evictorSink.add(context);
             } 
         } finally {
@@ -253,21 +239,20 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
     List<Future<Void>> emergencyEviction(final boolean blowout) {
         final ObjectIDSet evictableObjects = store.getAllEvictableObjectIDs();
-        ArrayList<Future<Void>> push = new ArrayList<Future<Void>>(evictableObjects.size());
+        List<Future<Void>> push = new ArrayList<Future<Void>>(evictableObjects.size());
         Random r = new Random();
         List<ObjectID> list = new ArrayList<ObjectID>(evictableObjects);
         while ( !list.isEmpty() ) {
             final ObjectID mapID = list.remove(r.nextInt(list.size()));
             push.add(agent.submit(new Callable<Void>() {
-                public Void call() {
-                    if ( Thread.interrupted() ) {
-                        return null;
-                    }
+                @Override
+                public Void call() throws Exception {
                     EmergencyEvictionTrigger trigger = new EmergencyEvictionTrigger(objectManager, mapID , blowout);
                     doEvictionOn(trigger);
                     return null;
                 }
-            }));
+            }
+            ));
         }
         return push;
     }
@@ -303,18 +288,21 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
         long last = System.currentTimeMillis();
         int size = 0;
+        volatile boolean isEmergency = false;
 
         List<Future<Void>> currentRun = Collections.singletonList(completedFuture);
         
         public void cancelCurrentRun(boolean immediate) {
             for ( Future<Void> n : currentRun ) {
-                n.cancel(immediate);
+                n.cancel(false);
             }
         }
         
         public boolean isDone() {
             for ( Future<Void> n : currentRun ) {
-                if ( !n.isDone() ) return false;
+                if ( !n.isDone() ) {
+                    return false;
+                }
             }
             return true;
         }
@@ -327,13 +315,11 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 if (evictor.isLogging()) {
                     log("Percent usage:" + percent + " time:" + (current - last) + " msec., size delta:" + (percent - size));
                 }
-                if (percent > L2_CACHEMANAGER_CRITICALTHRESHOLD) {
-                    boolean blowout = isEmergency; // if already in emergency situation, really try hard to remove items.
-                    
+                if (percent >= L2_CACHEMANAGER_CRITICALTHRESHOLD) {                    
                     if ( !isEmergency || isDone() ) {
                         log("Emergency Triggered - " + percent);
                         cancelCurrentRun(true);
-                        currentRun = emergencyEviction(blowout);
+                        currentRun = emergencyEviction(isEmergency);// if already in emergency situation, really try hard to remove items.
                         isEmergency = true;
                     }
                 } else {
