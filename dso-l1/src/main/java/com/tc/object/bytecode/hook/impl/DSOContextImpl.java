@@ -26,7 +26,6 @@ import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerImpl;
 import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ModuleConfiguration;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.logging.RuntimeLoggerImpl;
@@ -180,8 +179,8 @@ public class DSOContextImpl implements DSOContext {
   }
 
   @Override
-  public ModuleConfiguration getModuleConfigurtion() {
-    return configHelper;
+  public void addTunneledMBeanDomain(String mbeanDomain) {
+    this.configHelper.addTunneledMBeanDomain(mbeanDomain);
   }
 
   /**

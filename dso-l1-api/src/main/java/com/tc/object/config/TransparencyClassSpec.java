@@ -80,14 +80,6 @@ public interface TransparencyClassSpec {
   public LockDefinition getNonAutoLockDefinition(LockDefinition lds[]);
 
   /**
-   * Add a transient field
-   * 
-   * @param variableName Field name
-   * @return this
-   */
-  public TransparencyClassSpec addTransient(String variableName);
-
-  /**
    * Get the class name for this spec
    * 
    * @return Name

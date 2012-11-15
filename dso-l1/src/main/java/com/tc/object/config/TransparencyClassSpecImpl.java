@@ -123,12 +123,6 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   }
 
   @Override
-  public TransparencyClassSpec addTransient(final String variableName) {
-    configuration.addTransient(className, variableName);
-    return this;
-  }
-
-  @Override
   public String getClassName() {
     return className;
   }
