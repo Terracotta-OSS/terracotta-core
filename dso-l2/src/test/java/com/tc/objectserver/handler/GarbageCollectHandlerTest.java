@@ -46,7 +46,6 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -394,14 +393,6 @@ public class GarbageCollectHandlerTest extends TCTestCase {
     }
 
     public ObjectIDSet getObjectIDsInCache() {
-      throw new ImplementMe();
-    }
-
-    public void addFaultedObject(ObjectID oid, ManagedObject mo, boolean removeOnRelease) {
-      throw new ImplementMe();
-    }
-
-    public void flushAndEvict(List objects2Flush) {
       throw new ImplementMe();
     }
 

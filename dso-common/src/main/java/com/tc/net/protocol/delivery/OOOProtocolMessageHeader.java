@@ -25,7 +25,7 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
   public static final String[] typeNames                 = new String[] { "N/A", "TYPE_HANDSHAKE",
       "TYPE_HANDSHAKE_REPLY_OK", "TYPE_HANDSHAKE_REPLY_FAIL", "TYPE_ACK", "TYPE_SEND", "TYPE_GOODBYE", };
 
-  public static final short    VERSION                   = 1;
+  public static final short    VERSION                   = 2;
 
   private static final int     MAGIC_NUM                 = 0xBBBBBBBB;
   private static final int     MAGIC_NUM_OFFSET          = 0;
@@ -40,20 +40,27 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
   private static final int     SEQUENCE_OFFSET           = TYPE_OFFSET + TYPE_LENGTH;
   private static final int     SEQUENCE_LENGTH           = 8;
 
-  private static final int     SESSION_OFFSET            = SEQUENCE_OFFSET + SEQUENCE_LENGTH;
+  private static final int     ACK_OFFSET                = SEQUENCE_OFFSET + SEQUENCE_LENGTH;
+  private static final int     ACK_LENGTH                = 8;
+
+  private static final int     SESSION_OFFSET            = ACK_OFFSET + ACK_LENGTH;
   private static final int     SESSION_LENGTH            = UUID.SIZE;
 
   static final int             HEADER_LENGTH;
 
   static {
-    int tmp = MAGIC_NUM_LENGTH + VERSION_LENGTH + TYPE_LENGTH + SEQUENCE_LENGTH + SESSION_LENGTH;
+    int tmp = MAGIC_NUM_LENGTH + VERSION_LENGTH + TYPE_LENGTH + SEQUENCE_LENGTH + ACK_LENGTH + SESSION_LENGTH;
     // This padding is here to ensure that the header is a multiple of four bytes.
     HEADER_LENGTH = (tmp + 3) / 4 * 4;
   }
 
   OOOProtocolMessageHeader(short version, short type, long sequence, UUID sessionId) {
+    this(version, type, sequence, -1, sessionId);
+  }
+
+  OOOProtocolMessageHeader(short version, short type, long sequence, long ackSequence, UUID sessionId) {
     super(HEADER_LENGTH, HEADER_LENGTH);
-    putValues(version, type, sequence, sessionId);
+    putValues(version, type, sequence, ackSequence, sessionId);
     try {
       validate();
     } catch (TCProtocolException e) {
@@ -69,11 +76,12 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
     return HEADER_LENGTH;
   }
 
-  private void putValues(short version, short type, long sequence, UUID sessionId) {
+  private void putValues(short version, short type, long sequence, long ackSequence, UUID sessionId) {
     data.putInt(MAGIC_NUM_OFFSET, MAGIC_NUM);
     data.putUbyte(VERSION_OFFSET, version);
     data.putUbyte(TYPE_OFFSET, type);
     data.putLong(SEQUENCE_OFFSET, sequence);
+    data.putLong(ACK_OFFSET, ackSequence);
     try {
       data.put(SESSION_OFFSET, sessionId.toString().getBytes("UTF-8"), 0, SESSION_LENGTH);
     } catch (UnsupportedEncodingException e) {
@@ -81,10 +89,12 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
     }
   }
 
+  @Override
   protected void setHeaderLength(short headerLength) {
     throw new UnsupportedOperationException("These messages are fixed length.");
   }
 
+  @Override
   public void validate() throws TCProtocolException {
     int magic = getMagicNumber();
     if (magic != MAGIC_NUM) { throw new TCProtocolException("Bad magic number: " + magic + " != " + MAGIC_NUM); }
@@ -103,6 +113,7 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
                                                                  + ", send=" + send); }
   }
 
+  @Override
   public String toString() {
     StringBuffer buf = new StringBuffer();
     buf.append("Type=" + typeNames[getType()]);
@@ -130,6 +141,10 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
 
   long getSequence() {
     return data.getLong(SEQUENCE_OFFSET);
+  }
+
+  long getAckSequence() {
+    return data.getLong(ACK_OFFSET);
   }
 
   UUID getSession() {

@@ -29,9 +29,9 @@ public interface TsaManagementClientService {
 
   TopologyEntity getTopology() throws ServiceExecutionException;
 
-  StatisticsEntity getClientStatistics(String clientId) throws ServiceExecutionException;
+  StatisticsEntity getClientStatistics(String clientId, Set<String> attributes) throws ServiceExecutionException;
 
-  StatisticsEntity getServerStatistics(String serverName) throws ServiceExecutionException;
+  StatisticsEntity getServerStatistics(String serverName, Set<String> attributes) throws ServiceExecutionException;
 
   Set<String> getAllClientIds() throws ServiceExecutionException;
 

@@ -4,27 +4,32 @@ import org.terracotta.corestorage.ImmutableKeyValueStorageConfig;
 import org.terracotta.corestorage.KeyValueStorage;
 import org.terracotta.corestorage.KeyValueStorageConfig;
 import org.terracotta.corestorage.Transformer;
+import org.terracotta.corestorage.StorageManager;
 
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.objectserver.api.ClientNotFoundException;
 import com.tc.util.sequence.MutableSequence;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
  * @author tim
  */
 public class ClientStatePersistor {
+  private static final String CLIENT_STATE_SEQUENCE = "client_state_sequence";
+  private static final String CLIENT_STATES = "client_states";
+
   private final MutableSequence clientIDSequence;
   private final KeyValueStorage<ChannelID, Boolean> clients;
 
-  public ClientStatePersistor(MutableSequence clientIDSequence, KeyValueStorage<ChannelID, Boolean> clients) {
-    this.clientIDSequence = clientIDSequence;
-    this.clients = clients;
+  public ClientStatePersistor(SequenceManager sequenceManager, StorageManager storageManager) {
+    this.clientIDSequence = sequenceManager.getSequence(CLIENT_STATE_SEQUENCE);
+    this.clients = storageManager.getKeyValueStorage(CLIENT_STATES, ChannelID.class, Boolean.class);
   }
 
-  public static KeyValueStorageConfig<ChannelID, Boolean> config() {
-    return new ImmutableKeyValueStorageConfig<ChannelID, Boolean>(ChannelID.class, Boolean.class, ChannelIDTransformer.INSTANCE, (Transformer<Boolean, ?>) null);
+  public static void addConfigsTo(Map<String, KeyValueStorageConfig<?, ?>> configMap) {
+    configMap.put(CLIENT_STATES, ImmutableKeyValueStorageConfig.builder(ChannelID.class, Boolean.class).keyTransformer(ChannelIDTransformer.INSTANCE).build());
   }
 
   public MutableSequence getConnectionIDSequence() {

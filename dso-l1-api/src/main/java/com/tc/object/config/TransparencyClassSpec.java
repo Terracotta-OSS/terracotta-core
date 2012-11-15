@@ -4,18 +4,6 @@
  */
 package com.tc.object.config;
 
-import com.tc.asm.ClassVisitor;
-import com.tc.aspectwerkz.reflect.ClassInfo;
-import com.tc.aspectwerkz.reflect.FieldInfo;
-import com.tc.aspectwerkz.reflect.MemberInfo;
-import com.tc.aspectwerkz.reflect.MethodInfo;
-import com.tc.object.bytecode.ClassAdapterFactory;
-import com.tc.object.bytecode.MethodAdapter;
-import com.tc.object.bytecode.MethodCreator;
-import com.tc.object.logging.InstrumentationLogger;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * Configure and describe the custom adaption of a class
@@ -32,31 +20,6 @@ public interface TransparencyClassSpec {
   public static final byte ADAPTABLE     = 0x02;
 
   public static final byte PORTABLE      = 0x03;
-
-  /**
-   * @param classInfo Class information
-   * @return True if physically instrumented and portable
-   */
-  public boolean hasPhysicallyPortableSpecs(ClassInfo classInfo);
-
-  /**
-   * Add root field
-   * 
-   * @param variableName Field name
-   * @param rootName Root name
-   * @return this
-   */
-  public TransparencyClassSpec addRoot(String variableName, String rootName);
-
-  /**
-   * Add root field
-   * 
-   * @param variableName Field name
-   * @param rootName Root name
-   * @param dsoFinal True if final
-   * @return this
-   */
-  public TransparencyClassSpec addRoot(String variableName, String rootName, boolean dsoFinal);
 
   /**
    * Mark method as not instrumented
@@ -101,22 +64,6 @@ public interface TransparencyClassSpec {
   public boolean isForeign();
 
   /**
-   * Get lock definitions for member
-   * 
-   * @param memberInfo Member
-   * @return Locks
-   */
-  public LockDefinition[] lockDefinitionsFor(MemberInfo memberInfo);
-
-  /**
-   * Get auto lock definition for member
-   * 
-   * @param memberInfo Member
-   * @return Auto lock
-   */
-  public LockDefinition autoLockDefinitionFor(MethodInfo methodInfo);
-
-  /**
    * Examine lock definitions to find the the one that makes the method autolocked
    * 
    * @param lds Lock defs
@@ -131,14 +78,6 @@ public interface TransparencyClassSpec {
    * @return Lock def or null if none
    */
   public LockDefinition getNonAutoLockDefinition(LockDefinition lds[]);
-
-  /**
-   * Add support method creator
-   * 
-   * @param creator Creator
-   * @return this
-   */
-  public TransparencyClassSpec addSupportMethodCreator(MethodCreator creator);
 
   /**
    * Add distributed method call
@@ -159,27 +98,11 @@ public interface TransparencyClassSpec {
   public TransparencyClassSpec addTransient(String variableName);
 
   /**
-   * Add method adapter
-   * 
-   * @param method Method name
-   * @param adapter The adapter
-   * @return this
-   */
-  public TransparencyClassSpec addMethodAdapter(String method, MethodAdapter adapter);
-
-  /**
    * Get the class name for this spec
    * 
    * @return Name
    */
   public String getClassName();
-
-  /**
-   * Call support method creators and add to the class via the visitor
-   * 
-   * @param classVisitor Class visitor
-   */
-  public void createClassSupportMethods(ClassVisitor classVisitor);
 
   /**
    * @return True if logical
@@ -197,77 +120,11 @@ public interface TransparencyClassSpec {
   public boolean ignoreChecks();
 
   /**
-   * Check whether a field is a root in this class
-   * 
-   * @param fieldInfo Field
-   * @return True if root
-   */
-  public boolean isRootInThisClass(FieldInfo fieldInfo);
-
-  /**
-   * Check whether a field is a root in this class
-   * 
-   * @param fieldInfo Field
-   * @return True if root
-   */
-  public boolean isRoot(FieldInfo fieldInfo);
-
-  /**
-   * Check whether a field is a DSO final root
-   * 
-   * @param fieldInfo Field
-   * @return True if DSO final root
-   */
-  public boolean isRootDSOFinal(FieldInfo fieldInfo);
-
-  /**
-   * Check whether a field is injected by DSO.
-   * 
-   * @param fieldName Field name
-   * @return {@code true} when the field is injected; or {@code false} otherwise
-   */
-  public boolean isInjectedField(String fieldName);
-
-  /**
-   * Check whether a field is transient
-   * 
-   * @param access Access modifiers
-   * @param classInfo Class info
-   * @param fieldName Field name
-   * @return True if transient
-   */
-  public boolean isTransient(int access, ClassInfo classInfo, String fieldName);
-
-  /**
    * Check whether a ignore rewrite of instrumented methods
    * 
    * @return True if ignoreRewrite
    */
   public boolean isIgnoreRewrite();
-
-  /**
-   * Check whether a field is volatile
-   * 
-   * @param access Access modifiers
-   * @param classInfo Class info
-   * @param fieldName Field name
-   * @return True if volatile
-   */
-  public boolean isVolatile(int access, ClassInfo classInfo, String fieldName);
-
-  /**
-   * @param fieldInfo Field
-   * @return Root name for field
-   */
-  public String rootNameFor(FieldInfo fieldInfo);
-
-  /**
-   * Check whether this method is a locked method
-   * 
-   * @param memberInfo Method
-   * @return True if locked
-   */
-  public boolean isLockMethod(MemberInfo memberInfo);
 
   /**
    * Get lock definition for locked method
@@ -277,31 +134,6 @@ public interface TransparencyClassSpec {
    * @return Lock definition
    */
   public LockDefinition getLockMethodLockDefinition(int access, LockDefinition lds[]);
-
-  /**
-   * Check if has custom method adapter
-   * 
-   * @param memberInfo Method
-   * @return True if has custom adapter
-   */
-  public boolean hasCustomMethodAdapter(MemberInfo memberInfo);
-
-  /**
-   * Get custom method adapter
-   * 
-   * @param access Access modifiers
-   * @param methodName Method name
-   * @param origMethodName Original method name
-   * @param description Method description
-   * @param signature Method signature
-   * @param exceptions Exceptions thrown
-   * @param logger Logger
-   * @param memberInfo Method
-   * @return Custom adapter
-   */
-  public MethodAdapter customMethodAdapterFor(int access, String methodName, String origMethodName, String description,
-                                              String signature, String[] exceptions, InstrumentationLogger logger,
-                                              MemberInfo memberInfo);
 
   /**
    * @return Change applicator specification
@@ -319,13 +151,6 @@ public interface TransparencyClassSpec {
    * @param superClassSpec The logically managed super class
    */
   public void moveToLogical(TransparencyClassSpec superClassSpec);
-
-  /**
-   * Add logical method adapter to always log access to method
-   * 
-   * @param name Method signature
-   */
-  public void addAlwaysLogSpec(String name);
 
   /**
    * Add logical method adapter to log calls to System.arraycopy()
@@ -531,33 +356,6 @@ public interface TransparencyClassSpec {
   public void setPostCreateMethod(String postCreateMethod);
 
   /**
-   * Add a custom class adapter factory
-   * 
-   * @param customClassAdapter Custom factory
-   * @deprecated see {@link #addCustomClassAdapter(ClassAdapterFactory)}
-   * @see #addCustomClassAdapter(ClassAdapterFactory)
-   */
-  @Deprecated
-  public void setCustomClassAdapter(ClassAdapterFactory customClassAdapter);
-
-  /**
-   * Add a custom class adapter factory. They will later be processed according to their order of registration and
-   * delegate control to the earlier ones through the standard ASM visitor pattern. This means that any instrumentation
-   * that's done in the first class adapter will be seen by the second class adapter, and so on.
-   * 
-   * @param customClassAdapter Custom factory
-   */
-  public void addCustomClassAdapter(ClassAdapterFactory customClassAdapter);
-
-  /**
-   * Get the custom class adapter factories in the reverse order of addition. The first class adapter factory that was
-   * added will be the last one in the list.
-   * 
-   * @return Adapter factories
-   */
-  public List<ClassAdapterFactory> getCustomClassAdapters();
-
-  /**
    * @return Get name of change applicator class
    */
   public String getChangeApplicatorClassName();
@@ -580,23 +378,5 @@ public interface TransparencyClassSpec {
    */
   public void setChangeApplicatorSpec(ChangeApplicatorSpec changeApplicatorSpec);
 
-  /**
-   * Add a custom class adapter factory to be executed after DSO adapters
-   * <p/>
-   * They will later be processed according to their order of registration and delegate control to the earlier ones
-   * through the standard ASM visitor pattern. This means that any instrumentation that's done in the first class
-   * adapter will be seen by the second class adapter, and so on.
-   * 
-   * @param customClassAdapter Custom factory
-   */
-  public void addAfterDSOClassAdapter(ClassAdapterFactory customClassAdapter);
-
-  /**
-   * Get the custom class adapter factories to be executed after DSO adapters. The returned list is in the reverse order
-   * of addition. The first class adapter factory that was added will be the last one in the list.
-   * 
-   * @return Adapter factories
-   */
-  public Collection<ClassAdapterFactory> getAfterDSOClassAdapters();
 
 }

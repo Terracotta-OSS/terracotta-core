@@ -51,10 +51,21 @@
     <fileSet>
       <directory>${project.build.directory}/tmc-${tmc.version}</directory>
       <outputDirectory>/tools/tmc</outputDirectory>
+      <excludes>
+        <exclude>**/keychain.*</exclude>
+        <exclude>**/management-cli-common.*</exclude>
+        <exclude>**/add-tc-agent.*</exclude>
+        <exclude>**/usermanagement.*</exclude>
+        <exclude>**/security*.jar</exclude>
+        <exclude>**/commons-beanutils*.jar</exclude>
+        <exclude>**/management-cli*.jar</exclude>
+        <exclude>**/shiro*.jar</exclude>
+        <exclude>**/slf4j*.jar</exclude>
+      </excludes>
     </fileSet>
     <fileSet>
       <directory>${project.build.directory}/${kit.name}/bin</directory>
-      <outputDirectory>/common/bin</outputDirectory>
+      <outputDirectory>/tools/security/bin</outputDirectory>
       <includes>
         <include>keychain.*</include>
         <include>management-cli-common.*</include>
@@ -63,33 +74,38 @@
       </includes>
     </fileSet>
     <fileSet>
+      <directory>${project.build.directory}/tmc-${tmc.version}/lib</directory>
+      <outputDirectory>/tools/security/lib</outputDirectory>
+      <includes>
+        <include>**/security*.jar</include>
+        <include>**/commons-beanutils*.jar</include>
+        <include>**/management-cli*.jar</include>
+        <include>**/shiro*.jar</include>
+        <include>**/slf4j*.jar</include>
+      </includes>
+    </fileSet>
+    <fileSet>
       <directory>${project.build.directory}/${kit.name}/bin</directory>
       <outputDirectory>/server/bin</outputDirectory>
+      <excludes>
+        <exclude>**/keychain.*</exclude>
+        <exclude>**/management-cli-common.*</exclude>
+        <exclude>**/add-tc-agent.*</exclude>
+        <exclude>**/usermanagement.*</exclude>
+      </excludes>
     </fileSet>
     <fileSet>
       <directory>${project.build.directory}/${kit.name}/lib</directory>
       <outputDirectory>/server/lib</outputDirectory>
     </fileSet>
-    <!--
     <fileSet>
-      <directory>${ehcache-core.config.dir}</directory>
-      <outputDirectory>/config-samples</outputDirectory>
-      <includes>
-        <include>ehcache.xsd</include>
-      </includes>
+      <directory>${project.build.directory}/${kit.name}/management</directory>
+      <outputDirectory>/server/management</outputDirectory>
     </fileSet>
     <fileSet>
-      <directory>${ehcache-core.assembly.dir}</directory>
-      <includes>
-        <include>SLF4J-LICENSE.txt</include>
-      </includes>
-      <outputDirectory>/legal</outputDirectory>
-    </fileSet>
-    <fileSet>
-      <directory>${project.build.directory}/bigmemory-samples-${bigmemory.version}</directory>
+      <directory>${project.build.directory}/bigmemory-max-samples-${bigmemory.version}</directory>
       <outputDirectory>/code-samples</outputDirectory>
     </fileSet>
-    -->
   </fileSets>
   <files>
   </files>
@@ -120,23 +136,5 @@
       </includes>
       <unpack>true</unpack>
     </dependencySet>
-    <!--
-    <dependencySet>
-      <outputDirectory>javadoc</outputDirectory>
-      <includes>
-        <include>net.sf.ehcache:ehcache-core-ee:jar:javadoc</include>
-      </includes>
-      <unpack>true</unpack>
-    </dependencySet>
-    <dependencySet>
-      <outputDirectory>lib</outputDirectory>
-      <includes>
-        <include>*:*:jar</include>
-      </includes>
-      <excludes>
-        <exclude>*:*:jar:javadoc</exclude>
-      </excludes>
-    </dependencySet>
-    -->
   </dependencySets>
 </assembly>

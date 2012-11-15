@@ -8,9 +8,6 @@ import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortableOperationManagerImpl;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.asm.Type;
-import com.tc.aspectwerkz.reflect.ClassInfo;
-import com.tc.aspectwerkz.reflect.FieldInfo;
-import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.client.AbstractClientFactory;
 import com.tc.client.ClientMode;
 import com.tc.cluster.DsoCluster;
@@ -50,8 +47,6 @@ import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.Notify;
 import com.tc.object.locks.NotifyImpl;
 import com.tc.object.locks.UnclusteredLockID;
-import com.tc.object.logging.InstrumentationLogger;
-import com.tc.object.logging.InstrumentationLoggerImpl;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.logging.RuntimeLoggerImpl;
 import com.tc.object.metadata.MetaDataDescriptor;
@@ -81,7 +76,6 @@ import com.tc.util.Assert;
 import com.tc.util.FindbugsSuppressWarnings;
 import com.tc.util.Util;
 import com.tc.util.concurrent.SetOnceFlag;
-import com.tc.util.runtime.Vm;
 import com.tcclient.cluster.DsoClusterInternal;
 import com.terracottatech.search.AbstractNVPair;
 import com.terracottatech.search.NVPair;
@@ -116,8 +110,6 @@ public class ManagerImpl implements Manager {
   private final LockIdFactory                      lockIdFactory;
   private final ClientMode                         clientMode;
   private final TCSecurityManager                  securityManager;
-
-  private final InstrumentationLogger              instrumentationLogger;
 
   private ClientObjectManager                      objectManager;
   private ClientShutdownManager                    shutdownManager;
@@ -162,7 +154,6 @@ public class ManagerImpl implements Manager {
     this.lockManager = lockManager;
     this.searchRequestManager = searchRequestManager;
     this.config = config;
-    this.instrumentationLogger = new InstrumentationLoggerImpl(config.instrumentationLoggingOptions());
     this.startClient = startClient;
     this.connectionComponents = connectionComponents;
     this.rejoinManager = new RejoinManagerImpl(isExpressRejoinMode);
@@ -630,22 +621,6 @@ public class ManagerImpl implements Manager {
 
   @Override
   public boolean isRoot(final Field field) {
-    final String fName = field.getName();
-    final Class c = field.getDeclaringClass();
-
-    if (Vm.isIBM() && c.getName().startsWith("java.lang.reflect.")) {
-      // This avoids a StackOverFlow on ibm jdk -- it does mean that roots defined in classes in java.lang.reflect.*
-      // won't work right, but there are other chicken/egg reasons why roots there won't work there too
-      return false;
-    }
-
-    final ClassInfo classInfo = JavaClassInfo.getClassInfo(c);
-
-    final FieldInfo[] fields = classInfo.getFields();
-    for (final FieldInfo fieldInfo : fields) {
-      if (fieldInfo.getName().equals(fName)) { return this.config.isRoot(fieldInfo); }
-    }
-
     return false;
   }
 
@@ -672,11 +647,6 @@ public class ManagerImpl implements Manager {
   @Override
   public TCLogger getLogger(final String loggerName) {
     return TCLogging.getLogger(loggerName);
-  }
-
-  @Override
-  public InstrumentationLogger getInstrumentationLogger() {
-    return this.instrumentationLogger;
   }
 
   private static class MethodDisplayNames {

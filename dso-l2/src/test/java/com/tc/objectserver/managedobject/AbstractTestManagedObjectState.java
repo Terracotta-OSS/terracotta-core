@@ -4,10 +4,6 @@
  */
 package com.tc.objectserver.managedobject;
 
-import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.StorageManager;
-import org.terracotta.corestorage.heap.HeapStorageManager;
-
 import com.tc.io.serializer.TCObjectInputStream;
 import com.tc.io.serializer.TCObjectOutputStream;
 import com.tc.object.ObjectID;
@@ -15,13 +11,12 @@ import com.tc.object.TestDNACursor;
 import com.tc.object.TestDNAWriter;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.core.api.ManagedObjectState;
+import com.tc.objectserver.persistence.HeapStorageManagerFactory;
 import com.tc.objectserver.persistence.Persistor;
-import com.tc.objectserver.persistence.StorageManagerFactory;
 import com.tc.util.Assert;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.util.Map;
 
 import junit.framework.TestCase;
 
@@ -34,13 +29,8 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
     super.setUp();
     this.listenerProvider = new NullManagedObjectChangeListenerProvider();
     ManagedObjectStateFactory.disableSingleton(true);
-    Persistor persistor = new Persistor(new StorageManagerFactory() {
-
-          @Override
-          public StorageManager createStorageManager(Map<String, KeyValueStorageConfig<?, ?>> configMap) {
-              return new HeapStorageManager(configMap);
-          }
-      });
+    Persistor persistor = new Persistor(HeapStorageManagerFactory.INSTANCE);
+    persistor.start();
     ManagedObjectStateFactory.createInstance(this.listenerProvider, persistor);
     this.objectID = new ObjectID(2000);
   }

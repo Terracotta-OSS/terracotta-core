@@ -4,10 +4,6 @@
  */
 package com.tc.objectserver.impl;
 
-import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.StorageManager;
-import org.terracotta.corestorage.heap.HeapStorageManager;
-
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -16,8 +12,8 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.api.TransactionStore;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
+import com.tc.objectserver.persistence.HeapStorageManagerFactory;
 import com.tc.objectserver.persistence.Persistor;
-import com.tc.objectserver.persistence.StorageManagerFactory;
 import com.tc.objectserver.persistence.TransactionPersistor;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransaction;
 import com.tc.test.TCTestCase;
@@ -43,12 +39,8 @@ public class TransactionStoreTest extends TCTestCase {
   private TransactionStore store;
 
   public void setUp() {
-    Persistor persistor = new Persistor(new StorageManagerFactory() {
-      @Override
-      public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap) {
-        return new HeapStorageManager(configMap);
-      }
-    });
+    Persistor persistor = new Persistor(HeapStorageManagerFactory.INSTANCE);
+    persistor.start();
     transactionPersistor = spy(persistor.getTransactionPersistor());
     gidSequence = spy(persistor.getGlobalTransactionIDSequence());
     store = new TransactionStoreImpl(transactionPersistor, gidSequence);

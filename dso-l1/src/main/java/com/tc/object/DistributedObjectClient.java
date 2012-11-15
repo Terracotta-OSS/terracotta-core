@@ -8,9 +8,6 @@ import bsh.EvalError;
 import bsh.Interpreter;
 
 import com.tc.abortable.AbortableOperationManager;
-import com.tc.aspectwerkz.reflect.ClassInfoRepository;
-import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfoRepository;
-import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfoRepository;
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
@@ -500,7 +497,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                      this.connectionComponents.createConnectionInfoConfigItemByGroup().length,
                                      new HealthCheckerConfigClientImpl(this.l1Properties
                                          .getPropertiesFor("healthcheck.l2"), "DSO Client"),
-                                     getMessageTypeClassMapping(), getMessageTypeFactoryMApping(encoding),
+                                     getMessageTypeClassMapping(), getMessageTypeFactoryMapping(encoding),
                                      rejoinManager.getReconnectionRejectedHandler(), securityManager);
 
     DSO_LOGGER.debug("Created CommunicationsManager.");
@@ -684,7 +681,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     this.l1Management = this.dsoClientBuilder.createL1Management(teh, this.statisticsAgentSubSystem,
                                                                  this.runtimeLogger,
-                                                                 this.manager.getInstrumentationLogger(),
                                                                  this.config.rawConfigText(), this);
     this.l1Management.start(this.createDedicatedMBeanServer);
 
@@ -899,7 +895,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     DSO_LOGGER.info(infoMsg);
   }
 
-  private Map<TCMessageType, GeneratedMessageFactory> getMessageTypeFactoryMApping(final DNAEncoding encoding) {
+  private Map<TCMessageType, GeneratedMessageFactory> getMessageTypeFactoryMapping(final DNAEncoding encoding) {
     final Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping = new HashMap<TCMessageType, GeneratedMessageFactory>();
 
     messageTypeFactoryMapping.put(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE,
@@ -1208,11 +1204,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   public void shutdown() {
     final TCLogger logger = DSO_LOGGER;
-
-    // This seems to help perm gen GC
-    ClassInfoRepository.clear();
-    AsmClassInfoRepository.clear();
-    JavaClassInfoRepository.clear();
 
     TCTimerService.getInstance().shutdown();
 

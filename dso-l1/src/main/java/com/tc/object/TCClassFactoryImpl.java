@@ -4,8 +4,6 @@
  */
 package com.tc.object;
 
-import com.tc.aspectwerkz.reflect.ClassInfo;
-import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -52,30 +50,26 @@ public class TCClassFactoryImpl implements TCClassFactory {
     this.remoteServerMapManager = remoteServerMapManager;
   }
 
+  @Override
   public TCClass getOrCreate(final Class clazz, final ClientObjectManager objectManager) {
     TCClass rv = this.classes.get(clazz);
     if (rv != null) { return rv; }
 
     final String className = clazz.getName();
-    final ClassInfo classInfo = JavaClassInfo.getClassInfo(clazz);
-    rv = createTCClass(clazz, objectManager, className, classInfo);
+    rv = createTCClass(clazz, objectManager, className);
 
     final TCClass existing = this.classes.putIfAbsent(clazz, rv);
     return existing == null ? rv : existing;
   }
 
-  protected TCClass createTCClass(final Class clazz, final ClientObjectManager objectManager, final String className,
-                                  final ClassInfo classInfo) {
+  protected TCClass createTCClass(final Class clazz, final ClientObjectManager objectManager, final String className) {
     TCClass rv;
     if (className.equals(TCClassFactory.SERVER_MAP_CLASSNAME)) {
       rv = new ServerMapTCClassImpl(this.manager, this.globalLocalCacheManager, this.remoteServerMapManager,
                                     this.fieldFactory, this, objectManager, clazz,
                                     getLogicalSuperClassWithDefaultConstructor(clazz),
                                     this.config.getLogicalExtendingClassName(className),
-                                    this.config.isLogical(className), this.config.isCallConstructorOnLoad(classInfo),
-                                    this.config.hasOnLoadInjection(classInfo),
-                                    this.config.getOnLoadScriptIfDefined(classInfo),
-                                    this.config.getOnLoadMethodIfDefined(classInfo),
+                                    this.config.isLogical(className),
                                     this.config.isUseNonDefaultConstructor(clazz),
                                     this.config.useResolveLockWhenClearing(clazz),
                                     this.config.getPostCreateMethodIfDefined(className),
@@ -84,9 +78,6 @@ public class TCClassFactoryImpl implements TCClassFactory {
       rv = new TCClassImpl(this.fieldFactory, this, objectManager, clazz,
                            getLogicalSuperClassWithDefaultConstructor(clazz),
                            this.config.getLogicalExtendingClassName(className), this.config.isLogical(className),
-                           this.config.isCallConstructorOnLoad(classInfo), this.config.hasOnLoadInjection(classInfo),
-                           this.config.getOnLoadScriptIfDefined(classInfo),
-                           this.config.getOnLoadMethodIfDefined(classInfo),
                            this.config.isUseNonDefaultConstructor(clazz),
                            this.config.useResolveLockWhenClearing(clazz),
                            this.config.getPostCreateMethodIfDefined(className),
@@ -122,6 +113,7 @@ public class TCClassFactoryImpl implements TCClassFactory {
     return null;
   }
 
+  @Override
   public ChangeApplicator createApplicatorFor(final TCClass clazz, final boolean indexed) {
     if (indexed) { return new ArrayApplicator(this.encoding); }
     final String name = clazz.getName();

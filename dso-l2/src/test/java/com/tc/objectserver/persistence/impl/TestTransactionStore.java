@@ -14,50 +14,56 @@ import com.tc.objectserver.api.TransactionStore;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 import com.tc.objectserver.gtx.TransactionCommittedError;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
+import com.tc.util.sequence.Sequence;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.Map.Entry;
 
 public class TestTransactionStore implements TransactionStore {
 
-  public final NoExceptionLinkedQueue leastContextQueue             = new NoExceptionLinkedQueue();
-  public final NoExceptionLinkedQueue commitContextQueue            = new NoExceptionLinkedQueue();
-  public final NoExceptionLinkedQueue loadContextQueue              = new NoExceptionLinkedQueue();
-  public final NoExceptionLinkedQueue nextTransactionIDContextQueue = new NoExceptionLinkedQueue();
+  public final NoExceptionLinkedQueue                                 leastContextQueue             = new NoExceptionLinkedQueue();
+  public final NoExceptionLinkedQueue                                 commitContextQueue            = new NoExceptionLinkedQueue();
+  public final NoExceptionLinkedQueue                                 loadContextQueue              = new NoExceptionLinkedQueue();
+  public final NoExceptionLinkedQueue                                 nextTransactionIDContextQueue = new NoExceptionLinkedQueue();
 
-  private final Map                   volatileMap                   = new HashMap();
-  private final SortedSet             ids                           = new TreeSet();
-  private final Map                   durableMap                    = new HashMap();
-  public long                         idSequence                    = 1;
+  private final Map<ServerTransactionID, GlobalTransactionDescriptor> volatileMap                   = new HashMap<ServerTransactionID, GlobalTransactionDescriptor>();
+  private final SortedSet<GlobalTransactionID>                        ids                           = new TreeSet<GlobalTransactionID>();
+  private final Map<ServerTransactionID, GlobalTransactionDescriptor> durableMap                    = new HashMap<ServerTransactionID, GlobalTransactionDescriptor>();
+  public final Sequence                                               idSequence;
+
+  public TestTransactionStore(Sequence sequence) {
+    this.idSequence = sequence;
+  }
 
   public void restart() throws Exception {
     volatileMap.clear();
     ids.clear();
     volatileMap.putAll(durableMap);
-    for (Iterator i = volatileMap.values().iterator(); i.hasNext();) {
-      GlobalTransactionDescriptor gdesc = (GlobalTransactionDescriptor) i.next();
+    for (Object element : volatileMap.values()) {
+      GlobalTransactionDescriptor gdesc = (GlobalTransactionDescriptor) element;
       GlobalTransactionID gid = gdesc.getGlobalTransactionID();
       ids.add(gid);
     }
   }
 
   public GlobalTransactionDescriptor getOrCreateTransactionDescriptor(ServerTransactionID stxid) {
-    GlobalTransactionDescriptor rv = (GlobalTransactionDescriptor) volatileMap.get(stxid);
+    GlobalTransactionDescriptor rv = volatileMap.get(stxid);
     if (rv == null) {
       nextTransactionIDContextQueue.put(stxid);
-      rv = new GlobalTransactionDescriptor(stxid, new GlobalTransactionID(idSequence++));
+      rv = new GlobalTransactionDescriptor(stxid, new GlobalTransactionID(idSequence.next()));
       basicPut(volatileMap, rv);
+      ids.add(rv.getGlobalTransactionID());
     }
     return rv;
   }
 
-  private void basicPut(Map map, GlobalTransactionDescriptor txID) {
+  private void basicPut(Map<ServerTransactionID, GlobalTransactionDescriptor> map, GlobalTransactionDescriptor txID) {
     map.put(txID.getServerTransactionID(), txID);
   }
 
@@ -77,7 +83,7 @@ public class TestTransactionStore implements TransactionStore {
   public GlobalTransactionDescriptor getTransactionDescriptor(ServerTransactionID stxid) {
     try {
       loadContextQueue.put(stxid);
-      return (GlobalTransactionDescriptor) volatileMap.get(stxid);
+      return volatileMap.get(stxid);
     } catch (Exception e) {
       throw new TCRuntimeException(e);
     }
@@ -85,15 +91,19 @@ public class TestTransactionStore implements TransactionStore {
 
   public GlobalTransactionID getLeastGlobalTransactionID() {
     leastContextQueue.put(new Object());
-    return (GlobalTransactionID) ids.first();
+    if (ids.isEmpty()) {
+      return GlobalTransactionID.NULL_ID;
+    } else {
+      return ids.first();
+    }
   }
 
   public void clearCommitedTransactionsBelowLowWaterMark(Transaction tx, ServerTransactionID lowWaterMark) {
-    for (Iterator iter = volatileMap.entrySet().iterator(); iter.hasNext();) {
-      Entry e = (Entry) iter.next();
-      ServerTransactionID sid = (ServerTransactionID) e.getKey();
+    for (final Entry<ServerTransactionID, GlobalTransactionDescriptor> e : volatileMap
+        .entrySet()) {
+      ServerTransactionID sid = e.getKey();
       if (sid.getSourceID().equals(lowWaterMark.getSourceID())) {
-        GlobalTransactionDescriptor gdesc = (GlobalTransactionDescriptor) e.getValue();
+        GlobalTransactionDescriptor gdesc = e.getValue();
         if (gdesc.getClientTransactionID().toLong() < lowWaterMark.getClientTransactionID().toLong()) {
           ids.remove(gdesc.getGlobalTransactionID());
           durableMap.remove(sid);
@@ -116,8 +126,8 @@ public class TestTransactionStore implements TransactionStore {
   }
 
   public void commitAllTransactionDescriptor(Transaction persistenceTransaction, Collection stxIDs) {
-    for (Iterator i = stxIDs.iterator(); i.hasNext();) {
-      ServerTransactionID sid = (ServerTransactionID) i.next();
+    for (final Object stxID : stxIDs) {
+      ServerTransactionID sid = (ServerTransactionID)stxID;
       commitTransactionDescriptor(persistenceTransaction, sid);
     }
   }

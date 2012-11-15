@@ -31,11 +31,13 @@ import com.tc.objectserver.tx.NullTransactionalObjectManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 import com.tc.util.Counter;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
 import com.tc.util.concurrent.TCConcurrentMultiMap;
+import java.io.PrintWriter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -263,7 +265,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private boolean markReferenced(final ManagedObjectReference reference) {
-    final boolean marked = reference.markReference();
+      final boolean marked = reference.markReference();
     if (marked) {
       if (reference != this.references.get(reference.getObjectID())) {
         // This reference was removed by someone else and then unmarked before this thread got a chance to call
@@ -312,25 +314,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return rv;
   }
 
-  public void addFaultedObject(final ObjectID oid, final ManagedObject mo, final boolean removeOnRelease) {
-    final ManagedObjectReference mor = this.references.get(oid);
-    if (mor == null || !(mor instanceof FaultingManagedObjectReference) || !oid.equals(mor.getObjectID())) {
-      // Format
-      throw new AssertionError("ManagedObjectReference is not what was expected : " + mor + " oid : " + oid
-                               + " Faulting in : " + mo);
-    }
-    final FaultingManagedObjectReference fmor = (FaultingManagedObjectReference) mor;
-    if (mo == null) {
-      fmor.faultingFailed();
-    } else {
-      Assert.assertEquals(oid, mo.getID());
-      addFaultedReference(mo, removeOnRelease, fmor);
-      this.noReferencesIDStore.addToNoReferences(mo);
-    }
-    makeUnBlocked(oid);
-    postRelease();
-  }
-
   public void preFetchObjectsAndCreate(final Set<ObjectID> oids, final Set<ObjectID> newOids) {
     createNewObjects(newOids);
   }
@@ -346,11 +329,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       newReference.setRemoveOnRelease(removeOnRelease);
     }
     return ref == null ? newReference : ref;
-  }
-
-  private ManagedObjectReference addFaultedReference(final ManagedObject obj, final boolean isRemoveOnRelease,
-                                                     final FaultingManagedObjectReference fr) {
-    return addNewReference(obj.getReference(), isRemoveOnRelease, fr);
   }
 
   private void evicted(final Collection managedObjects) {
@@ -417,17 +395,27 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       if (reference == null || !available) {
         continue;
       }
-
-      if (isANewObjectIn(reference, newObjectIDs) && markReferenced(reference)) {
+      
+      final boolean isNew = isANewObjectIn(reference, newObjectIDs);
+      boolean isMarked = false;
+      
+      if ( isNew ) {
+          isMarked = markReferenced(reference);
+      }
+      
+      if ( isNew && isMarked ) {
         objects.put(id, reference.getObject());
       } else {
-        available = false;
+        available = false;      
+        if ( isMarked ) {
+            unmarkReferenced(reference);
+        }
         // Setting only the first referenced object to process Pending. If objects are being faulted in, then this
         // will ensure that we don't run processPending multiple times unnecessarily.
         blockedObjectID = id;
       }
     }
-
+    
     if (available) {
       final ObjectIDSet processLater = addReachableObjectsIfNecessary(nodeID, maxReachableObjects, objects,
                                                                       newObjectIDs);
@@ -440,7 +428,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       unmarkReferenced(objects.values());
       // It is OK to not unblock these unmarked references as any request that is blocked by these objects will be
       // processed after this request is (unblocked) and processed
-      return addBlocked(nodeID, context, maxReachableObjects, blockedObjectID);
+      LookupState state = addBlocked(nodeID, context, maxReachableObjects, blockedObjectID);
+        return state;
     }
   }
 
@@ -477,7 +466,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private boolean isANewObjectIn(final ManagedObjectReference reference, final Set<ObjectID> newObjectIDs) {
     // If reference isNew() and not in newObjects, someone (L1) is trying to do a lookup before the object is fully
     // created, make it pending.
-    if (reference.isNew() && !newObjectIDs.contains(reference.getObjectID())) { return false; }
+    if (reference.isNew() && !newObjectIDs.contains(reference.getObjectID())) { 
+        return false; 
+    }
     return true;
   }
 
@@ -844,10 +835,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private void processPendingLookups() {
     if (this.pending.size() == 0) { return; }
     final List<Pending> pendingLookups = this.pending.drain();
-    for (final Pending p : pendingLookups) {
-      basicLookupObjectsFor(p.getNodeID(), p.getRequestContext(), p.getMaxReachableObjects());
+    
+      for (final Pending p : pendingLookups) {
+          basicLookupObjectsFor(p.getNodeID(), p.getRequestContext(), p.getMaxReachableObjects());
+      }
     }
-  }
 
   private void makeUnBlocked(final ObjectID id) {
     this.pending.makeUnBlocked(id);
@@ -859,14 +851,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private void assertNotInShutdown() {
     if (this.inShutdown.get()) { throw new ShutdownError(); }
-  }
-
-  public void flushAndEvict(final List objects2Flush) {
-    final Transaction tx = newTransaction();
-    final int size = objects2Flush.size();
-    flushAllAndCommit(tx, objects2Flush);
-    evicted(objects2Flush);
-    this.flushInProgress.decrement(size);
   }
 
   // TODO:: May have to Optimize it with an atomic integer since size on CHM with 256 segments is costly
@@ -946,7 +930,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
   }
 
-  private static class WaitForLookupContext implements ObjectManagerResultsContext {
+  private class WaitForLookupContext implements ObjectManagerResultsContext {
 
     private final ObjectID       lookupID;
     private final ObjectIDSet    lookupIDs = new ObjectIDSet();
@@ -970,7 +954,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         try {
           wait();
         } catch (final InterruptedException e) {
-          throw new AssertionError(e);
+            throw new AssertionError(e);
         }
       }
       return this.result;
@@ -999,7 +983,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       }
       notifyAll();
     }
-
+    
     private void assertMissingObjects(final ObjectIDSet missing) {
       if (this.missingObjects == MissingObjects.NOT_OK && !missing.isEmpty()) { throw new AssertionError(
                                                                                                          "Lookup of non-existing objects : "
@@ -1010,7 +994,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
     @Override
     public String toString() {
-      return "WaitForLookupContext [ " + this.lookupID + ", " + this.missingObjects + "]";
+      return "WaitForLookupContext [ " + this.lookupID + ", " + this.missingObjects + ", " + this.resultSet + "]";
     }
 
     public boolean updateStats() {
@@ -1083,7 +1067,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     public void makeUnBlocked(final ObjectID id) {
       final Set<Pending> blockedRequests = this.blocked.removeAll(id);
       if (blockedRequests.isEmpty()) { return; }
-
+      
       for (final Pending pendingRequests : blockedRequests) {
         this.pending.add(pendingRequests);
       }

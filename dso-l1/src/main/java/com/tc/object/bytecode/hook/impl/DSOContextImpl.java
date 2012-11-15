@@ -12,9 +12,6 @@ import org.apache.log4j.PatternLayout;
 import org.apache.log4j.WriterAppender;
 import org.apache.log4j.spi.RootLogger;
 
-import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
-import com.tc.aspectwerkz.transform.InstrumentationContext;
-import com.tc.aspectwerkz.transform.WeavingStrategy;
 import com.tc.client.AbstractClientFactory;
 import com.tc.config.schema.L2ConfigForL1.L2Data;
 import com.tc.config.schema.setup.ConfigurationSetupException;
@@ -32,7 +29,6 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.ModuleConfiguration;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.loaders.ClassProvider;
-import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.RuntimeLoggerImpl;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
@@ -56,8 +52,6 @@ public class DSOContextImpl implements DSOContext {
 
   private final DSOClientConfigHelper configHelper;
   private final Manager               manager;
-  private final InstrumentationLogger instrumentationLogger;
-  private final WeavingStrategy       weavingStrategy;
 
   private final boolean               expressRejoinClient;
 
@@ -164,15 +158,10 @@ public class DSOContextImpl implements DSOContext {
     this.expressRejoinClient = expressRejoinClient;
     this.configHelper = configHelper;
     this.manager = manager;
-    this.instrumentationLogger = manager.getInstrumentationLogger();
-    this.weavingStrategy = new DefaultWeavingStrategy(configHelper, instrumentationLogger);
     logger.info("DSOContext created with expressRejoinClient=" + expressRejoinClient);
   }
 
   private void resolveClasses() {
-    // This fixes a class circularity error in JavaClassInfoRepository
-    JavaClassInfo.getClassInfo(getClass());
-
     // This is to help a deadlock in log4j (see MNK-3461, MNK-3512)
     Logger l = new RootLogger(Level.ALL);
     Hierarchy h = new Hierarchy(l);
@@ -203,9 +192,7 @@ public class DSOContextImpl implements DSOContext {
    */
   @Override
   public byte[] preProcess(String name, byte[] data, int offset, int length, ClassLoader caller) {
-    InstrumentationContext context = new InstrumentationContext(name, data, caller);
-    weavingStrategy.transform(name, context);
-    return context.getCurrentBytecode();
+    return data;
   }
 
   @Override

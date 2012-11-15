@@ -56,4 +56,5 @@ public interface ServerGlobalTransactionManager extends GlobalTransactionIDGener
 
   public Sequence getGlobalTransactionIDSequence();
 
+  public void registerCallbackOnLowWaterMarkReached(Runnable callback);
 }

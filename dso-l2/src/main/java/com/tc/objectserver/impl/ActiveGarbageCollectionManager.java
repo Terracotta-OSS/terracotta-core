@@ -3,8 +3,6 @@
  */
 package com.tc.objectserver.impl;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.Sink;
 import com.tc.l2.context.StateChangedEvent;
@@ -29,6 +27,9 @@ import com.tc.util.TCCollections;
 import java.util.Iterator;
 import java.util.SortedSet;
 
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 public class ActiveGarbageCollectionManager implements GarbageCollectionManager {
   private static final TCLogger          logger                 = TCLogging.getLogger(GarbageCollectionManager.class);
   private static final int               OBJECT_RETRY_THRESHOLD = 100000;
@@ -41,10 +42,13 @@ public class ActiveGarbageCollectionManager implements GarbageCollectionManager 
                                                                     .getProperties()
                                                                     .getLong(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_INLINE_MAX_OBJECTS,
                                                                              10000);
+  private static final long              DELETE_LOG_INTERVAL    = SECONDS.toNanos(60);
   public static final InlineGCContext    INLINE_GC_CONTEXT      = new InlineGCContext();
   private ObjectIDSet                    objectsToDelete        = new ObjectIDSet();
   private ObjectIDSet                    objectsToRetry         = new ObjectIDSet();
   private long                           lastInlineGCTime       = System.nanoTime();
+  private long                           lastDeleteLogTime      = System.nanoTime();
+  private long                           deletedObjectCount     = 0;
   private final Sink                     garbageCollectSink;
   private final ClientObjectReferenceSet clientObjectReferenceSet;
 
@@ -87,6 +91,13 @@ public class ActiveGarbageCollectionManager implements GarbageCollectionManager 
     }
     if (objectsRetried > OBJECT_RETRY_THRESHOLD) {
       logger.warn("Large number of referenced objects requiring retry (" + objectsRetried + ").");
+    }
+    deletedObjectCount += deleteNow.size();
+    long deleteInterval = System.nanoTime() - lastDeleteLogTime;
+    if (deleteInterval >= DELETE_LOG_INTERVAL) {
+      logger.info("Inline DGC removed " + deletedObjectCount + " objects in the last " + NANOSECONDS.toSeconds(deleteInterval) + " seconds.");
+      lastDeleteLogTime = System.nanoTime();
+      deletedObjectCount = 0;
     }
     return deleteNow;
   }

@@ -5,9 +5,6 @@
 package com.tc.objectserver.impl;
 
 import org.apache.commons.lang.NotImplementedException;
-import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.StorageManager;
-import org.terracotta.corestorage.heap.HeapStorageManager;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
@@ -66,9 +63,9 @@ import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
+import com.tc.objectserver.persistence.HeapStorageManagerFactory;
 import com.tc.objectserver.persistence.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.Persistor;
-import com.tc.objectserver.persistence.StorageManagerFactory;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
@@ -101,12 +98,8 @@ public class ObjectRequestManagerTest extends TestCase {
     super.setUp();
 
     ManagedObjectStateFactory.disableSingleton(true);
-    persistor = new Persistor(new StorageManagerFactory() {
-          @Override
-          public StorageManager createStorageManager(Map<String, KeyValueStorageConfig<?, ?>> configMap) {
-              return new HeapStorageManager(configMap);
-          }
-      });
+    persistor = new Persistor(HeapStorageManagerFactory.INSTANCE);
+    persistor.start();
 
     final ManagedObjectChangeListenerProviderImpl moclp = new ManagedObjectChangeListenerProviderImpl();
     moclp.setListener(new ManagedObjectChangeListener() {
@@ -867,17 +860,8 @@ public class ObjectRequestManagerTest extends TestCase {
       this.managedObjectPersistor = managedObjectPersistor;
     }
 
-    public void addFaultedObject(final ObjectID oid, final ManagedObject mo, final boolean removeOnRelease) {
-      throw new NotImplementedException(TestObjectManager.class);
-    }
-
     @Override
     public void createRoot(final String name, final ObjectID id) {
-      throw new NotImplementedException(TestObjectManager.class);
-    }
-
-    @Override
-    public void flushAndEvict(final List objects2Flush) {
       throw new NotImplementedException(TestObjectManager.class);
     }
 

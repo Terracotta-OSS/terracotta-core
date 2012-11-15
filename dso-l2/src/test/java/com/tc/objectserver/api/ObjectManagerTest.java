@@ -5,9 +5,6 @@
 package com.tc.objectserver.api;
 
 import org.mockito.Mockito;
-import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.StorageManager;
-import org.terracotta.corestorage.heap.HeapStorageManager;
 
 import com.tc.async.api.Sink;
 import com.tc.async.impl.MockSink;
@@ -61,9 +58,9 @@ import com.tc.objectserver.managedobject.ManagedObjectStateStaticConfig;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.MapEntryFacade;
+import com.tc.objectserver.persistence.HeapStorageManagerFactory;
 import com.tc.objectserver.persistence.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.Persistor;
-import com.tc.objectserver.persistence.StorageManagerFactory;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransactionProvider;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionImpl;
@@ -140,12 +137,8 @@ public class ObjectManagerTest extends TCTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    this.persistor = new Persistor(new StorageManagerFactory() {
-      @Override
-      public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap) {
-        return new HeapStorageManager(configMap);
-      }
-    });
+    this.persistor = new Persistor(HeapStorageManagerFactory.INSTANCE);
+    persistor.start();
     this.logger = TCLogging.getLogger(getClass());
     this.config = new TestObjectManagerConfig();
     this.clientStateManager = new ClientStateManagerImpl(TCLogging.getLogger(ClientStateManager.class));

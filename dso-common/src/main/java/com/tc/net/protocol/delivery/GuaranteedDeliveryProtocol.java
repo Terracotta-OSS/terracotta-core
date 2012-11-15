@@ -13,8 +13,8 @@ import com.tc.util.Util;
  * come in to the ProtocolMessageDelivery instance.
  */
 class GuaranteedDeliveryProtocol {
-  private final SendStateMachine    sender;
-  private final ReceiveStateMachine receiver;
+  private final SendStateMachine           sender;
+  private final ReceiveStateMachine        receiver;
 
   public GuaranteedDeliveryProtocol(OOOProtocolMessageDelivery delivery, ReconnectConfig reconnectConfig,
                                     boolean isClient) {
@@ -36,15 +36,15 @@ class GuaranteedDeliveryProtocol {
 
       sender.execute(null);
     } finally {
-      if (interrupted) {
-        Util.selfInterruptIfNeeded(interrupted);
-      }
+      Util.selfInterruptIfNeeded(interrupted);
     }
   }
 
   public void receive(OOOProtocolMessage msg) {
     if (msg.isSend()) {
       receiver.execute(msg);
+      // Handle the ACKed sequence from the message.
+      sender.execute(msg);
     } else if (msg.isAck() || msg.isHandshakeReplyOk()) {
       sender.execute(msg);
     } else {

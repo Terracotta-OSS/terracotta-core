@@ -4,27 +4,13 @@
  */
 package com.tc.object.config;
 
-import com.tc.asm.ClassVisitor;
-import com.tc.aspectwerkz.reflect.ClassInfo;
-import com.tc.aspectwerkz.reflect.FieldInfo;
-import com.tc.aspectwerkz.reflect.MemberInfo;
-import com.tc.aspectwerkz.reflect.MethodInfo;
 import com.tc.object.bytecode.ByteCodeUtil;
-import com.tc.object.bytecode.ClassAdapterFactory;
-import com.tc.object.bytecode.DistributedMethodCallAdapter;
-import com.tc.object.bytecode.LogicalMethodAdapter;
-import com.tc.object.bytecode.MethodAdapter;
-import com.tc.object.bytecode.MethodCreator;
 import com.tc.object.config.schema.IncludeOnLoad;
-import com.tc.object.logging.InstrumentationLogger;
 
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,10 +25,6 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
 
   private final DSOClientConfigHelper             configuration;
   private final String                            className;
-  private final List<MethodCreator>               supportMethodCreators     = new LinkedList<MethodCreator>();
-  private final Map<String, MethodAdapter>        methodAdapters            = new HashMap<String, MethodAdapter>();
-  private final List<ClassAdapterFactory>         customClassAdapters       = new ArrayList<ClassAdapterFactory>();
-  private final List<ClassAdapterFactory>         afterDsoClassAdapters     = new ArrayList<ClassAdapterFactory>();
   private final Map<String, Boolean>              flags                     = new HashMap<String, Boolean>();
   private final Map<String, TransparencyCodeSpec> codeSpecs                 = new HashMap<String, TransparencyCodeSpec>();
   private final Set<String>                       nonInstrumentedMethods    = Collections
@@ -82,70 +64,48 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     this.changeApplicatorSpec = null;
   }
 
+  @Override
   public TransparencyClassSpec getClassSpec(final String clazzName) {
     String name = clazzName.replace('/', '.');
     return configuration.getSpec(name);
   }
 
-  public boolean hasPhysicallyPortableSpecs(final ClassInfo classInfo) {
-    String name = classInfo.getName();
-    return configuration.shouldBeAdapted(classInfo) && !configuration.isLogical(name)
-           && (configuration.getSpec(name) != null)
-           && (configuration.getSpec(name).getInstrumentationAction() != ADAPTABLE);
-  }
-
-  public TransparencyClassSpec addRoot(final String variableName, final String rootName) {
-    configuration.addRoot(new Root(className, variableName, rootName), false);
-    return this;
-  }
-
-  public TransparencyClassSpec addRoot(final String variableName, final String rootName, final boolean dsoFinal) {
-    configuration.addRoot(new Root(className, variableName, rootName, dsoFinal), false);
-    return this;
-  }
-
+  @Override
   public void addDoNotInstrument(final String methodName) {
     nonInstrumentedMethods.add(methodName);
   }
 
+  @Override
   public boolean doNotInstrument(final String methodName) {
     return nonInstrumentedMethods.contains(methodName);
   }
 
+  @Override
   public TransparencyClassSpec markPreInstrumented() {
     preInstrumented = true;
     return this;
   }
 
+  @Override
   public TransparencyClassSpec markForeign() {
     foreign = true;
     return this;
   }
 
+  @Override
   public boolean isForeign() {
     return foreign;
   }
 
+  @Override
   public boolean isPreInstrumented() {
     return preInstrumented;
-  }
-
-  public synchronized LockDefinition[] lockDefinitionsFor(final MemberInfo memberInfo) {
-    return configuration.lockDefinitionsFor(memberInfo);
-  }
-
-  public synchronized LockDefinition autoLockDefinitionFor(final MethodInfo methodInfo) {
-    LockDefinition[] lds = lockDefinitionsFor(methodInfo);
-    for (LockDefinition ld : lds) {
-      if (ld.isAutolock()) { return ld; }
-    }
-    throw new AssertionError("Can't be an autolock and not have an autolock def:" //
-                             + methodInfo.getName() + methodInfo.getSignature() + " className:" + className);
   }
 
   /**
    * returns null if no LockDefinitions exists that makes the method autolocked.
    */
+  @Override
   public LockDefinition getAutoLockDefinition(final LockDefinition lds[]) {
     if (lds == null) return null;
     for (LockDefinition ld : lds) {
@@ -154,6 +114,7 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return null;
   }
 
+  @Override
   public LockDefinition getNonAutoLockDefinition(final LockDefinition lds[]) {
     if (lds == null) return null;
     for (int i = 0; i < lds.length; i++) {
@@ -162,11 +123,7 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return null;
   }
 
-  public TransparencyClassSpec addSupportMethodCreator(final MethodCreator creator) {
-    supportMethodCreators.add(creator);
-    return this;
-  }
-
+  @Override
   public TransparencyClassSpec addDistributedMethodCall(final String methodName, final String description,
                                                         final boolean runOnAllNodes) {
     if ("<init>".equals(methodName) || "<clinit>".equals(methodName)) { throw new AssertionError(
@@ -184,74 +141,36 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return this;
   }
 
+  @Override
   public TransparencyClassSpec addTransient(final String variableName) {
     configuration.addTransient(className, variableName);
     return this;
   }
 
-  public TransparencyClassSpec addMethodAdapter(final String method, final MethodAdapter adapter) {
-    methodAdapters.put(method, adapter);
-    return this;
-  }
-
+  @Override
   public String getClassName() {
     return className;
   }
 
-  public void createClassSupportMethods(final ClassVisitor classVisitor) {
-    for (Object element : supportMethodCreators) {
-      MethodCreator mc = (MethodCreator) element;
-      mc.createMethods(classVisitor);
-    }
-  }
-
+  @Override
   public boolean isLogical() {
     return isLogical;
   }
 
+  @Override
   public boolean isPhysical() {
     return !isLogical;
   }
 
+  @Override
   public boolean ignoreChecks() {
     return TransparencyClassSpecUtil.ignoreChecks(className);
-  }
-
-  public boolean isRootInThisClass(final FieldInfo fieldInfo) {
-    return configuration.isRoot(fieldInfo);
-  }
-
-  public boolean isRoot(final FieldInfo fieldInfo) {
-    return configuration.isRoot(fieldInfo);
-  }
-
-  public boolean isRootDSOFinal(final FieldInfo fieldInfo) {
-    return configuration.isRootDSOFinal(fieldInfo);
-  }
-
-  public boolean isInjectedField(final String fieldName) {
-    return configuration.isInjectedField(className, fieldName);
-  }
-
-  public boolean isTransient(final int access, final ClassInfo classInfo, final String fieldName) {
-    return configuration.isTransient(access, classInfo, fieldName);
-  }
-
-  public boolean isVolatile(final int access, final ClassInfo classInfo, final String fieldName) {
-    return configuration.isVolatile(access, classInfo, fieldName);
-  }
-
-  public String rootNameFor(final FieldInfo fieldInfo) {
-    return configuration.rootNameFor(fieldInfo);
-  }
-
-  public boolean isLockMethod(final MemberInfo memberInfo) {
-    return configuration.isLockMethod(memberInfo);
   }
 
   /**
    * returns null if no LockDefinitions exists that makes the method locked.
    */
+  @Override
   public LockDefinition getLockMethodLockDefinition(final int access, final LockDefinition lds[]) {
     if (lds == null) return null;
     for (int i = 0; i < lds.length; i++) {
@@ -261,34 +180,17 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return null;
   }
 
-  public boolean hasCustomMethodAdapter(final MemberInfo memberInfo) {
-    return memberInfo != null && getMethodAdapter(memberInfo) != null;
-  }
-
-  public MethodAdapter customMethodAdapterFor(final int access, final String methodName, final String origMethodName,
-                                              final String description, final String signature,
-                                              final String[] exceptions, final InstrumentationLogger logger,
-                                              final MemberInfo memberInfo) {
-    MethodAdapter ma = getMethodAdapter(memberInfo);
-    ma.initialize(access, className, methodName, origMethodName, description, signature, exceptions, logger, memberInfo);
-    return ma;
-  }
-
-  private MethodAdapter getMethodAdapter(final MemberInfo memberInfo) {
-    if (memberInfo == null) { return null; }
-    DistributedMethodSpec dms = configuration.getDmiSpec(memberInfo);
-    if (dms != null) { return new DistributedMethodCallAdapter(dms.runOnAllNodes()); }
-    return methodAdapters.get(memberInfo.getName() + memberInfo.getSignature());
-  }
-
+  @Override
   public ChangeApplicatorSpec getChangeApplicatorSpec() {
     return changeApplicatorSpec;
   }
 
+  @Override
   public String getLogicalExtendingClassName() {
     return this.logicalExtendingClassName;
   }
 
+  @Override
   public void moveToLogical(final TransparencyClassSpec superClassSpec) {
     this.isLogical = true;
     String superClassLogicalExtendingClassName = superClassSpec.getLogicalExtendingClassName();
@@ -300,14 +202,12 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     this.logicalExtendingClassName = superClassLogicalExtendingClassName;
   }
 
+  @Override
   public void setChangeApplicatorSpec(ChangeApplicatorSpec changeApplicatorSpec) {
     this.changeApplicatorSpec = changeApplicatorSpec;
   }
 
-  public void addAlwaysLogSpec(final String name) {
-    methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.ALWAYS_LOG));
-  }
-
+  @Override
   public void addArrayCopyMethodCodeSpec(final String name) {
     TransparencyCodeSpec codeSpec = new TransparencyCodeSpecImpl();
     codeSpec.setArraycopyInstrumentationReq(true);
@@ -315,57 +215,68 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     codeSpecs.put(name, codeSpec);
   }
 
+  @Override
   public void disableWaitNotifyCodeSpec(final String name) {
     TransparencyCodeSpec codeSpec = TransparencyCodeSpecImpl.getDefaultPhysicalCodeSpec();
     codeSpec.setWaitNotifyInstrumentationReq(false);
     codeSpecs.put(name, codeSpec);
   }
 
+  @Override
   public void addMethodCodeSpec(final String name, final TransparencyCodeSpec codeSpec) {
     codeSpecs.put(name, codeSpec);
   }
 
+  @Override
   public TransparencyClassSpec setHonorVolatile(final boolean b) {
     flags.put(HONOR_VOLATILE_KEY, b);
     return this;
   }
 
+  @Override
   public boolean isHonorVolatileSet() {
     return flags.containsKey(HONOR_VOLATILE_KEY);
   }
 
+  @Override
   public boolean isHonorVolatile() {
     Boolean flag = flags.get(HONOR_VOLATILE_KEY);
     if (flag == null) return false;
     return flag;
   }
 
+  @Override
   public TransparencyClassSpec setHonorTransient(final boolean b) {
     flags.put(HONOR_TRANSIENT_KEY, b);
     return this;
   }
 
+  @Override
   public boolean isIgnoreRewrite() {
     Boolean flag = flags.get(IGNORE_REWRITE_KEY);
     if (flag == null) return false;
     return flag;
   }
 
+  @Override
   public TransparencyClassSpec setIgnoreRewrite(final boolean b) {
     flags.put(IGNORE_REWRITE_KEY, b);
     return this;
   }
 
+  @Override
   public TransparencyClassSpec setCallConstructorOnLoad(final boolean b) {
     onLoad.setToCallConstructorOnLoad(b);
     return this;
   }
 
+  @Override
   public TransparencyClassSpec setExecuteScriptOnLoad(final String script) {
     onLoad.setExecuteScriptOnLoad(script);
     return this;
   }
 
+  @Override
   public TransparencyClassSpec setCallMethodOnLoad(final String method) {
     onLoad.setMethodCallOnLoad(method);
     return this;
@@ -375,22 +286,27 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return flags.get(HONOR_TRANSIENT_KEY);
   }
 
+  @Override
   public boolean isCallConstructorSet() {
     return onLoad.isCallConstructorOnLoadType();
   }
 
+  @Override
   public boolean isHonorJavaTransient() {
     return basicIsHonorJavaTransient();
   }
 
+  @Override
   public boolean isCallConstructorOnLoad() {
     return onLoad.isCallConstructorOnLoad();
   }
 
+  @Override
   public boolean isHonorTransientSet() {
     return flags.containsKey(HONOR_TRANSIENT_KEY);
   }
 
+  @Override
   public TransparencyCodeSpec getCodeSpec(final String methodName, final String description, final boolean isAutolock) {
     TransparencyCodeSpec spec = codeSpecs.get(methodName + description);
     if (spec != null) { return spec; }
@@ -398,103 +314,84 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return TransparencyCodeSpecImpl.getDefaultCodeSpec(className, isLogical, isAutolock);
   }
 
+  @Override
   public boolean isExecuteScriptOnLoadSet() {
     return onLoad.isExecuteScriptOnLoadType();
   }
 
+  @Override
   public boolean isCallMethodOnLoadSet() {
     return onLoad.isCallMethodOnLoadType();
   }
 
+  @Override
   public String getOnLoadMethod() {
     return onLoad.getMethod();
   }
 
+  @Override
   public String getOnLoadExecuteScript() {
     return onLoad.getExecuteScript();
   }
 
+  @Override
   public boolean isUseNonDefaultConstructor() {
     return this.useNonDefaultConstructor;
   }
 
+  @Override
   public void setUseNonDefaultConstructor(final boolean useNonDefaultConstructor) {
     this.useNonDefaultConstructor = useNonDefaultConstructor;
   }
 
+  @Override
   public void setInstrumentationAction(final byte action) {
     this.instrumentationAction = action;
   }
 
+  @Override
   public byte getInstrumentationAction() {
     return this.instrumentationAction;
   }
 
+  @Override
   public String getPreCreateMethod() {
     return preCreateMethod;
   }
 
+  @Override
   public String getPostCreateMethod() {
     return postCreateMethod;
   }
 
+  @Override
   public void setPreCreateMethod(final String preCreateMethod) {
     this.preCreateMethod = preCreateMethod;
   }
 
+  @Override
   public void setPostCreateMethod(final String postCreateMethod) {
     this.postCreateMethod = postCreateMethod;
   }
 
-  public void setCustomClassAdapter(final ClassAdapterFactory customClassAdapter) {
-    addCustomClassAdapter(customClassAdapter);
-  }
-
-  public void addCustomClassAdapter(final ClassAdapterFactory adapter) {
-    this.customClassAdapters.add(0, adapter);
-  }
-
-  public List<ClassAdapterFactory> getCustomClassAdapters() {
-    return customClassAdapters;
-  }
-
+  @Override
   public String getChangeApplicatorClassName() {
     return this.changeApplicatorClassName;
   }
 
+  @Override
   public void setDefaultCodeSpec(final TransparencyCodeSpec codeSpec) {
     this.defaultCodeSpec = codeSpec;
   }
 
+  @Override
   public boolean hasOnLoadInjection() {
     return onLoadInjection;
   }
 
+  @Override
   public TransparencyClassSpec setHasOnLoadInjection(final boolean flag) {
     this.onLoadInjection = flag;
     return this;
-  }
-
-  public void addAfterDSOClassAdapter(ClassAdapterFactory customClassAdapter) {
-    // don't add the same factory again, based on classname, if already present
-    if (customClassAdapter == null) {
-      // sane formatter
-      throw new AssertionError("Custom adapter cannot be null");
-    }
-    for (ClassAdapterFactory f : afterDsoClassAdapters) {
-      if (isSameFactory(f, customClassAdapter)) {
-        // already present, return
-        return;
-      }
-    }
-    this.afterDsoClassAdapters.add(customClassAdapter);
-  }
-
-  private boolean isSameFactory(ClassAdapterFactory one, ClassAdapterFactory two) {
-    return one.getClass().getName().equals(two.getClass().getName());
-  }
-
-  public List<ClassAdapterFactory> getAfterDSOClassAdapters() {
-    return this.afterDsoClassAdapters;
   }
 }

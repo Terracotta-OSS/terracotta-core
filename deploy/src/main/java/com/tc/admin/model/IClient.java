@@ -4,7 +4,6 @@
  */
 package com.tc.admin.model;
 
-import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
 import com.tc.net.ClientID;
@@ -33,8 +32,6 @@ public interface IClient extends IClusterNode {
 
   Number[] getDSOStatistics(String[] names);
 
-  InstrumentationLoggingMBean getInstrumentationLoggingBean();
-
   RuntimeLoggingMBean getRuntimeLoggingBean();
 
   RuntimeOutputOptionsMBean getRuntimeOutputOptionsBean();
@@ -45,5 +42,6 @@ public interface IClient extends IClusterNode {
 
   void killClient();
 
+  @Override
   String dump();
 }

@@ -273,7 +273,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     // Serialized entries are always remove on release
     return (state != null && state instanceof TDCSerializedEntryManagedObjectState) || getFlag(REMOVE_ON_RELEASE_OFFSET);
   }
-
+  
   public boolean markReference() {
     return compareAndSetFlag(REFERENCED_OFFSET, false, true);
   }

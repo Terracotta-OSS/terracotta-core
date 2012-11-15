@@ -12,7 +12,11 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- *
+ * This trigger is invoked by a server map with the size of the map goes over 
+ * the max count + some overshoot count ( default is 15% of the max count and is 
+ * set via TCProperty ehcache.storageStrategy.dcv2.eviction.overshoot ) and attempts
+ * to bring the size of the cache to the max capacity
+ * 
  * @author mscott
  */
 public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements ClientObjectReferenceSetChangedListener {
@@ -20,6 +24,8 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     private boolean aboveCapacity = true;
     private int count = 0;
     private int clientSetCount = 0;
+    private int max = 0;
+    private int size = 0;
     private final ServerMapEvictionManager mgr;
     private ClientObjectReferenceSet clientSet;
 
@@ -34,9 +40,11 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
         if ( !map.isEvicting() ) {
             throw new AssertionError("map is not in evicting state");
         }
-        int max = map.getMaxTotalCount();
         
-        if ( max != 0 && map.getSize() > max ) {
+        max = map.getMaxTotalCount();
+        size = map.getSize();
+        if ( size > max ) {
+            super.startEviction(map);
             return true;
         } else {
             map.evictionCompleted();
@@ -45,7 +53,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
         aboveCapacity = false;
         return false;
     }
-
+            
     @Override
     public Map collectEvictonCandidates(final int max, final EvictableMap map, final ClientObjectReferenceSet clients) {
    // lets try and get smarter about this in the future but for now, just bring it back to capacity
@@ -55,7 +63,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             throw new AssertionError("triggers should never start evicting a pinned cache or store");
         }
         if ( sample <= 0 ) {
-            return Collections.emptyMap();
+            return processSample(Collections.<Object,ObjectID>emptyMap());
         }
         Map samples = map.getRandomSamples(sample, clients);
         count = samples.size();
@@ -65,19 +73,24 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             clientSetCount = clients.size();
             clientSet = clients;
         }
-        return samples;
+       
+        return processSample(samples);
     } 
     
      @Override
     public void notifyReferenceSetChanged() {
        mgr.doEvictionOn(new AbstractEvictionTrigger(getId()) {
             private int sampleCount = 0;
+            private int size = 0;
+            private int max = 0;
             private boolean wasOver = true;
             private int clientSetCount = 0;
 
             @Override
             public boolean startEviction(EvictableMap map) {
-                if ( map.getSize() <= map.getMaxTotalCount() ) {
+                size = map.getSize();
+                max = map.getMaxTotalCount();
+                if ( size <= max ) {
                     wasOver = false;
                     clientSet.removeReferenceSetChangeListener(CapacityEvictionTrigger.this);
                     return false;
@@ -85,7 +98,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
                     return super.startEviction(map);
                 }
             }
-
+            
             @Override
             public Map collectEvictonCandidates(int max, EvictableMap map, ClientObjectReferenceSet clients) {
                 final int grab = map.getSize() - max;
@@ -100,14 +113,18 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
                 if ( sampleCount >= grab) {
                     clients.removeReferenceSetChangeListener(CapacityEvictionTrigger.this);
                 }
-                return sample;
+                return processSample(sample);
             }
 
             @Override
             public String toString() {
                 return "ClientReferenceSetRefreshCapacityEvictor{wasover="  + wasOver 
-                        + " count=" + sampleCount
-                        + " clientset=" + clientSet + "}";
+                        + ", count=" + sampleCount
+                        + ", size=" + size 
+                        + ", max=" + max 
+                        + ", clientset=" + clientSetCount
+                        + ", parent=" + super.toString() 
+                        + "}";
             }
             
             
@@ -117,10 +134,15 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
                  
     @Override
     public String toString() {
-        return "CapacityEvictionTrigger{count=" 
-                + count + ", was above capacity=" 
+        return "CapacityEvictionTrigger{"
+                + "count=" + count 
+                + ", size=" + size 
+                + ", max=" + max 
+                + ", was above capacity=" 
                 + aboveCapacity + ", client set=" 
-                + clientSetCount + '}';
+                + clientSetCount 
+                + ", parent=" + super.toString()
+                + '}';
     }
 
 }

@@ -75,7 +75,7 @@ public final class Validator {
     if (value >= compareWith) {
       return value;
     } else {
-      throw new IllegalArgumentException("Illegal value for '" + name + "', should be greater than or equal to"
+      throw new IllegalArgumentException("Illegal value for '" + name + "', should be greater than or equal to "
                                          + compareWith + ", actual value: " + value);
     }
   }
@@ -100,7 +100,7 @@ public final class Validator {
 
   public static long greaterThanOrEqualTo(String name, long value, long compareWith) {
     if (value < compareWith) {
-      throw new IllegalArgumentException("Illegal value for '" + name + "' - should be greater than or equal to"
+      throw new IllegalArgumentException("Illegal value for '" + name + "' - should be greater than or equal to "
                                          + compareWith + ", actual value: " + value);
     } else {
       return value;

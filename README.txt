@@ -21,20 +21,15 @@ Under root or "community" folder (if it's EE checkout), run
 You need to 'cd' into the sub module where the test resides:
 
 %> cd dso-system-tests
-%> mvn verify -Dtest=ArrayCopyTest -P system-tests
+%> mvn verify -Dtest=SomeTest -P system-tests
 
 You can skip the 'cd' step if you specify the pom of the sub module via '-f'
 
-%> mvn verify -Dtest=ArrayCopyTest -P system-tests -f dso-system-tests/pom.xml
-
-EXTRA TEST PROFILES:
-* berkeleydb: run tests with bdb
-* derby:      run tests with derby
-* normal,active-passive:  see dso-crash-tests/README.txt
+%> mvn verify -Dtest=SomeTest -P system-tests -f dso-system-tests/pom.xml
 
 TO DEBUG A TEST:
 
-%> mvn verify -Dtest=ArrayCopyTest -P system-tests -Dmaven.surefire.debug
+%> mvn verify -Dtest=SomeTest -P system-tests -Dmaven.surefire.debug
 
 The option -Dmaven.surefire.debug will run the test in debug mode where you 
 connect Eclipse or other IDE to the test JVM via remote debug option.
@@ -45,7 +40,7 @@ connect Eclipse or other IDE to the test JVM via remote debug option.
 ******************************************************************************
 
 %> cd dso-system-tests
-%> mvn verify -Dtest=ArrayCopyTest -P system-tests -DpoundTimes=5
+%> mvn verify -Dtest=SomeTest -P system-tests -DpoundTimes=5
 
 Pound that test 5 times.
 
@@ -124,21 +119,4 @@ You can also build projects along with it's dependencies (reverse of the above):
 This will build toolkit-runtime and all it's direct and indirect dependencies.
 Note that you need to specify the actual file path to toolkit-runtime in order
 for maven to find it.
-
-******************************************************************************
-9. Using Maven Shell
-******************************************************************************
-
-The Maven Shell, created by Sonatype, can also speed up builds to some degree,
-since it preloads the entire Maven environment--including plugins--and keeps it
-all loaded in memory. To use the Maven Shell, download it from here:
-
-http://shell.sonatype.org/
-
-You can then add the mvnsh command to your path and fire up the Maven Shell in
-the root of the project. Thereafter you can issue standard Maven commands and
-everything will work as before, except faster and with colorized output.
-
-NOTE: Maven Shell is still somewhat buggy in the 1.0.1 release, so you should
-experiment with it to see if it works for you.
 

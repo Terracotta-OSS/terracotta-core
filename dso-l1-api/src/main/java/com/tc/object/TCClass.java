@@ -35,41 +35,6 @@ public interface TCClass {
   public Class getPeerClass();
 
   /**
-   * Determine whether this class has a BeanShell script to execute on class load
-   * 
-   * @return True if has script
-   */
-  public boolean hasOnLoadExecuteScript();
-
-  /**
-   * Determine whether this class has a method to execute on class load
-   * 
-   * @return True if has load method
-   */
-  public boolean hasOnLoadMethod();
-
-  /**
-   * Determine whether this class has a injection to execute on class load
-   * 
-   * @return True if has injection on load
-   */
-  public boolean hasOnLoadInjection();
-
-  /**
-   * Get name of method to execute on load
-   * 
-   * @return Method name
-   */
-  public String getOnLoadMethod();
-
-  /**
-   * Get script to execute on load
-   * 
-   * @return Execute script
-   */
-  public String getOnLoadExecuteScript();
-
-  /**
    * If the class is an inner class, get the field referring to the parent "this object.
    * 
    * @return The field referring to the parent this

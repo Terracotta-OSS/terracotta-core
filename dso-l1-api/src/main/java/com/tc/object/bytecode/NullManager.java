@@ -18,8 +18,6 @@ import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.Notify;
 import com.tc.object.locks.UnclusteredLockID;
-import com.tc.object.logging.InstrumentationLogger;
-import com.tc.object.logging.NullInstrumentationLogger;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
@@ -46,7 +44,6 @@ public class NullManager implements Manager {
   public static final String                 CLASS                 = "com/tc/object/bytecode/NullManager";
   public static final String                 TYPE                  = "L" + CLASS + ";";
 
-  private static final InstrumentationLogger instrumentationLogger = new NullInstrumentationLogger();
   private static final Manager               INSTANCE              = new NullManager();
 
   /**
@@ -200,11 +197,6 @@ public class NullManager implements Manager {
   @Override
   public boolean isFieldPortableByOffset(Object pojo, long fieldOffset) {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public InstrumentationLogger getInstrumentationLogger() {
-    return instrumentationLogger;
   }
 
   @Override

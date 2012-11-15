@@ -14,6 +14,7 @@ import com.tc.config.schema.beanfactory.ConfigBeanFactory;
 import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.defaults.SchemaDefaultValueProvider;
 import com.tc.config.schema.repository.MutableBeanRepository;
+import com.tc.config.schema.setup.sources.Base64ConfigurationSource;
 import com.tc.config.schema.setup.sources.ConfigurationSource;
 import com.tc.config.schema.setup.sources.FileConfigurationSource;
 import com.tc.config.schema.setup.sources.ResourceConfigurationSource;
@@ -23,7 +24,6 @@ import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
-
 import com.tc.object.config.schema.L1DSOConfigObject;
 import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.properties.TCPropertiesConsts;
@@ -60,6 +60,8 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
                                                                                             Pattern.CASE_INSENSITIVE);
   private static final Pattern       RESOURCE_PATTERN                     = Pattern.compile("resource://(.*)",
                                                                                             Pattern.CASE_INSENSITIVE);
+  private static final Pattern       BASE64_PATTERN                       = Pattern.compile("base64://(.*)",
+                                                                                            Pattern.DOTALL);
   // We require more than one character before the colon so that we don't mistake Windows-style directory paths as URLs.
   private static final Pattern       URL_PATTERN                          = Pattern.compile("[A-Za-z][A-Za-z]+://.*");
   private static final long          GET_CONFIGURATION_ONE_SOURCE_TIMEOUT = TCPropertiesImpl
@@ -100,6 +102,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     this.pwProvider = pwProvider;
   }
 
+  @Override
   public void createConfigurationIntoRepositories(MutableBeanRepository l1BeanRepository,
                                                   MutableBeanRepository l2sBeanRepository,
                                                   MutableBeanRepository systemBeanRepository,
@@ -138,6 +141,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     }
   }
 
+  @Override
   public String reloadServersConfiguration(MutableBeanRepository l2sBeanRepository, boolean shouldLogTcConfig,
                                            boolean reportToConsole) throws ConfigurationSetupException {
     ConfigurationSource[] sources = getConfigurationSources(this.configurationSpec.getBaseConfigSpec());
@@ -168,6 +172,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
       ConfigurationSource source = attemptToCreateServerSource(thisComponent);
 
       if (source == null) source = attemptToCreateResourceSource(thisComponent);
+      if (source == null) source = attemptToCreateBase64Source(thisComponent);
       if (source == null) source = attemptToCreateURLSource(thisComponent);
       if (source == null) source = attemptToCreateFileSource(thisComponent);
 
@@ -205,6 +210,12 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
       }
     }
     return null;
+  }
+
+  private ConfigurationSource attemptToCreateBase64Source(String text) {
+    Matcher matcher = BASE64_PATTERN.matcher(text);
+    if (matcher.matches()) return new Base64ConfigurationSource(matcher.group(1));
+    else return null;
   }
 
   private ConfigurationSource attemptToCreateResourceSource(String text) {
@@ -310,8 +321,8 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
       if (out != null) break;
       ++iteration;
       boolean haveSources = false;
-      for (int i = 0; i < remainingSources.length; ++i)
-        haveSources = haveSources || remainingSources[i] != null;
+      for (ConfigurationSource remainingSource : remainingSources)
+        haveSources = haveSources || remainingSource != null;
       if (!haveSources) {
         // All sources have failed; bail out.
         break;
@@ -520,19 +531,23 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     return tcConfigDoc;
   }
 
+  @Override
   public File directoryConfigurationLoadedFrom() {
     return directoryLoadedFrom;
   }
 
+  @Override
   public boolean loadedFromTrustedSource() {
     return (baseConfigLoadedFromTrustedSource && (this.configurationSpec.shouldOverrideServerTopology() ? serverOverrideConfigLoadedFromTrustedSource
         : true));
   }
 
+  @Override
   public String rawConfigText() {
     return this.providedTcConfigDocument.toString();
   }
 
+  @Override
   public String describeSources() {
     return "The configuration specified by '"
            + baseConfigDescription

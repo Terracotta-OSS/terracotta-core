@@ -21,6 +21,8 @@ import javax.ws.rs.core.UriInfo;
  */
 public interface MonitoringResourceService {
 
+  public final static String ATTR_QUERY_KEY = "show";
+
   /**
    * Get a {@code Collection} of {@link StatisticsEntity} objects representing the
    * server(s) statistics provided by the associated monitorable entity's agent given the request path.

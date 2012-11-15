@@ -3,10 +3,6 @@
  */
 package com.tc.objectserver.impl;
 
-import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.StorageManager;
-import org.terracotta.corestorage.heap.HeapStorageManager;
-
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.Sink;
@@ -67,6 +63,7 @@ import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.metadata.NullMetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
+import com.tc.objectserver.persistence.HeapStorageManagerFactory;
 import com.tc.objectserver.persistence.StorageManagerFactory;
 import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.IndexManager;
@@ -101,7 +98,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.List;
-import java.util.Map;
 
 import javax.management.MBeanServer;
 
@@ -330,11 +326,6 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
 
   @Override
   public StorageManagerFactory createStorageManagerFactory(final boolean persistent, final File dbhome, final L2DSOConfig l2DSOConfig, final boolean offheapEnabled) {
-    return new StorageManagerFactory() {
-      @Override
-      public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap) {
-        return new HeapStorageManager(configMap);
-      }
-    };
+    return HeapStorageManagerFactory.INSTANCE;
   }
 }

@@ -3,8 +3,6 @@
  */
 package com.terracotta.toolkit.factory.impl;
 
-import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
-
 import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.config.Configuration;
@@ -28,6 +26,8 @@ import com.terracotta.toolkit.search.SearchFactory;
 import com.terracotta.toolkit.type.DistributedToolkitTypeFactory;
 
 import java.io.Serializable;
+
+import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 
 /**
  * An implementation of {@link DistributedToolkitTypeFactory} for ClusteredMap's
@@ -179,7 +179,7 @@ public class ToolkitCacheDistributedTypeFactory<K extends Serializable, V extend
     }
 
     InternalCacheConfigurationType.CONCURRENCY.validateExistingMatchesValueFromConfig(concurrency, newConfig);
-    InternalCacheConfigurationType.MAX_TOTAL_COUNT.validateExistingMatchesValueFromConfig(maxCount, newConfig);
+    InternalCacheConfigurationType.MAX_TOTAL_COUNT.validateExistingMatchesValueFromConfig(maxCount < 0 ? -1 : maxCount, newConfig);
   }
 
   private static void mergeMissingConfigsFromExistingConfig(ToolkitObjectStripe[] stripeObjects,
@@ -222,7 +222,7 @@ public class ToolkitCacheDistributedTypeFactory<K extends Serializable, V extend
       case CONCURRENCY:
         return concurrency;
       case MAX_TOTAL_COUNT:
-        return maxTotalCount;
+        return maxTotalCount < 0 ? -1 : maxTotalCount;
       default:
         throw new AssertionError("not reachable, something wrong");
     }
@@ -251,7 +251,9 @@ public class ToolkitCacheDistributedTypeFactory<K extends Serializable, V extend
     int[] maxTotalCounts = distributeInStripes(overallMaxTotalCount, divisor);
     if (maxTotalCounts.length != divisor) { throw new AssertionError(); }
     for (int i = 0; i < configurations.length; i++) {
-      if (i < maxTotalCounts.length) {
+      if (overallMaxTotalCount < 0) {
+        configurations[i].setInt(ToolkitCacheConfigFields.MAX_TOTAL_COUNT_FIELD_NAME, -1);
+      } else if (i < maxTotalCounts.length) {
         configurations[i].setInt(ToolkitCacheConfigFields.MAX_TOTAL_COUNT_FIELD_NAME, maxTotalCounts[i]);
       } else {
         // use 0 in case numberStripes more than overallConcurrency for non-participating stripes

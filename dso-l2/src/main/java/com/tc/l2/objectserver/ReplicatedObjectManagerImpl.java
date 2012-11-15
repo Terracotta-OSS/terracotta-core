@@ -109,8 +109,15 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       for (GroupMessage groupMessage : gr.getResponses()) {
         final ObjectListSyncMessage msg = (ObjectListSyncMessage) groupMessage;
         if (msg.getType() == ObjectListSyncMessage.RESPONSE) {
-          nodeIDSyncingPassives.put(msg.messageFrom(),
-                                    new SyncingPassiveValue(msg.getObjectIDs(), msg.getCurrentState()));
+          State curState = msg.getCurrentState();
+          // valid states during election window are STANDBY or START
+          if (StateManager.PASSIVE_UNINITIALIZED.equals(curState)) {
+            logger.error("Syncing to uninitialized passives not supported, msg: " + msg);
+            // XXX - is this the right zap type?
+            this.groupManager.zapNode(msg.messageFrom(), L2HAZapNodeRequestProcessor.NODE_JOINED_WITH_DIRTY_DB,
+                                      "Passive : " + msg.messageFrom() + " joined in unitialized state."
+                                          + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
+          } else nodeIDSyncingPassives.put(msg.messageFrom(), new SyncingPassiveValue(msg.getObjectIDs(), curState));
 
         } else {
           logger.error("Received wrong response for ObjectListSyncMessage Request  from " + msg.messageFrom()

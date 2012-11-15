@@ -4,10 +4,6 @@
  */
 package com.tc.objectserver.core.api;
 
-import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.StorageManager;
-import org.terracotta.corestorage.heap.HeapStorageManager;
-
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TestDNACursor;
@@ -18,8 +14,8 @@ import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
+import com.tc.objectserver.persistence.HeapStorageManagerFactory;
 import com.tc.objectserver.persistence.Persistor;
-import com.tc.objectserver.persistence.StorageManagerFactory;
 import com.tc.test.TCTestCase;
 
 import java.util.Map;
@@ -34,12 +30,8 @@ public class ManagedObjectTest extends TCTestCase {
 
   @Override
   public void setUp() {
-    persistor = new Persistor(new StorageManagerFactory() {
-      @Override
-      public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap) {
-        return new HeapStorageManager(configMap);
-      }
-    });
+    persistor = new Persistor(HeapStorageManagerFactory.INSTANCE);
+    persistor.start();
     ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), persistor);
   }
 

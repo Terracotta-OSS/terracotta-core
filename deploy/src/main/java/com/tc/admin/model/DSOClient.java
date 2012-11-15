@@ -9,7 +9,6 @@ import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.admin.model.IClusterModel.PollScope;
 import com.tc.management.beans.L1DumperMBean;
 import com.tc.management.beans.l1.L1InfoMBean;
-import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
 import com.tc.net.ClientID;
@@ -57,7 +56,6 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
   private boolean                     isListeningForTunneledBeans;
   private L1InfoMBean                 l1InfoBean;
   private L1DumperMBean               l1DumperBean;
-  private InstrumentationLoggingMBean instrumentationLoggingBean;
   private RuntimeLoggingMBean         runtimeLoggingBean;
   private RuntimeOutputOptionsMBean   runtimeOutputOptionsBean;
 
@@ -99,6 +97,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
 
   private final Map<ObjectName, ObjectName> tunneledBeanNames = new HashMap<ObjectName, ObjectName>();
 
+  @Override
   public ObjectName getTunneledBeanName(ObjectName on) {
     ObjectName result = tunneledBeanNames.get(on);
     if (result == null) {
@@ -118,8 +117,6 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     l1InfoBean = MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, l1InfoBeanName, L1InfoMBean.class, true);
     addMBeanNotificationListener(l1InfoBeanName, this, "L1InfoMBean");
 
-    instrumentationLoggingBean = MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, instrumentationLoggingBeanName,
-                                                                               InstrumentationLoggingMBean.class, true);
     addMBeanNotificationListener(instrumentationLoggingBeanName, this, "InstrumentationLoggingMBean");
 
     runtimeLoggingBean = MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, runtimeLoggingObjectName,
@@ -179,6 +176,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     }
   }
 
+  @Override
   public void handleNotification(Notification notification, Object handback) {
     String type = notification.getType();
 
@@ -233,18 +231,22 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     }
   }
 
+  @Override
   public boolean isReady() {
     return ready.get();
   }
 
+  @Override
   public IClusterModel getClusterModel() {
     return clusterModel;
   }
 
+  @Override
   public ObjectName getBeanName() {
     return beanName;
   }
 
+  @Override
   public ObjectName getL1InfoBeanName() {
     return l1InfoBeanName;
   }
@@ -253,18 +255,22 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     return delegate.isTunneledBeansRegistered();
   }
 
+  @Override
   public long getChannelID() {
     return channelId;
   }
 
+  @Override
   public ClientID getClientID() {
     return clientId;
   }
 
+  @Override
   public String getRemoteAddress() {
     return remoteAddress;
   }
 
+  @Override
   public String getHost() {
     if (host == null) {
       host = "unknown";
@@ -278,6 +284,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     return host;
   }
 
+  @Override
   public int getPort() {
     if (port == null) {
       port = Integer.valueOf(-1);
@@ -299,6 +306,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     return getRemoteAddress();
   }
 
+  @Override
   public Number[] getDSOStatistics(String[] names) {
     return delegate.getStatistics(names);
   }
@@ -320,18 +328,22 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     return l1InfoBean;
   }
 
+  @Override
   public String[] getCpuStatNames() {
     return getL1InfoBean().getCpuStatNames();
   }
 
+  @Override
   public StatisticData[] getCpuUsage() {
     return getL1InfoBean().getCpuUsage();
   }
 
+  @Override
   public StatisticData getCpuLoad() {
     return getL1InfoBean().getCpuLoad();
   }
 
+  @Override
   public long getTransactionRate() {
     return delegate.getTransactionRate();
   }
@@ -340,14 +352,11 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     return instrumentationLoggingBeanName;
   }
 
-  public InstrumentationLoggingMBean getInstrumentationLoggingBean() {
-    return instrumentationLoggingBean;
-  }
-
   public ObjectName getRuntimeLoggingObjectName() {
     return runtimeLoggingObjectName;
   }
 
+  @Override
   public RuntimeLoggingMBean getRuntimeLoggingBean() {
     return runtimeLoggingBean;
   }
@@ -356,10 +365,12 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     return runtimeOutputOptionsBeanName;
   }
 
+  @Override
   public RuntimeOutputOptionsMBean getRuntimeOutputOptionsBean() {
     return runtimeOutputOptionsBean;
   }
 
+  @Override
   public String takeThreadDump(long requestMillis) {
     if (l1InfoBean == null) { return "not connected"; }
     byte[] zippedByte = l1InfoBean.takeCompressedThreadDump(requestMillis);
@@ -368,20 +379,24 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     return decompress(zIn);
   }
 
+  @Override
   public String takeClusterDump() {
     if (l1DumperBean == null) { return "not connected"; }
     l1DumperBean.doClientDump();
     return "client dump taken";
   }
 
+  @Override
   public int getLiveObjectCount() {
     return delegate.getLiveObjectCount();
   }
 
+  @Override
   public boolean isResident(ObjectID oid) {
     return clusterModel.isResidentOnClient(this, oid);
   }
 
+  @Override
   public void killClient() {
     delegate.killClient();
   }
@@ -434,46 +449,57 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     return productInfo;
   }
 
+  @Override
   public String getProductVersion() {
     return getProductInfo().version();
   }
 
+  @Override
   public String getProductPatchLevel() {
     return getProductInfo().patchLevel();
   }
 
+  @Override
   public String getProductPatchVersion() {
     return getProductInfo().patchVersion();
   }
 
+  @Override
   public String getProductBuildID() {
     return getProductInfo().buildID();
   }
 
+  @Override
   public String getProductLicense() {
     return getProductInfo().license();
   }
 
+  @Override
   public String getProductCopyright() {
     return getProductInfo().copyright();
   }
 
+  @Override
   public String getConfig() {
     return getL1InfoBean().getConfig();
   }
 
+  @Override
   public String getEnvironment() {
     return getL1InfoBean().getEnvironment();
   }
 
+  @Override
   public String getTCProperties() {
     return getL1InfoBean().getTCProperties();
   }
 
+  @Override
   public String[] getProcessArguments() {
     return getL1InfoBean().getProcessArguments();
   }
 
+  @Override
   public Map getL1Statistics() {
     return getL1InfoBean().getStatistics();
   }
@@ -484,12 +510,14 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
    * @see IClusterModel.getPrimaryClientStatistics
    * @see IClusterModel.getPrimaryServerStatistics
    */
+  @Override
   public Map getPrimaryStatistics() {
     Map result = getL1Statistics();
     result.put("TransactionRate", getTransactionRate());
     return result;
   }
 
+  @Override
   public String dump() {
     StringBuilder sb = new StringBuilder(toString());
     sb.append(" ready: ");
@@ -508,14 +536,17 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     super.tearDown();
   }
 
+  @Override
   public void gc() {
     getL1InfoBean().gc();
   }
 
+  @Override
   public boolean isVerboseGC() {
     return getL1InfoBean().isVerboseGC();
   }
 
+  @Override
   public void setVerboseGC(boolean verboseGC) {
     getL1InfoBean().setVerboseGC(verboseGC);
   }

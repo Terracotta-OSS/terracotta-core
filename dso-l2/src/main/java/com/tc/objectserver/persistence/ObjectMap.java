@@ -1,11 +1,16 @@
 package com.tc.objectserver.persistence;
 
+import org.terracotta.corestorage.ImmutableKeyValueStorageConfig;
 import org.terracotta.corestorage.KeyValueStorage;
 import org.terracotta.corestorage.KeyValueStorageConfig;
+import org.terracotta.corestorage.KeyValueStorageMutationListener;
+import org.terracotta.corestorage.StorageManager;
+
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.managedobject.ManagedObjectSerializer;
 import com.tc.objectserver.managedobject.ManagedObjectStateSerializer;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -14,41 +19,43 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
-import org.terracotta.corestorage.ImmutableKeyValueStorageConfig;
-import org.terracotta.corestorage.KeyValueStorageMutationListener;
 
 /**
  * @author tim
  */
 class ObjectMap implements KeyValueStorage<ObjectID, ManagedObject> {
-    private final KeyValueStorage<Long, byte[]> backingMap;
-    private final ManagedObjectSerializer serializer;
+  private static final String OBJECT_DB = "object_db";
 
-    ObjectMap(ManagedObjectPersistor persistor, final KeyValueStorage<Long, byte[]> backingMap) {
-        this.backingMap = backingMap;
-        this.serializer = new ManagedObjectSerializer(new ManagedObjectStateSerializer(), persistor);
-    }
+  private final KeyValueStorage<Long, byte[]> backingMap;
+  private final ManagedObjectSerializer serializer;
 
-    public static KeyValueStorageConfig<Long, byte[]> getConfig(KeyValueStorageMutationListener<Long, byte[]> listener) {
-        return new ImmutableKeyValueStorageConfig<Long, byte[]>(Long.class, byte[].class, Collections.<KeyValueStorageMutationListener<? super Long, ? super byte[]>>singletonList(listener));
-    }
+  ObjectMap(ManagedObjectPersistor persistor, StorageManager storageManager) {
+    this.backingMap = storageManager.getKeyValueStorage(OBJECT_DB, Long.class, byte[].class);
+    this.serializer = new ManagedObjectSerializer(new ManagedObjectStateSerializer(), persistor);
+  }
 
-    @Override
-    public Set<ObjectID> keySet() {
-        throw new UnsupportedOperationException("Implement me!");
-    }
+  public static void addConfigTo(Map<String, KeyValueStorageConfig<?, ?>> configMap, KeyValueStorageMutationListener<Long, byte[]> listener) {
+    configMap.put(OBJECT_DB, ImmutableKeyValueStorageConfig.builder(Long.class, byte[].class)
+        .listener(listener)
+        .build());
+  }
 
-    @Override
-    public Collection<ManagedObject> values() {
-        throw new UnsupportedOperationException("Implement me!");
-    }
+  @Override
+  public Set<ObjectID> keySet() {
+    throw new UnsupportedOperationException("Implement me!");
+  }
 
-    @Override
-    public long size() {
-        return backingMap.size();
-    }
+  @Override
+  public Collection<ManagedObject> values() {
+    throw new UnsupportedOperationException("Implement me!");
+  }
+
+  @Override
+  public long size() {
+    return backingMap.size();
+  }
 
   @Override
   public void put(final ObjectID key, final ManagedObject value) {

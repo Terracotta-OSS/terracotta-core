@@ -3,6 +3,7 @@ package com.tc.test.setup;
 import org.terracotta.test.util.JMXUtils;
 import org.terracotta.test.util.TestBaseUtil;
 
+import com.tc.lang.ServerExitStatus;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
@@ -72,6 +73,7 @@ public class GroupServerManager {
                                                      });
 
   private final Runnable           testFailureCallback;
+  private final boolean             renameDataDir         = false;
 
   public GroupServerManager(GroupsData groupData, TestConfig testConfig, File tempDir, File javaHome, File tcConfigFile, final Runnable testFailureCallback)
       throws Exception {
@@ -159,6 +161,13 @@ public class GroupServerManager {
                                          jvmArgs, javaHome, true, workingDir), new MonitoringServerControl.MonitoringServerControlExitCallback() {
       @Override
       public boolean onExit(final int exitCode) {
+                                           if (exitCode == ServerExitStatus.EXITCODE_RESTART_REQUEST
+                                               && testConfig.isRestartZappedL2()) {
+                                             System.out.println("*** Server '" + serverName + "' with dso-port "
+                                                                + dsoPort
+                                                                + " was zapped and needs to be restarted! ***");
+                                             return true;
+                                           }
         System.out.println("*** Server '" + serverName + "' with dso-port " + dsoPort + " exited unexpectedly with exit code " + exitCode +". ***");
         if (!testConfig.getCrashConfig().shouldIgnoreUnexpectedL2Crash()) {
           testFailureCallback.run();
@@ -349,9 +358,18 @@ public class GroupServerManager {
 
   private void cleanupServerDB(int index) throws Exception {
     if (testConfig.getL2Config().getRestartable()) {
-      System.out.println("Deleting data directory for server=[" + serverControl[index].getDsoPort() + "]");
-      deleteDirectory(groupData.getDataDirectoryPath(index));
+      if (renameDataDir) {
+        System.out.println("Moving data directory for server=[" + serverControl[index].getDsoPort() + "]");
+        renameDir(groupData.getDataDirectoryPath(index));
+      } else {
+        System.out.println("Deleting data directory for server=[" + serverControl[index].getDsoPort() + "]");
+        deleteDirectory(groupData.getDataDirectoryPath(index));
+      }
     }
+  }
+
+  private void renameDir(String path) {
+    Assert.assertTrue(new File(path).renameTo(new File(path + "-" + System.currentTimeMillis())));
   }
 
   private void deleteDirectory(String directory) {

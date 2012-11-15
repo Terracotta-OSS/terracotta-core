@@ -42,7 +42,7 @@ import javax.management.MBeanServerConnection;
 
 @RunWith(value = TcTestRunner.class)
 public abstract class AbstractTestBase extends TCTestCase {
-  private static final String         SINGLE_SERVER_CONFIG = "single-server-config";
+  private static final String         DEFAULT_CONFIG       = "default-config";
   protected static final String       SEP                  = File.pathSeparator;
   private final TestConfig            testConfig;
   private final File                  tcConfigFile;
@@ -78,7 +78,7 @@ public abstract class AbstractTestBase extends TCTestCase {
    */
   @Configs
   public static List<TestConfig> getTestConfigs() {
-    TestConfig testConfig = new TestConfig(SINGLE_SERVER_CONFIG);
+    TestConfig testConfig = new TestConfig(DEFAULT_CONFIG);
     testConfig.getGroupConfig().setMemberCount(1);
     TestConfig[] testConfigs = new TestConfig[] { testConfig };
     return Arrays.asList(testConfigs);
@@ -89,7 +89,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   public void setUp() throws Exception {
     if (System.getProperty("com.tc.productkey.path") != null) {
       if (!testConfig.getL2Config().isOffHeapEnabled()) {
-        System.out.println("============= Offheap is turned off, switching it off to avoid OOMEs! ==============");
+        System.out.println("============= Offheap is turned off, switching it on to avoid OOMEs! ==============");
         testConfig.getL2Config().setOffHeapEnabled(true);
         testConfig.getL2Config().setDirectMemorySize(1024);
         testConfig.getL2Config().setMaxOffHeapDataSize(512);
@@ -298,7 +298,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   @Override
   protected File getTempDirectory() throws IOException {
     // this is a hack but there is no direct way to know whether a test is going to be run with single config
-    if (testConfig.getConfigName().equals(SINGLE_SERVER_CONFIG)) { return super.getTempDirectory(); }
+    if (testConfig.getConfigName().equals(DEFAULT_CONFIG)) { return super.getTempDirectory(); }
 
     File tempDirectory = new File(super.getTempDirectory(), testConfig.getConfigName());
     return tempDirectory;

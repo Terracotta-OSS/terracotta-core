@@ -92,8 +92,8 @@
       <artifactId>concurrent</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>google-collections-tc</artifactId>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
     </dependency>
     <dependency>
       <groupId>org.terracotta.license</groupId>

@@ -1,14 +1,16 @@
 package com.tc.objectserver.persistence;
 
+import org.terracotta.corestorage.Serializer;
+
 import com.tc.object.ObjectID;
+import com.tc.object.dna.impl.ClassInstance;
+import com.tc.object.dna.impl.EnumInstance;
 import com.tc.object.dna.impl.UTF8ByteCompressedDataHolder;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.terracotta.corestorage.Serializer;
 
 /**
  * @author tim
@@ -100,7 +102,7 @@ public class LiteralSerializer extends Serializer<Object> {
 
       @Override
       ByteBuffer serialize(final Object object) {
-        if (object instanceof Short) {
+        if (object instanceof Byte) {
           ByteBuffer buffer = ByteBuffer.allocate(2);
           buffer.put((byte) ordinal()).put((Byte)object).flip();
           return buffer;
@@ -219,6 +221,38 @@ public class LiteralSerializer extends Serializer<Object> {
       @Override
       Class<?> toClass() {
         return UTF8ByteCompressedDataHolder.class;
+      }
+    }, ENUM {
+      @Override
+      Object deserialize(final ByteBuffer buffer) {
+        if (buffer.get() != ordinal()) {
+          throw new AssertionError();
+        }
+        byte[] valueBytes = new byte[buffer.getInt()];
+        buffer.get(valueBytes);
+        byte[] classInstanceBytes = new byte[buffer.getInt()];
+        buffer.get(classInstanceBytes);
+        return new EnumInstance(new ClassInstance(new UTF8ByteDataHolder(classInstanceBytes)),
+            new UTF8ByteDataHolder(valueBytes));
+      }
+
+      @Override
+      ByteBuffer serialize(final Object object) {
+        if (object instanceof EnumInstance) {
+          EnumInstance enumInstance = (EnumInstance) object;
+          byte[] valueBytes = enumInstance.getEnumName().getBytes();
+          byte[] classInstanceBytes = enumInstance.getClassInstance().getName().getBytes();
+          ByteBuffer buffer = ByteBuffer.allocate(1 + Integer.SIZE / Byte.SIZE * 2 + classInstanceBytes.length + valueBytes.length);
+          buffer.put((byte)ordinal()).putInt(valueBytes.length).put(valueBytes).putInt(classInstanceBytes.length).put(classInstanceBytes).flip();
+          return buffer;
+        } else {
+          throw new AssertionError();
+        }
+      }
+
+      @Override
+      Class<?> toClass() {
+        return EnumInstance.class;
       }
     };
 

@@ -7,13 +7,14 @@ import org.terracotta.corestorage.StorageManager;
 
 import com.tc.object.ObjectID;
 
-import java.io.Serializable;
-
 /**
  * @author tim
  */
 public class PersistentObjectFactory {
-  private static final KeyValueStorageConfig<Serializable, Serializable> MAP_CONFIG = new ImmutableKeyValueStorageConfig<Serializable, Serializable>(Serializable.class, Serializable.class, 1);
+  private static final KeyValueStorageConfig<Object, Object> MAP_CONFIG = ImmutableKeyValueStorageConfig.builder(Object.class, Object.class)
+      .keyTransformer(LiteralSerializer.INSTANCE)
+      .valueTransformer(LiteralSerializer.INSTANCE)
+      .concurrency(1).build();
 
   private final StorageManager storageManager;
 
@@ -22,10 +23,10 @@ public class PersistentObjectFactory {
   }
 
   public synchronized KeyValueStorage<Object, Object> getMap(ObjectID objectID, final boolean create) {
-    KeyValueStorage map = storageManager.getKeyValueStorage(objectID.toString(), Serializable.class, Serializable.class);
+    KeyValueStorage<Object, Object> map = storageManager.getKeyValueStorage(objectID.toString(), Object.class, Object.class);
     if (map == null) {
       if (create) {
-        map = (KeyValueStorage) storageManager.createKeyValueStorage(objectID.toString(), MAP_CONFIG);
+        map = storageManager.createKeyValueStorage(objectID.toString(), MAP_CONFIG);
       } else {
         throw new AssertionError("Map for object id " + objectID + " not found.");
       }

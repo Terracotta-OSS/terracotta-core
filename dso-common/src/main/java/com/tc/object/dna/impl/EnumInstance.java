@@ -18,7 +18,7 @@ public class EnumInstance implements Serializable {
     return classInstance;
   }
 
-  public Object getEnumName() {
+  public UTF8ByteDataHolder getEnumName() {
     return enumName;
   }
 

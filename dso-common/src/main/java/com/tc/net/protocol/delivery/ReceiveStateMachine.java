@@ -18,8 +18,8 @@ public class ReceiveStateMachine extends AbstractStateMachine {
   private final OOOProtocolMessageDelivery delivery;
   private static final boolean             debug              = false;
 
-  private long                             received           = -1;
-  private int                              delayedAcks        = 0;
+  private volatile long                    received           = -1;
+  private volatile long                    lastAcked          = -1;
 
   public ReceiveStateMachine(OOOProtocolMessageDelivery delivery, ReconnectConfig reconnectConfig, boolean isClient) {
     maxDelayedAcks = reconnectConfig.getMaxDelayAcks();
@@ -39,7 +39,7 @@ public class ReceiveStateMachine extends AbstractStateMachine {
 
   @Override
   public String toString() {
-    return "CurrentState: " + getCurrentState() + "; Received: " + received + "; DelayedAcks: " + delayedAcks + "; "
+    return "CurrentState: " + getCurrentState() + "; Received: " + received + "; lastAcked: " + lastAcked + "; "
            + super.toString();
   }
 
@@ -62,23 +62,18 @@ public class ReceiveStateMachine extends AbstractStateMachine {
 
     private void handleSendMessage(OOOProtocolMessage msg) {
       final long r = msg.getSent();
-      final long curRecv = received;
-      if (r <= curRecv) {
+      if (r <= received) {
         // we already got message
         debugLog("Received dup msg " + r);
-        sendAck(curRecv);
-        delayedAcks = 0;
-        return;
-      } else if (r > (curRecv + 1)) {
+        sendAck(received);
+      } else if (r > (received + 1)) {
         // message missed, resend ack, receive to resend message.
         debugLog("Received out of order msg " + r);
-        sendAck(curRecv);
-        delayedAcks = 0;
-        return;
+        sendAck(received);
       } else {
-        Assert.inv(r == (curRecv + 1));
+        Assert.inv(r == (received + 1));
         putMessage(msg);
-        ackIfNeeded(++received);
+        ackIfNeeded(received = r);
       }
     }
   }
@@ -88,11 +83,8 @@ public class ReceiveStateMachine extends AbstractStateMachine {
   }
 
   private void ackIfNeeded(long next) {
-    ++delayedAcks;
-    if (delayedAcks >= maxDelayedAcks) {
-      if (sendAck(next)) {
-        delayedAcks = 0;
-      } else {
+    if (next - lastAcked >= maxDelayedAcks) {
+      if (!sendAck(next)) {
         debugLog("Failed to send ack:" + next);
       }
     }
@@ -101,13 +93,25 @@ public class ReceiveStateMachine extends AbstractStateMachine {
   private boolean sendAck(long seq) {
     OOOProtocolMessage opm = delivery.createAckMessage(seq);
     Assert.inv(!opm.getSessionId().equals(UUID.NULL_ID));
-    return (delivery.sendMessage(opm));
+    if (delivery.sendMessage(opm)) {
+      lastAcked = seq;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  public long ackSequence() {
+    // This is inherently a bit racey; on the SendStateMachine side (receiver for this ack), acks will arrive out of order
+    // but that should be fine, as all we need to do is clean out the send window up to the highest received ack, essentially
+    // ignore everything less than the highest ack seen.
+    return (lastAcked = received);
   }
 
   @Override
   public synchronized void reset() {
     received = -1;
-    delayedAcks = 0;
+    lastAcked = -1;
   }
 
   private void debugLog(String msg) {
@@ -122,7 +126,6 @@ public class ReceiveStateMachine extends AbstractStateMachine {
 
   // for testing purpose only
   synchronized boolean isClean() {
-    return ((received == -1) && (delayedAcks == 0));
+    return ((received == -1) && (lastAcked == -1));
   }
-
 }

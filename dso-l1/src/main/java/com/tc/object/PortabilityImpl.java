@@ -4,7 +4,6 @@
  */
 package com.tc.object;
 
-import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.util.Assert;
@@ -41,22 +40,9 @@ public class PortabilityImpl implements Portability {
     return classes;
   }
 
+  @Override
   public NonPortableReason getNonPortableReason(final Class topLevelClass) {
     final List classes = getHierarchy(topLevelClass);
-
-    // check if any class in the class hierarchy is not-adaptable (like java.lang.Thread etc.)
-    for (Iterator i = classes.iterator(); i.hasNext();) {
-      Class class2Inspect = (Class) i.next();
-      if (config.isNeverAdaptable(JavaClassInfo.getClassInfo(class2Inspect))) {
-        if (class2Inspect == topLevelClass) {
-          return new NonPortableReason(topLevelClass, NonPortableReason.CLASS_NOT_ADAPTABLE);
-        } else {
-          NonPortableReason reason = new NonPortableReason(topLevelClass, NonPortableReason.SUPER_CLASS_NOT_ADAPTABLE);
-          reason.addErroneousSuperClass(class2Inspect);
-          return reason;
-        }
-      }
-    }
 
     // check for the set of types that weren't instrumented
     byte reasonCode = NonPortableReason.UNDEFINED;
@@ -94,11 +80,6 @@ public class PortabilityImpl implements Portability {
     for (Iterator i = classes.iterator(); i.hasNext();) {
       Class class2Inspect = (Class) i.next();
 
-      // if a parent class simply wasn't included, don't report this a logical subclass issue until it really is
-      if (!config.shouldBeAdapted(JavaClassInfo.getClassInfo(class2Inspect))) {
-        break;
-      }
-
       if (config.isLogical(class2Inspect.getName())) {
         NonPortableReason reason = new NonPortableReason(topLevelClass,
                                                          NonPortableReason.SUBCLASS_OF_LOGICALLY_MANAGED_CLASS);
@@ -114,6 +95,7 @@ public class PortabilityImpl implements Portability {
    * This method does not rely on the config but rather on the fact that the class has to be instrumented at this time
    * for the object to be portable. For Logical Objects it still queries the config.
    */
+  @Override
   public boolean isPortableClass(final Class clazz) {
     Boolean isPortable = portableCache.get(clazz);
     if (isPortable != null) { return isPortable.booleanValue(); }
@@ -127,10 +109,12 @@ public class PortabilityImpl implements Portability {
     return bool;
   }
 
+  @Override
   public boolean isInstrumentationNotNeeded(String clazzName) {
     return nonInstrumentedClasses.isInstrumentationNotNeeded(clazzName);
   }
 
+  @Override
   public boolean isClassPhysicallyInstrumented(final Class clazz) {
     // this method should only return true if this class "directly" implements
     // the interface in question. It specifically does *NOT* walk the class hierarchy looking
@@ -151,6 +135,7 @@ public class PortabilityImpl implements Portability {
     return rv;
   }
 
+  @Override
   public boolean isPortableInstance(Object obj) {
     if (obj == null) return true;
     return isPortableClass(obj.getClass());
