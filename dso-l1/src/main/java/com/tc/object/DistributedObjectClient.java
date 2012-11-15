@@ -490,7 +490,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                      this.connectionComponents.createConnectionInfoConfigItemByGroup().length,
                                      new HealthCheckerConfigClientImpl(this.l1Properties
                                          .getPropertiesFor("healthcheck.l2"), "DSO Client"),
-                                     getMessageTypeClassMapping(), getMessageTypeFactoryMApping(encoding),
+                                     getMessageTypeClassMapping(), getMessageTypeFactoryMapping(encoding),
                                      reconnectionRejectedHandler, securityManager);
 
     DSO_LOGGER.debug("Created CommunicationsManager.");
@@ -874,7 +874,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     DSO_LOGGER.info(infoMsg);
   }
 
-  private Map<TCMessageType, GeneratedMessageFactory> getMessageTypeFactoryMApping(final DNAEncoding encoding) {
+  private Map<TCMessageType, GeneratedMessageFactory> getMessageTypeFactoryMapping(final DNAEncoding encoding) {
     final Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping = new HashMap<TCMessageType, GeneratedMessageFactory>();
 
     messageTypeFactoryMapping.put(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE,
