@@ -26,12 +26,10 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
     private final boolean blowout;
     private int sampleCount;
     private int sizeCount;
-    private final int target;
 
-    public EmergencyEvictionTrigger(ObjectManager mgr, ObjectID oid, int targetPercent, boolean blowout) {
+    public EmergencyEvictionTrigger(ObjectManager mgr, ObjectID oid, boolean blowout) {
         super(oid);
         this.blowout = blowout;
-        this.target = targetPercent;
     }
 
     @Override
@@ -42,7 +40,7 @@ public class EmergencyEvictionTrigger extends AbstractEvictionTrigger {
     @Override
     public Map collectEvictonCandidates(int max, EvictableMap map, ClientObjectReferenceSet clients) {
         sizeCount = map.getSize();
-        int get = sizeCount * (100-target) / 50;
+        int get = ( blowout ) ? sizeCount : sizeCount / 2;
         Map sampled = map.getRandomSamples(get,clients);
 //        Map sampled = map.getRandomSamples(sizeCount/5,new ClientObjectReferenceSet(new ClientStateManager() {
 //

@@ -29,14 +29,13 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.AbstractExecutorService;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
@@ -68,7 +67,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private final PersistentManagedObjectStore store;
     private final ObjectManager objectManager;
     private final ClientObjectReferenceSet clientObjectReferenceSet;
-    private long lastEmergency = 0;
     private Sink evictorSink;
     private final ExecutorService agent;
     private ThreadGroup        evictionGrp;
@@ -253,18 +251,19 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         }
     }
 
-    List<Future<Void>> emergencyEviction(final int alter) {
+    List<Future<Void>> emergencyEviction(final boolean blowout) {
         final ObjectIDSet evictableObjects = store.getAllEvictableObjectIDs();
-        final boolean blowout = (lastEmergency > 0 && lastEmergency - System.currentTimeMillis() < SLEEP_TIME);  // if the last emergency is less than the default sleep time, blow it out
-        lastEmergency = System.currentTimeMillis();
         ArrayList<Future<Void>> push = new ArrayList<Future<Void>>(evictableObjects.size());
-        for (final ObjectID mapID : evictableObjects) {
+        Random r = new Random();
+        List<ObjectID> list = new ArrayList<ObjectID>(evictableObjects);
+        while ( !list.isEmpty() ) {
+            final ObjectID mapID = list.remove(r.nextInt(list.size()));
             push.add(agent.submit(new Callable<Void>() {
                 public Void call() {
                     if ( Thread.interrupted() ) {
                         return null;
                     }
-                    EmergencyEvictionTrigger trigger = new EmergencyEvictionTrigger(objectManager, mapID, L2_CACHEMANAGER_CRITICALTHRESHOLD - alter, blowout);
+                    EmergencyEvictionTrigger trigger = new EmergencyEvictionTrigger(objectManager, mapID , blowout);
                     doEvictionOn(trigger);
                     return null;
                 }
@@ -304,7 +303,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
 
         long last = System.currentTimeMillis();
         int size = 0;
-        int alter = 0;
+
         List<Future<Void>> currentRun = Collections.singletonList(completedFuture);
         
         public void cancelCurrentRun(boolean immediate) {
@@ -329,17 +328,12 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                     log("Percent usage:" + percent + " time:" + (current - last) + " msec., size delta:" + (percent - size));
                 }
                 if (percent > L2_CACHEMANAGER_CRITICALTHRESHOLD) {
-                    if ( !isEmergency ) {
-                        alter = (int)((percent-size)/(current-last)*1000);
-                        if ( alter < 0 ) {
-                            alter = 0;
-                        }
-                    }
+                    boolean blowout = isEmergency; // if already in emergency situation, really try hard to remove items.
                     
                     if ( !isEmergency || isDone() ) {
-                        log("Emergency Triggered - " + percent + " rate of change: " + alter);
+                        log("Emergency Triggered - " + percent);
                         cancelCurrentRun(true);
-                        currentRun = emergencyEviction(alter);
+                        currentRun = emergencyEviction(blowout);
                         isEmergency = true;
                     }
                 } else {
