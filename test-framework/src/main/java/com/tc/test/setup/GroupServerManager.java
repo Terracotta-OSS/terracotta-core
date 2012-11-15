@@ -73,6 +73,7 @@ public class GroupServerManager {
                                                      });
 
   private final Runnable           testFailureCallback;
+  private final boolean             renameDataDir         = false;
 
   public GroupServerManager(GroupsData groupData, TestConfig testConfig, File tempDir, File javaHome, File tcConfigFile, final Runnable testFailureCallback)
       throws Exception {
@@ -356,11 +357,11 @@ public class GroupServerManager {
   }
 
   private void cleanupServerDB(int index) throws Exception {
-    renameDir(groupData.getDataDirectoryPath(index));
-    // if (testConfig.getL2Config().getRestartable()) {
-    // System.out.println("Deleting data directory for server=[" + serverControl[index].getDsoPort() + "]");
-    // deleteDirectory(groupData.getDataDirectoryPath(index));
-    // }
+    if (renameDataDir) renameDir(groupData.getDataDirectoryPath(index));
+    else if (testConfig.getL2Config().getRestartable()) {
+      System.out.println("Deleting data directory for server=[" + serverControl[index].getDsoPort() + "]");
+      deleteDirectory(groupData.getDataDirectoryPath(index));
+    }
   }
 
   private void renameDir(String path) {
