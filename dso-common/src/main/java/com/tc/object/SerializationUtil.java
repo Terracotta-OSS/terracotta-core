@@ -184,8 +184,8 @@ public class SerializationUtil {
   }
 
   public int methodToID(String name) {
-    int i = mappings.get(name);
-    if (i == 0) throw new AssertionError("Illegal method name:" + name);
+    Integer i = mappings.get(name);
+    if (i == null) throw new AssertionError("Illegal method name:" + name);
     return i;
   }
 
