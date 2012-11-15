@@ -19,6 +19,7 @@ public class TestConfig {
   private final ClientConfig        clientConfig     = new ClientConfig();
   private final Map<String, String> tcPropertiesMap;
   private boolean                   isStandAloneTest = false;
+  private Boolean                   restartZappedL2;
 
   public TestConfig(String configName) {
     this.configName = configName;
@@ -105,6 +106,11 @@ public class TestConfig {
     return isStandAloneTest;
   }
 
+  public boolean isRestartZappedL2() {
+    // By default, restart zapped servers in stripes with multiple passives
+    if (restartZappedL2 == null) { return groupConfig.getMemberCount() > 2; }
+    return restartZappedL2;
+  }
   /**
    * enables or disable the test in standAlone mode. Note that if this is set the servers will not start and so the user
    * has to make sure that there are no errors like crashing the servers, or using clustered barrier etc.
@@ -115,6 +121,9 @@ public class TestConfig {
     this.isStandAloneTest = isStandAloneTest;
   }
 
+  public void setRestartZappedL2(boolean restart) {
+    restartZappedL2 = restart;
+  }
   /**
    * creates a default test configuration object for the test
    * 
