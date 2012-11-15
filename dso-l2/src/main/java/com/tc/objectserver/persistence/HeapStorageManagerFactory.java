@@ -23,4 +23,9 @@ public class HeapStorageManagerFactory implements StorageManagerFactory {
   public StorageManager createStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap, final TransformerLookup transformerLookup) throws IOException {
     return new HeapStorageManager(configMap);
   }
+
+  @Override
+  public StorageManager createMetadataStorageManager(final Map<String, KeyValueStorageConfig<?, ?>> configMap) throws IOException {
+    return new HeapStorageManager(configMap);
+  }
 }

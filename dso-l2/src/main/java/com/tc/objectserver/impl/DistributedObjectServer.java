@@ -178,10 +178,10 @@ import com.tc.objectserver.handler.ClientHandshakeHandler;
 import com.tc.objectserver.handler.ClientLockStatisticsHandler;
 import com.tc.objectserver.handler.GarbageCollectHandler;
 import com.tc.objectserver.handler.GarbageDisposeHandler;
-import com.tc.objectserver.handler.LowWaterMarkCallbackHandler;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
 import com.tc.objectserver.handler.InvalidateObjectsHandler;
 import com.tc.objectserver.handler.JMXEventsHandler;
+import com.tc.objectserver.handler.LowWaterMarkCallbackHandler;
 import com.tc.objectserver.handler.ManagedObjectRequestHandler;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
 import com.tc.objectserver.handler.RecallObjectsHandler;
@@ -579,7 +579,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         configSetupManager.dsoL2Config(), offHeapConfig.getEnabled());
 
     this.persistor = new Persistor(storageManagerFactory);
-
+    persistor.start();
 
     // register the terracotta operator event logger
     this.operatorEventHistoryProvider = new DsoOperatorEventHistoryProvider();

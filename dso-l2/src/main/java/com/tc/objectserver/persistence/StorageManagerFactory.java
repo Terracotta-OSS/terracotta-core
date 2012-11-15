@@ -12,4 +12,5 @@ import java.util.Map;
  */
 public interface StorageManagerFactory {
   StorageManager createStorageManager(Map<String, KeyValueStorageConfig<?, ?>> configMap, TransformerLookup transformerLookup) throws IOException;
+  StorageManager createMetadataStorageManager(Map<String, KeyValueStorageConfig<?, ?>> configMap) throws IOException;
 }
