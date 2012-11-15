@@ -8,11 +8,10 @@ import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
-import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.collections.DestroyableToolkitMap;
 import com.terracotta.toolkit.collections.map.ToolkitMapImpl;
+import com.terracotta.toolkit.factory.ToolkitFactoryInitializationContext;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
-import com.terracotta.toolkit.roots.ToolkitTypeRootsFactory;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
 import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
 
@@ -23,10 +22,10 @@ public class ToolkitMapFactoryImpl extends AbstractPrimaryToolkitObjectFactory<T
 
   private static final MapIsolatedTypeFactory FACTORY = new MapIsolatedTypeFactory();
 
-  public ToolkitMapFactoryImpl(ToolkitInternal toolkit, ToolkitTypeRootsFactory rootsFactory,
-                               PlatformService platformService) {
-    super(toolkit, rootsFactory.createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_MAP_ROOT_NAME, FACTORY,
-                                                                platformService));
+  public ToolkitMapFactoryImpl(ToolkitInternal toolkit, ToolkitFactoryInitializationContext context) {
+    super(toolkit, context.getToolkitTypeRootsFactory()
+        .createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_MAP_ROOT_NAME, FACTORY,
+                                         context.getPlatformService()));
   }
 
   @Override

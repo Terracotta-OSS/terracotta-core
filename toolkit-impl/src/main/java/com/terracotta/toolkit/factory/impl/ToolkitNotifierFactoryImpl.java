@@ -14,8 +14,8 @@ import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.TerracottaProperties;
 import com.terracotta.toolkit.events.DestroyableToolkitNotifier;
 import com.terracotta.toolkit.events.ToolkitNotifierImpl;
+import com.terracotta.toolkit.factory.ToolkitFactoryInitializationContext;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
-import com.terracotta.toolkit.roots.ToolkitTypeRootsFactory;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
 import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
 
@@ -37,14 +37,14 @@ public class ToolkitNotifierFactoryImpl extends
 
   private static final NotifierIsolatedTypeFactory FACTORY                           = new NotifierIsolatedTypeFactory();
 
-  public ToolkitNotifierFactoryImpl(ToolkitInternal toolkit, ToolkitTypeRootsFactory rootsFactory,
-                                    PlatformService platformService) {
-    super(toolkit, rootsFactory.createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_NOTIFIER_ROOT_NAME,
-                                                                FACTORY, platformService));
+  public ToolkitNotifierFactoryImpl(ToolkitInternal toolkit, ToolkitFactoryInitializationContext context) {
+    super(toolkit, context.getToolkitTypeRootsFactory()
+        .createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_NOTIFIER_ROOT_NAME, FACTORY,
+                                         context.getPlatformService()));
 
-    final ExecutorService notifierService = createExecutorService(platformService);
-    ExecutorService service = platformService.registerObjectByNameIfAbsent(TOOLKIT_NOTIFIER_EXECUTOR_SERVICE,
-                                                                           notifierService);
+    final ExecutorService notifierService = createExecutorService(context.getPlatformService());
+    ExecutorService service = context.getPlatformService()
+        .registerObjectByNameIfAbsent(TOOLKIT_NOTIFIER_EXECUTOR_SERVICE, notifierService);
     if (service == notifierService) {
       registerForShutdown(notifierService);
     }

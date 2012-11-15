@@ -7,12 +7,11 @@ import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
-import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.collections.DestroyableToolkitSortedMap;
 import com.terracotta.toolkit.collections.ToolkitSortedSetImpl;
 import com.terracotta.toolkit.collections.map.ToolkitSortedMapImpl;
+import com.terracotta.toolkit.factory.ToolkitFactoryInitializationContext;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
-import com.terracotta.toolkit.roots.ToolkitTypeRootsFactory;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
 import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
 
@@ -24,10 +23,10 @@ public class ToolkitSortedSetFactoryImpl extends
 
   private static final SortedSetIsolatedTypeFactory FACTORY = new SortedSetIsolatedTypeFactory();
 
-  public ToolkitSortedSetFactoryImpl(ToolkitInternal toolkit, ToolkitTypeRootsFactory rootsFactory,
-                                     PlatformService platformService) {
-    super(toolkit, rootsFactory.createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_SORTED_SET_ROOT_NAME,
-                                                                FACTORY, platformService));
+  public ToolkitSortedSetFactoryImpl(ToolkitInternal toolkit, ToolkitFactoryInitializationContext context) {
+    super(toolkit, context.getToolkitTypeRootsFactory()
+        .createAggregateIsolatedTypeRoot(ToolkitTypeConstants.TOOLKIT_SORTED_SET_ROOT_NAME, FACTORY,
+                                         context.getPlatformService()));
   }
 
   @Override

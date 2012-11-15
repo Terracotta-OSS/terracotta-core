@@ -4,6 +4,7 @@
 package com.terracotta.toolkit;
 
 import net.sf.ehcache.CacheManager;
+
 import org.terracotta.toolkit.cache.ToolkitCache;
 import org.terracotta.toolkit.cache.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.cluster.ClusterInfo;
@@ -40,17 +41,18 @@ import com.terracotta.toolkit.cluster.TerracottaClusterInfo;
 import com.terracotta.toolkit.collections.ToolkitBlockingQueueImpl;
 import com.terracotta.toolkit.collections.ToolkitSetImpl;
 import com.terracotta.toolkit.collections.ToolkitSortedSetImpl;
-import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreFactory;
 import com.terracotta.toolkit.collections.servermap.api.ehcacheimpl.EhcacheSMLocalStoreFactory;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockImpl;
 import com.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLockImpl;
 import com.terracotta.toolkit.config.UnclusteredConfiguration;
 import com.terracotta.toolkit.events.OperatorEventUtil;
+import com.terracotta.toolkit.factory.ToolkitFactoryInitializationContext;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.factory.impl.ToolkitAtomicLongFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitBarrierFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitBlockingQueueFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitCacheFactoryImpl;
+import com.terracotta.toolkit.factory.impl.ToolkitFactoryInitializationContextBuilder;
 import com.terracotta.toolkit.factory.impl.ToolkitListFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitLockFactoryImpl;
 import com.terracotta.toolkit.factory.impl.ToolkitMapFactoryImpl;
@@ -89,12 +91,10 @@ public class TerracottaToolkit implements ToolkitInternal {
   private final ToolkitObjectFactory<ToolkitSetImpl>           clusteredSetFactory;
   private final ToolkitObjectFactory<ToolkitLockImpl>          lockFactory;
   private final ToolkitObjectFactory<ToolkitReadWriteLockImpl> rwLockFactory;
-  private final ServerMapLocalStoreFactory                     serverMapLocalStoreFactory;
   private final CacheManager                                   defaultToolkitCacheManager;
   private final TerracottaL1Instance                           tcClient;
   private final WeakValueMapManager                            weakValueMapManager                  = new WeakValueMapManager();
   private ToolkitProperties                                    toolkitProperties;
-
   protected final PlatformService                              platformService;
   private final ClusterInfo                                    clusterInfoInstance;
 
@@ -112,24 +112,26 @@ public class TerracottaToolkit implements ToolkitInternal {
       }
     }
     defaultToolkitCacheManager = createDefaultToolkitCacheManager();
-    serverMapLocalStoreFactory = new EhcacheSMLocalStoreFactory(defaultToolkitCacheManager);
-    ToolkitTypeRootsStaticFactory toolkitTypeRootsFactory = new ToolkitTypeRootsStaticFactory(weakValueMapManager);
 
-    lockFactory = new ToolkitLockFactoryImpl(weakValueMapManager, platformService);
-    rwLockFactory = new ToolkitReadWriteLockFactoryImpl(weakValueMapManager, platformService);
-    clusteredNotifierFactory = new ToolkitNotifierFactoryImpl(this, toolkitTypeRootsFactory, platformService);
-    clusteredListFactory = new ToolkitListFactoryImpl(this, toolkitTypeRootsFactory, platformService);
+    ToolkitFactoryInitializationContextBuilder builder = new ToolkitFactoryInitializationContextBuilder();
+    final ToolkitFactoryInitializationContext context = builder.weakValueMapManager(weakValueMapManager)
+        .platformService(platformService)
+        .toolkitTypeRootsFactory(new ToolkitTypeRootsStaticFactory(weakValueMapManager))
+        .serverMapLocalStoreFactory(new EhcacheSMLocalStoreFactory(defaultToolkitCacheManager))
+        .searchFactory(createSearchFactory()).build();
+    // .rejoinEventsController(new ToolkitRejoinEventsControllerImpl(platformService)).build();
+
+    lockFactory = new ToolkitLockFactoryImpl(context);
+    rwLockFactory = new ToolkitReadWriteLockFactoryImpl(context);
+    clusteredNotifierFactory = new ToolkitNotifierFactoryImpl(this, context);
+    clusteredListFactory = new ToolkitListFactoryImpl(this, context);
     // create set factory before map factory, as map uses set internally
-    clusteredSetFactory = new ToolkitSetFactoryImpl(this, toolkitTypeRootsFactory, platformService);
-    clusteredCacheFactory = ToolkitCacheFactoryImpl.newToolkitCacheFactory(this, toolkitTypeRootsFactory,
-                                                                           createSearchFactory(),
-                                                                           serverMapLocalStoreFactory, platformService);
-    clusteredMapFactory = new ToolkitMapFactoryImpl(this, toolkitTypeRootsFactory, platformService);
-    clusteredSortedMapFactory = new ToolkitSortedMapFactoryImpl(this, toolkitTypeRootsFactory, platformService);
-    clusteredStoreFactory = ToolkitCacheFactoryImpl.newToolkitStoreFactory(this, toolkitTypeRootsFactory,
-                                                                           createSearchFactory(),
-                                                                           serverMapLocalStoreFactory, platformService);
-    clusteredBlockingQueueFactory = new ToolkitBlockingQueueFactoryImpl(this, toolkitTypeRootsFactory, platformService);
+    clusteredSetFactory = new ToolkitSetFactoryImpl(this, context);
+    clusteredCacheFactory = ToolkitCacheFactoryImpl.newToolkitCacheFactory(this, context);
+    clusteredMapFactory = new ToolkitMapFactoryImpl(this, context);
+    clusteredSortedMapFactory = new ToolkitSortedMapFactoryImpl(this, context);
+    clusteredStoreFactory = ToolkitCacheFactoryImpl.newToolkitStoreFactory(this, context);
+    clusteredBlockingQueueFactory = new ToolkitBlockingQueueFactoryImpl(this, context);
     ToolkitStore atomicLongs = clusteredStoreFactory.getOrCreate(ToolkitTypeConstants.TOOLKIT_ATOMIC_LONG_MAP_NAME,
                                                                  new ToolkitStoreConfigBuilder()
                                                                      .consistency(Consistency.STRONG).build());
@@ -140,7 +142,7 @@ public class TerracottaToolkit implements ToolkitInternal {
                                                                   .consistency(Consistency.STRONG).build());
     clusteredBarrierFactory = new ToolkitBarrierFactoryImpl(barriers, weakValueMapManager);
 
-    clusteredSortedSetFactory = new ToolkitSortedSetFactoryImpl(this, toolkitTypeRootsFactory, platformService);
+    clusteredSortedSetFactory = new ToolkitSortedSetFactoryImpl(this, context);
   }
 
   private CacheManager createDefaultToolkitCacheManager() {

@@ -14,8 +14,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 
 public class ToolkitLockImpl implements ToolkitLock {
-  private final String             lockName;
-  private final UnnamedToolkitLock delegate;
+  private final String      lockName;
+  private final ToolkitLock delegate;
 
   public ToolkitLockImpl(PlatformService platformService, String name, ToolkitLockTypeInternal lockType) {
     this.lockName = name;

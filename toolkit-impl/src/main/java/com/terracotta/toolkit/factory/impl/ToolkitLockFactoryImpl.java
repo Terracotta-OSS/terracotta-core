@@ -9,9 +9,9 @@ import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
 import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockImpl;
+import com.terracotta.toolkit.factory.ToolkitFactoryInitializationContext;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.util.collections.WeakValueMap;
-import com.terracotta.toolkit.util.collections.WeakValueMapManager;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -22,9 +22,10 @@ public class ToolkitLockFactoryImpl implements ToolkitObjectFactory<ToolkitLockI
   private final PlatformService               platformService;
   private final Lock                          lock;
   private static final String                 DELIMITER          = "|";
-  public ToolkitLockFactoryImpl(WeakValueMapManager manager, PlatformService platformService) {
-    this.localCache = manager.createWeakValueMap();
-    this.platformService = platformService;
+
+  public ToolkitLockFactoryImpl(ToolkitFactoryInitializationContext context) {
+    this.localCache = context.getWeakValueMapManager().createWeakValueMap();
+    this.platformService = context.getPlatformService();
     this.lock = new ReentrantLock();
   }
 
