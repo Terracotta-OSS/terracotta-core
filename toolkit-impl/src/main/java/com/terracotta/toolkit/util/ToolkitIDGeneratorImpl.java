@@ -18,10 +18,12 @@ public class ToolkitIDGeneratorImpl implements ToolkitIDGenerator {
     map.putIfAbsent(name, new Long(1));
   }
 
+  @Override
   public long getId() {
     return (Long) map.get(name);
   }
 
+  @Override
   public void incrementId() {
     lock.lock();
     try {

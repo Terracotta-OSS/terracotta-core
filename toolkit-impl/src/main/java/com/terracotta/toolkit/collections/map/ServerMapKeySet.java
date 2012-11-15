@@ -65,16 +65,19 @@ public class ServerMapKeySet<K, V> extends AbstractSet<K> {
       this.delegate = delegate;
     }
 
+    @Override
     public boolean hasNext() {
       return this.delegate.hasNext();
     }
 
+    @Override
     public KI next() {
       final KI result = this.delegate.next();
       this.lastKey = result;
       return result;
     }
 
+    @Override
     public void remove() {
       if (null == this.lastKey) { throw new IllegalStateException("next needs to be called before calling remove"); }
       clusteredMap.remove(this.lastKey);
