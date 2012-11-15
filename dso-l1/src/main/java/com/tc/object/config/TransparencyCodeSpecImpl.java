@@ -4,8 +4,6 @@
  */
 package com.tc.object.config;
 
-import com.tc.object.bytecode.ByteCodeUtil;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -49,55 +47,57 @@ public class TransparencyCodeSpecImpl implements TransparencyCodeSpec {
     super();
   }
 
+  @Override
   public boolean isArraycopyInstrumentationReq(String className, String methodName) {
     return arraycopyInstrumentationReq && "java/lang/System".equals(className) && "arraycopy".equals(methodName);
   }
 
+  @Override
   public void setArraycopyInstrumentationReq(boolean arraycopyInstrumentationReq) {
     this.arraycopyInstrumentationReq = arraycopyInstrumentationReq;
   }
 
+  @Override
   public boolean isArrayOperatorInstrumentationReq() {
     return arrayOperatorInstrumentationReq;
   }
 
+  @Override
   public void setArrayOperatorInstrumentationReq(boolean arrayOperatorInstrumentationReq) {
     this.arrayOperatorInstrumentationReq = arrayOperatorInstrumentationReq;
   }
 
-  public boolean isFieldInstrumentationReq(String fieldName) {
-    // For jdk compiler, the <init> method of an anonymous inner class contains
-    // code to set the synthetic fields, followed by the super() call. This creates
-    // problem if we try to use TC setter method for the synthetic fields before
-    // the super() method. So, before the super() call, we will not instrument
-    // to use the TC setter method.
-    return fieldInstrumentationReq && !ByteCodeUtil.isTCSynthetic(fieldName);
-  }
-
+  @Override
   public void setFieldInstrumentationReq(boolean fieldInstrumentationReq) {
     this.fieldInstrumentationReq = fieldInstrumentationReq;
   }
 
+  @Override
   public boolean isWaitNotifyInstrumentationReq() {
     return waitNotifyInstrumentationReq;
   }
 
+  @Override
   public void setWaitNotifyInstrumentationReq(boolean waitNotifyInstrumentationReq) {
     this.waitNotifyInstrumentationReq = waitNotifyInstrumentationReq;
   }
 
+  @Override
   public boolean isMonitorInstrumentationReq() {
     return monitorInstrumentationReq;
   }
 
+  @Override
   public void setMonitorInstrumentationReq(boolean monitorInstrumentationReq) {
     this.monitorInstrumentationReq = monitorInstrumentationReq;
   }
 
+  @Override
   public void setForceRawFieldAccess() {
     this.forceUncheckedFieldAccess = true;
   }
 
+  @Override
   public boolean isForceRawFieldAccess() {
     return forceUncheckedFieldAccess;
   }

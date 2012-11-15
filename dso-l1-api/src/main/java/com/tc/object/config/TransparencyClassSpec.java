@@ -80,16 +80,6 @@ public interface TransparencyClassSpec {
   public LockDefinition getNonAutoLockDefinition(LockDefinition lds[]);
 
   /**
-   * Add distributed method call
-   * 
-   * @param methodName Method
-   * @param description Method signature
-   * @param runOnAllNodes True to run on all nodes, false for local
-   * @return this
-   */
-  public TransparencyClassSpec addDistributedMethodCall(String methodName, String description, boolean runOnAllNodes);
-
-  /**
    * Add a transient field
    * 
    * @param variableName Field name

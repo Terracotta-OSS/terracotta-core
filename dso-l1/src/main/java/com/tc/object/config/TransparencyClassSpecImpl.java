@@ -4,7 +4,6 @@
  */
 package com.tc.object.config;
 
-import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.config.schema.IncludeOnLoad;
 
 import java.lang.reflect.Modifier;
@@ -121,24 +120,6 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
       if (!lds[i].isAutolock()) { return lds[i]; }
     }
     return null;
-  }
-
-  @Override
-  public TransparencyClassSpec addDistributedMethodCall(final String methodName, final String description,
-                                                        final boolean runOnAllNodes) {
-    if ("<init>".equals(methodName) || "<clinit>".equals(methodName)) { throw new AssertionError(
-                                                                                                 "Initializers of class "
-                                                                                                     + className
-                                                                                                     + " cannot be participated in distrbuted method call and are ignored."); }
-    StringBuffer sb = new StringBuffer("* ");
-    sb.append(className);
-    sb.append(".");
-    sb.append(methodName);
-    String arguments = ByteCodeUtil.methodDescriptionToMethodArgument(description);
-    sb.append(arguments);
-    final DistributedMethodSpec dms = new DistributedMethodSpec(sb.toString(), runOnAllNodes);
-    configuration.addDistributedMethodCall(dms);
-    return this;
   }
 
   @Override

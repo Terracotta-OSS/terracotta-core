@@ -4,7 +4,6 @@
  */
 package com.tc.object.event;
 
-import com.tc.asm.Type;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ClientObjectManager;
@@ -48,6 +47,7 @@ public class DmiManagerImpl implements DmiManager {
     this.nesting = new VicariousThreadLocal();
   }
 
+  @Override
   public boolean distributedInvoke(Object receiver, String method, Object[] params, boolean runOnAllNodes) {
     if (feedBack.get() != null) { return false; }
     if (nesting.get() != null) { return false; }
@@ -76,12 +76,14 @@ public class DmiManagerImpl implements DmiManager {
     }
   }
 
+  @Override
   public void distributedInvokeCommit() {
     if (feedBack.get() != null) { return; }
     Assert.pre(nesting.get() != null);
     nesting.remove();
   }
 
+  @Override
   public void invoke(DistributedMethodCall dmc) {
     try {
       if (runtimeLogger.getDistributedMethodDebug()) runtimeLogger.distributedMethodCall(dmc.getReceiver().getClass()
@@ -134,27 +136,6 @@ public class DmiManagerImpl implements DmiManager {
     String methodName = dmc.getMethodName();
     String paramDesc = dmc.getParameterDesc();
 
-    Class c = dmc.getReceiver().getClass();
-
-    while (c != null) {
-      Method[] methods = c.getDeclaredMethods();
-      for (Method method : methods) {
-        Method m = method;
-        if (!m.getName().equals(methodName)) {
-          continue;
-        }
-        Class[] argTypes = m.getParameterTypes();
-        StringBuffer signature = new StringBuffer("(");
-        for (Class argType : argTypes) {
-          signature.append(Type.getDescriptor(argType));
-        }
-        signature.append(")");
-        signature.append(Type.getDescriptor(m.getReturnType()));
-        if (signature.toString().equals(paramDesc)) { return m; }
-      }
-
-      c = c.getSuperclass();
-    }
     throw new RuntimeException("Method " + methodName + paramDesc + " does not exist on this object: "
                                + dmc.getReceiver());
   }
@@ -189,6 +170,7 @@ public class DmiManagerImpl implements DmiManager {
     return new DmiClassSpec(className);
   }
 
+  @Override
   public DistributedMethodCall extract(DmiDescriptor dd) {
     Assert.pre(dd != null);
 

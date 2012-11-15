@@ -41,11 +41,6 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
-      <artifactId>thirdparty</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
       <artifactId>dso-cluster-api</artifactId>
       <version>${project.version}</version>
     </dependency>

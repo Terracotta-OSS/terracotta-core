@@ -24,7 +24,6 @@
     <module>build-parent</module>
     <module>build-data</module>
     <module>common</module>
-    <module>thirdparty</module>
     <module>dso-statistics-api</module>
     <module>dso-l1-api</module>
     <module>dso-common</module>
