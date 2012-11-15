@@ -138,6 +138,7 @@ public class ObjectManagerTest extends TCTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     this.persistor = new Persistor(HeapStorageManagerFactory.INSTANCE);
+    persistor.start();
     this.logger = TCLogging.getLogger(getClass());
     this.config = new TestObjectManagerConfig();
     this.clientStateManager = new ClientStateManagerImpl(TCLogging.getLogger(ClientStateManager.class));

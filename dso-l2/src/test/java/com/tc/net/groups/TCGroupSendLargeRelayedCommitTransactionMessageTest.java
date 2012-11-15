@@ -61,6 +61,7 @@ public class TCGroupSendLargeRelayedCommitTransactionMessageTest extends TCTestC
   public void baseTestSendingReceivingMessagesStatic(int batchSize) throws Exception {
     System.out.println("Test batch data size " + batchSize);
     Persistor persistor = new Persistor(HeapStorageManagerFactory.INSTANCE);
+    persistor.start();
     ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), persistor);
     PortChooser pc = new PortChooser();
     final int p1 = pc.chooseRandom2Port();

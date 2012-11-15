@@ -43,6 +43,7 @@ public abstract class ManagedObjectStateSerializationTestBase extends TCTestCase
     super.setUp();
 
     this.persistor = new Persistor(HeapStorageManagerFactory.INSTANCE);
+    persistor.start();
 
     this.ptp = persistor.getPersistenceTransactionProvider();
     this.managedObjectPersistor = persistor.getManagedObjectPersistor();

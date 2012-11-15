@@ -31,6 +31,7 @@ public class ManagedObjectTest extends TCTestCase {
   @Override
   public void setUp() {
     persistor = new Persistor(HeapStorageManagerFactory.INSTANCE);
+    persistor.start();
     ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), persistor);
   }
 

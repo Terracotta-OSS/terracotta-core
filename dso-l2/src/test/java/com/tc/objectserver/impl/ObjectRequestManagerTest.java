@@ -99,6 +99,7 @@ public class ObjectRequestManagerTest extends TestCase {
 
     ManagedObjectStateFactory.disableSingleton(true);
     persistor = new Persistor(HeapStorageManagerFactory.INSTANCE);
+    persistor.start();
 
     final ManagedObjectChangeListenerProviderImpl moclp = new ManagedObjectChangeListenerProviderImpl();
     moclp.setListener(new ManagedObjectChangeListener() {

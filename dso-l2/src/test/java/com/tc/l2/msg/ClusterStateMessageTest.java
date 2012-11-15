@@ -48,6 +48,7 @@ public class ClusterStateMessageTest extends TestCase {
 
   private void resetClusterState(int clusterState) {
     Persistor persistor =  new Persistor(HeapStorageManagerFactory.INSTANCE);
+    persistor.start();
     PersistentMapStore clusterStateStore = persistor.getPersistentStateStore();
     ObjectIDSequence oidSequence = persistor.getManagedObjectPersistor().getObjectIDSequence();
     ConnectionIDFactory connectionIdFactory = new ConnectionIDFactoryImpl(persistor.getClientStatePersistor());

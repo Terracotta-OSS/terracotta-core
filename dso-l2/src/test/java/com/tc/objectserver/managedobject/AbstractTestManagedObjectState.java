@@ -30,6 +30,7 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
     this.listenerProvider = new NullManagedObjectChangeListenerProvider();
     ManagedObjectStateFactory.disableSingleton(true);
     Persistor persistor = new Persistor(HeapStorageManagerFactory.INSTANCE);
+    persistor.start();
     ManagedObjectStateFactory.createInstance(this.listenerProvider, persistor);
     this.objectID = new ObjectID(2000);
   }

@@ -30,6 +30,7 @@ public class ManagedObjectSerializerTest extends TestCase {
   public void test() throws Exception {
     ManagedObjectStateFactory.disableSingleton(true);
     Persistor persistor = new Persistor(HeapStorageManagerFactory.INSTANCE);
+    persistor.start();
     
     ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), persistor);
     this.stateSerializer = new ManagedObjectStateSerializer();

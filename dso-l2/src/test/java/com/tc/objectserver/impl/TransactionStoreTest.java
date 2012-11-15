@@ -40,6 +40,7 @@ public class TransactionStoreTest extends TCTestCase {
 
   public void setUp() {
     Persistor persistor = new Persistor(HeapStorageManagerFactory.INSTANCE);
+    persistor.start();
     transactionPersistor = spy(persistor.getTransactionPersistor());
     gidSequence = spy(persistor.getGlobalTransactionIDSequence());
     store = new TransactionStoreImpl(transactionPersistor, gidSequence);
