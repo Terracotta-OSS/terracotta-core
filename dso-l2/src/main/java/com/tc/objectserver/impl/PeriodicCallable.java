@@ -33,7 +33,9 @@ public class PeriodicCallable implements Callable<Void>, CanCancel {
     @Override
     public boolean cancel() {
         stopped = true;
-        current.stop();
+        if ( current != null ) {
+            current.stop();
+        }
         return true;
     }
 
