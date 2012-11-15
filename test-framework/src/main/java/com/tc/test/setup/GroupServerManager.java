@@ -357,10 +357,14 @@ public class GroupServerManager {
   }
 
   private void cleanupServerDB(int index) throws Exception {
-    if (renameDataDir) renameDir(groupData.getDataDirectoryPath(index));
-    else if (testConfig.getL2Config().getRestartable()) {
-      System.out.println("Deleting data directory for server=[" + serverControl[index].getDsoPort() + "]");
-      deleteDirectory(groupData.getDataDirectoryPath(index));
+    if (testConfig.getL2Config().getRestartable()) {
+      if (renameDataDir) {
+        System.out.println("Moving data directory for server=[" + serverControl[index].getDsoPort() + "]");
+        renameDir(groupData.getDataDirectoryPath(index));
+      } else {
+        System.out.println("Deleting data directory for server=[" + serverControl[index].getDsoPort() + "]");
+        deleteDirectory(groupData.getDataDirectoryPath(index));
+      }
     }
   }
 
