@@ -5,7 +5,10 @@
 
 package com.tc.net.groups;
 
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.terracotta.corestorage.KeyValueStorage;
+import org.terracotta.corestorage.StorageManager;
 import org.terracotta.corestorage.heap.HeapKeyValueStorage;
 
 import com.tc.async.api.ConfigurationContext;
@@ -41,6 +44,7 @@ import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider
 import com.tc.objectserver.persistence.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.ObjectIDSetMaintainer;
 import com.tc.objectserver.persistence.PersistentObjectFactory;
+import com.tc.objectserver.persistence.SequenceManager;
 import com.tc.test.TCTestCase;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.PortChooser;
@@ -55,7 +59,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
   private final static String LOCALHOST   = "localhost";
@@ -64,7 +70,16 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
   private ManagedObjectPersistor managedObjectPersistor;
 
   public void setUp() {
-    managedObjectPersistor = new ManagedObjectPersistor(mock(KeyValueStorage.class), new StubKeyValueStorage<Long, byte[]>() , mock(MutableSequence.class), mock(ObjectIDSetMaintainer.class));
+    StorageManager storageManager = mock(StorageManager.class);
+    when(storageManager.getKeyValueStorage(any(String.class), any(Class.class), any(Class.class))).then(new Answer<KeyValueStorage>() {
+      @Override
+      public KeyValueStorage answer(final InvocationOnMock invocationOnMock) throws Throwable {
+        return new StubKeyValueStorage();
+      }
+    });
+    SequenceManager sequenceManager = mock(SequenceManager.class);
+    when(sequenceManager.getSequence(any(String.class))).thenReturn(mock(MutableSequence.class));
+    managedObjectPersistor = new ManagedObjectPersistor(storageManager,  sequenceManager, mock(ObjectIDSetMaintainer.class));
     ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), mock(PersistentObjectFactory.class));
   }
 

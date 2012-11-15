@@ -4,6 +4,7 @@ import org.terracotta.corestorage.ImmutableKeyValueStorageConfig;
 import org.terracotta.corestorage.KeyValueStorage;
 import org.terracotta.corestorage.KeyValueStorageConfig;
 import org.terracotta.corestorage.Serializer;
+import org.terracotta.corestorage.StorageManager;
 
 import com.tc.net.ClientID;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -14,20 +15,25 @@ import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.Map;
 import java.util.SortedSet;
 
 /**
  * @author tim
  */
 public class TransactionPersistor {
+  private static final String TRANSACTION = "transaction";
+
   private final KeyValueStorage<GlobalTransactionID, GlobalTransactionDescriptor> committed;
 
-  public TransactionPersistor(KeyValueStorage<GlobalTransactionID, GlobalTransactionDescriptor> committed) {
-    this.committed = committed;
+  public TransactionPersistor(StorageManager storageManager) {
+    this.committed = storageManager.getKeyValueStorage(TRANSACTION, GlobalTransactionID.class, GlobalTransactionDescriptor.class);
   }
 
-  public static KeyValueStorageConfig<GlobalTransactionID, GlobalTransactionDescriptor> config() {
-    return new ImmutableKeyValueStorageConfig<GlobalTransactionID, GlobalTransactionDescriptor>(GlobalTransactionID.class, GlobalTransactionDescriptor.class, TransactionPersistor.GlobalTransactionIDSerializer.INSTANCE, TransactionPersistor.GlobalTransactionDescriptorSerializer.INSTANCE);
+  public static void addConfigsTo(Map<String, KeyValueStorageConfig<?, ?>> configMap) {
+    configMap.put(TRANSACTION, ImmutableKeyValueStorageConfig.builder(GlobalTransactionID.class, GlobalTransactionDescriptor.class)
+        .valueTransformer(GlobalTransactionDescriptorSerializer.INSTANCE)
+        .keyTransformer(GlobalTransactionIDSerializer.INSTANCE).build());
   }
 
   public Collection<GlobalTransactionDescriptor> loadAllGlobalTransactionDescriptors() {

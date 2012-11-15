@@ -3,13 +3,12 @@ package com.tc.objectserver.persistence;
 import org.terracotta.corestorage.ImmutableKeyValueStorageConfig;
 import org.terracotta.corestorage.KeyValueStorage;
 import org.terracotta.corestorage.KeyValueStorageConfig;
-import org.terracotta.corestorage.KeyValueStorageMutationListener;
+import org.terracotta.corestorage.StorageManager;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.Transaction;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.util.ObjectIDSet;
-import com.tc.util.sequence.MutableSequence;
 import com.tc.util.sequence.ObjectIDSequence;
 
 import java.util.Collection;
@@ -24,26 +23,28 @@ import java.util.SortedSet;
  */
 public class ManagedObjectPersistor  {
 
-  // This should be persistent
+  private static final String ROOT_DB = "root_db";
+  private static final String OBJECT_ID_SEQUENCE = "object_id_sequence";
+
+
   private final KeyValueStorage<String, ObjectID> rootMap;
   private final KeyValueStorage<ObjectID, ManagedObject> objectMap;
   private final ObjectIDSequence objectIDSequence;
 
   private final ObjectIDSetMaintainer oidSetMaintainer;
 
-  public ManagedObjectPersistor(KeyValueStorage<String, ObjectID> rootMap, KeyValueStorage<Long, byte[]> objectMap, MutableSequence objectIDSequence, final ObjectIDSetMaintainer oidSetMaintainer) {
-    this.rootMap = rootMap;
+  public ManagedObjectPersistor(StorageManager storageManager, SequenceManager sequenceManager, final ObjectIDSetMaintainer oidSetMaintainer) {
+    this.rootMap = storageManager.getKeyValueStorage(ROOT_DB, String.class, ObjectID.class);
     this.oidSetMaintainer = oidSetMaintainer;
-    this.objectMap = new ObjectMap(this, objectMap);
-    this.objectIDSequence = new ObjectIDSequenceImpl(objectIDSequence);
+    this.objectMap = new ObjectMap(this, storageManager);
+    this.objectIDSequence = new ObjectIDSequenceImpl(sequenceManager.getSequence(OBJECT_ID_SEQUENCE));
   }
 
-  public static KeyValueStorageConfig<String, ObjectID> rootMapConfig() {
-    return new ImmutableKeyValueStorageConfig<String, ObjectID>(String.class, ObjectID.class, null, ObjectIDTransformer.INSTANCE);
-  }
-
-  public static KeyValueStorageConfig<Long, byte[]> objectConfig(KeyValueStorageMutationListener<Long, byte[]> listener) {
-    return ObjectMap.getConfig(listener);
+  public static void addConfigsTo(final Map<String, KeyValueStorageConfig<?, ?>> configs, final ObjectIDSetMaintainer objectIDSetMaintainer) {
+    configs.put(ROOT_DB, ImmutableKeyValueStorageConfig.builder(String.class, ObjectID.class)
+        .valueTransformer(ObjectIDTransformer.INSTANCE)
+        .build());
+    ObjectMap.addConfigTo(configs, objectIDSetMaintainer);
   }
 
   public void close() {
@@ -75,8 +76,8 @@ public class ManagedObjectPersistor  {
     managedObject.setIsDirty(false);
   }
 
-  public void saveAllObjects(Transaction tx, Collection managed) {
-    for (ManagedObject managedObject : (Collection<ManagedObject> ) managed) {
+  public void saveAllObjects(Transaction tx, Collection<ManagedObject> managed) {
+    for (ManagedObject managedObject : managed) {
       saveObject(tx, managedObject);
     }
   }
@@ -85,7 +86,7 @@ public class ManagedObjectPersistor  {
     objectMap.removeAll(ids);
   }
 
-  public Map loadRootNamesToIDs() {
+  public Map<String, ObjectID> loadRootNamesToIDs() {
     return asJdkMap(rootMap);
   }
 

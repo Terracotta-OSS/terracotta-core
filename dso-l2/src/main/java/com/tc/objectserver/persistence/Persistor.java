@@ -4,11 +4,7 @@ import org.terracotta.corestorage.KeyValueStorageConfig;
 import org.terracotta.corestorage.StorageManager;
 import org.terracotta.corestorage.monitoring.MonitoredResource;
 
-import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.object.ObjectID;
-import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.persistence.api.PersistentMapStore;
-import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 import com.tc.util.sequence.MutableSequence;
 
 import java.util.Collection;
@@ -19,17 +15,6 @@ import java.util.Map;
  * @author tim
  */
 public class Persistor {
-
-  private static final String TRANSACTION = "transaction";
-  private static final String CLIENT_STATES = "client_states";
-  private static final String OBJECT_DB = "object_db";
-  private static final String ROOT_DB = "root_db";
-  private static final String STATE_MAP = "state_map";
-  private static final String SEQUENCE_MAP = "sequence_map";
-  private static final String SEQUENCE_UUID_MAP = "sequence_uuid_map";
-
-  private static final String CLIENT_STATE_SEQUENCE = "client_state_sequence";
-  private static final String OBJECT_ID_SEQUENCE = "object_id_sequence";
   private static final String GLOBAL_TRANSACTION_ID_SEQUENCE = "global_transaction_id_sequence";
 
   private final StorageManagerFactory storageManagerFactory;
@@ -57,24 +42,22 @@ public class Persistor {
       throw new AssertionError(e);
     }
 
-    persistentMapStore = new PersistentMapStoreImpl(metadataStorageManager.getKeyValueStorage(STATE_MAP, String.class, String.class));
+    persistentMapStore = new PersistentMapStoreImpl(metadataStorageManager);
     this.storageManagerFactory = storageManagerFactory;
   }
 
   private Map<String, KeyValueStorageConfig<?, ?>> getMetadataStorageConfigs() {
     Map<String, KeyValueStorageConfig<?, ?>> configs = new HashMap<String, KeyValueStorageConfig<?, ?>>();
-    configs.put(STATE_MAP, PersistentMapStoreImpl.config());
+    PersistentMapStoreImpl.addConfigTo(configs);
     return configs;
   }
 
   private Map<String, KeyValueStorageConfig<?, ?>> getDataStorageConfigs() {
     Map<String, KeyValueStorageConfig<?, ?>> configs = new HashMap<String, KeyValueStorageConfig<?, ?>>();
-    configs.put(TRANSACTION, TransactionPersistor.config());
-    configs.put(CLIENT_STATES, ClientStatePersistor.config());
-    configs.put(ROOT_DB, ManagedObjectPersistor.rootMapConfig());
-    configs.put(SEQUENCE_MAP, SequenceManager.sequenceMapConfig());
-    configs.put(SEQUENCE_UUID_MAP, SequenceManager.uuidMapConfig());
-    configs.put(OBJECT_DB, ManagedObjectPersistor.objectConfig(objectIDSetMaintainer));
+    TransactionPersistor.addConfigsTo(configs);
+    ClientStatePersistor.addConfigsTo(configs);
+    ManagedObjectPersistor.addConfigsTo(configs, objectIDSetMaintainer);
+    SequenceManager.addConfigsTo(configs);
     return configs;
   }
 
@@ -87,15 +70,10 @@ public class Persistor {
       throw new AssertionError(e);
     }
 
-    sequenceManager = new SequenceManager(dataStorageManager.getKeyValueStorage(SEQUENCE_MAP, String.class, Long.class),
-        dataStorageManager.getKeyValueStorage(SEQUENCE_UUID_MAP, String.class, String.class));
-    transactionPersistor = new TransactionPersistor(dataStorageManager.getKeyValueStorage(TRANSACTION,
-        GlobalTransactionID.class,
-        GlobalTransactionDescriptor.class));
-    clientStatePersistor = new ClientStatePersistor(sequenceManager.getSequence(CLIENT_STATE_SEQUENCE), dataStorageManager
-        .getKeyValueStorage(CLIENT_STATES, ChannelID.class, Boolean.class));
-    managedObjectPersistor = new ManagedObjectPersistor(dataStorageManager.getKeyValueStorage(ROOT_DB, String.class, ObjectID.class), dataStorageManager
-        .getKeyValueStorage(OBJECT_DB, Long.class, byte[].class), sequenceManager.getSequence(OBJECT_ID_SEQUENCE), objectIDSetMaintainer);
+    sequenceManager = new SequenceManager(dataStorageManager);
+    transactionPersistor = new TransactionPersistor(dataStorageManager);
+    clientStatePersistor = new ClientStatePersistor(sequenceManager, dataStorageManager);
+    managedObjectPersistor = new ManagedObjectPersistor(dataStorageManager, sequenceManager, objectIDSetMaintainer);
     gidSequence = sequenceManager.getSequence(GLOBAL_TRANSACTION_ID_SEQUENCE);
     persistenceTransactionProvider = new PersistenceTransactionProvider(dataStorageManager);
     persistentObjectFactory = new PersistentObjectFactory(dataStorageManager);
