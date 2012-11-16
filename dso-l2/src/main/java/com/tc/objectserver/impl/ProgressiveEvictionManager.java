@@ -107,13 +107,21 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         this.clientObjectReferenceSet = clients;
         this.evictor = new ServerMapEvictionEngine(mgr, trans);
         //  assume 100 MB/sec fill rate and set 0% usage poll rate to the time it would take to fill up.
-        this.evictionGrp = new ThreadGroup(grp, "Eviction Group");
+        this.evictionGrp = new ThreadGroup(grp, "Eviction Group") {
+
+            @Override
+            public void uncaughtException(Thread thread, Throwable thrwbl) {
+                getParent().uncaughtException(thread, thrwbl);
+            }
+            
+        };
         this.trigger = new ResourceMonitor(monitored, (monitored.getTotal() * 1000) / (100 * 1024 * 1024), evictionGrp);      
         this.agent = new ThreadPoolExecutor(1, 64, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),new ThreadFactory() {
             private int count = 1;
             @Override
             public Thread newThread(Runnable r) {
-                return new Thread(evictionGrp, r, "Expiration Thread - " + count++);
+                Thread t = new Thread(evictionGrp, r, "Expiration Thread - " + count++);
+                return t;
             }
         });
         log("critical threshold " + L2_EVICTION_CRITICALTHRESHOLD);
@@ -208,6 +216,9 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             if (context != null) {
                 this.evictorSink.add(context);
             } 
+        } catch ( Throwable t) {
+            t.printStackTrace();
+            throw new AssertionError(t);
         } finally {
             evictor.markEvictionDone(oid);
             if (evictor.isLogging()) {
@@ -237,7 +248,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         }
     }
 
-    List<Future<Void>> emergencyEviction(final boolean blowout) {
+    Future<Void> emergencyEviction(final boolean blowout) {
         final ObjectIDSet evictableObjects = store.getAllEvictableObjectIDs();
         List<Future<Void>> push = new ArrayList<Future<Void>>(evictableObjects.size());
         Random r = new Random();
@@ -254,7 +265,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             }
             ));
         }
-        return push;
+        return new GroupFuture(push);
     }
 
     private EvictableMap getEvictableMapFrom(final ObjectID id, final ManagedObjectState state) {
@@ -290,22 +301,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         int size = 0;
         volatile boolean isEmergency = false;
 
-        List<Future<Void>> currentRun = Collections.singletonList(completedFuture);
-        
-        public void cancelCurrentRun(boolean immediate) {
-            for ( Future<Void> n : currentRun ) {
-                n.cancel(false);
-            }
-        }
-        
-        public boolean isDone() {
-            for ( Future<Void> n : currentRun ) {
-                if ( !n.isDone() ) {
-                    return false;
-                }
-            }
-            return true;
-        }
+        Future<Void> currentRun = completedFuture;
 
         @Override
         public void memoryUsed(MemoryUsage usage, boolean recommendOffheap) {
@@ -316,9 +312,9 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                     log("Percent usage:" + percent + " time:" + (current - last) + " msec., size delta:" + (percent - size));
                 }
                 if (percent >= L2_EVICTION_CRITICALTHRESHOLD) {                    
-                    if ( !isEmergency || isDone() ) {
+                    if ( !isEmergency || currentRun.isDone() ) {
                         log("Emergency Triggered - " + percent);
-                        cancelCurrentRun(true);
+                        currentRun.cancel(false);
                         currentRun = emergencyEviction(isEmergency);// if already in emergency situation, really try hard to remove items.
                         isEmergency = true;
                     }
@@ -326,17 +322,17 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                     clientObjectReferenceSet.size();
                     if ( isEmergency ) {
                         isEmergency = false;
-                        cancelCurrentRun(true);
-                    }
-                    if ( PERIODIC_EVICTOR_ENABLED && isDone() ) {
-                        currentRun = Collections.singletonList(scheduleEvictionRun());
+                        currentRun.cancel(false);
+                        }
+                    if ( PERIODIC_EVICTOR_ENABLED && currentRun.isDone() ) {
+                        currentRun = scheduleEvictionRun();
                     } 
                 }
                 last = current;
                 size = percent;
             } catch (UnsupportedOperationException us) {
-                if ( isDone() ) {
-                    currentRun = Collections.singletonList(scheduleEvictionRun());
+                if ( currentRun.isDone() ) {
+                    currentRun = scheduleEvictionRun();
                 }
                 log(us.toString());
             }

@@ -414,10 +414,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends PartialMap
     final int size = getSize();
     final int chance = count > size ? 100 : Math.max(10, (count / size) * 100);
     for (final Iterator<Object> i = this.references.keySet().iterator(); samples.size() < count && i.hasNext();) {
-        if ( Thread.currentThread().isInterrupted() ) {
-       //  don't unset flag, it may need to be checked again in an outer loop.
-            return samples;
-        }
       final Object k = i.next();
       if (r.nextInt(100) < chance) {
         Object value = references.get(k);
