@@ -52,15 +52,15 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private static final TCLogger logger = TCLogging
             .getLogger(ProgressiveEvictionManager.class);
     private static final int SLEEP_TIME = 60;
-    private static final int L2_CACHEMANAGER_RESOURCEPOLLINGINTERVAL = TCPropertiesImpl
+    private static final int L2_EVICTION_RESOURCEPOLLINGINTERVAL = TCPropertiesImpl
             .getProperties()
-            .getInt(TCPropertiesConsts.L2_CACHEMANAGER_RESOURCEPOLLINGINTERVAL, SLEEP_TIME);
+            .getInt(TCPropertiesConsts.L2_EVICTION_RESOURCEPOLLINGINTERVAL, SLEEP_TIME);
       private final static boolean                PERIODIC_EVICTOR_ENABLED        = TCPropertiesImpl
                                                                                   .getProperties()
                                                                                   .getBoolean(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED, true);
-    private static final int L2_CACHEMANAGER_CRITICALTHRESHOLD = TCPropertiesImpl
+    private static final int L2_EVICTION_CRITICALTHRESHOLD = TCPropertiesImpl
             .getProperties()
-            .getInt(TCPropertiesConsts.L2_CACHEMANAGER_CRITICALTHRESHOLD, 90);
+            .getInt(TCPropertiesConsts.L2_EVICTION_CRITICALTHRESHOLD, 90);
     private final ServerMapEvictionEngine evictor;
     private final ResourceMonitor trigger;
     private final PersistentManagedObjectStore store;
@@ -116,7 +116,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 return new Thread(evictionGrp, r, "Expiration Thread - " + count++);
             }
         });
-        log("critical threshold " + L2_CACHEMANAGER_CRITICALTHRESHOLD);
+        log("critical threshold " + L2_EVICTION_CRITICALTHRESHOLD);
     }
 
     @Override
@@ -315,7 +315,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 if (evictor.isLogging()) {
                     log("Percent usage:" + percent + " time:" + (current - last) + " msec., size delta:" + (percent - size));
                 }
-                if (percent >= L2_CACHEMANAGER_CRITICALTHRESHOLD) {                    
+                if (percent >= L2_EVICTION_CRITICALTHRESHOLD) {                    
                     if ( !isEmergency || isDone() ) {
                         log("Emergency Triggered - " + percent);
                         cancelCurrentRun(true);
