@@ -21,5 +21,4 @@ public interface ToolkitFactoryInitializationContext {
 
   SearchFactory getSearchFactory();
 
-  // ToolkitRejoinEventsController getToolkitRejoinEventsController();
 }

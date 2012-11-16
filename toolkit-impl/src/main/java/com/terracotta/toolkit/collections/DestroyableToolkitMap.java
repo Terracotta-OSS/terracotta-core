@@ -9,6 +9,7 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import com.terracotta.toolkit.collections.map.ToolkitMapImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
+import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -16,7 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObject<ToolkitMap> implements
-    ToolkitMap<K, V> {
+    ToolkitMap<K, V>, RejoinAwareToolkitObject {
 
   private final String              name;
   private volatile ToolkitMap<K, V> map;
@@ -26,6 +27,16 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
     this.map = map;
     this.name = name;
     map.setApplyDestroyCallback(getDestroyApplicator());
+  }
+
+  @Override
+  public void rejoinStarted() {
+    //
+  }
+
+  @Override
+  public void rejoinCompleted() {
+    //
   }
 
   @Override

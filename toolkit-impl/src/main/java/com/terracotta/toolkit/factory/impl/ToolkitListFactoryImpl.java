@@ -4,7 +4,6 @@
 package com.terracotta.toolkit.factory.impl;
 
 import org.terracotta.toolkit.ToolkitObjectType;
-import org.terracotta.toolkit.collections.ToolkitList;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
@@ -18,7 +17,8 @@ import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
 /**
  * An implementation of {@link ClusteredListFactory}
  */
-public class ToolkitListFactoryImpl extends AbstractPrimaryToolkitObjectFactory<ToolkitList, ToolkitListImpl> {
+public class ToolkitListFactoryImpl extends
+    AbstractPrimaryToolkitObjectFactory<DestroyableToolkitList, ToolkitListImpl> {
 
   private static final ListIsolatedTypeFactory FACTORY = new ListIsolatedTypeFactory();
 
@@ -33,10 +33,12 @@ public class ToolkitListFactoryImpl extends AbstractPrimaryToolkitObjectFactory<
     return ToolkitObjectType.LIST;
   }
 
-  private static class ListIsolatedTypeFactory implements IsolatedToolkitTypeFactory<ToolkitList, ToolkitListImpl> {
+  private static class ListIsolatedTypeFactory implements
+      IsolatedToolkitTypeFactory<DestroyableToolkitList, ToolkitListImpl> {
     @Override
-    public ToolkitList createIsolatedToolkitType(ToolkitObjectFactory<ToolkitList> factory, String name,
-                                                 Configuration config, ToolkitListImpl tcClusteredObject) {
+    public DestroyableToolkitList createIsolatedToolkitType(ToolkitObjectFactory<DestroyableToolkitList> factory,
+                                                            String name, Configuration config,
+                                                            ToolkitListImpl tcClusteredObject) {
       return new DestroyableToolkitList(factory, tcClusteredObject, name);
     }
 

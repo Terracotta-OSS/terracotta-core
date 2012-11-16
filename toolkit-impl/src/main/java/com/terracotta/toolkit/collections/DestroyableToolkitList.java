@@ -8,13 +8,15 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
+import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<ToolkitList> implements ToolkitList<E> {
+public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<ToolkitList> implements ToolkitList<E>,
+    RejoinAwareToolkitObject {
 
   private volatile ToolkitList<E> list;
   private final String            name;
@@ -25,6 +27,18 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
     this.name = name;
     list.setApplyDestroyCallback(getDestroyApplicator());
   }
+
+
+  @Override
+  public void rejoinStarted() {
+    //
+  }
+
+  @Override
+  public void rejoinCompleted() {
+    //
+  }
+
 
   @Override
   public void applyDestroy() {

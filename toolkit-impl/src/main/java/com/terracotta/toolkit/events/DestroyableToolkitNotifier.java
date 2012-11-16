@@ -10,13 +10,14 @@ import org.terracotta.toolkit.events.ToolkitNotifier;
 import com.terracotta.toolkit.collections.DestroyedInstanceProxy;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
+import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class DestroyableToolkitNotifier<T> extends AbstractDestroyableToolkitObject<ToolkitNotifier> implements
-    ToolkitNotifier<T>, ToolkitNotificationListener<T> {
+    ToolkitNotifier<T>, ToolkitNotificationListener<T>, RejoinAwareToolkitObject {
 
   private volatile ToolkitNotifier<T>                                notifier;
   private final String                                               name;
@@ -28,6 +29,16 @@ public class DestroyableToolkitNotifier<T> extends AbstractDestroyableToolkitObj
     this.name = name;
     this.notifier = notifierImpl;
     notifierImpl.setApplyDestroyCallback(getDestroyApplicator());
+  }
+
+  @Override
+  public void rejoinStarted() {
+    // TODO:
+  }
+
+  @Override
+  public void rejoinCompleted() {
+    // TODO:
   }
 
   @Override

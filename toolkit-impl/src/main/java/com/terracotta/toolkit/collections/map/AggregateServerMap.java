@@ -182,6 +182,16 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     return name;
   }
 
+  @Override
+  public void rejoinStarted() {
+    // TODO:
+  }
+
+  @Override
+  public void rejoinCompleted() {
+    // TODO:
+  }
+
   private L1ServerMapLocalCacheStore<K, V> createLocalCacheStore() {
     ServerMapLocalStore<K, V> smLocalStore = serverMapLocalStoreFactory
         .getOrCreateServerMapLocalStore(getLocalStoreConfig());

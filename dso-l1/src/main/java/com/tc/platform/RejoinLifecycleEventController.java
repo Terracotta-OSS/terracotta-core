@@ -7,11 +7,11 @@ import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.platform.rejoin.RejoinLifecycleListener;
 import com.tc.platform.rejoin.RejoinManager;
 
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class RejoinLifecycleEventController {
 
-  private final CopyOnWriteArraySet<RejoinLifecycleListener> upperLayerListeners = new CopyOnWriteArraySet<RejoinLifecycleListener>();
+  private final CopyOnWriteArrayList<RejoinLifecycleListener> upperLayerListeners = new CopyOnWriteArrayList<RejoinLifecycleListener>();
   private final ClientHandshakeManager                       clientHandshakeManager;
 
   public RejoinLifecycleEventController(RejoinManager rejoinManager, ClientHandshakeManager clientHandshakeManager) {
@@ -20,7 +20,7 @@ public class RejoinLifecycleEventController {
   }
 
   public void addUpperLayerListener(RejoinLifecycleListener listener) {
-    upperLayerListeners.add(listener);
+    upperLayerListeners.addIfAbsent(listener);
   }
 
   public void removeUpperLayerListener(RejoinLifecycleListener listener) {

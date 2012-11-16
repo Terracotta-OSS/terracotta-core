@@ -3,12 +3,11 @@
  */
 package com.terracotta.toolkit.roots.impl;
 
-import org.terracotta.toolkit.object.ToolkitObject;
-
 import com.tc.net.GroupID;
 import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.object.TCToolkitObject;
 import com.terracotta.toolkit.object.ToolkitObjectStripe;
+import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
 import com.terracotta.toolkit.roots.AggregateToolkitTypeRoot;
 import com.terracotta.toolkit.roots.ToolkitTypeRoot;
 import com.terracotta.toolkit.roots.ToolkitTypeRootsFactory;
@@ -27,7 +26,7 @@ public class ToolkitTypeRootsStaticFactory implements ToolkitTypeRootsFactory {
   }
 
   @Override
-  public <T extends ToolkitObject, S extends TCToolkitObject> AggregateIsolatedToolkitTypeRoot<T, S> createAggregateIsolatedTypeRoot(String name,
+  public <T extends RejoinAwareToolkitObject, S extends TCToolkitObject> AggregateIsolatedToolkitTypeRoot<T, S> createAggregateIsolatedTypeRoot(String name,
                                                                                                                                      IsolatedToolkitTypeFactory<T, S> isolatedTypeFactory,
                                                                                                                                      PlatformService platformService) {
     GroupID[] gids = platformService.getGroupIDs();

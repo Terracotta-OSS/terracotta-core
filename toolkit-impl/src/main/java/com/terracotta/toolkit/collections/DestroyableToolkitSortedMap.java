@@ -9,6 +9,7 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import com.terracotta.toolkit.collections.map.ToolkitSortedMapImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
+import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -18,8 +19,7 @@ import java.util.Set;
 import java.util.SortedMap;
 
 public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> extends
-    AbstractDestroyableToolkitObject<ToolkitSortedMap> implements
-    ToolkitSortedMap<K, V> {
+    AbstractDestroyableToolkitObject<ToolkitSortedMap> implements ToolkitSortedMap<K, V>, RejoinAwareToolkitObject {
 
   private final String                    name;
   private volatile ToolkitSortedMap<K, V> map;
@@ -30,6 +30,16 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
     this.map = map;
     this.name = name;
     map.setApplyDestroyCallback(getDestroyApplicator());
+  }
+
+  @Override
+  public void rejoinStarted() {
+    // TODO:
+  }
+
+  @Override
+  public void rejoinCompleted() {
+    // TODO:
   }
 
   @Override

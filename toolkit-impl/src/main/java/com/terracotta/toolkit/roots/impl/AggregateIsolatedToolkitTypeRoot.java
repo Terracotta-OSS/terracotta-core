@@ -7,21 +7,23 @@ import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
-import org.terracotta.toolkit.object.ToolkitObject;
+
 import com.tc.abortable.AbortedOperationException;
 import com.tc.platform.PlatformService;
+import com.tc.platform.rejoin.RejoinLifecycleListener;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.object.TCToolkitObject;
+import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
 import com.terracotta.toolkit.roots.AggregateToolkitTypeRoot;
 import com.terracotta.toolkit.roots.ToolkitTypeRoot;
 import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
 import com.terracotta.toolkit.util.collections.WeakValueMap;
 
-public class AggregateIsolatedToolkitTypeRoot<T extends ToolkitObject, S extends TCToolkitObject> implements
-    AggregateToolkitTypeRoot<T, S> {
+public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject, S extends TCToolkitObject> implements
+    AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener {
 
   private final ToolkitTypeRoot<S>[]             roots;
   private final IsolatedToolkitTypeFactory<T, S> isolatedTypeFactory;
@@ -35,6 +37,7 @@ public class AggregateIsolatedToolkitTypeRoot<T extends ToolkitObject, S extends
     this.isolatedTypeFactory = isolatedTypeFactory;
     this.isolatedTypes = weakValueMap;
     this.platformService = platformService;
+    platformService.addRejoinLifecycleListener(this);
   }
 
   @Override
@@ -109,4 +112,21 @@ public class AggregateIsolatedToolkitTypeRoot<T extends ToolkitObject, S extends
       unlock(type, obj.getName());
     }
   }
+
+  @Override
+  public void onRejoinStart() {
+    for (String name : isolatedTypes.keySet()) {
+      T wrapper = isolatedTypes.get(name);
+      wrapper.rejoinStarted();
+    }
+  }
+
+  @Override
+  public void onRejoinComplete() {
+    for (String name : isolatedTypes.keySet()) {
+      T wrapper = isolatedTypes.get(name);
+      wrapper.rejoinCompleted();
+    }
+  }
+
 }

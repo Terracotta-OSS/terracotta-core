@@ -5,7 +5,6 @@ package com.terracotta.toolkit.factory.impl;
 
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.config.Configuration;
-import org.terracotta.toolkit.events.ToolkitNotifier;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
 import com.tc.logging.TCLogger;
@@ -30,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * An implementation of {@link ClusteredListFactory}
  */
 public class ToolkitNotifierFactoryImpl extends
-    AbstractPrimaryToolkitObjectFactory<ToolkitNotifier, ToolkitNotifierImpl> {
+    AbstractPrimaryToolkitObjectFactory<DestroyableToolkitNotifier, ToolkitNotifierImpl> {
   private static final TCLogger                    LOGGER                            = TCLogging
                                                                                          .getLogger(ToolkitNotifierFactoryImpl.class);
   public static final String                       TOOLKIT_NOTIFIER_EXECUTOR_SERVICE = "toolkitNotifierExecutorService";
@@ -88,11 +87,12 @@ public class ToolkitNotifierFactoryImpl extends
   }
 
   private static class NotifierIsolatedTypeFactory implements
-      IsolatedToolkitTypeFactory<ToolkitNotifier, ToolkitNotifierImpl> {
+      IsolatedToolkitTypeFactory<DestroyableToolkitNotifier, ToolkitNotifierImpl> {
 
     @Override
-    public ToolkitNotifier createIsolatedToolkitType(ToolkitObjectFactory factory, String name, Configuration config,
-                                                     ToolkitNotifierImpl tcClusteredObject) {
+    public DestroyableToolkitNotifier createIsolatedToolkitType(ToolkitObjectFactory<DestroyableToolkitNotifier> factory,
+                                                                String name, Configuration config,
+                                                                ToolkitNotifierImpl tcClusteredObject) {
       return new DestroyableToolkitNotifier(factory, tcClusteredObject, name);
     }
 

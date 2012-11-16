@@ -20,19 +20,16 @@ import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.nonstop.NonStopConfigRegistryImpl;
 import com.terracotta.toolkit.nonstop.NonStopManager;
 import com.terracotta.toolkit.nonstop.NonstopTimeoutBehaviorResolver;
-import com.terracotta.toolkit.type.DistributedToolkitType;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
-    ValuesResolver<K, V>, ToolkitCacheInternal<K, V> {
+public class NonStopToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, ToolkitCacheInternal<K, V> {
   private final NonStopManager                                                    nonStopManager;
   private final NonStopConfigRegistryImpl                                         nonStopConfigManager;
 
@@ -133,19 +130,6 @@ public class NonStopToolkitCacheImpl<K, V> implements DistributedToolkitType<Int
       getDelegate().destroy();
     } catch (ToolkitAbortableOperationException e) {
       resolveTimeoutBehavior().destroy();
-    } finally {
-      nonStopManager.finish();
-    }
-  }
-
-  @Override
-  public Iterator<InternalToolkitMap<K, V>> iterator() {
-    nonStopManager.begin(getTimeout(getMethod()));
-
-    try {
-      return ((DistributedToolkitType<InternalToolkitMap<K, V>>) getDelegate()).iterator();
-    } catch (ToolkitAbortableOperationException e) {
-      return ((DistributedToolkitType<InternalToolkitMap<K, V>>) resolveTimeoutBehavior()).iterator();
     } finally {
       nonStopManager.finish();
     }

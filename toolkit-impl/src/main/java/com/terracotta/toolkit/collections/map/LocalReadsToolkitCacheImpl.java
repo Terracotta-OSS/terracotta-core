@@ -14,18 +14,16 @@ import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
 import com.tc.object.ObjectID;
 import com.terracotta.toolkit.object.DestroyableToolkitObject;
-import com.terracotta.toolkit.type.DistributedToolkitType;
 
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class LocalReadsToolkitCacheImpl<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
-    ValuesResolver<K, V>, ToolkitCacheInternal<K, V>, DestroyableToolkitObject {
+public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, ToolkitCacheInternal<K, V>,
+    DestroyableToolkitObject {
   private final AtomicReference<ToolkitCacheInternal<K, V>> delegate;
   private final ToolkitCacheInternal<K, V>                  mutationBehaviourResolver;
   private final ToolkitCacheInternal<K, V>                  noOpBehaviourResolver;
@@ -339,11 +337,6 @@ public class LocalReadsToolkitCacheImpl<K, V> implements DistributedToolkitType<
   @Override
   public SearchExecutor createSearchExecutor() {
     return getDelegate().createSearchExecutor();
-  }
-
-  @Override
-  public Iterator<InternalToolkitMap<K, V>> iterator() {
-    return ((DistributedToolkitType<InternalToolkitMap<K, V>>) getDelegate()).iterator();
   }
 
   @Override

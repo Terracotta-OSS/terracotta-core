@@ -4,10 +4,10 @@
 package com.terracotta.toolkit.factory.impl;
 
 import org.terracotta.toolkit.ToolkitObjectType;
-import org.terracotta.toolkit.cache.ToolkitCache;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
 import com.terracotta.toolkit.collections.map.ServerMap;
+import com.terracotta.toolkit.collections.map.ToolkitCacheImpl;
 import com.terracotta.toolkit.factory.ToolkitFactoryInitializationContext;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
@@ -15,8 +15,8 @@ import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
 /**
  * Implementation of {@link ClusteredCacheFactory}
  */
-public class ToolkitCacheFactoryImpl extends AbstractPrimaryToolkitObjectFactory<ToolkitCache, ServerMap> implements
-    ToolkitObjectFactory<ToolkitCache> {
+public class ToolkitCacheFactoryImpl extends AbstractPrimaryToolkitObjectFactory<ToolkitCacheImpl, ServerMap> implements
+    ToolkitObjectFactory<ToolkitCacheImpl> {
 
   private final ToolkitObjectType type;
 

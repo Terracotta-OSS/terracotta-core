@@ -18,8 +18,6 @@ public class ToolkitFactoryInitializationContextBuilder {
   private ServerMapLocalStoreFactory serverMapLocalStoreFactory;
   private SearchFactory              searchFactory;
 
-  // private ToolkitRejoinEventsController controller;
-
   public ToolkitFactoryInitializationContextBuilder weakValueMapManager(WeakValueMapManager weakValueMapManagerParam) {
     this.weakValueMapManager = weakValueMapManagerParam;
     return this;
@@ -45,12 +43,6 @@ public class ToolkitFactoryInitializationContextBuilder {
     return this;
   }
 
-  // public ToolkitFactoryInitializationContextBuilder rejoinEventsController(ToolkitRejoinEventsController
-  // rejoinController) {
-  // this.controller = rejoinController;
-  // return this;
-  // }
-
   public ToolkitFactoryInitializationContext build() {
     return new ToolkitFactoryInitializationContextImpl(this);
   }
@@ -63,15 +55,12 @@ public class ToolkitFactoryInitializationContextBuilder {
     private final ServerMapLocalStoreFactory localStoreFactory;
     private final SearchFactory              factory;
 
-    // private final ToolkitRejoinEventsController rejoinEventsController;
-
     private ToolkitFactoryInitializationContextImpl(ToolkitFactoryInitializationContextBuilder builder) {
       manager = builder.weakValueMapManager;
       service = builder.platformService;
       rootsFactory = builder.toolkitTypeRootsFactory;
       localStoreFactory = builder.serverMapLocalStoreFactory;
       factory = builder.searchFactory;
-      // rejoinEventsController = builder.controller;
     }
 
     @Override
@@ -98,11 +87,6 @@ public class ToolkitFactoryInitializationContextBuilder {
     public SearchFactory getSearchFactory() {
       return this.factory;
     }
-
-    // @Override
-    // public ToolkitRejoinEventsController getToolkitRejoinEventsController() {
-    // return this.rejoinEventsController;
-    // }
 
   }
 
