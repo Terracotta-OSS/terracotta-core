@@ -43,6 +43,10 @@ public class DsoNodeGetIpAndHostNameTest extends BaseDSOTestCase {
     ManagerUtil.enable();
   }
 
+  public DsoNodeGetIpAndHostNameTest() {
+    disableTest();
+  }
+
   /**
    * Test for DsoNodeImpl. To make sure getIp() and getHostanme() working fine when connected to L2 or disconnected.
    */
