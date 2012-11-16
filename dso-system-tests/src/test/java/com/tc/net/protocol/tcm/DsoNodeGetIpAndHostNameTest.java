@@ -20,9 +20,6 @@ import com.tc.object.MockRemoteSearchRequestManager;
 import com.tc.object.TestClientObjectManager;
 import com.tc.object.bytecode.ManagerImpl;
 import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.bytecode.hook.DSOContext;
-import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
-import com.tc.object.bytecode.hook.impl.DSOContextImpl;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.locks.MockClientLockManager;
@@ -143,6 +140,7 @@ public class DsoNodeGetIpAndHostNameTest extends BaseDSOTestCase {
   private class PingMessageSink implements TCMessageSink {
     Queue<PingMessage> queue = new LinkedBlockingQueue<PingMessage>();
 
+    @Override
     public void putMessage(final TCMessage message) throws UnsupportedMessageTypeException {
 
       PingMessage ping = (PingMessage) message;
@@ -179,8 +177,7 @@ public class DsoNodeGetIpAndHostNameTest extends BaseDSOTestCase {
     ManagerImpl tcmanager = new ManagerImpl(true, new TestClientObjectManager(), new MockTransactionManager(),
                                             new MockClientLockManager(), new MockRemoteSearchRequestManager(),
                                             configHelper, l2Connection, null);
-    DSOContext context = DSOContextImpl.createContext(configHelper, tcmanager);
-    ClassProcessorHelper.setContext(Thread.currentThread().getContextClassLoader(), context);
+    ManagerUtil.enableSingleton(tcmanager);
     tcmanager.initForTests(null);
     return tcmanager;
   }
@@ -211,6 +208,7 @@ public class DsoNodeGetIpAndHostNameTest extends BaseDSOTestCase {
       return server;
     }
 
+    @Override
     public void execute() throws Throwable {
       ManagedObjectStateFactory.disableSingleton(true);
       TestConfigurationSetupManagerFactory factory = configFactory();

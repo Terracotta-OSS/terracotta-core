@@ -3,7 +3,6 @@
  */
 package com.terracotta.toolkit.collections.map;
 
-import com.tc.object.bytecode.hook.impl.ArrayManager;
 import com.terracotta.toolkit.util.collections.AggregateMapIterator;
 
 import java.util.AbstractCollection;
@@ -18,16 +17,6 @@ public abstract class ToolkitMapAggregateSet<E> extends AbstractSet<E> {
 
   public ToolkitMapAggregateSet(AggregateServerMap map) {
     this.map = map;
-  }
-
-  @Override
-  public <T extends Object> T[] toArray(T[] a) {
-    if (ArrayManager.getObject(a) != null) {
-      //
-      throw new UnsupportedOperationException("toArray(T[] a) not supported with clustered target array");
-    }
-
-    return super.toArray(a);
   }
 
   public static class ClusteredMapAggregateKeySet<K, V> extends ToolkitMapAggregateSet<K> {
@@ -134,16 +123,5 @@ public abstract class ToolkitMapAggregateSet<E> extends AbstractSet<E> {
     public int size() {
       return map.size();
     }
-
-    @Override
-    public <T extends Object> T[] toArray(T[] a) {
-      if (ArrayManager.getObject(a) != null) {
-        //
-        throw new UnsupportedOperationException("toArray(T[] a) not supported with clustered target array");
-      }
-
-      return super.toArray(a);
-    }
-
   }
 }

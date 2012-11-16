@@ -3,8 +3,6 @@
  */
 package com.terracotta.toolkit.collections.map;
 
-import com.tc.object.bytecode.hook.impl.ArrayManager;
-
 import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -40,16 +38,6 @@ public class ServerMapKeySet<K, V> extends AbstractSet<K> {
   }
 
   @Override
-  public <T extends Object> T[] toArray(T[] a) {
-    if (ArrayManager.getObject(a) != null) {
-      //
-      throw new UnsupportedOperationException("toArray(T[] a) not supported with clustered target array");
-    }
-
-    return super.toArray(a);
-  }
-
-  @Override
   public Iterator<K> iterator() {
     return new KeyIterator<K, V>(map, this.delegateKeySet.iterator());
   }
@@ -65,16 +53,19 @@ public class ServerMapKeySet<K, V> extends AbstractSet<K> {
       this.delegate = delegate;
     }
 
+    @Override
     public boolean hasNext() {
       return this.delegate.hasNext();
     }
 
+    @Override
     public KI next() {
       final KI result = this.delegate.next();
       this.lastKey = result;
       return result;
     }
 
+    @Override
     public void remove() {
       if (null == this.lastKey) { throw new IllegalStateException("next needs to be called before calling remove"); }
       clusteredMap.remove(this.lastKey);

@@ -3,8 +3,6 @@
  */
 package com.terracotta.toolkit.collections.map;
 
-import com.tc.object.bytecode.hook.impl.ArrayManager;
-
 import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -52,16 +50,6 @@ public class ServerMapEntrySet<K, V> extends AbstractSet<Entry<K, V>> {
     map.clear();
   }
 
-  @Override
-  public <T extends Object> T[] toArray(T[] a) {
-    if (ArrayManager.getObject(a) != null) {
-      //
-      throw new UnsupportedOperationException("toArray(T[] a) not supported with clustered target array");
-    }
-
-    return super.toArray(a);
-  }
-
   private static class EntryIterator<T, D> implements Iterator<Entry<T, D>> {
     /**
      *
@@ -91,10 +79,12 @@ public class ServerMapEntrySet<K, V> extends AbstractSet<Entry<K, V>> {
       }
     }
 
+    @Override
     public synchronized boolean hasNext() {
       return nextEntry != null;
     }
 
+    @Override
     public synchronized Entry<T, D> next() {
       if (nextEntry == null) throw new NoSuchElementException();
 
@@ -103,6 +93,7 @@ public class ServerMapEntrySet<K, V> extends AbstractSet<Entry<K, V>> {
       return currentEntry;
     }
 
+    @Override
     public synchronized void remove() {
       if (null == this.currentEntry) { throw new IllegalStateException("next needs to be called before calling remove"); }
 
@@ -123,6 +114,7 @@ public class ServerMapEntrySet<K, V> extends AbstractSet<Entry<K, V>> {
       this.value = value;
     }
 
+    @Override
     public B getKey() {
       // entry locking here doesn't make sense since
       // 1. Entry keys can't change
@@ -130,10 +122,12 @@ public class ServerMapEntrySet<K, V> extends AbstractSet<Entry<K, V>> {
       return this.key;
     }
 
+    @Override
     public C getValue() {
       return this.value;
     }
 
+    @Override
     public C setValue(final C newValue) {
       final C old = map.put(this.key, newValue);
       this.value = newValue;

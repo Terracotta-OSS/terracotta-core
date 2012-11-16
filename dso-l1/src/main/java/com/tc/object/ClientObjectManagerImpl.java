@@ -23,7 +23,6 @@ import com.tc.object.appevent.NonPortableFieldSetContext;
 import com.tc.object.appevent.NonPortableObjectEvent;
 import com.tc.object.appevent.NonPortableRootContext;
 import com.tc.object.bytecode.Manageable;
-import com.tc.object.bytecode.hook.impl.ArrayManager;
 import com.tc.object.cache.CacheStats;
 import com.tc.object.cache.ConcurrentClockEvictionPolicy;
 import com.tc.object.cache.Evictable;
@@ -446,7 +445,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   /**
    * Prefetch object by ID, faulting into the JVM if necessary, Async lookup and will not cause ObjectNotFoundException
    * like lookupObject. Non-existent objects are ignored by the server.
-   * 
+   *
    * @param id Object identifier
    */
   @Override
@@ -1053,10 +1052,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       final Object pojo = obj.getPeerObject();
 
       if (pojo != null) {
-        if (pojo.getClass().isArray()) {
-          ArrayManager.register(pojo, obj);
-        }
-
         if (pojo instanceof Manageable) {
           final Manageable m = (Manageable) pojo;
           if (m.__tc_managed() == null) {
