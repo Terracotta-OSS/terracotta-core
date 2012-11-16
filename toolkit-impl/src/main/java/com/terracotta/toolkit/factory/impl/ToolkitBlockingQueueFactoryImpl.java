@@ -16,6 +16,7 @@ import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.ToolkitObjectStripe;
 import com.terracotta.toolkit.object.ToolkitObjectStripeImpl;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
+import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
 
 public class ToolkitBlockingQueueFactoryImpl extends
@@ -40,11 +41,22 @@ public class ToolkitBlockingQueueFactoryImpl extends
 
     @Override
     public ToolkitBlockingQueueImpl createIsolatedToolkitType(ToolkitObjectFactory<ToolkitBlockingQueueImpl> factory,
+                                                              final IsolatedClusteredObjectLookup<ToolkitObjectStripe<ToolkitListImpl>> lookup,
                                                               String name, Configuration config,
                                                               ToolkitObjectStripe<ToolkitListImpl> tcClusteredObject) {
       int actualCapacity = assertConfig(name, config, tcClusteredObject);
-      DestroyableToolkitList listWrapper = new DestroyableToolkitList(factory, tcClusteredObject.iterator().next(),
-                                                                      name);
+      DestroyableToolkitList listWrapper = new DestroyableToolkitList(
+                                                                      factory,
+                                                                      new IsolatedClusteredObjectLookup<ToolkitListImpl>() {
+
+                                                                        @Override
+                                                                        public ToolkitListImpl lookupClusteredObject(String blockingQName) {
+                                                                          ToolkitObjectStripe<ToolkitListImpl> toolkitObjectStripe = lookup
+                                                                              .lookupClusteredObject(blockingQName);
+                                                                          return toolkitObjectStripe.iterator().next();
+                                                                        }
+
+                                                                      }, tcClusteredObject.iterator().next(), name);
 
       return new ToolkitBlockingQueueImpl(factory, listWrapper, actualCapacity);
     }

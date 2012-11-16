@@ -10,6 +10,7 @@ import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 
 import com.tc.abortable.AbortedOperationException;
 import com.tc.platform.PlatformService;
+import com.tc.platform.rejoin.RejoinLifecycleListener;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
@@ -23,7 +24,7 @@ import com.terracotta.toolkit.type.DistributedToolkitTypeFactory;
 import com.terracotta.toolkit.util.collections.WeakValueMap;
 
 public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitType<S>, S extends TCToolkitObject>
-    implements AggregateToolkitTypeRoot<T, S> {
+    implements AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener {
 
   private final ToolkitTypeRoot<ToolkitObjectStripe<S>>[] roots;
   private final DistributedToolkitTypeFactory<T, S>       distributedTypeFactory;
@@ -37,6 +38,7 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
     this.distributedTypeFactory = factory;
     this.localCache = weakValueMap;
     this.platformService = platformService;
+    this.platformService.addRejoinLifecycleListener(this);
   }
 
   @Override
@@ -152,4 +154,23 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
     }
   }
 
+  @Override
+  public void onRejoinStart() {
+    for (String name : localCache.keySet()) {
+      T wrapper = localCache.get(name);
+      if (wrapper != null) {
+        wrapper.rejoinStarted();
+      }
+    }
+  }
+
+  @Override
+  public void onRejoinComplete() {
+    for (String name : localCache.keySet()) {
+      T wrapper = localCache.get(name);
+      if (wrapper != null) {
+        wrapper.rejoinCompleted();
+      }
+    }
+  }
 }

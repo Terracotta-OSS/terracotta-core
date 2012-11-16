@@ -11,6 +11,7 @@ import com.terracotta.toolkit.collections.DestroyedInstanceProxy;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
+import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 
 import java.util.Collections;
 import java.util.List;
@@ -23,9 +24,13 @@ public class DestroyableToolkitNotifier<T> extends AbstractDestroyableToolkitObj
   private final String                                               name;
   private final CopyOnWriteArrayList<ToolkitNotificationListener<T>> listeners  = new CopyOnWriteArrayList<ToolkitNotificationListener<T>>();
   private boolean                                                    registered = false;
+  private final IsolatedClusteredObjectLookup<ToolkitNotifierImpl>   lookup;
 
-  public DestroyableToolkitNotifier(ToolkitObjectFactory factory, ToolkitNotifierImpl<T> notifierImpl, String name) {
+  public DestroyableToolkitNotifier(ToolkitObjectFactory factory,
+                                    IsolatedClusteredObjectLookup<ToolkitNotifierImpl> lookup,
+                                    ToolkitNotifierImpl<T> notifierImpl, String name) {
     super(factory);
+    this.lookup = lookup;
     this.name = name;
     this.notifier = notifierImpl;
     notifierImpl.setApplyDestroyCallback(getDestroyApplicator());
@@ -38,7 +43,12 @@ public class DestroyableToolkitNotifier<T> extends AbstractDestroyableToolkitObj
 
   @Override
   public void rejoinCompleted() {
-    // TODO:
+    ToolkitNotifierImpl afterRejoin = lookup.lookupClusteredObject(name);
+    if (afterRejoin == null) {
+      // didn't find backing clustered object after rejoin - must have been destroyed
+      // todo: set to a new delegate which throws exception, as clustered object is destroyed
+    }
+    this.notifier = afterRejoin;
   }
 
   @Override

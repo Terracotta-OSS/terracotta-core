@@ -16,6 +16,7 @@ import com.terracotta.toolkit.events.ToolkitNotifierImpl;
 import com.terracotta.toolkit.factory.ToolkitFactoryInitializationContext;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
+import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
 
 import java.util.concurrent.ExecutorService;
@@ -91,9 +92,10 @@ public class ToolkitNotifierFactoryImpl extends
 
     @Override
     public DestroyableToolkitNotifier createIsolatedToolkitType(ToolkitObjectFactory<DestroyableToolkitNotifier> factory,
+                                                                IsolatedClusteredObjectLookup<ToolkitNotifierImpl> lookup,
                                                                 String name, Configuration config,
                                                                 ToolkitNotifierImpl tcClusteredObject) {
-      return new DestroyableToolkitNotifier(factory, tcClusteredObject, name);
+      return new DestroyableToolkitNotifier(factory, lookup, tcClusteredObject, name);
     }
 
     @Override

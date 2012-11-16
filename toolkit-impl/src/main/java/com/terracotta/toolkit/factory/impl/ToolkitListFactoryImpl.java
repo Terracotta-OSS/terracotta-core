@@ -12,6 +12,7 @@ import com.terracotta.toolkit.collections.ToolkitListImpl;
 import com.terracotta.toolkit.factory.ToolkitFactoryInitializationContext;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
+import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
 
 /**
@@ -37,9 +38,10 @@ public class ToolkitListFactoryImpl extends
       IsolatedToolkitTypeFactory<DestroyableToolkitList, ToolkitListImpl> {
     @Override
     public DestroyableToolkitList createIsolatedToolkitType(ToolkitObjectFactory<DestroyableToolkitList> factory,
+                                                            IsolatedClusteredObjectLookup<ToolkitListImpl> lookup,
                                                             String name, Configuration config,
                                                             ToolkitListImpl tcClusteredObject) {
-      return new DestroyableToolkitList(factory, tcClusteredObject, name);
+      return new DestroyableToolkitList(factory, lookup, tcClusteredObject, name);
     }
 
     @Override

@@ -19,11 +19,12 @@ import com.terracotta.toolkit.object.TCToolkitObject;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
 import com.terracotta.toolkit.roots.AggregateToolkitTypeRoot;
 import com.terracotta.toolkit.roots.ToolkitTypeRoot;
+import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 import com.terracotta.toolkit.type.IsolatedToolkitTypeFactory;
 import com.terracotta.toolkit.util.collections.WeakValueMap;
 
 public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject, S extends TCToolkitObject> implements
-    AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener {
+    AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, IsolatedClusteredObjectLookup<S> {
 
   private final ToolkitTypeRoot<S>[]             roots;
   private final IsolatedToolkitTypeFactory<T, S> isolatedTypeFactory;
@@ -57,7 +58,8 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
           clusteredObject = isolatedTypeFactory.createTCClusteredObject(configuration);
           getToolkitTypeRoot(name).addClusteredObject(name, clusteredObject);
         }
-        isolatedType = isolatedTypeFactory.createIsolatedToolkitType(factory, name, configuration, clusteredObject);
+        isolatedType = isolatedTypeFactory.createIsolatedToolkitType(factory, this, name, configuration,
+                                                                     clusteredObject);
         isolatedTypes.put(name, isolatedType);
         return isolatedType;
       }
@@ -117,7 +119,9 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
   public void onRejoinStart() {
     for (String name : isolatedTypes.keySet()) {
       T wrapper = isolatedTypes.get(name);
-      wrapper.rejoinStarted();
+      if (wrapper != null) {
+        wrapper.rejoinStarted();
+      }
     }
   }
 
@@ -125,8 +129,15 @@ public class AggregateIsolatedToolkitTypeRoot<T extends RejoinAwareToolkitObject
   public void onRejoinComplete() {
     for (String name : isolatedTypes.keySet()) {
       T wrapper = isolatedTypes.get(name);
-      wrapper.rejoinCompleted();
+      if (wrapper != null) {
+        wrapper.rejoinCompleted();
+      }
     }
+  }
+
+  @Override
+  public S lookupClusteredObject(String name) {
+    return getToolkitTypeRoot(name).getClusteredObject(name);
   }
 
 }

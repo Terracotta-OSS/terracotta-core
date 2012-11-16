@@ -10,6 +10,7 @@ import com.terracotta.toolkit.collections.map.ToolkitMapImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
+import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -19,11 +20,15 @@ import java.util.Set;
 public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObject<ToolkitMap> implements
     ToolkitMap<K, V>, RejoinAwareToolkitObject {
 
-  private final String              name;
-  private volatile ToolkitMap<K, V> map;
+  private final String                                        name;
+  private volatile ToolkitMap<K, V>                           map;
+  private final IsolatedClusteredObjectLookup<ToolkitMapImpl> lookup;
 
-  public DestroyableToolkitMap(ToolkitObjectFactory<ToolkitMap> factory, ToolkitMapImpl<K, V> map, String name) {
+  public DestroyableToolkitMap(ToolkitObjectFactory<ToolkitMap> factory,
+                               IsolatedClusteredObjectLookup<ToolkitMapImpl> lookup, ToolkitMapImpl<K, V> map,
+                               String name) {
     super(factory);
+    this.lookup = lookup;
     this.map = map;
     this.name = name;
     map.setApplyDestroyCallback(getDestroyApplicator());
@@ -36,7 +41,12 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
 
   @Override
   public void rejoinCompleted() {
-    //
+    ToolkitMapImpl afterRejoin = lookup.lookupClusteredObject(name);
+    if (afterRejoin == null) {
+      // didn't find backing clustered object after rejoin - must have been destroyed
+      // todo: set to a new delegate which throws exception, as clustered object is destroyed
+    }
+    this.map = afterRejoin;
   }
 
   @Override

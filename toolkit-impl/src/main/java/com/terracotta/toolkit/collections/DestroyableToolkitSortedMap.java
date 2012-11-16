@@ -10,6 +10,7 @@ import com.terracotta.toolkit.collections.map.ToolkitSortedMapImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
+import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -21,12 +22,15 @@ import java.util.SortedMap;
 public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> extends
     AbstractDestroyableToolkitObject<ToolkitSortedMap> implements ToolkitSortedMap<K, V>, RejoinAwareToolkitObject {
 
-  private final String                    name;
-  private volatile ToolkitSortedMap<K, V> map;
+  private final String                                              name;
+  private volatile ToolkitSortedMap<K, V>                           map;
+  private final IsolatedClusteredObjectLookup<ToolkitSortedMapImpl> lookup;
 
-  public DestroyableToolkitSortedMap(ToolkitObjectFactory<ToolkitSortedMap> factory, ToolkitSortedMapImpl<K, V> map,
-                                     String name) {
+  public DestroyableToolkitSortedMap(ToolkitObjectFactory<ToolkitSortedMap> factory,
+                                     IsolatedClusteredObjectLookup<ToolkitSortedMapImpl> lookup,
+                                     ToolkitSortedMapImpl<K, V> map, String name) {
     super(factory);
+    this.lookup = lookup;
     this.map = map;
     this.name = name;
     map.setApplyDestroyCallback(getDestroyApplicator());
@@ -39,7 +43,12 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
 
   @Override
   public void rejoinCompleted() {
-    // TODO:
+    ToolkitSortedMapImpl afterRejoin = lookup.lookupClusteredObject(name);
+    if (afterRejoin == null) {
+      // didn't find backing clustered object after rejoin - must have been destroyed
+      // todo: set to a new delegate which throws exception, as clustered object is destroyed
+    }
+    this.map = afterRejoin;
   }
 
   @Override

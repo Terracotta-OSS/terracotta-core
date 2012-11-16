@@ -9,6 +9,7 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
+import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -18,16 +19,18 @@ import java.util.ListIterator;
 public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<ToolkitList> implements ToolkitList<E>,
     RejoinAwareToolkitObject {
 
-  private volatile ToolkitList<E> list;
-  private final String            name;
+  private volatile ToolkitList<E>                              list;
+  private final String                                         name;
+  private final IsolatedClusteredObjectLookup<ToolkitListImpl> lookup;
 
-  public DestroyableToolkitList(ToolkitObjectFactory factory, ToolkitListImpl<E> list, String name) {
+  public DestroyableToolkitList(ToolkitObjectFactory factory, IsolatedClusteredObjectLookup<ToolkitListImpl> lookup,
+                                ToolkitListImpl<E> list, String name) {
     super(factory);
+    this.lookup = lookup;
     this.list = list;
     this.name = name;
     list.setApplyDestroyCallback(getDestroyApplicator());
   }
-
 
   @Override
   public void rejoinStarted() {
@@ -36,9 +39,13 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
 
   @Override
   public void rejoinCompleted() {
-    //
+    ToolkitListImpl afterRejoin = lookup.lookupClusteredObject(name);
+    if (afterRejoin == null) {
+      // didn't find backing clustered object after rejoin - must have been destroyed
+      // todo: set to a new delegate which throws exception, as clustered object is destroyed
+    }
+    this.list = afterRejoin;
   }
-
 
   @Override
   public void applyDestroy() {
