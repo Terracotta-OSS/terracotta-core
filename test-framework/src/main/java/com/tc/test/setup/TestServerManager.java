@@ -1,5 +1,7 @@
 package com.tc.test.setup;
 
+import org.terracotta.tests.base.TestFailureListener;
+
 import com.tc.config.test.schema.ConfigHelper;
 import com.tc.stats.api.DGCMBean;
 import com.tc.stats.api.DSOMBean;
@@ -19,7 +21,8 @@ public class TestServerManager {
   private final ConfigHelper         configHelper;
   private static final boolean       DEBUG = Boolean.getBoolean("test.framework.debug");
 
-  public TestServerManager(TestConfig testConfig, File tempDir, File tcConfigFile, File javaHome, Runnable failureCallback) throws Exception {
+  public TestServerManager(TestConfig testConfig, File tempDir, File tcConfigFile, File javaHome,
+                           TestFailureListener failureCallback) throws Exception {
     this.testConfig = testConfig;
     portChooser = new PortChooser();
 

@@ -2,6 +2,7 @@ package com.tc.test.setup;
 
 import org.terracotta.test.util.JMXUtils;
 import org.terracotta.test.util.TestBaseUtil;
+import org.terracotta.tests.base.TestFailureListener;
 
 import com.tc.lang.ServerExitStatus;
 import com.tc.management.beans.L2DumperMBean;
@@ -72,10 +73,42 @@ public class GroupServerManager {
                                                        }
                                                      });
 
-  private final Runnable           testFailureCallback;
+  private final TestFailureListener testFailureCallback;
   private final boolean             renameDataDir         = false;
 
-  public GroupServerManager(GroupsData groupData, TestConfig testConfig, File tempDir, File javaHome, File tcConfigFile, final Runnable testFailureCallback)
+  private final class ServerExitCallback implements MonitoringServerControl.MonitoringServerControlExitCallback {
+
+    private final String serverName;
+    private final int    dsoPort;
+
+    private ServerExitCallback(String server, int port) {
+      serverName = server;
+      dsoPort = port;
+    }
+
+    @Override
+    public boolean onExit(final int exitCode) {
+
+      String errMsg;
+      if (exitCode == ServerExitStatus.EXITCODE_RESTART_REQUEST && testConfig.isRestartZappedL2()) {
+        errMsg = "*** Server '" + serverName + "' with dso-port " + dsoPort
+                 + " was zapped and needs to be restarted! ***";
+        System.out.println(errMsg);
+        return true;
+      }
+      errMsg = "*** Server '" + serverName + "' with dso-port " + dsoPort
+                      + " exited unexpectedly with exit code " + exitCode + ". ***";
+      System.err.println(errMsg);
+      if (!testConfig.getCrashConfig().shouldIgnoreUnexpectedL2Crash()) {
+        testFailureCallback.testFailed(errMsg);
+      }
+      return false;
+    }
+
+  }
+
+  public GroupServerManager(GroupsData groupData, TestConfig testConfig, File tempDir, File javaHome,
+                            File tcConfigFile, final TestFailureListener testFailureCallback)
       throws Exception {
     this.groupData = groupData;
     this.testFailureCallback = testFailureCallback;
@@ -158,23 +191,8 @@ public class GroupServerManager {
     TestBaseUtil.removeDuplicateJvmArgs(jvmArgs);
     testConfig.getL2Config().getBytemanConfig().addTo(jvmArgs, tempDir);
     return new MonitoringServerControl(new ExtraProcessServerControl(HOST, dsoPort, jmxPort, tcConfigFile.getAbsolutePath(), true, serverName,
-                                         jvmArgs, javaHome, true, workingDir), new MonitoringServerControl.MonitoringServerControlExitCallback() {
-      @Override
-      public boolean onExit(final int exitCode) {
-                                           if (exitCode == ServerExitStatus.EXITCODE_RESTART_REQUEST
-                                               && testConfig.isRestartZappedL2()) {
-                                             System.out.println("*** Server '" + serverName + "' with dso-port "
-                                                                + dsoPort
-                                                                + " was zapped and needs to be restarted! ***");
-                                             return true;
-                                           }
-        System.out.println("*** Server '" + serverName + "' with dso-port " + dsoPort + " exited unexpectedly with exit code " + exitCode +". ***");
-        if (!testConfig.getCrashConfig().shouldIgnoreUnexpectedL2Crash()) {
-          testFailureCallback.run();
-        }
-        return false;
-      }
-    });
+                                                                     jvmArgs, javaHome, true, workingDir),
+                                       new ServerExitCallback(serverName, dsoPort));
   }
 
   public void startAllServers() throws Exception {
