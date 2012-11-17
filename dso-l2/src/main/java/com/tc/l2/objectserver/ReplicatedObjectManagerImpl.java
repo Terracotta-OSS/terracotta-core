@@ -114,7 +114,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
           if (StateManager.PASSIVE_UNINITIALIZED.equals(curState)) {
             logger.error("Syncing to uninitialized passives not supported, msg: " + msg);
             // XXX - is this the right zap type?
-            this.groupManager.zapNode(msg.messageFrom(), L2HAZapNodeRequestProcessor.PASSIVE_JOINED_UNITIALIZED,
+            this.groupManager.zapNode(msg.messageFrom(), L2HAZapNodeRequestProcessor.PASSIVE_JOINED_UNINITIALIZED,
                                       "Passive : " + msg.messageFrom() + " joined in unitialized state."
                                           + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
           } else nodeIDSyncingPassives.put(msg.messageFrom(), new SyncingPassiveValue(msg.getObjectIDs(), curState));
