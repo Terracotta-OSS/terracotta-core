@@ -75,7 +75,7 @@ public class Persistor {
 
   public void close() {
     checkStarted();
-    storageManager.shutdown();
+    storageManager.close();
   }
   
   public MonitoredResource getMonitoredResource() {
