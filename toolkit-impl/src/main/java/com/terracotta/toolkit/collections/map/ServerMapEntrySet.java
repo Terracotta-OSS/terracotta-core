@@ -3,8 +3,6 @@
  */
 package com.terracotta.toolkit.collections.map;
 
-import com.tc.object.bytecode.hook.impl.ArrayManager;
-
 import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -50,16 +48,6 @@ public class ServerMapEntrySet<K, V> extends AbstractSet<Entry<K, V>> {
   @Override
   public void clear() {
     map.clear();
-  }
-
-  @Override
-  public <T extends Object> T[] toArray(T[] a) {
-    if (ArrayManager.getObject(a) != null) {
-      //
-      throw new UnsupportedOperationException("toArray(T[] a) not supported with clustered target array");
-    }
-
-    return super.toArray(a);
   }
 
   private static class EntryIterator<T, D> implements Iterator<Entry<T, D>> {

@@ -19,7 +19,11 @@ public class TestConfig {
   private final ClientConfig        clientConfig     = new ClientConfig();
   private final Map<String, String> tcPropertiesMap;
   private boolean                   isStandAloneTest = false;
-  private Boolean                   restartZappedL2;
+
+  /**
+   * By default, restart ALL zapped servers
+   */
+  private boolean                   restartZappedL2  = true;
 
   public TestConfig(String configName) {
     this.configName = configName;
@@ -107,8 +111,6 @@ public class TestConfig {
   }
 
   public boolean isRestartZappedL2() {
-    // By default, restart zapped servers in stripes with multiple passives
-    if (restartZappedL2 == null) { return groupConfig.getMemberCount() > 2; }
     return restartZappedL2;
   }
   /**

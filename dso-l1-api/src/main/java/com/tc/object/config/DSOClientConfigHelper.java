@@ -13,15 +13,12 @@ import com.tc.object.config.schema.DSORuntimeOutputOptions;
 import com.tc.properties.ReconnectConfig;
 import com.tc.security.PwProvider;
 
-import java.util.Iterator;
-import java.util.Map;
-
 /**
  * Knows how to interpret the DSO client config and tell you things like whether a class is portable. This interface
  * extends DSOApplicationConfig which is a much simpler interface suitable for manipulating the config from the
  * perspective of generating a configuration file.
  */
-public interface DSOClientConfigHelper extends DSOMBeanConfig, ModuleConfiguration {
+public interface DSOClientConfigHelper extends DSOMBeanConfig {
   String[] processArguments();
 
   String rawConfigText();
@@ -30,11 +27,8 @@ public interface DSOClientConfigHelper extends DSOMBeanConfig, ModuleConfigurati
 
   TransparencyClassSpec[] getAllSpecs();
 
-  Iterator getAllUserDefinedBootSpecs();
-
   Class getChangeApplicator(Class clazz);
 
-  @Override
   boolean addTunneledMBeanDomain(String tunneledMBeanDomain);
 
   // HACK: is also in IStandardDSOClientConfigHelper
@@ -51,29 +45,7 @@ public interface DSOClientConfigHelper extends DSOMBeanConfig, ModuleConfigurati
 
   int getFaultCount();
 
-  @Override
-  void addWriteAutolock(String methodPattern);
-
-  void addWriteAutolock(String methodPattern, String lockContextInfo);
-
-  void addSynchronousWriteAutolock(String methodPattern);
-
-  void addLock(String methodPattern, LockDefinition lockDefinition);
-
-  @Override
-  void addReadAutolock(String methodPattern);
-
-  void addAutolock(String methodPattern, ConfigLockLevel type);
-
-  void addAutolock(String methodPattern, ConfigLockLevel type, String configurationText);
-
-  void addReadAutoSynchronize(String methodPattern);
-
-  void addWriteAutoSynchronize(String methodPattern);
-
   void setFaultCount(int count);
-
-  void addTransient(String className, String fieldName);
 
   String getPreCreateMethodIfDefined(String className);
 
@@ -83,19 +55,11 @@ public interface DSOClientConfigHelper extends DSOMBeanConfig, ModuleConfigurati
 
   CommonL1Config getNewCommonL1Config();
 
-  void addAspectModule(String pattern, String moduleName);
-
-  Map getAspectModules();
-
-  void addDistributedMethodCall(DistributedMethodSpec dms);
-
   Portability getPortability();
 
   void removeSpec(String className);
 
   String getLogicalExtendingClassName(String className);
-
-  void addUserDefinedBootSpec(String className, TransparencyClassSpec spec);
 
   public ReconnectConfig getL1ReconnectProperties(final PwProvider pwProvider) throws ConfigurationSetupException;
 

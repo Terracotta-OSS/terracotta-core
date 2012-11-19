@@ -40,14 +40,6 @@ public interface TransparencyCodeSpec {
   public void setArrayOperatorInstrumentationReq(boolean arrayOperatorInstrumentationReq);
 
   /**
-   * Check whether field access should be instrumented
-   *
-   * @param fieldName Field to check
-   * @return True to instrument
-   */
-  public boolean isFieldInstrumentationReq(String fieldName);
-
-  /**
    * Set that field access should be instrumented
    *
    * @param fieldInstrumentationReq Flag

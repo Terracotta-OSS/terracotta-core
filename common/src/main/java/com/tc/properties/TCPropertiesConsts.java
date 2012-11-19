@@ -53,6 +53,10 @@ public interface TCPropertiesConsts {
   public static final String L2_CACHEMANAGER_CRITICALOBJECTTHRESHOLD                        = "l2.cachemanager.criticalObjectThreshold";
   public static final String L2_CACHEMANAGER_RESOURCEPOLLINGINTERVAL                        = "l2.cachemanager.resourcePollInterval";
 
+  
+  public static final String L2_EVICTION_CRITICALTHRESHOLD                              = "l2.eviction.criticalThreshold";
+  public static final String L2_EVICTION_RESOURCEPOLLINGINTERVAL                        = "l2.eviction.resourcePollInterval";
+
   /*********************************************************************************************************************
    * <code>
    * Section : L2 Transaction Manager Properties

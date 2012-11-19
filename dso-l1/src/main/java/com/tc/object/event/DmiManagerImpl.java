@@ -5,7 +5,6 @@
 package com.tc.object.event;
 
 import com.tc.abortable.AbortedOperationException;
-import com.tc.asm.Type;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -146,27 +145,6 @@ public class DmiManagerImpl implements DmiManager {
     String methodName = dmc.getMethodName();
     String paramDesc = dmc.getParameterDesc();
 
-    Class c = dmc.getReceiver().getClass();
-
-    while (c != null) {
-      Method[] methods = c.getDeclaredMethods();
-      for (Method method : methods) {
-        Method m = method;
-        if (!m.getName().equals(methodName)) {
-          continue;
-        }
-        Class[] argTypes = m.getParameterTypes();
-        StringBuffer signature = new StringBuffer("(");
-        for (Class argType : argTypes) {
-          signature.append(Type.getDescriptor(argType));
-        }
-        signature.append(")");
-        signature.append(Type.getDescriptor(m.getReturnType()));
-        if (signature.toString().equals(paramDesc)) { return m; }
-      }
-
-      c = c.getSuperclass();
-    }
     throw new RuntimeException("Method " + methodName + paramDesc + " does not exist on this object: "
                                + dmc.getReceiver());
   }

@@ -74,13 +74,6 @@ public class StandaloneL1Boot implements Callable<Object> {
     DSOContext context = DSOContextImpl.createStandaloneContext(configSpec, appLevelTimLoader,
                                                                 this.rejoin, securityManager, securityInfo);
 
-    // run a class through transformer -- avoids ClassCirculartiryError
-    String name = getClass().getName();
-    ClassLoader loader = getClass().getClassLoader();
-    byte[] bytes = com.terracotta.toolkit.express.loader.Util.extract(loader.getResourceAsStream(name.replace('.', '/')
-        .concat(".class")));
-    context.transform(loader, name, null, null, bytes);
-
     return context;
   }
 }

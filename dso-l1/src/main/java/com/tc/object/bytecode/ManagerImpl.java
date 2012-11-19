@@ -7,7 +7,6 @@ package com.tc.object.bytecode;
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortableOperationManagerImpl;
 import com.tc.abortable.AbortedOperationException;
-import com.tc.asm.Type;
 import com.tc.client.AbstractClientFactory;
 import com.tc.client.ClientMode;
 import com.tc.cluster.DsoCluster;
@@ -83,10 +82,8 @@ import com.terracottatech.search.NVPair;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -121,7 +118,6 @@ public class ManagerImpl implements Manager {
 
   private final SerializationUtil                  serializer                = new SerializationUtil();
 
-  private final MethodDisplayNames                 methodDisplay             = new MethodDisplayNames(this.serializer);
   private final ConcurrentHashMap<String, Object>  registeredObjects         = new ConcurrentHashMap<String, Object>();
   private final AbortableOperationManager          abortableOperationManager = new AbortableOperationManagerImpl();
   private final AtomicReference<PlatformService>   platformServiceRef        = new AtomicReference<PlatformService>();
@@ -353,8 +349,7 @@ public class ManagerImpl implements Manager {
                                   ((Integer) params[0]).intValue(), (Collection) params[1], tco);
           } else {
             adjustForJava1ParametersIfNecessary(methodSignature, params);
-            tco.logicalInvoke(this.serializer.methodToID(methodSignature),
-                              this.methodDisplay.getDisplayForSignature(methodSignature), params);
+            tco.logicalInvoke(this.serializer.methodToID(methodSignature), methodSignature, params);
           }
         }
       } catch (final Throwable t) {
@@ -390,8 +385,7 @@ public class ManagerImpl implements Manager {
   private void logicalAddAllInvoke(final int method, final String methodSignature, final Collection collection,
                                    final TCObject tcobj) {
     for (final Iterator i = collection.iterator(); i.hasNext();) {
-      tcobj
-          .logicalInvoke(method, this.methodDisplay.getDisplayForSignature(methodSignature), new Object[] { i.next() });
+      tcobj.logicalInvoke(method, methodSignature, new Object[] { i.next() });
     }
   }
 
@@ -399,8 +393,7 @@ public class ManagerImpl implements Manager {
                                      final Collection collection, final TCObject tcobj) {
 
     for (final Iterator i = collection.iterator(); i.hasNext();) {
-      tcobj.logicalInvoke(method, this.methodDisplay.getDisplayForSignature(methodSignature),
-                          new Object[] { Integer.valueOf(index++), i.next() });
+      tcobj.logicalInvoke(method, methodSignature, new Object[] { Integer.valueOf(index++), i.next() });
     }
   }
 
@@ -647,77 +640,6 @@ public class ManagerImpl implements Manager {
   @Override
   public TCLogger getLogger(final String loggerName) {
     return TCLogging.getLogger(loggerName);
-  }
-
-  private static class MethodDisplayNames {
-
-    private final Map display = new HashMap();
-
-    public MethodDisplayNames(final SerializationUtil serializer) {
-      final String[] sigs = serializer.getSignatures();
-      for (final String sig : sigs) {
-        this.display.put(sig, getDisplayStringFor(sig));
-      }
-    }
-
-    private String getDisplayStringFor(final String signature) {
-      final String methodName = signature.substring(0, signature.indexOf('('));
-      final StringBuffer rv = new StringBuffer(methodName);
-      rv.append('(');
-
-      final Type[] args = Type.getArgumentTypes(signature.substring(signature.indexOf('(')));
-      for (int i = 0; i < args.length; i++) {
-        if (i > 0) {
-          rv.append(',');
-        }
-        final Type t = args[i];
-        final int sort = t.getSort();
-        switch (sort) {
-          case Type.ARRAY:
-            final Type elemType = t.getElementType();
-            if (elemType.getSort() == Type.OBJECT) {
-              rv.append(getShortName(elemType));
-            } else {
-              rv.append(elemType.getClassName());
-            }
-            for (int d = t.getDimensions(); d > 0; --d) {
-              rv.append("[]");
-            }
-            break;
-          case Type.OBJECT:
-            rv.append(getShortName(t));
-            break;
-          case Type.BOOLEAN:
-          case Type.BYTE:
-          case Type.CHAR:
-          case Type.DOUBLE:
-          case Type.FLOAT:
-          case Type.INT:
-          case Type.LONG:
-          case Type.SHORT:
-            rv.append(t.getClassName());
-            break;
-          default:
-            throw new AssertionError("unknown sort: " + sort);
-        }
-      }
-
-      rv.append(')');
-      return rv.toString();
-    }
-
-    private String getShortName(final Type t) {
-      final String fqName = t.getClassName();
-      final int lastDot = fqName.lastIndexOf('.');
-      if (lastDot > -1) { return fqName.substring(lastDot + 1); }
-      return fqName;
-    }
-
-    String getDisplayForSignature(final String methodSignature) {
-      final String rv = (String) this.display.get(methodSignature);
-      if (rv == null) { throw new AssertionError("missing display string for signature: " + methodSignature); }
-      return rv;
-    }
   }
 
   public DmiManager getDmiManager() {

@@ -326,6 +326,7 @@ import javax.management.remote.JMXConnectorServer;
 
 import bsh.EvalError;
 import bsh.Interpreter;
+import com.terracottatech.config.Management;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -725,6 +726,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                      this.threadGroup, !offHeapConfig.getEnabled());
     final long timeOut = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.LOGGING_LONG_GC_THRESHOLD);
     final LongGCLogger gcLogger = this.serverBuilder.createLongGCLogger(timeOut);
+    
     tcMemManager.registerForMemoryEvents(gcLogger);
     tcMemManager.registerForMemoryEvents(new MemoryOperatorEventListener(cacheConfig.getUsedCriticalThreshold()));
     // CDV-1181 warn if using CMS

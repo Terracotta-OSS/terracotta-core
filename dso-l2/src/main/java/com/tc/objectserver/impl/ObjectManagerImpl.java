@@ -973,6 +973,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     public synchronized void setResults(final ObjectManagerLookupResults results) {
+        if ( this.resultSet ) {
+            throw new AssertionError("results already set");
+        }
       this.resultSet = true;
       assertMissingObjects(results.getMissingObjectIDs());
       final Map objects = results.getObjects();

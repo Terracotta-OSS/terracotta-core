@@ -55,6 +55,7 @@ public abstract class AbstractTestBase extends TCTestCase {
   private volatile Thread             testExecutionThread;
   private static final String         log4jPrefix          = "log4j.logger.";
   private final Map<String, LogLevel> tcLoggingConfigs     = new HashMap<String, LogLevel>();
+  private final AtomicReference<Throwable> testException    = new AtomicReference<Throwable>();
 
   public AbstractTestBase(TestConfig testConfig) {
     this.testConfig = testConfig;
@@ -146,7 +147,6 @@ public abstract class AbstractTestBase extends TCTestCase {
   final public void runTest() throws Throwable {
     if (!testWillRun) return;
 
-    final AtomicReference<Throwable> testException = new AtomicReference<Throwable>();
     testExecutionThread = new Thread(new Runnable() {
       @Override
       public void run() {
@@ -154,7 +154,7 @@ public abstract class AbstractTestBase extends TCTestCase {
           startClients();
           postClientVerification();
         } catch (Throwable throwable) {
-          testException.set(throwable);
+          testException.compareAndSet(null, throwable);
         }
       }
     }, "Test execution thread");
@@ -165,11 +165,12 @@ public abstract class AbstractTestBase extends TCTestCase {
     tcTestCaseTearDown(testException.get());
   }
 
-  private class FailTestCallback implements Runnable {
+  private class FailTestCallback implements TestFailureListener {
     @Override
-    public void run() {
+    public void testFailed(String reason) {
       if (testExecutionThread != null) {
         doDumpServerDetails();
+        testException.compareAndSet(null, new Throwable(reason));
         testExecutionThread.interrupt();
       }
     }

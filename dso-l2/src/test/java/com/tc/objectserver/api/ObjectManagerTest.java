@@ -9,8 +9,6 @@ import org.mockito.Mockito;
 import com.tc.async.api.Sink;
 import com.tc.async.impl.MockSink;
 import com.tc.exception.ImplementMe;
-import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandler;
 import com.tc.logging.LogLevelImpl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -23,7 +21,6 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAException;
-import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.api.PhysicalAction;
@@ -59,7 +56,6 @@ import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.MapEntryFacade;
 import com.tc.objectserver.persistence.HeapStorageManagerFactory;
-import com.tc.objectserver.persistence.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransactionProvider;
 import com.tc.objectserver.tx.ServerTransaction;
@@ -113,26 +109,15 @@ public class ObjectManagerTest extends TCTestCase {
   private ObjectManagerImpl                  objectManager;
   private TestObjectManagerConfig            config;
   private ClientStateManager                 clientStateManager;
-  private PersistentManagedObjectStore                 objectStore;
+  private PersistentManagedObjectStore       objectStore;
   private TCLogger                           logger;
   private ObjectManagerStatsImpl             stats;
   private SampledCounter                     newObjectCounter;
   private TestPersistenceTransactionProvider persistenceTransactionProvider;
   private TestTransactionalStageCoordinator  coordinator;
-  private TestGlobalTransactionManager       gtxMgr;
   private TransactionalObjectManagerImpl     txObjectManager;
   private long                               version = 0;
   private Persistor persistor;
-
-  /**
-   * Constructor for ObjectManagerTest.
-   * 
-   * @param arg0
-   */
-  public ObjectManagerTest(final String arg0) {
-    super(arg0);
-    // disableTest();
-  }
 
   @Override
   protected void setUp() throws Exception {
@@ -151,20 +136,11 @@ public class ObjectManagerTest extends TCTestCase {
   }
 
   private void initObjectManager() {
-    initObjectManager(createThreadGroup());
-  }
-
-  private TCThreadGroup createThreadGroup() {
-    return new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(ObjectManagerImpl.class)));
-  }
-
-  private void initObjectManager(final ThreadGroup threadGroup) {
     this.objectStore = new PersistentManagedObjectStore(persistor.getManagedObjectPersistor(), Mockito.mock(Sink.class));
-    initObjectManager(threadGroup, this.objectStore);
+    initObjectManager(this.objectStore);
   }
 
-  private void initObjectManager(final ThreadGroup threadGroup,
-                                 final PersistentManagedObjectStore store) {
+  private void initObjectManager(final PersistentManagedObjectStore store) {
     this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, store,
                                                this.persistenceTransactionProvider);
   }
@@ -172,8 +148,7 @@ public class ObjectManagerTest extends TCTestCase {
   private void initTransactionObjectManager() {
     final ServerTransactionSequencer sequencer = new ServerTransactionSequencerImpl();
     this.coordinator = new TestTransactionalStageCoordinator();
-    this.gtxMgr = new TestGlobalTransactionManager();
-    this.txObjectManager = new TransactionalObjectManagerImpl(this.objectManager, sequencer, this.gtxMgr,
+    this.txObjectManager = new TransactionalObjectManagerImpl(this.objectManager, sequencer, new TestGlobalTransactionManager(),
                                                               this.coordinator);
     ServerConfigurationContext scc = Mockito.mock(ServerConfigurationContext.class);
     Mockito.when(scc.getTransactionManager()).thenReturn(new TestServerTransactionManager());
@@ -276,7 +251,7 @@ public class ObjectManagerTest extends TCTestCase {
   // DEV-2324
   public void testReachableObjects() {
     this.config.paranoid = true;
-    initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))));
+    initObjectManager();
     this.objectManager.setStatsListener(this.stats);
 
     assertEquals(0, this.stats.getTotalCacheHits());
@@ -337,7 +312,7 @@ public class ObjectManagerTest extends TCTestCase {
 
     initObjectManager();
 
-    createObjects(10, 10);
+    createObjects(10);
 
     // Look up two existing objects
     final ObjectIDSet ids = makeObjectIDSet(1, 2);
@@ -651,18 +626,12 @@ public class ObjectManagerTest extends TCTestCase {
     return rv;
   }
 
-  private Set<ObjectID> createObjects(final int num, final int inCache) {
-    Set<ObjectID> oids = createObjects(num);
-//    evictCache(inCache);
-    return oids;
-  }
-
   private Set<ObjectID> createObjects(final int num) {
-    return createObjects(0, num, new HashSet());
+    return createObjects(0, num, new HashSet<ObjectID>());
   }
 
   public Set<ObjectID> createObjects(final int startID, final int endID, final Set<ObjectID> children) {
-    return createObjects(startID, endID, children, new HashSet());
+    return createObjects(startID, endID, children, new HashSet<TestManagedObject>());
   }
 
   public Set<ObjectID> createObjects(final int startID, final int endID, final Set<ObjectID> children,
@@ -748,15 +717,13 @@ public class ObjectManagerTest extends TCTestCase {
    * recall in TransactionalObjectManager in persistence mode
    */
   public void testRecallNewObjects() throws Exception {
-    final PersistenceTransactionProvider ptp = persistor.getPersistenceTransactionProvider();
     final PersistentManagedObjectStore persistentMOStore = new PersistentManagedObjectStore(
                                                                                             persistor
                                                                                                 .getManagedObjectPersistor(),
                                                                                             new MockSink());
     this.objectStore = persistentMOStore;
     this.config.paranoid = true;
-    initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))),
-                      this.objectStore);
+    initObjectManager(this.objectStore);
     initTransactionObjectManager();
 
     // this should disable the gc thread.
@@ -771,7 +738,7 @@ public class ObjectManagerTest extends TCTestCase {
     final Map<ObjectID, DNA> changes = new HashMap<ObjectID, DNA>();
 
     final String fieldName = "whatsup";
-    final AtomicReference atomicReference = new AtomicReference(new ObjectID(500));
+    final AtomicReference<ObjectID> atomicReference = new AtomicReference<ObjectID>(new ObjectID(500));
 
     changes.put(new ObjectID(1), new TestServerMapDNA(new ObjectID(1), fieldName, atomicReference));
 
@@ -811,7 +778,7 @@ public class ObjectManagerTest extends TCTestCase {
     changes.clear();
 
     final String fieldName2 = "whatsup2";
-    final AtomicReference atomicReference2 = new AtomicReference(new ObjectID(501));
+    final AtomicReference<ObjectID> atomicReference2 = new AtomicReference<ObjectID>(new ObjectID(501));
     changes.put(new ObjectID(2), new TestServerMapDNA(new ObjectID(2), fieldName2, atomicReference2));
 
     final ServerTransaction stxn2 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2),
@@ -846,7 +813,7 @@ public class ObjectManagerTest extends TCTestCase {
     changes.clear();
 
     final String fieldName3 = "whatsup3";
-    final AtomicReference atomicReference3 = new AtomicReference(new ObjectID(505));
+    final AtomicReference<ObjectID> atomicReference3 = new AtomicReference<ObjectID>(new ObjectID(505));
 
     changes.put(new ObjectID(1), new TestServerMapDNA(new ObjectID(1), true, fieldName3, atomicReference3));
     changes.put(new ObjectID(2), new TestServerMapDNA(new ObjectID(2), true, fieldName3, atomicReference3));
@@ -891,7 +858,6 @@ public class ObjectManagerTest extends TCTestCase {
      */
 
     // Now check back Object 1
-    Transaction dbtxn = ptp.newTransaction();
     this.objectManager.releaseAll(applyTxnInfo1.getObjectsToRelease());
 
     // Lookup context should have been fired
@@ -931,7 +897,6 @@ public class ObjectManagerTest extends TCTestCase {
     this.txObjectManager.recallCheckedoutObject(roc);
 
     // Check in Object 2 to make the GC go to paused state
-    dbtxn = ptp.newTransaction();
     this.objectManager.releaseAll(applyTxnInfo2.getObjectsToRelease());
 
     cb.await();
@@ -959,7 +924,6 @@ public class ObjectManagerTest extends TCTestCase {
     this.txObjectManager.applyTransactionComplete(applyTxnInfo3);
 
     // Now check back the objects
-    dbtxn = ptp.newTransaction();
     this.objectManager.releaseAll(applyTxnInfo3.getObjectsToRelease());
 
     assertEquals(0, this.objectManager.getCheckedOutCount());
@@ -972,7 +936,7 @@ public class ObjectManagerTest extends TCTestCase {
 
   public void testGetObjectReferencesFrom() {
     this.config.paranoid = true;
-    initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))));
+    initObjectManager();
     this.objectManager.setStatsListener(this.stats);
 
     final TestGarbageCollector gc = new TestGarbageCollector(this.objectManager);
@@ -983,7 +947,7 @@ public class ObjectManagerTest extends TCTestCase {
     final Set<ObjectID> children = createObjects(1000, 2000, new HashSet<ObjectID>());
 
     createObjects(0, 2, children);
-    final Set<TestManagedObject> objects = new HashSet();
+    final Set<TestManagedObject> objects = new HashSet<TestManagedObject>();
 
     createObjects(3, 5, children, objects);
     final Set<ObjectID> returnedSet = this.objectManager.getObjectReferencesFrom(new ObjectID(1), false);
@@ -1001,12 +965,12 @@ public class ObjectManagerTest extends TCTestCase {
 
   public void testFaultWithConcurrentRemove() throws Exception {
     this.config.paranoid = true;
-    initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))));
+    initObjectManager();
     final TestGarbageCollector gc = new TestGarbageCollector(this.objectManager);
     this.objectManager.setGarbageCollector(gc);
     this.objectManager.start();
 
-    final Set<ObjectID> oids = createObjects(100, 0);
+    final Set<ObjectID> oids = createObjects(100);
     final AtomicBoolean fail = new AtomicBoolean(true);
     final CyclicBarrier barrier = new CyclicBarrier(2);
 
@@ -1521,101 +1485,6 @@ public class ObjectManagerTest extends TCTestCase {
     }
   }
 
-  private static class TestLiteralValuesDNA implements DNA {
-    private final ObjectID id;
-
-    TestLiteralValuesDNA(final ObjectID id) {
-      this.id = id;
-    }
-
-    @Override
-    public long getVersion() {
-      return 0;
-    }
-
-    @Override
-    public boolean hasLength() {
-      return false;
-    }
-
-    @Override
-    public int getArraySize() {
-      return -1;
-    }
-
-    @Override
-    public String getTypeName() {
-      return "java.lang.Integer";
-    }
-
-    @Override
-    public ObjectID getObjectID() throws DNAException {
-      return this.id;
-    }
-
-    @Override
-    public ObjectID getParentObjectID() throws DNAException {
-      return new ObjectID(25);
-    }
-
-    @Override
-    public DNACursor getCursor() {
-      return new DNACursor() {
-
-        int count = 0;
-
-        @Override
-        public boolean next() {
-          this.count++;
-          return this.count < 2;
-        }
-
-        @Override
-        public LogicalAction getLogicalAction() {
-          return null;
-        }
-
-        @Override
-        public Object getAction() {
-          switch (this.count) {
-            case 1: {
-              return new LiteralAction(42);
-            }
-            default: {
-              throw new RuntimeException();
-            }
-          }
-        }
-
-        @Override
-        public PhysicalAction getPhysicalAction() {
-          throw new ImplementMe();
-        }
-
-        @Override
-        public boolean next(final DNAEncoding encoding) {
-          throw new ImplementMe();
-        }
-
-        @Override
-        public int getActionCount() {
-          return 1;
-        }
-
-        @Override
-        public void reset() throws UnsupportedOperationException {
-          throw new ImplementMe();
-        }
-      };
-    }
-
-    @Override
-    public boolean isDelta() {
-      return false;
-    }
-
-  }
-
   private class GCCaller implements Runnable {
 
     @Override
@@ -1641,11 +1510,6 @@ public class ObjectManagerTest extends TCTestCase {
       super(10000, true, true, true, false, 60000, 1000);
     }
 
-    TestObjectManagerConfig(final long gcThreadSleepTime, final boolean doGC) {
-      super(gcThreadSleepTime, doGC, true, true, false, 60000, 1000);
-      throw new RuntimeException("Don't use me.");
-    }
-
     @Override
     public long gcThreadSleepTime() {
       return this.myGCThreadSleepTime;
@@ -1655,21 +1519,6 @@ public class ObjectManagerTest extends TCTestCase {
     public boolean paranoid() {
       return this.paranoid;
     }
-  }
-
-  private static class NullSinkContext implements SinkContext {
-
-    @Override
-    public void postProcess() {
-      // do nothing
-    }
-
-  }
-
-  private interface SinkContext {
-
-    void postProcess();
-
   }
 
   private static final class TestServerMapDNA implements DNA {

@@ -7,9 +7,10 @@ import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
+import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionProvider;
 
-import java.lang.reflect.Method;
+import java.lang.reflect.Constructor;
 import java.util.Map;
 
 public class TCMessageFactoryImpl implements TCMessageFactory {
@@ -22,6 +23,7 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
     this.monitor = monitor;
   }
 
+  @Override
   public TCMessage createMessage(final MessageChannel source, final TCMessageType type)
       throws UnsupportedMessageTypeException {
     final GeneratedMessageFactory factory = lookupFactory(type);
@@ -29,6 +31,7 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
                                  new TCByteBufferOutputStream(4, 4096, false), source, type);
   }
 
+  @Override
   public TCMessage createMessage(final MessageChannel source, final TCMessageType type, final TCMessageHeader header,
                                  final TCByteBuffer[] data) {
     final GeneratedMessageFactory factory = lookupFactory(type);
@@ -36,6 +39,7 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
                                  header, data);
   }
 
+  @Override
   public void addClassMapping(final TCMessageType type, final GeneratedMessageFactory messageFactory) {
     if ((type == null) || (messageFactory == null)) { throw new IllegalArgumentException(); }
     if (this.factories.put(type, messageFactory) != null) { throw new IllegalStateException(
@@ -43,6 +47,7 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
                                                                                                 + type); }
   }
 
+  @Override
   public void addClassMapping(final TCMessageType type, final Class msgClass) {
     if ((type == null) || (msgClass == null)) { throw new IllegalArgumentException(); }
 
@@ -51,53 +56,10 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
     synchronized (msgClass.getName().intern()) {
       final GeneratedMessageFactory factory = (GeneratedMessageFactory) this.factories.get(type);
       if (factory == null) {
-        this.factories.put(type, createFactory(type, msgClass));
+        this.factories.put(type, new GeneratedMessageFactoryImpl(msgClass));
       } else {
         throw new IllegalStateException("message already has class mapping: " + type);
       }
-
-    }
-  }
-
-  private String generatedFactoryClassName(final TCMessageType type) {
-    return getClass().getName() + "$" + type.getTypeName() + "Factory";
-  }
-
-  private GeneratedMessageFactory createFactory(final TCMessageType type, final Class msgClass) {
-    final String factoryClassName = generatedFactoryClassName(type);
-
-    final ClassLoader loader = msgClass.getClassLoader();
-
-    Class c = null;
-    try {
-      // The factory class might already exist in the target loader
-      c = loader.loadClass(factoryClassName);
-    } catch (final ClassNotFoundException e) {
-      c = defineFactory(factoryClassName, type, msgClass, loader);
-    }
-
-    try {
-      return (GeneratedMessageFactory) c.newInstance();
-    } catch (final Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private Class defineFactory(final String className, final TCMessageType type, final Class msgClass,
-                              final ClassLoader loader) {
-    try {
-      final byte[] clazz = GeneratedMessageFactoryClassCreator.create(className, msgClass);
-
-      final Method defineClass = ClassLoader.class.getDeclaredMethod("defineClass", new Class[] { String.class,
-          byte[].class, Integer.TYPE, Integer.TYPE });
-      defineClass.setAccessible(true);
-
-      final Class c = (Class) defineClass.invoke(loader,
-                                                 new Object[] { className, clazz, Integer.valueOf(0),
-                                                     Integer.valueOf(clazz.length) });
-      return c;
-    } catch (final Exception e) {
-      throw new RuntimeException(e);
     }
   }
 
@@ -105,6 +67,56 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
     final GeneratedMessageFactory factory = (GeneratedMessageFactory) this.factories.get(type);
     if (factory == null) { throw new RuntimeException("No factory for type " + type); }
     return factory;
+  }
+
+  private static class GeneratedMessageFactoryImpl implements GeneratedMessageFactory {
+
+    private final Constructor sendCstr;
+    private final Constructor recvCstr;
+
+    GeneratedMessageFactoryImpl(Class msgClass) {
+      sendCstr = findConstructor(msgClass, SessionID.class, MessageMonitor.class, TCByteBufferOutputStream.class,
+                                 MessageChannel.class, TCMessageType.class);
+      recvCstr = findConstructor(msgClass, SessionID.class, MessageMonitor.class, MessageChannel.class,
+                                 TCMessageHeader.class, TCByteBuffer[].class);
+
+      if (sendCstr == null && recvCstr == null) {
+        // require at least one half of message construction to work
+        throw new RuntimeException("No constructors available for " + msgClass);
+      }
+    }
+
+    private static Constructor findConstructor(Class msgClass, Class... argTypes) {
+      try {
+        return msgClass.getConstructor(argTypes);
+      } catch (Exception e) {
+        return null;
+      }
+    }
+
+    @Override
+    public TCMessage createMessage(SessionID sid, MessageMonitor monitor, TCByteBufferOutputStream output,
+                                   MessageChannel channel, TCMessageType type) {
+      if (sendCstr == null) { throw new UnsupportedOperationException(); }
+
+      try {
+        return (TCMessage) sendCstr.newInstance(sid, monitor, output, channel, type);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    @Override
+    public TCMessage createMessage(SessionID sid, MessageMonitor monitor, MessageChannel channel,
+                                   TCMessageHeader msgHeader, TCByteBuffer[] data) {
+      if (recvCstr == null) { throw new UnsupportedOperationException(); }
+
+      try {
+        return (TCMessage) recvCstr.newInstance(sid, monitor, channel, msgHeader, data);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
 }

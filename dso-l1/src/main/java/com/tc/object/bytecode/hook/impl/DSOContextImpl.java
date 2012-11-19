@@ -26,7 +26,6 @@ import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerImpl;
 import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.ModuleConfiguration;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.logging.RuntimeLoggerImpl;
@@ -43,7 +42,6 @@ import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
-import java.security.ProtectionDomain;
 import java.util.Map;
 
 public class DSOContextImpl implements DSOContext {
@@ -55,29 +53,6 @@ public class DSOContextImpl implements DSOContext {
 
   private final boolean               expressRejoinClient;
 
-  public static DSOContext createContext(String configSpec) throws ConfigurationSetupException {
-    StandardConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(
-                                                                                                    (String[]) null,
-                                                                                                    StandardConfigurationSetupManagerFactory.ConfigMode.CUSTOM_L1,
-                                                                                                    new FatalIllegalConfigurationChangeHandler(),
-                                                                                                    configSpec, null);
-
-    L1ConfigurationSetupManager config = factory.getL1TVSConfigurationSetupManager();
-    config.setupLogging();
-    PreparedComponentsFromL2Connection l2Connection;
-    try {
-      l2Connection = validateMakeL2Connection(config, null);
-    } catch (Exception e) {
-      throw new ConfigurationSetupException(e.getLocalizedMessage(), e);
-    }
-
-    DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(config);
-    Manager manager = new ManagerImpl(configHelper, l2Connection, null);
-    DSOContext context = createContext(configHelper, manager);
-    manager.init();
-    return context;
-  }
-
   public static DSOContext createStandaloneContext(String configSpec, ClassLoader loader, boolean expressRejoinClient)
       throws ConfigurationSetupException {
     return createStandaloneContext(configSpec, loader, expressRejoinClient, null, new SecurityInfo());
@@ -86,8 +61,6 @@ public class DSOContextImpl implements DSOContext {
   public static DSOContext createStandaloneContext(String configSpec, ClassLoader loader, boolean expressRejoinClient,
                                                    TCSecurityManager securityManager, SecurityInfo securityInfo)
       throws ConfigurationSetupException {
-    // XXX: refactor this method to not duplicate createContext() so much
-
     StandardConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(
                                                                                                     (String[]) null,
                                                                                                     StandardConfigurationSetupManagerFactory.ConfigMode.EXPRESS_L1,
@@ -140,10 +113,6 @@ public class DSOContextImpl implements DSOContext {
     start.invoke(toolkitConfigurator, configHelper);
   }
 
-  public static DSOContext createContext(DSOClientConfigHelper configHelper, Manager manager) {
-    return createContext(configHelper, manager, false);
-  }
-
   private static DSOContextImpl createContext(DSOClientConfigHelper configHelper, Manager manager,
                                               boolean expressRejoinClient) {
     return new DSOContextImpl(configHelper, manager.getClassProvider(), manager, expressRejoinClient);
@@ -180,24 +149,8 @@ public class DSOContextImpl implements DSOContext {
   }
 
   @Override
-  public ModuleConfiguration getModuleConfigurtion() {
-    return configHelper;
-  }
-
-  /**
-   * XXX::NOTE:: ClassLoader checks the returned byte array to see if the class is instrumented or not to maintain the
-   * offset.
-   * 
-   * @return new byte array if the class is instrumented and same input byte array if not.
-   */
-  @Override
-  public byte[] preProcess(String name, byte[] data, int offset, int length, ClassLoader caller) {
-    return data;
-  }
-
-  @Override
-  public void postProcess(Class clazz, ClassLoader caller) {
-    // NOP
+  public void addTunneledMBeanDomain(String mbeanDomain) {
+    this.configHelper.addTunneledMBeanDomain(mbeanDomain);
   }
 
   private static PreparedComponentsFromL2Connection validateMakeL2Connection(L1ConfigurationSetupManager config, final TCSecurityManager securityManager)
@@ -266,12 +219,6 @@ public class DSOContextImpl implements DSOContext {
     throw new TCTimeoutException("We tried for " + (int) ((System.currentTimeMillis() - startTime) / 1000)
                                  + " seconds, but couldn't fetch system configuration mode from the L2 " + "at '"
                                  + theURL + "'. Is the L2 running?");
-  }
-
-  @Override
-  public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
-                          ProtectionDomain protectionDomain, byte[] classfileBuffer) {
-    return preProcess(className, classfileBuffer, 0, classfileBuffer.length, loader);
   }
 
   @Override

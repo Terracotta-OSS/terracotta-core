@@ -76,18 +76,16 @@ public class PipeSocket extends Socket {
   @Override
   public synchronized void close() throws IOException {
     if (closed) return;
-    closed = true;
     super.close();
-    inputPipe.source().close();
-    outputPipe.sink().close();
+    closed = true;
+    closeRead();
+    closeWrite();
   }
 
   public void dispose() throws IOException {
     if (!isClosed()) {
       close();
     }
-    inputPipe.sink().close();
-    outputPipe.source().close();
   }
 
   public void onWrite() {
@@ -96,10 +94,12 @@ public class PipeSocket extends Socket {
 
   public void closeRead() throws IOException {
     inputPipe.source().close();
+    inputPipe.sink().close();
   }
 
   public void closeWrite() throws IOException {
     outputPipe.sink().close();
+    outputPipe.source().close();
   }
 
   private final class PipeSocketOutputStream extends OutputStream {

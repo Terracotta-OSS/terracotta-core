@@ -28,6 +28,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
   public static final int                     PROGRAM_ERROR                 = 0x02;
   public static final int                     NODE_JOINED_WITH_DIRTY_DB     = 0x03;
   public static final int                     COMMUNICATION_TO_ACTIVE_ERROR = 0x04;
+  public static final int              PASSIVE_JOINED_UNINITIALIZED  = 0x05;
   public static final int                     SPLIT_BRAIN                   = 0xff;
 
   private final TCLogger                      consoleLogger;
@@ -45,6 +46,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
     this.factory = factory;
   }
 
+  @Override
   public boolean acceptOutgoingZapNodeRequest(NodeID nodeID, int zapNodeType, String reason) {
     assertOnType(zapNodeType, reason);
     if (stateManager.isActiveCoordinator()
@@ -57,6 +59,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
     }
   }
 
+  @Override
   public long[] getCurrentNodeWeights() {
     return factory.generateWeightSequence();
   }
@@ -80,6 +83,8 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
         return "PROGRAM ERROR";
       case NODE_JOINED_WITH_DIRTY_DB:
         return "Newly Joined Node Contains dirty database. (Please clean up DB and restart node)";
+      case PASSIVE_JOINED_UNINITIALIZED:
+        return "Newly Joined Node already uninitialized - this is not supported.";
       case SPLIT_BRAIN:
         return "Two or more Active servers detected in the cluster";
       default:
@@ -93,6 +98,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
       case COMMUNICATION_TO_ACTIVE_ERROR:
       case PROGRAM_ERROR:
       case NODE_JOINED_WITH_DIRTY_DB:
+      case PASSIVE_JOINED_UNINITIALIZED:
       case SPLIT_BRAIN:
         break;
       default:
@@ -100,6 +106,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
     }
   }
 
+  @Override
   public void incomingZapNodeRequest(NodeID nodeID, int zapNodeType, String reason, long[] weights) {
     assertOnType(zapNodeType, reason);
     if (stateManager.isActiveCoordinator()) {
@@ -153,8 +160,8 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
     if (l == null) return "null";
     if (l.length == 0) return "empty";
     StringBuffer sb = new StringBuffer();
-    for (int i = 0; i < l.length; i++) {
-      sb.append(String.valueOf(l[i])).append(",");
+    for (long element : l) {
+      sb.append(String.valueOf(element)).append(",");
     }
     sb.setLength(sb.length() - 1);
     return sb.toString();
@@ -170,6 +177,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
     return sw.toString();
   }
 
+  @Override
   public void addZapEventListener(ZapEventListener listener) {
     this.listeners.add(listener);
   }

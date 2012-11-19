@@ -13,8 +13,6 @@ import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
-import com.tc.object.bytecode.hook.impl.ArrayManager;
-import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.metadata.MetaDataDescriptor;
@@ -98,15 +96,12 @@ public class ManagerUtil {
     Manager rv = SINGLETON;
     if (rv != null) return rv;
 
-    ClassLoader loader = Thread.currentThread().getContextClassLoader();
-    rv = ClassProcessorHelper.getManager(loader);
-    if (rv == null) { return NULL_MANAGER; }
-    return rv;
+    return NULL_MANAGER;
   }
 
   /**
    * Get the named logger
-   * 
+   *
    * @param loggerName Logger name
    * @return The logger
    */
@@ -116,7 +111,7 @@ public class ManagerUtil {
 
   /**
    * Determine whether this class is physically instrumented
-   * 
+   *
    * @param clazz Class
    * @return True if physically instrumented
    */
@@ -126,7 +121,7 @@ public class ManagerUtil {
 
   /**
    * Get JVM Client identifier
-   * 
+   *
    * @return Client identifier
    */
   protected static String getClientID() {
@@ -135,7 +130,7 @@ public class ManagerUtil {
 
   /**
    * Get Unique Client identifier
-   * 
+   *
    * @return Unique Client identifier
    */
   protected static String getUUID() {
@@ -148,7 +143,7 @@ public class ManagerUtil {
 
   /**
    * Look up or create a new root object
-   * 
+   *
    * @param name Root name
    * @param object Root object to use if none exists yet
    * @return The root object actually used, may or may not == object
@@ -173,7 +168,7 @@ public class ManagerUtil {
 
   /**
    * Look up or create a new root object. Objects faulted in to arbitrary depth.
-   * 
+   *
    * @param name Root name
    * @param obj Root object to use if none exists yet
    * @return The root object actually used, may or may not == object
@@ -186,7 +181,7 @@ public class ManagerUtil {
 
   /**
    * Create or replace root, typically used for replaceable roots.
-   * 
+   *
    * @param rootName Root name
    * @param object Root object
    * @return Root object used
@@ -199,7 +194,7 @@ public class ManagerUtil {
 
   /**
    * Begin volatile lock by field offset in the class
-   * 
+   *
    * @param pojo Instance containing field
    * @param fieldOffset Field offset in pojo
    * @param type Lock level
@@ -213,7 +208,7 @@ public class ManagerUtil {
 
   /**
    * Commit volatile lock by field offset in the class
-   * 
+   *
    * @param pojo Instance containing field
    * @param fieldOffset Field offset in pojo
    * @throws AbortedOperationException
@@ -226,7 +221,7 @@ public class ManagerUtil {
 
   /**
    * Begin volatile lock
-   * 
+   *
    * @param TCObject TCObject to lock
    * @param fieldName Field name holding volatile object
    * @param type Lock type
@@ -241,7 +236,7 @@ public class ManagerUtil {
 
   /**
    * Begin lock
-   * 
+   *
    * @param lockID Lock identifier
    * @param type Lock type
    * @throws AbortedOperationException
@@ -261,7 +256,7 @@ public class ManagerUtil {
 
   /**
    * Begin lock
-   * 
+   *
    * @param lockID Lock identifier
    * @param type Lock type
    * @param contextInfo
@@ -273,7 +268,7 @@ public class ManagerUtil {
 
   /**
    * Try to begin lock
-   * 
+   *
    * @param lockID Lock identifier
    * @param type Lock type
    * @return True if lock was successful
@@ -299,7 +294,7 @@ public class ManagerUtil {
 
   /**
    * Try to begin lock within a specific timespan
-   * 
+   *
    * @param lockID Lock identifier
    * @param type Lock type
    * @param timeoutInNanos Timeout in nanoseconds
@@ -314,7 +309,7 @@ public class ManagerUtil {
 
   /**
    * Commit volatile lock
-   * 
+   *
    * @param TCObject Volatile object TCObject
    * @param fieldName Field holding the volatile object
    * @throws AbortedOperationException
@@ -328,7 +323,7 @@ public class ManagerUtil {
 
   /**
    * Commit lock
-   * 
+   *
    * @param lockID Lock name
    * @throws AbortedOperationException
    */
@@ -351,7 +346,7 @@ public class ManagerUtil {
 
   /**
    * Find managed object, which may be null
-   * 
+   *
    * @param pojo The object instance
    * @return The TCObject
    */
@@ -361,7 +356,7 @@ public class ManagerUtil {
 
   /**
    * Perform invoke on logical managed object
-   * 
+   *
    * @param object The object
    * @param methodName The method to call
    * @param params The parameters to the method
@@ -372,7 +367,7 @@ public class ManagerUtil {
 
   /**
    * Perform invoke on logical managed object in lock
-   * 
+   *
    * @param object The object
    * @param lockObject The lock object
    * @param methodName The method to call
@@ -394,7 +389,7 @@ public class ManagerUtil {
 
   /**
    * Perform distributed method call on just this node
-   * 
+   *
    * @param receiver The receiver object
    * @param method The method to call
    * @param params The parameter values
@@ -405,7 +400,7 @@ public class ManagerUtil {
 
   /**
    * Perform distributed method call on all nodes
-   * 
+   *
    * @param receiver The receiver object
    * @param method The method to call
    * @param params The parameter values
@@ -416,7 +411,7 @@ public class ManagerUtil {
 
   /**
    * Lookup root by name
-   * 
+   *
    * @param name Name of root
    * @return Root object
    * @throws AbortedOperationException
@@ -427,7 +422,7 @@ public class ManagerUtil {
 
   /**
    * Look up object by ID, faulting into the JVM if necessary
-   * 
+   *
    * @param id Object identifier
    * @return The actual object
    * @throws AbortedOperationException
@@ -444,7 +439,7 @@ public class ManagerUtil {
   /**
    * Prefetch object by ID, faulting into the JVM if necessary, Async lookup and will not cause ObjectNotFoundException
    * like lookupObject. Non-existent objects are ignored by the server.
-   * 
+   *
    * @param id Object identifier
    * @throws AbortedOperationException
    */
@@ -455,7 +450,7 @@ public class ManagerUtil {
   /**
    * Look up object by ID, faulting into the JVM if necessary, This method also passes the parent Object context so that
    * more intelligent prefetching is possible at the L2.
-   * 
+   *
    * @param id Object identifier of the object we are looking up
    * @param parentContext Object identifier of the parent object
    * @return The actual object
@@ -473,7 +468,7 @@ public class ManagerUtil {
 
   /**
    * Find or create new TCObject
-   * 
+   *
    * @param obj The object instance
    * @return The TCObject
    */
@@ -483,7 +478,7 @@ public class ManagerUtil {
 
   /**
    * Find or create new TCObject
-   * 
+   *
    * @param obj The object instance
    * @return The TCObject
    */
@@ -493,7 +488,7 @@ public class ManagerUtil {
 
   /**
    * Check whether current context has write access
-   * 
+   *
    * @param context Context object
    * @throws com.tc.object.util.ReadOnlyException If in read-only transaction
    */
@@ -503,7 +498,7 @@ public class ManagerUtil {
 
   /**
    * Check whether an object is managed
-   * 
+   *
    * @param obj Instance
    * @return True if managed
    */
@@ -513,7 +508,7 @@ public class ManagerUtil {
 
   /**
    * Check whether an object is shared
-   * 
+   *
    * @param obj Instance
    * @return True if shared
    */
@@ -523,7 +518,7 @@ public class ManagerUtil {
 
   /**
    * Check whether dso MonitorExist is required
-   * 
+   *
    * @return True if required
    * @throws AbortedOperationException
    */
@@ -533,7 +528,7 @@ public class ManagerUtil {
 
   /**
    * Check whether object is logically instrumented
-   * 
+   *
    * @param obj Instance
    * @return True if logically instrumented
    */
@@ -543,7 +538,7 @@ public class ManagerUtil {
 
   /**
    * Check whether field is a root
-   * 
+   *
    * @param field Field
    * @return True if root
    */
@@ -553,7 +548,7 @@ public class ManagerUtil {
 
   /**
    * Perform notify on obj
-   * 
+   *
    * @param obj Instance
    * @throws AbortedOperationException
    */
@@ -565,7 +560,7 @@ public class ManagerUtil {
 
   /**
    * Perform notifyAll on obj
-   * 
+   *
    * @param obj Instance
    * @throws AbortedOperationException
    */
@@ -577,7 +572,7 @@ public class ManagerUtil {
 
   /**
    * Perform untimed wait on obj
-   * 
+   *
    * @param obj Instance
    * @throws AbortedOperationException
    */
@@ -589,7 +584,7 @@ public class ManagerUtil {
 
   /**
    * Perform timed wait on obj
-   * 
+   *
    * @param obj Instance
    * @param millis Wait time
    * @throws AbortedOperationException
@@ -603,7 +598,7 @@ public class ManagerUtil {
 
   /**
    * Perform timed wait on obj
-   * 
+   *
    * @param obj Instance
    * @param millis Wait time
    * @param nanos More wait time
@@ -620,7 +615,7 @@ public class ManagerUtil {
 
   /**
    * Enter synchronized monitor
-   * 
+   *
    * @param obj Object
    * @param type Lock type
    * @throws AbortedOperationException
@@ -632,7 +627,7 @@ public class ManagerUtil {
 
   /**
    * Enter synchronized monitor
-   * 
+   *
    * @param obj Object
    * @param type Lock type
    * @param contextInfo Configuration text of the lock
@@ -644,7 +639,7 @@ public class ManagerUtil {
 
   /**
    * Exit synchronized monitor
-   * 
+   *
    * @param obj Object
    * @throws AbortedOperationException
    */
@@ -678,7 +673,7 @@ public class ManagerUtil {
 
   /**
    * Check whether an object is locked at this lockLevel
-   * 
+   *
    * @param obj Lock
    * @param lockLevel Lock level
    * @return True if locked at this level
@@ -698,7 +693,7 @@ public class ManagerUtil {
 
   /**
    * Try to enter monitor for specified object
-   * 
+   *
    * @param obj The object monitor
    * @param timeoutInNanos Timeout in nanoseconds
    * @param type The lock level
@@ -714,7 +709,7 @@ public class ManagerUtil {
 
   /**
    * Enter synchronized monitor (interruptibly).
-   * 
+   *
    * @param obj The object monitor
    * @param type The lock level
    * @throws NullPointerException If obj is null
@@ -729,7 +724,7 @@ public class ManagerUtil {
 
   /**
    * Acquire lock (interruptibly).
-   * 
+   *
    * @param obj The object monitor
    * @param level The lock level
    * @throws NullPointerException If obj is null
@@ -745,7 +740,7 @@ public class ManagerUtil {
 
   /**
    * Get number of locks held locally on this object
-   * 
+   *
    * @param obj The lock object
    * @param lockLevel The lock level
    * @return Lock count
@@ -760,7 +755,7 @@ public class ManagerUtil {
 
   /**
    * Check whether this lock is held by the current thread
-   * 
+   *
    * @param obj The lock
    * @param lockLevel The lock level
    * @return True if held by current thread
@@ -776,7 +771,7 @@ public class ManagerUtil {
 
   /**
    * Check whether this lock is held by the current thread
-   * 
+   *
    * @param lockId The lock ID
    * @param lockLevel The lock level
    * @return True if held by current thread
@@ -791,7 +786,7 @@ public class ManagerUtil {
 
   /**
    * Number in queue waiting on this lock
-   * 
+   *
    * @param obj The object
    * @return Number of waiters
    * @throws AbortedOperationException
@@ -805,7 +800,7 @@ public class ManagerUtil {
 
   /**
    * Number in queue waiting on this wait()
-   * 
+   *
    * @param obj The object
    * @return Number of waiters
    * @throws AbortedOperationException
@@ -822,421 +817,6 @@ public class ManagerUtil {
   }
 
   /**
-   * For java.lang.reflect.Array.get()
-   * 
-   * @param array The array
-   * @param index Index into the array
-   * @return Item in array at index, boxed to Object if primitive array
-   * @throws NullPointerException If array is null
-   * @throws IllegalArgumentException If array is not an array type
-   */
-  protected static Object get(final Object array, final int index) throws IllegalArgumentException,
-      ArrayIndexOutOfBoundsException {
-    return ArrayManager.get(array, index);
-  }
-
-  /**
-   * This method is part of java.lang.reflect.Array and does the same as the set() method in the Sun JDK, the IBM
-   * version of the set method just adds a series of argument checks and then delegates to the native setImpl version.
-   * 
-   * @param array Array
-   * @param index Index in array
-   * @param value New value
-   * @throws NullPointerException If array is null
-   * @throws IllegalArgumentException If array is an unexpected array type
-   * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
-   */
-  protected static void setImpl(final Object array, final int index, final Object value)
-      throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
-    set(array, index, value);
-  }
-
-  /**
-   * This method is part of java.lang.reflect.Array and does the same as the set() method in the Sun JDK, the IBM
-   * version of the set method just adds a series of argument checks and then delegates to the native setImpl version.
-   * 
-   * @param array Array
-   * @param index Index in array
-   * @param value New value
-   * @throws NullPointerException If array is null
-   * @throws IllegalArgumentException If array is an unexpected array type
-   * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
-   */
-  protected static void set(final Object array, final int index, final Object value) throws IllegalArgumentException,
-      ArrayIndexOutOfBoundsException {
-    if (array == null) { throw new NullPointerException(); }
-
-    if (array instanceof Object[]) {
-      Class componentType = array.getClass().getComponentType();
-      if (value != null && !componentType.isInstance(value)) {
-        //
-        throw new IllegalArgumentException("Cannot assign an instance of type " + value.getClass().getName()
-                                           + " to array with component type " + componentType.getName());
-      }
-      ArrayManager.objectArrayChanged((Object[]) array, index, value);
-    } else if (value instanceof Byte) {
-      setByte(array, index, ((Byte) value).byteValue());
-    } else if (value instanceof Short) {
-      setShort(array, index, ((Short) value).shortValue());
-    } else if (value instanceof Integer) {
-      setInt(array, index, ((Integer) value).intValue());
-    } else if (value instanceof Long) {
-      setLong(array, index, ((Long) value).longValue());
-    } else if (value instanceof Float) {
-      setFloat(array, index, ((Float) value).floatValue());
-    } else if (value instanceof Double) {
-      setDouble(array, index, ((Double) value).doubleValue());
-    } else if (value instanceof Character) {
-      setChar(array, index, ((Character) value).charValue());
-    } else if (value instanceof Boolean) {
-      setBoolean(array, index, ((Boolean) value).booleanValue());
-    } else {
-      throw new IllegalArgumentException("Not an array type: " + array.getClass().getName());
-    }
-  }
-
-  /**
-   * Set boolean value in array
-   * 
-   * @param array Array
-   * @param index Index in array
-   * @param z New boolean value
-   * @throws NullPointerException If array is null
-   * @throws IllegalArgumentException If array is an unexpected array type
-   * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
-   */
-  protected static void setBoolean(final Object array, final int index, final boolean z)
-      throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
-    if (array == null) { throw new NullPointerException(); }
-
-    if (array instanceof boolean[]) {
-      byte b = z ? (byte) 1 : (byte) 0;
-
-      ArrayManager.byteOrBooleanArrayChanged(array, index, b);
-    } else {
-      throw new IllegalArgumentException();
-    }
-  }
-
-  /**
-   * Set byte value in array
-   * 
-   * @param array Array
-   * @param index Index in array
-   * @param b New byte value
-   * @throws NullPointerException If array is null
-   * @throws IllegalArgumentException If array is an unexpected array type
-   * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
-   */
-  protected static void setByte(final Object array, final int index, final byte b) throws IllegalArgumentException,
-      ArrayIndexOutOfBoundsException {
-    if (array == null) { throw new NullPointerException(); }
-
-    if (array instanceof byte[]) {
-      ArrayManager.byteOrBooleanArrayChanged(array, index, b);
-    } else {
-      setShort(array, index, b);
-    }
-  }
-
-  /**
-   * Set int value in array
-   * 
-   * @param array Array
-   * @param index Index in array
-   * @param c New int value
-   * @throws NullPointerException If array is null
-   * @throws IllegalArgumentException If array is an unexpected array type
-   * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
-   */
-  protected static void setChar(final Object array, final int index, final char c) throws IllegalArgumentException,
-      ArrayIndexOutOfBoundsException {
-    if (array == null) { throw new NullPointerException(); }
-
-    if (array instanceof char[]) {
-      ArrayManager.charArrayChanged((char[]) array, index, c);
-    } else {
-      setInt(array, index, c);
-    }
-  }
-
-  /**
-   * Set short value in array
-   * 
-   * @param array Array
-   * @param index Index in array
-   * @param s New short value
-   * @throws NullPointerException If array is null
-   * @throws IllegalArgumentException If array is an unexpected array type
-   * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
-   */
-  protected static void setShort(final Object array, final int index, final short s) throws IllegalArgumentException,
-      ArrayIndexOutOfBoundsException {
-    if (array == null) { throw new NullPointerException(); }
-
-    if (array instanceof short[]) {
-      ArrayManager.shortArrayChanged((short[]) array, index, s);
-    } else {
-      setInt(array, index, s);
-    }
-  }
-
-  /**
-   * Set int value in array
-   * 
-   * @param array Array
-   * @param index Index in array
-   * @param i New int value
-   * @throws NullPointerException If array is null
-   * @throws IllegalArgumentException If array is an unexpected array type
-   * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
-   */
-  protected static void setInt(final Object array, final int index, final int i) throws IllegalArgumentException,
-      ArrayIndexOutOfBoundsException {
-    if (array == null) { throw new NullPointerException(); }
-
-    if (array instanceof int[]) {
-      ArrayManager.intArrayChanged((int[]) array, index, i);
-    } else {
-      setLong(array, index, i);
-    }
-  }
-
-  /**
-   * Set long value in array
-   * 
-   * @param array Array
-   * @param index Index in array
-   * @param l New long value
-   * @throws NullPointerException If array is null
-   * @throws IllegalArgumentException If array is an unexpected array type
-   * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
-   */
-  protected static void setLong(final Object array, final int index, final long l) throws IllegalArgumentException,
-      ArrayIndexOutOfBoundsException {
-    if (array == null) { throw new NullPointerException(); }
-
-    if (array instanceof long[]) {
-      ArrayManager.longArrayChanged((long[]) array, index, l);
-    } else {
-      setFloat(array, index, l);
-    }
-  }
-
-  /**
-   * Set float value in array
-   * 
-   * @param array Array
-   * @param index Index in array
-   * @param f New float value
-   * @throws NullPointerException If array is null
-   * @throws IllegalArgumentException If array is an unexpected array type
-   * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
-   */
-  protected static void setFloat(final Object array, final int index, final float f) throws IllegalArgumentException,
-      ArrayIndexOutOfBoundsException {
-    if (array == null) { throw new NullPointerException(); }
-
-    if (array instanceof float[]) {
-      ArrayManager.floatArrayChanged((float[]) array, index, f);
-    } else {
-      setDouble(array, index, f);
-    }
-  }
-
-  /**
-   * Set double value in array
-   * 
-   * @param array Array
-   * @param index Index in array
-   * @param d New double value
-   * @throws NullPointerException If array is null
-   * @throws IllegalArgumentException If array is an unexpected array type
-   * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
-   */
-  protected static void setDouble(final Object array, final int index, final double d) throws IllegalArgumentException,
-      ArrayIndexOutOfBoundsException {
-    if (array == null) { throw new NullPointerException(); }
-
-    if (array instanceof double[]) {
-      ArrayManager.doubleArrayChanged((double[]) array, index, d);
-    } else {
-      throw new IllegalArgumentException();
-    }
-  }
-
-  /**
-   * Indicate that object in array changed
-   * 
-   * @param array The array
-   * @param index The index into array
-   * @param value The new value
-   */
-  protected static void objectArrayChanged(final Object[] array, final int index, final Object value) {
-    ArrayManager.objectArrayChanged(array, index, value);
-  }
-
-  /**
-   * Indicate that short in array changed
-   * 
-   * @param array The array
-   * @param index The index into array
-   * @param value The new value
-   */
-  protected static void shortArrayChanged(final short[] array, final int index, final short value) {
-    ArrayManager.shortArrayChanged(array, index, value);
-  }
-
-  /**
-   * Indicate that long in array changed
-   * 
-   * @param array The array
-   * @param index The index into array
-   * @param value The new value
-   */
-  protected static void longArrayChanged(final long[] array, final int index, final long value) {
-    ArrayManager.longArrayChanged(array, index, value);
-  }
-
-  /**
-   * Indicate that int in array changed
-   * 
-   * @param array The array
-   * @param index The index into array
-   * @param value The new value
-   */
-  protected static void intArrayChanged(final int[] array, final int index, final int value) {
-    ArrayManager.intArrayChanged(array, index, value);
-  }
-
-  /**
-   * Indicate that float in array changed
-   * 
-   * @param array The array
-   * @param index The index into array
-   * @param value The new value
-   */
-  protected static void floatArrayChanged(final float[] array, final int index, final float value) {
-    ArrayManager.floatArrayChanged(array, index, value);
-  }
-
-  /**
-   * Indicate that double in array changed
-   * 
-   * @param array The array
-   * @param index The index into array
-   * @param value The new value
-   */
-  protected static void doubleArrayChanged(final double[] array, final int index, final double value) {
-    ArrayManager.doubleArrayChanged(array, index, value);
-  }
-
-  /**
-   * Indicate that char in array changed
-   * 
-   * @param array The array
-   * @param index The index into array
-   * @param value The new value
-   */
-  protected static void charArrayChanged(final char[] array, final int index, final char value) {
-    ArrayManager.charArrayChanged(array, index, value);
-  }
-
-  /**
-   * Indicate that byte or boolean in array changed
-   * 
-   * @param array The array
-   * @param index The index into array
-   * @param value The new value
-   */
-  protected static void byteOrBooleanArrayChanged(final Object array, final int index, final byte value) {
-    ArrayManager.byteOrBooleanArrayChanged(array, index, value);
-  }
-
-  /**
-   * Handle System.arraycopy() semantics with managed arrays
-   * 
-   * @param src Source array
-   * @param srcPos Start index in source
-   * @param dest Destination array
-   * @param destPos Destination start index
-   * @param length Number of items to copy
-   * @throws NullPointerException If src or dest is null
-   */
-  protected static void arraycopy(final Object src, final int srcPos, final Object dest, final int destPos,
-                                  final int length) {
-    ArrayManager.arraycopy(src, srcPos, dest, destPos, length);
-  }
-
-  /**
-   * Get the TCO for an array
-   * 
-   * @param array The array instance
-   * @return The TCObject
-   */
-  protected static TCObject getObject(final Object array) {
-    return ArrayManager.getObject(array);
-  }
-
-  /**
-   * Copy char[]
-   * 
-   * @param src Source array
-   * @param srcPos Start in src
-   * @param dest Destination array
-   * @param destPos Start in dest
-   * @param length Number of items to copy
-   * @param tco TCObject for dest array
-   */
-  protected static void charArrayCopy(final char[] src, final int srcPos, final char[] dest, final int destPos,
-                                      final int length, final TCObject tco) {
-    ArrayManager.charArrayCopy(src, srcPos, dest, destPos, length, tco);
-  }
-
-  /**
-   * Register an array with its TCO. It is an error to register an array that has already been registered.
-   * 
-   * @param array Array
-   * @param obj TCObject
-   * @throws NullPointerException if array or tco are null
-   */
-  protected static void register(final Object array, final TCObject obj) {
-    ArrayManager.register(array, obj);
-  }
-
-  /**
-   * @return TCProperties
-   */
-  protected static TCProperties getTCProperties() {
-    return getManager().getTCProperties();
-  }
-
-  /**
-   * Returns true if the field represented by the offset is a portable field, i.e., not static and not dso transient
-   * 
-   * @param pojo Object
-   * @param fieldOffset The index
-   * @return true if the field is portable and false otherwise
-   */
-  protected static boolean isFieldPortableByOffset(final Object pojo, final long fieldOffset) {
-    return getManager().isFieldPortableByOffset(pojo, fieldOffset);
-  }
-
-  //
-  // protected static void registerMBean(Object bean, ObjectName name) throws InstanceAlreadyExistsException,
-  // MBeanRegistrationException, NotCompliantMBeanException {
-  // getManager().registerMBean(bean, name);
-  // }
-
-  protected static void waitForAllCurrentTransactionsToComplete() throws AbortedOperationException {
-    getManager().waitForAllCurrentTransactionsToComplete();
-  }
-
-  protected static MetaDataDescriptor createMetaDataDescriptor(String category) {
-    return getManager().createMetaDataDescriptor(category);
-  }
-
-  protected static SearchQueryResults executeQuery(String cachename, List queryStack, boolean includeKeys,
                                                    boolean includeValues, Set<String> attributeSet,
                                                    List<NVPair> sortAttributes, List<NVPair> aggregators,
                                                    int maxResults, int batchSize, boolean waitForTxn)
@@ -1259,7 +839,7 @@ public class ManagerUtil {
 
   /**
    * Begin lock
-   * 
+   *
    * @param Object lockID Lock identifier
    * @param type Lock type
    * @throws AbortedOperationException
@@ -1272,7 +852,7 @@ public class ManagerUtil {
 
   /**
    * Commit lock
-   * 
+   *
    * @param lockID Lock name
    * @throws AbortedOperationException
    */
@@ -1284,7 +864,7 @@ public class ManagerUtil {
 
   /**
    * Begin lock
-   * 
+   *
    * @param long lockID Lock identifier
    * @param type Lock type
    * @throws AbortedOperationException
@@ -1296,7 +876,7 @@ public class ManagerUtil {
 
   /**
    * Try to begin lock
-   * 
+   *
    * @param long lockID Lock identifier
    * @param type Lock type
    * @return True if lock was successful
@@ -1309,7 +889,7 @@ public class ManagerUtil {
 
   /**
    * Try to begin lock within a specific timespan
-   * 
+   *
    * @param lockID Lock identifier
    * @param type Lock type
    * @param timeoutInNanos Timeout in nanoseconds
@@ -1324,7 +904,7 @@ public class ManagerUtil {
 
   /**
    * Commit lock
-   * 
+   *
    * @param long lockID Lock name
    * @throws AbortedOperationException
    */
@@ -1347,7 +927,7 @@ public class ManagerUtil {
 
   /**
    * Check whether this lock is held by the current thread
-   * 
+   *
    * @param lockId The lock ID
    * @param lockLevel The lock level
    * @return True if held by current thread

@@ -23,7 +23,7 @@ public class SpiInit implements DSOContextControl {
     boolean sendCurrentTunnelledDomains = false;
     if (tunnelledMBeanDomains != null) {
       for (String mbeanDomain : tunnelledMBeanDomains) {
-        dsoContext.getModuleConfigurtion().addTunneledMBeanDomain(mbeanDomain);
+        dsoContext.addTunneledMBeanDomain(mbeanDomain);
         sendCurrentTunnelledDomains = true;
       }
     }

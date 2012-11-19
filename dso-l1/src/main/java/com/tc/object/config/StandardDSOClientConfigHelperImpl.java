@@ -30,17 +30,12 @@ import com.terracottatech.config.L1ReconnectPropertiesDocument;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper {
 
@@ -49,24 +44,12 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
   private final L1ConfigurationSetupManager                  configSetupManager;
   private final UUID                                         id;
 
-  private final List                                         locks                              = new CopyOnWriteArrayList();
-  private final List                                         roots                              = new CopyOnWriteArrayList();
-  private final Set                                          transients                         = Collections
-                                                                                                    .synchronizedSet(new HashSet());
-  private final List                                         distributedMethods                 = new CopyOnWriteArrayList();
-
   // ====================================================================================================================
   /**
    * The lock for both {@link #userDefinedBootSpecs} and {@link #classSpecs} Maps
    */
   private final Object                                       specLock                           = new Object();
 
-  /**
-   * A map of class names to TransparencyClassSpec
-   * 
-   * @GuardedBy {@link #specLock}
-   */
-  private final Map                                          userDefinedBootSpecs               = new HashMap();
 
   /**
    * A map of class names to TransparencyClassSpec for individual classes
@@ -76,7 +59,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
   private final Map                                          classSpecs                         = new HashMap();
   // ====================================================================================================================
 
-  private final Map                                          aspectModules                      = new ConcurrentHashMap();
   private final Portability                                  portability;
   private int                                                faultCount                         = -1;
   private final Set<String>                                  tunneledMBeanDomains               = Collections
@@ -101,10 +83,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     } catch (Exception e) {
       throw new ConfigurationSetupException(e.getLocalizedMessage(), e);
     }
-
-    logger.debug("roots: " + this.roots);
-    logger.debug("locks: " + this.locks);
-    logger.debug("distributed-methods: " + this.distributedMethods);
   }
 
   @Override
@@ -166,15 +144,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
   }
 
   @Override
-  public Iterator getAllUserDefinedBootSpecs() {
-    Collection values = null;
-    synchronized (specLock) {
-      values = new HashSet(userDefinedBootSpecs.values());
-    }
-    return values.iterator();
-  }
-
-  @Override
   public void setFaultCount(final int count) {
     this.faultCount = count;
   }
@@ -182,56 +151,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
   @Override
   public int getFaultCount() {
     return faultCount < 0 ? this.configSetupManager.dsoL1Config().faultCount() : faultCount;
-  }
-
-  @Override
-  public void addWriteAutolock(final String methodPattern) {
-    addAutolock(methodPattern, ConfigLockLevel.WRITE);
-  }
-
-  @Override
-  public void addWriteAutolock(final String methodPattern, final String lockContextInfo) {
-    addAutolock(methodPattern, ConfigLockLevel.WRITE, lockContextInfo);
-  }
-
-  @Override
-  public void addSynchronousWriteAutolock(final String methodPattern) {
-    addAutolock(methodPattern, ConfigLockLevel.SYNCHRONOUS_WRITE);
-  }
-
-  @Override
-  public void addReadAutolock(final String methodPattern) {
-    addAutolock(methodPattern, ConfigLockLevel.READ);
-  }
-
-  @Override
-  public void addAutolock(final String methodPattern, final ConfigLockLevel type) {
-    LockDefinition lockDefinition = new LockDefinitionImpl(LockDefinition.TC_AUTOLOCK_NAME, type);
-    lockDefinition.commit();
-    addLock(methodPattern, lockDefinition);
-  }
-
-  @Override
-  public void addAutolock(final String methodPattern, final ConfigLockLevel type, final String configurationText) {
-    LockDefinition lockDefinition = new LockDefinitionImpl(LockDefinition.TC_AUTOLOCK_NAME, type, configurationText);
-    lockDefinition.commit();
-    addLock(methodPattern, lockDefinition);
-  }
-
-  @Override
-  public void addReadAutoSynchronize(final String methodPattern) {
-    addAutolock(methodPattern, ConfigLockLevel.AUTO_SYNCHRONIZED_READ);
-  }
-
-  @Override
-  public void addWriteAutoSynchronize(final String methodPattern) {
-    addAutolock(methodPattern, ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE);
-  }
-
-  @Override
-  public void addLock(final String methodPattern, final LockDefinition lockDefinition) {
-    // keep the list in reverse order of add
-    locks.add(0, new Lock(methodPattern, lockDefinition));
   }
 
   @Override
@@ -333,7 +252,6 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
   public void removeSpec(String className) {
     className = className.replace('/', '.');
     classSpecs.remove(className);
-    userDefinedBootSpecs.remove(className);
   }
 
   @Override
@@ -341,55 +259,15 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
     synchronized (specLock) {
       // NOTE: This method doesn't create a spec for you. If you want that use getOrCreateSpec()
       className = className.replace('/', '.');
-      TransparencyClassSpec rv = (TransparencyClassSpec) classSpecs.get(className);
-
-      if (rv == null) {
-        rv = (TransparencyClassSpec) userDefinedBootSpecs.get(className);
-      } else {
-        // shouldn't have a spec in both of the spec collections
-        Assert.assertNull(userDefinedBootSpecs.get(className));
-      }
-
-      return rv;
+      return (TransparencyClassSpec) classSpecs.get(className);
     }
-  }
-
-  private TransparencyClassSpec[] getAllSpecs(final boolean includeBootJarSpecs) {
-    List rv = null;
-    synchronized (specLock) {
-      rv = new ArrayList(classSpecs.values());
-
-      if (includeBootJarSpecs) {
-        for (Iterator i = getAllUserDefinedBootSpecs(); i.hasNext();) {
-          rv.add(i.next());
-        }
-      }
-    }
-    return (TransparencyClassSpec[]) rv.toArray(new TransparencyClassSpec[rv.size()]);
   }
 
   @Override
   public TransparencyClassSpec[] getAllSpecs() {
-    return getAllSpecs(false);
-  }
-
-  @Override
-  public void addDistributedMethodCall(final DistributedMethodSpec dms) {
-    this.distributedMethods.add(dms);
-  }
-
-  @Override
-  public void addDistributedMethod(String expression) {
-    addDistributedMethodCall(new DistributedMethodSpec(expression, false));
-  }
-
-  @Override
-  public void addTransient(final String className, final String fieldName) {
-    if (null == className || null == fieldName) {
-      //
-      throw new IllegalArgumentException("class " + className + ", field = " + fieldName);
+    synchronized (specLock) {
+      return (TransparencyClassSpec[]) classSpecs.values().toArray(new TransparencyClassSpec[classSpecs.size()]);
     }
-    transients.add(className + "." + fieldName);
   }
 
   @Override
@@ -398,34 +276,10 @@ public class StandardDSOClientConfigHelperImpl implements DSOClientConfigHelper 
   }
 
   @Override
-  public void addAspectModule(final String classNamePrefix, final String moduleName) {
-    synchronized (aspectModules) {
-      List modules = (List) this.aspectModules.get(classNamePrefix);
-      if (modules == null) {
-        modules = new ArrayList();
-        this.aspectModules.put(classNamePrefix, modules);
-      }
-      modules.add(moduleName);
-    }
-  }
-
-  @Override
-  public Map getAspectModules() {
-    return this.aspectModules;
-  }
-
-  @Override
   public String getLogicalExtendingClassName(final String className) {
     TransparencyClassSpec spec = getSpec(className);
     if (spec == null || !spec.isLogical()) { return null; }
     return spec.getLogicalExtendingClassName();
-  }
-
-  @Override
-  public void addUserDefinedBootSpec(final String className, final TransparencyClassSpec spec) {
-    synchronized (specLock) {
-      userDefinedBootSpecs.put(className, spec);
-    }
   }
 
   @Override
