@@ -21,6 +21,7 @@ import org.terracotta.toolkit.events.ToolkitNotifier;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.ToolkitLogger;
 import org.terracotta.toolkit.internal.ToolkitProperties;
+import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
 import org.terracotta.toolkit.nonstop.NonStopConfigRegistry;
@@ -29,12 +30,16 @@ import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.exception.ImplementMe;
-import com.terracotta.toolkit.collections.map.NonStopToolkitCacheImpl;
+import com.terracotta.toolkit.collections.map.ValuesResolver;
 import com.terracotta.toolkit.nonstop.NonStopConfigRegistryImpl;
+import com.terracotta.toolkit.nonstop.NonStopDelegateProvider;
+import com.terracotta.toolkit.nonstop.NonStopInvocationHandler;
 import com.terracotta.toolkit.nonstop.NonStopManager;
 import com.terracotta.toolkit.nonstop.NonStopManagerImpl;
+import com.terracotta.toolkit.nonstop.NonStopToolkitCacheDelegateProvider;
 import com.terracotta.toolkit.nonstop.NonstopTimeoutBehaviorResolver;
 
+import java.lang.reflect.Proxy;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -151,12 +156,21 @@ public class NonStopToolkit implements ToolkitInternal {
 
   @Override
   public <V> ToolkitCache<String, V> getCache(String name, Configuration configuration, Class<V> klazz) {
-    // TODO:
+    // TODO: refactor in a factory ?
     ToolkitCache<String, V> cache = (ToolkitCache<String, V>) toolkitObjects.get(ToolkitObjectType.CACHE).get(name);
     if (cache != null) { return cache; }
-
-    cache = new NonStopToolkitCacheImpl<String, V>(name, klazz, configuration, nonStopManager, toolkitDelegate,
-                                                   nonStopConfigManager, nonstopTimeoutBehaviorFactory);
+    NonStopDelegateProvider<ToolkitCacheInternal<String, V>> nonStopDelegateProvider = new NonStopToolkitCacheDelegateProvider(
+                                                                                                                               nonStopConfigManager,
+                                                                                                                               nonstopTimeoutBehaviorFactory,
+                                                                                                                               toolkitDelegate,
+                                                                                                                               name,
+                                                                                                                               klazz,
+                                                                                                                               configuration);
+    cache = (ToolkitCache<String, V>) Proxy
+        .newProxyInstance(this.getClass().getClassLoader(), new Class[] { ToolkitCacheInternal.class,
+                              ValuesResolver.class },
+                          new NonStopInvocationHandler<ToolkitCacheInternal<String, V>>(nonStopManager,
+                                                                                        nonStopDelegateProvider));
     ToolkitCache<String, V> oldCache = (ToolkitCache<String, V>) toolkitObjects.get(ToolkitObjectType.CACHE)
         .putIfAbsent(name, cache);
     return oldCache == null ? cache : oldCache;
