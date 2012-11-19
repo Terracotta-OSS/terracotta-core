@@ -8,8 +8,7 @@ import org.terracotta.toolkit.cache.ToolkitCache;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
-public class NonStopToolkitCacheDelegateProvider<V> extends
- AbstractNonStopDelegateProvider<ToolkitCache<String, V>> {
+public class NonStopToolkitCacheDelegateProvider<V> extends AbstractNonStopDelegateProvider<ToolkitCache<String, V>> {
 
   private final String          name;
   private final ToolkitInternal toolkit;

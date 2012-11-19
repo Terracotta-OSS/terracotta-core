@@ -24,7 +24,7 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
 
                                                                                        @Override
                                                                                        public NonStopTimeoutBehavior getNonStopTimeoutBehavior() {
-                                                                                         return NonStopConfigurationFields.DEFAULT_NON_STOP_TIMEOUT_READ_BEHAVIOR;
+                                                                                         return NonStopConfigurationFields.DEFAULT_NON_STOP_TIMEOUT_BEHAVIOR;
                                                                                        }
 
                                                                                        @Override
