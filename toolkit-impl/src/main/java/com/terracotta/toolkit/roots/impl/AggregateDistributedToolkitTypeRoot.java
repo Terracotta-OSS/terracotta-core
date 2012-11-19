@@ -19,12 +19,13 @@ import com.terracotta.toolkit.object.TCToolkitObject;
 import com.terracotta.toolkit.object.ToolkitObjectStripe;
 import com.terracotta.toolkit.roots.AggregateToolkitTypeRoot;
 import com.terracotta.toolkit.roots.ToolkitTypeRoot;
+import com.terracotta.toolkit.type.DistributedClusteredObjectLookup;
 import com.terracotta.toolkit.type.DistributedToolkitType;
 import com.terracotta.toolkit.type.DistributedToolkitTypeFactory;
 import com.terracotta.toolkit.util.collections.WeakValueMap;
 
 public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitType<S>, S extends TCToolkitObject>
-    implements AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener {
+    implements AggregateToolkitTypeRoot<T, S>, RejoinLifecycleListener, DistributedClusteredObjectLookup<S> {
 
   private final ToolkitTypeRoot<ToolkitObjectStripe<S>>[] roots;
   private final DistributedToolkitTypeFactory<T, S>       distributedTypeFactory;
@@ -66,7 +67,7 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
           stripeObjects = createStripeObjects(name, effectiveConfig);
         }
 
-        distributedType = distributedTypeFactory.createDistributedType(toolkit, factory, name, stripeObjects,
+        distributedType = distributedTypeFactory.createDistributedType(toolkit, factory, this, name, stripeObjects,
                                                                        effectiveConfig, platformService);
         localCache.put(name, distributedType);
         return distributedType;
@@ -98,7 +99,8 @@ public class AggregateDistributedToolkitTypeRoot<T extends DistributedToolkitTyp
     return stripeObjects;
   }
 
-  private ToolkitObjectStripe<S>[] lookupStripeObjects(String name) throws AssertionError {
+  @Override
+  public ToolkitObjectStripe<S>[] lookupStripeObjects(String name) {
     final ToolkitObjectStripe<S>[] stripeObjects = new ToolkitObjectStripe[roots.length];
     // already created.. make sure was created in all stripes
     for (int i = 0; i < roots.length; i++) {

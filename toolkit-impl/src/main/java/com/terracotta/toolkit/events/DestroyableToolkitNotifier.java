@@ -7,11 +7,11 @@ import org.terracotta.toolkit.events.ToolkitNotificationEvent;
 import org.terracotta.toolkit.events.ToolkitNotificationListener;
 import org.terracotta.toolkit.events.ToolkitNotifier;
 
-import com.terracotta.toolkit.collections.DestroyedInstanceProxy;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
 import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
+import com.terracotta.toolkit.util.ToolkitInstanceProxy;
 
 import java.util.Collections;
 import java.util.List;
@@ -38,7 +38,7 @@ public class DestroyableToolkitNotifier<T> extends AbstractDestroyableToolkitObj
 
   @Override
   public void rejoinStarted() {
-    // TODO:
+    this.notifier = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitNotifier.class);
   }
 
   @Override
@@ -53,7 +53,7 @@ public class DestroyableToolkitNotifier<T> extends AbstractDestroyableToolkitObj
 
   @Override
   public void applyDestroy() {
-    this.notifier = DestroyedInstanceProxy.createNewInstance(ToolkitNotifier.class, getName());
+    this.notifier = ToolkitInstanceProxy.newDestroyedInstanceProxy(name, ToolkitNotifier.class);
   }
 
   @Override

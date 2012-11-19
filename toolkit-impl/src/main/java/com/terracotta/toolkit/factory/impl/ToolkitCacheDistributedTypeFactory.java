@@ -3,6 +3,8 @@
  */
 package com.terracotta.toolkit.factory.impl;
 
+import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
+
 import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.config.Configuration;
@@ -23,11 +25,10 @@ import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.ToolkitObjectStripe;
 import com.terracotta.toolkit.object.ToolkitObjectStripeImpl;
 import com.terracotta.toolkit.search.SearchFactory;
+import com.terracotta.toolkit.type.DistributedClusteredObjectLookup;
 import com.terracotta.toolkit.type.DistributedToolkitTypeFactory;
 
 import java.io.Serializable;
-
-import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 
 /**
  * An implementation of {@link DistributedToolkitTypeFactory} for ClusteredMap's
@@ -48,8 +49,10 @@ public class ToolkitCacheDistributedTypeFactory<K extends Serializable, V extend
     this.serverMapLocalStoreFactory = serverMapLocalStoreFactory;
   }
 
+
   @Override
   public ToolkitCacheImpl<K, V> createDistributedType(ToolkitInternal toolkit, ToolkitObjectFactory factory,
+                                                      DistributedClusteredObjectLookup<InternalToolkitMap<K, V>> lookup,
                                                       String name,
                                                       ToolkitObjectStripe<InternalToolkitMap<K, V>>[] stripeObjects,
                                                       Configuration configuration, PlatformService platformService) {
@@ -57,7 +60,7 @@ public class ToolkitCacheDistributedTypeFactory<K extends Serializable, V extend
     ToolkitMap<String, ToolkitAttributeType> attrSchema = toolkit.getMap(name + "|" + SEARCH_ATTR_TYPES_MAP_SUFFIX,
                                                                          String.class, ToolkitAttributeType.class);
     AggregateServerMap aggregateServerMap = new AggregateServerMap(factory.getManufacturedToolkitObjectType(),
-                                                                   searchBuilderFactory, name, stripeObjects,
+                                                                   searchBuilderFactory, lookup, name, stripeObjects,
                                                                    configuration, attrSchema, serverMapLocalStoreFactory,
                                                                    platformService);
     return new ToolkitCacheImpl<K, V>(factory, toolkit, name, aggregateServerMap);

@@ -639,6 +639,13 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   @Override
+  public void cleanLocalState() {
+    synchronized (localLock) {
+      this.cache.cleanLocalState();
+    }
+  }
+
+  @Override
   public void evictedInServer(Object key) {
     synchronized (localLock) {
       // MNK-2875: Since server side eviction messages come in asynchronously with the initialization process, it's

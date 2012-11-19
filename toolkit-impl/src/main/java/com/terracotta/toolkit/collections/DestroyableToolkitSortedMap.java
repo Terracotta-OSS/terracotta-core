@@ -11,6 +11,7 @@ import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
 import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
+import com.terracotta.toolkit.util.ToolkitInstanceProxy;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -38,7 +39,7 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
 
   @Override
   public void rejoinStarted() {
-    // TODO:
+    this.map = ToolkitInstanceProxy.newDestroyedInstanceProxy(name, ToolkitSortedMap.class);
   }
 
   @Override
@@ -53,7 +54,7 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
 
   @Override
   public void applyDestroy() {
-    this.map = DestroyedInstanceProxy.createNewInstance(ToolkitSortedMap.class, getName());
+    this.map = ToolkitInstanceProxy.newDestroyedInstanceProxy(name, ToolkitSortedMap.class);
   }
 
   @Override

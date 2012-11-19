@@ -534,6 +534,10 @@ public class ServerMap<K, V> extends AbstractTCToolkitObject implements Internal
     return ToolkitLockingApi.createUnnamedReadWriteLock(lockId, platformService);
   }
 
+  public void cleanLocalState() {
+    this.tcObjectServerMap.cleanLocalState();
+  }
+
   @Override
   public void clearLocalCache() {
     if (isEventual()) {

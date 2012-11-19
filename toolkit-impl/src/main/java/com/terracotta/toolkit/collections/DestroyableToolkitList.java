@@ -10,6 +10,7 @@ import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
 import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
+import com.terracotta.toolkit.util.ToolkitInstanceProxy;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -34,7 +35,7 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
 
   @Override
   public void rejoinStarted() {
-    //
+    this.list = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitList.class);
   }
 
   @Override
@@ -49,7 +50,7 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
 
   @Override
   public void applyDestroy() {
-    this.list = DestroyedInstanceProxy.createNewInstance(ToolkitList.class, getName());
+    this.list = ToolkitInstanceProxy.newDestroyedInstanceProxy(name, ToolkitList.class);
   }
 
   @Override

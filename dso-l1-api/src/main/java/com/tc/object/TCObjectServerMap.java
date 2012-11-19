@@ -196,6 +196,8 @@ public interface TCObjectServerMap<L> extends TCObject {
    */
   public void clearLocalCache(final TCServerMap map);
 
+  public void cleanLocalState();
+
   public void clearAllLocalCacheInline(final TCServerMap map);
 
   /**

@@ -3,21 +3,24 @@
  */
 package com.terracotta.toolkit.collections.map;
 
+import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
+import org.terracotta.toolkit.object.ToolkitObject;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.SearchExecutor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
+import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.tc.object.ObjectID;
-import com.terracotta.toolkit.collections.DestroyedInstanceProxy;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.type.DistributedToolkitType;
+import com.terracotta.toolkit.util.ToolkitInstanceProxy;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -26,8 +29,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject implements
-    DistributedToolkitType<InternalToolkitMap<K, V>>, ValuesResolver<K, V>,
-    ToolkitCacheInternal<K, V> {
+    DistributedToolkitType<InternalToolkitMap<K, V>>, ValuesResolver<K, V>, ToolkitCacheInternal<K, V> {
 
   private final AggregateServerMap<K, V>      aggregateServerMap;
   private volatile ToolkitCacheInternal<K, V> activeDelegate;
@@ -44,17 +46,27 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   @Override
   public void rejoinStarted() {
-    // TODO:
+    this.activeDelegate = ToolkitInstanceProxy.newRejoinInProgressProxy(name, getToolkitClass());
+    aggregateServerMap.rejoinStarted();
+  }
+
+  private Class<? extends ToolkitObject> getToolkitClass() {
+    if (aggregateServerMap.getToolkitObjectType() == ToolkitObjectType.STORE) {
+      return ToolkitStore.class;
+    } else {
+      return ToolkitCacheInternal.class;
+    }
   }
 
   @Override
   public void rejoinCompleted() {
-    // TODO:
+    aggregateServerMap.rejoinCompleted();
+    this.activeDelegate = aggregateServerMap;
   }
 
   @Override
   public void applyDestroy() {
-    this.activeDelegate = DestroyedInstanceProxy.createNewInstance(ToolkitCacheInternal.class, getName());
+    this.activeDelegate = ToolkitInstanceProxy.newDestroyedInstanceProxy(getName(), ToolkitCacheInternal.class);
   }
 
   @Override

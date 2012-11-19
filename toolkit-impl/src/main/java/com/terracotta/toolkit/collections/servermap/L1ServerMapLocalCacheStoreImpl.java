@@ -38,6 +38,11 @@ public class L1ServerMapLocalCacheStoreImpl<K, V> implements L1ServerMapLocalCac
   }
 
   @Override
+  public void cleanLocalState() {
+    toolkitStore.cleanLocalState();
+  }
+
+  @Override
   public void unpinAll() {
     toolkitStore.unpinAll();
   }

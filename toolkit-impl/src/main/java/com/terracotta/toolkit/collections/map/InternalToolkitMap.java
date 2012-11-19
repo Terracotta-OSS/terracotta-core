@@ -74,6 +74,8 @@ public interface InternalToolkitMap<K, V> extends ConcurrentMap<K, V>, TCServerM
 
   void clearLocalCache();
 
+  void cleanLocalState();
+
   long localOnHeapSizeInBytes();
 
   long localOffHeapSizeInBytes();

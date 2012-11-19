@@ -11,6 +11,7 @@ import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
 import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
 import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
+import com.terracotta.toolkit.util.ToolkitInstanceProxy;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -36,7 +37,7 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
 
   @Override
   public void rejoinStarted() {
-    //
+    this.map = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitMap.class);
   }
 
   @Override
@@ -51,7 +52,7 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
 
   @Override
   public void applyDestroy() {
-    this.map = DestroyedInstanceProxy.createNewInstance(ToolkitMap.class, getName());
+    this.map = ToolkitInstanceProxy.newDestroyedInstanceProxy(name, ToolkitMap.class);
   }
 
   @Override

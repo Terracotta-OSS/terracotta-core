@@ -192,6 +192,16 @@ public class EhcacheSMLocalStore implements ServerMapLocalStore<Object, Object> 
   }
 
   @Override
+  public void cleanLocalState() {
+    readLock.lock();
+    try {
+      getActiveStore().cleanLocalState();
+    } finally {
+      readLock.unlock();
+    }
+  }
+
+  @Override
   public long getOnHeapSizeInBytes() {
     readLock.lock();
     try {

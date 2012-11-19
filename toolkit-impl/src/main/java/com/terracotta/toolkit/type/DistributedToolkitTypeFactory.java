@@ -24,7 +24,8 @@ public interface DistributedToolkitTypeFactory<T extends DistributedToolkitType<
    * 
    * @param name
    */
-  T createDistributedType(ToolkitInternal toolkit, ToolkitObjectFactory factory, String name,
+  T createDistributedType(ToolkitInternal toolkit, ToolkitObjectFactory factory,
+                          DistributedClusteredObjectLookup<S> lookup, String name,
                           ToolkitObjectStripe<S>[] stripeObjects, Configuration configuration,
                           PlatformService platformService);
 
