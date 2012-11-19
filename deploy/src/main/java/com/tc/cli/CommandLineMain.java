@@ -6,12 +6,6 @@ package com.tc.cli;
 
 import com.tc.cli.command.BaseCommand;
 import com.tc.cli.command.Command;
-//import com.tc.cli.command.DBDiffCommand;
-//import com.tc.cli.command.DBUsageCommand;
-//import com.tc.cli.command.FastLoadOidLogAnalysisCommand;
-//import com.tc.cli.command.ManagedObjectReportCommand;
-//import com.tc.cli.command.ReviveClassFilesCommand;
-//import com.tc.cli.command.SetDbCleanCommand;
 import com.tc.util.ProductInfo;
 
 import java.io.IOException;

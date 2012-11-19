@@ -3,9 +3,9 @@ package com.tc.admin;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.servlet.Context;
-import org.mortbay.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 
 import com.tc.test.TCTestCase;
 import com.tc.util.ProductInfo;
@@ -24,18 +24,20 @@ public class UpdateCheckRequestTest extends TCTestCase {
   private Server fServer;
   private int    fPort;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     fServer = new Server(0);
     ServletHolder servletHolder = new ServletHolder(new TestServlet());
     servletHolder.setInitOrder(1);
-    Context context = new Context(fServer, "/", Context.SESSIONS);
+    ServletContextHandler context = new ServletContextHandler(fServer, "/", ServletContextHandler.SESSIONS);
     context.addServlet(servletHolder, "/test");
     fServer.start();
     fPort = fServer.getConnectors()[0].getLocalPort();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     if (fServer != null) {
       fServer.stop();
@@ -75,6 +77,7 @@ public class UpdateCheckRequestTest extends TCTestCase {
 }
 
 class TestServlet extends HttpServlet {
+  @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     response.setContentType("text/html");
     response.setStatus(HttpServletResponse.SC_OK);
@@ -82,9 +85,9 @@ class TestServlet extends HttpServlet {
     String[] expectedParams = { "kitID", "pageID", "id", "os-name", "jvm-name", "jvm-version", "platform",
         "tc-version", "tc-product", "source" };
     Map paramMap = request.getParameterMap();
-    for (int i = 0; i < expectedParams.length; i++) {
-      if (paramMap.get(expectedParams[i]) == null) {
-        response.getWriter().println("Missing parameter '" + expectedParams[i] + "'");
+    for (String expectedParam : expectedParams) {
+      if (paramMap.get(expectedParam) == null) {
+        response.getWriter().println("Missing parameter '" + expectedParam + "'");
         return;
       }
     }

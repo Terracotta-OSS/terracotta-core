@@ -4,9 +4,9 @@
  */
 package com.tc.server;
 
+import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
-import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.exception.MortbayMultiExceptionHelper;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;

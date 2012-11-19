@@ -13,8 +13,8 @@ import java.awt.Insets;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import javax.swing.SpinnerNumberModel;
 import javax.swing.JSpinner.DefaultEditor;
+import javax.swing.SpinnerNumberModel;
 
 public class RuntimeStatsOption extends AbstractOption {
   public static final String  NAME                                    = "RuntimeStats";

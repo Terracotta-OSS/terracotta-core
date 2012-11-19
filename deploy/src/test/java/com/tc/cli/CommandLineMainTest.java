@@ -5,11 +5,6 @@
 package com.tc.cli;
 
 import com.tc.cli.command.Command;
-//import com.tc.cli.command.DBDiffCommand;
-//import com.tc.cli.command.DBUsageCommand;
-//import com.tc.cli.command.FastLoadOidLogAnalysisCommand;
-//import com.tc.cli.command.ManagedObjectReportCommand;
-//import com.tc.cli.command.ReviveClassFilesCommand;
 
 import java.io.StringWriter;
 

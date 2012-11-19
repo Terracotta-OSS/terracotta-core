@@ -4,7 +4,7 @@
  */
 package com.tc.exception;
 
-import org.mortbay.util.MultiException;
+import org.eclipse.jetty.util.MultiException;
 
 /**
  * Deal with Jetty MultiException to extract useful info
