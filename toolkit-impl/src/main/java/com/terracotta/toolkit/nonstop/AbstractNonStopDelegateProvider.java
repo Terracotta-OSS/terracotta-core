@@ -4,16 +4,17 @@
 package com.terracotta.toolkit.nonstop;
 
 import org.terracotta.toolkit.ToolkitObjectType;
-import org.terracotta.toolkit.nonstop.NonStopConfigFields.NonStopTimeoutBehavior;
-import org.terracotta.toolkit.nonstop.NonStopConfigRegistry;
+import org.terracotta.toolkit.nonstop.NonStopConfiguration;
+import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopTimeoutBehavior;
+import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
 import org.terracotta.toolkit.object.ToolkitObject;
 
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class AbstractNonStopDelegateProvider<T extends ToolkitObject> implements NonStopDelegateProvider<T> {
 
-  private final NonStopConfigRegistry           nonStopConfigRegistry;
-  private final NonstopTimeoutBehaviorResolver  behaviorResolver;
+  private final NonStopConfigurationRegistry   nonStopConfigRegistry;
+  private final NonstopTimeoutBehaviorResolver behaviorResolver;
   private final String                         toolkitObjectName;
   private final AtomicReference<T>             delegate = new AtomicReference<T>();
 
@@ -26,10 +27,15 @@ public abstract class AbstractNonStopDelegateProvider<T extends ToolkitObject> i
 
   @Override
   public long getTimeout(String methodName) {
-    return nonStopConfigRegistry.getConfigForInstanceMethod(methodName, toolkitObjectName, getTolkitObjectType())
-        .getTimeout();
+    NonStopConfiguration nonStopConfiguration = nonStopConfigRegistry.getConfigForInstanceMethod(methodName,
+                                                                                                 toolkitObjectName,
+                                                                                                 getTolkitObjectType());
+    if (nonStopConfiguration.isEnabled()) {
+      return nonStopConfiguration.getTimeoutMillis();
+    } else {
+      return -1;
+    }
   }
-
 
   @Override
   public T getTimeoutBehavior() {

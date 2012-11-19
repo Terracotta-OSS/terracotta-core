@@ -26,7 +26,7 @@ import org.terracotta.toolkit.internal.ToolkitLogger;
 import org.terracotta.toolkit.internal.ToolkitProperties;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
-import org.terracotta.toolkit.nonstop.NonStopConfigRegistry;
+import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
 import org.terracotta.toolkit.store.ToolkitStore;
 import org.terracotta.toolkit.store.ToolkitStoreConfigBuilder;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
@@ -326,7 +326,7 @@ public class TerracottaToolkit implements ToolkitInternal {
   }
 
   @Override
-  public NonStopConfigRegistry getNonStopToolkitRegistry() {
+  public NonStopConfigurationRegistry getNonStopToolkitRegistry() {
     throw new UnsupportedOperationException();
   }
 

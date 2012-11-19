@@ -8,8 +8,8 @@ import org.terracotta.toolkit.Toolkit;
 import org.terracotta.toolkit.cache.ToolkitCache;
 import org.terracotta.toolkit.cache.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.concurrent.ToolkitBarrier;
-import org.terracotta.toolkit.nonstop.NonStopConfigBuilder;
-import org.terracotta.toolkit.nonstop.NonStopConfigFields.NonStopTimeoutBehavior;
+import org.terracotta.toolkit.nonstop.NonStopConfigurationBuilder;
+import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopTimeoutBehavior;
 import org.terracotta.toolkit.nonstop.NonStopException;
 
 import java.util.Date;
@@ -122,7 +122,7 @@ public abstract class AbstractNonStopTestClient extends NonStopClientBase {
   private ToolkitCache createCache(Toolkit toolkit) {
     String cacheName = "test-cache";
 
-    new NonStopConfigBuilder().timeoutMillis(NON_STOP_TIMEOUT_MILLIS).nonStopTimeoutBehavior(getTimeoutBehavior())
+    new NonStopConfigurationBuilder().timeoutMillis(NON_STOP_TIMEOUT_MILLIS).nonStopTimeoutBehavior(getTimeoutBehavior())
         .apply(toolkit);
 
     ToolkitCacheConfigBuilder builder = new ToolkitCacheConfigBuilder();

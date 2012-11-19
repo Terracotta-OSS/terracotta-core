@@ -24,7 +24,7 @@ import org.terracotta.toolkit.internal.ToolkitProperties;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
-import org.terracotta.toolkit.nonstop.NonStopConfigRegistry;
+import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
 import org.terracotta.toolkit.object.ToolkitObject;
 import org.terracotta.toolkit.store.ToolkitStore;
 
@@ -192,7 +192,7 @@ public class NonStopToolkit implements ToolkitInternal {
   }
 
   @Override
-  public NonStopConfigRegistry getNonStopToolkitRegistry() {
+  public NonStopConfigurationRegistry getNonStopToolkitRegistry() {
     return nonStopConfigManager;
   }
 

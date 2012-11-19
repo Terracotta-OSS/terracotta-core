@@ -5,7 +5,7 @@ package org.terracotta.express.tests.nonstop;
 
 import org.terracotta.express.tests.base.AbstractToolkitTestBase;
 import org.terracotta.toolkit.cache.ToolkitCache;
-import org.terracotta.toolkit.nonstop.NonStopConfigFields.NonStopTimeoutBehavior;
+import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopTimeoutBehavior;
 
 import com.tc.test.config.model.TestConfig;
 

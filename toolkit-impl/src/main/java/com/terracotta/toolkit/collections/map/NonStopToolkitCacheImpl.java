@@ -10,7 +10,8 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
-import org.terracotta.toolkit.nonstop.NonStopConfigFields.NonStopTimeoutBehavior;
+import org.terracotta.toolkit.nonstop.NonStopConfiguration;
+import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopTimeoutBehavior;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.SearchExecutor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
@@ -71,7 +72,11 @@ public class NonStopToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, Tool
   }
 
   private long getTimeout(String method) {
-    return nonStopConfigManager.getConfigForInstanceMethod(method, name, getObjectType()).getTimeout();
+    NonStopConfiguration nonStopConfiguration = nonStopConfigManager.getConfigForInstanceMethod(method, name,
+                                                                                                getObjectType());
+    if (nonStopConfiguration.isEnabled()) { return nonStopConfiguration.getTimeoutMillis(); }
+
+    return -1;
   }
 
   protected ToolkitObjectType getObjectType() {

@@ -5,7 +5,7 @@ package com.terracotta.toolkit.nonstop;
 
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
-import org.terracotta.toolkit.nonstop.NonStopConfigFields.NonStopTimeoutBehavior;
+import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopTimeoutBehavior;
 
 import com.terracotta.toolkit.collections.map.LocalReadsToolkitCacheImpl;
 import com.terracotta.toolkit.collections.map.ValuesResolver;

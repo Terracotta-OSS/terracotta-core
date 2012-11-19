@@ -4,53 +4,58 @@
 package com.terracotta.toolkit.nonstop;
 
 import org.terracotta.toolkit.ToolkitObjectType;
-import org.terracotta.toolkit.nonstop.NonStopConfig;
-import org.terracotta.toolkit.nonstop.NonStopConfigFields;
-import org.terracotta.toolkit.nonstop.NonStopConfigFields.NonStopTimeoutBehavior;
-import org.terracotta.toolkit.nonstop.NonStopConfigRegistry;
+import org.terracotta.toolkit.nonstop.NonStopConfiguration;
+import org.terracotta.toolkit.nonstop.NonStopConfigurationFields;
+import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopTimeoutBehavior;
+import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class NonStopConfigRegistryImpl implements NonStopConfigRegistry {
-  private final ConcurrentMap<NonStopConfigKey, NonStopConfig> allConfigs     = new ConcurrentHashMap<NonStopConfigKey, NonStopConfig>();
+public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
+  private final ConcurrentMap<NonStopConfigKey, NonStopConfiguration> allConfigs     = new ConcurrentHashMap<NonStopConfigKey, NonStopConfiguration>();
 
-  private final NonStopConfig                                  DEFAULT_CONFIG = new NonStopConfig() {
+  private final NonStopConfiguration                                  DEFAULT_CONFIG = new NonStopConfiguration() {
 
-                                                                                @Override
-                                                                                public long getTimeout() {
-                                                                                  return NonStopConfigFields.DEFAULT_TIMEOUT_MILLIS;
-                                                                                }
+                                                                                       @Override
+                                                                                       public long getTimeoutMillis() {
+                                                                                         return NonStopConfigurationFields.DEFAULT_TIMEOUT_MILLIS;
+                                                                                       }
 
-                                                                                @Override
-                                                                                public NonStopTimeoutBehavior getNonStopTimeoutBehavior() {
-                                                                                  return NonStopConfigFields.DEFAULT_NON_STOP_TIMEOUT_BEHAVIOR;
-                                                                                }
-                                                                              };
+                                                                                       @Override
+                                                                                       public NonStopTimeoutBehavior getNonStopTimeoutBehavior() {
+                                                                                         return NonStopConfigurationFields.DEFAULT_NON_STOP_TIMEOUT_READ_BEHAVIOR;
+                                                                                       }
+
+                                                                                       @Override
+                                                                                       public boolean isEnabled() {
+                                                                                         return NonStopConfigurationFields.DEFAULT_NON_STOP_ENABLED;
+                                                                                       }
+                                                                                     };
 
   @Override
-  public void registerForType(NonStopConfig config, ToolkitObjectType... types) {
+  public void registerForType(NonStopConfiguration config, ToolkitObjectType... types) {
     for (ToolkitObjectType type : types) {
       allConfigs.put(new NonStopConfigKey(null, type, null), config);
     }
   }
 
   @Override
-  public void registerForInstance(NonStopConfig config, String toolkitTypeName, ToolkitObjectType... types) {
+  public void registerForInstance(NonStopConfiguration config, String toolkitTypeName, ToolkitObjectType... types) {
     for (ToolkitObjectType type : types) {
       allConfigs.put(new NonStopConfigKey(null, type, toolkitTypeName), config);
     }
   }
 
   @Override
-  public void registerForTypeMethod(NonStopConfig config, String methodName, ToolkitObjectType... types) {
+  public void registerForTypeMethod(NonStopConfiguration config, String methodName, ToolkitObjectType... types) {
     for (ToolkitObjectType type : types) {
       allConfigs.put(new NonStopConfigKey(methodName, type, null), config);
     }
   }
 
   @Override
-  public void registerForInstanceMethod(NonStopConfig config, String methodName, String toolkitTypeName,
+  public void registerForInstanceMethod(NonStopConfiguration config, String methodName, String toolkitTypeName,
                                         ToolkitObjectType... types) {
     for (ToolkitObjectType type : types) {
       allConfigs.put(new NonStopConfigKey(methodName, type, toolkitTypeName), config);
@@ -58,9 +63,9 @@ public class NonStopConfigRegistryImpl implements NonStopConfigRegistry {
   }
 
   @Override
-  public NonStopConfig getConfigForType(ToolkitObjectType type) {
+  public NonStopConfiguration getConfigForType(ToolkitObjectType type) {
     NonStopConfigKey nonStopConfigKey = new NonStopConfigKey(null, type, null);
-    NonStopConfig nonStopConfig = allConfigs.get(nonStopConfigKey);
+    NonStopConfiguration nonStopConfig = allConfigs.get(nonStopConfigKey);
     if (nonStopConfig != null) {
       return nonStopConfig;
     } else {
@@ -69,9 +74,9 @@ public class NonStopConfigRegistryImpl implements NonStopConfigRegistry {
   }
 
   @Override
-  public NonStopConfig getConfigForInstance(String toolkitTypeName, ToolkitObjectType type) {
+  public NonStopConfiguration getConfigForInstance(String toolkitTypeName, ToolkitObjectType type) {
     NonStopConfigKey nonStopConfigKey = new NonStopConfigKey(null, type, toolkitTypeName);
-    NonStopConfig nonStopConfig = allConfigs.get(nonStopConfigKey);
+    NonStopConfiguration nonStopConfig = allConfigs.get(nonStopConfigKey);
     if (nonStopConfig == null) {
       nonStopConfig = getConfigForType(type);
     }
@@ -79,9 +84,9 @@ public class NonStopConfigRegistryImpl implements NonStopConfigRegistry {
   }
 
   @Override
-  public NonStopConfig getConfigForTypeMethod(String methodName, ToolkitObjectType type) {
+  public NonStopConfiguration getConfigForTypeMethod(String methodName, ToolkitObjectType type) {
     NonStopConfigKey nonStopConfigKey = new NonStopConfigKey(methodName, type, null);
-    NonStopConfig nonStopConfig = allConfigs.get(nonStopConfigKey);
+    NonStopConfiguration nonStopConfig = allConfigs.get(nonStopConfigKey);
     if (nonStopConfig == null) {
       nonStopConfig = getConfigForType(type);
     }
@@ -89,9 +94,10 @@ public class NonStopConfigRegistryImpl implements NonStopConfigRegistry {
   }
 
   @Override
-  public NonStopConfig getConfigForInstanceMethod(String methodName, String toolkitTypeName, ToolkitObjectType type) {
+  public NonStopConfiguration getConfigForInstanceMethod(String methodName, String toolkitTypeName,
+                                                         ToolkitObjectType type) {
     NonStopConfigKey nonStopConfigKey = new NonStopConfigKey(methodName, type, toolkitTypeName);
-    NonStopConfig nonStopConfig = allConfigs.get(nonStopConfigKey);
+    NonStopConfiguration nonStopConfig = allConfigs.get(nonStopConfigKey);
 
     // try method & type
     if (nonStopConfig == null) {
@@ -108,25 +114,26 @@ public class NonStopConfigRegistryImpl implements NonStopConfigRegistry {
   }
 
   @Override
-  public NonStopConfig deregisterForType(ToolkitObjectType type) {
+  public NonStopConfiguration deregisterForType(ToolkitObjectType type) {
     NonStopConfigKey nonStopConfigKey = new NonStopConfigKey(null, type, null);
     return allConfigs.remove(nonStopConfigKey);
   }
 
   @Override
-  public NonStopConfig deregisterForInstance(String toolkitTypeName, ToolkitObjectType type) {
+  public NonStopConfiguration deregisterForInstance(String toolkitTypeName, ToolkitObjectType type) {
     NonStopConfigKey nonStopConfigKey = new NonStopConfigKey(null, type, toolkitTypeName);
     return allConfigs.remove(nonStopConfigKey);
   }
 
   @Override
-  public NonStopConfig deregisterForTypeMethod(String methodName, ToolkitObjectType type) {
+  public NonStopConfiguration deregisterForTypeMethod(String methodName, ToolkitObjectType type) {
     NonStopConfigKey nonStopConfigKey = new NonStopConfigKey(methodName, type, null);
     return allConfigs.remove(nonStopConfigKey);
   }
 
   @Override
-  public NonStopConfig deregisterForInstanceMethod(String methodName, String toolkitTypeName, ToolkitObjectType type) {
+  public NonStopConfiguration deregisterForInstanceMethod(String methodName, String toolkitTypeName,
+                                                          ToolkitObjectType type) {
     NonStopConfigKey nonStopConfigKey = new NonStopConfigKey(methodName, type, toolkitTypeName);
     return allConfigs.remove(nonStopConfigKey);
   }
