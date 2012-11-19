@@ -12,7 +12,6 @@ import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import com.tc.util.ObjectIDSet;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -115,6 +114,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
         count = ev.getSize();
 
         sampled = count/15;
+        
         if ( sampled < 100 ) {
             sampled = 100;
         } else if ( sampled > 100000 ) {
@@ -126,7 +126,7 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
             dumpLive = true;
         }
         
-        return sampled;
+        return boundsCheckSampleSize(sampled);
     }
     
    private Map<Object, ObjectID> filter(final Map<Object, ObjectID> samples, final int ttiSeconds,
