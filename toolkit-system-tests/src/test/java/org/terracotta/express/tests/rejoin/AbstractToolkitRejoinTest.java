@@ -46,8 +46,13 @@ public class AbstractToolkitRejoinTest extends AbstractToolkitTestBase {
     }
 
     @Override
-    protected void test(Toolkit toolkit) throws Throwable {
+    protected void doTest() throws Throwable {
       doRejoinTest(getTestControlMbean());
+    }
+
+    @Override
+    protected void test(Toolkit toolkit) throws Throwable {
+      throw new RuntimeException("This method should not be used for rejoin tests");
     }
 
     protected abstract void doRejoinTest(TestHandlerMBean testHandlerMBean) throws Throwable;

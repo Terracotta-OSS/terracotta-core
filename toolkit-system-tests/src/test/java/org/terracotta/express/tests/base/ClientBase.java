@@ -25,7 +25,7 @@ public abstract class ClientBase extends AbstractClientBase {
   }
 
   @Override
-  protected final void doTest() throws Throwable {
+  protected void doTest() throws Throwable {
     test(getClusteringToolkit());
   }
 
