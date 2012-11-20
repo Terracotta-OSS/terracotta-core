@@ -167,6 +167,9 @@ public class ClientMessageTransport extends MessageTransportBase implements Reco
   // TODO :: come back
   @Override
   public void closeEvent(TCConnectionEvent event) {
+    // TODO: remove me
+    new Exception().printStackTrace();
+    logger.info("Received close event", new Exception());
     if (isNotOpen()) { return; }
     super.closeEvent(event);
   }

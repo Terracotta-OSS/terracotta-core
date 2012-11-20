@@ -125,7 +125,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
       outstandingBatchesCounter.setValue(0);
       batchAccounting = new TransactionBatchAccounting();
       lockAccounting.cleanup();
-      sequencer.clear();
+      sequencer.cleanup();
     }
   }
 
