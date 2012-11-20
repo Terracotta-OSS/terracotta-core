@@ -42,4 +42,9 @@ public interface TerracottaInternalClient {
    * Returns whether this client has been shutdown or not
    */
   boolean isShutdown();
+
+  /**
+   * Returns whether this client is online or not
+   */
+  boolean isOnline();
 }

@@ -36,4 +36,9 @@ public class SpiInit implements DSOContextControl {
   public void shutdown() {
     dsoContext.shutdown();
   }
+
+  @Override
+  public boolean isOnline() {
+    return dsoContext.getManager().getDsoCluster().areOperationsEnabled();
+  }
 }

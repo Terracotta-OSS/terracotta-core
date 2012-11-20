@@ -227,4 +227,9 @@ class TerracottaInternalClientImpl implements TerracottaInternalClient {
                                  + " in an instance of " + EE_SECRET_DELEGATE, e);
     }
   }
+
+  @Override
+  public boolean isOnline() {
+    return contextControl.isOnline();
+  }
 }

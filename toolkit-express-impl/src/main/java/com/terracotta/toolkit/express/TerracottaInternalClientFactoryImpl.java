@@ -3,8 +3,6 @@
  */
 package com.terracotta.toolkit.express;
 
-import org.terracotta.toolkit.cluster.ClusterInfo;
-
 import com.terracotta.toolkit.client.TerracottaClientConfig;
 import com.terracotta.toolkit.express.TerracottaInternalClientImpl.ClientShutdownException;
 
@@ -15,7 +13,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class TerracottaInternalClientFactoryImpl implements TerracottaInternalClientFactory {
-  private static final String                              TERRACOTTA_CLUSTER_INFO_CLASSNAME                                = "com.terracotta.toolkit.cluster.TerracottaClusterInfo";
   private final Map<String, TerracottaInternalClient>      clientsByUrl                                                     = new ConcurrentHashMap<String, TerracottaInternalClient>();
 
   private final ConcurrentMap<String, Map<String, Object>> envByUrl                                                         = new ConcurrentHashMap<String, Map<String, Object>>();
@@ -70,7 +67,7 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
             clientsByUrl.put(tcConfig, client);
           } else {
             // check if existing client is online, if not create a new one else reuse
-            if (isClusterOnline(client)) {
+            if (client.isOnline()) {
               return joinSharedClient(client, tunneledMBeanDomains);
             } else {
               // create a new client and update the mapping too
@@ -82,15 +79,6 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
       }
     }
     return client;
-  }
-
-  private boolean isClusterOnline(TerracottaInternalClient client) {
-    try {
-      ClusterInfo info = client.instantiate(TERRACOTTA_CLUSTER_INFO_CLASSNAME, new Class[0], new Object[0]);
-      return info.areOperationsEnabled();
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to create ClusterInfo instance of already existing client", e);
-    }
   }
 
   private TerracottaInternalClient joinSharedClient(TerracottaInternalClient client, Set<String> tunneledMBeanDomains) {
