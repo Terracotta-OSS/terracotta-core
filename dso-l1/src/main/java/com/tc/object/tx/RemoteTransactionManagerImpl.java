@@ -173,9 +173,15 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
                                   final ClientHandshakeMessage handshakeMessage) {
     if (this.isShutdown) { return; }
     synchronized (this.lock) {
-      if (this.status != PAUSED) { throw new AssertionError("At " + this.status + " from " + remoteNode + " to "
-                                                            + thisNode + " . "
-                                                            + "Attempting to handshake while not in paused state."); }
+      State current = this.status;
+      if (!(current == PAUSED || current == REJOIN_IN_PROGRESS)) { throw new AssertionError(
+                                                                                            "At from "
+                                                                                                + remoteNode
+                                                                                                + " to "
+                                                                                                + thisNode
+                                                                                                + " . "
+                                                                                                + "Attempting to handshake while "
+                                                                                                + current); }
       this.status = STARTING;
       handshakeMessage.addTransactionSequenceIDs(getTransactionSequenceIDs());
       handshakeMessage.addResentTransactionIDs(getResentTransactionIDs());
@@ -637,6 +643,13 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
 
     @Override
     public void run() {
+      synchronized (RemoteTransactionManagerImpl.this.lock) {
+        if (status == REJOIN_IN_PROGRESS) {
+          RemoteTransactionManagerImpl.this.logger.info("Ignoring timerTask RemoteTransactionManagerTimerTask "
+                                                        + REJOIN_IN_PROGRESS);
+          return;
+        }
+      }
       try {
         final TransactionID lwm = getCompletedTransactionIDLowWaterMark();
         if (lwm.isNull()) { return; }
@@ -653,6 +666,9 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
       } catch (final TCNotRunningException e) {
         RemoteTransactionManagerImpl.this.logger.info("Ignoring TCNotRunningException while sending Low water mark : ");
         this.cancel();
+      } catch (final RejoinInProgressException e) {
+        RemoteTransactionManagerImpl.this.logger
+            .info("Ignoring RejoinInProgressException while sending Low water mark : ");
       } catch (final Exception e) {
         RemoteTransactionManagerImpl.this.logger.error("Error sending Low water mark : ", e);
         throw new AssertionError(e);

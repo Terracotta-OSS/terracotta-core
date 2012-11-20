@@ -366,7 +366,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
                                   final ClientHandshakeMessage handshakeMessage) {
     if (isShutdown) return;
     synchronized (this) {
-      assertPaused("Attempt to initializeHandshake while not PAUSED");
+      assertPausedOrRejoinInProgress("Attempt to initializeHandshake while ");
       this.state = STARTING;
     }
   }
@@ -401,8 +401,9 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     }
   }
 
-  private void assertPaused(final Object message) {
-    if (this.state != PAUSED) { throw new AssertionError(message + ": " + this.state); }
+  private void assertPausedOrRejoinInProgress(final Object message) {
+    State current = this.state;
+    if (!(current == PAUSED || current == REJOIN_IN_PROGRESS)) { throw new AssertionError(message + ": " + current); }
   }
 
   private void assertNotPaused(final Object message) {

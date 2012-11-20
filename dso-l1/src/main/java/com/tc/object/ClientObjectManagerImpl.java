@@ -260,7 +260,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   public synchronized void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                                final ClientHandshakeMessage handshakeMessage) {
     if (isShutdown()) return;
-    assertPaused("Attempt to initiateHandshake while not PAUSED. " + thisNode + " <--> " + remoteNode);
+    assertPausedOrRejoinInProgress("Attempt to initiateHandshake " + thisNode + " <--> " + remoteNode);
     changeStateToStarting();
     addAllObjectIDs(handshakeMessage.getObjectIDs(), remoteNode);
 
@@ -310,8 +310,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
-  private void assertPaused(final Object message) {
-    if (this.state != PAUSED) { throw new AssertionError(message + ": " + this.state); }
+  private void assertPausedOrRejoinInProgress(final Object message) {
+    State current = this.state;
+    if (!(current == PAUSED || current == REJOIN_IN_PROGRESS)) { throw new AssertionError(message + ": " + current); }
   }
 
   private void assertNotPaused(final Object message) {

@@ -539,7 +539,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
   public synchronized void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                                final ClientHandshakeMessage handshakeMessage) {
     if (isStopped()) { return; }
-    assertPaused("Attempt to init handshake while not PAUSED");
+    assertPausedOrRejoinInProgress("Attempt to init handshake while");
     this.state = State.STARTING;
     globalLocalCacheManager.addAllObjectIDsToValidate(handshakeMessage.getObjectIDsToValidate(), remoteNode);
   }
@@ -571,8 +571,10 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     return this.state == State.REJOIN_IN_PROGRESS;
   }
 
-  private void assertPaused(final String message) {
-    if (this.state != State.PAUSED) { throw new AssertionError(message + ": " + this.state); }
+  private void assertPausedOrRejoinInProgress(final Object message) {
+    State current = this.state;
+    if (!(current == State.PAUSED || current == State.REJOIN_IN_PROGRESS)) { throw new AssertionError(message + ": "
+                                                                                                      + current); }
   }
 
   private void assertNotPaused(final String message) {

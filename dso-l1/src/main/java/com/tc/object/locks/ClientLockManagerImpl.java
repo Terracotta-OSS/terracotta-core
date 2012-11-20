@@ -735,6 +735,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     return this.state == State.SHUTDOWN;
   }
 
+  @SuppressWarnings("unused")
   private boolean paused() {
     /*
      * I would like to wrap this read in a stateGuard read lock but due to the current RRWL instrumentation forcing RRWL
@@ -876,7 +877,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
       @Override
       State initialize() {
-        throw new AssertionError("initialize is an invalid state transition for " + this);
+        return RUNNING;
       }
 
       @Override
