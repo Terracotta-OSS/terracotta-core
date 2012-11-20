@@ -13,9 +13,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class NonStopManagerImpl implements NonStopManager {
-  private final AbortableOperationManager               abortableOperationManager;
-  private final Timer                                   timer      = new Timer("Timer for Non Stop tasks", true);
-  private final ConcurrentMap<Thread, NonStopTimerTask> timerTasks = new ConcurrentHashMap<Thread, NonStopTimerTask>();
+  private final AbortableOperationManager                             abortableOperationManager;
+  private final Timer                                                 timer      = new Timer(
+                                                                                             "Timer for Non Stop tasks",
+                                                                                             true);
+  private final ConcurrentMap<Thread, ValueWrapper<NonStopTimerTask>> timerTasks = new ConcurrentHashMap<Thread, ValueWrapper<NonStopTimerTask>>();
 
   public NonStopManagerImpl(AbortableOperationManager abortableOperationManager) {
     this.abortableOperationManager = abortableOperationManager;
@@ -24,18 +26,25 @@ public class NonStopManagerImpl implements NonStopManager {
   @Override
   public void begin(long timeout) {
     abortableOperationManager.begin();
-    if (timeout > 0) {
+    if (timeout > 0 && !timerTasks.containsKey(Thread.currentThread())) {
       NonStopTimerTask task = new NonStopTimerTask(Thread.currentThread());
-      timerTasks.put(Thread.currentThread(), task);
+      timerTasks.put(Thread.currentThread(), new ValueWrapper(task));
       timer.schedule(task, timeout);
+    } else {
+      ValueWrapper valueWrapper = timerTasks.get(Thread.currentThread());
+      valueWrapper.increment();
     }
   }
 
   @Override
   public void finish() {
-    NonStopTimerTask task = timerTasks.remove(Thread.currentThread());
-    if (task != null) {
-      task.cancelTaskIfRequired();
+    ValueWrapper<NonStopTimerTask> valueWrapper = timerTasks.get(Thread.currentThread());
+    if (valueWrapper != null) {
+      valueWrapper.decrement();
+      if (valueWrapper.isZero()) {
+        timerTasks.remove(Thread.currentThread());
+        valueWrapper.getValue().cancelTaskIfRequired();
+      }
     }
     abortableOperationManager.finish();
   }
@@ -47,6 +56,32 @@ public class NonStopManagerImpl implements NonStopManager {
 
   private enum NonStopTimerTaskState {
     INIT, ABORTED, CANCELLED
+  }
+
+  private static class ValueWrapper<V> {
+    private final V value;
+    private int     count;
+
+    public ValueWrapper(V value) {
+      this.value = value;
+      this.count = 1;
+    }
+
+    private void increment() {
+      count++;
+    }
+
+    private void decrement() {
+      count--;
+    }
+
+    public V getValue() {
+      return value;
+    }
+
+    private boolean isZero() {
+      return count == 0;
+    }
   }
 
   private class NonStopTimerTask extends TimerTask {
