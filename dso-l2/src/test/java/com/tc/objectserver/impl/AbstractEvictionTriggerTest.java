@@ -9,10 +9,12 @@ import com.tc.objectserver.api.EvictionTrigger;
 import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
 import java.util.Collections;
 import java.util.Map;
+import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
-import org.hamcrest.Matcher;
+import org.mockito.Matchers;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -25,7 +27,7 @@ import org.mockito.Mockito;
 public class AbstractEvictionTriggerTest {
     
     private EvictableMap evm;
-    private EvictionTrigger trigger;
+    private AbstractEvictionTrigger trigger;
     private ClientObjectReferenceSet clientSet;
     
     public EvictableMap getEvictableMap() {
@@ -35,7 +37,7 @@ public class AbstractEvictionTriggerTest {
         return evm;
     }
     
-    public EvictionTrigger getTrigger() {
+    public AbstractEvictionTrigger getTrigger() {
         if ( trigger == null ) {
             trigger = createTrigger();
         }
@@ -49,12 +51,12 @@ public class AbstractEvictionTriggerTest {
         return clientSet;
     }
             
-    public EvictionTrigger createTrigger() {
+    public AbstractEvictionTrigger createTrigger() {
         return new AbstractEvictionTrigger(ObjectID.NULL_ID) {
 
             @Override
             public Map<Object, ObjectID> collectEvictonCandidates(int targetMax, EvictableMap map, ClientObjectReferenceSet clients) {
-                return processSample(map.getRandomSamples(targetMax, clientSet));
+                return processSample(map.getRandomSamples(boundsCheckSampleSize(targetMax), clientSet));
             }
         };
     }
@@ -70,21 +72,84 @@ public class AbstractEvictionTriggerTest {
     public static void tearDownClass() {
     }
     
-    @Test 
-    public void testTriggerLifecycle() {
-        int size = 100;
+    public void testSizeCycle(int size) {
         EvictableMap map = getEvictableMap();
-        EvictionTrigger et = getTrigger();
+        Mockito.when(map.getSize()).thenReturn(size);
+        testCycle(Integer.MAX_VALUE);
+    }
+    
+    public void testMaxCycle(int max) {
+        EvictableMap map = getEvictableMap();
+        Mockito.when(map.getMaxTotalCount()).thenReturn(max);
+        testCycle(max);
+    }   
+    
+    public void testCycle(int max) {
+        EvictableMap map = getEvictableMap();
+        final AbstractEvictionTrigger et = getTrigger();
         ClientObjectReferenceSet cs = getClientSet();
+        Map<Object, ObjectID> found = null;
         
         if ( et.startEviction(map) ) {
-            Map<Object, ObjectID> found = et.collectEvictonCandidates(size, map, cs);
+            found = et.collectEvictonCandidates(max, map, cs);
             et.completeEviction(map);
         }
         Mockito.verify(map).startEviction();
-        Mockito.verify(map).getRandomSamples(Mockito.anyInt(), Mockito.eq(cs));
-        Mockito.verify(map).evictionCompleted();
+        if ( found != null ) {
+            Mockito.verify(map).getRandomSamples(Matchers.intThat(new BaseMatcher<Integer>() {
+                int max = et.boundsCheckSampleSize(Integer.MAX_VALUE);
+                @Override
+                public boolean matches(Object item) {
+                    if ( item instanceof Integer && ((Integer)item) <=  max && ((Integer)item) >= 0 ) {
+                        return true;
+                    }
+                    return false;
+                }
+
+                @Override
+                public void describeTo(Description description) {
+                    description.appendText("< " + max);
+                }
+
+            }), Mockito.eq(cs));
+            Mockito.verify(map).evictionCompleted();
+        }
     } 
+    
+    @Test 
+    public void testNormalMax() {
+        testMaxCycle(200);
+    }
+    
+    @Test 
+    public void testPinnedMax() {
+        testMaxCycle(0);
+    }     
+        
+    @Test 
+    public void testLowerMax() {
+        testMaxCycle(Integer.MIN_VALUE);
+    }   
+        
+    @Test 
+    public void testUpperMax() {
+        testMaxCycle(Integer.MAX_VALUE);
+    }
+    
+    @Test 
+    public void testNormalSize() {
+        testSizeCycle(200);
+    }
+    
+    @Test 
+    public void testEmptySize() {
+        testSizeCycle(0);
+    }       
+        
+    @Test 
+    public void testUpperSize() {
+        testSizeCycle(Integer.MAX_VALUE);
+    }
     
     @Before
     public void setUp() {

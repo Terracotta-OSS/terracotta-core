@@ -33,6 +33,9 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     }
     
     public int boundsCheckSampleSize(int sampled) {
+        if ( sampled < 0 ) {
+            sampled = 0;
+        }
         if ( sampled > 100000 ) {
             sampled = 100000;
         }
@@ -44,7 +47,11 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
         started = true;
         name = map.getCacheName();
         pinned = map.getMaxTotalCount() == 0;
-        return map.startEviction();
+        if ( !map.isEvicting() ) {
+            return map.startEviction();
+        } else {
+            return false;
+        }
     }
     
     @Override
