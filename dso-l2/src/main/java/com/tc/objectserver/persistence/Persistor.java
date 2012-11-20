@@ -74,7 +74,6 @@ public class Persistor {
   }
 
   public void close() {
-    checkStarted();
     storageManager.close();
   }
   

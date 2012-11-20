@@ -20,7 +20,6 @@ import com.tc.exception.CleanDirtyDatabaseException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.exception.ZapDirtyDbServerNodeException;
 import com.tc.exception.ZapServerNodeException;
-import com.tc.handler.CallbackDatabaseDirtyAlertAdapter;
 import com.tc.handler.CallbackDirtyDatabaseExceptionAdapter;
 import com.tc.handler.CallbackDumpAdapter;
 import com.tc.handler.CallbackDumpHandler;
@@ -218,7 +217,6 @@ import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.objectserver.persistence.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.Persistor;
-import com.tc.objectserver.persistence.StorageManagerFactory;
 import com.tc.objectserver.persistence.TransactionPersistor;
 import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.SearchEventHandler;
@@ -326,7 +324,6 @@ import javax.management.remote.JMXConnectorServer;
 
 import bsh.EvalError;
 import bsh.Interpreter;
-import com.terracottatech.config.Management;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -558,28 +555,16 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final SampledCounter l2FaultFromDisk = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
 
-    final File dbhome = new File(this.configSetupManager.commonl2Config().dataPath(), L2DSOConfig.OBJECTDB_DIRNAME);
     logger.debug("persistent: " + restartable);
     if (!restartable) {
-      if (dbhome.exists()) {
-        logger.info("deleting persistence database: " + dbhome.getAbsolutePath());
-        FileUtils.cleanDirectory(dbhome);
-      }
-
       File indexRoot = configSetupManager.commonl2Config().indexPath();
       if (indexRoot.exists()) {
         logger.info("deleting index directory: " + indexRoot.getAbsolutePath());
         FileUtils.cleanDirectory(indexRoot);
       }
     }
-    logger.debug("persistence database home: " + dbhome);
 
-    final CallbackOnExitHandler dirtydbHandler = new CallbackDatabaseDirtyAlertAdapter(logger, consoleLogger);
-
-    StorageManagerFactory storageManagerFactory = serverBuilder.createStorageManagerFactory(restartable, dbhome,
-        configSetupManager.dsoL2Config(), offHeapConfig.getEnabled());
-
-    this.persistor = new Persistor(storageManagerFactory);
+    persistor = serverBuilder.createPersistor(restartable, configSetupManager.commonl2Config().dataPath());
     persistor.start();
 
     // register the terracotta operator event logger
