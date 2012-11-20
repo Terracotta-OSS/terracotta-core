@@ -77,10 +77,6 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
   @Override
   public void initiateRejoin(MessageChannel channel) {
     assertRejoinEnabled();
-    if (rejoinInProgress.compareAndSet(false, true)) {
-      // rejoin starting for first time, other channels can also initiate rejoin simultaneously
-      notifyRejoinStart();
-    }
     rejoinWorker.requestRejoin(channel);
   }
 
@@ -99,8 +95,13 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
     }
   }
 
-  private void reestablishComms(MessageChannel channel) {
-    logger.info("Reestablishing comms for channel: " + channel);
+  // only called by rejoin worker
+  private void doRejoin(MessageChannel channel) {
+    logger.info("Doing rejoin for channel: " + channel);
+    if (rejoinInProgress.compareAndSet(false, true)) {
+      // rejoin starting for first time, other channels can also initiate rejoin simultaneously
+      notifyRejoinStart();
+    }
     while (true) {
       try {
         channel.reopen();
@@ -152,6 +153,10 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
 
     private void requestRejoin(MessageChannel channel) {
       synchronized (monitor) {
+        if (shutdown) {
+          logger.info("Ignoring request for rejoin as already shutdown - channel: " + channel);
+          return;
+        }
         rejoinRequestedChannels.add(channel);
         monitor.notifyAll();
       }
@@ -162,7 +167,7 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
       while (true) {
         MessageChannel channel = waitUntilRejoinRequestedOrShutdown();
         if (shutdown) return;
-        manager.reestablishComms(channel);
+        manager.doRejoin(channel);
       }
     }
 

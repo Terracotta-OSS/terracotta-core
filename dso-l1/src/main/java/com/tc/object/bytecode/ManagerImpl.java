@@ -157,7 +157,7 @@ public class ManagerImpl implements Manager {
     this.rejoinManager.init(dsoCluster);
     this.statisticsAgentSubSystem = new StatisticsAgentSubSystemImpl();
     if (shutdownActionRequired) {
-      this.shutdownAction = new Thread(new ShutdownAction());
+      this.shutdownAction = new Thread(new ShutdownAction(), "L1 VM Shutdown Hook");
       // Register a shutdown hook for the DSO client
       Runtime.getRuntime().addShutdownHook(this.shutdownAction);
     } else {
@@ -274,7 +274,8 @@ public class ManagerImpl implements Manager {
 
         ManagerImpl.this.shutdownManager = new ClientShutdownManager(ManagerImpl.this.objectManager,
                                                                      ManagerImpl.this.dso,
-                                                                     ManagerImpl.this.connectionComponents);
+                                                                     ManagerImpl.this.connectionComponents,
+                                                                     rejoinManager);
 
         ManagerImpl.this.dsoCluster.init(ManagerImpl.this.dso.getClusterMetaDataManager(),
                                          ManagerImpl.this.objectManager, ManagerImpl.this.dso.getClusterEventsStage());
@@ -627,7 +628,7 @@ public class ManagerImpl implements Manager {
     public void run() {
       // XXX: we should just call stop(), but for the 1.5 (chex) release, I'm reverting the behavior
       // stop();
-
+      logger.info("Running L1 VM shutdown hook");
       shutdown(true, false);
     }
   }

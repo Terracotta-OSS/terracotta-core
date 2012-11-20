@@ -29,6 +29,7 @@ import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.tx.RemoteTransactionManagerImpl;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
+import com.tc.platform.rejoin.RejoinManager;
 import com.tc.platform.rejoin.RejoinManagerInternal;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
@@ -138,7 +139,8 @@ public class ClientShutdownTest extends BaseDSOTestCase {
 
     ThreadUtil.reallySleep(5000);
 
-    new ClientShutdownManager(client.getObjectManager(), client, preparedComponentsFromL2Connection)
+    new ClientShutdownManager(client.getObjectManager(), client, preparedComponentsFromL2Connection,
+                              Mockito.mock(RejoinManager.class))
         .execute(shutDownHook, false);
 
     System.out.println("XXX waiting for client close event");
