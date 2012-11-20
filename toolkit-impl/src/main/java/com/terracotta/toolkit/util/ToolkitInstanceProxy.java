@@ -3,15 +3,13 @@
  */
 package com.terracotta.toolkit.util;
 
-import org.terracotta.toolkit.object.ToolkitObject;
-
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
 public abstract class ToolkitInstanceProxy {
 
-  public static <T> T newDestroyedInstanceProxy(final String name, final Class<? extends ToolkitObject> clazz) {
+  public static <T> T newDestroyedInstanceProxy(final String name, final Class<T> clazz) {
     InvocationHandler handler = new InvocationHandler() {
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -24,7 +22,7 @@ public abstract class ToolkitInstanceProxy {
     return proxy;
   }
 
-  public static <T> T newRejoinInProgressProxy(final String name, final Class<? extends ToolkitObject> clazz) {
+  public static <T> T newRejoinInProgressProxy(final String name, final Class<T> clazz) {
     InvocationHandler handler = new InvocationHandler() {
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
