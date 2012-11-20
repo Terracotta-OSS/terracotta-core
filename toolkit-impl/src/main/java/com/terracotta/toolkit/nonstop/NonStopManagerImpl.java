@@ -26,7 +26,8 @@ public class NonStopManagerImpl implements NonStopManager {
   @Override
   public void begin(long timeout) {
     abortableOperationManager.begin();
-    if (timeout > 0 && !timerTasks.containsKey(Thread.currentThread())) {
+    if (timeout <= 0) { return; }
+    if (!timerTasks.containsKey(Thread.currentThread())) {
       NonStopTimerTask task = new NonStopTimerTask(Thread.currentThread());
       timerTasks.put(Thread.currentThread(), new ValueWrapper(task));
       timer.schedule(task, timeout);
