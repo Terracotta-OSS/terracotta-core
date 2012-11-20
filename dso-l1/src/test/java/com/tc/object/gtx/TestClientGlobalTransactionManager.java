@@ -9,15 +9,19 @@ import com.tc.net.NodeID;
 import com.tc.object.locks.LockFlushCallback;
 import com.tc.object.locks.LockID;
 import com.tc.object.tx.TransactionID;
-import com.tc.platform.rejoin.NullCleanupHelper;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.Collection;
 
-public class TestClientGlobalTransactionManager extends NullCleanupHelper implements ClientGlobalTransactionManager {
+public class TestClientGlobalTransactionManager implements ClientGlobalTransactionManager {
 
   public final NoExceptionLinkedQueue flushCalls = new NoExceptionLinkedQueue();
   public Collection                   transactionSequenceIDs;
+
+  @Override
+  public void cleanup() {
+    throw new ImplementMe();
+  }
 
   @Override
   public void setLowWatermark(GlobalTransactionID lowWatermark, NodeID nodeID) {

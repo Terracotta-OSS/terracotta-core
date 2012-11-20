@@ -10,7 +10,6 @@ import com.tc.object.locks.LockFlushCallback;
 import com.tc.object.locks.LockID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
-import com.tc.platform.rejoin.NullCleanupHelper;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
@@ -18,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class TestRemoteTransactionManager extends NullCleanupHelper implements RemoteTransactionManager {
+public class TestRemoteTransactionManager implements RemoteTransactionManager {
   public final NoExceptionLinkedQueue isChangeListenerCalls = new NoExceptionLinkedQueue();
 
   public List                         ids;
@@ -28,6 +27,11 @@ public class TestRemoteTransactionManager extends NullCleanupHelper implements R
   public TransactionID                acked;
   public TxnBatchID                   batchAcked;
   public ClientTransaction            transaction;
+
+  @Override
+  public void cleanup() {
+    // NOP
+  }
 
   @Override
   public void commit(final ClientTransaction txn) {

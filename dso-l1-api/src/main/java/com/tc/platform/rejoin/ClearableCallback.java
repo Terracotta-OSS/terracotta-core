@@ -4,12 +4,5 @@
 package com.tc.platform.rejoin;
 
 public interface ClearableCallback {
-
-  public void clearTimers();
-
-  public void clearInternalDS();
-
-  public void initTimers();
-
   public void cleanup();
 }

@@ -13,7 +13,6 @@ import com.tc.object.ClientIDProvider;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockRequestMessageFactory;
-import com.tc.platform.rejoin.CleanupHelper;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -22,7 +21,7 @@ import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class RemoteLockManagerImpl extends CleanupHelper implements RemoteLockManager {
+public class RemoteLockManagerImpl implements RemoteLockManager {
   private static final TCLogger                logger                      = TCLogging
                                                                                .getLogger(RemoteLockManagerImpl.class);
 
@@ -34,7 +33,7 @@ public class RemoteLockManagerImpl extends CleanupHelper implements RemoteLockMa
   private final GroupID                        group;
   private final ClientIDProvider               clientIdProvider;
 
-  private Queue<RecallBatchContext>            queue                       = new LinkedList<RecallBatchContext>();
+  private final Queue<RecallBatchContext>            queue                       = new LinkedList<RecallBatchContext>();
   private BatchRecallCommitsTimerTask          batchRecallCommitsTimerTask = null;
   private final Timer                          timer                       = new Timer("Batch Recall Timer", true);
   private boolean                              shutdown                    = false;
@@ -54,20 +53,11 @@ public class RemoteLockManagerImpl extends CleanupHelper implements RemoteLockMa
   }
 
   @Override
-  public void clearInternalDS() {
-    clientGlobalTxnManager.cleanup();
-    queue = new LinkedList<RecallBatchContext>();
-  }
-
-  @Override
-  public void clearTimers() {
-    cancelTimerTask();
-    timer.purge();
-  }
-
-  @Override
-  public void initTimers() {
-    // batchRecallCommitsTimerTask is initialized only on recallCommit method call not before that
+  public void cleanup() {
+    synchronized (queue) {
+      clientGlobalTxnManager.cleanup();
+      queue.clear();
+    }
   }
 
   @Override

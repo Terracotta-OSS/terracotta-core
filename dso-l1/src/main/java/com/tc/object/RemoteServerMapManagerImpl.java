@@ -5,6 +5,7 @@ package com.tc.object;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.RejoinInProgressException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.invalidation.Invalidations;
@@ -22,7 +23,6 @@ import com.tc.object.servermap.localcache.L1ServerMapLocalCacheManager;
 import com.tc.object.servermap.localcache.impl.ReInvalidateHandler;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
-import com.tc.platform.rejoin.CleanupHelper;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrinter;
@@ -41,7 +41,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class RemoteServerMapManagerImpl extends CleanupHelper implements RemoteServerMapManager {
+public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
 
   // TODO::Make its own property
   private static final int                                               MAX_OUTSTANDING_REQUESTS_SENT_IMMEDIATELY = TCPropertiesImpl
@@ -59,11 +59,10 @@ public class RemoteServerMapManagerImpl extends CleanupHelper implements RemoteS
   private final ServerMapMessageFactory                                  smmFactory;
   private final TCLogger                                                 logger;
   private final SessionManager                                           sessionManager;
-  private Map<ServerMapRequestID, AbstractServerMapRequestContext> outstandingRequests                       = new HashMap<ServerMapRequestID, AbstractServerMapRequestContext>();
+  private final Map<ServerMapRequestID, AbstractServerMapRequestContext> outstandingRequests                       = new HashMap<ServerMapRequestID, AbstractServerMapRequestContext>();
   private final Timer                                                    requestTimer                              = new Timer(
                                                                                                                                "RemoteServerMapManager Request Scheduler",
                                                                                                                                true);
-  private TimerTask                                                      timerTask                                 = new SendPendingRequestsTimer();
   private final AbortableOperationManager                                abortableOperationManager;
 
   private volatile State                                                 state                                     = State.RUNNING;
@@ -75,7 +74,7 @@ public class RemoteServerMapManagerImpl extends CleanupHelper implements RemoteS
   private ReInvalidateHandler                                            reInvalidateHandler;
 
   private static enum State {
-    PAUSED, RUNNING, STARTING, STOPPED
+    PAUSED, RUNNING, REJOIN_IN_PROGRESS, STARTING, STOPPED
   }
 
   public RemoteServerMapManagerImpl(final GroupID groupID, final TCLogger logger,
@@ -92,25 +91,20 @@ public class RemoteServerMapManagerImpl extends CleanupHelper implements RemoteS
   }
 
   @Override
-  public void clearInternalDS() {
-    outstandingRequests = new HashMap<ServerMapRequestID, AbstractServerMapRequestContext>();
+  public synchronized void cleanup() {
+    checkAndSetstate();
+    outstandingRequests.clear();
     pendingSendTaskScheduled = false;
     globalLocalCacheManager.cleanup();
-  }
-
-  @Override
-  public void clearTimers() {
-    timerTask.cancel();
-    requestTimer.purge();
-    timerTask = null;
     reInvalidateHandler.shutdown();
-    reInvalidateHandler = null;
+    reInvalidateHandler = new ReInvalidateHandler(globalLocalCacheManager);
   }
 
-  @Override
-  public void initTimers() {
-    timerTask = new SendPendingRequestsTimer();
-    reInvalidateHandler = new ReInvalidateHandler(globalLocalCacheManager);
+  private void checkAndSetstate() {
+    if (state != State.PAUSED) { throw new IllegalStateException("unexpected state: expexted " + State.PAUSED
+                                                                 + " but found "
+                                                           + state); }
+    state = State.REJOIN_IN_PROGRESS;
   }
 
   /**
@@ -275,7 +269,7 @@ public class RemoteServerMapManagerImpl extends CleanupHelper implements RemoteS
   private void scheduleRequestForLater(final AbstractServerMapRequestContext context) {
     context.makePending();
     if (!this.pendingSendTaskScheduled) {
-      this.requestTimer.schedule(timerTask, BATCH_LOOKUP_TIME_PERIOD);
+      this.requestTimer.schedule(new SendPendingRequestsTimer(), BATCH_LOOKUP_TIME_PERIOD);
       this.pendingSendTaskScheduled = true;
     }
   }
@@ -450,6 +444,7 @@ public class RemoteServerMapManagerImpl extends CleanupHelper implements RemoteS
       while (this.state != State.RUNNING) {
         try {
           if (isStopped()) { throw new TCNotRunningException(); }
+          if (isRejoinInProgress()) { throw new RejoinInProgressException(); }
           wait();
         } catch (final InterruptedException e) {
           handleInterruptedException();
@@ -470,6 +465,7 @@ public class RemoteServerMapManagerImpl extends CleanupHelper implements RemoteS
       while (this.state != State.RUNNING) {
         try {
           if (isStopped()) { throw new TCNotRunningException(); }
+          if (isRejoinInProgress()) { throw new RejoinInProgressException(); }
           wait();
         } catch (final InterruptedException e) {
           isInterrupted = true;
@@ -569,6 +565,10 @@ public class RemoteServerMapManagerImpl extends CleanupHelper implements RemoteS
 
   private boolean isStopped() {
     return this.state == State.STOPPED;
+  }
+
+  private boolean isRejoinInProgress() {
+    return this.state == State.REJOIN_IN_PROGRESS;
   }
 
   private void assertPaused(final String message) {

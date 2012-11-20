@@ -6,6 +6,7 @@ package com.tc.object;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.RejoinInProgressException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.logging.TCLogger;
@@ -19,7 +20,6 @@ import com.tc.object.msg.RequestRootMessage;
 import com.tc.object.msg.RequestRootMessageFactory;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
-import com.tc.platform.rejoin.CleanupHelper;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
@@ -44,7 +44,7 @@ import java.util.TimerTask;
 /**
  * This class is responsible for any communications to the server for object retrieval and removal
  */
-public class RemoteObjectManagerImpl extends CleanupHelper implements RemoteObjectManager, PrettyPrintable {
+public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrintable {
 
   private static final long    RETRIEVE_WAIT_INTERVAL                    = 15000;
   private static final int     REMOVE_OBJECTS_THRESHOLD                  = 10000;
@@ -66,17 +66,17 @@ public class RemoteObjectManagerImpl extends CleanupHelper implements RemoteObje
                                                                              .getBoolean(TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_LOGGING_ENABLED);
 
   private static enum State {
-    PAUSED, RUNNING, STARTING, STOPPED
+    PAUSED, RUNNING, REJOIN_IN_PROGRESS, STARTING, STOPPED
   }
 
   private static enum RemovedObjectsSendState {
     NOT_SCHEDULED, SCHEDULED_LATER, SCHEDULED_NOW
   }
 
-  private HashMap<String, ObjectID>                rootRequests             = new HashMap<String, ObjectID>();
+  private final HashMap<String, ObjectID>                rootRequests             = new HashMap<String, ObjectID>();
 
-  private Map<ObjectID, DNA>                       dnaCache                 = new HashMap<ObjectID, DNA>();
-  private Map<ObjectID, ObjectLookupState>         objectLookupStates       = new HashMap<ObjectID, ObjectLookupState>();
+  private final Map<ObjectID, DNA>                       dnaCache                 = new HashMap<ObjectID, DNA>();
+  private final Map<ObjectID, ObjectLookupState>         objectLookupStates       = new HashMap<ObjectID, ObjectLookupState>();
 
   private final Timer                              objectRequestTimer       = new Timer(
                                                                                         "RemoteObjectManager Request Scheduler",
@@ -84,7 +84,7 @@ public class RemoteObjectManagerImpl extends CleanupHelper implements RemoteObje
 
   private final RequestRootMessageFactory          rrmFactory;
   private final RequestManagedObjectMessageFactory rmomFactory;
-  private LRUCache                                 lru                      = new LRUCache();
+  private final LRUCache                                 lru                      = new LRUCache();
   private final GroupID                            groupID;
   private final int                                defaultDepth;
   private final SessionManager                     sessionManager;
@@ -92,7 +92,6 @@ public class RemoteObjectManagerImpl extends CleanupHelper implements RemoteObje
 
   private State                                    state                    = State.RUNNING;
   private ObjectIDSet                              removeObjects            = new ObjectIDSet();
-  private TimerTask                                timerTask;
   private boolean                                  pendingSendTaskScheduled = false;
   private RemovedObjectsSendState                  removeTaskScheduled      = RemovedObjectsSendState.NOT_SCHEDULED;
   private long                                     objectRequestIDCounter   = 0;
@@ -112,32 +111,26 @@ public class RemoteObjectManagerImpl extends CleanupHelper implements RemoteObje
     this.defaultDepth = defaultDepth;
     this.sessionManager = sessionManager;
     this.abortableOperationManager = abortableOperationManager;
-    initTimers();
+    this.objectRequestTimer.schedule(new CleanupUnusedDNATimerTask(), CLEANUP_UNUSED_DNA_TIMER,
+                                     CLEANUP_UNUSED_DNA_TIMER);
   }
 
   @Override
-  public void clearInternalDS() {
-    rootRequests = new HashMap<String, ObjectID>();
-    dnaCache = new HashMap<ObjectID, DNA>();
-    objectLookupStates = new HashMap<ObjectID, ObjectLookupState>();
-    lru = new LRUCache(); // used in CleanupUnusedDNATimerTask
+  public synchronized void cleanup() {
+    checkAndSetstate();
+    rootRequests.clear();
+    dnaCache.clear();
+    objectLookupStates.clear();
+    lru.clear();
     removeObjects = new ObjectIDSet();
-    // SessionManager any method call needed discuss
     pendingSendTaskScheduled = false;
     removeTaskScheduled = RemovedObjectsSendState.NOT_SCHEDULED;
   }
 
-  @Override
-  public void clearTimers() {
-    timerTask.cancel();
-    objectRequestTimer.purge();
-    timerTask = null;
-  }
-
-  @Override
-  public void initTimers() {
-    timerTask = new CleanupUnusedDNATimerTask();
-    objectRequestTimer.schedule(timerTask, CLEANUP_UNUSED_DNA_TIMER, CLEANUP_UNUSED_DNA_TIMER);
+  private void checkAndSetstate() {
+    if (state != State.PAUSED) { throw new IllegalStateException("unexpected state: expexted " + State.PAUSED
+                                                                 + " but found " + state); }
+    state = State.REJOIN_IN_PROGRESS;
   }
 
   @Override
@@ -149,6 +142,10 @@ public class RemoteObjectManagerImpl extends CleanupHelper implements RemoteObje
 
   private boolean isStopped() {
     return this.state == State.STOPPED;
+  }
+
+  private boolean isRejoinInProgress() {
+    return this.state == State.REJOIN_IN_PROGRESS;
   }
 
   @Override
@@ -192,6 +189,7 @@ public class RemoteObjectManagerImpl extends CleanupHelper implements RemoteObje
     try {
       while (this.state != State.RUNNING) {
         if (isStopped()) { throw new TCNotRunningException(); }
+        if (isRejoinInProgress()) { throw new RejoinInProgressException(); }
         try {
           wait();
         } catch (final InterruptedException e) {
@@ -209,6 +207,7 @@ public class RemoteObjectManagerImpl extends CleanupHelper implements RemoteObje
     try {
       while (this.state != State.RUNNING) {
         if (isStopped()) { throw new TCNotRunningException(); }
+        if (isRejoinInProgress()) { throw new RejoinInProgressException(); }
         try {
           wait();
         } catch (final InterruptedException e) {

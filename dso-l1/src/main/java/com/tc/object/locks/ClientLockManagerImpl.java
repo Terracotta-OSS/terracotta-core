@@ -5,6 +5,7 @@ package com.tc.object.locks;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.RejoinInProgressException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.management.ClientLockStatManager;
@@ -14,7 +15,6 @@ import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.operatorevent.LockEventListener;
-import com.tc.platform.rejoin.CleanupHelper;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.FindbugsSuppressWarnings;
@@ -23,20 +23,17 @@ import com.tc.util.runtime.ThreadIDManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class ClientLockManagerImpl extends CleanupHelper implements ClientLockManager, ClientLockManagerTestMethods,
+public class ClientLockManagerImpl implements ClientLockManager, ClientLockManagerTestMethods,
     PrettyPrintable {
   private static final WaitListener               NULL_LISTENER       = new WaitListener() {
                                                                         @Override
@@ -48,12 +45,7 @@ public class ClientLockManagerImpl extends CleanupHelper implements ClientLockMa
   private final Timer                             gcTimer             = new Timer("ClientLockManager LockGC", true);
   private final Timer                             lockLeaseTimer      = new Timer("ClientLockManager Lock Lease Timer",
                                                                                   true);
-  private TimerTask                               gcTimerTask;
-  private Set<TimerTask>                        leaseTimerTaskSet;
-  // this is a weakSet keeps leaseTimers
-  private final long                              gcPeriod;
-  private final ClientLockManagerConfig           config;
-  private ConcurrentMap<LockID, ClientLock>     locks;
+  private final ConcurrentMap<LockID, ClientLock>     locks;
   private final ReentrantReadWriteLock            stateGuard          = new ReentrantReadWriteLock();
   private final Condition                         runningCondition    = this.stateGuard.writeLock().newCondition();
   private State                                   state               = State.RUNNING;
@@ -63,7 +55,7 @@ public class ClientLockManagerImpl extends CleanupHelper implements ClientLockMa
   private final SessionManager                    sessionManager;
   private final TCLogger                          logger;
 
-  private ConcurrentMap<ThreadID, Object>   inFlightLockQueries = new ConcurrentHashMap<ThreadID, Object>();
+  private final ConcurrentMap<ThreadID, Object>   inFlightLockQueries = new ConcurrentHashMap<ThreadID, Object>();
   private final List<LockEventListener>           lockEventListeners  = new CopyOnWriteArrayList<LockEventListener>();
 
   @Deprecated
@@ -81,40 +73,29 @@ public class ClientLockManagerImpl extends CleanupHelper implements ClientLockMa
     this.sessionManager = sessionManager;
     this.abortableOperationManager = abortableOperationManager;
     this.statManager = statManager;
-    this.config = config;
     this.locks = new ConcurrentHashMap<LockID, ClientLock>(config.getStripedCount());
-    this.gcPeriod = Math.max(config.getTimeoutInterval(), 100);
-    this.leaseTimerTaskSet = Collections.synchronizedSet(Collections
-        .newSetFromMap(new WeakHashMap<TimerTask, Boolean>()));
-    initTimers();
+    final long gcPeriod = Math.max(config.getTimeoutInterval(), 100);
+    this.gcTimer.schedule(new LockGcTimerTask(), gcPeriod, gcPeriod);
   }
 
   @Override
-  public void clearInternalDS() {
-    // not sure what to do with stateGuard and runningCondition, discuss
-    locks = new ConcurrentHashMap<LockID, ClientLock>(config.getStripedCount());
-    remoteLockManager.cleanup();
-    // sessionManager any method call needed discuss
-    inFlightLockQueries = new ConcurrentHashMap<ThreadID, Object>();
-    leaseTimerTaskSet = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<TimerTask, Boolean>()));
-  }
-
-  @Override
-  public void clearTimers() {
-    gcTimerTask.cancel();
-    gcTimer.purge();
-    gcTimerTask = null;
-    for (TimerTask leaseTimerTask : leaseTimerTaskSet) {
-      leaseTimerTask.cancel();
+  public void cleanup() {
+    this.stateGuard.writeLock().lock();
+    try {
+      checkAndSetstate();
+      locks.clear();
+      remoteLockManager.cleanup();
+      inFlightLockQueries.clear();
+    } finally {
+      this.stateGuard.writeLock().unlock();
     }
-    lockLeaseTimer.purge();
-    leaseTimerTaskSet = null;
+
   }
 
-  @Override
-  public void initTimers() {
-    gcTimerTask = new LockGcTimerTask(locks, remoteLockManager);
-    gcTimer.schedule(gcTimerTask, gcPeriod, gcPeriod);
+  private void checkAndSetstate() {
+    if (state != State.PAUSED) { throw new IllegalStateException("unexpected state: expexted " + State.PAUSED
+                                                                 + " but found " + state); }
+    state.rejoin_in_progress();
   }
 
   private ClientLock getOrCreateClientLockState(final LockID lock) {
@@ -472,7 +453,7 @@ public class ClientLockManagerImpl extends CleanupHelper implements ClientLockMa
                     final ServerLockLevel level) {
     this.stateGuard.readLock().lock();
     try {
-      if (paused() || !this.sessionManager.isCurrentSession(node, session)) {
+      if (isPausedOrRejoinInProgress() || !this.sessionManager.isCurrentSession(node, session)) {
         this.logger.warn("Ignoring lock award from a dead server :" + session + ", " + this.sessionManager + " : "
                          + lock + " " + thread + " " + level + " state = " + this.state);
         return;
@@ -511,7 +492,7 @@ public class ClientLockManagerImpl extends CleanupHelper implements ClientLockMa
   public void notified(final LockID lock, final ThreadID thread) {
     this.stateGuard.readLock().lock();
     try {
-      if (paused()) {
+      if (isPausedOrRejoinInProgress()) {
         this.logger.warn("Ignoring notified call from dead server : " + lock + ", " + thread);
         return;
       }
@@ -543,7 +524,8 @@ public class ClientLockManagerImpl extends CleanupHelper implements ClientLockMa
                      final int lease, final boolean batch) {
     this.stateGuard.readLock().lock();
     try {
-      if (paused() || isShutdown() || (node != null && !sessionManager.isCurrentSession(node, session))) {
+      if (isPausedOrRejoinInProgress() || isShutdown()
+          || (node != null && !sessionManager.isCurrentSession(node, session))) {
         this.logger.warn("Ignoring recall request from a dead server :" + session + ", " + this.sessionManager + " : "
                          + lock + ", interestedLevel : " + level + " state: " + state);
         return;
@@ -554,7 +536,6 @@ public class ClientLockManagerImpl extends CleanupHelper implements ClientLockMa
         if (lockState.recall(this.remoteLockManager, level, lease, batch)) {
           // schedule the greedy lease
           TimerTask leaseTimerTask = new LeaseTimerTask(node, session, lock, level, batch);
-          leaseTimerTaskSet.add(leaseTimerTask);
           this.lockLeaseTimer.schedule(leaseTimerTask, lease);
         }
       }
@@ -568,7 +549,7 @@ public class ClientLockManagerImpl extends CleanupHelper implements ClientLockMa
                      final ServerLockLevel level) {
     this.stateGuard.readLock().lock();
     try {
-      if (paused() || !this.sessionManager.isCurrentSession(node, session)) {
+      if (isPausedOrRejoinInProgress() || !this.sessionManager.isCurrentSession(node, session)) {
         this.logger.warn("Ignoring lock refuse from a dead server :" + session + ", " + this.sessionManager + " : "
                          + lock + " " + thread + " " + level + " state = " + this.state);
         return;
@@ -720,6 +701,7 @@ public class ClientLockManagerImpl extends CleanupHelper implements ClientLockMa
       while (this.state != State.RUNNING) {
         try {
           if (isShutdown()) { throw new TCNotRunningException(); }
+          if (isRejoinInProgress()) { throw new RejoinInProgressException(); }
           this.runningCondition.await();
         } catch (final InterruptedException e) {
           handleInterruptedException();
@@ -763,6 +745,15 @@ public class ClientLockManagerImpl extends CleanupHelper implements ClientLockMa
     return this.state == State.PAUSED;
   }
 
+  private boolean isRejoinInProgress() {
+    return this.state == State.REJOIN_IN_PROGRESS;
+  }
+
+  private boolean isPausedOrRejoinInProgress() {
+    State current = this.state;
+    return current == State.PAUSED || current == State.REJOIN_IN_PROGRESS;
+  }
+
   static enum State {
     RUNNING {
       @Override
@@ -778,6 +769,11 @@ public class ClientLockManagerImpl extends CleanupHelper implements ClientLockMa
       @Override
       State initialize() {
         throw new AssertionError("initialize is an invalid state transition for " + this);
+      }
+
+      @Override
+      State rejoin_in_progress() {
+        throw new AssertionError("rejoin_in_progress is an invalid state transition for " + this);
       }
 
       @Override
@@ -803,6 +799,11 @@ public class ClientLockManagerImpl extends CleanupHelper implements ClientLockMa
       }
 
       @Override
+      State rejoin_in_progress() {
+        throw new AssertionError("rejoin_in_progress is an invalid state transition for " + this);
+      }
+
+      @Override
       State shutdown() {
         return SHUTDOWN;
       }
@@ -822,6 +823,11 @@ public class ClientLockManagerImpl extends CleanupHelper implements ClientLockMa
       @Override
       State initialize() {
         return STARTING;
+      }
+
+      @Override
+      State rejoin_in_progress() {
+        return REJOIN_IN_PROGRESS;
       }
 
       @Override
@@ -847,6 +853,38 @@ public class ClientLockManagerImpl extends CleanupHelper implements ClientLockMa
       }
 
       @Override
+      State rejoin_in_progress() {
+        return SHUTDOWN;
+      }
+
+      @Override
+      State shutdown() {
+        return SHUTDOWN;
+      }
+    },
+
+    REJOIN_IN_PROGRESS {
+      @Override
+      State pause() {
+        throw new AssertionError("pause is an invalid state transition for " + this);
+      }
+
+      @Override
+      State unpause() {
+        return RUNNING;
+      }
+
+      @Override
+      State initialize() {
+        throw new AssertionError("initialize is an invalid state transition for " + this);
+      }
+
+      @Override
+      State rejoin_in_progress() {
+        throw new AssertionError("rejoin_in_progress is an invalid state transition for " + this);
+      }
+
+      @Override
       State shutdown() {
         return SHUTDOWN;
       }
@@ -858,7 +896,10 @@ public class ClientLockManagerImpl extends CleanupHelper implements ClientLockMa
 
     abstract State initialize();
 
+    abstract State rejoin_in_progress();
+
     abstract State shutdown();
+
   }
 
   @Override
@@ -942,19 +983,12 @@ public class ClientLockManagerImpl extends CleanupHelper implements ClientLockMa
 
   class LockGcTimerTask extends TimerTask {
     private static final int GCED_LOCK_THRESHOLD = 1000;
-    private final ConcurrentMap<LockID, ClientLock> lockForTimer;
-    private final RemoteLockManager                 remoteManagerForTimer;
-
-    public LockGcTimerTask(ConcurrentMap<LockID, ClientLock> lockForTimer, RemoteLockManager remoteManagerForTimer) {
-      this.lockForTimer = lockForTimer;
-      this.remoteManagerForTimer = remoteManagerForTimer;
-    }
 
     @Override
     public void run() {
       try {
         int gcCount = 0;
-        for (final Entry<LockID, ClientLock> entry : lockForTimer.entrySet()) {
+        for (final Entry<LockID, ClientLock> entry : ClientLockManagerImpl.this.locks.entrySet()) {
           ClientLockManagerImpl.this.stateGuard.readLock().lock();
           try {
             if (ClientLockManagerImpl.this.state != State.RUNNING) { return; }
@@ -965,8 +999,8 @@ public class ClientLockManagerImpl extends CleanupHelper implements ClientLockMa
               continue;
             }
 
-            if (lockState.tryMarkAsGarbage(remoteManagerForTimer)
-                && lockForTimer.remove(lock, lockState)) {
+            if (lockState.tryMarkAsGarbage(ClientLockManagerImpl.this.remoteLockManager)
+                && ClientLockManagerImpl.this.locks.remove(lock, lockState)) {
               gcCount++;
             }
           } finally {
@@ -991,7 +1025,7 @@ public class ClientLockManagerImpl extends CleanupHelper implements ClientLockMa
 
   @Override
   public int runLockGc() {
-    new LockGcTimerTask(locks, remoteLockManager).run();
+    new LockGcTimerTask().run();
     return this.locks.size();
   }
 

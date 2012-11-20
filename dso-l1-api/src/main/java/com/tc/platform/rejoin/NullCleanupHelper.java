@@ -3,21 +3,10 @@
  */
 package com.tc.platform.rejoin;
 
-public class NullCleanupHelper extends CleanupHelper {
+public class NullCleanupHelper implements ClearableCallback {
 
   @Override
-  public void clearInternalDS() {
+  public void cleanup() {
     // no-op
   }
-
-  @Override
-  public void clearTimers() {
-    // no-op
-  }
-
-  @Override
-  public void initTimers() {
-    // no-op
-  }
-
 }

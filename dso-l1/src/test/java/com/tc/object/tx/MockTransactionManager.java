@@ -18,7 +18,6 @@ import com.tc.object.locks.Notify;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.ClientTransactionManagerImpl.ThreadTransactionLoggingStack;
-import com.tc.platform.rejoin.NullCleanupHelper;
 import com.tc.util.Assert;
 import com.tc.util.Counter;
 
@@ -30,7 +29,7 @@ import java.util.Map;
 /**
  * MockTransactionManager for unit testing.
  */
-public class MockTransactionManager extends NullCleanupHelper implements ClientTransactionManager {
+public class MockTransactionManager implements ClientTransactionManager {
 
   private static final TCLogger logger         = TCLogging.getLogger(MockTransactionManager.class);
 
@@ -43,6 +42,11 @@ public class MockTransactionManager extends NullCleanupHelper implements ClientT
 
   // TODO: This is a test member remove otherwise.
   private final Counter         loggingCounter = new Counter(0);
+
+  @Override
+  public void cleanup() {
+    //
+  }
 
   public Counter getLoggingCounter() {
     return this.loggingCounter;

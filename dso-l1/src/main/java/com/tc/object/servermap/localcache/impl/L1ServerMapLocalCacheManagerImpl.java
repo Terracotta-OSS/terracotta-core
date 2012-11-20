@@ -24,7 +24,6 @@ import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.object.servermap.localcache.PinnedEntryInvalidationListener;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
 import com.tc.object.servermap.localcache.ServerMapLocalCacheRemoveCallback;
-import com.tc.platform.rejoin.InternalDSCleanupHelper;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.ObjectIDSet;
@@ -38,7 +37,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class L1ServerMapLocalCacheManagerImpl extends InternalDSCleanupHelper implements L1ServerMapLocalCacheManager {
+public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheManager {
 
   private static final boolean                                                   PINNING_ENABLED                      = TCPropertiesImpl
                                                                                                                           .getProperties()
@@ -78,6 +77,7 @@ public class L1ServerMapLocalCacheManagerImpl extends InternalDSCleanupHelper im
   private final TCObjectSelfStore                                                tcObjectSelfStore;
   private volatile ClientLockManager                                             clientLockManager;
   private final PinnedEntryInvalidationListener                                  pinnedEntryInvalidationListener;
+  private final Sink                                                             pinnedEntryFaultSink;
 
   public L1ServerMapLocalCacheManagerImpl(LocksRecallService locksRecallHelper, Sink capacityEvictionSink,
                                           Sink txnCompleteSink, Sink pinnedEntryFaultSink) {
@@ -86,19 +86,22 @@ public class L1ServerMapLocalCacheManagerImpl extends InternalDSCleanupHelper im
     removeCallback = new RemoveCallback();
     tcObjectSelfStore = new TCObjectSelfStoreImpl(localCacheToPinnedEntryFaultCallback);
     this.txnCompleteSink = txnCompleteSink;
+    this.pinnedEntryFaultSink = pinnedEntryFaultSink;
     this.pinnedEntryInvalidationListener = new Listener(localCacheToPinnedEntryFaultCallback, pinnedEntryFaultSink);
   }
 
   @Override
-  public void clearInternalDS() {
+  public void cleanup() {
     for (Entry<L1ServerMapLocalCacheStore, ServerMapLocalCache> entry : localStores.entrySet()) {
       ServerMapLocalCache localCache = entry.getValue();
-      localCache.clear();
+      localCache.cleanLocalState();
     }
     lockIdsToLocalCache = new TCConcurrentMultiMap<LockID, ServerMapLocalCache>();
     tcObjectSelfStore.cleanup();
+    capacityEvictionSink.clear();
+    txnCompleteSink.clear();
+    pinnedEntryFaultSink.clear();
     // clientLockManager will be cleanup from clientHandshakeCallbacks
-    // all sinks will be cleanup as a part of stageMgr cleanup
   }
 
   @Override

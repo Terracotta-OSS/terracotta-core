@@ -24,7 +24,6 @@ import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.impl.MockSerializedEntry;
-import com.tc.platform.rejoin.NullCleanupHelper;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.Assert;
 
@@ -155,8 +154,13 @@ public class TCObjectSelfTransactionApplyTest extends TestCase {
 
   }
 
-  private class MyTCObjectSelfStore extends NullCleanupHelper implements TCObjectSelfStore {
+  private class MyTCObjectSelfStore implements TCObjectSelfStore {
     private final HashMap<ObjectID, byte[]> oidtoSerialized = new HashMap<ObjectID, byte[]>();
+
+    @Override
+    public void cleanup() {
+      throw new ImplementMe();
+    }
 
     @Override
     public void addAllObjectIDs(Set oids) {

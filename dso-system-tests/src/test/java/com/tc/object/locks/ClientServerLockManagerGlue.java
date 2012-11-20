@@ -22,7 +22,6 @@ import com.tc.objectserver.locks.LockResponseContext;
 import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.locks.NullChannelManager;
 import com.tc.objectserver.locks.ServerLock.NotifyAction;
-import com.tc.platform.rejoin.CleanupHelper;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -32,7 +31,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-public class ClientServerLockManagerGlue extends CleanupHelper implements RemoteLockManager, Runnable {
+public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable {
 
   private LockManagerImpl         serverLockManager;
   protected ClientLockManagerImpl clientLockManager;
@@ -53,18 +52,8 @@ public class ClientServerLockManagerGlue extends CleanupHelper implements Remote
   }
 
   @Override
-  public void clearTimers() {
-    //
-  }
-
-  @Override
-  public void clearInternalDS() {
+  public void cleanup() {
     sink.clear();
-  }
-  
-  @Override
-  public void initTimers() {
-    //
   }
   
   public void startEventNotifier() {

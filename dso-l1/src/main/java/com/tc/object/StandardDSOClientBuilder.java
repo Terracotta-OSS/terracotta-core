@@ -201,10 +201,10 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     final GroupID defaultGroups[] = dsoChannel.getGroupIDs();
     Assert.assertNotNull(defaultGroups);
     Assert.assertEquals(1, defaultGroups.length);
-    final RemoteLockManager remoteManager = new RemoteLockManagerImpl(dsoChannel.getClientIDProvider(),
+    final RemoteLockManager remoteLockManager = new RemoteLockManagerImpl(dsoChannel.getClientIDProvider(),
                                                                       defaultGroups[0], lockRequestMessageFactory,
                                                                       gtxManager, lockStatManager);
-    return new ClientLockManagerImpl(clientIDLogger, sessionManager, remoteManager, threadManager, config,
+    return new ClientLockManagerImpl(clientIDLogger, sessionManager, remoteLockManager, threadManager, config,
                                      lockStatManager, abortableOperationManager);
   }
 

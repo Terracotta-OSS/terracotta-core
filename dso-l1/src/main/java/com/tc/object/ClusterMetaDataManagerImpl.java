@@ -4,6 +4,7 @@
  */
 package com.tc.object;
 
+import com.tc.exception.RejoinInProgressException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -26,7 +27,6 @@ import com.tc.object.msg.NodesWithKeysMessage;
 import com.tc.object.msg.NodesWithKeysMessageFactory;
 import com.tc.object.msg.NodesWithObjectsMessage;
 import com.tc.object.msg.NodesWithObjectsMessageFactory;
-import com.tc.platform.rejoin.InternalDSCleanupHelper;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.Util;
@@ -41,7 +41,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ClusterMetaDataManagerImpl extends InternalDSCleanupHelper implements ClusterMetaDataManager {
+public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
 
   private static final TCLogger                             LOGGER                                   = TCLogging
                                                                                                          .getLogger(ClusterMetaDataManagerImpl.class);
@@ -52,6 +52,8 @@ public class ClusterMetaDataManagerImpl extends InternalDSCleanupHelper implemen
                                                                                                                  "PAUSED");
   private static final State                                RUNNING                                  = new State(
                                                                                                                  "RUNNING");
+  private static final State                          REJOIN_IN_PROGRESS                       = new State(
+                                                                                                           "REJOIN_IN_PROGRESS");
   private static final State                                STARTING                                 = new State(
                                                                                                                  "STARTING");
 
@@ -65,13 +67,13 @@ public class ClusterMetaDataManagerImpl extends InternalDSCleanupHelper implemen
   private final NodeMetaDataMessageFactory                  nmdmFactory;
   private final NodesWithKeysMessageFactory                 nwkmFactory;
 
-  private Map<ThreadID, NodesWithObjectsMessage>      outstandingNodesWithObjectsRequests      = new ConcurrentHashMap<ThreadID, NodesWithObjectsMessage>();
-  private Map<ThreadID, KeysForOrphanedValuesMessage> outstandingKeysForOrphanedValuesRequests = new ConcurrentHashMap<ThreadID, KeysForOrphanedValuesMessage>();
-  private Map<ThreadID, NodeMetaDataMessage>          outstandingNodeMetaDataRequests          = new ConcurrentHashMap<ThreadID, NodeMetaDataMessage>();
-  private Map<ThreadID, NodesWithKeysMessage>         outstandingNodesWithKeysRequests         = new ConcurrentHashMap<ThreadID, NodesWithKeysMessage>();
+  private final Map<ThreadID, NodesWithObjectsMessage>      outstandingNodesWithObjectsRequests      = new ConcurrentHashMap<ThreadID, NodesWithObjectsMessage>();
+  private final Map<ThreadID, KeysForOrphanedValuesMessage> outstandingKeysForOrphanedValuesRequests = new ConcurrentHashMap<ThreadID, KeysForOrphanedValuesMessage>();
+  private final Map<ThreadID, NodeMetaDataMessage>          outstandingNodeMetaDataRequests          = new ConcurrentHashMap<ThreadID, NodeMetaDataMessage>();
+  private final Map<ThreadID, NodesWithKeysMessage>         outstandingNodesWithKeysRequests         = new ConcurrentHashMap<ThreadID, NodesWithKeysMessage>();
 
-  private Map<ThreadID, WaitForResponse>              waitObjects                              = new HashMap<ThreadID, WaitForResponse>();
-  private Map<ThreadID, Object>                       responses                                = new HashMap<ThreadID, Object>();
+  private final Map<ThreadID, WaitForResponse>              waitObjects                              = new HashMap<ThreadID, WaitForResponse>();
+  private final Map<ThreadID, Object>                       responses                                = new HashMap<ThreadID, Object>();
   private volatile boolean                                  isShutdown                               = false;
 
   public ClusterMetaDataManagerImpl(final GroupID groupID, final DNAEncoding encoding,
@@ -90,13 +92,22 @@ public class ClusterMetaDataManagerImpl extends InternalDSCleanupHelper implemen
   }
 
   @Override
-  public void clearInternalDS() {
-    outstandingNodesWithObjectsRequests = new ConcurrentHashMap<ThreadID, NodesWithObjectsMessage>();
-    outstandingKeysForOrphanedValuesRequests = new ConcurrentHashMap<ThreadID, KeysForOrphanedValuesMessage>();
-    outstandingNodeMetaDataRequests = new ConcurrentHashMap<ThreadID, NodeMetaDataMessage>();
-    outstandingNodesWithKeysRequests = new ConcurrentHashMap<ThreadID, NodesWithKeysMessage>();
-    waitObjects = new HashMap<ThreadID, WaitForResponse>();
-    responses = new HashMap<ThreadID, Object>();
+  public void cleanup() {
+    synchronized (this) {
+      checkAndSetstate();
+      outstandingNodesWithObjectsRequests.clear();
+      outstandingKeysForOrphanedValuesRequests.clear();
+      outstandingNodeMetaDataRequests.clear();
+      outstandingNodesWithKeysRequests.clear();
+      waitObjects.clear();
+      responses.clear();
+    }
+  }
+
+  private void checkAndSetstate() {
+    if (state != PAUSED) { throw new IllegalStateException("unexpected state: expexted " + PAUSED + " but found "
+                                                           + state); }
+    state = REJOIN_IN_PROGRESS;
   }
 
   @Override
@@ -377,6 +388,7 @@ public class ClusterMetaDataManagerImpl extends InternalDSCleanupHelper implemen
       synchronized (this) {
         while (this.state != RUNNING) {
           if (isShutdown) { throw new TCNotRunningException(); }
+          if (this.state == REJOIN_IN_PROGRESS) { throw new RejoinInProgressException(); }
           try {
             this.wait();
           } catch (InterruptedException e) {

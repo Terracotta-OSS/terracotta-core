@@ -6,6 +6,7 @@ package com.tc.object.tx;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.RejoinInProgressException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.LossyTCLogger;
 import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
@@ -19,7 +20,6 @@ import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
-import com.tc.platform.rejoin.CleanupHelper;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.Counter;
@@ -49,7 +49,7 @@ import java.util.TimerTask;
 /**
  * Sends off committed transactions
  */
-public class RemoteTransactionManagerImpl extends CleanupHelper implements RemoteTransactionManager, PrettyPrintable {
+public class RemoteTransactionManagerImpl implements RemoteTransactionManager, PrettyPrintable {
 
   private static final long                       FLUSH_WAIT_INTERVAL         = 15 * 1000;
 
@@ -63,12 +63,13 @@ public class RemoteTransactionManagerImpl extends CleanupHelper implements Remot
   private static final State                      RUNNING                     = new State("RUNNING");
   private static final State                      PAUSED                      = new State("PAUSED");
   private static final State                      STARTING                    = new State("STARTING");
+  private static final State                REJOIN_IN_PROGRESS          = new State("REJOIN_IN_PROGRESS");
   private static final State                      STOP_INITIATED              = new State("STOP-INITIATED");
   private static final State                      STOPPED                     = new State("STOPPED");
 
   private final Object                            lock                        = new Object();
-  private Map                               incompleteBatches           = new HashMap();
-  private HashMap                           lockFlushCallbacks          = new HashMap();
+  private final Map                               incompleteBatches           = new HashMap();
+  private final HashMap                           lockFlushCallbacks          = new HashMap();
 
   private final Counter                           outstandingBatchesCounter;
   private TransactionBatchAccounting        batchAccounting             = new TransactionBatchAccounting();
@@ -84,7 +85,7 @@ public class RemoteTransactionManagerImpl extends CleanupHelper implements Remot
   private final Timer                             timer                       = new Timer(
                                                                                           "RemoteTransactionManager Flusher",
                                                                                           true);
-  private RemoteTransactionManagerTimerTask remoteTxManagerTimerTask;
+  private final RemoteTransactionManagerTimerTask remoteTxManagerTimerTask;
 
   private final GroupID                           groupID;
   private volatile boolean                        isShutdown                  = false;
@@ -115,27 +116,23 @@ public class RemoteTransactionManagerImpl extends CleanupHelper implements Remot
   }
 
   @Override
-  public void clearInternalDS() {
-    incompleteBatches = new HashMap();
-    lockFlushCallbacks = new HashMap();
-    outStandingBatches = 0;
-    outstandingBatchesCounter.setValue(0);
-    batchAccounting = new TransactionBatchAccounting();
-    lockAccounting.cleanup();
-    sequencer.clear();
+  public void cleanup() {
+    synchronized (this.lock) {
+      checkAndSetstate();
+      incompleteBatches.clear();
+      lockFlushCallbacks.clear();
+      outStandingBatches = 0;
+      outstandingBatchesCounter.setValue(0);
+      batchAccounting = new TransactionBatchAccounting();
+      lockAccounting.cleanup();
+      sequencer.clear();
+    }
   }
 
-  @Override
-  public void clearTimers() {
-    remoteTxManagerTimerTask.cancel();
-    timer.purge();
-    remoteTxManagerTimerTask = null;
-  }
-
-  @Override
-  public void initTimers() {
-    remoteTxManagerTimerTask = new RemoteTransactionManagerTimerTask();
-    timer.schedule(remoteTxManagerTimerTask, COMPLETED_ACK_FLUSH_TIMEOUT, COMPLETED_ACK_FLUSH_TIMEOUT);
+  private void checkAndSetstate() {
+    if (status != PAUSED) { throw new IllegalStateException("unexpected state: expexted " + PAUSED + " but found "
+                                                            + status); }
+    status = REJOIN_IN_PROGRESS;
   }
 
   @Override
@@ -592,6 +589,7 @@ public class RemoteTransactionManagerImpl extends CleanupHelper implements Remot
     try {
       while (this.status != RUNNING) {
         if (isShutdown) { throw new TCNotRunningException(); }
+        if (this.status == REJOIN_IN_PROGRESS) { throw new RejoinInProgressException(); }
         try {
           this.lock.wait();
         } catch (final InterruptedException e) {
@@ -613,6 +611,7 @@ public class RemoteTransactionManagerImpl extends CleanupHelper implements Remot
     try {
       while (this.status != RUNNING) {
         if (isShutdown) { throw new TCNotRunningException(); }
+        if (this.status == REJOIN_IN_PROGRESS) { throw new RejoinInProgressException(); }
         try {
           this.lock.wait();
         } catch (final InterruptedException e) {

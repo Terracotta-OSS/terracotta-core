@@ -11,7 +11,6 @@ import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
 import com.tc.object.tx.ClientTransactionBatchWriter.FoldedInfo;
 import com.tc.platform.rejoin.ClearableCallback;
-import com.tc.platform.rejoin.InternalDSCleanupHelper;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.Counter;
@@ -23,7 +22,7 @@ import com.tc.util.Util;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-public class TransactionSequencer extends InternalDSCleanupHelper implements ClearableCallback {
+public class TransactionSequencer implements ClearableCallback {
 
   private static final TCLogger                             logger         = TCLogging
                                                                                .getLogger(TransactionSequencer.class);
@@ -47,7 +46,7 @@ public class TransactionSequencer extends InternalDSCleanupHelper implements Cle
 
   private SequenceGenerator                                 sequence       = new SequenceGenerator(1);
   private final TransactionBatchFactory                     batchFactory;
-  private LinkedBlockingQueue<ClientTransactionBatch> pendingBatches = new LinkedBlockingQueue<ClientTransactionBatch>();
+  private final LinkedBlockingQueue<ClientTransactionBatch> pendingBatches = new LinkedBlockingQueue<ClientTransactionBatch>();
 
   private ClientTransactionBatch                            currentBatch;
 
@@ -88,9 +87,9 @@ public class TransactionSequencer extends InternalDSCleanupHelper implements Cle
   }
 
   @Override
-  public void clearInternalDS() {
+  public synchronized void cleanup() {
     sequence = new SequenceGenerator(1);
-    pendingBatches = new LinkedBlockingQueue<ClientTransactionBatch>();
+    pendingBatches.clear();
     currentBatch = createNewBatch();
     reconcilePendingSize();
   }

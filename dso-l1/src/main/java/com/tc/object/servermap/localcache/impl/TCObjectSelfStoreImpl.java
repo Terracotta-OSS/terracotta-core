@@ -18,7 +18,6 @@ import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;
 import com.tc.object.servermap.localcache.L1ServerMapLocalCacheStore;
 import com.tc.object.servermap.localcache.PinnedEntryFaultCallback;
 import com.tc.object.servermap.localcache.ServerMapLocalCache;
-import com.tc.platform.rejoin.InternalDSCleanupHelper;
 import com.tc.util.ObjectIDSet;
 
 import java.util.HashMap;
@@ -27,11 +26,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class TCObjectSelfStoreImpl extends InternalDSCleanupHelper implements TCObjectSelfStore {
-  private TCObjectSelfStoreObjectIDSet                                           tcObjectSelfStoreOids = new TCObjectSelfStoreObjectIDSet();
+public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
+  private final TCObjectSelfStoreObjectIDSet                                           tcObjectSelfStoreOids = new TCObjectSelfStoreObjectIDSet();
   private final ReentrantReadWriteLock                                           tcObjectStoreLock     = new ReentrantReadWriteLock();
   private volatile TCObjectSelfCallback                                          tcObjectSelfRemovedFromStoreCallback;
-  private Map<ObjectID, TCObjectSelf>                                            tcObjectSelfTempCache = new HashMap<ObjectID, TCObjectSelf>();
+  private final Map<ObjectID, TCObjectSelf>                                            tcObjectSelfTempCache = new HashMap<ObjectID, TCObjectSelf>();
 
   private final ConcurrentHashMap<ServerMapLocalCache, PinnedEntryFaultCallback> localCaches;
 
@@ -45,9 +44,14 @@ public class TCObjectSelfStoreImpl extends InternalDSCleanupHelper implements TC
   }
 
   @Override
-  public void clearInternalDS() {
-    tcObjectSelfStoreOids = new TCObjectSelfStoreObjectIDSet();
-    tcObjectSelfTempCache = new HashMap<ObjectID, TCObjectSelf>();
+  public void cleanup() {
+    tcObjectStoreLock.writeLock().lock();
+    try {
+      tcObjectSelfStoreOids.clear();
+      tcObjectSelfTempCache.clear();
+    } finally {
+      tcObjectStoreLock.writeLock().unlock();
+    }
   }
 
   private void isShutdownThenException() {
@@ -361,6 +365,11 @@ public class TCObjectSelfStoreImpl extends InternalDSCleanupHelper implements TC
   private static class TCObjectSelfStoreObjectIDSet {
     private final ObjectIDSet nonEventualIds = new ObjectIDSet();
     private final ObjectIDSet eventualIds    = new ObjectIDSet();
+
+    public void clear() {
+      nonEventualIds.clear();
+      eventualIds.clear();
+    }
 
     public void add(boolean isEventual, ObjectID id) {
       if (isEventual) {

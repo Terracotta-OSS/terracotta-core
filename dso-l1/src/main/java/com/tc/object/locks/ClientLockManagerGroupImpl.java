@@ -16,7 +16,6 @@ import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
-import com.tc.platform.rejoin.InternalDSCleanupHelper;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.runtime.ThreadIDManager;
 
@@ -25,7 +24,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ClientLockManagerGroupImpl extends InternalDSCleanupHelper implements ClientLockManager {
+public class ClientLockManagerGroupImpl implements ClientLockManager {
   private final Map<GroupID, ClientLockManager> lockManagers;
   private final LockDistributionStrategy        distribution;
 
@@ -49,7 +48,7 @@ public class ClientLockManagerGroupImpl extends InternalDSCleanupHelper implemen
   }
 
   @Override
-  public void clearInternalDS() {
+  public void cleanup() {
     for (ClientLockManager clientLockMgr : lockManagers.values()) {
       clientLockMgr.cleanup();
     }

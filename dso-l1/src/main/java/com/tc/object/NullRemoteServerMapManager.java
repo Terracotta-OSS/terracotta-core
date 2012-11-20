@@ -9,14 +9,13 @@ import com.tc.net.NodeID;
 import com.tc.object.locks.LockID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
-import com.tc.platform.rejoin.NullCleanupHelper;
 import com.tc.text.PrettyPrinter;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-public final class NullRemoteServerMapManager extends NullCleanupHelper implements RemoteServerMapManager {
+public final class NullRemoteServerMapManager implements RemoteServerMapManager {
 
   @Override
   public void cleanup() {

@@ -7,7 +7,6 @@ import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
-import com.tc.platform.rejoin.NullCleanupHelper;
 import com.tc.search.SearchQueryResults;
 import com.terracottatech.search.IndexQueryResult;
 import com.terracottatech.search.NVPair;
@@ -21,7 +20,7 @@ import java.util.Set;
  * 
  * @author Nabib El-Rahman
  */
-public class NullRemoteSearchRequestManager extends NullCleanupHelper implements RemoteSearchRequestManager {
+public class NullRemoteSearchRequestManager implements RemoteSearchRequestManager {
 
   @Override
   public SearchQueryResults query(String cachename, List queryStack, boolean includeKeys, boolean includeValues,

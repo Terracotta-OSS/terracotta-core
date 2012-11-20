@@ -7,7 +7,6 @@ import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
-import com.tc.platform.rejoin.NullCleanupHelper;
 import com.tc.search.SearchQueryResults;
 import com.terracottatech.search.IndexQueryResult;
 import com.terracottatech.search.NVPair;
@@ -16,7 +15,12 @@ import com.terracottatech.search.aggregator.Aggregator;
 import java.util.List;
 import java.util.Set;
 
-public class MockRemoteSearchRequestManager extends NullCleanupHelper implements RemoteSearchRequestManager {
+public class MockRemoteSearchRequestManager implements RemoteSearchRequestManager {
+
+  @Override
+  public void cleanup() {
+    //
+  }
 
   @Override
   public void addResponseForQuery(final SessionID sessionID, final SearchRequestID requestID,

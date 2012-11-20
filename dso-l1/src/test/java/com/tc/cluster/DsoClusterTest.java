@@ -23,7 +23,6 @@ import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.locks.ThreadID;
 import com.tc.object.msg.ClientHandshakeMessage;
-import com.tc.platform.rejoin.NullCleanupHelper;
 import com.tc.platform.rejoin.RejoinManagerInternal;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
@@ -68,7 +67,11 @@ public class DsoClusterTest extends TestCase {
     cluster.init(new MockClusterMetaDataManager(), null, mockStage);
   }
 
-  private final static class MockClusterMetaDataManager extends NullCleanupHelper implements ClusterMetaDataManager {
+  private final static class MockClusterMetaDataManager implements ClusterMetaDataManager {
+    @Override
+    public void cleanup() {
+      // no-op
+    }
 
     @Override
     public DNAEncoding getEncoding() {

@@ -9,7 +9,6 @@ import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.object.session.SessionProvider;
 import com.tc.object.tx.TransactionID;
-import com.tc.platform.rejoin.NullCleanupHelper;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.ThreadUtil;
@@ -24,7 +23,7 @@ import java.util.Map;
 /**
  * @author steve
  */
-public class TestRemoteLockManager extends NullCleanupHelper implements RemoteLockManager {
+public class TestRemoteLockManager implements RemoteLockManager {
   public final LockResponder          LOOPBACK_LOCK_RESPONDER = new LoopbackLockResponder();
   public final LockResponder          NULL_LOCK_RESPONDER     = new LockResponder() {
                                                                 @Override
@@ -48,6 +47,11 @@ public class TestRemoteLockManager extends NullCleanupHelper implements RemoteLo
 
   public TestRemoteLockManager(SessionProvider sessionProvider) {
     this.sessionProvider = sessionProvider;
+  }
+
+  @Override
+  public void cleanup() {
+    //
   }
 
   public void setClientLockManager(ClientLockManager lockManager) {

@@ -28,7 +28,6 @@ import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.util.ToggleableStrongReference;
-import com.tc.platform.rejoin.NullCleanupHelper;
 import com.tc.text.PrettyPrinter;
 
 import java.lang.ref.WeakReference;
@@ -47,7 +46,11 @@ public class ManagerImplTest extends BaseDSOTestCase {
     manager.unlock(classLock, LockLevel.WRITE);
   }
 
-  private static class LockMgr extends NullCleanupHelper implements ClientLockManager {
+  private static class LockMgr implements ClientLockManager {
+    @Override
+    public void cleanup() {
+      throw new ImplementMe();
+    }
 
     @Override
     public void award(final NodeID node, final SessionID session, final LockID lock, final ThreadID thread,

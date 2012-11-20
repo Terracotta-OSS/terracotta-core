@@ -8,10 +8,9 @@ import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.msg.ClientHandshakeMessage;
-import com.tc.platform.rejoin.NullCleanupHelper;
 import com.tc.util.sequence.BatchSequenceReceiver;
 
-public class ObjectIDClientHandshakeRequester extends NullCleanupHelper implements ClientHandshakeCallback {
+public class ObjectIDClientHandshakeRequester implements ClientHandshakeCallback {
 
   private final BatchSequenceReceiver sequence;
   private final GroupID               requestTo;
@@ -23,6 +22,11 @@ public class ObjectIDClientHandshakeRequester extends NullCleanupHelper implemen
   public ObjectIDClientHandshakeRequester(BatchSequenceReceiver sequence, GroupID requestTo) {
     this.sequence = sequence;
     this.requestTo = requestTo;
+  }
+
+  @Override
+  public void cleanup() {
+    // NOP
   }
 
   @Override

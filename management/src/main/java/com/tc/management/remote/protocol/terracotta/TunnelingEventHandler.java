@@ -13,7 +13,6 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.config.DSOMBeanConfig;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.msg.ClientHandshakeMessage;
-import com.tc.platform.rejoin.CleanupHelper;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.SetOnceFlag;
 
@@ -55,26 +54,13 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
   }
 
   @Override
-  public void clearTimers() {
-    // no-op
-  }
-
-  @Override
-  public void initTimers() {
-    // no-op
-  }
-
-  @Override
-  public void clearInternalDS() {
-    acceptOk = false;
-    localJmxServerReady = new SetOnceFlag();
-    transportConnected = false;
-    sentReadyMessage = false;
-  }
-
-  @Override
   public void cleanup() {
-    CleanupHelper.cleanup(this);
+    synchronized (this) {
+      acceptOk = false;
+      localJmxServerReady = new SetOnceFlag();
+      transportConnected = false;
+      sentReadyMessage = false;
+    }
   }
 
   public MessageChannel getMessageChannel() {

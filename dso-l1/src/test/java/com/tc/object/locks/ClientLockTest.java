@@ -7,7 +7,6 @@ import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.net.ClientID;
-import com.tc.platform.rejoin.NullCleanupHelper;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -1018,7 +1017,7 @@ public class ClientLockTest extends TestCase {
     }
   }
 
-  static class AssertingRemoteLockManager extends NullCleanupHelper implements RemoteLockManager {
+  static class AssertingRemoteLockManager implements RemoteLockManager {
 
     protected final Executor                  executor = Executors.newSingleThreadExecutor();
     protected final ClientLock                target;
@@ -1027,6 +1026,11 @@ public class ClientLockTest extends TestCase {
     public AssertingRemoteLockManager(ClientLock lock, RemoteOperation... legal) {
       this.target = lock;
       this.legal = Arrays.asList(legal);
+    }
+
+    @Override
+    public void cleanup() {
+      //
     }
 
     @Override

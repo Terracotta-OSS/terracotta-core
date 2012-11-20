@@ -13,7 +13,6 @@ import com.tc.object.locks.LockID;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
-import com.tc.platform.rejoin.InternalDSCleanupHelper;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -23,15 +22,15 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-public class ClientGlobalTransactionManagerImpl extends InternalDSCleanupHelper implements
+public class ClientGlobalTransactionManagerImpl implements
     ClientGlobalTransactionManager {
 
   private static final TCLogger             logger               = TCLogging
                                                                      .getLogger(ClientGlobalTransactionManagerImpl.class);
 
   private static final int                  ALLOWED_LWM_DELTA    = 100;
-  private Set                               applied              = new HashSet();
-  private SortedMap                         globalTransactionIDs = new TreeMap();
+  private final Set                               applied              = new HashSet();
+  private final SortedMap                         globalTransactionIDs = new TreeMap();
 
   private GlobalTransactionID               lowWatermark         = GlobalTransactionID.NULL_ID;
   private final RemoteTransactionManager    remoteTransactionManager;
@@ -45,10 +44,10 @@ public class ClientGlobalTransactionManagerImpl extends InternalDSCleanupHelper 
   }
 
   @Override
-  public void clearInternalDS() {
+  public synchronized void cleanup() {
     // remoteTxnManager will be cleanup from clientHandshakeCallbacks
-    applied = new HashSet();
-    globalTransactionIDs = new TreeMap();
+    applied.clear();
+    globalTransactionIDs.clear();
     lowWatermark = GlobalTransactionID.NULL_ID; // need to do this, discuss
     ignoredCount = 0;
   }

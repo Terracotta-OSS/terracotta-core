@@ -35,7 +35,6 @@ import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.object.session.SessionID;
 import com.tc.object.util.ReadOnlyException;
-import com.tc.platform.rejoin.InternalDSCleanupHelper;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.text.Banner;
 import com.tc.text.PrettyPrintable;
@@ -53,8 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class ClientTransactionManagerImpl extends InternalDSCleanupHelper implements ClientTransactionManager,
-    PrettyPrintable {
+public class ClientTransactionManagerImpl implements ClientTransactionManager, PrettyPrintable {
   private static final TCLogger                logger      = TCLogging.getLogger(ClientTransactionManagerImpl.class);
 
   private final ThreadLocal                    transaction = new VicariousThreadLocal() {
@@ -104,7 +102,7 @@ public class ClientTransactionManagerImpl extends InternalDSCleanupHelper implem
   }
 
   @Override
-  public void clearInternalDS() {
+  public void cleanup() {
     // remoteTxnManager will be cleanup from clientHandshakeCallbacks
     // clientObjectManager can't because this call is from ClientObjectManagerImpl
     // clientLockManager will be cleanup from clientHandshakeCallbacks

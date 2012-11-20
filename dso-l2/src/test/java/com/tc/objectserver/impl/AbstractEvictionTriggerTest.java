@@ -3,20 +3,21 @@
  */
 package com.tc.objectserver.impl;
 
-import com.tc.object.ObjectID;
-import com.tc.objectserver.api.EvictableMap;
-import com.tc.objectserver.api.EvictionTrigger;
-import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
-import java.util.Collections;
-import java.util.Map;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Matchers;
 import org.mockito.Mockito;
+
+import com.tc.object.ObjectID;
+import com.tc.objectserver.api.EvictableMap;
+import com.tc.objectserver.api.EvictionTrigger;
+import com.tc.objectserver.l1.impl.ClientObjectReferenceSet;
+
+import java.util.Collections;
+import java.util.Map;
 
 /**
  *
@@ -64,13 +65,15 @@ public class AbstractEvictionTriggerTest {
     
     @BeforeClass
     public static void setUpClass() {
+    //
     }
     
     @AfterClass
     public static void tearDownClass() {
+    //
     }
     
-    @Test 
+    @Test
     public void testTriggerLifecycle() {
         int size = 100;
         EvictableMap map = getEvictableMap();
@@ -82,20 +85,22 @@ public class AbstractEvictionTriggerTest {
             et.completeEviction(map);
         }
         Mockito.verify(map).startEviction();
-        Mockito.verify(map).getRandomSamples(Mockito.anyInt(), Mockito.eq(cs));
+    Mockito.verify(map).getRandomSamples(Matchers.anyInt(), Matchers.eq(cs));
         Mockito.verify(map).evictionCompleted();
-    } 
+    }
     
     @Before
     public void setUp() {
         evm = getEvictableMap();
         trigger = getTrigger();
         Mockito.when(evm.startEviction()).thenReturn(Boolean.TRUE);
-        Mockito.when(evm.getRandomSamples(Mockito.anyInt(), Mockito.eq(clientSet))).thenReturn(Collections.<Object, ObjectID>emptyMap());
+    Mockito.when(evm.getRandomSamples(Matchers.anyInt(), Matchers.eq(clientSet)))
+        .thenReturn(Collections.<Object, ObjectID> emptyMap());
     }
     
     @After
     public void tearDown() {
+    //
     }
     // TODO add test methods here.
     // The methods must be annotated with annotation @Test. For example:

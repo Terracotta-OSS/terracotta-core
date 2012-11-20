@@ -7,6 +7,7 @@ package com.tc.object;
 import com.google.common.collect.MapMaker;
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.RejoinInProgressException;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.exception.TCNotRunningException;
@@ -42,7 +43,6 @@ import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.object.walker.ObjectGraphWalker;
-import com.tc.platform.rejoin.CleanupHelper;
 import com.tc.text.ConsoleNonPortableReasonFormatter;
 import com.tc.text.ConsoleParagraphFormatter;
 import com.tc.text.DumpLoggerWriter;
@@ -83,7 +83,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
 
-public class ClientObjectManagerImpl extends CleanupHelper implements ClientObjectManager, ClientHandshakeCallback,
+public class ClientObjectManagerImpl implements ClientObjectManager, ClientHandshakeCallback,
     PortableObjectProvider, Evictable, PrettyPrintable {
 
   private static final long                     CONCURRENT_LOOKUP_TIMED_WAIT = 1000;
@@ -93,6 +93,7 @@ public class ClientObjectManagerImpl extends CleanupHelper implements ClientObje
   private static final State                    RUNNING                      = new State("RUNNING");
   private static final State                    STARTING                     = new State("STARTING");
   private static final State                    SHUTDOWN                     = new State("SHUTDOWN");
+  private static final State                    REJOIN_IN_PROGRESS           = new State("REJOIN_IN_PROGRESS");
 
   private static final TCLogger                 staticLogger                 = TCLogging
                                                                                  .getLogger(ClientObjectManager.class);
@@ -105,20 +106,19 @@ public class ClientObjectManagerImpl extends CleanupHelper implements ClientObje
   private static final int                      COMMIT_SIZE                  = 100;
 
   private State                                 state                        = RUNNING;
-  private final TCObjectSelfStore               tcObjectSelfStore;
-  private ConcurrentMap<Object, TCObject>       pojoToManaged                = new MapMaker()
+  private final ConcurrentMap<Object, TCObject>       pojoToManaged                = new MapMaker()
                                                                                  .concurrencyLevel(REFERENCE_MAP_SEGS)
                                                                                  .weakKeys().makeMap();
 
   private final ClassProvider                   classProvider;
   private final RemoteObjectManager             remoteObjectManager;
-  private Traverser                             traverser;
-  private TraverseTest                          traverseTest;
+  private final Traverser                             traverser;
+  private final TraverseTest                          traverseTest;
   private final DSOClientConfigHelper           clientConfiguration;
   private final TCClassFactory                  clazzFactory;
   private final ObjectIDProvider                idProvider;
   private final TCObjectFactory                 factory;
-  private ObjectStore                           objectStore;
+  private final ObjectStore                           objectStore;
 
   private ClientTransactionManager              clientTxManager;
 
@@ -130,11 +130,11 @@ public class ClientObjectManagerImpl extends CleanupHelper implements ClientObje
   private final Portability                     portability;
   private final DSOClientMessageChannel         channel;
   private final ToggleableReferenceManager      referenceManager;
-  private ReferenceQueue                        referenceQueue               = new ReferenceQueue();
+  private final ReferenceQueue                        referenceQueue               = new ReferenceQueue();
 
   private final boolean                         sendErrors                   = System.getProperty("project.name") != null;
 
-  private Map<ObjectID, ObjectLatchState>       objectLatchStateMap          = new HashMap();
+  private final Map<ObjectID, ObjectLatchState>       objectLatchStateMap          = new HashMap();
   private final ThreadLocal<LocalLookupContext> localLookupContext           = new VicariousThreadLocal() {
 
                                                                                @Override
@@ -170,7 +170,6 @@ public class ClientObjectManagerImpl extends CleanupHelper implements ClientObje
                                  final ToggleableReferenceManager referenceManager,
                                  TCObjectSelfStore tcObjectSelfStore, RootsHolder holder,
                                  AbortableOperationManager abortableOperationManager) {
-    this.tcObjectSelfStore = tcObjectSelfStore;
     this.objectStore = new ObjectStore(tcObjectSelfStore);
     this.remoteObjectManager = remoteObjectManager;
     this.clientConfiguration = clientConfiguration;
@@ -189,35 +188,34 @@ public class ClientObjectManagerImpl extends CleanupHelper implements ClientObje
     this.appEventContextFactory = new NonPortableEventContextFactory(provider);
     this.rootsHolder = holder;
     this.abortableOperationManager = abortableOperationManager;
-    initTimers();
+    startReaper();
     ensureKeyClassesLoaded();
   }
 
   @Override
-  public void clearInternalDS() {
-    // tcObjectSelfStore (or L1ServerMapLocalCacheManager) will be cleanup from L1ServerMapLocalCacheManagerImpl
-    pojoToManaged = new MapMaker().concurrencyLevel(REFERENCE_MAP_SEGS).weakKeys().makeMap();
+  public synchronized void cleanup() {
+    checkAndSetstate();
+    // tcObjectSelfStore (or L1ServerMapLocalCacheManager) will be cleanup from RemoteServerMapManagerImpl
     // remoteObjectManager will be cleanup from clientHandshakeCallbacks
-    traverseTest = new NewObjectTraverseTest();
-    traverser = new Traverser(this);
-    objectStore = new ObjectStore(tcObjectSelfStore);
+
+    // traverser discuss
+    // traverseTest discuss
+    // DSOClientMessageChannel discuss
+    // ToggleableReferenceManager discuss
+
+    pojoToManaged.clear();
+    objectStore.cleanup();
     clientTxManager.cleanup();
-    // DSOClientMessageChannel any method call needed discuss
-    // ToggleableReferenceManager cleanup needed discuss
-    referenceQueue = new ReferenceQueue();
-    objectLatchStateMap = new HashMap();
+    while (referenceQueue.poll() != null) {
+      // cleanup the referenceQueue
+    }
+    objectLatchStateMap.clear();
   }
 
-  @Override
-  public void clearTimers() {
-    reaper.interrupt();
-    stopThread(reaper);
-    reaper = null;
-  }
-
-  @Override
-  public void initTimers() {
-    startReaper();
+  private void checkAndSetstate() {
+    if (state != PAUSED) { throw new IllegalStateException("unexpected state: expexted " + PAUSED
+                                                                 + " but found " + state); }
+    state = REJOIN_IN_PROGRESS;
   }
 
   private void ensureKeyClassesLoaded() {
@@ -282,6 +280,7 @@ public class ClientObjectManagerImpl extends CleanupHelper implements ClientObje
     try {
       while (this.state != RUNNING) {
         if (this.state == SHUTDOWN) { throw new TCNotRunningException(); }
+        if (this.state == REJOIN_IN_PROGRESS) { throw new RejoinInProgressException(); }
         try {
           wait();
         } catch (final InterruptedException e) {
@@ -299,6 +298,7 @@ public class ClientObjectManagerImpl extends CleanupHelper implements ClientObje
     try {
       while (this.state != RUNNING) {
         if (this.state == SHUTDOWN) { throw new TCNotRunningException(); }
+        if (this.state == REJOIN_IN_PROGRESS) { throw new RejoinInProgressException(); }
         try {
           wait();
         } catch (final InterruptedException e) {
@@ -320,7 +320,6 @@ public class ClientObjectManagerImpl extends CleanupHelper implements ClientObje
 
   private void assertNotRunning(final Object message) {
     if (this.state == RUNNING) { throw new AssertionError(message + ": " + this.state); }
-
   }
 
   protected synchronized boolean isPaused() {
@@ -1503,6 +1502,11 @@ public class ClientObjectManagerImpl extends CleanupHelper implements ClientObje
     ObjectStore(TCObjectSelfStore tcObjectSelfStore) {
       this.tcObjectSelfStore = tcObjectSelfStore;
       this.cache = new ConcurrentClockEvictionPolicy(this.cacheManaged);
+    }
+
+    public void cleanup() {
+      cacheManaged.clear();
+      cacheUnmanaged.clear();
     }
 
     public void shutdown() {

@@ -13,7 +13,6 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
-import com.tc.platform.rejoin.InternalDSCleanupHelper;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
@@ -22,7 +21,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 
-public class TestRemoteObjectManager extends InternalDSCleanupHelper implements RemoteObjectManager {
+public class TestRemoteObjectManager implements RemoteObjectManager {
   private final int               SIZE                  = 10000;
 
   /**
@@ -39,7 +38,7 @@ public class TestRemoteObjectManager extends InternalDSCleanupHelper implements 
   public final ObjectIDSet        removedObjects        = new ObjectIDSet();
 
   @Override
-  public void clearInternalDS() {
+  public void cleanup() {
     retrieveCalls.clear();
     retrieveResults.clear();
     retrieveRootIDCalls.clear();
