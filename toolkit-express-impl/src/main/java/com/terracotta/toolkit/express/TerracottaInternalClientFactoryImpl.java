@@ -145,7 +145,7 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
       try {
         instance.getClass().getMethod("fetchSecret").invoke(instance);
       } catch (Exception e) {
-        throw new RuntimeException("Couldn't invoke fetchSecret on " + secretProviderClass);
+        throw new RuntimeException("Error invoking fetchSecret on " + secretProviderClass, e);
       }
       env.put(TerracottaInternalClientImpl.SECRET_PROVIDER, instance);
     }
