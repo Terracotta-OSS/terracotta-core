@@ -58,7 +58,8 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
     public Map collectEvictonCandidates(final int max, final EvictableMap map, final ClientObjectReferenceSet clients) {
    // lets try and get smarter about this in the future but for now, just bring it back to capacity
         final int size = map.getSize();
-        final int sample = size - max;
+        final int sample = boundsCheckSampleSize(size - max);
+
         if ( max == 0 ) {
             throw new AssertionError("triggers should never start evicting a pinned cache or store");
         }
@@ -68,7 +69,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
         Map samples = map.getRandomSamples(sample, clients);
         count = samples.size();
  // didn't get the sample count we wanted.  wait for a clientobjectidset refresh, only once and try it again
-        if ( count < sample ) {
+        if ( count < size - max ) {
             clients.addReferenceSetChangeListener(this);
             clientSetCount = clients.size();
             clientSet = clients;
@@ -101,7 +102,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
             
             @Override
             public Map collectEvictonCandidates(int max, EvictableMap map, ClientObjectReferenceSet clients) {
-                final int grab = map.getSize() - max;
+                final int grab = boundsCheckSampleSize(size - max);
                 Map sample;
                 if ( grab > 0 ) {
                     sample = map.getRandomSamples(grab, clients);
@@ -110,7 +111,7 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
                     sample = Collections.emptyMap();
                 }
                 sampleCount = sample.size();
-                if ( sampleCount >= grab) {
+                if ( sampleCount >= size - max ) {
                     clients.removeReferenceSetChangeListener(CapacityEvictionTrigger.this);
                 }
                 return processSample(sample);

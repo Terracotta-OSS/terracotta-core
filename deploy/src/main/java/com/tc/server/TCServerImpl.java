@@ -6,19 +6,20 @@ package com.tc.server;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.mortbay.jetty.Request;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.handler.ContextHandlerCollection;
-import org.mortbay.jetty.security.Constraint;
-import org.mortbay.jetty.security.ConstraintMapping;
-import org.mortbay.jetty.security.HashUserRealm;
-import org.mortbay.jetty.security.SecurityHandler;
-import org.mortbay.jetty.security.UserRealm;
-import org.mortbay.jetty.servlet.Context;
-import org.mortbay.jetty.servlet.DefaultServlet;
-import org.mortbay.jetty.servlet.ServletHandler;
-import org.mortbay.jetty.servlet.ServletHolder;
-import org.mortbay.jetty.webapp.WebAppContext;
+import org.eclipse.jetty.security.ConstraintMapping;
+import org.eclipse.jetty.security.ConstraintSecurityHandler;
+import org.eclipse.jetty.security.HashLoginService;
+import org.eclipse.jetty.security.LoginService;
+import org.eclipse.jetty.security.MappedLoginService;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.UserIdentity;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.servlet.DefaultServlet;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.security.Constraint;
+import org.eclipse.jetty.webapp.WebAppContext;
 
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.SEDA;
@@ -86,9 +87,9 @@ import java.net.UnknownHostException;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
@@ -555,7 +556,8 @@ public class TCServerImpl extends SEDA implements TCServer {
     this.httpServer.addConnector(tcConnector);
     this.contextHandlerCollection = new ContextHandlerCollection();
 
-    Context context = new Context(null, "/", Context.NO_SESSIONS | Context.SECURITY);
+    ServletContextHandler context = new ServletContextHandler(null, "/", ServletContextHandler.NO_SESSIONS
+                                                                         | ServletContextHandler.SECURITY);
 
     if(commonL2Config.isSecure()) {
       final String pathSpec = "/*";
@@ -563,7 +565,8 @@ public class TCServerImpl extends SEDA implements TCServer {
       setupBasicAuth(context, pathSpec, userRealm, HTTP_SECURITY_ROLE);
       logger.info("HTTPS Authentication enabled for path '" + pathSpec + "'");
     } else if (commonL2Config.httpAuthentication()) {
-      final HashUserRealm userRealm = new HashUserRealm("Terracotta Statistics Gatherer", commonL2Config
+      final HashLoginService userRealm = new HashLoginService("Terracotta Statistics Gatherer",
+                                                              commonL2Config
           .httpAuthenticationUserRealmFile());
       setupBasicAuth(context, STATISTICS_GATHERER_SERVLET_PATH, userRealm, HTTP_AUTHENTICATION_ROLE_STATISTICS);
       logger.info("HTTP Authentication enabled for path '" + STATISTICS_GATHERER_SERVLET_PATH
@@ -637,7 +640,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     context.setServletHandler(servletHandler);
     contextHandlerCollection.addHandler(context);
 
-    this.httpServer.addHandler(contextHandlerCollection);
+    this.httpServer.setHandler(contextHandlerCollection);
     this.httpServer.setSessionIdManager(new TcHashSessionIdManager());
 
     try {
@@ -696,7 +699,9 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
   }
 
-  private void setupBasicAuth(final Context context, final String pathSpec, final UserRealm userRealm, String... roles) {
+  private void setupBasicAuth(final ServletContextHandler context, final String pathSpec,
+                              final LoginService loginService,
+                              String... roles) {
     Constraint constraint = new Constraint();
     constraint.setName(Constraint.__BASIC_AUTH);
     constraint.setRoles(roles);
@@ -706,11 +711,11 @@ public class TCServerImpl extends SEDA implements TCServer {
     cm.setConstraint(constraint);
     cm.setPathSpec(pathSpec);
 
-    SecurityHandler sh = new SecurityHandler();
-    sh.setUserRealm(userRealm);
-    sh.setConstraintMappings(new ConstraintMapping[] { cm });
+    ConstraintSecurityHandler sh = new ConstraintSecurityHandler();
+    sh.setLoginService(loginService);
+    sh.setConstraintMappings(Collections.singletonList(cm));
 
-    context.addHandler(sh);
+    context.setSecurityHandler(sh);
   }
 
   private static void createAndAddServlet(final ServletHandler servletHandler, final String servletClassName,
@@ -866,62 +871,32 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 }
 
-class TCUserRealm implements UserRealm {
-
-  private final ConcurrentHashMap<String, Principal> users           = new ConcurrentHashMap<String, Principal>();
+class TCUserRealm extends MappedLoginService {
   private final TCSecurityManager                    securityManager;
 
   TCUserRealm(final TCSecurityManager securityManager) {
     this.securityManager = securityManager;
+    setName(this.getClass().getSimpleName());
   }
 
   @Override
-  public String getName() {
-    return this.getClass().getSimpleName();
-  }
-
-  @Override
-  public Principal getPrincipal(final String username) {
-    return users.get(username);
-  }
-
-  @Override
-  public Principal authenticate(final String username, final Object credentials, final Request request) {
-    final Principal authenticatedUser = securityManager.authenticate(username, ((String)credentials).toCharArray());
-    if(authenticatedUser != null) {
-      users.put(authenticatedUser.getName(), authenticatedUser);
+  public UserIdentity login(final String username, final Object credentials) {
+    UserIdentity user = _users.get(username);
+    if (user == null) {
+      user = putUser(username, credentials);
     }
-    return authenticatedUser;
+    final Principal authenticatedUser = securityManager.authenticate(username, ((String)credentials).toCharArray());
+    return authenticatedUser != null ? user : null;
   }
 
   @Override
-  public boolean reauthenticate(final Principal user) {
-    return true;
+  protected UserIdentity loadUser(String username) {
+    return null;
   }
 
   @Override
-  public boolean isUserInRole(final Principal user, final String role) {
-    return user != null && TCServerImpl.HTTP_SECURITY_ROLE.equals(role);
-  }
-
-  @Override
-  public void disassociate(final Principal user) {
-    //
-  }
-
-  @Override
-  public Principal pushRole(final Principal user, final String role) {
-    return user;
-  }
-
-  @Override
-  public Principal popRole(final Principal user) {
-    return user;
-  }
-
-  @Override
-  public void logout(final Principal user) {
-    users.remove(user.getName());
+  protected void loadUsers() {
+    /**/
   }
 }
 

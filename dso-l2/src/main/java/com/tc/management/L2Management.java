@@ -37,14 +37,12 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
-import javax.management.MBeanServerFactory;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnectorServer;
@@ -92,6 +90,7 @@ public class L2Management extends TerracottaManagement {
     this.bindAddress = bindAddr;
     this.jmxPort = port;
     this.remoteEventsSink = remoteEventsSink;
+    this.mBeanServer = ManagementFactory.getPlatformMBeanServer();
 
     try {
       objectManagementBean = new ObjectManagementMonitor();
@@ -101,14 +100,6 @@ public class L2Management extends TerracottaManagement {
                                    ncmbe);
     }
 
-    final List jmxServers = MBeanServerFactory.findMBeanServer(null);
-    if (Boolean.getBoolean("com.tc.management.bindMBeansToPlatformMBeanServer")) {
-      mBeanServer = ManagementFactory.getPlatformMBeanServer();
-    } else if (jmxServers != null && !jmxServers.isEmpty()) {
-      mBeanServer = (MBeanServer) jmxServers.get(0);
-    } else {
-      mBeanServer = MBeanServerFactory.createMBeanServer();
-    }
     registerMBeans();
     statisticsGateway.addStatisticsAgent(ChannelID.NULL_ID, mBeanServer);
   }

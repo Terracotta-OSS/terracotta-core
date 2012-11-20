@@ -28,7 +28,6 @@ import com.tc.runtime.MemoryUsage;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -216,9 +215,6 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             if (context != null) {
                 this.evictorSink.add(context);
             } 
-        } catch ( Throwable t) {
-            t.printStackTrace();
-            throw new AssertionError(t);
         } finally {
             evictor.markEvictionDone(oid);
             if (evictor.isLogging()) {
@@ -298,7 +294,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     class Responder implements MemoryEventsListener {
 
         long last = System.currentTimeMillis();
-        int size = 0;
+        long epoc = System.currentTimeMillis();
+        long size = 0;
         volatile boolean isEmergency = false;
 
         Future<Void> currentRun = completedFuture;
@@ -309,11 +306,15 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                 int percent = usage.getUsedPercentage();
                 long current = System.currentTimeMillis();
                 if (evictor.isLogging()) {
-                    log("Percent usage:" + percent + " time:" + (current - last) + " msec., size delta:" + (percent - size));
+                    log("Percent usage:" + percent + " time:" + (current - last) + " msec.");
                 }
-                if (percent >= L2_EVICTION_CRITICALTHRESHOLD) {                    
+                long max = usage.getMaxMemory();
+                long reserve = usage.getUsedMemory();
+
+
+                if (reserve >= calculateThreshold(reserve,max)) {                    
                     if ( !isEmergency || currentRun.isDone() ) {
-                        log("Emergency Triggered - " + percent);
+                        log("Emergency Triggered - " + (reserve*100/max));
                         currentRun.cancel(false);
                         currentRun = emergencyEviction(isEmergency);// if already in emergency situation, really try hard to remove items.
                         isEmergency = true;
@@ -323,18 +324,42 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
                     if ( isEmergency ) {
                         isEmergency = false;
                         currentRun.cancel(false);
-                        }
+                    }
                     if ( PERIODIC_EVICTOR_ENABLED && currentRun.isDone() ) {
                         currentRun = scheduleEvictionRun();
                     } 
                 }
                 last = current;
-                size = percent;
+ 
+                resetEpocIfNeeded(current,reserve,max);
             } catch (UnsupportedOperationException us) {
                 if ( currentRun.isDone() ) {
                     currentRun = scheduleEvictionRun();
                 }
                 log(us.toString());
+            }
+        }
+        
+        private long calculateThreshold(long reserve, long max) {
+/*  gap is to handle rapidly growing resource usage.  We take the average growth
+ * and based on that, if we are going to go over on the next poll, go ahead and fire now to get a head start.
+ * should consider a moving time window.
+ */
+            long aveGrow = (reserve-size) / ( System.currentTimeMillis() - epoc );
+            long gap = ( System.currentTimeMillis() - last ) * aveGrow;
+            if ( gap < 0 ) {
+                gap = 0;
+            }
+            return (max * L2_EVICTION_CRITICALTHRESHOLD / 100) - gap;
+        }
+    /* 
+    * if resource usage is going down or 5 min have passed, reset the epoc and base size to try and detect rapid 
+    * growth in the future
+    */        
+        private void resetEpocIfNeeded(long currenTime, long currentSize, long maxSize) {
+            if ( currentSize < size - ( maxSize *.10 ) || epoc + (5 * 60 * 1000) < currenTime) {
+                epoc = currenTime;
+                size = maxSize;
             }
         }
     }

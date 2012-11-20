@@ -3,7 +3,7 @@
  * notice. All rights reserved.
  */
 
-import org.mortbay.util.MultiException;
+import org.eclipse.jetty.util.MultiException;
 
 import com.tc.exception.ExceptionHelper;
 import com.tc.exception.ExceptionHelperImpl;

@@ -3,8 +3,8 @@
  */
 package com.tc.server.util;
 
-import org.mortbay.jetty.SessionIdManager;
-import org.mortbay.jetty.servlet.HashSessionIdManager;
+import org.eclipse.jetty.server.SessionIdManager;
+import org.eclipse.jetty.server.session.HashSessionIdManager;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -53,6 +53,7 @@ public class TcHashSessionIdManager implements SessionIdManager {
     return getDelegate().isFailed();
   }
 
+  @Override
   public final void start() throws Exception {
     if (delegate != null) { return; }
 
@@ -69,41 +70,49 @@ public class TcHashSessionIdManager implements SessionIdManager {
     thread.start();
   }
 
+  @Override
   public final void stop() throws Exception {
     if (delegate == null) { return; }
     getDelegate().stop();
     delegate = null;
   }
 
+  @Override
   public boolean isRunning() {
     if (delegate == null) { return false; }
     return getDelegate().isRunning();
   }
 
+  @Override
   public boolean isStarted() {
     if (delegate == null) { return false; }
     return getDelegate().isStarted();
   }
 
+  @Override
   public boolean isStarting() {
     if (delegate == null) { return false; }
     return getDelegate().isStarting();
   }
 
+  @Override
   public boolean isStopping() {
     if (delegate == null) { return false; }
     return getDelegate().isStopping();
   }
 
+  @Override
   public boolean isStopped() {
     if (delegate == null) { return true; }
     return getDelegate().isStopped();
   }
 
+  @Override
   public void removeSession(HttpSession session) {
     getDelegate().removeSession(session);
   }
 
+  @Override
   public String newSessionId(HttpServletRequest request, long created) {
     return getDelegate().newSessionId(request, created);
   }
@@ -124,5 +133,15 @@ public class TcHashSessionIdManager implements SessionIdManager {
 
       return delegate;
     }
+  }
+
+  @Override
+  public void addLifeCycleListener(Listener arg0) {
+    /**/
+  }
+
+  @Override
+  public void removeLifeCycleListener(Listener arg0) {
+    /**/
   }
 }

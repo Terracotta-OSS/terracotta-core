@@ -32,6 +32,13 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
         return oid;
     }
     
+    public int boundsCheckSampleSize(int sampled) {
+        if ( sampled > 100000 ) {
+            sampled = 100000;
+        }
+        return sampled;
+    }
+    
     @Override
     public boolean startEviction(EvictableMap map) {
         started = true;

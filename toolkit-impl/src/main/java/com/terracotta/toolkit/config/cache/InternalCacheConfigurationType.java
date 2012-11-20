@@ -463,7 +463,7 @@ public enum InternalCacheConfigurationType {
    *         the <code>newConfig</code>)
    */
   public void validateExistingMatchesValueFromConfig(Object existingValue, Configuration newConfig) {
-    Object value = getValueIfExists(newConfig);
+    Object value = getValueIfExistsOrDefault(newConfig);
     if (!existingValue.equals(value)) {
       //
       throw new IllegalArgumentException("'" + configString + "' should be same but does not match. Existing value: "

@@ -7,6 +7,7 @@ import org.terracotta.corestorage.monitoring.MonitoredResource;
 import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.util.sequence.MutableSequence;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,17 +18,16 @@ import java.util.Map;
 public class Persistor {
   private static final String GLOBAL_TRANSACTION_ID_SEQUENCE = "global_transaction_id_sequence";
 
-  private final StorageManagerFactory storageManagerFactory;
-  private final StorageManager metadataStorageManager;
+  private final StorageManager storageManager;
 
   private volatile boolean started = false;
 
-  private StorageManager dataStorageManager;
+  private final PersistentMapStore persistentMapStore;
+
   private TransactionPersistor transactionPersistor;
   private ManagedObjectPersistor managedObjectPersistor;
   private MutableSequence gidSequence;
   private ClientStatePersistor clientStatePersistor;
-  private PersistentMapStoreImpl persistentMapStore;
   private SequenceManager sequenceManager;
   private PersistenceTransactionProvider persistenceTransactionProvider;
   private ObjectIDSetMaintainer objectIDSetMaintainer;
@@ -36,20 +36,13 @@ public class Persistor {
   public Persistor(StorageManagerFactory storageManagerFactory) {
     objectIDSetMaintainer = new ObjectIDSetMaintainer();
     try {
-      metadataStorageManager = storageManagerFactory.createMetadataStorageManager(getMetadataStorageConfigs());
-      metadataStorageManager.start().get();
-    } catch (Exception e) {
+      storageManager = storageManagerFactory.createStorageManager(getDataStorageConfigs(),
+          new SingletonTransformerLookup(Object.class, LiteralSerializer.INSTANCE));
+    } catch (IOException e) {
       throw new AssertionError(e);
     }
 
-    persistentMapStore = new PersistentMapStoreImpl(metadataStorageManager);
-    this.storageManagerFactory = storageManagerFactory;
-  }
-
-  private Map<String, KeyValueStorageConfig<?, ?>> getMetadataStorageConfigs() {
-    Map<String, KeyValueStorageConfig<?, ?>> configs = new HashMap<String, KeyValueStorageConfig<?, ?>>();
-    PersistentMapStoreImpl.addConfigTo(configs);
-    return configs;
+    persistentMapStore = new PersistentMapStoreImpl(storageManager);
   }
 
   private Map<String, KeyValueStorageConfig<?, ?>> getDataStorageConfigs() {
@@ -63,33 +56,31 @@ public class Persistor {
 
   public void start() {
     try {
-      dataStorageManager = storageManagerFactory.createStorageManager(getDataStorageConfigs(),
-          new SingletonTransformerLookup(Object.class, LiteralSerializer.INSTANCE));
-      dataStorageManager.start().get();
+      storageManager.start().get();
     } catch (Exception e) {
       throw new AssertionError(e);
     }
 
-    sequenceManager = new SequenceManager(dataStorageManager);
-    transactionPersistor = new TransactionPersistor(dataStorageManager);
-    clientStatePersistor = new ClientStatePersistor(sequenceManager, dataStorageManager);
-    managedObjectPersistor = new ManagedObjectPersistor(dataStorageManager, sequenceManager, objectIDSetMaintainer);
+    sequenceManager = new SequenceManager(storageManager);
+    transactionPersistor = new TransactionPersistor(storageManager);
+    clientStatePersistor = new ClientStatePersistor(sequenceManager, storageManager);
+    managedObjectPersistor = new ManagedObjectPersistor(storageManager, sequenceManager, objectIDSetMaintainer);
+    persistenceTransactionProvider = new PersistenceTransactionProvider(storageManager);
+    persistentObjectFactory = new PersistentObjectFactory(storageManager);
+
     gidSequence = sequenceManager.getSequence(GLOBAL_TRANSACTION_ID_SEQUENCE);
-    persistenceTransactionProvider = new PersistenceTransactionProvider(dataStorageManager);
-    persistentObjectFactory = new PersistentObjectFactory(dataStorageManager);
 
     started = true;
   }
 
   public void close() {
     checkStarted();
-    dataStorageManager.shutdown();
-    metadataStorageManager.shutdown();
+    storageManager.close();
   }
   
   public MonitoredResource getMonitoredResource() {
     checkStarted();
-    Collection<MonitoredResource> list = dataStorageManager.getMonitoredResources();
+    Collection<MonitoredResource> list = storageManager.getMonitoredResources();
     for (MonitoredResource rsrc : list) {
       if (rsrc.getType() == MonitoredResource.Type.OFFHEAP || rsrc.getType() == MonitoredResource.Type.HEAP) {
         return rsrc;
