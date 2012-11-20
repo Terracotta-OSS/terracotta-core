@@ -23,6 +23,7 @@ import org.terracotta.toolkit.internal.ToolkitLogger;
 import org.terracotta.toolkit.internal.ToolkitProperties;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
+import org.terracotta.toolkit.internal.nonstop.NonStopManager;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
 import org.terracotta.toolkit.object.ToolkitObject;
@@ -34,7 +35,6 @@ import com.terracotta.toolkit.collections.map.ValuesResolver;
 import com.terracotta.toolkit.nonstop.NonStopConfigRegistryImpl;
 import com.terracotta.toolkit.nonstop.NonStopDelegateProvider;
 import com.terracotta.toolkit.nonstop.NonStopInvocationHandler;
-import com.terracotta.toolkit.nonstop.NonStopManager;
 import com.terracotta.toolkit.nonstop.NonStopManagerImpl;
 import com.terracotta.toolkit.nonstop.NonStopToolkitCacheDelegateProvider;
 import com.terracotta.toolkit.nonstop.NonstopTimeoutBehaviorResolver;
@@ -224,5 +224,10 @@ public class NonStopToolkit implements ToolkitInternal {
   @Override
   public ToolkitProperties getProperties() {
     return getInitializedToolkit().getProperties();
+  }
+
+  @Override
+  public NonStopManager getNonStopManager() {
+    return nonStopManager;
   }
 }

@@ -25,6 +25,7 @@ import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.ToolkitLogger;
 import org.terracotta.toolkit.internal.ToolkitProperties;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
+import org.terracotta.toolkit.internal.nonstop.NonStopManager;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
 import org.terracotta.toolkit.store.ToolkitStore;
@@ -332,5 +333,10 @@ public class TerracottaToolkit implements ToolkitInternal {
 
   AbortableOperationManager getAbortableOperationManager() {
     return platformService.getAbortableOperationManager();
+  }
+
+  @Override
+  public NonStopManager getNonStopManager() {
+    throw new UnsupportedOperationException("Please initialize the toolkit as non stop");
   }
 }

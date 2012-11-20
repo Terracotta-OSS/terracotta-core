@@ -4,6 +4,7 @@
 package com.terracotta.toolkit.nonstop;
 
 import org.terracotta.toolkit.ToolkitRuntimeException;
+import org.terracotta.toolkit.internal.nonstop.NonStopManager;
 
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 
