@@ -18,7 +18,6 @@ public class DEV8287Test extends AbstractToolkitTestBase {
 
   public DEV8287Test(TestConfig testConfig) {
     super(testConfig, DEV8287TestClient.class);
-    timebombTest("2012-12-01");
   }
 
   public static class DEV8287TestClient extends ClientBase {
@@ -33,7 +32,6 @@ public class DEV8287Test extends AbstractToolkitTestBase {
     @Override
     protected void test(Toolkit toolkit) throws Throwable {
       bug_given_a_cache_with_no_local_cache_when_try_to_insert_10_entries_then_none_are_in_the_local_cache(toolkit);
-      // Thread.sleep(TimeUnit.MINUTES.toMillis(5));
     }
 
     public void bug_given_a_cache_with_no_local_cache_when_try_to_insert_10_entries_then_none_are_in_the_local_cache(Toolkit toolkit) {
@@ -44,8 +42,8 @@ public class DEV8287Test extends AbstractToolkitTestBase {
         cache.put("elem" + i, "value" + i);
       }
       ToolkitCacheInternal<String, String> cacheInternal = (ToolkitCacheInternal<String, String>) cache;
-      Assert.assertTrue(cacheInternal.localOnHeapSize() == 0);
-      Assert.assertTrue(cacheInternal.size() == 10);
+      Assert.assertEquals(0, cacheInternal.localOnHeapSize());
+      Assert.assertEquals(10, cacheInternal.size());
     }
   }
 
