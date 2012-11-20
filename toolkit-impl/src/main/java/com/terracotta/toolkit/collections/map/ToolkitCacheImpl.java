@@ -3,18 +3,15 @@
  */
 package com.terracotta.toolkit.collections.map;
 
-import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
-import org.terracotta.toolkit.object.ToolkitObject;
 import org.terracotta.toolkit.search.QueryBuilder;
 import org.terracotta.toolkit.search.SearchExecutor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
-import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.tc.object.ObjectID;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
@@ -46,16 +43,8 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
 
   @Override
   public void rejoinStarted() {
-    this.activeDelegate = ToolkitInstanceProxy.newRejoinInProgressProxy(name, getToolkitClass());
+    this.activeDelegate = ToolkitInstanceProxy.newRejoinInProgressProxy(name, ToolkitCacheInternal.class);
     aggregateServerMap.rejoinStarted();
-  }
-
-  private Class<? extends ToolkitObject> getToolkitClass() {
-    if (aggregateServerMap.getToolkitObjectType() == ToolkitObjectType.STORE) {
-      return ToolkitStore.class;
-    } else {
-      return ToolkitCacheInternal.class;
-    }
   }
 
   @Override
