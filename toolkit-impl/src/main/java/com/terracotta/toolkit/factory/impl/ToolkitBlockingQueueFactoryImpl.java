@@ -53,6 +53,7 @@ public class ToolkitBlockingQueueFactoryImpl extends
                                                                         public ToolkitListImpl lookupClusteredObject(String blockingQName) {
                                                                           ToolkitObjectStripe<ToolkitListImpl> toolkitObjectStripe = lookup
                                                                               .lookupClusteredObject(blockingQName);
+                                                                          // todo: toolkitObjectStripe may be null
                                                                           return toolkitObjectStripe.iterator().next();
                                                                         }
 
