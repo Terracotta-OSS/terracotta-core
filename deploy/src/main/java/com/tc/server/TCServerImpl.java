@@ -11,6 +11,7 @@ import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.HashLoginService;
 import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.security.MappedLoginService;
+import org.eclipse.jetty.security.authentication.BasicAuthenticator;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
@@ -19,6 +20,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.security.Constraint;
+import org.eclipse.jetty.util.security.Password;
 import org.eclipse.jetty.webapp.WebAppContext;
 
 import com.tc.async.api.ConfigurationContext;
@@ -712,6 +714,8 @@ public class TCServerImpl extends SEDA implements TCServer {
     cm.setPathSpec(pathSpec);
 
     ConstraintSecurityHandler sh = new ConstraintSecurityHandler();
+    sh.setAuthenticator(new BasicAuthenticator());
+    sh.setRealmName(TCUserRealm.class.getSimpleName());
     sh.setLoginService(loginService);
     sh.setConstraintMappings(Collections.singletonList(cm));
 
@@ -869,35 +873,43 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
     return securityHostname;
   }
-}
 
-class TCUserRealm extends MappedLoginService {
-  private final TCSecurityManager                    securityManager;
+  private static final class TCUserRealm extends MappedLoginService {
+    private final TCSecurityManager securityManager;
 
-  TCUserRealm(final TCSecurityManager securityManager) {
-    this.securityManager = securityManager;
-    setName(this.getClass().getSimpleName());
-  }
-
-  @Override
-  public UserIdentity login(final String username, final Object credentials) {
-    UserIdentity user = _users.get(username);
-    if (user == null) {
-      user = putUser(username, credentials);
+    TCUserRealm(final TCSecurityManager securityManager) {
+      this.securityManager = securityManager;
+      setName(this.getClass().getSimpleName());
     }
-    final Principal authenticatedUser = securityManager.authenticate(username, ((String)credentials).toCharArray());
-    return authenticatedUser != null ? user : null;
+
+    @Override
+    public UserIdentity login(final String username, final Object credentials) {
+      final Principal authenticatedUser = securityManager.authenticate(username, ((String)credentials).toCharArray());
+      if (authenticatedUser == null) {
+        return null;
+      }
+
+      UserIdentity user = _users.get(username);
+      if (user == null) {
+        String[] roles = new String[0];
+        if (securityManager.isUserInRole(authenticatedUser, HTTP_SECURITY_ROLE)) {
+          roles = new String[] {HTTP_SECURITY_ROLE};
+        }
+        user = putUser(username, new Password((String) credentials), roles);
+      }
+      return user;
+    }
+
+    @Override
+    protected UserIdentity loadUser(String username) {
+      return null;
+    }
+
+    @Override
+    protected void loadUsers() {
+      /**/
+    }
   }
 
-  @Override
-  protected UserIdentity loadUser(String username) {
-    return null;
-  }
 
-  @Override
-  protected void loadUsers() {
-    /**/
-  }
 }
-
-
