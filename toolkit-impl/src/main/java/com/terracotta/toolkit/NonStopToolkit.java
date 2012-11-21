@@ -30,7 +30,6 @@ import org.terracotta.toolkit.object.ToolkitObject;
 import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.tc.abortable.AbortableOperationManager;
-import com.tc.exception.ImplementMe;
 import com.terracotta.toolkit.collections.map.ValuesResolver;
 import com.terracotta.toolkit.nonstop.NonReentrantNonStopManager;
 import com.terracotta.toolkit.nonstop.NonStopConfigRegistryImpl;
@@ -83,12 +82,29 @@ public class NonStopToolkit implements ToolkitInternal {
 
   @Override
   public <V> ToolkitStore<String, V> getStore(String name, Configuration configuration, Class<V> klazz) {
-    throw new ImplementMe();
+    // TODO: refactor in a factory ?
+    ToolkitStore<String, V> store = (ToolkitStore<String, V>) toolkitObjects.get(ToolkitObjectType.STORE).get(name);
+    if (store != null) { return store; }
+    NonStopDelegateProvider<ToolkitCacheInternal<String, V>> nonStopDelegateProvider = new NonStopToolkitCacheDelegateProvider(
+                                                                                                                               nonStopConfigManager,
+                                                                                                                               nonstopTimeoutBehaviorFactory,
+                                                                                                                               toolkitDelegate,
+                                                                                                                               name,
+                                                                                                                               klazz,
+                                                                                                                               configuration);
+    store = (ToolkitCache<String, V>) Proxy
+        .newProxyInstance(this.getClass().getClassLoader(), new Class[] { ToolkitCacheInternal.class,
+                              ValuesResolver.class },
+                          new NonStopInvocationHandler<ToolkitCacheInternal<String, V>>(nonStopManager,
+                                                                                        nonStopDelegateProvider));
+    ToolkitCache<String, V> oldStore = (ToolkitCache<String, V>) toolkitObjects.get(ToolkitObjectType.STORE)
+        .putIfAbsent(name, store);
+    return oldStore == null ? store : oldStore;
   }
 
   @Override
   public <V> ToolkitStore<String, V> getStore(String name, Class<V> klazz) {
-    throw new ImplementMe();
+    return getStore(name, null, klazz);
   }
 
   @Override
