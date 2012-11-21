@@ -759,7 +759,38 @@
         </plugins>          
       </build>
     </profile>
-
+    
+    <profile>
+      <id>devmode</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.gmaven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+            <version>${gmaven-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>generate-devmode-classpath</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+                <configuration>
+                  <source>
+                    def classesDir = new File(project.build.outputDirectory)
+                    classesDir.mkdirs()
+                    def targetFile = new File(classesDir, "devmode-classdir.txt")
+                    targetFile.withWriter { out ->
+                      out.println classesDir
+                    }
+                  </source>
+                </configuration>
+              </execution>
+            </executions>            
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
   <repositories>

@@ -19,10 +19,17 @@
     <archive>${project.build.directory}/${project.artifactId}-${project.version}.jar</archive>
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
     <toolkitContentFilename>toolkit-content.txt</toolkitContentFilename>
+    <packagingTarget>classes</packagingTarget>
+    <skipToolkitPackaging>false</skipToolkitPackaging>
   </properties>
 
   <dependencies>
     <!-- express impl -->
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>build-data</artifactId>
+      <version>${project.version}</version>
+    </dependency>    
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>toolkit-express-impl</artifactId>
@@ -141,7 +148,7 @@
             <id>package-L1-and-TIMs</id>
             <configuration>
               <skipAssembly>${skipInternalJars}</skipAssembly>
-              <finalName>classes</finalName>
+              <finalName>${packagingTarget}</finalName>
               <appendAssemblyId>false</appendAssemblyId>
               <descriptors>
                 <descriptor>${basedir}/src/main/assembly/jar.xml</descriptor>
@@ -180,6 +187,7 @@
               <goal>parepareToolkitContent</goal>
             </goals>
             <configuration>
+              <skip>${skipToolkitPackaging}</skip>
               <packagingDir>${project.build.outputDirectory}</packagingDir>
               <privateClassSuffix>.class_terracotta</privateClassSuffix>
               <toolkitContentFilename>${toolkitContentFilename}</toolkitContentFilename>
@@ -199,6 +207,7 @@
               <include>org.terracotta.internal:toolkit-express-impl</include>
               <include>org.terracotta.toolkit:terracotta-toolkit-api</include>
               <include>org.terracotta.toolkit:terracotta-toolkit-api-internal</include>
+              <include>org.terracotta.internal:build-data</include>
             </includes>
           </artifactSet>       
           <filters>
@@ -212,7 +221,8 @@
           </filters>    
           <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
           <keepDependenciesWithProvidedScope>false</keepDependenciesWithProvidedScope>
-          <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>                      
+          <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>
+         
         </configuration>
         <executions>
           <execution>
@@ -287,6 +297,54 @@
       <properties>
         <skipJavadoc>true</skipJavadoc>
       </properties>
+    </profile>
+    
+    <profile>
+      <id>devmode</id>
+      <properties>
+        <skipToolkitPackaging>true</skipToolkitPackaging>
+        <packagingTarget>packaging</packagingTarget>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.gmaven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>create-devmode-class-file</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+                <configuration>
+                  <source>
+                    def packagingDir = new File(project.build.directory, project.properties['packagingTarget'])
+                    def toolkitDevmodeClasspath = new File(project.build.outputDirectory, 'devmode-embedded-classpath.txt')
+                    toolkitDevmodeClasspath.withWriter{ out ->
+                      packagingDir.eachFileRecurse  {
+                        if (it.name.endsWith('.jar')) {
+                          def jarFile = new java.util.zip.ZipFile(it)
+                          def classDirEntry = jarFile.getEntry("devmode-classdir.txt")
+                          if (classDirEntry != null) {
+                            out.println jarFile.getInputStream(classDirEntry).text
+                          } else {
+                            out.println(it)
+                          }
+                        }
+                      }
+                    }
+                    // create empty toolkit content file 
+                    new File(project.build.outputDirectory, project.properties['toolkitContentFilename']).withWriter { out ->
+                      out.println("")
+                    }
+                  </source>
+                </configuration>
+              </execution>
+            </executions>              
+          </plugin>
+        </plugins>
+      </build>
     </profile>
   </profiles>
   

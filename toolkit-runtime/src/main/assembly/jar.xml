@@ -53,22 +53,5 @@
       <scope>provided</scope>
     </dependencySet>
 
-    <dependencySet>
-      <unpack>true</unpack>
-      <scope>provided</scope>
-      <unpackOptions>
-        <includes>
-          <include>**/build-data.txt</include>
-          <include>**/license.txt</include>
-        </includes>
-        <excludes>
-          <exclude>**/META-INF/maven/**</exclude>
-        </excludes>
-      </unpackOptions>
-      <includes>
-        <include>org.terracotta:${terracotta-l1.artifactId}</include>
-      </includes>
-    </dependencySet>
-       
   </dependencySets>
 </assembly>
