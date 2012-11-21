@@ -17,14 +17,14 @@ public class PersistenceTransactionProvider implements TransactionProvider {
   }
 
   public Transaction newTransaction() {
-    return new GBTransaction();
+    return new StorageTransaction();
   }
 
 
-  private class GBTransaction implements Transaction {
+  private class StorageTransaction implements Transaction {
     private final Thread t;
 
-    private GBTransaction() {
+    private StorageTransaction() {
       this.t = Thread.currentThread();
       manager.begin();
     }
