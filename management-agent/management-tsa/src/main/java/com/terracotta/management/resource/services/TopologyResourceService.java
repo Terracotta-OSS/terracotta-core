@@ -27,7 +27,7 @@ public interface TopologyResourceService {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  Collection<VersionedEntity> getTopologies(@Context UriInfo info);
+  Collection<TopologyEntity> getTopologies(@Context UriInfo info);
 
   /**
    * Get a {@code Collection} of {@link TopologyEntity} objects representing the
@@ -49,6 +49,6 @@ public interface TopologyResourceService {
   @GET
   @Path("/clients")
   @Produces(MediaType.APPLICATION_JSON)
-  Collection<ClientEntity> getConnectedClients(@Context UriInfo info);
+  Collection<TopologyEntity> getConnectedClients(@Context UriInfo info);
 
 }

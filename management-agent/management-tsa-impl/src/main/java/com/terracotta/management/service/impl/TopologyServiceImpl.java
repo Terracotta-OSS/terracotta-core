@@ -6,7 +6,7 @@ package com.terracotta.management.service.impl;
 import org.terracotta.management.ServiceExecutionException;
 
 import com.terracotta.management.resource.ClientEntity;
-import com.terracotta.management.resource.TopologyEntity;
+import com.terracotta.management.resource.ServerGroupEntity;
 import com.terracotta.management.service.TopologyService;
 import com.terracotta.management.service.TsaManagementClientService;
 
@@ -24,7 +24,7 @@ public class TopologyServiceImpl implements TopologyService {
   }
 
   @Override
-  public TopologyEntity getTopology() throws ServiceExecutionException {
+  public Collection<ServerGroupEntity> getTopology() throws ServiceExecutionException {
     return tsaManagementClientService.getTopology();
   }
 

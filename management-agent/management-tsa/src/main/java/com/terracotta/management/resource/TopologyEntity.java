@@ -14,9 +14,14 @@ import java.util.Set;
 public class TopologyEntity extends AbstractTsaEntity {
 
   private Set<ServerGroupEntity> serverGroupEntities = new HashSet<ServerGroupEntity>();
+  private Set<ClientEntity> clientEntities = new HashSet<ClientEntity>();
 
   public Set<ServerGroupEntity> getServerGroupEntities() {
     return serverGroupEntities;
+  }
+
+  public Set<ClientEntity> getClientEntities() {
+    return clientEntities;
   }
 
 }

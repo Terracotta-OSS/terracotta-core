@@ -281,14 +281,12 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
   }
 
   @Override
-  public TopologyEntity getTopology() throws ServiceExecutionException {
+  public Collection<ServerGroupEntity> getTopology() throws ServiceExecutionException {
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     try {
       ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
 
-      TopologyEntity topologyEntity = new TopologyEntity();
-      topologyEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
-      topologyEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+      Collection<ServerGroupEntity> serverGroupEntities = new ArrayList<ServerGroupEntity>();
 
       for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
         ServerGroupEntity serverGroupEntity = new ServerGroupEntity();
@@ -319,10 +317,10 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
           }
         }
 
-        topologyEntity.getServerGroupEntities().add(serverGroupEntity);
+        serverGroupEntities.add(serverGroupEntity);
       }
 
-      return topologyEntity;
+      return serverGroupEntities;
     } catch (Exception e) {
       throw new ServiceExecutionException("error making JMX call", e);
     }
