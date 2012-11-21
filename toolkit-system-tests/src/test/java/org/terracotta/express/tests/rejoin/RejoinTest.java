@@ -10,6 +10,7 @@ import org.terracotta.toolkit.cluster.ClusterEvent;
 import org.terracotta.toolkit.cluster.ClusterListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.cluster.RejoinClusterEvent;
+import org.terracotta.toolkit.collections.ToolkitBlockingQueue;
 import org.terracotta.toolkit.collections.ToolkitList;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.ToolkitLogger;
@@ -60,13 +61,16 @@ public class RejoinTest extends AbstractToolkitRejoinTest {
 
       doDebug("Adding values to list before rejoin");
       ToolkitList<String> list = tk.getList("someList", null);
+      ToolkitBlockingQueue<String> queue = tk.getBlockingQueue("someTBQ", null);
       for (int i = 0; i < NUM_ELEMENTS; i++) {
         list.add("value-" + i);
+        queue.add("value-" + i);
       }
 
       doDebug("Asserting values before rejoin");
       for (int i = 0; i < NUM_ELEMENTS; i++) {
         Assert.assertEquals("value-" + i, list.get(i));
+        Assert.assertTrue(queue.contains("value-" + i));
       }
 
       String msg = "";
@@ -109,6 +113,7 @@ public class RejoinTest extends AbstractToolkitRejoinTest {
 
       for (int i = 0; i < NUM_ELEMENTS; i++) {
         Assert.assertEquals("value-" + i, list.get(i));
+        Assert.assertTrue(queue.contains("value-" + i));
       }
 
       doSleep(5);
@@ -116,17 +121,20 @@ public class RejoinTest extends AbstractToolkitRejoinTest {
       doDebug("Adding new values after rejoin");
       for (int i = 0; i < NUM_ELEMENTS; i++) {
         list.add("value-after-rejoin-" + (i + NUM_ELEMENTS));
+        queue.add("value-after-rejoin-" + (i + NUM_ELEMENTS));
       }
 
       doSleep(5);
 
       for (int i = 0; i < list.size(); i++) {
         doDebug("Got value for i: " + i + ", value: " + list.get(i));
+        doDebug("Got value for i: " + i + ", value: " + (queue.contains("value-" + i) ? "value-" + i : null));
       }
       doSleep(10);
 
       doDebug("Asserting new values inserted after rejoin");
       Assert.assertEquals(2 * NUM_ELEMENTS, list.size());
+      Assert.assertEquals(2 * NUM_ELEMENTS, queue.size());
       for (int i = 0; i < 2 * NUM_ELEMENTS; i++) {
         final String expected;
         if (i < NUM_ELEMENTS) {
@@ -135,6 +143,7 @@ public class RejoinTest extends AbstractToolkitRejoinTest {
           expected = "value-after-rejoin-" + i;
         }
         Assert.assertEquals(expected, list.get(i));
+        Assert.assertTrue(queue.contains(expected));
       }
       doDebug("Asserted new values");
 
