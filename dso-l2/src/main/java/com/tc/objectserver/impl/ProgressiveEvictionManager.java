@@ -26,6 +26,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.MemoryEventsListener;
 import com.tc.runtime.MemoryUsage;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
+import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterImpl;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
@@ -72,8 +73,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private final ExecutorService agent;
     private ThreadGroup        evictionGrp;
     private final Responder responder =        new Responder();
-    private final SampledRateCounter expirationStats = new SampledRateCounterImpl();
-    private final SampledRateCounter evictionStats = new SampledRateCounterImpl();
+    private final SampledRateCounter expirationStats = new SampledRateCounterImpl(new SampledRateCounterConfig(5, 100, false));
+    private final SampledRateCounter evictionStats = new SampledRateCounterImpl(new SampledRateCounterConfig(5, 100, false));
     
     private final static Future<Void> completedFuture = new Future<Void>() {
 
