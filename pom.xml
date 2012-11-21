@@ -36,7 +36,6 @@
     
     <module>legacy-test-tree</module>
     <module>dso-system-tests</module>
-    <module>dso-crash-tests</module>
     <module>dso-statistics-tests</module>
     
     <module>terracotta-parent</module>
