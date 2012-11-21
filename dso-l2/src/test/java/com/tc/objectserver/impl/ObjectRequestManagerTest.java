@@ -4,6 +4,9 @@
  */
 package com.tc.objectserver.impl;
 
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+
 import org.apache.commons.lang.NotImplementedException;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
@@ -85,9 +88,6 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import junit.framework.TestCase;
-
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 
 public class ObjectRequestManagerTest extends TestCase {
 
@@ -931,6 +931,7 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public void release(final ManagedObject object) {
       throw new NotImplementedException(TestObjectManager.class);
     }
@@ -980,6 +981,7 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    @Override
     public void releaseAll(final Collection<ManagedObject> collection) {
       throw new NotImplementedException(TestObjectManager.class);
     }
@@ -1001,11 +1003,6 @@ public class ObjectRequestManagerTest extends TestCase {
 
     @Override
     public int getLiveObjectCount() {
-      throw new NotImplementedException(TestObjectManager.class);
-    }
-
-    @Override
-    public int getCachedObjectCount() {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
