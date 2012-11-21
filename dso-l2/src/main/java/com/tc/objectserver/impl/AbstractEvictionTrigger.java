@@ -21,7 +21,9 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     boolean processed = false;
     private String name;
     private boolean pinned;
-    
+    private long startTime;
+    private long endTime;
+    private int count;
 
     public AbstractEvictionTrigger(ObjectID oid) {
         this.oid = oid;
@@ -33,6 +35,9 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
     }
     
     public int boundsCheckSampleSize(int sampled) {
+        if ( sampled < 0 ) {
+            sampled = 0;
+        }
         if ( sampled > 100000 ) {
             sampled = 100000;
         }
@@ -44,7 +49,12 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
         started = true;
         name = map.getCacheName();
         pinned = map.getMaxTotalCount() == 0;
-        return map.startEviction();
+        if ( !map.isEvicting() ) {
+            startTime = System.currentTimeMillis();
+            return map.startEviction();
+        } else {
+            return false;
+        }
     }
     
     @Override
@@ -55,15 +65,26 @@ public abstract class AbstractEvictionTrigger implements EvictionTrigger {
         if ( !processed ) {
             throw new AssertionError("sample not processed");
         }
+        endTime = System.currentTimeMillis();
         if ( !evicting ) {
             map.evictionCompleted();
         }
+        
     }    
     
     protected Map<Object, ObjectID> processSample(Map<Object, ObjectID> sample) {
         evicting = !sample.isEmpty();
+        count = sample.size();
         processed = true;
         return sample;
+    }
+    
+    public long getRuntimeInSeconds() {
+        return ( endTime - startTime ) / 1000;
+    }
+    
+    public int getCount() {
+        return count;
     }
 
     @Override

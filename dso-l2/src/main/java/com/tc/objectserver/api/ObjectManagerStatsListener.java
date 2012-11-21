@@ -5,12 +5,6 @@ package com.tc.objectserver.api;
 
 public interface ObjectManagerStatsListener {
   
-  public void cacheHit();
-
-  public void cacheMiss();
-  
-  public void flushed(int count);
-  
   public void newObjectCreated();
   
 }

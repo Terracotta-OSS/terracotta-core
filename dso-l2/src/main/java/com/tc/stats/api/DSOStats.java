@@ -8,25 +8,21 @@ public interface DSOStats {
 
   Number[] getStatistics(String[] names);
 
-  double getCacheHitRatio();
-
-  long getOnHeapFaultRate();
-
-  long getOnHeapFlushRate();
-
   long getTransactionRate();
 
   long getObjectFaultRate();
 
   long getObjectFlushRate();
 
+  long getEvictionRate();
+
+  long getExpirationRate();
+
   long getGlobalLockRecallRate();
 
   long getTransactionSizeRate();
 
   long getBroadcastRate();
-
-  long getL2DiskFaultRate();
 
   long getGlobalServerMapGetSizeRequestsCount();
 

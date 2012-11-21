@@ -14,47 +14,15 @@ public interface OffheapJMXStats extends OffheapStats, PrettyPrintable {
 
   public static final OffheapJMXStats NULL_OFFHEAP_JMXSTATS = new OffheapJMXStats() {
 
-                                                              public long getOffheapTotalAllocatedSize() {
+                                                              public long getOffheapReservedSize() {
                                                                 return 0;
                                                               }
 
-                                                              public long getOffheapObjectCachedCount() {
+                                                              public long getOffheapUsedSize() {
                                                                 return 0;
                                                               }
 
-                                                              public long getOffheapObjectAllocatedMemory() {
-                                                                return 0;
-                                                              }
-
-                                                              public long getOffheapMaxDataSize() {
-                                                                return 0;
-                                                              }
-
-                                                              public long getOffheapMapAllocatedMemory() {
-                                                                return 0;
-                                                              }
-
-                                                              public long getOffHeapFlushRate() {
-                                                                return 0;
-                                                              }
-
-                                                              public long getOffHeapFaultRate() {
-                                                                return 0;
-                                                              }
-
-                                                              public long getExactOffheapObjectCachedCount() {
-                                                                return 0;
-                                                              }
-
-                                                              public long getOffheapTotalOccupiedSize() {
-                                                                return 0;
-                                                              }
-
-                                                              public long getOffheapObjectOccupiedSize() {
-                                                                return 0;
-                                                              }
-
-                                                              public long getOffheapMapOccupiedSize() {
+                                                              public long getOffheapMaxSize() {
                                                                 return 0;
                                                               }
 
@@ -62,11 +30,4 @@ public interface OffheapJMXStats extends OffheapStats, PrettyPrintable {
                                                                 return out;
                                                               }
                                                             };
-
-  long getOffheapTotalOccupiedSize();
-
-  long getOffheapObjectOccupiedSize();
-
-  long getOffheapMapOccupiedSize();
-
 }

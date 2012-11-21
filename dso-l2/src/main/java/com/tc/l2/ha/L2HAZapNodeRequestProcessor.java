@@ -24,12 +24,12 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
   private static final TCLogger               logger                        = TCLogging
                                                                                 .getLogger(L2HAZapNodeRequestProcessor.class);
 
-  public static final int                     COMMUNICATION_ERROR           = 0x01;
-  public static final int                     PROGRAM_ERROR                 = 0x02;
-  public static final int                     NODE_JOINED_WITH_DIRTY_DB     = 0x03;
-  public static final int                     COMMUNICATION_TO_ACTIVE_ERROR = 0x04;
-  public static final int              PASSIVE_JOINED_UNINITIALIZED  = 0x05;
-  public static final int                     SPLIT_BRAIN                   = 0xff;
+  public static final int              COMMUNICATION_ERROR             = 0x01;
+  public static final int              PROGRAM_ERROR                   = 0x02;
+  public static final int              NODE_JOINED_WITH_DIRTY_DB       = 0x03;
+  public static final int              COMMUNICATION_TO_ACTIVE_ERROR   = 0x04;
+  public static final int              PARTIALLY_SYNCED_PASSIVE_JOINED = 0x05;
+  public static final int              SPLIT_BRAIN                     = 0xff;
 
   private final TCLogger                      consoleLogger;
   private final StateManager                  stateManager;
@@ -83,8 +83,8 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
         return "PROGRAM ERROR";
       case NODE_JOINED_WITH_DIRTY_DB:
         return "Newly Joined Node Contains dirty database. (Please clean up DB and restart node)";
-      case PASSIVE_JOINED_UNINITIALIZED:
-        return "Newly Joined Node already uninitialized - this is not supported.";
+      case PARTIALLY_SYNCED_PASSIVE_JOINED:
+        return "Newly joined node in uninitialized state is already partially synced - this is not supported.";
       case SPLIT_BRAIN:
         return "Two or more Active servers detected in the cluster";
       default:
@@ -98,7 +98,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
       case COMMUNICATION_TO_ACTIVE_ERROR:
       case PROGRAM_ERROR:
       case NODE_JOINED_WITH_DIRTY_DB:
-      case PASSIVE_JOINED_UNINITIALIZED:
+      case PARTIALLY_SYNCED_PASSIVE_JOINED:
       case SPLIT_BRAIN:
         break;
       default:

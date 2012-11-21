@@ -27,7 +27,6 @@ import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
-import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.object.msg.MessageRecycler;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.ChannelStatsImpl;
@@ -49,7 +48,7 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
-import com.tc.objectserver.persistence.StorageManagerFactory;
+import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.IndexManager;
 import com.tc.objectserver.search.SearchRequestManager;
@@ -178,7 +177,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                  TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider,
                                  MBeanServer l2MbeanServer);
 
-  StorageManagerFactory createStorageManagerFactory(final boolean persistent, final File dbhome, final L2DSOConfig l2DSOConfig, boolean offheapEnabled);
+  Persistor createPersistor(final boolean persistent, final File l2DataPath) throws IOException;
 
   LongGCLogger createLongGCLogger(long gcTimeOut);
 

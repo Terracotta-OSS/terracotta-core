@@ -12,7 +12,7 @@
   
   <groupId>org.terracotta</groupId>
   <artifactId>terracotta-root</artifactId>
-  <version>3.8.0-SNAPSHOT</version>
+  <version>4.0.0-SNAPSHOT</version>
   <name>terracotta-root</name>
   <packaging>pom</packaging>
 
@@ -222,6 +222,18 @@
       </activation>      
       <modules>
         <module>devwork/search</module>
+      </modules>
+    </profile>
+
+    <profile>
+      <id>terracotta-license</id>
+      <activation>
+        <file>
+          <exists>devwork/terracotta-license</exists>
+        </file>
+      </activation>      
+      <modules>
+        <module>devwork/terracotta-license</module>
       </modules>
     </profile>
   </profiles>

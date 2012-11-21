@@ -18,7 +18,7 @@ public class EmergencyEvictionTriggerTest extends AbstractEvictionTriggerTest {
     }
 
     @Override
-    public EvictionTrigger getTrigger() {
+    public AbstractEvictionTrigger getTrigger() {
         return new EmergencyEvictionTrigger(Mockito.mock(ObjectManager.class), ObjectID.NULL_ID, false);
     }
 

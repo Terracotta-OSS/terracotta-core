@@ -3,22 +3,8 @@
  */
 package com.tc.objectserver.api;
 
-import com.tc.stats.counter.sampled.TimeStampedCounterValue;
-
 public interface ObjectManagerStats {
 
-  double getCacheHitRatio();
-  
-  TimeStampedCounterValue getOnHeapFaultRate();
- 
-  TimeStampedCounterValue getOnHeapFlushRate();
-  
-  long getTotalRequests();
-
-  long getTotalCacheMisses();
-
-  long getTotalCacheHits();
-  
   long getTotalObjectsCreated();
 
 }

@@ -65,6 +65,10 @@ public class PeriodicEvictionTrigger extends AbstractEvictionTrigger {
     protected ObjectManager getObjectManager() {
         return mgr;
     }
+    
+    public boolean isExpirationOnly() {
+        return !dumpLive;
+    }
 
     @Override
     public boolean startEviction(EvictableMap map) {

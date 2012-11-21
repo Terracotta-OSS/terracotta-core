@@ -128,7 +128,8 @@ public class ServerURL {
       return urlConnection.getInputStream();
     } catch (IOException e) {
       if (urlConnection instanceof HttpURLConnection
-          && ((HttpURLConnection)urlConnection).getResponseCode() == 401) {
+          && (((HttpURLConnection)urlConnection).getResponseCode() == 401 ||
+              ((HttpURLConnection)urlConnection).getResponseCode() == 403)) {
         throw new TCAuthenticationException("Invalid credentials connecting to " + (uri != null ? uri : urlConnection.getURL()), e);
       } else {
         throw e;

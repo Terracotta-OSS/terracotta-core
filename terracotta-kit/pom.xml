@@ -8,7 +8,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>terracotta-parent</artifactId>
-    <version>3.8.0-SNAPSHOT</version>
+    <version>4.0.0-SNAPSHOT</version>
     <relativePath>../terracotta-parent</relativePath>
   </parent>
 
@@ -526,7 +526,7 @@
     <profile>
       <id>bigmemory-max</id>
       <properties>
-        <bigmemory.version>3.8.0-SNAPSHOT</bigmemory.version>
+        <bigmemory.version>4.0.0-SNAPSHOT</bigmemory.version>
         <tmc.version>1.1.0-SNAPSHOT</tmc.version>
       </properties>
       <dependencies>

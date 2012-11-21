@@ -4,8 +4,6 @@
  */
 package com.tc.statistics.retrieval.actions;
 
-import junit.framework.TestCase;
-
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.objectserver.core.api.DSOGlobalServerStatsImpl;
 import com.tc.statistics.StatisticData;
@@ -17,6 +15,8 @@ import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 
+import junit.framework.TestCase;
+
 public class SRAL1ToL2FlushRateTest extends TestCase {
   private DSOGlobalServerStats dsoGlobalServerStats;
   private CounterIncrementer   counterIncrementer;
@@ -26,8 +26,8 @@ public class SRAL1ToL2FlushRateTest extends TestCase {
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 10, true, 0L);
     final SampledCounter l1Tol2FlushCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
 
-    dsoGlobalServerStats = new DSOGlobalServerStatsImpl(l1Tol2FlushCounter, null, null, null, null, null, null, null,
-                                                        null, null, null, null);
+    dsoGlobalServerStats = new DSOGlobalServerStatsImpl(l1Tol2FlushCounter, null, null, null, null,
+        null, null, null, null, null, null);
 
     counterIncrementer = new CounterIncrementer(l1Tol2FlushCounter, 200);
     new Thread(counterIncrementer, "Counter Incrementer").start();

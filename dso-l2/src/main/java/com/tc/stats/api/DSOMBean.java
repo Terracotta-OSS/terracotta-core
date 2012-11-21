@@ -65,8 +65,6 @@ public interface DSOMBean extends DSOStats, OffheapStats, DGCMBean, TerracottaMB
 
   int getLiveObjectCount();
 
-  int getCachedObjectCount();
-
   boolean isResident(NodeID node, ObjectID oid);
 
   Map<ObjectName, Exception> setAttribute(Set<ObjectName> onSet, String attrName, Object attrValue);

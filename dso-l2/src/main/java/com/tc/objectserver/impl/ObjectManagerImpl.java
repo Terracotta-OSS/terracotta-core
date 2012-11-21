@@ -31,13 +31,10 @@ import com.tc.objectserver.tx.NullTransactionalObjectManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
-import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
-import com.tc.util.Counter;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
 import com.tc.util.concurrent.TCConcurrentMultiMap;
-import java.io.PrintWriter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -89,7 +86,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private final PersistentManagedObjectStore                              objectStore;
   private final ConcurrentMap<ObjectID, ManagedObjectReference> references;
-  private final Counter                                         flushInProgress = new Counter();
   private final AtomicInteger                                   checkedOutCount = new AtomicInteger();
   private final AtomicInteger                                   preFetchedCount = new AtomicInteger();
   private final PendingList                                     pending         = new PendingList();
@@ -105,7 +101,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private final ClientStateManager                              stateManager;
   private final ObjectManagerConfig                             config;
-  private final TransactionProvider                  persistenceTransactionProvider;
+  private final TransactionProvider                             persistenceTransactionProvider;
 
   // TODO: Flip this around to ReferencesIDStore? It's highly probable that we'll have more objects with no references
   private final NoReferencesIDStore                             noReferencesIDStore;
@@ -319,32 +315,16 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private ManagedObjectReference addNewReference(final ManagedObject obj, final boolean isRemoveOnRelease) {
-    return addNewReference(obj.getReference(), isRemoveOnRelease, null);
+    return addNewReference(obj.getReference(), isRemoveOnRelease);
   }
 
   private ManagedObjectReference addNewReference(final ManagedObjectReference newReference,
-                                                 final boolean removeOnRelease, final ManagedObjectReference expectedOld) {
+                                                 final boolean removeOnRelease) {
     final ManagedObjectReference ref = this.references.putIfAbsent(newReference.getObjectID(), newReference);
     if (removeOnRelease) {
       newReference.setRemoveOnRelease(removeOnRelease);
     }
     return ref == null ? newReference : ref;
-  }
-
-  private void evicted(final Collection managedObjects) {
-    for (final Iterator i = managedObjects.iterator(); i.hasNext();) {
-      final ManagedObject mo = (ManagedObject) i.next();
-      final ObjectID oid = mo.getID();
-      final Object o = this.removeReferenceAndDestroyIfNecessary(oid);
-      if (o == null) {
-        logger.warn("Object ID : " + mo.getID() + " was mapped to null but should have been mapped to a reference of  "
-                    + mo);
-      }
-      unmarkReferenced(mo.getReference());
-      // Remove first and then unblock to make sure we don't miss any request
-      makeUnBlocked(oid);
-    }
-    postRelease();
   }
 
   private boolean basicLookupObjectsFor(final NodeID nodeID, final ObjectManagerLookupContext context,
@@ -627,10 +607,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return this.objectStore.getObjectCount();
   }
 
-  public int getCachedObjectCount() {
-    return references_size();
-  }
-
   public Set<ObjectID> getObjectReferencesFrom(final ObjectID id, final boolean cacheOnly) {
     if (this.noReferencesIDStore.hasNoReferences(id)) { return TCCollections.EMPTY_OBJECT_ID_SET; }
     final ManagedObjectReference mor = getReference(id);
@@ -769,11 +745,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     processPendingLookups();
   }
 
-  private void flushAndCommit(final Transaction persistenceTransaction, final ManagedObject managedObject) {
-    this.objectStore.commitObject(persistenceTransaction, managedObject);
-    persistenceTransaction.commit();
-  }
-
   private void flushAllAndCommit(final Transaction persistenceTransaction, final Collection managedObjects) {
     this.objectStore.commitAllObjects(persistenceTransaction, managedObjects);
     persistenceTransaction.commit();
@@ -851,11 +822,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private void assertNotInShutdown() {
     if (this.inShutdown.get()) { throw new ShutdownError(); }
-  }
-
-  // TODO:: May have to Optimize it with an atomic integer since size on CHM with 256 segments is costly
-  private int references_size() {
-    return this.references.size();
   }
 
   private static class ObjectManagerLookupContext implements ObjectManagerResultsContext {

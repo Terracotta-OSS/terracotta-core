@@ -37,7 +37,6 @@ import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.groups.TCGroupManagerImpl;
 import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
-import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.object.msg.MessageRecycler;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.ChannelStatsImpl;
@@ -64,7 +63,7 @@ import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.metadata.NullMetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.HeapStorageManagerFactory;
-import com.tc.objectserver.persistence.StorageManagerFactory;
+import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.IndexManager;
 import com.tc.objectserver.search.NullIndexHACoordinator;
@@ -325,7 +324,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   }
 
   @Override
-  public StorageManagerFactory createStorageManagerFactory(final boolean persistent, final File dbhome, final L2DSOConfig l2DSOConfig, final boolean offheapEnabled) {
-    return HeapStorageManagerFactory.INSTANCE;
+  public Persistor createPersistor(final boolean persistent, final File l2DataPath) throws IOException {
+    return new Persistor(HeapStorageManagerFactory.INSTANCE);
   }
 }

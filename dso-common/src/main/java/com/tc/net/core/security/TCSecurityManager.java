@@ -11,6 +11,8 @@ import java.security.Principal;
 public interface TCSecurityManager extends PwProvider {
   Principal authenticate(String username, char[] chars);
 
+  boolean isUserInRole(Principal principal, String roleName);
+
   BufferManagerFactory getBufferManagerFactory();
 
   String getIntraL2Username();

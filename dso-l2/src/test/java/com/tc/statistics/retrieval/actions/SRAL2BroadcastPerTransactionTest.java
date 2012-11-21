@@ -4,8 +4,6 @@
  */
 package com.tc.statistics.retrieval.actions;
 
-import junit.framework.TestCase;
-
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.objectserver.core.api.DSOGlobalServerStatsImpl;
 import com.tc.statistics.StatisticData;
@@ -19,6 +17,8 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.math.BigDecimal;
 
+import junit.framework.TestCase;
+
 public class SRAL2BroadcastPerTransactionTest extends TestCase {
 
   private DSOGlobalServerStats dsoGlobalServerStats;
@@ -31,8 +31,8 @@ public class SRAL2BroadcastPerTransactionTest extends TestCase {
     final SampledCounter broadcastCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
     final SampledCounter transactionCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
 
-    dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, null, transactionCounter, null, broadcastCounter, null,
-                                                        null, null, null, null, null, null);
+    dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, null, transactionCounter, null, broadcastCounter,
+        null, null, null, null, null, null);
 
     txnCounterIncrementer = new CounterIncrementer(transactionCounter, 200);
     broadcastCounterIncrementer = new CounterIncrementer(broadcastCounter, 200);

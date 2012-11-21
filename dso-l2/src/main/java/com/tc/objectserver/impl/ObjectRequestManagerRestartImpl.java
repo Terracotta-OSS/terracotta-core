@@ -156,11 +156,6 @@ public class ObjectRequestManagerRestartImpl extends AbstractServerTransactionLi
     return out;
   }
 
-  // delegating all ObjectManagerMbean requests to the object manager
-  public int getCachedObjectCount() {
-    return this.objectManager.getCachedObjectCount();
-  }
-
   public int getLiveObjectCount() {
     return this.objectManager.getLiveObjectCount();
   }
