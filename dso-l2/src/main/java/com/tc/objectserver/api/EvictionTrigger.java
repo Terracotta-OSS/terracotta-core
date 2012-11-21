@@ -44,5 +44,9 @@ public interface EvictionTrigger {
      * @return          a map of evictable items
      */
     Map<Object, ObjectID> collectEvictonCandidates(int targetMax, EvictableMap map, ClientObjectReferenceSet clients);
+    
+    long getRuntimeInSeconds();
+    
+    int getCount();
 
 }

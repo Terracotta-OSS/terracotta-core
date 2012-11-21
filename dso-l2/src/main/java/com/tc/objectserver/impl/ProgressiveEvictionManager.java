@@ -25,8 +25,11 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.MemoryEventsListener;
 import com.tc.runtime.MemoryUsage;
+import com.tc.stats.counter.sampled.derived.SampledRateCounter;
+import com.tc.stats.counter.sampled.derived.SampledRateCounterImpl;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
+//import java.lang.management.MemoryUsage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +72,8 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     private final ExecutorService agent;
     private ThreadGroup        evictionGrp;
     private final Responder responder =        new Responder();
+    private final SampledRateCounter expirationStats = new SampledRateCounterImpl();
+    private final SampledRateCounter evictionStats = new SampledRateCounterImpl();
     
     private final static Future<Void> completedFuture = new Future<Void>() {
 
@@ -99,7 +104,19 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             
     };
             
-            
+     public SampledRateCounter getExpirationStatistics() {
+        return expirationStats;
+    }
+     
+    public SampledRateCounter getEvictionStatistics() {
+        return evictionStats;
+    }
+    
+    private void resetStatistics() {
+        evictionStats.setValue(0,0);
+        expirationStats.setValue(0,0);
+    }
+    
     public ProgressiveEvictionManager(ObjectManager mgr, MonitoredResource monitored, PersistentManagedObjectStore store, ClientObjectReferenceSet clients, ServerTransactionFactory trans, final TCThreadGroup grp) {
         this.objectManager = mgr;
         this.store = store;
@@ -146,6 +163,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
     
     private Future<Void> scheduleEvictionRun() {
         try{
+            resetStatistics();
             final ObjectIDSet evictableObjects = store.getAllEvictableObjectIDs();
             return new FutureCallable<Void>(agent, new PeriodicCallable(this,objectManager,evictableObjects,evictor.isElementBasedTTIorTTL()));
         } catch ( ShutdownError err ) {
@@ -213,6 +231,11 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
             this.objectManager.releaseReadOnly(mo);
             
             if (context != null) {
+                if ( trigger instanceof PeriodicEvictionTrigger && ((PeriodicEvictionTrigger)trigger).isExpirationOnly() ) {
+                    expirationStats.increment(trigger.getCount(),trigger.getRuntimeInSeconds());
+                } else {
+                    evictionStats.increment(trigger.getCount(),trigger.getRuntimeInSeconds());
+                }
                 this.evictorSink.add(context);
             } 
         } finally {
@@ -249,6 +272,7 @@ public class ProgressiveEvictionManager implements ServerMapEvictionManager {
         List<Future<Void>> push = new ArrayList<Future<Void>>(evictableObjects.size());
         Random r = new Random();
         List<ObjectID> list = new ArrayList<ObjectID>(evictableObjects);
+        resetStatistics();
         while ( !list.isEmpty() ) {
             final ObjectID mapID = list.remove(r.nextInt(list.size()));
             push.add(agent.submit(new Callable<Void>() {
