@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.ServiceLocator;
+import org.terracotta.management.resource.VersionedEntity;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
 import com.terracotta.management.resource.ClientEntity;
@@ -14,6 +15,7 @@ import com.terracotta.management.resource.TopologyEntity;
 import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.TopologyService;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -39,6 +41,24 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
   }
 
   @Override
+  public Collection<VersionedEntity> getTopologies(UriInfo info) {
+    LOG.info(String.format("Invoking TopologyServiceImpl.getTopologies: %s", info.getRequestUri()));
+
+    requestValidator.validateSafe(info);
+
+    try {
+      Collection<VersionedEntity> result = new ArrayList<VersionedEntity>();
+      result.add(topologyService.getTopology());
+      result.addAll(topologyService.getClients());
+      return result;
+    } catch (ServiceExecutionException see) {
+      LOG.error("Failed to get TSA topologies.", see.getCause());
+      throw new WebApplicationException(
+          Response.status(Response.Status.BAD_REQUEST).entity(see.getCause().getMessage()).build());
+    }
+  }
+
+  @Override
   public Collection<TopologyEntity> getServerTopologies(UriInfo info) {
     LOG.info(String.format("Invoking TopologyServiceImpl.getServerTopologies: %s", info.getRequestUri()));
 
@@ -47,7 +67,7 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
     try {
       return Collections.singleton(topologyService.getTopology());
     } catch (ServiceExecutionException see) {
-      LOG.error("Failed to get TSA topologies.", see.getCause());
+      LOG.error("Failed to get TSA servers topologies.", see.getCause());
       throw new WebApplicationException(
           Response.status(Response.Status.BAD_REQUEST).entity(see.getCause().getMessage()).build());
     }
@@ -62,7 +82,7 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
     try {
       return topologyService.getClients();
     } catch (ServiceExecutionException see) {
-      LOG.error("Failed to get TSA clients.", see.getCause());
+      LOG.error("Failed to get TSA clients topologies.", see.getCause());
       throw new WebApplicationException(
           Response.status(Response.Status.BAD_REQUEST).entity(see.getCause().getMessage()).build());
     }
