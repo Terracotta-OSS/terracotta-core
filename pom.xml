@@ -224,6 +224,18 @@
         <module>devwork/search</module>
       </modules>
     </profile>
+
+    <profile>
+      <id>terracotta-license</id>
+      <activation>
+        <file>
+          <exists>devwork/terracotta-license</exists>
+        </file>
+      </activation>      
+      <modules>
+        <module>devwork/terracotta-license</module>
+      </modules>
+    </profile>
   </profiles>
   
   <repositories>
