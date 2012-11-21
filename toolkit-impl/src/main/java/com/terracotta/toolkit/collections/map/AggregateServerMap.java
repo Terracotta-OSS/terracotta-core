@@ -108,6 +108,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   private final ToolkitMap<String, ToolkitAttributeType>           attrSchema;
   private final DistributedClusteredObjectLookup<InternalToolkitMap<K, V>> lookup;
   private final ToolkitObjectType                                          toolkitObjectType;
+  private final L1ServerMapLocalCacheStore<K, V> localCacheStore;
+  private final PinnedEntryFaultCallback                                   pinnedEntryFaultCallback;
 
   private int getTerracottaProperty(String propName, int defaultValue) {
     try {
@@ -153,8 +155,9 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
       stripeObject.addConfigChangeListener(this);
     }
 
-    PinnedEntryFaultCallback pinnedEntryFaultCallback = new PinnedEntryFaultCallbackImpl(this);
-    initializeLocalCache(pinnedEntryFaultCallback);
+    localCacheStore = createLocalCacheStore();
+    pinnedEntryFaultCallback = new PinnedEntryFaultCallbackImpl(this);
+    initializeLocalCache();
     this.timeSource = new SystemTimeSource();
   }
 
@@ -179,12 +182,10 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
     return false;
   }
 
-  private L1ServerMapLocalCacheStore<K, V> initializeLocalCache(PinnedEntryFaultCallback pinnedEntryFaultCallback) {
-    L1ServerMapLocalCacheStore<K, V> localCacheStore = createLocalCacheStore();
+  private void initializeLocalCache() {
     for (InternalToolkitMap<K, V> serverMap : serverMaps) {
       serverMap.initializeLocalCache(localCacheStore, pinnedEntryFaultCallback);
     }
-    return localCacheStore;
   }
 
   @Override
@@ -200,6 +201,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   @Override
   public void rejoinCompleted() {
     setupStripeObjects(lookup.lookupStripeObjects(name));
+    initializeLocalCache();
   }
 
   private L1ServerMapLocalCacheStore<K, V> createLocalCacheStore() {

@@ -10,33 +10,32 @@ import org.terracotta.toolkit.cluster.ClusterEvent;
 import org.terracotta.toolkit.cluster.ClusterListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.cluster.RejoinClusterEvent;
-import org.terracotta.toolkit.collections.ToolkitBlockingQueue;
-import org.terracotta.toolkit.collections.ToolkitList;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.ToolkitLogger;
+import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.jmx.TestHandlerMBean;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import junit.framework.Assert;
 
-public class RejoinTest extends AbstractToolkitRejoinTest {
+public class ToolkitStoreRejoinTest extends AbstractToolkitRejoinTest {
 
-  public RejoinTest(TestConfig testConfig) {
-    super(testConfig, RejoinTestClient.class);
+  public ToolkitStoreRejoinTest(TestConfig testConfig) {
+    super(testConfig, ToolkitStoreRejoinTestClient.class);
   }
 
-  public static class RejoinTestClient extends AbstractToolkitRejoinTestClient {
+  public static class ToolkitStoreRejoinTestClient extends AbstractToolkitRejoinTestClient {
 
     private static final int NUM_ELEMENTS = 10;
     private ToolkitLogger    logger;
 
-    public RejoinTestClient(String[] args) {
+    public ToolkitStoreRejoinTestClient(String[] args) {
       super(args);
     }
 
@@ -46,50 +45,60 @@ public class RejoinTest extends AbstractToolkitRejoinTest {
       Properties properties = new Properties();
       properties.put("rejoin", "true");
       Toolkit tk = ToolkitFactory.createToolkit("toolkit:terracotta://" + getTerracottaUrl(), properties);
-      final List<ClusterEvent> receivedEvents = new CopyOnWriteArrayList<ClusterEvent>();
+      final List<ClusterEvent> receivedEvents = new ArrayList<ClusterEvent>();
       final ClusterNode beforeRejoinNode = tk.getClusterInfo().getCurrentNode();
-      logger = ((ToolkitInternal) tk).getLogger("com.tc.AppLogger");
 
       tk.getClusterInfo().addClusterListener(new ClusterListener() {
 
         @Override
         public void onClusterEvent(ClusterEvent event) {
-          doDebug("Received cluster event: " + event);
+          debug("Received cluster event: " + event);
           receivedEvents.add(event);
         }
       });
 
+      logger = ((ToolkitInternal) tk).getLogger("com.tc.AppLogger");
+
       doDebug("Adding values to list before rejoin");
-      ToolkitList<String> list = tk.getList("someList", null);
-      ToolkitBlockingQueue<String> queue = tk.getBlockingQueue("someTBQ", null);
+      final ToolkitStore<String, String> store = tk.getStore("someList", null);
       for (int i = 0; i < NUM_ELEMENTS; i++) {
-        list.add("value-" + i);
-        queue.add("value-" + i);
+        store.put("key-" + i, "value-" + i);
       }
 
       doDebug("Asserting values before rejoin");
       for (int i = 0; i < NUM_ELEMENTS; i++) {
-        Assert.assertEquals("value-" + i, list.get(i));
-        Assert.assertTrue(queue.contains("value-" + i));
+        final String key = "key-" + i;
+        final String actual = store.get(key);
+        final String expected = "value-" + i;
+        doDebug(" expected: " + expected + ", key: " + key + ", actual: " + actual);
+        Assert.assertEquals(expected, actual);
       }
 
+      WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          return store.size() == NUM_ELEMENTS;
+        }
+      });
+      doDebug("Got size: " + store.size());
       ((ToolkitInternal) tk).waitUntilAllTransactionsComplete();
 
       doDebug("Crashing first active...");
       testHandlerMBean.crashActiveAndWaitForPassiveToTakeOver(0);
+
       doDebug("Passive must have taken over as ACTIVE");
 
       WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
 
         @Override
         public Boolean call() throws Exception {
-          doDebug("Processing received events (waiting till rejoin happens for node: " + beforeRejoinNode + ")");
+          debug("Processing received events (waiting till rejoin happens for node: " + beforeRejoinNode + ")");
           for (ClusterEvent e : receivedEvents) {
             if (e instanceof RejoinClusterEvent) {
               RejoinClusterEvent re = (RejoinClusterEvent) e;
-              doDebug("Rejoin event - oldNode: " + re.getNodeBeforeRejoin() + ", newNode: " + re.getNodeAfterRejoin());
+              debug("Rejoin event - oldNode: " + re.getNodeBeforeRejoin() + ", newNode: " + re.getNodeAfterRejoin());
               if (re.getNodeBeforeRejoin().getId().equals(beforeRejoinNode.getId())) {
-                doDebug("Rejoin received for expected node - " + beforeRejoinNode);
+                debug("Rejoin received for expected node - " + beforeRejoinNode);
                 return true;
               }
             }
@@ -102,46 +111,37 @@ public class RejoinTest extends AbstractToolkitRejoinTest {
       doDebug("Asserting old values after rejoin");
 
       for (int i = 0; i < NUM_ELEMENTS; i++) {
-        Assert.assertEquals("value-" + i, list.get(i));
-        Assert.assertTrue(queue.contains("value-" + i));
+        Assert.assertEquals("value-" + i, store.get("key-" + i));
       }
-
 
       doDebug("Adding new values after rejoin");
       for (int i = 0; i < NUM_ELEMENTS; i++) {
-        list.add("value-after-rejoin-" + (i + NUM_ELEMENTS));
-        queue.add("value-after-rejoin-" + (i + NUM_ELEMENTS));
+        store.put("key-after-rejoin-" + i, "value-after-rejoin-" + i);
       }
 
-
-      for (int i = 0; i < list.size(); i++) {
-        doDebug("Got value for i: " + i + ", value: " + list.get(i));
-        doDebug("Got value for i: " + i + ", value: " + (queue.contains("value-" + i) ? "value-" + i : null));
+      for (String key : store.keySet()) {
+        doDebug("Store content: Key: " + key + ", value: " + store.get(key));
       }
 
       doDebug("Asserting new values inserted after rejoin");
-      Assert.assertEquals(2 * NUM_ELEMENTS, list.size());
-      Assert.assertEquals(2 * NUM_ELEMENTS, queue.size());
-      for (int i = 0; i < 2 * NUM_ELEMENTS; i++) {
-        final String expected;
-        if (i < NUM_ELEMENTS) {
-          expected = "value-" + i;
-        } else {
-          expected = "value-after-rejoin-" + i;
-        }
-        Assert.assertEquals(expected, list.get(i));
-        Assert.assertTrue(queue.contains(expected));
+      Assert.assertEquals(2 * NUM_ELEMENTS, store.size());
+      for (int i = 0; i < NUM_ELEMENTS; i++) {
+        final String key = "key-" + i;
+        final String expected = "value-" + i;
+        Assert.assertEquals(expected, store.get(key));
       }
-      doDebug("Asserted new values");
 
+      for (int i = 0; i < NUM_ELEMENTS; i++) {
+        final String key = "key-after-rejoin-" + i;
+        final String expected = "value-after-rejoin-" + i;
+        Assert.assertEquals(expected, store.get(key));
+      }
 
     }
 
     private void doDebug(String string) {
       debug(string);
-      if (logger != null) {
-        logger.info("___XXX___: " + string);
-      }
+      logger.info("___XXXX___: " + string);
     }
 
   }
