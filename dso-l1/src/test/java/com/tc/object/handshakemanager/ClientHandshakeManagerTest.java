@@ -6,6 +6,7 @@ package com.tc.object.handshakemanager;
 
 import org.mockito.Mockito;
 
+import com.tc.async.api.ClearableCallback;
 import com.tc.async.api.Sink;
 import com.tc.async.impl.NullSink;
 import com.tc.cluster.DsoClusterImpl;
@@ -53,9 +54,10 @@ public class ClientHandshakeManagerTest extends TCTestCase {
                                           final ClientHandshakeMessageFactory chmf, final Sink pauseSink,
                                           final SessionManager sessionManager, final Sink nullSink,
                                           final String clientVersion,
-                                          final Collection<ClientHandshakeCallback> callbacks) {
+                                          final Collection<ClientHandshakeCallback> callbacks,
+                                          final Collection<ClearableCallback> clearCallbacks) {
       super(logger, channel, chmf, pauseSink, sessionManager,
-            new DsoClusterImpl(Mockito.mock(RejoinManagerInternal.class)), clientVersion, callbacks);
+            new DsoClusterImpl(Mockito.mock(RejoinManagerInternal.class)), clientVersion, callbacks, clearCallbacks);
     }
 
     @Override
@@ -82,7 +84,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     this.sessMgr = new TestSessionManager();
     this.mgr = new TestClientHandshakeManagerImpl(TCLogging.getLogger(ClientHandshakeManagerImpl.class), this.channel,
                                                   this.chmf, new NullSink(), this.sessMgr, new NullSink(),
-                                                  clientVersion, callbacks);
+                                                  clientVersion, callbacks, null);
   }
 
   public void tests() {

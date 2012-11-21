@@ -4,8 +4,8 @@
 package com.tc.object.locks;
 
 import com.tc.abortable.AbortedOperationException;
+import com.tc.async.api.ClearableCallback;
 import com.tc.net.ClientID;
-import com.tc.platform.rejoin.ClearableCallback;
 
 import java.util.Collection;
 

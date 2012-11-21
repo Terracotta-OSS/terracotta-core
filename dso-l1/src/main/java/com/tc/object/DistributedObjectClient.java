@@ -8,6 +8,7 @@ import bsh.EvalError;
 import bsh.Interpreter;
 
 import com.tc.abortable.AbortableOperationManager;
+import com.tc.async.api.ClearableCallback;
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
@@ -217,6 +218,7 @@ import com.tcclient.cluster.DsoClusterInternal;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -793,12 +795,15 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     clientHandshakeCallbacks.add(this.clusterMetaDataManager);
     clientHandshakeCallbacks.add(teh);
     final ProductInfo pInfo = ProductInfo.getInstance();
+    final Collection<ClearableCallback> clearCallbacks = new ArrayList<ClearableCallback>();
+    clearCallbacks.add(stageManager);
     this.clientHandshakeManager = this.dsoClientBuilder
         .createClientHandshakeManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
                                           .getLogger(ClientHandshakeManagerImpl.class)), this.channel, this.channel
                                           .getClientHandshakeMessageFactory(), pauseStage.getSink(), sessionManager,
                                       dsoCluster, pInfo.version(), Collections
-                                          .unmodifiableCollection(clientHandshakeCallbacks));
+                                          .unmodifiableCollection(clientHandshakeCallbacks), Collections
+                                          .unmodifiableCollection(clearCallbacks));
     // this.channel.addListener(this.clientHandshakeManager);
 
     // final List<ReconnectionRejectedCallback> reconnectionRejectedCallbacks = new

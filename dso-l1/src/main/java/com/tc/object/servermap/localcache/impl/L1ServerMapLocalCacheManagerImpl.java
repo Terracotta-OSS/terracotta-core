@@ -77,7 +77,6 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
   private final TCObjectSelfStore                                                tcObjectSelfStore;
   private volatile ClientLockManager                                             clientLockManager;
   private final PinnedEntryInvalidationListener                                  pinnedEntryInvalidationListener;
-  private final Sink                                                             pinnedEntryFaultSink;
 
   public L1ServerMapLocalCacheManagerImpl(LocksRecallService locksRecallHelper, Sink capacityEvictionSink,
                                           Sink txnCompleteSink, Sink pinnedEntryFaultSink) {
@@ -86,7 +85,6 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     removeCallback = new RemoveCallback();
     tcObjectSelfStore = new TCObjectSelfStoreImpl(localCacheToPinnedEntryFaultCallback);
     this.txnCompleteSink = txnCompleteSink;
-    this.pinnedEntryFaultSink = pinnedEntryFaultSink;
     this.pinnedEntryInvalidationListener = new Listener(localCacheToPinnedEntryFaultCallback, pinnedEntryFaultSink);
   }
 
@@ -98,9 +96,7 @@ public class L1ServerMapLocalCacheManagerImpl implements L1ServerMapLocalCacheMa
     }
     lockIdsToLocalCache = new TCConcurrentMultiMap<LockID, ServerMapLocalCache>();
     tcObjectSelfStore.cleanup();
-    capacityEvictionSink.clear();
-    txnCompleteSink.clear();
-    pinnedEntryFaultSink.clear();
+    // all sinks will be cleaned-up as a part of stageManager.cleanAll() from ClientHandshakeManagerImpl.reset()
     // clientLockManager will be cleanup from clientHandshakeCallbacks
   }
 

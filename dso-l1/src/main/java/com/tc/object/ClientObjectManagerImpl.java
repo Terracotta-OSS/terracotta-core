@@ -205,7 +205,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
     pojoToManaged.clear();
     objectStore.cleanup();
-    clientTxManager.cleanup();
+    // clientTxManager.cleanup(); not needed because doing nothing
     while (referenceQueue.poll() != null) {
       // cleanup the referenceQueue
     }

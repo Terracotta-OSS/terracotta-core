@@ -6,11 +6,11 @@ package com.tc.object.tx;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
+import com.tc.async.api.ClearableCallback;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
 import com.tc.object.tx.ClientTransactionBatchWriter.FoldedInfo;
-import com.tc.platform.rejoin.ClearableCallback;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.Counter;

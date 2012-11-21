@@ -4,6 +4,7 @@
  */
 package com.tc.object.handshakemanager;
 
+import com.tc.async.api.ClearableCallback;
 import com.tc.async.api.Sink;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
@@ -47,12 +48,14 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   private volatile boolean                          isShutdown           = false;
   private final AtomicBoolean                       transitionInProgress = new AtomicBoolean(false);
   private final DsoClusterInternalEventsGun         dsoClusterEventsGun;
+  private final Collection<ClearableCallback>       clearCallbacks;
 
   public ClientHandshakeManagerImpl(final TCLogger logger, final DSOClientMessageChannel channel,
                                     final ClientHandshakeMessageFactory chmf, final Sink pauseSink,
                                     final SessionManager sessionManager,
                                     final DsoClusterInternalEventsGun dsoClusterEventsGun, final String clientVersion,
-                                    final Collection<ClientHandshakeCallback> callbacks) {
+                                    final Collection<ClientHandshakeCallback> callbacks,
+                                    final Collection<ClearableCallback> clearCallbacks) {
     this.logger = logger;
     this.cidp = channel.getClientIDProvider();
     this.chmf = chmf;
@@ -65,6 +68,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     this.disconnected = this.groupIDs.length;
     initGroupStates(State.PAUSED);
     pauseCallbacks(GroupID.ALL_GROUPS, this.disconnected);
+    this.clearCallbacks = clearCallbacks;
   }
 
   private void waitForTransitionToComplete() {
@@ -262,6 +266,9 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   public void reset() {
     for (ClientHandshakeCallback c : callBacks) {
       c.cleanup();
+    }
+    for (ClearableCallback clearable : clearCallbacks) {
+      clearable.cleanup();
     }
   }
 

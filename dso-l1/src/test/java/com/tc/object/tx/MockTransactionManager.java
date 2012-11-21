@@ -43,10 +43,10 @@ public class MockTransactionManager implements ClientTransactionManager {
   // TODO: This is a test member remove otherwise.
   private final Counter         loggingCounter = new Counter(0);
 
-  @Override
-  public void cleanup() {
-    //
-  }
+  // @Override
+  // public void cleanup() {
+  // //
+  // }
 
   public Counter getLoggingCounter() {
     return this.loggingCounter;

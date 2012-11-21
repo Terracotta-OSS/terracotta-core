@@ -84,14 +84,17 @@ public class StageManagerImpl implements StageManager {
     t.start();
   }
 
+  @Override
   public void setLoggerProvider(TCLoggerProvider loggerProvider) {
     this.loggerProvider = loggerProvider;
   }
 
+  @Override
   public synchronized Stage createStage(String name, EventHandler handler, int threads, int maxSize) {
     return createStage(name, handler, threads, threads, maxSize);
   }
 
+  @Override
   public synchronized Stage createStage(String name, EventHandler handler, int threads, int threadsToQueueRatio,
                                         int maxSize) {
     int capacity = maxSize > 0 ? maxSize : Integer.MAX_VALUE;
@@ -109,10 +112,12 @@ public class StageManagerImpl implements StageManager {
     Arrays.sort(stageNames);
   }
 
+  @Override
   public void startStage(Stage stage, ConfigurationContext context) {
     stage.start(context);
   }
 
+  @Override
   public synchronized void startAll(ConfigurationContext context, List<PostInit> toInit) {
     for (Object element : toInit) {
       PostInit mgr = (PostInit) element;
@@ -125,10 +130,12 @@ public class StageManagerImpl implements StageManager {
     }
   }
 
+  @Override
   public void stopStage(Stage stage) {
     stage.destroy();
   }
 
+  @Override
   public void stopAll() {
     for (Object element : stages.values()) {
       Stage s = (Stage) element;
@@ -137,10 +144,20 @@ public class StageManagerImpl implements StageManager {
     stages.clear();
   }
 
+  @Override
+  public void cleanup() {
+    for (Object element : stages.values()) {
+      Stage s = (Stage) element;
+      s.getSink().clear();
+    }
+  }
+
+  @Override
   public Stage getStage(String name) {
     return stages.get(name);
   }
 
+  @Override
   public synchronized Stats[] getStats() {
     final String[] names = stageNames;
     final Stats[] stats = new Stats[names.length];
@@ -151,6 +168,7 @@ public class StageManagerImpl implements StageManager {
     return stats;
   }
 
+  @Override
   public Collection<Stage> getStages() {
     return stages.values();
   }
@@ -179,6 +197,7 @@ public class StageManagerImpl implements StageManager {
     }
   }
 
+  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.print(this.getClass().getName()).flush();
     for (Stage stage : getStages()) {

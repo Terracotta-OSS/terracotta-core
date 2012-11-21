@@ -101,13 +101,13 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     this.abortableOperationManager = abortableOperationManager;
   }
 
-  @Override
-  public void cleanup() {
-    // remoteTxnManager will be cleanup from clientHandshakeCallbacks
-    // clientObjectManager can't because this call is from ClientObjectManagerImpl
-    // clientLockManager will be cleanup from clientHandshakeCallbacks
-    // tcObjectSelfStore (or L1ServerMapLocalCacheManager) will be cleanup from L1ServerMapLocalCacheManagerImpl
-  }
+  // @Override
+  // public void cleanup() {
+  // // remoteTxnManager will be cleanup from clientHandshakeCallbacks
+  // // clientObjectManager can't because this call is from ClientObjectManagerImpl
+  // // clientLockManager will be cleanup from clientHandshakeCallbacks
+  // // tcObjectSelfStore (or L1ServerMapLocalCacheManager) will be cleanup from L1ServerMapLocalCacheManagerImpl
+  // }
 
   @Override
   public void begin(final LockID lock, final LockLevel lockLevel) {

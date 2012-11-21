@@ -4,6 +4,7 @@
 package com.tc.object;
 
 import com.tc.abortable.AbortableOperationManager;
+import com.tc.async.api.ClearableCallback;
 import com.tc.async.api.Sink;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
@@ -281,9 +282,10 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                              final Sink pauseSink, final SessionManager sessionManager,
                                                              final DsoClusterInternalEventsGun dsoClusterEventsGun,
                                                              final String clientVersion,
-                                                             final Collection<ClientHandshakeCallback> callbacks) {
+                                                             final Collection<ClientHandshakeCallback> callbacks,
+                                                             final Collection<ClearableCallback> clearCallbacks) {
     return new ClientHandshakeManagerImpl(logger, channel, chmf, pauseSink, sessionManager, dsoClusterEventsGun,
-                                          clientVersion, callbacks);
+                                          clientVersion, callbacks, clearCallbacks);
   }
 
   @Override

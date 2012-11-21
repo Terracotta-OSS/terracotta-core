@@ -3,9 +3,9 @@
  */
 package com.tc.object.handshakemanager;
 
+import com.tc.async.api.ClearableCallback;
 import com.tc.net.NodeID;
 import com.tc.object.msg.ClientHandshakeMessage;
-import com.tc.platform.rejoin.ClearableCallback;
 
 public interface ClientHandshakeCallback extends ClearableCallback {
 

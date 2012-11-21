@@ -5,11 +5,11 @@
 package com.tc.object.gtx;
 
 import com.tc.abortable.AbortedOperationException;
+import com.tc.async.api.ClearableCallback;
 import com.tc.net.NodeID;
 import com.tc.object.locks.LockFlushCallback;
 import com.tc.object.locks.LockID;
 import com.tc.object.tx.TransactionID;
-import com.tc.platform.rejoin.ClearableCallback;
 
 public interface ClientGlobalTransactionManager extends GlobalTransactionManager, ClearableCallback {
   public void setLowWatermark(GlobalTransactionID lowWatermark, NodeID nodeID);

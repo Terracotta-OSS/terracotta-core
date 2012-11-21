@@ -4,6 +4,7 @@
 package com.tc.object;
 
 import com.tc.abortable.AbortableOperationManager;
+import com.tc.async.api.ClearableCallback;
 import com.tc.async.api.Sink;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
@@ -160,7 +161,8 @@ public interface DSOClientBuilder {
                                                       final SessionManager sessionManager,
                                                       final DsoClusterInternalEventsGun dsoClusterEventsGun,
                                                       final String clientVersion,
-                                                      final Collection<ClientHandshakeCallback> callbacks);
+                                                      final Collection<ClientHandshakeCallback> callbacks,
+                                                      Collection<ClearableCallback> clearCallbacks);
 
   L1Management createL1Management(TunnelingEventHandler teh, StatisticsAgentSubSystem statisticsAgentSubSystem,
                                   RuntimeLogger runtimeLogger, String rawConfigText,
