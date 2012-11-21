@@ -9,7 +9,7 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import com.terracotta.toolkit.collections.map.ToolkitSortedMapImpl;
 import com.terracotta.toolkit.factory.ToolkitObjectFactory;
 import com.terracotta.toolkit.object.AbstractDestroyableToolkitObject;
-import com.terracotta.toolkit.rejoin.RejoinAwareToolkitObject;
+import com.terracotta.toolkit.rejoin.RejoinAwareToolkitMap;
 import com.terracotta.toolkit.type.IsolatedClusteredObjectLookup;
 import com.terracotta.toolkit.util.ToolkitInstanceProxy;
 
@@ -21,7 +21,7 @@ import java.util.Set;
 import java.util.SortedMap;
 
 public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> extends
-    AbstractDestroyableToolkitObject<ToolkitSortedMap> implements ToolkitSortedMap<K, V>, RejoinAwareToolkitObject {
+    AbstractDestroyableToolkitObject<ToolkitSortedMap> implements ToolkitSortedMap<K, V>, RejoinAwareToolkitMap<K, V> {
 
   private final String                                              name;
   private volatile ToolkitSortedMap<K, V>                           map;
@@ -47,7 +47,9 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
     ToolkitSortedMapImpl afterRejoin = lookup.lookupClusteredObject(name);
     if (afterRejoin == null) {
       // didn't find backing clustered object after rejoin - must have been destroyed
-      // todo: set to a new delegate which throws exception, as clustered object is destroyed
+      // apply destory locally
+      applyDestroy();
+      return;
     }
     this.map = afterRejoin;
   }

@@ -41,11 +41,12 @@ public class DestroyableToolkitList<E> extends AbstractDestroyableToolkitObject<
   @Override
   public void rejoinCompleted() {
     ToolkitListImpl afterRejoin = lookup.lookupClusteredObject(name);
-    if (afterRejoin == null) {
-      // didn't find backing clustered object after rejoin - must have been destroyed
-      this.list = ToolkitInstanceProxy.newDestroyedInstanceProxy(name, ToolkitList.class);
-    } else {
+    if (afterRejoin != null) {
       this.list = afterRejoin;
+    } else {
+      // didn't find backing clustered object after rejoin - must have been destroyed
+      // apply destroy locally
+      applyDestroy();
     }
   }
 
