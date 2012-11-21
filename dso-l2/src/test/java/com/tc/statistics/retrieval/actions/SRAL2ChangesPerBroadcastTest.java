@@ -31,7 +31,7 @@ public class SRAL2ChangesPerBroadcastTest extends TestCase {
         .createCounter(sampledRateCounterConfig);
 
     dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, null, null, null, null, null,
-                                                        changesPerBroadcast, null, null);
+                                                        changesPerBroadcast, null, null, null, null);
 
     changesCounterIncrementer = new CounterIncrementer(changesPerBroadcast, 200);
     new Thread(changesCounterIncrementer, "ChangesPerBroadcast Counter Incrementer").start();

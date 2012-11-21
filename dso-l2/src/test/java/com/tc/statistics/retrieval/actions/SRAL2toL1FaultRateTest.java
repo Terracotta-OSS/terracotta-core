@@ -28,7 +28,7 @@ public class SRAL2toL1FaultRateTest extends TestCase {
     final SampledCounter objectFaultCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
 
     dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, objectFaultCounter, null, null, null,
-        null, null, null, null);
+        null, null, null, null, null, null);
 
     counterIncrementer = new CounterIncrementer(objectFaultCounter, 200);
     new Thread(counterIncrementer, "Counter Incrementer").start();

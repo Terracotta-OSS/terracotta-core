@@ -29,7 +29,7 @@ public class SRAL2ServerMapGetValueRequestsCountTest extends TestCase {
     final SampledCumulativeCounterConfig sampledCounterConfig = new SampledCumulativeCounterConfig(1, 10, true, 0L);
     getValueCounter = (SampledCumulativeCounter) counterManager.createCounter(sampledCounterConfig);
     dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, null, null, null, null, null, null,
-                                                        null, null);
+                                                        null, null, null, null);
     dsoGlobalServerStats.serverMapGetValueRequestsCounter(getValueCounter);
   }
 

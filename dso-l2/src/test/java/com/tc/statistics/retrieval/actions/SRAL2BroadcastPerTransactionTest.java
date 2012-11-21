@@ -32,7 +32,7 @@ public class SRAL2BroadcastPerTransactionTest extends TestCase {
     final SampledCounter transactionCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
 
     dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, null, transactionCounter, null, broadcastCounter,
-        null, null, null, null);
+        null, null, null, null, null, null);
 
     txnCounterIncrementer = new CounterIncrementer(transactionCounter, 200);
     broadcastCounterIncrementer = new CounterIncrementer(broadcastCounter, 200);

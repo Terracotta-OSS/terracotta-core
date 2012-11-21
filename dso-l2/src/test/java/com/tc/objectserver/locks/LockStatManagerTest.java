@@ -72,7 +72,7 @@ public class LockStatManagerTest extends TestCase {
     final SampledCounter lockCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
 
     this.serverStats = new DSOGlobalServerStatsImpl(null, null, null, null, null, lockRecallCounter,
-                                                    null, null, lockCounter);
+                                                    null, null, lockCounter, null, null);
     lockStatManager.start(new NullChannelManager(), serverStats, ObjectStatsManager.NULL_OBJECT_STATS_MANAGER);
   }
 

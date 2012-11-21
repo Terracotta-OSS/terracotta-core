@@ -14,6 +14,10 @@ public interface DSOStats {
 
   long getObjectFlushRate();
 
+  long getEvictionRate();
+
+  long getExpirationRate();
+
   long getGlobalLockRecallRate();
 
   long getTransactionSizeRate();

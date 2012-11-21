@@ -755,4 +755,14 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   public int getLicensedClientHighCount() {
     return connectionPolicy.getConnectionHighWatermark();
   }
+
+  @Override
+  public long getEvictionRate() {
+    return getStats().getEvictionRate();
+  }
+
+  @Override
+  public long getExpirationRate() {
+    return getStats().getExpirationRate();
+  }
 }

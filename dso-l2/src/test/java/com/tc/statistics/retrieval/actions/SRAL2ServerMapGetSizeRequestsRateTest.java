@@ -28,7 +28,7 @@ public class SRAL2ServerMapGetSizeRequestsRateTest extends TestCase {
         .createCounter(sampledCounterConfig);
 
     dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, null, null, null, null, null, null,
-                                                        null, null);
+                                                        null, null, null, null);
     dsoGlobalServerStats.serverMapGetSizeRequestsCounter(getSizeCounter);
 
     counterIncrementer = new CounterIncrementer(getSizeCounter, 200);

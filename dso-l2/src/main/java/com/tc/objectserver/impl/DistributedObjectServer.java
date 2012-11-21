@@ -802,16 +802,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final SampledCumulativeCounter globalServerMapGetSnapshotRequestsCounter = (SampledCumulativeCounter) this.sampledCounterManager
         .createCounter(sampledCumulativeCounterConfig);
 
-    final DSOGlobalServerStatsImpl serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter,
-                                                                              globalObjectFaultCounter,
-                                                                              globalTxnCounter, objMgrStats,
-                                                                              broadcastCounter, globalLockRecallCounter,
-                                                                              changesPerBroadcast,
-                                                                              transactionSizeCounter, globalLockCount);
-    serverStats.serverMapGetSizeRequestsCounter(globalServerMapGetSizeRequestsCounter)
-        .serverMapGetValueRequestsCounter(globalServerMapGetValueRequestsCounter)
-        .serverMapGetSnapshotRequestsCounter(globalServerMapGetSnapshotRequestsCounter);
-
     final TransactionStore transactionStore = new TransactionStoreImpl(transactionPersistor,
                                                                        globalTransactionIDSequence);
     final Stage lwmCallbackStage = stageManager
@@ -1097,6 +1087,19 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     }
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.l2Coordinator));
+
+
+    final DSOGlobalServerStatsImpl serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter,
+        globalObjectFaultCounter,
+        globalTxnCounter, objMgrStats,
+        broadcastCounter, globalLockRecallCounter,
+        changesPerBroadcast,
+        transactionSizeCounter, globalLockCount, serverMapEvictor.getEvictionStatistics(), serverMapEvictor.getExpirationStatistics());
+
+    serverStats.serverMapGetSizeRequestsCounter(globalServerMapGetSizeRequestsCounter)
+        .serverMapGetValueRequestsCounter(globalServerMapGetValueRequestsCounter)
+        .serverMapGetSnapshotRequestsCounter(globalServerMapGetSnapshotRequestsCounter);
+
     this.context = this.serverBuilder.createServerConfigurationContext(stageManager, this.objectManager,
                                                                        this.objectRequestManager,
                                                                        this.serverMapRequestManager, this.objectStore,

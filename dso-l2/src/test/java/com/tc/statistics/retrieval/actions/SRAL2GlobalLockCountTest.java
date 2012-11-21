@@ -27,7 +27,7 @@ public class SRAL2GlobalLockCountTest extends TestCase {
     final SampledCounter lockCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
 
     dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, null, null, null, null,
-        null, null, null, lockCounter);
+        null, null, null, lockCounter, null, null);
 
     counterIncrementer = new CounterIncrementer(lockCounter, 200);
     new Thread(counterIncrementer, "Counter Incrementer").start();

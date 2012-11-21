@@ -54,6 +54,14 @@ public class DSOStatsImpl implements DSOStats {
     return txnRate.getMostRecentSample().getCounterValue();
   }
 
+  public long getEvictionRate() {
+    return serverStats.getEvictionRateCounter().getMostRecentSample().getCounterValue();
+  }
+
+  public long getExpirationRate() {
+    return serverStats.getExpirationRateCounter().getMostRecentSample().getCounterValue();
+  }
+
   public long getGlobalLockRecallRate() {
     return globalLockRecallRate.getMostRecentSample().getCounterValue();
   }

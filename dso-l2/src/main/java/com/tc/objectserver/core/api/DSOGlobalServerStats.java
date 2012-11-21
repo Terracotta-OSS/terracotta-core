@@ -17,6 +17,10 @@ public interface DSOGlobalServerStats {
 
   SampledCounter getTransactionCounter();
 
+  SampledRateCounter getEvictionRateCounter();
+
+  SampledRateCounter getExpirationRateCounter();
+
   ObjectManagerStats getObjectManagerStats();
 
   SampledCounter getBroadcastCounter();

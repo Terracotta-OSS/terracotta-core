@@ -28,7 +28,7 @@ public class SRAL2ServerMapGetValueRequestsRateTest extends TestCase {
         .createCounter(sampledCounterConfig);
 
     dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, null, null, null, null, null, null,
-                                                        null, null);
+                                                        null, null, null, null);
     dsoGlobalServerStats.serverMapGetValueRequestsCounter(getValueCounter);
 
     counterIncrementer = new CounterIncrementer(getValueCounter, 200);

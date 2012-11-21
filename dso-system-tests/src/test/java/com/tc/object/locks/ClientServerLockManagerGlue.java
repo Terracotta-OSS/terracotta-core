@@ -100,7 +100,7 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
     final SampledCounter lockCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
 
     DSOGlobalServerStatsImpl serverStats = new DSOGlobalServerStatsImpl(null, null, null, null, null,
-        lockRecallCounter, null, null, lockCounter);
+        lockRecallCounter, null, null, lockCounter, null, null);
     L2LockStatsManager.UNSYNCHRONIZED_LOCK_STATS_MANAGER.start(new NullChannelManager(), serverStats,
                                                                ObjectStatsManager.NULL_OBJECT_STATS_MANAGER);
   }

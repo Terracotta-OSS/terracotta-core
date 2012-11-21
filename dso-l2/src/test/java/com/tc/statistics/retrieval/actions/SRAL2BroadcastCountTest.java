@@ -27,7 +27,7 @@ public class SRAL2BroadcastCountTest extends TestCase {
     final SampledCounter broadcastCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
 
     dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, null, null, null, broadcastCounter,
-        null, null, null, null);
+        null, null, null, null, null, null);
 
     counterIncrementer = new CounterIncrementer(broadcastCounter, 200);
     new Thread(counterIncrementer, "Counter Incrementer").start();
