@@ -110,12 +110,11 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
         final ObjectListSyncMessage msg = (ObjectListSyncMessage) groupMessage;
         if (msg.getType() == ObjectListSyncMessage.RESPONSE) {
           State curState = msg.getCurrentState();
-          // valid states during election window are STANDBY or START
-          if (StateManager.PASSIVE_UNINITIALIZED.equals(curState)) {
-            logger.error("Syncing to uninitialized passives not supported, msg: " + msg);
-            // XXX - is this the right zap type?
-            this.groupManager.zapNode(msg.messageFrom(), L2HAZapNodeRequestProcessor.PASSIVE_JOINED_UNINITIALIZED,
-                                      "Passive : " + msg.messageFrom() + " joined in unitialized state."
+          // Zap all uninitialized passives joining with # of objects > 0
+          if (StateManager.PASSIVE_UNINITIALIZED.equals(curState) && msg.getObjectIDs().size() > 0) {
+            logger.error("Syncing to partially synced passives not supported, msg: " + msg);
+            this.groupManager.zapNode(msg.messageFrom(), L2HAZapNodeRequestProcessor.PARTIALLY_SYNCED_PASSIVE_JOINED,
+                                      "Passive : " + msg.messageFrom() + " joined in partially synced state. "
                                           + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
           } else nodeIDSyncingPassives.put(msg.messageFrom(), new SyncingPassiveValue(msg.getObjectIDs(), curState));
 
