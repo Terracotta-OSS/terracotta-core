@@ -17,16 +17,18 @@ public class PersistentObjectFactory {
       .concurrency(1).build();
 
   private final StorageManager storageManager;
+  private final KeyValueStorageConfig<Object, Object> defaultConfig;
 
-  public PersistentObjectFactory(final StorageManager storageManager) {
+  public PersistentObjectFactory(final StorageManager storageManager, final StorageManagerFactory storageManagerFactory) {
     this.storageManager = storageManager;
+    defaultConfig = storageManagerFactory.wrapMapConfig(MAP_CONFIG);
   }
 
   public synchronized KeyValueStorage<Object, Object> getMap(ObjectID objectID, final boolean create) {
     KeyValueStorage<Object, Object> map = storageManager.getKeyValueStorage(objectID.toString(), Object.class, Object.class);
     if (map == null) {
       if (create) {
-        map = storageManager.createKeyValueStorage(objectID.toString(), MAP_CONFIG);
+        map = storageManager.createKeyValueStorage(objectID.toString(), defaultConfig);
       } else {
         throw new AssertionError("Map for object id " + objectID + " not found.");
       }

@@ -36,10 +36,10 @@ class ObjectMap implements KeyValueStorage<ObjectID, ManagedObject> {
     this.serializer = new ManagedObjectSerializer(new ManagedObjectStateSerializer(), persistor);
   }
 
-  public static void addConfigTo(Map<String, KeyValueStorageConfig<?, ?>> configMap, KeyValueStorageMutationListener<Long, byte[]> listener) {
-    configMap.put(OBJECT_DB, ImmutableKeyValueStorageConfig.builder(Long.class, byte[].class)
-        .listener(listener)
-        .build());
+  public static void addConfigTo(Map<String, KeyValueStorageConfig<?, ?>> configMap, KeyValueStorageMutationListener<Long, byte[]> listener,
+                                 final StorageManagerFactory storageManagerFactory) {
+    configMap.put(OBJECT_DB, storageManagerFactory.wrapObjectDBConfig(ImmutableKeyValueStorageConfig.builder(Long.class, byte[].class)
+        .listener(listener)));
   }
 
   @Override
