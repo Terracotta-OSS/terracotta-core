@@ -21,12 +21,6 @@ public interface DSOGlobalServerStats {
 
   SampledCounter getBroadcastCounter();
 
-  SampledCounter getL2FaultFromDiskCounter();
-
-  SampledCounter getTime2FaultFromDisk();
-
-  SampledCounter getTime2Add2ObjectMgr();
-
   SampledCounter getGlobalLockRecallCounter();
 
   SampledRateCounter getChangesPerBroadcastCounter();

@@ -10,10 +10,10 @@ import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.management.L2LockStatsManager;
 import com.tc.net.ClientID;
 import com.tc.object.locks.ServerLockContext;
+import com.tc.object.locks.ServerLockContext.State;
 import com.tc.object.locks.ServerLockLevel;
 import com.tc.object.locks.StringLockID;
 import com.tc.object.locks.ThreadID;
-import com.tc.object.locks.ServerLockContext.State;
 import com.tc.objectserver.api.ObjectStatsManager;
 import com.tc.objectserver.core.api.DSOGlobalServerStatsImpl;
 import com.tc.objectserver.locks.ServerLock.NotifyAction;
@@ -45,8 +45,8 @@ public class LockTest extends TestCase {
     final SampledCounter lockRecallCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
     final SampledCounter lockCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
 
-    DSOGlobalServerStatsImpl serverStats = new DSOGlobalServerStatsImpl(null, null, null, null, null, null, null, null,
-                                                                        lockRecallCounter, null, null, lockCounter);
+    DSOGlobalServerStatsImpl serverStats = new DSOGlobalServerStatsImpl(null, null, null, null, null,
+        lockRecallCounter, null, null, lockCounter);
     L2LockStatsManager.UNSYNCHRONIZED_LOCK_STATS_MANAGER.start(new NullChannelManager(), serverStats,
                                                                ObjectStatsManager.NULL_OBJECT_STATS_MANAGER);
   }

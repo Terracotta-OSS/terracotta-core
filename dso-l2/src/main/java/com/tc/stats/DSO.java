@@ -144,18 +144,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return getStats().getObjectFlushRate();
   }
 
-  public double getCacheHitRatio() {
-    return getStats().getCacheHitRatio();
-  }
-
-  public long getOnHeapFaultRate() {
-    return getStats().getOnHeapFaultRate();
-  }
-
-  public long getOnHeapFlushRate() {
-    return getStats().getOnHeapFlushRate();
-  }
-
   public long getTransactionRate() {
     return getStats().getTransactionRate();
   }
@@ -453,10 +441,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return objMgr.getLiveObjectCount();
   }
 
-  public int getCachedObjectCount() {
-    return objMgr.getCachedObjectCount();
-  }
-
   public long getLastCollectionGarbageCount() {
     GCStats gcStats = gcStatsPublisher.getLastGarbageCollectorStats();
     return gcStats != null ? gcStats.getActualGarbageCount() : -1;
@@ -752,40 +736,16 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return result;
   }
 
-  public long getOffHeapFaultRate() {
-    return offheapStats.getOffHeapFaultRate();
+  public long getOffheapMaxSize() {
+    return offheapStats.getOffheapMaxSize();
   }
 
-  public long getOffHeapFlushRate() {
-    return offheapStats.getOffHeapFlushRate();
+  public long getOffheapReservedSize() {
+    return offheapStats.getOffheapReservedSize();
   }
 
-  public long getOffheapMaxDataSize() {
-    return offheapStats.getOffheapMaxDataSize();
-  }
-
-  public long getOffheapObjectCachedCount() {
-    return offheapStats.getOffheapObjectCachedCount();
-  }
-
-  public long getL2DiskFaultRate() {
-    return getStats().getL2DiskFaultRate();
-  }
-
-  public long getExactOffheapObjectCachedCount() {
-    return offheapStats.getExactOffheapObjectCachedCount();
-  }
-
-  public long getOffheapTotalAllocatedSize() {
-    return offheapStats.getOffheapTotalAllocatedSize();
-  }
-
-  public long getOffheapMapAllocatedMemory() {
-    return offheapStats.getOffheapMapAllocatedMemory();
-  }
-
-  public long getOffheapObjectAllocatedMemory() {
-    return offheapStats.getOffheapObjectAllocatedMemory();
+  public long getOffheapUsedSize() {
+    return offheapStats.getOffheapUsedSize();
   }
 
   public int getActiveLicensedClientCount() {

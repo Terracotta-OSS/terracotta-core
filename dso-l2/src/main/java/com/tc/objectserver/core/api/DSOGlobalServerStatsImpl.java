@@ -18,9 +18,6 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
   private final ObjectManagerStatsImpl   objMgrStats;
 
   private final SampledCounter           broadcastCounter;
-  private final SampledCounter           l2FaultFromDiskCounter;
-  private final SampledCounter           time2FaultFromDisk;
-  private final SampledCounter           time2Add2ObjMgr;
   private final SampledCounter           globalLockCounter;
   private final SampledCounter           globalLockRecallCounter;
   private final SampledRateCounter       changesPerBroadcast;
@@ -31,8 +28,7 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
 
   public DSOGlobalServerStatsImpl(SampledCounter flushCounter, SampledCounter faultCounter, SampledCounter txnCounter,
                                   ObjectManagerStatsImpl objMgrStats, SampledCounter broadcastCounter,
-                                  SampledCounter l2FaultFromDiskCounter, SampledCounter time2FaultFromDisk,
-                                  SampledCounter time2Add2ObjMgr, SampledCounter globalLockRecallCounter,
+                                  SampledCounter globalLockRecallCounter,
                                   SampledRateCounter changesPerBroadcast, SampledRateCounter transactionSizeCounter,
                                   SampledCounter globalLockCounter) {
     this.flushCounter = flushCounter;
@@ -40,9 +36,6 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
     this.txnCounter = txnCounter;
     this.objMgrStats = objMgrStats;
     this.broadcastCounter = broadcastCounter;
-    this.l2FaultFromDiskCounter = l2FaultFromDiskCounter;
-    this.time2FaultFromDisk = time2FaultFromDisk;
-    this.time2Add2ObjMgr = time2Add2ObjMgr;
     this.globalLockRecallCounter = globalLockRecallCounter;
     this.changesPerBroadcast = changesPerBroadcast;
     this.transactionSizeCounter = transactionSizeCounter;
@@ -80,18 +73,6 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
 
   public SampledCounter getBroadcastCounter() {
     return broadcastCounter;
-  }
-
-  public SampledCounter getL2FaultFromDiskCounter() {
-    return l2FaultFromDiskCounter;
-  }
-
-  public SampledCounter getTime2FaultFromDisk() {
-    return time2FaultFromDisk;
-  }
-
-  public SampledCounter getTime2Add2ObjectMgr() {
-    return time2Add2ObjMgr;
   }
 
   public SampledCounter getGlobalLockRecallCounter() {

@@ -130,8 +130,7 @@ public class ObjectManagerTest extends TCTestCase {
     ManagedObjectStateFactory.disableSingleton(true);
     ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), persistor);
     this.newObjectCounter = new SampledCounterImpl(new SampledCounterConfig(1, 1, true, 0L));
-    this.stats = new ObjectManagerStatsImpl(this.newObjectCounter, mock(SampledCounter.class),
-        mock(SampledCounter.class));
+    this.stats = new ObjectManagerStatsImpl(this.newObjectCounter);
     this.persistenceTransactionProvider = new TestPersistenceTransactionProvider();
   }
 
@@ -253,9 +252,6 @@ public class ObjectManagerTest extends TCTestCase {
     this.config.paranoid = true;
     initObjectManager();
     this.objectManager.setStatsListener(this.stats);
-
-    assertEquals(0, this.stats.getTotalCacheHits());
-    assertEquals(0, this.stats.getTotalCacheMisses());
 
     // each object has 1000 distinct reachable objects
     createObjects(0, 1, createObjects(1000, 2000, new HashSet<ObjectID>()));

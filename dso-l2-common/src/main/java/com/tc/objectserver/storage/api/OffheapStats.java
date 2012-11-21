@@ -8,56 +8,23 @@ import java.io.Serializable;
 public interface OffheapStats extends Serializable {
   public static final OffheapStats NULL_OFFHEAP_STATS = new OffheapStats() {
 
-                                                        public long getOffheapObjectCachedCount() {
+                                                        public long getOffheapMaxSize() {
                                                           return 0;
                                                         }
 
-                                                        public long getOffheapMaxDataSize() {
+                                                        public long getOffheapReservedSize() {
                                                           return 0;
                                                         }
 
-                                                        public long getOffHeapFlushRate() {
-                                                          return 0;
-                                                        }
-
-                                                        public long getOffHeapFaultRate() {
-                                                          return 0;
-                                                        }
-
-                                                        public long getExactOffheapObjectCachedCount() {
-                                                          return 0;
-                                                        }
-
-                                                        public long getOffheapTotalAllocatedSize() {
-                                                          return 0;
-                                                        }
-
-                                                        public long getOffheapMapAllocatedMemory() {
-                                                          return 0;
-                                                        }
-
-                                                        public long getOffheapObjectAllocatedMemory() {
+                                                        public long getOffheapUsedSize() {
                                                           return 0;
                                                         }
 
                                                       };
 
-  long getOffheapObjectCachedCount();
+  long getOffheapMaxSize();
 
-  /**
-   * This will be locked
-   */
-  long getExactOffheapObjectCachedCount();
+  long getOffheapReservedSize();
 
-  long getOffHeapFaultRate();
-
-  long getOffHeapFlushRate();
-
-  long getOffheapMaxDataSize();
-
-  long getOffheapTotalAllocatedSize();
-
-  long getOffheapObjectAllocatedMemory();
-
-  long getOffheapMapAllocatedMemory();
+  long getOffheapUsedSize();
 }

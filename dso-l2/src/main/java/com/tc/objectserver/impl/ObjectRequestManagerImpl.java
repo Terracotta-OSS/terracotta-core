@@ -604,11 +604,6 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     }
   }
 
-  // delegating all ObjectManagerMbean requests to the object manager
-  public int getCachedObjectCount() {
-    return this.objectManager.getCachedObjectCount();
-  }
-
   public int getLiveObjectCount() {
     return this.objectManager.getLiveObjectCount();
   }

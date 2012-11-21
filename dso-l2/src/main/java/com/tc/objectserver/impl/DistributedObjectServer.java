@@ -208,13 +208,13 @@ import com.tc.objectserver.l1.impl.InvalidateObjectManagerImpl;
 import com.tc.objectserver.l1.impl.TransactionAcknowledgeAction;
 import com.tc.objectserver.l1.impl.TransactionAcknowledgeActionImpl;
 import com.tc.objectserver.locks.LockManagerImpl;
-import com.tc.objectserver.locks.LockManagerMBean;
 import com.tc.objectserver.managedobject.ConcurrentDistributedServerMapManagedObjectState;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListenerProviderImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.ClientStatePersistor;
+import com.tc.objectserver.persistence.OffheapStatsImpl;
 import com.tc.objectserver.persistence.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.TransactionPersistor;
@@ -262,7 +262,6 @@ import com.tc.statistics.retrieval.actions.SRAL1ToL2FlushRate;
 import com.tc.statistics.retrieval.actions.SRAL2BroadcastCount;
 import com.tc.statistics.retrieval.actions.SRAL2BroadcastPerTransaction;
 import com.tc.statistics.retrieval.actions.SRAL2ChangesPerBroadcast;
-import com.tc.statistics.retrieval.actions.SRAL2FaultsFromDisk;
 import com.tc.statistics.retrieval.actions.SRAL2GlobalLockCount;
 import com.tc.statistics.retrieval.actions.SRAL2PendingTransactions;
 import com.tc.statistics.retrieval.actions.SRAL2ServerMapGetSizeRequestsCount;
@@ -358,7 +357,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private ServerManagementContext                managementContext;
   private StartupLock                            startupLock;
   private ClientStateManager                     clientStateManager;
-  private PersistentManagedObjectStore                     objectStore;
+  private PersistentManagedObjectStore           objectStore;
   private GarbageCollectionManager               garbageCollectionManager;
   private Persistor persistor;
   private ServerTransactionManagerImpl           transactionManager;
@@ -552,8 +551,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.sampledCounterManager = new CounterManagerImpl();
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
-    final SampledCounter l2FaultFromDisk = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
 
     logger.debug("persistent: " + restartable);
     if (!restartable) {
@@ -609,7 +606,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     ClientStatePersistor clientStateStore = this.persistor.getClientStatePersistor();
 
-    ManagedObjectStateFactory.createInstance(managedObjectChangeListenerProvider, (Persistor) this.persistor);
+    ManagedObjectStateFactory.createInstance(managedObjectChangeListenerProvider, persistor);
 
     final int commWorkerThreadCount = L2Utils.getOptimalCommWorkerThreads();
     final int stageWorkerThreadCount = L2Utils.getOptimalStageWorkerThreads();
@@ -657,16 +654,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                              true, 0L);
     final SampledCounter objectCreationRate = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
-    final SampledCounter objectFaultRate = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
-    final SampledCounter objectFlushedRate = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
-    final ObjectManagerStatsImpl objMgrStats = new ObjectManagerStatsImpl(objectCreationRate, objectFaultRate,
-                                                                          objectFlushedRate);
-    final SampledCounter time2FaultFromDiskOrOffheap = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
-    final SampledCounter time2Add2ObjMgr = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
+    final ObjectManagerStatsImpl objMgrStats = new ObjectManagerStatsImpl(objectCreationRate);
 
     final SequenceValidator sequenceValidator = new SequenceValidator(0);
 
@@ -817,9 +805,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final DSOGlobalServerStatsImpl serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter,
                                                                               globalObjectFaultCounter,
                                                                               globalTxnCounter, objMgrStats,
-                                                                              broadcastCounter, l2FaultFromDisk,
-                                                                              time2FaultFromDiskOrOffheap,
-                                                                              time2Add2ObjMgr, globalLockRecallCounter,
+                                                                              broadcastCounter, globalLockRecallCounter,
                                                                               changesPerBroadcast,
                                                                               transactionSizeCounter, globalLockCount);
     serverStats.serverMapGetSizeRequestsCounter(globalServerMapGetSizeRequestsCounter)
@@ -941,14 +927,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.serverMapRequestManager));
 
     final ServerTransactionFactory serverTransactionFactory = new ServerTransactionFactory();
-//    this.serverMapEvictor = new ServerMapEvictionManagerImpl(
-//                                                             this.objectManager,
-//                                                             this.objectStore,
-//                                                             clientObjectReferenceSet,
-//                                                             serverTransactionFactory,
-//                                                             objectManagerConfig.gcThreadSleepTime() > 0 ? ((objectManagerConfig
-//                                                                 .gcThreadSleepTime() + 1) / 2)
-//                                                                 : ServerMapEvictionManagerImpl.DEFAULT_SLEEP_TIME);
+
     this.serverMapEvictor = new ProgressiveEvictionManager(objectManager, 
             persistor.getMonitoredResource(), 
             objectStore, clientObjectReferenceSet, serverTransactionFactory, threadGroup);
@@ -961,8 +940,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                              new ServerMapEvictionHandler(this.serverMapEvictor), 8, TCPropertiesImpl.getProperties()
                                  .getInt(TCPropertiesConsts.L2_SEDA_EVICTION_PROCESSORSTAGE_SINK_SIZE));
     stageManager.createStage(ServerConfigurationContext.SERVER_MAP_CAPACITY_EVICTION_STAGE,
-                             new ServerMapCapacityEvictionHandler(this.serverMapEvictor),
-                             this.l2Properties.getInt("servermap.capacityEvictor.threads", 1), maxStageSize);
+        new ServerMapCapacityEvictionHandler(this.serverMapEvictor),
+        this.l2Properties.getInt("servermap.capacityEvictor.threads", 1), maxStageSize);
 
     this.objectRequestManager = this.serverBuilder.createObjectRequestManager(this.objectManager, channelManager,
                                                                               this.clientStateManager,
@@ -1142,7 +1121,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     // XXX: yucky casts
     this.managementContext = new ServerManagementContext(this.transactionManager, this.objectRequestManager,
-                                                         (LockManagerMBean) this.lockManager,
+                                                         this.lockManager,
                                                          (DSOChannelManagerMBean) channelManager, serverStats,
                                                          channelStats, instanceMonitor, appEvents, indexHACoordinator,
                                                          connectionPolicy);
@@ -1363,7 +1342,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       registry.registerActionInstance(new SRADistributedGC());
       registry.registerActionInstance(new SRAVmGarbageCollector(SRAVmGarbageCollectorType.L2_VM_GARBAGE_COLLECTOR));
       registry.registerActionInstance(new SRAMessages(messageMonitor));
-      registry.registerActionInstance(new SRAL2FaultsFromDisk(serverStats));
       registry.registerActionInstance(new SRAL1ToL2FlushRate(serverStats));
       registry.registerActionInstance(new SRAL2PendingTransactions(txnManager));
       registry.registerActionInstance(new SRAServerTransactionSequencer(serverTransactionSequencerStats));
@@ -1621,7 +1599,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   public OffheapStats getOffheapStats() {
-    return OffheapStats.NULL_OFFHEAP_STATS;
+    return new OffheapStatsImpl(persistor.getMonitoredResource());
   }
 
   public ReconnectConfig getL1ReconnectProperties() {
