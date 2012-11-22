@@ -44,7 +44,7 @@ public class ToolkitListRejoinTest extends AbstractToolkitRejoinTest {
         Assert.assertTrue(queue.contains("value-" + i));
       }
 
-      startRejoinAndWaitUnilRejoinHappened(testHandlerMBean, tk);
+      startRejoinAndWaitUnilCompleted(testHandlerMBean, tk);
       doDebug("Asserting old values after rejoin");
 
       for (int i = 0; i < NUM_ELEMENTS; i++) {

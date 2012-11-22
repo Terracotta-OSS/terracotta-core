@@ -41,7 +41,7 @@ public class ToolkitSetRejoinTest extends AbstractToolkitRejoinTest {
         Assert.assertTrue(toolkitSet.contains(keyValGr.getValue(i)));
       }
 
-      startRejoinAndWaitUnilRejoinHappened(testHandlerMBean, tk);
+      startRejoinAndWaitUnilCompleted(testHandlerMBean, tk);
 
       doDebug("Asserting old values after rejoin");
       for (int i = 0; i < NUM_ELEMENTS; i++) {

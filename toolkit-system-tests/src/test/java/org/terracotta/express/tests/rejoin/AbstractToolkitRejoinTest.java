@@ -84,7 +84,7 @@ public class AbstractToolkitRejoinTest extends AbstractToolkitTestBase {
       return tk;
     }
 
-    protected void startRejoinAndWaitUnilRejoinHappened(TestHandlerMBean testHandlerMBean, ToolkitInternal tk) throws Exception {
+    protected void startRejoinAndWaitUnilCompleted(TestHandlerMBean testHandlerMBean, ToolkitInternal tk) throws Exception {
       tk.waitUntilAllTransactionsComplete();
 
       doDebug("Crashing first active...");
