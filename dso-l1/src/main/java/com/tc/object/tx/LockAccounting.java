@@ -8,9 +8,9 @@ import EDU.oswego.cs.dl.util.concurrent.Latch;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
-import com.tc.async.api.ClearableCallback;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
+import com.tc.object.ClearableCallback;
 import com.tc.object.locks.LockID;
 
 import java.util.Collection;

@@ -4,6 +4,7 @@
 package com.tc.async.api;
 
 import com.tc.logging.TCLoggerProvider;
+import com.tc.object.ClearableCallback;
 import com.tc.stats.Stats;
 import com.tc.text.PrettyPrintable;
 

@@ -2,7 +2,6 @@
  */
 package com.tc.object;
 
-import com.tc.async.api.ClearableCallback;
 import com.tc.invalidation.Invalidations;
 import com.tc.net.NodeID;
 import com.tc.object.servermap.localcache.AbstractLocalCacheStoreValue;

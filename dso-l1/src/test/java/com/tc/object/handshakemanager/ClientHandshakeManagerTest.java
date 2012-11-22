@@ -6,7 +6,6 @@ package com.tc.object.handshakemanager;
 
 import org.mockito.Mockito;
 
-import com.tc.async.api.ClearableCallback;
 import com.tc.async.api.Sink;
 import com.tc.async.impl.NullSink;
 import com.tc.cluster.DsoClusterImpl;
@@ -16,6 +15,7 @@ import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
+import com.tc.object.ClearableCallback;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.TestClientHandshakeMessage;

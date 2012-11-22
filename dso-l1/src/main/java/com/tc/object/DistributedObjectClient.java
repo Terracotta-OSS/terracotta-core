@@ -8,7 +8,6 @@ import bsh.EvalError;
 import bsh.Interpreter;
 
 import com.tc.abortable.AbortableOperationManager;
-import com.tc.async.api.ClearableCallback;
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;

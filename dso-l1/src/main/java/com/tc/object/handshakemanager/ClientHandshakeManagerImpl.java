@@ -4,12 +4,12 @@
  */
 package com.tc.object.handshakemanager;
 
-import com.tc.async.api.ClearableCallback;
 import com.tc.async.api.Sink;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
+import com.tc.object.ClearableCallback;
 import com.tc.object.ClientIDProvider;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeMessage;

@@ -5,8 +5,8 @@
 package com.tc.object.gtx;
 
 import com.tc.abortable.AbortedOperationException;
-import com.tc.async.api.ClearableCallback;
 import com.tc.net.NodeID;
+import com.tc.object.ClearableCallback;
 import com.tc.object.locks.LockFlushCallback;
 import com.tc.object.locks.LockID;
 import com.tc.object.tx.TransactionID;

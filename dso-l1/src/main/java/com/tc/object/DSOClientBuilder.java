@@ -4,7 +4,6 @@
 package com.tc.object;
 
 import com.tc.abortable.AbortableOperationManager;
-import com.tc.async.api.ClearableCallback;
 import com.tc.async.api.Sink;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
