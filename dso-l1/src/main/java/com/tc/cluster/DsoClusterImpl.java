@@ -455,14 +455,13 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   }
 
   @Override
-  public void fireNodeRejoined(ClientID oldNodeId, ClientID newNodeId) {
-    fireRejoinEvent(new DsoNodeImpl(oldNodeId.toString(), oldNodeId.toLong(), false),
-                    new DsoNodeImpl(newNodeId.toString(), newNodeId.toLong(), false));
+  public void fireNodeRejoined(ClientID newNodeId) {
+    fireRejoinEvent(new DsoNodeImpl(newNodeId.toString(), newNodeId.toLong(), false));
   }
 
-  private void fireRejoinEvent(DsoNodeImpl oldNode, DsoNodeImpl newNode) {
+  private void fireRejoinEvent(DsoNodeImpl newNode) {
     for (DsoClusterListener l : listeners) {
-      l.nodeRejoined(oldNode, newNode);
+      l.nodeRejoined(new DsoClusterEventImpl(newNode));
     }
   }
 

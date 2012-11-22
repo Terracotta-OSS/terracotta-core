@@ -90,7 +90,7 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
         // take care of any cleanup/reinitialization
         notifyRejoinComplete();
         // fire rejoin event
-        dsoClusterInternal.fireNodeRejoined(oldNodeId, newNodeId);
+        dsoClusterInternal.fireNodeRejoined(newNodeId);
       }
     }
   }

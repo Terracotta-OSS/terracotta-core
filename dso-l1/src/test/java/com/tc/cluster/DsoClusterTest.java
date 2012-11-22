@@ -409,9 +409,9 @@ public class DsoClusterTest extends TestCase {
     }
 
     @Override
-    public void nodeRejoined(DsoNode oldNode, DsoNode newNode) {
+    public void nodeRejoined(DsoClusterEvent event) {
       check();
-      events.add(oldNode.getId() + " REJOINED AS " + newNode.getId());
+      events.add(event.getNode().getId() + " REJOINED");
     }
 
     public void check() {
@@ -446,7 +446,7 @@ public class DsoClusterTest extends TestCase {
     }
 
     @Override
-    public void nodeRejoined(DsoNode oldNode, DsoNode newNode) {
+    public void nodeRejoined(DsoClusterEvent event) {
       throw new RuntimeException("rejoined");
     }
 

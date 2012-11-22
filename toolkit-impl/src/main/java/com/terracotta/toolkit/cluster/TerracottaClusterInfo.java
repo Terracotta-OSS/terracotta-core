@@ -8,7 +8,6 @@ import org.terracotta.toolkit.cluster.ClusterEvent.Type;
 import org.terracotta.toolkit.cluster.ClusterInfo;
 import org.terracotta.toolkit.cluster.ClusterListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
-import org.terracotta.toolkit.cluster.RejoinClusterEvent;
 import org.terracotta.toolkit.internal.cluster.OutOfBandClusterListener;
 
 import com.tc.cluster.DsoCluster;
@@ -92,17 +91,7 @@ public class TerracottaClusterInfo implements ClusterInfo {
   }
 
   private ClusterEvent translateEvent(final DsoClusterEvent event, final Type type) {
-    return new ClusterEvent() {
-      @Override
-      public ClusterNode getNode() {
-        return new TerracottaNode(event.getNode());
-      }
-
-      @Override
-      public Type getType() {
-        return type;
-      }
-    };
+    return new ClusterEventImpl(event.getNode(), type);
   }
 
   private class ClusterListenerWrapper implements OutOfBandDsoClusterListener {
@@ -134,8 +123,8 @@ public class TerracottaClusterInfo implements ClusterInfo {
     }
 
     @Override
-    public void nodeRejoined(final DsoNode oldNode, final DsoNode newNode) {
-      listener.onClusterEvent(new RejoinClusterEventImpl(oldNode, newNode));
+    public void nodeRejoined(DsoClusterEvent event) {
+      listener.onClusterEvent(translateEvent(event, Type.NODE_REJOINED));
     }
 
     @Override
@@ -178,40 +167,31 @@ public class TerracottaClusterInfo implements ClusterInfo {
     }
   }
 
-  private static class RejoinClusterEventImpl implements RejoinClusterEvent {
-    private final ClusterNode beforeRejoinNode;
-    private final ClusterNode afterRejoinNode;
+  private static class ClusterEventImpl implements ClusterEvent {
 
-    public RejoinClusterEventImpl(DsoNode oldNode, DsoNode newNode) {
-      this.beforeRejoinNode = new TerracottaNode(oldNode);
-      this.afterRejoinNode = new TerracottaNode(newNode);
-    }
+    private final TerracottaNode clusterNode;
+    private final Type           type;
 
-    @Override
-    public Type getType() {
-      return Type.NODE_REJOINED;
+    public ClusterEventImpl(DsoNode node, Type type) {
+      clusterNode = new TerracottaNode(node);
+      this.type = type;
     }
 
     @Override
     public ClusterNode getNode() {
-      return getNodeAfterRejoin();
+      return clusterNode;
     }
 
     @Override
-    public ClusterNode getNodeBeforeRejoin() {
-      return beforeRejoinNode;
-    }
-
-    @Override
-    public ClusterNode getNodeAfterRejoin() {
-      return afterRejoinNode;
+    public Type getType() {
+      return type;
     }
 
     @Override
     public String toString() {
-      return "RejoinClusterEvent [beforeRejoinNode: " + beforeRejoinNode + ", afterRejoinNode: " + afterRejoinNode
-             + "]";
+      return "ClusterEvent [type=" + type + ", clusterNode=" + clusterNode + "]";
     }
+
   }
 
 }
