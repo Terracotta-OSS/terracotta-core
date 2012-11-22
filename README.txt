@@ -144,3 +144,19 @@ If you change a class that goes into embbeded jars (ie. common or dso-l1 or ehca
 you don't need to recompile toolkit-runtime project at all. Those classes are loaded
 directly from there target/classes folder
 
+******************************************************************************
+10. Working with 'devmode' and L2
+******************************************************************************
+
+Do this at least once. Compile with devmode on
+
+%> mvn install -P devmode
+
+Then run system test with devmode on
+
+%> mvn verify -P system-test,devmode  -Dtest=SomeTest
+
+You could change any classes that use by L2 in Eclipse and not having to recompile again.
+Just rerun the test and your new class will be picked up from its target/classes folder.
+
+
