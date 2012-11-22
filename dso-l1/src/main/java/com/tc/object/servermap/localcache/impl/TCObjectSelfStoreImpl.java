@@ -182,24 +182,27 @@ public class TCObjectSelfStoreImpl implements TCObjectSelfStore {
                                  Object tcoself, final boolean isNew) {
     isShutdownThenException();
 
-    tcObjectStoreLock.writeLock().lock();
-    try {
-      if (tcoself instanceof TCObject) {
-        // no need of instanceof check if tcoself is declared as TCObject only... skipping for tests.. refactor later
-        ObjectID oid = ((TCObject) tcoself).getObjectID();
-        if (logger.isDebugEnabled()) {
-          logger.debug("XXX Adding TCObjectSelf to Store if necessary, ObjectID=" + oid);
-        }
+    synchronized (tcObjectSelfRemovedFromStoreCallback) {
+      tcObjectStoreLock.writeLock().lock();
+      try {
+        if (tcoself instanceof TCObject) {
+          // no need of instanceof check if tcoself is declared as TCObject only... skipping for tests.. refactor later
+          ObjectID oid = ((TCObject) tcoself).getObjectID();
+          if (logger.isDebugEnabled()) {
+            logger.debug("XXX Adding TCObjectSelf to Store if necessary, ObjectID=" + oid);
+          }
 
-        if (isNew || (tcObjectSelfTempCache.containsKey(oid) && !tcObjectSelfStoreOids.contains(oid))) {
-          tcObjectSelfStoreOids.add(localStoreValue.isEventualConsistentValue(), oid);
-          return true;
-        } else {
-          return false;
+          if (isNew || (tcObjectSelfTempCache.containsKey(oid) && !tcObjectSelfStoreOids.contains(oid))) {
+            tcObjectSelfStoreOids.add(localStoreValue.isEventualConsistentValue(), oid);
+            removeTCObjectSelfTemp((TCObjectSelf) tcoself, false);
+            return true;
+          } else {
+            return false;
+          }
         }
+      } finally {
+        tcObjectStoreLock.writeLock().unlock();
       }
-    } finally {
-      tcObjectStoreLock.writeLock().unlock();
     }
 
     return true;
