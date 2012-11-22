@@ -6,7 +6,7 @@ package org.terracotta.express.tests.rejoin;
 import org.terracotta.test.util.WaitUtil;
 import org.terracotta.toolkit.Toolkit;
 import org.terracotta.toolkit.cluster.ClusterEvent;
-import org.terracotta.toolkit.cluster.RejoinClusterEvent;
+import org.terracotta.toolkit.cluster.ClusterEvent.Type;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.collections.ToolkitSortedMap;
 
@@ -78,10 +78,9 @@ public class ToolkitMapAndSortedMapRejoinTest extends AbstractToolkitRejoinTest 
         public Boolean call() throws Exception {
           doDebug("Processing received events (waiting till rejoin happens for node: " + beforeRejoinNode + ")");
           for (ClusterEvent e : receivedEvents) {
-            if (e instanceof RejoinClusterEvent) {
-              RejoinClusterEvent re = (RejoinClusterEvent) e;
-              doDebug("Rejoin event - oldNode: " + re.getNodeBeforeRejoin() + ", newNode: " + re.getNodeAfterRejoin());
-              if (re.getNodeBeforeRejoin().getId().equals(beforeRejoinNode.getId())) {
+            if (e.getType() == Type.NODE_REJOINED) {
+              doDebug("Rejoin event - oldNode: " + e.getNode());
+              if (e.getNode().getId().equals(beforeRejoinNode.getId())) {
                 doDebug("Rejoin received for expected node - " + beforeRejoinNode);
                 return true;
               }

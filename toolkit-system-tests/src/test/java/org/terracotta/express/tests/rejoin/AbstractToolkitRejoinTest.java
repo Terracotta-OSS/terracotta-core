@@ -9,9 +9,9 @@ import org.terracotta.test.util.WaitUtil;
 import org.terracotta.toolkit.Toolkit;
 import org.terracotta.toolkit.ToolkitFactory;
 import org.terracotta.toolkit.cluster.ClusterEvent;
+import org.terracotta.toolkit.cluster.ClusterEvent.Type;
 import org.terracotta.toolkit.cluster.ClusterListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
-import org.terracotta.toolkit.cluster.RejoinClusterEvent;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.ToolkitLogger;
 
@@ -52,7 +52,7 @@ public class AbstractToolkitRejoinTest extends AbstractToolkitTestBase {
   }
 
   public static abstract class AbstractToolkitRejoinTestClient extends ClientBase {
-    private ToolkitLogger logger;
+    private ToolkitLogger              logger;
     protected final List<ClusterEvent> receivedEvents = new CopyOnWriteArrayList<ClusterEvent>();
     protected ClusterNode              beforeRejoinNode;
 
@@ -84,7 +84,8 @@ public class AbstractToolkitRejoinTest extends AbstractToolkitTestBase {
       return tk;
     }
 
-    protected void startRejoinAndWaitUnilCompleted(TestHandlerMBean testHandlerMBean, ToolkitInternal tk) throws Exception {
+    protected void startRejoinAndWaitUnilCompleted(TestHandlerMBean testHandlerMBean, ToolkitInternal tk)
+        throws Exception {
       tk.waitUntilAllTransactionsComplete();
 
       doDebug("Crashing first active...");
@@ -97,10 +98,9 @@ public class AbstractToolkitRejoinTest extends AbstractToolkitTestBase {
         public Boolean call() throws Exception {
           doDebug("Processing received events (waiting till rejoin happens for node: " + beforeRejoinNode + ")");
           for (ClusterEvent e : receivedEvents) {
-            if (e instanceof RejoinClusterEvent) {
-              RejoinClusterEvent re = (RejoinClusterEvent) e;
-              doDebug("Rejoin event - oldNode: " + re.getNodeBeforeRejoin() + ", newNode: " + re.getNodeAfterRejoin());
-              if (re.getNodeBeforeRejoin().getId().equals(beforeRejoinNode.getId())) {
+            if (e.getType() == Type.NODE_REJOINED) {
+              doDebug("Rejoin event - oldNode: " + e.getNode());
+              if (e.getNode().getId().equals(beforeRejoinNode.getId())) {
                 doDebug("Rejoin received for expected node - " + beforeRejoinNode);
                 return true;
               }
