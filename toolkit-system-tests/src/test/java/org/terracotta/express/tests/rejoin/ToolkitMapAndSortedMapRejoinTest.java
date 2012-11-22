@@ -79,11 +79,8 @@ public class ToolkitMapAndSortedMapRejoinTest extends AbstractToolkitRejoinTest 
           doDebug("Processing received events (waiting till rejoin happens for node: " + beforeRejoinNode + ")");
           for (ClusterEvent e : receivedEvents) {
             if (e.getType() == Type.NODE_REJOINED) {
-              doDebug("Rejoin event - oldNode: " + e.getNode());
-              if (e.getNode().getId().equals(beforeRejoinNode.getId())) {
-                doDebug("Rejoin received for expected node - " + beforeRejoinNode);
-                return true;
-              }
+              doDebug("Received rejoin event - newNode: " + e.getNode());
+              return true;
             }
           }
           return false;
