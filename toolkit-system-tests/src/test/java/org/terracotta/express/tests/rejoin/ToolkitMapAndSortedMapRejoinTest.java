@@ -1,0 +1,127 @@
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ */
+package org.terracotta.express.tests.rejoin;
+
+import org.terracotta.test.util.WaitUtil;
+import org.terracotta.toolkit.Toolkit;
+import org.terracotta.toolkit.cluster.ClusterEvent;
+import org.terracotta.toolkit.cluster.RejoinClusterEvent;
+import org.terracotta.toolkit.collections.ToolkitMap;
+import org.terracotta.toolkit.collections.ToolkitSortedMap;
+
+import com.tc.test.config.model.TestConfig;
+import com.tc.test.jmx.TestHandlerMBean;
+import com.tc.util.Assert;
+
+import java.util.Map;
+import java.util.concurrent.Callable;
+
+public class ToolkitMapAndSortedMapRejoinTest extends AbstractToolkitRejoinTest {
+  public ToolkitMapAndSortedMapRejoinTest(TestConfig testConfig) {
+    super(testConfig, ToolkitMapRejoinTestClient.class);
+  }
+
+  public static class ToolkitMapRejoinTestClient extends AbstractToolkitRejoinTestClient {
+
+    private static final int              NUM_ELEMENTS = 10;
+    private final StringKeyValueGenerator keyValGr     = new StringKeyValueGenerator();
+    private Toolkit                       toolkit;
+
+    public ToolkitMapRejoinTestClient(String[] args) {
+      super(args);
+    }
+
+    @Override
+    protected void doRejoinTest(TestHandlerMBean testHandlerMBean) throws Throwable {
+      init();
+      ToolkitMap toolkitMap = toolkit.getMap("rejoinTestMap", String.class, String.class);
+      doDebug("Running Test For Map");
+      runTestFor(toolkitMap, testHandlerMBean);
+      receivedEvents.clear();
+      doDebug("Done Testing Map, Now testing SortedMap");
+
+      ToolkitSortedMap toolkitSortedMap = toolkit.getSortedMap("rejoinTestSortedMap", String.class, String.class);
+      doDebug("Running test for SortedMap");
+      runTestFor(toolkitSortedMap, testHandlerMBean);
+      receivedEvents.clear();
+      doDebug("Done Testing SortedMap, Exiting!");
+    }
+
+    private void init() throws Exception {
+      debug("Creating toolkit");
+      toolkit = createRejoinToolkit();
+    }
+
+    private void runTestFor(Map toolkitMap, TestHandlerMBean testHandlerMBean) throws Exception {
+
+      for (int i = 0; i < NUM_ELEMENTS; i++) {
+        toolkitMap.put(keyValGr.getValue(i), keyValGr.getValue(i));
+      }
+
+      doDebug("Asserting values before rejoin");
+      for (int i = 0; i < NUM_ELEMENTS; i++) {
+        Assert.assertEquals(toolkitMap.get(keyValGr.getValue(i)), keyValGr.getValue(i));
+      }
+
+      String msg = "";
+      msg = "Crashing first active...";
+      doDebug(msg);
+      testHandlerMBean.crashActiveAndWaitForPassiveToTakeOver(0);
+
+      msg = "Passive must have taken over as ACTIVE";
+      doDebug(msg);
+
+      WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
+
+        @Override
+        public Boolean call() throws Exception {
+          doDebug("Processing received events (waiting till rejoin happens for node: " + beforeRejoinNode + ")");
+          for (ClusterEvent e : receivedEvents) {
+            if (e instanceof RejoinClusterEvent) {
+              RejoinClusterEvent re = (RejoinClusterEvent) e;
+              doDebug("Rejoin event - oldNode: " + re.getNodeBeforeRejoin() + ", newNode: " + re.getNodeAfterRejoin());
+              if (re.getNodeBeforeRejoin().getId().equals(beforeRejoinNode.getId())) {
+                doDebug("Rejoin received for expected node - " + beforeRejoinNode);
+                return true;
+              }
+            }
+          }
+          return false;
+        }
+      });
+
+      doDebug("Rejoin happened successfully");
+      doDebug("Asserting old values after rejoin");
+
+      for (int i = 0; i < NUM_ELEMENTS; i++) {
+        Assert.assertEquals(toolkitMap.get(keyValGr.getValue(i)), keyValGr.getValue(i));
+      }
+
+      doSleep(5);
+
+      doDebug("Adding new values after rejoin");
+      for (int i = NUM_ELEMENTS; i < 2 * NUM_ELEMENTS; i++) {
+        toolkitMap.put(keyValGr.getValue(i), keyValGr.getValue(i));
+      }
+
+      doSleep(5);
+
+      for (int i = 0; i < toolkitMap.size(); i++) {
+        doDebug("Got value for i: " + i + ", value: " + (toolkitMap.get(keyValGr.getKey(i))));
+      }
+      doSleep(10);
+
+      doDebug("Asserting new values inserted after rejoin");
+      Assert.assertEquals(2 * NUM_ELEMENTS, toolkitMap.size());
+      for (int i = 0; i < 2 * NUM_ELEMENTS; i++) {
+        Assert.assertEquals(toolkitMap.get(keyValGr.getValue(i)), keyValGr.getValue(i));
+      }
+      doDebug("Asserted new values");
+
+      doSleep(10);
+
+    }
+
+  }
+}
