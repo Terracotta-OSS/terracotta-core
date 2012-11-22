@@ -6,6 +6,8 @@ package com.terracotta.toolkit.nonstop;
 import org.terracotta.toolkit.internal.nonstop.NonStopManager;
 
 import com.tc.abortable.AbortableOperationManager;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -13,11 +15,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class NonStopManagerImpl implements NonStopManager {
-  private final AbortableOperationManager                             abortableOperationManager;
-  private final Timer                                                 timer      = new Timer(
-                                                                                             "Timer for Non Stop tasks",
-                                                                                             true);
-  private final ConcurrentMap<Thread, ValueWrapper<NonStopTimerTask>> timerTasks = new ConcurrentHashMap<Thread, ValueWrapper<NonStopTimerTask>>();
+  private static final TCLogger                         LOGGER     = TCLogging.getLogger(NonStopManagerImpl.class);
+  private final AbortableOperationManager               abortableOperationManager;
+  private final Timer                                   timer      = new Timer("Timer for Non Stop tasks", true);
+  private final ConcurrentMap<Thread, NonStopTimerTask> timerTasks = new ConcurrentHashMap<Thread, NonStopTimerTask>();
 
   public NonStopManagerImpl(AbortableOperationManager abortableOperationManager) {
     this.abortableOperationManager = abortableOperationManager;
@@ -25,64 +26,50 @@ public class NonStopManagerImpl implements NonStopManager {
 
   @Override
   public void begin(long timeout) {
-    abortableOperationManager.begin();
-    if (timeout <= 0) { return; }
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("begin nonstop operation with timeout :" + timeout + "for Thread : " + Thread.currentThread());
+    }
     if (!timerTasks.containsKey(Thread.currentThread())) {
+      abortableOperationManager.begin();
       NonStopTimerTask task = new NonStopTimerTask(Thread.currentThread());
-      timerTasks.put(Thread.currentThread(), new ValueWrapper(task));
-      timer.schedule(task, timeout);
+      timerTasks.put(Thread.currentThread(), task);
+      // Do not start timer for negative timeouts.
+      if (timeout > 0) {
+        timer.schedule(task, timeout);
+      }
     } else {
-      ValueWrapper valueWrapper = timerTasks.get(Thread.currentThread());
-      valueWrapper.increment();
+      throw new IllegalStateException("The thread has already called begin");
     }
   }
 
   @Override
   public void finish() {
-    ValueWrapper<NonStopTimerTask> valueWrapper = timerTasks.get(Thread.currentThread());
-    if (valueWrapper != null) {
-      valueWrapper.decrement();
-      if (valueWrapper.isZero()) {
-        timerTasks.remove(Thread.currentThread());
-        valueWrapper.getValue().cancelTaskIfRequired();
-      }
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("finish nonstop operation for Thread : " + Thread.currentThread());
     }
-    abortableOperationManager.finish();
+    NonStopTimerTask task = timerTasks.get(Thread.currentThread());
+    if (task != null) {
+      timerTasks.remove(Thread.currentThread());
+      if (!task.cancelTaskIfRequired()) {
+        // clear Interrupted status flag. // TODO: rethink seems like a hack..
+      }
+      abortableOperationManager.finish();
+    } else {
+      throw new IllegalStateException("The thread has not called begin");
+    }
   }
 
   @Override
+  public boolean isBegin() {
+    return timerTasks.containsKey(Thread.currentThread());
+  }
+
   public void shutdown() {
     timer.cancel();
   }
 
   private enum NonStopTimerTaskState {
     INIT, ABORTED, CANCELLED
-  }
-
-  private static class ValueWrapper<V> {
-    private final V value;
-    private int     count;
-
-    public ValueWrapper(V value) {
-      this.value = value;
-      this.count = 1;
-    }
-
-    private void increment() {
-      count++;
-    }
-
-    private void decrement() {
-      count--;
-    }
-
-    public V getValue() {
-      return value;
-    }
-
-    private boolean isZero() {
-      return count == 0;
-    }
   }
 
   private class NonStopTimerTask extends TimerTask {
@@ -93,15 +80,21 @@ public class NonStopManagerImpl implements NonStopManager {
       this.thread = thread;
     }
 
-    public synchronized void cancelTaskIfRequired() {
+    public synchronized boolean cancelTaskIfRequired() {
       if (state == NonStopTimerTaskState.INIT) {
         state = NonStopTimerTaskState.CANCELLED;
         this.cancel();
+        return true;
+      } else {
+        return false;
       }
     }
 
     @Override
     public synchronized void run() {
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug(" nonstop operation with timedout for Thread : " + Thread.currentThread());
+      }
       if (state == NonStopTimerTaskState.INIT) {
         state = NonStopTimerTaskState.ABORTED;
         abortableOperationManager.abort(thread);

@@ -31,7 +31,6 @@ import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.terracotta.toolkit.collections.map.ValuesResolver;
-import com.terracotta.toolkit.nonstop.NonReentrantNonStopManager;
 import com.terracotta.toolkit.nonstop.NonStopConfigRegistryImpl;
 import com.terracotta.toolkit.nonstop.NonStopDelegateProvider;
 import com.terracotta.toolkit.nonstop.NonStopInvocationHandler;
@@ -46,8 +45,6 @@ import java.util.concurrent.ConcurrentMap;
 public class NonStopToolkit implements ToolkitInternal {
   private final ToolkitInternal                                                        toolkitDelegate;
   private final NonStopManager                                                         nonStopManager;
-  private final NonReentrantNonStopManager                                             exposedNonStopManager;
-
   private final NonStopConfigRegistryImpl                                              nonStopConfigManager          = new NonStopConfigRegistryImpl();
   private final NonstopTimeoutBehaviorResolver                                         nonstopTimeoutBehaviorFactory = new NonstopTimeoutBehaviorResolver();
 
@@ -64,7 +61,6 @@ public class NonStopToolkit implements ToolkitInternal {
     AbortableOperationManager abortableOperationManager = ((TerracottaToolkit) toolkitDelegate)
         .getAbortableOperationManager();
     this.nonStopManager = new NonStopManagerImpl(abortableOperationManager);
-    this.exposedNonStopManager = new NonReentrantNonStopManager(this.nonStopManager);
 
     for (ToolkitObjectType objectType : ToolkitObjectType.values()) {
       toolkitObjects.put(objectType, new ConcurrentHashMap<String, ToolkitObject>());
@@ -247,6 +243,6 @@ public class NonStopToolkit implements ToolkitInternal {
 
   @Override
   public NonStopManager getNonStopManager() {
-    return exposedNonStopManager;
+    return nonStopManager;
   }
 }

@@ -5,6 +5,10 @@ package com.terracotta.toolkit.nonstop;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 class NoOpInvocationHandler implements InvocationHandler {
 
@@ -27,8 +31,11 @@ class NoOpInvocationHandler implements InvocationHandler {
       } else if (method.getReturnType() == Character.TYPE) {
         return '\u0000';
       } else if (method.getReturnType() == Boolean.TYPE) { return false; }
-
-    }
+    } else if (Map.class.isAssignableFrom(method.getReturnType())) {
+      return Collections.EMPTY_MAP;
+    } else if (List.class.isAssignableFrom(method.getReturnType())) {
+      return Collections.EMPTY_LIST;
+    } else if (Set.class.isAssignableFrom(method.getReturnType())) { return Collections.EMPTY_SET; }
     return null;
   }
 }

@@ -24,13 +24,18 @@ public class NonStopInvocationHandler<T> implements InvocationHandler {
 
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-    nonStopManager.begin(nonStopDelegateProvider.getTimeout(method.getName()));
+    boolean externalBegin = nonStopManager.isBegin();
+    if (!externalBegin) {
+      nonStopManager.begin(nonStopDelegateProvider.getTimeout(method.getName()));
+    }
     try {
       return invokeMethod(method, args, nonStopDelegateProvider.getDelegate());
     } catch (ToolkitAbortableOperationException e) {
       return invokeMethod(method, args, nonStopDelegateProvider.getTimeoutBehavior());
     } finally {
-      nonStopManager.finish();
+      if (!externalBegin) {
+        nonStopManager.finish();
+      }
     }
   }
 

@@ -3,10 +3,15 @@
  */
 package com.tc.abortable;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class AbortableOperationManagerImpl implements AbortableOperationManager {
+  private static final TCLogger LOGGER = TCLogging.getLogger(AbortableOperationManagerImpl.class);
+
   enum OperationState {
     INIT, ABORTED;
   }
@@ -32,13 +37,20 @@ public class AbortableOperationManagerImpl implements AbortableOperationManager 
   @Override
   public void abort(Thread thread) {
     if (threadStates.replace(new ThreadWrapper(thread), OperationState.INIT, OperationState.ABORTED)) {
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Interrupting thread :" + thread);
+      }
       thread.interrupt();
     }
   }
 
   @Override
   public boolean isAborted() {
-    return threadStates.get(new ThreadWrapper(Thread.currentThread())) == OperationState.ABORTED;
+    OperationState operationState = threadStates.get(new ThreadWrapper(Thread.currentThread()));
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("checking isAborted for thread :" + Thread.currentThread() + " State : " + operationState);
+    }
+    return operationState == OperationState.ABORTED;
   }
 
   private static class ThreadWrapper {
