@@ -11,8 +11,7 @@ import com.tc.test.config.model.TestConfig;
 import com.tc.test.jmx.TestHandlerMBean;
 
 import java.util.concurrent.BrokenBarrierException;
-
-import junit.framework.Assert;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ToolkitBarrierRejoinTest extends AbstractToolkitRejoinTest {
 
@@ -30,16 +29,16 @@ public class ToolkitBarrierRejoinTest extends AbstractToolkitRejoinTest {
     protected void doRejoinTest(TestHandlerMBean testHandlerMBean) throws Throwable {
       ToolkitInternal tk = createRejoinToolkit();
       final ToolkitBarrier toolkitBarrier = tk.getBarrier("rejoinBarrier", 2);
-
+      final AtomicBoolean exceptionFound = new AtomicBoolean(false);
       Thread anotherThread = new Thread() {
         @Override
         public void run() {
           try {
             doDebug("waiting on toolkitBarrier");
             toolkitBarrier.await();
-            Assert.fail("should have failed with RejoinInProgressException");
           } catch (RejoinInProgressException e) {
             // expected exception
+            exceptionFound.set(true);
           } catch (InterruptedException e) {
             throw new RuntimeException(e);
           } catch (BrokenBarrierException e) {
@@ -49,9 +48,10 @@ public class ToolkitBarrierRejoinTest extends AbstractToolkitRejoinTest {
       };
       anotherThread.start();
       doSleep(5);
-      doDebug("done with sleep now starting rejoin");
+      doDebug("done with sleep now doing rejoin");
       startRejoinAndWaitUnilCompleted(testHandlerMBean, tk);
       anotherThread.join();
+      if (!exceptionFound.get()) { throw new RuntimeException("RejoinInProgressException should have seen"); }
     }
   }
 }

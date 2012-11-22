@@ -96,7 +96,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     if (state != State.PAUSED) { throw new IllegalStateException("unexpected state: expexted " + State.PAUSED
                                                                  + " but found " + state); }
     state.rejoin_in_progress();
-    runningCondition.notifyAll();
+    runningCondition.signalAll();
   }
 
   private ClientLock getOrCreateClientLockState(final LockID lock) {
