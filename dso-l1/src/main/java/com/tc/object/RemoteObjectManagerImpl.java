@@ -131,6 +131,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     if (state != State.PAUSED) { throw new IllegalStateException("unexpected state: expexted " + State.PAUSED
                                                                  + " but found " + state); }
     state = State.REJOIN_IN_PROGRESS;
+    notifyAll();
   }
 
   @Override

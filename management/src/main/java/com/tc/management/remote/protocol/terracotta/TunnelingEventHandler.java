@@ -56,6 +56,7 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Clien
   @Override
   public void cleanup() {
     synchronized (this) {
+      notifyAll();
       acceptOk = false;
       localJmxServerReady = new SetOnceFlag();
       transportConnected = false;

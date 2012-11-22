@@ -108,6 +108,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     if (state != PAUSED) { throw new IllegalStateException("unexpected state: expexted " + PAUSED + " but found "
                                                            + state); }
     state = REJOIN_IN_PROGRESS;
+    notifyAll();
   }
 
   @Override

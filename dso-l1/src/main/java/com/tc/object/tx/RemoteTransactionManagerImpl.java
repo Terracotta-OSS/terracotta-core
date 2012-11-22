@@ -133,6 +133,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     if (status != PAUSED) { throw new IllegalStateException("unexpected state: expexted " + PAUSED + " but found "
                                                             + status); }
     status = REJOIN_IN_PROGRESS;
+    this.lock.notifyAll();
   }
 
   @Override

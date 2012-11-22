@@ -105,6 +105,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
                                                                  + " but found "
                                                            + state); }
     state = State.REJOIN_IN_PROGRESS;
+    notifyAll();
   }
 
   /**
@@ -194,6 +195,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     try {
       while (true) {
         if (isStopped()) { throw new TCNotRunningException(); }
+        if (isRejoinInProgress()) { throw new RejoinInProgressException(); }
         try {
           wait(RESULT_WAIT_MAXTIME_MILLIS);
         } catch (final InterruptedException e) {
@@ -225,6 +227,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     try {
       while (true) {
         if (isStopped()) { throw new TCNotRunningException(); }
+        if (isRejoinInProgress()) { throw new RejoinInProgressException(); }
         try {
           wait(RESULT_WAIT_MAXTIME_MILLIS);
         } catch (final InterruptedException e) {

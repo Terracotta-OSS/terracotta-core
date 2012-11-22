@@ -216,6 +216,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     if (state != PAUSED) { throw new IllegalStateException("unexpected state: expexted " + PAUSED
                                                                  + " but found " + state); }
     state = REJOIN_IN_PROGRESS;
+    notifyAll();
   }
 
   private void ensureKeyClassesLoaded() {
