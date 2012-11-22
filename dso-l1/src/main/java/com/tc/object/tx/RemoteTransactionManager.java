@@ -24,7 +24,7 @@ public interface RemoteTransactionManager extends ClientHandshakeCallback, Prett
   /**
    * Blocks until all of the transactions within the given lock has been fully ACKed.
    */
-  public void flush(LockID lockID);
+  public void flush(LockID lockID) throws AbortedOperationException;
 
   public boolean asyncFlush(LockID lockID, LockFlushCallback callback);
 

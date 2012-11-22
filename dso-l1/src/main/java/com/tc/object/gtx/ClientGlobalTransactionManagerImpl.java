@@ -110,7 +110,7 @@ public class ClientGlobalTransactionManagerImpl implements
   }
 
   @Override
-  public void flush(final LockID lockID, boolean noLocksLeftOnClient) {
+  public void flush(final LockID lockID, boolean noLocksLeftOnClient) throws AbortedOperationException {
     if (noLocksLeftOnClient) {
       preTransactionFlushCallback.preTransactionFlush(lockID);
     }

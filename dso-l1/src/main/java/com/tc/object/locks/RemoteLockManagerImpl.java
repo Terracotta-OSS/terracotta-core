@@ -66,7 +66,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   }
 
   @Override
-  public void flush(final LockID lock, boolean noLocksLeftOnClient) {
+  public void flush(final LockID lock, boolean noLocksLeftOnClient) throws AbortedOperationException {
     this.clientGlobalTxnManager.flush(lock, noLocksLeftOnClient);
   }
 

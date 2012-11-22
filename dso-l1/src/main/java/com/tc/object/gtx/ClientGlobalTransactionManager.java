@@ -14,7 +14,7 @@ import com.tc.object.tx.TransactionID;
 public interface ClientGlobalTransactionManager extends GlobalTransactionManager, ClearableCallback {
   public void setLowWatermark(GlobalTransactionID lowWatermark, NodeID nodeID);
 
-  public void flush(LockID lockID, boolean noLocksLeftOnClient);
+  public void flush(LockID lockID, boolean noLocksLeftOnClient) throws AbortedOperationException;
 
   public boolean startApply(NodeID clientID, TransactionID transactionID, GlobalTransactionID globalTransactionID,
                             NodeID remoteGroupID);

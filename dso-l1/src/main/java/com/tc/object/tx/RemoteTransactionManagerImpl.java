@@ -250,7 +250,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   }
 
   @Override
-  public void flush(final LockID lockID) {
+  public void flush(final LockID lockID) throws AbortedOperationException {
     final long start = System.currentTimeMillis();
     long lastPrinted = 0;
     boolean isInterrupted = false;
@@ -268,6 +268,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
               lastPrinted = now;
             }
           } catch (final InterruptedException e) {
+            handleInterruptedException();
             isInterrupted = true;
           }
         }

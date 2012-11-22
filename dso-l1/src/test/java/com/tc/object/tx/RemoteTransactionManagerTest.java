@@ -11,6 +11,7 @@ import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 
+import com.tc.abortable.AbortedOperationException;
 import com.tc.abortable.NullAbortableOperationManager;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.ImplementMe;
@@ -186,7 +187,12 @@ public class RemoteTransactionManagerTest extends TestCase {
     Runnable flusher = new Runnable() {
       @Override
       public void run() {
-        RemoteTransactionManagerTest.this.manager.flush(lockID1);
+        try {
+          RemoteTransactionManagerTest.this.manager.flush(lockID1);
+        } catch (AbortedOperationException e) {
+          e.printStackTrace();
+          // should never come here
+        }
         flushCalls.put(lockID1);
       }
     };

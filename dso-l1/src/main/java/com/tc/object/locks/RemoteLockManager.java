@@ -24,7 +24,7 @@ public interface RemoteLockManager extends ClearableCallback {
 
   public void recallCommit(LockID lock, Collection<ClientServerExchangeLockContext> lockState, boolean batch);
 
-  public void flush(LockID lock, boolean noLocksLeftOnClient);
+  public void flush(LockID lock, boolean noLocksLeftOnClient) throws AbortedOperationException;
 
   public boolean asyncFlush(LockID lock, LockFlushCallback callback, boolean noLocksLeftOnClient);
 
