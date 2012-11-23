@@ -20,44 +20,36 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
-public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, ToolkitCacheInternal<K, V>,
+public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, ToolkitCacheInternal<K, V>,
     DestroyableToolkitObject {
-  private final AtomicReference<ToolkitCacheInternal<K, V>> delegate;
-  private final ToolkitCacheInternal<K, V>                  noOpBehaviourResolver;
+  private final ToolkitCacheInternal<K, V> mutationBehaviourResolver;
+  private final ToolkitCacheInternal<K, V> immutationBehaviourResolver;
 
-  public LocalReadsToolkitCacheImpl(AtomicReference<ToolkitCacheInternal<K, V>> delegate,
-                                    ToolkitCacheInternal<K, V> noOpBehaviourResolver) {
-    this.delegate = delegate;
-    this.noOpBehaviourResolver = noOpBehaviourResolver;
-  }
-
-  private ToolkitCacheInternal<K, V> getDelegate() {
-    ToolkitCacheInternal<K, V> rv = delegate.get();
-    if (rv == null) { return noOpBehaviourResolver; }
-
-    return rv;
+  public TimeoutBehaviorToolkitCacheImpl(ToolkitCacheInternal<K, V> immutationBehaviourResolver,
+                                         ToolkitCacheInternal<K, V> mutationBehaviourResolver) {
+    this.immutationBehaviourResolver = immutationBehaviourResolver;
+    this.mutationBehaviourResolver = mutationBehaviourResolver;
   }
 
   @Override
   public String getName() {
-    return getDelegate().getName();
+    return immutationBehaviourResolver.getName();
   }
 
   @Override
   public boolean isDestroyed() {
-    return getDelegate().isDestroyed();
+    return immutationBehaviourResolver.isDestroyed();
   }
 
   @Override
   public void destroy() {
-    throw new UnsupportedOperationException();
+    mutationBehaviourResolver.destroy();
   }
 
   @Override
   public V getQuiet(Object key) {
-    return getDelegate().unsafeLocalGet(key);
+    return immutationBehaviourResolver.unsafeLocalGet(key);
   }
 
   @Override
@@ -71,47 +63,48 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
 
   @Override
   public void putNoReturn(K key, V value, long createTimeInSecs, int maxTTISeconds, int maxTTLSeconds) {
-    throw new UnsupportedOperationException();
+    mutationBehaviourResolver.putNoReturn(key, value, createTimeInSecs, maxTTISeconds, maxTTLSeconds);
+
   }
 
   @Override
   public V putIfAbsent(K key, V value, long createTimeInSecs, int maxTTISeconds, int maxTTLSeconds) {
-    throw new UnsupportedOperationException();
+    return mutationBehaviourResolver.putIfAbsent(key, value, createTimeInSecs, maxTTISeconds, maxTTLSeconds);
   }
 
   @Override
   public void addListener(ToolkitCacheListener<K> listener) {
-    throw new UnsupportedOperationException();
+    mutationBehaviourResolver.addListener(listener);
   }
 
   @Override
   public void removeListener(ToolkitCacheListener<K> listener) {
-    throw new UnsupportedOperationException();
+    mutationBehaviourResolver.removeListener(listener);
   }
 
   @Override
   public void unpinAll() {
-    throw new UnsupportedOperationException();
+    mutationBehaviourResolver.unpinAll();
   }
 
   @Override
   public boolean isPinned(K key) {
-    return getDelegate().isPinned(key);
+    return immutationBehaviourResolver.isPinned(key);
   }
 
   @Override
   public void setPinned(K key, boolean pinned) {
-    throw new UnsupportedOperationException();
+    mutationBehaviourResolver.setPinned(key, pinned);
   }
 
   @Override
   public void removeNoReturn(Object key) {
-    throw new UnsupportedOperationException();
+    mutationBehaviourResolver.removeNoReturn(key);
   }
 
   @Override
   public void putNoReturn(K key, V value) {
-    throw new UnsupportedOperationException();
+    mutationBehaviourResolver.putNoReturn(key, value);
   }
 
   @Override
@@ -121,12 +114,13 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
 
   @Override
   public Configuration getConfiguration() {
-    return getDelegate().getConfiguration();
+    return immutationBehaviourResolver.getConfiguration();
   }
 
   @Override
   public void setConfigField(String name, Serializable value) {
-    throw new UnsupportedOperationException();
+    mutationBehaviourResolver.setConfigField(name, value);
+
   }
 
   @Override
@@ -137,42 +131,42 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
   @Override
   public ToolkitReadWriteLock createLockForKey(K key) {
     // TODO: return nonstop lock when supporting nonstop for locks.
-    return getDelegate().createLockForKey(key);
+    return immutationBehaviourResolver.createLockForKey(key);
   }
 
   @Override
   public void setAttributeExtractor(ToolkitAttributeExtractor attrExtractor) {
-    getDelegate().setAttributeExtractor(attrExtractor);
+    immutationBehaviourResolver.setAttributeExtractor(attrExtractor);
   }
 
   @Override
   public V putIfAbsent(K key, V value) {
-    throw new UnsupportedOperationException();
+    return mutationBehaviourResolver.putIfAbsent(key, value);
   }
 
   @Override
   public boolean remove(Object key, Object value) {
-    throw new UnsupportedOperationException();
+    return mutationBehaviourResolver.remove(key, value);
   }
 
   @Override
   public boolean replace(K key, V oldValue, V newValue) {
-    throw new UnsupportedOperationException();
+    return mutationBehaviourResolver.replace(key, oldValue, newValue);
   }
 
   @Override
   public V replace(K key, V value) {
-    throw new UnsupportedOperationException();
+    return mutationBehaviourResolver.replace(key, value);
   }
 
   @Override
   public int size() {
-    return getDelegate().localSize();
+    return immutationBehaviourResolver.localSize();
   }
 
   @Override
   public boolean isEmpty() {
-    return getDelegate().localSize() == 0;
+    return immutationBehaviourResolver.localSize() == 0;
   }
 
   @Override
@@ -187,27 +181,27 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
 
   @Override
   public V put(K key, V value) {
-    throw new UnsupportedOperationException();
+    return mutationBehaviourResolver.put(key, value);
   }
 
   @Override
   public V remove(Object key) {
-    throw new UnsupportedOperationException();
+    return mutationBehaviourResolver.remove(key);
   }
 
   @Override
   public void putAll(Map<? extends K, ? extends V> m) {
-    throw new UnsupportedOperationException();
+    mutationBehaviourResolver.putAll(m);
   }
 
   @Override
   public void clear() {
-    throw new UnsupportedOperationException();
+    mutationBehaviourResolver.clear();
   }
 
   @Override
   public Set<K> keySet() {
-    return getDelegate().localKeySet();
+    return immutationBehaviourResolver.localKeySet();
   }
 
   @Override
@@ -223,8 +217,8 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
   }
 
   private Map<K, V> getAllLocalKeyValuesMap() {
-    Map<K, V> allValuesMap = new HashMap<K, V>(getDelegate().localSize());
-    for (K key : getDelegate().keySet()) {
+    Map<K, V> allValuesMap = new HashMap<K, V>(immutationBehaviourResolver.localSize());
+    for (K key : immutationBehaviourResolver.keySet()) {
       allValuesMap.put(key, getQuiet(key));
     }
     return allValuesMap;
@@ -232,17 +226,19 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
 
   @Override
   public Map<Object, Set<ClusterNode>> getNodesWithKeys(Set portableKeys) {
-    throw new UnsupportedOperationException();
+    return mutationBehaviourResolver.getNodesWithKeys(portableKeys);
   }
 
   @Override
   public void unlockedPutNoReturn(K k, V v, int createTime, int customTTI, int customTTL) {
-    throw new UnsupportedOperationException();
+    mutationBehaviourResolver.unlockedPutNoReturn(k, v, createTime, customTTI, customTTL);
+
   }
 
   @Override
   public void unlockedRemoveNoReturn(Object k) {
-    throw new UnsupportedOperationException();
+    mutationBehaviourResolver.unlockedRemoveNoReturn(k);
+
   }
 
   @Override
@@ -253,93 +249,93 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
   @Override
   public void clearLocalCache() {
     // TODO: discuss
-    throw new UnsupportedOperationException();
+    mutationBehaviourResolver.clearLocalCache();
   }
 
   @Override
   public V unsafeLocalGet(Object key) {
-    return getDelegate().unsafeLocalGet(key);
+    return immutationBehaviourResolver.unsafeLocalGet(key);
   }
 
   @Override
   public boolean containsLocalKey(Object key) {
-    return getDelegate().containsLocalKey(key);
+    return immutationBehaviourResolver.containsLocalKey(key);
   }
 
   @Override
   public int localSize() {
-    return getDelegate().localSize();
+    return immutationBehaviourResolver.localSize();
   }
 
   @Override
   public Set<K> localKeySet() {
-    return getDelegate().localKeySet();
+    return immutationBehaviourResolver.localKeySet();
   }
 
   @Override
   public long localOnHeapSizeInBytes() {
-    return getDelegate().localOnHeapSizeInBytes();
+    return immutationBehaviourResolver.localOnHeapSizeInBytes();
   }
 
   @Override
   public long localOffHeapSizeInBytes() {
-    return getDelegate().localOffHeapSizeInBytes();
+    return immutationBehaviourResolver.localOffHeapSizeInBytes();
   }
 
   @Override
   public int localOnHeapSize() {
-    return getDelegate().localOnHeapSize();
+    return immutationBehaviourResolver.localOnHeapSize();
   }
 
   @Override
   public int localOffHeapSize() {
-    return getDelegate().localOffHeapSize();
+    return immutationBehaviourResolver.localOffHeapSize();
   }
 
   @Override
   public boolean containsKeyLocalOnHeap(Object key) {
-    return getDelegate().containsKeyLocalOnHeap(key);
+    return immutationBehaviourResolver.containsKeyLocalOnHeap(key);
   }
 
   @Override
   public boolean containsKeyLocalOffHeap(Object key) {
-    return getDelegate().containsKeyLocalOffHeap(key);
+    return immutationBehaviourResolver.containsKeyLocalOffHeap(key);
   }
 
   @Override
   public V put(K key, V value, int createTimeInSecs, int customMaxTTISeconds, int customMaxTTLSeconds) {
-    throw new UnsupportedOperationException();
+    return mutationBehaviourResolver.put(key, value, createTimeInSecs, customMaxTTISeconds, customMaxTTLSeconds);
   }
 
   @Override
   public void disposeLocally() {
     // TODO: discuss
-    throw new UnsupportedOperationException();
+    mutationBehaviourResolver.disposeLocally();
   }
 
   @Override
   public void removeAll(Set<K> keys) {
-    throw new UnsupportedOperationException();
+    mutationBehaviourResolver.removeAll(keys);
   }
 
   @Override
   public QueryBuilder createQueryBuilder() {
-    return getDelegate().createQueryBuilder();
+    return immutationBehaviourResolver.createQueryBuilder();
   }
 
   @Override
   public SearchExecutor createSearchExecutor() {
-    return getDelegate().createSearchExecutor();
+    return immutationBehaviourResolver.createSearchExecutor();
   }
 
   @Override
   public void doDestroy() {
-    throw new UnsupportedOperationException();
+    ((DestroyableToolkitObject) mutationBehaviourResolver).doDestroy();
   }
 
   @Override
   public V get(K key, ObjectID valueOid) {
     // TODO: discuss change in behavior for search here.
-    return getDelegate().unsafeLocalGet(key);
+    return immutationBehaviourResolver.unsafeLocalGet(key);
   }
 }

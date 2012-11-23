@@ -22,7 +22,12 @@ public class NonStopNoOpTest extends AbstractToolkitTestBase {
     }
 
     @Override
-    protected NonStopTimeoutBehavior getTimeoutBehavior() {
+    protected NonStopTimeoutBehavior getImmutableOpTimeoutBehavior() {
+      return NonStopTimeoutBehavior.NO_OP;
+    }
+
+    @Override
+    protected NonStopTimeoutBehavior getMutableOpTimeoutBehavior() {
       return NonStopTimeoutBehavior.NO_OP;
     }
 

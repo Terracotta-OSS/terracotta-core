@@ -23,18 +23,37 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
                                                                                        }
 
                                                                                        @Override
-                                                                                       public NonStopTimeoutBehavior getNonStopTimeoutBehavior() {
-                                                                                         return NonStopConfigurationFields.DEFAULT_NON_STOP_TIMEOUT_BEHAVIOR;
-                                                                                       }
-
-                                                                                       @Override
                                                                                        public boolean isEnabled() {
                                                                                          return NonStopConfigurationFields.DEFAULT_NON_STOP_ENABLED;
                                                                                        }
+
+                                                                                       @Override
+                                                                                       public boolean isImmediateTimeoutEnabled() {
+                                                                                         return NonStopConfigurationFields.DEFAULT_NON_STOP_IMMEDIATE_TIMEOUT_ENABLED;
+                                                                                       }
+
+                                                                                       @Override
+                                                                                       public NonStopTimeoutBehavior getImmutableOpNonStopTimeoutBehavior() {
+                                                                                         return NonStopConfigurationFields.DEFAULT_NON_STOP_READ_TIMEOUT_BEHAVIOR;
+                                                                                       }
+
+                                                                                       @Override
+                                                                                       public NonStopTimeoutBehavior getMutableOpNonStopTimeoutBehavior() {
+                                                                                         return NonStopConfigurationFields.DEFAULT_NON_STOP_WRITE_TIMEOUT_BEHAVIOR;
+                                                                                       }
                                                                                      };
+
+  private void verify(NonStopConfiguration nonStopConfiguration) {
+    NonStopConfigurationFields.NonStopTimeoutBehavior mutableOpBehavior = nonStopConfiguration
+        .getMutableOpNonStopTimeoutBehavior();
+    if (mutableOpBehavior == NonStopTimeoutBehavior.LOCAL_READS) { throw new IllegalArgumentException(
+                                                                                                      "LOCAL_READS is not supported for mutable operations"); }
+  }
 
   @Override
   public void registerForType(NonStopConfiguration config, ToolkitObjectType... types) {
+    verify(config);
+
     for (ToolkitObjectType type : types) {
       allConfigs.put(new NonStopConfigKey(null, type, null), config);
     }
@@ -42,6 +61,8 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
 
   @Override
   public void registerForInstance(NonStopConfiguration config, String toolkitTypeName, ToolkitObjectType... types) {
+    verify(config);
+
     for (ToolkitObjectType type : types) {
       allConfigs.put(new NonStopConfigKey(null, type, toolkitTypeName), config);
     }
@@ -49,6 +70,8 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
 
   @Override
   public void registerForTypeMethod(NonStopConfiguration config, String methodName, ToolkitObjectType... types) {
+    verify(config);
+
     for (ToolkitObjectType type : types) {
       allConfigs.put(new NonStopConfigKey(methodName, type, null), config);
     }
@@ -57,6 +80,8 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
   @Override
   public void registerForInstanceMethod(NonStopConfiguration config, String methodName, String toolkitTypeName,
                                         ToolkitObjectType... types) {
+    verify(config);
+
     for (ToolkitObjectType type : types) {
       allConfigs.put(new NonStopConfigKey(methodName, type, toolkitTypeName), config);
     }

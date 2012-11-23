@@ -23,8 +23,13 @@ public class NonStopLocalReadExceptionOnMutateTest extends AbstractToolkitTestBa
     }
 
     @Override
-    protected NonStopTimeoutBehavior getTimeoutBehavior() {
-      return NonStopTimeoutBehavior.EXCEPTION_ON_MUTATE_AND_LOCAL_READS;
+    protected NonStopTimeoutBehavior getImmutableOpTimeoutBehavior() {
+      return NonStopTimeoutBehavior.LOCAL_READS;
+    }
+
+    @Override
+    protected NonStopTimeoutBehavior getMutableOpTimeoutBehavior() {
+      return NonStopTimeoutBehavior.EXCEPTION_ON_TIMEOUT;
     }
 
     @Override

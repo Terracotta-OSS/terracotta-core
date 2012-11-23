@@ -75,17 +75,13 @@ public class NonStopStartupTest extends AbstractToolkitTestBase {
       String cacheName = "test-cache";
 
       new NonStopConfigurationBuilder().timeoutMillis(NON_STOP_TIMEOUT_MILLIS)
-          .nonStopTimeoutBehavior(getTimeoutBehavior()).apply(toolkit);
+          .nonStopTimeoutBehavior(NonStopTimeoutBehavior.EXCEPTION_ON_TIMEOUT,
+                                  NonStopTimeoutBehavior.EXCEPTION_ON_TIMEOUT).apply(toolkit);
 
       ToolkitCacheConfigBuilder builder = new ToolkitCacheConfigBuilder();
       builder.maxCountLocalHeap(MAX_ENTRIES_LOCAL_HEAP);
 
       return toolkit.getCache(cacheName, builder.build(), Integer.class);
-    }
-
-
-    protected NonStopTimeoutBehavior getTimeoutBehavior() {
-      return NonStopTimeoutBehavior.EXCEPTION_ON_TIMEOUT;
     }
   }
 

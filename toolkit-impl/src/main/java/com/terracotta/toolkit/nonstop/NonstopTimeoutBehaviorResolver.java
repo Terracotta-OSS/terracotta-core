@@ -8,6 +8,7 @@ import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopTimeoutBehavior;
 
 import com.terracotta.toolkit.collections.map.LocalReadsToolkitCacheImpl;
+import com.terracotta.toolkit.collections.map.TimeoutBehaviorToolkitCacheImpl;
 import com.terracotta.toolkit.collections.map.ValuesResolver;
 import com.terracotta.toolkit.type.DistributedToolkitType;
 
@@ -38,18 +39,41 @@ public class NonstopTimeoutBehaviorResolver {
 
   }
 
-  public <E> E create(ToolkitObjectType objectType, NonStopTimeoutBehavior nonStopBehavior, AtomicReference<E> e) {
+  public <E> E create(ToolkitObjectType objectType, NonStopTimeoutBehavior immutableOpBehavior,
+                      NonStopTimeoutBehavior mutableOpBehavior, AtomicReference<E> e) {
+    if (objectType != ToolkitObjectType.CACHE && objectType != ToolkitObjectType.STORE) { throw new UnsupportedOperationException(); }
+
+    E immutationBehaviourResolver = createImmutableOpBehavior(objectType, immutableOpBehavior, e);
+    E mutationBehaviourResolver = createMutableOpBehavior(objectType, mutableOpBehavior, e);
+    TimeoutBehaviorToolkitCacheImpl behaviorToolkitCacheImpl = new TimeoutBehaviorToolkitCacheImpl(
+                                                                                                   (ToolkitCacheInternal) immutationBehaviourResolver,
+                                                                                                   (ToolkitCacheInternal) mutationBehaviourResolver);
+    return (E) behaviorToolkitCacheImpl;
+  }
+
+  private <E> E createMutableOpBehavior(ToolkitObjectType objectType, NonStopTimeoutBehavior nonStopBehavior,
+                                        AtomicReference<E> e) {
     switch (nonStopBehavior) {
       case EXCEPTION_ON_TIMEOUT:
         return createExceptionOnTimeOutBehaviour(objectType, e.get());
       case NO_OP:
         return createNoOpBehaviour(objectType, e.get());
-      case EXCEPTION_ON_MUTATE_AND_LOCAL_READS:
-        return createLocalReadsBehaviour(objectType, e, createExceptionOnTimeOutBehaviour(objectType, e.get()),
-                                         createNoOpBehaviour(objectType, e.get()));
+      case LOCAL_READS:
+        throw new UnsupportedOperationException();
+    }
+    return null;
+  }
+
+  private <E> E createImmutableOpBehavior(ToolkitObjectType objectType, NonStopTimeoutBehavior nonStopBehavior,
+                                          AtomicReference<E> e) {
+    switch (nonStopBehavior) {
+      case EXCEPTION_ON_TIMEOUT:
+        return createExceptionOnTimeOutBehaviour(objectType, e.get());
+      case NO_OP:
+        return createNoOpBehaviour(objectType, e.get());
       case LOCAL_READS:
         E noOpBehavior = createNoOpBehaviour(objectType, e.get());
-        return createLocalReadsBehaviour(objectType, e, noOpBehavior, noOpBehavior);
+        return createLocalReadsBehaviour(objectType, e, noOpBehavior);
     }
     return null;
   }
@@ -74,14 +98,12 @@ public class NonstopTimeoutBehaviorResolver {
 
   }
 
-  private <E> E createLocalReadsBehaviour(ToolkitObjectType objectType, AtomicReference<E> delegate,
-                                          E mutationBehaviour, E noOpBehavior) {
+  private <E> E createLocalReadsBehaviour(ToolkitObjectType objectType, AtomicReference<E> delegate, E noOpBehavior) {
 
     switch (objectType) {
       case CACHE:
       case STORE:
-        return (E) new LocalReadsToolkitCacheImpl(delegate, (ToolkitCacheInternal) mutationBehaviour,
-                                                  (ToolkitCacheInternal) noOpBehavior);
+        return (E) new LocalReadsToolkitCacheImpl(delegate, (ToolkitCacheInternal) noOpBehavior);
       case ATOMIC_LONG:
       case BARRIER:
       case BLOCKING_QUEUE:

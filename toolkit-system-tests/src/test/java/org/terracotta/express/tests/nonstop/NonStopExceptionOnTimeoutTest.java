@@ -22,10 +22,14 @@ public class NonStopExceptionOnTimeoutTest extends AbstractToolkitTestBase {
     }
 
     @Override
-    protected NonStopTimeoutBehavior getTimeoutBehavior() {
+    protected NonStopTimeoutBehavior getImmutableOpTimeoutBehavior() {
       return NonStopTimeoutBehavior.EXCEPTION_ON_TIMEOUT;
     }
 
+    @Override
+    protected NonStopTimeoutBehavior getMutableOpTimeoutBehavior() {
+      return NonStopTimeoutBehavior.EXCEPTION_ON_TIMEOUT;
+    }
     @Override
     protected void addToLocalCache(ToolkitCache<Integer, Integer> cache) {
       //

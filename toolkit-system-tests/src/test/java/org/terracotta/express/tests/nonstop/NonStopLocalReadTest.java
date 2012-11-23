@@ -23,8 +23,13 @@ public class NonStopLocalReadTest extends AbstractToolkitTestBase {
     }
 
     @Override
-    protected NonStopTimeoutBehavior getTimeoutBehavior() {
+    protected NonStopTimeoutBehavior getImmutableOpTimeoutBehavior() {
       return NonStopTimeoutBehavior.LOCAL_READS;
+    }
+
+    @Override
+    protected NonStopTimeoutBehavior getMutableOpTimeoutBehavior() {
+      return NonStopTimeoutBehavior.NO_OP;
     }
 
     @Override

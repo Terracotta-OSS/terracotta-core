@@ -81,10 +81,9 @@ public abstract class AbstractNonStopTestClient extends NonStopClientBase {
   }
 
   private void checkOnReturnValue(Integer expected, Integer actual) {
-    switch (getTimeoutBehavior()) {
+    switch (getImmutableOpTimeoutBehavior()) {
       case EXCEPTION_ON_TIMEOUT:
         throw new AssertionError("Expected " + expected + " , actual " + actual + ". But no value should have come.");
-      case EXCEPTION_ON_MUTATE_AND_LOCAL_READS:
       case LOCAL_READS:
         Assert.assertEquals(expected, actual);
         break;
@@ -95,11 +94,10 @@ public abstract class AbstractNonStopTestClient extends NonStopClientBase {
   }
 
   private void checkNonStopExceptionOnReads(NonStopException exception) {
-    switch (getTimeoutBehavior()) {
+    switch (getImmutableOpTimeoutBehavior()) {
       case EXCEPTION_ON_TIMEOUT:
         Assert.assertNotNull(exception);
         break;
-      case EXCEPTION_ON_MUTATE_AND_LOCAL_READS:
       case LOCAL_READS:
       case NO_OP:
         if (exception != null) {
@@ -123,7 +121,7 @@ public abstract class AbstractNonStopTestClient extends NonStopClientBase {
     String cacheName = "test-cache";
 
     new NonStopConfigurationBuilder().timeoutMillis(NON_STOP_TIMEOUT_MILLIS)
-        .nonStopTimeoutBehavior(getTimeoutBehavior()).apply(toolkit);
+        .nonStopTimeoutBehavior(getImmutableOpTimeoutBehavior(), getMutableOpTimeoutBehavior()).apply(toolkit);
 
     ToolkitCacheConfigBuilder builder = new ToolkitCacheConfigBuilder();
     builder.maxCountLocalHeap(MAX_ENTRIES_LOCAL_HEAP);
@@ -137,5 +135,7 @@ public abstract class AbstractNonStopTestClient extends NonStopClientBase {
     //
   }
 
-  protected abstract NonStopTimeoutBehavior getTimeoutBehavior();
+  protected abstract NonStopTimeoutBehavior getImmutableOpTimeoutBehavior();
+
+  protected abstract NonStopTimeoutBehavior getMutableOpTimeoutBehavior();
 }
