@@ -60,5 +60,4 @@ public class NonStopBasicTest extends AbstractToolkitTestBase {
       return toolkit.getCache("test-cache", builder.build(), Integer.class);
     }
   }
-
 }

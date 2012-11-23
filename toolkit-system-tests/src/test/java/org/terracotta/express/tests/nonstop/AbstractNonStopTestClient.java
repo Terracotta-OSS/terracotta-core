@@ -20,7 +20,7 @@ public abstract class AbstractNonStopTestClient extends NonStopClientBase {
   protected static final int  CLIENT_COUNT            = 2;
   protected static final int  NUMBER_OF_ELEMENTS      = 10;
   protected static final int  MAX_ENTRIES_LOCAL_HEAP  = 0;
-  protected static final long NON_STOP_TIMEOUT_MILLIS = 10000;
+  protected static final long NON_STOP_TIMEOUT_MILLIS = 20000;
 
   public AbstractNonStopTestClient(String[] args) {
     super(args);
