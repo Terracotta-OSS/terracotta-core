@@ -25,18 +25,21 @@ import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.internal.nonstop.NonStopManager;
 import org.terracotta.toolkit.monitoring.OperatorEventLevel;
+import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
 import org.terracotta.toolkit.object.ToolkitObject;
 import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.platform.PlatformService;
+import com.tc.util.Util;
 import com.terracotta.toolkit.collections.map.ValuesResolver;
 import com.terracotta.toolkit.nonstop.NonStopConfigRegistryImpl;
 import com.terracotta.toolkit.nonstop.NonStopDelegateProvider;
 import com.terracotta.toolkit.nonstop.NonStopInvocationHandler;
 import com.terracotta.toolkit.nonstop.NonStopManagerImpl;
 import com.terracotta.toolkit.nonstop.NonStopToolkitCacheDelegateProvider;
+import com.terracotta.toolkit.nonstop.NonStopToolkitStoreDelegateProvider;
 import com.terracotta.toolkit.nonstop.NonstopTimeoutBehaviorResolver;
 
 import java.lang.reflect.Proxy;
@@ -65,13 +68,21 @@ public class NonStopToolkit implements ToolkitInternal {
   }
 
   private ToolkitInternal getInitializedToolkit() {
-    try {
-      return toolkitDelegateFutureTask.get();
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    } catch (ExecutionException e) {
-      throw new RuntimeException(e);
+    ToolkitInternal toolkitInternal = null;
+    boolean interrupted = false;
+
+    while (toolkitInternal == null) {
+      try {
+        toolkitInternal = toolkitDelegateFutureTask.get();
+      } catch (InterruptedException e) {
+        interrupted = true;
+      } catch (ExecutionException e) {
+        throw new RuntimeException(e);
+      }
     }
+
+    Util.selfInterruptIfNeeded(interrupted);
+    return toolkitInternal;
   }
 
   @Override
@@ -84,20 +95,19 @@ public class NonStopToolkit implements ToolkitInternal {
     // TODO: refactor in a factory ?
     ToolkitStore<String, V> store = (ToolkitStore<String, V>) toolkitObjects.get(ToolkitObjectType.STORE).get(name);
     if (store != null) { return store; }
-    NonStopDelegateProvider<ToolkitCacheInternal<String, V>> nonStopDelegateProvider = new NonStopToolkitCacheDelegateProvider(
-                                                                                                                               abortableOperationManager,
-                                                                                                                               nonStopConfigManager,
-                                                                                                                               nonstopTimeoutBehaviorFactory,
-                                                                                                                               toolkitDelegateFutureTask,
-                                                                                                                               name,
-                                                                                                                               klazz,
-                                                                                                                               configuration);
-    store = (ToolkitCache<String, V>) Proxy
+    NonStopDelegateProvider<ToolkitStore<String, V>> nonStopDelegateProvider = new NonStopToolkitStoreDelegateProvider(
+                                                                                                                       abortableOperationManager,
+                                                                                                                       nonStopConfigManager,
+                                                                                                                       nonstopTimeoutBehaviorFactory,
+                                                                                                                       toolkitDelegateFutureTask,
+                                                                                                                       name,
+                                                                                                                       klazz,
+                                                                                                                       configuration);
+    store = (ToolkitStore<String, V>) Proxy
         .newProxyInstance(this.getClass().getClassLoader(), new Class[] { ToolkitCacheInternal.class,
-                              ValuesResolver.class },
-                          new NonStopInvocationHandler<ToolkitCacheInternal<String, V>>(nonStopManager,
-                                                                                        nonStopDelegateProvider));
-    ToolkitCache<String, V> oldStore = (ToolkitCache<String, V>) toolkitObjects.get(ToolkitObjectType.STORE)
+            ValuesResolver.class }, new NonStopInvocationHandler<ToolkitStore<String, V>>(nonStopManager,
+                                                                                          nonStopDelegateProvider));
+    ToolkitStore<String, V> oldStore = (ToolkitStore<String, V>) toolkitObjects.get(ToolkitObjectType.STORE)
         .putIfAbsent(name, store);
     return oldStore == null ? store : oldStore;
   }
@@ -176,6 +186,10 @@ public class NonStopToolkit implements ToolkitInternal {
   @Override
   public <V> ToolkitCache<String, V> getCache(String name, Configuration configuration, Class<V> klazz) {
     // TODO: refactor in a factory ?
+    NonStopConfiguration nonStopConfiguration = this.nonStopConfigManager.getConfigForInstance(name,
+                                                                                               ToolkitObjectType.CACHE);
+    if (!nonStopConfiguration.isEnabled()) { return getInitializedToolkit().getCache(name, configuration, klazz); }
+
     ToolkitCache<String, V> cache = (ToolkitCache<String, V>) toolkitObjects.get(ToolkitObjectType.CACHE).get(name);
     if (cache != null) { return cache; }
     NonStopDelegateProvider<ToolkitCacheInternal<String, V>> nonStopDelegateProvider = new NonStopToolkitCacheDelegateProvider(
