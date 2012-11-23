@@ -3,16 +3,11 @@
  */
 package org.terracotta.express.tests.rejoin;
 
-import org.terracotta.test.util.WaitUtil;
-import org.terracotta.toolkit.Toolkit;
-import org.terracotta.toolkit.cluster.ClusterEvent;
-import org.terracotta.toolkit.cluster.ClusterEvent.Type;
 import org.terracotta.toolkit.collections.ToolkitSortedSet;
+import org.terracotta.toolkit.internal.ToolkitInternal;
 
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.jmx.TestHandlerMBean;
-
-import java.util.concurrent.Callable;
 
 import junit.framework.Assert;
 
@@ -33,7 +28,7 @@ public class ToolkitSortedSetRejoinTest extends AbstractToolkitRejoinTest {
 
     @Override
     protected void doRejoinTest(TestHandlerMBean testHandlerMBean) throws Throwable {
-      Toolkit tk = createRejoinToolkit();
+      ToolkitInternal tk = createRejoinToolkit();
 
       doDebug("Creating ToolkitSet");
       ToolkitSortedSet toolkitSortedSet = tk.getSortedSet("ToolkitSet", String.class);
@@ -47,33 +42,9 @@ public class ToolkitSortedSetRejoinTest extends AbstractToolkitRejoinTest {
         Assert.assertTrue(toolkitSortedSet.contains(keyValGr.getValue(i)));
       }
 
-      String msg = "";
-      msg = "Crashing first active...";
-      doDebug(msg);
+      startRejoinAndWaitUnilCompleted(testHandlerMBean, tk);
 
-      testHandlerMBean.crashActiveAndWaitForPassiveToTakeOver(0);
-
-      msg = "Passive must have taken over as ACTIVE";
-      doDebug(msg);
-
-      WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
-
-        @Override
-        public Boolean call() throws Exception {
-          doDebug("Processing received events (waiting till rejoin happens for node: " + beforeRejoinNode + ")");
-          for (ClusterEvent e : receivedEvents) {
-            if (e.getType() == Type.NODE_REJOINED) {
-              doDebug("Received rejoin event - newNode: " + e.getNode());
-              return true;
-            }
-          }
-          return false;
-        }
-      });
-
-      doDebug("Rejoin happened successfully");
       doDebug("Asserting old values after rejoin");
-
       for (int i = 0; i < NUM_ELEMENTS; i++) {
         Assert.assertTrue(toolkitSortedSet.contains(keyValGr.getValue(i)));
       }

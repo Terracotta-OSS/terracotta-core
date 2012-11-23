@@ -3,19 +3,15 @@
  */
 package org.terracotta.express.tests.rejoin;
 
-import org.terracotta.test.util.WaitUtil;
-import org.terracotta.toolkit.Toolkit;
-import org.terracotta.toolkit.cluster.ClusterEvent;
-import org.terracotta.toolkit.cluster.ClusterEvent.Type;
 import org.terracotta.toolkit.collections.ToolkitMap;
 import org.terracotta.toolkit.collections.ToolkitSortedMap;
+import org.terracotta.toolkit.internal.ToolkitInternal;
 
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.jmx.TestHandlerMBean;
 import com.tc.util.Assert;
 
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 public class ToolkitMapAndSortedMapRejoinTest extends AbstractToolkitRejoinTest {
   public ToolkitMapAndSortedMapRejoinTest(TestConfig testConfig) {
@@ -26,7 +22,7 @@ public class ToolkitMapAndSortedMapRejoinTest extends AbstractToolkitRejoinTest 
 
     private static final int              NUM_ELEMENTS = 10;
     private final StringKeyValueGenerator keyValGr     = new StringKeyValueGenerator();
-    private Toolkit                       toolkit;
+    private ToolkitInternal               toolkit;
 
     public ToolkitMapRejoinTestClient(String[] args) {
       super(args);
@@ -64,32 +60,9 @@ public class ToolkitMapAndSortedMapRejoinTest extends AbstractToolkitRejoinTest 
         Assert.assertEquals(toolkitMap.get(keyValGr.getValue(i)), keyValGr.getValue(i));
       }
 
-      String msg = "";
-      msg = "Crashing first active...";
-      doDebug(msg);
-      testHandlerMBean.crashActiveAndWaitForPassiveToTakeOver(0);
+      startRejoinAndWaitUnilCompleted(testHandlerMBean, toolkit);
 
-      msg = "Passive must have taken over as ACTIVE";
-      doDebug(msg);
-
-      WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
-
-        @Override
-        public Boolean call() throws Exception {
-          doDebug("Processing received events (waiting till rejoin happens for node: " + beforeRejoinNode + ")");
-          for (ClusterEvent e : receivedEvents) {
-            if (e.getType() == Type.NODE_REJOINED) {
-              doDebug("Received rejoin event - newNode: " + e.getNode());
-              return true;
-            }
-          }
-          return false;
-        }
-      });
-
-      doDebug("Rejoin happened successfully");
       doDebug("Asserting old values after rejoin");
-
       for (int i = 0; i < NUM_ELEMENTS; i++) {
         Assert.assertEquals(toolkitMap.get(keyValGr.getValue(i)), keyValGr.getValue(i));
       }
