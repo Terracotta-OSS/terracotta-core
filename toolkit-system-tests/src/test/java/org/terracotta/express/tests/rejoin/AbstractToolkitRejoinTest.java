@@ -5,12 +5,9 @@ package org.terracotta.express.tests.rejoin;
 
 import org.terracotta.express.tests.base.AbstractToolkitTestBase;
 import org.terracotta.express.tests.base.ClientBase;
-import org.terracotta.test.util.WaitUtil;
 import org.terracotta.toolkit.Toolkit;
 import org.terracotta.toolkit.ToolkitFactory;
 import org.terracotta.toolkit.cluster.ClusterEvent;
-import org.terracotta.toolkit.cluster.ClusterEvent.Type;
-import org.terracotta.toolkit.cluster.ClusterListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.ToolkitLogger;
@@ -18,9 +15,11 @@ import org.terracotta.toolkit.internal.ToolkitLogger;
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.jmx.TestHandlerMBean;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryPoolMXBean;
+import java.lang.management.MemoryUsage;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
@@ -55,6 +54,7 @@ public class AbstractToolkitRejoinTest extends AbstractToolkitTestBase {
     private ToolkitLogger              logger;
     protected final List<ClusterEvent> receivedEvents = new CopyOnWriteArrayList<ClusterEvent>();
     protected ClusterNode              beforeRejoinNode;
+    private TKStatefulClusterListener  statefulListener;
 
     public AbstractToolkitRejoinTestClient(String[] args) {
       super(args);
@@ -65,22 +65,14 @@ public class AbstractToolkitRejoinTest extends AbstractToolkitTestBase {
       doRejoinTest(getTestControlMbean());
     }
 
-    public ToolkitInternal createRejoinToolkit() throws Exception {
-      debug("Creating first toolkit");
+    protected ToolkitInternal createRejoinToolkit() throws Exception {
+      debug("Creating rejoin toolkit");
       Properties properties = new Properties();
       properties.put("rejoin", "true");
       ToolkitInternal tk = (ToolkitInternal) ToolkitFactory.createToolkit("toolkit:terracotta://" + getTerracottaUrl(),
                                                                           properties);
-      beforeRejoinNode = tk.getClusterInfo().getCurrentNode();
       logger = tk.getLogger("com.tc.AppLogger");
-      tk.getClusterInfo().addClusterListener(new ClusterListener() {
-
-        @Override
-        public void onClusterEvent(ClusterEvent event) {
-          doDebug("Received cluster event: " + event);
-          receivedEvents.add(event);
-        }
-      });
+      statefulListener = new TKStatefulClusterListener(tk);
       return tk;
     }
 
@@ -92,29 +84,19 @@ public class AbstractToolkitRejoinTest extends AbstractToolkitTestBase {
       testHandlerMBean.crashActiveAndWaitForPassiveToTakeOver(0);
       doDebug("Passive must have taken over as ACTIVE");
 
-      WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
-
-        @Override
-        public Boolean call() throws Exception {
-          debug("Processing received events (waiting till rejoin happens for node: " + beforeRejoinNode + ")");
-          for (ClusterEvent e : receivedEvents) {
-            debug("Event: type: " + e.getType() + ", node: " + e.getNode());
-            if (e.getType() == Type.NODE_REJOINED) {
-              debug("Received rejoin event - newNode: " + e.getNode());
-              return true;
-            }
-          }
-          return false;
-        }
-      });
+      statefulListener.waitUntilRejoin();
 
       doDebug("Rejoin happened successfully");
     }
 
-    protected void doSleep(int sec) throws InterruptedException {
+    protected void doSleep(int sec) {
       for (int i = 0; i < sec; i++) {
-        doDebug("Sleeping for 1 sec (" + i + "/" + sec + ")");
-        Thread.sleep(1000);
+        // doDebug("Sleeping for 1 sec (" + i + "/" + sec + ")");
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException e) {
+          //
+        }
       }
     }
 
@@ -128,6 +110,24 @@ public class AbstractToolkitRejoinTest extends AbstractToolkitTestBase {
     @Override
     protected void test(Toolkit toolkit) throws Throwable {
       throw new RuntimeException("This method should not be used for rejoin tests");
+    }
+
+    protected String getPermGenUsage() {
+      String message = "";
+      List<MemoryPoolMXBean> memoryPoolMXBeans = ManagementFactory.getMemoryPoolMXBeans();
+      for (MemoryPoolMXBean memoryPoolMXBean : memoryPoolMXBeans) {
+        String name = memoryPoolMXBean.getName();
+        if (!name.contains("Perm Gen")) {
+          continue;
+        }
+        MemoryUsage usage = memoryPoolMXBean.getUsage();
+        message += " (" + name + " : " + toMegaBytes(usage.getUsed()) + "M / " + toMegaBytes(usage.getMax()) + "M)";
+      }
+      return message;
+    }
+
+    private long toMegaBytes(long bytes) {
+      return (bytes / 1024) / 1024;
     }
 
     protected abstract void doRejoinTest(TestHandlerMBean testHandlerMBean) throws Throwable;
