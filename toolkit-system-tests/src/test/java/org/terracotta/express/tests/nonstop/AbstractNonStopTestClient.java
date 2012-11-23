@@ -42,6 +42,14 @@ public abstract class AbstractNonStopTestClient extends NonStopClientBase {
 
     barrier.await();
 
+    try {
+      cache.get(NUMBER_OF_ELEMENTS + 1);
+    } catch (NonStopException e) {
+      e.printStackTrace();
+    }
+
+    barrier.await();
+
     if (index == 1) {
       addToLocalCache(cache);
 
@@ -64,7 +72,37 @@ public abstract class AbstractNonStopTestClient extends NonStopClientBase {
         checkNonStopExceptionOnReads(exception);
       }
 
+      boolean exceptionOccurredOnPut = false;
+      Object rv = null;
+
+      System.err.println("Asserting now on Put");
+      long time = System.currentTimeMillis();
+      try {
+        rv = cache.put(NUMBER_OF_ELEMENTS + 1, NUMBER_OF_ELEMENTS + 1);
+      } catch (NonStopException e) {
+        exceptionOccurredOnPut = true;
+      }
+
+      checkAndAssertOnPut(time, rv, exceptionOccurredOnPut);
+
       restartCrashedServer();
+    }
+  }
+
+  private void checkAndAssertOnPut(long time, Object rv, boolean exceptionOccurredOnPut) {
+    time = System.currentTimeMillis() - time;
+    Assert.assertTrue((time > (NON_STOP_TIMEOUT_MILLIS - 500)) && (time < (NON_STOP_TIMEOUT_MILLIS + 2000)));
+    Assert.assertNull(rv);
+
+    switch (getMutableOpTimeoutBehavior()) {
+      case NO_OP:
+        Assert.assertFalse(exceptionOccurredOnPut);
+        break;
+      case EXCEPTION_ON_TIMEOUT:
+        Assert.assertTrue(exceptionOccurredOnPut);
+        break;
+      default:
+        throw new UnsupportedOperationException();
     }
   }
 
