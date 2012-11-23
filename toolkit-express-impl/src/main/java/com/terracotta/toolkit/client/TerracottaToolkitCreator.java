@@ -6,8 +6,12 @@ package com.terracotta.toolkit.client;
 import org.terracotta.toolkit.internal.TerracottaL1Instance;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.express.TerracottaInternalClient;
 import com.terracotta.toolkit.express.TerracottaInternalClientStaticFactory;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.FutureTask;
 
 public class TerracottaToolkitCreator {
 
@@ -29,16 +33,45 @@ public class TerracottaToolkitCreator {
 
   public ToolkitInternal createToolkit() {
     try {
-      ToolkitInternal toolkitInternal = null;
-      if (enterprise) {
-        toolkitInternal = instantiateToolkit(ENTERPRISE_TOOLKIT_IMPL_CLASSNAME);
+      if (config.isNonStopEnabled()) {
+        final FutureTask<ToolkitInternal> futureTask = createInternalToolkitAsynchronously();
+        return instantiateNonStopToolkit(futureTask);
       } else {
-        toolkitInternal = instantiateToolkit(TOOLKIT_IMPL_CLASSNAME);
+        return createInternalToolkit();
       }
-      return config.isNonStopEnabled() ? instantiateNonStopToolkit(toolkitInternal) : toolkitInternal;
     } catch (Exception e) {
       throw new RuntimeException("Unable to create toolkit.", e);
     }
+  }
+
+  private FutureTask<ToolkitInternal> createInternalToolkitAsynchronously() {
+    Callable<ToolkitInternal> callable = new Callable<ToolkitInternal>() {
+      @Override
+      public ToolkitInternal call() throws Exception {
+        return createInternalToolkit();
+      }
+    };
+    final FutureTask<ToolkitInternal> futureTask = new FutureTask<ToolkitInternal>(callable);
+    Thread t = new Thread("Non Stop initialization of Toolkit") {
+      @Override
+      public void run() {
+        futureTask.run();
+      }
+    };
+    t.start();
+    return futureTask;
+  }
+
+  private ToolkitInternal createInternalToolkit() throws Exception {
+    ToolkitInternal toolkitInternal = null;
+    internalClient.init();
+
+    if (enterprise) {
+      toolkitInternal = instantiateToolkit(ENTERPRISE_TOOLKIT_IMPL_CLASSNAME);
+    } else {
+      toolkitInternal = instantiateToolkit(TOOLKIT_IMPL_CLASSNAME);
+    }
+    return toolkitInternal;
   }
 
   private TerracottaInternalClient createInternalClient() {
@@ -54,9 +87,11 @@ public class TerracottaToolkitCreator {
                                       new Object[] { getTerracottaL1Instance() });
   }
 
-  private ToolkitInternal instantiateNonStopToolkit(ToolkitInternal toolkitInternal) throws Exception {
-    return internalClient.instantiate(NON_STOP_TOOLKIT_IMPL_CLASSNAME, new Class[] { ToolkitInternal.class },
-                                      new Object[] { toolkitInternal });
+  private ToolkitInternal instantiateNonStopToolkit(FutureTask<ToolkitInternal> futureTask) throws Exception {
+    return internalClient.instantiate(NON_STOP_TOOLKIT_IMPL_CLASSNAME,
+                                      new Class[] { FutureTask.class,
+                                          internalClient.loadClass(PlatformService.class.getName()) }, new Object[] {
+                                          futureTask, internalClient.getPlatformService() });
   }
 
   private TerracottaL1Instance getTerracottaL1Instance() {

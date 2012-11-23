@@ -31,11 +31,14 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class PlatformServiceImpl implements PlatformService {
-  private final Manager manager;
-  private final RejoinLifecycleEventController rejoinEventsController;
+  private final Manager                           manager;
+  private volatile RejoinLifecycleEventController rejoinEventsController;
 
-  public PlatformServiceImpl(Manager manager, RejoinManager rejoinManager, ClientHandshakeManager clientHandshakeManager) {
+  public PlatformServiceImpl(Manager manager) {
     this.manager = manager;
+  }
+
+  public void init(RejoinManager rejoinManager, ClientHandshakeManager clientHandshakeManager) {
     rejoinEventsController = new RejoinLifecycleEventController(rejoinManager, clientHandshakeManager);
   }
 

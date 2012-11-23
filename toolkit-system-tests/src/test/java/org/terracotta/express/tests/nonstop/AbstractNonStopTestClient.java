@@ -122,8 +122,8 @@ public abstract class AbstractNonStopTestClient extends NonStopClientBase {
   private ToolkitCache createCache(Toolkit toolkit) {
     String cacheName = "test-cache";
 
-    new NonStopConfigurationBuilder().timeoutMillis(NON_STOP_TIMEOUT_MILLIS).nonStopTimeoutBehavior(getTimeoutBehavior())
-        .apply(toolkit);
+    new NonStopConfigurationBuilder().timeoutMillis(NON_STOP_TIMEOUT_MILLIS)
+        .nonStopTimeoutBehavior(getTimeoutBehavior()).apply(toolkit);
 
     ToolkitCacheConfigBuilder builder = new ToolkitCacheConfigBuilder();
     builder.maxCountLocalHeap(MAX_ENTRIES_LOCAL_HEAP);

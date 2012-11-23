@@ -8,6 +8,12 @@ import com.terracotta.toolkit.express.TerracottaInternalClientImpl.ClientShutdow
 import java.util.Set;
 
 public interface TerracottaInternalClient {
+
+  /**
+   * Initialize the client. This will start the client to connect to the L2.
+   */
+  void init();
+
   /**
    * Instantiates a class using an internal instrumentation capable class loader.
    * <p>
@@ -22,6 +28,11 @@ public interface TerracottaInternalClient {
    * @throws Exception if the class could not be loaded or instantiated
    */
   <T> T instantiate(String className, Class[] cstrArgTypes, Object[] cstrArgs) throws Exception;
+
+  /**
+   * Return the class using a capable class loader.
+   */
+  Class loadClass(String className) throws ClassNotFoundException;
 
   /**
    * Returns true if the client is a dedicated client. Otherwise false
@@ -42,6 +53,11 @@ public interface TerracottaInternalClient {
    * Returns whether this client has been shutdown or not
    */
   boolean isShutdown();
+
+  /**
+   * Returns the PlatformService.
+   */
+  Object getPlatformService();
 
   /**
    * Returns whether this client is online or not

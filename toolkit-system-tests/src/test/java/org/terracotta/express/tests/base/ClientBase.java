@@ -36,7 +36,7 @@ public abstract class ClientBase extends AbstractClientBase {
     return clusteringToolkit;
   }
 
-  private Toolkit createToolkit() {
+  protected Toolkit createToolkit() {
     try {
       return ToolkitFactory.createToolkit(getTerracottaTypeSubType() + getTerracottaUrl());
     } catch (ToolkitInstantiationException e) {

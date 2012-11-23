@@ -87,41 +87,41 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
 
 import javax.management.MBeanServer;
 
 public class ManagerImpl implements Manager {
-  private static final TCLogger                    logger                    = TCLogging.getLogger(Manager.class);
-  private final SetOnceFlag                        clientStarted             = new SetOnceFlag();
-  private final SetOnceFlag                        clientStopped             = new SetOnceFlag();
-  private final DSOClientConfigHelper              config;
-  private final ClassProvider                      classProvider;
-  private final boolean                            startClient;
-  private final PreparedComponentsFromL2Connection connectionComponents;
-  private final Thread                             shutdownAction;
-  private final Portability                        portability;
-  private final StatisticsAgentSubSystem           statisticsAgentSubSystem;
-  private final DsoClusterInternal                 dsoCluster;
-  private final RuntimeLogger                      runtimeLogger;
-  private final LockIdFactory                      lockIdFactory;
-  private final ClientMode                         clientMode;
-  private final TCSecurityManager                  securityManager;
+  private static final TCLogger                       logger                    = TCLogging.getLogger(Manager.class);
+  private final SetOnceFlag                           clientStarted             = new SetOnceFlag();
+  private final SetOnceFlag                           clientStopped             = new SetOnceFlag();
+  private final ClassProvider                         classProvider;
+  private final boolean                               startClient;
+  private final Thread                                shutdownAction;
+  private final StatisticsAgentSubSystem              statisticsAgentSubSystem;
+  private final DsoClusterInternal                    dsoCluster;
+  private final LockIdFactory                         lockIdFactory;
+  private final ClientMode                            clientMode;
+  private final TCSecurityManager                     securityManager;
 
-  private ClientObjectManager                      objectManager;
-  private ClientShutdownManager                    shutdownManager;
-  private ClientTransactionManager                 txManager;
-  private ClientLockManager                        lockManager;
-  private RemoteSearchRequestManager               searchRequestManager;
-  private DistributedObjectClient                  dso;
-  private DmiManager                               methodCallManager;
+  private ClientObjectManager                         objectManager;
+  private ClientShutdownManager                       shutdownManager;
+  private ClientTransactionManager                    txManager;
+  private ClientLockManager                           lockManager;
+  private RemoteSearchRequestManager                  searchRequestManager;
+  private DistributedObjectClient                     dso;
+  private DmiManager                                  methodCallManager;
 
-  private final SerializationUtil                  serializer                = new SerializationUtil();
+  private volatile Portability                        portability;
+  private volatile DSOClientConfigHelper              config;
+  private volatile PreparedComponentsFromL2Connection connectionComponents;
+  private volatile RuntimeLogger                      runtimeLogger;
 
-  private final ConcurrentHashMap<String, Object>  registeredObjects         = new ConcurrentHashMap<String, Object>();
-  private final AbortableOperationManager          abortableOperationManager = new AbortableOperationManagerImpl();
-  private final AtomicReference<PlatformService>   platformServiceRef        = new AtomicReference<PlatformService>();
-  private final RejoinManagerInternal              rejoinManager;
+  private final SerializationUtil                     serializer                = new SerializationUtil();
+
+  private final ConcurrentHashMap<String, Object>     registeredObjects         = new ConcurrentHashMap<String, Object>();
+  private final AbortableOperationManager             abortableOperationManager = new AbortableOperationManagerImpl();
+  private final PlatformServiceImpl                   platformService;
+  private final RejoinManagerInternal                 rejoinManager;
 
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
                      final TCSecurityManager securityManager) {
@@ -145,7 +145,7 @@ public class ManagerImpl implements Manager {
                      final boolean isExpressRejoinMode, final TCSecurityManager securityManager) {
     this.objectManager = objectManager;
     this.securityManager = securityManager;
-    this.portability = config.getPortability();
+    this.portability = config == null ? null : config.getPortability();
     this.txManager = txManager;
     this.lockManager = lockManager;
     this.searchRequestManager = searchRequestManager;
@@ -163,11 +163,20 @@ public class ManagerImpl implements Manager {
     } else {
       this.shutdownAction = null;
     }
-    this.runtimeLogger = runtimeLogger == null ? new RuntimeLoggerImpl(config) : runtimeLogger;
+    this.runtimeLogger = runtimeLogger == null ? config == null ? null : new RuntimeLoggerImpl(config) : runtimeLogger;
     this.classProvider = new SingleLoaderClassProvider(loader == null ? getClass().getClassLoader() : loader);
 
     this.lockIdFactory = new LockIdFactory(this);
     this.clientMode = isExpressRejoinMode ? ClientMode.EXPRESS_REJOIN_MODE : ClientMode.DSO_MODE;
+    this.platformService = new PlatformServiceImpl(this);
+  }
+
+  public void set(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
+           final RuntimeLogger runtimeLogger) {
+    this.portability = config.getPortability();
+    this.config = config;
+    this.connectionComponents = connectionComponents;
+    this.runtimeLogger = runtimeLogger == null ? new RuntimeLoggerImpl(config) : runtimeLogger;
   }
 
   @Override
@@ -186,13 +195,9 @@ public class ManagerImpl implements Manager {
     if (this.startClient) {
       if (this.clientStarted.attemptSet()) {
         startClient(forTests, testStartLatch);
-        this.platformServiceRef.set(createPlatformService());
+        this.platformService.init(rejoinManager, this.dso.getClientHandshakeManager());
       }
     }
-  }
-
-  private PlatformService createPlatformService() {
-    return new PlatformServiceImpl(this, rejoinManager, this.dso.getClientHandshakeManager());
   }
 
   @Override
@@ -1064,8 +1069,6 @@ public class ManagerImpl implements Manager {
 
   @Override
   public PlatformService getPlatformService() {
-    PlatformService platformService = platformServiceRef.get();
-    if (platformService == null) { throw new AssertionError(); }
     return platformService;
   }
 }

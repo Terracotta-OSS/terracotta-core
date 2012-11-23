@@ -30,6 +30,7 @@ import org.terracotta.toolkit.object.ToolkitObject;
 import org.terracotta.toolkit.store.ToolkitStore;
 
 import com.tc.abortable.AbortableOperationManager;
+import com.tc.platform.PlatformService;
 import com.terracotta.toolkit.collections.map.ValuesResolver;
 import com.terracotta.toolkit.nonstop.NonStopConfigRegistryImpl;
 import com.terracotta.toolkit.nonstop.NonStopDelegateProvider;
@@ -41,25 +42,21 @@ import com.terracotta.toolkit.nonstop.NonstopTimeoutBehaviorResolver;
 import java.lang.reflect.Proxy;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 
 public class NonStopToolkit implements ToolkitInternal {
-  private final ToolkitInternal                                                        toolkitDelegate;
+  private final FutureTask<ToolkitInternal>                                            toolkitDelegateFutureTask;
   private final NonStopManager                                                         nonStopManager;
   private final NonStopConfigRegistryImpl                                              nonStopConfigManager          = new NonStopConfigRegistryImpl();
   private final NonstopTimeoutBehaviorResolver                                         nonstopTimeoutBehaviorFactory = new NonstopTimeoutBehaviorResolver();
 
   private final ConcurrentMap<ToolkitObjectType, ConcurrentMap<String, ToolkitObject>> toolkitObjects                = new ConcurrentHashMap<ToolkitObjectType, ConcurrentMap<String, ToolkitObject>>();
+  private final AbortableOperationManager                                              abortableOperationManager;
 
-  public NonStopToolkit(ToolkitInternal toolkitDelegate) {
-    this.toolkitDelegate = toolkitDelegate;
-    if (!(toolkitDelegate instanceof TerracottaToolkit)) { throw new RuntimeException(
-                                                                                      "Wrong Toolkit Initialized, toolkit should be instance of "
-                                                                                          + TerracottaToolkit.class
-                                                                                          + " but is "
-                                                                                          + toolkitDelegate.getClass()); }
-
-    AbortableOperationManager abortableOperationManager = ((TerracottaToolkit) toolkitDelegate)
-        .getAbortableOperationManager();
+  public NonStopToolkit(FutureTask<ToolkitInternal> toolkitDelegateFutureTask, PlatformService platformService) {
+    this.toolkitDelegateFutureTask = toolkitDelegateFutureTask;
+    abortableOperationManager = platformService.getAbortableOperationManager();
     this.nonStopManager = new NonStopManagerImpl(abortableOperationManager);
 
     for (ToolkitObjectType objectType : ToolkitObjectType.values()) {
@@ -68,7 +65,13 @@ public class NonStopToolkit implements ToolkitInternal {
   }
 
   private ToolkitInternal getInitializedToolkit() {
-    return toolkitDelegate;
+    try {
+      return toolkitDelegateFutureTask.get();
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    } catch (ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
@@ -82,9 +85,10 @@ public class NonStopToolkit implements ToolkitInternal {
     ToolkitStore<String, V> store = (ToolkitStore<String, V>) toolkitObjects.get(ToolkitObjectType.STORE).get(name);
     if (store != null) { return store; }
     NonStopDelegateProvider<ToolkitCacheInternal<String, V>> nonStopDelegateProvider = new NonStopToolkitCacheDelegateProvider(
+                                                                                                                               abortableOperationManager,
                                                                                                                                nonStopConfigManager,
                                                                                                                                nonstopTimeoutBehaviorFactory,
-                                                                                                                               toolkitDelegate,
+                                                                                                                               toolkitDelegateFutureTask,
                                                                                                                                name,
                                                                                                                                klazz,
                                                                                                                                configuration);
@@ -175,9 +179,10 @@ public class NonStopToolkit implements ToolkitInternal {
     ToolkitCache<String, V> cache = (ToolkitCache<String, V>) toolkitObjects.get(ToolkitObjectType.CACHE).get(name);
     if (cache != null) { return cache; }
     NonStopDelegateProvider<ToolkitCacheInternal<String, V>> nonStopDelegateProvider = new NonStopToolkitCacheDelegateProvider(
+                                                                                                                               abortableOperationManager,
                                                                                                                                nonStopConfigManager,
                                                                                                                                nonstopTimeoutBehaviorFactory,
-                                                                                                                               toolkitDelegate,
+                                                                                                                               toolkitDelegateFutureTask,
                                                                                                                                name,
                                                                                                                                klazz,
                                                                                                                                configuration);
