@@ -49,7 +49,7 @@ public class ToolkitBarrierRejoinTest extends AbstractToolkitRejoinTest {
       anotherThread.start();
       doSleep(5);
       doDebug("done with sleep now doing rejoin");
-      startRejoinAndWaitUnilCompleted(testHandlerMBean, tk);
+      startRejoinAndWaitUntilCompleted(testHandlerMBean, tk);
       anotherThread.join();
       if (!exceptionFound.get()) { throw new RuntimeException("RejoinInProgressException should have seen"); }
     }

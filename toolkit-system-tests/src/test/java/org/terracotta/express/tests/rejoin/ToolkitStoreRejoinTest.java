@@ -44,7 +44,7 @@ public class ToolkitStoreRejoinTest extends AbstractToolkitRejoinTest {
         Assert.assertEquals(expected, actual);
       }
 
-      startRejoinAndWaitUnilCompleted(testHandlerMBean, tk);
+      startRejoinAndWaitUntilCompleted(testHandlerMBean, tk);
 
       doDebug("Asserting old values after rejoin");
       for (int i = 0; i < NUM_ELEMENTS; i++) {

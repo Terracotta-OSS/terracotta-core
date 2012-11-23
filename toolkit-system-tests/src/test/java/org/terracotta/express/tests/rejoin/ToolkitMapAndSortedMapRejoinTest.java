@@ -60,7 +60,7 @@ public class ToolkitMapAndSortedMapRejoinTest extends AbstractToolkitRejoinTest 
         Assert.assertEquals(toolkitMap.get(keyValGr.getValue(i)), keyValGr.getValue(i));
       }
 
-      startRejoinAndWaitUnilCompleted(testHandlerMBean, toolkit);
+      startRejoinAndWaitUntilCompleted(testHandlerMBean, toolkit);
 
       doDebug("Asserting old values after rejoin");
       for (int i = 0; i < NUM_ELEMENTS; i++) {

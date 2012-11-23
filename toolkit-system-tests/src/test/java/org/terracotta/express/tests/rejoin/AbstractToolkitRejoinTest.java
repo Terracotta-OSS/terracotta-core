@@ -84,7 +84,7 @@ public class AbstractToolkitRejoinTest extends AbstractToolkitTestBase {
       return tk;
     }
 
-    protected void startRejoinAndWaitUnilCompleted(TestHandlerMBean testHandlerMBean, ToolkitInternal tk)
+    protected void startRejoinAndWaitUntilCompleted(TestHandlerMBean testHandlerMBean, ToolkitInternal tk)
         throws Exception {
       tk.waitUntilAllTransactionsComplete();
 
