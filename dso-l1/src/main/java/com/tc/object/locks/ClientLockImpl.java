@@ -574,7 +574,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     }
 
     public boolean isKnownResult() {
-      return isSuccess() || isFailure();
+      return isSuccess() || isFailure() || isWaitingForFlush();
     }
 
     public boolean isWaitingForFlush() {
@@ -765,17 +765,15 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
     final boolean noLocksHeld;
     final ServerLockLevel flushLevel;
-    final boolean doRemoteUnlock;
 
     synchronized (this) {
       unlock.flushInProgress();
       noLocksHeld = noLocksHeld(unlock, null);
       flushLevel = greediness.getFlushLevel();
-      doRemoteUnlock = greediness.isFree();
     }
 
     // TODO: to be done in a flush thread and not on txn complete thread
-    LockFlushCallback flushCallback = getUnlockFlushCallback(remote, flushLevel, unlock, doRemoteUnlock);
+    LockFlushCallback flushCallback = getUnlockFlushCallback(remote, flushLevel, unlock);
 
     if (remote.asyncFlush(lock, flushCallback, noLocksHeld)) {
       flushCallback.transactionsForLockFlushed(lock);
@@ -787,7 +785,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   }
 
   private LockFlushCallback getUnlockFlushCallback(final RemoteLockManager remote, final ServerLockLevel flushLevel,
-                                                   final LockHold unlockParam, final boolean doRemoteUnlock) {
+                                                   final LockHold unlockParam) {
     LockFlushCallback flushCallback = new LockFlushCallback() {
       @Override
       public void transactionsForLockFlushed(LockID id) {
@@ -799,7 +797,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
               remove(unlockParam);
               ClientLockImpl.this.notifyAll();
 
-              if (greediness.isFree() && doRemoteUnlock) {
+              if (greediness.isFree()) {
                 remoteUnlock(remote, unlockParam);
               } else if (greediness.isRecalled() && canRecallNow()) {
                 greediness = recallCommit(remote, false);
