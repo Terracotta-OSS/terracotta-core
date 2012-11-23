@@ -4,19 +4,16 @@
  */
 package com.tc.cluster;
 
-import com.tc.abortable.AbortedOperationException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.cluster.exceptions.UnclusteredObjectException;
 import com.tc.exception.TCNotRunningException;
-import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ClusterMetaDataManager;
-import com.tc.object.ObjectID;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TCMap;
 import com.tc.object.bytecode.TCServerMap;
@@ -35,12 +32,10 @@ import com.tcclient.cluster.DsoNodeInternal;
 import com.tcclient.cluster.DsoNodeMetaData;
 import com.tcclient.cluster.OutOfBandDsoClusterListener;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -67,8 +62,6 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   private final OutOfBandNotifier                outOfBandNotifier    = new OutOfBandNotifier();
 
   private ClusterMetaDataManager                 clusterMetaDataManager;
-  private ClientObjectManager                    clientObjectManager;
-
   private Sink                                   eventsProcessorSink;
 
   private final RejoinManagerInternal            rejoinManager;
@@ -81,7 +74,6 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   public void init(final ClusterMetaDataManager metaDataManager, final ClientObjectManager objectManager,
                    final Stage dsoClusterEventsStage) {
     this.clusterMetaDataManager = metaDataManager;
-    this.clientObjectManager = objectManager;
     this.eventsProcessorSink = dsoClusterEventsStage.getSink();
 
     for (DsoNodeInternal node : topology.getInternalNodes()) {
@@ -144,41 +136,6 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   }
 
   @Override
-  public Set<DsoNode> getNodesWithObject(final Object object) throws UnclusteredObjectException {
-    Assert.assertNotNull(clusterMetaDataManager);
-
-    if (null == object) { return Collections.emptySet(); }
-
-    // we might have to use ManagerUtil.lookupExistingOrNull(object) here if we need to support literals
-    if (object instanceof Manageable) {
-      Manageable manageable = (Manageable) object;
-      if (manageable.__tc_isManaged()) {
-        ObjectID objectId = manageable.__tc_managed().getObjectID();
-        Set<NodeID> response = mergeLocalInformation(objectId, clusterMetaDataManager.getNodesWithObject(objectId));
-        if (response.isEmpty()) { return Collections.emptySet(); }
-
-        final Set<DsoNode> result = new HashSet<DsoNode>();
-        for (NodeID nodeID : response) {
-          result.add(topology.getAndRegisterDsoNode(nodeID));
-        }
-
-        return result;
-      }
-    }
-
-    throw new UnclusteredObjectException(object);
-  }
-
-  @Override
-  public Map<?, Set<DsoNode>> getNodesWithObjects(final Object... objects) throws UnclusteredObjectException {
-    Assert.assertNotNull(clusterMetaDataManager);
-
-    if (null == objects || 0 == objects.length) { return Collections.emptyMap(); }
-
-    return getNodesWithObjects(Arrays.asList(objects));
-  }
-
-  @Override
   public <K> Map<K, Set<DsoNode>> getNodesWithKeys(final Map<K, ?> map, final Collection<? extends K> keys)
       throws UnclusteredObjectException {
     Assert.assertNotNull(clusterMetaDataManager);
@@ -210,110 +167,6 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
       }
     }
     return result;
-  }
-
-  @Override
-  public Map<?, Set<DsoNode>> getNodesWithObjects(final Collection<?> objects) throws UnclusteredObjectException {
-    Assert.assertNotNull(clusterMetaDataManager);
-
-    if (null == objects || 0 == objects.size()) { return Collections.emptyMap(); }
-
-    // ensure that all objects in the collection are managed and collect their object IDs
-    // we might have to use ManagerUtil.lookupExistingOrNull(object) here if we need to support literals
-    final HashMap<ObjectID, Object> objectIDMapping = new HashMap<ObjectID, Object>();
-    for (Object object : objects) {
-      if (object != null) {
-        if (!(object instanceof Manageable)) {
-          throw new UnclusteredObjectException(object);
-        } else {
-          Manageable manageable = (Manageable) object;
-          if (!manageable.__tc_isManaged()) {
-            throw new UnclusteredObjectException(object);
-          } else {
-            objectIDMapping.put(manageable.__tc_managed().getObjectID(), object);
-          }
-        }
-      }
-    }
-
-    if (0 == objectIDMapping.size()) { return Collections.emptyMap(); }
-
-    // retrieve the object locality information from the L2
-    final Map<ObjectID, Set<NodeID>> response = mergeLocalInformation(clusterMetaDataManager
-        .getNodesWithObjects(objectIDMapping.keySet()));
-    if (response.isEmpty()) { return Collections.emptyMap(); }
-
-    // transform object IDs and node IDs in actual local instances
-    Map<Object, Set<DsoNode>> result = new IdentityHashMap<Object, Set<DsoNode>>();
-    for (Map.Entry<ObjectID, Set<NodeID>> entry : response.entrySet()) {
-      final Object object = objectIDMapping.get(entry.getKey());
-      Assert.assertNotNull(object);
-
-      final Set<DsoNode> dsoNodes = new HashSet<DsoNode>();
-      for (NodeID nodeID : entry.getValue()) {
-        dsoNodes.add(topology.getAndRegisterDsoNode(nodeID));
-      }
-      result.put(object, dsoNodes);
-    }
-
-    return result;
-  }
-
-  @Override
-  public <K> Set<K> getKeysForOrphanedValues(final Map<K, ?> map) throws UnclusteredObjectException {
-    Assert.assertNotNull(clusterMetaDataManager);
-
-    if (null == map) { return Collections.emptySet(); }
-
-    if (map instanceof Manageable) {
-      Manageable manageable = (Manageable) map;
-      if (manageable.__tc_isManaged() && manageable instanceof TCMap) {
-        final Set<K> result = new HashSet<K>();
-        final Set keys = clusterMetaDataManager.getKeysForOrphanedValues((TCMap) map);
-        for (Object key : keys) {
-          if (key instanceof ObjectID) {
-            try {
-              result.add((K) clientObjectManager.lookupObject((ObjectID) key));
-            } catch (ClassNotFoundException e) {
-              Assert.fail("Unexpected ClassNotFoundException for key '" + key + "' : " + e.getMessage());
-            } catch (AbortedOperationException e) {
-              throw new TCRuntimeException(e);
-            }
-          } else {
-            result.add((K) key);
-          }
-        }
-        return result;
-      }
-    }
-
-    // if either the map isn't clustered, or it doesn't implement partial map capabilities, then no key are orphaned
-    return Collections.emptySet();
-  }
-
-  @Override
-  public <K> Set<K> getKeysForLocalValues(final Map<K, ?> map) throws UnclusteredObjectException {
-    if (null == map) { return Collections.emptySet(); }
-
-    if (map instanceof Manageable) {
-      Manageable manageable = (Manageable) map;
-      if (manageable.__tc_isManaged() && manageable instanceof TCMap) {
-        final Collection<Map.Entry> localEntries = ((TCMap) manageable).__tc_getAllEntriesSnapshot();
-        if (0 == localEntries.size()) { return Collections.emptySet(); }
-
-        final Set<K> result = new HashSet<K>();
-        for (Map.Entry entry : localEntries) {
-          if (!(entry.getValue() instanceof ObjectID) || clientObjectManager.isLocal((ObjectID) entry.getValue())) {
-            result.add((K) entry.getKey());
-          }
-        }
-
-        return result;
-      }
-    }
-
-    // if either the map isn't clustered, or it doesn't implement partial map capabilities, then all the keys are local
-    return map.keySet();
   }
 
   @Override
@@ -379,8 +232,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
     try {
       ClientID newNodeId = (ClientID) nodeId;
 
-      ClientID oldNodeId = currentClientID;
-      rejoinManager.thisNodeJoinedCallback(oldNodeId, newNodeId);
+      rejoinManager.thisNodeJoinedCallback(this, newNodeId);
 
       if (currentNode != null) {
         // we might get multiple calls in a row, ignore all but the first one
@@ -567,25 +419,6 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
       LOGGER.error("Problem firing the cluster event : " + eventType + " - " + event, t);
     }
 
-  }
-
-  private Map<ObjectID, Set<NodeID>> mergeLocalInformation(Map<ObjectID, Set<NodeID>> serverResult) {
-    if (currentClientID != null) {
-      for (Map.Entry<ObjectID, Set<NodeID>> e : serverResult.entrySet()) {
-        Set<NodeID> filtered = mergeLocalInformation(e.getKey(), e.getValue());
-        if (filtered != e.getValue()) {
-          e.setValue(filtered);
-        }
-      }
-    }
-    return serverResult;
-  }
-
-  private Set<NodeID> mergeLocalInformation(ObjectID objectId, Set<NodeID> serverResult) {
-    if (clientObjectManager.isLocal(objectId)) {
-      serverResult.add(currentClientID);
-    }
-    return serverResult;
   }
 
   private static final class FiredEventsStatus {

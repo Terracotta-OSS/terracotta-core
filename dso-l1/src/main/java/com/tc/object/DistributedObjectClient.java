@@ -452,6 +452,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   }
 
   public synchronized void start(CountDownLatch testStartLatch) {
+    rejoinManager.start();
     validateSecurityConfig();
     validateGroupConfigOrExit();
 

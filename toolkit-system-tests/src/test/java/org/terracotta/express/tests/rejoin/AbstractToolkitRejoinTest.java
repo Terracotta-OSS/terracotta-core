@@ -96,10 +96,11 @@ public class AbstractToolkitRejoinTest extends AbstractToolkitTestBase {
 
         @Override
         public Boolean call() throws Exception {
-          doDebug("Processing received events (waiting till rejoin happens for node: " + beforeRejoinNode + ")");
+          debug("Processing received events (waiting till rejoin happens for node: " + beforeRejoinNode + ")");
           for (ClusterEvent e : receivedEvents) {
+            debug("Event: type: " + e.getType() + ", node: " + e.getNode());
             if (e.getType() == Type.NODE_REJOINED) {
-              doDebug("Received rejoin event - newNode: " + e.getNode());
+              debug("Received rejoin event - newNode: " + e.getNode());
               return true;
             }
           }

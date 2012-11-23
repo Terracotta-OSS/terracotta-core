@@ -9,9 +9,9 @@ import com.tcclient.cluster.DsoClusterInternalEventsGun;
 
 public interface RejoinManagerInternal extends RejoinManager {
 
-  void init(DsoClusterInternalEventsGun dsoClusterEventsGun);
+  void start();
 
   void initiateRejoin(MessageChannel channel);
 
-  void thisNodeJoinedCallback(ClientID oldNodeId, ClientID newNodeId);
+  void thisNodeJoinedCallback(DsoClusterInternalEventsGun dsoEventsGun, ClientID newNodeId);
 }

@@ -23,7 +23,6 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
   private final List<RejoinLifecycleListener>  listeners        = new CopyOnWriteArrayList<RejoinLifecycleListener>();
   private final boolean                        rejoinEnabled;
   private final ReconnectionRejectedHandler    reconnectionRejectedHandler;
-  private volatile DsoClusterInternalEventsGun dsoClusterInternal;
   private final RejoinWorker                   rejoinWorker;
   private final AtomicBoolean                  rejoinInProgress = new AtomicBoolean(false);
 
@@ -31,14 +30,13 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
     this.rejoinEnabled = isRejoinEnabled;
     this.reconnectionRejectedHandler = new ReconnectionRejectedHandlerImpl(rejoinEnabled);
     this.rejoinWorker = new RejoinWorker(this);
-    Thread th = new Thread(rejoinWorker, "Rejoin worker thread");
-    th.setDaemon(true);
-    th.start();
   }
 
   @Override
-  public void init(DsoClusterInternalEventsGun dsoClusterEventsGun) {
-    this.dsoClusterInternal = dsoClusterEventsGun;
+  public void start() {
+    Thread th = new Thread(rejoinWorker, "Rejoin worker thread");
+    th.setDaemon(true);
+    th.start();
   }
 
   @Override
@@ -62,6 +60,7 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
 
   private void notifyRejoinStart() {
     assertRejoinEnabled();
+    logger.info("Notifying rejoin start...");
     for (RejoinLifecycleListener listener : listeners) {
       listener.onRejoinStart();
     }
@@ -69,6 +68,7 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
 
   private void notifyRejoinComplete() {
     assertRejoinEnabled();
+    logger.info("Notifying rejoin complete...");
     for (RejoinLifecycleListener listener : listeners) {
       listener.onRejoinComplete();
     }
@@ -81,16 +81,16 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
   }
 
   @Override
-  public void thisNodeJoinedCallback(ClientID oldNodeId, ClientID newNodeId) {
+  public void thisNodeJoinedCallback(DsoClusterInternalEventsGun dsoEventsGun, ClientID newNodeId) {
     logger.info("This node joined the cluster - rejoinEnabled: " + rejoinEnabled + ", rejoin in progress:"
-                + rejoinInProgress.get() + ", oldNodeId: " + oldNodeId + ", newNodeId: " + newNodeId);
+                + rejoinInProgress.get() + ", newNodeId: " + newNodeId);
     if (rejoinEnabled) {
       // called when all channels have connected and handshake is complete
       if (rejoinInProgress.compareAndSet(true, false)) {
         // take care of any cleanup/reinitialization
         notifyRejoinComplete();
         // fire rejoin event
-        dsoClusterInternal.fireNodeRejoined(newNodeId);
+        dsoEventsGun.fireNodeRejoined(newNodeId);
       }
     }
   }

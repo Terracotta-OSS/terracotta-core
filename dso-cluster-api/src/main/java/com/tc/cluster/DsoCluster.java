@@ -4,13 +4,8 @@
  */
 package com.tc.cluster;
 
-import com.tc.cluster.exceptions.UnclusteredObjectException;
 import com.tc.injection.annotations.InjectedDsoInstance;
 import com.tcclient.cluster.DsoNode;
-
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * The {@code DsoCluster} interface provides access to Terracotta DSO cluster events and meta data.
@@ -95,70 +90,4 @@ public interface DsoCluster {
    */
   public boolean areOperationsEnabled();
 
-  /**
-   * Determine on which nodes a particular object is faulted.
-   *
-   * @param object the object that will be checked
-   * @throws UnclusteredObjectException when the object isn't clustered
-   * @return the set of nodes where the object is faulted;
-   *         <p>
-   *         this never returns {@code null}, so null checks aren't needed
-   */
-  public Set<DsoNode> getNodesWithObject(Object object) throws UnclusteredObjectException;
-
-  /**
-   * Determine where a series of clustered objects is faulted.
-   * <p>
-   * Each object will be a key in the map that is returned, with sets of nodes as values that indicate where the objects
-   * are faulted.
-   *
-   * @param objects the objects that will be checked
-   * @throws UnclusteredObjectException when any of the objects isn't clustered
-   * @return the map of nodes where the objects are faulted;
-   *         <p>
-   *         this never returns {@code null}, so null checks aren't needed
-   */
-  public Map<?, Set<DsoNode>> getNodesWithObjects(final Object... objects) throws UnclusteredObjectException;
-
-  /**
-   * Determine where a collection of clustered objects is faulted.
-   * <p>
-   * Each object will be a key in the map that is returned, with sets of nodes as values that indicate where the objects
-   * are faulted.
-   *
-   * @param objects the objects that will be checked
-   * @throws UnclusteredObjectException when any of the objects isn't clustered
-   * @return the map of nodes where the objects are faulted;
-   *         <p>
-   *         this never returns {@code null}, so null checks aren't needed
-   */
-  public Map<?, Set<DsoNode>> getNodesWithObjects(Collection<?> objects) throws UnclusteredObjectException;
-
-  /**
-   * Retrieve a set of keys for map values that are not faulted anywhere out of a clustered map for which partialness is
-   * supported.
-   *
-   * @param map the map with the values that will be checked
-   * @throws UnclusteredObjectException when the map isn't clustered
-   * @return the set of keys for the values that are faulted nowhere;
-   *         <p>
-   *         an empty set if the map doesn't support partialness;
-   *         <p>
-   *         this never returns {@code null}, so null checks aren't needed
-   */
-  public <K> Set<K> getKeysForOrphanedValues(Map<K, ?> map) throws UnclusteredObjectException;
-
-  /**
-   * Retrieve a set of keys for map values that are faulted on the current node out of a clustered map for which
-   * partialness is supported.
-   *
-   * @param map the map with the values that will be checked
-   * @throws UnclusteredObjectException when the map isn't clustered
-   * @return the set of keys for the values that are faulted on the current node;
-   *         <p>
-   *         an empty set if the map doesn't support partialness;
-   *         <p>
-   *         this never returns {@code null}, so null checks aren't needed
-   */
-  public <K> Set<K> getKeysForLocalValues(Map<K, ?> map) throws UnclusteredObjectException;
 }

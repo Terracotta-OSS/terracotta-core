@@ -154,7 +154,6 @@ public class ManagerImpl implements Manager {
     this.connectionComponents = connectionComponents;
     this.rejoinManager = new RejoinManagerImpl(isExpressRejoinMode);
     this.dsoCluster = new DsoClusterImpl(rejoinManager);
-    this.rejoinManager.init(dsoCluster);
     this.statisticsAgentSubSystem = new StatisticsAgentSubSystemImpl();
     if (shutdownActionRequired) {
       this.shutdownAction = new Thread(new ShutdownAction(), "L1 VM Shutdown Hook");
