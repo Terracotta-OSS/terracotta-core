@@ -29,12 +29,20 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
                                                       });
 
   private final ThreadID               owner;
-
+  private volatile boolean             rejoinInProgress = false;
   private LockStateNode                next;
 
   LockStateNode(ThreadID owner) {
     this.owner = owner;
     this.next = null;
+  }
+
+  void setrejoinInProgress() {
+    rejoinInProgress = true;
+  }
+
+  boolean isRejoinInProgress() {
+    return rejoinInProgress;
   }
 
   /**

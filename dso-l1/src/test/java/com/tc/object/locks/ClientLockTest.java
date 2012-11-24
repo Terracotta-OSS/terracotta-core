@@ -1029,6 +1029,16 @@ public class ClientLockTest extends TestCase {
     }
 
     @Override
+    public boolean isRejoinInProgress() {
+      return false;
+    }
+
+    @Override
+    public void setRejoinInProgress(boolean isProgress) {
+      //
+    }
+
+    @Override
     public void cleanup() {
       //
     }

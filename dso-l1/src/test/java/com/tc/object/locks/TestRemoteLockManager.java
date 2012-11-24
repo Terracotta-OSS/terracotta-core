@@ -50,6 +50,16 @@ public class TestRemoteLockManager implements RemoteLockManager {
   }
 
   @Override
+  public boolean isRejoinInProgress() {
+    return false;
+  }
+
+  @Override
+  public void setRejoinInProgress(boolean isProgress) {
+    //
+  }
+
+  @Override
   public void cleanup() {
     //
   }

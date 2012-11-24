@@ -52,6 +52,16 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
   }
 
   @Override
+  public void setRejoinInProgress(boolean isProgress) {
+    //
+  }
+
+  @Override
+  public boolean isRejoinInProgress() {
+    return false;
+  }
+
+  @Override
   public void cleanup() {
     sink.clear();
   }

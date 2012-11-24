@@ -5,6 +5,7 @@ package com.tc.object.locks;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
+import com.tc.exception.RejoinInProgressException;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
@@ -54,6 +55,28 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     this.lock = lock;
   }
 
+  @Override
+  public synchronized void cleanup() {
+    notifyAll();
+    for (final Iterator<LockStateNode> it = iterator(); it.hasNext();) {
+      LockStateNode lockState = it.next();
+      unparkIfNecessary(lockState, it);
+    }
+  }
+
+  private void unparkIfNecessary(LockStateNode lockState, Iterator<LockStateNode> it) {
+    try {
+      lockState.setrejoinInProgress();
+      LOGGER.info("unparkIfNecessary unpark " + lockState.getClass().getName() + " " + lockState);
+      lockState.unpark();
+      it.remove(); // if unpark() fails (like LockHold), we do not remove item
+      // unlock() / release() of this item will remove it
+      LOGGER.info("unparkIfNecessary removed " + lockState.getClass().getName() + " " + lockState);
+    } catch (AssertionError e) {
+      // some impl of LockStateNode (like LockHold) throws AssertionError
+    }
+  }
+
   /*
    * Try to acquire this lock locally - if successful then return, otherwise queue the request and potentially call out
    * to the server.
@@ -62,7 +85,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   public void lock(final AbortableOperationManager abortableOperationManager, final RemoteLockManager remote,
                    final ThreadID thread, final LockLevel level) throws GarbageLockException, AbortedOperationException {
     markUsed();
-    if (!tryAcquireLocally(abortableOperationManager, thread, level).isSuccess()) {
+    if (!tryAcquireLocally(remote, abortableOperationManager, thread, level).isSuccess()) {
       acquireQueued(abortableOperationManager, remote, thread, level);
     }
   }
@@ -77,7 +100,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       throws InterruptedException, GarbageLockException, AbortedOperationException {
     markUsed();
     if (Thread.interrupted()) { throw new InterruptedException(); }
-    if (!tryAcquireLocally(abortableOperationManager, thread, level).isSuccess()) {
+    if (!tryAcquireLocally(remote, abortableOperationManager, thread, level).isSuccess()) {
       acquireQueuedInterruptibly(abortableOperationManager, remote, thread, level);
     }
   }
@@ -92,7 +115,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
                          final ThreadID thread, final LockLevel level) throws GarbageLockException,
       AbortedOperationException {
     markUsed();
-    final LockAcquireResult result = tryAcquireLocally(abortableOperationManager, thread, level);
+    final LockAcquireResult result = tryAcquireLocally(remote, abortableOperationManager, thread, level);
     if (result.isKnownResult()) {
       return result.isSuccess();
     } else {
@@ -114,7 +137,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       GarbageLockException, AbortedOperationException {
     markUsed();
     if (Thread.interrupted()) { throw new InterruptedException(); }
-    return tryAcquireLocally(abortableOperationManager, thread, level).isSuccess()
+    return tryAcquireLocally(remote, abortableOperationManager, thread, level).isSuccess()
            || acquireQueuedTimeout(abortableOperationManager, remote, thread, level, timeout);
   }
 
@@ -154,7 +177,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     final Collection<LockWaiter> waiters = new ArrayList<LockWaiter>();
 
     synchronized (this) {
-      if (!isLockedBy(thread, WRITE_LEVELS)) { throw new IllegalMonitorStateException(); }
+      if (thread != null && !isLockedBy(thread, WRITE_LEVELS)) { throw new IllegalMonitorStateException(); }
 
       if (this.greediness.isFree()) {
         // other L1s may be waiting (let server decide who to notify)
@@ -243,7 +266,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       unparkFirstQueuedAcquire();
       waitOnLockWaiter(remote, thread, waiter, listener);
     } finally {
-      if (waiter != null) {
+      if (waiter != null && !waiter.isRejoinInProgress()) {
         moveWaiterToPending(waiter);
         acquireAll(abortableOperationManager, remote, thread, waiter.getReacquires());
       } else if (!isLockedBy(thread, WRITE_LEVELS)) {
@@ -297,6 +320,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       }
       throw e;
     }
+    if (waiter.isRejoinInProgress()) { throw new RejoinInProgressException(); }
   }
 
   private void acquireAll(final AbortableOperationManager abortableOperationManager, final RemoteLockManager remote,
@@ -311,6 +335,8 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       } catch (AbortedOperationException e) {
         // If it came here, it failed because of flush, hence this means no lock was taken from the stack and hence
         // throwing AbortedOperationException is fine
+        // TODO: looks wrong, for each PendingLockHold in acquires which sees AbortedOperationException
+        // we remove all PendingLockHold present in acquiresClone
         for (PendingLockHold pending : acquiresClone) {
           remove(pending);
         }
@@ -449,10 +475,12 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   }
 
   private synchronized void addPendingAcquires(final LockWaiter waiter) {
-    Stack<PendingLockHold> reacquires = waiter.getReacquires();
-    java.util.ListIterator<PendingLockHold> it = reacquires.listIterator(reacquires.size());
-    while (it.hasPrevious()) {
-      addLast(it.previous());
+    if (!waiter.isRejoinInProgress()) {
+      Stack<PendingLockHold> reacquires = waiter.getReacquires();
+      java.util.ListIterator<PendingLockHold> it = reacquires.listIterator(reacquires.size());
+      while (it.hasPrevious()) {
+        addLast(it.previous());
+      }
     }
   }
 
@@ -590,7 +618,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
                                        final long timeout, final PendingLockHold node) throws GarbageLockException,
       AbortedOperationException {
     // try to do things locally first...
-    final LockAcquireResult result = tryAcquireLocally(abortableOperationManager, thread, level);
+    final LockAcquireResult result = tryAcquireLocally(remote, abortableOperationManager, thread, level);
     if (result.isKnownResult()) {
       return result;
     } else {
@@ -665,23 +693,24 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   /*
    * Attempt to acquire the lock at the given level locally
    */
-  private LockAcquireResult tryAcquireLocally(final AbortableOperationManager abortableOperationManager,
+  private LockAcquireResult tryAcquireLocally(final RemoteLockManager remote,
+                                              final AbortableOperationManager abortableOperationManager,
                                               final ThreadID thread, final LockLevel level)
       throws GarbageLockException, AbortedOperationException {
     // if this is a concurrent acquire then just let it through.
     if (level == LockLevel.CONCURRENT) { return LockAcquireResult.SHARED_SUCCESS; }
 
     synchronized (this) {
-      LockAcquireResult result = tryAcquireUsingThreadState(thread, level);
+      LockAcquireResult result = tryAcquireUsingThreadState(remote, thread, level);
       boolean interrupted = false;
       while (result.isWaitingForFlush()) {
         try {
-          ClientLockImpl.this.wait();
+          wait();
         } catch (InterruptedException e) {
           handleInterruptedException(abortableOperationManager);
           interrupted = true;
         }
-        result = tryAcquireUsingThreadState(thread, level);
+        result = tryAcquireUsingThreadState(remote, thread, level);
       }
 
       if (interrupted) {
@@ -699,7 +728,8 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     }
   }
 
-  private LockAcquireResult tryAcquireUsingThreadState(final ThreadID thread, final LockLevel level) {
+  private LockAcquireResult tryAcquireUsingThreadState(RemoteLockManager remote, final ThreadID thread, final LockLevel level) {
+    if (remote.isRejoinInProgress()) { throw new RejoinInProgressException(); }
     // What can we glean from local lock state
     final LockHold newHold = new LockHold(thread, level);
     for (final Iterator<LockStateNode> it = iterator(); it.hasNext();) {
@@ -744,6 +774,10 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
           final LockHold hold = (LockHold) s;
           if (hold.getOwner().equals(thread) && hold.getLockLevel().equals(level)) {
             unlock = hold;
+            if (unlock.isRejoinInProgress()) {
+              it.remove();
+              throw new RejoinInProgressException();
+            }
             break;
           }
         }
@@ -791,11 +825,11 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       public void transactionsForLockFlushed(LockID id) {
         ServerLockLevel flushLevelParam = flushLevel;
         while (true) {
-          synchronized (ClientLockImpl.this) {
+          synchronized (this) {
             if (flushLevelParam.equals(greediness.getFlushLevel())) {
               unlockParam.flushCompleted();
               remove(unlockParam);
-              ClientLockImpl.this.notifyAll();
+              notifyAll();
 
               if (greediness.isFree()) {
                 remoteUnlock(remote, unlockParam);
@@ -941,6 +975,9 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
           interrupted = true;
           if (remote.isShutdown()) { throw new TCNotRunningException(); }
         }
+        if (node.isRejoinInProgress()) {
+          throw new RejoinInProgressException();
+        }
       }
     } catch (final RuntimeException ex) {
       abortAndRemove(remote, node);
@@ -1081,7 +1118,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         lastTime = now;
       }
       remove(node);
-      final LockAcquireResult result = tryAcquireLocally(abortableOperationManager, thread, level);
+      final LockAcquireResult result = tryAcquireLocally(remote, abortableOperationManager, thread, level);
       if (result.isShared()) {
         unparkFirstQueuedAcquire();
       }

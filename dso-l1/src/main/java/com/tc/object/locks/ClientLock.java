@@ -7,11 +7,12 @@ import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.net.ClientID;
+import com.tc.object.ClearableCallback;
 import com.tc.object.msg.ClientHandshakeMessage;
 
 import java.util.Collection;
 
-public interface ClientLock {
+public interface ClientLock extends ClearableCallback {
   /**
    * Blocking acquire
    * 
