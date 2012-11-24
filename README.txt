@@ -120,3 +120,43 @@ This will build toolkit-runtime and all it's direct and indirect dependencies.
 Note that you need to specify the actual file path to toolkit-runtime in order
 for maven to find it.
 
+******************************************************************************
+9. Working with 'devmode' and toolkit
+******************************************************************************
+
+Toolkit runtime jars take a long time to package due to processing of internal
+jars. There is a "devmode" profile that would allow classes to be loaded directly
+from target/classes of these internal modules instead of loading from runtime jars.
+
+To use, do this at least once under "community"
+
+%> mvn install -P devmode
+
+Then if you change something in toolkit-express-impl
+
+%> mvn install -P devmode -pl toolkit-express-impl -pl toolkit-runtime
+
+Then you can run a system test under toolkit-system-tests
+
+%> mvn verify -P system-test,devmode  -Dtest=SomeTest
+
+If you change a class that goes into embbeded jars (ie. common or dso-l1 or ehcache)
+you don't need to recompile toolkit-runtime project at all. Those classes are loaded
+directly from there target/classes folder
+
+******************************************************************************
+10. Working with 'devmode' and L2
+******************************************************************************
+
+Do this at least once. Compile with devmode on
+
+%> mvn install -P devmode
+
+Then run system test with devmode on
+
+%> mvn verify -P system-test,devmode  -Dtest=SomeTest
+
+You could change any classes that use by L2 in Eclipse and not having to recompile again.
+Just rerun the test and your new class will be picked up from its target/classes folder.
+
+

@@ -23,33 +23,35 @@ public class Persistor {
   private volatile boolean started = false;
 
   private final PersistentMapStore persistentMapStore;
+  private final PersistentObjectFactory persistentObjectFactory;
+  private final PersistenceTransactionProvider persistenceTransactionProvider;
 
   private TransactionPersistor transactionPersistor;
   private ManagedObjectPersistor managedObjectPersistor;
   private MutableSequence gidSequence;
   private ClientStatePersistor clientStatePersistor;
   private SequenceManager sequenceManager;
-  private PersistenceTransactionProvider persistenceTransactionProvider;
   private ObjectIDSetMaintainer objectIDSetMaintainer;
-  private PersistentObjectFactory persistentObjectFactory;
 
   public Persistor(StorageManagerFactory storageManagerFactory) {
     objectIDSetMaintainer = new ObjectIDSetMaintainer();
     try {
-      storageManager = storageManagerFactory.createStorageManager(getDataStorageConfigs(),
+      storageManager = storageManagerFactory.createStorageManager(getDataStorageConfigs(objectIDSetMaintainer, storageManagerFactory),
           new SingletonTransformerLookup(Object.class, LiteralSerializer.INSTANCE));
     } catch (IOException e) {
       throw new AssertionError(e);
     }
 
+    persistenceTransactionProvider = new PersistenceTransactionProvider(storageManager);
+    persistentObjectFactory = new PersistentObjectFactory(storageManager, storageManagerFactory);
     persistentMapStore = new PersistentMapStoreImpl(storageManager);
   }
 
-  private Map<String, KeyValueStorageConfig<?, ?>> getDataStorageConfigs() {
+  private Map<String, KeyValueStorageConfig<?, ?>> getDataStorageConfigs(ObjectIDSetMaintainer objectIDSetMaintainer, StorageManagerFactory storageManagerFactory) {
     Map<String, KeyValueStorageConfig<?, ?>> configs = new HashMap<String, KeyValueStorageConfig<?, ?>>();
     TransactionPersistor.addConfigsTo(configs);
     ClientStatePersistor.addConfigsTo(configs);
-    ManagedObjectPersistor.addConfigsTo(configs, objectIDSetMaintainer);
+    ManagedObjectPersistor.addConfigsTo(configs, objectIDSetMaintainer, storageManagerFactory);
     SequenceManager.addConfigsTo(configs);
     return configs;
   }
@@ -65,8 +67,6 @@ public class Persistor {
     transactionPersistor = new TransactionPersistor(storageManager);
     clientStatePersistor = new ClientStatePersistor(sequenceManager, storageManager);
     managedObjectPersistor = new ManagedObjectPersistor(storageManager, sequenceManager, objectIDSetMaintainer);
-    persistenceTransactionProvider = new PersistenceTransactionProvider(storageManager);
-    persistentObjectFactory = new PersistentObjectFactory(storageManager);
 
     gidSequence = sequenceManager.getSequence(GLOBAL_TRANSACTION_ID_SEQUENCE);
 

@@ -9,7 +9,6 @@ import org.terracotta.management.ServiceExecutionException;
 import org.terracotta.management.ServiceLocator;
 import org.terracotta.management.resource.services.validator.RequestValidator;
 
-import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.TopologyEntity;
 import com.terracotta.management.resource.services.validator.TSARequestValidator;
 import com.terracotta.management.service.TopologyService;
@@ -39,13 +38,16 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
   }
 
   @Override
-  public Collection<TopologyEntity> getServerTopologies(UriInfo info) {
-    LOG.info(String.format("Invoking TopologyServiceImpl.getServerTopologies: %s", info.getRequestUri()));
+  public Collection<TopologyEntity> getTopologies(UriInfo info) {
+    LOG.info(String.format("Invoking TopologyServiceImpl.getTopologies: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      return Collections.singleton(topologyService.getTopology());
+      TopologyEntity result = new TopologyEntity();
+      result.getServerGroupEntities().addAll(topologyService.getTopology());
+      result.getClientEntities().addAll(topologyService.getClients());
+      return Collections.singleton(result);
     } catch (ServiceExecutionException see) {
       LOG.error("Failed to get TSA topologies.", see.getCause());
       throw new WebApplicationException(
@@ -54,15 +56,34 @@ public class TopologyResourceServiceImpl implements TopologyResourceService {
   }
 
   @Override
-  public Collection<ClientEntity> getConnectedClients(UriInfo info) {
+  public Collection<TopologyEntity> getServerTopologies(UriInfo info) {
+    LOG.info(String.format("Invoking TopologyServiceImpl.getServerTopologies: %s", info.getRequestUri()));
+
+    requestValidator.validateSafe(info);
+
+    try {
+      TopologyEntity result = new TopologyEntity();
+      result.getServerGroupEntities().addAll(topologyService.getTopology());
+      return Collections.singleton(result);
+    } catch (ServiceExecutionException see) {
+      LOG.error("Failed to get TSA servers topologies.", see.getCause());
+      throw new WebApplicationException(
+          Response.status(Response.Status.BAD_REQUEST).entity(see.getCause().getMessage()).build());
+    }
+  }
+
+  @Override
+  public Collection<TopologyEntity> getConnectedClients(UriInfo info) {
     LOG.info(String.format("Invoking TopologyServiceImpl.getConnectedClients: %s", info.getRequestUri()));
 
     requestValidator.validateSafe(info);
 
     try {
-      return topologyService.getClients();
+      TopologyEntity result = new TopologyEntity();
+      result.getClientEntities().addAll(topologyService.getClients());
+      return Collections.singleton(result);
     } catch (ServiceExecutionException see) {
-      LOG.error("Failed to get TSA clients.", see.getCause());
+      LOG.error("Failed to get TSA clients topologies.", see.getCause());
       throw new WebApplicationException(
           Response.status(Response.Status.BAD_REQUEST).entity(see.getCause().getMessage()).build());
     }

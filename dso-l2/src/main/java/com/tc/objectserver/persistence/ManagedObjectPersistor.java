@@ -40,11 +40,12 @@ public class ManagedObjectPersistor  {
     this.objectIDSequence = new ObjectIDSequenceImpl(sequenceManager.getSequence(OBJECT_ID_SEQUENCE));
   }
 
-  public static void addConfigsTo(final Map<String, KeyValueStorageConfig<?, ?>> configs, final ObjectIDSetMaintainer objectIDSetMaintainer) {
+  public static void addConfigsTo(final Map<String, KeyValueStorageConfig<?, ?>> configs, final ObjectIDSetMaintainer objectIDSetMaintainer,
+                                  final StorageManagerFactory storageManagerFactory) {
     configs.put(ROOT_DB, ImmutableKeyValueStorageConfig.builder(String.class, ObjectID.class)
         .valueTransformer(ObjectIDTransformer.INSTANCE)
         .build());
-    ObjectMap.addConfigTo(configs, objectIDSetMaintainer);
+    ObjectMap.addConfigTo(configs, objectIDSetMaintainer, storageManagerFactory);
   }
 
   public void close() {

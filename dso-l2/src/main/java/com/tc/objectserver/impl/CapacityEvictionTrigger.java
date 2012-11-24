@@ -48,7 +48,6 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
                 throw new AssertionError("map is not in evicting state");
             }
             super.startEviction(map);
-            System.out.println("eviction started");
             return true;
         } else {
             map.evictionCompleted();
@@ -66,7 +65,6 @@ public class CapacityEvictionTrigger extends AbstractEvictionTrigger implements 
         if ( max == 0 ) {
             throw new AssertionError("triggers should never start evicting a pinned cache or store");
         }
-        System.out.println(max + " " + size);
         if ( sample <= 0 ) {
             return processSample(Collections.<Object,ObjectID>emptyMap());
         }

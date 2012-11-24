@@ -71,6 +71,9 @@ public abstract class AbstractTestBase extends TCTestCase {
       testConfig.getClientConfig().addExtraClientJvmArg("-XXfullSystemGC");
     }
     testConfig.getClientConfig().addExtraClientJvmArg("-XX:+HeapDumpOnOutOfMemoryError");
+    if (Boolean.getBoolean("com.tc.test.toolkit.devmode")) {
+      testConfig.getClientConfig().addExtraClientJvmArg("-Dcom.tc.test.toolkit.devmode=true");
+    }
   }
 
   /**

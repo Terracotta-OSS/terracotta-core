@@ -3,6 +3,8 @@
  */
 package com.terracotta.management.resource.services;
 
+import org.terracotta.management.resource.VersionedEntity;
+
 import com.terracotta.management.resource.ClientEntity;
 import com.terracotta.management.resource.TopologyEntity;
 
@@ -22,6 +24,11 @@ import javax.ws.rs.core.UriInfo;
  */
 public interface TopologyResourceService {
 
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  Collection<TopologyEntity> getTopologies(@Context UriInfo info);
+
   /**
    * Get a {@code Collection} of {@link TopologyEntity} objects representing the
    * TSA topology provided by the associated monitorable entity's agent given the request path.
@@ -29,6 +36,7 @@ public interface TopologyResourceService {
    * @return a a collection of {@link TopologyEntity} objects.
    */
   @GET
+  @Path("/servers")
   @Produces(MediaType.APPLICATION_JSON)
   Collection<TopologyEntity> getServerTopologies(@Context UriInfo info);
 
@@ -41,6 +49,6 @@ public interface TopologyResourceService {
   @GET
   @Path("/clients")
   @Produces(MediaType.APPLICATION_JSON)
-  Collection<ClientEntity> getConnectedClients(@Context UriInfo info);
+  Collection<TopologyEntity> getConnectedClients(@Context UriInfo info);
 
 }

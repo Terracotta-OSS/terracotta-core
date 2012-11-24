@@ -156,17 +156,16 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
           return valueObject;
         }
       }
+      ObjectID valueObjectID = invokeLogicalPutIfAbsent(map, key, value);
+
+      if (!isEventual) {
+        addIncoherentValueToCache(key, value, valueObjectID, MapOperationType.PUT);
+      } else {
+        addEventualValueToCache(key, value, valueObjectID, MapOperationType.PUT);
+      }
+
+      return null;
     }
-
-    ObjectID valueObjectID = invokeLogicalPutIfAbsent(map, key, value);
-
-    if (!isEventual) {
-      addIncoherentValueToCache(key, value, valueObjectID, MapOperationType.PUT);
-    } else {
-      addEventualValueToCache(key, value, valueObjectID, MapOperationType.PUT);
-    }
-
-    return null;
   }
 
   @Override
@@ -407,7 +406,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
         cache.addToCache(key, localCacheValue, mapOperation);
       }
 
-      if (value instanceof TCObjectSelf) {
+      if ((value instanceof TCObjectSelf) && notifyServerForRemove) {
         this.tcObjectSelfStore.removeTCObjectSelfTemp((TCObjectSelf) value, notifyServerForRemove);
       }
       return;

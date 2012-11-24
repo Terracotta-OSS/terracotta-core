@@ -7,6 +7,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Reader;
 
 public class Util {
 
@@ -30,6 +31,16 @@ public class Util {
     if (in != null) {
       try {
         in.close();
+      } catch (IOException ioe) {
+        // ignore
+      }
+    }
+  }
+
+  public static void closeQuietly(final Reader reader) {
+    if (reader != null) {
+      try {
+        reader.close();
       } catch (IOException ioe) {
         // ignore
       }

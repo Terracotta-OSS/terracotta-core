@@ -4,6 +4,7 @@
 package com.terracotta.management.service.impl;
 
 import net.sf.ehcache.management.service.impl.DfltSamplerRepositoryServiceMBean;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.ServiceExecutionException;
@@ -22,7 +23,6 @@ import com.terracotta.management.resource.ServerEntity;
 import com.terracotta.management.resource.ServerGroupEntity;
 import com.terracotta.management.resource.StatisticsEntity;
 import com.terracotta.management.resource.ThreadDumpEntity;
-import com.terracotta.management.resource.TopologyEntity;
 import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.service.impl.pool.JmxConnectorPool;
 
@@ -63,19 +63,12 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
   private static final String[] SERVER_ENTITY_ATTRIBUTE_NAMES = new String[] {
       "Version", "BuildID", "DescriptionOfCapabilities", "PersistenceMode", "FailoverMode", "DSOListenPort", "DSOGroupPort", "State"};
 
-  private static final String[] CLIENT_STATS_MBEAN_ATTRIBUTE_NAMES = new String[] {
-      "ObjectFaultRate", "ObjectFlushRate", "PendingTransactionsCount", "TransactionRate",
-      "ServerMapGetSizeRequestsCount", "ServerMapGetSizeRequestsRate", "ServerMapGetValueRequestsCount",
-      "ServerMapGetValueRequestsRate" };
+  private static final String[]  CLIENT_STATS_MBEAN_ATTRIBUTE_NAMES = new String[] { "ObjectFaultRate",
+      "ObjectFlushRate", "TransactionRate"                         };
 
-  private static final String[] SERVER_STATS_MBEAN_ATTRIBUTE_NAMES = new String[] {
-      "BroadcastRate", "CacheHitRatio", "CachedObjectCount", "ExactOffheapObjectCachedCount",
-      "GlobalLockRecallRate", "GlobalServerMapGetSizeRequestsCount", "GlobalServerMapGetSizeRequestsRate",
-      "GlobalServerMapGetValueRequestsCount", "GlobalServerMapGetValueRequestsRate", "L2DiskFaultRate",
-      "LastCollectionElapsedTime", "LastCollectionGarbageCount", "LiveObjectCount", "ObjectFaultRate",
-      "ObjectFlushRate", "OffHeapFaultRate", "OffHeapFlushRate", "OffheapMapAllocatedMemory", "OffheapMaxDataSize",
-      "OffheapObjectAllocatedMemory", "OffheapObjectCachedCount", "OffheapTotalAllocatedSize", "OnHeapFaultRate",
-      "OnHeapFlushRate", "PendingTransactionsCount", "TransactionRate", "TransactionSizeRate" };
+  private static final String[]  SERVER_STATS_MBEAN_ATTRIBUTE_NAMES = new String[] { "LiveObjectCount",
+      "ObjectFaultRate", "ObjectFlushRate", "TransactionRate", "OffheapMaxSize", "OffheapReservedSize",
+      "OffheapUsedSize", "EvictionRate", "ExpirationRate"          };
 
   private final JmxConnectorPool jmxConnectorPool;
 
@@ -281,14 +274,12 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
   }
 
   @Override
-  public TopologyEntity getTopology() throws ServiceExecutionException {
+  public Collection<ServerGroupEntity> getTopology() throws ServiceExecutionException {
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     try {
       ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
 
-      TopologyEntity topologyEntity = new TopologyEntity();
-      topologyEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
-      topologyEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+      Collection<ServerGroupEntity> serverGroupEntities = new ArrayList<ServerGroupEntity>();
 
       for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
         ServerGroupEntity serverGroupEntity = new ServerGroupEntity();
@@ -319,10 +310,10 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
           }
         }
 
-        topologyEntity.getServerGroupEntities().add(serverGroupEntity);
+        serverGroupEntities.add(serverGroupEntity);
       }
 
-      return topologyEntity;
+      return serverGroupEntities;
     } catch (Exception e) {
       throw new ServiceExecutionException("error making JMX call", e);
     }

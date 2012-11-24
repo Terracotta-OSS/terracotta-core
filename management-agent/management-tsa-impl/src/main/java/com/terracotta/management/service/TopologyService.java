@@ -6,7 +6,7 @@ package com.terracotta.management.service;
 import org.terracotta.management.ServiceExecutionException;
 
 import com.terracotta.management.resource.ClientEntity;
-import com.terracotta.management.resource.TopologyEntity;
+import com.terracotta.management.resource.ServerGroupEntity;
 
 import java.util.Collection;
 
@@ -19,10 +19,10 @@ public interface TopologyService {
 
   /**
    * Get the topology of the current TSA
-   * @return the topology
+   * @return a collection of server groups
    * @throws ServiceExecutionException
    */
-  TopologyEntity getTopology() throws ServiceExecutionException;
+  Collection<ServerGroupEntity> getTopology() throws ServiceExecutionException;
 
   /**
    * Get the connected clients of the current TSA
