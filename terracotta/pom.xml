@@ -27,11 +27,6 @@
       <artifactId>deploy</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>dso-statistics</artifactId>
-      <version>${project.version}</version>
-    </dependency>
   </dependencies>
 
   <build>

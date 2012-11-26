@@ -22,7 +22,6 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectID;
 import com.tc.object.net.ChannelStats;
 import com.tc.objectserver.l1.api.ClientStateManager;
-import com.tc.statistics.StatisticData;
 import com.tc.stats.api.DSOClientMBean;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -444,16 +443,6 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   public String getConfig() {
     if (l1InfoBean == null) return null;
     return l1InfoBean.getConfig();
-  }
-
-  public String[] getCpuStatNames() {
-    if (l1InfoBean == null) return null;
-    return l1InfoBean.getCpuStatNames();
-  }
-
-  public StatisticData[] getCpuUsage() {
-    if (l1InfoBean == null) return null;
-    return l1InfoBean.getCpuUsage();
   }
 
   public String getEnvironment() {

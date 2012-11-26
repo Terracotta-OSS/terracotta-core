@@ -34,7 +34,6 @@ import com.tc.objectserver.tx.ServerTransactionManagerEventListener;
 import com.tc.objectserver.tx.ServerTransactionManagerMBean;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
-import com.tc.statistics.StatisticData;
 import com.tc.stats.api.DSOClassInfo;
 import com.tc.stats.api.DSOMBean;
 import com.tc.stats.api.DSOStats;
@@ -124,74 +123,91 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     setupClients();
   }
 
+  @Override
   public void optimizeSearchIndex(String indexName) {
     indexManager.optimizeSearchIndex(indexName);
   }
 
+  @Override
   public String[] getSearchIndexNames() {
     return indexManager.getSearchIndexNames();
   }
 
+  @Override
   public void reset() {
     // TODO: implement this?
   }
 
+  @Override
   public DSOStats getStats() {
     return dsoStats;
   }
 
+  @Override
   public long getObjectFlushRate() {
     return getStats().getObjectFlushRate();
   }
 
+  @Override
   public long getTransactionRate() {
     return getStats().getTransactionRate();
   }
 
+  @Override
   public long getObjectFaultRate() {
     return getStats().getObjectFaultRate();
   }
 
+  @Override
   public long getGlobalLockRecallRate() {
     return getStats().getGlobalLockRecallRate();
   }
 
+  @Override
   public long getTransactionSizeRate() {
     return getStats().getTransactionSizeRate();
   }
 
+  @Override
   public long getBroadcastRate() {
     return getStats().getBroadcastRate();
   }
 
+  @Override
   public Number[] getStatistics(String[] names) {
     return getStats().getStatistics(names);
   }
 
+  @Override
   public GCStats[] getGarbageCollectorStats() {
     return gcStatsPublisher.getGarbageCollectorStats();
   }
 
+  @Override
   public List<TerracottaOperatorEvent> getOperatorEvents() {
     return this.operatorEventHistoryProvider.getOperatorEvents();
   }
 
+  @Override
   public ObjectName[] getRoots() {
     synchronized (rootObjectNames) {
       return (ObjectName[]) rootObjectNames.toArray(new ObjectName[rootObjectNames.size()]);
     }
   }
 
+  @Override
   public LockMBean[] getLocks() {
     return this.lockMgr.getAllLocks();
   }
 
+  @Override
   public ObjectName[] getClients() {
     synchronized (clientObjectNames) {
       return (ObjectName[]) clientObjectNames.toArray(new ObjectName[clientObjectNames.size()]);
     }
   }
 
+  @Override
   public DSOClassInfo[] getClassInfo() {
     Map counts = instanceMonitor.getInstanceCounts();
     List<DSOClassInfo> list = new ArrayList<DSOClassInfo>();
@@ -205,6 +221,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return list.toArray(new DSOClassInfo[list.size()]);
   }
 
+  @Override
   public ManagedObjectFacade lookupFacade(ObjectID objectID, int limit) throws NoSuchObjectException {
     return this.objMgr.lookupFacade(objectID, limit);
   }
@@ -313,6 +330,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     }
   }
 
+  @Override
   public Map<ObjectName, Long> getAllPendingTransactionsCount() {
     Map<ObjectName, Long> map = new HashMap<ObjectName, Long>();
     synchronized (clientObjectNames) {
@@ -328,6 +346,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   /**
    * Sum of all unacknowledged client transactions
    */
+  @Override
   public long getPendingTransactionsCount() {
     long result = 0;
     synchronized (clientObjectNames) {
@@ -340,6 +359,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return result;
   }
 
+  @Override
   public Map<ObjectName, Long> getClientTransactionRates() {
     Map<ObjectName, Long> result = new HashMap<ObjectName, Long>();
     synchronized (clientObjectNames) {
@@ -352,18 +372,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return result;
   }
 
-  public Map<ObjectName, StatisticData[]> getL1CpuUsages() {
-    Map<ObjectName, StatisticData[]> result = new HashMap<ObjectName, StatisticData[]>();
-    synchronized (clientObjectNames) {
-      Iterator<ObjectName> iter = clientObjectNames.iterator();
-      while (iter.hasNext()) {
-        ObjectName clientBeanName = iter.next();
-        result.put(clientBeanName, clientMap.get(clientBeanName).getCpuUsage());
-      }
-    }
-    return result;
-  }
-
+  @Override
   public Map<ObjectName, Map> getL1Statistics() {
     Map<ObjectName, Map> result = new HashMap<ObjectName, Map>();
     synchronized (clientObjectNames) {
@@ -387,6 +396,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
       this.client = client;
     }
 
+    @Override
     public Map call() {
       try {
         Map result = client.getStatistics();
@@ -404,6 +414,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   /*
    * MemoryUsage, CpuUsage, TransactionRate
    */
+  @Override
   public Map<ObjectName, Map> getPrimaryClientStatistics() {
     Map<ObjectName, Map> result = new HashMap<ObjectName, Map>();
     List<Callable<Map>> tasks = new ArrayList<Callable<Map>>();
@@ -437,20 +448,24 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return result;
   }
 
+  @Override
   public int getLiveObjectCount() {
     return objMgr.getLiveObjectCount();
   }
 
+  @Override
   public long getLastCollectionGarbageCount() {
     GCStats gcStats = gcStatsPublisher.getLastGarbageCollectorStats();
     return gcStats != null ? gcStats.getActualGarbageCount() : -1;
   }
 
+  @Override
   public long getLastCollectionElapsedTime() {
     GCStats gcStats = gcStatsPublisher.getLastGarbageCollectorStats();
     return gcStats != null ? gcStats.getElapsedTime() : -1;
   }
 
+  @Override
   public Map<ObjectName, Integer> getClientLiveObjectCount() {
     Map<ObjectName, Integer> result = new HashMap<ObjectName, Integer>();
     synchronized (clientObjectNames) {
@@ -463,22 +478,27 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return result;
   }
 
+  @Override
   public long getGlobalServerMapGetSizeRequestsCount() {
     return getStats().getGlobalServerMapGetSizeRequestsCount();
   }
 
+  @Override
   public long getGlobalServerMapGetSizeRequestsRate() {
     return getStats().getGlobalServerMapGetSizeRequestsRate();
   }
 
+  @Override
   public long getGlobalServerMapGetValueRequestsCount() {
     return getStats().getGlobalServerMapGetValueRequestsCount();
   }
 
+  @Override
   public long getGlobalServerMapGetValueRequestsRate() {
     return getStats().getGlobalServerMapGetValueRequestsRate();
   }
 
+  @Override
   public Map<ObjectName, Long> getServerMapGetSizeRequestsCount() {
     Map<ObjectName, Long> result = new HashMap<ObjectName, Long>();
     synchronized (clientObjectNames) {
@@ -491,6 +511,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return result;
   }
 
+  @Override
   public Map<ObjectName, Long> getServerMapGetSizeRequestsRate() {
     Map<ObjectName, Long> result = new HashMap<ObjectName, Long>();
     synchronized (clientObjectNames) {
@@ -503,6 +524,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return result;
   }
 
+  @Override
   public Map<ObjectName, Long> getServerMapGetValueRequestsCount() {
     Map<ObjectName, Long> result = new HashMap<ObjectName, Long>();
     synchronized (clientObjectNames) {
@@ -515,6 +537,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return result;
   }
 
+  @Override
   public Map<ObjectName, Long> getServerMapGetValueRequestsRate() {
     Map<ObjectName, Long> result = new HashMap<ObjectName, Long>();
     synchronized (clientObjectNames) {
@@ -527,11 +550,13 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return result;
   }
 
+  @Override
   public boolean isResident(NodeID node, ObjectID oid) {
     return clientStateManager.hasReference(node, oid);
   }
 
   private class TransactionManagerListener implements ServerTransactionManagerEventListener {
+    @Override
     public void rootCreated(String name, ObjectID rootID) {
       addRootMBean(name, rootID);
     }
@@ -539,6 +564,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
   private class DSOGCStatsEventListener implements GCStatsEventListener {
 
+    @Override
     public void update(GCStats stats) {
       sendNotification(GC_STATUS_UPDATE, stats);
     }
@@ -546,10 +572,12 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   }
 
   private class ChannelManagerListener implements DSOChannelManagerEventListener {
+    @Override
     public void channelCreated(MessageChannel channel) {
       addClientMBean(channel);
     }
 
+    @Override
     public void channelRemoved(MessageChannel channel) {
       removeClientMBean(channel);
     }
@@ -576,6 +604,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
       this.attributeSet = attributeSet;
     }
 
+    @Override
     public SourcedAttributeList call() {
       AttributeList attributeList;
       try {
@@ -598,6 +627,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     }
   }
 
+  @Override
   public Map<ObjectName, Exception> setAttribute(Set<ObjectName> onSet, String attrName, Object attrValue) {
     Map<ObjectName, Exception> result = new HashMap<ObjectName, Exception>();
     Iterator<ObjectName> onIter = onSet.iterator();
@@ -614,6 +644,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return result;
   }
 
+  @Override
   public Map<ObjectName, Exception> setAttribute(String attrName, Map<ObjectName, Object> attrMap) {
     Map<ObjectName, Exception> result = new HashMap<ObjectName, Exception>();
     Iterator<Entry<ObjectName, Object>> entryIter = attrMap.entrySet().iterator();
@@ -630,6 +661,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return result;
   }
 
+  @Override
   public Map<ObjectName, Map<String, Object>> getAttributeMap(Map<ObjectName, Set<String>> attributeMap, long timeout,
                                                               TimeUnit unit) {
     Map<ObjectName, Map<String, Object>> result = new HashMap<ObjectName, Map<String, Object>>();
@@ -692,6 +724,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
       this.signatures = signatures;
     }
 
+    @Override
     public SimpleInvokeResult call() {
       Object result;
       try {
@@ -703,10 +736,12 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     }
   }
 
+  @Override
   public Map<ObjectName, Object> invoke(Set<ObjectName> onSet, String operation, long timeout, TimeUnit unit) {
     return invoke(onSet, operation, timeout, unit, SIMPLE_INVOKE_PARAMS, SIMPLE_INVOKE_SIG);
   }
 
+  @Override
   public Map<ObjectName, Object> invoke(Set<ObjectName> onSet, String operation, long timeout, TimeUnit unit,
                                         Object[] args, String[] sigs) {
     Map<ObjectName, Object> result = new HashMap<ObjectName, Object>();
@@ -736,22 +771,27 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return result;
   }
 
+  @Override
   public long getOffheapMaxSize() {
     return offheapStats.getOffheapMaxSize();
   }
 
+  @Override
   public long getOffheapReservedSize() {
     return offheapStats.getOffheapReservedSize();
   }
 
+  @Override
   public long getOffheapUsedSize() {
     return offheapStats.getOffheapUsedSize();
   }
 
+  @Override
   public int getActiveLicensedClientCount() {
     return connectionPolicy.getNumberOfActiveConnections();
   }
 
+  @Override
   public int getLicensedClientHighCount() {
     return connectionPolicy.getConnectionHighWatermark();
   }

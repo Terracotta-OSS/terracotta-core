@@ -171,23 +171,6 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.TCMemoryManagerImpl;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.runtime.logging.MemoryOperatorEventListener;
-import com.tc.statistics.StatisticsAgentSubSystem;
-import com.tc.statistics.StatisticsAgentSubSystemCallback;
-import com.tc.statistics.StatisticsSystemType;
-import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
-import com.tc.statistics.retrieval.actions.SRACacheObjectsEvictRequest;
-import com.tc.statistics.retrieval.actions.SRACacheObjectsEvicted;
-import com.tc.statistics.retrieval.actions.SRAL1OutstandingBatches;
-import com.tc.statistics.retrieval.actions.SRAL1PendingBatchesSize;
-import com.tc.statistics.retrieval.actions.SRAL1TransactionCount;
-import com.tc.statistics.retrieval.actions.SRAL1TransactionSize;
-import com.tc.statistics.retrieval.actions.SRAL1TransactionsPerBatch;
-import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
-import com.tc.statistics.retrieval.actions.SRAMessages;
-import com.tc.statistics.retrieval.actions.SRAStageQueueDepths;
-import com.tc.statistics.retrieval.actions.SRASystemProperties;
-import com.tc.statistics.retrieval.actions.SRAVmGarbageCollector;
-import com.tc.statistics.retrieval.actions.SRAVmGarbageCollector.SRAVmGarbageCollectorType;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
@@ -245,7 +228,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private final Manager                              manager;
   private final DsoClusterInternal                   dsoCluster;
   private final TCThreadGroup                        threadGroup;
-  private final StatisticsAgentSubSystem             statisticsAgentSubSystem;
   private final RuntimeLogger                        runtimeLogger;
   private final ThreadIDMap                          threadIDMap;
 
@@ -280,16 +262,14 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
                                  final ClassProvider classProvider,
                                  final PreparedComponentsFromL2Connection connectionComponents, final Manager manager,
-                                 final StatisticsAgentSubSystem statisticsAgentSubSystem,
                                  final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger) {
-    this(config, threadGroup, classProvider, connectionComponents, manager, statisticsAgentSubSystem, dsoCluster,
+    this(config, threadGroup, classProvider, connectionComponents, manager, dsoCluster,
          runtimeLogger, ClientMode.DSO_MODE, null);
   }
 
   public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
                                  final ClassProvider classProvider,
                                  final PreparedComponentsFromL2Connection connectionComponents, final Manager manager,
-                                 final StatisticsAgentSubSystem statisticsAgentSubSystem,
                                  final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger,
                                  final ClientMode clientMode, final TCSecurityManager securityManager) {
     super(threadGroup);
@@ -302,7 +282,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.manager = manager;
     this.dsoCluster = dsoCluster;
     this.threadGroup = threadGroup;
-    this.statisticsAgentSubSystem = statisticsAgentSubSystem;
     this.threadIDMap = new ThreadIDMapImpl();
     this.runtimeLogger = runtimeLogger;
     this.dsoClientBuilder = createClientBuilder();
@@ -349,48 +328,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   public void setCreateDedicatedMBeanServer(final boolean createDedicatedMBeanServer) {
     this.createDedicatedMBeanServer = createDedicatedMBeanServer;
-  }
-
-  private class StatisticsSetupCallback implements StatisticsAgentSubSystemCallback {
-    final StageManager       stageManager;
-    final MessageMonitor     messageMonitor;
-    final Counter            outstandingBatchesCounter;
-    final Counter            pendingBatchesSize;
-    final SampledRateCounter transactionSizeCounter;
-    final SampledRateCounter transactionsPerBatchCounter;
-    final SampledCounter     txCounter;
-
-    public StatisticsSetupCallback(final StageManager stageManager, final MessageMonitor messageMonitor,
-                                   final Counter outstandingBatchesCounter, final Counter pendingBatchesSize,
-                                   final SampledRateCounter transactionSizeCounter,
-                                   final SampledRateCounter transactionsPerBatchCounter, final SampledCounter txCounter) {
-      this.stageManager = stageManager;
-      this.messageMonitor = messageMonitor;
-      this.outstandingBatchesCounter = outstandingBatchesCounter;
-      this.pendingBatchesSize = pendingBatchesSize;
-      this.transactionSizeCounter = transactionSizeCounter;
-      this.transactionsPerBatchCounter = transactionsPerBatchCounter;
-      this.txCounter = txCounter;
-    }
-
-    @Override
-    public void setupComplete(final StatisticsAgentSubSystem subsystem) {
-      final StatisticsRetrievalRegistry registry = subsystem.getStatisticsRetrievalRegistry();
-
-      registry.registerActionInstance(new SRAMemoryUsage());
-      registry.registerActionInstance(new SRASystemProperties());
-      registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRAThreadDump");
-      registry.registerActionInstance(new SRAStageQueueDepths(this.stageManager));
-      registry.registerActionInstance(new SRACacheObjectsEvictRequest());
-      registry.registerActionInstance(new SRACacheObjectsEvicted());
-      registry.registerActionInstance(new SRAMessages(this.messageMonitor));
-      registry.registerActionInstance(new SRAL1OutstandingBatches(this.outstandingBatchesCounter));
-      registry.registerActionInstance(new SRAL1TransactionsPerBatch(this.transactionsPerBatchCounter));
-      registry.registerActionInstance(new SRAL1TransactionSize(this.transactionSizeCounter));
-      registry.registerActionInstance(new SRAL1PendingBatchesSize(this.pendingBatchesSize));
-      registry.registerActionInstance(new SRAL1TransactionCount(this.txCounter));
-      registry.registerActionInstance(new SRAVmGarbageCollector(SRAVmGarbageCollectorType.L1_VM_GARBAGE_COLLECTOR));
-    }
   }
 
   private void validateSecurityConfig() {
@@ -558,12 +495,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
     final SampledCounter txnCounter = (SampledCounter) this.counterManager.createCounter(sampledCounterConfig);
 
-    // setup statistics subsystem
-    this.statisticsAgentSubSystem.addCallback(new StatisticsSetupCallback(stageManager, mm, outstandingBatchesCounter,
-                                                                          pendingBatchesSize, transactionSizeCounter,
-                                                                          transactionsPerBatchCounter, txnCounter));
-    this.statisticsAgentSubSystem.setup(StatisticsSystemType.CLIENT, null);
-
     final RemoteObjectManager remoteObjectManager = this.dsoClientBuilder
         .createRemoteObjectManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
                                        .getLogger(RemoteObjectManager.class)), this.channel, faultCount, sessionManager);
@@ -640,8 +571,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.tcMemManager.checkGarbageCollectors();
 
     if (cacheManagerProperties.getBoolean("enabled")) {
-      this.cacheManager = new CacheManager(this.objectManager, cacheConfig, getThreadGroup(),
-                                           this.statisticsAgentSubSystem, this.tcMemManager);
+      this.cacheManager = new CacheManager(this.objectManager, cacheConfig, getThreadGroup(), this.tcMemManager);
       this.cacheManager.start();
       if (DSO_LOGGER.isDebugEnabled()) {
         DSO_LOGGER.debug("CacheManager Enabled : " + this.cacheManager);
@@ -666,8 +596,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.tunneledDomainManager = this.dsoClientBuilder.createTunneledDomainManager(this.channel.channel(), this.config,
                                                                                    teh);
 
-    this.l1Management = this.dsoClientBuilder.createL1Management(teh, this.statisticsAgentSubSystem,
-                                                                 this.runtimeLogger,
+    this.l1Management = this.dsoClientBuilder.createL1Management(teh, this.runtimeLogger,
                                                                  this.config.rawConfigText(), this);
     this.l1Management.start(this.createDedicatedMBeanServer);
 
@@ -813,11 +742,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     // register for memory events for operator console register for it after the handshake happens see MNK-1684
     this.tcMemManager.registerForMemoryEvents(new MemoryOperatorEventListener(cacheConfig.getUsedCriticalThreshold()));
-
-    if (this.statisticsAgentSubSystem.isActive()) {
-      this.statisticsAgentSubSystem.setDefaultAgentDifferentiator(DEFAULT_AGENT_DIFFERENTIATOR_PREFIX
-                                                                  + this.channel.channel().getChannelID().toLong());
-    }
 
     setLoggerOnExit();
   }
@@ -1134,10 +1058,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   public DmiManager getDmiManager() {
     return this.dmiManager;
-  }
-
-  public StatisticsAgentSubSystem getStatisticsAgentSubSystem() {
-    return this.statisticsAgentSubSystem;
   }
 
   public TunneledDomainManager getTunneledDomainManager() {

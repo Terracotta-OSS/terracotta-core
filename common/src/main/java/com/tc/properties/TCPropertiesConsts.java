@@ -53,7 +53,7 @@ public interface TCPropertiesConsts {
   public static final String L2_CACHEMANAGER_CRITICALOBJECTTHRESHOLD                        = "l2.cachemanager.criticalObjectThreshold";
   public static final String L2_CACHEMANAGER_RESOURCEPOLLINGINTERVAL                        = "l2.cachemanager.resourcePollInterval";
 
-  
+
   public static final String L2_EVICTION_CRITICALTHRESHOLD                              = "l2.eviction.criticalThreshold";
   public static final String L2_EVICTION_RESOURCEPOLLINGINTERVAL                        = "l2.eviction.resourcePollInterval";
 
@@ -747,25 +747,6 @@ public interface TCPropertiesConsts {
    ********************************************************************************************************************/
   public static final String NET_CORE_KEEPALIVE                                             = "net.core.keepalive";
   public static final String NET_CORE_TCP_NO_DELAY                                          = "net.core.tcpnodelay";
-
-  /*********************************************************************************************************************
-   * <code> Section :
-   * CVT cvt.retriever.notification.interval  - Interval between log file messages when the CVT
-   *                                            retriever is running (in seconds)
-   * cvt.statistics.logging.interval          - Interval between logging of statistics data (in seconds).
-   * cvt.buffer.randomsuffix.enabled          - If true, add a random suffix when a buffer is created
-   * cvt.store.randomsuffix.enabled           - If true, add a random suffix when a store is created
-   * cvt.rest.interface.enabled               - If false, the REST interface for the CVT will be disabled. True by default
-   * cvt.client.fail.buffer.open              - If true, always fail the open of the CVT statistics buffer on a client. This is
-   *                                            supposed to be used by tests. False by default
-   * </code>
-   ********************************************************************************************************************/
-  public static final String CVT_RETRIEVER_NOTIFICATION_INTERVAL                            = "cvt.retriever.notification.interval";
-  public static final String CVT_STATISTICS_LOGGING_INTERVAL                                = "cvt.statistics.logging.interval";
-  public static final String CVT_BUFFER_RANDOM_SUFFIX_ENABLED                               = "cvt.buffer.randomsuffix.enabled";
-  public static final String CVT_STORE_RANDOM_SUFFIX_ENABLED                                = "cvt.store.randomsuffix.enabled";
-  public static final String CVT_REST_INTERFACE_ENABLED                                     = "cvt.rest.interface.enabled";
-  public static final String CVT_CLIENT_FAIL_BUFFER_OPEN                                    = "cvt.client.fail.buffer.open";
 
   /*********************************************************************************************************************
    * <code>

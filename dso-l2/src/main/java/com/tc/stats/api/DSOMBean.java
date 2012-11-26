@@ -12,7 +12,6 @@ import com.tc.objectserver.locks.LockMBean;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.storage.api.OffheapStats;
 import com.tc.operatorevent.TerracottaOperatorEvent;
-import com.tc.statistics.StatisticData;
 
 import java.util.List;
 import java.util.Map;
@@ -50,8 +49,6 @@ public interface DSOMBean extends DSOStats, OffheapStats, DGCMBean, TerracottaMB
   long getPendingTransactionsCount();
 
   Map<ObjectName, Long> getClientTransactionRates();
-
-  Map<ObjectName, StatisticData[]> getL1CpuUsages();
 
   Map<ObjectName, Map> getL1Statistics();
 

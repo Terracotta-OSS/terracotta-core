@@ -73,7 +73,6 @@ import com.tc.object.tx.TransactionIDGenerator;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.logging.LongGCLogger;
-import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.Assert;
@@ -281,10 +280,9 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
 
   @Override
   public L1Management createL1Management(final TunnelingEventHandler teh,
-                                         final StatisticsAgentSubSystem statisticsAgentSubSystem,
                                          final RuntimeLogger runtimeLogger, final String rawConfigText,
                                          final DistributedObjectClient distributedObjectClient) {
-    return new L1Management(teh, statisticsAgentSubSystem, runtimeLogger, rawConfigText, distributedObjectClient);
+    return new L1Management(teh, runtimeLogger, rawConfigText, distributedObjectClient);
   }
 
   @Override

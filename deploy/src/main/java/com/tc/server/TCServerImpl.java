@@ -70,9 +70,6 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.util.TcHashSessionIdManager;
 import com.tc.servlets.L1ReconnectPropertiesServlet;
-import com.tc.statistics.StatisticsGathererSubSystem;
-import com.tc.statistics.beans.StatisticsMBeanNames;
-import com.tc.statistics.beans.impl.StatisticsLocalGathererMBeanImpl;
 import com.tc.stats.DSO;
 import com.tc.stats.api.DSOMBean;
 import com.tc.util.Assert;
@@ -125,7 +122,6 @@ public class TCServerImpl extends SEDA implements TCServer {
   private Server                            httpServer;
   private ContextHandlerCollection          contextHandlerCollection;
   private TerracottaConnector               terracottaConnector;
-  private StatisticsGathererSubSystem       statisticsGathererSubSystem;
 
   private final Object                      stateLock                                    = new Object();
   private final L2State                     state                                        = new L2State();
@@ -159,12 +155,6 @@ public class TCServerImpl extends SEDA implements TCServer {
       this.securityManager = createSecurityManager(configurationSetupManager.getSecurity());
     } else {
       this.securityManager = null;
-    }
-
-    this.statisticsGathererSubSystem = new StatisticsGathererSubSystem();
-    if (!this.statisticsGathererSubSystem.setup(manager.commonl2Config())) {
-      notifyShutdown();
-      throw new RuntimeException("Unable to setup StatisticsGathererSubSystem");
     }
   }
 
@@ -408,16 +398,6 @@ public class TCServerImpl extends SEDA implements TCServer {
       consoleLogger.debug("Stopping TC server...");
     }
 
-    if (this.statisticsGathererSubSystem != null) {
-      try {
-        this.statisticsGathererSubSystem.cleanup();
-      } catch (Exception e) {
-        logger.error("Error shutting down statistics gatherer", e);
-      } finally {
-        this.statisticsGathererSubSystem = null;
-      }
-    }
-
     if (this.terracottaConnector != null) {
       try {
         this.terracottaConnector.shutdown();
@@ -579,12 +559,6 @@ public class TCServerImpl extends SEDA implements TCServer {
     context.setAttribute(GroupInfoServlet.GROUP_INFO_ATTRIBUTE, this.configurationSetupManager);
     context.setAttribute(GroupIDMapServlet.GROUPID_MAP_ATTRIBUTE, this.configurationSetupManager);
 
-    final boolean cvtRestEnabled = TCPropertiesImpl.getProperties()
-        .getBoolean(TCPropertiesConsts.CVT_REST_INTERFACE_ENABLED, true);
-    if (cvtRestEnabled) {
-      context.setAttribute(StatisticsGathererServlet.GATHERER_ATTRIBUTE, this.statisticsGathererSubSystem);
-    }
-
     ServletHandler servletHandler = new ServletHandler();
 
     /**
@@ -611,10 +585,6 @@ public class TCServerImpl extends SEDA implements TCServer {
     createAndAddServlet(servletHandler, ConfigServlet.class.getName(), CONFIG_SERVLET_PATH);
     createAndAddServlet(servletHandler, GroupInfoServlet.class.getName(), GROUP_INFO_SERVLET_PATH);
     createAndAddServlet(servletHandler, GroupIDMapServlet.class.getName(), GROUPID_MAP_SERVLET_PATH);
-
-    if (cvtRestEnabled) {
-      createAndAddServlet(servletHandler, StatisticsGathererServlet.class.getName(), STATISTICS_GATHERER_SERVLET_PATH);
-    }
     createAndAddServlet(servletHandler, L1ReconnectPropertiesServlet.class.getName(),
                         L1_RECONNECT_PROPERTIES_FROML2_SERVELET_PATH);
 
@@ -744,13 +714,6 @@ public class TCServerImpl extends SEDA implements TCServer {
     MBeanServer mBeanServer = this.dsoServer.getMBeanServer();
     registerDSOMBeans(mgmtContext, configContext, mBeanServer);
     mBeanServer.registerMBean(mgmtContext.getDSOAppEventsMBean(), L2MBeanNames.DSO_APP_EVENTS);
-    StatisticsLocalGathererMBeanImpl local_gatherer = new StatisticsLocalGathererMBeanImpl(
-                                                                                           this.statisticsGathererSubSystem,
-                                                                                           this.configurationSetupManager
-                                                                                               .commonl2Config(),
-                                                                                           this.configurationSetupManager
-                                                                                               .dsoL2Config());
-    mBeanServer.registerMBean(local_gatherer, StatisticsMBeanNames.STATISTICS_GATHERER);
   }
 
   protected void registerDSOMBeans(ServerManagementContext mgmtContext, ServerConfigurationContext configContext,

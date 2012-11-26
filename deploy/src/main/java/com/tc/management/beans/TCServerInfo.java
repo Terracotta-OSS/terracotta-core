@@ -17,8 +17,6 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.JVMMemoryManager;
 import com.tc.runtime.TCRuntime;
 import com.tc.server.TCServer;
-import com.tc.statistics.StatisticData;
-import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.util.ProductInfo;
 import com.tc.util.State;
 import com.tc.util.StringUtil;
@@ -61,11 +59,6 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   private long                                 nextSequenceNumber;
 
   private final JVMMemoryManager               manager;
-  private StatisticRetrievalAction             cpuUsageSRA;
-  private StatisticRetrievalAction             cpuLoadSRA;
-  private String[]                             cpuNames;
-
-  private static final String[]                EMPTY_CPU_NAMES = {};
 
   private final ObjectStatsRecorder            objectStatsRecorder;
 
@@ -88,47 +81,58 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     return this.objectStatsRecorder;
   }
 
+  @Override
   public void reset() {
     // nothing to reset
   }
 
+  @Override
   public boolean isStarted() {
     return l2State.isStartState();
   }
 
+  @Override
   public boolean isActive() {
     return l2State.isActiveCoordinator();
   }
 
+  @Override
   public boolean isPassiveUninitialized() {
     return l2State.isPassiveUninitialized();
   }
 
+  @Override
   public boolean isPassiveStandby() {
     return l2State.isPassiveStandby();
   }
 
+  @Override
   public long getStartTime() {
     return server.getStartTime();
   }
 
+  @Override
   public long getActivateTime() {
     return server.getActivateTime();
   }
 
+  @Override
   public boolean isGarbageCollectionEnabled() {
     return server.isGarbageCollectionEnabled();
   }
 
+  @Override
   public int getGarbageCollectionInterval() {
     return server.getGarbageCollectionInterval();
   }
 
+  @Override
   public void stop() {
     server.stop();
     _sendNotification("TCServer stopped", "Started", "java.lang.Boolean", Boolean.TRUE, Boolean.FALSE);
   }
 
+  @Override
   public boolean isShutdownable() {
     return server.canShutdown();
   }
@@ -137,6 +141,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
    * This schedules the shutdown to occur one second after we return from this call because otherwise JMX will be
    * shutdown and we'll get all sorts of other errors trying to return from this call.
    */
+  @Override
   public void shutdown() {
     if (!server.canShutdown()) {
       String msg = "Server cannot be shutdown because it is not fully started.";
@@ -159,6 +164,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     return Arrays.asList(NOTIFICATION_INFO).toArray(EMPTY_NOTIFICATION_INFO);
   }
 
+  @Override
   public void startBeanShell(int port) {
     server.startBeanShell(port);
   }
@@ -174,26 +180,32 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     }
   }
 
+  @Override
   public String getState() {
     return l2State.toString();
   }
 
+  @Override
   public String getVersion() {
     return productInfo.toShortString();
   }
 
+  @Override
   public String getMavenArtifactsVersion() {
     return productInfo.mavenArtifactsVersion();
   }
 
+  @Override
   public String getBuildID() {
     return buildID;
   }
 
+  @Override
   public boolean isPatched() {
     return productInfo.isPatched();
   }
 
+  @Override
   public String getPatchLevel() {
     if (productInfo.isPatched()) {
       return productInfo.patchLevel();
@@ -202,6 +214,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     }
   }
 
+  @Override
   public String getPatchVersion() {
     if (productInfo.isPatched()) {
       return productInfo.toLongPatchString();
@@ -210,6 +223,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     }
   }
 
+  @Override
   public String getPatchBuildID() {
     if (productInfo.isPatched()) {
       return productInfo.patchBuildID();
@@ -218,105 +232,67 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     }
   }
 
+  @Override
   public String getCopyright() {
     return productInfo.copyright();
   }
 
+  @Override
   public String getDescriptionOfCapabilities() {
     return server.getDescriptionOfCapabilities();
   }
 
+  @Override
   public L2Info[] getL2Info() {
     return server.infoForAllL2s();
   }
 
+  @Override
   public ServerGroupInfo[] getServerGroupInfo() {
     return server.serverGroups();
   }
 
+  @Override
   public int getDSOListenPort() {
     return server.getDSOListenPort();
   }
 
+  @Override
   public int getDSOGroupPort() {
     return server.getDSOGroupPort();
   }
 
-  public String[] getCpuStatNames() {
-    if (cpuNames != null) return Arrays.asList(cpuNames).toArray(EMPTY_CPU_NAMES);
-    if (cpuUsageSRA == null) return cpuNames = EMPTY_CPU_NAMES;
-
-    List list = new ArrayList();
-    StatisticData[] statsData = cpuUsageSRA.retrieveStatisticData();
-    if (statsData != null) {
-      for (StatisticData element : statsData) {
-        list.add(element.getElement());
-      }
-    }
-    return cpuNames = (String[]) list.toArray(EMPTY_CPU_NAMES);
-  }
-
+  @Override
   public long getUsedMemory() {
     return manager.getMemoryUsage().getUsedMemory();
   }
 
+  @Override
   public long getMaxMemory() {
     return manager.getMemoryUsage().getMaxMemory();
   }
 
+  @Override
   public Map getStatistics() {
     HashMap<String, Object> map = new HashMap<String, Object>();
 
     map.put(MEMORY_USED, Long.valueOf(getUsedMemory()));
     map.put(MEMORY_MAX, Long.valueOf(getMaxMemory()));
 
-    if (cpuUsageSRA != null) {
-      StatisticData[] statsData = getCpuUsage();
-      if (statsData != null) {
-        map.put(CPU_USAGE, statsData);
-      }
-    }
-
-    if (cpuLoadSRA != null) {
-      StatisticData statsData = getCpuLoad();
-      if (statsData != null) {
-        map.put(CPU_LOAD, statsData);
-      }
-    }
-
     return map;
   }
 
-  private long             lastCpuUsageUpdateTime   = System.currentTimeMillis();
-  private StatisticData[]  lastCpuUsageUpdate;
-  private long             lastCpuLoadUpdateTime    = System.currentTimeMillis();
-  private StatisticData    lastCpuLoadUpdate;
-  private static final int CPU_UPDATE_WINDOW_MILLIS = 1000;
-
-  public StatisticData[] getCpuUsage() {
-    if (cpuUsageSRA == null) { return null; }
-    if (System.currentTimeMillis() - lastCpuUsageUpdateTime < CPU_UPDATE_WINDOW_MILLIS) { return lastCpuUsageUpdate; }
-    lastCpuUsageUpdateTime = System.currentTimeMillis();
-    return lastCpuUsageUpdate = cpuUsageSRA.retrieveStatisticData();
-  }
-
-  public StatisticData getCpuLoad() {
-    if (cpuLoadSRA == null) { return null; }
-    if (System.currentTimeMillis() - lastCpuLoadUpdateTime < CPU_UPDATE_WINDOW_MILLIS) { return lastCpuLoadUpdate; }
-    lastCpuLoadUpdateTime = System.currentTimeMillis();
-    StatisticData[] sd = cpuLoadSRA.retrieveStatisticData();
-    if (sd.length == 1) { return lastCpuLoadUpdate = sd[0]; }
-    return null;
-  }
-
+  @Override
   public byte[] takeCompressedThreadDump(long requestMillis) {
     return ThreadDumpUtil.getCompressedThreadDump();
   }
 
+  @Override
   public String getEnvironment() {
     return format(System.getProperties());
   }
 
+  @Override
   public String getTCProperties() {
     Properties props = TCPropertiesImpl.getProperties().addAllPropertiesTo(new Properties());
     String keyPrefix = /* TCPropertiesImpl.SYSTEM_PROP_PREFIX */null;
@@ -367,6 +343,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     return sb.toString();
   }
 
+  @Override
   public String[] getProcessArguments() {
     String[] args = server.processArguments();
     List<String> inputArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
@@ -380,24 +357,29 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     }
   }
 
+  @Override
   public boolean getRestartable() {
     return server.getRestartable();
   }
 
+  @Override
   public String getFailoverMode() {
     return server.getFailoverMode();
   }
 
+  @Override
   public String getConfig() {
     return server.getConfig();
   }
 
+  @Override
   public String getHealthStatus() {
     // FIXME: the returned value should eventually contain a true representative status of L2 server.
     // for now just return 'OK' to indicate that the process is up-and-running..
     return "OK";
   }
 
+  @Override
   public void l2StateChanged(StateChangedEvent sce) {
     State state = sce.getCurrentState();
 
@@ -424,81 +406,100 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     }
   }
 
+  @Override
   public boolean getFaultDebug() {
     return objectStatsRecorder.getFaultDebug();
   }
 
+  @Override
   public void setFaultDebug(boolean faultDebug) {
     objectStatsRecorder.setFaultDebug(faultDebug);
   }
 
+  @Override
   public boolean getRequestDebug() {
     return objectStatsRecorder.getRequestDebug();
   }
 
+  @Override
   public void setRequestDebug(boolean requestDebug) {
     objectStatsRecorder.setRequestDebug(requestDebug);
   }
 
+  @Override
   public boolean getFlushDebug() {
     return objectStatsRecorder.getFlushDebug();
   }
 
+  @Override
   public void setFlushDebug(boolean flushDebug) {
     objectStatsRecorder.setFlushDebug(flushDebug);
   }
 
+  @Override
   public boolean getBroadcastDebug() {
     return objectStatsRecorder.getBroadcastDebug();
   }
 
+  @Override
   public void setBroadcastDebug(boolean broadcastDebug) {
     objectStatsRecorder.setBroadcastDebug(broadcastDebug);
   }
 
+  @Override
   public boolean getCommitDebug() {
     return objectStatsRecorder.getCommitDebug();
   }
 
+  @Override
   public void setCommitDebug(boolean commitDebug) {
     objectStatsRecorder.setCommitDebug(commitDebug);
   }
 
+  @Override
   public void gc() {
     ManagementFactory.getMemoryMXBean().gc();
   }
 
+  @Override
   public boolean isVerboseGC() {
     return ManagementFactory.getMemoryMXBean().isVerbose();
   }
 
+  @Override
   public void setVerboseGC(boolean verboseGC) {
     boolean oldValue = isVerboseGC();
     ManagementFactory.getMemoryMXBean().setVerbose(verboseGC);
     _sendNotification("VerboseGC changed", "VerboseGC", "java.lang.Boolean", oldValue, verboseGC);
   }
 
+  @Override
   public boolean isEnterprise() {
     return server.getClass().getSimpleName().equals("EnterpriseServerImpl");
   }
 
+  @Override
   public boolean isProduction() {
     return server.isProduction();
   }
 
+  @Override
   public boolean isSecure() {
     return server.isSecure();
   }
 
+  @Override
   public String getSecurityServiceLocation() {
     return server.getSecurityServiceLocation();
   }
 
+  @Override
   public String getSecurityHostname() {
     server.getDSOListenPort();
     return server.getSecurityHostname();
   }
 
+  @Override
   public Integer getSecurityServiceTimeout() {
     return server.getSecurityServiceTimeout();
   }

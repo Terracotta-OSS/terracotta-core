@@ -19,7 +19,6 @@ import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
-import com.tc.statistics.StatisticRetrievalAction;
 import com.terracottatech.search.NVPair;
 
 import java.io.PrintWriter;
@@ -133,10 +132,6 @@ public class ManagerUtil {
    */
   protected static String getUUID() {
     return getManager().getUUID();
-  }
-
-  protected static void registerStatisticRetrievalAction(StatisticRetrievalAction sra) {
-    getManager().registerStatisticRetrievalAction(sra);
   }
 
   /**

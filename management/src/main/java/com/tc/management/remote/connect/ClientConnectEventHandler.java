@@ -15,7 +15,6 @@ import com.tc.management.remote.protocol.terracotta.TunnelingMessageConnection;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.statistics.StatisticsGateway;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -37,15 +36,14 @@ import javax.management.remote.JMXServiceURL;
 public class ClientConnectEventHandler extends AbstractEventHandler {
   private static final TCLogger                 LOGGER         = TCLogging.getLogger(ClientConnectEventHandler.class);
 
-  private final StatisticsGateway               statisticsGateway;
-
   final ConcurrentMap<ChannelID, ClientBeanBag> clientBeanBags = new ConcurrentHashMap<ChannelID, ClientBeanBag>();
 
-  public ClientConnectEventHandler(final StatisticsGateway statisticsGateway) {
-    this.statisticsGateway = statisticsGateway;
+  public ClientConnectEventHandler() {
+    //
   }
 
   private static final class ConnectorClosedFilter implements NotificationFilter {
+    @Override
     public boolean isNotificationEnabled(final Notification notification) {
       boolean enabled = false;
       if (notification instanceof JMXConnectionNotification) {
@@ -63,6 +61,7 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
       this.bag = bag;
     }
 
+    @Override
     final public void handleNotification(final Notification notification, final Object context) {
       bag.unregisterBeans();
     }
@@ -133,8 +132,6 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
 
           final MBeanServerConnection l1MBeanServerConnection = jmxConnector.getMBeanServerConnection();
 
-          statisticsGateway.addStatisticsAgent(channel.getChannelID(), l1MBeanServerConnection);
-
           ClientBeanBag bag = new ClientBeanBag(l2MBeanServer, channel, msg.getUUID(), msg.getTunneledDomains(),
                                                 l1MBeanServerConnection);
           clientBeanBags.put(channel.getChannelID(), bag);
@@ -182,8 +179,6 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
     try {
       final JMXConnector jmxConnector = channelIdToJmxConnector.remove(channel.getChannelID());
       if (jmxConnector != null) {
-        statisticsGateway.removeStatisticsAgent(channel.getChannelID());
-
         try {
           jmxConnector.close();
         } catch (IOException ioe) {

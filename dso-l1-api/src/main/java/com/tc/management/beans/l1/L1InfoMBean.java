@@ -5,7 +5,6 @@ package com.tc.management.beans.l1;
 
 import com.tc.management.RuntimeStatisticConstants;
 import com.tc.management.TerracottaMBean;
-import com.tc.statistics.StatisticData;
 
 import java.util.Map;
 
@@ -40,17 +39,11 @@ public interface L1InfoMBean extends TerracottaMBean, NotificationEmitter, Runti
 
   String getConfig();
 
-  String[] getCpuStatNames();
-
   Map getStatistics();
 
   long getUsedMemory();
 
   long getMaxMemory();
-
-  StatisticData getCpuLoad();
-
-  StatisticData[] getCpuUsage();
 
   boolean isVerboseGC();
 

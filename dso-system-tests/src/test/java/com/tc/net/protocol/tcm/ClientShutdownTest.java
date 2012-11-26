@@ -31,7 +31,6 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.TCServer;
 import com.tc.server.TCServerImpl;
-import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
@@ -149,6 +148,7 @@ public class ClientShutdownTest extends BaseDSOTestCase {
   private class PingMessageSink implements TCMessageSink {
     Queue<PingMessage> queue = new LinkedBlockingQueue<PingMessage>();
 
+    @Override
     public void putMessage(final TCMessage message) throws UnsupportedMessageTypeException {
 
       PingMessage ping = (PingMessage) message;
@@ -189,7 +189,6 @@ public class ClientShutdownTest extends BaseDSOTestCase {
                                                                  new MockClassProvider(),
                                                                  preparedComponentsFromL2Connection,
                                                                  NullManager.getInstance(),
-                                                                 new StatisticsAgentSubSystemImpl(),
                                                                  new DsoClusterImpl(), new NullRuntimeLogger());
     client.start();
     return client;
@@ -221,6 +220,7 @@ public class ClientShutdownTest extends BaseDSOTestCase {
       return server;
     }
 
+    @Override
     public void execute() throws Throwable {
       ManagedObjectStateFactory.disableSingleton(true);
       TestConfigurationSetupManagerFactory factory = configFactory();
@@ -244,6 +244,7 @@ public class ClientShutdownTest extends BaseDSOTestCase {
       this.txManager = remoteTransactionManager;
     }
 
+    @Override
     public void notifyChannelEvent(ChannelEvent event) {
       if (ChannelEventType.CHANNEL_CLOSED_EVENT.matches(event)) {
         System.out.println("XXX CH CLOSED");

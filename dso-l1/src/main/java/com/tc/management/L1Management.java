@@ -21,7 +21,6 @@ import com.tc.management.remote.protocol.ProtocolProvider;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.management.remote.protocol.terracotta.TunnelingMessageConnectionServer;
 import com.tc.object.logging.RuntimeLogger;
-import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;
@@ -55,22 +54,18 @@ public class L1Management extends TerracottaManagement {
   private final RuntimeOutputOptions     runtimeOutputOptionsBean;
   private final RuntimeLogging           runtimeLoggingBean;
 
-  private final StatisticsAgentSubSystem statisticsAgentSubSystem;
-
   private final L1Dumper                 l1DumpBean;
 
   private JMXConnectorServer             connServer;
 
   private volatile boolean               stopped;
 
-  public L1Management(final TunnelingEventHandler tunnelingHandler,
-                      final StatisticsAgentSubSystem statisticsAgentSubSystem, final RuntimeLogger runtimeLogger,
+  public L1Management(final TunnelingEventHandler tunnelingHandler, final RuntimeLogger runtimeLogger,
                       final String rawConfigText, final TCClient client) {
     super();
 
     started = new SetOnceFlag();
     this.tunnelingHandler = tunnelingHandler;
-    this.statisticsAgentSubSystem = statisticsAgentSubSystem;
 
     try {
       l1InfoBean = new L1Info(client, rawConfigText);
@@ -231,10 +226,6 @@ public class L1Management extends TerracottaManagement {
       NotCompliantMBeanException, MalformedObjectNameException {
     registerMBean(l1DumpBean, MBeanNames.L1DUMPER_INTERNAL);
     registerMBean(clusterBean, L1MBeanNames.CLUSTER_BEAN_PUBLIC);
-    if (statisticsAgentSubSystem.isActive()) {
-      statisticsAgentSubSystem.registerMBeans(mBeanServer, tunnelingHandler.getUUID());
-    }
-
     registerMBean(l1InfoBean, L1MBeanNames.L1INFO_PUBLIC);
     registerMBean(runtimeOutputOptionsBean, L1MBeanNames.RUNTIME_OUTPUT_OPTIONS_PUBLIC);
     registerMBean(runtimeLoggingBean, L1MBeanNames.RUNTIME_LOGGING_PUBLIC);

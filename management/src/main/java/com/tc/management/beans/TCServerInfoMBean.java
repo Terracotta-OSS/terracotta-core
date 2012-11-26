@@ -8,7 +8,6 @@ import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.management.RuntimeStatisticConstants;
 import com.tc.management.TerracottaMBean;
-import com.tc.statistics.StatisticData;
 
 import java.util.Map;
 
@@ -72,17 +71,11 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   int getGarbageCollectionInterval();
 
-  String[] getCpuStatNames();
-
   Map getStatistics();
 
   long getUsedMemory();
 
   long getMaxMemory();
-
-  StatisticData[] getCpuUsage();
-
-  StatisticData getCpuLoad();
 
   byte[] takeCompressedThreadDump(long requestMillis);
 
