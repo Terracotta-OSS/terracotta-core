@@ -44,11 +44,14 @@ public class DestroyableToolkitNotifier<T> extends AbstractDestroyableToolkitObj
   @Override
   public void rejoinCompleted() {
     ToolkitNotifierImpl afterRejoin = lookup.lookupClusteredObject(name);
-    if (afterRejoin == null) {
+
+    if (afterRejoin != null) {
+      this.notifier = afterRejoin;
+    } else {
       // didn't find backing clustered object after rejoin - must have been destroyed
-      // todo: set to a new delegate which throws exception, as clustered object is destroyed
+      // apply destroy locally
+      applyDestroy();
     }
-    this.notifier = afterRejoin;
   }
 
   @Override
