@@ -3,8 +3,10 @@
  */
 package com.terracotta.toolkit.nonstop;
 
+import org.terracotta.toolkit.nonstop.NonStopConfiguration;
+
 public interface NonStopDelegateProvider<T> {
-  public long getTimeout(String name);
+  public NonStopConfiguration getNonStopConfiguration(String name);
 
   public T getTimeoutBehavior();
 

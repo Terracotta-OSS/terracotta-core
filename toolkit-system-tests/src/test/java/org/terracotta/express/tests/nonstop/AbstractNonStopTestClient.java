@@ -66,7 +66,7 @@ public abstract class AbstractNonStopTestClient extends NonStopClientBase {
         }
 
         time = System.currentTimeMillis() - time;
-        Assert.assertTrue((time > (NON_STOP_TIMEOUT_MILLIS - 500)) && (time < (NON_STOP_TIMEOUT_MILLIS + 2000)));
+        assertOnTimeTakenForTimedOutOps(time);
         System.err.println("Time consumed " + time);
 
         checkNonStopExceptionOnReads(exception);
@@ -89,9 +89,17 @@ public abstract class AbstractNonStopTestClient extends NonStopClientBase {
     }
   }
 
+  private void assertOnTimeTakenForTimedOutOps(long time) {
+    if (isImmediateTimeoutEnabled()) {
+      Assert.assertTrue(time < 2000);
+    } else {
+      Assert.assertTrue((time > (NON_STOP_TIMEOUT_MILLIS - 500)) && (time < (NON_STOP_TIMEOUT_MILLIS + 2000)));
+    }
+  }
+
   private void checkAndAssertOnPut(long time, Object rv, boolean exceptionOccurredOnPut) {
     time = System.currentTimeMillis() - time;
-    Assert.assertTrue((time > (NON_STOP_TIMEOUT_MILLIS - 500)) && (time < (NON_STOP_TIMEOUT_MILLIS + 2000)));
+    assertOnTimeTakenForTimedOutOps(time);
     Assert.assertNull(rv);
 
     switch (getMutableOpTimeoutBehavior()) {
@@ -159,7 +167,8 @@ public abstract class AbstractNonStopTestClient extends NonStopClientBase {
     String cacheName = "test-cache";
 
     new NonStopConfigurationBuilder().timeoutMillis(NON_STOP_TIMEOUT_MILLIS)
-        .nonStopTimeoutBehavior(getImmutableOpTimeoutBehavior(), getMutableOpTimeoutBehavior()).apply(toolkit);
+        .nonStopTimeoutBehavior(getImmutableOpTimeoutBehavior(), getMutableOpTimeoutBehavior())
+        .immediateTimeout(isImmediateTimeoutEnabled()).apply(toolkit);
 
     ToolkitCacheConfigBuilder builder = new ToolkitCacheConfigBuilder();
     builder.maxCountLocalHeap(MAX_ENTRIES_LOCAL_HEAP);
@@ -167,6 +176,10 @@ public abstract class AbstractNonStopTestClient extends NonStopClientBase {
     addMoreConfigToBuilder(builder);
 
     return toolkit.getCache(cacheName, builder.build(), Integer.class);
+  }
+
+  protected boolean isImmediateTimeoutEnabled() {
+    return false;
   }
 
   protected void addMoreConfigToBuilder(ToolkitCacheConfigBuilder builder) {

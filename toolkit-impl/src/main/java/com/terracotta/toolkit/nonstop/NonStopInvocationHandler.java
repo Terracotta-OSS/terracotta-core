@@ -5,6 +5,7 @@ package com.terracotta.toolkit.nonstop;
 
 import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.internal.nonstop.NonStopManager;
+import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 
@@ -13,20 +14,29 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class NonStopInvocationHandler<T> implements InvocationHandler {
-
   private final NonStopManager             nonStopManager;
   private final NonStopDelegateProvider<T> nonStopDelegateProvider;
+  private final NonStopClusterListener     clusterListener;
 
-  public NonStopInvocationHandler(NonStopManager nonStopManager, NonStopDelegateProvider<T> nonStopDelegateProvider) {
+  public NonStopInvocationHandler(NonStopManager nonStopManager, NonStopDelegateProvider<T> nonStopDelegateProvider,
+                                  NonStopClusterListener clusterListener) {
     this.nonStopManager = nonStopManager;
     this.nonStopDelegateProvider = nonStopDelegateProvider;
+    this.clusterListener = clusterListener;
   }
 
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     boolean externalBegin = nonStopManager.isBegin();
+    NonStopConfiguration nonStopConfiguration = nonStopDelegateProvider.getNonStopConfiguration(method.getName());
+
+    if (nonStopConfiguration.isImmediateTimeoutEnabled() && !clusterListener.areOperationsEnabled()) { return invokeMethod(method,
+                                                                                                                           args,
+                                                                                                                           nonStopDelegateProvider
+                                                                                                                               .getTimeoutBehavior()); }
+
     if (!externalBegin) {
-      nonStopManager.begin(nonStopDelegateProvider.getTimeout(method.getName()));
+      nonStopManager.begin(nonStopConfiguration.getTimeoutMillis());
     }
     try {
       return invokeMethod(method, args, nonStopDelegateProvider.getDelegate());
@@ -50,5 +60,4 @@ public class NonStopInvocationHandler<T> implements InvocationHandler {
       throw new ToolkitRuntimeException(e);
     }
   }
-
 }

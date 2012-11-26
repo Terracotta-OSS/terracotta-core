@@ -34,6 +34,7 @@ import com.tc.abortable.AbortableOperationManager;
 import com.tc.platform.PlatformService;
 import com.tc.util.Util;
 import com.terracotta.toolkit.collections.map.ValuesResolver;
+import com.terracotta.toolkit.nonstop.NonStopClusterListener;
 import com.terracotta.toolkit.nonstop.NonStopConfigRegistryImpl;
 import com.terracotta.toolkit.nonstop.NonStopDelegateProvider;
 import com.terracotta.toolkit.nonstop.NonStopInvocationHandler;
@@ -56,6 +57,7 @@ public class NonStopToolkit implements ToolkitInternal {
 
   private final ConcurrentMap<ToolkitObjectType, ConcurrentMap<String, ToolkitObject>> toolkitObjects                = new ConcurrentHashMap<ToolkitObjectType, ConcurrentMap<String, ToolkitObject>>();
   private final AbortableOperationManager                                              abortableOperationManager;
+  private final NonStopClusterListener                                                 nonStopClusterListener;
 
   public NonStopToolkit(FutureTask<ToolkitInternal> toolkitDelegateFutureTask, PlatformService platformService) {
     this.toolkitDelegateFutureTask = toolkitDelegateFutureTask;
@@ -65,6 +67,8 @@ public class NonStopToolkit implements ToolkitInternal {
     for (ToolkitObjectType objectType : ToolkitObjectType.values()) {
       toolkitObjects.put(objectType, new ConcurrentHashMap<String, ToolkitObject>());
     }
+
+    this.nonStopClusterListener = new NonStopClusterListener(toolkitDelegateFutureTask);
   }
 
   private ToolkitInternal getInitializedToolkit() {
@@ -106,7 +110,8 @@ public class NonStopToolkit implements ToolkitInternal {
     store = (ToolkitStore<String, V>) Proxy
         .newProxyInstance(this.getClass().getClassLoader(), new Class[] { ToolkitCacheInternal.class,
             ValuesResolver.class }, new NonStopInvocationHandler<ToolkitStore<String, V>>(nonStopManager,
-                                                                                          nonStopDelegateProvider));
+                                                                                          nonStopDelegateProvider,
+                                                                                          nonStopClusterListener));
     ToolkitStore<String, V> oldStore = (ToolkitStore<String, V>) toolkitObjects.get(ToolkitObjectType.STORE)
         .putIfAbsent(name, store);
     return oldStore == null ? store : oldStore;
@@ -204,7 +209,8 @@ public class NonStopToolkit implements ToolkitInternal {
         .newProxyInstance(this.getClass().getClassLoader(), new Class[] { ToolkitCacheInternal.class,
                               ValuesResolver.class },
                           new NonStopInvocationHandler<ToolkitCacheInternal<String, V>>(nonStopManager,
-                                                                                        nonStopDelegateProvider));
+                                                                                        nonStopDelegateProvider,
+                                                                                        nonStopClusterListener));
     ToolkitCache<String, V> oldCache = (ToolkitCache<String, V>) toolkitObjects.get(ToolkitObjectType.CACHE)
         .putIfAbsent(name, cache);
     return oldCache == null ? cache : oldCache;
