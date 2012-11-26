@@ -274,7 +274,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
     popTransaction(lock);
 
     if (peekContext() != null) {
-      if (hasCommitted) {
+      if (hasCommitted || aborted) {
         createTxAndInitContext();
       } else {
         // If the current transaction has not committed, we will reuse the current transaction

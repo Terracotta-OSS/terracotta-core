@@ -42,6 +42,10 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
     this.transaction = txn;
   }
 
+  public ClientTransaction getTransaction() {
+    return transaction;
+  }
+
   @Override
   public TransactionBuffer receivedAcknowledgement(final SessionID sessionID, final TransactionID ackTxID,
                                                    final NodeID nodeID) {
