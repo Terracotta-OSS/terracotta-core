@@ -25,7 +25,7 @@ public class PeriodicEvictionTriggerTest extends AbstractEvictionTriggerTest {
 
     @Override @Before
     public void setUp() {
-        Mockito.when(getEvictableMap().isEvicting()).thenReturn(Boolean.TRUE);
+//        Mockito.when(getEvictableMap().isEvicting()).thenReturn(Boolean.TRUE);
         Mockito.when(getEvictableMap().getSize()).thenReturn(250);
         super.setUp();
     }
