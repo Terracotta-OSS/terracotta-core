@@ -62,9 +62,7 @@ public class NonStopManagerImpl implements NonStopManager {
     NonStopTimerTask task = timerTasks.get(Thread.currentThread());
     if (task != null) {
       timerTasks.remove(Thread.currentThread());
-      if (!task.cancelTaskIfRequired()) {
-        // clear Interrupted status flag. // TODO: rethink seems like a hack..
-      }
+      task.cancelTaskIfRequired();
       abortableOperationManager.finish();
     } else {
       throw new IllegalStateException("The thread has not called begin");
