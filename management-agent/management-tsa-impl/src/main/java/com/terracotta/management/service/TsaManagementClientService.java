@@ -21,9 +21,9 @@ import java.util.Set;
  */
 public interface TsaManagementClientService {
 
-  Collection<ThreadDumpEntity> clientsThreadDump() throws ServiceExecutionException;
+  Collection<ThreadDumpEntity> clientsThreadDump(Set<String> clientIds) throws ServiceExecutionException;
 
-  Collection<ThreadDumpEntity> serversThreadDump() throws ServiceExecutionException;
+  Collection<ThreadDumpEntity> serversThreadDump(Set<String> serverNames) throws ServiceExecutionException;
 
   Collection<ClientEntity> getClientEntities() throws ServiceExecutionException;
 

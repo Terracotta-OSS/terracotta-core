@@ -77,7 +77,7 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
   }
 
   @Override
-  public Collection<ThreadDumpEntity> clientsThreadDump() throws ServiceExecutionException {
+  public Collection<ThreadDumpEntity> clientsThreadDump(Set<String> clientIds) throws ServiceExecutionException {
     JMXConnector jmxConnector = null;
     try {
       MBeanServerConnection mBeanServerConnection;
@@ -98,7 +98,17 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
 
       Set<ObjectName> dsoClientObjectNames = mBeanServerConnection.queryNames(
           new ObjectName("org.terracotta:clients=Clients,name=L1 Info Bean,type=DSO Client,node=*"), null);
-      for (ObjectName dsoClientObjectName : dsoClientObjectNames) {
+      ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
+
+      Iterator<ObjectName> it = dsoClientObjectNames.iterator();
+      for (ObjectName clientObjectName : clientObjectNames) {
+        ObjectName dsoClientObjectName = it.next();
+
+        String clientId = "" + ((ClientID)mBeanServerConnection.getAttribute(clientObjectName, "ClientID")).toLong();
+        if (clientIds != null && !clientIds.contains(clientId)) {
+          continue;
+        }
+
         try {
           L1InfoMBean l1InfoMBean = JMX.newMBeanProxy(mBeanServerConnection, dsoClientObjectName, L1InfoMBean.class);
 
@@ -133,7 +143,7 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
   }
 
   @Override
-  public Collection<ThreadDumpEntity> serversThreadDump() throws ServiceExecutionException {
+  public Collection<ThreadDumpEntity> serversThreadDump(Set<String> serverNames) throws ServiceExecutionException {
     Collection<ThreadDumpEntity> threadDumpEntities = new ArrayList<ThreadDumpEntity>();
 
     try {
@@ -144,6 +154,10 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
       for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
         L2Info[] members = serverGroupInfo.members();
         for (L2Info member : members) {
+          if (serverNames != null && !serverNames.contains(member.name())) {
+            continue;
+          }
+
           int jmxPort = member.jmxPort();
           String jmxHost = member.host();
 

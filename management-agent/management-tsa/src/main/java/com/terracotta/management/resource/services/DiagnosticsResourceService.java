@@ -27,6 +27,16 @@ public interface DiagnosticsResourceService {
   Collection<ThreadDumpEntity> clusterThreadDump(@Context UriInfo info);
 
   @POST
+  @Path("/threadDump/servers")
+  @Produces(MediaType.APPLICATION_JSON)
+  Collection<ThreadDumpEntity> serversThreadDump(@Context UriInfo info);
+
+  @POST
+  @Path("/threadDump/clients")
+  @Produces(MediaType.APPLICATION_JSON)
+  Collection<ThreadDumpEntity> clientsThreadDump(@Context UriInfo info);
+
+  @POST
   @Path("/dgc")
   @Produces(MediaType.APPLICATION_JSON)
   boolean runDgc(@Context UriInfo info);
