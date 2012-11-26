@@ -36,7 +36,7 @@ public class NonStopInvocationHandler<T> implements InvocationHandler {
                                                                                                                                .getTimeoutBehavior()); }
 
     if (!externalBegin) {
-      nonStopManager.begin(nonStopConfiguration.getTimeoutMillis());
+      nonStopManager.begin(getTimeout(nonStopConfiguration));
     }
     try {
       return invokeMethod(method, args, nonStopDelegateProvider.getDelegate());
@@ -46,6 +46,14 @@ public class NonStopInvocationHandler<T> implements InvocationHandler {
       if (!externalBegin) {
         nonStopManager.finish();
       }
+    }
+  }
+
+  private long getTimeout(NonStopConfiguration nonStopConfiguration) {
+    if (nonStopConfiguration.isEnabled()) {
+      return nonStopConfiguration.getTimeoutMillis();
+    } else {
+      return -1;
     }
   }
 

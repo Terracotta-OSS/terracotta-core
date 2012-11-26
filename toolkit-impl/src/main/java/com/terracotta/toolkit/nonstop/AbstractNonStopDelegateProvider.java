@@ -60,11 +60,6 @@ public abstract class AbstractNonStopDelegateProvider<T extends ToolkitObject> i
   @Override
   public NonStopConfiguration getNonStopConfiguration(String methodName) {
     return nonStopConfigRegistry.getConfigForInstanceMethod(methodName, toolkitObjectName, getTolkitObjectType());
-    // if (nonStopConfiguration.isEnabled()) {
-    // return nonStopConfiguration.getTimeoutMillis();
-    // } else {
-    // return -1;
-    // }
   }
 
   @Override
