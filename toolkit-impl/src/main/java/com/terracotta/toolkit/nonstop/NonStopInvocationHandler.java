@@ -27,17 +27,13 @@ public class NonStopInvocationHandler<T> implements InvocationHandler {
 
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-    boolean externalBegin = nonStopManager.isBegin();
     NonStopConfiguration nonStopConfiguration = nonStopDelegateProvider.getNonStopConfiguration(method.getName());
 
     if (nonStopConfiguration.isImmediateTimeoutEnabled() && !clusterListener.areOperationsEnabled()) { return invokeMethod(method,
                                                                                                                            args,
                                                                                                                            nonStopDelegateProvider
                                                                                                                                .getTimeoutBehavior()); }
-
-    if (!externalBegin) {
-      nonStopManager.begin(getTimeout(nonStopConfiguration));
-    }
+    boolean externalBegin = nonStopManager.tryBegin(getTimeout(nonStopConfiguration));
     try {
       return invokeMethod(method, args, nonStopDelegateProvider.getDelegate());
     } catch (ToolkitAbortableOperationException e) {

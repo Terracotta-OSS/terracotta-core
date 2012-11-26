@@ -4,6 +4,9 @@
 package com.terracotta.toolkit.nonstop;
 
 import org.terracotta.toolkit.ToolkitObjectType;
+import org.terracotta.toolkit.collections.ToolkitList;
+import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
+import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopTimeoutBehavior;
 
@@ -36,6 +39,36 @@ public class NonstopTimeoutBehaviorResolver {
         ToolkitCacheInternal.class, DistributedToolkitType.class, ValuesResolver.class }, new NoOpInvocationHandler());
     noOpOnTimeoutBehaviorMap.put(ToolkitObjectType.CACHE, cacheNoOpOnTimeOutBehavior);
     noOpOnTimeoutBehaviorMap.put(ToolkitObjectType.STORE, cacheNoOpOnTimeOutBehavior);
+
+    Object listExceptionOnTimeOutBehavior = Proxy.newProxyInstance(this.getClass().getClassLoader(),
+                                                                   new Class[] { ToolkitList.class },
+                                                                   new ExceptionOnTimeoutInvocationHandler());
+    exceptionOnTimeoutBehaviorMap.put(ToolkitObjectType.LIST, listExceptionOnTimeOutBehavior);
+
+    Object listNoOpOnTimeOutBehavior = Proxy.newProxyInstance(this.getClass().getClassLoader(),
+                                                              new Class[] { ToolkitList.class },
+                                                              new NoOpInvocationHandler());
+    noOpOnTimeoutBehaviorMap.put(ToolkitObjectType.LIST, listNoOpOnTimeOutBehavior);
+
+    Object lockExceptionOnTimeOutBehavior = Proxy.newProxyInstance(this.getClass().getClassLoader(),
+                                                                   new Class[] { ToolkitLock.class },
+                                                                   new ExceptionOnTimeoutInvocationHandler());
+    exceptionOnTimeoutBehaviorMap.put(ToolkitObjectType.LOCK, lockExceptionOnTimeOutBehavior);
+
+    Object lockNoOpOnTimeOutBehavior = Proxy.newProxyInstance(this.getClass().getClassLoader(),
+                                                              new Class[] { ToolkitLock.class },
+                                                              new NoOpInvocationHandler());
+    noOpOnTimeoutBehaviorMap.put(ToolkitObjectType.LOCK, lockNoOpOnTimeOutBehavior);
+
+    Object rwLockExceptionOnTimeOutBehavior = Proxy.newProxyInstance(this.getClass().getClassLoader(),
+                                                                     new Class[] { ToolkitReadWriteLock.class },
+                                                                     new ExceptionOnTimeoutInvocationHandler());
+    exceptionOnTimeoutBehaviorMap.put(ToolkitObjectType.READ_WRITE_LOCK, rwLockExceptionOnTimeOutBehavior);
+
+    Object rwLockNoOpOnTimeOutBehavior = Proxy.newProxyInstance(this.getClass().getClassLoader(),
+                                                                new Class[] { ToolkitReadWriteLock.class },
+                                                                new NoOpInvocationHandler());
+    noOpOnTimeoutBehaviorMap.put(ToolkitObjectType.READ_WRITE_LOCK, rwLockNoOpOnTimeOutBehavior);
 
   }
 
@@ -115,7 +148,7 @@ public class NonstopTimeoutBehaviorResolver {
       case SET:
       case SORTED_MAP:
       case SORTED_SET:
-        throw new UnsupportedOperationException("NonStop Not Supported for ToolkitType " + objectType);
+        throw new UnsupportedOperationException("NonStop local reads Not Supported for ToolkitType " + objectType);
     }
     return null;
   }

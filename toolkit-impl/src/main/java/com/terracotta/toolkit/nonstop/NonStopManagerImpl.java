@@ -43,6 +43,18 @@ public class NonStopManagerImpl implements NonStopManager {
   }
 
   @Override
+  public boolean tryBegin(long timeout) {
+    if (timerTasks.containsKey(Thread.currentThread())) {
+      // Nonstop operation already running
+      return false;
+    } else {
+      begin(timeout);
+      return true;
+    }
+
+  }
+
+  @Override
   public void finish() {
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("finish nonstop operation for Thread : " + Thread.currentThread());
@@ -57,11 +69,6 @@ public class NonStopManagerImpl implements NonStopManager {
     } else {
       throw new IllegalStateException("The thread has not called begin");
     }
-  }
-
-  @Override
-  public boolean isBegin() {
-    return timerTasks.containsKey(Thread.currentThread());
   }
 
   public void shutdown() {

@@ -1060,7 +1060,7 @@ public class ClientLockTest extends TestCase {
 
     @Override
     public boolean asyncFlush(LockID lock, LockFlushCallback callback, boolean noLocksLeftOnClient) {
-      Assert.assertTrue(legal.contains(RemoteOperation.TXN_FLUSHED));
+      Assert.assertTrue(legal.contains(RemoteOperation.TXN_FLUSHED) || legal.contains(RemoteOperation.FLUSH));
       return true;
     }
 

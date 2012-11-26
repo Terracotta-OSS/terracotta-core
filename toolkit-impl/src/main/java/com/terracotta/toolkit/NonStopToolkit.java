@@ -42,6 +42,9 @@ import com.terracotta.toolkit.nonstop.NonStopManagerImpl;
 import com.terracotta.toolkit.nonstop.NonStopToolkitCacheDelegateProvider;
 import com.terracotta.toolkit.nonstop.NonStopToolkitStoreDelegateProvider;
 import com.terracotta.toolkit.nonstop.NonstopTimeoutBehaviorResolver;
+import com.terracotta.toolkit.nonstop.NonstopToolkitListDelegateProvider;
+import com.terracotta.toolkit.nonstop.NonstopToolkitLockDelegateProvider;
+import com.terracotta.toolkit.nonstop.NonstopToolkitReadWriteLockDelegateProvider;
 
 import java.lang.reflect.Proxy;
 import java.util.concurrent.ConcurrentHashMap;
@@ -50,6 +53,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
 public class NonStopToolkit implements ToolkitInternal {
+  private static final String                                                          DELIMITER                     = "|";
+
   private final FutureTask<ToolkitInternal>                                            toolkitDelegateFutureTask;
   private final NonStopManager                                                         nonStopManager;
   private final NonStopConfigRegistryImpl                                              nonStopConfigManager          = new NonStopConfigRegistryImpl();
@@ -91,7 +96,21 @@ public class NonStopToolkit implements ToolkitInternal {
 
   @Override
   public <E> ToolkitList<E> getList(String name, Class<E> klazz) {
-    return getInitializedToolkit().getList(name, klazz);
+    ToolkitList<E> list = (ToolkitList<E>) toolkitObjects.get(ToolkitObjectType.LIST).get(name);
+    if (list != null) { return list; }
+    NonStopDelegateProvider<ToolkitList<E>> nonStopDelegateProvider = new NonstopToolkitListDelegateProvider(
+                                                                                                             abortableOperationManager,
+                                                                                                             nonStopConfigManager,
+                                                                                                             nonstopTimeoutBehaviorFactory,
+                                                                                                             toolkitDelegateFutureTask,
+                                                                                                             name,
+                                                                                                             klazz);
+    list = (ToolkitList<E>) Proxy
+        .newProxyInstance(this.getClass().getClassLoader(), new Class[] { ToolkitList.class },
+                          new NonStopInvocationHandler<ToolkitList<E>>(nonStopManager, nonStopDelegateProvider,
+                                                                       nonStopClusterListener));
+    ToolkitList<E> oldList = (ToolkitList<E>) toolkitObjects.get(ToolkitObjectType.LIST).putIfAbsent(name, list);
+    return oldList == null ? list : oldList;
   }
 
   @Override
@@ -150,12 +169,27 @@ public class NonStopToolkit implements ToolkitInternal {
 
   @Override
   public ToolkitLock getLock(String name) {
-    return getInitializedToolkit().getLock(name);
+    return getLock(name, ToolkitLockTypeInternal.WRITE);
   }
 
   @Override
   public ToolkitReadWriteLock getReadWriteLock(String name) {
-    return getInitializedToolkit().getReadWriteLock(name);
+    ToolkitReadWriteLock lock = (ToolkitReadWriteLock) toolkitObjects.get(ToolkitObjectType.READ_WRITE_LOCK).get(name);
+    if (lock != null) { return lock; }
+    NonStopDelegateProvider<ToolkitReadWriteLock> nonStopDelegateProvider = new NonstopToolkitReadWriteLockDelegateProvider(
+                                                                                                                            abortableOperationManager,
+                                                                                                                            nonStopConfigManager,
+                                                                                                                            nonstopTimeoutBehaviorFactory,
+                                                                                                                            toolkitDelegateFutureTask,
+                                                                                                                            name);
+    lock = (ToolkitReadWriteLock) Proxy
+        .newProxyInstance(this.getClass().getClassLoader(), new Class[] { ToolkitReadWriteLock.class },
+                          new NonStopInvocationHandler<ToolkitReadWriteLock>(nonStopManager,
+                                                                                       nonStopDelegateProvider,
+                                                                                       nonStopClusterListener));
+    ToolkitReadWriteLock oldLock = (ToolkitReadWriteLock) toolkitObjects.get(ToolkitObjectType.READ_WRITE_LOCK)
+        .putIfAbsent(name, lock);
+    return oldLock == null ? lock : oldLock;
   }
 
   @Override
@@ -238,7 +272,27 @@ public class NonStopToolkit implements ToolkitInternal {
 
   @Override
   public ToolkitLock getLock(String name, ToolkitLockTypeInternal lockType) {
-    return getInitializedToolkit().getLock(name, lockType);
+    ToolkitLock lock = (ToolkitLock) toolkitObjects.get(ToolkitObjectType.LOCK)
+        .get(getQualifiedlockName(name, lockType));
+    if (lock != null) { return lock; }
+    NonStopDelegateProvider<ToolkitLock> nonStopDelegateProvider = new NonstopToolkitLockDelegateProvider(
+                                                                                                          abortableOperationManager,
+                                                                                                          nonStopConfigManager,
+                                                                                                          nonstopTimeoutBehaviorFactory,
+                                                                                                          toolkitDelegateFutureTask,
+                                                                                                          name,
+                                                                                                          lockType);
+    lock = (ToolkitLock) Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class[] { ToolkitLock.class },
+                                                new NonStopInvocationHandler<ToolkitLock>(nonStopManager,
+                                                                                          nonStopDelegateProvider,
+                                                                                          nonStopClusterListener));
+    ToolkitLock oldLock = (ToolkitLock) toolkitObjects.get(ToolkitObjectType.LOCK)
+        .putIfAbsent(getQualifiedlockName(name, lockType), lock);
+    return oldLock == null ? lock : oldLock;
+  }
+
+  private String getQualifiedlockName(String name, ToolkitLockTypeInternal lockType) {
+    return name + DELIMITER + lockType.name();
   }
 
   @Override
