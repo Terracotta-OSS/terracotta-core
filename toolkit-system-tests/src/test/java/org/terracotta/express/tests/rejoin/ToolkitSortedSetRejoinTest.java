@@ -49,20 +49,15 @@ public class ToolkitSortedSetRejoinTest extends AbstractToolkitRejoinTest {
         Assert.assertTrue(toolkitSortedSet.contains(keyValGr.getValue(i)));
       }
 
-      doSleep(5);
-
       doDebug("Adding new values after rejoin");
       for (int i = NUM_ELEMENTS; i < 2 * NUM_ELEMENTS; i++) {
         toolkitSortedSet.add(keyValGr.getValue(i));
       }
 
-      doSleep(5);
-
       for (int i = 0; i < toolkitSortedSet.size(); i++) {
         doDebug("Got value for i: " + i + ", value: "
                 + (toolkitSortedSet.contains(keyValGr.getValue(i)) ? keyValGr.getValue(i) : null));
       }
-      doSleep(10);
 
       doDebug("Asserting new values inserted after rejoin");
       Assert.assertEquals(2 * NUM_ELEMENTS, toolkitSortedSet.size());
@@ -71,7 +66,6 @@ public class ToolkitSortedSetRejoinTest extends AbstractToolkitRejoinTest {
       }
       doDebug("Asserted new values");
 
-      doSleep(10);
 
   }
   }
