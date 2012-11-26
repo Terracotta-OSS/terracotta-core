@@ -63,7 +63,7 @@ public class NonStopStartupTest extends AbstractToolkitTestBase {
     }
 
     private void restartCrashedServer() throws Exception {
-      getTestControlMbean().reastartLastCrashedServer(0);
+      getTestControlMbean().restartLastCrashedServer(0);
     }
 
     private void makeServerDie() throws Exception {

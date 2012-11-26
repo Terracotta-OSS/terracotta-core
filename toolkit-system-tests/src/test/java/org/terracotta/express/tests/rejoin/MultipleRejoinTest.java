@@ -30,7 +30,7 @@ public class MultipleRejoinTest extends AbstractToolkitRejoinTest {
         doDebug("Number of rejoins till now: " + numRejoins + ", perm gen: " + getPermGenUsage());
         startRejoinAndWaitUntilCompleted(testHandlerMBean, tk);
         doDebug("Starting last crashed server...");
-        testHandlerMBean.reastartLastCrashedServer(0);
+        testHandlerMBean.restartLastCrashedServer(0);
         doDebug("Waiting for passive to come up in cluster");
         testHandlerMBean.waitUntilPassiveStandBy(0);
         numRejoins++;

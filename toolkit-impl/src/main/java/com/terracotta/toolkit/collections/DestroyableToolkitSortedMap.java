@@ -45,13 +45,13 @@ public class DestroyableToolkitSortedMap<K extends Comparable<? super K>, V> ext
   @Override
   public void rejoinCompleted() {
     ToolkitSortedMapImpl afterRejoin = lookup.lookupClusteredObject(name);
-    if (afterRejoin == null) {
+    if (afterRejoin != null) {
+      this.map = afterRejoin;
+    } else {
       // didn't find backing clustered object after rejoin - must have been destroyed
       // apply destory locally
       applyDestroy();
-      return;
     }
-    this.map = afterRejoin;
   }
 
   @Override

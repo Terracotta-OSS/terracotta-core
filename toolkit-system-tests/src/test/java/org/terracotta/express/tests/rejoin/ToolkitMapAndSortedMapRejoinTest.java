@@ -37,6 +37,7 @@ public class ToolkitMapAndSortedMapRejoinTest extends AbstractToolkitRejoinTest 
       receivedEvents.clear();
       doDebug("Done Testing Map, Now testing SortedMap");
 
+      testHandlerMBean.restartLastCrashedServer(0);
       ToolkitSortedMap toolkitSortedMap = toolkit.getSortedMap("rejoinTestSortedMap", String.class, String.class);
       doDebug("Running test for SortedMap");
       runTestFor(toolkitSortedMap, testHandlerMBean);

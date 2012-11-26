@@ -43,12 +43,13 @@ public class DestroyableToolkitMap<K, V> extends AbstractDestroyableToolkitObjec
   @Override
   public void rejoinCompleted() {
     ToolkitMapImpl afterRejoin = lookup.lookupClusteredObject(name);
-    if (afterRejoin == null) {
+    if (afterRejoin != null) {
+      this.map = afterRejoin;
+    } else {
       // didn't find backing clustered object after rejoin - must have been destroyed
       // so apply destroy locally
       applyDestroy();
     }
-    this.map = afterRejoin;
   }
 
   @Override
