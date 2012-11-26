@@ -50,7 +50,7 @@
     </fileSet>
     <fileSet>
       <directory>${project.build.directory}/tmc-${tmc.version}</directory>
-      <outputDirectory>/tools/tmc</outputDirectory>
+      <outputDirectory>/tools/management-console</outputDirectory>
       <excludes>
         <exclude>**/keychain.*</exclude>
         <exclude>**/management-cli-common.*</exclude>
