@@ -34,7 +34,7 @@ public class NonStopInvocationHandler<T> implements InvocationHandler {
                                                                                                                            args,
                                                                                                                            nonStopDelegateProvider
                                                                                                                                .getTimeoutBehavior()); }
-    boolean externalBegin = nonStopManager.tryBegin(getTimeout(nonStopConfiguration));
+    boolean started = nonStopManager.tryBegin(getTimeout(nonStopConfiguration));
     try {
       return invokeMethod(method, args, nonStopDelegateProvider.getDelegate());
     } catch (ToolkitAbortableOperationException e) {
@@ -43,7 +43,7 @@ public class NonStopInvocationHandler<T> implements InvocationHandler {
       // TODO: Review this.. Is this the right place to handle this...
       return invokeMethod(method, args, nonStopDelegateProvider.getTimeoutBehavior());
     } finally {
-      if (!externalBegin) {
+      if (started) {
         nonStopManager.finish();
       }
     }
