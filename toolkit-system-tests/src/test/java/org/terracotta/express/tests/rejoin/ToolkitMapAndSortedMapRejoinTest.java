@@ -15,16 +15,16 @@ import java.util.Map;
 
 public class ToolkitMapAndSortedMapRejoinTest extends AbstractToolkitRejoinTest {
   public ToolkitMapAndSortedMapRejoinTest(TestConfig testConfig) {
-    super(testConfig, ToolkitMapRejoinTestClient.class);
+    super(testConfig, ToolkitMapAndSortedMapRejoinTestClient.class);
   }
 
-  public static class ToolkitMapRejoinTestClient extends AbstractToolkitRejoinTestClient {
+  public static class ToolkitMapAndSortedMapRejoinTestClient extends AbstractToolkitRejoinTestClient {
 
     private static final int              NUM_ELEMENTS = 10;
     private final StringKeyValueGenerator keyValGr     = new StringKeyValueGenerator();
     private ToolkitInternal               toolkit;
 
-    public ToolkitMapRejoinTestClient(String[] args) {
+    public ToolkitMapAndSortedMapRejoinTestClient(String[] args) {
       super(args);
     }
 
@@ -38,6 +38,7 @@ public class ToolkitMapAndSortedMapRejoinTest extends AbstractToolkitRejoinTest 
       doDebug("Done Testing Map, Now testing SortedMap");
 
       testHandlerMBean.restartLastCrashedServer(0);
+
       ToolkitSortedMap toolkitSortedMap = toolkit.getSortedMap("rejoinTestSortedMap", String.class, String.class);
       doDebug("Running test for SortedMap");
       runTestFor(toolkitSortedMap, testHandlerMBean);
@@ -68,19 +69,16 @@ public class ToolkitMapAndSortedMapRejoinTest extends AbstractToolkitRejoinTest 
         Assert.assertEquals(toolkitMap.get(keyValGr.getValue(i)), keyValGr.getValue(i));
       }
 
-      doSleep(5);
 
       doDebug("Adding new values after rejoin");
       for (int i = NUM_ELEMENTS; i < 2 * NUM_ELEMENTS; i++) {
         toolkitMap.put(keyValGr.getValue(i), keyValGr.getValue(i));
       }
 
-      doSleep(5);
 
       for (int i = 0; i < toolkitMap.size(); i++) {
         doDebug("Got value for i: " + i + ", value: " + (toolkitMap.get(keyValGr.getKey(i))));
       }
-      doSleep(10);
 
       doDebug("Asserting new values inserted after rejoin");
       Assert.assertEquals(2 * NUM_ELEMENTS, toolkitMap.size());
@@ -89,7 +87,6 @@ public class ToolkitMapAndSortedMapRejoinTest extends AbstractToolkitRejoinTest 
       }
       doDebug("Asserted new values");
 
-      doSleep(10);
 
     }
 
