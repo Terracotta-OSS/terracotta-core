@@ -37,8 +37,8 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     this.next = null;
   }
 
-  void setrejoinInProgress() {
-    rejoinInProgress = true;
+  void setrejoinInProgress(boolean inProgress) {
+    rejoinInProgress = inProgress;
   }
 
   boolean isRejoinInProgress() {

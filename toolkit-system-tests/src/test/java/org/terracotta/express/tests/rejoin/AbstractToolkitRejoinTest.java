@@ -34,7 +34,7 @@ public class AbstractToolkitRejoinTest extends AbstractToolkitTestBase {
   private final int         electionTimeSec                         = DEFAULT_ELECTION_TIME;
   protected boolean         startPassive                            = true;
 
-  public AbstractToolkitRejoinTest(TestConfig testConfig, Class<? extends AbstractToolkitRejoinTestClient>... c) {
+  public AbstractToolkitRejoinTest(TestConfig testConfig, Class<? extends ClientBase>... c) {
     super(testConfig, c);
     testConfig.setNumOfGroups(1);
     testConfig.getGroupConfig().setMemberCount(2);
@@ -83,9 +83,11 @@ public class AbstractToolkitRejoinTest extends AbstractToolkitTestBase {
       doDebug("Crashing first active...");
       testHandlerMBean.crashActiveAndWaitForPassiveToTakeOver(0);
       doDebug("Passive must have taken over as ACTIVE");
+      waitUntilRejoinCompleted();
+    }
 
+    protected void waitUntilRejoinCompleted() {
       statefulListener.waitUntilRejoin();
-
       doDebug("Rejoin happened successfully");
     }
 

@@ -66,12 +66,16 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
   private void unparkIfNecessary(LockStateNode lockState, Iterator<LockStateNode> it) {
     try {
-      lockState.setrejoinInProgress();
-      LOGGER.info("unparkIfNecessary unpark " + lockState.getClass().getName() + " " + lockState);
+      LOGGER.info("unparkIfNecessary unpark " + lockState.getClass().getSimpleName() + " "
+                  + lockState.isRejoinInProgress()
+                  + " " + lockState);
+      lockState.setrejoinInProgress(true);
       lockState.unpark();
       it.remove(); // if unpark() fails (like LockHold), we do not remove item
       // unlock() / release() of this item will remove it
-      LOGGER.info("unparkIfNecessary removed " + lockState.getClass().getName() + " " + lockState);
+      LOGGER.info("unparkIfNecessary removed " + lockState.getClass().getSimpleName() + " "
+                  + lockState.isRejoinInProgress()
+                  + " " + lockState);
     } catch (AssertionError e) {
       // some impl of LockStateNode (like LockHold) throws AssertionError
     }
@@ -266,7 +270,9 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       unparkFirstQueuedAcquire();
       waitOnLockWaiter(remote, thread, waiter, listener);
     } finally {
+      // if (waiter != null) {
       if (waiter != null && !waiter.isRejoinInProgress()) {
+        // LOGGER.info("abhim " + waiter.getClass().getSimpleName() + " " + waiter + " " + waiter.isRejoinInProgress());
         moveWaiterToPending(waiter);
         acquireAll(abortableOperationManager, remote, thread, waiter.getReacquires());
       } else if (!isLockedBy(thread, WRITE_LEVELS)) {
@@ -475,6 +481,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   }
 
   private synchronized void addPendingAcquires(final LockWaiter waiter) {
+    // LOGGER.info("abhim " + waiter.getClass().getSimpleName() + " " + waiter + " " + waiter.isRejoinInProgress());
     if (!waiter.isRejoinInProgress()) {
       Stack<PendingLockHold> reacquires = waiter.getReacquires();
       java.util.ListIterator<PendingLockHold> it = reacquires.listIterator(reacquires.size());
@@ -705,7 +712,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       boolean interrupted = false;
       while (result.isWaitingForFlush()) {
         try {
-          wait();
+          ClientLockImpl.this.wait();
         } catch (InterruptedException e) {
           handleInterruptedException(abortableOperationManager);
           interrupted = true;
@@ -825,11 +832,11 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       public void transactionsForLockFlushed(LockID id) {
         ServerLockLevel flushLevelParam = flushLevel;
         while (true) {
-          synchronized (this) {
+          synchronized (ClientLockImpl.this) {
             if (flushLevelParam.equals(greediness.getFlushLevel())) {
               unlockParam.flushCompleted();
               remove(unlockParam);
-              notifyAll();
+              ClientLockImpl.this.notifyAll();
 
               if (greediness.isFree()) {
                 remoteUnlock(remote, unlockParam);
