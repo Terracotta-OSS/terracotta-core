@@ -84,9 +84,9 @@ public abstract class AbstractNonStopTestClient extends NonStopClientBase {
       }
 
       checkAndAssertOnPut(time, rv, exceptionOccurredOnPut);
-
       restartCrashedServer();
     }
+    barrier.await();
   }
 
   private void assertOnTimeTakenForTimedOutOps(long time) {
