@@ -218,7 +218,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
       if (currentNode != null) {
         // node rejoined, update current node
         currentClientID = newNodeId;
-        currentNode = topology.registerThisDsoNode(currentClientID);
+        currentNode = topology.updateOnRejoin(currentClientID, clusterMembers);
         return;
       } else {
         currentClientID = newNodeId;
