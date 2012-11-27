@@ -335,6 +335,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
 
   @Override
   public Persistor createPersistor(final boolean persistent, final File l2DataPath) throws IOException {
+    if (persistent) throw new UnsupportedOperationException("Restartability is not supported in open source servers.");
     return new Persistor(HeapStorageManagerFactory.INSTANCE);
   }
 }
