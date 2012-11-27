@@ -36,7 +36,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -45,26 +44,27 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEventsGun {
 
-  private static final TCLogger                  LOGGER               = TCLogging.getLogger(DsoClusterImpl.class);
+  private static final TCLogger                          LOGGER               = TCLogging
+                                                                                  .getLogger(DsoClusterImpl.class);
 
-  private volatile ClientID                      currentClientID;
-  private volatile DsoNodeInternal               currentNode;
+  private volatile ClientID                              currentClientID;
+  private volatile DsoNodeInternal                       currentNode;
 
-  private final DsoClusterTopologyImpl           topology             = new DsoClusterTopologyImpl();
-  private final List<DsoClusterListener>         listeners            = new CopyOnWriteArrayList<DsoClusterListener>();
-  private final Object                           nodeJoinsClusterSync = new Object();
+  private final DsoClusterTopologyImpl                   topology             = new DsoClusterTopologyImpl();
+  private final CopyOnWriteArrayList<DsoClusterListener> listeners            = new CopyOnWriteArrayList<DsoClusterListener>();
+  private final Object                                   nodeJoinsClusterSync = new Object();
 
-  private final ReentrantReadWriteLock           stateLock            = new ReentrantReadWriteLock();
-  private final ReentrantReadWriteLock.ReadLock  stateReadLock        = stateLock.readLock();
-  private final ReentrantReadWriteLock.WriteLock stateWriteLock       = stateLock.writeLock();
-  private final ClusterNodeStatus                nodeStatus           = new ClusterNodeStatus();
-  private final FiredEventsStatus                firedEventsStatus    = new FiredEventsStatus();
-  private final OutOfBandNotifier                outOfBandNotifier    = new OutOfBandNotifier();
+  private final ReentrantReadWriteLock                   stateLock            = new ReentrantReadWriteLock();
+  private final ReentrantReadWriteLock.ReadLock          stateReadLock        = stateLock.readLock();
+  private final ReentrantReadWriteLock.WriteLock         stateWriteLock       = stateLock.writeLock();
+  private final ClusterNodeStatus                        nodeStatus           = new ClusterNodeStatus();
+  private final FiredEventsStatus                        firedEventsStatus    = new FiredEventsStatus();
+  private final OutOfBandNotifier                        outOfBandNotifier    = new OutOfBandNotifier();
 
-  private ClusterMetaDataManager                 clusterMetaDataManager;
-  private Sink                                   eventsProcessorSink;
+  private ClusterMetaDataManager                         clusterMetaDataManager;
+  private Sink                                           eventsProcessorSink;
 
-  private final RejoinManagerInternal            rejoinManager;
+  private final RejoinManagerInternal                    rejoinManager;
 
   public DsoClusterImpl(RejoinManagerInternal rejoinManager) {
     this.rejoinManager = rejoinManager;
@@ -90,34 +90,25 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   @Override
   public void addClusterListener(final DsoClusterListener listener) {
 
-    stateWriteLock.lock();
-    try {
-      if (listeners.contains(listener)) { return; }
-      listeners.add(listener);
-    } finally {
-      stateWriteLock.unlock();
-    }
+    boolean added = listeners.addIfAbsent(listener);
 
-    if (nodeStatus.getState().isNodeLeft()) {
-      fireEvent(DsoClusterEventType.NODE_LEFT, new DsoClusterEventImpl(currentNode), listener);
-    } else {
-      if (nodeStatus.getState().isNodeJoined()) {
-        fireNodeJoinedInternal(currentNode, new DsoClusterEventImpl(currentNode), listener);
-      }
-      if (nodeStatus.getState().areOperationsEnabled()) {
-        fireEvent(DsoClusterEventType.OPERATIONS_ENABLED, new DsoClusterEventImpl(currentNode), listener);
+    if (added) {
+      if (nodeStatus.getState().isNodeLeft()) {
+        fireEvent(DsoClusterEventType.NODE_LEFT, new DsoClusterEventImpl(currentNode), listener);
+      } else {
+        if (nodeStatus.getState().isNodeJoined()) {
+          fireNodeJoinedInternal(currentNode, new DsoClusterEventImpl(currentNode), listener);
+        }
+        if (nodeStatus.getState().areOperationsEnabled()) {
+          fireEvent(DsoClusterEventType.OPERATIONS_ENABLED, new DsoClusterEventImpl(currentNode), listener);
+        }
       }
     }
   }
 
   @Override
   public void removeClusterListener(final DsoClusterListener listener) {
-    stateWriteLock.lock();
-    try {
-      listeners.remove(listener);
-    } finally {
-      stateWriteLock.unlock();
-    }
+    listeners.remove(listener);
   }
 
   @Override
@@ -158,7 +149,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
           for (Map.Entry<K, Set<NodeID>> entry : rawResult.entrySet()) {
             Set<DsoNode> dsoNodes = new HashSet<DsoNode>(rawResult.entrySet().size(), 1.0f);
             for (NodeID nodeID : entry.getValue()) {
-              DsoNodeInternal dsoNode = topology.getAndRegisterDsoNode(nodeID);
+              DsoNodeInternal dsoNode = topology.getAndRegisterDsoNode((ClientID) nodeID);
               dsoNodes.add(dsoNode);
             }
             result.put(entry.getKey(), dsoNodes);
@@ -177,22 +168,12 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
 
   @Override
   public boolean isNodeJoined() {
-    stateReadLock.lock();
-    try {
-      return nodeStatus.getState().isNodeJoined();
-    } finally {
-      stateReadLock.unlock();
-    }
+    return nodeStatus.getState().isNodeJoined();
   }
 
   @Override
   public boolean areOperationsEnabled() {
-    stateReadLock.lock();
-    try {
-      return nodeStatus.getState().areOperationsEnabled();
-    } finally {
-      stateReadLock.unlock();
-    }
+    return nodeStatus.getState().areOperationsEnabled();
   }
 
   @Override
@@ -227,28 +208,31 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   }
 
   @Override
-  public void fireThisNodeJoined(final NodeID nodeId, final NodeID[] clusterMembers) {
+  public void fireThisNodeJoined(final ClientID nodeId, final ClientID[] clusterMembers) {
     stateWriteLock.lock();
     try {
-      ClientID newNodeId = (ClientID) nodeId;
+      ClientID newNodeId = nodeId;
 
       rejoinManager.thisNodeJoinedCallback(this, newNodeId);
 
       if (currentNode != null) {
-        // we might get multiple calls in a row, ignore all but the first one
+        // node rejoined, update current node
+        currentClientID = newNodeId;
+        currentNode = topology.registerThisDsoNode(currentClientID);
         return;
-      }
+      } else {
+        currentClientID = newNodeId;
+        currentNode = topology.registerThisDsoNode(nodeId);
+        nodeStatus.nodeJoined();
+        nodeStatus.operationsEnabled();
 
-      currentClientID = newNodeId;
-      currentNode = topology.registerThisDsoNode(nodeId);
-      nodeStatus.nodeJoined();
-      nodeStatus.operationsEnabled();
-
-      for (NodeID otherNodeId : clusterMembers) {
-        if (!currentClientID.equals(otherNodeId)) {
-          topology.registerDsoNode(otherNodeId);
+        for (ClientID otherNodeId : clusterMembers) {
+          if (!currentClientID.equals(otherNodeId)) {
+            topology.registerDsoNode(otherNodeId);
+          }
         }
       }
+
     } finally {
       stateWriteLock.unlock();
 
@@ -289,7 +273,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   }
 
   @Override
-  public void fireNodeJoined(final NodeID nodeId) {
+  public void fireNodeJoined(final ClientID nodeId) {
     if (topology.containsDsoNode(nodeId)) { return; }
 
     final DsoClusterEvent event = new DsoClusterEventImpl(topology.getAndRegisterDsoNode(nodeId));
@@ -318,7 +302,7 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
   }
 
   @Override
-  public void fireNodeLeft(final NodeID nodeId) {
+  public void fireNodeLeft(final ClientID nodeId) {
     DsoNodeInternal node = topology.getAndRemoveDsoNode(nodeId);
     if (node == null) { return; }
     final DsoClusterEvent event = new DsoClusterEventImpl(node);

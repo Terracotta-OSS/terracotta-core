@@ -93,6 +93,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
 
   @Override
   public void cleanup() {
+    // TODO: notify threads waiting for responses
     synchronized (this) {
       checkAndSetstate();
       outstandingNodesWithObjectsRequests.clear();

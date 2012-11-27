@@ -45,8 +45,7 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
   public Collection<DsoNode> getNodes() {
     nodesReadLock.lock();
     try {
-      // yucky cast hack for generics
-      return (Collection) Collections.unmodifiableCollection(new ArrayList<DsoNodeInternal>(nodes.values()));
+      return Collections.unmodifiableCollection(new ArrayList<DsoNode>(nodes.values()));
     } finally {
       nodesReadLock.unlock();
     }
@@ -61,7 +60,7 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
     }
   }
 
-  DsoNodeInternal getAndRegisterDsoNode(final NodeID nodeId) {
+  DsoNodeInternal getAndRegisterDsoNode(final ClientID nodeId) {
     nodesReadLock.lock();
     try {
       DsoNodeInternal node = nodes.get(nodeId);
@@ -83,21 +82,35 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
     }
   }
 
-  DsoNodeInternal registerDsoNode(final NodeID nodeId) {
+  DsoNodeInternal registerDsoNode(final ClientID nodeId) {
     return registerDsoNodeBase(nodeId, false);
   }
 
-  DsoNodeInternal registerThisDsoNode(final NodeID nodeId) {
+  DsoNodeInternal registerThisDsoNode(final ClientID nodeId) {
     return registerDsoNodeBase(nodeId, true);
   }
 
-  private DsoNodeInternal registerDsoNodeBase(final NodeID nodeId, boolean isLocalNode) {
-    final ClientID clientId = (ClientID) nodeId;
+  DsoNodeInternal updateOnRejoin(final ClientID currentNodeId, final NodeID[] clusterMembers) {
+    nodesWriteLock.lock();
+    try {
+      nodes.clear();
+      for (NodeID otherNode : clusterMembers) {
+        if (!currentNodeId.equals(otherNode)) {
+          registerDsoNodeBase((ClientID) otherNode, false);
+        }
+      }
+      return registerDsoNodeBase(currentNodeId, true);
+    } finally {
+      nodesWriteLock.unlock();
+    }
+  }
+
+  private DsoNodeInternal registerDsoNodeBase(final ClientID clientId, boolean isLocalNode) {
     final DsoNodeInternal node = new DsoNodeImpl(clientId.toString(), clientId.toLong(), isLocalNode);
 
     nodesWriteLock.lock();
     try {
-      nodes.put(nodeId, node);
+      nodes.put(clientId, node);
       return node;
     } finally {
       nodesWriteLock.unlock();

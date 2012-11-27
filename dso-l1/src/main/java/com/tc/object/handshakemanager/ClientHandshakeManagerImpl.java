@@ -7,6 +7,7 @@ package com.tc.object.handshakemanager;
 import com.tc.async.api.Sink;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.ClearableCallback;
@@ -215,8 +216,8 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     return 0 == this.disconnected;
   }
 
-  protected void acknowledgeHandshake(final NodeID remoteID, final boolean persistentServer, final NodeID thisNodeId,
-                                      final NodeID[] clusterMembers, final String serverVersion) {
+  protected void acknowledgeHandshake(final NodeID remoteID, final boolean persistentServer, final ClientID thisNodeId,
+                                      final ClientID[] clusterMembers, final String serverVersion) {
     this.logger.info("Received Handshake ack for this node :" + remoteID);
     if (getState(remoteID) != State.STARTING) {
       this.logger.warn("Handshake acknowledged while not STARTING: " + getState(remoteID));
