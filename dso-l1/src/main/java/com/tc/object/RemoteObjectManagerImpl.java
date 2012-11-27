@@ -73,10 +73,10 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     NOT_SCHEDULED, SCHEDULED_LATER, SCHEDULED_NOW
   }
 
-  private final HashMap<String, ObjectID>                rootRequests             = new HashMap<String, ObjectID>();
+  private final HashMap<String, ObjectID>          rootRequests             = new HashMap<String, ObjectID>();
 
-  private final Map<ObjectID, DNA>                       dnaCache                 = new HashMap<ObjectID, DNA>();
-  private final Map<ObjectID, ObjectLookupState>         objectLookupStates       = new HashMap<ObjectID, ObjectLookupState>();
+  private final Map<ObjectID, DNA>                 dnaCache                 = new HashMap<ObjectID, DNA>();
+  private final Map<ObjectID, ObjectLookupState>   objectLookupStates       = new HashMap<ObjectID, ObjectLookupState>();
 
   private final Timer                              objectRequestTimer       = new Timer(
                                                                                         "RemoteObjectManager Request Scheduler",
@@ -84,7 +84,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
 
   private final RequestRootMessageFactory          rrmFactory;
   private final RequestManagedObjectMessageFactory rmomFactory;
-  private final LRUCache                                 lru                      = new LRUCache();
+  private final LRUCache                           lru                      = new LRUCache();
   private final GroupID                            groupID;
   private final int                                defaultDepth;
   private final SessionManager                     sessionManager;
@@ -615,6 +615,9 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     public void run() {
       try {
         sendRemovedObjects();
+      } catch (RejoinInProgressException e) {
+        logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
+        this.cancel();
       } catch (TCNotRunningException e) {
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
         this.cancel();
@@ -627,6 +630,9 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     public void run() {
       try {
         clearAllUnrequestedDNABatches();
+      } catch (RejoinInProgressException e) {
+        logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
+        this.cancel();
       } catch (TCNotRunningException e) {
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
         this.cancel();

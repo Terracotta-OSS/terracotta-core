@@ -117,12 +117,12 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                            final HealthCheckerConfig aConfig,
                                                            Map<TCMessageType, Class> messageTypeClassMapping,
                                                            Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping,
-                                                           ReconnectionRejectedHandler reconnectionRejectediHandler,
+                                                           ReconnectionRejectedHandler reconnectionRejectedHandler,
                                                            TCSecurityManager securityManager) {
     return new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_CLIENT, monitor, messageRouter,
                                          stackHarnessFactory, null, connectionPolicy, 0, aConfig,
                                          new TransportHandshakeErrorHandlerForL1(), messageTypeClassMapping,
-                                         messageTypeFactoryMapping, reconnectionRejectediHandler, securityManager);
+                                         messageTypeFactoryMapping, reconnectionRejectedHandler, securityManager);
   }
 
   @Override
