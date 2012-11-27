@@ -147,6 +147,8 @@ public class TerracottaClusterInfo implements ClusterInfo {
           return Type.OPERATIONS_ENABLED;
         case OPERATIONS_DISABLED:
           return Type.OPERATIONS_DISABLED;
+        case NODE_REJOINED:
+          return Type.NODE_REJOINED;
         default:
           throw new AssertionError("Unknown type: " + type);
       }

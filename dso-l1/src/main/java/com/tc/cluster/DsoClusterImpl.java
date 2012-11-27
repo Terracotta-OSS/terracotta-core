@@ -292,12 +292,14 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
 
   @Override
   public void fireNodeRejoined(ClientID newNodeId) {
+
     fireRejoinEvent(new DsoNodeImpl(newNodeId.toString(), newNodeId.toLong(), false));
   }
 
   private void fireRejoinEvent(DsoNodeImpl newNode) {
+    final DsoClusterEvent event = new DsoClusterEventImpl(newNode);
     for (DsoClusterListener l : listeners) {
-      l.nodeRejoined(new DsoClusterEventImpl(newNode));
+      fireEvent(DsoClusterEventType.NODE_REJOINED, event, l);
     }
   }
 
@@ -393,6 +395,9 @@ public class DsoClusterImpl implements DsoClusterInternal, DsoClusterInternalEve
           break;
         case OPERATIONS_DISABLED:
           listener.operationsDisabled(event);
+          break;
+        case NODE_REJOINED:
+          listener.nodeRejoined(event);
           break;
         default:
           throw new AssertionError("Unknown type of cluster event - " + eventType);
