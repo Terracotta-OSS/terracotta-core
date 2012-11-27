@@ -7,10 +7,10 @@ import java.util.concurrent.CountDownLatch;
 
 import junit.framework.Assert;
 
-public class MyNotificationListener implements ToolkitNotificationListener<MyInt> {
+public class MyNotificationListener implements ToolkitNotificationListener<TCInt> {
   private final CountDownLatch latch;
   private volatile ClusterNode remoteNode;
-  private volatile MyInt       msgRecvd;
+  private volatile TCInt       msgRecvd;
 
   public MyNotificationListener(CountDownLatch latch) {
     this.latch = latch;
@@ -20,7 +20,7 @@ public class MyNotificationListener implements ToolkitNotificationListener<MyInt
     return remoteNode;
   }
 
-  public MyInt getMsgRecvd() {
+  public TCInt getMsgRecvd() {
     return msgRecvd;
   }
 
@@ -29,7 +29,7 @@ public class MyNotificationListener implements ToolkitNotificationListener<MyInt
     // Assert that the notification is done is Executor Thread not in Stage thread.
     System.err.println("Got notified " + event + " Thread : " + Thread.currentThread().getName());
     Assert.assertTrue(Thread.currentThread().getName().contains("ToolkitNotifier"));
-    msgRecvd = (MyInt) event.getMessage();
+    msgRecvd = (TCInt) event.getMessage();
     remoteNode = event.getRemoteNode();
     latch.countDown();
   }

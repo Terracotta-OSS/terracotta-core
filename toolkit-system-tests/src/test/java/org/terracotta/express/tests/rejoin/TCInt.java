@@ -2,10 +2,10 @@ package org.terracotta.express.tests.rejoin;
 
 import java.io.Serializable;
 
-public class MyInt implements Serializable, Comparable {
+public class TCInt implements Serializable, Comparable {
   private final int i;
 
-  public MyInt(int i) {
+  public TCInt(int i) {
     this.i = i;
   }
 
@@ -26,7 +26,7 @@ public class MyInt implements Serializable, Comparable {
     if (this == obj) return true;
     if (obj == null) return false;
     if (getClass() != obj.getClass()) return false;
-    MyInt other = (MyInt) obj;
+    TCInt other = (TCInt) obj;
     if (i != other.i) return false;
     return true;
   }
@@ -39,8 +39,8 @@ public class MyInt implements Serializable, Comparable {
   @Override
   public int compareTo(Object paramT) {
     if (paramT == null) { throw new NullPointerException(); }
-    if (paramT instanceof MyInt) {
-      MyInt myInt = (MyInt) paramT;
+    if (paramT instanceof TCInt) {
+      TCInt myInt = (TCInt) paramT;
       if (this.i > myInt.i) {
         return 1;
       } else if (this.i == myInt.i) {
