@@ -11,7 +11,7 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
 import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.Stage;
-import com.tc.exception.RejoinInProgressException;
+import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
@@ -189,7 +189,7 @@ public class StageImpl implements Stage {
             if (shutdownRequested()) {
               return;
             } else {
-              tcLogger.info("Ignoring " + RejoinInProgressException.class.getSimpleName() + " while handling context: "
+              tcLogger.info("Ignoring " + PlatformRejoinException.class.getSimpleName() + " while handling context: "
                             + ctxt);
             }
             return;
@@ -221,7 +221,7 @@ public class StageImpl implements Stage {
       rootCause = e;
       e = e.getCause();
     }
-    return rootCause instanceof RejoinInProgressException;
+    return rootCause instanceof PlatformRejoinException;
   }
 
   @Override

@@ -11,9 +11,9 @@ import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.NotClearable;
 import com.tc.platform.PlatformService;
-import com.tc.platform.StaticPlatformApi;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.object.TCToolkitObject;
+import com.terracotta.toolkit.rejoin.PlatformServiceProvider;
 import com.terracotta.toolkit.roots.ToolkitTypeRoot;
 
 import java.util.HashMap;
@@ -28,7 +28,7 @@ public class ToolkitTypeRootImpl<T extends TCToolkitObject> implements ToolkitTy
   private final PlatformService                 platformService;
 
   public ToolkitTypeRootImpl() {
-    platformService = StaticPlatformApi.getPlatformService();
+    platformService = PlatformServiceProvider.getPlatformService();
   }
 
   @Override

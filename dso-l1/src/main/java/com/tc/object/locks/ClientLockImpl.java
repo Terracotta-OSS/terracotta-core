@@ -5,7 +5,7 @@ package com.tc.object.locks;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
-import com.tc.exception.RejoinInProgressException;
+import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
@@ -320,7 +320,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       }
       throw e;
     }
-    if (waiter.isRejoinInProgress()) { throw new RejoinInProgressException(); }
+    if (waiter.isRejoinInProgress()) { throw new PlatformRejoinException(); }
   }
 
   private void acquireAll(final AbortableOperationManager abortableOperationManager, final RemoteLockManager remote,
@@ -729,7 +729,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   }
 
   private LockAcquireResult tryAcquireUsingThreadState(RemoteLockManager remote, final ThreadID thread, final LockLevel level) {
-    if (remote.isRejoinInProgress()) { throw new RejoinInProgressException(); }
+    if (remote.isRejoinInProgress()) { throw new PlatformRejoinException(); }
     // What can we glean from local lock state
     final LockHold newHold = new LockHold(thread, level);
     for (final Iterator<LockStateNode> it = iterator(); it.hasNext();) {
@@ -776,7 +776,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
             unlock = hold;
             if (unlock.isRejoinInProgress()) {
               it.remove();
-              throw new RejoinInProgressException();
+              throw new PlatformRejoinException();
             }
             break;
           }
@@ -976,7 +976,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
           if (remote.isShutdown()) { throw new TCNotRunningException(); }
         }
         if (node.isRejoinInProgress()) {
-          throw new RejoinInProgressException();
+          throw new PlatformRejoinException();
         }
       }
     } catch (final RuntimeException ex) {

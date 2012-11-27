@@ -5,7 +5,7 @@ package com.tc.object.locks;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
-import com.tc.exception.RejoinInProgressException;
+import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.management.ClientLockStatManager;
@@ -707,7 +707,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       while (this.state != State.RUNNING) {
         try {
           if (isShutdown()) { throw new TCNotRunningException(); }
-          if (isRejoinInProgress()) { throw new RejoinInProgressException(); }
+          if (isRejoinInProgress()) { throw new PlatformRejoinException(); }
           this.runningCondition.await();
         } catch (final InterruptedException e) {
           handleInterruptedException();

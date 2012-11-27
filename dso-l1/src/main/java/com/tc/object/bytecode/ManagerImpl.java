@@ -167,7 +167,7 @@ public class ManagerImpl implements Manager {
 
     this.lockIdFactory = new LockIdFactory(this);
     this.clientMode = isExpressRejoinMode ? ClientMode.EXPRESS_REJOIN_MODE : ClientMode.DSO_MODE;
-    this.platformService = new PlatformServiceImpl(this);
+    this.platformService = new PlatformServiceImpl(this, isExpressRejoinMode);
   }
 
   public void set(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,

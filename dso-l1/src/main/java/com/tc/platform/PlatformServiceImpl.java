@@ -33,9 +33,16 @@ import java.util.concurrent.TimeUnit;
 public class PlatformServiceImpl implements PlatformService {
   private final Manager                           manager;
   private volatile RejoinLifecycleEventController rejoinEventsController;
+  private final boolean                           rejoinEnabled;
 
-  public PlatformServiceImpl(Manager manager) {
+  public PlatformServiceImpl(Manager manager, boolean rejoinEnabled) {
     this.manager = manager;
+    this.rejoinEnabled = rejoinEnabled;
+  }
+
+  @Override
+  public boolean isRejoinEnabled() {
+    return rejoinEnabled;
   }
 
   public void init(RejoinManager rejoinManager, ClientHandshakeManager clientHandshakeManager) {

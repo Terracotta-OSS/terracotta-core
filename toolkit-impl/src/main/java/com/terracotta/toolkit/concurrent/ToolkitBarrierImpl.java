@@ -7,14 +7,12 @@ import org.terracotta.toolkit.concurrent.ToolkitBarrier;
 import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.store.ToolkitStore;
 
-import com.tc.exception.RejoinInProgressException;
 import com.terracotta.toolkit.util.ToolkitIDGenerator;
 
 import java.io.Serializable;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 
 public class ToolkitBarrierImpl implements ToolkitBarrier {
@@ -24,7 +22,6 @@ public class ToolkitBarrierImpl implements ToolkitBarrier {
   private final ToolkitLock                               lock;
   private final long                                      uid;
   private final ToolkitIDGenerator                        longIdGenerator;
-  private final AtomicBoolean                             rejoinException = new AtomicBoolean(false);
 
   public ToolkitBarrierImpl(String name, int parties, ToolkitStore<String, ToolkitBarrierState> clusteredMap,
                             ToolkitIDGenerator barrierIdGenerator) {
@@ -100,7 +97,6 @@ public class ToolkitBarrierImpl implements ToolkitBarrier {
       BrokenBarrierException {
     lock.lock();
     try {
-      rejoinException.set(false);
       ToolkitBarrierState state = getInternalState();
       int index = state.decrementCount();
       barriers.putNoReturn(name, state);
@@ -161,18 +157,9 @@ public class ToolkitBarrierImpl implements ToolkitBarrier {
           }
         }
       }
-    } catch (RejoinInProgressException e) {
-      if (rejoinException.get()) { throw new IllegalStateException("rejoinException was TRUE but expected FALSE"); }
-      rejoinException.set(true);
-      throw e;
     } finally {
-      if (!rejoinException.get()) {
-        lock.unlock();
-      } else {
-        throw new RejoinInProgressException();
-      }
+      lock.unlock();
     }
-
   }
 
   @Override

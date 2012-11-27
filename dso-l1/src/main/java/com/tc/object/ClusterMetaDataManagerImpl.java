@@ -4,7 +4,7 @@
  */
 package com.tc.object;
 
-import com.tc.exception.RejoinInProgressException;
+import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -389,7 +389,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
       synchronized (this) {
         while (this.state != RUNNING) {
           if (isShutdown) { throw new TCNotRunningException(); }
-          if (this.state == REJOIN_IN_PROGRESS) { throw new RejoinInProgressException(); }
+          if (this.state == REJOIN_IN_PROGRESS) { throw new PlatformRejoinException(); }
           try {
             this.wait();
           } catch (InterruptedException e) {

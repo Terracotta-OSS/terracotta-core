@@ -7,7 +7,7 @@ package com.tc.object;
 import com.google.common.collect.MapMaker;
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
-import com.tc.exception.RejoinInProgressException;
+import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.exception.TCNotRunningException;
@@ -281,7 +281,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     try {
       while (this.state != RUNNING) {
         if (this.state == SHUTDOWN) { throw new TCNotRunningException(); }
-        if (this.state == REJOIN_IN_PROGRESS) { throw new RejoinInProgressException(); }
+        if (this.state == REJOIN_IN_PROGRESS) { throw new PlatformRejoinException(); }
         try {
           wait();
         } catch (final InterruptedException e) {
@@ -299,7 +299,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     try {
       while (this.state != RUNNING) {
         if (this.state == SHUTDOWN) { throw new TCNotRunningException(); }
-        if (this.state == REJOIN_IN_PROGRESS) { throw new RejoinInProgressException(); }
+        if (this.state == REJOIN_IN_PROGRESS) { throw new PlatformRejoinException(); }
         try {
           wait();
         } catch (final InterruptedException e) {

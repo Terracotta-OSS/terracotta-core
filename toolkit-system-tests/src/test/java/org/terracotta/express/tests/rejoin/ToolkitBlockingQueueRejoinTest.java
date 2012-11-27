@@ -8,6 +8,7 @@ import org.terracotta.express.tests.util.TCInt;
 import org.terracotta.toolkit.collections.ToolkitBlockingQueue;
 import org.terracotta.toolkit.concurrent.ToolkitBarrier;
 import org.terracotta.toolkit.internal.ToolkitInternal;
+import org.terracotta.toolkit.rejoin.RejoinException;
 
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.jmx.TestHandlerMBean;
@@ -108,11 +109,8 @@ public class ToolkitBlockingQueueRejoinTest extends AbstractToolkitRejoinTest {
             }
           } catch (InterruptedException e) {
             throw new RuntimeException(e);
-          } catch (Exception e) {
-            doDebug("RejoinInProgressException while doing " + operation.toUpperCase() + " " + e);
-            if (e.getClass().getName().equals("com.tc.exception.RejoinInProgressException")) {
-              exceptionFound.set(true);
-            }
+          } catch (RejoinException e) {
+            exceptionFound.set(true);
           }
         }
       };

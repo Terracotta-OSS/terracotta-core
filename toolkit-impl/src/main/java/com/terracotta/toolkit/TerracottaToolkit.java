@@ -36,7 +36,6 @@ import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
 import com.tc.net.GroupID;
 import com.tc.platform.PlatformService;
-import com.tc.platform.StaticPlatformApi;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 import com.terracotta.toolkit.cluster.TerracottaClusterInfo;
 import com.terracotta.toolkit.collections.DestroyableToolkitList;
@@ -71,6 +70,7 @@ import com.terracotta.toolkit.object.serialization.SerializationStrategy;
 import com.terracotta.toolkit.object.serialization.SerializationStrategyImpl;
 import com.terracotta.toolkit.object.serialization.SerializerMap;
 import com.terracotta.toolkit.object.serialization.SerializerMapImpl;
+import com.terracotta.toolkit.rejoin.PlatformServiceProvider;
 import com.terracotta.toolkit.roots.impl.RootsUtil;
 import com.terracotta.toolkit.roots.impl.RootsUtil.RootObjectCreator;
 import com.terracotta.toolkit.roots.impl.ToolkitTypeConstants;
@@ -106,7 +106,7 @@ public class TerracottaToolkit implements ToolkitInternal {
 
   public TerracottaToolkit(TerracottaL1Instance tcClient) {
     this.tcClient = tcClient;
-    platformService = StaticPlatformApi.getPlatformService();
+    this.platformService = PlatformServiceProvider.getPlatformService();
     clusterInfoInstance = new TerracottaClusterInfo(platformService);
     SerializationStrategy strategy = createSerializationStrategy();
     Object old = platformService.registerObjectByNameIfAbsent(TOOLKIT_SERIALIZER_REGISTRATION_NAME, strategy);

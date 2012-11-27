@@ -6,7 +6,7 @@ package com.tc.object.tx;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
-import com.tc.exception.RejoinInProgressException;
+import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.LossyTCLogger;
 import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
@@ -597,7 +597,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     try {
       while (this.status != RUNNING) {
         if (isShutdown) { throw new TCNotRunningException(); }
-        if (this.status == REJOIN_IN_PROGRESS) { throw new RejoinInProgressException(); }
+        if (this.status == REJOIN_IN_PROGRESS) { throw new PlatformRejoinException(); }
         try {
           this.lock.wait();
         } catch (final InterruptedException e) {
@@ -619,7 +619,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     try {
       while (this.status != RUNNING) {
         if (isShutdown) { throw new TCNotRunningException(); }
-        if (this.status == REJOIN_IN_PROGRESS) { throw new RejoinInProgressException(); }
+        if (this.status == REJOIN_IN_PROGRESS) { throw new PlatformRejoinException(); }
         try {
           this.lock.wait();
         } catch (final InterruptedException e) {
@@ -668,7 +668,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
       } catch (final TCNotRunningException e) {
         RemoteTransactionManagerImpl.this.logger.info("Ignoring TCNotRunningException while sending Low water mark : ");
         this.cancel();
-      } catch (final RejoinInProgressException e) {
+      } catch (final PlatformRejoinException e) {
         RemoteTransactionManagerImpl.this.logger
             .info("Ignoring RejoinInProgressException while sending Low water mark : ");
       } catch (final Exception e) {

@@ -8,12 +8,12 @@ import com.tc.object.LiteralValues;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.platform.PlatformService;
-import com.tc.platform.StaticPlatformApi;
 import com.terracotta.toolkit.TerracottaToolkit;
 import com.terracotta.toolkit.object.serialization.SerializationStrategy;
 import com.terracotta.toolkit.object.serialization.SerializedClusterObject;
 import com.terracotta.toolkit.object.serialization.SerializedClusterObjectFactory;
 import com.terracotta.toolkit.object.serialization.SerializedClusterObjectFactoryImpl;
+import com.terracotta.toolkit.rejoin.PlatformServiceProvider;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,7 +31,7 @@ public abstract class AbstractTCToolkitObject implements TCToolkitObject {
   protected final PlatformService                platformService;
 
   public AbstractTCToolkitObject() {
-    platformService = StaticPlatformApi.getPlatformService();
+    platformService = PlatformServiceProvider.getPlatformService();
     SerializationStrategy registeredSerializer = platformService
         .lookupRegisteredObjectByName(TerracottaToolkit.TOOLKIT_SERIALIZER_REGISTRATION_NAME,
                                       SerializationStrategy.class);

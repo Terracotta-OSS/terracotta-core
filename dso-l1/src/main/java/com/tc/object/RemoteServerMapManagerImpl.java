@@ -5,7 +5,7 @@ package com.tc.object;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
-import com.tc.exception.RejoinInProgressException;
+import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.invalidation.Invalidations;
@@ -195,7 +195,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     try {
       while (true) {
         if (isStopped()) { throw new TCNotRunningException(); }
-        if (isRejoinInProgress()) { throw new RejoinInProgressException(); }
+        if (isRejoinInProgress()) { throw new PlatformRejoinException(); }
         try {
           wait(RESULT_WAIT_MAXTIME_MILLIS);
         } catch (final InterruptedException e) {
@@ -227,7 +227,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
     try {
       while (true) {
         if (isStopped()) { throw new TCNotRunningException(); }
-        if (isRejoinInProgress()) { throw new RejoinInProgressException(); }
+        if (isRejoinInProgress()) { throw new PlatformRejoinException(); }
         try {
           wait(RESULT_WAIT_MAXTIME_MILLIS);
         } catch (final InterruptedException e) {
@@ -447,7 +447,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
       while (this.state != State.RUNNING) {
         try {
           if (isStopped()) { throw new TCNotRunningException(); }
-          if (isRejoinInProgress()) { throw new RejoinInProgressException(); }
+          if (isRejoinInProgress()) { throw new PlatformRejoinException(); }
           wait();
         } catch (final InterruptedException e) {
           handleInterruptedException();
@@ -468,7 +468,7 @@ public class RemoteServerMapManagerImpl implements RemoteServerMapManager {
       while (this.state != State.RUNNING) {
         try {
           if (isStopped()) { throw new TCNotRunningException(); }
-          if (isRejoinInProgress()) { throw new RejoinInProgressException(); }
+          if (isRejoinInProgress()) { throw new PlatformRejoinException(); }
           wait();
         } catch (final InterruptedException e) {
           isInterrupted = true;

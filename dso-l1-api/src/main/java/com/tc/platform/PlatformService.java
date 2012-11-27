@@ -101,5 +101,6 @@ public interface PlatformService {
 
   void removeRejoinLifecycleListener(RejoinLifecycleListener listener);
 
+  boolean isRejoinEnabled();
 
 }

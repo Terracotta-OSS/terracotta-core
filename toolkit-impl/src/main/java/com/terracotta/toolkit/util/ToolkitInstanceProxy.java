@@ -3,6 +3,8 @@
  */
 package com.terracotta.toolkit.util;
 
+import org.terracotta.toolkit.rejoin.RejoinException;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -27,7 +29,7 @@ public abstract class ToolkitInstanceProxy {
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         // TODO: throw explicit public exception type
-        throw new RuntimeException("The toolkit instance with name '" + name + "' (instance of " + clazz.getName()
+        throw new RejoinException("The toolkit instance with name '" + name + "' (instance of " + clazz.getName()
                                    + ") is not usable at the moment as rejoin is in progress");
       }
     };

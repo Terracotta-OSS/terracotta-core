@@ -6,7 +6,7 @@ package com.tc.object;
 
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.abortable.AbortedOperationException;
-import com.tc.exception.RejoinInProgressException;
+import com.tc.exception.PlatformRejoinException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.logging.TCLogger;
@@ -190,7 +190,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     try {
       while (this.state != State.RUNNING) {
         if (isStopped()) { throw new TCNotRunningException(); }
-        if (isRejoinInProgress()) { throw new RejoinInProgressException(); }
+        if (isRejoinInProgress()) { throw new PlatformRejoinException(); }
         try {
           wait();
         } catch (final InterruptedException e) {
@@ -208,7 +208,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     try {
       while (this.state != State.RUNNING) {
         if (isStopped()) { throw new TCNotRunningException(); }
-        if (isRejoinInProgress()) { throw new RejoinInProgressException(); }
+        if (isRejoinInProgress()) { throw new PlatformRejoinException(); }
         try {
           wait();
         } catch (final InterruptedException e) {
@@ -615,7 +615,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     public void run() {
       try {
         sendRemovedObjects();
-      } catch (RejoinInProgressException e) {
+      } catch (PlatformRejoinException e) {
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
         this.cancel();
       } catch (TCNotRunningException e) {
@@ -630,7 +630,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     public void run() {
       try {
         clearAllUnrequestedDNABatches();
-      } catch (RejoinInProgressException e) {
+      } catch (PlatformRejoinException e) {
         logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
         this.cancel();
       } catch (TCNotRunningException e) {

@@ -5,6 +5,7 @@ package org.terracotta.express.tests.rejoin;
 
 import org.terracotta.toolkit.concurrent.ToolkitBarrier;
 import org.terracotta.toolkit.internal.ToolkitInternal;
+import org.terracotta.toolkit.rejoin.RejoinException;
 
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.jmx.TestHandlerMBean;
@@ -57,10 +58,8 @@ public class ToolkitBarrierRejoinTest extends AbstractToolkitRejoinTest {
             throw new RuntimeException(e);
           } catch (BrokenBarrierException e) {
             throw new RuntimeException(e);
-          } catch (Exception e) {
-            if (e.getClass().getName().equals("com.tc.exception.RejoinInProgressException")) {
-              exceptionFound.set(true);
-            }
+          } catch (RejoinException e) {
+            exceptionFound.set(true);
           }
         }
       };

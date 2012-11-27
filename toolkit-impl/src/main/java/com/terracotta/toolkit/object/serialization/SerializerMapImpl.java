@@ -11,8 +11,8 @@ import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
 import com.tc.platform.PlatformService;
-import com.tc.platform.StaticPlatformApi;
 import com.terracotta.toolkit.concurrent.locks.ToolkitLockingApi;
+import com.terracotta.toolkit.rejoin.PlatformServiceProvider;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,7 +28,7 @@ public class SerializerMapImpl<K, V> implements SerializerMap<K, V>, Manageable 
   private final PlatformService platformService;
 
   public SerializerMapImpl() {
-    platformService = StaticPlatformApi.getPlatformService();
+    platformService = PlatformServiceProvider.getPlatformService();
   }
 
   @Override
