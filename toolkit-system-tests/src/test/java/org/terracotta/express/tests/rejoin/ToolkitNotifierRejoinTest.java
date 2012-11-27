@@ -3,6 +3,7 @@
  */
 package org.terracotta.express.tests.rejoin;
 
+import org.terracotta.test.util.WaitUtil;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.concurrent.ToolkitBarrier;
 import org.terracotta.toolkit.events.ToolkitNotificationEvent;
@@ -13,6 +14,7 @@ import org.terracotta.toolkit.internal.ToolkitInternal;
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.jmx.TestHandlerMBean;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 
 import junit.framework.Assert;
@@ -42,7 +44,7 @@ public class ToolkitNotifierRejoinTest extends AbstractToolkitRejoinTest {
       doDebug("Notifier Created");
 
       CountDownLatch latch = new CountDownLatch(1);
-      MyNotificationListener listener = new MyNotificationListener(latch);
+      final MyNotificationListener listener = new MyNotificationListener(latch);
       notifier.addNotificationListener(listener);
       doDebug("listener ADDED");
 
@@ -54,7 +56,9 @@ public class ToolkitNotifierRejoinTest extends AbstractToolkitRejoinTest {
       } else {
         doDebug("waiting till other node Notifies all my listeners");
       }
+
       barrier.await();
+
       if (nodeIndex == 0) {
         doDebug("node 0 is asserting somethings");
         latch.await();
@@ -69,24 +73,36 @@ public class ToolkitNotifierRejoinTest extends AbstractToolkitRejoinTest {
       }
 
       barrier.await();
+
       doDebug("intiating  rejoin..");
       if (nodeIndex == 0) {
         startRejoinAndWaitUntilCompleted(testHandlerMBean, toolkit);
       } else {
         waitUntilRejoinCompleted();
       }
+
       barrier.await();
       doDebug("rejoin completed : nodeIndex= " + nodeIndex);
 
-      if (nodeIndex == 0) {
-        doDebug("Sending notification to all listener,  Rejoin");
-        notifier.notifyListeners(MSG_AFTER_REJOIN);
+      if (nodeIndex == 1) {
+        doDebug("Notifying all listeners: after rejoin");
+        notifier.notifyListeners(MSG_BEFORE_REJOIN);
+      } else {
+        doDebug("waiting till other node Notifies all my listeners: after rejoin");
       }
       barrier.await();
       if (nodeIndex == 0) {
         doDebug("node 0 is asserting somethings");
         latch.await();
-        Assert.assertEquals(MSG_AFTER_REJOIN, listener.getMsgRecvd());
+        WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
+          
+          @Override
+          public Boolean call() throws Exception {
+            doDebug(listener.getMsgRecvd());
+            return MSG_AFTER_REJOIN.equals(listener.getMsgRecvd());
+          }
+        });
+        
         Assert.assertEquals(NOTIFIER_NAME, notifier.getName());
         Assert.assertNotNull(listener.getRemoteNode());
         Assert.assertEquals(1, notifier.getNotificationListeners().size());
