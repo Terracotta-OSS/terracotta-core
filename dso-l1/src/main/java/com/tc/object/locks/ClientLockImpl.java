@@ -62,20 +62,15 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       LockStateNode lockState = it.next();
       unparkIfNecessary(lockState, it);
     }
+    greediness = ClientGreediness.FREE;
   }
 
   private void unparkIfNecessary(LockStateNode lockState, Iterator<LockStateNode> it) {
     try {
-      LOGGER.info("unparkIfNecessary unpark " + lockState.getClass().getSimpleName() + " "
-                  + lockState.isRejoinInProgress()
-                  + " " + lockState);
       lockState.setrejoinInProgress(true);
       lockState.unpark();
       it.remove(); // if unpark() fails (like LockHold), we do not remove item
       // unlock() / release() of this item will remove it
-      LOGGER.info("unparkIfNecessary removed " + lockState.getClass().getSimpleName() + " "
-                  + lockState.isRejoinInProgress()
-                  + " " + lockState);
     } catch (AssertionError e) {
       // some impl of LockStateNode (like LockHold) throws AssertionError
     }
@@ -272,7 +267,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     } finally {
       // if (waiter != null) {
       if (waiter != null && !waiter.isRejoinInProgress()) {
-        // LOGGER.info("abhim " + waiter.getClass().getSimpleName() + " " + waiter + " " + waiter.isRejoinInProgress());
         moveWaiterToPending(waiter);
         acquireAll(abortableOperationManager, remote, thread, waiter.getReacquires());
       } else if (!isLockedBy(thread, WRITE_LEVELS)) {
@@ -481,7 +475,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   }
 
   private synchronized void addPendingAcquires(final LockWaiter waiter) {
-    // LOGGER.info("abhim " + waiter.getClass().getSimpleName() + " " + waiter + " " + waiter.isRejoinInProgress());
     if (!waiter.isRejoinInProgress()) {
       Stack<PendingLockHold> reacquires = waiter.getReacquires();
       java.util.ListIterator<PendingLockHold> it = reacquires.listIterator(reacquires.size());

@@ -129,8 +129,10 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   @Override
   public void notifyTransportConnected(final MessageTransport transport) {
     // TODO: review this.
-    this.channelID = new ChannelID(transport.getConnectionId().getChannelID());
+    long channelIdLong = transport.getConnectionId().getChannelID();
+    this.channelID = new ChannelID(channelIdLong);
     this.cidProvider.setChannelID(this.channelID);
+    // setLocalNodeID(new ClientID(channelIdLong));
     super.notifyTransportConnected(transport);
     this.connectCount++;
   }
