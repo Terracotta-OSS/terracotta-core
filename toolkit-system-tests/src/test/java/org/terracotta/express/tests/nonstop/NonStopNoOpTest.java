@@ -14,6 +14,7 @@ public class NonStopNoOpTest extends AbstractToolkitTestBase {
   public NonStopNoOpTest(TestConfig testConfig) {
     super(testConfig, NonStopNoOpTestClient.class, NonStopNoOpTestClient.class);
     testConfig.getClientConfig().setParallelClients(true);
+    testConfig.getL2Config().setRestartable(true);
   }
 
   public static class NonStopNoOpTestClient extends AbstractNonStopTestClient {

@@ -13,6 +13,7 @@ public class NonStopLocalReadExceptionOnMutateImmediateTimeoutEnabledTest extend
   public NonStopLocalReadExceptionOnMutateImmediateTimeoutEnabledTest(TestConfig testConfig) {
     super(testConfig, NonStopLocalReadExceptionOnMutateTestImmediateTimeoutEnabledClient.class, NonStopLocalReadExceptionOnMutateTestImmediateTimeoutEnabledClient.class);
     testConfig.getClientConfig().setParallelClients(true);
+    testConfig.getL2Config().setRestartable(true);
   }
 
   public static class NonStopLocalReadExceptionOnMutateTestImmediateTimeoutEnabledClient extends

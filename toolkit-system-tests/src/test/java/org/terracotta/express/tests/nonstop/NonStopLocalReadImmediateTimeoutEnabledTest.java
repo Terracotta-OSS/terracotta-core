@@ -14,6 +14,7 @@ public class NonStopLocalReadImmediateTimeoutEnabledTest extends AbstractToolkit
     super(testConfig, NonStopLocalReadImmediateTimeoutEnabledTestClient.class,
           NonStopLocalReadImmediateTimeoutEnabledTestClient.class);
     testConfig.getClientConfig().setParallelClients(true);
+    testConfig.getL2Config().setRestartable(true);
   }
 
   public static class NonStopLocalReadImmediateTimeoutEnabledTestClient extends NonStopLocalReadTestClient {

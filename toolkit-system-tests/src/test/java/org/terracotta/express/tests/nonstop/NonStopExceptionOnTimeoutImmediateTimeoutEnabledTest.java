@@ -13,6 +13,7 @@ public class NonStopExceptionOnTimeoutImmediateTimeoutEnabledTest extends Abstra
   public NonStopExceptionOnTimeoutImmediateTimeoutEnabledTest(TestConfig testConfig) {
     super(testConfig, NonStopExceptionOnTimeoutImmediateTimeoutEnabledTestClient.class, NonStopExceptionOnTimeoutImmediateTimeoutEnabledTestClient.class);
     testConfig.getClientConfig().setParallelClients(true);
+    testConfig.getL2Config().setRestartable(true);
   }
 
   public static class NonStopExceptionOnTimeoutImmediateTimeoutEnabledTestClient extends

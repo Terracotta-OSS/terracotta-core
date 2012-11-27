@@ -14,6 +14,7 @@ public class NonStopExceptionOnTimeoutTest extends AbstractToolkitTestBase {
   public NonStopExceptionOnTimeoutTest(TestConfig testConfig) {
     super(testConfig, NonStopExceptionOnTimeoutTestClient.class, NonStopExceptionOnTimeoutTestClient.class);
     testConfig.getClientConfig().setParallelClients(true);
+    testConfig.getL2Config().setRestartable(true);
   }
 
   public static class NonStopExceptionOnTimeoutTestClient extends AbstractNonStopTestClient {

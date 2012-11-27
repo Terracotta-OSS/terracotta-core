@@ -15,6 +15,7 @@ public class NonStopLocalReadExceptionOnMutateTest extends AbstractToolkitTestBa
   public NonStopLocalReadExceptionOnMutateTest(TestConfig testConfig) {
     super(testConfig, NonStopLocalReadExceptionOnMutateTestClient.class, NonStopLocalReadExceptionOnMutateTestClient.class);
     testConfig.getClientConfig().setParallelClients(true);
+    testConfig.getL2Config().setRestartable(true);
   }
 
   public static class NonStopLocalReadExceptionOnMutateTestClient extends AbstractNonStopTestClient {

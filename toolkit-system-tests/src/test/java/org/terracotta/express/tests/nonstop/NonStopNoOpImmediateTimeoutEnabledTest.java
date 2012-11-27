@@ -14,6 +14,8 @@ public class NonStopNoOpImmediateTimeoutEnabledTest extends AbstractToolkitTestB
     super(testConfig, NonStopNoOpImmediateTimeoutEnabledTestClient.class,
           NonStopNoOpImmediateTimeoutEnabledTestClient.class);
     testConfig.getClientConfig().setParallelClients(true);
+    testConfig.getL2Config().setRestartable(true);
+    testConfig.getCrashConfig().shouldCleanDbOnCrash();
   }
 
   public static class NonStopNoOpImmediateTimeoutEnabledTestClient extends NonStopNoOpTestClient {

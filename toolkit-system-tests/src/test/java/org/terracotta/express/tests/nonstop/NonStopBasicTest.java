@@ -19,6 +19,7 @@ public class NonStopBasicTest extends AbstractToolkitTestBase {
   public NonStopBasicTest(TestConfig testConfig) {
     super(testConfig, NonStopBasicTestClient.class, NonStopBasicTestClient.class);
     testConfig.getClientConfig().setParallelClients(true);
+    testConfig.getL2Config().setRestartable(true);
   }
 
   public static class NonStopBasicTestClient extends NonStopClientBase {

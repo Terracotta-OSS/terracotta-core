@@ -15,6 +15,7 @@ public class NonStopLocalReadTest extends AbstractToolkitTestBase {
   public NonStopLocalReadTest(TestConfig testConfig) {
     super(testConfig, NonStopLocalReadTestClient.class, NonStopLocalReadTestClient.class);
     testConfig.getClientConfig().setParallelClients(true);
+    testConfig.getL2Config().setRestartable(true);
   }
 
   public static class NonStopLocalReadTestClient extends AbstractNonStopTestClient {
