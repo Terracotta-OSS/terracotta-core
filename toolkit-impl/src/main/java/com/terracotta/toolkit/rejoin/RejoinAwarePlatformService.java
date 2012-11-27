@@ -14,6 +14,7 @@ import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.locks.LockLevel;
+import com.tc.object.locks.ThreadID;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
@@ -22,6 +23,7 @@ import com.tc.platform.PlatformService;
 import com.tc.platform.rejoin.RejoinLifecycleListener;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
+import com.tc.util.concurrent.ConcurrentHashMap;
 import com.tc.util.runtime.ThreadIDManager;
 import com.tc.util.runtime.ThreadIDManagerImpl;
 import com.tc.util.runtime.ThreadIDMapImpl;
@@ -31,15 +33,117 @@ import com.terracottatech.search.NVPair;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class RejoinAwarePlatformService implements PlatformService {
+public class RejoinAwarePlatformService implements PlatformService, RejoinLifecycleListener {
+  // private static final TCLogger LOGGER = TCLogging
+  // .getLogger(RejoinAwarePlatformService.class);
   private final PlatformService delegate;
   private final ThreadIDManager threadIDManager = new ThreadIDManagerImpl(new ThreadIDMapImpl());
+  private final ConcurrentHashMap<ThreadLockContext, AtomicInteger> current         = new ConcurrentHashMap<ThreadLockContext, AtomicInteger>();
+  private final ConcurrentHashMap<ThreadLockContext, AtomicInteger> old             = new ConcurrentHashMap<ThreadLockContext, AtomicInteger>();
 
-  // private final ConcurrentHashMap<K, V>
+  private static class ThreadLockContext {
+    private final Object   lockId;
+    private final ThreadID threadId;
+
+    @Override
+    public String toString() {
+      return "lockId=" + lockId + ", threadId=" + threadId;
+    }
+
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((lockId == null) ? 0 : lockId.hashCode());
+      result = prime * result + ((threadId == null) ? 0 : threadId.hashCode());
+      return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) return true;
+      if (obj == null) return false;
+      if (!(obj instanceof ThreadLockContext)) return false;
+      ThreadLockContext other = (ThreadLockContext) obj;
+      if (lockId == null) {
+        if (other.lockId != null) return false;
+      } else if (!lockId.equals(other.lockId)) return false;
+      if (threadId == null) {
+        if (other.threadId != null) return false;
+      } else if (!threadId.equals(other.threadId)) return false;
+      return true;
+    }
+
+    public ThreadLockContext(Object lockId, ThreadID threadId) {
+      this.lockId = lockId;
+      this.threadId = threadId;
+    }
+  }
+
+  // private String getCallTrace() {
+  // Throwable t = new Throwable();
+  // StringWriter sw = new StringWriter();
+  // PrintWriter pw = new PrintWriter(sw);
+  // t.printStackTrace(pw);
+  // return sw.toString();
+  // }
+
+  private void addContext(Object lockId) {
+    ThreadLockContext context = createContext(lockId);
+    AtomicInteger count = current.putIfAbsent(context, new AtomicInteger(1));
+    if (count != null) {
+      count.incrementAndGet();
+    } else {
+      old.remove(context);
+    }
+  }
+
+  private void removeContext(Object lockId) {
+    ThreadLockContext context = createContext(lockId);
+    AtomicInteger count = current.get(context);
+    if (count != null && count.decrementAndGet() < 0) { throw new IllegalStateException("current removed more times "
+                                                                                        + context); }
+  }
+
+  private ThreadLockContext createContext(Object lockId) {
+    ThreadID thredId = threadIDManager.getThreadID();
+    ThreadLockContext context = new ThreadLockContext(lockId, thredId);
+    return context;
+  }
+
+  private boolean isLockedBeforeRejoin(Object lockId) {
+    ThreadLockContext context = createContext(lockId);
+    AtomicInteger count = old.get(context);
+    if (count != null) {
+      int value = count.decrementAndGet();
+      if (value >= 0) {
+        if (value == 0) {
+          old.remove(context);
+        }
+        return true;
+      } else {
+        throw new IllegalStateException("old removed more times " + context);
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public void onRejoinStart() {
+    old.putAll(current);
+    current.clear();
+  }
+
+  @Override
+  public void onRejoinComplete() {
+    //
+  }
 
   public RejoinAwarePlatformService(PlatformService delegate) {
     this.delegate = delegate;
+    addRejoinLifecycleListener(this);
   }
 
   @Override
@@ -96,16 +200,18 @@ public class RejoinAwarePlatformService implements PlatformService {
   public void beginLock(Object lockID, LockLevel level) throws AbortedOperationException {
     try {
       delegate.beginLock(lockID, level);
+      addContext(lockID);
     } catch (PlatformRejoinException e) {
       throw new RejoinException(e);
     }
   }
 
   @Override
-  public void beginLockInterruptibly(Object obj, LockLevel level) throws InterruptedException,
+  public void beginLockInterruptibly(Object lockID, LockLevel level) throws InterruptedException,
       AbortedOperationException {
     try {
-      delegate.beginLockInterruptibly(obj, level);
+      delegate.beginLockInterruptibly(lockID, level);
+      addContext(lockID);
     } catch (PlatformRejoinException e) {
       throw new RejoinException(e);
     }
@@ -115,6 +221,7 @@ public class RejoinAwarePlatformService implements PlatformService {
   public void commitLock(Object lockID, LockLevel level) throws AbortedOperationException {
     try {
       delegate.commitLock(lockID, level);
+      removeContext(lockID);
     } catch (PlatformRejoinException e) {
       throw new RejoinException(e);
     } catch (IllegalMonitorStateException e) {
@@ -123,14 +230,14 @@ public class RejoinAwarePlatformService implements PlatformService {
     }
   }
 
-  private boolean isLockedBeforeRejoin(Object lockID) {
-    return true;
-  }
-
   @Override
   public boolean tryBeginLock(Object lockID, LockLevel level) throws AbortedOperationException {
     try {
-      return delegate.tryBeginLock(lockID, level);
+      boolean granted = delegate.tryBeginLock(lockID, level);
+      if (granted) {
+        addContext(lockID);
+      }
+      return granted;
     } catch (PlatformRejoinException e) {
       throw new RejoinException(e);
     }
@@ -140,7 +247,11 @@ public class RejoinAwarePlatformService implements PlatformService {
   public boolean tryBeginLock(Object lockID, LockLevel level, long timeout, TimeUnit timeUnit)
       throws InterruptedException, AbortedOperationException {
     try {
-      return delegate.tryBeginLock(lockID, level, timeout, timeUnit);
+      boolean granted = delegate.tryBeginLock(lockID, level, timeout, timeUnit);
+      if (granted) {
+        addContext(lockID);
+      }
+      return granted;
     } catch (PlatformRejoinException e) {
       throw new RejoinException(e);
     }
