@@ -3,9 +3,9 @@
  */
 package com.tc.exception;
 
-public class RejoinInProgressException extends TCRuntimeException {
+public class RejoinInProgressException extends RejoinException {
   public RejoinInProgressException() {
-    this("Can not perform this operation because rejoin in progress");
+    this("Can not perform this operation because rejoin-in-progress");
   }
 
   public RejoinInProgressException(String message) {

@@ -15,28 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ToolkitBarrierRejoinTest extends AbstractToolkitRejoinTest {
 
   public ToolkitBarrierRejoinTest(TestConfig testConfig) {
-    super(testConfig, ToolkitBarrierRejoinTestClient.class, BarrierTestClient.class);
-  }
-
-  public static class BarrierTestClient extends AbstractToolkitRejoinTestClient {
-
-    public BarrierTestClient(String[] args) {
-      super(args);
-    }
-
-    @Override
-    protected void doRejoinTest(TestHandlerMBean testHandlerMBean) throws Throwable {
-      ToolkitInternal tk = createRejoinToolkit();
-      ToolkitBarrier beforeRejoinBarrier = tk.getBarrier("beforeRejoinBarrier", 2);
-      int index = beforeRejoinBarrier.await();
-      debug("client " + index + " starting.. ");
-      waitUntilRejoinCompleted();
-      debug("client " + index + " done with rejoin");
-      beforeRejoinBarrier.await();
-      ToolkitBarrier afterRejoinBarrier = tk.getBarrier("afterRejoinBarrier", 2);
-      debug("client " + index + " waiting on " + afterRejoinBarrier.getName());
-      afterRejoinBarrier.await();
-    }
+    super(testConfig, ToolkitBarrierRejoinTestClient.class, ToolkitBarrierRejoinTestClient.class);
   }
 
   public static class ToolkitBarrierRejoinTestClient extends AbstractToolkitRejoinTestClient {
@@ -48,16 +27,31 @@ public class ToolkitBarrierRejoinTest extends AbstractToolkitRejoinTest {
     @Override
     protected void doRejoinTest(TestHandlerMBean testHandlerMBean) throws Throwable {
       ToolkitInternal tk = createRejoinToolkit();
-      final ToolkitBarrier duringRejoinBarrier = tk.getBarrier("duringRejoinBarrier", 2);
-      final ToolkitBarrier beforeRejoinBarrier = tk.getBarrier("beforeRejoinBarrier", 2);
+      ToolkitBarrier beforeRejoinBarrier = tk.getBarrier("beforeRejoinBarrier", 2);
       int index = beforeRejoinBarrier.await();
       doDebug("client " + index + " starting.. ");
+      if (index == 0) {
+        testSingleNode(testHandlerMBean, tk, index);
+      } else {
+        waitUntilRejoinCompleted();
+      }
+      debug("client " + index + " done with rejoin");
+      beforeRejoinBarrier.await();
+      ToolkitBarrier afterRejoinBarrier = tk.getBarrier("afterRejoinBarrier", 2);
+      debug("client " + index + " waiting on " + afterRejoinBarrier.getName());
+      afterRejoinBarrier.await();
+    }
+
+    private void testSingleNode(TestHandlerMBean testHandlerMBean, ToolkitInternal tk, final int index)
+        throws Exception,
+        InterruptedException, BrokenBarrierException {
+      final ToolkitBarrier duringRejoinBarrier = tk.getBarrier("duringRejoinBarrier", 2);
       final AtomicBoolean exceptionFound = new AtomicBoolean(false);
       Thread anotherThread = new Thread() {
         @Override
         public void run() {
           try {
-            doDebug("waiting on toolkitBarrier");
+            doDebug("client " + index + " waiting on " + duringRejoinBarrier.getName());
             duringRejoinBarrier.await(); // 1st hit on duringRejoinBarrier
           } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -78,11 +72,6 @@ public class ToolkitBarrierRejoinTest extends AbstractToolkitRejoinTest {
       doDebug("exceptionFound " + exceptionFound.get());
       if (!exceptionFound.get()) { throw new RuntimeException("RejoinInProgressException should have seen"); }
       duringRejoinBarrier.await(); // 2nd hit on duringRejoinBarrier
-      debug("client " + index + " done with rejoin");
-      beforeRejoinBarrier.await();
-      ToolkitBarrier afterRejoinBarrier = tk.getBarrier("afterRejoinBarrier", 2);
-      debug("client " + index + " waiting on " + afterRejoinBarrier.getName());
-      afterRejoinBarrier.await();
     }
   }
 }

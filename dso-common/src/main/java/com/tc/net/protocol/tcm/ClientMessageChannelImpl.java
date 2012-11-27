@@ -132,7 +132,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
     long channelIdLong = transport.getConnectionId().getChannelID();
     this.channelID = new ChannelID(channelIdLong);
     this.cidProvider.setChannelID(this.channelID);
-    // setLocalNodeID(new ClientID(channelIdLong));
+    setLocalNodeID(new ClientID(channelIdLong));
     super.notifyTransportConnected(transport);
     this.connectCount++;
   }

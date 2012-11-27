@@ -5,10 +5,10 @@ package org.terracotta.express.tests.rejoin;
 
 import org.terracotta.express.tests.base.AbstractToolkitTestBase;
 import org.terracotta.express.tests.base.ClientBase;
+import org.terracotta.express.tests.util.KeyValueGenerator;
 import org.terracotta.toolkit.Toolkit;
 import org.terracotta.toolkit.ToolkitFactory;
 import org.terracotta.toolkit.cluster.ClusterEvent;
-import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.ToolkitLogger;
 
@@ -53,8 +53,8 @@ public class AbstractToolkitRejoinTest extends AbstractToolkitTestBase {
   public static abstract class AbstractToolkitRejoinTestClient extends ClientBase {
     private ToolkitLogger              logger;
     protected final List<ClusterEvent> receivedEvents = new CopyOnWriteArrayList<ClusterEvent>();
-    protected ClusterNode              beforeRejoinNode;
     private TKStatefulClusterListener  statefulListener;
+    protected KeyValueGenerator        keyValueGenerator;
 
     public AbstractToolkitRejoinTestClient(String[] args) {
       super(args);

@@ -20,7 +20,7 @@ public class ToolkitListRejoinTest extends AbstractToolkitRejoinTest {
 
   public static class ToolkitListRejoinTestClient extends AbstractToolkitRejoinTestClient {
 
-    private static final int NUM_ELEMENTS = 10;
+    private static final int NUM_ELEMENTS = 1000;
 
     public ToolkitListRejoinTestClient(String[] args) {
       super(args);

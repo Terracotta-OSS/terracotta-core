@@ -1,4 +1,6 @@
 package org.terracotta.express.tests.rejoin;
+
+import org.terracotta.express.tests.util.TCInt;
 import org.terracotta.toolkit.cluster.ClusterNode;
 import org.terracotta.toolkit.events.ToolkitNotificationEvent;
 import org.terracotta.toolkit.events.ToolkitNotificationListener;
