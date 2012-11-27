@@ -69,11 +69,13 @@ public class ToolkitNotifierRejoinTest extends AbstractToolkitRejoinTest {
       }
 
       barrier.await();
-
       doDebug("intiating  rejoin..");
-
-      startRejoinAndWaitUntilCompleted(testHandlerMBean, toolkit);
-
+      if (nodeIndex == 0) {
+        startRejoinAndWaitUntilCompleted(testHandlerMBean, toolkit);
+      } else {
+        waitUntilRejoinCompleted();
+      }
+      barrier.await();
       doDebug("rejoin completed : nodeIndex= " + nodeIndex);
 
       if (nodeIndex == 0) {
@@ -81,11 +83,10 @@ public class ToolkitNotifierRejoinTest extends AbstractToolkitRejoinTest {
         notifier.notifyListeners(MSG_AFTER_REJOIN);
       }
       barrier.await();
-
       if (nodeIndex == 0) {
         doDebug("node 0 is asserting somethings");
         latch.await();
-        Assert.assertEquals(MSG_BEFORE_REJOIN, listener.getMsgRecvd());
+        Assert.assertEquals(MSG_AFTER_REJOIN, listener.getMsgRecvd());
         Assert.assertEquals(NOTIFIER_NAME, notifier.getName());
         Assert.assertNotNull(listener.getRemoteNode());
         Assert.assertEquals(1, notifier.getNotificationListeners().size());
