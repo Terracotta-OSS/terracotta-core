@@ -54,20 +54,7 @@ public class ToolkitNotifierRejoinTest extends AbstractToolkitRejoinTest {
       } else {
         doDebug("waiting till other node Notifies all my listeners");
       }
-
-      if (nodeIndex == 0) {
-        doDebug("0 reached");
-      } else {
-        doDebug("1 reached");
-      }
       barrier.await();
-
-      if (nodeIndex == 0) {
-        doDebug("0 reached out");
-      } else {
-        doDebug("1 reached out");
-      }
-
       if (nodeIndex == 0) {
         doDebug("node 0 is asserting somethings");
         latch.await();
@@ -83,16 +70,10 @@ public class ToolkitNotifierRejoinTest extends AbstractToolkitRejoinTest {
 
       barrier.await();
 
-      if (nodeIndex == 0) {
-        doDebug("client 0 is trying to intiate rejoin..");
-        startRejoinAndWaitUntilCompleted(testHandlerMBean, toolkit);
-      } else {
-        doDebug("Client1: other client is trying to initiate rejoin");
-      }
+      doDebug("intiating  rejoin..");
 
-      barrier.await();
+      startRejoinAndWaitUntilCompleted(testHandlerMBean, toolkit);
 
-      doDebug("rejoin done");
       doDebug("rejoin completed : nodeIndex= " + nodeIndex);
 
       if (nodeIndex == 0) {
