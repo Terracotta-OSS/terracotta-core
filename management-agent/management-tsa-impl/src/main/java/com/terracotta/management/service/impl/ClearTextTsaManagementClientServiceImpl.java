@@ -19,6 +19,7 @@ import com.tc.net.ClientID;
 import com.tc.objectserver.api.GCStats;
 import com.tc.util.Conversion;
 import com.terracotta.management.resource.ClientEntity;
+import com.terracotta.management.resource.ConfigEntity;
 import com.terracotta.management.resource.ServerEntity;
 import com.terracotta.management.resource.ServerGroupEntity;
 import com.terracotta.management.resource.StatisticsEntity;
@@ -116,13 +117,13 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
           ThreadDumpEntity threadDumpEntity = unzipThreadDump(bytes);
           threadDumpEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
           threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-          threadDumpEntity.setSourceId(dsoClientObjectName.getKeyProperty("node"));
+          threadDumpEntity.setSourceId(clientId);
           threadDumpEntities.add(threadDumpEntity);
         } catch (Exception e) {
           ThreadDumpEntity threadDumpEntity = new ThreadDumpEntity();
           threadDumpEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
           threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
-          threadDumpEntity.setSourceId(dsoClientObjectName.toString());
+          threadDumpEntity.setSourceId(clientId);
           threadDumpEntity.setDump("Unavailable");
           threadDumpEntities.add(threadDumpEntity);
         }
@@ -170,17 +171,17 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
                 new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), TCServerInfoMBean.class);
             ThreadDumpEntity threadDumpEntity = threadDump(tcServerInfoMBean);
 
-            threadDumpEntity.setSourceId(jmxHost + ":" + jmxPort);
+            threadDumpEntity.setSourceId(member.name());
             threadDumpEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
             threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
 
             threadDumpEntities.add(threadDumpEntity);
           } catch (Exception e) {
             ThreadDumpEntity threadDumpEntity = new ThreadDumpEntity();
-            threadDumpEntity.setDump("Unavailable");
-            threadDumpEntity.setSourceId(jmxHost + ":" + jmxPort);
             threadDumpEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
             threadDumpEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+            threadDumpEntity.setSourceId(member.name());
+            threadDumpEntity.setDump("Unavailable");
             threadDumpEntities.add(threadDumpEntity);
           } finally {
             if (jmxConnector != null) {
@@ -692,6 +693,133 @@ public class ClearTextTsaManagementClientServiceImpl implements TsaManagementCli
       throw see;
     } catch (Exception e) {
       throw new ServiceExecutionException("error making JMX call", e);
+    } finally {
+      if (jmxConnector != null) {
+        try {
+          jmxConnector.close();
+        } catch (IOException ioe) {
+          LOG.warn("error closing JMX connection", ioe);
+        }
+      }
+    }
+  }
+
+  @Override
+  public Collection<ConfigEntity> getServerConfigs(Set<String> serverNames) throws ServiceExecutionException {
+    Collection<ConfigEntity> configEntities = new ArrayList<ConfigEntity>();
+
+    try {
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      ServerGroupInfo[] serverGroupInfos = (ServerGroupInfo[])mBeanServer.getAttribute(
+          new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "ServerGroupInfo");
+
+      for (ServerGroupInfo serverGroupInfo : serverGroupInfos) {
+        L2Info[] members = serverGroupInfo.members();
+        for (L2Info member : members) {
+          if (serverNames != null && !serverNames.contains(member.name())) {
+            continue;
+          }
+
+          int jmxPort = member.jmxPort();
+          String jmxHost = member.host();
+
+          JMXConnector jmxConnector = null;
+          try {
+            jmxConnector = jmxConnectorPool.getConnector("service:jmx:jmxmp://" + jmxHost + ":" + jmxPort);
+            MBeanServerConnection mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+
+            TCServerInfoMBean tcServerInfoMBean = JMX.newMBeanProxy(mBeanServerConnection,
+                new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), TCServerInfoMBean.class);
+
+            ConfigEntity configEntity = new ConfigEntity();
+            configEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+            configEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+            configEntity.setSourceId(member.name());
+
+            configEntity.getAttributes().put("tcProperties", tcServerInfoMBean.getTCProperties());
+            configEntity.getAttributes().put("config", tcServerInfoMBean.getConfig());
+            configEntity.getAttributes().put("environment", tcServerInfoMBean.getEnvironment());
+            configEntity.getAttributes().put("processArguments", tcServerInfoMBean.getProcessArguments());
+
+            configEntities.add(configEntity);
+          } catch (Exception e) {
+            ConfigEntity configEntity = new ConfigEntity();
+            configEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+            configEntity.setSourceId(member.name());
+            configEntities.add(configEntity);
+          } finally {
+            if (jmxConnector != null) {
+              jmxConnector.close();
+            }
+          }
+        }
+      }
+
+      return configEntities;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error getting servers config", e);
+    }
+  }
+
+  @Override
+  public Collection<ConfigEntity> getClientConfigs(Set<String> clientIds) throws ServiceExecutionException {
+    JMXConnector jmxConnector = null;
+    try {
+      MBeanServerConnection mBeanServerConnection;
+
+      // find the server where L1 Info MBeans are registered
+      if (localServerContainsL1MBeans()) {
+        mBeanServerConnection = ManagementFactory.getPlatformMBeanServer();
+      } else {
+        jmxConnector = findServerContainingL1MBeans();
+        if (jmxConnector == null) {
+          // there is no connected client
+          return Collections.emptyList();
+        }
+        mBeanServerConnection = jmxConnector.getMBeanServerConnection();
+      }
+
+      Collection<ConfigEntity> configEntities = new ArrayList<ConfigEntity>();
+
+      Set<ObjectName> dsoClientObjectNames = mBeanServerConnection.queryNames(
+          new ObjectName("org.terracotta:clients=Clients,name=L1 Info Bean,type=DSO Client,node=*"), null);
+      ObjectName[] clientObjectNames = (ObjectName[])mBeanServerConnection.getAttribute(new ObjectName("org.terracotta:type=Terracotta Server,name=DSO"), "Clients");
+
+      Iterator<ObjectName> it = dsoClientObjectNames.iterator();
+      for (ObjectName clientObjectName : clientObjectNames) {
+        ObjectName dsoClientObjectName = it.next();
+
+        String clientId = "" + ((ClientID)mBeanServerConnection.getAttribute(clientObjectName, "ClientID")).toLong();
+        if (clientIds != null && !clientIds.contains(clientId)) {
+          continue;
+        }
+
+        try {
+          L1InfoMBean l1InfoMBean = JMX.newMBeanProxy(mBeanServerConnection, dsoClientObjectName, L1InfoMBean.class);
+
+          ConfigEntity configEntity = new ConfigEntity();
+          configEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+          configEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+          configEntity.setSourceId(clientId);
+
+          configEntity.getAttributes().put("tcProperties", l1InfoMBean.getTCProperties());
+          configEntity.getAttributes().put("config", l1InfoMBean.getConfig());
+          configEntity.getAttributes().put("environment", l1InfoMBean.getEnvironment());
+          configEntity.getAttributes().put("processArguments", l1InfoMBean.getProcessArguments());
+
+          configEntities.add(configEntity);
+        } catch (Exception e) {
+          ConfigEntity configEntity = new ConfigEntity();
+          configEntity.setAgentId(AgentEntity.EMBEDDED_AGENT_ID);
+          configEntity.setVersion(this.getClass().getPackage().getImplementationVersion());
+          configEntity.setSourceId(clientId);
+          configEntities.add(configEntity);
+        }
+      }
+
+      return configEntities;
+    } catch (Exception e) {
+      throw new ServiceExecutionException("error getting clients config", e);
     } finally {
       if (jmxConnector != null) {
         try {
