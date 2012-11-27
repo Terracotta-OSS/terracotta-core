@@ -24,7 +24,7 @@ public class ToolkitBlockingQueueRejoinTest extends AbstractToolkitRejoinTest {
   }
 
   public static class ToolkitBlockingQueueRejoinTestClient extends AbstractToolkitRejoinTestClient {
-    private static final int NUM_ELEMENTS = 10;
+    private static final int NUM_ELEMENTS = 500;
 
     public ToolkitBlockingQueueRejoinTestClient(String[] args) {
       super(args);
@@ -68,7 +68,6 @@ public class ToolkitBlockingQueueRejoinTest extends AbstractToolkitRejoinTest {
       for (int i = 0; i < 2 * NUM_ELEMENTS; i++) {
         Assert.assertTrue(toolkitBlockingQueue.contains(keyValueGenerator.getValue(i)));
       }
-
     }
 
     private void testSingleNode(TestHandlerMBean testHandlerMBean, ToolkitInternal tk, int index) throws Exception {
@@ -101,11 +100,11 @@ public class ToolkitBlockingQueueRejoinTest extends AbstractToolkitRejoinTest {
             doDebug(toolkitBlockingQueue.getName() + " " + operation + " " + exceptionFound.get());
             if(operation.equals("put")) {
               toolkitBlockingQueue.put((TCInt) keyValueGenerator.getValue(0));
-              doDebug("abhim PUT did not block");
+              doDebug("PUT did not block");
             }
             if(operation.equals("take")) {
               toolkitBlockingQueue.take();
-              doDebug("abhim TAKE did not block");
+              doDebug("TAKE did not block");
             }
           } catch (InterruptedException e) {
             throw new RuntimeException(e);
