@@ -43,6 +43,8 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
                                                                                        }
                                                                                      };
 
+  private final ThreadLocal<NonStopConfiguration>                     threadLocalConfiguration = new ThreadLocal<NonStopConfiguration>();
+
   private void verify(NonStopConfiguration nonStopConfiguration) {
     NonStopConfigurationFields.NonStopTimeoutBehavior mutableOpBehavior = nonStopConfiguration
         .getMutableOpNonStopTimeoutBehavior();
@@ -88,9 +90,20 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
   }
 
   @Override
+  public void registerForThread(NonStopConfiguration config) {
+    verify(config);
+
+    threadLocalConfiguration.set(config);
+  }
+
+
+  @Override
   public NonStopConfiguration getConfigForType(ToolkitObjectType type) {
+    NonStopConfiguration nonStopConfig = getConfigForThread();
+    if (nonStopConfig != null) { return nonStopConfig; }
+
     NonStopConfigKey nonStopConfigKey = new NonStopConfigKey(null, type, null);
-    NonStopConfiguration nonStopConfig = allConfigs.get(nonStopConfigKey);
+    nonStopConfig = allConfigs.get(nonStopConfigKey);
     if (nonStopConfig != null) {
       return nonStopConfig;
     } else {
@@ -100,8 +113,11 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
 
   @Override
   public NonStopConfiguration getConfigForInstance(String toolkitTypeName, ToolkitObjectType type) {
+    NonStopConfiguration nonStopConfig = getConfigForThread();
+    if (nonStopConfig != null) { return nonStopConfig; }
+
     NonStopConfigKey nonStopConfigKey = new NonStopConfigKey(null, type, toolkitTypeName);
-    NonStopConfiguration nonStopConfig = allConfigs.get(nonStopConfigKey);
+    nonStopConfig = allConfigs.get(nonStopConfigKey);
     if (nonStopConfig == null) {
       nonStopConfig = getConfigForType(type);
     }
@@ -110,8 +126,11 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
 
   @Override
   public NonStopConfiguration getConfigForTypeMethod(String methodName, ToolkitObjectType type) {
+    NonStopConfiguration nonStopConfig = getConfigForThread();
+    if (nonStopConfig != null) { return nonStopConfig; }
+
     NonStopConfigKey nonStopConfigKey = new NonStopConfigKey(methodName, type, null);
-    NonStopConfiguration nonStopConfig = allConfigs.get(nonStopConfigKey);
+    nonStopConfig = allConfigs.get(nonStopConfigKey);
     if (nonStopConfig == null) {
       nonStopConfig = getConfigForType(type);
     }
@@ -121,8 +140,11 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
   @Override
   public NonStopConfiguration getConfigForInstanceMethod(String methodName, String toolkitTypeName,
                                                          ToolkitObjectType type) {
+    NonStopConfiguration nonStopConfig = getConfigForThread();
+    if (nonStopConfig != null) { return nonStopConfig; }
+
     NonStopConfigKey nonStopConfigKey = new NonStopConfigKey(methodName, type, toolkitTypeName);
-    NonStopConfiguration nonStopConfig = allConfigs.get(nonStopConfigKey);
+    nonStopConfig = allConfigs.get(nonStopConfigKey);
 
     // try method & type
     if (nonStopConfig == null) {
@@ -136,6 +158,11 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
     }
 
     return nonStopConfig;
+  }
+
+  @Override
+  public NonStopConfiguration getConfigForThread() {
+    return threadLocalConfiguration.get();
   }
 
   @Override
@@ -161,6 +188,14 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
                                                           ToolkitObjectType type) {
     NonStopConfigKey nonStopConfigKey = new NonStopConfigKey(methodName, type, toolkitTypeName);
     return allConfigs.remove(nonStopConfigKey);
+  }
+
+  @Override
+  public NonStopConfiguration deregisterForThread() {
+    NonStopConfiguration old = threadLocalConfiguration.get();
+    threadLocalConfiguration.remove();
+
+    return old;
   }
 
   private static class NonStopConfigKey {
@@ -201,5 +236,4 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
     }
 
   }
-
 }
