@@ -6,8 +6,8 @@ package com.terracotta.toolkit.nonstop;
 import org.terracotta.toolkit.ToolkitRuntimeException;
 import org.terracotta.toolkit.internal.nonstop.NonStopManager;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
+import org.terracotta.toolkit.rejoin.RejoinException;
 
-import com.tc.exception.PlatformRejoinException;
 import com.terracotta.toolkit.abortable.ToolkitAbortableOperationException;
 
 import java.lang.reflect.InvocationHandler;
@@ -39,7 +39,7 @@ public class NonStopInvocationHandler<T> implements InvocationHandler {
       return invokeMethod(method, args, nonStopDelegateProvider.getDelegate());
     } catch (ToolkitAbortableOperationException e) {
       return invokeMethod(method, args, nonStopDelegateProvider.getTimeoutBehavior());
-    } catch (PlatformRejoinException e) {
+    } catch (RejoinException e) {
       // TODO: Review this.. Is this the right place to handle this...
       return invokeMethod(method, args, nonStopDelegateProvider.getTimeoutBehavior());
     } finally {
