@@ -13,7 +13,6 @@
 		<server host="localhost" name="server1">
 			<data>server1-data</data>
 			<logs>server1-logs</logs>
-			<statistics>server1-stats</statistics>
 			<dso-port>1310</dso-port>
 			<jmx-port>1320</jmx-port>
 			<l2-group-port>1330</l2-group-port>

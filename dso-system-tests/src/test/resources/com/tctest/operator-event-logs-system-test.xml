@@ -18,7 +18,6 @@
 			<l2-group-port>4200</l2-group-port>
 			<data>server-1-data</data>
 			<logs>server-1-logs</logs>
-			<statistics>server-1-stats</statistics>
 		</server>
 
 	</servers>

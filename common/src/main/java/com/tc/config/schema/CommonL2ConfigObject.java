@@ -88,63 +88,71 @@ public class CommonL2ConfigObject extends BaseConfigObject implements CommonL2Co
     this.jmxPort = server.getJmxPort();
   }
 
+  @Override
   public File dataPath() {
     Server server = (Server) getBean();
     return new File(server.getData());
   }
 
+  @Override
   public File logsPath() {
     Server server = (Server) getBean();
     return new File(server.getLogs());
   }
 
+  @Override
   public File serverDbBackupPath() {
     Server server = (Server) getBean();
     return new File(server.getDataBackup());
   }
 
-  public File statisticsPath() {
-    Server server = (Server) getBean();
-    return new File(server.getStatistics());
-  }
-
+  @Override
   public File indexPath() {
     Server server = (Server) getBean();
     return new File(server.getIndex());
   }
 
+  @Override
   public BindPort jmxPort() {
     return this.jmxPort;
   }
 
+  @Override
   public String host() {
     return this.host;
   }
 
+  @Override
   public boolean authentication() {
     return authentication;
   }
 
+  @Override
   public String authenticationAccessFile() {
     return accessFile;
   }
 
+  @Override
   public String authenticationLoginConfigName() {
     return loginConfigName;
   }
 
+  @Override
   public String authenticationPasswordFile() {
     return passwordFile;
   }
 
+  @Override
   public boolean httpAuthentication() {
     return httpAuthentication;
   }
 
+  @Override
   public String httpAuthenticationUserRealmFile() {
     return userRealmFile;
   }
 
+  @Override
   public boolean isSecure() {
     return secured;
   }

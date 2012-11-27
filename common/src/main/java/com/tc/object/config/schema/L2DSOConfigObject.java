@@ -94,46 +94,57 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     }
   }
 
+  @Override
   public Offheap offHeapConfig() {
     return this.offHeapConfig;
   }
 
+  @Override
   public Security securityConfig() {
     return this.securityConfig;
   }
 
+  @Override
   public BindPort dsoPort() {
     return this.dsoPort;
   }
 
+  @Override
   public BindPort l2GroupPort() {
     return this.l2GroupPort;
   }
 
+  @Override
   public String host() {
     return host;
   }
 
+  @Override
   public String serverName() {
     return this.serverName;
   }
 
+  @Override
   public Persistence getPersistence() {
     return this.persistence;
   }
 
+  @Override
   public GarbageCollection garbageCollection() {
     return this.garbageCollection;
   }
 
+  @Override
   public DsoServerData getDso() {
     return this.dso;
   }
 
+  @Override
   public int clientReconnectWindow() {
     return this.dso.getClientReconnectWindow();
   }
 
+  @Override
   public String bind() {
     return this.bind;
   }
@@ -164,7 +175,6 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
       initializeLogsDirectory(server, defaultValueProvider, directoryLoadedFrom);
       initializeDataBackupDirectory(server, defaultValueProvider, directoryLoadedFrom);
       initializeIndexDiretory(server, defaultValueProvider, directoryLoadedFrom);
-      initializeStatisticsDirectory(server, defaultValueProvider, directoryLoadedFrom);
       initializeDso(server, defaultValueProvider);
       initializeSecurity(server, defaultValueProvider);
     }
@@ -299,18 +309,6 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     return out.getAbsolutePath();
   }
 
-  private static void initializeStatisticsDirectory(Server server, DefaultValueProvider defaultValueProvider,
-                                                    File directoryLoadedFrom) throws XmlException {
-    if (!server.isSetStatistics()) {
-      final XmlString defaultValue = (XmlString) defaultValueProvider.defaultFor(server.schemaType(), "statistics");
-      String substitutedString = ParameterSubstituter.substitute(defaultValue.getStringValue());
-      server.setStatistics(new File(directoryLoadedFrom, substitutedString).getAbsolutePath());
-    } else {
-      server
-          .setStatistics(getAbsolutePath(ParameterSubstituter.substitute(server.getStatistics()), directoryLoadedFrom));
-    }
-  }
-
   private static void initializeDso(Server server, DefaultValueProvider defaultValueProvider) throws XmlException {
     if (!server.isSetDso()) {
       server.addNewDso();
@@ -378,8 +376,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     initializeOffHeap(server, defaultValueProvider);
   }
 
-  private static void initializeRestartable(Server server, DefaultValueProvider defaultValueProvider)
-      throws XmlException {
+  private static void initializeRestartable(Server server, DefaultValueProvider defaultValueProvider) {
     DsoServerData dso = server.getDso();
     Assert.assertNotNull(dso);
 

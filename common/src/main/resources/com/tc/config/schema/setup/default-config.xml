@@ -14,7 +14,6 @@
         <server>
             <data>%(user.home)/terracotta/server-data</data>
             <logs>%(user.home)/terracotta/server-logs</logs>
-            <statistics>%(user.home)/terracotta/server-statistics</statistics>
         </server>
     </servers>
 

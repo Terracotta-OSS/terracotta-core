@@ -251,8 +251,6 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     Server server = (Server) l2CommonConfig().getBean();
     server.setData(BOGUS_FILENAME);
     server.setLogs(BOGUS_FILENAME);
-    server.setStatistics(BOGUS_FILENAME);
-    server.setStatistics(BOGUS_FILENAME);
   }
 
   public void activateConfigurationChange() throws ConfigurationSetupException {

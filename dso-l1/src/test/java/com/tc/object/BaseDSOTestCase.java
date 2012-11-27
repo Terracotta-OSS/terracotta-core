@@ -67,19 +67,18 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
   }
 
   private synchronized void prepareFactory(TestConfigurationSetupManagerFactory out) throws ConfigurationSetupException {
-    setupConfigLogDataStatisticsPaths(out);
+    setupConfigLogDataPaths(out);
 
     out.activateConfigurationChange();
   }
 
-  protected synchronized void setupConfigLogDataStatisticsPaths(TestConfigurationSetupManagerFactory out)
+  protected synchronized void setupConfigLogDataPaths(TestConfigurationSetupManagerFactory out)
       throws ConfigurationSetupException {
     try {
       Server server = (Server) out.l2CommonConfig().getBean();
       server.setData(getTempFile("l2-data").toString());
       server.setLogs(getTempFile("l2-logs").toString());
       server.setIndex(getTempFile("l2-index").toString());
-      server.setStatistics(getTempFile("l2-statistics").toString());
       ((Client) out.l1CommonConfig().getBean()).setLogs(getTempFile("l1-logs").toString());
     } catch (IOException ioe) {
       throw new ConfigurationSetupException("Can't set up log, data and statistics paths", ioe);
