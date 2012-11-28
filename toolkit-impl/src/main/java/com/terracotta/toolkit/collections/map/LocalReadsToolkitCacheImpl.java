@@ -336,4 +336,9 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
     // TODO: discuss change in behavior for search here.
     return getDelegate().unsafeLocalGet(key);
   }
+
+  @Override
+  public Map<K, V> unlockedGetAll(Collection<K> keys, boolean quiet) {
+    return getDelegate().unlockedGetAll(keys, quiet);
+  }
 }

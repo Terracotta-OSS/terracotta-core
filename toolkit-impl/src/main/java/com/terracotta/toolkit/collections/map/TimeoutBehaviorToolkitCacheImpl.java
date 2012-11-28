@@ -9,7 +9,6 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.search.QueryBuilder;
-import org.terracotta.toolkit.search.SearchExecutor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
 import com.tc.object.ObjectID;
@@ -324,11 +323,6 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ValuesResolver<K, 
   }
 
   @Override
-  public SearchExecutor createSearchExecutor() {
-    return immutationBehaviourResolver.createSearchExecutor();
-  }
-
-  @Override
   public void doDestroy() {
     ((DestroyableToolkitObject) mutationBehaviourResolver).doDestroy();
   }
@@ -337,5 +331,10 @@ public class TimeoutBehaviorToolkitCacheImpl<K, V> implements ValuesResolver<K, 
   public V get(K key, ObjectID valueOid) {
     // TODO: discuss change in behavior for search here.
     return immutationBehaviourResolver.unsafeLocalGet(key);
+  }
+
+  @Override
+  public Map<K, V> unlockedGetAll(Collection<K> keys, boolean quiet) {
+    return immutationBehaviourResolver.unlockedGetAll(keys, quiet);
   }
 }
