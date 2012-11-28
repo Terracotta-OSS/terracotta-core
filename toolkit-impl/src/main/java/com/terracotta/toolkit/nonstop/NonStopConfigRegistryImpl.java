@@ -13,35 +13,35 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
-  private final ConcurrentMap<NonStopConfigKey, NonStopConfiguration> allConfigs     = new ConcurrentHashMap<NonStopConfigKey, NonStopConfiguration>();
+  private final ConcurrentMap<NonStopConfigKey, NonStopConfiguration> allConfigs               = new ConcurrentHashMap<NonStopConfigKey, NonStopConfiguration>();
 
-  private final NonStopConfiguration                                  DEFAULT_CONFIG = new NonStopConfiguration() {
+  private final NonStopConfiguration                                  DEFAULT_CONFIG           = new NonStopConfiguration() {
 
-                                                                                       @Override
-                                                                                       public long getTimeoutMillis() {
-                                                                                         return NonStopConfigurationFields.DEFAULT_TIMEOUT_MILLIS;
-                                                                                       }
+                                                                                                 @Override
+                                                                                                 public long getTimeoutMillis() {
+                                                                                                   return NonStopConfigurationFields.DEFAULT_TIMEOUT_MILLIS;
+                                                                                                 }
 
-                                                                                       @Override
-                                                                                       public boolean isEnabled() {
-                                                                                         return NonStopConfigurationFields.DEFAULT_NON_STOP_ENABLED;
-                                                                                       }
+                                                                                                 @Override
+                                                                                                 public boolean isEnabled() {
+                                                                                                   return NonStopConfigurationFields.DEFAULT_NON_STOP_ENABLED;
+                                                                                                 }
 
-                                                                                       @Override
-                                                                                       public boolean isImmediateTimeoutEnabled() {
-                                                                                         return NonStopConfigurationFields.DEFAULT_NON_STOP_IMMEDIATE_TIMEOUT_ENABLED;
-                                                                                       }
+                                                                                                 @Override
+                                                                                                 public boolean isImmediateTimeoutEnabled() {
+                                                                                                   return NonStopConfigurationFields.DEFAULT_NON_STOP_IMMEDIATE_TIMEOUT_ENABLED;
+                                                                                                 }
 
-                                                                                       @Override
-                                                                                       public NonStopTimeoutBehavior getImmutableOpNonStopTimeoutBehavior() {
-                                                                                         return NonStopConfigurationFields.DEFAULT_NON_STOP_READ_TIMEOUT_BEHAVIOR;
-                                                                                       }
+                                                                                                 @Override
+                                                                                                 public NonStopTimeoutBehavior getImmutableOpNonStopTimeoutBehavior() {
+                                                                                                   return NonStopConfigurationFields.DEFAULT_NON_STOP_READ_TIMEOUT_BEHAVIOR;
+                                                                                                 }
 
-                                                                                       @Override
-                                                                                       public NonStopTimeoutBehavior getMutableOpNonStopTimeoutBehavior() {
-                                                                                         return NonStopConfigurationFields.DEFAULT_NON_STOP_WRITE_TIMEOUT_BEHAVIOR;
-                                                                                       }
-                                                                                     };
+                                                                                                 @Override
+                                                                                                 public NonStopTimeoutBehavior getMutableOpNonStopTimeoutBehavior() {
+                                                                                                   return NonStopConfigurationFields.DEFAULT_NON_STOP_WRITE_TIMEOUT_BEHAVIOR;
+                                                                                                 }
+                                                                                               };
 
   private final ThreadLocal<NonStopConfiguration>                     threadLocalConfiguration = new ThreadLocal<NonStopConfiguration>();
 
@@ -62,31 +62,25 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
   }
 
   @Override
-  public void registerForInstance(NonStopConfiguration config, String toolkitTypeName, ToolkitObjectType... types) {
+  public void registerForInstance(NonStopConfiguration config, String toolkitTypeName, ToolkitObjectType type) {
     verify(config);
 
-    for (ToolkitObjectType type : types) {
-      allConfigs.put(new NonStopConfigKey(null, type, toolkitTypeName), config);
-    }
+    allConfigs.put(new NonStopConfigKey(null, type, toolkitTypeName), config);
   }
 
   @Override
-  public void registerForTypeMethod(NonStopConfiguration config, String methodName, ToolkitObjectType... types) {
+  public void registerForTypeMethod(NonStopConfiguration config, String methodName, ToolkitObjectType type) {
     verify(config);
 
-    for (ToolkitObjectType type : types) {
-      allConfigs.put(new NonStopConfigKey(methodName, type, null), config);
-    }
+    allConfigs.put(new NonStopConfigKey(methodName, type, null), config);
   }
 
   @Override
   public void registerForInstanceMethod(NonStopConfiguration config, String methodName, String toolkitTypeName,
-                                        ToolkitObjectType... types) {
+                                        ToolkitObjectType type) {
     verify(config);
 
-    for (ToolkitObjectType type : types) {
-      allConfigs.put(new NonStopConfigKey(methodName, type, toolkitTypeName), config);
-    }
+    allConfigs.put(new NonStopConfigKey(methodName, type, toolkitTypeName), config);
   }
 
   @Override
@@ -95,7 +89,6 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
 
     threadLocalConfiguration.set(config);
   }
-
 
   @Override
   public NonStopConfiguration getConfigForType(ToolkitObjectType type) {
