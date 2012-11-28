@@ -19,7 +19,6 @@ import javax.management.ObjectName;
  */
 public class TSAConfig {
 
-  private static final String DEFAULT_IA_URL = "https://localhost:9443/tmc/api/assertIdentity";
   private static final int DEFAULT_TIMEOUT = 10000;
 
   private static volatile KeyChainAccessor KEY_CHAIN_ACCESSOR;
@@ -65,10 +64,12 @@ public class TSAConfig {
       Object response = mBeanServer.getAttribute(new ObjectName("org.terracotta.internal:type=Terracotta Server,name=Terracotta Server"), "SecurityServiceLocation");
 
       if (response == null) {
-        return DEFAULT_IA_URL;
+        throw new RuntimeException("Missing configuration entry for security service location");
       }
 
       return (String)response;
+    } catch (RuntimeException re) {
+      throw re;
     } catch (Exception e) {
       throw new RuntimeException("Error getting SecurityServiceLocation", e);
     }
