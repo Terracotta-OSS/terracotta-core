@@ -8,8 +8,8 @@ import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.management.RuntimeStatisticConstants;
 import com.tc.management.TerracottaMBean;
-import com.tc.statistics.StatisticData;
 
+import java.io.IOException;
 import java.util.Map;
 
 public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticConstants {
@@ -72,17 +72,11 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   int getGarbageCollectionInterval();
 
-  String[] getCpuStatNames();
-
   Map getStatistics();
 
   long getUsedMemory();
 
   long getMaxMemory();
-
-  StatisticData[] getCpuUsage();
-
-  StatisticData getCpuLoad();
 
   byte[] takeCompressedThreadDump(long requestMillis);
 
@@ -134,4 +128,9 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   String getSecurityHostname();
 
+  String getRunningBackup();
+
+  String getBackupStatus(String name) throws IOException;
+
+  void backup(String name) throws IOException;
 }

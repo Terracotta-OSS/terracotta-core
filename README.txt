@@ -144,6 +144,9 @@ If you change a class that goes into embbeded jars (ie. common or dso-l1 or ehca
 you don't need to recompile toolkit-runtime project at all. Those classes are loaded
 directly from there target/classes folder
 
+NOTE: if you create a ${user.home}/.devmode file, you can then have devmode
+turn on permamently and don't have to specify devmode profile every time
+
 ******************************************************************************
 10. Working with 'devmode' and L2
 ******************************************************************************

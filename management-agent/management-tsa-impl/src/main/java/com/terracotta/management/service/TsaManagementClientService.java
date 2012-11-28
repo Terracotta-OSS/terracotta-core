@@ -7,6 +7,7 @@ import net.sf.ehcache.management.service.impl.DfltSamplerRepositoryServiceMBean;
 import org.terracotta.management.ServiceExecutionException;
 
 import com.terracotta.management.resource.ClientEntity;
+import com.terracotta.management.resource.ConfigEntity;
 import com.terracotta.management.resource.ServerGroupEntity;
 import com.terracotta.management.resource.StatisticsEntity;
 import com.terracotta.management.resource.ThreadDumpEntity;
@@ -21,9 +22,9 @@ import java.util.Set;
  */
 public interface TsaManagementClientService {
 
-  Collection<ThreadDumpEntity> clientsThreadDump() throws ServiceExecutionException;
+  Collection<ThreadDumpEntity> clientsThreadDump(Set<String> clientIds) throws ServiceExecutionException;
 
-  Collection<ThreadDumpEntity> serversThreadDump() throws ServiceExecutionException;
+  Collection<ThreadDumpEntity> serversThreadDump(Set<String> serverNames) throws ServiceExecutionException;
 
   Collection<ClientEntity> getClientEntities() throws ServiceExecutionException;
 
@@ -49,5 +50,9 @@ public interface TsaManagementClientService {
 
   byte[] invokeMethod(String validatedNode, Class<DfltSamplerRepositoryServiceMBean> clazz, String ticket, String token,
                       String securityCallbackUrl, String methodName, Class<?>[] paramClasses, Object[] params) throws ServiceExecutionException;
+
+  Collection<ConfigEntity> getServerConfigs(Set<String> serverNames) throws ServiceExecutionException;
+
+  Collection<ConfigEntity> getClientConfigs(Set<String> clientIds) throws ServiceExecutionException;
 
 }

@@ -16,7 +16,6 @@
 			<jmx-port>9520</jmx-port>
 			<data>terracotta/server-data</data>
 			<logs>terracotta/server-logs</logs>
-			<statistics>terracotta/server-stats</statistics>
 		</server>
 	</servers>
 

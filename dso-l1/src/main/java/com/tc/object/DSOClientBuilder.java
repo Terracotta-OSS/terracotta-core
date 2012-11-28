@@ -54,7 +54,6 @@ import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.TransactionIDGenerator;
 import com.tc.runtime.logging.LongGCLogger;
-import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.ToggleableReferenceManager;
@@ -163,8 +162,7 @@ public interface DSOClientBuilder {
                                                       final Collection<ClientHandshakeCallback> callbacks,
                                                       Collection<ClearableCallback> clearCallbacks);
 
-  L1Management createL1Management(TunnelingEventHandler teh, StatisticsAgentSubSystem statisticsAgentSubSystem,
-                                  RuntimeLogger runtimeLogger, String rawConfigText,
+  L1Management createL1Management(TunnelingEventHandler teh, RuntimeLogger runtimeLogger, String rawConfigText,
                                   DistributedObjectClient distributedObjectClient);
 
   void registerForOperatorEvents(L1Management management);

@@ -11,24 +11,13 @@ import com.tc.runtime.TCMemoryManagerImpl;
 import com.tc.runtime.cache.CacheMemoryEventType;
 import com.tc.runtime.cache.CacheMemoryEventsListener;
 import com.tc.runtime.cache.CacheMemoryManagerEventGenerator;
-import com.tc.statistics.AgentStatisticsManager;
-import com.tc.statistics.StatisticData;
-import com.tc.statistics.StatisticsAgentSubSystem;
-import com.tc.statistics.exceptions.AgentStatisticsManagerException;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class CacheManager implements CacheMemoryEventsListener {
-
-  public static final String             CACHE_OBJECTS_EVICT_REQUEST = "cache objects evict request";
-  public static final String             CACHE_OBJECTS_EVICTED       = "cache objects evicted";
 
   private static final TCLogger          logger                      = TCLogging.getLogger(CacheManager.class);
 
@@ -41,11 +30,10 @@ public class CacheManager implements CacheMemoryEventsListener {
 
   private int                            calculatedCacheSize         = 0;
   private CacheStatistics                lastStat                    = null;
-  private final StatisticsAgentSubSystem statisticsAgentSubSystem;
   private final TCMemoryManagerImpl      memoryManager;
 
   public CacheManager(Evictable evictable, CacheConfig config, TCThreadGroup threadGroup,
-                      StatisticsAgentSubSystem statisticsAgentSubSystem, TCMemoryManagerImpl memoryManager) {
+                      TCMemoryManagerImpl memoryManager) {
     this.evictable = evictable;
     this.config = config;
     this.memoryManager = memoryManager;
@@ -56,8 +44,6 @@ public class CacheManager implements CacheMemoryEventsListener {
                 + config.getObjectCountCriticalThreshold()
                 + ". It is not recommended that this value is set. Setting a wrong vlaue could totally destroy performance.");
     }
-    this.statisticsAgentSubSystem = statisticsAgentSubSystem;
-    Assert.assertNotNull(statisticsAgentSubSystem);
   }
 
   public void start() {
@@ -129,46 +115,7 @@ public class CacheManager implements CacheMemoryEventsListener {
                       + calculatedCacheSize + " heap used = " + usedPercentage + " %  gc count = " + collectionCount);
         }
       }
-      if (statisticsAgentSubSystem.isActive()) {
-        storeCacheEvictRequestStats(currentCount, toEvict, calculatedCacheSize, usedPercentage, collectionCount);
-      }
       return this.toEvict;
-    }
-
-    private synchronized void storeCacheEvictRequestStats(int currentCount, int toEvictArg, int cacheSize,
-                                                          int usedPercentage, long collectionCount) {
-      Date moment = new Date();
-      AgentStatisticsManager agentStatisticsManager = statisticsAgentSubSystem.getStatisticsManager();
-      Collection sessions = agentStatisticsManager.getActiveSessionIDsForAction(CACHE_OBJECTS_EVICT_REQUEST);
-      if (sessions != null && sessions.size() > 0) {
-        StatisticData[] datas = getCacheObjectsEvictRequestData(currentCount, toEvictArg, cacheSize, usedPercentage,
-                                                                collectionCount);
-        storeStatisticsDatas(moment, sessions, datas);
-      }
-    }
-
-    private synchronized StatisticData[] getCacheObjectsEvictRequestData(int currentCount, int toEvictArg,
-                                                                         int cacheSize, int usedPercentage,
-                                                                         long collectionCount) {
-      List datas = new ArrayList();
-      StatisticData statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "asking to evict count",
-                                                      Long.valueOf(toEvictArg));
-      datas.add(statisticData);
-
-      statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "current size", Long.valueOf(currentCount));
-      datas.add(statisticData);
-
-      statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "calculated cache size", Long.valueOf(cacheSize));
-      datas.add(statisticData);
-
-      statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "percentage heap used",
-                                        Long.valueOf(usedPercentage));
-      datas.add(statisticData);
-
-      statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "gc count", Long.valueOf(collectionCount));
-      datas.add(statisticData);
-
-      return (StatisticData[]) datas.toArray(new StatisticData[0]);
     }
 
     //
@@ -211,52 +158,6 @@ public class CacheManager implements CacheMemoryEventsListener {
                       + newObjectsCount + " time taken = " + timeTaken + " ms");
         }
       }
-      if (statisticsAgentSubSystem.isActive()) {
-        storeCacheObjectsEvictedStats(evictedCount, currentCount, newObjectsCount, timeTaken);
-      }
-    }
-
-    private synchronized void storeCacheObjectsEvictedStats(int evictedCount, int currentCount, int newObjectsCount,
-                                                            long timeTaken) {
-      Date moment = new Date();
-      AgentStatisticsManager agentStatisticsManager = statisticsAgentSubSystem.getStatisticsManager();
-      Collection sessions = agentStatisticsManager.getActiveSessionIDsForAction(CACHE_OBJECTS_EVICTED);
-      if (sessions != null && sessions.size() > 0) {
-        StatisticData[] datas = getCacheObjectsEvictedData(evictedCount, currentCount, newObjectsCount, timeTaken);
-        storeStatisticsDatas(moment, sessions, datas);
-      }
-    }
-
-    private synchronized void storeStatisticsDatas(Date moment, Collection sessions, StatisticData[] datas) {
-      try {
-        for (Iterator sessionsIterator = sessions.iterator(); sessionsIterator.hasNext();) {
-          String session = (String) sessionsIterator.next();
-          for (StatisticData data : datas) {
-            statisticsAgentSubSystem.getStatisticsManager().injectStatisticData(session, data.moment(moment));
-          }
-        }
-      } catch (AgentStatisticsManagerException e) {
-        logger.error("Unexpected error while trying to store Cache Objects Evict Request statistics statistics.", e);
-      }
-    }
-
-    private synchronized StatisticData[] getCacheObjectsEvictedData(int evictedCount, int currentCount,
-                                                                    int newObjectsCount, long timeTaken) {
-      List datas = new ArrayList();
-      StatisticData statisticData = new StatisticData(CACHE_OBJECTS_EVICTED, "evicted count",
-                                                      Long.valueOf(evictedCount));
-      datas.add(statisticData);
-
-      statisticData = new StatisticData(CACHE_OBJECTS_EVICTED, "current count", Long.valueOf(currentCount));
-      datas.add(statisticData);
-
-      statisticData = new StatisticData(CACHE_OBJECTS_EVICTED, "new objects count", Long.valueOf(newObjectsCount));
-      datas.add(statisticData);
-
-      statisticData = new StatisticData(CACHE_OBJECTS_EVICTED, "time taken", Long.valueOf(timeTaken));
-      datas.add(statisticData);
-
-      return (StatisticData[]) datas.toArray(new StatisticData[0]);
     }
 
     private int getNewObjectsCount() {

@@ -167,11 +167,6 @@ public class TcConfigBuilder {
     tcConfig.getServers().getServerArray(0).setData(path);
   }
 
-  public void setServerStatistics(String path) {
-    ensureServers();
-    tcConfig.getServers().getServerArray(0).setStatistics(path);
-  }
-
   public void setServerLogs(int index, String path) {
     ensureServers();
     tcConfig.getServers().getServerArray(index).setLogs(path);
@@ -180,11 +175,6 @@ public class TcConfigBuilder {
   public void setServerData(int index, String path) {
     ensureServers();
     tcConfig.getServers().getServerArray(index).setData(path);
-  }
-
-  public void setServerStatistics(int index, String path) {
-    ensureServers();
-    tcConfig.getServers().getServerArray(index).setStatistics(path);
   }
 
   public void setClientLogs(String path) {

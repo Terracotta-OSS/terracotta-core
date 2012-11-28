@@ -11,6 +11,7 @@ import com.terracotta.management.service.TsaManagementClientService;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author Ludovic Orban
@@ -25,16 +26,22 @@ public class DiagnosticsServiceImpl implements DiagnosticsService {
 
   @Override
   public Collection<ThreadDumpEntity> getClusterThreadDump() throws ServiceExecutionException {
-    try {
-      Collection<ThreadDumpEntity> threadDumpEntities = new ArrayList<ThreadDumpEntity>();
+    Collection<ThreadDumpEntity> threadDumpEntities = new ArrayList<ThreadDumpEntity>();
 
-      threadDumpEntities.addAll(tsaManagementClientService.serversThreadDump());
-      threadDumpEntities.addAll(tsaManagementClientService.clientsThreadDump());
+    threadDumpEntities.addAll(tsaManagementClientService.serversThreadDump(null));
+    threadDumpEntities.addAll(tsaManagementClientService.clientsThreadDump(null));
 
-      return threadDumpEntities;
-    } catch (Exception e) {
-      throw new ServiceExecutionException("error making JMX call", e);
-    }
+    return threadDumpEntities;
+  }
+
+  @Override
+  public Collection<ThreadDumpEntity> getServersThreadDump(Set<String> serverNames) throws ServiceExecutionException {
+    return tsaManagementClientService.serversThreadDump(serverNames);
+  }
+
+  @Override
+  public Collection<ThreadDumpEntity> getClientsThreadDump(Set<String> clientIds) throws ServiceExecutionException {
+    return tsaManagementClientService.clientsThreadDump(clientIds);
   }
 
   @Override

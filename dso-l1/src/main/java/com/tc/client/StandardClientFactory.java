@@ -14,7 +14,6 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.platform.rejoin.RejoinManagerInternal;
-import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tcclient.cluster.DsoClusterInternal;
 
 import java.util.Map;
@@ -26,13 +25,12 @@ public class StandardClientFactory extends AbstractClientFactory {
                                               final ClassProvider classProvider,
                                               final PreparedComponentsFromL2Connection connectionComponents,
                                               final Manager manager,
-                                              final StatisticsAgentSubSystem statisticsAgentSubSystem,
                                               final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger,
                                               final ClientMode clientMode, final TCSecurityManager securityManager,
                                               final AbortableOperationManager abortableOperationManager,
                                               final RejoinManagerInternal rejoinManager) {
     return new DistributedObjectClient(config, threadGroup, classProvider, connectionComponents, manager,
-                                       statisticsAgentSubSystem, dsoCluster, runtimeLogger, clientMode,
+                                       dsoCluster, runtimeLogger, clientMode,
                                        securityManager, abortableOperationManager, rejoinManager);
   }
 

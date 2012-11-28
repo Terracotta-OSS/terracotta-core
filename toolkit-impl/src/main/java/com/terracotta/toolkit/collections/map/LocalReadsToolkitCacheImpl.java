@@ -9,7 +9,6 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitReadWriteLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.search.QueryBuilder;
-import org.terracotta.toolkit.search.SearchExecutor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
 import com.tc.object.ObjectID;
@@ -325,11 +324,6 @@ public class LocalReadsToolkitCacheImpl<K, V> implements ValuesResolver<K, V>, T
   @Override
   public QueryBuilder createQueryBuilder() {
     return getDelegate().createQueryBuilder();
-  }
-
-  @Override
-  public SearchExecutor createSearchExecutor() {
-    return getDelegate().createSearchExecutor();
   }
 
   @Override

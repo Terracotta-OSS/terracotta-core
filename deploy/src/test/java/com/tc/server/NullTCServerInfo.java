@@ -6,11 +6,11 @@ package com.tc.server;
 
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
-import com.tc.config.schema.setup.TopologyReloadStatus;
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.management.beans.TCServerInfoMBean;
-import com.tc.statistics.StatisticData;
+import com.tc.objectserver.api.BackupManager;
 
+import java.io.IOException;
 import java.util.Map;
 
 import javax.management.NotCompliantMBeanException;
@@ -21,238 +21,272 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
     super(TCServerInfoMBean.class, false);
   }
 
+  @Override
   public void reset() {
     // nothing to reset
   }
 
+  @Override
   public long getActivateTime() {
     return 0;
   }
 
+  @Override
   public String getBuildID() {
     return "";
   }
 
+  @Override
   public String getCopyright() {
     return "";
   }
 
+  @Override
   public String getDescriptionOfCapabilities() {
     return "";
   }
 
+  @Override
   public L2Info[] getL2Info() {
     return null;
   }
 
+  @Override
   public int getDSOListenPort() {
     return 0;
   }
 
+  @Override
   public int getDSOGroupPort() {
     return 0;
   }
 
+  @Override
   public long getStartTime() {
     return 0;
   }
 
+  @Override
   public String getVersion() {
     return "";
   }
 
+  @Override
   public String getPatchLevel() {
     return "";
   }
 
+  @Override
   public String getPatchVersion() {
     return "";
   }
 
+  @Override
   public String getPatchBuildID() {
     return "";
   }
 
+  @Override
   public boolean isActive() {
     return false;
   }
 
+  @Override
   public boolean isStarted() {
     return false;
   }
 
+  @Override
   public boolean isShutdownable() {
     return false;
   }
 
+  @Override
   public void shutdown() {
     //
   }
 
+  @Override
   public void stop() {
     //
   }
 
+  @Override
   public String getHealthStatus() {
     return "";
   }
 
-  public boolean isInStartState() {
-    return false;
-  }
-
+  @Override
   public boolean isPassiveStandby() {
     return false;
   }
 
+  @Override
   public boolean isPassiveUninitialized() {
     return false;
   }
 
+  @Override
   public void startBeanShell(int port) {
     //
   }
 
-  public String[] getCpuStatNames() {
-    return null;
-  }
-
+  @Override
   public Map getStatistics() {
     return null;
   }
 
+  @Override
   public long getMaxMemory() {
     return 0;
   }
 
+  @Override
   public long getUsedMemory() {
     return 0;
   }
 
-  public StatisticData[] getCpuUsage() {
-    return null;
-  }
-
+  @Override
   public byte[] takeCompressedThreadDump(long requestMillis) {
     return null;
   }
 
+  @Override
   public String getFailoverMode() {
     return null;
   }
 
+  @Override
   public boolean getRestartable() {
     return false;
   }
 
+  @Override
   public String getEnvironment() {
     return null;
   }
 
+  @Override
   public String getConfig() {
     return null;
   }
 
+  @Override
   public boolean isPatched() {
     return false;
   }
 
+  @Override
   public String getState() {
     return null;
   }
 
+  @Override
   public boolean getFaultDebug() {
     return false;
   }
 
+  @Override
   public void setFaultDebug(boolean faultDebug) {
     /**/
   }
 
+  @Override
   public boolean getRequestDebug() {
     return false;
   }
 
+  @Override
   public void setRequestDebug(boolean requestDebug) {
     /**/
   }
 
+  @Override
   public boolean getFlushDebug() {
     return false;
   }
 
+  @Override
   public void setFlushDebug(boolean flushDebug) {
     /**/
   }
 
+  @Override
   public boolean getBroadcastDebug() {
     return false;
   }
 
+  @Override
   public void setBroadcastDebug(boolean broadcastDebug) {
     /**/
   }
 
+  @Override
   public boolean getCommitDebug() {
     return false;
   }
 
+  @Override
   public void setCommitDebug(boolean commitDebug) {
     /**/
   }
 
+  @Override
   public int getGarbageCollectionInterval() {
     return 0;
   }
 
+  @Override
   public boolean isGarbageCollectionEnabled() {
     return false;
   }
 
+  @Override
   public ServerGroupInfo[] getServerGroupInfo() {
     return null;
   }
 
+  @Override
   public String getMavenArtifactsVersion() {
     return null;
   }
 
+  @Override
   public void gc() {
     /**/
   }
 
+  @Override
   public boolean isVerboseGC() {
     return false;
   }
 
+  @Override
   public void setVerboseGC(boolean verboseGC) {
     /**/
   }
 
-  public TopologyReloadStatus reloadConfiguration() {
-    return null;
-  }
-
+  @Override
   public boolean isEnterprise() {
     return false;
   }
 
+  @Override
   public String getTCProperties() {
     return null;
   }
 
+  @Override
   public String[] getProcessArguments() {
     return null;
   }
 
-  public StatisticData getCpuLoad() {
-    return null;
-  }
-
+  @Override
   public boolean isProduction() {
     return false;
   }
 
+  @Override
   public boolean isSecure() {
     return false;
   }
@@ -270,5 +304,19 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   @Override
   public String getSecurityHostname() {
     return null;
+  }
+
+  @Override
+  public void backup(final String name) throws IOException {
+  }
+
+  @Override
+  public String getRunningBackup() {
+    return null;
+  }
+
+  @Override
+  public String getBackupStatus(final String name) throws IOException {
+    return BackupManager.BackupStatus.UNKNOWN.toString();
   }
 }

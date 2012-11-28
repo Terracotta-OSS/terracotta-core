@@ -41,7 +41,7 @@ public class EnterpriseToolkitNotCreatedTest extends AbstractToolkitTestBase {
       ToolkitCache<String, Serializable> map = toolkit.getCache("testCache", null);
       Assert.assertTrue(map instanceof ToolkitCacheInternal);
       try {
-        ((ToolkitCacheInternal) map).createSearchExecutor();
+        map.createQueryBuilder();
         fail("Creating search builder with oss toolkit should fail");
       } catch (UnsupportedOperationException e) {
         System.out.println("Got expected exception: " + e);

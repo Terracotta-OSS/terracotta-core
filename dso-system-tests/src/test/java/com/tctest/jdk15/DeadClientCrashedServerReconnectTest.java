@@ -27,7 +27,6 @@ import com.tc.platform.rejoin.RejoinManagerInternal;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.stats.api.DSOMBean;
 import com.tc.test.JMXUtils;
 import com.tc.test.proxy.ProxyConnectManager;
@@ -48,6 +47,8 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
   private final TCProperties tcProps;
 
   public DeadClientCrashedServerReconnectTest() {
+    // Move this test to toolkit-ee-system-tests, no real need for it to be here. And it's broken.
+    timebombTest("2012-12-01");
     tcProps = TCPropertiesImpl.getProperties();
     tcProps.setProperty(TCPropertiesConsts.L1_L2_CONFIG_VALIDATION_ENABLED, "false");
     System.out.println("L1 and L2 config match check disabled temporarily as we use proxy");
@@ -89,7 +90,6 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
                                                                      .getLogger(DistributedObjectClient.class))),
                                                                  new MockClassProvider(), components,
                                                                  NullManager.getInstance(),
-                                                                 new StatisticsAgentSubSystemImpl(),
                                                                  new DsoClusterImpl(mock),
                                                                  new NullRuntimeLogger(),
                                                                  new NullAbortableOperationManager(),

@@ -300,7 +300,12 @@
     </profile>
     
     <profile>
-      <id>devmode</id>
+      <id>devmode</id>      
+      <activation>
+        <file>
+          <exists>${user.home}/.devmode</exists>
+        </file>
+      </activation>      
       <properties>
         <skipToolkitPackaging>true</skipToolkitPackaging>
         <packagingTarget>packaging</packagingTarget>
@@ -319,6 +324,7 @@
                 </goals>
                 <configuration>
                   <source>
+                    println "================== devmode ===================="
                     def packagingDir = new File(project.build.directory, project.properties['packagingTarget'])
                     def toolkitDevmodeClasspath = new File(project.build.outputDirectory, 'devmode-embedded-classpath.txt')
                     toolkitDevmodeClasspath.withWriter{ out ->

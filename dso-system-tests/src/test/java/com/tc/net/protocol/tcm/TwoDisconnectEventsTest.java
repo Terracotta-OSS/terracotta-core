@@ -35,7 +35,6 @@ import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.platform.rejoin.RejoinManagerInternal;
 import com.tc.server.TCServer;
 import com.tc.server.TCServerImpl;
-import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
@@ -175,7 +174,6 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
                                                                  new MockClassProvider(),
                                                                  new PreparedComponentsFromL2Connection(manager),
                                                                  NullManager.getInstance(),
-                                                                 new StatisticsAgentSubSystemImpl(),
                                                                  new DsoClusterImpl(mock),
                                                                  new NullRuntimeLogger(),
                                                                  new NullAbortableOperationManager(),

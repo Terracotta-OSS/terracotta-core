@@ -13,8 +13,6 @@ import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.platform.rejoin.RejoinManager;
-import com.tc.statistics.StatisticsAgentSubSystem;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -25,7 +23,6 @@ public class ClientShutdownManager {
   private final DSOClientMessageChannel            channel;
 
   private final ClientHandshakeManager             handshakeManager;
-  private final StatisticsAgentSubSystem           statisticsAgentSubSystem;
   private final PreparedComponentsFromL2Connection connectionComponents;
   private final Set<Runnable>                      beforeShutdown = new HashSet<Runnable>();
   private final DistributedObjectClient            client;
@@ -38,7 +35,6 @@ public class ClientShutdownManager {
     this.rtxManager = client.getRemoteTransactionManager();
     this.channel = client.getChannel();
     this.handshakeManager = client.getClientHandshakeManager();
-    this.statisticsAgentSubSystem = client.getStatisticsAgentSubSystem();
     this.connectionComponents = connectionComponents;
   }
 
@@ -59,13 +55,10 @@ public class ClientShutdownManager {
   }
 
   public void execute(boolean fromShutdownHook, boolean forceImmediate) {
-
     // no more rejoins should happen after shutdown
     rejoinManager.shutdown();
 
     executeBeforeShutdownHooks();
-
-    closeStatisticsAgent();
 
     closeLocalWork(forceImmediate);
 
@@ -79,16 +72,6 @@ public class ClientShutdownManager {
         } catch (Throwable t) {
           logger.error("Error closing channel", t);
         }
-      }
-    }
-  }
-
-  private void closeStatisticsAgent() {
-    if (statisticsAgentSubSystem != null && statisticsAgentSubSystem.isActive()) {
-      try {
-        statisticsAgentSubSystem.cleanup();
-      } catch (Throwable t) {
-        logger.error("Error cleaning up the statistics agent", t);
       }
     }
   }

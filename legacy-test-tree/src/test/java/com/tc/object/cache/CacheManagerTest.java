@@ -10,7 +10,6 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogging;
 import com.tc.runtime.TCMemoryManagerImpl;
-import com.tc.statistics.mock.NullStatisticsAgentSubSystem;
 import com.tc.test.TCTestCase;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -48,7 +47,7 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
   }
 
   public void test() throws Exception {
-    CacheManager cm = new CacheManager(this, cacheConfig, thrdGrp, new NullStatisticsAgentSubSystem(), tcMemManager);
+    CacheManager cm = new CacheManager(this, cacheConfig, thrdGrp, tcMemManager);
     cm.start();
     log("Cache Manager Created : " + cm);
     hogMemory();
@@ -58,8 +57,9 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
   public void testCritcalObjectCount() throws Exception {
     cacheConfig.criticalObjectCount = 500;
     CacheManager cm = new CacheManager(new CritialObjectCountCacheValidator(cacheConfig
-        .getObjectCountCriticalThreshold(), cacheConfig.getPercentageToEvict()), cacheConfig, thrdGrp,
-                                       new NullStatisticsAgentSubSystem(), tcMemManager);
+                                                                                .getObjectCountCriticalThreshold(),
+                                                                            cacheConfig.getPercentageToEvict()),
+                                       cacheConfig, thrdGrp, tcMemManager);
     cm.start();
     log("Cache Manager Created : " + cm);
     hogMemory();
@@ -117,6 +117,7 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
 
   }
 
+  @Override
   public void evictCache(CacheStats stat) {
     synchronized (v) {
       int toEvict = stat.getObjectCountToEvict(v.size());
@@ -161,6 +162,7 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
       this.evictionPercentage = evictionPercentage;
     }
 
+    @Override
     public void evictCache(CacheStats stat) {
       synchronized (v) {
         int toEvict = stat.getObjectCountToEvict(v.size());
@@ -178,34 +180,42 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
 
     int criticalObjectCount = -1;
 
+    @Override
     public int getUsedCriticalThreshold() {
       return usedCritialT;
     }
 
+    @Override
     public int getUsedThreshold() {
       return usedT;
     }
 
+    @Override
     public int getLeastCount() {
       return lc;
     }
 
+    @Override
     public int getPercentageToEvict() {
       return percentage2Evict;
     }
 
+    @Override
     public long getSleepInterval() {
       return sleepInterval;
     }
 
+    @Override
     public boolean isOnlyOldGenMonitored() {
       return true;
     }
 
+    @Override
     public boolean isLoggingEnabled() {
       return false;
     }
 
+    @Override
     public int getObjectCountCriticalThreshold() {
       return criticalObjectCount;
     }

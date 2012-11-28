@@ -11,8 +11,6 @@ import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.JVMMemoryManager;
 import com.tc.runtime.TCRuntime;
-import com.tc.statistics.StatisticData;
-import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.util.ProductInfo;
 import com.tc.util.StringUtil;
 import com.tc.util.runtime.LockInfoByThreadID;
@@ -48,9 +46,6 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
   private final String                         buildID;
   private final String                         rawConfigText;
   private final JVMMemoryManager               manager;
-  private StatisticRetrievalAction             cpuUsageSRA;
-  private StatisticRetrievalAction             cpuLoadSRA;
-  private String[]                             cpuNames;
   private final TCClient                       client;
   private final LockInfoDumpHandler            lockInfoDumpHandler;
 
@@ -88,26 +83,32 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     this.nextSequenceNumber = 1;
   }
 
+  @Override
   public String getVersion() {
     return productInfo.toShortString();
   }
 
+  @Override
   public String getMavenArtifactsVersion() {
     return productInfo.mavenArtifactsVersion();
   }
 
+  @Override
   public String getBuildID() {
     return buildID;
   }
 
+  @Override
   public boolean isPatched() {
     return productInfo.isPatched();
   }
 
+  @Override
   public String getPatchLevel() {
     return productInfo.patchLevel();
   }
 
+  @Override
   public String getPatchVersion() {
     if (productInfo.isPatched()) {
       return productInfo.toLongPatchString();
@@ -116,6 +117,7 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     }
   }
 
+  @Override
   public String getPatchBuildID() {
     if (productInfo.isPatched()) {
       return productInfo.patchBuildID();
@@ -124,14 +126,17 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     }
   }
 
+  @Override
   public String getCopyright() {
     return productInfo.copyright();
   }
 
+  @Override
   public String getEnvironment() {
     return format(System.getProperties());
   }
 
+  @Override
   public String getTCProperties() {
     Properties props = TCPropertiesImpl.getProperties().addAllPropertiesTo(new Properties());
     String keyPrefix = /* TCPropertiesImpl.SYSTEM_PROP_PREFIX */null;
@@ -182,6 +187,7 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     return sb.toString();
   }
 
+  @Override
   public String[] getProcessArguments() {
     String[] args = client.processArguments();
     List<String> inputArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
@@ -195,10 +201,12 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     }
   }
 
+  @Override
   public String getConfig() {
     return rawConfigText;
   }
 
+  @Override
   public String takeThreadDump(long requestMillis) {
     LockInfoByThreadID lockInfo = new LockInfoByThreadIDImpl();
     this.lockInfoDumpHandler.addAllLocksTo(lockInfo);
@@ -207,88 +215,54 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     return text;
   }
 
+  @Override
   public byte[] takeCompressedThreadDump(long requestMillis) {
     LockInfoByThreadID lockInfo = new LockInfoByThreadIDImpl();
     this.lockInfoDumpHandler.addAllLocksTo(lockInfo);
     return ThreadDumpUtil.getCompressedThreadDump(lockInfo, this.lockInfoDumpHandler.getThreadIDMap());
   }
 
-  public String[] getCpuStatNames() {
-    if (cpuNames != null) return cpuNames;
-    if (cpuUsageSRA == null) return cpuNames = new String[0];
-
-    List list = new ArrayList();
-    StatisticData[] statsData = cpuUsageSRA.retrieveStatisticData();
-    if (statsData != null) {
-      for (StatisticData element : statsData) {
-        list.add(element.getElement());
-      }
-    }
-    return cpuNames = (String[]) list.toArray(new String[0]);
-  }
-
+  @Override
   public Map getStatistics() {
     HashMap map = new HashMap();
 
     map.put(MEMORY_USED, Long.valueOf(getUsedMemory()));
     map.put(MEMORY_MAX, Long.valueOf(getMaxMemory()));
 
-    if (cpuUsageSRA != null) {
-      StatisticData[] statsData = getCpuUsage();
-      if (statsData != null) {
-        map.put(CPU_USAGE, statsData);
-      }
-    }
-
     return map;
   }
 
+  @Override
   public long getUsedMemory() {
     return manager.getMemoryUsage().getUsedMemory();
   }
 
+  @Override
   public long getMaxMemory() {
     return manager.getMemoryUsage().getMaxMemory();
   }
 
-  private long             lastCpuUsageUpdateTime   = System.currentTimeMillis();
-  private StatisticData[]  lastCpuUsageUpdate;
-  private long             lastCpuLoadUpdateTime    = System.currentTimeMillis();
-  private StatisticData    lastCpuLoadUpdate;
-  private static final int CPU_UPDATE_WINDOW_MILLIS = 1000;
-
-  public StatisticData[] getCpuUsage() {
-    if (cpuUsageSRA == null) { return null; }
-    if (System.currentTimeMillis() - lastCpuUsageUpdateTime < CPU_UPDATE_WINDOW_MILLIS) { return lastCpuUsageUpdate; }
-    lastCpuUsageUpdateTime = System.currentTimeMillis();
-    return lastCpuUsageUpdate = cpuUsageSRA.retrieveStatisticData();
-  }
-
-  public StatisticData getCpuLoad() {
-    if (cpuLoadSRA == null) { return null; }
-    if (System.currentTimeMillis() - lastCpuLoadUpdateTime < CPU_UPDATE_WINDOW_MILLIS) { return lastCpuLoadUpdate; }
-    lastCpuLoadUpdateTime = System.currentTimeMillis();
-    StatisticData[] sd = cpuLoadSRA.retrieveStatisticData();
-    if (sd.length == 1) { return lastCpuLoadUpdate = sd[0]; }
-    return null;
-  }
-
+  @Override
   public void reset() {
     /**/
   }
 
+  @Override
   public void startBeanShell(int port) {
     this.client.startBeanShell(port);
   }
 
+  @Override
   public void gc() {
     ManagementFactory.getMemoryMXBean().gc();
   }
 
+  @Override
   public boolean isVerboseGC() {
     return ManagementFactory.getMemoryMXBean().isVerbose();
   }
 
+  @Override
   public void setVerboseGC(boolean verboseGC) {
     boolean oldValue = isVerboseGC();
     ManagementFactory.getMemoryMXBean().setVerbose(verboseGC);

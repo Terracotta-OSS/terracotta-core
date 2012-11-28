@@ -143,20 +143,6 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
       -->
       <index>/opt/terracotta/server-index</index>
 
-      <!-- In which directory should the server store statistics data that is
-         being buffered? Again, this value undergoes parameter substitution
-         before being used; thus, a value like 'statistics-data-%h' would
-         expand to 'statistics-data' if running on host 'artichoke'.
-        
-         If this is a relative path, then it is interpreted relative to the
-         current working directory of the server (that is, the directory you
-         were in when you started server). It is thus recommended that you
-         specify an absolute path here.
-        
-         Default: 'statistics' This places the 'statistics' directory in the
-         directory you were in when you invoked 'start-tc-server'. -->
-      <statistics>/opt/terracotta/server-statistics</statistics>
-
       <!-- On what port should the DSO server listen for connections from DSO
          clients? This can be any port you like, but note that
          ports below 1024 typically require 'root' privileges to use
@@ -217,9 +203,6 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
         
          The format of the properties file is:
          username: password [,rolename ...]
-        
-         The supported roles and protected sections are: 
-         - statistics: for the statistics gatherer at /statistics-gatherer
         
          Passwords may be clear text, obfuscated or checksummed.
          

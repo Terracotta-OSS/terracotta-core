@@ -24,11 +24,9 @@
     <module>build-parent</module>
     <module>build-data</module>
     <module>common</module>
-    <module>dso-statistics-api</module>
     <module>dso-l1-api</module>
     <module>dso-common</module>
     <module>dso-l2-common</module>
-    <module>dso-statistics</module>
     <module>dso-l1</module>
     <module>dso-l2</module>
     <module>deploy</module>
@@ -36,7 +34,6 @@
     
     <module>legacy-test-tree</module>
     <module>dso-system-tests</module>
-    <module>dso-statistics-tests</module>
     
     <module>terracotta-parent</module>
     <module>terracotta</module>

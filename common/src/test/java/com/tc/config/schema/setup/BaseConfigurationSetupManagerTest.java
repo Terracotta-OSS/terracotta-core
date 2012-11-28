@@ -264,7 +264,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   }
 
-  public void testServerDiretctoryDefaults() throws IOException, ConfigurationSetupException {
+  public void testServerDirectoryDefaults() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
                     + " </server>" + "</servers>" + "</tc:tc-config>";
@@ -284,13 +284,11 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
         .getAbsolutePath(), server.getLogs());
     Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator
                                  + "data-backup").getAbsolutePath(), server.getDataBackup());
-    Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator
-                                 + "statistics").getAbsolutePath(), server.getStatistics());
     Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator + "data"
                                  + File.separator + "index").getAbsolutePath(), server.getIndex());
   }
 
-  public void testServerDiretctoryPaths() throws IOException, ConfigurationSetupException {
+  public void testServerDirectoryPaths() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
                     + "<data>abc/xyz/123</data>" + "<logs>xyz/abc/451</logs>"
@@ -317,20 +315,16 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
       Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator + "qrt"
                                    + File.separator + "opt" + File.separator + "pqr").getAbsolutePath(),
                           server.getDataBackup());
-      Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator + "opq"
-                                   + File.separator + "pqr" + File.separator + "123" + File.separator + "or")
-          .getAbsolutePath(), server.getStatistics());
       Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator + "rta"
                                    + File.separator + "try" + File.separator + "456").getAbsolutePath(),
                           server.getIndex());
     } else {
       Assert.assertEquals("/qrt/opt/pqr", server.getDataBackup());
-      Assert.assertEquals("/opq/pqr/123/or", server.getStatistics());
       Assert.assertEquals("/rta/try/456", server.getIndex());
     }
   }
 
-  public void testServerSubsitutedDirtctoryPaths() throws IOException, ConfigurationSetupException {
+  public void testServerSubsitutedDirectoryPaths() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
                     + "<data>%h</data>" + "<logs>%i</logs>" + "<data-backup>%H</data-backup>"
@@ -350,8 +344,6 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator
                                  + InetAddress.getLocalHost().getHostAddress()).getAbsolutePath(), server.getLogs());
     Assert.assertEquals(System.getProperty("user.home"), server.getDataBackup());
-    Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator
-                                 + System.getProperty("user.name")).getAbsolutePath(), server.getStatistics());
   }
 
   public void testDefaultDso() throws IOException, ConfigurationSetupException {

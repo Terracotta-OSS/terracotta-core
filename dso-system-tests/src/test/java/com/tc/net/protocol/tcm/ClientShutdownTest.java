@@ -36,7 +36,6 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.TCServer;
 import com.tc.server.TCServerImpl;
-import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
@@ -197,7 +196,6 @@ public class ClientShutdownTest extends BaseDSOTestCase {
                                                                  new MockClassProvider(),
                                                                  preparedComponentsFromL2Connection,
                                                                  NullManager.getInstance(),
-                                                                 new StatisticsAgentSubSystemImpl(),
                                                                  new DsoClusterImpl(mock),
                                                                  new NullRuntimeLogger(),
                                                                  new NullAbortableOperationManager(),

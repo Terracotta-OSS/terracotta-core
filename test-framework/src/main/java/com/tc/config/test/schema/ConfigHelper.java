@@ -2,6 +2,7 @@ package com.tc.config.test.schema;
 
 import org.apache.commons.io.IOUtils;
 
+import com.tc.test.config.model.GroupConfig;
 import com.tc.test.config.model.L2Config;
 import com.tc.test.config.model.TestConfig;
 import com.tc.test.setup.GroupsData;
@@ -24,7 +25,7 @@ public class ConfigHelper {
   private final int           numOfGroups;
   private final int           numOfServersPerGroup;
   private final File          tcConfigFile;
-  private final File          temmDir;
+  private final File          tempDir;
   private final GroupsData[]  groupData;
 
   public ConfigHelper(final PortChooser portChooser, final TestConfig testConfig, final File tcConfigFile, File tempDir) {
@@ -34,7 +35,7 @@ public class ConfigHelper {
     numOfServersPerGroup = testConfig.getGroupConfig().getMemberCount();
     groupData = new GroupsData[numOfGroups];
     this.tcConfigFile = tcConfigFile;
-    this.temmDir = tempDir;
+    this.tempDir = tempDir;
     setServerPorts();
   }
 
@@ -48,7 +49,7 @@ public class ConfigHelper {
     numOfGroups = testConfig.getNumOfGroups();
     numOfServersPerGroup = testConfig.getGroupConfig().getMemberCount();
     this.tcConfigFile = tcConfigFile;
-    this.temmDir = tempDir;
+    this.tempDir = tempDir;
     portChooser = new PortChooser();
   }
 
@@ -117,6 +118,12 @@ public class ConfigHelper {
     l2sConfig.setL2s(l2s);
     l2sConfig.setGroups(groups);
 
+    HaConfigBuilder ha = new HaConfigBuilder(3);
+    GroupConfig gc = testConfig.getGroupConfig();
+    ha.setMode(HaConfigBuilder.HA_MODE_NETWORKED_ACTIVE_PASSIVE);
+    ha.setElectionTime(String.valueOf(gc.getElectionTime()));
+    l2sConfig.setHa(ha);
+
     return l2sConfig;
   }
 
@@ -136,6 +143,7 @@ public class ConfigHelper {
       // set logs
       l2ConfigBuilders[serverIndex].setLogs(getLogDirectoryPath(groupIndex, serverIndex));
       l2ConfigBuilders[serverIndex].setData(getDataDirectoryPath(groupIndex, serverIndex));
+      l2ConfigBuilders[serverIndex].setServerDbBackup(getBackupDirectoryPath(groupIndex, serverIndex));
       l2ConfigBuilders[serverIndex].setStatistics(getStatisticsDirectoryPath(groupIndex, serverIndex));
 
       // set test level things
@@ -168,6 +176,7 @@ public class ConfigHelper {
       String[] serverNames = new String[numOfServersPerGroup];
       String[] dataDirectoryPath = new String[numOfServersPerGroup];
       String[] logDirectoryPath = new String[numOfServersPerGroup];
+      String[] backupDirectoryPath = new String[numOfServersPerGroup];
       int[] proxyL2GroupPorts = null;
       int[] proxyDsoPorts = null;
       for (int serverIndex = 0; serverIndex < numOfServersPerGroup; serverIndex++) {
@@ -177,8 +186,9 @@ public class ConfigHelper {
         l2GroupPorts[serverIndex] = portNum + 2;
         String serverName = SERVER_NAME + (groupIndex * numOfServersPerGroup + serverIndex);
         serverNames[serverIndex] = serverName;
-        dataDirectoryPath[serverIndex] = new File(temmDir, serverName + File.separator + "data").getAbsolutePath();
-        logDirectoryPath[serverIndex] = new File(temmDir, serverName).getAbsolutePath();
+        backupDirectoryPath[serverIndex] = new File(tempDir, serverName + File.separator + "backup").getAbsolutePath();
+        dataDirectoryPath[serverIndex] = new File(tempDir, serverName + File.separator + "data").getAbsolutePath();
+        logDirectoryPath[serverIndex] = new File(tempDir, serverName).getAbsolutePath();
       }
       if (isProxyDsoPort()) {
         proxyDsoPorts = new int[numOfServersPerGroup];
@@ -194,7 +204,7 @@ public class ConfigHelper {
       }
 
       groupData[groupIndex] = new GroupsData(groupName, dsoPorts, jmxPorts, l2GroupPorts, serverNames, proxyDsoPorts,
-                                             proxyL2GroupPorts, dataDirectoryPath, logDirectoryPath);
+                                             proxyL2GroupPorts, dataDirectoryPath, logDirectoryPath, backupDirectoryPath);
     }
   }
 
@@ -258,8 +268,12 @@ public class ConfigHelper {
     return groupData[groupIndex].getLogDirectoryPath(serverIndex);
   }
 
+  protected String getBackupDirectoryPath(final int groupIndex, final int serverIndex) {
+    return groupData[groupIndex].getBackupDirectoryPath(serverIndex);
+  }
+
   private String getStatisticsDirectoryPath(int groupIndex, int serverIndex) {
-    return new File(temmDir, getServerName(groupIndex, serverIndex) + File.separator + "statistics").getAbsolutePath();
+    return new File(tempDir, getServerName(groupIndex, serverIndex) + File.separator + "statistics").getAbsolutePath();
   }
 
 }

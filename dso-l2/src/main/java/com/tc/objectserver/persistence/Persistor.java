@@ -7,6 +7,7 @@ import org.terracotta.corestorage.monitoring.MonitoredResource;
 import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.util.sequence.MutableSequence;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -45,6 +46,10 @@ public class Persistor {
     persistenceTransactionProvider = new PersistenceTransactionProvider(storageManager);
     persistentObjectFactory = new PersistentObjectFactory(storageManager, storageManagerFactory);
     persistentMapStore = new PersistentMapStoreImpl(storageManager);
+  }
+
+  protected StorageManager getStorageManager() {
+    return storageManager;
   }
 
   private Map<String, KeyValueStorageConfig<?, ?>> getDataStorageConfigs(ObjectIDSetMaintainer objectIDSetMaintainer, StorageManagerFactory storageManagerFactory) {
@@ -131,5 +136,9 @@ public class Persistor {
     if (!started) {
       throw new IllegalStateException("Persistor is not yet started.");
     }
+  }
+
+  public void backup(File path) throws IOException {
+    throw new UnsupportedOperationException("Can not backup a non-persistent L2.");
   }
 }

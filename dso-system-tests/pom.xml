@@ -89,13 +89,6 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
-      <artifactId>dso-statistics</artifactId>
-      <version>${project.version}</version>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
       <artifactId>dso-l1</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>

@@ -762,6 +762,11 @@
     
     <profile>
       <id>devmode</id>
+      <activation>
+        <file>
+          <exists>${user.home}/.devmode</exists>
+        </file>
+      </activation>
       <build>
         <plugins>
           <plugin>
@@ -777,6 +782,7 @@
                 </goals>
                 <configuration>
                   <source>
+                    println "================== devmode ===================="
                     def classesDir = new File(project.build.outputDirectory)
                     classesDir.mkdirs()
                     def targetFile = new File(classesDir, "devmode-classdir.txt")

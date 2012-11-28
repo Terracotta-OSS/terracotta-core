@@ -66,9 +66,6 @@ import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.search.SearchQueryResults;
-import com.tc.statistics.StatisticRetrievalAction;
-import com.tc.statistics.StatisticsAgentSubSystem;
-import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.text.ConsoleParagraphFormatter;
 import com.tc.text.StringFormatter;
 import com.tc.util.Assert;
@@ -97,12 +94,10 @@ public class ManagerImpl implements Manager {
   private final ClassProvider                         classProvider;
   private final boolean                               startClient;
   private final Thread                                shutdownAction;
-  private final StatisticsAgentSubSystem              statisticsAgentSubSystem;
   private final DsoClusterInternal                    dsoCluster;
   private final LockIdFactory                         lockIdFactory;
   private final ClientMode                            clientMode;
   private final TCSecurityManager                     securityManager;
-
   private ClientObjectManager                         objectManager;
   private ClientShutdownManager                       shutdownManager;
   private ClientTransactionManager                    txManager;
@@ -154,7 +149,6 @@ public class ManagerImpl implements Manager {
     this.connectionComponents = connectionComponents;
     this.rejoinManager = new RejoinManagerImpl(isExpressRejoinMode);
     this.dsoCluster = new DsoClusterImpl(rejoinManager);
-    this.statisticsAgentSubSystem = new StatisticsAgentSubSystemImpl();
     if (shutdownActionRequired) {
       this.shutdownAction = new Thread(new ShutdownAction(), "L1 VM Shutdown Hook");
       // Register a shutdown hook for the DSO client
@@ -259,7 +253,6 @@ public class ManagerImpl implements Manager {
         ManagerImpl.this.dso = clientFactory.createClient(ManagerImpl.this.config, group,
                                                           ManagerImpl.this.classProvider,
                                                           ManagerImpl.this.connectionComponents, ManagerImpl.this,
-                                                          ManagerImpl.this.statisticsAgentSubSystem,
                                                           ManagerImpl.this.dsoCluster, ManagerImpl.this.runtimeLogger,
                                                           ManagerImpl.this.clientMode,
                                                           ManagerImpl.this.securityManager,
@@ -669,20 +662,6 @@ public class ManagerImpl implements Manager {
   @Override
   public MBeanServer getMBeanServer() {
     return this.dso.getL1Management().getMBeanServer();
-  }
-
-  @Override
-  public StatisticRetrievalAction getStatisticRetrievalActionInstance(final String name) {
-    if (this.statisticsAgentSubSystem.waitUntilSetupComplete()) {
-      return this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry().getActionInstance(name);
-    } else {
-      return null;
-    }
-  }
-
-  @Override
-  public void registerStatisticRetrievalAction(StatisticRetrievalAction sra) {
-    this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry().registerActionInstance(sra);
   }
 
   private static class FakeManageableObject implements Manageable {

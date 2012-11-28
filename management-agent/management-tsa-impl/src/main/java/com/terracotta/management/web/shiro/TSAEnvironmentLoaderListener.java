@@ -30,11 +30,13 @@ import com.terracotta.management.security.impl.NullRequestTicketMonitor;
 import com.terracotta.management.security.impl.NullUserService;
 import com.terracotta.management.security.impl.RelayingJerseyIdentityAssertionServiceClient;
 import com.terracotta.management.security.impl.TSAIdentityAsserter;
+import com.terracotta.management.service.ConfigurationService;
 import com.terracotta.management.service.DiagnosticsService;
 import com.terracotta.management.service.MonitoringService;
 import com.terracotta.management.service.TopologyService;
 import com.terracotta.management.service.TsaManagementClientService;
 import com.terracotta.management.service.impl.ClearTextTsaManagementClientServiceImpl;
+import com.terracotta.management.service.impl.ConfigurationServiceImpl;
 import com.terracotta.management.service.impl.DiagnosticsServiceImpl;
 import com.terracotta.management.service.impl.MonitoringServiceImpl;
 import com.terracotta.management.service.impl.TopologyServiceImpl;
@@ -64,6 +66,7 @@ public class TSAEnvironmentLoaderListener extends EnvironmentLoaderListener {
       serviceLocator.loadService(TopologyService.class, new TopologyServiceImpl(tsaManagementClientService));
       serviceLocator.loadService(MonitoringService.class, new MonitoringServiceImpl(tsaManagementClientService));
       serviceLocator.loadService(DiagnosticsService.class, new DiagnosticsServiceImpl(tsaManagementClientService));
+      serviceLocator.loadService(ConfigurationService.class, new ConfigurationServiceImpl(tsaManagementClientService));
 
       // The following services are for forwarding REST calls to L1s, using security or not
       boolean sslEnabled = TSAConfig.isSslEnabled();

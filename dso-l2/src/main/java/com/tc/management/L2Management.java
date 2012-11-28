@@ -26,10 +26,6 @@ import com.tc.management.beans.LockStatisticsMonitorMBean;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ObjectManagementMonitor;
-import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.statistics.StatisticsAgentSubSystem;
-import com.tc.statistics.beans.StatisticsMBeanNames;
-import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 import com.tc.util.concurrent.TCExceptionResultException;
 import com.tc.util.concurrent.TCFuture;
 
@@ -63,8 +59,6 @@ public class L2Management extends TerracottaManagement {
   private final TCDumper                      tcDumper;
   private final ObjectManagementMonitor       objectManagementBean;
   private final LockStatisticsMonitorMBean    lockStatistics;
-  private final StatisticsAgentSubSystem      statisticsAgentSubSystem;
-  private final StatisticsGatewayMBeanImpl    statisticsGateway;
   protected final int                         jmxPort;
   protected final InetAddress                 bindAddress;
   private final Sink                          remoteEventsSink;
@@ -77,15 +71,12 @@ public class L2Management extends TerracottaManagement {
   }
 
   public L2Management(TCServerInfoMBean tcServerInfo, LockStatisticsMonitorMBean lockStatistics,
-                      StatisticsAgentSubSystem statisticsAgentSubSystem, StatisticsGatewayMBeanImpl statisticsGateway,
                       L2ConfigurationSetupManager configurationSetupManager, TCDumper tcDumper, InetAddress bindAddr,
                       int port, Sink remoteEventsSink) throws MBeanRegistrationException, NotCompliantMBeanException,
       InstanceAlreadyExistsException {
     this.tcServerInfo = tcServerInfo;
     this.lockStatistics = lockStatistics;
     this.configurationSetupManager = configurationSetupManager;
-    this.statisticsAgentSubSystem = statisticsAgentSubSystem;
-    this.statisticsGateway = statisticsGateway;
     this.tcDumper = tcDumper;
     this.bindAddress = bindAddr;
     this.jmxPort = port;
@@ -101,7 +92,6 @@ public class L2Management extends TerracottaManagement {
     }
 
     registerMBeans();
-    statisticsGateway.addStatisticsAgent(ChannelID.NULL_ID, mBeanServer);
   }
 
   /**
@@ -173,10 +163,6 @@ public class L2Management extends TerracottaManagement {
     mBeanServer.registerMBean(JMXLogging.getJMXAppender().getMBean(), L2MBeanNames.LOGGER);
     mBeanServer.registerMBean(objectManagementBean, L2MBeanNames.OBJECT_MANAGEMENT);
     mBeanServer.registerMBean(lockStatistics, L2MBeanNames.LOCK_STATISTICS);
-    if (statisticsAgentSubSystem.isActive()) {
-      statisticsAgentSubSystem.registerMBeans(mBeanServer);
-    }
-    mBeanServer.registerMBean(statisticsGateway, StatisticsMBeanNames.STATISTICS_GATEWAY);
     mBeanServer.registerMBean(new L2Dumper(tcDumper, mBeanServer), L2MBeanNames.DUMPER);
   }
 
@@ -185,10 +171,6 @@ public class L2Management extends TerracottaManagement {
     mBeanServer.unregisterMBean(L2MBeanNames.LOGGER);
     mBeanServer.unregisterMBean(L2MBeanNames.OBJECT_MANAGEMENT);
     mBeanServer.unregisterMBean(L2MBeanNames.LOCK_STATISTICS);
-    if (statisticsAgentSubSystem.isActive()) {
-      statisticsAgentSubSystem.unregisterMBeans(mBeanServer);
-    }
-    mBeanServer.unregisterMBean(StatisticsMBeanNames.STATISTICS_GATEWAY);
     mBeanServer.unregisterMBean(L2MBeanNames.DUMPER);
   }
 

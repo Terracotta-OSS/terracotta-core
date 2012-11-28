@@ -26,7 +26,6 @@ import com.tc.platform.PlatformService;
 import com.tc.properties.NullTCProperties;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
-import com.tc.statistics.StatisticRetrievalAction;
 import com.terracottatech.search.NVPair;
 
 import java.lang.reflect.Field;
@@ -225,11 +224,6 @@ public class NullManager implements Manager {
   }
 
   @Override
-  public StatisticRetrievalAction getStatisticRetrievalActionInstance(String name) {
-    return null;
-  }
-
-  @Override
   public Object getChangeApplicator(Class clazz) {
     return null;
   }
@@ -377,11 +371,6 @@ public class NullManager implements Manager {
   @Override
   public void registerBeforeShutdownHook(Runnable beforeShutdownHook) {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void registerStatisticRetrievalAction(StatisticRetrievalAction sra) {
-    //
   }
 
   @Override

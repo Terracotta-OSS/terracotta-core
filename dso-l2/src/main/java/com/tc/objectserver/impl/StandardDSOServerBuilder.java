@@ -81,10 +81,6 @@ import com.tc.operatorevent.TerracottaOperatorEventLogger;
 import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.server.ServerConnectionValidator;
-import com.tc.statistics.StatisticsAgentSubSystem;
-import com.tc.statistics.StatisticsAgentSubSystemImpl;
-import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
-import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.util.BlockingStartupLock;
 import com.tc.util.NonBlockingStartupLock;
 import com.tc.util.StartupLock;
@@ -115,6 +111,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     this.thisGroupID = this.haConfig.getThisGroupID();
   }
 
+  @Override
   public GarbageCollector createGarbageCollector(final List<PostInit> toInit,
                                                  final ObjectManagerConfig objectManagerConfig,
                                                  final ObjectManager objectMgr, final ClientStateManager stateManager,
@@ -123,7 +120,6 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                                  final ObjectManager objectManager,
                                                  final ClientStateManager clientStateManger,
                                                  final GCStatsEventPublisher gcEventListener,
-                                                 final StatisticsAgentSubSystem statsAgentSubSystem,
                                                  final DGCSequenceProvider dgcSequenceProvider,
                                                  final ServerTransactionManager serverTransactionManager,
                                                  final GarbageCollectionManager garbageCollectionManager) {
@@ -136,6 +132,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     return gc;
   }
 
+  @Override
   public GroupManager createGroupCommManager(final boolean networkedHA,
                                              final L2ConfigurationSetupManager configManager,
                                              final StageManager stageManager, final ServerID serverNodeID,
@@ -149,16 +146,19 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     }
   }
 
+  @Override
   public MetaDataManager createMetaDataManager(Sink sink) {
     return new NullMetaDataManager();
   }
 
+  @Override
   @SuppressWarnings("unused")
   public IndexHACoordinator createIndexHACoordinator(L2ConfigurationSetupManager configSetupManager, Sink sink)
       throws IOException {
     return new NullIndexHACoordinator();
   }
 
+  @Override
   public L2IndexStateManager createL2IndexStateManager(IndexHACoordinator indexHACoordinator,
                                                        ServerTransactionManager transactionManager,
                                                        SequenceGenerator indexSequenceGenerator,
@@ -166,21 +166,25 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     return new NullL2IndexStateManager();
   }
 
+  @Override
   public L2ObjectStateManager createL2ObjectStateManager(ObjectManager objectManager,
                                                          ServerTransactionManager transactionManager) {
     return new L2ObjectStateManagerImpl(objectManager, transactionManager);
   }
 
+  @Override
   public L2PassiveSyncStateManager createL2PassiveSyncStateManager(L2IndexStateManager l2IndexStateManager,
                                                                    L2ObjectStateManager l2ObjectStateManager,
                                                                    StateSyncManager stateSyncManager) {
     return new L2PassiveSyncStateManagerImpl(l2IndexStateManager, l2ObjectStateManager, stateSyncManager);
   }
 
+  @Override
   public SearchRequestManager createSearchRequestManager(DSOChannelManager channelManager, Sink managedObjectRequestSink) {
     return new NullSearchRequestManager();
   }
 
+  @Override
   public ObjectRequestManager createObjectRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,
                                                          ClientStateManager clientStateMgr,
                                                          ServerTransactionManager transactionMgr,
@@ -194,6 +198,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     return new ObjectRequestManagerRestartImpl(objectMgr, transactionMgr, orm);
   }
 
+  @Override
   public ServerMapRequestManager createServerMapRequestManager(final ObjectManager objectMgr,
                                                                final DSOChannelManager channelManager,
                                                                final Sink respondToServerTCMapSink,
@@ -204,6 +209,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                            managedObjectRequestSink, clientStateManager, channelStats);
   }
 
+  @Override
   public ServerConfigurationContext createServerConfigurationContext(StageManager stageManager,
                                                                      ObjectManager objMgr,
                                                                      ObjectRequestManager objRequestMgr,
@@ -237,6 +243,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                               indexManager, searchRequestManager, deleteObjectManager);
   }
 
+  @Override
   public TransactionFilter getTransactionFilter(final List<PostInit> toInit, final StageManager stageManager,
                                                 final int maxStageSize) {
     final PassThruTransactionFilter txnFilter = new PassThruTransactionFilter();
@@ -244,26 +251,27 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     return txnFilter;
   }
 
-  public void populateAdditionalStatisticsRetrivalRegistry(final StatisticsRetrievalRegistry registry) {
-    // Add any additional Statistics here
-  }
-
+  @Override
   public GroupManager getClusterGroupCommManager() {
     throw new AssertionError("Not supported");
   }
 
+  @Override
   public GCStatsEventPublisher getLocalDGCStatsEventPublisher() {
     throw new AssertionError("Not supported");
   }
 
+  @Override
   public void dump() {
     TCLogging.getDumpLogger().info(ThreadDumpUtil.getThreadDump());
   }
 
+  @Override
   public void initializeContext(final ConfigurationContext context) {
     // Nothing to initialize here
   }
 
+  @Override
   public L2Coordinator createL2HACoordinator(final TCLogger consoleLogger, final DistributedObjectServer server,
                                              final StageManager stageManager, final GroupManager groupCommsManager,
                                              final PersistentMapStore persistentMapStore,
@@ -288,19 +296,19 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                serverTransactionFactory, dgcSequenceProvider, indexSequenceGenerator, objectIDSequence);
   }
 
+  @Override
   public L2Management createL2Management(final TCServerInfoMBean tcServerInfoMBean,
                                          final LockStatisticsMonitor lockStatisticsMBean,
-                                         final StatisticsAgentSubSystemImpl statisticsAgentSubSystem,
-                                         final StatisticsGatewayMBeanImpl statisticsGateway,
                                          final L2ConfigurationSetupManager configSetupManager,
                                          final DistributedObjectServer distributedObjectServer, final InetAddress bind,
                                          final int jmxPort, final Sink remoteEventsSink,
                                          final ServerConnectionValidator serverConnectionValidator,
                                          final ServerDBBackupMBean serverDBBackupMBean) throws Exception {
-    return new L2Management(tcServerInfoMBean, lockStatisticsMBean, statisticsAgentSubSystem, statisticsGateway,
-                            configSetupManager, distributedObjectServer, bind, jmxPort, remoteEventsSink);
+    return new L2Management(tcServerInfoMBean, lockStatisticsMBean, configSetupManager, distributedObjectServer, bind,
+                            jmxPort, remoteEventsSink);
   }
 
+  @Override
   public void registerForOperatorEvents(final L2Management l2Management,
                                         final TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider,
                                         final MBeanServer l2MbeanServer) {
@@ -309,10 +317,12 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     tcEventLogger.registerEventCallback(new TerracottaOperatorEventCallbackLogger());
   }
 
+  @Override
   public LongGCLogger createLongGCLogger(long gcTimeOut) {
     return new LongGCLogger(gcTimeOut);
   }
 
+  @Override
   public StartupLock createStartupLock(final TCFile location, final boolean retries) {
     if (this.haConfig.isNetworkedActivePassive()) {
       return new NonBlockingStartupLock(location, retries);
@@ -325,6 +335,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
 
   @Override
   public Persistor createPersistor(final boolean persistent, final File l2DataPath) throws IOException {
+    if (persistent) throw new UnsupportedOperationException("Restartability is not supported in open source servers.");
     return new Persistor(HeapStorageManagerFactory.INSTANCE);
   }
 }

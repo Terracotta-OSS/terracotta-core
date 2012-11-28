@@ -14,9 +14,6 @@ public class HaConfigBuilder extends BaseConfigBuilder {
   private static final String[] ALL_PROPERTIES                         = concat(new Object[] { MODE,
       NETWORKED_ACTIVE_PASSIVE                                        });
 
-  private String                haMode;
-  private String                electionTime;
-
   public HaConfigBuilder() {
     super(7, ALL_PROPERTIES);
   }
@@ -27,20 +24,10 @@ public class HaConfigBuilder extends BaseConfigBuilder {
 
   public void setMode(String data) {
     setProperty("mode", data);
-    this.haMode = data;
-  }
-
-  public String getMode() {
-    return this.haMode;
   }
 
   public void setElectionTime(String data) {
     setProperty("election-time", data);
-    this.electionTime = data;
-  }
-
-  public String getElectionTime() {
-    return this.electionTime;
   }
 
   @Override
@@ -51,7 +38,7 @@ public class HaConfigBuilder extends BaseConfigBuilder {
 
     out += element(MODE);
 
-    if (this.haMode.equals(HA_MODE_NETWORKED_ACTIVE_PASSIVE)) {
+    if (getProperty(MODE).equals(HA_MODE_NETWORKED_ACTIVE_PASSIVE)) {
       String networkedActivePassiveString = openElement("networked-active-passive", NETWORKED_ACTIVE_PASSIVE);
       if (!networkedActivePassiveString.equals("")) {
         out += networkedActivePassiveString + element(NETWORKED_ACTIVE_PASSIVE_ELECTION_TIME)

@@ -24,7 +24,6 @@ import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.platform.PlatformService;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
-import com.tc.statistics.StatisticRetrievalAction;
 import com.terracottatech.search.NVPair;
 
 import java.lang.reflect.Field;
@@ -336,10 +335,6 @@ public interface Manager extends TerracottaLocking {
    * @return the MBean server for this client
    */
   public MBeanServer getMBeanServer();
-
-  public StatisticRetrievalAction getStatisticRetrievalActionInstance(String name);
-
-  public void registerStatisticRetrievalAction(StatisticRetrievalAction sra);
 
   /**
    * Used by instrumented code to perform a clustered <code>monitorenter</code>.

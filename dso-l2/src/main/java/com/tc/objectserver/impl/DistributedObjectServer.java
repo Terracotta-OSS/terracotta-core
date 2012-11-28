@@ -146,6 +146,7 @@ import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManager;
 import com.tc.objectserver.DSOApplicationEvents;
+import com.tc.objectserver.api.BackupManager;
 import com.tc.objectserver.api.GarbageCollectionManager;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
@@ -157,19 +158,18 @@ import com.tc.objectserver.api.ServerMapRequestManager;
 import com.tc.objectserver.api.TransactionStore;
 import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManager;
 import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManagerImpl;
-import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.objectserver.core.api.DSOGlobalServerStatsImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.impl.GCControllerImpl;
-import com.tc.objectserver.dgc.impl.GCStatisticsAgentSubSystemEventListener;
 import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
 import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManagerImpl;
 import com.tc.objectserver.handler.ApplyTransactionChangeHandler;
+import com.tc.objectserver.handler.BackupHandler;
 import com.tc.objectserver.handler.BroadcastChangeHandler;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handler.ClientChannelOperatorEventlistener;
@@ -224,11 +224,9 @@ import com.tc.objectserver.search.SearchQueryRequestMessageHandler;
 import com.tc.objectserver.search.SearchRequestManager;
 import com.tc.objectserver.storage.api.OffheapStats;
 import com.tc.objectserver.tx.CommitTransactionMessageRecycler;
-import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.ServerTransactionManagerConfig;
 import com.tc.objectserver.tx.ServerTransactionManagerImpl;
 import com.tc.objectserver.tx.ServerTransactionSequencerImpl;
-import com.tc.objectserver.tx.ServerTransactionSequencerStats;
 import com.tc.objectserver.tx.TransactionBatchManagerImpl;
 import com.tc.objectserver.tx.TransactionFilter;
 import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
@@ -248,35 +246,6 @@ import com.tc.runtime.logging.LongGCLogger;
 import com.tc.runtime.logging.MemoryOperatorEventListener;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.server.TCServer;
-import com.tc.statistics.StatisticsAgentSubSystem;
-import com.tc.statistics.StatisticsAgentSubSystemImpl;
-import com.tc.statistics.StatisticsSystemType;
-import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
-import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
-import com.tc.statistics.retrieval.actions.SRACacheObjectsEvictRequest;
-import com.tc.statistics.retrieval.actions.SRACacheObjectsEvicted;
-import com.tc.statistics.retrieval.actions.SRADistributedGC;
-import com.tc.statistics.retrieval.actions.SRAGlobalLockRecallCount;
-import com.tc.statistics.retrieval.actions.SRAL1ReferenceCount;
-import com.tc.statistics.retrieval.actions.SRAL1ToL2FlushRate;
-import com.tc.statistics.retrieval.actions.SRAL2BroadcastCount;
-import com.tc.statistics.retrieval.actions.SRAL2BroadcastPerTransaction;
-import com.tc.statistics.retrieval.actions.SRAL2ChangesPerBroadcast;
-import com.tc.statistics.retrieval.actions.SRAL2GlobalLockCount;
-import com.tc.statistics.retrieval.actions.SRAL2PendingTransactions;
-import com.tc.statistics.retrieval.actions.SRAL2ServerMapGetSizeRequestsCount;
-import com.tc.statistics.retrieval.actions.SRAL2ServerMapGetSizeRequestsRate;
-import com.tc.statistics.retrieval.actions.SRAL2ServerMapGetValueRequestsCount;
-import com.tc.statistics.retrieval.actions.SRAL2ServerMapGetValueRequestsRate;
-import com.tc.statistics.retrieval.actions.SRAL2ToL1FaultRate;
-import com.tc.statistics.retrieval.actions.SRAL2TransactionCount;
-import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
-import com.tc.statistics.retrieval.actions.SRAMessages;
-import com.tc.statistics.retrieval.actions.SRAServerTransactionSequencer;
-import com.tc.statistics.retrieval.actions.SRAStageQueueDepths;
-import com.tc.statistics.retrieval.actions.SRASystemProperties;
-import com.tc.statistics.retrieval.actions.SRAVmGarbageCollector;
-import com.tc.statistics.retrieval.actions.SRAVmGarbageCollector.SRAVmGarbageCollectorType;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -360,6 +329,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private PersistentManagedObjectStore           objectStore;
   private GarbageCollectionManager               garbageCollectionManager;
   private Persistor persistor;
+  private BackupManager backupManager;
   private ServerTransactionManagerImpl           transactionManager;
 
   private L2Management                           l2Management;
@@ -370,9 +340,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private ConnectionIDFactoryImpl                connectionIdFactory;
 
   private LockStatisticsMonitor                  lockStatisticsMBean;
-
-  private StatisticsAgentSubSystemImpl           statisticsAgentSubSystem;
-  private StatisticsGatewayMBeanImpl             statisticsGateway;
 
   private final TCThreadGroup                    threadGroup;
   private final SEDA                             seda;
@@ -490,23 +457,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                              + "]. Local addresses are "
                                                                              + addressChecker.getAllLocalAddresses()); }
 
-    // setup the statistics subsystem
-    this.statisticsAgentSubSystem = new StatisticsAgentSubSystemImpl();
-    if (!this.statisticsAgentSubSystem.setup(StatisticsSystemType.SERVER, this.configSetupManager.commonl2Config())) {
-      System.exit(-1);
-    }
-    if (TCSocketAddress.WILDCARD_IP.equals(bindAddress)) {
-      this.statisticsAgentSubSystem.setDefaultAgentIp(InetAddress.getLocalHost().getHostAddress());
-    } else {
-      this.statisticsAgentSubSystem.setDefaultAgentIp(jmxBind.getHostAddress());
-    }
-    try {
-      this.statisticsGateway = new StatisticsGatewayMBeanImpl();
-    } catch (final NotCompliantMBeanException e) {
-      throw new TCRuntimeException("Unable to construct the " + StatisticsGatewayMBeanImpl.class.getName()
-                                   + " MBean; this is a programming error. Please go fix that class.", e);
-    }
-
     NIOWorkarounds.solaris10Workaround();
     ConcurrentDistributedServerMapManagedObjectState.init();
     this.l2Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l2");
@@ -563,6 +513,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     persistor = serverBuilder.createPersistor(restartable, configSetupManager.commonl2Config().dataPath());
     persistor.start();
+
+    if (restartable) {
+      Sink backupSink = stageManager.createStage(ServerConfigurationContext.BACKUP_STAGE, new BackupHandler(), 1, maxStageSize).getSink();
+      backupManager = new BackupManagerImpl(persistor, configSetupManager.commonl2Config()
+          .serverDbBackupPath(), backupSink);
+    }
 
     // register the terracotta operator event logger
     this.operatorEventHistoryProvider = new DsoOperatorEventHistoryProvider();
@@ -699,7 +655,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                      this.threadGroup, !offHeapConfig.getEnabled());
     final long timeOut = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.LOGGING_LONG_GC_THRESHOLD);
     final LongGCLogger gcLogger = this.serverBuilder.createLongGCLogger(timeOut);
-    
+
     tcMemManager.registerForMemoryEvents(gcLogger);
     tcMemManager.registerForMemoryEvents(new MemoryOperatorEventListener(cacheConfig.getUsedCriticalThreshold()));
     // CDV-1181 warn if using CMS
@@ -709,8 +665,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.connectionIdFactory = new ConnectionIDFactoryImpl(clientStateStore);
 
     final int serverPort = l2DSOConfig.dsoPort().getIntValue();
-
-    this.statisticsAgentSubSystem.setDefaultAgentDifferentiator("L2/" + serverPort);
 
     final String dsoBind = l2DSOConfig.dsoPort().getBind();
     this.l1Listener = this.communicationsManager.createListener(sessionManager,
@@ -918,10 +872,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     final ServerTransactionFactory serverTransactionFactory = new ServerTransactionFactory();
 
-    this.serverMapEvictor = new ProgressiveEvictionManager(objectManager, 
-            persistor.getMonitoredResource(), 
+    this.serverMapEvictor = new ProgressiveEvictionManager(objectManager, persistor.getMonitoredResource(),
             objectStore, clientObjectReferenceSet, serverTransactionFactory, threadGroup);
-    
+
     toInit.add(this.serverMapEvictor);
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.serverMapEvictor));
     stageManager.createStage(ServerConfigurationContext.SERVER_MAP_EVICTION_BROADCAST_STAGE,
@@ -959,12 +912,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                           new JMXEventsHandler(appEvents), 1, maxStageSize);
 
     final Stage jmxRemoteConnectStage = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_CONNECT_STAGE,
-                                                                 new ClientConnectEventHandler(this.statisticsGateway),
+                                                                 new ClientConnectEventHandler(),
                                                                  1, maxStageSize);
 
     final Stage jmxRemoteDisconnectStage = stageManager
-        .createStage(ServerConfigurationContext.JMXREMOTE_DISCONNECT_STAGE,
-                     new ClientConnectEventHandler(this.statisticsGateway), 1, maxStageSize);
+        .createStage(ServerConfigurationContext.JMXREMOTE_DISCONNECT_STAGE, new ClientConnectEventHandler(), 1,
+                     maxStageSize);
 
     cteh.setStages(jmxRemoteConnectStage.getSink(), jmxRemoteDisconnectStage.getSink());
     final Stage jmxRemoteTunnelStage = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_TUNNEL_STAGE,
@@ -1026,10 +979,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                           stageManager, maxStageSize, gcPublisher,
                                                                           this.objectManager, this.clientStateManager,
                                                                           getGcStatsEventPublisher(),
-                                                                          getStatisticsAgentSubSystem(),
                                                                           dgcSequenceProvider, this.transactionManager,
                                                                           this.garbageCollectionManager);
-    gc.addListener(new GCStatisticsAgentSubSystemEventListener(getStatisticsAgentSubSystem()));
     this.objectManager.setGarbageCollector(gc);
     this.l2Management.findObjectManagementMonitorMBean().registerGCController(new GCControllerImpl(this.objectManager
                                                                                   .getGarbageCollector()));
@@ -1117,10 +1068,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     toInit.add(this.serverBuilder);
 
     stageManager.startAll(this.context, toInit);
-
-    // populate the statistics retrieval register
-    populateStatisticsRetrievalRegistry(serverStats, this.seda.getStageManager(), mm, this.transactionManager,
-                                        serverTransactionSequencerImpl.getStats());
 
     // XXX: yucky casts
     this.managementContext = new ServerManagementContext(this.transactionManager, this.objectRequestManager,
@@ -1324,42 +1271,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     });
   }
 
-  private void populateStatisticsRetrievalRegistry(final DSOGlobalServerStats serverStats,
-                                                   final StageManager stageManager,
-                                                   final MessageMonitor messageMonitor,
-                                                   final ServerTransactionManager txnManager,
-                                                   final ServerTransactionSequencerStats serverTransactionSequencerStats) {
-    if (this.statisticsAgentSubSystem.isActive()) {
-      final StatisticsRetrievalRegistry registry = this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry();
-      registry.registerActionInstance(new SRAL2ToL1FaultRate(serverStats));
-      registry.registerActionInstance(new SRAMemoryUsage());
-      registry.registerActionInstance(new SRASystemProperties());
-      registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRAThreadDump");
-      registry.registerActionInstance(new SRAL2TransactionCount(serverStats));
-      registry.registerActionInstance(new SRAL2BroadcastCount(serverStats));
-      registry.registerActionInstance(new SRAL2ChangesPerBroadcast(serverStats));
-      registry.registerActionInstance(new SRAL2BroadcastPerTransaction(serverStats));
-      registry.registerActionInstance(new SRAStageQueueDepths(stageManager));
-      registry.registerActionInstance(new SRACacheObjectsEvictRequest());
-      registry.registerActionInstance(new SRACacheObjectsEvicted());
-      registry.registerActionInstance(new SRADistributedGC());
-      registry.registerActionInstance(new SRAVmGarbageCollector(SRAVmGarbageCollectorType.L2_VM_GARBAGE_COLLECTOR));
-      registry.registerActionInstance(new SRAMessages(messageMonitor));
-      registry.registerActionInstance(new SRAL1ToL2FlushRate(serverStats));
-      registry.registerActionInstance(new SRAL2PendingTransactions(txnManager));
-      registry.registerActionInstance(new SRAServerTransactionSequencer(serverTransactionSequencerStats));
-      registry.registerActionInstance(new SRAL1ReferenceCount(this.clientStateManager));
-      registry.registerActionInstance(new SRAGlobalLockRecallCount(serverStats));
-      registry.registerActionInstance(new SRAL2GlobalLockCount(serverStats));
-      registry.registerActionInstance(new SRAL2ServerMapGetSizeRequestsCount(serverStats));
-      registry.registerActionInstance(new SRAL2ServerMapGetSizeRequestsRate(serverStats));
-      registry.registerActionInstance(new SRAL2ServerMapGetValueRequestsCount(serverStats));
-      registry.registerActionInstance(new SRAL2ServerMapGetValueRequestsRate(serverStats));
-
-      this.serverBuilder.populateAdditionalStatisticsRetrivalRegistry(registry);
-    }
-  }
-
   public boolean isBlocking() {
     return this.startupLock != null && this.startupLock.isBlocked();
   }
@@ -1442,18 +1353,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       }
     } catch (Throwable t) {
       logger.warn(t);
-    }
-
-    try {
-      this.statisticsAgentSubSystem.cleanup();
-    } catch (final Throwable e) {
-      logger.warn(e);
-    }
-
-    try {
-      this.statisticsGateway.cleanup();
-    } catch (final Throwable e) {
-      logger.warn(e);
     }
 
     this.seda.getStageManager().stopAll();
@@ -1559,14 +1458,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return this.l2Management.getJMXConnServer();
   }
 
-  public StatisticsAgentSubSystem getStatisticsAgentSubSystem() {
-    return this.statisticsAgentSubSystem;
-  }
-
-  public StatisticsGatewayMBeanImpl getStatisticsGateway() {
-    return this.statisticsGateway;
-  }
-
   public GCStatsEventPublisher getGcStatsEventPublisher() {
     return this.gcStatsEventPublisher;
   }
@@ -1582,7 +1473,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     }
 
     this.l2Management = this.serverBuilder.createL2Management(this.tcServerInfoMBean, this.lockStatisticsMBean,
-                                                              this.statisticsAgentSubSystem, this.statisticsGateway,
                                                               this.configSetupManager, this, bind, jmxPort,
                                                               remoteEventsSink, this, serverDBBackupMBean);
 
@@ -1590,8 +1480,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   private void stopJMXServer() throws Exception {
-    this.statisticsAgentSubSystem.disableJMX();
-
     try {
       if (this.l2Management != null) {
         this.l2Management.stop();
@@ -1650,5 +1538,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       logger.warn("Could not take Cluster dump, hence taking server dump only");
       dump();
     }
+  }
+
+  public BackupManager getBackupManager() {
+    return backupManager;
   }
 }

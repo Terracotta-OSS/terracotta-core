@@ -7,6 +7,8 @@ import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 
+import java.io.IOException;
+
 public interface TCServer {
   String[] processArguments();
 
@@ -70,4 +72,9 @@ public interface TCServer {
 
   String getSecurityHostname();
 
+  String getRunningBackup();
+
+  String getBackupStatus(String name) throws IOException;
+
+  void backup(String name) throws IOException;
 }

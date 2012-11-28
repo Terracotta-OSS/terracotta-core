@@ -13,9 +13,6 @@ import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
-import com.tc.properties.TCProperties;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.Server;
@@ -27,17 +24,10 @@ import java.io.IOException;
  */
 public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelperFactory {
 
-  static {
-    // ensure that the databases that are created for the CVT are unique for
-    // each test run and for all the nodes that are started within a test
-    TCProperties tcProps = TCPropertiesImpl.getProperties();
-    tcProps.setProperty(TCPropertiesConsts.CVT_BUFFER_RANDOM_SUFFIX_ENABLED, "true");
-    tcProps.setProperty(TCPropertiesConsts.CVT_STORE_RANDOM_SUFFIX_ENABLED, "true");
-  }
-
   private Exception failTestException;
 
   private class TestFailingIllegalConfigChangeHandler implements IllegalConfigurationChangeHandler {
+    @Override
     public void changeFailed(ConfigItem item, Object oldValue, Object newValue) {
       failTestException = new Exception("An attempt was made to illegally change the config item " + item + " from "
                                         + ArrayUtils.toString(oldValue) + " to " + ArrayUtils.toString(newValue));
@@ -77,19 +67,18 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
   }
 
   private synchronized void prepareFactory(TestConfigurationSetupManagerFactory out) throws ConfigurationSetupException {
-    setupConfigLogDataStatisticsPaths(out);
+    setupConfigLogDataPaths(out);
 
     out.activateConfigurationChange();
   }
 
-  protected synchronized void setupConfigLogDataStatisticsPaths(TestConfigurationSetupManagerFactory out)
+  protected synchronized void setupConfigLogDataPaths(TestConfigurationSetupManagerFactory out)
       throws ConfigurationSetupException {
     try {
       Server server = (Server) out.l2CommonConfig().getBean();
       server.setData(getTempFile("l2-data").toString());
       server.setLogs(getTempFile("l2-logs").toString());
       server.setIndex(getTempFile("l2-index").toString());
-      server.setStatistics(getTempFile("l2-statistics").toString());
       ((Client) out.l1CommonConfig().getBean()).setLogs(getTempFile("l1-logs").toString());
     } catch (IOException ioe) {
       throw new ConfigurationSetupException("Can't set up log, data and statistics paths", ioe);
@@ -119,6 +108,7 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
     return this.configHelper;
   }
 
+  @Override
   public synchronized final DSOClientConfigHelper createClientConfigHelper() throws ConfigurationSetupException {
     return new StandardDSOClientConfigHelperImpl(true, createL1ConfigManager());
   }

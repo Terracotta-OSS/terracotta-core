@@ -59,10 +59,6 @@ import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.server.ServerConnectionValidator;
-import com.tc.statistics.StatisticsAgentSubSystem;
-import com.tc.statistics.StatisticsAgentSubSystemImpl;
-import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
-import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.util.StartupLock;
 import com.tc.util.sequence.DGCSequenceProvider;
 import com.tc.util.sequence.ObjectIDSequence;
@@ -108,8 +104,6 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
 
   SearchRequestManager createSearchRequestManager(DSOChannelManager channelManager, Sink managedObjectRequestSink);
 
-  void populateAdditionalStatisticsRetrivalRegistry(StatisticsRetrievalRegistry registry);
-
   GroupManager createGroupCommManager(boolean networkedHA, L2ConfigurationSetupManager configManager,
                                       StageManager stageManager, ServerID serverNodeID, Sink httpSink,
                                       StripeIDStateManager stripeStateManager, ServerGlobalTransactionManager gtxm);
@@ -119,7 +113,6 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                           StageManager stageManager, int maxStageSize,
                                           GarbageCollectionInfoPublisher gcPublisher, ObjectManager objectManager,
                                           ClientStateManager clientStateManger, GCStatsEventPublisher gcEventListener,
-                                          StatisticsAgentSubSystem statsSubSystem,
                                           DGCSequenceProvider dgcSequenceProvider,
                                           ServerTransactionManager serverTransactionManager,
                                           GarbageCollectionManager garbageCollectionManager);
@@ -166,8 +159,6 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                       DGCSequenceProvider dgcSequenceProvider, SequenceGenerator indexSequenceGenerator, ObjectIDSequence objectIDSequence);
 
   L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean, LockStatisticsMonitor lockStatisticsMBean,
-                                  StatisticsAgentSubSystemImpl statisticsAgentSubSystem,
-                                  StatisticsGatewayMBeanImpl statisticsGateway,
                                   L2ConfigurationSetupManager configSetupManager,
                                   DistributedObjectServer distributedObjectServer, InetAddress bind, int jmxPort,
                                   Sink remoteEventsSink, ServerConnectionValidator serverConnectionValidator,
