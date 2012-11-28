@@ -66,8 +66,8 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
       if (index == 0) {
         try {
           lock.lock();
-          // startRejoinAndWaitUntilPassiveStandBy(testHandlerMBean, toolkit);
-          startRejoinAndWaitUntilCompleted(testHandlerMBean, toolkit);
+          startRejoinAndWaitUntilPassiveStandBy(testHandlerMBean, toolkit);
+          // startRejoinAndWaitUntilCompleted(testHandlerMBean, toolkit);
         } finally {
           try {
             lock.unlock();
@@ -75,13 +75,15 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
             // ignored
           }
         }
+
         testBarrier.await();
-        // doLockUnlock(lock);
+        doLockUnlock(lock);
       } else {
-        // waitUntilPassiveStandBy(testHandlerMBean);
+        waitUntilPassiveStandBy(testHandlerMBean);
         waitUntilRejoinCompleted();
+
         testBarrier.await();
-        // doLockUnlock(lock);
+        doLockUnlock(lock);
       }
       testBarrier.await();
 
@@ -91,6 +93,7 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
           try {
             rwLock.writeLock().lock();
             startRejoinAndWaitUntilPassiveStandBy(testHandlerMBean, toolkit);
+            // startRejoinAndWaitUntilPassiveStandBy(testHandlerMBean, toolkit);
           } finally {
             try {
               rwLock.writeLock().unlock();
@@ -98,8 +101,14 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
               // ignored
             }
           }
+
+          testBarrier.await();
+          doLockUnlock(lock);
         } else {
           waitUntilPassiveStandBy(testHandlerMBean);
+          waitUntilRejoinCompleted();
+
+          testBarrier.await();
           doLockUnlock(rwLock.writeLock());
         }
         testBarrier.await();
@@ -110,6 +119,7 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
         if (index == 0) {
           try {
             rwLock.readLock().lock();
+            // startRejoinAndWaitUntilPassiveStandBy(testHandlerMBean, toolkit);
             startRejoinAndWaitUntilPassiveStandBy(testHandlerMBean, toolkit);
           } finally {
             try {
@@ -118,8 +128,14 @@ public class ToolkitLockRejoinTest extends AbstractToolkitRejoinTest {
               // ignored
             }
           }
+
+          testBarrier.await();
+          doLockUnlock(rwLock.readLock());
         } else {
           waitUntilPassiveStandBy(testHandlerMBean);
+          waitUntilRejoinCompleted();
+
+          testBarrier.await();
           doLockUnlock(rwLock.readLock());
         }
         testBarrier.await();
