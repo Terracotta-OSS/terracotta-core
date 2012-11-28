@@ -7,7 +7,6 @@ import com.terracotta.management.security.KeyChainAccessor;
 import com.terracotta.management.security.KeychainInitializationException;
 import com.terracotta.management.security.SSLContextFactory;
 import com.terracotta.management.security.impl.DfltSSLContextFactory;
-import com.terracotta.management.security.impl.ObfuscatedSecretFileStoreKeyChainAccessor;
 
 import java.lang.management.ManagementFactory;
 
@@ -40,7 +39,7 @@ public class TSAConfig {
     if (KEY_CHAIN_ACCESSOR == null) {
       synchronized (KEY_CHAIN_ACCESSOR_LOCK) {
         if (KEY_CHAIN_ACCESSOR == null) {
-          KEY_CHAIN_ACCESSOR = new ObfuscatedSecretFileStoreKeyChainAccessor();
+          KEY_CHAIN_ACCESSOR = new L2KeyChainAccessor();
         }
       }
     }
