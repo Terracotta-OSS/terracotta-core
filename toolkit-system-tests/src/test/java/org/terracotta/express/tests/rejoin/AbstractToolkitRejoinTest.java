@@ -76,6 +76,19 @@ public class AbstractToolkitRejoinTest extends AbstractToolkitTestBase {
       return tk;
     }
 
+    protected void startRejoinAndWaitUntilPassiveStandBy(TestHandlerMBean testHandlerMBean, ToolkitInternal tk)
+        throws Exception {
+      startRejoinAndWaitUntilCompleted(testHandlerMBean, tk);
+      doDebug("Starting last crashed server...");
+      testHandlerMBean.restartLastCrashedServer(0);
+      waitUntilPassiveStandBy(testHandlerMBean);
+    }
+
+    protected void waitUntilPassiveStandBy(TestHandlerMBean testHandlerMBean) throws Exception {
+      doDebug("Waiting for passive to come up in cluster");
+      testHandlerMBean.waitUntilPassiveStandBy(0);
+    }
+
     protected void startRejoinAndWaitUntilCompleted(TestHandlerMBean testHandlerMBean, ToolkitInternal tk)
         throws Exception {
       tk.waitUntilAllTransactionsComplete();
