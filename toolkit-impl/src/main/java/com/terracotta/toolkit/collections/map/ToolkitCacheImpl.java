@@ -10,7 +10,6 @@ import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.ToolkitInternal;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.search.QueryBuilder;
-import org.terracotta.toolkit.search.SearchExecutor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 
 import com.tc.object.ObjectID;
@@ -55,11 +54,6 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   @Override
   public String getName() {
     return name;
-  }
-
-  @Override
-  public SearchExecutor createSearchExecutor() {
-    return activeDelegate.createSearchExecutor();
   }
 
   @Override
@@ -326,6 +320,11 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
   public void removeAll(Set<K> keys) {
     activeDelegate.removeAll(keys);
 
+  }
+
+  @Override
+  public Map<K, V> unlockedGetAll(Collection<K> keys, boolean quiet) {
+    return activeDelegate.unlockedGetAll(keys, quiet);
   }
 
 }

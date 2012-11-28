@@ -3,8 +3,10 @@
  */
 package com.terracotta.toolkit.collections.map;
 
+import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
 import net.sf.ehcache.pool.SizeOfEngine;
 import net.sf.ehcache.pool.impl.DefaultSizeOfEngine;
+
 import org.terracotta.toolkit.cache.ToolkitCacheConfigFields;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
 import org.terracotta.toolkit.cluster.ClusterNode;
@@ -15,7 +17,8 @@ import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.cache.ToolkitCacheInternal;
 import org.terracotta.toolkit.internal.concurrent.locks.ToolkitLockTypeInternal;
 import org.terracotta.toolkit.search.QueryBuilder;
-import org.terracotta.toolkit.search.SearchExecutor;
+import org.terracotta.toolkit.search.SearchQueryResultSet;
+import org.terracotta.toolkit.search.ToolkitSearchQuery;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeExtractor;
 import org.terracotta.toolkit.search.attribute.ToolkitAttributeType;
 import org.terracotta.toolkit.store.ToolkitStoreConfigFields.Consistency;
@@ -50,6 +53,7 @@ import com.terracotta.toolkit.object.DestroyApplicator;
 import com.terracotta.toolkit.object.ToolkitObjectStripe;
 import com.terracotta.toolkit.object.ToolkitObjectType;
 import com.terracotta.toolkit.search.SearchFactory;
+import com.terracotta.toolkit.search.SearchableEntity;
 import com.terracotta.toolkit.type.DistributedToolkitType;
 
 import java.io.Serializable;
@@ -67,10 +71,8 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static com.terracotta.toolkit.config.ConfigUtil.distributeInStripes;
-
-public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>,
-    ToolkitCacheListener<K>, ToolkitCacheInternal<K, V>, ConfigChangeListener, ValuesResolver<K, V> {
+public class AggregateServerMap<K, V> implements DistributedToolkitType<InternalToolkitMap<K, V>>, ToolkitCacheListener<K>, ConfigChangeListener, ValuesResolver<K, V>, ToolkitCacheInternal<K, V>,
+    SearchableEntity {
   private static final TCLogger                                 LOGGER                               = TCLogging
                                                                                                          .getLogger(AggregateServerMap.class);
   private static final int                                      KB                                   = 1024;
@@ -403,8 +405,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   }
 
   @Override
-  public SearchExecutor createSearchExecutor() {
-    return searchBuilderFactory.createSearchExecutor(this, getAnyServerMap().isEventual(), platformService);
+  public SearchQueryResultSet executeQuery(ToolkitSearchQuery query) {
+    return searchBuilderFactory.createSearchExecutor(this, getAnyServerMap().isEventual(), platformService).executeQuery(query);
   }
 
   public void setApplyDestroyCallback(DestroyApplicator destroyCallback) {
@@ -561,7 +563,7 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         }
         return rv;
       case EVENTUAL:
-        return Collections.unmodifiableMap(new GetAllCustomMap(keys, this, quiet, getAllBatchSize));
+        return unlockedGetAll((Collection<K>) keys, quiet);
     }
     throw new UnsupportedOperationException("Unknown consistency - " + consistency);
   }
@@ -822,5 +824,10 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   @Override
   public QueryBuilder createQueryBuilder() {
     return searchBuilderFactory.createQueryBuilder(this);
+  }
+
+  @Override
+  public Map<K, V> unlockedGetAll(Collection<K> keys, boolean quiet) {
+    return Collections.unmodifiableMap(new GetAllCustomMap(keys, this, quiet, getAllBatchSize));
   }
 }
