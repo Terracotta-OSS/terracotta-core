@@ -3,16 +3,26 @@
  */
 package com.terracotta.toolkit.nonstop;
 
+import static org.terracotta.toolkit.ToolkitObjectType.CACHE;
+import static org.terracotta.toolkit.ToolkitObjectType.LIST;
+import static org.terracotta.toolkit.ToolkitObjectType.LOCK;
+import static org.terracotta.toolkit.ToolkitObjectType.STORE;
+
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.nonstop.NonStopConfiguration;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationFields;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationFields.NonStopTimeoutBehavior;
 import org.terracotta.toolkit.nonstop.NonStopConfigurationRegistry;
 
+import java.util.EnumSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
+  private static final EnumSet<ToolkitObjectType>                     SUPPORTED_TOOLKIT_TYPES  = EnumSet.of(STORE,
+                                                                                                            CACHE,
+                                                                                                            LIST, LOCK);
+
   private final ConcurrentMap<NonStopConfigKey, NonStopConfiguration> allConfigs               = new ConcurrentHashMap<NonStopConfigKey, NonStopConfiguration>();
 
   private final NonStopConfiguration                                  DEFAULT_CONFIG           = new NonStopConfiguration() {
@@ -45,16 +55,25 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
 
   private final ThreadLocal<NonStopConfiguration>                     threadLocalConfiguration = new ThreadLocal<NonStopConfiguration>();
 
-  private void verify(NonStopConfiguration nonStopConfiguration) {
+  private void verify(NonStopConfiguration nonStopConfiguration, ToolkitObjectType... types) {
     NonStopConfigurationFields.NonStopTimeoutBehavior mutableOpBehavior = nonStopConfiguration
         .getMutableOpNonStopTimeoutBehavior();
     if (mutableOpBehavior == NonStopTimeoutBehavior.LOCAL_READS) { throw new IllegalArgumentException(
                                                                                                       "LOCAL_READS is not supported for mutable operations"); }
+
+    if (types != null) {
+      for (ToolkitObjectType nonStopToolkitTypeParam : types) {
+        if (!SUPPORTED_TOOLKIT_TYPES.contains(nonStopToolkitTypeParam)) { throw new UnsupportedOperationException(
+                                                                                                                  nonStopToolkitTypeParam
+                                                                                                                      .name()
+                                                                                                                      + " is not yet supported as a non stop data structure"); }
+      }
+    }
   }
 
   @Override
   public void registerForType(NonStopConfiguration config, ToolkitObjectType... types) {
-    verify(config);
+    verify(config, types);
 
     for (ToolkitObjectType type : types) {
       allConfigs.put(new NonStopConfigKey(null, type, null), config);
@@ -63,14 +82,14 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
 
   @Override
   public void registerForInstance(NonStopConfiguration config, String toolkitTypeName, ToolkitObjectType type) {
-    verify(config);
+    verify(config, type);
 
     allConfigs.put(new NonStopConfigKey(null, type, toolkitTypeName), config);
   }
 
   @Override
   public void registerForTypeMethod(NonStopConfiguration config, String methodName, ToolkitObjectType type) {
-    verify(config);
+    verify(config, type);
 
     allConfigs.put(new NonStopConfigKey(methodName, type, null), config);
   }
@@ -78,7 +97,7 @@ public class NonStopConfigRegistryImpl implements NonStopConfigurationRegistry {
   @Override
   public void registerForInstanceMethod(NonStopConfiguration config, String methodName, String toolkitTypeName,
                                         ToolkitObjectType type) {
-    verify(config);
+    verify(config, type);
 
     allConfigs.put(new NonStopConfigKey(methodName, type, toolkitTypeName), config);
   }
